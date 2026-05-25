@@ -61,60 +61,6 @@ theorem residue_eq_zero_of_analyticAt {f : ℂ → ℂ} {z₀ : ℂ}
   filter_upwards [Iio_mem_nhds hR_pos] with r hr_lt hr_pos
   rw [circleIntegral_eq_zero_of_analyticOnNhd_ball hr_pos hr_lt hR_an, mul_zero]
 
-/-- `f` agrees with `c * (z-z₀)⁻¹ + g` on any sphere contained in the punctured
-neighborhood where the decomposition holds. -/
-private lemma simple_pole_eqOn_sphere {f : ℂ → ℂ} {z₀ c : ℂ} {g : ℂ → ℂ}
-    {rf r : ℝ} (hr_pos : 0 < r) (hr_lt_rf : r < rf)
-    (hrf_eq : ∀ z, z ∈ ball z₀ rf ∩ {z₀}ᶜ →
-      z ∈ {z | f z = c / (z - z₀) + g z}) :
-    EqOn f (fun z => c * (z - z₀)⁻¹ + g z) (sphere z₀ r) := by
-  intro z hz
-  have h_ne : z ≠ z₀ := fun heq => by
-    rw [heq, mem_sphere, dist_self] at hz; linarith
-  have h_mem : z ∈ ball z₀ rf ∩ {z₀}ᶜ :=
-    ⟨mem_ball.mpr (mem_sphere.mp hz ▸ hr_lt_rf), mem_compl_singleton_iff.mpr h_ne⟩
-  change f z = c * (z - z₀)⁻¹ + g z
-  rw [hrf_eq _ h_mem, div_eq_mul_inv]
-
-/-- For small enough `r > 0`, the normalized circle integral of `f` around a simple pole
-`z₀` equals the pole coefficient `c`. The `c/(z-z₀)` term contributes `c` via
-`circleIntegral.integral_sub_center_inv`, while the analytic remainder integrates
-to zero. -/
-theorem circleIntegral_simple_pole_eq {f : ℂ → ℂ} {z₀ c : ℂ} {g : ℂ → ℂ}
-    (hg : AnalyticAt ℂ g z₀)
-    (hf_eq : ∀ᶠ z in 𝓝[≠] z₀, f z = c / (z - z₀) + g z) :
-    ∀ᶠ r in 𝓝[>] (0 : ℝ),
-      (2 * ↑Real.pi * I)⁻¹ * ∮ z in C(z₀, r), f z = c := by
-  obtain ⟨rg, hrg_pos, hg_ball⟩ := hg.exists_ball_analyticOnNhd
-  rw [Filter.Eventually, Metric.mem_nhdsWithin_iff] at hf_eq
-  obtain ⟨rf, hrf_pos, hrf_eq⟩ := hf_eq
-  rw [eventually_nhdsWithin_iff]
-  filter_upwards [Iio_mem_nhds (lt_min hrg_pos hrf_pos)] with r hr_lt hr_pos
-  have hr_lt_rg : r < rg := lt_of_lt_of_le hr_lt (min_le_left _ _)
-  have hr_lt_rf : r < rf := lt_of_lt_of_le hr_lt (min_le_right _ _)
-  have hr_ne : r ≠ 0 := ne_of_gt hr_pos
-  have h_ci_g : CircleIntegrable g z₀ r :=
-    ((hg_ball.continuousOn.mono (closedBall_subset_ball hr_lt_rg)).mono
-      sphere_subset_closedBall).circleIntegrable hr_pos.le
-  have h_ci_cinv : CircleIntegrable (fun z => c * (z - z₀)⁻¹) z₀ r :=
-    (circleIntegrable_sub_inv_iff.mpr (Or.inr (by
-      rw [mem_sphere, dist_self, abs_of_pos hr_pos]
-      exact hr_ne.symm))).const_fun_smul
-  rw [circleIntegral.integral_congr hr_pos.le (simple_pole_eqOn_sphere hr_pos hr_lt_rf hrf_eq),
-    circleIntegral.integral_add h_ci_cinv h_ci_g,
-    circleIntegral.integral_const_mul,
-    circleIntegral.integral_sub_center_inv z₀ hr_ne,
-    circleIntegral_eq_zero_of_analyticOnNhd_ball hr_pos hr_lt_rg hg_ball, add_zero]
-  field_simp
-
-/-- For a function with a simple pole decomposition `f(z) = c/(z-z₀) + g(z)`, the
-residue equals the pole coefficient `c`. For small `r`, the normalized integral
-equals `c` exactly by `circleIntegral_simple_pole_eq`, so the `limUnder` is `c`. -/
-theorem residue_eq_of_simple_pole_decomp {f : ℂ → ℂ} {z₀ c : ℂ} {g : ℂ → ℂ}
-    (hg : AnalyticAt ℂ g z₀)
-    (hf_eq : ∀ᶠ z in 𝓝[≠] z₀, f z = c / (z - z₀) + g z) :
-    residue f z₀ = c :=
-  (tendsto_nhds_of_eventually_eq (circleIntegral_simple_pole_eq hg hf_eq)).limUnder_eq
 
 /-- If `f` and `g` agree in a punctured neighborhood of `z₀`, they have the same
 residue. The proof shows that the circle integrals agree for all sufficiently small
