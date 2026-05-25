@@ -91,16 +91,6 @@ theorem HasCauchyPV.cauchyPV_eq {f : ℂ → ℂ} {γ : PiecewiseC1Path x y} {z�
     (h : HasCauchyPV f γ z₀ L) : cauchyPV f γ z₀ = L :=
   h.limUnder_eq
 
-/-- Negation: `HasCauchyPV f γ z₀ L → HasCauchyPV (-f) γ z₀ (-L)`. -/
-theorem HasCauchyPV.neg {f : ℂ → ℂ} {γ : PiecewiseC1Path x y} {z₀ : ℂ} {L : ℂ}
-    (h : HasCauchyPV f γ z₀ L) : HasCauchyPV (fun z => -f z) γ z₀ (-L) := by
-  simp only [HasCauchyPV] at h ⊢
-  refine h.neg.congr fun ε => ?_
-  rw [← intervalIntegral.integral_neg]
-  refine intervalIntegral.integral_congr fun t _ => ?_
-  simp only [cpvIntegrand]
-  split_ifs <;> simp only [neg_zero, neg_mul]
-
 /-- Scalar multiplication: `HasCauchyPV f γ z₀ L → HasCauchyPV (c • f) γ z₀ (c * L)`. -/
 theorem HasCauchyPV.smul {f : ℂ → ℂ} {γ : PiecewiseC1Path x y} {z₀ : ℂ} {L : ℂ}
     (c : ℂ) (h : HasCauchyPV f γ z₀ L) :
@@ -155,27 +145,6 @@ and taking the limit as `ε → 0⁺`. -/
 def HasCauchyPVOn (S : Finset ℂ) (f : ℂ → ℂ) (γ : PiecewiseC1Path x y) (L : ℂ) : Prop :=
   Tendsto (fun ε => ∫ t in (0 : ℝ)..1, cpvIntegrandOn S f γ.toPath.extend ε t)
     (𝓝[>] 0) (𝓝 L)
-
-/-- Negation for multi-point CPV. -/
-theorem HasCauchyPVOn.neg {S : Finset ℂ} {f : ℂ → ℂ} {γ : PiecewiseC1Path x y} {L : ℂ}
-    (h : HasCauchyPVOn S f γ L) : HasCauchyPVOn S (fun z => -f z) γ (-L) := by
-  simp only [HasCauchyPVOn] at h ⊢
-  refine h.neg.congr fun ε => ?_
-  rw [← intervalIntegral.integral_neg]
-  refine intervalIntegral.integral_congr fun t _ => ?_
-  simp only [cpvIntegrandOn]
-  split_ifs <;> simp only [neg_zero, neg_mul]
-
-/-- Scalar multiplication for multi-point CPV. -/
-theorem HasCauchyPVOn.smul {S : Finset ℂ} {f : ℂ → ℂ} {γ : PiecewiseC1Path x y} {L : ℂ}
-    (c : ℂ) (h : HasCauchyPVOn S f γ L) :
-    HasCauchyPVOn S (fun z => c * f z) γ (c * L) := by
-  simp only [HasCauchyPVOn] at h ⊢
-  refine (h.const_mul c).congr fun ε => ?_
-  refine (intervalIntegral.integral_const_mul c _).symm.trans
-    (intervalIntegral.integral_congr fun t _ => ?_)
-  simp only [cpvIntegrandOn]
-  split_ifs <;> ring
 
 /-- If `γ` avoids all points in `S`, the multi-point CPV equals the ordinary
 contour integral. -/
