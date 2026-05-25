@@ -36,10 +36,6 @@ def HasSimplePoleAt (f : ℂ → ℂ) (z₀ : ℂ) : Prop :=
   ∃ c : ℂ, ∃ g : ℂ → ℂ, AnalyticAt ℂ g z₀ ∧
     ∀ᶠ z in 𝓝[≠] z₀, f z = c / (z - z₀) + g z
 
-/-- Extract the pole coefficient from a simple pole decomposition. -/
-def HasSimplePoleAt.coeff {f : ℂ → ℂ} {z₀ : ℂ} (h : HasSimplePoleAt f z₀) : ℂ :=
-  h.choose
-
 /-- The residue of `f` at `z₀`, defined as the limit of normalized circle integrals:
 `Res(f, z₀) = lim_{r→0⁺} (2πi)⁻¹ ∮_{|z-z₀|=r} f(z) dz`. -/
 def residue (f : ℂ → ℂ) (z₀ : ℂ) : ℂ :=

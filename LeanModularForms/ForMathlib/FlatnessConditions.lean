@@ -112,26 +112,6 @@ structure IsFlatOfOrder (γ : ℝ → ℂ) (t₀ : ℝ) (n : ℕ) : Prop where
     (fun t => ‖tangentDeviation (γ t - γ t₀) L‖) =o[𝓝[<] t₀]
       (fun t => ‖γ t - γ t₀‖ ^ n)
 
-/-- Flatness of order `m` implies flatness of order `n` for `n ≤ m`,
-provided `γ` is continuous at `t₀` (so `‖γ(t) - γ(t₀)‖ → 0`). -/
-theorem IsFlatOfOrder.of_le {γ : ℝ → ℂ} {t₀ : ℝ} {m n : ℕ}
-    (h : IsFlatOfOrder γ t₀ m) (hmn : n ≤ m)
-    (hγ_cont : ContinuousAt γ t₀) :
-    IsFlatOfOrder γ t₀ n := by
-  have h_le_one : ∀ᶠ t in 𝓝 t₀, ‖γ t - γ t₀‖ ≤ 1 := by
-    have h_tend : Tendsto (fun t => ‖γ t - γ t₀‖) (𝓝 t₀) (𝓝 0) := by
-      rw [← norm_zero (E := ℂ), ← sub_self (γ t₀)]
-      exact (hγ_cont.sub continuousAt_const).norm
-    exact h_tend (Iic_mem_nhds one_pos)
-  have h_big_O : ∀ l : Filter ℝ, l ≤ 𝓝 t₀ →
-      (fun t => ‖γ t - γ t₀‖ ^ m) =O[l] (fun t => ‖γ t - γ t₀‖ ^ n) := fun l hl => by
-    refine .of_bound 1 ?_
-    filter_upwards [hl h_le_one] with t ht
-    simp only [Real.norm_of_nonneg (pow_nonneg (norm_nonneg _) _), one_mul]
-    exact pow_le_pow_of_le_one (norm_nonneg _) ht hmn
-  exact ⟨fun L hL hR => (h.right_flat L hL hR).trans_isBigO (h_big_O _ nhdsWithin_le_nhds),
-    fun L hL hL' => (h.left_flat L hL hL').trans_isBigO (h_big_O _ nhdsWithin_le_nhds)⟩
-
 /-- Flatness of order 1 from a derivative limit on either side, packaged as a
 common helper for the left and right variants. The set `u` is the open ray
 `Ioi t₀` or `Iio t₀`. -/
