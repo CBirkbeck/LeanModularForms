@@ -23,7 +23,6 @@ Proposition 2.2 from Hungerbuhler-Wasem.
 ## Main Results
 
 * `finite_crossings` — the set `{t ∈ Icc a b | γ t = z₀}` is finite
-* `exists_isolated_crossing_interval` — each crossing has an isolating sub-interval
 
 ## Proof Strategy
 
@@ -236,43 +235,5 @@ theorem PiecewiseC1Immersion.crossing_not_accPt (γ : PiecewiseC1Immersion) (z�
     (fun t ht ht_mem => by
       simp only [mem_setOf_eq] at ht_mem
       exact ht.elim (fun h => h ht_mem.2) (fun h => h ht_mem.1))
-
-/-- For each crossing, there exists an isolating sub-interval. -/
-theorem exists_isolated_crossing_interval (γ : PiecewiseC1Immersion) (z₀ : ℂ) (t₀ : ℝ)
-    (ht₀ : t₀ ∈ Ioo γ.a γ.b) (hcross : γ.toFun t₀ = z₀) :
-    ∃ a' b' : ℝ, a' < t₀ ∧ t₀ < b' ∧
-      Icc a' b' ⊆ Icc γ.a γ.b ∧
-      (∀ t ∈ Icc a' b', γ.toFun t = z₀ → t = t₀) ∧
-      (∀ t ∈ Ioo a' b', t ∉ γ.toPiecewiseC1Curve.partition →
-        DifferentiableAt ℝ γ.toFun t) := by
-  have h_isol := γ.crossing_isolated_nhds z₀ t₀ (Ioo_subset_Icc_self ht₀) hcross
-  rw [eventually_nhdsWithin_iff] at h_isol
-  obtain ⟨l, u, ⟨hl_lt, hlt_u⟩, h_Ioo⟩ := h_isol.exists_Ioo_subset
-  set a' := (max l γ.a + t₀) / 2 with ha'_def
-  set b' := (t₀ + min u γ.b) / 2 with hb'_def
-  have h_max_lt : max l γ.a < t₀ := max_lt hl_lt ht₀.1
-  have h_t₀_lt_min : t₀ < min u γ.b := lt_min hlt_u ht₀.2
-  have ha'_lt : a' < t₀ := by linarith
-  have ht₀_lt_b' : t₀ < b' := by linarith
-  have hl_lt_a' : l < a' := by linarith [le_max_left l γ.a]
-  have hb'_lt_u : b' < u := by linarith [min_le_left u γ.b]
-  have ha_le_a' : γ.a ≤ a' := by linarith [le_max_right l γ.a]
-  have hb'_le_b : b' ≤ γ.b := by linarith [min_le_right u γ.b]
-  refine ⟨a', b', ha'_lt, ht₀_lt_b', ?_, ?_, ?_⟩
-  · intro t ht
-    exact ⟨le_trans ha_le_a' ht.1, le_trans ht.2 hb'_le_b⟩
-  · intro t ht hγt
-    by_contra h_ne
-    have ht_Ioo_lu : t ∈ Ioo l u :=
-      ⟨lt_of_lt_of_le hl_lt_a' ht.1, lt_of_le_of_lt ht.2 hb'_lt_u⟩
-    have := h_Ioo ht_Ioo_lu h_ne
-    rcases this with h_ne_z₀ | h_not_Icc
-    · exact h_ne_z₀ hγt
-    · exact h_not_Icc ⟨le_trans ha_le_a' ht.1, le_trans ht.2 hb'_le_b⟩
-  · intro t ht ht_part
-    have ht_Icc : t ∈ Icc γ.a γ.b :=
-      ⟨le_trans ha_le_a' (Ioo_subset_Icc_self ht).1,
-       le_trans (Ioo_subset_Icc_self ht).2 hb'_le_b⟩
-    exact γ.smooth_off_partition t ht_Icc ht_part
 
 end

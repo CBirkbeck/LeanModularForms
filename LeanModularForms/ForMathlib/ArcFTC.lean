@@ -60,11 +60,6 @@ open Complex Set
 
 noncomputable section
 
-/-- The argument of `exp(iθ)` is `θ` for `θ ∈ (-π, π]`. -/
-theorem arg_exp_mul_I (θ : ℝ) (hθ : θ ∈ Ioc (-Real.pi) Real.pi) :
-    arg (exp (↑θ * I)) = θ := by
-  simpa [exp_mul_I] using Complex.arg_cos_add_sin_mul_I hθ
-
 /-- The argument of `r * I` is `π/2` for `r > 0`. -/
 theorem arg_ofReal_mul_I (r : ℝ) (hr : 0 < r) :
     arg (↑r * I) = Real.pi / 2 := by

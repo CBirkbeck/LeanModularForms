@@ -21,9 +21,6 @@ and builds a `PolarPartDecomposition` from a `SatisfiesConditionB` hypothesis.
 
 ## Main definitions
 
-* `HungerbuhlerWasem.IsCrossed γ s` — `γ` crosses `s` in the open interval.
-* `HungerbuhlerWasem.crossingParam γ s` — the crossing parameter `t₀` selected
-  via `Classical.choose`.
 * `HungerbuhlerWasem.PolarPartDecomposition.ofMeromorphicWithCondB` — the
   constructor consuming `MeromorphicAt` data and `SatisfiesConditionB γ f S`
   to build a `PolarPartDecomposition` (handles both crossed and uncrossed poles).
@@ -43,16 +40,6 @@ noncomputable section
 namespace HungerbuhlerWasem
 
 variable {x : ℂ}
-
-/-- Predicate: pole `s` is crossed by `γ` in the open interval `(0, 1)`. -/
-def IsCrossed (γ : PwC1Immersion x x) (s : ℂ) : Prop :=
-  ∃ t₀ ∈ Set.Ioo (0 : ℝ) 1, (γ : ℝ → ℂ) t₀ = s
-
-/-- Selector for the crossing parameter `t₀` of pole `s`: the unique `t₀ ∈ (0, 1)`
-with `γ(t₀) = s` if any exists, or `0` (default) otherwise. -/
-noncomputable def crossingParam (γ : PwC1Immersion x x) (s : ℂ) : ℝ :=
-  open Classical in if h : IsCrossed γ s then Classical.choose h else 0
-
 
 private lemma circleIntegral_higherOrder_eq_zero
     {s : ℂ} {r : ℝ} {n : ℕ} (hn : 2 ≤ n) (c : ℂ) :
