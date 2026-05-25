@@ -88,26 +88,6 @@ theorem avoids_delta_bound (γ : PiecewiseC1Path x x) (z₀ : ℂ)
           Metric.infDist_le_dist_of_mem (mem_image_of_mem _ ht)
       _ = ‖γ.toPath.extend t - z₀‖ := by rw [Complex.dist_eq, norm_sub_rev]⟩
 
-/-- If a piecewise C^1 path avoids each point of a finite set `S`, there is a uniform
-positive distance lower bound. Iterates `avoids_delta_bound` with `Finset.induction`. -/
-theorem avoids_finset_delta_bound (γ : PiecewiseC1Path x x) (S : Finset ℂ)
-    (h_avoids : ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s) :
-    ∃ δ > 0, ∀ s ∈ S, ∀ t ∈ Icc (0 : ℝ) 1, δ ≤ ‖γ t - s‖ := by
-  classical
-  induction S using Finset.induction_on with
-  | empty =>
-    exact ⟨1, zero_lt_one, fun s hs => absurd hs (Finset.notMem_empty s)⟩
-  | @insert a T ha ih =>
-    have h_avoids_T : ∀ s ∈ T, ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ s :=
-      fun s hs t ht => h_avoids s (Finset.mem_insert.mpr (Or.inr hs)) t ht
-    obtain ⟨δ_T, hδ_T_pos, hδ_T_bd⟩ := ih h_avoids_T
-    have h_avoids_a : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ a :=
-      fun t ht => h_avoids a (Finset.mem_insert_self _ _) t ht
-    obtain ⟨δ_a, hδ_a_pos, hδ_a_bd⟩ := avoids_delta_bound γ a h_avoids_a
-    refine ⟨min δ_T δ_a, lt_min hδ_T_pos hδ_a_pos, fun s hs t ht => ?_⟩
-    rcases Finset.mem_insert.mp hs with rfl | hs_T
-    · exact (min_le_right _ _).trans (hδ_a_bd t ht)
-    · exact (min_le_left _ _).trans (hδ_T_bd s hs_T t ht)
 
 /-! ### Lipschitz implies bounded image -/
 
