@@ -744,6 +744,85 @@ theorem SL2Z_to_PSL2R_smul (g : SL(2, ℤ)) (τ : ℍ) :
       (Matrix.SpecialLinearGroup.map (Int.castRingHom ℝ) g) • τ :=
   rfl
 
+/-- Per-entry transfer for the integer-to-real cast on `SL(2, ℤ)`:
+`((map ℝ g) : Matrix _) i j = ((g : Matrix _) i j : ℝ)` (definitionally). -/
+private lemma map_intCast_entry (g : SL(2, ℤ)) (i j : Fin 2) :
+    ((Matrix.SpecialLinearGroup.map (Int.castRingHom ℝ) g : SL(2, ℝ)) :
+      Matrix (Fin 2) (Fin 2) ℝ) i j =
+    (((g : Matrix (Fin 2) (Fin 2) ℤ) i j : ℤ) : ℝ) := rfl
+
+/-- Forward kernel direction: if the real cast `map ℝ g` is a scalar matrix
+(i.e. central in `SL(2, ℝ)`), then `g` is itself central in `SL(2, ℤ)`.
+The real scalar `r` is the cast of the integer diagonal entry `g 0 0`, and the
+off-diagonal entries vanish because their real casts do. -/
+private lemma g_mem_center_of_map_intCast_mem_center (g : SL(2, ℤ))
+    (hmem : (Matrix.SpecialLinearGroup.map (Int.castRingHom ℝ) g : SL(2, ℝ)) ∈
+      Subgroup.center SL(2, ℝ)) : g ∈ Subgroup.center SL(2, ℤ) := by
+  rw [Matrix.SpecialLinearGroup.mem_center_iff] at hmem ⊢
+  obtain ⟨r, hr_pow, hr_scalar⟩ := hmem
+  -- Per-entry: `((g : Matrix _) i j : ℝ) = (scalar r) i j`.
+  have h_entry_R : ∀ i j, ((g : Matrix (Fin 2) (Fin 2) ℤ) i j : ℝ) =
+      (Matrix.scalar (Fin 2) r) i j := fun i j => by
+    have h_ij := congr_fun (congr_fun hr_scalar i) j
+    rw [map_intCast_entry] at h_ij
+    exact h_ij.symm
+  -- Set z := g.val 0 0.  Diagonal entries of g all equal z; off-diagonals are 0.
+  set z : ℤ := (g : Matrix (Fin 2) (Fin 2) ℤ) 0 0 with hz_def
+  have hr_z : (z : ℝ) = r := by
+    have := h_entry_R 0 0
+    rwa [show (Matrix.scalar (Fin 2) r) 0 0 = r from by
+      simp [Matrix.scalar_apply, Matrix.diagonal_apply]] at this
+  have h_diag : ∀ i, (g : Matrix (Fin 2) (Fin 2) ℤ) i i = z := fun i => by
+    have h_iR : (((g : Matrix _ _ ℤ) i i : ℤ) : ℝ) = (z : ℝ) := by
+      have := h_entry_R i i
+      rw [show (Matrix.scalar (Fin 2) r) i i = r from by
+        simp [Matrix.scalar_apply, Matrix.diagonal_apply]] at this
+      rw [this, ← hr_z]
+    exact_mod_cast h_iR
+  have h_off : ∀ i j, i ≠ j → (g : Matrix (Fin 2) (Fin 2) ℤ) i j = 0 := fun i j hij => by
+    have h_R : (((g : Matrix _ _ ℤ) i j : ℤ) : ℝ) = 0 := by
+      have := h_entry_R i j
+      rw [show (Matrix.scalar (Fin 2) r) i j = 0 from by
+        simp [Matrix.scalar_apply, Matrix.diagonal_apply, hij]] at this
+      exact this
+    exact_mod_cast h_R
+  -- z² = 1 (from r² = 1 and r = (z : ℝ)).
+  have hz_sq : z ^ 2 = 1 := by
+    have hr_pow' : r ^ 2 = 1 := by simpa [Fintype.card_fin] using hr_pow
+    have hz_sq_R : (z : ℝ) ^ 2 = 1 := by rw [hr_z]; exact hr_pow'
+    exact_mod_cast hz_sq_R
+  refine ⟨z, ?_, ?_⟩
+  · simpa [Fintype.card_fin] using hz_sq
+  · -- scalar z = g.val (matrix-wise).
+    ext i j
+    by_cases hij : i = j
+    · subst hij
+      rw [Matrix.scalar_apply, Matrix.diagonal_apply_eq, h_diag]
+    · rw [Matrix.scalar_apply, Matrix.diagonal_apply_ne _ hij, h_off i j hij]
+
+/-- Backward kernel direction: if `g` is central in `SL(2, ℤ)` (a scalar matrix),
+then its real cast `map ℝ g` is central in `SL(2, ℝ)`, with scalar the cast of
+the integer scalar. -/
+private lemma map_intCast_mem_center_of_g_mem_center (g : SL(2, ℤ))
+    (hmem : g ∈ Subgroup.center SL(2, ℤ)) :
+    (Matrix.SpecialLinearGroup.map (Int.castRingHom ℝ) g : SL(2, ℝ)) ∈
+      Subgroup.center SL(2, ℝ) := by
+  rw [Matrix.SpecialLinearGroup.mem_center_iff] at hmem ⊢
+  obtain ⟨z, hz_pow, hz_scalar⟩ := hmem
+  refine ⟨(z : ℝ), ?_, ?_⟩
+  · have h : ((z ^ Fintype.card (Fin 2) : ℤ) : ℝ) = ((1 : ℤ) : ℝ) := by rw [hz_pow]
+    push_cast at h
+    exact h
+  · ext i j
+    have h_ij := congr_fun (congr_fun hz_scalar i) j
+    rw [map_intCast_entry]
+    by_cases hij : i = j
+    · subst hij
+      rw [Matrix.scalar_apply, Matrix.diagonal_apply_eq] at h_ij ⊢
+      exact_mod_cast h_ij
+    · rw [Matrix.scalar_apply, Matrix.diagonal_apply_ne _ hij] at h_ij ⊢
+      exact_mod_cast h_ij
+
 /-- **Kernel of `SL2Z_to_PSL2R` is the center of `SL(2, ℤ)`**.
 
 For `g : SL(2, ℤ)`, the cast `g.map (Int.castRingHom ℝ) : SL(2, ℝ)` is
@@ -751,71 +830,9 @@ a scalar matrix (member of `center SL(2, ℝ)`) iff `g` is itself a scalar
 matrix in `SL(2, ℤ)`, by `Matrix.SpecialLinearGroup.map_intCast_injective`
 on the entries. -/
 theorem ker_SL2Z_to_PSL2R : SL2Z_to_PSL2R.ker = Subgroup.center SL(2, ℤ) := by
-  -- Per-entry transfer: `((map ℝ g) : Matrix _) i j = ((g : Matrix _) i j : ℝ)`.
-  have h_map_entry : ∀ (g : SL(2, ℤ)) (i j : Fin 2),
-      ((Matrix.SpecialLinearGroup.map (Int.castRingHom ℝ) g : SL(2, ℝ)) :
-        Matrix (Fin 2) (Fin 2) ℝ) i j =
-      (((g : Matrix (Fin 2) (Fin 2) ℤ) i j : ℤ) : ℝ) := fun _ _ _ => rfl
   ext g
-  simp only [MonoidHom.mem_ker, SL2Z_to_PSL2R_apply, QuotientGroup.eq_one_iff,
-    Matrix.SpecialLinearGroup.mem_center_iff]
-  constructor
-  · -- (g.map ℝ ∈ center SL(2, ℝ)) → g ∈ center SL(2, ℤ).
-    rintro ⟨r, hr_pow, hr_scalar⟩
-    -- Per-entry: `((g : Matrix _) i j : ℝ) = (scalar r) i j`.
-    have h_entry_R : ∀ i j, ((g : Matrix (Fin 2) (Fin 2) ℤ) i j : ℝ) =
-        (Matrix.scalar (Fin 2) r) i j := fun i j => by
-      have h_ij := congr_fun (congr_fun hr_scalar i) j
-      rw [h_map_entry] at h_ij
-      exact h_ij.symm
-    -- Set z := g.val 0 0.  Diagonal entries of g all equal z; off-diagonals are 0.
-    set z : ℤ := (g : Matrix (Fin 2) (Fin 2) ℤ) 0 0 with hz_def
-    have hr_z : (z : ℝ) = r := by
-      have := h_entry_R 0 0
-      rwa [show (Matrix.scalar (Fin 2) r) 0 0 = r from by
-        simp [Matrix.scalar_apply, Matrix.diagonal_apply]] at this
-    have h_diag : ∀ i, (g : Matrix (Fin 2) (Fin 2) ℤ) i i = z := fun i => by
-      have h_iR : (((g : Matrix _ _ ℤ) i i : ℤ) : ℝ) = (z : ℝ) := by
-        have := h_entry_R i i
-        rw [show (Matrix.scalar (Fin 2) r) i i = r from by
-          simp [Matrix.scalar_apply, Matrix.diagonal_apply]] at this
-        rw [this, ← hr_z]
-      exact_mod_cast h_iR
-    have h_off : ∀ i j, i ≠ j → (g : Matrix (Fin 2) (Fin 2) ℤ) i j = 0 := fun i j hij => by
-      have h_R : (((g : Matrix _ _ ℤ) i j : ℤ) : ℝ) = 0 := by
-        have := h_entry_R i j
-        rw [show (Matrix.scalar (Fin 2) r) i j = 0 from by
-          simp [Matrix.scalar_apply, Matrix.diagonal_apply, hij]] at this
-        exact this
-      exact_mod_cast h_R
-    -- z² = 1 (from r² = 1 and r = (z : ℝ)).
-    have hz_sq : z ^ 2 = 1 := by
-      have hr_pow' : r ^ 2 = 1 := by simpa [Fintype.card_fin] using hr_pow
-      have hz_sq_R : (z : ℝ) ^ 2 = 1 := by rw [hr_z]; exact hr_pow'
-      exact_mod_cast hz_sq_R
-    refine ⟨z, ?_, ?_⟩
-    · simpa [Fintype.card_fin] using hz_sq
-    · -- scalar z = g.val (matrix-wise).
-      ext i j
-      by_cases hij : i = j
-      · subst hij
-        rw [Matrix.scalar_apply, Matrix.diagonal_apply_eq, h_diag]
-      · rw [Matrix.scalar_apply, Matrix.diagonal_apply_ne _ hij, h_off i j hij]
-  · -- (g ∈ center SL(2, ℤ)) → (g.map ℝ ∈ center SL(2, ℝ)).
-    rintro ⟨z, hz_pow, hz_scalar⟩
-    refine ⟨(z : ℝ), ?_, ?_⟩
-    · have h : ((z ^ Fintype.card (Fin 2) : ℤ) : ℝ) = ((1 : ℤ) : ℝ) := by rw [hz_pow]
-      push_cast at h
-      exact h
-    · ext i j
-      have h_ij := congr_fun (congr_fun hz_scalar i) j
-      rw [h_map_entry]
-      by_cases hij : i = j
-      · subst hij
-        rw [Matrix.scalar_apply, Matrix.diagonal_apply_eq] at h_ij ⊢
-        exact_mod_cast h_ij
-      · rw [Matrix.scalar_apply, Matrix.diagonal_apply_ne _ hij] at h_ij ⊢
-        exact_mod_cast h_ij
+  simp only [MonoidHom.mem_ker, SL2Z_to_PSL2R_apply, QuotientGroup.eq_one_iff]
+  exact ⟨g_mem_center_of_map_intCast_mem_center g, map_intCast_mem_center_of_g_mem_center g⟩
 
 /-- **Phase C — descended hom `PSL(2, ℤ) →* PSL(2, ℝ)`**.
 

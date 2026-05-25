@@ -320,114 +320,112 @@ lemma weight_eight_one_dimensional (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Even 
     rw [@sub_eq_zero] at this
     aesop
 
+/-- If `c₄ • E₄` agrees with `f²` (weight-2 `f`), then `c₄` is the square of `f`'s constant
+coefficient. -/
+private lemma weight_two_c4_eq_coeff_sq (f : ModularForm (CongruenceSubgroup.Gamma 1) 2) (c4 : ℂ)
+    (hc4 : c4 • E₄ = f.mul f) : c4 = ((qExpansion 1 f).coeff 0) ^ 2 := by
+  have := qExpansion_mul_coeff 1 2 2 f f
+  rw [← hc4] at this
+  rw [qExpansion_coe_smul (a := c4) (f := E₄), ← qExpansion_smul2 1 c4] at this
+  have hh := congr_arg (fun x => x.coeff 0) this
+  simp only [_root_.map_smul, smul_eq_mul] at hh
+  rw [Nat.cast_one, E4_q_exp_zero] at hh
+  rw [pow_two]
+  simpa using hh
+
+/-- If `c₆ • E₆` agrees with `f³` (weight-2 `f`), then `c₆` is the cube of `f`'s constant
+coefficient. -/
+private lemma weight_two_c6_eq_coeff_cube (f : ModularForm (CongruenceSubgroup.Gamma 1) 2) (c6 : ℂ)
+    (hc6 : c6 • E₆ = (f.mul f).mul f) : c6 = ((qExpansion 1 f).coeff 0) ^ 3 := by
+  have := qExpansion_mul_coeff 1 4 2 (f.mul f) f
+  have h2 := qExpansion_mul_coeff 1 2 2 f f
+  rw [← hc6] at this
+  rw [qExpansion_coe_smul (a := c6) (f := E₆), ← qExpansion_smul2 1 c6, h2] at this
+  have hh := congr_arg (fun x => x.coeff 0) this
+  simp only [_root_.map_smul, smul_eq_mul] at hh
+  rw [Nat.cast_one, E6_q_exp_zero] at hh
+  rw [pow_three]
+  simp only [PowerSeries.coeff_zero_eq_constantCoeff, Int.reduceAdd, mul_one,
+    map_mul] at *
+  rw [← mul_assoc]
+  exact hh
+
+/-- For a weight-2 form `f` with `c₄ • E₄ = f²` and `c₆ • E₆ = f³`, the sixth power of `f`'s
+constant coefficient kills `Δ` (in the graded ring), via `Δ = (E₄³ - E₆²)/1728`. -/
+private lemma weight_two_coeff_pow_six_smul_delta_eq_zero
+    (f : ModularForm (CongruenceSubgroup.Gamma 1) 2) (c4 c6 : ℂ) (hc4 : c4 • E₄ = f.mul f)
+    (hc6 : c6 • E₆ = (f.mul f).mul f) (hc4e : c4 = ((qExpansion 1 f).coeff 0) ^ 2)
+    (hc6e : c6 = ((qExpansion 1 f).coeff 0) ^ 3) :
+    ((qExpansion 1 f).coeff 0) ^ 6 • (DirectSum.of _ 12 (ModForm_mk Γ(1) 12 Delta) 12) = 0 := by
+  let F := DirectSum.of _ 2 f
+  have HF2 : (F ^ 2) = c4 • (DirectSum.of _ 4 E₄) := by
+    rw [← DirectSum.of_smul, hc4]
+    simp [F]
+    rw [pow_two, DirectSum.of_mul_of]
+    rfl
+  have HF3 : (F ^ 3) = c6 • (DirectSum.of _ 6 E₆) := by
+    rw [← DirectSum.of_smul, hc6]
+    simp [F]
+    rw [pow_three, ← mul_assoc, DirectSum.of_mul_of, DirectSum.of_mul_of]
+    rfl
+  have HF12 : (((F ^ 2) ^ 3) 12) = ((qExpansion 1 f).coeff 0) ^ 6 • (E₄.mul (E₄.mul E₄)) := by
+    rw [HF2, pow_three]
+    simp
+    rw [DirectSum.of_mul_of, DirectSum.of_mul_of, hc4e, smul_smul, smul_smul]
+    ring_nf
+    rw [@DirectSum.smul_apply]
+    simp only [PowerSeries.coeff_zero_eq_constantCoeff, Int.reduceAdd, DirectSum.of_eq_same]
+    rfl
+  have hF2 : (((F ^ 3) ^ 2) 12) = ((qExpansion 1 f).coeff 0) ^ 6 • ((E₆.mul E₆)) := by
+    rw [HF3, pow_two]
+    simp only [Algebra.mul_smul_comm, Algebra.smul_mul_assoc, Int.reduceAdd,
+      PowerSeries.coeff_zero_eq_constantCoeff]
+    rw [DirectSum.of_mul_of, hc6e, smul_smul]
+    ring_nf
+    rw [@DirectSum.smul_apply]
+    simp only [PowerSeries.coeff_zero_eq_constantCoeff, Int.reduceAdd, DirectSum.of_eq_same]
+    rfl
+  have V : (1 / 1728 : ℂ) • ((((F ^ 2) ^ 3) 12) - (((F ^ 3) ^ 2) 12)) =
+      ((qExpansion 1 f).coeff 0) ^ 6 • (DirectSum.of _ 12 (ModForm_mk Γ(1) 12 Delta) 12) := by
+    rw [HF12, hF2]
+    simp only [one_div, Int.reduceAdd, PowerSeries.coeff_zero_eq_constantCoeff,
+      DirectSum.of_eq_same]
+    rw [Delta_E4_eqn, Delta_E4_E6_eq, pow_two, pow_three, DirectSum.of_mul_of,
+      DirectSum.of_mul_of, DirectSum.of_mul_of]
+    simp only [one_div, Int.reduceAdd, DirectSum.sub_apply, DirectSum.of_eq_same]
+    ext y
+    simp only [IsGLPos.smul_apply, sub_apply, Int.reduceAdd, smul_eq_mul]
+    ring_nf
+    rfl
+  have ht : (1 / 1728 : ℂ) • ((((F ^ 2) ^ 3) 12) - (((F ^ 3) ^ 2) 12)) = 0 := by
+    ext y
+    simp only [one_div, IsGLPos.smul_apply, sub_apply, smul_eq_mul, zero_apply, mul_eq_zero,
+      inv_eq_zero, OfNat.ofNat_ne_zero, false_or, F]
+    ring_nf
+  rw [ht] at V
+  exact V.symm
+
 lemma weight_two_zero (f : ModularForm (CongruenceSubgroup.Gamma 1) 2) : f = 0 := by
 /- cant be a cuspform from the above, so let a be its constant term, then f^2 = a^2 E₄ and
 f^3 = a^3 E₆, but now this would mean that Δ = 0 or a = 0, which is a contradiction. -/
   by_cases hf : IsCuspForm (CongruenceSubgroup.Gamma 1) 2 f
-  --have hfc := IsCuspForm_to_CuspForm _ _ f hf
-  · have hfc2:= CuspForm_to_ModularForm_coe _ _ f hf
-    ext z
-    simp only [ModularForm.zero_apply] at *
-    have hy := congr_arg (fun x ↦ x.1) hfc2
-    have hz := congr_fun hy z
-    simp only [SlashInvariantForm.toFun_eq_coe, CuspForm.toSlashInvariantForm_coe,
-      toSlashInvariantForm_coe] at hz
-    rw [← hz]
-    have := rank_zero_iff_forall_zero.mp (cuspform_weight_lt_12_zero 2 (by norm_num))
-      (IsCuspForm_to_CuspForm Γ(1) 2 f hf)
-    rw [this]
-    simp only [CuspForm.zero_apply]
-  · have hc1 : (qExpansion 1 f).coeff 0 ≠ 0 := by
-      intro h
-      rw [← IsCuspForm_iff_coeffZero_eq_zero] at h
-      exact hf h
+  · exact IsCuspForm_weight_lt_eq_zero 2 (by norm_num) f hf
+  · have hc1 : (qExpansion 1 f).coeff 0 ≠ 0 := fun h =>
+      hf ((IsCuspForm_iff_coeffZero_eq_zero (k := 2) f).mpr h)
     obtain ⟨c6, hc6⟩ := exists_smul_eq_of_rank_one' weight_six_one_dimensional E6_ne_zero
       ((f.mul f).mul f)
-    have hc6e : c6 = ((qExpansion 1 f).coeff 0)^3 := by
-      have := qExpansion_mul_coeff 1 4 2 (f.mul f) f
-      have h2 := qExpansion_mul_coeff 1 2 2 f f
-      rw [← hc6] at this
-      rw [qExpansion_coe_smul (a := c6) (f := E₆), ← qExpansion_smul2 1 c6, h2] at this
-      have hh := congr_arg (fun x => x.coeff 0) this
-      simp only [_root_.map_smul, smul_eq_mul] at hh
-      rw [Nat.cast_one, E6_q_exp_zero] at hh
-      rw [pow_three]
-      simp only [PowerSeries.coeff_zero_eq_constantCoeff, ne_eq, Int.reduceAdd, mul_one,
-        map_mul] at *
-      rw [← mul_assoc]
-      exact hh
     obtain ⟨c4, hc4⟩ := exists_smul_eq_of_rank_one' weight_four_one_dimensional E4_ne_zero
       (f.mul f)
-    have hc4e : c4 = ((qExpansion 1 f).coeff 0)^2 := by
-      have := qExpansion_mul_coeff 1 2 2 f f
-      rw [← hc4] at this
-      rw [qExpansion_coe_smul (a := c4) (f := E₄), ← qExpansion_smul2 1 c4] at this
-      have hh := congr_arg (fun x => x.coeff 0) this
-      simp only [_root_.map_smul, smul_eq_mul] at hh
-      rw [Nat.cast_one, E4_q_exp_zero] at hh
-      rw [pow_two]
-      simpa using hh
     exfalso
-    let F := DirectSum.of _ 2 f
-    let D := DirectSum.of _ 12 (ModForm_mk Γ(1) 12 Delta) 12
-    have : D ≠ 0 := by
-      have HD := ModForm_mk_inj _ _ _ Delta_ne_zero
-      apply HD
-    have HF2 : (F^2) = c4 • (DirectSum.of _ 4 E₄) := by
-      rw [← DirectSum.of_smul, hc4]
-      simp [F]
-      rw [pow_two, DirectSum.of_mul_of]
-      rfl
-    have HF3 : (F^3) = c6 • (DirectSum.of _ 6 E₆) := by
-      rw [← DirectSum.of_smul, hc6]
-      simp [F]
-      rw [pow_three, ← mul_assoc, DirectSum.of_mul_of, DirectSum.of_mul_of]
-      rfl
-    have HF12 : (((F^2)^3) 12) = ((qExpansion 1 f).coeff 0)^6 • (E₄.mul (E₄.mul E₄)) := by
-      rw [HF2, pow_three]
-      simp
-      rw [DirectSum.of_mul_of, DirectSum.of_mul_of, hc4e, smul_smul, smul_smul]
-      ring_nf
-      rw [@DirectSum.smul_apply]
-      simp only [PowerSeries.coeff_zero_eq_constantCoeff, Int.reduceAdd, DirectSum.of_eq_same]
-      rfl
-    have hF2 : (((F^3)^2) 12) = ((qExpansion 1 f).coeff 0)^6 • ((E₆.mul E₆)) := by
-      rw [HF3, pow_two]
-      simp only [Algebra.mul_smul_comm, Algebra.smul_mul_assoc, Int.reduceAdd,
-        PowerSeries.coeff_zero_eq_constantCoeff]
-      rw [DirectSum.of_mul_of, hc6e, smul_smul]
-      ring_nf
-      rw [@DirectSum.smul_apply]
-      simp only [PowerSeries.coeff_zero_eq_constantCoeff, Int.reduceAdd, DirectSum.of_eq_same]
-      rfl
-    have V : (1 / 1728 : ℂ) • ((((F^2)^3) 12) - (((F^3)^2) 12)) = ((qExpansion 1 f).coeff 0)^6 • D
-      := by
-      rw [HF12, hF2]
-      simp only [one_div, Int.reduceAdd, PowerSeries.coeff_zero_eq_constantCoeff,
-        DirectSum.of_eq_same, D]
-      rw [Delta_E4_eqn, Delta_E4_E6_eq, pow_two, pow_three, DirectSum.of_mul_of,
-        DirectSum.of_mul_of,DirectSum.of_mul_of]
-      simp only [one_div, Int.reduceAdd, DirectSum.sub_apply, DirectSum.of_eq_same]
-      ext y
-      simp only [IsGLPos.smul_apply, sub_apply, Int.reduceAdd, smul_eq_mul]
-      ring_nf
-      rfl
-    have ht : (1 / 1728 : ℂ) • ((((F^2)^3) 12) - (((F^3)^2) 12)) = 0 := by
-      ext y
-      simp only [one_div, IsGLPos.smul_apply, sub_apply, smul_eq_mul, zero_apply, mul_eq_zero,
-        inv_eq_zero, OfNat.ofNat_ne_zero, false_or, F]
-      ring_nf
-    rw [ht] at V
+    have V := weight_two_coeff_pow_six_smul_delta_eq_zero f c4 c6 hc4 hc6
+      (weight_two_c4_eq_coeff_sq f c4 hc4) (weight_two_c6_eq_coeff_cube f c6 hc6)
     have hr := congr_fun (congr_arg (fun x ↦ x.toFun) V) UpperHalfPlane.I
     simp only [SlashInvariantForm.toFun_eq_coe, toSlashInvariantForm_coe, zero_apply,
       PowerSeries.coeff_zero_eq_constantCoeff, DirectSum.of_eq_same, IsGLPos.smul_apply,
-      smul_eq_mul, zero_eq_mul, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, pow_eq_zero_iff,
-      D] at hr
+      smul_eq_mul, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, pow_eq_zero_iff,
+      mul_eq_zero] at hr
     rcases hr with h | h
-    · simp only [PowerSeries.coeff_zero_eq_constantCoeff, ne_eq, Int.reduceAdd, one_div,
-      isUnit_iff_ne_zero, inv_eq_zero, OfNat.ofNat_ne_zero, not_false_eq_true, IsUnit.smul_eq_zero,
-      F, D] at *
-      exact hc1 h
+    · exact hc1 (by rwa [PowerSeries.coeff_zero_eq_constantCoeff])
     · simp only [ModForm_mk] at h
       have hDelta := Δ_ne_zero UpperHalfPlane.I
       rw [← Delta_apply] at hDelta
@@ -486,6 +484,75 @@ lemma floor_lem1 (k a : ℚ) (ha : 0 < a) (hak : a ≤ k) :
   refine (le_div_iff₀ ha).mpr ?_
   simpa using hak
 
+/-- Inductive step of the level-one dimension formula: given the dimension of weight `k - 12`
+forms (the hypothesis `iH`), peel off one factor of `Δ` to obtain the weight-`k` formula. -/
+private lemma dim_modforms_lvl_one_step (k : ℕ) (HK : (3 : ℤ) ≤ (k : ℤ) - 12)
+    (iH : Module.rank ℂ (ModularForm (CongruenceSubgroup.Gamma 1) ((k - 12 : ℕ) : ℤ)) =
+      if 12 ∣ ((k - 12 : ℕ) : ℤ) - 2 then Nat.floor (((k - 12 : ℕ) : ℚ) / 12)
+        else Nat.floor (((k - 12 : ℕ) : ℚ) / 12) + 1) :
+    1 + Module.rank ℂ (ModularForm (CongruenceSubgroup.Gamma 1) ((k : ℤ) - 12)) =
+      if 12 ∣ (k : ℤ) - 2 then Nat.floor ((k : ℚ) / 12) else Nat.floor ((k : ℚ) / 12) + 1 := by
+  have hk12 : (((k - 12) : ℕ) : ℤ) = k - 12 := by
+    norm_cast
+    refine Eq.symm (Int.subNatNat_of_le ?_)
+    omega
+  rw [hk12] at iH
+  have : ((k - 12) : ℕ) = (k : ℚ) - 12 := by
+    norm_cast
+  rw [iH, this]
+  by_cases h12 : 12 ∣ ((k) : ℤ) - 2
+  · have h12k : 12 ∣ (k : ℤ) -12 - 2 := by
+      omega
+    simp only [h12k, ↓reduceIte, h12]
+    have := floor_lem1 k 12 (by norm_num)
+    norm_cast at *
+    apply this
+    omega
+  · have h12k : ¬ 12 ∣ (k : ℤ) -12 - 2 := by
+      omega
+    simp only [h12k, ↓reduceIte, Nat.cast_add, Nat.cast_one, h12]
+    have := floor_lem1 k 12 (by norm_num)
+    norm_cast at *
+    rw [← add_assoc, this]
+    omega
+
+/-- Base cases of the level-one dimension formula: weights `k` with `3 ≤ k` and `k - 12 < 3`
+(i.e. `k ∈ {4, 6, 8, 10, 12, 14}`), handled by direct rank computations. -/
+private lemma dim_modforms_lvl_one_base (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Even k)
+    (HK : ¬ (3 : ℤ) ≤ (k : ℤ) - 12) :
+    1 + Module.rank ℂ (ModularForm (CongruenceSubgroup.Gamma 1) ((k : ℤ) - 12)) =
+      if 12 ∣ (k : ℤ) - 2 then Nat.floor ((k : ℚ) / 12) else Nat.floor ((k : ℚ) / 12) + 1 := by
+  simp only [not_le] at HK
+  have hkop : k ∈ Finset.filter Even (Finset.Icc 3 14) := by
+    simp only [Finset.mem_filter, Finset.mem_Icc, hk2, and_true]
+    omega
+  have : Finset.filter Even (Finset.Icc 3 14) = ({4,6,8,10,12, 14} : Finset ℕ) := by
+      decide
+  rw [this] at hkop
+  fin_cases hkop
+  · simp only [Nat.cast_ofNat, Int.reduceSub, Int.reduceNeg, Nat.cast_ite]
+    have h8 : -8 < 0 := by norm_num
+    rw [ModularForm.levelOne_neg_weight_rank_zero h8]
+    norm_cast
+  · simp only [Nat.cast_ofNat, Int.reduceSub, Int.reduceNeg, Nat.cast_ite]
+    have h8 : -6 < 0 := by norm_num
+    rw [ModularForm.levelOne_neg_weight_rank_zero h8]
+    norm_cast
+  · simp only [Nat.cast_ofNat, Int.reduceSub, Int.reduceNeg, Nat.cast_ite]
+    have h8 : -4 < 0 := by norm_num
+    rw [ModularForm.levelOne_neg_weight_rank_zero h8]
+    norm_cast
+  · simp only [Nat.cast_ofNat, Int.reduceSub, Int.reduceNeg, Nat.cast_ite]
+    have h8 : -2 < 0 := by norm_num
+    rw [ModularForm.levelOne_neg_weight_rank_zero h8]
+    norm_cast
+  · simp only [Nat.cast_ofNat, Int.reduceSub, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true,
+    div_self, Nat.floor_one, Nat.reduceAdd, Nat.cast_ite, Nat.cast_one]
+    rw [ModularForm.levelOne_weight_zero_rank_one]
+    norm_cast
+  · simp only [Nat.cast_ofNat, Int.reduceSub, dim_weight_two, add_zero, dvd_refl, ↓reduceIte]
+    norm_cast
+
 lemma dim_modforms_lvl_one (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Even k) :
     Module.rank ℂ (ModularForm (CongruenceSubgroup.Gamma 1) (k)) = if 12 ∣ ((k) : ℤ) - 2 then
     Nat.floor ((k : ℚ)/ 12) else Nat.floor ((k : ℚ) / 12) + 1 := by
@@ -493,65 +560,12 @@ lemma dim_modforms_lvl_one (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Even k) :
   rw [dim_modforms_eq_one_add_dim_cuspforms (k) (by omega) hk2 ,
     LinearEquiv.rank_eq (CuspForms_iso_Modforms (((k)) : ℤ))]
   by_cases HK : (3 : ℤ) ≤ (((k : ℤ) - 12))
-  · have iH := ihn (k - 12) (by omega) ?_ ?_
-    · have hk12 : (((k - 12) : ℕ) : ℤ) = k - 12 := by
-        norm_cast
-        refine Eq.symm (Int.subNatNat_of_le ?_)
-        omega
-      rw [hk12] at iH
-      have : ((k - 12) : ℕ) = (k : ℚ) - 12 := by
-        norm_cast
-      rw [iH, this]
-      by_cases h12 : 12 ∣ ((k) : ℤ) - 2
-      · have h12k : 12 ∣ (k : ℤ) -12 - 2 := by
-          omega
-        simp only [h12k, ↓reduceIte, h12]
-        have := floor_lem1 k 12 (by norm_num)
-        norm_cast at *
-        apply this
-        omega
-      · have h12k : ¬ 12 ∣ (k : ℤ) -12 - 2 := by
-          omega
-        simp only [h12k, ↓reduceIte, Nat.cast_add, Nat.cast_one, h12]
-        have := floor_lem1 k 12 (by norm_num)
-        norm_cast at *
-        rw [← add_assoc, this]
-        omega
+  · refine dim_modforms_lvl_one_step k HK (ihn (k - 12) (by omega) (by omega) ?_)
+    refine (Nat.even_sub ?_).mpr ?_
     · omega
-    · refine (Nat.even_sub ?_).mpr ?_
-      · omega
-      simp only [hk2, true_iff]
-      decide
-  · simp only [not_le] at HK
-    have hkop : k ∈ Finset.filter Even (Finset.Icc 3 14) := by
-      simp only [Finset.mem_filter, Finset.mem_Icc, hk2, and_true]
-      omega
-    have : Finset.filter Even (Finset.Icc 3 14) = ({4,6,8,10,12, 14} : Finset ℕ) := by
-        decide
-    rw [this] at hkop
-    fin_cases hkop
-    · simp only [Nat.cast_ofNat, Int.reduceSub, Int.reduceNeg, Nat.cast_ite]
-      have h8 : -8 < 0 := by norm_num
-      rw [ModularForm.levelOne_neg_weight_rank_zero h8]
-      norm_cast
-    · simp only [Nat.cast_ofNat, Int.reduceSub, Int.reduceNeg, Nat.cast_ite]
-      have h8 : -6 < 0 := by norm_num
-      rw [ModularForm.levelOne_neg_weight_rank_zero h8]
-      norm_cast
-    · simp only [Nat.cast_ofNat, Int.reduceSub, Int.reduceNeg, Nat.cast_ite]
-      have h8 : -4 < 0 := by norm_num
-      rw [ModularForm.levelOne_neg_weight_rank_zero h8]
-      norm_cast
-    · simp only [Nat.cast_ofNat, Int.reduceSub, Int.reduceNeg, Nat.cast_ite]
-      have h8 : -2 < 0 := by norm_num
-      rw [ModularForm.levelOne_neg_weight_rank_zero h8]
-      norm_cast
-    · simp only [Nat.cast_ofNat, Int.reduceSub, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true,
-      div_self, Nat.floor_one, Nat.reduceAdd, Nat.cast_ite, Nat.cast_one]
-      rw [ModularForm.levelOne_weight_zero_rank_one]
-      norm_cast
-    · simp only [Nat.cast_ofNat, Int.reduceSub, dim_weight_two, add_zero, dvd_refl, ↓reduceIte]
-      norm_cast
+    simp only [hk2, true_iff]
+    decide
+  · exact dim_modforms_lvl_one_base k hk hk2 HK
 
 lemma ModularForm.dimension_level_one (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Even k) :
     Module.rank ℂ (ModularForm (CongruenceSubgroup.Gamma 1) (k)) = if 12 ∣ ((k) : ℤ) - 2 then
@@ -652,6 +666,38 @@ lemma finiteDimensional_modularForm_SL2Z (k : ℤ) :
   exact finiteDimensional_modularForm_congr (k := k) hrange.symm htop
 
 open SpherePacking.ModularForms.NormReduction in
+/-- A level-`Γ` modular form is determined by the first `N` coefficients of its `q`-expansion
+(at the cusp width), provided the same holds after pushing forward to level one via
+`ModularForm.norm` (the injectivity hypothesis `hNinj`). -/
+private lemma dim_gen_cong_levels_eq_of_coeff_eq_zero {k : ℤ} {Γ : Subgroup SL(2, ℤ)}
+    [Γ.FiniteIndex] {N : ℕ}
+    (hNinj : Function.Injective fun (f : ModularForm 𝒮ℒ (k * Nat.card (Q Γ)))
+      (n : Fin N) => (qExpansion (cuspWidth (Γ := Γ)) f).coeff n) (f g : ModularForm (G Γ) k)
+    (hcoeff : ∀ m < N, (qExpansion (cuspWidth (Γ := Γ)) (⇑(f - g))).coeff m = 0) : f = g := by
+  have hcoeff_norm : ∀ m < N,
+      (qExpansion (cuspWidth (Γ := Γ)) (ModularForm.norm 𝒮ℒ (f - g))).coeff m = 0 := by
+    have qCoeffNorm :=
+      SpherePacking.ModularForms.NormReduction.qExpansion_coeff_eq_zero_norm_of_qExpansion_coeff_eq_zero
+        (Γ := Γ) (k := k)
+    intro m hm
+    exact qCoeffNorm (f := (f - g)) (N := N) (n := m) hm hcoeff
+  have hfun :
+      (fun n : Fin N => (qExpansion (cuspWidth (Γ := Γ)) (ModularForm.norm 𝒮ℒ (f - g))).coeff n) =
+    fun n : Fin N =>
+      (qExpansion (cuspWidth (Γ := Γ)) (0 : ModularForm 𝒮ℒ (k * Nat.card (Q Γ)))).coeff n := by
+    ext n
+    simpa [qExpansion_zero (cuspWidth (Γ := Γ))] using hcoeff_norm (n : ℕ) n.isLt
+  have hnorm : ModularForm.norm 𝒮ℒ (f - g) = (0 : ModularForm 𝒮ℒ (k * Nat.card (Q Γ))) :=
+    hNinj hfun
+  have : (f - g : ModularForm (G Γ) k) = 0 := by
+    have := (ModularForm.norm_eq_zero_iff (ℋ := 𝒮ℒ) (f := (f - g)) (k := k))
+    have hf0 :
+        ((f - g : ModularForm (G Γ) k) : ℍ → ℂ) = 0 :=
+      this.1 (by simpa using hnorm)
+    exact (coe_eq_zero_iff (f - g)).mp hf0
+  simpa [sub_eq_zero] using this
+
+open SpherePacking.ModularForms.NormReduction in
 lemma dim_gen_cong_levels (k : ℤ) (Γ : Subgroup SL(2, ℤ)) (hΓ : Subgroup.index Γ ≠ 0) :
     FiniteDimensional ℂ (ModularForm Γ k) := by
   by_cases hkneg : k < 0
@@ -693,34 +739,13 @@ lemma dim_gen_cong_levels (k : ℤ) (Γ : Subgroup SL(2, ℤ)) (hΓ : Subgroup.i
           simp [qExpansion_smul hh hperΓ a f] }
       have htrunc_inj : Function.Injective trunc := by
         intro f g hfg
-        have hcoeff : ∀ m < N, (qExpansion h (f - g)).coeff m = 0 := by
-          intro m hm
-          have hsub : trunc (f - g) = 0 := by
-            have hmap : trunc (f - g) = trunc f - trunc g := trunc.map_sub f g
-            have hdiff : trunc f - trunc g = 0 := by simp [hfg]
-            simp [hmap, hdiff]
-          have := congrArg (fun t : Fin N → ℂ => t ⟨m, hm⟩) hsub
-          simpa [trunc] using this
-        have hcoeff_norm : ∀ m < N,
-            (qExpansion h (ModularForm.norm 𝒮ℒ (f - g))).coeff m = 0 := by
-          have qCoeffNorm :=
-            SpherePacking.ModularForms.NormReduction.qExpansion_coeff_eq_zero_norm_of_qExpansion_coeff_eq_zero
-              (Γ := Γ) (k := k)
-          intro m hm
-          exact qCoeffNorm (f := (f - g)) (N := N) (n := m) hm hcoeff
-        have hfun :
-            (fun n : Fin N => (qExpansion h (ModularForm.norm 𝒮ℒ (f - g))).coeff n) =
-          fun n : Fin N => (qExpansion h (0 : ModularForm 𝒮ℒ w)).coeff n := by
-          ext n
-          simpa [qExpansion_zero h] using hcoeff_norm (n : ℕ) n.isLt
-        have hnorm : ModularForm.norm 𝒮ℒ (f - g) = (0 : ModularForm 𝒮ℒ w) :=
-          hNinj hfun
-        have : (f - g : ModularForm GΓ k) = 0 := by
-          have := (ModularForm.norm_eq_zero_iff (ℋ := 𝒮ℒ) (f := (f - g)) (k := k))
-          have hf0 :
-              ((f - g : ModularForm GΓ k) : ℍ → ℂ) = 0 :=
-            this.1 (by simpa using hnorm)
-          exact (coe_eq_zero_iff (f - g)).mp hf0
-        simpa [sub_eq_zero] using this
+        refine dim_gen_cong_levels_eq_of_coeff_eq_zero hNinj f g ?_
+        intro m hm
+        have hsub : trunc (f - g) = 0 := by
+          have hmap : trunc (f - g) = trunc f - trunc g := trunc.map_sub f g
+          have hdiff : trunc f - trunc g = 0 := by simp [hfg]
+          simp [hmap, hdiff]
+        have := congrArg (fun t : Fin N → ℂ => t ⟨m, hm⟩) hsub
+        simpa [trunc] using this
       haveI : FiniteDimensional ℂ (Fin N → ℂ) := by infer_instance
       simpa using (FiniteDimensional.of_injective trunc htrunc_inj)

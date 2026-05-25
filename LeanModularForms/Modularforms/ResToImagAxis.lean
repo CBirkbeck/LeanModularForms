@@ -365,6 +365,49 @@ then `F = O(exp(-2π n₀ · im z))` at `atImInfty`, which gives `t^s * F(it) �
 This is useful for functions with q-expansions starting at a positive index (like `(E₂E₄ - E₆)²`).
 -/
 
+/-- Real part of the Fourier exponent `2πi(m+n₀)w` is `-2π(m+n₀)·im w`. -/
+private lemma mul_re_two_pi_I_natCast (m n₀ : ℕ) (w : ℂ) :
+    (2 * π * I * ((m + n₀ : ℕ) : ℂ) * w).re = -(2 * π) * (m + n₀) * w.im := by
+  simp [Complex.mul_re, Complex.mul_im]
+
+/--
+For `c ≤ y`, the decay factor at height `y` splits off a uniform `n₀`-tail:
+`exp(-2π(m+n₀)y) ≤ exp(-2πc·m) · exp(-2πc·n₀)`. Used for absolute summability.
+-/
+private lemma exp_neg_two_pi_natCast_add_le (m n₀ : ℕ) {c y : ℝ} (hy : c ≤ y) :
+    rexp (-(2 * π) * (↑m + ↑n₀) * y) ≤ rexp (-(2 * π * c) * m) * rexp (-(2 * π * c) * n₀) := by
+  rw [← Real.exp_add, Real.exp_le_exp]
+  nlinarith [Real.pi_pos, (Nat.cast_nonneg m : (0 : ℝ) ≤ m),
+    (Nat.cast_nonneg n₀ : (0 : ℝ) ≤ n₀),
+    mul_le_mul_of_nonneg_left hy (by positivity : (0 : ℝ) ≤ 2 * π * (↑m + ↑n₀))]
+
+/--
+For `c ≤ y`, the `m`-part of the decay factor at height `y` is bounded by its value at the
+reference height `c`, keeping the `n₀`-part at height `y`:
+`exp(-2π(m+n₀)y) ≤ exp(-2πc·m) · exp(-2π·n₀·y)`. Used in the main norm estimate.
+-/
+private lemma exp_neg_two_pi_natCast_add_le_mul (m n₀ : ℕ) {c y : ℝ} (hy : c ≤ y) :
+    rexp (-(2 * π) * (↑m + ↑n₀) * y) ≤ rexp (-(2 * π * c) * m) * rexp (-(2 * π) * n₀ * y) := by
+  rw [← Real.exp_add, Real.exp_le_exp]
+  nlinarith [Real.pi_pos, (Nat.cast_nonneg m : (0 : ℝ) ≤ m),
+    (Nat.cast_nonneg n₀ : (0 : ℝ) ≤ n₀),
+    mul_le_mul_of_nonneg_left hy (by positivity : (0 : ℝ) ≤ 2 * π * ↑m)]
+
+/--
+The Fourier terms `m ↦ a_m · exp(2πi(m+n₀)w)` are absolutely summable at any height
+`w.im ≥ c`, provided the coefficient bound `m ↦ ‖a_m‖ · exp(-2πc·m)` is summable.
+-/
+private lemma summable_norm_fourier_shift_term {a : ℕ → ℂ} (n₀ : ℕ) {c : ℝ} (w : ℂ)
+    (hw : c ≤ w.im) (ha : Summable (fun m : ℕ => ‖a m‖ * rexp (-(2 * π * c) * (m : ℝ)))) :
+    Summable fun m : ℕ => ‖a m * cexp (2 * π * I * ((m + n₀ : ℕ) : ℂ) * w)‖ := by
+  refine .of_nonneg_of_le (fun _ => norm_nonneg _) (fun m => ?_)
+    (ha.mul_right (rexp (-(2 * π * c) * n₀)))
+  rw [norm_mul, norm_exp, mul_re_two_pi_I_natCast]
+  calc ‖a m‖ * rexp (-(2 * π) * (↑m + ↑n₀) * w.im)
+      ≤ ‖a m‖ * (rexp (-(2 * π * c) * m) * rexp (-(2 * π * c) * n₀)) :=
+        mul_le_mul_of_nonneg_left (exp_neg_two_pi_natCast_add_le m n₀ hw) (norm_nonneg (a m))
+    _ = ‖a m‖ * rexp (-(2 * π * c) * m) * rexp (-(2 * π * c) * n₀) := by ring
+
 /--
 If `F` has a Fourier expansion `∑_{m≥0} a_m exp(2πi(m+n₀)z)` with `n₀ > 0`,
 and the coefficients are absolutely summable at height `im z = c`,
@@ -384,31 +427,12 @@ lemma isBigO_atImInfty_of_fourier_shift
   rw [Filter.eventually_atImInfty]
   refine ⟨c, fun z hz => ?_⟩
   rw [hF z, Real.norm_of_nonneg (le_of_lt (Real.exp_pos _))]
-  -- Real part of 2πi(m+n₀)z is -2π(m+n₀)·im z
-  have hexp_re m : (2 * π * I * ((m + n₀ : ℕ) : ℂ) * z).re = -(2 * π) * (m + n₀) * z.im := by
-    simp only [Nat.cast_add, mul_re, re_ofNat, ofReal_re, im_ofNat, ofReal_im, mul_zero, sub_zero,
-      Complex.I_re, mul_im, zero_mul, add_zero, Complex.I_im, mul_one, sub_self, add_re, natCast_re,
-      add_im, natCast_im, coe_re, zero_add, coe_im, zero_sub, neg_mul]
-  -- Key bound: for y ≥ c, exp(-(2π)(m+n₀)y) ≤ exp(-(2πc)m) * exp(-(2πc)n₀)
-  have hexp_bound (m : ℕ) :
-      rexp (-(2 * π) * (↑m + ↑n₀) * z.im) ≤
-        rexp (-(2 * π * c) * m) * rexp (-(2 * π * c) * n₀) := by
-    rw [← Real.exp_add, Real.exp_le_exp]
-    have _ : (↑m + ↑n₀) * z.im ≥ (↑m + ↑n₀) * c := by nlinarith
-    nlinarith [Real.pi_pos, (Nat.cast_nonneg m : (0 : ℝ) ≤ m),
-      (Nat.cast_nonneg n₀ : (0 : ℝ) ≤ n₀), z.im_pos]
-  -- Summability of norms
-  have hsum_norms : Summable fun m => ‖a m * cexp (2 * π * I * ((m + n₀ : ℕ) : ℂ) * z)‖ := by
-    refine .of_nonneg_of_le (fun _ => norm_nonneg _) (fun m => ?_)
-      (ha.mul_right (rexp (-(2 * π * c) * n₀)))
-    simp only [norm_mul, norm_exp, hexp_re]
-    calc ‖a m‖ * rexp (-(2 * π) * (↑m + ↑n₀) * z.im)
-        ≤ ‖a m‖ * (rexp (-(2 * π * c) * m) * rexp (-(2 * π * c) * n₀)) :=
-          mul_le_mul_of_nonneg_left (hexp_bound m) (norm_nonneg _)
-      _ = ‖a m‖ * rexp (-(2 * π * c) * m) * rexp (-(2 * π * c) * n₀) := by ring
+  have hexp_re (m : ℕ) :
+      (2 * π * I * ((m + n₀ : ℕ) : ℂ) * z).re = -(2 * π) * (m + n₀) * z.im :=
+    mul_re_two_pi_I_natCast m n₀ z
+  have hsum_norms := summable_norm_fourier_shift_term n₀ (z : ℂ) hz ha
   have hsum_norms' : Summable fun m => ‖a m‖ * rexp (-(2 * π) * (m + n₀) * z.im) := by
     convert hsum_norms with m; rw [norm_mul, norm_exp, hexp_re]
-  -- Main calculation
   calc ‖∑' m, a m * cexp (2 * π * I * ((m + n₀ : ℕ) : ℂ) * z)‖
       ≤ ∑' m, ‖a m * cexp (2 * π * I * ((m + n₀ : ℕ) : ℂ) * z)‖ :=
         norm_tsum_le_tsum_norm hsum_norms
@@ -417,19 +441,11 @@ lemma isBigO_atImInfty_of_fourier_shift
     _ ≤ ∑' m, ‖a m‖ * rexp (-(2 * π * c) * m) * rexp (-(2 * π) * n₀ * z.im) := by
         refine Summable.tsum_le_tsum (fun m => ?_) hsum_norms'
           (ha.mul_right (rexp (-(2 * π) * n₀ * z.im)))
-        have hsplit : rexp (-(2 * π) * (↑m + ↑n₀) * z.im) =
-            rexp (-(2 * π) * m * z.im) * rexp (-(2 * π) * n₀ * z.im) := by
-          rw [← Real.exp_add]; ring_nf
-        have hexp_m : rexp (-(2 * π) * m * z.im) ≤ rexp (-(2 * π * c) * m) := by
-          rw [Real.exp_le_exp]
-          have key : (m : ℝ) * z.im ≥ m * c := by nlinarith
-          nlinarith [Real.pi_pos, (Nat.cast_nonneg m : (0 : ℝ) ≤ m), z.im_pos]
         calc ‖a m‖ * rexp (-(2 * π) * (↑m + ↑n₀) * z.im)
-            = ‖a m‖ * rexp (-(2 * π) * m * z.im) * rexp (-(2 * π) * n₀ * z.im) := by
-              rw [hsplit]; ring
-          _ ≤ ‖a m‖ * rexp (-(2 * π * c) * m) * rexp (-(2 * π) * n₀ * z.im) := by
-              apply mul_le_mul_of_nonneg_right _ (le_of_lt (Real.exp_pos _))
-              exact mul_le_mul_of_nonneg_left hexp_m (norm_nonneg _)
+            ≤ ‖a m‖ * (rexp (-(2 * π * c) * m) * rexp (-(2 * π) * n₀ * z.im)) :=
+              mul_le_mul_of_nonneg_left (exp_neg_two_pi_natCast_add_le_mul m n₀ hz)
+                (norm_nonneg (a m))
+          _ = ‖a m‖ * rexp (-(2 * π * c) * m) * rexp (-(2 * π) * n₀ * z.im) := by ring
     _ = (∑' m, ‖a m‖ * rexp (-(2 * π * c) * m)) * rexp (-(2 * π) * n₀ * z.im) := tsum_mul_right
     _ = _ := by ring_nf
 

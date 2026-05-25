@@ -288,6 +288,26 @@ and diamond unitarity ([DS] Theorem 5.5.3). -/
 
 namespace MeasureTheory
 
+/-- Injectivity of the map `(q, h) ↦ h · q.out⁻¹` on the `H`-translate index: if two
+coset representatives `r₁.out, r₂.out` and subgroup elements `a, b : H` satisfy
+`a · r₁.out⁻¹ = b · r₂.out⁻¹`, then `a = b`. The hypothesis forces `r₂.out⁻¹ · r₁.out ∈ H`,
+hence `r₁ = r₂` in `G ⧸ H`, and right-cancellation gives `a = b`. -/
+private theorem eq_of_mul_out_inv_eq {G : Type*} [Group G] {H : Subgroup G}
+    {r₁ r₂ : G ⧸ H} {a b : H}
+    (hh : (a : G) * (r₁.out)⁻¹ = (b : G) * (r₂.out)⁻¹) : a = b := by
+  have hmem : (r₂.out : G)⁻¹ * r₁.out ∈ H := by
+    have he : (b : G)⁻¹ * (a : G) = (r₂.out : G)⁻¹ * (r₁.out : G) := by
+      have h2 : (b : G)⁻¹ * ((a : G) * (r₁.out)⁻¹) * r₁.out
+          = (b : G)⁻¹ * ((b : G) * (r₂.out)⁻¹) * r₁.out := by rw [hh]
+      simpa [mul_assoc] using h2
+    rw [← he]; exact H.mul_mem (H.inv_mem b.2) a.2
+  have hq : r₁ = r₂ := by
+    have h_mk : (QuotientGroup.mk r₁.out : G ⧸ H) = QuotientGroup.mk r₂.out := by
+      rw [QuotientGroup.eq]; simpa [mul_inv_rev] using H.inv_mem hmem
+    simpa using h_mk
+  subst hq
+  exact Subtype.ext (mul_right_cancel hh)
+
 /-- **Subgroup coset tiling of a fundamental domain.**
 
 If `s` is a fundamental domain for a group `G` acting on `α`, then for any subgroup
@@ -329,32 +349,7 @@ theorem IsFundamentalDomain.subgroup_iUnion_out_smul
           (((h₁ : G) * (q₁.out : G)⁻¹) • s : Set α) from (mul_smul _ _ _).symm,
         show ((h₂ : G) • ((q₂.out : G))⁻¹ • s : Set α) =
           (((h₂ : G) * (q₂.out : G)⁻¹) • s : Set α) from (mul_smul _ _ _).symm]
-    apply hs.aedisjoint
-    intro heq
-    apply hne
-    have hmem : (q₂.out : G)⁻¹ * q₁.out ∈ H := by
-      have : (h₂ : G)⁻¹ * (h₁ : G) = (q₂.out : G)⁻¹ * (q₁.out : G) := by
-        have h := heq
-        have : (h₂ : G)⁻¹ * ((h₁ : G) * (q₁.out : G)⁻¹) =
-               (h₂ : G)⁻¹ * ((h₂ : G) * (q₂.out : G)⁻¹) := by rw [h]
-        calc (h₂ : G)⁻¹ * (h₁ : G)
-            = ((h₂ : G)⁻¹ * (h₁ : G) * (q₁.out : G)⁻¹) * (q₁.out : G) := by group
-          _ = ((h₂ : G)⁻¹ * ((h₁ : G) * (q₁.out : G)⁻¹)) * (q₁.out : G) := by group
-          _ = ((h₂ : G)⁻¹ * ((h₂ : G) * (q₂.out : G)⁻¹)) * (q₁.out : G) := by rw [h]
-          _ = (q₂.out : G)⁻¹ * (q₁.out : G) := by group
-      rw [← this]
-      exact H.mul_mem (H.inv_mem h₂.2) h₁.2
-    have hq : q₁ = q₂ := by
-      have h_mk : (QuotientGroup.mk q₁.out : G ⧸ H) = QuotientGroup.mk q₂.out := by
-        rw [QuotientGroup.eq]
-        have := H.inv_mem hmem
-        simpa [mul_inv_rev] using this
-      simpa using h_mk
-    subst hq
-    have : (h₁ : G) = (h₂ : G) := by
-      have := heq
-      exact mul_right_cancel this
-    exact Subtype.ext this
+    exact hs.aedisjoint fun heq ↦ hne (eq_of_mul_out_inv_eq heq)
 
 /-- **Normalizer-shift of a fundamental domain.**
 
@@ -924,6 +919,21 @@ theorem slToPslQuot_slLeftMul (h : SL(2, ℤ)) (q : SL(2, ℤ) ⧸ Gamma1 N) :
       (QuotientGroup.mk_mul _ _ _).symm]
     rfl
 
+/-- **Fiber transport along `slLeftMul`.** If `q` lies in the `slToPslQuot`-fiber over
+`mk (mk gs)` and `mk h = mk gt · (mk gs)⁻¹` in `PSL(2,ℤ)`, then `slLeftMul h q` lies in
+the fiber over `mk (mk gt)`. This is the SL-equivariance of `slToPslQuot`
+(`slToPslQuot_slLeftMul`) packaged for the fiber-bijection argument. -/
+private theorem slToPslQuot_slLeftMul_eq_of_eq (h : SL(2, ℤ)) (q : SL(2, ℤ) ⧸ Gamma1 N)
+    (gs gt : SL(2, ℤ))
+    (hq : slToPslQuot q = QuotientGroup.mk (QuotientGroup.mk gs : PSL(2, ℤ)))
+    (hh : (QuotientGroup.mk h : PSL(2, ℤ)) =
+      QuotientGroup.mk gt * (QuotientGroup.mk gs)⁻¹) :
+    slToPslQuot (slLeftMul h q) = QuotientGroup.mk (QuotientGroup.mk gt : PSL(2, ℤ)) := by
+  rw [slToPslQuot_slLeftMul h q, hq]
+  show (QuotientGroup.mk ((QuotientGroup.mk h : PSL(2, ℤ)) *
+    (QuotientGroup.mk gs : PSL(2, ℤ))) : PSL(2, ℤ) ⧸ imageGamma1_PSL N) = _
+  rw [hh]; congr 1; group
+
 /-- **Uniform fiber size**: any two fibers of `slToPslQuot` have equal cardinality.
 
 Since `SL(2,ℤ)` acts transitively on `PSL(2,ℤ) ⧸ imageGamma1_PSL N` (via `SL → PSL →
@@ -954,56 +964,17 @@ theorem slToPslQuot_fiber_card_uniform
       show slLeftMul h (slLeftMul h⁻¹ q) = q
       rw [slLeftMul_comp, mul_inv_cancel, slLeftMul_one])
   · simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hq ⊢
-    induction q using QuotientGroup.induction_on with | _ g => ?_
-    show slToPslQuot (QuotientGroup.mk (h * g)) = q₂'
-    rw [slToPslQuot_mk]
-    have hq_psl : (QuotientGroup.mk (QuotientGroup.mk g : PSL(2, ℤ)) :
-        PSL(2, ℤ) ⧸ imageGamma1_PSL N) = q₁' := hq
-    have h_psl : (QuotientGroup.mk (h * g) : PSL(2, ℤ)) =
-        (QuotientGroup.mk h : PSL(2, ℤ)) * (QuotientGroup.mk g : PSL(2, ℤ)) :=
-      (QuotientGroup.mk_mul _ _ _).symm
-    rw [h_psl]
-    have h_h_psl : (QuotientGroup.mk h : PSL(2, ℤ)) =
-        QuotientGroup.mk g₂ * (QuotientGroup.mk g₁)⁻¹ := by
-      rw [hh_def, ← QuotientGroup.mk_inv, ← QuotientGroup.mk_mul]
-    rw [h_h_psl]
-    have hq_eq_g₁ : (QuotientGroup.mk (QuotientGroup.mk g : PSL(2, ℤ)) :
-        PSL(2, ℤ) ⧸ imageGamma1_PSL N) =
-        QuotientGroup.mk (QuotientGroup.mk g₁ : PSL(2, ℤ)) := by
-      rw [hq_psl]; exact hq₁.symm
-    rw [QuotientGroup.eq] at hq_eq_g₁
-    rw [show q₂' = QuotientGroup.mk (QuotientGroup.mk g₂ : PSL(2, ℤ)) from hq₂.symm,
-      QuotientGroup.eq]
-    have : (QuotientGroup.mk g₂ * (QuotientGroup.mk g₁)⁻¹ *
-          (QuotientGroup.mk g : PSL(2, ℤ)))⁻¹ * QuotientGroup.mk g₂ =
-        (QuotientGroup.mk g : PSL(2, ℤ))⁻¹ * QuotientGroup.mk g₁ := by group
-    rw [this]; exact hq_eq_g₁
+    rw [show q₂' = QuotientGroup.mk (QuotientGroup.mk g₂ : PSL(2, ℤ)) from by
+      rw [← slToPslQuot_mk]; exact hq₂.symm]
+    refine slToPslQuot_slLeftMul_eq_of_eq h q g₁ g₂ ?_ ?_
+    · rw [hq, ← slToPslQuot_mk]; exact hq₁.symm
+    · rw [hh_def, ← QuotientGroup.mk_inv, ← QuotientGroup.mk_mul]
   · simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hq ⊢
-    induction q using QuotientGroup.induction_on with | _ g => ?_
-    show slToPslQuot (QuotientGroup.mk (h⁻¹ * g)) = q₁'
-    rw [slToPslQuot_mk]
-    have hq_psl : (QuotientGroup.mk (QuotientGroup.mk g : PSL(2, ℤ)) :
-        PSL(2, ℤ) ⧸ imageGamma1_PSL N) = q₂' := hq
-    have h_psl : (QuotientGroup.mk (h⁻¹ * g) : PSL(2, ℤ)) =
-        (QuotientGroup.mk h : PSL(2, ℤ))⁻¹ * (QuotientGroup.mk g : PSL(2, ℤ)) := by
-      rw [show (h⁻¹ * g : SL(2, ℤ)) = h⁻¹ * g from rfl,
-        ← QuotientGroup.mk_inv, ← QuotientGroup.mk_mul]
-    rw [h_psl]
-    have h_h_psl : (QuotientGroup.mk h : PSL(2, ℤ)) =
-        QuotientGroup.mk g₂ * (QuotientGroup.mk g₁)⁻¹ := by
-      rw [hh_def, ← QuotientGroup.mk_inv, ← QuotientGroup.mk_mul]
-    rw [h_h_psl]
-    have hq_eq_g₂ : (QuotientGroup.mk (QuotientGroup.mk g : PSL(2, ℤ)) :
-        PSL(2, ℤ) ⧸ imageGamma1_PSL N) =
-        QuotientGroup.mk (QuotientGroup.mk g₂ : PSL(2, ℤ)) := by
-      rw [hq_psl]; exact hq₂.symm
-    rw [QuotientGroup.eq] at hq_eq_g₂
-    rw [show q₁' = QuotientGroup.mk (QuotientGroup.mk g₁ : PSL(2, ℤ)) from hq₁.symm,
-      QuotientGroup.eq]
-    have : ((QuotientGroup.mk g₂ * (QuotientGroup.mk g₁)⁻¹)⁻¹ *
-          (QuotientGroup.mk g : PSL(2, ℤ)))⁻¹ * QuotientGroup.mk g₁ =
-        (QuotientGroup.mk g : PSL(2, ℤ))⁻¹ * QuotientGroup.mk g₂ := by group
-    rw [this]; exact hq_eq_g₂
+    rw [show q₁' = QuotientGroup.mk (QuotientGroup.mk g₁ : PSL(2, ℤ)) from by
+      rw [← slToPslQuot_mk]; exact hq₁.symm]
+    refine slToPslQuot_slLeftMul_eq_of_eq h⁻¹ q g₂ g₁ ?_ ?_
+    · rw [hq, ← slToPslQuot_mk]; exact hq₂.symm
+    · rw [hh_def, ← QuotientGroup.mk_inv, ← QuotientGroup.mk_mul]; group
 
 /-- The PSL-action on a set equals the SL-action when the PSL element is `↑g` for an
 SL element `g`. Direct consequence of `PSL_smul_coe` (which is `rfl`). -/
