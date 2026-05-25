@@ -329,6 +329,50 @@ private lemma Gamma0_exists_diag_rep_primitive (N : ℕ) [NeZero N]
     exact ⟨![1, m], fun i => by fin_cases i <;> simp [hm_pos], by simp, ⟨m, by simp⟩,
       Gamma0_coset_eq_T_diag_of_coprime N g' A' hA' hA'N m hm_pos hdet_g' hA'm⟩
 
+/-- **Content scale-back** for `Gamma0_exists_diag_rep`: given the primitive quotient `g₀`
+(matrix `A₀ = A / d`) with diagonal representative `⟦g₀⟧ = T_diag_Gamma0 N a₀`, scale back by
+the content `d` to obtain `⟦g⟧ = T_diag_Gamma0 N (d • a₀)`. Consumes the inductive
+hypothesis `hrep₀`, so it is independent of the well-founded recursion. -/
+private lemma Gamma0_diag_rep_scale_back (N : ℕ) [NeZero N]
+    (g g₀ : (Gamma0_pair N).Δ)
+    (A A₀ : Matrix (Fin 2) (Fin 2) ℤ) (d : ℕ)
+    (hA : (g.1 : Matrix (Fin 2) (Fin 2) ℚ) = A.map (Int.cast : ℤ → ℚ))
+    (hg₀_val : (g₀.1 : Matrix (Fin 2) (Fin 2) ℚ) = A₀.map (Int.cast : ℤ → ℚ))
+    (hA₀_eq : ∀ i j, A i j = ↑d * A₀ i j)
+    (hd_pos : 0 < d) (hd_dvd : ∀ i j : Fin 2, (d : ℤ) ∣ A i j)
+    (hAco : Int.gcd (A 0 0) N = 1)
+    (a₀ : Fin 2 → ℕ) (ha₀ : ∀ i, 0 < a₀ i) (hgcd₀ : Int.gcd (a₀ 0) N = 1)
+    (hdiv₀ : a₀ 0 ∣ a₀ 1)
+    (hrep₀ : (⟦g₀⟧ : HeckeCoset (Gamma0_pair N)) = T_diag_Gamma0 N a₀ ha₀ hgcd₀) :
+    ∃ (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i) (hgcd : Int.gcd (a 0) N = 1)
+      (_ : a 0 ∣ a 1),
+      (⟦g⟧ : HeckeCoset (Gamma0_pair N)) = T_diag_Gamma0 N a ha hgcd := by
+  have hg₀_dc : g₀.1 ∈ DoubleCoset.doubleCoset (diagMat 2 a₀ : GL (Fin 2) ℚ)
+      ((Gamma0_pair N).H : Set _) ((Gamma0_pair N).H : Set _) :=
+    ((HeckeCoset.eq_iff g₀ ⟨_, diagMat_mem_Delta0_of_gcd N a₀ ha₀ hgcd₀⟩).mp hrep₀).symm ▸
+      DoubleCoset.mem_doubleCoset_self _ _ g₀.1
+  rw [DoubleCoset.mem_doubleCoset] at hg₀_dc
+  obtain ⟨γ₁, hγ₁, γ₂, hγ₂, hg₀_eq⟩ := hg₀_dc
+  set a := fun i : Fin 2 => d * a₀ i
+  have ha : ∀ i, 0 < a i := fun i => Nat.mul_pos hd_pos (ha₀ i)
+  have hd_Nco : Int.gcd (d : ℤ) N = 1 := by
+    apply Nat.eq_one_of_dvd_one; rw [← hAco]
+    exact Nat.dvd_gcd
+      (Int.natAbs_dvd_natAbs.mpr ((Int.gcd_dvd_left (d : ℤ) N).trans (hd_dvd 0 0)))
+      (Int.natAbs_dvd_natAbs.mpr (Int.gcd_dvd_right (d : ℤ) N))
+  have hgcd_a : Int.gcd (↑(a 0)) ↑N = 1 := by
+    show Int.gcd (↑(d * a₀ 0)) ↑N = 1
+    simp only [Int.gcd_natCast_natCast]
+    exact Nat.Coprime.mul_left
+      (by rwa [Int.gcd_natCast_natCast] at hd_Nco)
+      (by rwa [Int.gcd_natCast_natCast] at hgcd₀)
+  have hdiv_a : a 0 ∣ a 1 := Nat.mul_dvd_mul_left d hdiv₀
+  have hg_dc : g.1 ∈ DoubleCoset.doubleCoset (diagMat 2 a : GL (Fin 2) ℚ)
+      ((Gamma0_pair N).H : Set _) ((Gamma0_pair N).H : Set _) :=
+    content_scaled_doubleCoset_mem N g g₀ γ₁ γ₂ A A₀ d a a₀ hA
+      hg₀_val hA₀_eq rfl ha ha₀ hγ₁ hγ₂ hg₀_eq
+  exact ⟨a, ha, hgcd_a, hdiv_a, HeckeCoset.eq_mk_of_mem hg_dc⟩
+
 /-- **General diagonal representative** for Gamma0 double cosets: every `g ∈ Δ₀(N)` has
 `⟦g⟧ = T_diag_Gamma0 N (![d₁, d₂])` for some `d₁ | d₂`, `d₁ > 0`, `d₂ > 0`,
 `gcd(d₁, N) = 1`.
@@ -365,31 +409,9 @@ lemma Gamma0_exists_diag_rep (N : ℕ) [NeZero N]
       ⟨⟨A₀, rfl⟩, by simp [det_intMat_cast]; exact_mod_cast hA₀_det_pos,
        A₀, rfl, hA₀N, hA₀co⟩⟩
     obtain ⟨a₀, ha₀, hgcd₀, hdiv₀, hrep₀⟩ := Gamma0_exists_diag_rep N g₀
-    have hg₀_dc : g₀.1 ∈ DoubleCoset.doubleCoset (diagMat 2 a₀ : GL (Fin 2) ℚ)
-        ((Gamma0_pair N).H : Set _) ((Gamma0_pair N).H : Set _) :=
-      ((HeckeCoset.eq_iff g₀ ⟨_, diagMat_mem_Delta0_of_gcd N a₀ ha₀ hgcd₀⟩).mp hrep₀).symm ▸
-        DoubleCoset.mem_doubleCoset_self _ _ g₀.1
-    rw [DoubleCoset.mem_doubleCoset] at hg₀_dc
-    obtain ⟨γ₁, hγ₁, γ₂, hγ₂, hg₀_eq⟩ := hg₀_dc
-    set a := fun i : Fin 2 => d * a₀ i
-    have ha : ∀ i, 0 < a i := fun i => Nat.mul_pos hd_pos (ha₀ i)
-    have hd_Nco : Int.gcd (d : ℤ) N = 1 := by
-      apply Nat.eq_one_of_dvd_one; rw [← hAco]
-      exact Nat.dvd_gcd
-        (Int.natAbs_dvd_natAbs.mpr ((Int.gcd_dvd_left (d : ℤ) N).trans (hd_dvd 0 0)))
-        (Int.natAbs_dvd_natAbs.mpr (Int.gcd_dvd_right (d : ℤ) N))
-    have hgcd_a : Int.gcd (↑(a 0)) ↑N = 1 := by
-      show Int.gcd (↑(d * a₀ 0)) ↑N = 1
-      simp only [Int.gcd_natCast_natCast]
-      exact Nat.Coprime.mul_left
-        (by rwa [Int.gcd_natCast_natCast] at hd_Nco)
-        (by rwa [Int.gcd_natCast_natCast] at hgcd₀)
-    have hdiv_a : a 0 ∣ a 1 := Nat.mul_dvd_mul_left d hdiv₀
-    have hg_dc : g.1 ∈ DoubleCoset.doubleCoset (diagMat 2 a : GL (Fin 2) ℚ)
-        ((Gamma0_pair N).H : Set _) ((Gamma0_pair N).H : Set _) :=
-      content_scaled_doubleCoset_mem N g g₀ γ₁ γ₂ A A₀ d a a₀ hA
-        (Matrix.GeneralLinearGroup.val_mkOfDetNeZero _ _) hA₀_eq rfl ha ha₀ hγ₁ hγ₂ hg₀_eq
-    exact ⟨a, ha, hgcd_a, hdiv_a, HeckeCoset.eq_mk_of_mem hg_dc⟩
+    exact Gamma0_diag_rep_scale_back N g g₀ A A₀ d hA
+      (Matrix.GeneralLinearGroup.val_mkOfDetNeZero _ _) hA₀_eq hd_pos hd_dvd hAco
+      a₀ ha₀ hgcd₀ hdiv₀ hrep₀
   termination_by (g.1.val.det.num.natAbs)
   decreasing_by
     simp only [g₀, GeneralLinearGroup.mkOfDetNeZero]
