@@ -337,12 +337,10 @@ private lemma exists_predecessor (γ : ClosedPwC1Immersion x) {p : ℝ}
   set pred := γ.closedPartition.filter (· < p)
   have h0_pred : (0 : ℝ) ∈ pred :=
     Finset.mem_filter.mpr ⟨γ.zero_mem_closedPartition, hp_pos⟩
-  set a := pred.max' ⟨0, h0_pred⟩
-  have ha_mem : a ∈ pred := pred.max'_mem _
-  refine ⟨a, (Finset.mem_filter.mp ha_mem).1, hp_in,
-    (Finset.mem_filter.mp ha_mem).2, fun c hc hc_Ioo => ?_⟩
-  exact absurd (pred.le_max' c (Finset.mem_filter.mpr ⟨hc, hc_Ioo.2⟩))
-    (by linarith [hc_Ioo.1])
+  have ha_mem : pred.max' ⟨0, h0_pred⟩ ∈ pred := pred.max'_mem _
+  exact ⟨_, (Finset.mem_filter.mp ha_mem).1, hp_in, (Finset.mem_filter.mp ha_mem).2,
+    fun c hc hc_Ioo => absurd (pred.le_max' c (Finset.mem_filter.mpr ⟨hc, hc_Ioo.2⟩))
+      (by linarith [hc_Ioo.1])⟩
 
 /-- Helper for the immersion bridge: at an interior closed-partition point `p`, the
 successor `b := min{c ∈ closedPartition : p < c}` is well-defined and `(p, b)` is
@@ -353,12 +351,29 @@ private lemma exists_successor (γ : ClosedPwC1Immersion x) {p : ℝ}
   set succ := γ.closedPartition.filter (p < ·)
   have h1_succ : (1 : ℝ) ∈ succ :=
     Finset.mem_filter.mpr ⟨γ.one_mem_closedPartition, hp_lt_one⟩
-  set b := succ.min' ⟨1, h1_succ⟩
-  have hb_mem : b ∈ succ := succ.min'_mem _
-  refine ⟨b, hp_in, (Finset.mem_filter.mp hb_mem).1,
-    (Finset.mem_filter.mp hb_mem).2, fun c hc hc_Ioo => ?_⟩
-  exact absurd (succ.min'_le c (Finset.mem_filter.mpr ⟨hc, hc_Ioo.1⟩))
-    (by linarith [hc_Ioo.2])
+  have hb_mem : succ.min' ⟨1, h1_succ⟩ ∈ succ := succ.min'_mem _
+  exact ⟨_, hp_in, (Finset.mem_filter.mp hb_mem).1, (Finset.mem_filter.mp hb_mem).2,
+    fun c hc hc_Ioo => absurd (succ.min'_le c (Finset.mem_filter.mpr ⟨hc, hc_Ioo.1⟩))
+      (by linarith [hc_Ioo.2])⟩
+
+/-- Shared inner computation for `left_deriv_limit` / `right_deriv_limit` in
+`toPwC1Immersion`. Given a piece `Icc a b` with `a < b` and a designated endpoint
+`p ∈ {a, b}`, produces the one-sided derivative limit `Tendsto (deriv γ̃) (𝓝[hSide] p)`
+where `hSide` is the one-sided neighborhood toward the *interior* of `Icc a b`. -/
+private lemma toPwC1Immersion_deriv_limit_aux (γ : ClosedPwC1Immersion x) {a b : ℝ}
+    (hcons : γ.closedPartition.IsConsecutive a b) {p : ℝ} (hp : p ∈ Icc a b)
+    (S : Set ℝ) (hSeq : 𝓝[S] p = 𝓝[Ioo a b] p) :
+    ∃ L : E, L ≠ 0 ∧ Tendsto (deriv γ.toPath.extend) (𝓝[S] p) (𝓝 L) := by
+  have hab : a < b := hcons.2.2.1
+  have h_dw_cont : ContinuousOn (derivWithin γ.toPath.extend (Icc a b)) (Icc a b) :=
+    (γ.contDiffOn_pieces a b hcons).continuousOn_derivWithin (uniqueDiffOn_Icc hab) le_rfl
+  refine ⟨derivWithin γ.toPath.extend (Icc a b) p,
+    γ.derivWithin_ne_zero_pieces a b hcons p hp, ?_⟩
+  refine (hSeq ▸ (h_dw_cont p hp).mono_left
+    (nhdsWithin_mono _ Ioo_subset_Icc_self)).congr' ?_
+  rw [hSeq]
+  exact Filter.eventuallyEq_of_mem (s := Ioo a b) self_mem_nhdsWithin
+    fun _ hu => ClosedPwC1Curve.derivWithin_eq_deriv_on_Ioo _ hu
 
 /-- A `ClosedPwC1Immersion` produces a legacy `PwC1Immersion`. -/
 def toPwC1Immersion (γ : ClosedPwC1Immersion x) : PwC1Immersion x x where
@@ -376,41 +391,17 @@ def toPwC1Immersion (γ : ClosedPwC1Immersion x) : PwC1Immersion x x where
   left_deriv_limit := by
     intro p hp
     have hp_in : p ∈ γ.closedPartition := (γ.toClosedPwC1Curve.mem_partition_iff.mp hp).1
-    have hp_pos : 0 < p := (γ.partition_subset hp).1
-    obtain ⟨a, hcons⟩ := γ.exists_predecessor hp_in hp_pos
-    have ha_lt : a < p := hcons.2.2.1
-    have h_dw_cont : ContinuousOn (derivWithin γ.toPath.extend (Icc a p)) (Icc a p) :=
-      (γ.contDiffOn_pieces a p hcons).continuousOn_derivWithin (uniqueDiffOn_Icc ha_lt) le_rfl
-    set L := derivWithin γ.toPath.extend (Icc a p) p
-    refine ⟨L, γ.derivWithin_ne_zero_pieces a p hcons p (right_mem_Icc.mpr ha_lt.le), ?_⟩
-    have h_eq : 𝓝[<] p = 𝓝[Ioo a p] p := by
-      rw [← Set.Iio_inter_Ioi (a := p) (b := a),
-        nhdsWithin_inter_of_mem' (mem_nhdsWithin_of_mem_nhds (Ioi_mem_nhds ha_lt))]
-    have h_at_p : Tendsto (derivWithin γ.toPath.extend (Icc a p))
-        (𝓝[Icc a p] p) (𝓝 L) := h_dw_cont p (right_mem_Icc.mpr ha_lt.le)
-    refine (h_eq ▸ h_at_p.mono_left (nhdsWithin_mono _ Ioo_subset_Icc_self)).congr' ?_
-    rw [h_eq]
-    exact Filter.eventuallyEq_of_mem (s := Ioo a p) self_mem_nhdsWithin
-      fun _ hu => ClosedPwC1Curve.derivWithin_eq_deriv_on_Ioo _ hu
+    obtain ⟨a, hcons⟩ := γ.exists_predecessor hp_in (γ.partition_subset hp).1
+    refine γ.toPwC1Immersion_deriv_limit_aux hcons (right_mem_Icc.mpr hcons.2.2.1.le) _ ?_
+    rw [← Set.Iio_inter_Ioi (a := p) (b := a),
+      nhdsWithin_inter_of_mem' (mem_nhdsWithin_of_mem_nhds (Ioi_mem_nhds hcons.2.2.1))]
   right_deriv_limit := by
     intro p hp
     have hp_in : p ∈ γ.closedPartition := (γ.toClosedPwC1Curve.mem_partition_iff.mp hp).1
-    have hp_lt_1 : p < 1 := (γ.partition_subset hp).2
-    obtain ⟨b, hcons⟩ := γ.exists_successor hp_in hp_lt_1
-    have hp_lt_b : p < b := hcons.2.2.1
-    have h_dw_cont : ContinuousOn (derivWithin γ.toPath.extend (Icc p b)) (Icc p b) :=
-      (γ.contDiffOn_pieces p b hcons).continuousOn_derivWithin (uniqueDiffOn_Icc hp_lt_b) le_rfl
-    set L := derivWithin γ.toPath.extend (Icc p b) p
-    refine ⟨L, γ.derivWithin_ne_zero_pieces p b hcons p (left_mem_Icc.mpr hp_lt_b.le), ?_⟩
-    have h_eq : 𝓝[>] p = 𝓝[Ioo p b] p := by
-      rw [← Set.Ioi_inter_Iio (a := p) (b := b),
-        nhdsWithin_inter_of_mem' (mem_nhdsWithin_of_mem_nhds (Iio_mem_nhds hp_lt_b))]
-    have h_at_p : Tendsto (derivWithin γ.toPath.extend (Icc p b))
-        (𝓝[Icc p b] p) (𝓝 L) := h_dw_cont p (left_mem_Icc.mpr hp_lt_b.le)
-    refine (h_eq ▸ h_at_p.mono_left (nhdsWithin_mono _ Ioo_subset_Icc_self)).congr' ?_
-    rw [h_eq]
-    exact Filter.eventuallyEq_of_mem (s := Ioo p b) self_mem_nhdsWithin
-      fun _ hu => ClosedPwC1Curve.derivWithin_eq_deriv_on_Ioo _ hu
+    obtain ⟨b, hcons⟩ := γ.exists_successor hp_in (γ.partition_subset hp).2
+    refine γ.toPwC1Immersion_deriv_limit_aux hcons (left_mem_Icc.mpr hcons.2.2.1.le) _ ?_
+    rw [← Set.Ioi_inter_Iio (a := p) (b := b),
+      nhdsWithin_inter_of_mem' (mem_nhdsWithin_of_mem_nhds (Iio_mem_nhds hcons.2.2.1))]
 
 end ClosedPwC1Immersion
 
@@ -807,6 +798,35 @@ namespace ClosedPwC1Curve
 
 variable {x : E}
 
+/-- Auxiliary helper for `cyclicShift_consecutive_lift_*`: given an interval
+`[a', b'] ⊆ [0, 1]` with `a' < b'`, find consecutive partition members `(c, d)`
+containing it, using a hypothesis that every interior partition member would
+contradict `(a, b)` being consecutive in the shifted partition. -/
+private lemma cyclicShift_consecutive_lift_aux (γ : ClosedPwC1Curve x)
+    {a' b' : ℝ} (h0_le_a' : 0 ≤ a') (h_b'_le : b' ≤ 1) (h_a'b' : a' < b')
+    (h_no_interior : ∀ e ∈ γ.closedPartition, e ∈ Ioo a' b' → False) :
+    ∃ c d, γ.closedPartition.IsConsecutive c d ∧ Icc a' b' ⊆ Icc c d := by
+  classical
+  set Pl : Finset ℝ := γ.closedPartition.filter (· ≤ a')
+  have h0_in_Pl : (0 : ℝ) ∈ Pl :=
+    Finset.mem_filter.mpr ⟨γ.zero_mem_closedPartition, h0_le_a'⟩
+  have hc_mem : Pl.max' ⟨0, h0_in_Pl⟩ ∈ Pl := Pl.max'_mem _
+  have hc_le : Pl.max' ⟨0, h0_in_Pl⟩ ≤ a' := (Finset.mem_filter.mp hc_mem).2
+  set Pr : Finset ℝ := γ.closedPartition.filter (b' ≤ ·)
+  have h1_in_Pr : (1 : ℝ) ∈ Pr := Finset.mem_filter.mpr ⟨γ.one_mem_closedPartition, h_b'_le⟩
+  have hd_mem : Pr.min' ⟨1, h1_in_Pr⟩ ∈ Pr := Pr.min'_mem _
+  have hd_ge : b' ≤ Pr.min' ⟨1, h1_in_Pr⟩ := (Finset.mem_filter.mp hd_mem).2
+  refine ⟨_, _, ⟨(Finset.mem_filter.mp hc_mem).1, (Finset.mem_filter.mp hd_mem).1,
+    hc_le.trans_lt (h_a'b'.trans_le hd_ge), fun e he_in he_Ioo => ?_⟩,
+    fun _ ht => ⟨hc_le.trans ht.1, ht.2.trans hd_ge⟩⟩
+  rcases le_or_gt e a' with he_le | he_gt
+  · exact absurd (Pl.le_max' e (Finset.mem_filter.mpr ⟨he_in, he_le⟩))
+      (not_le_of_gt he_Ioo.1)
+  rcases le_or_gt b' e with he_ge | he_lt
+  · exact absurd (Pr.min'_le e (Finset.mem_filter.mpr ⟨he_in, he_ge⟩))
+      (not_le_of_gt he_Ioo.2)
+  exact h_no_interior e he_in ⟨he_gt, he_lt⟩
+
 /-- **Step 1: cyclicShift consecutive lift (case 1, no wraparound).** For a
 consecutive pair `(a, b)` in the cyclic-shift partition with `b ≤ 1 - τ`, the
 interval `[a + τ, b + τ]` lies inside a γ-piece of the original partition. -/
@@ -815,37 +835,18 @@ theorem cyclicShift_consecutive_lift_no_wrap (γ : ClosedPwC1Curve x) {τ : ℝ}
     (h_cons : (cyclicShiftPartitionExt γ.closedPartition τ).IsConsecutive a b)
     (h_b_le : b ≤ 1 - τ) :
     ∃ c d, γ.closedPartition.IsConsecutive c d ∧ Icc (a + τ) (b + τ) ⊆ Icc c d := by
-  classical
-  obtain ⟨ha_in, hb_in, h_ab_lt, h_no_between⟩ := h_cons
+  obtain ⟨ha_in, _, h_ab_lt, h_no_between⟩ := h_cons
   have ha_ge : 0 ≤ a := (cyclicShiftPartitionExt_subset_Icc γ.closedPartition hτ ha_in).1
-  have h_bT_le : b + τ ≤ 1 := by linarith
-  set Pl : Finset ℝ := γ.closedPartition.filter (· ≤ a + τ)
-  have h0_in_Pl : (0 : ℝ) ∈ Pl :=
-    Finset.mem_filter.mpr ⟨γ.zero_mem_closedPartition, by linarith [hτ.1]⟩
-  set c : ℝ := Pl.max' ⟨0, h0_in_Pl⟩
-  have hc_mem : c ∈ Pl := Pl.max'_mem _
-  have hc_le : c ≤ a + τ := (Finset.mem_filter.mp hc_mem).2
-  set Pr : Finset ℝ := γ.closedPartition.filter (b + τ ≤ ·)
-  have h1_in_Pr : (1 : ℝ) ∈ Pr := Finset.mem_filter.mpr ⟨γ.one_mem_closedPartition, h_bT_le⟩
-  set d : ℝ := Pr.min' ⟨1, h1_in_Pr⟩
-  have hd_mem : d ∈ Pr := Pr.min'_mem _
-  have hd_ge : b + τ ≤ d := (Finset.mem_filter.mp hd_mem).2
-  refine ⟨c, d, ⟨(Finset.mem_filter.mp hc_mem).1, (Finset.mem_filter.mp hd_mem).1,
-    hc_le.trans_lt ((by linarith : a + τ < b + τ).trans_le hd_ge), fun e he_in he_Ioo => ?_⟩,
-    fun _ ht => ⟨hc_le.trans ht.1, ht.2.trans hd_ge⟩⟩
-  rcases le_or_gt e (a + τ) with he_le | he_gt
-  · exact absurd (Pl.le_max' e (Finset.mem_filter.mpr ⟨he_in, he_le⟩))
-      (not_le_of_gt he_Ioo.1)
-  rcases le_or_gt (b + τ) e with he_ge | he_lt
-  · exact absurd (Pr.min'_le e (Finset.mem_filter.mpr ⟨he_in, he_ge⟩))
-      (not_le_of_gt he_Ioo.2)
+  refine γ.cyclicShift_consecutive_lift_aux (by linarith [hτ.1]) (by linarith)
+    (by linarith) fun e he_in he_Ioo => ?_
   have h_e_in_Icc : e - τ ∈ Set.Icc (0 : ℝ) 1 :=
-    ⟨by linarith [hτ.1, ha_ge], by linarith [hτ.1, h_b_le]⟩
-  have h_csp : e - τ ∈ cyclicShiftPartition γ.closedPartition τ := by
-    rw [mem_cyclicShiftPartition_iff]
-    exact ⟨h_e_in_Icc, Or.inl (by convert he_in using 1; ring)⟩
-  exact h_no_between (e - τ) ((mem_cyclicShiftPartitionExt_iff _ _ _).mpr (Or.inr (Or.inr (Or.inr h_csp))))
-    ⟨by linarith, by linarith⟩
+    ⟨by linarith [hτ.1, ha_ge, he_Ioo.1], by linarith [hτ.1, h_b_le, he_Ioo.2]⟩
+  have h_csp : e - τ ∈ cyclicShiftPartition γ.closedPartition τ :=
+    (mem_cyclicShiftPartition_iff _ _ _).mpr
+      ⟨h_e_in_Icc, Or.inl (by convert he_in using 1; ring)⟩
+  exact h_no_between (e - τ) ((mem_cyclicShiftPartitionExt_iff _ _ _).mpr
+    (Or.inr (Or.inr (Or.inr h_csp))))
+    ⟨by linarith [he_Ioo.1], by linarith [he_Ioo.2]⟩
 
 /-- **Step 1: cyclicShift consecutive lift (case 2, with wraparound).** For a
 consecutive pair `(a, b)` in the cyclic-shift partition with `a ≥ 1 - τ`, the
@@ -856,38 +857,18 @@ theorem cyclicShift_consecutive_lift_wrap (γ : ClosedPwC1Curve x) {τ : ℝ}
     (h_cons : (cyclicShiftPartitionExt γ.closedPartition τ).IsConsecutive a b)
     (h_a_ge : a ≥ 1 - τ) :
     ∃ c d, γ.closedPartition.IsConsecutive c d ∧ Icc (a + τ - 1) (b + τ - 1) ⊆ Icc c d := by
-  classical
-  obtain ⟨ha_in, hb_in, h_ab_lt, h_no_between⟩ := h_cons
+  obtain ⟨_, hb_in, h_ab_lt, h_no_between⟩ := h_cons
   have hb_le_1 : b ≤ 1 := (cyclicShiftPartitionExt_subset_Icc γ.closedPartition hτ hb_in).2
-  set Pl : Finset ℝ := γ.closedPartition.filter (· ≤ a + τ - 1)
-  have h0_in_Pl : (0 : ℝ) ∈ Pl :=
-    Finset.mem_filter.mpr ⟨γ.zero_mem_closedPartition, by linarith⟩
-  set c : ℝ := Pl.max' ⟨0, h0_in_Pl⟩
-  have hc_mem : c ∈ Pl := Pl.max'_mem _
-  have hc_le : c ≤ a + τ - 1 := (Finset.mem_filter.mp hc_mem).2
-  set Pr : Finset ℝ := γ.closedPartition.filter (b + τ - 1 ≤ ·)
-  have h1_in_Pr : (1 : ℝ) ∈ Pr :=
-    Finset.mem_filter.mpr ⟨γ.one_mem_closedPartition, by linarith [hτ.2]⟩
-  set d : ℝ := Pr.min' ⟨1, h1_in_Pr⟩
-  have hd_mem : d ∈ Pr := Pr.min'_mem _
-  have hd_ge : b + τ - 1 ≤ d := (Finset.mem_filter.mp hd_mem).2
-  refine ⟨c, d, ⟨(Finset.mem_filter.mp hc_mem).1, (Finset.mem_filter.mp hd_mem).1,
-    hc_le.trans_lt ((by linarith : a + τ - 1 < b + τ - 1).trans_le hd_ge),
-    fun e he_in he_Ioo => ?_⟩, fun _ ht => ⟨hc_le.trans ht.1, ht.2.trans hd_ge⟩⟩
-  rcases le_or_gt e (a + τ - 1) with he_le | he_gt
-  · exact absurd (Pl.le_max' e (Finset.mem_filter.mpr ⟨he_in, he_le⟩))
-      (not_le_of_gt he_Ioo.1)
-  rcases le_or_gt (b + τ - 1) e with he_ge | he_lt
-  · exact absurd (Pr.min'_le e (Finset.mem_filter.mpr ⟨he_in, he_ge⟩))
-      (not_le_of_gt he_Ioo.2)
+  refine γ.cyclicShift_consecutive_lift_aux (by linarith) (by linarith [hτ.2])
+    (by linarith) fun e he_in he_Ioo => ?_
   have h_shift_in_Icc : e + 1 - τ ∈ Set.Icc (0 : ℝ) 1 :=
-    ⟨by linarith [hτ.2, h_a_ge], by linarith [hτ.1, hb_le_1]⟩
-  have h_csp : e + 1 - τ ∈ cyclicShiftPartition γ.closedPartition τ := by
-    rw [mem_cyclicShiftPartition_iff]
-    exact ⟨h_shift_in_Icc, Or.inr (by convert he_in using 1; ring)⟩
-  exact h_no_between (e + 1 - τ)
-    ((mem_cyclicShiftPartitionExt_iff _ _ _).mpr (Or.inr (Or.inr (Or.inr h_csp))))
-    ⟨by linarith, by linarith⟩
+    ⟨by linarith [hτ.2, h_a_ge, he_Ioo.1], by linarith [hτ.1, hb_le_1, he_Ioo.2]⟩
+  have h_csp : e + 1 - τ ∈ cyclicShiftPartition γ.closedPartition τ :=
+    (mem_cyclicShiftPartition_iff _ _ _).mpr
+      ⟨h_shift_in_Icc, Or.inr (by convert he_in using 1; ring)⟩
+  exact h_no_between (e + 1 - τ) ((mem_cyclicShiftPartitionExt_iff _ _ _).mpr
+    (Or.inr (Or.inr (Or.inr h_csp))))
+    ⟨by linarith [he_Ioo.1], by linarith [he_Ioo.2]⟩
 
 /-- **Step 1 (combined): cyclicShift consecutive lift.** For a consecutive pair
 `(a, b)` in the cyclic-shift partition, either there's no wraparound (`b ≤ 1-τ`)
