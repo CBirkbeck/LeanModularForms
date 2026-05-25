@@ -478,7 +478,6 @@ private lemma finiteIndex_Gamma0_map_subgroupOf (N k : ℕ) [NeZero N] (hk : 0 <
   exact ⟨((Gamma0_pair N).h₁ (⟨diagMat 2 (![1, k] : Fin 2 → ℕ), diagMat_mem_Delta0_of_gcd N _
     (fun i => by fin_cases i <;> simp [hk]) (by simp)⟩ : (Gamma0_pair N).Δ).2).1⟩
 
-set_option maxHeartbeats 6400000 in
 /-- **Gamma0 degree multiplicativity**: `deg(diag(1,m)) * deg(diag(1,n)) = deg(diag(1,mn))`
 when `gcd(m,n) = 1`, where all degrees are at the Gamma0(N) level.
 

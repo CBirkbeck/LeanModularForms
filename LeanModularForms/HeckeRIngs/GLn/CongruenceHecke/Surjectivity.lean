@@ -772,7 +772,6 @@ private lemma ker_π_le_ker_ψ :
   rw [(RingHom.injective_iff_ker_eq_bot π_hom).mp π_injective]
   exact bot_le
 
-set_option maxHeartbeats 800000 in
 /-- The product element in a scalar × diagonal mulMap lands in the GL DC of the product diagonal.
 Uses scalar centrality: `diag(c,c) * g = g * diag(c,c)` for all `g`. -/
 private lemma product_mem_GL_DC_scalar
@@ -1397,7 +1396,6 @@ private lemma heckeMult_pp_deg_facts (p : ℕ) (hp : p.Prime)
   exact Int.lt_iff_add_one_le.mp (lt_of_le_of_ne
     (HeckeRing.heckeMultiplicity_nonneg (Gamma0_pair N) D1.rep D2.rep D_out1.rep) (Ne.symm hne))
 
-set_option maxHeartbeats 800000 in
 /-- **Multiplicity values at Γ₀(N) level**:
     `μ(D'_out1) = 1` and `μ(D'_out2) = c_k` (where c_k = p+1 if k=1, else p). -/
 private lemma heckeMultiplicity_Gamma0_values (p : ℕ) (hp : p.Prime)

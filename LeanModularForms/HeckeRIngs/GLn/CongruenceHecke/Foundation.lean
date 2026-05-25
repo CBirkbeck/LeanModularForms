@@ -465,7 +465,6 @@ private lemma exists_Gamma_factor_of_mem_Gamma_gcd (a b : ℕ) [NeZero a] [NeZer
     rw [hβ_b]; exact inv_mul_cancel _
   exact ⟨β, hβ_a, β⁻¹ * γ, hβγ_b, by group⟩
 
-set_option maxHeartbeats 6400000 in
 open CongruenceSubgroup in
 /-- **Shimura Lemma 3.28**: `Γ(gcd(a,b)) = Γ(a) · Γ(b)` — the product of principal
     congruence subgroups is the congruence subgroup of the gcd.

@@ -304,7 +304,6 @@ private lemma phiOfFactorisations_injective_Gamma0_bridge (p : ℕ) (hp : Nat.Pr
   · -- Both ≥ p, but Fin (p+1) forces equality.
     have := j₁.isLt; have := j₂.isLt; omega
 
-set_option maxHeartbeats 6400000 in
 /-- Γ₀(N)-level analogue of `tRep_gen_D_p_matches_T_p_reps`: for a `Γ₀(N)`-invariant
 function `f : ℍ → ℂ`, the abstract `heckeSlash_gen` sum equals the explicit `T_p`
 coset-sum formula. -/

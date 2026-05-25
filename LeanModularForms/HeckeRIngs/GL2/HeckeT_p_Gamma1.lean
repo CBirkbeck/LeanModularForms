@@ -82,6 +82,22 @@ noncomputable def diag_1p_delta_Gamma1 (N p : ℕ) [NeZero N] (hp : 0 < p) :
     (Gamma1_pair N).Δ :=
   ⟨diagMat 2 ![1, p], diag_1p_mem_Delta1 N p hp⟩
 
+/-- Entrywise value of `diag(1, p) · mapGL ℚ s` for `s ∈ SL(2, ℤ)`: the top row is
+`(s 0 0, s 0 1)`, the bottom row is `(p · s 1 0, p · s 1 1)`. Used to discharge the
+left-coset factorisations `T_p_upper(b) = diag(1,p) · σ_b` and `M_∞ = diag(1,p) · γ′`
+with cheap, entrywise computation under the default heartbeat budget. -/
+private lemma diag_1p_mul_mapGL_val (p : ℕ) (hp : 0 < p) (s : SL(2, ℤ)) :
+    ((diagMat 2 ![1, p] : GL (Fin 2) ℚ) * (mapGL ℚ s)).val =
+    !![((s.val 0 0 : ℤ) : ℚ), ((s.val 0 1 : ℤ) : ℚ);
+       (p : ℚ) * (s.val 1 0 : ℤ), (p : ℚ) * (s.val 1 1 : ℤ)] := by
+  have hpos : ∀ k : Fin 2, 0 < (![1, p] : Fin 2 → ℕ) k := fun k => by
+    fin_cases k <;> simp [hp]
+  rw [Units.val_mul, diagMat_val _ _ hpos]
+  ext i j
+  simp only [mapGL_coe_matrix, Matrix.mul_apply, Fin.sum_univ_two,
+    Matrix.diagonal_apply, algebraMap_int_eq]
+  fin_cases i <;> fin_cases j <;> simp
+
 /-! ### Upper-triangular `T_p` representatives are in `Δ₁(N)` and in `D_p_Gamma1` -/
 
 /-- `T_p_upper(b) = [[1, b], [0, p]]` lies in `Δ₁(N)`: it has integer entries,
@@ -122,14 +138,10 @@ lemma T_p_upper_mem_D_p_Gamma1 (N : ℕ) [NeZero N] (p : ℕ) (hp : 0 < p) (b : 
   -- Step 3: T_p_upper(b) = diag(1, p) · mapGL ℚ σ_b
   have hfact : (T_p_upper p hp b : GL (Fin 2) ℚ) =
       diagMat 2 ![1, p] * (mapGL ℚ σ_b) := by
-    apply Units.ext; ext i j
-    have hpos : ∀ k : Fin 2, 0 < (![1, p] : Fin 2 → Nat) k := fun k => by
-      fin_cases k <;> simp [hp]
-    simp only [diagMat_val _ _ hpos, Units.val_mul, Matrix.mul_apply, Fin.sum_univ_two,
-      Matrix.diagonal_apply]
-    fin_cases i <;> fin_cases j <;>
-      simp [T_p_upper, GeneralLinearGroup.mkOfDetNeZero, σ_b, mapGL_coe_matrix,
-        algebraMap_int_eq]
+    apply Units.ext
+    rw [diag_1p_mul_mapGL_val p hp, T_p_upper_coe]
+    ext i j
+    fin_cases i <;> fin_cases j <;> simp [σ_b]
   -- Step 4: diag(1, p) = α⁻¹ · rep · γ⁻¹
   have hdiag_eq : (diagMat 2 ![1, p] : GL _ ℚ) =
       α⁻¹ * ((D_p_Gamma1 N p hp).rep : GL _ ℚ) * γ⁻¹ := by
@@ -264,7 +276,39 @@ noncomputable def M_infty (N p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime
     !![((aInvOfCoprime N p hpN : ℤ) : ℚ) * p, 1;
        ((N : ℤ) * mIdxOfCoprime N p hpN : ℚ) * p, p] := rfl
 
-set_option maxHeartbeats 800000 in
+/-- The determinant of `γ′ = [[ap, 1], [Nm, 1]]` is `1` (since `ap − Nm = 1`). -/
+private lemma gamma_prime_det (N p : ℕ) [NeZero N] (hpN : Nat.Coprime p N) :
+    (!![((aInvOfCoprime N p hpN : ℤ) * p), 1;
+        ((N : ℤ) * mIdxOfCoprime N p hpN), 1] : Matrix (Fin 2) (Fin 2) ℤ).det = 1 := by
+  have := N_mul_mIdx_eq N p hpN
+  simp [det_fin_two]; linarith
+
+/-- `γ′ = [[ap, 1], [Nm, 1]] ∈ Γ₁(N)`: top-left `ap ≡ 1 mod N`, lower-left `Nm ≡ 0
+mod N`, lower-right `1`. -/
+private lemma gamma_prime_mem_Gamma1 (N p : ℕ) [NeZero N] (hpN : Nat.Coprime p N) :
+    (⟨!![((aInvOfCoprime N p hpN : ℤ) * p), 1;
+         ((N : ℤ) * mIdxOfCoprime N p hpN), 1], gamma_prime_det N p hpN⟩ :
+      SL(2, ℤ)) ∈ Gamma1 N := by
+  rw [Gamma1_mem]
+  refine ⟨?_, ?_, ?_⟩
+  · change (((aInvOfCoprime N p hpN : ℤ) * p : ℤ) : ZMod N) = 1
+    push_cast; exact aInvOfCoprime_mul_eq_one N p hpN
+  · change ((1 : ℤ) : ZMod N) = 1; simp
+  · change (((N : ℤ) * mIdxOfCoprime N p hpN : ℤ) : ZMod N) = 0
+    push_cast; rw [ZMod.natCast_self, zero_mul]
+
+/-- The factorisation `M_∞ = diag(1, p) · mapGL ℚ γ′` with `γ′ = [[ap, 1], [Nm, 1]]`. -/
+private lemma M_infty_eq_diag_mul_gamma_prime (N p : ℕ) [NeZero N] (hp : 0 < p)
+    (hpN : Nat.Coprime p N) :
+    M_infty N p hp hpN = diagMat 2 ![1, p] *
+      (mapGL ℚ (⟨!![((aInvOfCoprime N p hpN : ℤ) * p), 1;
+           ((N : ℤ) * mIdxOfCoprime N p hpN), 1], gamma_prime_det N p hpN⟩ :
+        SL(2, ℤ))) := by
+  apply Units.ext
+  rw [diag_1p_mul_mapGL_val p hp, M_infty_val]
+  ext i j
+  fin_cases i <;> fin_cases j <;> simp [mul_comm]
+
 /-- `M_∞` lies in the double coset `D_p_Gamma1`.
 
 The factorisation `M_∞ = diag(1,p) · γ′` with `γ′ = [[ap, 1], [Nm, 1]] ∈ Γ₁(N)`
@@ -278,45 +322,14 @@ lemma M_infty_mem_D_p_Gamma1 (N p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Copr
   rw [D_p_Gamma1, HeckeCoset.toSet_mk, DoubleCoset.mem_doubleCoset] at hrep
   obtain ⟨α, hα, γ, hγ, habc⟩ := hrep
   -- Step 2: γ' = [[ap, 1], [Nm, 1]] ∈ Γ₁(N)
-  have hγ'_det : (!![((aInvOfCoprime N p hpN : ℤ) * p), 1;
-                     ((N : ℤ) * mIdxOfCoprime N p hpN), 1] :
-                  Matrix (Fin 2) (Fin 2) ℤ).det = 1 := by
-    have := N_mul_mIdx_eq N p hpN
-    simp [det_fin_two]; linarith
   set γ' : SL(2, ℤ) :=
     ⟨!![((aInvOfCoprime N p hpN : ℤ) * p), 1;
-        ((N : ℤ) * mIdxOfCoprime N p hpN), 1], hγ'_det⟩
-  have hγ'_in_Gamma1 : γ' ∈ Gamma1 N := by
-    rw [Gamma1_mem]
-    refine ⟨?_, ?_, ?_⟩
-    · -- (γ' 0 0 : ZMod N) = (ap : ZMod N) = 1
-      change (((aInvOfCoprime N p hpN : ℤ) * p : ℤ) : ZMod N) = 1
-      push_cast
-      exact aInvOfCoprime_mul_eq_one N p hpN
-    · -- (γ' 1 1 : ZMod N) = 1
-      change ((1 : ℤ) : ZMod N) = 1
-      simp
-    · -- (γ' 1 0 : ZMod N) = (Nm : ZMod N) = 0
-      change (((N : ℤ) * mIdxOfCoprime N p hpN : ℤ) : ZMod N) = 0
-      push_cast
-      rw [ZMod.natCast_self, zero_mul]
+        ((N : ℤ) * mIdxOfCoprime N p hpN), 1], gamma_prime_det N p hpN⟩
   have hγ'_mem : (mapGL ℚ γ' : GL (Fin 2) ℚ) ∈ (Gamma1_pair N).H :=
-    Subgroup.mem_map.mpr ⟨γ', hγ'_in_Gamma1, rfl⟩
+    Subgroup.mem_map.mpr ⟨γ', gamma_prime_mem_Gamma1 N p hpN, rfl⟩
   -- Step 3: M_∞ = diag(1, p) · mapGL ℚ γ'
-  have hfact : M_infty N p hp hpN = diagMat 2 ![1, p] * (mapGL ℚ γ') := by
-    apply Units.ext
-    show (M_infty N p hp hpN : Matrix _ _ ℚ) =
-      (diagMat 2 ![1, p] : GL _ ℚ).val * (mapGL ℚ γ' : GL _ ℚ).val
-    rw [M_infty_val]
-    have hpos : ∀ k : Fin 2, 0 < (![1, p] : Fin 2 → ℕ) k := fun k => by
-      fin_cases k <;> simp [hp]
-    ext i j
-    fin_cases i <;> fin_cases j <;>
-      (first
-        | (simp [diagMat_val _ _ hpos, Matrix.mul_apply,
-            Matrix.diagonal_apply, mapGL_coe_matrix, γ']; ring)
-        | (simp [diagMat_val _ _ hpos, Matrix.mul_apply,
-            Matrix.diagonal_apply, mapGL_coe_matrix, γ']))
+  have hfact : M_infty N p hp hpN = diagMat 2 ![1, p] * (mapGL ℚ γ') :=
+    M_infty_eq_diag_mul_gamma_prime N p hp hpN
   -- Step 4: diag(1, p) = α⁻¹ · rep · γ⁻¹
   have hdiag_eq : (diagMat 2 ![1, p] : GL _ ℚ) =
       α⁻¹ * ((D_p_Gamma1 N p hp).rep : GL _ ℚ) * γ⁻¹ := by
@@ -423,32 +436,50 @@ private lemma Gamma1_pair_H_entry_is_int {N : ℕ} [NeZero N] (g : GL (Fin 2) �
   obtain ⟨s, _, hs⟩ := Subgroup.mem_map.mp hg
   exact ⟨s.val i j, by rw [← hs]; simp [mapGL_coe_matrix, algebraMap_int_eq]⟩
 
-set_option maxHeartbeats 1600000 in
+/-- `adj(T_p_upper(b)) = [[p, -b], [0, 1]]`. -/
+private lemma adj_T_p_upper_val (p : ℕ) (hp : 0 < p) (b : ℕ) :
+    (GL_adjugate (T_p_upper p hp b : GL (Fin 2) ℚ)).val =
+    !![(p : ℚ), -(b : ℚ); 0, 1] := by
+  rw [GL_adjugate_val, T_p_upper_coe, Matrix.adjugate_fin_two_of, neg_zero]
+
+/-- `adj(T_p_upper(b))⁻¹ = [[1/p, b/p], [0, 1]]`. -/
+private lemma adj_T_p_upper_inv_val (p : ℕ) (hp : 0 < p) (b : ℕ) :
+    ((GL_adjugate (T_p_upper p hp b : GL (Fin 2) ℚ))⁻¹).val =
+    !![1 / (p : ℚ), (b : ℚ) / (p : ℚ); 0, 1] := by
+  have hp_ne : (p : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr hp.ne'
+  rw [Matrix.coe_units_inv, adj_T_p_upper_val p hp b,
+    Matrix.inv_def, Matrix.adjugate_fin_two_of, Ring.inverse_eq_inv']
+  ext i j
+  fin_cases i <;> fin_cases j <;>
+    simp [Matrix.det_fin_two_of] <;> field_simp
+
+/-- The product `adj(T_p_upper(b₁))⁻¹ · adj(T_p_upper(b₂))` has value
+`[[1, (b₁ − b₂)/p], [0, 1]]`. Computed entrywise from the two explicit adjugate
+forms, keeping the elaboration cheap (default heartbeat budget). -/
+private lemma adj_upper_inv_mul_upper_val (p : ℕ) (hp : 0 < p) (b₁ b₂ : ℕ) :
+    ((GL_adjugate (T_p_upper p hp b₁ : GL (Fin 2) ℚ))⁻¹ *
+      GL_adjugate (T_p_upper p hp b₂ : GL (Fin 2) ℚ)).val =
+    !![(1 : ℚ), ((b₁ : ℤ) - (b₂ : ℤ) : ℤ) / (p : ℚ); 0, 1] := by
+  have hp_ne : (p : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr hp.ne'
+  rw [Units.val_mul, adj_T_p_upper_inv_val p hp b₁, adj_T_p_upper_val p hp b₂]
+  ext i j
+  fin_cases i <;> fin_cases j <;>
+    simp [Matrix.mul_apply, Fin.sum_univ_two, sub_div] <;> field_simp <;> ring
+
 /-- `adj(T_p_upper(b₁))⁻¹ · adj(T_p_upper(b₂)) ∉ Γ₁(N).H` for distinct `b₁, b₂ < p`.
 The product has `(0,1)`-entry `(b₁ - b₂)/p ∉ ℤ`. -/
 lemma adj_upper_inv_mul_upper_not_mem_Gamma1 (N : ℕ) [NeZero N] (p : ℕ)
     (hp : Nat.Prime p) (b₁ b₂ : ℕ) (hb₁ : b₁ < p) (hb₂ : b₂ < p) (hne : b₁ ≠ b₂) :
     (GL_adjugate (T_p_upper p hp.pos b₁ : GL (Fin 2) ℚ))⁻¹ *
      GL_adjugate (T_p_upper p hp.pos b₂ : GL (Fin 2) ℚ) ∉ (Gamma1_pair N).H := by
-  have h_eq : (GL_adjugate (T_p_upper p hp.pos b₁ : GL _ ℚ))⁻¹ *
-     GL_adjugate (T_p_upper p hp.pos b₂ : GL _ ℚ) =
-    GeneralLinearGroup.mkOfDetNeZero
-      (!![(1 : ℚ), ((b₁ : ℤ) - (b₂ : ℤ) : ℤ) / (p : ℚ); 0, 1])
-      (by simp [det_fin_two]) := by
-    rw [inv_mul_eq_iff_eq_mul]; apply Units.ext; ext i j
-    simp only [GL_adjugate_val, Units.val_mul, Matrix.mul_apply, Fin.sum_univ_two]
-    have hp_ne : (p : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr hp.ne_zero
-    fin_cases i <;> fin_cases j <;>
-      simp [T_p_upper, GeneralLinearGroup.mkOfDetNeZero, sub_div] <;>
-      (try ring) <;> field_simp <;> ring
-  intro hmem; rw [h_eq] at hmem
+  intro hmem
   obtain ⟨n, hn⟩ := Gamma1_pair_H_entry_is_int _ hmem 0 1
-  simp [GeneralLinearGroup.mkOfDetNeZero] at hn
+  rw [adj_upper_inv_mul_upper_val p hp.pos b₁ b₂] at hn
+  simp only [Matrix.of_apply, Matrix.cons_val', Matrix.cons_val_zero,
+    Matrix.cons_val_one, Matrix.empty_val', Matrix.cons_val_fin_one] at hn
   have hp_ne : (p : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr hp.ne_zero
-  have h_rat : ((b₁ : ℤ) - (b₂ : ℤ) : ℚ) = (n : ℚ) * (p : ℚ) := by
-    have := hn; field_simp at this ⊢; exact_mod_cast this
-  have h_int : (b₁ : ℤ) - (b₂ : ℤ) = n * (p : ℤ) := by exact_mod_cast h_rat
-  have : (p : ℤ) ∣ ((b₁ : ℤ) - b₂) := ⟨n, by linarith⟩
+  rw [div_eq_iff hp_ne] at hn
+  have h_int : (b₁ : ℤ) - (b₂ : ℤ) = n * (p : ℤ) := by exact_mod_cast hn
   have hlt : |(b₁ : ℤ) - b₂| < p := by
     rw [abs_lt]; constructor <;> [push_cast; push_cast] <;> omega
   rw [h_int] at hlt; simp [abs_mul, Nat.abs_cast] at hlt
