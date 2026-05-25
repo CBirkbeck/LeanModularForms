@@ -62,9 +62,6 @@ def fdBoundary : ℝ → ℂ := fun t =>
   else
     (t - 9 / 2) + heightCutoff * I
 
-/-- Interior partition points of fdBoundary. -/
-def fdPartition : Finset ℝ := {1, 2, 3, 4}
-
 /-- Full partition including endpoints. -/
 def fdBoundaryFullPartition : Finset ℝ := {0, 1, 2, 3, 4, 5}
 
@@ -125,11 +122,6 @@ def fdBoundary_H_partition : Finset ℝ := {1, 3, 4}
 
 /-- The q-expansion radius at height H: e^(-2πH). -/
 def seg5_q_radius_H (H : ℝ) : ℝ := Real.exp (-2 * Real.pi * H)
-
-theorem fdBoundary_eq_fdBoundary_H :
-    fdBoundary = fdBoundary_H heightCutoff := by
-  ext t
-  simp only [fdBoundary, fdBoundary_H, heightCutoff]
 
 lemma fdBoundary_H_at_zero (H : ℝ) :
     fdBoundary_H H 0 = 1 / 2 + H * I := by
