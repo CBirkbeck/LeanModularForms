@@ -29,7 +29,6 @@ import LeanModularForms.ForMathlib.ModularInvariance
 import LeanModularForms.ForMathlib.ValenceFormula.OnCurvePV.Basic
 import LeanModularForms.ForMathlib.ValenceFormula.OnCurvePV.EndpointCorner
 import LeanModularForms.ForMathlib.ValenceFormula.OnCurvePV.Main
-import LeanModularForms.ForMathlib.ValenceFormula.PVChain
 import LeanModularForms.ForMathlib.ValenceFormula.PVChain.ArcContribution
 import LeanModularForms.ForMathlib.ValenceFormula.PVChain.Assembly
 import LeanModularForms.ForMathlib.ValenceFormula.PVChain.Assembly.ResidueSide
