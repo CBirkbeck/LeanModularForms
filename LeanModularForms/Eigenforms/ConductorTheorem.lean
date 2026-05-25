@@ -1249,6 +1249,11 @@ lemma exists_unit_of_not_factorsThrough
   · rwa [MonoidHom.mem_ker] at hu_ker
   · exact hu_chi ∘ MonoidHom.mem_ker.mpr
 
+/-- For `l ∣ N`, the integer cast factors as `N = l * (N / l)`. -/
+private lemma natCast_eq_mul_natCast_div {l N : ℕ} (h_dvd : l ∣ N) :
+    (N : ℤ) = (l : ℤ) * ((N / l : ℕ) : ℤ) := by
+  rw [mul_comm]; exact_mod_cast (Nat.div_mul_cancel h_dvd).symm
+
 /-- **Structural ascent**: if `γ ∈ Γ₀(N)` has `γ.val 1 1 ≡ 1 mod (N/l)`
 (i.e., `Gamma0MapUnits ⟨γ, hγ⟩` lies in the kernel of the unit-group
 reduction `(ZMod N)ˣ → (ZMod (N/l))ˣ`), then `levelRaiseConjOfDvd l γ`
@@ -1300,13 +1305,9 @@ lemma levelRaiseConjOfDvd_mem_Gamma1_div_of_mem_ker
     rw [show ((gtilde : SL(2, ℤ)) 1 0 : ℤ) = gtilde.val 1 0 from rfl, hgtilde_eq10,
       ZMod.intCast_zmod_eq_zero_iff_dvd]
     obtain ⟨m, hm⟩ := hN_dvd_c
-    rw [hm]
-    have hN_eq : (N : ℤ) = (l : ℤ) * (N / l : ℕ) := by
-      have : (N / l) * l = N := Nat.div_mul_cancel h_dvd
-      rw [show ((N : ℕ) : ℤ) = (((N / l) * l : ℕ) : ℤ) from by rw [this], Nat.cast_mul]
-      ring
-    rw [hN_eq, show ((l : ℤ) * ((N / l : ℕ) : ℤ)) * m = (l : ℤ) * (((N / l : ℕ) : ℤ) * m) from
-        by ring, Int.mul_ediv_cancel_left _ (Nat.cast_ne_zero.mpr (NeZero.ne l))]
+    rw [hm, natCast_eq_mul_natCast_div h_dvd,
+      show ((l : ℤ) * ((N / l : ℕ) : ℤ)) * m = (l : ℤ) * (((N / l : ℕ) : ℤ) * m) from by ring,
+      Int.mul_ediv_cancel_left _ (Nat.cast_ne_zero.mpr (NeZero.ne l))]
     exact ⟨m, rfl⟩
 
 /-- **Case B slash relation theorem.** Under the Case B hypothesis
@@ -1642,6 +1643,35 @@ private lemma controlled_lift_det_identity (N : ℕ) [NeZero N] (u : (ZMod N)ˣ)
         (N : ℤ) = 1 := by
   linarith [Int.ediv_mul_cancel (N_dvd_inv_val_mul_val_sub_one N u)]
 
+/-- The underlying matrix of the level-raising conjugate of the controlled lift
+`gamma0LiftLowerLeftN N u`: it is `!![a, l*b; N/l, e]` where `a, b, e` are the
+entries of `gamma0LiftLowerLeftN N u`. -/
+private lemma levelRaiseConjOfDvd_gamma0LiftLowerLeftN_val
+    (l N : ℕ) [NeZero l] [NeZero N] (h_dvd : l ∣ N) (u : (ZMod N)ˣ) :
+    (levelRaiseConjOfDvd l (gamma0LiftLowerLeftN N u : SL(2, ℤ))
+      (dvd_lower_left_of_dvd_of_mem_Gamma0 h_dvd
+        (gamma0LiftLowerLeftN N u).property)).val =
+      (!![((u⁻¹.val : ZMod N).val : ℤ),
+          (l : ℤ) * ((((u⁻¹.val : ZMod N).val : ℤ) * ((u.val : ZMod N).val : ℤ) - 1) /
+            (N : ℤ));
+          ((N / l : ℕ) : ℤ), ((u.val : ZMod N).val : ℤ)] : Matrix (Fin 2) (Fin 2) ℤ) := by
+  show (Matrix.of !![(gamma0LiftLowerLeftN N u : SL(2, ℤ)).val 0 0,
+      (l : ℤ) * (gamma0LiftLowerLeftN N u : SL(2, ℤ)).val 0 1;
+      (gamma0LiftLowerLeftN N u : SL(2, ℤ)).val 1 0 / l,
+      (gamma0LiftLowerLeftN N u : SL(2, ℤ)).val 1 1] : Matrix _ _ ℤ) =
+    !![((u⁻¹.val : ZMod N).val : ℤ),
+        (l : ℤ) * ((((u⁻¹.val : ZMod N).val : ℤ) * ((u.val : ZMod N).val : ℤ) - 1) /
+          (N : ℤ));
+        ((N / l : ℕ) : ℤ), ((u.val : ZMod N).val : ℤ)]
+  have h_div_eq : (N : ℤ) / (l : ℤ) = ((N / l : ℕ) : ℤ) := by
+    rw [natCast_eq_mul_natCast_div h_dvd,
+      Int.mul_ediv_cancel_left _ (Nat.cast_ne_zero.mpr (NeZero.ne l))]
+  ext p q; fin_cases p <;> fin_cases q <;>
+    simp only [Matrix.of_apply, Matrix.cons_val', Matrix.empty_val',
+      Matrix.cons_val_fin_one, gamma0LiftLowerLeftN_upper_left,
+      gamma0LiftLowerLeftN_upper_right, gamma0LiftLowerLeftN_lower_left,
+      gamma0LiftLowerLeftN_lower_right, h_div_eq]
+
 /-- **Explicit T-factor with character separation** (T072 main theorem).
 Given the Case B hypothesis (`¬ FactorsThrough`) and a unit `u`, construct
 an integer pair `(i, j)` and a separating unit `u'` (in the same
@@ -1689,16 +1719,11 @@ theorem exists_T_factor_with_char_separation
   refine ⟨i, j, u', hu'_chi, ?_⟩
   have h_i_eq : i * Nl = a₀ - a₀' := Int.ediv_mul_cancel h_dvd_a
   have h_j_eq : j * Nl = e₀ - e₀' := Int.ediv_mul_cancel h_dvd_e
-  have hN_eq : (N : ℤ) = (l : ℤ) * Nl := by
-    show ((N : ℕ) : ℤ) = (l : ℤ) * ((N / l : ℕ) : ℤ)
-    rw [show ((N : ℕ) : ℤ) = (((N / l) * l : ℕ) : ℤ) from by rw [Nat.div_mul_cancel h_dvd],
-      Nat.cast_mul]
-    ring
-  have hNl_ne : Nl ≠ 0 := by
-    have h_pos : 0 < N / l :=
-      Nat.div_pos (Nat.le_of_dvd (Nat.pos_of_neZero N) h_dvd) (Nat.pos_of_neZero l)
-    show ((N / l : ℕ) : ℤ) ≠ 0
-    exact_mod_cast h_pos.ne'
+  have hN_eq : (N : ℤ) = (l : ℤ) * Nl := natCast_eq_mul_natCast_div h_dvd
+  have hNl_ne : Nl ≠ 0 :=
+    show ((N / l : ℕ) : ℤ) ≠ 0 from by
+      exact_mod_cast (Nat.div_pos (Nat.le_of_dvd (Nat.pos_of_neZero N) h_dvd)
+        (Nat.pos_of_neZero l)).ne'
   have h_det_u : a₀ * e₀ - b₀ * ((l : ℤ) * Nl) = 1 := by
     rw [← hN_eq]; exact controlled_lift_det_identity N u
   have h_det_u' : a₀' * e₀' - b₀' * ((l : ℤ) * Nl) = 1 := by
@@ -1714,33 +1739,13 @@ theorem exists_T_factor_with_char_separation
   have h_lhs_val : (levelRaiseConjOfDvd l (gamma0LiftLowerLeftN N u : SL(2, ℤ))
       (dvd_lower_left_of_dvd_of_mem_Gamma0 h_dvd
         (gamma0LiftLowerLeftN N u).property)).val =
-      (!![a₀, (l : ℤ) * b₀; Nl, e₀] : Matrix (Fin 2) (Fin 2) ℤ) := by
-    show (Matrix.of !![(gamma0LiftLowerLeftN N u : SL(2, ℤ)).val 0 0,
-        (l : ℤ) * (gamma0LiftLowerLeftN N u : SL(2, ℤ)).val 0 1;
-        (gamma0LiftLowerLeftN N u : SL(2, ℤ)).val 1 0 / l,
-        (gamma0LiftLowerLeftN N u : SL(2, ℤ)).val 1 1] : Matrix _ _ ℤ) =
-      !![a₀, (l : ℤ) * b₀; Nl, e₀]
-    have h_div_eq : (N : ℤ) / (l : ℤ) = Nl := by
-      rw [hN_eq, Int.mul_ediv_cancel_left _ (Nat.cast_ne_zero.mpr (NeZero.ne l))]
-    ext p q; fin_cases p <;> fin_cases q <;>
-      simp [gamma0LiftLowerLeftN_upper_left, gamma0LiftLowerLeftN_upper_right,
-        gamma0LiftLowerLeftN_lower_left, gamma0LiftLowerLeftN_lower_right,
-        h_div_eq, e₀, a₀, b₀]
+      (!![a₀, (l : ℤ) * b₀; Nl, e₀] : Matrix (Fin 2) (Fin 2) ℤ) :=
+    levelRaiseConjOfDvd_gamma0LiftLowerLeftN_val l N h_dvd u
   have h_rhs_val : (levelRaiseConjOfDvd l (gamma0LiftLowerLeftN N u' : SL(2, ℤ))
       (dvd_lower_left_of_dvd_of_mem_Gamma0 h_dvd
         (gamma0LiftLowerLeftN N u').property)).val =
-      (!![a₀', (l : ℤ) * b₀'; Nl, e₀'] : Matrix (Fin 2) (Fin 2) ℤ) := by
-    show (Matrix.of !![(gamma0LiftLowerLeftN N u' : SL(2, ℤ)).val 0 0,
-        (l : ℤ) * (gamma0LiftLowerLeftN N u' : SL(2, ℤ)).val 0 1;
-        (gamma0LiftLowerLeftN N u' : SL(2, ℤ)).val 1 0 / l,
-        (gamma0LiftLowerLeftN N u' : SL(2, ℤ)).val 1 1] : Matrix _ _ ℤ) =
-      !![a₀', (l : ℤ) * b₀'; Nl, e₀']
-    have h_div_eq : (N : ℤ) / (l : ℤ) = Nl := by
-      rw [hN_eq, Int.mul_ediv_cancel_left _ (Nat.cast_ne_zero.mpr (NeZero.ne l))]
-    ext p q; fin_cases p <;> fin_cases q <;>
-      simp [gamma0LiftLowerLeftN_upper_left, gamma0LiftLowerLeftN_upper_right,
-        gamma0LiftLowerLeftN_lower_left, gamma0LiftLowerLeftN_lower_right,
-        h_div_eq, e₀', a₀', b₀']
+      (!![a₀', (l : ℤ) * b₀'; Nl, e₀'] : Matrix (Fin 2) (Fin 2) ℤ) :=
+    levelRaiseConjOfDvd_gamma0LiftLowerLeftN_val l N h_dvd u'
   rwa [h_lhs_val, h_rhs_val]
 
 /-- **Case B vanishing theorem (T072 closure)**: under the Case B hypothesis

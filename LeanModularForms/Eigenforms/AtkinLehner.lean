@@ -1327,6 +1327,80 @@ private def cuspFormOfModularForm
     (h : ∀ {c : OnePoint ℝ}, IsCusp c Γ → c.IsZeroAt g.toFun k) :
     (⇑(cuspFormOfModularForm g h) : UpperHalfPlane → ℂ) = ⇑g := rfl
 
+/-- **Character-space transfer along a shared coercion.**  If a cusp form
+`g_cf` and a modular form `g_mf` at level `Γ₁(N)` share the same underlying
+function on `ℍ` and `g_mf` lies in the modular-form Nebentypus space
+`modFormCharSpace k χ`, then `g_cf` lies in the cusp-form Nebentypus space
+`cuspFormCharSpace k χ`.
+
+Both diamond operators reduce, on any `(ZMod N)ˣ`-representative `γ`, to the
+same slash `⇑g ∣[k] mapGL ℝ γ` (via `diamondOpCusp_eq` / `diamondOp_eq_diamondOpAux`),
+so the modular-form eigenvalue equation transfers verbatim through `h_coe`. -/
+private lemma mem_cuspFormCharSpace_of_funeq_modForm
+    {N : ℕ} [NeZero N] {k : ℤ} (χ : (ZMod N)ˣ →* ℂˣ)
+    (g_cf : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (g_mf : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (h_coe : (⇑g_cf : UpperHalfPlane → ℂ) = ⇑g_mf)
+    (h_mf : g_mf ∈ modFormCharSpace k χ) :
+    g_cf ∈ cuspFormCharSpace k χ := by
+  rw [mem_cuspFormCharSpace_iff]
+  intro u
+  obtain ⟨γ, hγ⟩ := Gamma0MapUnits_surjective (N := N) u
+  have h_mf_app := congrArg (fun F : ModularForm ((Gamma1 N).map (mapGL ℝ)) k =>
+    (⇑F : UpperHalfPlane → ℂ)) ((mem_modFormCharSpace_iff k χ g_mf).mp h_mf u)
+  apply DFunLike.ext
+  intro z
+  have h_cf_slash : (⇑(diamondOpCuspHom k u g_cf) : UpperHalfPlane → ℂ) z =
+      (⇑g_mf ∣[k] (mapGL ℝ (γ : Matrix.SpecialLinearGroup (Fin 2) ℤ) :
+        GL (Fin 2) ℝ)) z := by
+    show (⇑(diamondOpCusp k u g_cf) : UpperHalfPlane → ℂ) z = _
+    rw [diamondOpCusp_eq k u γ hγ, ← h_coe]; rfl
+  have h_mf_slash : (⇑g_mf ∣[k] (mapGL ℝ (γ : Matrix.SpecialLinearGroup (Fin 2) ℤ) :
+        GL (Fin 2) ℝ)) z =
+      ((↑(χ u) : ℂ) • (⇑g_mf : UpperHalfPlane → ℂ)) z := by
+    rw [← show (⇑(diamondOp k u g_mf) : UpperHalfPlane → ℂ) z =
+        (⇑g_mf ∣[k] (mapGL ℝ (γ : Matrix.SpecialLinearGroup (Fin 2) ℤ) :
+          GL (Fin 2) ℝ)) z by
+      rw [diamondOp_eq_diamondOpAux k u γ hγ]; rfl]
+    simpa using congrFun h_mf_app z
+  rw [h_cf_slash, h_mf_slash]
+  simp [h_coe]
+
+/-- **Cusp-form reconstruction from a coercion-matched modular-form sum.**
+If `f.toModularForm'` equals a finite sum `∑ d ∈ S, samePiece d` of modular
+forms, and a cusp-form family `lifted` matches `samePiece` coercion-wise on
+`S`, then `f = ∑ d ∈ S, lifted d` as cusp forms.
+
+Pointwise (`DFunLike.ext`) argument: the coercion of each finite sum is the
+pointwise finite sum (by `Finset.cons_induction`), then `Finset.sum_congr`
+with the per-divisor coercion equality `h_coe`. -/
+private lemma cuspForm_eq_sum_of_toModularForm_eq_sum
+    {N : ℕ} [NeZero N] {k : ℤ}
+    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (samePiece : ℕ → ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (lifted : ℕ → CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (S : Finset ℕ)
+    (h_sum : f.toModularForm' = ∑ d ∈ S, samePiece d)
+    (h_coe : ∀ d ∈ S, (⇑(lifted d) : UpperHalfPlane → ℂ) = ⇑(samePiece d)) :
+    f = ∑ d ∈ S, lifted d := by
+  apply DFunLike.ext
+  intro z
+  have h_mf_sum : ∀ T : Finset ℕ,
+      (⇑(∑ d ∈ T, samePiece d) : UpperHalfPlane → ℂ) z = ∑ d ∈ T, ⇑(samePiece d) z := by
+    intro T
+    induction T using Finset.cons_induction with
+    | empty => simp
+    | cons a s ha ih => simp only [Finset.sum_cons, ModularForm.coe_add, Pi.add_apply, ih]
+  have h_cf_sum : ∀ T : Finset ℕ,
+      (⇑(∑ d ∈ T, lifted d) : UpperHalfPlane → ℂ) z = ∑ d ∈ T, ⇑(lifted d) z := by
+    intro T
+    induction T using Finset.cons_induction with
+    | empty => simp
+    | cons a s ha ih => simp only [Finset.sum_cons, CuspForm.coe_add, Pi.add_apply, ih]
+  rw [h_cf_sum, show (f z : ℂ) = (⇑f.toModularForm' : UpperHalfPlane → ℂ) z from rfl,
+    h_sum, h_mf_sum]
+  exact Finset.sum_congr rfl (fun d hd => by rw [h_coe d hd])
+
 /-- **T131 / SMO bridge consumer (ModularForm-input).**  Given:
 
 * a `CuspForm` `f` at level `Γ₁(N)` lying in the cusp-form character space
@@ -1362,27 +1436,9 @@ theorem mainLemma_charSpace_of_modularFormSameLevelDivisorDecomposition
     if hd : d ∈ N.divisors.filter (1 < ·) then
       cuspFormOfModularForm (samePiece d) (h_cusp d hd)
     else 0
-  have h_sum_lifted : f = ∑ d ∈ N.divisors.filter (1 < ·), lifted d := by
-    apply DFunLike.ext
-    intro z
-    have h_coe_f : (⇑f.toModularForm' : UpperHalfPlane → ℂ) = ⇑f := rfl
-    have h_sum_fun : (⇑f.toModularForm' : UpperHalfPlane → ℂ) z =
-        ∑ d ∈ N.divisors.filter (1 < ·), ⇑(samePiece d) z := by
-      rw [h_sum]
-      induction N.divisors.filter (1 < ·) using Finset.cons_induction with
-      | empty => simp
-      | cons a s ha ih => simp only [Finset.sum_cons, ModularForm.coe_add, Pi.add_apply, ih]
-    have h_sum_lift_fun : (⇑(∑ d ∈ N.divisors.filter (1 < ·), lifted d)
-          : UpperHalfPlane → ℂ) z =
-        ∑ d ∈ N.divisors.filter (1 < ·), ⇑(lifted d) z := by
-      induction N.divisors.filter (1 < ·) using Finset.cons_induction with
-      | empty => simp
-      | cons a s ha ih => simp only [Finset.sum_cons, CuspForm.coe_add, Pi.add_apply, ih]
-    rw [h_sum_lift_fun]
-    rw [show (f z : ℂ) = (⇑f.toModularForm' : UpperHalfPlane → ℂ) z from rfl,
-        h_sum_fun]
-    refine Finset.sum_congr rfl (fun d hd => ?_)
-    simp only [lifted, dif_pos hd, cuspFormOfModularForm_coe]
+  have h_sum_lifted : f = ∑ d ∈ N.divisors.filter (1 < ·), lifted d :=
+    cuspForm_eq_sum_of_toModularForm_eq_sum f samePiece lifted _ h_sum
+      (fun d hd => by simp only [lifted, dif_pos hd, cuspFormOfModularForm_coe])
   have h_pieces_lifted : ∀ d ∈ N.divisors.filter (1 < ·),
       lifted d ∈ qSupportedOnDvdSubmodule N k d ∧
       lifted d ∈ cuspFormCharSpace k χ.toUnitHom := by
@@ -1395,72 +1451,8 @@ theorem mainLemma_charSpace_of_modularFormSameLevelDivisorDecomposition
       rw [show (qExpansion (1 : ℝ) ⇑(lifted d)) =
           qExpansion (1 : ℝ) ⇑(samePiece d) by rw [h_coe]]
       exact h_pieces_qsupp d hd n hn
-    · rw [mem_cuspFormCharSpace_iff]
-      intro u
-      have h_mf := (mem_modFormCharSpace_iff k χ.toUnitHom (samePiece d)).mp
-        (h_pieces_char d hd) u
-      apply DFunLike.ext
-      intro z
-      obtain ⟨γ, hγ⟩ := Gamma0MapUnits_surjective (N := N) u
-      have h_cusp_diamond : (⇑(diamondOpCuspHom k u (lifted d))
-            : UpperHalfPlane → ℂ) z =
-          ((⇑(lifted d) : UpperHalfPlane → ℂ) ∣[k]
-            (mapGL ℝ (γ : Matrix.SpecialLinearGroup (Fin 2) ℤ) : GL (Fin 2) ℝ)) z := by
-        show (⇑(diamondOpCusp k u (lifted d)) : UpperHalfPlane → ℂ) z = _
-        rw [diamondOpCusp_eq k u γ hγ]
-        rfl
-      have h_mf_diamond : (⇑(diamondOpHom k u (samePiece d))
-            : UpperHalfPlane → ℂ) z =
-          ((⇑(samePiece d) : UpperHalfPlane → ℂ) ∣[k]
-            (mapGL ℝ (γ : Matrix.SpecialLinearGroup (Fin 2) ℤ) : GL (Fin 2) ℝ)) z := by
-        show (⇑(diamondOp k u (samePiece d)) : UpperHalfPlane → ℂ) z = _
-        rw [diamondOp_eq_diamondOpAux k u γ hγ]
-        rfl
-      have h_mf_app := congrArg
-        (fun F : ModularForm ((Gamma1 N).map (mapGL ℝ)) k =>
-          (⇑F : UpperHalfPlane → ℂ) z) h_mf
-      simp only at h_mf_app
-      rw [h_mf_diamond] at h_mf_app
-      have h_smul_mf : ((↑(χ.toUnitHom u) : ℂ) • (⇑(samePiece d)
-            : UpperHalfPlane → ℂ)) z =
-          ((↑(χ.toUnitHom u) : ℂ) • (⇑(lifted d) : UpperHalfPlane → ℂ)) z := by
-        simp [h_coe]
-      have h_target : ((⇑(samePiece d) : UpperHalfPlane → ℂ) ∣[k]
-            (mapGL ℝ (γ : Matrix.SpecialLinearGroup (Fin 2) ℤ) : GL (Fin 2) ℝ)) z =
-          ((↑(χ.toUnitHom u) : ℂ) • (⇑(samePiece d)
-            : UpperHalfPlane → ℂ)) z := by
-        have hsmul : (⇑((↑(χ.toUnitHom u) : ℂ) • (samePiece d))
-              : UpperHalfPlane → ℂ) z =
-            ((↑(χ.toUnitHom u) : ℂ) • (⇑(samePiece d)
-              : UpperHalfPlane → ℂ)) z := by
-          simp [Pi.smul_apply]
-        calc ((⇑(samePiece d) : UpperHalfPlane → ℂ) ∣[k]
-              (mapGL ℝ (γ : Matrix.SpecialLinearGroup (Fin 2) ℤ) : GL (Fin 2) ℝ)) z
-            = (⇑(diamondOpHom k u (samePiece d))
-              : UpperHalfPlane → ℂ) z := h_mf_diamond.symm
-          _ = (⇑((↑(χ.toUnitHom u) : ℂ) • (samePiece d))
-              : UpperHalfPlane → ℂ) z := by rw [h_mf]
-          _ = _ := hsmul
-      have h_lift_smul : ((↑(χ.toUnitHom u) : ℂ) • (⇑(lifted d)
-            : UpperHalfPlane → ℂ)) z =
-          (⇑((↑(χ.toUnitHom u) : ℂ) • (lifted d) : CuspForm _ k)
-            : UpperHalfPlane → ℂ) z := by
-        simp [Pi.smul_apply]
-      have h_slash_lift : ((⇑(lifted d) : UpperHalfPlane → ℂ) ∣[k]
-            (mapGL ℝ (γ : Matrix.SpecialLinearGroup (Fin 2) ℤ) : GL (Fin 2) ℝ)) z =
-          ((⇑(samePiece d) : UpperHalfPlane → ℂ) ∣[k]
-            (mapGL ℝ (γ : Matrix.SpecialLinearGroup (Fin 2) ℤ) : GL (Fin 2) ℝ)) z := by rw [h_coe]
-      calc (⇑(diamondOpCuspHom k u (lifted d)) : UpperHalfPlane → ℂ) z
-          = ((⇑(lifted d) : UpperHalfPlane → ℂ) ∣[k]
-            (mapGL ℝ (γ : Matrix.SpecialLinearGroup (Fin 2) ℤ) : GL (Fin 2) ℝ)) z := h_cusp_diamond
-        _ = ((⇑(samePiece d) : UpperHalfPlane → ℂ) ∣[k]
-            (mapGL ℝ (γ : Matrix.SpecialLinearGroup (Fin 2) ℤ) : GL (Fin 2) ℝ)) z := h_slash_lift
-        _ = ((↑(χ.toUnitHom u) : ℂ) • (⇑(samePiece d)
-            : UpperHalfPlane → ℂ)) z := h_target
-        _ = ((↑(χ.toUnitHom u) : ℂ) • (⇑(lifted d)
-            : UpperHalfPlane → ℂ)) z := h_smul_mf
-        _ = (⇑((↑(χ.toUnitHom u) : ℂ) • lifted d) : UpperHalfPlane → ℂ) z :=
-            h_lift_smul.symm
+    · exact mem_cuspFormCharSpace_of_funeq_modForm χ.toUnitHom (lifted d)
+        (samePiece d) h_coe (h_pieces_char d hd)
   exact mainLemma_charSpace_of_sameLevelDivisorDecomposition χ f lifted
     h_sum_lifted h_pieces_lifted
 

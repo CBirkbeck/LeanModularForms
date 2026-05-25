@@ -63,6 +63,38 @@ open ModularFormClass CongruenceSubgroup Matrix.SpecialLinearGroup
 
 namespace HeckeRing.GL2.MainLemma
 
+/-- **Sieve-indicator merge over `Finset.insert`.**  Folding the
+single-prime test `p₀ ∣ n` and the divisor-set test
+`∃ q ∈ S', q ∣ n` into one test over `insert p₀ S'`.  Powers the
+inductive `insert`-step coefficient bookkeeping of the prime-sieve
+lemmas. -/
+private theorem ite_dvd_insert_eq_ite_exists
+    {α : Type*} (p₀ n : ℕ) (S' : Finset ℕ) (a b : α) :
+    (if p₀ ∣ n then a else if ∃ q ∈ S', q ∣ n then a else b) =
+      if ∃ p ∈ insert p₀ S', p ∣ n then a else b := by
+  simp only [Finset.exists_mem_insert]
+  split <;> simp_all
+
+/-- **Sieve-indicator merge over `List.cons`.**  The `List`-indexed
+analogue of `ite_dvd_insert_eq_ite_exists`, folding `p₀ ∣ n` and
+`∃ q ∈ L', q ∣ n` into one test over `p₀ :: L'`. -/
+private theorem ite_dvd_cons_eq_ite_exists
+    {α : Type*} (p₀ n : ℕ) (L' : List ℕ) (a b : α) :
+    (if p₀ ∣ n then a else if ∃ q ∈ L', q ∣ n then a else b) =
+      if ∃ p ∈ p₀ :: L', p ∣ n then a else b := by
+  simp only [List.exists_mem_cons_iff]
+  split <;> simp_all
+
+/-- **`M · ∏ L` is nonzero when every prime in `L` divides `M`.**  The
+`List`-indexed counterpart of `neZero_mul_finset_prod_of_prime_dvd`,
+discharging the recurring `NeZero (M * L.prod)` side condition of the
+list-iterated sieve constructions. -/
+private theorem neZero_mul_list_prod_of_prime_dvd
+    {M : ℕ} [NeZero M] {L : List ℕ} (hL : ∀ p ∈ L, p.Prime ∧ p ∣ M) :
+    NeZero (M * L.prod) :=
+  ⟨Nat.mul_ne_zero (NeZero.ne M)
+    (List.prod_pos (fun p hp ↦ (hL p hp).1.pos)).ne'⟩
+
 /-- **Containment of `Γ₁(M)` in `Γ₁(N)` after `mapGL ℝ`.**
 For `N ∣ M`, the image `(Γ₁(M)).map (mapGL ℝ)` is contained in
 `(Γ₁(N)).map (mapGL ℝ)` inside `GL(2, ℝ)`. -/
@@ -501,6 +533,35 @@ theorem miyake_4_6_5_prime_sieve_heckeT_p_divN_one
     (HeckeRing.GL2.heckeT_p_divN k p hp hpM f)
     (fun m ↦ HeckeRing.GL2.qExpansion_one_heckeT_p_divN_coeff hp hpM f m) n
 
+/-- **Period-1 coefficient of one `heckeT_p_divN` sieve step.**  For a
+prime `p₀ ∣ M`, the difference of the level-`Γ₁(p₀·M)` restriction of
+`g` and the level-raised `heckeT_p_divN` image has `n`-th Fourier
+coefficient `0` when `p₀ ∣ n` and `a_n(g)` otherwise.  This is the
+single inductive sieve step shared by the `Finset`- and `List`-indexed
+iterations (it bundles `qExpansion_sub`, `ModularForm.coe_sub`, and
+`miyake_4_6_5_prime_sieve_heckeT_p_divN_one`). -/
+private theorem qExpansion_coeff_sieve_step
+    {M : ℕ} [NeZero M] {k : ℤ} {p₀ : ℕ} [NeZero p₀]
+    (hp₀_prime : p₀.Prime) (hp₀_not_coprime : ¬ Nat.Coprime p₀ M)
+    (h_le : (Gamma1 (p₀ * M)).map (mapGL ℝ) ≤ (Gamma1 M).map (mapGL ℝ))
+    (g : ModularForm ((Gamma1 M).map (mapGL ℝ)) k) (n : ℕ) :
+    (qExpansion (1 : ℝ)
+        (ModularForm.restrictSubgroup h_le g -
+          HeckeRing.GL2.modularFormLevelRaise M p₀ k
+            (HeckeRing.GL2.heckeT_p_divN k p₀ hp₀_prime hp₀_not_coprime g))).coeff n =
+      (if p₀ ∣ n then 0 else (qExpansion (1 : ℝ) g).coeff n) := by
+  haveI : NeZero (p₀ * M) := ⟨Nat.mul_ne_zero (NeZero.ne p₀) (NeZero.ne M)⟩
+  have h1_period : (1 : ℝ) ∈ ((Gamma1 (p₀ * M)).map (mapGL ℝ)).strictPeriods := by
+    rw [show (Gamma1 (p₀ * M)).map (mapGL ℝ) =
+          (Gamma1 (p₀ * M) : Subgroup (GL (Fin 2) ℝ)) from rfl,
+      CongruenceSubgroup.strictPeriods_Gamma1]
+    exact ⟨1, by simp⟩
+  have h_restrict_coeff :
+      (qExpansion (1 : ℝ) (ModularForm.restrictSubgroup h_le g)).coeff n =
+      (qExpansion (1 : ℝ) g).coeff n := rfl
+  rw [qExpansion_sub one_pos h1_period, map_sub, h_restrict_coeff,
+    miyake_4_6_5_prime_sieve_heckeT_p_divN_one hp₀_prime hp₀_not_coprime g n]
+
 /-- **Miyake 4.6.7 — finite-prime iteration of the period-1 single-prime
 `heckeT_p_divN` sieve at level aware of each prime.**
 
@@ -564,45 +625,9 @@ theorem miyake_4_6_5_finset_sieve_heckeT_p_divN_one
         HeckeRing.GL2.modularFormLevelRaise M_prev p₀ k
           (HeckeRing.GL2.heckeT_p_divN k p₀ hp₀_prime hp₀_not_coprime g_prev), ?_⟩
     intro n
-    have h1_pos : (0 : ℝ) < 1 := one_pos
-    have h1_period : (1 : ℝ) ∈ ((Gamma1 (p₀ * M_prev)).map (mapGL ℝ)).strictPeriods := by
-      rw [show (Gamma1 (p₀ * M_prev)).map (mapGL ℝ) =
-            (Gamma1 (p₀ * M_prev) : Subgroup (GL (Fin 2) ℝ)) from rfl,
-        CongruenceSubgroup.strictPeriods_Gamma1]
-      exact ⟨1, by simp⟩
-    rw [show ⇑(ModularForm.restrictSubgroup h_le g_prev -
-          HeckeRing.GL2.modularFormLevelRaise M_prev p₀ k
-            (HeckeRing.GL2.heckeT_p_divN k p₀ hp₀_prime hp₀_not_coprime g_prev)) =
-        ⇑(ModularForm.restrictSubgroup h_le g_prev) -
-        ⇑(HeckeRing.GL2.modularFormLevelRaise M_prev p₀ k
-            (HeckeRing.GL2.heckeT_p_divN k p₀ hp₀_prime hp₀_not_coprime g_prev)) from
-      ModularForm.coe_sub _ _]
-    rw [qExpansion_sub h1_pos h1_period, map_sub]
-    have h_restrict_coeff :
-        (qExpansion (1 : ℝ)
-          (ModularForm.restrictSubgroup h_le g_prev)).coeff n =
-        (qExpansion (1 : ℝ) g_prev).coeff n := rfl
-    rw [h_restrict_coeff]
-    have hT83 :=
-      miyake_4_6_5_prime_sieve_heckeT_p_divN_one hp₀_prime hp₀_not_coprime g_prev n
-    rw [hT83, hg_prev n]
-    by_cases hn_p₀ : p₀ ∣ n
-    · have h_ex : ∃ p ∈ insert p₀ S', p ∣ n :=
-        ⟨p₀, Finset.mem_insert_self _ _, hn_p₀⟩
-      rw [if_pos hn_p₀, if_pos h_ex]
-    · rw [if_neg hn_p₀]
-      by_cases hn_S' : ∃ q ∈ S', q ∣ n
-      · have h_ex : ∃ p ∈ insert p₀ S', p ∣ n := by
-          obtain ⟨q, hqS', hqn⟩ := hn_S'
-          exact ⟨q, Finset.mem_insert_of_mem hqS', hqn⟩
-        rw [if_pos hn_S', if_pos h_ex]
-      · rw [if_neg hn_S']
-        have h_nex : ¬ ∃ p ∈ insert p₀ S', p ∣ n := by
-          rintro ⟨p, hp_mem, hpn⟩
-          rcases Finset.mem_insert.mp hp_mem with rfl | hp_S'
-          · exact hn_p₀ hpn
-          · exact hn_S' ⟨p, hp_S', hpn⟩
-        rw [if_neg h_nex]
+    rw [ModularForm.coe_sub,
+      qExpansion_coeff_sieve_step hp₀_prime hp₀_not_coprime h_le g_prev n, hg_prev n]
+    exact ite_dvd_insert_eq_ite_exists p₀ n S' 0 _
 
 theorem miyake_4_6_5_squarefree_sieve_heckeT_p_divN_one
     {M : ℕ} [NeZero M] {k : ℤ} (f : ModularForm ((Gamma1 M).map (mapGL ℝ)) k)
@@ -725,6 +750,55 @@ theorem modularFormLevelRaise_mem_modFormCharSpace
   exact DFunLike.congr_fun
     ((HeckeRing.GL2.modularFormLevelRaise M d k).map_smul c f) z
 
+/-- **Restriction to a deeper level, with the Nebentypus pull-back
+collapsed.**  If `g` lies in the `(M ∣ N)`-pulled-back character space
+at level `Γ₁(N)`, then its restriction to `Γ₁(N')` (any `N ∣ N'` via
+`h_le`) lies in the single `(M ∣ N')`-pulled-back space.  Bundles
+`restrictSubgroup_mem_modFormCharSpace` with the `unitsMap`
+composition identity `MonoidHom.comp_assoc`/`ZMod.unitsMap_comp`. -/
+private theorem restrictSubgroup_mem_modFormCharSpace_comp
+    {M N N' : ℕ} [NeZero M] [NeZero N] [NeZero N'] {k : ℤ}
+    (χ : (ZMod M)ˣ →* ℂˣ) (hdvd_prev : M ∣ N) (h_nn' : N ∣ N') (hdvd_inner : M ∣ N')
+    (h_le : (Gamma1 N').map (mapGL ℝ) ≤ (Gamma1 N).map (mapGL ℝ))
+    {g : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
+    (hg : g ∈ modFormCharSpace k (χ.comp (ZMod.unitsMap hdvd_prev))) :
+    ModularForm.restrictSubgroup h_le g ∈
+      modFormCharSpace k (χ.comp (ZMod.unitsMap hdvd_inner)) := by
+  have h_comp_eq :
+      (χ.comp (ZMod.unitsMap hdvd_prev)).comp (ZMod.unitsMap h_nn') =
+        χ.comp (ZMod.unitsMap hdvd_inner) := by
+    rw [MonoidHom.comp_assoc, ZMod.unitsMap_comp]
+  have h := restrictSubgroup_mem_modFormCharSpace
+    (χ.comp (ZMod.unitsMap hdvd_prev)) h_nn' g hg
+  rwa [h_comp_eq] at h
+
+/-- **Level-raised `heckeT_p_divN` image, with the Nebentypus pull-back
+collapsed.**  For a prime `p₀ ∣ N` and `g` in the `(M ∣ N)`-pulled-back
+character space at level `Γ₁(N)`, the level-raised `heckeT_p_divN`
+image lands in the single `(M ∣ p₀·N)`-pulled-back space.  Bundles
+`heckeT_p_divN_preserves_modFormCharSpace`,
+`modularFormLevelRaise_mem_modFormCharSpace`, and the `unitsMap`
+composition identity. -/
+private theorem levelRaise_heckeT_mem_modFormCharSpace_comp
+    {M N : ℕ} [NeZero M] [NeZero N] {k : ℤ} {p₀ : ℕ} [NeZero p₀]
+    (hp₀_prime : p₀.Prime) (hp₀_not_coprime : ¬ Nat.Coprime p₀ N)
+    (χ : (ZMod M)ˣ →* ℂˣ) (hdvd_prev : M ∣ N) (hdvd_inner : M ∣ p₀ * N)
+    {g : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
+    (hg : g ∈ modFormCharSpace k (χ.comp (ZMod.unitsMap hdvd_prev))) :
+    HeckeRing.GL2.modularFormLevelRaise N p₀ k
+        (HeckeRing.GL2.heckeT_p_divN k p₀ hp₀_prime hp₀_not_coprime g) ∈
+      modFormCharSpace k (χ.comp (ZMod.unitsMap hdvd_inner)) := by
+  have h_mp_dvd : N ∣ p₀ * N := Nat.dvd_mul_left N p₀
+  have h_comp_eq :
+      (χ.comp (ZMod.unitsMap hdvd_prev)).comp (ZMod.unitsMap h_mp_dvd) =
+        χ.comp (ZMod.unitsMap hdvd_inner) := by
+    rw [MonoidHom.comp_assoc, ZMod.unitsMap_comp]
+  have h_ht := heckeT_p_divN_preserves_modFormCharSpace
+    hp₀_prime hp₀_not_coprime (χ.comp (ZMod.unitsMap hdvd_prev)) hg
+  have h_lr := modularFormLevelRaise_mem_modFormCharSpace
+    N p₀ k (χ.comp (ZMod.unitsMap hdvd_prev)) h_ht
+  rwa [h_comp_eq] at h_lr
+
 theorem miyake_main_lemma_4_6_8_finset
     {M : ℕ} [NeZero M] {k : ℤ} (χ : (ZMod M)ˣ →* ℂˣ)
     (f : ModularForm ((Gamma1 M).map (mapGL ℝ)) k)
@@ -768,61 +842,16 @@ theorem miyake_main_lemma_4_6_8_finset
           (HeckeRing.GL2.heckeT_p_divN k p₀ hp₀_prime hp₀_not_coprime g_prev),
       ?_, ?_⟩
     · -- Character-space membership of the new form.
-      have h_comp_eq :
-          (χ.comp (ZMod.unitsMap hdvd_prev)).comp (ZMod.unitsMap h_mp_dvd) =
-            χ.comp (ZMod.unitsMap hdvd_new) := by
-        rw [MonoidHom.comp_assoc, ZMod.unitsMap_comp]
-      refine Submodule.sub_mem _ ?_ ?_
-      · have := restrictSubgroup_mem_modFormCharSpace
-          (χ.comp (ZMod.unitsMap hdvd_prev)) h_mp_dvd g_prev hg_prev_char
-        rwa [h_comp_eq] at this
-      · have h_ht := heckeT_p_divN_preserves_modFormCharSpace hp₀_prime
-          hp₀_not_coprime (χ.comp (ZMod.unitsMap hdvd_prev)) hg_prev_char
-        have h_lr := modularFormLevelRaise_mem_modFormCharSpace M_prev p₀ k
-          (χ.comp (ZMod.unitsMap hdvd_prev)) h_ht
-        rwa [h_comp_eq] at h_lr
+      exact Submodule.sub_mem _
+        (restrictSubgroup_mem_modFormCharSpace_comp χ hdvd_prev h_mp_dvd hdvd_new h_le
+          hg_prev_char)
+        (levelRaise_heckeT_mem_modFormCharSpace_comp hp₀_prime hp₀_not_coprime χ hdvd_prev
+          hdvd_new hg_prev_char)
     · -- Coefficient formula: mirrors the T085 induction step.
       intro n
-      have h1_pos : (0 : ℝ) < 1 := one_pos
-      have h1_period :
-          (1 : ℝ) ∈ ((Gamma1 (p₀ * M_prev)).map (mapGL ℝ)).strictPeriods := by
-        rw [show (Gamma1 (p₀ * M_prev)).map (mapGL ℝ) =
-              (Gamma1 (p₀ * M_prev) : Subgroup (GL (Fin 2) ℝ)) from rfl,
-          CongruenceSubgroup.strictPeriods_Gamma1]
-        exact ⟨1, by simp⟩
-      rw [show ⇑(ModularForm.restrictSubgroup h_le g_prev -
-            HeckeRing.GL2.modularFormLevelRaise M_prev p₀ k
-              (HeckeRing.GL2.heckeT_p_divN k p₀ hp₀_prime hp₀_not_coprime g_prev)) =
-          ⇑(ModularForm.restrictSubgroup h_le g_prev) -
-          ⇑(HeckeRing.GL2.modularFormLevelRaise M_prev p₀ k
-              (HeckeRing.GL2.heckeT_p_divN k p₀ hp₀_prime hp₀_not_coprime g_prev)) from
-        ModularForm.coe_sub _ _]
-      rw [qExpansion_sub h1_pos h1_period, map_sub]
-      have h_restrict_coeff :
-          (qExpansion (1 : ℝ)
-            (ModularForm.restrictSubgroup h_le g_prev)).coeff n =
-          (qExpansion (1 : ℝ) g_prev).coeff n := rfl
-      rw [h_restrict_coeff]
-      have hT83 :=
-        miyake_4_6_5_prime_sieve_heckeT_p_divN_one hp₀_prime hp₀_not_coprime g_prev n
-      rw [hT83, hg_prev n]
-      by_cases hn_p₀ : p₀ ∣ n
-      · have h_ex : ∃ p ∈ insert p₀ S', p ∣ n :=
-          ⟨p₀, Finset.mem_insert_self _ _, hn_p₀⟩
-        rw [if_pos hn_p₀, if_pos h_ex]
-      · rw [if_neg hn_p₀]
-        by_cases hn_S' : ∃ q ∈ S', q ∣ n
-        · have h_ex : ∃ p ∈ insert p₀ S', p ∣ n := by
-            obtain ⟨q, hqS', hqn⟩ := hn_S'
-            exact ⟨q, Finset.mem_insert_of_mem hqS', hqn⟩
-          rw [if_pos hn_S', if_pos h_ex]
-        · rw [if_neg hn_S']
-          have h_nex : ¬ ∃ p ∈ insert p₀ S', p ∣ n := by
-            rintro ⟨p, hp_mem, hpn⟩
-            rcases Finset.mem_insert.mp hp_mem with rfl | hp_S'
-            · exact hn_p₀ hpn
-            · exact hn_S' ⟨p, hp_S', hpn⟩
-          rw [if_neg h_nex]
+      rw [ModularForm.coe_sub,
+        qExpansion_coeff_sieve_step hp₀_prime hp₀_not_coprime h_le g_prev n, hg_prev n]
+      exact ite_dvd_insert_eq_ite_exists p₀ n S' 0 _
 
 /-- **Miyake Main Lemma 4.6.8 (square-free case).**
 
@@ -1174,51 +1203,10 @@ private theorem iteratedSieveWitnessOnList_qExpansion_coeff
       rw [List.prod_cons]; ring
     haveI hM_new_ne : NeZero (p₀ * (M * L'.prod)) :=
       ⟨Nat.mul_ne_zero (NeZero.ne p₀) (NeZero.ne (M * L'.prod))⟩
-    rw [qExpansion_coeff_cast_Gamma1 hM_eq _ n]
-    have h1_pos : (0 : ℝ) < 1 := one_pos
-    have h1_period : (1 : ℝ) ∈
-        ((Gamma1 (p₀ * (M * L'.prod))).map (mapGL ℝ)).strictPeriods := by
-      rw [show (Gamma1 (p₀ * (M * L'.prod))).map (mapGL ℝ) =
-            (Gamma1 (p₀ * (M * L'.prod)) : Subgroup (GL (Fin 2) ℝ)) from rfl,
-        CongruenceSubgroup.strictPeriods_Gamma1]
-      exact ⟨1, by simp⟩
-    rw [show ⇑(ModularForm.restrictSubgroup h_le g_prev -
-          HeckeRing.GL2.modularFormLevelRaise (M * L'.prod) p₀ k
-            (HeckeRing.GL2.heckeT_p_divN k p₀ hp₀_prime_M.1 hp₀_not_coprime
-              g_prev)) =
-        ⇑(ModularForm.restrictSubgroup h_le g_prev) -
-        ⇑(HeckeRing.GL2.modularFormLevelRaise (M * L'.prod) p₀ k
-            (HeckeRing.GL2.heckeT_p_divN k p₀ hp₀_prime_M.1 hp₀_not_coprime
-              g_prev)) from
-      ModularForm.coe_sub _ _]
-    rw [qExpansion_sub h1_pos h1_period, map_sub]
-    have h_restrict_coeff :
-        (qExpansion (1 : ℝ)
-          (ModularForm.restrictSubgroup h_le g_prev)).coeff n =
-        (qExpansion (1 : ℝ) g_prev).coeff n := rfl
-    rw [h_restrict_coeff]
-    have hT83 :=
-      miyake_4_6_5_prime_sieve_heckeT_p_divN_one hp₀_prime_M.1
-        hp₀_not_coprime g_prev n
-    rw [hT83]
-    rw [iteratedSieveWitnessOnList_qExpansion_coeff f L' hL'_props n]
-    by_cases hn_p₀ : p₀ ∣ n
-    · have h_ex : ∃ p ∈ p₀ :: L', p ∣ n :=
-        ⟨p₀, List.mem_cons_self, hn_p₀⟩
-      rw [if_pos hn_p₀, if_pos h_ex]
-    · rw [if_neg hn_p₀]
-      by_cases hn_L' : ∃ q ∈ L', q ∣ n
-      · have h_ex : ∃ p ∈ p₀ :: L', p ∣ n := by
-          obtain ⟨q, hqL', hqn⟩ := hn_L'
-          exact ⟨q, List.mem_cons_of_mem _ hqL', hqn⟩
-        rw [if_pos hn_L', if_pos h_ex]
-      · rw [if_neg hn_L']
-        have h_nex : ¬ ∃ p ∈ p₀ :: L', p ∣ n := by
-          rintro ⟨p, hp_mem, hpn⟩
-          rcases List.mem_cons.mp hp_mem with rfl | hp_L'
-          · exact hn_p₀ hpn
-          · exact hn_L' ⟨p, hp_L', hpn⟩
-        rw [if_neg h_nex]
+    rw [qExpansion_coeff_cast_Gamma1 hM_eq _ n, ModularForm.coe_sub,
+      qExpansion_coeff_sieve_step hp₀_prime_M.1 hp₀_not_coprime h_le g_prev n,
+      iteratedSieveWitnessOnList_qExpansion_coeff f L' hL'_props n]
+    exact ite_dvd_cons_eq_ite_exists p₀ n L' 0 _
 
 private theorem iteratedSieveWitnessOnList_qExpansion_zero_of_coprime_prod_vanish
     {M : ℕ} [NeZero M] {k : ℤ}
@@ -1739,6 +1727,63 @@ private def IsOldformImageAtDeep
             (HeckeRing.GL2.heckeT_p_divN k p hp hpM'
               (iteratedSieveWitnessOnList f Lprev hLprev)))
 
+/-- **The fresh head piece of the cons step is an oldform image.**
+The level-`Γ₁(M·(p₀::L').prod)` cast of
+`modularFormLevelRaise (M·L'.prod) p₀ ∘ heckeT_p_divN` of the prior
+sieve witness is itself an `IsOldformImageAtDeep` (take `Lprev := L'`,
+`p := p₀`, with the trivial deep inclusion `le_refl` up to the level
+cast `hM_eq`).  This is case (b) of
+`iteratedSieveCorrectionPiecesOnList_forall_mem_isOldformImage`. -/
+private theorem head_piece_isOldformImageAtDeep
+    {M : ℕ} [NeZero M] {k : ℤ} (f : ModularForm ((Gamma1 M).map (mapGL ℝ)) k)
+    (p₀ : ℕ) [NeZero p₀] (L' : List ℕ) (hL'_props : ∀ p ∈ L', p.Prime ∧ p ∣ M)
+    [NeZero (M * L'.prod)] (hp₀_prime : p₀.Prime)
+    (hp₀_not_coprime : ¬ Nat.Coprime p₀ (M * L'.prod))
+    (hM_eq : p₀ * (M * L'.prod) = M * (p₀ :: L').prod)
+    [NeZero (M * (p₀ :: L').prod)]
+    {g : ModularForm ((Gamma1 (M * (p₀ :: L').prod)).map (mapGL ℝ)) k}
+    (hg : g = hM_eq ▸ HeckeRing.GL2.modularFormLevelRaise (M * L'.prod) p₀ k
+        (HeckeRing.GL2.heckeT_p_divN k p₀ hp₀_prime hp₀_not_coprime
+          (iteratedSieveWitnessOnList f L' hL'_props))) :
+    IsOldformImageAtDeep f (M * (p₀ :: L').prod) g := by
+  refine ⟨p₀, L', hL'_props, ‹_›, ‹_›, hp₀_prime, hp₀_not_coprime, ?_, ?_⟩
+  · intro x hx
+    rwa [show M * (p₀ :: L').prod = p₀ * (M * L'.prod) from hM_eq.symm] at hx
+  · rw [hg]
+    set lr : ModularForm ((Gamma1 (p₀ * (M * L'.prod))).map (mapGL ℝ)) k :=
+      HeckeRing.GL2.modularFormLevelRaise (M * L'.prod) p₀ k
+        (HeckeRing.GL2.heckeT_p_divN k p₀ hp₀_prime hp₀_not_coprime
+          (iteratedSieveWitnessOnList f L' hL'_props))
+    conv_lhs => rw [show lr = ModularForm.restrictSubgroup (le_refl _) lr from rfl]
+    exact restrictSubgroup_cast_eq_of_level_eq hM_eq _ _ _
+
+/-- **An oldform image at one deep level remains one after a deeper
+restriction (modulo a level cast).**  If `g₀` is an `IsOldformImageAtDeep`
+at level `Γ₁(M·L'.prod)` and `g` is its restriction to
+`Γ₁(p₀·(M·L'.prod))` recast to `Γ₁(M·(p₀::L').prod)`, then `g` is an
+`IsOldformImageAtDeep` at the deeper level (compose the deep inclusions).
+This is case (a) of
+`iteratedSieveCorrectionPiecesOnList_forall_mem_isOldformImage`. -/
+private theorem mapped_piece_isOldformImageAtDeep
+    {M : ℕ} [NeZero M] {k : ℤ} (f : ModularForm ((Gamma1 M).map (mapGL ℝ)) k)
+    (p₀ : ℕ) (L' : List ℕ)
+    [NeZero (M * L'.prod)] [NeZero (M * (p₀ :: L').prod)]
+    (h_le : (Gamma1 (p₀ * (M * L'.prod))).map (mapGL ℝ) ≤
+      (Gamma1 (M * L'.prod)).map (mapGL ℝ))
+    (hM_eq : p₀ * (M * L'.prod) = M * (p₀ :: L').prod)
+    {g₀ : ModularForm ((Gamma1 (M * L'.prod)).map (mapGL ℝ)) k}
+    (hg₀ : IsOldformImageAtDeep f (M * L'.prod) g₀)
+    {g : ModularForm ((Gamma1 (M * (p₀ :: L').prod)).map (mapGL ℝ)) k}
+    (hg : hM_eq ▸ ModularForm.restrictSubgroup h_le g₀ = g) :
+    IsOldformImageAtDeep f (M * (p₀ :: L').prod) g := by
+  obtain ⟨p, Lprev, hLprev, hpNe, hMLprevNe, hp, hpM', h_le_inner, hg₀_form⟩ := hg₀
+  refine ⟨p, Lprev, hLprev, hpNe, hMLprevNe, hp, hpM', ?_, ?_⟩
+  · intro x hx
+    refine h_le_inner (h_le ?_)
+    rwa [show M * (p₀ :: L').prod = p₀ * (M * L'.prod) from hM_eq.symm] at hx
+  · rw [← hg, hg₀_form, ModularForm_restrictSubgroup_restrictSubgroup]
+    exact restrictSubgroup_cast_eq_of_level_eq hM_eq _ _ _
+
 private theorem iteratedSieveCorrectionPiecesOnList_forall_mem_isOldformImage
     {M : ℕ} [NeZero M] {k : ℤ}
     (f : ModularForm ((Gamma1 M).map (mapGL ℝ)) k) :
@@ -1757,15 +1802,11 @@ private theorem iteratedSieveCorrectionPiecesOnList_forall_mem_isOldformImage
       set hL'_props : ∀ p ∈ L', p.Prime ∧ p ∣ M :=
         fun p hp ↦ hL p (List.mem_cons_of_mem _ hp) with hL'_props_def
       set hp₀_prime_M : p₀.Prime ∧ p₀ ∣ M := hL p₀ List.mem_cons_self with hp₀_def
-      haveI hM_prev_ne : NeZero (M * L'.prod) := ⟨by
-        have hL'_pos : 0 < L'.prod :=
-          List.prod_pos (fun p hp ↦ (hL'_props p hp).1.pos)
-        exact Nat.mul_ne_zero (NeZero.ne M) hL'_pos.ne'⟩
+      haveI hM_prev_ne : NeZero (M * L'.prod) :=
+        neZero_mul_list_prod_of_prime_dvd hL'_props
       haveI hp₀_ne : NeZero p₀ := ⟨hp₀_prime_M.1.ne_zero⟩
-      haveI hM_full_ne : NeZero (M * (p₀ :: L').prod) := ⟨by
-        have hL_pos : 0 < (p₀ :: L').prod :=
-          List.prod_pos (fun p hp ↦ (hL p hp).1.pos)
-        exact Nat.mul_ne_zero (NeZero.ne M) hL_pos.ne'⟩
+      haveI hM_full_ne : NeZero (M * (p₀ :: L').prod) :=
+        neZero_mul_list_prod_of_prime_dvd hL
       have hp₀_not_coprime : ¬ Nat.Coprime p₀ (M * L'.prod) :=
         Nat.Prime.not_coprime_iff_dvd.mpr
           ⟨p₀, hp₀_prime_M.1, dvd_refl _, hp₀_prime_M.2.mul_right _⟩
@@ -1780,37 +1821,13 @@ private theorem iteratedSieveCorrectionPiecesOnList_forall_mem_isOldformImage
       · -- Case (a): g comes from the mapped IH list.
         rw [List.mem_map] at hg_mapped
         obtain ⟨g₀, hg₀_mem, hg₀_eq⟩ := hg_mapped
-        have hIH :=
-          iteratedSieveCorrectionPiecesOnList_forall_mem_isOldformImage
-            f L' hL'_props g₀ hg₀_mem
-        obtain ⟨p, Lprev, hLprev, hpNe, hMLprevNe, hp, hpM', h_le_inner, hg₀_form⟩
-          := hIH
-        refine ⟨p, Lprev, hLprev, hpNe, hMLprevNe, hp, hpM', ?_, ?_⟩
-        · -- Compose inclusions: Γ₁(M*(p₀::L').prod) ≤ Γ₁(p*(M*Lprev.prod)).
-          intro x hx
-          refine h_le_inner (h_le ?_)
-          rw [show M * (p₀ :: L').prod = p₀ * (M * L'.prod) from hM_eq.symm] at hx
-          exact hx
-        · -- Equality: rewrite g via hg₀_eq, then use the cast helper.
-          rw [← hg₀_eq, hg₀_form, ModularForm_restrictSubgroup_restrictSubgroup]
-          exact restrictSubgroup_cast_eq_of_level_eq hM_eq _ _ _
+        exact mapped_piece_isOldformImageAtDeep f p₀ L' h_le hM_eq
+          (iteratedSieveCorrectionPiecesOnList_forall_mem_isOldformImage
+            f L' hL'_props g₀ hg₀_mem) hg₀_eq
       · -- Case (b): g is the last new piece.
         rw [List.mem_singleton] at hg_last
-        refine ⟨p₀, L', hL'_props, hp₀_ne, hM_prev_ne, hp₀_prime_M.1,
-          hp₀_not_coprime, ?_, ?_⟩
-        · -- The inclusion is reflexivity modulo hM_eq.
-          intro x hx
-          rw [show M * (p₀ :: L').prod = p₀ * (M * L'.prod) from hM_eq.symm] at hx
-          exact hx
-        · -- Equality up to the cast hM_eq ▸.  Use the helper after viewing
-          rw [hg_last]
-          set lr : ModularForm ((Gamma1 (p₀ * (M * L'.prod))).map (mapGL ℝ)) k :=
-            HeckeRing.GL2.modularFormLevelRaise (M * L'.prod) p₀ k
-              (HeckeRing.GL2.heckeT_p_divN k p₀ hp₀_prime_M.1 hp₀_not_coprime
-                (iteratedSieveWitnessOnList f L' hL'_props)) with hlr_def
-          have h_self : lr = ModularForm.restrictSubgroup (le_refl _) lr := rfl
-          conv_lhs => rw [h_self]
-          exact restrictSubgroup_cast_eq_of_level_eq hM_eq _ _ _
+        exact head_piece_isOldformImageAtDeep f p₀ L' hL'_props hp₀_prime_M.1
+          hp₀_not_coprime hM_eq hg_last
 
 /-- **TraceDescent / mainLemma consumer** (T131).  Packages the corrections
 decomposition into the existential shape expected by the
@@ -1898,31 +1915,16 @@ private theorem iteratedSieveWitnessOnList_mem_modFormCharSpace
         f hf_χ L' hL'_props
       set g_prev : ModularForm ((Gamma1 (M * L'.prod)).map (mapGL ℝ)) k :=
         iteratedSieveWitnessOnList f L' hL'_props with hg_prev_def
-      have h_comp_eq :
-          (χ.comp (ZMod.unitsMap hdvd_prev)).comp (ZMod.unitsMap h_mp_dvd) =
-            χ.comp (ZMod.unitsMap hdvd_inner) := by
-        rw [MonoidHom.comp_assoc, ZMod.unitsMap_comp]
-      have h_restr : ModularForm.restrictSubgroup h_le g_prev ∈
-          modFormCharSpace k (χ.comp (ZMod.unitsMap hdvd_inner)) := by
-        have := restrictSubgroup_mem_modFormCharSpace
-          (χ.comp (ZMod.unitsMap hdvd_prev)) h_mp_dvd g_prev hIH
-        rwa [h_comp_eq] at this
-      have h_ht := heckeT_p_divN_preserves_modFormCharSpace
-        hp₀_prime_M.1 hp₀_not_coprime
-        (χ.comp (ZMod.unitsMap hdvd_prev)) hIH
-      have h_lr := modularFormLevelRaise_mem_modFormCharSpace
-        (M * L'.prod) p₀ k (χ.comp (ZMod.unitsMap hdvd_prev)) h_ht
-      have h_lr_inner : HeckeRing.GL2.modularFormLevelRaise (M * L'.prod) p₀ k
-          (HeckeRing.GL2.heckeT_p_divN k p₀ hp₀_prime_M.1 hp₀_not_coprime g_prev)
-            ∈ modFormCharSpace k (χ.comp (ZMod.unitsMap hdvd_inner)) := by
-        rwa [h_comp_eq] at h_lr
       have h_sub :
           ModularForm.restrictSubgroup h_le g_prev -
             HeckeRing.GL2.modularFormLevelRaise (M * L'.prod) p₀ k
               (HeckeRing.GL2.heckeT_p_divN k p₀ hp₀_prime_M.1 hp₀_not_coprime
                 g_prev) ∈
             modFormCharSpace k (χ.comp (ZMod.unitsMap hdvd_inner)) :=
-        Submodule.sub_mem _ h_restr h_lr_inner
+        Submodule.sub_mem _
+          (restrictSubgroup_mem_modFormCharSpace_comp χ hdvd_prev h_mp_dvd hdvd_inner h_le hIH)
+          (levelRaise_heckeT_mem_modFormCharSpace_comp hp₀_prime_M.1 hp₀_not_coprime χ
+            hdvd_prev hdvd_inner hIH)
       rw [iteratedSieveWitnessOnList_cons]
       exact cast_mem_modFormCharSpace_Gamma1 χ hM_eq hdvd_inner
         (Nat.dvd_mul_right M (p₀ :: L').prod) h_sub
@@ -1974,31 +1976,16 @@ private theorem iteratedSieveCorrectionsOnList_mem_modFormCharSpace
         iteratedSieveWitnessOnList f L' hL'_props with hg_prev_def
       set c_prev : ModularForm ((Gamma1 (M * L'.prod)).map (mapGL ℝ)) k :=
         iteratedSieveCorrectionsOnList f L' hL'_props with hc_prev_def
-      have h_comp_eq :
-          (χ.comp (ZMod.unitsMap hdvd_prev)).comp (ZMod.unitsMap h_mp_dvd) =
-            χ.comp (ZMod.unitsMap hdvd_inner) := by
-        rw [MonoidHom.comp_assoc, ZMod.unitsMap_comp]
-      have h_restr : ModularForm.restrictSubgroup h_le c_prev ∈
-          modFormCharSpace k (χ.comp (ZMod.unitsMap hdvd_inner)) := by
-        have := restrictSubgroup_mem_modFormCharSpace
-          (χ.comp (ZMod.unitsMap hdvd_prev)) h_mp_dvd c_prev hIH_c
-        rwa [h_comp_eq] at this
-      have h_ht := heckeT_p_divN_preserves_modFormCharSpace
-        hp₀_prime_M.1 hp₀_not_coprime
-        (χ.comp (ZMod.unitsMap hdvd_prev)) hIH_w
-      have h_lr := modularFormLevelRaise_mem_modFormCharSpace
-        (M * L'.prod) p₀ k (χ.comp (ZMod.unitsMap hdvd_prev)) h_ht
-      have h_lr_inner : HeckeRing.GL2.modularFormLevelRaise (M * L'.prod) p₀ k
-          (HeckeRing.GL2.heckeT_p_divN k p₀ hp₀_prime_M.1 hp₀_not_coprime g_prev)
-            ∈ modFormCharSpace k (χ.comp (ZMod.unitsMap hdvd_inner)) := by
-        rwa [h_comp_eq] at h_lr
       have h_add :
           ModularForm.restrictSubgroup h_le c_prev +
             HeckeRing.GL2.modularFormLevelRaise (M * L'.prod) p₀ k
               (HeckeRing.GL2.heckeT_p_divN k p₀ hp₀_prime_M.1 hp₀_not_coprime
                 g_prev) ∈
             modFormCharSpace k (χ.comp (ZMod.unitsMap hdvd_inner)) :=
-        Submodule.add_mem _ h_restr h_lr_inner
+        Submodule.add_mem _
+          (restrictSubgroup_mem_modFormCharSpace_comp χ hdvd_prev h_mp_dvd hdvd_inner h_le hIH_c)
+          (levelRaise_heckeT_mem_modFormCharSpace_comp hp₀_prime_M.1 hp₀_not_coprime χ
+            hdvd_prev hdvd_inner hIH_w)
       rw [iteratedSieveCorrectionsOnList_cons]
       exact cast_mem_modFormCharSpace_Gamma1 χ hM_eq hdvd_inner
         (Nat.dvd_mul_right M (p₀ :: L').prod) h_add
@@ -2022,15 +2009,11 @@ private theorem iteratedSieveCorrectionPiecesOnList_forall_mem_modFormCharSpace
       set hL'_props : ∀ p ∈ L', p.Prime ∧ p ∣ M :=
         fun p hp ↦ hL' p (List.mem_cons_of_mem _ hp) with hL'_props_def
       set hp₀_prime_M : p₀.Prime ∧ p₀ ∣ M := hL' p₀ List.mem_cons_self
-      haveI hM_prev_ne : NeZero (M * L'.prod) := ⟨by
-        have hL'_pos : 0 < L'.prod :=
-          List.prod_pos (fun p hp ↦ (hL'_props p hp).1.pos)
-        exact Nat.mul_ne_zero (NeZero.ne M) hL'_pos.ne'⟩
+      haveI hM_prev_ne : NeZero (M * L'.prod) :=
+        neZero_mul_list_prod_of_prime_dvd hL'_props
       haveI : NeZero p₀ := ⟨hp₀_prime_M.1.ne_zero⟩
-      haveI hM_full_ne : NeZero (M * (p₀ :: L').prod) := ⟨by
-        have hL_pos : 0 < (p₀ :: L').prod :=
-          List.prod_pos (fun p hp ↦ (hL' p hp).1.pos)
-        exact Nat.mul_ne_zero (NeZero.ne M) hL_pos.ne'⟩
+      haveI hM_full_ne : NeZero (M * (p₀ :: L').prod) :=
+        neZero_mul_list_prod_of_prime_dvd hL'
       haveI hp₀M'_ne : NeZero (p₀ * (M * L'.prod)) :=
         ⟨Nat.mul_ne_zero (NeZero.ne p₀) (NeZero.ne (M * L'.prod))⟩
       have hp₀_not_coprime : ¬ Nat.Coprime p₀ (M * L'.prod) :=
@@ -2044,10 +2027,6 @@ private theorem iteratedSieveCorrectionPiecesOnList_forall_mem_modFormCharSpace
       have hdvd_prev : M ∣ M * L'.prod := Nat.dvd_mul_right M L'.prod
       have h_mp_dvd : (M * L'.prod) ∣ p₀ * (M * L'.prod) := ⟨p₀, by ring⟩
       have hdvd_inner : M ∣ p₀ * (M * L'.prod) := hdvd_prev.trans h_mp_dvd
-      have h_comp_eq :
-          (χ.comp (ZMod.unitsMap hdvd_prev)).comp (ZMod.unitsMap h_mp_dvd) =
-            χ.comp (ZMod.unitsMap hdvd_inner) := by
-        rw [MonoidHom.comp_assoc, ZMod.unitsMap_comp]
       rw [iteratedSieveCorrectionPiecesOnList_cons f p₀ L' hL',
           List.mem_append] at hg
       rcases hg with hg_mapped | hg_last
@@ -2056,31 +2035,19 @@ private theorem iteratedSieveCorrectionPiecesOnList_forall_mem_modFormCharSpace
         obtain ⟨g₀, hg₀_mem, hg₀_eq⟩ := hg_mapped
         have hIH := iteratedSieveCorrectionPiecesOnList_forall_mem_modFormCharSpace
           f hf_χ L' hL'_props g₀ hg₀_mem
-        have h_restr : ModularForm.restrictSubgroup h_le g₀ ∈
-            modFormCharSpace k (χ.comp (ZMod.unitsMap hdvd_inner)) := by
-          have := restrictSubgroup_mem_modFormCharSpace
-            (χ.comp (ZMod.unitsMap hdvd_prev)) h_mp_dvd g₀ hIH
-          rwa [h_comp_eq] at this
         rw [← hg₀_eq]
         exact cast_mem_modFormCharSpace_Gamma1 χ hM_eq hdvd_inner
-          (Nat.dvd_mul_right M (p₀ :: L').prod) h_restr
+          (Nat.dvd_mul_right M (p₀ :: L').prod)
+          (restrictSubgroup_mem_modFormCharSpace_comp χ hdvd_prev h_mp_dvd hdvd_inner h_le hIH)
       · -- New head piece: levelRaise ∘ heckeT_p_divN of previous witness.
         rw [List.mem_singleton] at hg_last
         have hIH_w := iteratedSieveWitnessOnList_mem_modFormCharSpace
           f hf_χ L' hL'_props
-        have h_ht := heckeT_p_divN_preserves_modFormCharSpace
-          hp₀_prime_M.1 hp₀_not_coprime
-          (χ.comp (ZMod.unitsMap hdvd_prev)) hIH_w
-        have h_lr := modularFormLevelRaise_mem_modFormCharSpace
-          (M * L'.prod) p₀ k (χ.comp (ZMod.unitsMap hdvd_prev)) h_ht
-        have h_lr_inner : HeckeRing.GL2.modularFormLevelRaise (M * L'.prod) p₀ k
-            (HeckeRing.GL2.heckeT_p_divN k p₀ hp₀_prime_M.1 hp₀_not_coprime
-              (iteratedSieveWitnessOnList f L' hL'_props))
-              ∈ modFormCharSpace k (χ.comp (ZMod.unitsMap hdvd_inner)) := by
-          rwa [h_comp_eq] at h_lr
         rw [hg_last]
         exact cast_mem_modFormCharSpace_Gamma1 χ hM_eq hdvd_inner
-          (Nat.dvd_mul_right M (p₀ :: L').prod) h_lr_inner
+          (Nat.dvd_mul_right M (p₀ :: L').prod)
+          (levelRaise_heckeT_mem_modFormCharSpace_comp hp₀_prime_M.1 hp₀_not_coprime χ
+            hdvd_prev hdvd_inner hIH_w)
 
 /-- **TraceDescent / Nebentypus-aware mainLemma consumer** (T131).
 Strengthening of `exists_oldform_pieces_decomposition_of_coprime_prod_vanish`

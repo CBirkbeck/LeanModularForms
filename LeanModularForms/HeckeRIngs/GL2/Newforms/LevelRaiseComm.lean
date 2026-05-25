@@ -233,6 +233,97 @@ lemma diamondOp_levelRaise_eq (a : (ZMod N)ˣ)
       (Gamma0_dmul_lower_left_dvd d M (g₀ : SL(2, ℤ)) g₀.property)).symm]
   rw [SlashAction.slash_mul, ← hh]
 
+/-- **Upper-triangular part of `T_p` under level raising.**
+
+The shared computation behind all three prime-`T_p` level-raise lemmas: pushing
+`heckeT_p_ut` through the level-raise `LR_d` rewrites the sum over `b` into a
+sum of slashed-and-reindexed translates,
+`Σ_b d^{1-k} • (g ∣ [[1, d·b mod p],[0,p]]) ∣ α_d`.
+Combines `smul_slash_pos_det`, the matrix commutation `levelRaise_mul_T_p_upper`,
+slash associativity, and `Γ₁`-periodicity `slash_T_p_upper_mod`. -/
+private lemma heckeT_p_ut_levelRaise
+    (p : ℕ) (hp : Nat.Prime p) (M d : ℕ) [NeZero M] [NeZero d]
+    (g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) :
+    heckeT_p_ut k p hp.pos (⇑((levelRaise M d k g).toModularForm')) =
+      ∑ b ∈ Finset.range p, ((d : ℂ) ^ (1 - k)) •
+        (⇑g.toModularForm' ∣[k] (T_p_upper p hp.pos (d * b % p) : GL (Fin 2) ℚ)) ∣[k]
+          levelRaiseMatrix d := by
+  simp only [heckeT_p_ut]
+  have hLR : (⇑((levelRaise M d k g).toModularForm') : UpperHalfPlane → ℂ) =
+    ((d : ℂ) ^ (1 - k)) • (⇑g ∣[k] levelRaiseMatrix d) := rfl
+  simp_rw [hLR, smul_slash_pos_det k _ _ _ (T_p_upper_det_pos p hp.pos _)]
+  simp_rw [show ∀ b, (⇑g ∣[k] levelRaiseMatrix d) ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ) =
+    ⇑g ∣[k] (levelRaiseMatrix d * glMap (T_p_upper p hp.pos b)) from
+    fun b => show (⇑g ∣[k] levelRaiseMatrix d) ∣[k] glMap (T_p_upper p hp.pos b) = _ from
+      (SlashAction.slash_mul k _ _ _).symm]
+  simp_rw [levelRaise_mul_T_p_upper d p hp.pos]
+  simp_rw [show ∀ b, ⇑g ∣[k] (glMap (T_p_upper p hp.pos (d * b)) * levelRaiseMatrix d) =
+    (⇑g ∣[k] (T_p_upper p hp.pos (d * b) : GL (Fin 2) ℚ)) ∣[k] levelRaiseMatrix d from
+    fun b => show ⇑g ∣[k] (glMap (T_p_upper p hp.pos (d * b)) * levelRaiseMatrix d) =
+      (⇑g ∣[k] glMap (T_p_upper p hp.pos (d * b))) ∣[k] levelRaiseMatrix d from
+      SlashAction.slash_mul k _ _ _]
+  simp_rw [show ∀ b, ⇑g ∣[k] (T_p_upper p hp.pos (d * b) : GL (Fin 2) ℚ) =
+    ⇑g.toModularForm' ∣[k] (T_p_upper p hp.pos (d * b % p) : GL (Fin 2) ℚ) from
+    fun b => slash_T_p_upper_mod M k p hp.pos (d * b) g.toModularForm']
+
+/-- **Reindexing the level-raised upper-triangular sum.**
+
+When `(d, p) = 1`, the bijection `b ↦ d·b mod p` (`sum_reindex_mul_mod`) folds the
+sum produced by `heckeT_p_ut_levelRaise` back into `heckeT_p_ut g`, slashed:
+`Σ_b d^{1-k} • (g ∣ [[1, d·b mod p],[0,p]]) ∣ α_d = d^{1-k} • (heckeT_p_ut g) ∣ α_d`. -/
+private lemma heckeT_p_ut_levelRaise_reindex
+    (p : ℕ) (hp : Nat.Prime p) (M d : ℕ) [NeZero M] [NeZero d]
+    (hdp : Nat.Coprime d p) (g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) :
+    (∑ b ∈ Finset.range p, ((d : ℂ) ^ (1 - k)) •
+        (⇑g.toModularForm' ∣[k] (T_p_upper p hp.pos (d * b % p) : GL (Fin 2) ℚ)) ∣[k]
+          levelRaiseMatrix d) =
+      ((d : ℂ) ^ (1 - k)) •
+        (heckeT_p_ut k p hp.pos (⇑g.toModularForm') ∣[k] levelRaiseMatrix d) := by
+  rw [sum_reindex_mul_mod d p hp hdp
+    (fun b => ((d : ℂ) ^ (1 - k)) • (⇑g.toModularForm' ∣[k]
+      (T_p_upper p hp.pos b : GL (Fin 2) ℚ)) ∣[k] levelRaiseMatrix d),
+    heckeT_p_ut, sum_slash_R, ← Finset.smul_sum]
+
+/-- **Lower/diamond part of `T_p` under level raising.**
+
+The `⟨p⟩`-twisted lower-triangular term of `T_p` commutes with `LR_d`:
+`(⟨p⟩_{dM} (LR_d g)) ∣ [[p,0],[0,1]] = d^{1-k} • ((⟨p⟩_M g) ∣ [[p,0],[0,1]]) ∣ α_d`.
+Combines `diamondOp_levelRaise_eq` (diamond/level-raise), `smul_slash_pos_det`,
+and the diagonal commutation `levelRaise_mul_T_p_lower`. -/
+private lemma diamondOp_T_p_lower_levelRaise
+    (p : ℕ) (hp : Nat.Prime p) (M d : ℕ) [NeZero M] [NeZero d]
+    (hpdM : Nat.Coprime p (d * M)) (hpM : Nat.Coprime p M)
+    (g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) :
+    (⇑(diamondOp k (ZMod.unitOfCoprime p hpdM) ((levelRaise M d k g).toModularForm')) ∣[k]
+        (T_p_lower p hp.pos : GL (Fin 2) ℚ)) =
+      ((d : ℂ) ^ (1 - k)) •
+        (⇑(diamondOp k (ZMod.unitOfCoprime p hpM) g.toModularForm') ∣[k]
+          (T_p_lower p hp.pos : GL (Fin 2) ℚ)) ∣[k] levelRaiseMatrix d := by
+  have hdia := diamondOp_levelRaise_eq (ZMod.unitOfCoprime p hpdM) M d rfl g
+  have hdia_fun : (⇑((diamondOp k (ZMod.unitOfCoprime p hpdM))
+      ((levelRaise M d k g).toModularForm') : ModularForm _ k) : UpperHalfPlane → ℂ) =
+    ((d : ℂ) ^ (1 - k)) • (⇑(diamondOpCusp k
+      (ZMod.unitsMap (Nat.dvd_mul_left M d) (ZMod.unitOfCoprime p hpdM)) g) ∣[k]
+      levelRaiseMatrix d) :=
+    congr_arg (fun f : CuspForm _ k => (⇑f : UpperHalfPlane → ℂ)) hdia
+  rw [hdia_fun, smul_slash_pos_det k _ _ _ (T_p_lower_det_pos p hp.pos)]
+  have h_units_eq : ZMod.unitsMap (Nat.dvd_mul_left M d) (ZMod.unitOfCoprime p hpdM) =
+      ZMod.unitOfCoprime p hpM := by
+    ext; simp [ZMod.unitsMap_val, ZMod.coe_unitOfCoprime]
+  rw [h_units_eq]
+  have h_coe : (⇑(diamondOpCusp k (ZMod.unitOfCoprime p hpM) g) : UpperHalfPlane → ℂ) =
+    ⇑((diamondOp k (ZMod.unitOfCoprime p hpM)) g.toModularForm') := rfl
+  rw [h_coe,
+    show (⇑((diamondOp k (ZMod.unitOfCoprime p hpM)) g.toModularForm') ∣[k]
+        levelRaiseMatrix d) ∣[k] (T_p_lower p hp.pos : GL (Fin 2) ℚ) =
+      ⇑((diamondOp k (ZMod.unitOfCoprime p hpM)) g.toModularForm') ∣[k]
+        (levelRaiseMatrix d * glMap (T_p_lower p hp.pos)) from
+      show (⇑((diamondOp k (ZMod.unitOfCoprime p hpM)) g.toModularForm') ∣[k]
+          levelRaiseMatrix d) ∣[k] glMap (T_p_lower p hp.pos) = _ from
+        (SlashAction.slash_mul k _ _ _).symm]
+  rw [levelRaise_mul_T_p_lower d p hp.pos, SlashAction.slash_mul k _ _ _]
+  rfl
+
 /-- **Level-raise commutation for prime T_p** (the hard case):
 `T_p (ι_d g) = ι_d (T_p^{(M)} g)` at the function level.
 
@@ -257,7 +348,7 @@ private lemma heckeT_p_all_levelRaise_comm
     have : Nat.Coprime (d * M) p := hpN.symm
     exact this.coprime_dvd_left (dvd_mul_right d M)
   apply CuspForm.ext; intro z
-  -- Both sides unfold through heckeT_n → heckeT_p_all → heckeT_p (coprime)
+  -- Both sides unfold through heckeT_n → heckeT_p_all → heckeT_p_fun (coprime).
   show (heckeT_n (N := d * M) k p (levelRaise M d k g).toModularForm').toFun z =
     (((d : ℂ) ^ (1 - k)) • ((heckeT_n_cusp (N := M) k p g : CuspForm _ k).toFun
       ∣[k] levelRaiseMatrix d)) z
@@ -266,46 +357,16 @@ private lemma heckeT_p_all_levelRaise_comm
     (((d : ℂ) ^ (1 - k)) • ((heckeT_n (N := M) k p g.toModularForm').toFun
       ∣[k] levelRaiseMatrix d)) z
   rw [heckeT_n_prime k hp, heckeT_p_all_coprime k hp hpN, heckeT_p_all_coprime k hp hpM]
-  -- Now LHS = heckeT_p_fun at d*M, RHS = d^{1-k} • (heckeT_p_fun at M) ∣[k] α_d
-  -- Unfold heckeT_p_fun on LHS to upper-tri + lower parts
-  show heckeT_p_fun k p hp hpN ((levelRaise M d k g).toModularForm') z =
-    (((d : ℂ) ^ (1 - k)) • ((heckeT_p k p hp hpM g.toModularForm').toFun
-      ∣[k] levelRaiseMatrix d)) z
-  -- Suffices to show both sides agree as functions.
-  -- Strategy: unfold heckeT_p_fun on both sides, then rewrite the upper-triangular
-  -- sum using the matrix commutation + reindexing, and the lower part using
-  -- the diamond commutation + diagonal commutativity.
-  --
-  -- Upper-tri part: Σ_b (c•(g|α_d))|β_b = c • Σ_b (g|β_{db%p})|α_d = c • (Σ_b g|β_b)|α_d
-  -- Lower part: (⟨p⟩(c•(g|α_d)))|γ = c • ((⟨p'⟩g)|γ)|α_d (diamond comm + diag comm)
-  -- RHS: c • (Σ_b g|β_b + (⟨p⟩g)|γ)|α_d
-  --
-  -- All helper lemmas are proved sorry-free:
-  -- • smul_slash_pos_det, slash_mul, levelRaise_mul_T_p_upper
-  -- • slash_T_p_upper_mod, sum_reindex_mul_mod, sum_slash_R
-  -- • diamondOp_levelRaise_eq, levelRaise_mul_T_p_lower
-  --
-  -- The remaining difficulty is the Lean type coercions between:
-  -- • GL₂(ℚ) slash (via glMap) vs GL₂(ℝ) slash
-  -- • ModularForm coercion vs CuspForm coercion
-  -- • diamondOp on ModularForm vs diamondOpCusp on CuspForm
-  simp only [heckeT_p_fun, heckeT_p_ut, Pi.add_apply]
-  have hLR : (⇑((levelRaise M d k g).toModularForm') : UpperHalfPlane → ℂ) =
-    ((d : ℂ) ^ (1 - k)) • (⇑g ∣[k] levelRaiseMatrix d) := rfl
-  simp_rw [hLR, smul_slash_pos_det k _ _ _ (T_p_upper_det_pos p hp.pos _)]
-  simp_rw [show ∀ b, (⇑g ∣[k] levelRaiseMatrix d) ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ) =
-    ⇑g ∣[k] (levelRaiseMatrix d * glMap (T_p_upper p hp.pos b)) from
-    fun b => show (⇑g ∣[k] levelRaiseMatrix d) ∣[k] glMap (T_p_upper p hp.pos b) = _ from
-      (SlashAction.slash_mul k _ _ _).symm]
-  simp_rw [levelRaise_mul_T_p_upper d p hp.pos]
-  simp_rw [show ∀ b, ⇑g ∣[k] (glMap (T_p_upper p hp.pos (d * b)) * levelRaiseMatrix d) =
-    (⇑g ∣[k] (T_p_upper p hp.pos (d * b) : GL (Fin 2) ℚ)) ∣[k] levelRaiseMatrix d from
-    fun b => show ⇑g ∣[k] (glMap (T_p_upper p hp.pos (d * b)) * levelRaiseMatrix d) =
-      (⇑g ∣[k] glMap (T_p_upper p hp.pos (d * b))) ∣[k] levelRaiseMatrix d from
-      SlashAction.slash_mul k _ _ _]
-  simp_rw [show ∀ b, ⇑g ∣[k] (T_p_upper p hp.pos (d * b) : GL (Fin 2) ℚ) =
-    ⇑g.toModularForm' ∣[k] (T_p_upper p hp.pos (d * b % p) : GL (Fin 2) ℚ) from
-    fun b => slash_T_p_upper_mod M k p hp.pos (d * b) g.toModularForm']
+  -- LHS = heckeT_p_fun at d*M, RHS = d^{1-k} • (heckeT_p_fun at M) ∣[k] α_d; unfold
+  -- `heckeT_p_fun` into ut + lower parts and rewrite the ut part by `heckeT_p_ut_levelRaise`
+  -- (the lower `⟨p⟩`-part is handled below via the diamond + diagonal commutations).
+  show heckeT_p_fun k p hp hpN ((levelRaise M d k g).toModularForm') z = _
+  rw [show heckeT_p_fun k p hp hpN ((levelRaise M d k g).toModularForm') =
+      heckeT_p_ut k p hp.pos (⇑((levelRaise M d k g).toModularForm')) +
+      ⇑(diamondOp k (ZMod.unitOfCoprime p hpN) ((levelRaise M d k g).toModularForm')) ∣[k]
+        (T_p_lower p hp.pos : GL (Fin 2) ℚ) from rfl,
+    heckeT_p_ut_levelRaise p hp M d g]
+  simp only [Pi.add_apply]
   suffices h :
     (∑ x ∈ Finset.range p, ((d : ℂ) ^ (1 - k)) •
       (⇑g.toModularForm' ∣[k] (T_p_upper p hp.pos (d * x % p) : GL (Fin 2) ℚ)) ∣[k]
@@ -314,52 +375,19 @@ private lemma heckeT_p_all_levelRaise_comm
       (T_p_lower p hp.pos : GL (Fin 2) ℚ)) =
     ((d : ℂ) ^ (1 - k)) • (((heckeT_p k p hp hpM) g.toModularForm').toFun ∣[k]
       levelRaiseMatrix d) from congr_fun h z
-  have h_reindex := sum_reindex_mul_mod d p hp hd_coprime_p
-    (fun b => ((d : ℂ) ^ (1 - k)) • (⇑g.toModularForm' ∣[k]
-      (T_p_upper p hp.pos b : GL (Fin 2) ℚ)) ∣[k] levelRaiseMatrix d)
-  simp only at h_reindex; rw [h_reindex]
-  show ∑ b ∈ Finset.range p, ((d : ℂ) ^ (1 - k)) •
-      (⇑g.toModularForm' ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ)) ∣[k]
-        levelRaiseMatrix d +
-    ⇑((diamondOp k (ZMod.unitOfCoprime p hpN)) ((levelRaise M d k) g).toModularForm') ∣[k]
-      (T_p_lower p hp.pos : GL (Fin 2) ℚ) =
+  -- Reindex the upper sum, unfold the RHS `heckeT_p_fun` into ut + lower, and split.
+  rw [heckeT_p_ut_levelRaise_reindex p hp M d hd_coprime_p g]
+  show ((d : ℂ) ^ (1 - k)) • (heckeT_p_ut k p hp.pos ⇑g.toModularForm' ∣[k] levelRaiseMatrix d) +
+      ⇑(diamondOp k (ZMod.unitOfCoprime p hpN) ((levelRaise M d k g).toModularForm')) ∣[k]
+        (T_p_lower p hp.pos : GL (Fin 2) ℚ) =
     ((d : ℂ) ^ (1 - k)) • (heckeT_p_fun k p hp hpM g.toModularForm' ∣[k] levelRaiseMatrix d)
   rw [show heckeT_p_fun k p hp hpM g.toModularForm' = heckeT_p_ut k p hp.pos ⇑g.toModularForm' +
-    ⇑(diamondOp k (ZMod.unitOfCoprime p hpM) g.toModularForm') ∣[k]
-      (T_p_lower p hp.pos : GL (Fin 2) ℚ) from rfl,
+      ⇑(diamondOp k (ZMod.unitOfCoprime p hpM) g.toModularForm') ∣[k]
+        (T_p_lower p hp.pos : GL (Fin 2) ℚ) from rfl,
     SlashAction.add_slash, smul_add]
-  rw [show heckeT_p_ut k p hp.pos ⇑g.toModularForm' = ∑ b ∈ Finset.range p,
-    ⇑g.toModularForm' ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ) from rfl,
-    sum_slash_R, ← Finset.smul_sum]
+  -- Upper sums agree; the lower `⟨p⟩`-part is `diamondOp_T_p_lower_levelRaise`.
   congr 1
-  -- Lower/diamond part: ⟨p⟩_{d*M}(ι_d g) = ι_d(⟨p'⟩_M g) by diamondOp_levelRaise_eq
-  have hdia := diamondOp_levelRaise_eq (ZMod.unitOfCoprime p hpN) M d rfl g
-  have hdia_fun : (⇑((diamondOp k (ZMod.unitOfCoprime p hpN))
-      ((levelRaise M d k g).toModularForm') : ModularForm _ k) : UpperHalfPlane → ℂ) =
-    ((d : ℂ) ^ (1 - k)) • (⇑(diamondOpCusp k
-      (ZMod.unitsMap (Nat.dvd_mul_left M d) (ZMod.unitOfCoprime p hpN)) g) ∣[k]
-      levelRaiseMatrix d) :=
-    congr_arg (fun f : CuspForm _ k => (⇑f : UpperHalfPlane → ℂ)) hdia
-  rw [hdia_fun, smul_slash_pos_det k _ _ _ (T_p_lower_det_pos p hp.pos)]
-  -- unitsMap sends unitOfCoprime p hpN to unitOfCoprime p hpM
-  have h_units_eq : ZMod.unitsMap (Nat.dvd_mul_left M d) (ZMod.unitOfCoprime p hpN) =
-      ZMod.unitOfCoprime p hpM := by
-    ext; simp [ZMod.unitsMap_val, ZMod.coe_unitOfCoprime]
-  rw [h_units_eq]
-  have h_coe : (⇑(diamondOpCusp k (ZMod.unitOfCoprime p hpM) g) : UpperHalfPlane → ℂ) =
-    ⇑((diamondOp k (ZMod.unitOfCoprime p hpM)) g.toModularForm') := rfl
-  rw [h_coe]
-  congr 1
-  -- Commute levelRaiseMatrix d and T_p_lower: α_d * glMap(γ) = glMap(γ) * α_d
-  rw [show (⇑((diamondOp k (ZMod.unitOfCoprime p hpM)) g.toModularForm') ∣[k]
-      levelRaiseMatrix d) ∣[k] (T_p_lower p hp.pos : GL (Fin 2) ℚ) =
-    ⇑((diamondOp k (ZMod.unitOfCoprime p hpM)) g.toModularForm') ∣[k]
-      (levelRaiseMatrix d * glMap (T_p_lower p hp.pos)) from
-    show (⇑((diamondOp k (ZMod.unitOfCoprime p hpM)) g.toModularForm') ∣[k]
-        levelRaiseMatrix d) ∣[k] glMap (T_p_lower p hp.pos) = _ from
-      (SlashAction.slash_mul k _ _ _).symm]
-  rw [levelRaise_mul_T_p_lower d p hp.pos, SlashAction.slash_mul k _ _ _]
-  rfl
+  exact diamondOp_T_p_lower_levelRaise p hp M d hpN hpM g
 
 /-- **Bad-prime version of `heckeT_p_all_levelRaise_comm` (T168 partial).**
 
@@ -420,35 +448,12 @@ lemma heckeT_p_all_levelRaise_comm_divN
   rw [show ⇑((heckeT_p_all k p hp) g.toModularForm') =
         heckeT_p_ut k p hp.pos (⇑g.toModularForm') from
       heckeT_p_all_not_coprime_apply k hp hpM _]
-  -- Now LHS is heckeT_p_ut at level d*M of LR_d g, RHS is d^{1-k} • (heckeT_p_ut at M of g) ∣ α_d.
-  -- Unfold heckeT_p_ut on LHS, apply matrix shifts and the modular reindex.
-  have hLR : (⇑((levelRaise M d k g).toModularForm') : UpperHalfPlane → ℂ) =
-    ((d : ℂ) ^ (1 - k)) • (⇑g ∣[k] levelRaiseMatrix d) := rfl
+  -- LHS is heckeT_p_ut at level d*M of LR_d g, RHS is d^{1-k} • (heckeT_p_ut at M of g) ∣ α_d;
+  -- rewrite the level-raised sum (`heckeT_p_ut_levelRaise`) then reindex (`..._reindex`).
   show heckeT_p_ut k p hp.pos (⇑((levelRaise M d k) g).toModularForm') z =
     (((d : ℂ) ^ (1 - k)) • (heckeT_p_ut k p hp.pos (⇑g.toModularForm') ∣[k]
       levelRaiseMatrix d)) z
-  simp only [heckeT_p_ut]
-  simp_rw [hLR, smul_slash_pos_det k _ _ _ (T_p_upper_det_pos p hp.pos _)]
-  simp_rw [show ∀ b, (⇑g ∣[k] levelRaiseMatrix d) ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ) =
-    ⇑g ∣[k] (levelRaiseMatrix d * glMap (T_p_upper p hp.pos b)) from
-    fun b => show (⇑g ∣[k] levelRaiseMatrix d) ∣[k] glMap (T_p_upper p hp.pos b) = _ from
-      (SlashAction.slash_mul k _ _ _).symm]
-  simp_rw [levelRaise_mul_T_p_upper d p hp.pos]
-  simp_rw [show ∀ b, ⇑g ∣[k] (glMap (T_p_upper p hp.pos (d * b)) * levelRaiseMatrix d) =
-    (⇑g ∣[k] (T_p_upper p hp.pos (d * b) : GL (Fin 2) ℚ)) ∣[k] levelRaiseMatrix d from
-    fun b => show ⇑g ∣[k] (glMap (T_p_upper p hp.pos (d * b)) * levelRaiseMatrix d) =
-      (⇑g ∣[k] glMap (T_p_upper p hp.pos (d * b))) ∣[k] levelRaiseMatrix d from
-      SlashAction.slash_mul k _ _ _]
-  simp_rw [show ∀ b, ⇑g ∣[k] (T_p_upper p hp.pos (d * b) : GL (Fin 2) ℚ) =
-    ⇑g.toModularForm' ∣[k] (T_p_upper p hp.pos (d * b % p) : GL (Fin 2) ℚ) from
-    fun b => slash_T_p_upper_mod M k p hp.pos (d * b) g.toModularForm']
-  -- Apply sum_reindex_mul_mod with Coprime d p to swap d*b mod p ↔ b.
-  have h_reindex := sum_reindex_mul_mod d p hp hd_coprime_p
-    (fun b => ((d : ℂ) ^ (1 - k)) • (⇑g.toModularForm' ∣[k]
-      (T_p_upper p hp.pos b : GL (Fin 2) ℚ)) ∣[k] levelRaiseMatrix d)
-  simp only at h_reindex; rw [h_reindex]
-  -- Now LHS = Σ_b d^{1-k} • (g ∣ T_p_upper b ∣ α_d), RHS = d^{1-k} • (Σ_b g ∣ T_p_upper b) ∣ α_d.
-  rw [sum_slash_R, ← Finset.smul_sum]
+  rw [heckeT_p_ut_levelRaise p hp M d g, heckeT_p_ut_levelRaise_reindex p hp M d hd_coprime_p g]
 
 /-! ### T171 trivial-inclusion oldform API (`p ∣ d` bad-prime case) -/
 
@@ -801,6 +806,31 @@ private lemma T_p_upper_zero_mul_levelRaise_smul_eq
     simp
   rw [h_num, h_denom, div_one]
 
+/-- **T171 — scalar collapse for the `p ∣ d` slash product.**
+
+The pure ℂ-arithmetic identity behind the `p ∣ d` slash collapse: with `p ∣ d`
+(so `d = p · (d/p)`) and `p ≠ 0`, the determinant/denominator scalars combine as
+`x · (p·d)^{k-1} · p^{-k} = p^{k-2} · (x · (d/p)^{k-1})`.  Pulls `2(k-1) - k = k-2`
+out of the prime powers via `zpow_add₀`. -/
+private lemma T_p_zero_levelRaise_scalar_collapse
+    {p d : ℕ} (hp : 0 < p) (hpd : p ∣ d) (x : ℂ) :
+    x * (((p : ℝ) * (d : ℝ) : ℝ) : ℂ) ^ (k - 1) * (p : ℂ) ^ (-k) =
+      (p : ℂ) ^ (k - 2) * (x * (((d / p : ℕ) : ℝ) : ℂ) ^ (k - 1)) := by
+  have hpC : (p : ℂ) ≠ 0 := by exact_mod_cast hp.ne'
+  have hdetC : (((p : ℝ) * (d : ℝ) : ℝ) : ℂ) = ((p : ℂ) * (p : ℂ)) * ((d / p : ℕ) : ℂ) := by
+    rw [show (((p : ℝ) * (d : ℝ) : ℝ) : ℂ) = (p : ℂ) * (d : ℂ) by push_cast; ring,
+      show (d : ℂ) = ((p * (d / p) : ℕ) : ℂ) by rw [Nat.mul_div_cancel' hpd]]
+    push_cast; ring
+  rw [hdetC, show (((d / p : ℕ) : ℝ) : ℂ) = ((d / p : ℕ) : ℂ) by push_cast; ring,
+    mul_zpow, mul_zpow,
+    show x * (((p : ℂ) ^ (k - 1) * (p : ℂ) ^ (k - 1)) *
+        ((d / p : ℕ) : ℂ) ^ (k - 1)) * (p : ℂ) ^ (-k) =
+        (((p : ℂ) ^ (k - 1) * (p : ℂ) ^ (k - 1)) * (p : ℂ) ^ (-k)) *
+        (x * ((d / p : ℕ) : ℂ) ^ (k - 1)) by ring,
+    show (p : ℂ) ^ (k - 1) * (p : ℂ) ^ (k - 1) = (p : ℂ) ^ (2 * k - 2) by
+      rw [← zpow_add₀ hpC]; congr 1; ring,
+    ← zpow_add₀ hpC, show (2 * k - 2 + -k : ℤ) = k - 2 by ring]
+
 /-- **T171 — slash-level helper for the `p ∣ d` collapsed product.**
 
 For `p ∣ d` with `[NeZero (d / p)]` as an explicit instance binder, the
@@ -841,36 +871,32 @@ private lemma slash_T_p_upper_zero_mul_levelRaise_apply
   --   RHS: (p:ℂ)^(k-2) * (f(...) * ((d/p:ℕ:ℝ) : ℂ)^(k-1) * 1^(-k))
   -- Simplify 1^(-k) = 1.
   rw [one_zpow, mul_one]
-  -- Apply scalar arithmetic in ℂ (avoids ℕ→ℝ→ℂ nested cast issues).
+  -- The remaining scalar arithmetic is `T_p_zero_levelRaise_scalar_collapse`.
+  exact T_p_zero_levelRaise_scalar_collapse hp hpd _
+
+/-- **T171 — final scalar identity for the `p ∣ d` collapse.**
+
+The closing ℂ-arithmetic step of the collapse identity: with `p ∣ d` and `p ≠ 0`
+(so `d = p · (d/p)`), the accumulated `p · (d^{1-k} · (p^{k-2} · h))` reduces to
+`(d/p)^{1-k} · h`, because `p · p^{1-k} · p^{k-2} = p^0 = 1`. -/
+private lemma T_p_divN_collapse_final_scalar
+    {p d : ℕ} (hp : 0 < p) (hpd : p ∣ d) (h : ℂ) :
+    (p : ℂ) * ((d : ℂ) ^ (1 - k) * ((p : ℂ) ^ (k - 2) * h)) =
+      ((d / p : ℕ) : ℂ) ^ (1 - k) * h := by
   have hpC : (p : ℂ) ≠ 0 := by exact_mod_cast hp.ne'
-  have hq_pos : 0 < d / p :=
-    Nat.div_pos (Nat.le_of_dvd (NeZero.pos d) hpd) hp
   have hdC : (d : ℂ) = (p : ℂ) * ((d / p : ℕ) : ℂ) := by
     rw [show (d : ℂ) = ((p * (d / p) : ℕ) : ℂ) by rw [Nat.mul_div_cancel' hpd]]
     push_cast; ring
-  have hdetC : (((p : ℝ) * (d : ℝ) : ℝ) : ℂ) = (p : ℂ) * ((p : ℂ) * ((d / p : ℕ) : ℂ)) := by
-    rw [show (((p : ℝ) * (d : ℝ) : ℝ) : ℂ) = (p : ℂ) * (d : ℂ) by push_cast; ring]
-    rw [hdC]
-  -- hscalar handles the ℂ-level scalar arithmetic.
-  have hscalar : ∀ (x : ℂ),
-      x * (((p : ℝ) * (d : ℝ) : ℝ) : ℂ) ^ (k - 1) * (p : ℂ) ^ (-k) =
-        (p : ℂ) ^ (k - 2) * (x * (((d / p : ℕ) : ℝ) : ℂ) ^ (k - 1)) := by
-    intro x
-    rw [hdetC]
-    rw [show (((d / p : ℕ) : ℝ) : ℂ) = ((d / p : ℕ) : ℂ) by push_cast; ring]
-    rw [show (p : ℂ) * ((p : ℂ) * ((d / p : ℕ) : ℂ)) =
-        ((p : ℂ) * (p : ℂ)) * ((d / p : ℕ) : ℂ) by ring]
-    rw [mul_zpow, mul_zpow]
-    rw [show x * (((p : ℂ) ^ (k - 1) * (p : ℂ) ^ (k - 1)) *
-        ((d / p : ℕ) : ℂ) ^ (k - 1)) * (p : ℂ) ^ (-k) =
-        (((p : ℂ) ^ (k - 1) * (p : ℂ) ^ (k - 1)) * (p : ℂ) ^ (-k)) *
-        (x * ((d / p : ℕ) : ℂ) ^ (k - 1)) by ring]
-    rw [show (p : ℂ) ^ (k - 1) * (p : ℂ) ^ (k - 1) = (p : ℂ) ^ (2 * k - 2) by
-      rw [← zpow_add₀ hpC]
-      congr 1; ring]
-    rw [← zpow_add₀ hpC]
-    rw [show (2 * k - 2 + -k : ℤ) = k - 2 by ring]
-  exact hscalar _
+  have hp_exp : (p : ℂ) * (p : ℂ) ^ (1 - k) * (p : ℂ) ^ (k - 2) = 1 := by
+    rw [mul_assoc, ← zpow_add₀ hpC, show ((1 - k) + (k - 2) : ℤ) = -1 from by ring,
+      zpow_neg_one]
+    exact mul_inv_cancel₀ hpC
+  rw [hdC, mul_zpow,
+    show (p : ℂ) * (((p : ℂ) ^ (1 - k) * ((d / p : ℕ) : ℂ) ^ (1 - k)) *
+        ((p : ℂ) ^ (k - 2) * h)) =
+      ((p : ℂ) * (p : ℂ) ^ (1 - k) * (p : ℂ) ^ (k - 2)) *
+        (((d / p : ℕ) : ℂ) ^ (1 - k) * h) from by ring,
+    hp_exp, one_mul]
 
 /-- **T171 — `p ∣ d` collapse identity (proof of `HasHeckeT_p_divN_LR_d_collapse_identity`).**
 
@@ -906,26 +932,10 @@ private theorem Newform.HasHeckeT_p_divN_LR_d_collapse_identity_proof
         heckeT_p_ut k p hp.pos (⇑((levelRaise M d k) g).toModularForm') from
       heckeT_p_all_not_coprime_apply k hp hpdM _]
   show heckeT_p_ut k p hp.pos (⇑((levelRaise M d k) g).toModularForm') z = _
-  have hLR : (⇑((levelRaise M d k g).toModularForm') : UpperHalfPlane → ℂ) =
-    ((d : ℂ) ^ (1 - k)) • (⇑g ∣[k] levelRaiseMatrix d) := rfl
-  simp only [heckeT_p_ut, Finset.sum_apply]
-  simp_rw [hLR, smul_slash_pos_det k _ _ _ (T_p_upper_det_pos p hp.pos _)]
-  simp_rw [show ∀ b, (⇑g ∣[k] levelRaiseMatrix d) ∣[k]
-      (T_p_upper p hp.pos b : GL (Fin 2) ℚ) =
-    ⇑g ∣[k] (levelRaiseMatrix d * glMap (T_p_upper p hp.pos b)) from
-    fun b => show (⇑g ∣[k] levelRaiseMatrix d) ∣[k] glMap (T_p_upper p hp.pos b) =
-      _ from (SlashAction.slash_mul k _ _ _).symm]
-  simp_rw [levelRaise_mul_T_p_upper d p hp.pos]
-  simp_rw [show ∀ b, ⇑g ∣[k]
-      (glMap (T_p_upper p hp.pos (d * b)) * levelRaiseMatrix d) =
-    (⇑g ∣[k] (T_p_upper p hp.pos (d * b) : GL (Fin 2) ℚ)) ∣[k] levelRaiseMatrix d from
-    fun b => show ⇑g ∣[k]
-      (glMap (T_p_upper p hp.pos (d * b)) * levelRaiseMatrix d) =
-      (⇑g ∣[k] glMap (T_p_upper p hp.pos (d * b))) ∣[k] levelRaiseMatrix d from
-      SlashAction.slash_mul k _ _ _]
-  simp_rw [show ∀ b, ⇑g ∣[k] (T_p_upper p hp.pos (d * b) : GL (Fin 2) ℚ) =
-    ⇑g.toModularForm' ∣[k] (T_p_upper p hp.pos (d * b % p) : GL (Fin 2) ℚ) from
-    fun b => slash_T_p_upper_mod M k p hp.pos (d * b) g.toModularForm']
+  -- Rewrite the level-raised upper-triangular sum via `heckeT_p_ut_levelRaise`,
+  -- then collapse the index since `p ∣ d` forces `d * b % p = 0`.
+  rw [heckeT_p_ut_levelRaise p hp M d g]
+  simp only [Finset.sum_apply]
   simp_rw [mul_mod_eq_zero_of_dvd hp.pos hpd]
   simp_rw [show (⇑g.toModularForm' ∣[k] (T_p_upper p hp.pos 0 : GL (Fin 2) ℚ))
       ∣[k] levelRaiseMatrix d =
@@ -937,33 +947,14 @@ private theorem Newform.HasHeckeT_p_divN_LR_d_collapse_identity_proof
   simp_rw [slash_T_p_upper_zero_mul_levelRaise_apply (k := k) hp.pos hpd
     ⇑g.toModularForm']
   rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
-  -- Final algebra: ↑p * (↑d^(1-k) * (↑p^(k-2) * h)) = levelRaiseFun (d/p) k ⇑g z
-  -- where h = (⇑g.toModularForm' ∣[k] α_(d/p)) z.
-  have hpC : (p : ℂ) ≠ 0 := by exact_mod_cast hp.ne_zero
-  have hdC : (d : ℂ) = (p : ℂ) * ((d / p : ℕ) : ℂ) := by
-    rw [show (d : ℂ) = ((p * (d / p) : ℕ) : ℂ) by rw [Nat.mul_div_cancel' hpd]]
-    push_cast; ring
-  have hp_exp : (p : ℂ) * (p : ℂ) ^ (1 - k) * (p : ℂ) ^ (k - 2) = 1 := by
-    rw [mul_assoc, ← zpow_add₀ hpC]
-    rw [show ((1 - k) + (k - 2) : ℤ) = -1 from by ring]
-    rw [zpow_neg_one]
-    exact mul_inv_cancel₀ hpC
-  -- Single `show` performs all rfl-defeq conversions: levelRaiseFun unfold,
-  -- Pi.smul_apply, smul_eq_mul, ⇑g.toModularForm' = ⇑g.
+  -- Final ℂ-arithmetic via `T_p_divN_collapse_final_scalar`.  The `show` performs the
+  -- rfl-defeq conversions: `levelRaiseFun` unfold, `Pi.smul_apply`, `⇑g.toModularForm' = ⇑g`.
   show ((p : ℕ) : ℂ) * ((d : ℂ) ^ (1 - k) *
       ((p : ℂ) ^ (k - 2) *
         (⇑g ∣[k] (levelRaiseMatrix (d / p) : GL (Fin 2) ℝ)) z)) =
     ((d / p : ℕ) : ℂ) ^ (1 - k) *
       (⇑g ∣[k] levelRaiseMatrix (d / p)) z
-  rw [show ((p : ℕ) : ℂ) = (p : ℂ) from rfl]
-  rw [hdC, mul_zpow]
-  rw [show (p : ℂ) * (((p : ℂ) ^ (1 - k) * ((d / p : ℕ) : ℂ) ^ (1 - k)) *
-        ((p : ℂ) ^ (k - 2) *
-          (⇑g ∣[k] (levelRaiseMatrix (d / p) : GL (Fin 2) ℝ)) z)) =
-      ((p : ℂ) * (p : ℂ) ^ (1 - k) * (p : ℂ) ^ (k - 2)) *
-        (((d / p : ℕ) : ℂ) ^ (1 - k) *
-          (⇑g ∣[k] (levelRaiseMatrix (d / p) : GL (Fin 2) ℝ)) z) from by ring]
-  rw [hp_exp, one_mul]
+  exact T_p_divN_collapse_final_scalar hp.pos hpd _
 
 /-- **T171 — `p ∣ d` extended-oldspace preservation theorem (proof of
 `HasHeckeT_p_divN_LRpd_in_cuspFormsOldExtended`).**
@@ -1001,10 +992,206 @@ theorem Newform.HasHeckeT_p_divN_LRpd_in_cuspFormsOldExtended_proof
   rw [h_eq]
   exact levelInclude_cusp_mem_cuspFormsOldExtended hQM_dvd hQM_lt _
 
+/-- **CuspForm-level multiplicative decomposition.**  A `Module.End`-level
+factorisation `T_m = T_a ∘ T_b` of the Hecke operator transfers to the
+function level: `T_m f = T_a (T_b f)` for every cusp form `f`. -/
+private lemma heckeT_n_cusp_decomp_of_mul
+    {L : ℕ} [NeZero L] (k : ℤ) (a b m : ℕ) [NeZero a] [NeZero b] [NeZero m]
+    (h_mul : heckeT_n (N := L) k m = heckeT_n k a * heckeT_n k b)
+    (f : CuspForm ((Gamma1 L).map (mapGL ℝ)) k) :
+    heckeT_n_cusp k m f = heckeT_n_cusp k a (heckeT_n_cusp k b f) := by
+  apply CuspForm.ext; intro z
+  show ((heckeT_n (N := L) k m) f.toModularForm').toFun z =
+    ((heckeT_n k a) ((heckeT_n k b) f.toModularForm')).toFun z
+  simp only [ModularForm.toFun_eq_coe]; rw [h_mul]; rfl
+
+/-- **CuspForm-level prime-power recurrence `T_{p^{r+2}}`.**  The Hecke
+recurrence `T_{p^{r+2}} = T_p T_{p^{r+1}} - p^{k-1} ⟨p⟩ T_{p^r}` (from
+`heckeT_ppow_succ_succ`) at the function level, with the diamond identified
+via `diamondOp_ext_coprime`. -/
+private lemma heckeT_n_cusp_ppow_succ_succ
+    {L : ℕ} [NeZero L] (k : ℤ) {p : ℕ} (hp : Nat.Prime p) (hpL : Nat.Coprime p L)
+    (r : ℕ) (f : CuspForm ((Gamma1 L).map (mapGL ℝ)) k) :
+    haveI : NeZero p := ⟨hp.ne_zero⟩
+    haveI : NeZero (p ^ (r + 2)) := ⟨(pow_pos hp.pos _).ne'⟩
+    haveI : NeZero (p ^ (r + 1)) := ⟨(pow_pos hp.pos _).ne'⟩
+    haveI : NeZero (p ^ r) := ⟨(pow_pos hp.pos _).ne'⟩
+    heckeT_n_cusp k (p ^ (r + 2)) f =
+      heckeT_n_cusp k p (heckeT_n_cusp k (p ^ (r + 1)) f) -
+        ((↑p : ℂ) ^ (k - 1)) • diamondOp_cusp k (ZMod.unitOfCoprime p hpL)
+          (heckeT_n_cusp k (p ^ r) f) := by
+  haveI : NeZero p := ⟨hp.ne_zero⟩
+  haveI : NeZero (p ^ (r + 2)) := ⟨(pow_pos hp.pos _).ne'⟩
+  haveI : NeZero (p ^ (r + 1)) := ⟨(pow_pos hp.pos _).ne'⟩
+  haveI : NeZero (p ^ r) := ⟨(pow_pos hp.pos _).ne'⟩
+  apply CuspForm.ext; intro z
+  show ((heckeT_n (N := L) k (p ^ (r + 2))) f.toModularForm').toFun z = _
+  rw [heckeT_n_prime_pow k hp (r + 2) (by omega), heckeT_ppow_succ_succ k p hp r]
+  simp only [LinearMap.sub_apply, LinearMap.smul_apply,
+    ModularForm.toFun_eq_coe, ModularForm.coe_sub, Pi.sub_apply]
+  congr 1
+  · show (heckeT_p_all (N := L) k p hp
+      (heckeT_ppow k p hp (r + 1) f.toModularForm')).toFun z =
+      ((heckeT_n k p) ((heckeT_n k (p ^ (r + 1))) f.toModularForm')).toFun z
+    rw [← heckeT_n_prime k hp, ← heckeT_n_prime_pow k hp (r + 1) (by omega)]
+  · have key : (diamondOp_ext k p) ((heckeT_ppow k p hp r) f.toModularForm') =
+        (diamondOp k (ZMod.unitOfCoprime p hpL))
+          ((heckeT_n (N := L) k (p ^ r)) f.toModularForm') := by
+      rw [diamondOp_ext_coprime k hpL]
+      cases r with
+      | zero => simp [heckeT_ppow_zero, heckeT_n_one]
+      | succ r => rw [← heckeT_n_prime_pow k hp (r + 1) (by omega)]
+    rw [show diamondOp_ext k p * heckeT_ppow k p hp r =
+      (diamondOp_ext k p).comp (heckeT_ppow k p hp r) from rfl] at *
+    simp only [LinearMap.comp_apply] at *
+    rw [key]; rfl
+
+/-- **Prime-power inductive step for level-raise commutation.**  Assuming the
+commutation `T_q (LR g) = LR (T_q g)` already holds for `q ∈ {p, p^{r+1}, p^r}`,
+the recurrence (`heckeT_n_cusp_ppow_succ_succ`) plus the diamond/level-raise
+commutation (`diamondOp_levelRaise_eq`) gives it for `q = p^{r+2}`. -/
+private lemma heckeT_ppow_levelRaise_comm_step
+    (M d : ℕ) [NeZero M] [NeZero d] {p : ℕ} (hp : Nat.Prime p)
+    (hpM : Nat.Coprime p M) (hpdM : Nat.Coprime p (d * M)) (r : ℕ)
+    (g' : CuspForm ((Gamma1 M).map (mapGL ℝ)) k)
+    (ih_p : haveI : NeZero p := ⟨hp.ne_zero⟩
+      ∀ f : CuspForm ((Gamma1 M).map (mapGL ℝ)) k,
+      heckeT_n_cusp k p (levelRaise M d k f) = levelRaise M d k (heckeT_n_cusp k p f))
+    (ih_pv1 : haveI : NeZero (p ^ (r + 1)) := ⟨(pow_pos hp.pos _).ne'⟩
+      ∀ f : CuspForm ((Gamma1 M).map (mapGL ℝ)) k,
+      heckeT_n_cusp k (p ^ (r + 1)) (levelRaise M d k f) =
+        levelRaise M d k (heckeT_n_cusp k (p ^ (r + 1)) f))
+    (ih_pr : haveI : NeZero (p ^ r) := ⟨(pow_pos hp.pos _).ne'⟩
+      ∀ f : CuspForm ((Gamma1 M).map (mapGL ℝ)) k,
+      heckeT_n_cusp k (p ^ r) (levelRaise M d k f) =
+        levelRaise M d k (heckeT_n_cusp k (p ^ r) f)) :
+    haveI : NeZero p := ⟨hp.ne_zero⟩
+    haveI : NeZero (p ^ (r + 2)) := ⟨(pow_pos hp.pos _).ne'⟩
+    heckeT_n_cusp (N := d * M) k (p ^ (r + 2)) (levelRaise M d k g') =
+      levelRaise M d k (heckeT_n_cusp (N := M) k (p ^ (r + 2)) g') := by
+  haveI : NeZero p := ⟨hp.ne_zero⟩
+  haveI : NeZero (p ^ (r + 1)) := ⟨(pow_pos hp.pos _).ne'⟩
+  haveI : NeZero (p ^ r) := ⟨(pow_pos hp.pos _).ne'⟩
+  have h_units_eq : ZMod.unitsMap (Nat.dvd_mul_left M d)
+      (ZMod.unitOfCoprime p hpdM) = ZMod.unitOfCoprime p hpM := by
+    ext; simp [ZMod.unitsMap_val, ZMod.coe_unitOfCoprime]
+  have ih_dia : ∀ f, diamondOp_cusp k (ZMod.unitOfCoprime p hpdM) (levelRaise M d k f) =
+      levelRaise M d k (diamondOp_cusp k (ZMod.unitOfCoprime p hpM) f) := by
+    intro f
+    have h := diamondOp_levelRaise_eq (ZMod.unitOfCoprime p hpdM) M d rfl f
+    rw [h, h_units_eq]; rfl
+  calc heckeT_n_cusp k (p ^ (r + 2)) (levelRaise M d k g')
+      = heckeT_n_cusp k p (heckeT_n_cusp k (p ^ (r + 1)) (levelRaise M d k g')) -
+          ((↑p : ℂ) ^ (k - 1)) • diamondOp_cusp k (ZMod.unitOfCoprime p hpdM)
+            (heckeT_n_cusp k (p ^ r) (levelRaise M d k g')) :=
+        heckeT_n_cusp_ppow_succ_succ k hp hpdM r (levelRaise M d k g')
+    _ = heckeT_n_cusp k p (levelRaise M d k (heckeT_n_cusp k (p ^ (r + 1)) g')) -
+          ((↑p : ℂ) ^ (k - 1)) • diamondOp_cusp k (ZMod.unitOfCoprime p hpdM)
+            (levelRaise M d k (heckeT_n_cusp k (p ^ r) g')) := by
+        rw [ih_pv1 g', ih_pr g']
+    _ = levelRaise M d k (heckeT_n_cusp k p (heckeT_n_cusp k (p ^ (r + 1)) g')) -
+          ((↑p : ℂ) ^ (k - 1)) • levelRaise M d k (diamondOp_cusp k
+            (ZMod.unitOfCoprime p hpM) (heckeT_n_cusp k (p ^ r) g')) := by
+        rw [ih_p (heckeT_n_cusp k (p ^ (r + 1)) g'), ih_dia (heckeT_n_cusp k (p ^ r) g')]
+    _ = levelRaise M d k (heckeT_n_cusp k p (heckeT_n_cusp k (p ^ (r + 1)) g') -
+          ((↑p : ℂ) ^ (k - 1)) • diamondOp_cusp k (ZMod.unitOfCoprime p hpM)
+            (heckeT_n_cusp k (p ^ r) g')) := by
+        rw [← (levelRaise M d k).map_smul, ← (levelRaise M d k).map_sub]
+    _ = levelRaise M d k (heckeT_n_cusp k (p ^ (r + 2)) g') := by
+        rw [heckeT_n_cusp_ppow_succ_succ k hp hpM r g']
+
+/-- **Prime-power case `m = p^{r+2}` of the level-raise commutation step.**
+Discharges the IH size bounds (`p, p^{r+1}, p^r < p^{r+2}`) and feeds the three
+resulting commutations to `heckeT_ppow_levelRaise_comm_step`. -/
+private lemma heckeT_n_levelRaise_comm_ppow_case
+    (M d : ℕ) [NeZero M] [NeZero d] {p : ℕ} (hp : Nat.Prime p) (r : ℕ)
+    (hpcop : Nat.Coprime p (d * M))
+    (ih : haveI : NeZero p := ⟨hp.ne_zero⟩
+        ∀ m' < p ^ (r + 2), ∀ (_ : 0 < m'), Nat.Coprime m' (d * M) →
+        ∀ f : CuspForm ((Gamma1 M).map (mapGL ℝ)) k,
+          haveI : NeZero m' := ⟨‹0 < m'›.ne'⟩
+          heckeT_n_cusp k m' (levelRaise M d k f) =
+            levelRaise M d k (heckeT_n_cusp k m' f))
+    (g' : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) :
+    haveI : NeZero p := ⟨hp.ne_zero⟩
+    haveI : NeZero (p ^ (r + 2)) := ⟨(pow_pos hp.pos _).ne'⟩
+    heckeT_n_cusp k (p ^ (r + 2)) (levelRaise M d k g') =
+      levelRaise M d k (heckeT_n_cusp k (p ^ (r + 2)) g') := by
+  haveI : NeZero p := ⟨hp.ne_zero⟩
+  have hp_lt : p < p ^ (r + 2) := by
+    calc p = p ^ 1 := (pow_one p).symm
+      _ < p ^ (r + 2) := Nat.pow_lt_pow_right hp.one_lt (by omega)
+  have hpv1_lt : p ^ (r + 1) < p ^ (r + 2) := Nat.pow_lt_pow_right hp.one_lt (by omega)
+  have hpr_lt : p ^ r < p ^ (r + 2) := Nat.pow_lt_pow_right hp.one_lt (by omega)
+  exact heckeT_ppow_levelRaise_comm_step M d hp
+    (hpcop.coprime_dvd_right (dvd_mul_left M d)) hpcop r g'
+    (fun f => ih p hp_lt hp.pos hpcop f)
+    (fun f => ih (p ^ (r + 1)) hpv1_lt (pow_pos hp.pos _) (hpcop.pow_left _) f)
+    (fun f => ih (p ^ r) hpr_lt (pow_pos hp.pos _) (hpcop.pow_left _) f)
+
+/-- **`m > 1` inductive step for `heckeT_n_levelRaise_comm`.**  Splits `m` by
+its largest prime-power factor `p^v ‖ m`.  If `p^v < m`, `T_m = T_{p^v} T_{m/p^v}`
+factors and the IH applies to both; if `p^v = m`, the prime case
+(`heckeT_p_all_levelRaise_comm`, `v = 1`) or the recurrence step
+(`heckeT_n_levelRaise_comm_ppow_case`, `v ≥ 2`) closes the goal. -/
+private lemma heckeT_n_levelRaise_comm_step
+    (M d : ℕ) [NeZero M] [NeZero d] (m : ℕ) (hle : 1 < m)
+    (hcop : Nat.Coprime m (d * M))
+    (ih : ∀ m' < m, ∀ (_ : 0 < m'), Nat.Coprime m' (d * M) →
+        ∀ f : CuspForm ((Gamma1 M).map (mapGL ℝ)) k,
+          haveI : NeZero m' := ⟨‹0 < m'›.ne'⟩
+          heckeT_n_cusp k m' (levelRaise M d k f) =
+            levelRaise M d k (heckeT_n_cusp k m' f))
+    (g' : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) :
+    haveI : NeZero m := ⟨(by omega : 0 < m).ne'⟩
+    heckeT_n_cusp k m (levelRaise M d k g') =
+      levelRaise M d k (heckeT_n_cusp k m g') := by
+  haveI : NeZero m := ⟨(by omega : 0 < m).ne'⟩
+  set p := m.minFac with hp_def
+  have hpp : p.Prime := Nat.minFac_prime (by omega : m ≠ 1)
+  set v := m.factorization p with hv_def
+  have hv_pos : 0 < v := hpp.factorization_pos_of_dvd (by omega) (Nat.minFac_dvd m)
+  have hdiv_pos : 0 < m / p ^ v :=
+    Nat.div_pos (Nat.le_of_dvd (by omega) (Nat.ordProj_dvd m p)) (pow_pos hpp.pos v)
+  have hdiv_lt : m / p ^ v < m := heckeT_n_unfold_lt m hle
+  have hpcop : Nat.Coprime p (d * M) := Nat.Coprime.coprime_dvd_left (Nat.minFac_dvd m) hcop
+  have hdiv_cop : Nat.Coprime (m / p ^ v) (d * M) :=
+    Nat.Coprime.coprime_dvd_left (Nat.div_dvd_of_dvd (Nat.ordProj_dvd m p)) hcop
+  have hpv_cop : Nat.Coprime (p ^ v) (d * M) := Nat.Coprime.pow_left v hpcop
+  have hpv_pos : 0 < p ^ v := pow_pos hpp.pos v
+  haveI : NeZero (p ^ v) := ⟨hpv_pos.ne'⟩
+  haveI : NeZero (m / p ^ v) := ⟨hdiv_pos.ne'⟩
+  by_cases hpv_lt : p ^ v < m
+  · -- Case 1: m not a prime power. T_m = T_{p^v} ∘ T_{m/p^v}, IH on both factors.
+    have hDecomp : ∀ {L : ℕ} [NeZero L] (f : CuspForm ((Gamma1 L).map (mapGL ℝ)) k),
+        heckeT_n_cusp k m f = heckeT_n_cusp k (p ^ v) (heckeT_n_cusp k (m / p ^ v) f) :=
+      fun {L} _ f => heckeT_n_cusp_decomp_of_mul k (p ^ v) (m / p ^ v) m
+        (heckeT_n_mul_ppow_quot (N := L) (k := k) m hle p hpp rfl v rfl hv_pos hdiv_pos) f
+    rw [hDecomp, ih (m / p ^ v) hdiv_lt hdiv_pos hdiv_cop g',
+      ih (p ^ v) hpv_lt hpv_pos hpv_cop (heckeT_n_cusp k (m / p ^ v) g')]
+    congr 1; exact (hDecomp g').symm
+  · have hpv_eq : p ^ v = m := le_antisymm
+      (Nat.le_of_dvd (by omega) (Nat.ordProj_dvd m p)) (not_lt.mp hpv_lt)
+    by_cases hv1 : v = 1
+    · -- Case 2a: m = p prime.
+      have hpp_m : Nat.Prime m := by
+        have := hpv_eq; rw [hv1, pow_one] at this; rwa [← this]
+      exact heckeT_p_all_levelRaise_comm m hpp_m hcop M d rfl g'
+    · -- Case 2b: m = p^v with v ≥ 2; reduce to `heckeT_n_levelRaise_comm_ppow_case`.
+      obtain ⟨r, hr⟩ : ∃ r, v = r + 2 := ⟨v - 2, by omega⟩
+      haveI : NeZero p := ⟨hpp.ne_zero⟩
+      haveI : NeZero (p ^ (r + 2)) := ⟨(pow_pos hpp.pos _).ne'⟩
+      have hm_eq : m = p ^ (r + 2) := by rw [← hpv_eq, hr]
+      calc heckeT_n_cusp k m (levelRaise M d k g')
+          = heckeT_n_cusp k (p ^ (r + 2)) (levelRaise M d k g') := by simp only [hm_eq]
+        _ = levelRaise M d k (heckeT_n_cusp k (p ^ (r + 2)) g') :=
+            heckeT_n_levelRaise_comm_ppow_case M d hpp r hpcop (hm_eq ▸ ih) g'
+        _ = levelRaise M d k (heckeT_n_cusp k m g') := by simp only [hm_eq]
+
 /-- The commutation `T_n (LR g) = LR (T_n g)` for general coprime n.
-Proved by strong induction on `n` using `heckeT_n_unfold`:
-`T_n = T_{p^v} * T_{n/p^v}`. The prime case uses `heckeT_p_all_levelRaise_comm`.
-Prime powers and the general case follow by composition. -/
+Proved by strong induction on `n` (`heckeT_n_levelRaise_comm_step` is the
+`n > 1` step); the prime case uses `heckeT_p_all_levelRaise_comm`, prime
+powers the recurrence, and composite `n` the multiplicative factorisation. -/
 lemma heckeT_n_levelRaise_comm
     (n : ℕ) [NeZero n] (hn : Nat.Coprime n N)
     (M : ℕ) (d : ℕ) [NeZero M] [NeZero d] (heq : d * M = N)
@@ -1012,9 +1199,8 @@ lemma heckeT_n_levelRaise_comm
     heckeT_n_cusp k n (heq ▸ levelRaise M d k g) =
       heq ▸ levelRaise M d k (heckeT_n_cusp k n g) := by
   subst heq
-  -- After subst, everything is at level d*M and the ▸ transports disappear.
-  -- Strong induction on n.
-  -- Strengthen: quantify over ALL cusp forms g' (not just g).
+  -- Strong induction on `n`, strengthened over all cusp forms `g'`; the
+  -- `m > 1` step is `heckeT_n_levelRaise_comm_step`.
   suffices h : ∀ m : ℕ, (hm : 0 < m) → Nat.Coprime m (d * M) →
       ∀ g' : CuspForm ((Gamma1 M).map (mapGL ℝ)) k,
         haveI : NeZero m := ⟨hm.ne'⟩
@@ -1026,229 +1212,21 @@ lemma heckeT_n_levelRaise_comm
   | _ m ih =>
     intro hm hcop g'
     haveI : NeZero m := ⟨hm.ne'⟩
-    by_cases hle : m ≤ 1
-    · -- m = 1: T_1 = id, trivial
-      have hm1 : m = 1 := by omega
-      subst hm1
-      have hLHS : heckeT_n_cusp k 1 (levelRaise M d k g') = levelRaise M d k g' := by
+    by_cases hle : 1 < m
+    · exact heckeT_n_levelRaise_comm_step M d m hle hcop ih g'
+    · -- m = 1: T_1 = id, so both sides are `LR g'`.
+      obtain rfl : m = 1 := by omega
+      have hid : ∀ (f : CuspForm ((Gamma1 (d * M)).map (mapGL ℝ)) k),
+          heckeT_n_cusp k 1 f = f := fun f => by
         apply CuspForm.ext; intro w
-        show (heckeT_n k 1 (levelRaise M d k g').toModularForm').toFun w = _
+        show (heckeT_n k 1 f.toModularForm').toFun w = f w
         rw [heckeT_n_one]; rfl
-      have hRHS : levelRaise M d k (heckeT_n_cusp k 1 g') = levelRaise M d k g' := by
-        congr 1; apply CuspForm.ext; intro w
-        show (heckeT_n k 1 g'.toModularForm').toFun w = g' w
+      have hid_M : ∀ (f : CuspForm ((Gamma1 M).map (mapGL ℝ)) k),
+          heckeT_n_cusp k 1 f = f := fun f => by
+        apply CuspForm.ext; intro w
+        show (heckeT_n k 1 f.toModularForm').toFun w = f w
         rw [heckeT_n_one]; rfl
-      rw [hLHS, hRHS]
-    · -- m > 1: decompose via heckeT_n_unfold
-      push_neg at hle
-      set p := m.minFac with hp_def
-      have hpp : p.Prime := Nat.minFac_prime (by omega : m ≠ 1)
-      set v := m.factorization p with hv_def
-      have hv_pos : 0 < v := hpp.factorization_pos_of_dvd (by omega) (Nat.minFac_dvd m)
-      have hdiv_pos : 0 < m / p ^ v :=
-        Nat.div_pos (Nat.le_of_dvd (by omega) (Nat.ordProj_dvd m p)) (pow_pos hpp.pos v)
-      have hdiv_lt : m / p ^ v < m := heckeT_n_unfold_lt m hle
-      have hpcop : Nat.Coprime p (d * M) := Nat.Coprime.coprime_dvd_left (Nat.minFac_dvd m) hcop
-      have hdiv_cop : Nat.Coprime (m / p ^ v) (d * M) :=
-        Nat.Coprime.coprime_dvd_left (Nat.div_dvd_of_dvd (Nat.ordProj_dvd m p)) hcop
-      have hpv_cop : Nat.Coprime (p ^ v) (d * M) := Nat.Coprime.pow_left v hpcop
-      have hpv_pos : 0 < p ^ v := pow_pos hpp.pos v
-      haveI : NeZero (p ^ v) := ⟨hpv_pos.ne'⟩
-      haveI : NeZero (m / p ^ v) := ⟨hdiv_pos.ne'⟩
-      -- IH on m/p^v: T_{m/p^v} commutes with LR for ALL cusp forms
-      have h_quot : ∀ f : CuspForm ((Gamma1 M).map (mapGL ℝ)) k,
-          heckeT_n_cusp k (m / p ^ v) (levelRaise M d k f) =
-            levelRaise M d k (heckeT_n_cusp k (m / p ^ v) f) :=
-        fun f => ih (m / p ^ v) hdiv_lt hdiv_pos hdiv_cop f
-      -- Multiplication decomposition: T_m = T_{p^v} * T_{m/p^v}
-      have h_mul_eq := heckeT_n_mul_ppow_quot (N := d * M) (k := k) m hle p hpp rfl v rfl hv_pos hdiv_pos
-      have h_mul_eq_M := heckeT_n_mul_ppow_quot (N := M) (k := k) m hle p hpp rfl v rfl hv_pos hdiv_pos
-      -- CuspForm-level decomposition: T_m f = T_{p^v}(T_{m/p^v} f)
-      -- Uses h_mul_eq at Module.End level; * on Module.End is comp, so (A*B)x = A(Bx) by rfl.
-      have hDecomp : ∀ (f : CuspForm ((Gamma1 (d * M)).map (mapGL ℝ)) k),
-          heckeT_n_cusp k m f = heckeT_n_cusp k (p ^ v) (heckeT_n_cusp k (m / p ^ v) f) := by
-        intro f; apply CuspForm.ext; intro z
-        show ((heckeT_n k m) f.toModularForm').toFun z =
-          ((heckeT_n k (p ^ v)) ((heckeT_n k (m / p ^ v)) f.toModularForm')).toFun z
-        simp only [ModularForm.toFun_eq_coe]; rw [h_mul_eq]; rfl
-      have hDecomp_M : ∀ (f : CuspForm ((Gamma1 M).map (mapGL ℝ)) k),
-          heckeT_n_cusp (N := M) k m f = heckeT_n_cusp k (p ^ v) (heckeT_n_cusp k (m / p ^ v) f) := by
-        intro f; apply CuspForm.ext; intro z
-        show ((heckeT_n (N := M) k m) f.toModularForm').toFun z =
-          ((heckeT_n k (p ^ v)) ((heckeT_n k (m / p ^ v)) f.toModularForm')).toFun z
-        simp only [ModularForm.toFun_eq_coe]; rw [h_mul_eq_M]; rfl
-      by_cases hpv_lt : p ^ v < m
-      · -- Case 1: m is NOT a prime power (p^v < m, so m/p^v > 1)
-        -- IH on p^v: T_{p^v} also commutes with LR
-        have h_pv : ∀ f : CuspForm ((Gamma1 M).map (mapGL ℝ)) k,
-            heckeT_n_cusp k (p ^ v) (levelRaise M d k f) =
-              levelRaise M d k (heckeT_n_cusp k (p ^ v) f) :=
-          fun f => ih (p ^ v) hpv_lt hpv_pos hpv_cop f
-        -- Chain: T_m(LR g')  = T_{p^v}(T_{m/p^v}(LR g'))  [decomp]
-        --                     = T_{p^v}(LR(T_{m/p^v} g'))  [IH on m/p^v]
-        --                     = LR(T_{p^v}(T_{m/p^v} g'))  [IH on p^v]
-        --                     = LR(T_m g')                  [decomp reversed]
-        rw [hDecomp, h_quot g', h_pv (heckeT_n_cusp k (m / p ^ v) g')]
-        congr 1; exact (hDecomp_M g').symm
-      · -- Case 2: m IS a prime power (p^v = m)
-        have hpv_eq : p ^ v = m := le_antisymm
-          (Nat.le_of_dvd (by omega) (Nat.ordProj_dvd m p)) (not_lt.mp hpv_lt)
-        by_cases hv1 : v = 1
-        · -- v = 1: m = p is prime, use heckeT_p_all_levelRaise_comm directly with m
-          have hpp_m : Nat.Prime m := by
-            have := hpv_eq; rw [hv1, pow_one] at this; rwa [← this]
-          exact heckeT_p_all_levelRaise_comm m hpp_m hcop M d rfl g'
-        · -- v ≥ 2: m = p^v, prime power case
-          -- p < m since p < p^2 ≤ p^v = m (as v ≥ 2 and p ≥ 2)
-          have hp_lt : p < m := by
-            rw [← hpv_eq]
-            calc p = p ^ 1 := (pow_one p).symm
-              _ < p ^ v := Nat.pow_lt_pow_right hpp.one_lt (by omega)
-          -- v ≥ 2, so write v = (v-2) + 2 and apply the recurrence
-          -- T_{p^v} = T_p * T_{p^{v-1}} - p^{1-k} * ⟨p⟩ * T_{p^{v-2}}
-          obtain ⟨r, hr⟩ : ∃ r, v = r + 2 := ⟨v - 2, by omega⟩
-          -- NeZero instances for all prime powers involved
-          haveI : NeZero p := ⟨hpp.ne_zero⟩
-          haveI : NeZero (p ^ (r + 1)) := ⟨(pow_pos hpp.pos _).ne'⟩
-          haveI : NeZero (p ^ r) := ⟨(pow_pos hpp.pos _).ne'⟩
-          -- Coprimality proofs at both levels
-          have hpM : Nat.Coprime p M :=
-            hpcop.coprime_dvd_right (dvd_mul_left M d)
-          have hpdM : Nat.Coprime p (d * M) := hpcop
-          -- Module.End recurrence: heckeT_ppow at d*M
-          have h_ppow_rec : heckeT_ppow (N := d * M) k p hpp (r + 2) =
-              heckeT_p_all k p hpp * heckeT_ppow k p hpp (r + 1) -
-                ((↑p : ℂ) ^ (k - 1)) •
-                  (diamondOp_ext k p * heckeT_ppow k p hpp r) :=
-            heckeT_ppow_succ_succ k p hpp r
-          -- Module.End recurrence: heckeT_ppow at M
-          have h_ppow_rec_M : heckeT_ppow (N := M) k p hpp (r + 2) =
-              heckeT_p_all k p hpp * heckeT_ppow k p hpp (r + 1) -
-                ((↑p : ℂ) ^ (k - 1)) •
-                  (diamondOp_ext k p * heckeT_ppow k p hpp r) :=
-            heckeT_ppow_succ_succ k p hpp r
-          -- CuspForm-level recurrence at d*M:
-          -- T_{p^v} f = T_p(T_{p^{v-1}} f) - c • ⟨p⟩(T_{p^{v-2}} f)
-          have hRec_cusp : ∀ (f : CuspForm ((Gamma1 (d * M)).map (mapGL ℝ)) k),
-              heckeT_n_cusp k (p ^ v) f =
-                heckeT_n_cusp k p (heckeT_n_cusp k (p ^ (r + 1)) f) -
-                  ((↑p : ℂ) ^ (k - 1)) • diamondOp_cusp k
-                    (ZMod.unitOfCoprime p hpdM)
-                    (heckeT_n_cusp k (p ^ r) f) := by
-            intro f; apply CuspForm.ext; intro z
-            show ((heckeT_n (N := d * M) k (p ^ v)) f.toModularForm').toFun z = _
-            rw [heckeT_n_prime_pow k hpp v hv_pos, hr, h_ppow_rec]
-            simp only [LinearMap.sub_apply, LinearMap.smul_apply,
-              ModularForm.toFun_eq_coe, ModularForm.coe_sub, Pi.sub_apply]
-            congr 1
-            · show (heckeT_p_all (N := d * M) k p hpp
-                (heckeT_ppow k p hpp (r + 1) f.toModularForm')).toFun z =
-                ((heckeT_n k p) ((heckeT_n k (p ^ (r + 1))) f.toModularForm')).toFun z
-              rw [← heckeT_n_prime k hpp, ← heckeT_n_prime_pow k hpp (r + 1) (by omega)]
-            · have key : (diamondOp_ext k p) ((heckeT_ppow k p hpp r) f.toModularForm') =
-                  (diamondOp k (ZMod.unitOfCoprime p hpdM))
-                    ((heckeT_n (N := d * M) k (p ^ r)) f.toModularForm') := by
-                rw [diamondOp_ext_coprime k hpdM]
-                cases r with
-                | zero => simp [heckeT_ppow_zero, heckeT_n_one]
-                | succ r => rw [← heckeT_n_prime_pow k hpp (r + 1) (by omega)]
-              rw [show diamondOp_ext k p * heckeT_ppow k p hpp r =
-                (diamondOp_ext k p).comp (heckeT_ppow k p hpp r) from rfl] at *
-              simp only [LinearMap.comp_apply] at *
-              rw [key]; rfl
-          -- CuspForm-level recurrence at M
-          have hRec_cusp_M : ∀ (f : CuspForm ((Gamma1 M).map (mapGL ℝ)) k),
-              heckeT_n_cusp k (p ^ v) f =
-                heckeT_n_cusp k p (heckeT_n_cusp k (p ^ (r + 1)) f) -
-                  ((↑p : ℂ) ^ (k - 1)) • diamondOp_cusp k
-                    (ZMod.unitOfCoprime p hpM)
-                    (heckeT_n_cusp k (p ^ r) f) := by
-            intro f; apply CuspForm.ext; intro z
-            show ((heckeT_n (N := M) k (p ^ v)) f.toModularForm').toFun z = _
-            rw [heckeT_n_prime_pow k hpp v hv_pos, hr, h_ppow_rec_M]
-            simp only [LinearMap.sub_apply, LinearMap.smul_apply,
-              ModularForm.toFun_eq_coe, ModularForm.coe_sub, Pi.sub_apply]
-            congr 1
-            · show (heckeT_p_all (N := M) k p hpp
-                (heckeT_ppow k p hpp (r + 1) f.toModularForm')).toFun z =
-                ((heckeT_n k p) ((heckeT_n k (p ^ (r + 1))) f.toModularForm')).toFun z
-              rw [← heckeT_n_prime k hpp, ← heckeT_n_prime_pow k hpp (r + 1) (by omega)]
-            · have key : (diamondOp_ext k p) ((heckeT_ppow k p hpp r) f.toModularForm') =
-                  (diamondOp k (ZMod.unitOfCoprime p hpM))
-                    ((heckeT_n (N := M) k (p ^ r)) f.toModularForm') := by
-                rw [diamondOp_ext_coprime k hpM]
-                cases r with
-                | zero => simp [heckeT_ppow_zero, heckeT_n_one]
-                | succ r => rw [← heckeT_n_prime_pow k hpp (r + 1) (by omega)]
-              rw [show diamondOp_ext k p * heckeT_ppow k p hpp r =
-                (diamondOp_ext k p).comp (heckeT_ppow k p hpp r) from rfl] at *
-              simp only [LinearMap.comp_apply] at *
-              rw [key]; rfl
-          -- Size bounds for IH
-          have hpv1_lt : p ^ (r + 1) < m := by
-            rw [← hpv_eq, hr]; exact Nat.pow_lt_pow_right hpp.one_lt (by omega)
-          have hpr_lt : p ^ r < m := by
-            rw [← hpv_eq, hr]; exact Nat.pow_lt_pow_right hpp.one_lt (by omega)
-          -- Coprimality for IH
-          have hpv1_cop : Nat.Coprime (p ^ (r + 1)) (d * M) := hpcop.pow_left _
-          have hpr_cop : Nat.Coprime (p ^ r) (d * M) := hpcop.pow_left _
-          -- IH applications
-          have ih_p : ∀ f, heckeT_n_cusp k p (levelRaise M d k f) =
-              levelRaise M d k (heckeT_n_cusp k p f) :=
-            fun f => ih p hp_lt hpp.pos hpcop f
-          have ih_pv1 : ∀ f, heckeT_n_cusp k (p ^ (r + 1)) (levelRaise M d k f) =
-              levelRaise M d k (heckeT_n_cusp k (p ^ (r + 1)) f) :=
-            fun f => ih (p ^ (r + 1)) hpv1_lt (pow_pos hpp.pos _) hpv1_cop f
-          have ih_pr : ∀ f, heckeT_n_cusp k (p ^ r) (levelRaise M d k f) =
-              levelRaise M d k (heckeT_n_cusp k (p ^ r) f) :=
-            fun f => ih (p ^ r) hpr_lt (pow_pos hpp.pos _) hpr_cop f
-          -- Diamond / level-raise commutation
-          have h_units_eq : ZMod.unitsMap (Nat.dvd_mul_left M d)
-              (ZMod.unitOfCoprime p hpdM) =
-              ZMod.unitOfCoprime p hpM := by
-            ext; simp [ZMod.unitsMap_val, ZMod.coe_unitOfCoprime]
-          have ih_dia : ∀ f, diamondOp_cusp k
-              (ZMod.unitOfCoprime p hpdM)
-              (levelRaise M d k f) =
-              levelRaise M d k (diamondOp_cusp k
-                (ZMod.unitOfCoprime p hpM) f) := by
-            intro f
-            have h := diamondOp_levelRaise_eq
-              (ZMod.unitOfCoprime p hpdM) M d rfl f
-            rw [h, h_units_eq]; rfl
-          -- Chain the equalities
-          -- Goal has m, but recurrence uses p^v
-          have hm_eq : m = p ^ v := hpv_eq.symm
-          calc heckeT_n_cusp k m (levelRaise M d k g')
-              = heckeT_n_cusp k (p ^ v) (levelRaise M d k g') := by simp only [hm_eq]
-            _ = heckeT_n_cusp k p (heckeT_n_cusp k (p ^ (r + 1))
-                  (levelRaise M d k g')) -
-                ((↑p : ℂ) ^ (k - 1)) • diamondOp_cusp k
-                  (ZMod.unitOfCoprime p hpdM)
-                  (heckeT_n_cusp k (p ^ r) (levelRaise M d k g')) :=
-              hRec_cusp (levelRaise M d k g')
-            _ = heckeT_n_cusp k p (levelRaise M d k
-                  (heckeT_n_cusp k (p ^ (r + 1)) g')) -
-                ((↑p : ℂ) ^ (k - 1)) • diamondOp_cusp k
-                  (ZMod.unitOfCoprime p hpdM)
-                  (levelRaise M d k (heckeT_n_cusp k (p ^ r) g')) := by
-              rw [ih_pv1 g', ih_pr g']
-            _ = levelRaise M d k (heckeT_n_cusp k p
-                  (heckeT_n_cusp k (p ^ (r + 1)) g')) -
-                ((↑p : ℂ) ^ (k - 1)) • levelRaise M d k (diamondOp_cusp k
-                  (ZMod.unitOfCoprime p hpM)
-                  (heckeT_n_cusp k (p ^ r) g')) := by
-              rw [ih_p (heckeT_n_cusp k (p ^ (r + 1)) g'),
-                  ih_dia (heckeT_n_cusp k (p ^ r) g')]
-            _ = levelRaise M d k (heckeT_n_cusp k p
-                  (heckeT_n_cusp k (p ^ (r + 1)) g') -
-                ((↑p : ℂ) ^ (k - 1)) • diamondOp_cusp k
-                  (ZMod.unitOfCoprime p hpM)
-                  (heckeT_n_cusp k (p ^ r) g')) := by
-              rw [← (levelRaise M d k).map_smul, ← (levelRaise M d k).map_sub]
-            _ = levelRaise M d k (heckeT_n_cusp k (p ^ v) g') := by
-              rw [hRec_cusp_M g']
-            _ = levelRaise M d k (heckeT_n_cusp k m g') := by simp only [hm_eq]
+      rw [hid, hid_M]
 
 /-- **Generator step for `T_n` stability**: `T_n(ι_d g) ∈ cuspFormsOld`.
 Follows immediately from `heckeT_n_levelRaise_comm`. -/
