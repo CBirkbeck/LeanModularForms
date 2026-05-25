@@ -57,6 +57,15 @@ namespace HungerbuhlerWasem
 
 variable {x : ℂ}
 
+/-- Given a nonempty Finset `S` and a function `f` taking positive values on members
+of `S`, extract a positive lower bound `r_min` for `f` on `S`. -/
+private lemma exists_pos_min_image {α : Type*} {S : Finset α} (h_nonempty : S.Nonempty)
+    (f : ∀ a ∈ S, ℝ) (hf_pos : ∀ a (ha : a ∈ S), 0 < f a ha) :
+    ∃ r_min > 0, ∀ a (ha : a ∈ S), r_min ≤ f a ha := by
+  obtain ⟨⟨a₀, ha₀⟩, _, h_min⟩ := Finset.exists_min_image S.attach
+    (fun ⟨a, ha⟩ => f a ha) (Finset.attach_nonempty_iff.mpr h_nonempty)
+  exact ⟨_, hf_pos a₀ ha₀, fun a ha => h_min ⟨a, ha⟩ (Finset.mem_attach _ _)⟩
+
 /-! ### Per-crossing radius bundle: per-crossing chord-quotient thresholds -/
 
 /-- **Per-crossing radius existence**: for each crossing `t_i`, extract a
@@ -683,14 +692,8 @@ theorem hasCauchyPV_inv_sub_multiCrossing
       (h_per_cross t_i ht_i_mem).choose
     have hr_at_pos : ∀ t_i (ht_i_mem : t_i ∈ D.crossings), 0 < r_at t_i ht_i_mem :=
       fun t_i ht_i_mem => (h_per_cross t_i ht_i_mem).choose_spec.choose_spec.choose_spec.1
-    -- Min over crossings.
-    have h_min_r : ∃ r_min > 0, ∀ t_i (ht_i_mem : t_i ∈ D.crossings),
-        r_min ≤ r_at t_i ht_i_mem := by
-      obtain ⟨⟨t₀, ht₀⟩, _, h_min⟩ := Finset.exists_min_image D.crossings.attach
-        (fun ⟨t_i, ht_i⟩ => r_at t_i ht_i) (Finset.attach_nonempty_iff.mpr h_nonempty)
-      exact ⟨_, hr_at_pos t₀ ht₀,
-        fun t_i ht_i => h_min ⟨t_i, ht_i⟩ (Finset.mem_attach _ _)⟩
-    obtain ⟨r_chord, hr_chord_pos, hr_chord_min⟩ := h_min_r
+    obtain ⟨r_chord, hr_chord_pos, hr_chord_min⟩ :=
+      exists_pos_min_image h_nonempty r_at hr_at_pos
     -- Step 2: combine with geometric common radius. We halve to get STRICT
     -- inequality (`r < r_geom`), which we need for strict positivity of the
     -- smooth pieces `t_i - r > 0`.
@@ -922,13 +925,8 @@ theorem hasCauchyPV_inv_sub_multiCrossing_corner
       (h_per_cross t_i ht_i_mem).choose
     have hr_at_pos : ∀ t_i (ht_i_mem : t_i ∈ crossings), 0 < r_at t_i ht_i_mem :=
       fun t_i ht_i_mem => (h_per_cross t_i ht_i_mem).choose_spec.choose_spec.choose_spec.1
-    have h_min_r : ∃ r_min > 0, ∀ t_i (ht_i_mem : t_i ∈ crossings),
-        r_min ≤ r_at t_i ht_i_mem := by
-      obtain ⟨⟨t₀, ht₀⟩, _, h_min⟩ := Finset.exists_min_image crossings.attach
-        (fun ⟨t_i, ht_i⟩ => r_at t_i ht_i) (Finset.attach_nonempty_iff.mpr h_nonempty)
-      exact ⟨_, hr_at_pos t₀ ht₀,
-        fun t_i ht_i => h_min ⟨t_i, ht_i⟩ (Finset.mem_attach _ _)⟩
-    obtain ⟨r_chord, hr_chord_pos, hr_chord_min⟩ := h_min_r
+    obtain ⟨r_chord, hr_chord_pos, hr_chord_min⟩ :=
+      exists_pos_min_image h_nonempty r_at hr_at_pos
     -- Step 2: corner-friendly common geometric radius (avoids partition \ crossings).
     obtain ⟨r_geom, hr_geom_pos, hr_geom_endpts, hr_geom_pair, _hr_geom_part⟩ :=
       multi_pole_common_radius_corner_simple (crossings := crossings)
@@ -2031,17 +2029,8 @@ theorem hasCauchyPVOn_multiCrossing_higherOrder
       (h_per_cross t_i ht_i_mem).choose
     have hr_at_pos : ∀ t_i (ht_i_mem : t_i ∈ D.crossings), 0 < r_at t_i ht_i_mem :=
       fun t_i ht_i_mem => (h_per_cross t_i ht_i_mem).choose_spec.choose_spec.choose_spec.1
-    have h_min_r : ∃ r_min > 0, ∀ t_i (ht_i_mem : t_i ∈ D.crossings),
-        r_min ≤ r_at t_i ht_i_mem := by
-      let f : D.crossings → ℝ := fun ⟨t_i, ht_i⟩ => r_at t_i ht_i
-      have h_attach_ne : D.crossings.attach.Nonempty :=
-        Finset.attach_nonempty_iff.mpr h_nonempty
-      obtain ⟨⟨t₀, ht₀⟩, _ht₀_mem, h_min⟩ :=
-        Finset.exists_min_image D.crossings.attach f h_attach_ne
-      refine ⟨f ⟨t₀, ht₀⟩, hr_at_pos t₀ ht₀, ?_⟩
-      intro t_i ht_i
-      exact h_min ⟨t_i, ht_i⟩ (Finset.mem_attach _ _)
-    obtain ⟨r_chord, hr_chord_pos, hr_chord_min⟩ := h_min_r
+    obtain ⟨r_chord, hr_chord_pos, hr_chord_min⟩ :=
+      exists_pos_min_image h_nonempty r_at hr_at_pos
     obtain ⟨r_geom, hr_geom_pos, hr_geom_endpts, hr_geom_pair, hr_geom_part⟩ :=
       multi_pole_common_radius (crossings := D.crossings)
         (partition := γ.toPwC1Immersion.toPiecewiseC1Path.partition)
@@ -2982,13 +2971,8 @@ theorem hasCauchyPVOn_multiCrossing_higherOrder_corner
       (h_per_cross t_i ht_i_mem).choose
     have hr_at_pos : ∀ t_i (ht_i_mem : t_i ∈ crossings), 0 < r_at t_i ht_i_mem :=
       fun t_i ht_i_mem => (h_per_cross t_i ht_i_mem).choose_spec.1
-    have h_min_r : ∃ r_min > 0, ∀ t_i (ht_i_mem : t_i ∈ crossings),
-        r_min ≤ r_at t_i ht_i_mem := by
-      obtain ⟨⟨t₀, ht₀⟩, _, h_min⟩ := Finset.exists_min_image crossings.attach
-        (fun ⟨t_i, ht_i⟩ => r_at t_i ht_i) (Finset.attach_nonempty_iff.mpr h_nonempty)
-      exact ⟨_, hr_at_pos t₀ ht₀,
-        fun t_i ht_i => h_min ⟨t_i, ht_i⟩ (Finset.mem_attach _ _)⟩
-    obtain ⟨r_chord, hr_chord_pos, hr_chord_min⟩ := h_min_r
+    obtain ⟨r_chord, hr_chord_pos, hr_chord_min⟩ :=
+      exists_pos_min_image h_nonempty r_at hr_at_pos
     -- Step 2: corner-friendly common radius (avoid partition \ crossings).
     obtain ⟨r_geom, hr_geom_pos, hr_geom_endpts, hr_geom_pair, hr_geom_part⟩ :=
       multi_pole_common_radius_corner_simple (crossings := crossings)
