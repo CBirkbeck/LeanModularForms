@@ -662,6 +662,40 @@ private lemma dvd_lower_left_of_dvd
   have h := (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp hγ
   exact dvd_trans (Int.natCast_dvd_natCast.mpr h_dvd) h
 
+/-- The lifted matrix's lower-left entry `l·c` is divisible by `N`: when
+`l ∣ N` and the quotient `(N / l)` divides `c`, then `N ∣ l·c`. This is the
+`Γ₀(N)`-membership step of the T-factorisation construction. -/
+private lemma natCast_dvd_levelRaiseConj_lower_left
+    {l N : ℕ} (h_dvd : l ∣ N) {c : ℤ} (hc : ((N / l : ℕ) : ℤ) ∣ c) :
+    (N : ℤ) ∣ (l : ℤ) * c := by
+  have hN : (N : ℤ) = (l : ℤ) * ((N / l : ℕ) : ℤ) := by
+    rw [← Nat.cast_mul, Nat.mul_div_cancel' h_dvd]
+  rw [hN]
+  exact mul_dvd_mul_left _ hc
+
+/-- The matrix identity `[[a,b],[c,d]] = T^i · (α_l γ α_l⁻¹) · T^j` underlying the
+T-factorisation, with the lift `γ.val = [[a - i·c, k], [l·c, d - c·j]]` (so
+`(α_l γ α_l⁻¹).val = [[a - i·c, l·k], [c, d - c·j]]`) and the Bezout relation
+`(b - i·d) - j·(a - i·c) = l·k`. This packages the mechanical matrix arithmetic
+of `exists_T_levelRaiseConj_T_factor`. -/
+private lemma eq_T_zpow_mul_levelRaiseConj_mul_T_zpow
+    (l : ℕ) [NeZero l] (a b c d i j k : ℤ) (M γ : SL(2, ℤ))
+    (hMval : (M.val : Matrix (Fin 2) (Fin 2) ℤ) = !![a, b; c, d])
+    (hγval : (γ.val : Matrix (Fin 2) (Fin 2) ℤ) = !![a - i * c, k; (l : ℤ) * c, d - c * j])
+    (hk : b - i * d - j * (a - i * c) = (l : ℤ) * k)
+    (hdvd : (l : ℤ) ∣ γ.val 1 0) :
+    M = ModularGroup.T ^ i * levelRaiseConjOfDvd l γ hdvd * ModularGroup.T ^ j := by
+  apply Subtype.ext
+  have hl_ne : (l : ℤ) ≠ 0 := Nat.cast_ne_zero.mpr (NeZero.ne l)
+  have h_div : ((l : ℤ) * c) / (l : ℤ) = c := Int.mul_ediv_cancel_left c hl_ne
+  rw [hMval, Matrix.SpecialLinearGroup.coe_mul, Matrix.SpecialLinearGroup.coe_mul,
+    ModularGroup.coe_T_zpow, ModularGroup.coe_T_zpow]
+  apply Matrix.ext
+  intro p q
+  fin_cases p <;> fin_cases q <;>
+    (simp [Matrix.mul_apply, Fin.sum_univ_two, levelRaiseConjOfDvd, hγval, h_div];
+     try linear_combination hk)
+
 /-- **Lower-level T-factorisation.** Every `γ' ∈ Γ₀(N/l)` can be written as
 `T^i · (levelRaiseConjOfDvd l γ ...) · T^j` for explicit integers `i, j`
 and an explicit `γ ∈ Γ₀(N)`.
@@ -718,40 +752,18 @@ lemma exists_T_levelRaiseConj_T_factor
     have : α = a - i * c := hα_def
     have : β = b - i * d := hβ_def
     linear_combination hdet + c * hk
-  · -- γ ∈ Gamma0 N: lower-left entry l*c is divisible by N = l * (N/l).
+  · -- γ ∈ Gamma0 N: lower-left entry `l*c` divisible by `N` since `(N/l) ∣ c`.
     rw [Gamma0_mem]
     show (((l : ℤ) * c : ℤ) : ZMod N) = 0
-    rw [ZMod.intCast_zmod_eq_zero_iff_dvd]
-    -- Have hγ' : γ' ∈ Gamma0 (N/l), so (N/l) ∣ c.
     rw [Gamma0_mem] at hγ'
-    have hc_dvd : ((N / l : ℕ) : ℤ) ∣ c :=
-      (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp hγ'
-    obtain ⟨m, hm⟩ := hc_dvd
-    refine ⟨m, ?_⟩
-    rw [hm]
-    have hN : N = l * (N / l) := (Nat.mul_div_cancel' h_dvd).symm
-    rw [show ((N : ℤ) : ℤ) = ((l * (N / l) : ℕ) : ℤ) from by rw [← hN]]
-    push_cast
-    ring
-  · -- Product equality: γ' = T^i · (levelRaiseConjOfDvd l γ ...) · T^j
-    apply Subtype.ext
-    have hl_ne : (l : ℤ) ≠ 0 := Nat.cast_ne_zero.mpr (NeZero.ne l)
-    have h_div : ((l : ℤ) * c) / (l : ℤ) = c := Int.mul_ediv_cancel_left c hl_ne
-    rw [Matrix.SpecialLinearGroup.coe_mul, Matrix.SpecialLinearGroup.coe_mul,
-        ModularGroup.coe_T_zpow, ModularGroup.coe_T_zpow]
-    apply Matrix.ext
-    intro p q
-    simp only [Matrix.mul_apply, Fin.sum_univ_two]
-    have ha : γ'.val 0 0 = a := rfl
-    have hb : γ'.val 0 1 = b := rfl
-    have hc : γ'.val 1 0 = c := rfl
-    have hd : γ'.val 1 1 = d := rfl
-    fin_cases p <;> fin_cases q <;>
-      simp [levelRaiseConjOfDvd, h_div, hα_def, hβ_def, hj_def, ha, hb, hc, hd]
-    -- After simp, four entry-equality goals remain; (0,1) needs hk.
-    · linear_combination hk
-    -- (Other three goals close with `ring` reflex via simp's normalisation;
-    --  if any remain, follow up with linear_combination.)
+    rw [ZMod.intCast_zmod_eq_zero_iff_dvd]
+    exact natCast_dvd_levelRaiseConj_lower_left h_dvd
+      ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp hγ')
+  · -- Product equality, by the matrix-arithmetic helper.
+    refine eq_T_zpow_mul_levelRaiseConj_mul_T_zpow l a b c d i j k γ' _
+      (Matrix.eta_fin_two γ'.val) rfl ?_ _
+    show β - j * α = (l : ℤ) * k
+    linear_combination hk
   · -- Diagonal entry: γ.val 1 1 = d - c*j = γ'.val 1 1 - γ'.val 1 0 * j.
     rfl
 

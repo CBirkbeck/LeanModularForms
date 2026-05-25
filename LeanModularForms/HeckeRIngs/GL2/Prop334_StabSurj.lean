@@ -186,6 +186,32 @@ then the stabilizers of `g` and `g'` have the same image under `Gamma0MapUnits`.
 This uses (a) `Stab(g') = γ_L · Stab(g) · γ_L⁻¹` and (b) the commutativity of
 `(ZMod N)ˣ`, so `Gamma0MapUnits(γ_L · γ · γ_L⁻¹) = Gamma0MapUnits(γ)`. -/
 
+/-- The nebentypus map `Gamma0MapUnits` is invariant under conjugation, since its
+target `(ZMod N)ˣ` is abelian: `Gamma0MapUnits (a⁻¹ * b * a) = Gamma0MapUnits b`. -/
+private lemma Gamma0MapUnits_conj_eq {N : ℕ} (a b : ↥(Gamma0 N)) :
+    Gamma0MapUnits (a⁻¹ * b * a) = Gamma0MapUnits b := by
+  rw [map_mul, map_mul, map_inv]
+  exact inv_mul_cancel_comm _ _
+
+/-- The group-theoretic core of stabilizer transport: if `g_source = γ_L · g_target · γ_R`
+with `γ_L, γ_R ∈ H` and `γ` stabilizes `g_source` into `H` (i.e.
+`g_source⁻¹ · γ · g_source ∈ H`), then the `γ_L`-conjugate `γ_L⁻¹ · γ · γ_L` stabilizes
+`g_target` into `H`.  The conjugation `γ_R · (g_source⁻¹ · γ · g_source) · γ_R⁻¹` lands in
+`H` by closure, using `h_eq` to rewrite the `g_target`-conjugate. -/
+private lemma mem_H_conj_of_source_stab {N : ℕ} [NeZero N]
+    (g_target g_source γ_src_gl : GL (Fin 2) ℚ) (γ_L γ_R : (Gamma0_pair N).H)
+    (h_eq : g_source = (γ_L : GL (Fin 2) ℚ) * g_target * (γ_R : GL (Fin 2) ℚ))
+    (h_src : g_source⁻¹ * γ_src_gl * g_source ∈ (Gamma0_pair N).H) :
+    g_target⁻¹ * ((γ_L : GL (Fin 2) ℚ)⁻¹ * γ_src_gl * (γ_L : GL (Fin 2) ℚ)) * g_target
+      ∈ (Gamma0_pair N).H := by
+  have h_conj_eq :
+      g_target⁻¹ * ((γ_L : GL (Fin 2) ℚ)⁻¹ * γ_src_gl * (γ_L : GL (Fin 2) ℚ)) * g_target =
+        (γ_R : GL (Fin 2) ℚ) * (g_source⁻¹ * γ_src_gl * g_source) * (γ_R : GL (Fin 2) ℚ)⁻¹ := by
+    subst h_eq; group
+  rw [h_conj_eq]
+  exact (Gamma0_pair N).H.mul_mem ((Gamma0_pair N).H.mul_mem γ_R.property h_src)
+    ((Gamma0_pair N).H.inv_mem γ_R.property)
+
 /-- **Stabilizer-surjectivity transports across the `Γ₀(N)`-double coset action**.
 
 If `g_source` is obtained from `g_target` by `Γ₀(N)`-conjugation (`g_source = γ_L · g_target · γ_R`
@@ -223,35 +249,17 @@ theorem Gamma0MapUnits_surjOn_stab_transport
       (Gamma0_pair N).H.inv_mem γ_L.property
     exact (Gamma0_pair N).H.mul_mem
       ((Gamma0_pair N).H.mul_mem hγ_L_inv hγ_src_gl_H) γ_L.property
-  -- γ_tgt_gl ∈ Stab(g_target)
+  -- γ_tgt_gl ∈ Stab(g_target): unfold `subgroupOf`/conjugation membership into raw
+  -- `H`-membership, then invoke the group-theoretic core `mem_H_conj_of_source_stab`.
   have hγ_tgt_stab :
       (⟨γ_tgt_gl, hγ_tgt_H⟩ : (Gamma0_pair N).H) ∈
       (ConjAct.toConjAct g_target •
         (Gamma0_pair N).H).subgroupOf (Gamma0_pair N).H := by
-    -- hγ_src_stab : γ_src ∈ (ConjAct g_source • H).subgroupOf H
-    -- i.e., g_source⁻¹ · γ_src · g_source ∈ H.
     simp only [Subgroup.mem_subgroupOf,
       Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
       ConjAct.smul_def, ConjAct.ofConjAct_inv,
       ConjAct.ofConjAct_toConjAct, inv_inv] at hγ_src_stab ⊢
-    -- Goal: g_target⁻¹ · γ_tgt_gl · g_target ∈ H.
-    -- Compute: g_target⁻¹ · γ_tgt_gl · g_target =
-    --         (γ_R) · (g_source⁻¹ · γ_src_gl · g_source) · (γ_R)⁻¹
-    -- via group laws and h_eq.
-    have h_conj_eq :
-        g_target⁻¹ * γ_tgt_gl * g_target =
-          (γ_R : GL (Fin 2) ℚ) *
-            (g_source⁻¹ * γ_src_gl * g_source) *
-            (γ_R : GL (Fin 2) ℚ)⁻¹ := by
-      subst h_eq
-      show g_target⁻¹ * ((γ_L : GL (Fin 2) ℚ)⁻¹ * γ_src_gl *
-        (γ_L : GL (Fin 2) ℚ)) * g_target = _
-      group
-    rw [h_conj_eq]
-    -- R · (stuff ∈ H) · R⁻¹ ∈ H.
-    exact (Gamma0_pair N).H.mul_mem
-      ((Gamma0_pair N).H.mul_mem γ_R.property hγ_src_stab)
-      ((Gamma0_pair N).H.inv_mem γ_R.property)
+    exact mem_H_conj_of_source_stab g_target g_source γ_src_gl γ_L γ_R h_eq hγ_src_stab
   -- Build γ_SL_tgt
   -- γ_L = mapGL γ_L_SL for some γ_L_SL ∈ Γ₀(N)
   obtain ⟨γ_L_SL, hγ_L_SL_mem, hγ_L_SL_eq⟩ := Subgroup.mem_map.mp γ_L.property
@@ -266,24 +274,13 @@ theorem Gamma0MapUnits_surjOn_stab_transport
       (γ_L : GL (Fin 2) ℚ)⁻¹ * γ_src_gl * (γ_L : GL (Fin 2) ℚ)
     simp only [map_mul, map_inv]
     rw [hγ_L_SL_eq, hγ_SL_src_eq]
-  -- Gamma0MapUnits computation: conjugation by γ_L_SL acts trivially
-  -- since (ZMod N)ˣ is abelian.
+  -- Gamma0MapUnits computation: conjugation by γ_L_SL acts trivially since
+  -- `(ZMod N)ˣ` is abelian (`Gamma0MapUnits_conj_eq`).
   have hγ_SL_tgt_map : Gamma0MapUnits ⟨γ_SL_tgt, hγ_SL_tgt_mem⟩ = d := by
-    have hunits_comm : Gamma0MapUnits ⟨γ_SL_tgt, hγ_SL_tgt_mem⟩ =
-        Gamma0MapUnits γ_SL_src := by
-      show Gamma0MapUnits (⟨γ_L_SL⁻¹ * (γ_SL_src : SL(2, ℤ)) * γ_L_SL,
-        hγ_SL_tgt_mem⟩ : ↥(Gamma0 N)) = Gamma0MapUnits γ_SL_src
-      set γ_L_sub : ↥(Gamma0 N) := ⟨γ_L_SL, hγ_L_SL_mem⟩
-      have h_prod_eq : (⟨γ_L_SL⁻¹ * (γ_SL_src : SL(2, ℤ)) * γ_L_SL,
-          hγ_SL_tgt_mem⟩ : ↥(Gamma0 N)) =
-          γ_L_sub⁻¹ * γ_SL_src * γ_L_sub := by
-        apply Subtype.ext; simp [γ_L_sub, mul_assoc]
-      rw [h_prod_eq, map_mul, map_mul, map_inv]
-      set u_L := Gamma0MapUnits γ_L_sub
-      set u_src := Gamma0MapUnits γ_SL_src
-      show u_L⁻¹ * u_src * u_L = u_src
-      rw [mul_comm u_L⁻¹ u_src, mul_assoc, inv_mul_cancel, mul_one]
-    rw [hunits_comm, hγ_SL_src_map]
+    have h_prod_eq : (⟨γ_SL_tgt, hγ_SL_tgt_mem⟩ : ↥(Gamma0 N)) =
+        (⟨γ_L_SL, hγ_L_SL_mem⟩ : ↥(Gamma0 N))⁻¹ * γ_SL_src * ⟨γ_L_SL, hγ_L_SL_mem⟩ := by
+      apply Subtype.ext; simp [γ_SL_tgt, mul_assoc]
+    rw [h_prod_eq, Gamma0MapUnits_conj_eq, hγ_SL_src_map]
   refine ⟨⟨γ_tgt_gl, hγ_tgt_H⟩, hγ_tgt_stab, ⟨γ_SL_tgt, hγ_SL_tgt_mem⟩, hγ_SL_tgt_eq,
     hγ_SL_tgt_map⟩
 

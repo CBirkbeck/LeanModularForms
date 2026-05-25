@@ -160,6 +160,55 @@ lemma charDecomp_isSemisimple_of_isOfFinOrder [CharZero K]
     (Polynomial.X_pow_sub_one_separable_iff.mpr hnK).squarefree
   simp [map_sub, aeval_X_pow, hn]
 
+/-- **Function-indexed joint-eigenspace decomposition of an invariant
+submodule.**  For a commuting family `f : ι → Module.End K V` of semisimple
+endomorphisms whose eigenspaces span `V`, any invariant submodule `p` is the
+supremum over functions `χ : ι → K` of its intersections with the joint
+eigenspaces `⨅ i, (f i).eigenspace (χ i)`.
+
+This is the abstract backbone shared by the diamond-invariant character
+decompositions for both modular and cusp forms: the joint eigenspace pulls
+back through `p.subtype` (`Submodule.inf_iInf_maxGenEigenspace_of_forall_mapsTo`),
+and the restricted family still spans `⊤` on `p`
+(`Module.End.genEigenspace_restrict_eq_top` plus the joint spanning theorem
+`Module.End.iSup_iInf_maxGenEigenspace_eq_top_of_iSup_maxGenEigenspace_eq_top_of_commute`). -/
+private lemma iSup_inf_iInf_eigenspace_eq_self_of_invariant {ι : Type*}
+    [FiniteDimensional K V] (f : ι → Module.End K V)
+    (hcomm : Pairwise fun i j ↦ Commute (f i) (f j))
+    (hss : ∀ i, (f i).IsSemisimple)
+    (htop : ∀ i, ⨆ μ : K, (f i).eigenspace μ = ⊤)
+    (p : Submodule K V) (hp : ∀ i, ∀ x ∈ p, f i x ∈ p) :
+    (⨆ χ : ι → K, p ⊓ ⨅ i, (f i).eigenspace (χ i)) = p := by
+  have hmax : ∀ (i : ι) (μ : K),
+      (f i).maxGenEigenspace μ = (f i).eigenspace μ :=
+    fun i μ => Module.End.IsFinitelySemisimple.maxGenEigenspace_eq_eigenspace
+      (hss i).isFinitelySemisimple μ
+  -- Rewrite each joint eigenspace as a joint maximal-generalised eigenspace,
+  -- then pull it back through the inclusion `p.subtype`.
+  simp_rw [← hmax]
+  have h_per_χ : ∀ χ : ι → K,
+      p ⊓ (⨅ i, (f i).maxGenEigenspace (χ i)) =
+        (⨅ i, Module.End.maxGenEigenspace ((f i).restrict (hp i)) (χ i)).map p.subtype :=
+    fun χ => Submodule.inf_iInf_maxGenEigenspace_of_forall_mapsTo
+      (f := f) (μ := χ) p (fun i => hp i)
+  simp_rw [h_per_χ, ← Submodule.map_iSup]
+  -- The restricted family still spans `⊤` on `p`, so the image is all of `p`.
+  suffices h_restrict_top :
+      (⨆ χ : ι → K, ⨅ i,
+        Module.End.maxGenEigenspace ((f i).restrict (hp i)) (χ i)) = ⊤ by
+    rw [h_restrict_top, Submodule.map_top, Submodule.range_subtype]
+  apply Module.End.iSup_iInf_maxGenEigenspace_eq_top_of_iSup_maxGenEigenspace_eq_top_of_commute
+  · -- Restrictions of commuting endomorphisms commute.
+    intro i j hij
+    refine LinearMap.ext fun ⟨x, hx⟩ => Subtype.ext ?_
+    simp only [Module.End.mul_apply, LinearMap.restrict_coe_apply]
+    exact LinearMap.congr_fun (hcomm hij).eq x
+  · -- Each restricted endomorphism has `⨆ μ, maxGenEigenspace μ = ⊤` on `p`.
+    intro i
+    refine Module.End.genEigenspace_restrict_eq_top (hp i) ?_
+    show ⨆ μ : K, (f i).maxGenEigenspace μ = ⊤
+    simp_rw [hmax]; exact htop i
+
 end Abstract
 
 /-! ### Diamond operators are semisimple, commute, and span the whole space -/
@@ -657,52 +706,14 @@ theorem modFormCharSpace_iSup_inf_of_diamondOpHom_invariant
     (k : ℤ) (p : Submodule ℂ (ModularForm ((Gamma1 N).map (mapGL ℝ)) k))
     (hp : ∀ d : (ZMod N)ˣ, ∀ f ∈ p, diamondOpHom k d f ∈ p) :
     (⨆ χ : (ZMod N)ˣ →* ℂˣ, p ⊓ modFormCharSpace k χ) = p := by
-  -- Step 1: decomposition of `p` indexed by functions `(ZMod N)ˣ → ℂ`.
+  -- Step 1: decomposition of `p` indexed by functions `(ZMod N)ˣ → ℂ`, from
+  -- the abstract joint-eigenspace decomposition of an invariant submodule.
   have h_fun_top :
       (⨆ χ : (ZMod N)ˣ → ℂ, p ⊓ jointDiamondEigenspace k χ) = p := by
-    -- Convert the joint eigenspace into a joint maximal-generalised eigenspace.
-    have h_jeig_eq : ∀ χ : (ZMod N)ˣ → ℂ,
-        jointDiamondEigenspace k χ =
-          ⨅ d : (ZMod N)ˣ, (diamondOpHom k d).maxGenEigenspace (χ d) := by
-      intro χ
-      unfold jointDiamondEigenspace
-      refine iInf_congr (fun d => ?_)
-      exact (Module.End.IsFinitelySemisimple.maxGenEigenspace_eq_eigenspace
-        (diamondOp_isSemisimple d).isFinitelySemisimple (χ d)).symm
-    simp_rw [h_jeig_eq]
-    -- Each `p ⊓ ⨅ d, maxGenEigenspace` pulls back through `p.subtype`.
-    have h_per_χ : ∀ χ : (ZMod N)ˣ → ℂ,
-        p ⊓ (⨅ d : (ZMod N)ˣ, (diamondOpHom k d).maxGenEigenspace (χ d)) =
-          (⨅ d : (ZMod N)ˣ,
-              Module.End.maxGenEigenspace
-                ((diamondOpHom k d).restrict (hp d)) (χ d)).map p.subtype :=
-      fun χ => Submodule.inf_iInf_maxGenEigenspace_of_forall_mapsTo
-        (f := diamondOpHom k) (μ := χ) p (fun d => hp d)
-    simp_rw [h_per_χ]
-    -- Push the `⨆` inside `.map p.subtype`, then use restricted ⨆ = ⊤.
-    rw [← Submodule.map_iSup]
-    suffices h_restrict_top :
-        (⨆ χ : (ZMod N)ˣ → ℂ, ⨅ d : (ZMod N)ˣ,
-          Module.End.maxGenEigenspace
-            ((diamondOpHom k d).restrict (hp d)) (χ d)) = ⊤ by
-      rw [h_restrict_top, Submodule.map_top, Submodule.range_subtype]
-    -- Apply the joint max-gen eigenspace spanning theorem to the restricted
-    -- diamond family on the invariant submodule `p`.
-    apply Module.End.iSup_iInf_maxGenEigenspace_eq_top_of_iSup_maxGenEigenspace_eq_top_of_commute
-    · -- Commutation: restrictions of commuting endomorphisms commute.
-      intro d₁ d₂ hd
-      refine LinearMap.ext ?_
-      rintro ⟨x, hx⟩
-      apply Subtype.ext
-      simp only [Module.End.mul_apply, LinearMap.restrict_coe_apply]
-      exact LinearMap.congr_fun (diamondOpHom_pairwise_commute hd).eq x
-    · -- Each restricted diamond has `⨆ μ, maxGenEigenspace μ = ⊤` on `p`.
-      intro d
-      apply Module.End.genEigenspace_restrict_eq_top (hp d)
-      show ⨆ μ : ℂ, (diamondOpHom k d).maxGenEigenspace μ = ⊤
-      simp_rw [Module.End.IsFinitelySemisimple.maxGenEigenspace_eq_eigenspace
-        (diamondOp_isSemisimple d).isFinitelySemisimple]
-      exact diamondOp_iSup_eigenspace_eq_top d
+    simp only [jointDiamondEigenspace]
+    exact iSup_inf_iInf_eigenspace_eq_self_of_invariant (diamondOpHom k)
+      diamondOpHom_pairwise_commute diamondOp_isSemisimple
+      diamondOp_iSup_eigenspace_eq_top p hp
   -- Step 2: restrict from `(ZMod N)ˣ → ℂ` to multiplicative characters.
   apply le_antisymm (iSup_le (fun _ => inf_le_left))
   conv_lhs => rw [← h_fun_top]
@@ -746,45 +757,14 @@ theorem cuspFormCharSpace_iSup_inf_of_diamondOpCuspHom_invariant
     (k : ℤ) (p : Submodule ℂ (CuspForm ((Gamma1 N).map (mapGL ℝ)) k))
     (hp : ∀ d : (ZMod N)ˣ, ∀ f ∈ p, diamondOpCuspHom k d f ∈ p) :
     (⨆ χ : (ZMod N)ˣ →* ℂˣ, p ⊓ cuspFormCharSpace k χ) = p := by
-  -- Mirror the ModularForm proof with the cusp-form operators.
+  -- Mirror the ModularForm proof with the cusp-form operators, via the
+  -- abstract joint-eigenspace decomposition of an invariant submodule.
   have h_fun_top :
       (⨆ χ : (ZMod N)ˣ → ℂ, p ⊓ jointDiamondCuspEigenspace k χ) = p := by
-    have h_jeig_eq : ∀ χ : (ZMod N)ˣ → ℂ,
-        jointDiamondCuspEigenspace k χ =
-          ⨅ d : (ZMod N)ˣ, (diamondOpCuspHom k d).maxGenEigenspace (χ d) := by
-      intro χ
-      unfold jointDiamondCuspEigenspace
-      refine iInf_congr (fun d => ?_)
-      exact (Module.End.IsFinitelySemisimple.maxGenEigenspace_eq_eigenspace
-        (diamondOpCusp_isSemisimple d).isFinitelySemisimple (χ d)).symm
-    simp_rw [h_jeig_eq]
-    have h_per_χ : ∀ χ : (ZMod N)ˣ → ℂ,
-        p ⊓ (⨅ d : (ZMod N)ˣ, (diamondOpCuspHom k d).maxGenEigenspace (χ d)) =
-          (⨅ d : (ZMod N)ˣ,
-              Module.End.maxGenEigenspace
-                ((diamondOpCuspHom k d).restrict (hp d)) (χ d)).map p.subtype :=
-      fun χ => Submodule.inf_iInf_maxGenEigenspace_of_forall_mapsTo
-        (f := diamondOpCuspHom k) (μ := χ) p (fun d => hp d)
-    simp_rw [h_per_χ]
-    rw [← Submodule.map_iSup]
-    suffices h_restrict_top :
-        (⨆ χ : (ZMod N)ˣ → ℂ, ⨅ d : (ZMod N)ˣ,
-          Module.End.maxGenEigenspace
-            ((diamondOpCuspHom k d).restrict (hp d)) (χ d)) = ⊤ by
-      rw [h_restrict_top, Submodule.map_top, Submodule.range_subtype]
-    apply Module.End.iSup_iInf_maxGenEigenspace_eq_top_of_iSup_maxGenEigenspace_eq_top_of_commute
-    · intro d₁ d₂ hd
-      refine LinearMap.ext ?_
-      rintro ⟨x, hx⟩
-      apply Subtype.ext
-      simp only [Module.End.mul_apply, LinearMap.restrict_coe_apply]
-      exact LinearMap.congr_fun (diamondOpCuspHom_pairwise_commute hd).eq x
-    · intro d
-      apply Module.End.genEigenspace_restrict_eq_top (hp d)
-      show ⨆ μ : ℂ, (diamondOpCuspHom k d).maxGenEigenspace μ = ⊤
-      simp_rw [Module.End.IsFinitelySemisimple.maxGenEigenspace_eq_eigenspace
-        (diamondOpCusp_isSemisimple d).isFinitelySemisimple]
-      exact diamondOpCusp_iSup_eigenspace_eq_top d
+    simp only [jointDiamondCuspEigenspace]
+    exact iSup_inf_iInf_eigenspace_eq_self_of_invariant (diamondOpCuspHom k)
+      diamondOpCuspHom_pairwise_commute diamondOpCusp_isSemisimple
+      diamondOpCusp_iSup_eigenspace_eq_top p hp
   apply le_antisymm (iSup_le (fun _ => inf_le_left))
   conv_lhs => rw [← h_fun_top]
   refine iSup_le (fun χ => ?_)
