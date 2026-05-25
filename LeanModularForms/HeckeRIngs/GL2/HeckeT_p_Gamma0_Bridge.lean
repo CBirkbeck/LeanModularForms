@@ -21,19 +21,6 @@ the Γ₁(N)-level Hecke operator `heckeT_p` corresponds (via the canonical isom
 * `heckeT_p_val_eq_heckeOperator_Gamma0_on_charSpace_one` — for
   `f ∈ modFormCharSpace k 1`, the two operators agree as functions `ℍ → ℂ`.
 
-## Strategy
-
-1. (Internal) `tRep_gen_D_p_Gamma0_matches_T_p_reps`: Γ₀(N)-analogue of the level-1
-   matching `tRep_gen_D_p_matches_T_p_reps`, using a bijection built from the
-   Phase 1 cardinality and the Phase 3 distinctness lemmas from `HeckeT_p_Gamma0.lean`.
-   For a `Γ₀(N)`-invariant function, the abstract sum equals the explicit `T_p`
-   formula `∑ b < p, f ∣[k] T_p_upper(b) + f ∣[k] T_p_lower`.
-
-2. Combine with `heckeT_p_fun_eq_coset_sum` (which expresses `heckeT_p_fun` in terms of
-   the upper sum plus `f ∣[k] M_∞`) and the diamond identity
-   `slash_M_infty_eq_diamond_slash_T_p_lower`. For `f ∈ modFormCharSpace k 1`, the
-   diamond twist vanishes (`⟨p⟩ f = f`), so `f ∣[k] M_∞ = f ∣[k] T_p_lower`.
-
 ## References
 
 * Shimura, *Introduction to the Arithmetic Theory of Automorphic Functions*, §3.4.
@@ -49,18 +36,12 @@ namespace HeckeRing.GL2
 
 variable {N : ℕ} [NeZero N]
 
-/-! ### Γ₀(N)-invariance helpers for `f ∈ modFormCharSpace k 1` -/
-
-/-- For `f : modFormCharSpace k 1`, the underlying function is Γ₀(N)-slash-invariant
-via `glMap`. This is the invariance hypothesis required by `heckeSlash_gen`. -/
 private lemma charSpaceOne_Gamma0_pair_H_invariant (k : ℤ)
     (f : modFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ)) :
     ∀ h, h ∈ (Gamma0_pair N).H →
       (⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) ∣[k] glMap h =
         ⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) := by
   intro h hh
-  -- View `(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)` as a function that equals
-  -- the Γ₀(N)-form produced by `modFormCharSpace_one_equiv_Gamma0`.
   set g : ModularForm ((Gamma0 N).map (mapGL ℝ)) k :=
     modFormCharSpace_one_equiv_Gamma0 N k f
   have hfg : ⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) = ⇑g := by rfl
@@ -68,7 +49,6 @@ private lemma charSpaceOne_Gamma0_pair_H_invariant (k : ℤ)
   exact Gamma0_pair_H_invariant_of_invariant N
     (fun γ hγ => SlashInvariantFormClass.slash_action_eq g γ hγ) h hh
 
-/-- For `f ∈ modFormCharSpace k 1`, every diamond operator acts trivially. -/
 private lemma diamondOp_trivial_of_charSpaceOne (k : ℤ)
     (f : modFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ))
     (d : (ZMod N)ˣ) :
@@ -78,11 +58,6 @@ private lemma diamondOp_trivial_of_charSpaceOne (k : ℤ)
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)).mp f.property d
   simpa using this
 
-/-! ### Adjugate factorisations and the key `slash` identity for Γ₀(N)
-
-These mimic the level-1 private lemmas in `HeckeT_p_GLpair.lean`. -/
-
-/-- Matrix identity `adj(diag(1, p)) = T_p_lower p`. -/
 private lemma adj_diag_1p_eq_T_p_lower_bridge (p : ℕ) (hp : Nat.Prime p) :
     GL_adjugate (diagMat 2 ![1, p] : GL (Fin 2) ℚ) =
       (T_p_lower p hp.pos : GL (Fin 2) ℚ) := by
@@ -98,7 +73,6 @@ private lemma adj_diag_1p_eq_T_p_lower_bridge (p : ℕ) (hp : Nat.Prime p) :
     simp [T_p_lower, GeneralLinearGroup.mkOfDetNeZero,
       Matrix.of_apply, huniv, he0, he1, Finset.prod_singleton]
 
-/-- `adj(rep(D_p_Gamma0)) ∈ D_p_Gamma0`. -/
 private lemma adj_rep_mem_D_p_Gamma0_bridge (p : ℕ) (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) :
     GL_adjugate (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) ∈
@@ -122,7 +96,6 @@ private lemma adj_rep_mem_D_p_Gamma0_bridge (p : ℕ) (hp : Nat.Prime p)
     rw [GL_adjugate_mul, GL_adjugate_mul, mul_assoc]
   rw [h1, adj_diag_1p_eq_T_p_lower_bridge p hp, hTl_eq]; group
 
-/-- Generic: if `adj(rep) ∈ D` then `adj` preserves `D`. -/
 private lemma GL_adjugate_mem_D_p_Gamma0_bridge (p : ℕ) (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) (g : GL (Fin 2) ℚ)
     (hg : g ∈ HeckeCoset.toSet (D_p_Gamma0 N p hp.pos)) :
@@ -140,8 +113,6 @@ private lemma GL_adjugate_mem_D_p_Gamma0_bridge (p : ℕ) (hp : Nat.Prime p)
     r₁ * (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) * r₂ from hrep_eq]
   group
 
-/-- For any `g ∈ D_p_Gamma0` and Γ₀(N)-invariant `f`, there exists a `decompQuot`
-element `σ` with `f ∣[k] g = f ∣[k] tRep_gen σ`, and a factorisation of `adj(g)`. -/
 private lemma adj_mem_dc_factorisation_Gamma0_bridge (p : ℕ) (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) (g : GL (Fin 2) ℚ)
     (hg : g ∈ HeckeCoset.toSet (D_p_Gamma0 N p hp.pos)) :
@@ -154,9 +125,6 @@ private lemma adj_mem_dc_factorisation_Gamma0_bridge (p : ℕ) (hp : Nat.Prime p
   obtain ⟨h₁, hh₁, h₂, hh₂, heq⟩ := hadj_mem
   exact ⟨h₁, hh₁, h₂, hh₂, heq⟩
 
-/-- Γ₀(N)-level `slash_eq_tRep_gen_of_adj_mem`: if `adj(g) = h₁ * rep * h₂` with
-`h₁, h₂ ∈ (Gamma0_pair N).H` and `f` is `(Gamma0_pair N).H`-invariant, then
-`f ∣[k] g = f ∣[k] tRep_gen (Gamma0_pair N) D ⟦⟨h₁, hh₁⟩⟧`. -/
 private lemma slash_eq_tRep_gen_of_adj_mem_Gamma0_bridge (k : ℤ) (f : ℍ → ℂ)
     (hf : ∀ h, h ∈ (Gamma0_pair N).H → f ∣[k] glMap h = f)
     (D : HeckeCoset (Gamma0_pair N))
@@ -169,10 +137,6 @@ private lemma slash_eq_tRep_gen_of_adj_mem_Gamma0_bridge (k : ℤ) (f : ℍ → 
   rw [hg]
   exact slash_tRep_gen_of_mem k D h₁ h₂ hh₁ hh₂ f hf
 
-/-- If `g₁, g₂` both admit adjugate factorisations `adj(gᵢ) = hᵢ * rep(D) * h'ᵢ`
-through `D` whose left factors are equal in the decomposition quotient
-`decompQuot (Gamma0_pair N) (rep D)`, then `(adj g₁)⁻¹ * adj g₂ ∈ (Gamma0_pair N).H`.
-This is the algebraic core of the injectivity of the rep-matching map. -/
 private lemma adj_inv_mul_mem_H_of_factorisations_Gamma0_bridge
     (D : HeckeCoset (Gamma0_pair N)) (g₁ g₂ : GL (Fin 2) ℚ)
     (e₁ : ∃ (h₁ : GL _ ℚ) (_ : h₁ ∈ (Gamma0_pair N).H) (h₂ : GL _ ℚ)
@@ -206,15 +170,6 @@ private lemma adj_inv_mul_mem_H_of_factorisations_Gamma0_bridge
       ((Gamma0_pair N).H.inv_mem e₁.choose_spec.choose_spec.choose_spec.choose) hrel)
     e₂.choose_spec.choose_spec.choose_spec.choose
 
-/-! ### The matching theorem at `Γ₀(N)` — inline construction of the bijection
-
-This mirrors the level-1 `tRep_gen_D_p_matches_T_p_reps` but works at level Γ₀(N),
-using the Γ₀(N) distinctness lemmas. We rebuild the bijection inline (rather than
-calling `T_p_coset_reps_Gamma0_equiv`) so that definitional equalities go through. -/
-
-/-- The map `Fin (p+1) → decompQuot` built from adjugate factorisations of the
-classical `T_p` representatives: `b < p` maps to the upper coset of `T_p_upper b`,
-and the top index maps to the lower coset of `T_p_lower`. -/
 private noncomputable def phiOfFactorisations_Gamma0_bridge (p : ℕ)
     (hp : Nat.Prime p) (D : HeckeCoset (Gamma0_pair N))
     (h_upper_dc : ∀ b : Fin p,
@@ -232,9 +187,6 @@ private noncomputable def phiOfFactorisations_Gamma0_bridge (p : ℕ)
   else
     ⟦⟨h_lower_dc.choose, h_lower_dc.choose_spec.choose⟩⟧
 
-/-- The map `phiOfFactorisations_Gamma0_bridge` matches the classical `T_p`
-representatives under slashing: the explicit `T_p_upper`/`T_p_lower` slash equals
-the abstract `tRep_gen` slash at `φ j`, for any `(Gamma0_pair N).H`-invariant `f`. -/
 private lemma phiOfFactorisations_slash_eq_tRep_gen_Gamma0_bridge (k : ℤ) (p : ℕ)
     (hp : Nat.Prime p) (D : HeckeCoset (Gamma0_pair N)) (f : ℍ → ℂ)
     (hf : ∀ h, h ∈ (Gamma0_pair N).H → f ∣[k] glMap h = f)
@@ -262,9 +214,6 @@ private lemma phiOfFactorisations_slash_eq_tRep_gen_Gamma0_bridge (k : ℤ) (p :
       h_lower_dc.choose_spec.choose_spec.choose_spec.choose
       h_lower_dc.choose_spec.choose_spec.choose_spec.choose_spec
 
-/-- `phiOfFactorisations_Gamma0_bridge` is injective: distinct indices give distinct
-cosets, using the Γ₀(N) distinctness lemmas (`adj_upper_inv_mul_not_mem_H` etc.)
-combined with `Gamma0_pair_H_le_GL_pair_H`. -/
 private lemma phiOfFactorisations_injective_Gamma0_bridge (p : ℕ) (hp : Nat.Prime p)
     (D : HeckeCoset (Gamma0_pair N))
     (h_upper_dc : ∀ b : Fin p,
@@ -282,27 +231,23 @@ private lemma phiOfFactorisations_injective_Gamma0_bridge (p : ℕ) (hp : Nat.Pr
   by_contra hne
   simp only [phiOfFactorisations_Gamma0_bridge] at heq
   by_cases h₁ : j₁.val < p <;> by_cases h₂ : j₂.val < p
-  · -- Both upper.
-    simp only [h₁, h₂, dite_true] at heq
+  · simp only [h₁, h₂, dite_true] at heq
     have hne_val : j₁.val ≠ j₂.val := fun h => hne (Fin.ext h)
     have hmem := adj_inv_mul_mem_H_of_factorisations_Gamma0_bridge D _ _
       (h_upper_dc ⟨j₁.val, h₁⟩) (h_upper_dc ⟨j₂.val, h₂⟩) heq
     exact HeckeRing.GL2.adj_upper_inv_mul_not_mem_H p hp j₁.val j₂.val h₁ h₂ hne_val
       (Gamma0_pair_H_le_GL_pair_H N hmem)
-  · -- j₁ upper, j₂ lower.
-    simp only [h₁, dite_true, h₂, dite_false] at heq
+  · simp only [h₁, dite_true, h₂, dite_false] at heq
     have hmem := adj_inv_mul_mem_H_of_factorisations_Gamma0_bridge D _ _
       (h_upper_dc ⟨j₁.val, h₁⟩) h_lower_dc heq
     exact HeckeRing.GL2.adj_upper_inv_mul_lower_not_mem_H p hp j₁.val
       (Gamma0_pair_H_le_GL_pair_H N hmem)
-  · -- j₁ lower, j₂ upper.
-    simp only [h₁, dite_false, h₂, dite_true] at heq
+  · simp only [h₁, dite_false, h₂, dite_true] at heq
     have hmem := adj_inv_mul_mem_H_of_factorisations_Gamma0_bridge D _ _
       h_lower_dc (h_upper_dc ⟨j₂.val, h₂⟩) heq
     exact HeckeRing.GL2.adj_lower_inv_mul_upper_not_mem_H p hp j₂.val
       (Gamma0_pair_H_le_GL_pair_H N hmem)
-  · -- Both ≥ p, but Fin (p+1) forces equality.
-    have := j₁.isLt; have := j₂.isLt; omega
+  · have := j₁.isLt; have := j₂.isLt; omega
 
 /-- Γ₀(N)-level analogue of `tRep_gen_D_p_matches_T_p_reps`: for a `Γ₀(N)`-invariant
 function `f : ℍ → ℂ`, the abstract `heckeSlash_gen` sum equals the explicit `T_p`
@@ -315,7 +260,6 @@ theorem tRep_gen_D_p_Gamma0_matches_T_p_reps (k : ℤ) (p : ℕ) (hp : Nat.Prime
     (∑ b ∈ Finset.range p, f ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ)) +
       f ∣[k] (T_p_lower p hp.pos : GL (Fin 2) ℚ) := by
   set D := D_p_Gamma0 N p hp.pos with hD_def
-  -- Adjugate factorisations for the p+1 classical reps.
   have h_upper_dc : ∀ b : Fin p,
       ∃ (h₁ : GL _ ℚ) (_ : h₁ ∈ (Gamma0_pair N).H)
         (h₂ : GL _ ℚ) (_ : h₂ ∈ (Gamma0_pair N).H),
@@ -330,7 +274,6 @@ theorem tRep_gen_D_p_Gamma0_matches_T_p_reps (k : ℤ) (p : ℕ) (hp : Nat.Prime
           h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂ :=
     adj_mem_dc_factorisation_Gamma0_bridge p hp hpN _
       (T_p_lower_mem_D_p_Gamma0 N p hp hpN)
-  -- The matching bijection `φ` and its value/injectivity properties (see helpers).
   set φ := phiOfFactorisations_Gamma0_bridge p hp D h_upper_dc h_lower_dc
   have h_val := phiOfFactorisations_slash_eq_tRep_gen_Gamma0_bridge k p hp D f hf
     h_upper_dc h_lower_dc
@@ -342,7 +285,6 @@ theorem tRep_gen_D_p_Gamma0_matches_T_p_reps (k : ℤ) (p : ℕ) (hp : Nat.Prime
     rw [Fintype.bijective_iff_injective_and_card]
     exact ⟨phiOfFactorisations_injective_Gamma0_bridge p hp D h_upper_dc h_lower_dc,
       by rw [Fintype.card_fin, h_card]⟩
-  -- Rewrite the explicit T_p sum as a sum over Fin(p+1) via `dite`.
   symm
   rw [← Fin.sum_univ_eq_sum_range]
   rw [show (∑ j : Fin p, f ∣[k] (T_p_upper p hp.pos j.val : GL _ ℚ)) +
@@ -355,29 +297,16 @@ theorem tRep_gen_D_p_Gamma0_matches_T_p_reps (k : ℤ) (p : ℕ) (hp : Nat.Prime
     · simp]
   exact Fintype.sum_bijective φ h_bij _ _ h_val
 
-/-! ### Main bridge theorem -/
-
-/-- **Bridge theorem**: on `modFormCharSpace k 1`, the Γ₁(N)-level Hecke operator
-`heckeT_p k p hp hpN f.val` agrees pointwise with the Γ₀(N)-level abstract Hecke
-operator `heckeOperator_Gamma0 N k (D_p_Gamma0 N p hp.pos)` composed with the
-canonical isomorphism `modFormCharSpace_one_equiv_Gamma0`.
-
-More precisely, as functions `ℍ → ℂ`:
-```
-heckeT_p_fun k p hp hpN f.val =
-  heckeSlash_gen (Gamma0_pair N) k (D_p_Gamma0 N p hp.pos) ↑f
-```
-which unfolds `heckeOperator_Gamma0`. -/
+/-- On `modFormCharSpace k 1`, the Γ₁(N)-level Hecke operator `heckeT_p_fun` agrees
+as a function `ℍ → ℂ` with `heckeSlash_gen (Gamma0_pair N) k (D_p_Gamma0 N p hp.pos)`,
+which unfolds the Γ₀(N)-level abstract Hecke operator `heckeOperator_Gamma0`. -/
 theorem heckeT_p_fun_eq_heckeSlash_gen_Gamma0_on_charSpace_one (k : ℤ) (p : ℕ)
     (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (f : modFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ)) :
     heckeT_p_fun k p hp hpN (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) =
     heckeSlash_gen (Gamma0_pair N) k (D_p_Gamma0 N p hp.pos)
       (⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) := by
-  -- Step 1: LHS = `heckeT_p_ut + (⟨p⟩ f) ∣[k] T_p_lower`. Via `heckeT_p_fun_eq_coset_sum`,
-  -- this is `heckeT_p_ut + f ∣[k] M_∞`.
   rw [heckeT_p_fun_eq_coset_sum k hp hpN (f : ModularForm _ k)]
-  -- Step 2: `f ∣[k] M_∞ = f ∣[k] T_p_lower` via diamond triviality.
   have hdiamond := diamondOp_trivial_of_charSpaceOne (N := N) k f
     (ZMod.unitOfCoprime p hpN)
   have hM_inf_eq :
@@ -391,7 +320,6 @@ theorem heckeT_p_fun_eq_heckeSlash_gen_Gamma0_on_charSpace_one (k : ℤ) (p : �
       (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) =
       ⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) from by rw [hdiamond]]
   rw [hM_inf_eq]
-  -- Step 3: apply the matching theorem.
   unfold heckeSlash_gen
   rw [tRep_gen_D_p_Gamma0_matches_T_p_reps k p hp hpN _
     (charSpaceOne_Gamma0_pair_H_invariant k f)]
@@ -412,14 +340,12 @@ theorem heckeT_p_val_eq_heckeOperator_Gamma0_on_charSpace_one (k : ℤ) (p : ℕ
         ModularForm ((Gamma1 N).map (mapGL ℝ)) k) := by
   apply ModularForm.ext
   intro z
-  -- Unfold `heckeT_p` and the RHS to functions at `z`.
   show heckeT_p_fun k p hp hpN (f : ModularForm _ k) z =
     (heckeOperator_Gamma0 N k (D_p_Gamma0 N p hp.pos)
       (modFormCharSpace_one_equiv_Gamma0 N k f) : ℍ → ℂ) z
   change heckeT_p_fun k p hp hpN (f : ModularForm _ k) z =
     heckeSlash_gen (Gamma0_pair N) k (D_p_Gamma0 N p hp.pos)
       (⇑(modFormCharSpace_one_equiv_Gamma0 N k f)) z
-  -- The two coercions agree.
   have h_coe : ⇑(modFormCharSpace_one_equiv_Gamma0 N k f) =
       ⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) := by
     funext w; rw [modFormCharSpace_one_equiv_Gamma0_apply]
@@ -437,7 +363,6 @@ theorem heckeOperator_Gamma0_eq_equiv_heckeT_p_on_charSpace_one (k : ℤ) (p : �
         heckeT_p_preserves_modFormCharSpace k p hp hpN _ f.property⟩ := by
   apply ModularForm.ext
   intro z
-  -- Pointwise: both functions equal `heckeT_p_fun ... z` by construction.
   show (heckeOperator_Gamma0 N k (D_p_Gamma0 N p hp.pos)
       (modFormCharSpace_one_equiv_Gamma0 N k f) : ℍ → ℂ) z =
     (modFormCharSpace_one_equiv_Gamma0 N k

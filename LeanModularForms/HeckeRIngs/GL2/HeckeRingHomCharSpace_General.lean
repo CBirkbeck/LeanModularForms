@@ -29,25 +29,6 @@ into a clean "coprime multiplicative" structure on `Module.End ℂ (modFormCharS
   `{n : ℕ // 0 < n ∧ Nat.Coprime n N}` (with mul = coprime product) assembles
   (on coprime pairs) into commuting operators.
 
-Because the multiplicative structure `T_m T_n = T_{mn}` requires `Nat.Coprime m n`,
-we do not get a global monoid homomorphism `ℕ →* End`; instead, the composition of
-coprime operators factors through the underlying `T_n` operation. This matches the
-classical statement of Shimura / Diamond–Shurman: the Hecke algebra has a
-multiplicative structure on coprime indices, assembled via the abstract formal
-Dirichlet convolution.
-
-## Relationship to `heckeRingHomCharSpaceOne`
-
-For the trivial character `χ = 1`, a full ring homomorphism
-`heckeRingHomCharSpaceOne k : 𝕋(Gamma0_pair N) ℤ →+* End ℂ (modFormCharSpace k 1)`
-exists (see `HeckeT_p_CharSpace_Comm.lean`). For non-trivial `χ`, a full ring hom
-from `𝕋(Gamma0_pair N) ℤ` would require showing that `heckeSlash_gen (Gamma0_pair N) k D`
-preserves `modFormCharSpace k χ` for every double coset `D`, which is a delicate
-nebentypus-twisted refinement of `heckeSlash_gen_slash_invariant`. The coprime-case
-machinery in this file gives a clean, well-defined multiplicative structure on the
-part of the Hecke algebra directly reachable from `heckeT_n` (coprime-to-`N`
-operators), covering the main case of interest for the classical theory.
-
 ## References
 
 * Shimura, *Introduction to the Arithmetic Theory of Automorphic Functions*, §3.4, §3.5.
@@ -62,8 +43,6 @@ open scoped Pointwise MatrixGroups ModularForm UpperHalfPlane
 namespace HeckeRing.GL2
 
 variable {N : ℕ} [NeZero N]
-
-/-! ### Identity and multiplicativity for `heckeT_n_charRestrict` -/
 
 /-- The restricted `T_1` is the identity on `modFormCharSpace k χ`. -/
 @[simp] lemma heckeT_n_charRestrict_one (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
@@ -95,8 +74,6 @@ theorem heckeT_n_charRestrict_mul_coprime (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
   rw [heckeT_n_mul_coprime k m n hmn]
   rfl
 
-/-! ### Coercion simp lemma: subtype coercion is strict `heckeT_n` -/
-
 /-- Applying `heckeT_n_charRestrict k n hn χ * heckeT_n_charRestrict k m hm χ` and
 coercing back to the ambient `ModularForm` space gives `heckeT_n k n (heckeT_n k m ...)`. -/
 lemma heckeT_n_charRestrict_mul_coe (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
@@ -113,13 +90,6 @@ lemma heckeT_n_charRestrict_mul_coe (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
       heckeT_n_charRestrict k m hm χ (heckeT_n_charRestrict k n hn χ f) from rfl]
   simp only [heckeT_n_charRestrict_coe]
 
-/-! ### Pointwise commutativity of `T_m T_n` and `T_n T_m` on charSpace
-
-`heckeT_n_charRestrict_commute` (in `HeckeRingHomCharSpace.lean`) gives the abstract
-commutativity in `Module.End`. Here we record the pointwise version, which is the form
-most useful when reasoning about how `T_m T_n f` and `T_n T_m f` relate inside
-`modFormCharSpace k χ`. -/
-
 /-- Pointwise commutativity: `T_m T_n f = T_n T_m f` on `modFormCharSpace k χ`. -/
 theorem heckeT_n_charRestrict_commute_apply (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (m n : ℕ) [NeZero m] [NeZero n]
@@ -130,12 +100,6 @@ theorem heckeT_n_charRestrict_commute_apply (k : ℤ) (χ : (ZMod N)ˣ →* ℂ�
   have h := heckeT_n_charRestrict_commute k χ m n hm hn
   have := congr_fun (congr_arg DFunLike.coe h) f
   simpa [Module.End.mul_apply] using this
-
-/-! ### Coprime multiplicativity: a chain-rule form
-
-The multiplicativity `T_{mn} = T_m T_n` at coprime pairs propagates through any
-finite product of pairwise coprime factors (all coprime to `N`). We state a clean
-two-step and three-step version suitable for applications. -/
 
 /-- Three-way coprime multiplicativity:
 `T_{mnr}|_χ = T_m|_χ · T_n|_χ · T_r|_χ` for pairwise coprime `m, n, r` all coprime to `N`. -/
@@ -159,17 +123,6 @@ theorem heckeT_n_charRestrict_mul_coprime_three (k : ℤ) (χ : (ZMod N)ˣ →* 
   have key2 := heckeT_n_charRestrict_mul_coprime k χ hn hr hnr
   rw [key1, key2]
 
-/-! ### Ring-hom view (restricted subring)
-
-On the trivial-character eigenspace (`χ = 1`), a full ring hom
-`heckeRingHomCharSpaceOne` from the abstract Hecke ring exists (via the iso to
-`M_k(Γ₀(N))`). For general `χ`, we record the coprime-submonoid image directly.
-
-The monoid `coprimeNats N := {n : ℕ // 0 < n ∧ Nat.Coprime n N}` (with multiplication
-the ℕ product on representatives when the product is also coprime to `N`) is the
-natural target for the Hecke operators obtainable from `heckeT_n`. Because
-`N.Coprime mn` iff `N.Coprime m ∧ N.Coprime n`, this is closed under ℕ-multiplication. -/
-
 /-- The submonoid of ℕ of positive naturals coprime to `N`.
 Closed under multiplication because `Nat.Coprime.mul_left`. -/
 def coprimeToN (N : ℕ) : Submonoid ℕ where
@@ -180,11 +133,6 @@ def coprimeToN (N : ℕ) : Submonoid ℕ where
 
 @[simp] lemma mem_coprimeToN {N n : ℕ} :
     n ∈ coprimeToN N ↔ 0 < n ∧ Nat.Coprime n N := Iff.rfl
-
-/-! ### Well-defined restricted operator indexed by `coprimeToN N`
-
-Given `⟨n, hn_pos, hn⟩ : coprimeToN N`, we obtain the endomorphism
-`heckeT_n_charRestrict k n hn χ`, using `hn_pos` to provide the `NeZero n` instance. -/
 
 /-- `heckeT_n` restricted to `modFormCharSpace k χ`, indexed by elements of
 `coprimeToN N`. Wraps `heckeT_n_charRestrict` with the positivity→`NeZero` bridge. -/
@@ -224,22 +172,5 @@ theorem heckeT_coprimeRestrict_commute (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
   show heckeT_n_charRestrict k (m : ℕ) _ χ * heckeT_n_charRestrict k (n : ℕ) _ χ =
     heckeT_n_charRestrict k (n : ℕ) _ χ * heckeT_n_charRestrict k (m : ℕ) _ χ
   exact heckeT_n_charRestrict_commute k χ _ _ _ _
-
-/-! ### Summary
-
-For any Nebentypus character `χ : (ZMod N)ˣ →* ℂˣ` and any weight `k : ℤ`, the
-restricted Hecke operators on `modFormCharSpace k χ` satisfy:
-
-* `heckeT_coprimeRestrict k χ 1 = 1` (identity)
-* `heckeT_coprimeRestrict k χ (m * n) = heckeT_coprimeRestrict k χ m *
-    heckeT_coprimeRestrict k χ n` when `Nat.Coprime m n`
-* All `heckeT_coprimeRestrict k χ m` commute with each other.
-
-This captures the classical multiplicative structure `T_{mn} = T_m T_n` for coprime
-`m, n` coprime to `N`, packaged as commuting endomorphisms of `modFormCharSpace k χ`.
-
-The coprimality restriction reflects the classical identity
-  `T_m T_n = Σ_{d | gcd(m,n)} d^{k-1} ⟨d⟩ T_{mn/d²}`
-which reduces to `T_{mn}` exactly when `gcd(m, n) = 1`. -/
 
 end HeckeRing.GL2
