@@ -81,12 +81,6 @@ theorem coe_mk (toFun : ℝ → E) (source target continuous_toFun partition par
       differentiable_off deriv_continuous_off : PiecewiseC1PathOn a b hab x y) : ℝ → E) = toFun :=
   rfl
 
-@[simp]
-theorem apply_left (γ : PiecewiseC1PathOn a b hab x y) : γ a = x := γ.source
-
-@[simp]
-theorem apply_right (γ : PiecewiseC1PathOn a b hab x y) : γ b = y := γ.target
-
 end PiecewiseC1PathOn
 
 end

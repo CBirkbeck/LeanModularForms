@@ -944,16 +944,6 @@ noncomputable def cyclicShift (γ : ClosedPwC1Curve x) {τ : ℝ}
     (cyclicShiftPartitionExt_subset_Icc γ.closedPartition hτ)
     (fun _ _ h_cons => γ.cyclicShift_extend_contDiffOn_piece hτ h_cons)
 
-@[simp]
-theorem cyclicShift_closedPartition (γ : ClosedPwC1Curve x) {τ : ℝ}
-    (hτ : τ ∈ Ioo (0 : ℝ) 1) :
-    (γ.cyclicShift hτ).closedPartition = cyclicShiftPartitionExt γ.closedPartition τ := rfl
-
-@[simp]
-theorem cyclicShift_toPath (γ : ClosedPwC1Curve x) {τ : ℝ}
-    (hτ : τ ∈ Ioo (0 : ℝ) 1) :
-    (γ.cyclicShift hτ).toPath = γ.toPath.cyclicShift hτ := rfl
-
 end ClosedPwC1Curve
 
 /-! ### Step 3: `ClosedPwC1Immersion.cyclicShift`
