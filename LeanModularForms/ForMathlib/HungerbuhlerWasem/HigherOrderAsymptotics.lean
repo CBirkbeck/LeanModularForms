@@ -41,42 +41,6 @@ noncomputable section
 
 namespace HungerbuhlerWasem
 
-/-- When `γ` is differentiable at `t` with derivative `γ'` and `γ(t) ≠ s`, the function
-`u ↦ -1/[(k-1)(γ(u)-s)^{k-1}]` has derivative `γ'/(γ(t)-s)^k` at `t`. -/
-theorem hasDerivAt_antiderivative_pow_inv
-    {γ : ℝ → ℂ} {γ' s : ℂ} {t : ℝ} {k : ℕ}
-    (hk : 2 ≤ k) (hγ : HasDerivAt γ γ' t) (h_ne : γ t - s ≠ 0) :
-    HasDerivAt (fun u => -(↑(k - 1) : ℂ)⁻¹ * ((γ u - s) ^ (k - 1))⁻¹)
-      (γ' / (γ t - s) ^ k) t := by
-  have h_pow_raw : HasDerivAt (fun u => (γ u - s) ^ (k - 1))
-      (↑(k - 1) * (γ t - s) ^ (k - 1 - 1) * γ') t := (hγ.sub_const s).pow (k - 1)
-  rw [show k - 1 - 1 = k - 2 from by omega] at h_pow_raw
-  have h_const := ((hasDerivAt_inv (pow_ne_zero _ h_ne)).scomp t h_pow_raw).const_mul
-    (-(↑(k - 1) : ℂ)⁻¹)
-  convert h_const using 1
-  have hk1 : (↑(k - 1) : ℂ) ≠ 0 := by exact_mod_cast (by omega : 0 < k - 1).ne'
-  have h_pow2 : ((γ t - s) ^ (k - 1)) ^ 2 = (γ t - s) ^ k * (γ t - s) ^ (k - 2) := by
-    rw [← pow_mul, ← pow_add]; congr 1; omega
-  simp only [smul_eq_mul]
-  rw [h_pow2]
-  field_simp
-
-/-- FTC for `γ'/(γ-s)^k` on a smooth piece (`k ≥ 2`): when `γ` is differentiable on
-`uIcc a b` and avoids `s`, the integral of `γ'/(γ-s)^k` equals the antiderivative at
-the endpoints. -/
-theorem integral_pow_inv_eq_FTC
-    {γ : ℝ → ℂ} {γ' : ℝ → ℂ} {s : ℂ} {k : ℕ} {a b : ℝ}
-    (hk : 2 ≤ k)
-    (hγ : ∀ t ∈ uIcc a b, HasDerivAt γ (γ' t) t)
-    (h_avoids : ∀ t ∈ uIcc a b, γ t ≠ s)
-    (h_int : IntervalIntegrable (fun t => γ' t / (γ t - s) ^ k) volume a b) :
-    ∫ t in a..b, γ' t / (γ t - s) ^ k =
-      (-(↑(k - 1) : ℂ)⁻¹ * ((γ b - s) ^ (k - 1))⁻¹) -
-      (-(↑(k - 1) : ℂ)⁻¹ * ((γ a - s) ^ (k - 1))⁻¹) :=
-  intervalIntegral.integral_eq_sub_of_hasDerivAt
-    (fun t ht => hasDerivAt_antiderivative_pow_inv hk (hγ t ht)
-      (sub_ne_zero.mpr (h_avoids t ht))) h_int
-
 /-- Antiderivative of `1/(z-s)^k` as a function `ℂ → ℂ` (`k ≥ 2`): the function
 `F(z) = -1/[(k-1)(z-s)^{k-1}]` has complex derivative `1/(z-s)^k` at any `z ≠ s`. -/
 theorem hasDerivAt_antiderivative_pow_inv_complex
@@ -96,27 +60,6 @@ theorem hasDerivAt_antiderivative_pow_inv_complex
     rw [← pow_mul, ← pow_add]; congr 1; omega
   rw [h_pow2]
   field_simp
-
-/-- For a closed curve avoiding `s` on two smooth pieces flanking a crossing, the
-parameter-excised integral equals `F(γ(t_minus)) - F(γ(t_plus))` where `F` is the
-antiderivative `-1/[(k-1)(z-s)^{k-1}]`. -/
-theorem closed_excised_integral_eq_antideriv_diff
-    {γ : ℝ → ℂ} {γ' : ℝ → ℂ} {s : ℂ} {k : ℕ} {a t_minus t_plus b : ℝ}
-    (hk : 2 ≤ k)
-    (h_close : γ a = γ b)
-    (hγ_left : ∀ t ∈ uIcc a t_minus, HasDerivAt γ (γ' t) t)
-    (hγ_right : ∀ t ∈ uIcc t_plus b, HasDerivAt γ (γ' t) t)
-    (h_avoids_left : ∀ t ∈ uIcc a t_minus, γ t ≠ s)
-    (h_avoids_right : ∀ t ∈ uIcc t_plus b, γ t ≠ s)
-    (h_int_left : IntervalIntegrable (fun t => γ' t / (γ t - s) ^ k) volume a t_minus)
-    (h_int_right : IntervalIntegrable (fun t => γ' t / (γ t - s) ^ k) volume t_plus b) :
-    (∫ t in a..t_minus, γ' t / (γ t - s) ^ k) +
-      (∫ t in t_plus..b, γ' t / (γ t - s) ^ k) =
-      (-(↑(k - 1) : ℂ)⁻¹ * ((γ t_minus - s) ^ (k - 1))⁻¹) -
-      (-(↑(k - 1) : ℂ)⁻¹ * ((γ t_plus - s) ^ (k - 1))⁻¹) := by
-  rw [integral_pow_inv_eq_FTC hk hγ_left h_avoids_left h_int_left,
-    integral_pow_inv_eq_FTC hk hγ_right h_avoids_right h_int_right, h_close]
-  ring
 
 /-- When the line segment from `z₁` to `z₂` stays at distance `≥ ε` from `s`, the
 antiderivative difference satisfies `‖F(z₂) − F(z₁)‖ ≤ ‖z₂ − z₁‖ / ε^k`, where
@@ -528,36 +471,6 @@ theorem F_diff_at_tangent_target_tendsto_zero_left
             ‖γ t - s‖ ^ k) := by ring
   exact tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds h_const_ratio
     (Eventually.of_forall fun _ => norm_nonneg _) h_F_diff_le
-
-/-- Combining the closed-curve excised integral formula with the F-diff Tendsto
-hypothesis: the parameter-excised integral tends to 0 as `ε → 0⁺`. -/
-theorem cpv_excised_tendsto_zero_of_F_diff_zero
-    {γ : ℝ → ℂ} {γ' : ℝ → ℂ} {a b : ℝ} {s : ℂ} {k : ℕ}
-    (h_close : γ a = γ b) (hk : 2 ≤ k)
-    (t_eps_plus t_eps_minus : ℝ → ℝ)
-    (h_minus_smooth : ∀ ε > 0, ∀ t ∈ uIcc a (t_eps_minus ε), HasDerivAt γ (γ' t) t)
-    (h_minus_avoids : ∀ ε > 0, ∀ t ∈ uIcc a (t_eps_minus ε), γ t ≠ s)
-    (h_minus_int : ∀ ε > 0,
-      IntervalIntegrable (fun t => γ' t / (γ t - s) ^ k) volume a (t_eps_minus ε))
-    (h_plus_smooth : ∀ ε > 0, ∀ t ∈ uIcc (t_eps_plus ε) b, HasDerivAt γ (γ' t) t)
-    (h_plus_avoids : ∀ ε > 0, ∀ t ∈ uIcc (t_eps_plus ε) b, γ t ≠ s)
-    (h_plus_int : ∀ ε > 0,
-      IntervalIntegrable (fun t => γ' t / (γ t - s) ^ k) volume (t_eps_plus ε) b)
-    (h_F_diff_to_zero : Tendsto (fun ε =>
-      ‖(-(↑(k - 1) : ℂ)⁻¹ * ((γ (t_eps_minus ε) - s) ^ (k - 1))⁻¹) -
-        (-(↑(k - 1) : ℂ)⁻¹ * ((γ (t_eps_plus ε) - s) ^ (k - 1))⁻¹)‖)
-      (𝓝[>] 0) (𝓝 0)) :
-    Tendsto (fun ε =>
-      (∫ t in a..(t_eps_minus ε), γ' t / (γ t - s) ^ k) +
-        (∫ t in (t_eps_plus ε)..b, γ' t / (γ t - s) ^ k))
-      (𝓝[>] 0) (𝓝 0) := by
-  rw [tendsto_zero_iff_norm_tendsto_zero]
-  refine h_F_diff_to_zero.congr' ?_
-  filter_upwards [self_mem_nhdsWithin] with ε (hε_pos : 0 < ε)
-  rw [closed_excised_integral_eq_antideriv_diff hk h_close
-    (hγ_left := h_minus_smooth ε hε_pos) (hγ_right := h_plus_smooth ε hε_pos)
-    (h_avoids_left := h_minus_avoids ε hε_pos) (h_avoids_right := h_plus_avoids ε hε_pos)
-    (h_int_left := h_minus_int ε hε_pos) (h_int_right := h_plus_int ε hε_pos)]
 
 end HungerbuhlerWasem
 
