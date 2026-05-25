@@ -1128,6 +1128,84 @@ the FTC-difference constant `c · (F(γ(t_i + r)) - F(γ(t_i - r)))`, where
 private noncomputable def antiderivPow (s : ℂ) (k : ℕ) (z : ℂ) : ℂ :=
   -(↑(k - 1) : ℂ)⁻¹ * ((z - s) ^ (k - 1))⁻¹
 
+/-- **Empty-case higher-order CPV vanishing.** When `γ` avoids `s` on `[0, 1]`,
+the higher-order CPV `c / (z-s)^k` (for `k ≥ 2`) vanishes: the FTC integral
+`∫_0^1 c·γ'/(γ-s)^k = c·(F(γ(1)) - F(γ(0))) = 0` by closedness, and
+`hasCauchyPVOn_of_avoids` then gives the cutoff convergence. Shared between
+`hasCauchyPVOn_multiCrossing_higherOrder` (T-BR-Y9e) and its corner-friendly
+counterpart `hasCauchyPVOn_multiCrossing_higherOrder_corner` (T-BR-Y11b). -/
+private theorem hasCauchyPVOn_higherOrder_of_avoids
+    (γ : ClosedPwC1Immersion x) {s : ℂ} {k : ℕ} (hk : 2 ≤ k) (c : ℂ)
+    (h_avoid : ∀ t ∈ Set.Icc (0 : ℝ) 1,
+      γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t ≠ s) :
+    HasCauchyPVOn {s} (fun z => c / (z - s) ^ k)
+      γ.toPwC1Immersion.toPiecewiseC1Path 0 := by
+  classical
+  set γf : ℝ → ℂ :=
+    (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend : ℝ → ℂ) with hγf_def
+  have hγ_cont : Continuous γf :=
+    γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend
+  obtain ⟨t_min, ht_min_mem, ht_min⟩ := isCompact_Icc.exists_isMinOn
+    ⟨0, le_rfl, zero_le_one⟩ ((hγ_cont.continuousOn.sub continuousOn_const).norm)
+  have hδ_pos : 0 < ‖γf t_min - s‖ :=
+    norm_pos_iff.mpr (sub_ne_zero.mpr (h_avoid t_min ht_min_mem))
+  set partSet : Set ℝ :=
+    (γ.toPwC1Immersion.toPiecewiseC1Path.partition : Set ℝ) with partSet_def
+  have h_partSet_countable : partSet.Countable :=
+    γ.toPwC1Immersion.toPiecewiseC1Path.partition.finite_toSet.countable
+  have h_diff : ∀ u ∈ Set.Ioo (0 : ℝ) 1 \ partSet, HasDerivAt γf (deriv γf u) u :=
+    fun u ⟨h_u_in, h_u_off⟩ =>
+      (γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off_extend
+        u h_u_in h_u_off).hasDerivAt
+  have h_int : IntervalIntegrable
+      (fun u => c * deriv γf u / (γf u - s) ^ k) MeasureTheory.volume 0 1 :=
+    pow_inv_mul_deriv_intervalIntegrable γ c k zero_le_one (subset_refl _) h_avoid
+  have h_FTC : ∫ u in (0 : ℝ)..1, c * deriv γf u / (γf u - s) ^ k =
+      c * antiderivPow s k (γf 1) - c * antiderivPow s k (γf 0) := by
+    set F : ℂ → ℂ := fun z => c * antiderivPow s k z
+    have h_F_diff_at : ∀ u ∈ Set.Ioo (0 : ℝ) 1 \ partSet,
+        HasDerivAt (fun v => F (γf v)) (c * deriv γf u / (γf u - s) ^ k) u := by
+      intro u hu
+      have h_γu_ne_s : γf u ≠ s := h_avoid u (Set.Ioo_subset_Icc_self hu.1)
+      have h_F_at : HasDerivAt F (c * (1 / (γf u - s) ^ k)) (γf u) :=
+        (hasDerivAt_antiderivative_pow_inv_complex hk h_γu_ne_s).const_mul c
+      have h_chain := h_F_at.comp u (h_diff u hu)
+      rw [show c * (1 / (γf u - s) ^ k) * deriv γf u =
+          c * deriv γf u / (γf u - s) ^ k from by ring] at h_chain
+      exact h_chain
+    have h_Fγ_cont : ContinuousOn (fun v => F (γf v)) (Set.Icc (0 : ℝ) 1) := fun u hu =>
+      (((hasDerivAt_antiderivative_pow_inv_complex hk
+        (h_avoid u hu)).continuousAt).const_mul
+        c).comp_continuousWithinAt (hγ_cont.continuousOn u hu)
+    exact MeasureTheory.integral_eq_of_hasDerivAt_off_countable_of_le
+      (fun v => F (γf v)) (fun u => c * deriv γf u / (γf u - s) ^ k)
+      zero_le_one h_partSet_countable h_Fγ_cont h_F_diff_at h_int
+  have h_closed : γf 0 = γf 1 := closed_immersion_extend_zero_eq_one γ
+  have h_contour : γ.toPwC1Immersion.toPiecewiseC1Path.contourIntegral
+      (fun z => c / (z - s) ^ k) = 0 := by
+    show ∫ t in (0 : ℝ)..1,
+        (fun z => c / (z - s) ^ k)
+          (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t) *
+        deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t = 0
+    rw [show (fun t => (fun z => c / (z - s) ^ k)
+      (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t) *
+      deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t) =
+      (fun u => c * deriv γf u / (γf u - s) ^ k) from
+      funext fun u => by ring, h_FTC, h_closed]
+    ring
+  have h_pv : HasCauchyPVOn {s} (fun z => c / (z - s) ^ k)
+      γ.toPwC1Immersion.toPiecewiseC1Path
+      (γ.toPwC1Immersion.toPiecewiseC1Path.contourIntegral
+        (fun z => c / (z - s) ^ k)) := by
+    apply hasCauchyPVOn_of_avoids
+    refine ⟨‖γf t_min - s‖, hδ_pos, ?_⟩
+    intro s' hs' t ht
+    rw [Finset.mem_singleton] at hs'
+    subst hs'
+    exact ht_min ht
+  rw [h_contour] at h_pv
+  exact h_pv
+
 /-- **Per-crossing higher-order window convergence under condition (B).**
 
 For a single crossing `t_i ∈ Ioo 0 1` of γ at `s` (off-partition), with a
@@ -1927,85 +2005,10 @@ theorem hasCauchyPVOn_multiCrossing_higherOrder
   classical
   set γf : ℝ → ℂ :=
     (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend : ℝ → ℂ) with hγf_def
-  -- Case 0: empty crossings → γ avoids s on Icc 0 1.
+  -- Case 0: empty crossings → γ avoids s on Icc 0 1. FTC + closedness gives 0.
   by_cases h_empty : D.crossings = ∅
-  · -- γ avoids s, so CPV = ∫ c·γ'/(γ-s)^k = c·(F(γ(1)) - F(γ(0))) = 0 (closed γ).
-    have h_avoid : ∀ t ∈ Set.Icc (0 : ℝ) 1, γf t ≠ s :=
+  · exact hasCauchyPVOn_higherOrder_of_avoids γ hk c
       fun t ht => D.avoids_of_crossings_empty h_empty t ht
-    have hγ_cont : Continuous γf :=
-      γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend
-    have h_norm_cont : ContinuousOn (fun t => ‖γf t - s‖) (Set.Icc (0 : ℝ) 1) :=
-      ((hγ_cont.continuousOn).sub continuousOn_const).norm
-    have h_compact : IsCompact (Set.Icc (0 : ℝ) 1) := isCompact_Icc
-    have h_nonempty : (Set.Icc (0 : ℝ) 1).Nonempty := ⟨0, ⟨le_rfl, zero_le_one⟩⟩
-    obtain ⟨t_min, ht_min_mem, ht_min⟩ :=
-      h_compact.exists_isMinOn h_nonempty h_norm_cont
-    set δ : ℝ := ‖γf t_min - s‖
-    have hδ_pos : 0 < δ :=
-      norm_pos_iff.mpr (sub_ne_zero.mpr (h_avoid t_min ht_min_mem))
-    -- The contour integral of c·γ'/(γ-s)^k on a closed curve avoiding s.
-    -- Closed γ: γ(0) = γ(1). FTC gives 0.
-    -- We use `hasCauchyPVOn_of_avoids` and compute the contour integral = 0.
-    set partSet : Set ℝ :=
-      (γ.toPwC1Immersion.toPiecewiseC1Path.partition : Set ℝ) with partSet_def
-    have h_partSet_countable : partSet.Countable :=
-      γ.toPwC1Immersion.toPiecewiseC1Path.partition.finite_toSet.countable
-    have h_diff : ∀ u ∈ Set.Ioo (0 : ℝ) 1 \ partSet, HasDerivAt γf (deriv γf u) u :=
-      fun u ⟨h_u_in, h_u_off⟩ =>
-        (γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off_extend
-          u h_u_in h_u_off).hasDerivAt
-    have h_a_le_1 : (0 : ℝ) ≤ 1 := zero_le_one
-    have h_unit_self : Set.Icc (0 : ℝ) 1 ⊆ Set.Icc (0 : ℝ) 1 := subset_refl _
-    have h_int : IntervalIntegrable
-        (fun u => c * deriv γf u / (γf u - s) ^ k) MeasureTheory.volume 0 1 :=
-      pow_inv_mul_deriv_intervalIntegrable γ c k h_a_le_1 h_unit_self h_avoid
-    have h_FTC : ∫ u in (0 : ℝ)..1, c * deriv γf u / (γf u - s) ^ k =
-        c * antiderivPow s k (γf 1) - c * antiderivPow s k (γf 0) := by
-      set F : ℂ → ℂ := fun z => c * antiderivPow s k z
-      have h_F_diff_at : ∀ u ∈ Set.Ioo (0 : ℝ) 1 \ partSet,
-          HasDerivAt (fun v => F (γf v)) (c * deriv γf u / (γf u - s) ^ k) u := by
-        intro u hu
-        have h_γu_ne_s : γf u ≠ s := h_avoid u (Set.Ioo_subset_Icc_self hu.1)
-        have h_F_at : HasDerivAt F (c * (1 / (γf u - s) ^ k)) (γf u) :=
-          (hasDerivAt_antiderivative_pow_inv_complex hk h_γu_ne_s).const_mul c
-        have h_chain := h_F_at.comp u (h_diff u hu)
-        rw [show c * (1 / (γf u - s) ^ k) * deriv γf u =
-            c * deriv γf u / (γf u - s) ^ k from by ring] at h_chain
-        exact h_chain
-      have h_Fγ_cont : ContinuousOn (fun v => F (γf v)) (Set.Icc (0 : ℝ) 1) := fun u hu =>
-        (((hasDerivAt_antiderivative_pow_inv_complex hk
-          (h_avoid u hu)).continuousAt).const_mul
-          c).comp_continuousWithinAt (hγ_cont.continuousOn u hu)
-      exact MeasureTheory.integral_eq_of_hasDerivAt_off_countable_of_le
-        (fun v => F (γf v)) (fun u => c * deriv γf u / (γf u - s) ^ k)
-        h_a_le_1 h_partSet_countable h_Fγ_cont h_F_diff_at h_int
-    -- For closed γ: γ(0) = γ(1) = x, so F(γ(0)) = F(γ(1)).
-    have h_closed : γf 0 = γf 1 := closed_immersion_extend_zero_eq_one γ
-    -- HasCauchyPVOn from avoids: limit = contour integral = 0.
-    have h_contour : γ.toPwC1Immersion.toPiecewiseC1Path.contourIntegral
-        (fun z => c / (z - s) ^ k) = 0 := by
-      show ∫ t in (0 : ℝ)..1,
-          (fun z => c / (z - s) ^ k)
-            (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t) *
-          deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t = 0
-      rw [show (fun t => (fun z => c / (z - s) ^ k)
-        (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t) *
-        deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t) =
-        (fun u => c * deriv γf u / (γf u - s) ^ k) from
-        funext fun u => by ring, h_FTC, h_closed]
-      ring
-    have h_pv : HasCauchyPVOn {s} (fun z => c / (z - s) ^ k)
-        γ.toPwC1Immersion.toPiecewiseC1Path
-        (γ.toPwC1Immersion.toPiecewiseC1Path.contourIntegral
-          (fun z => c / (z - s) ^ k)) := by
-      apply hasCauchyPVOn_of_avoids
-      refine ⟨δ, hδ_pos, ?_⟩
-      intro s' hs' t ht
-      rw [Finset.mem_singleton] at hs'
-      subst hs'
-      exact ht_min ht
-    rw [h_contour] at h_pv
-    exact h_pv
   · -- Case: non-empty crossings.
     have h_nonempty : D.crossings.Nonempty := Finset.nonempty_iff_ne_empty.mpr h_empty
     -- Step 1: extract per-crossing radius data (same as T-BR-Y9d).
@@ -2946,82 +2949,10 @@ theorem hasCauchyPVOn_multiCrossing_higherOrder_corner
   classical
   set γf : ℝ → ℂ :=
     (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend : ℝ → ℂ) with hγf_def
-  -- Case 0: empty crossings → γ avoids s on Icc 0 1.
+  -- Case 0: empty crossings → γ avoids s on Icc 0 1. FTC + closedness gives 0.
   by_cases h_empty : crossings = ∅
-  · have h_avoid : ∀ t ∈ Set.Icc (0 : ℝ) 1, γf t ≠ s := by
-      intro t ht h_eq
-      have h_mem := h_complete t ht h_eq
-      rw [h_empty] at h_mem
-      exact absurd h_mem (Finset.notMem_empty t)
-    have hγ_cont : Continuous γf :=
-      γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend
-    have h_norm_cont : ContinuousOn (fun t => ‖γf t - s‖) (Set.Icc (0 : ℝ) 1) :=
-      ((hγ_cont.continuousOn).sub continuousOn_const).norm
-    have h_compact : IsCompact (Set.Icc (0 : ℝ) 1) := isCompact_Icc
-    have h_nonempty : (Set.Icc (0 : ℝ) 1).Nonempty := ⟨0, ⟨le_rfl, zero_le_one⟩⟩
-    obtain ⟨t_min, ht_min_mem, ht_min⟩ :=
-      h_compact.exists_isMinOn h_nonempty h_norm_cont
-    set δ : ℝ := ‖γf t_min - s‖
-    have hδ_pos : 0 < δ :=
-      norm_pos_iff.mpr (sub_ne_zero.mpr (h_avoid t_min ht_min_mem))
-    set partSet : Set ℝ :=
-      (γ.toPwC1Immersion.toPiecewiseC1Path.partition : Set ℝ) with partSet_def
-    have h_partSet_countable : partSet.Countable :=
-      γ.toPwC1Immersion.toPiecewiseC1Path.partition.finite_toSet.countable
-    have h_diff : ∀ u ∈ Set.Ioo (0 : ℝ) 1 \ partSet, HasDerivAt γf (deriv γf u) u :=
-      fun u ⟨h_u_in, h_u_off⟩ =>
-        (γ.toPwC1Immersion.toPiecewiseC1Path.differentiable_off_extend
-          u h_u_in h_u_off).hasDerivAt
-    have h_a_le_1 : (0 : ℝ) ≤ 1 := zero_le_one
-    have h_unit_self : Set.Icc (0 : ℝ) 1 ⊆ Set.Icc (0 : ℝ) 1 := subset_refl _
-    have h_int : IntervalIntegrable
-        (fun u => c * deriv γf u / (γf u - s) ^ k) MeasureTheory.volume 0 1 :=
-      pow_inv_mul_deriv_intervalIntegrable γ c k h_a_le_1 h_unit_self h_avoid
-    have h_FTC : ∫ u in (0 : ℝ)..1, c * deriv γf u / (γf u - s) ^ k =
-        c * antiderivPow s k (γf 1) - c * antiderivPow s k (γf 0) := by
-      set F : ℂ → ℂ := fun z => c * antiderivPow s k z
-      have h_F_diff_at : ∀ u ∈ Set.Ioo (0 : ℝ) 1 \ partSet,
-          HasDerivAt (fun v => F (γf v)) (c * deriv γf u / (γf u - s) ^ k) u := by
-        intro u hu
-        have h_γu_ne_s : γf u ≠ s := h_avoid u (Set.Ioo_subset_Icc_self hu.1)
-        have h_F_at : HasDerivAt F (c * (1 / (γf u - s) ^ k)) (γf u) :=
-          (hasDerivAt_antiderivative_pow_inv_complex hk h_γu_ne_s).const_mul c
-        have h_chain := h_F_at.comp u (h_diff u hu)
-        rw [show c * (1 / (γf u - s) ^ k) * deriv γf u =
-            c * deriv γf u / (γf u - s) ^ k from by ring] at h_chain
-        exact h_chain
-      have h_Fγ_cont : ContinuousOn (fun v => F (γf v)) (Set.Icc (0 : ℝ) 1) := fun u hu =>
-        (((hasDerivAt_antiderivative_pow_inv_complex hk
-          (h_avoid u hu)).continuousAt).const_mul
-          c).comp_continuousWithinAt (hγ_cont.continuousOn u hu)
-      exact MeasureTheory.integral_eq_of_hasDerivAt_off_countable_of_le
-        (fun v => F (γf v)) (fun u => c * deriv γf u / (γf u - s) ^ k)
-        h_a_le_1 h_partSet_countable h_Fγ_cont h_F_diff_at h_int
-    have h_closed : γf 0 = γf 1 := closed_immersion_extend_zero_eq_one γ
-    have h_contour : γ.toPwC1Immersion.toPiecewiseC1Path.contourIntegral
-        (fun z => c / (z - s) ^ k) = 0 := by
-      show ∫ t in (0 : ℝ)..1,
-          (fun z => c / (z - s) ^ k)
-            (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t) *
-          deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t = 0
-      rw [show (fun t => (fun z => c / (z - s) ^ k)
-        (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t) *
-        deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t) =
-        (fun u => c * deriv γf u / (γf u - s) ^ k) from
-        funext fun u => by ring, h_FTC, h_closed]
-      ring
-    have h_pv : HasCauchyPVOn {s} (fun z => c / (z - s) ^ k)
-        γ.toPwC1Immersion.toPiecewiseC1Path
-        (γ.toPwC1Immersion.toPiecewiseC1Path.contourIntegral
-          (fun z => c / (z - s) ^ k)) := by
-      apply hasCauchyPVOn_of_avoids
-      refine ⟨δ, hδ_pos, ?_⟩
-      intro s' hs' t ht
-      rw [Finset.mem_singleton] at hs'
-      subst hs'
-      exact ht_min ht
-    rw [h_contour] at h_pv
-    exact h_pv
+  · refine hasCauchyPVOn_higherOrder_of_avoids γ hk c fun t ht h_eq => ?_
+    exact absurd (h_empty ▸ h_complete t ht h_eq) (Finset.notMem_empty t)
   · -- Case: non-empty crossings.
     have h_nonempty : crossings.Nonempty := Finset.nonempty_iff_ne_empty.mpr h_empty
     -- Step 1: extract per-crossing radius data for strict mono/anti.
