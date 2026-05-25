@@ -1111,6 +1111,24 @@ lemma lintegral_enorm_qParam_pow_imAxis_term (a : ℂ) (m : ℕ) (s : ℂ) :
   intro t ht
   exact enorm_qParam_pow_imAxis_term_of_pos a m s ht
 
+/-- **Pointwise `ENNReal.ofReal` factoring of `‖a‖` out of the real Mellin
+summand** (a.e. on `Ioi 0`).
+
+Standalone factoring step extracted from `lintegral_real_qExpansion_term_eq_Gamma`:
+since `‖a‖ ≥ 0`, the scalar pulls out of `ENNReal.ofReal`. -/
+private lemma ofReal_rpow_mul_norm_mul_exp_ae_eq (a : ℂ) (m : ℕ) (s : ℂ) :
+    ∀ᵐ (t : ℝ) ∂(MeasureTheory.volume.restrict (Set.Ioi (0 : ℝ))),
+        ENNReal.ofReal
+            (t ^ (s.re - 1) * ‖a‖ * Real.exp (-(2 * Real.pi * (m : ℝ) * t)))
+          = ENNReal.ofReal ‖a‖ *
+              ENNReal.ofReal
+                (t ^ (s.re - 1) * Real.exp (-(2 * Real.pi * (m : ℝ) * t))) := by
+  refine (MeasureTheory.ae_restrict_iff' measurableSet_Ioi).mpr ?_
+  filter_upwards with t _ht
+  rw [show t ^ (s.re - 1) * ‖a‖ * Real.exp (-(2 * Real.pi * (m : ℝ) * t)) =
+        ‖a‖ * (t ^ (s.re - 1) * Real.exp (-(2 * Real.pi * (m : ℝ) * t))) by ring]
+  exact ENNReal.ofReal_mul (norm_nonneg _)
+
 /-- **One-term Gamma evaluation of the period-one Mellin `h_summ` summand**.
 
 For `1 ≤ m` and `0 < s.re`,
@@ -1138,19 +1156,7 @@ theorem lintegral_real_qExpansion_term_eq_Gamma {a : ℂ} {m : ℕ} (hm : 1 ≤ 
     show t ^ (s.re - 1) * Real.exp (-(2 * Real.pi * (m : ℝ)) * t ^ (1 : ℝ))
         = t ^ (s.re - 1) * Real.exp (-(2 * Real.pi * (m : ℝ) * t))
     rw [Real.rpow_one]; ring_nf
-  have h_ext :
-      ∀ᵐ (t : ℝ) ∂(MeasureTheory.volume.restrict (Set.Ioi (0 : ℝ))),
-        ENNReal.ofReal
-            (t ^ (s.re - 1) * ‖a‖ * Real.exp (-(2 * Real.pi * (m : ℝ) * t)))
-          = ENNReal.ofReal ‖a‖ *
-              ENNReal.ofReal
-                (t ^ (s.re - 1) * Real.exp (-(2 * Real.pi * (m : ℝ) * t))) := by
-    refine (MeasureTheory.ae_restrict_iff' measurableSet_Ioi).mpr ?_
-    filter_upwards with t _ht
-    rw [show t ^ (s.re - 1) * ‖a‖ * Real.exp (-(2 * Real.pi * (m : ℝ) * t)) =
-          ‖a‖ * (t ^ (s.re - 1) * Real.exp (-(2 * Real.pi * (m : ℝ) * t))) by ring]
-    exact ENNReal.ofReal_mul h_norm_nn
-  rw [MeasureTheory.lintegral_congr_ae h_ext,
+  rw [MeasureTheory.lintegral_congr_ae (ofReal_rpow_mul_norm_mul_exp_ae_eq a m s),
       MeasureTheory.lintegral_const_mul' _ _ ENNReal.ofReal_ne_top]
   have h_lintegrand_eq :
       ∫⁻ t in Set.Ioi (0 : ℝ),
@@ -1219,7 +1225,6 @@ lemma lintegral_qExpansion_term_eq_Gamma_of_succ
   ring
 
 open CongruenceSubgroup Matrix.SpecialLinearGroup in
-set_option maxHeartbeats 400000 in
 /-- **`h_summ` of period-one Mellin lintegrand reduces to coefficient-tail
 summability**.
 

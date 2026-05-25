@@ -49,7 +49,6 @@ private lemma slSuccEmbed_val_eq {k : ℕ} (M : SpecialLinearGroup (Fin (k + 1))
       (Fin.castOrderIso (show k + 1 + 1 = 1 + (k + 1) by omega)
         |>.toEquiv.trans finSumFinEquiv.symm) := rfl
 
-set_option maxHeartbeats 800000 in
 /-- `slSuccEmbed` is multiplicative: `(1 ⊕ A) · (1 ⊕ B) = 1 ⊕ (A · B)`. -/
 private lemma slSuccEmbed_mul {k : ℕ} (A B : SpecialLinearGroup (Fin (k + 1)) ℤ) :
     slSuccEmbed (A * B) = slSuccEmbed A * slSuccEmbed B := by

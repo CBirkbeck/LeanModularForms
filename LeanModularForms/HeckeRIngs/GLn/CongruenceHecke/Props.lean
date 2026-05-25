@@ -169,7 +169,6 @@ private lemma diagMat_one_mem_Delta0 (N : ℕ) (n : ℕ) :
   · simp [Matrix.diagonal]
   · simp [Matrix.diagonal, Int.gcd_one_left]
 
-set_option maxHeartbeats 800000 in
 /-- `HeckeCoset (Gamma0_pair N)` is infinite: `diag(1, n+1) ∈ Δ₀(N)` gives distinct
     `Γ₀(N)`-double cosets because they map to distinct `Γ`-double cosets via
     `Gamma0_doubleCoset_subset_Gamma` and `diagonal_representative_unique`. -/
@@ -371,7 +370,6 @@ private lemma fin2_col_scale (m : ℕ) (j : Fin 2) :
     (![0, (m : ℤ)] : Fin 2 → ℤ) j = (m : ℤ) * (![0, 1] : Fin 2 → ℤ) j := by
   fin_cases j <;> simp
 
-set_option maxHeartbeats 800000 in
 /-- Lower-unipotent injection `Fin k → decompQuot (Gamma0_pair N) g`
 for counting the right-coset quotient. -/
 private noncomputable def lunip_inject (N : ℕ) [NeZero N] (k_exp : ℕ)
@@ -708,7 +706,6 @@ private lemma lunip_inject_injective (N : ℕ) [NeZero N]
         nlinarith [h_e2]
       exact_mod_cast h_q⟩)
 
-set_option maxHeartbeats 1600000 in
 /-- Cardinality of `decompQuot` for any `g` in the double coset of `diag(1, k)` is `k`. -/
 private lemma decompQuot_Npow_natcard (N : ℕ) [NeZero N]
     (k_exp : ℕ) (hk_pos : 0 < k_exp) (hk : ℕ) (hk_dvd : k_exp ∣ N ^ hk)

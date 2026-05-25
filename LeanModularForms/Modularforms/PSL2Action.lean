@@ -313,7 +313,6 @@ instance instSMulInvMeasure_PSL : SMulInvariantMeasure PSL(2, ℤ) ℍ μ_hyp wh
     simp only [PSL_smul_coe]
     exact (measurePreserving_smul a μ_hyp).measure_preimage hs.nullMeasurableSet
 
-set_option maxHeartbeats 800000 in
 /-- If `g ∈ SL₂(ℤ)` acts trivially on `ℍ` and has `c`-entry zero, then `g ∈ center`.
 
 From `c = 0` and `det = 1`: `g = [[a,b],[0,d]]` with `ad = 1`, so `a = d = ±1`.

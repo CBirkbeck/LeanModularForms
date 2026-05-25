@@ -220,7 +220,6 @@ private lemma coset_cond_of_compensated_out {n : ℕ} [NeZero n] (δA δB δC : 
   rw [← Set.singleton_mul_singleton] at h_target
   exact h_target
 
-set_option maxHeartbeats 1200000 in
 /-- **Diagonal-level ≥ direction of `heckeMultiplicity_block_embed`.** Compensated
 injection via `coset_shift_fwd_q1`. -/
 lemma heckeMultiplicity_block_embed_ge_diagMat {k : ℕ}
@@ -578,7 +577,6 @@ private lemma fiber_rep_iff_mem_H {n : ℕ} [NeZero n]
 
 /-! ### The compensated bridge injections and the bridge lemma -/
 
-set_option maxHeartbeats 1600000 in
 /-- **Bridge ≤ direction.** rep-multiplicity ≤ diagMat-multiplicity via a compensated
 injection, paralleling `heckeMultiplicity_block_embed_ge_diagMat`. -/
 private lemma heckeMultiplicity_rep_le_diagMat_delta {n : ℕ} [NeZero n]
@@ -677,7 +675,6 @@ private lemma heckeMultiplicity_rep_le_diagMat_delta {n : ℕ} [NeZero n]
   subst h_j_final
   rfl
 
-set_option maxHeartbeats 1600000 in
 /-- **Bridge ≥ direction.** diagMat-multiplicity ≤ rep-multiplicity via a compensated
 injection, symmetric to `heckeMultiplicity_rep_le_diagMat_delta` with the reverse
 L/R-compensation: `σ' ↦ Lc · σ' · La⁻¹`, `τ' ↦ Ra⁻¹ · τ' · Lb⁻¹`. -/
