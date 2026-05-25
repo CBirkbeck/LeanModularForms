@@ -58,30 +58,6 @@ theorem HungerbuhlerWasem.hasCauchyPV_simplePole_of_inv
     HasCauchyPV (fun z => c / (z - s)) γ s (c * L) := by
   simpa [div_eq_mul_inv] using h.smul c
 
-namespace SingleCrossingData
-
-/-- **Simple-pole CPV from `SingleCrossingData`.** Given a `SingleCrossingData γ s`
-witnessing a single transverse crossing, the CPV of `c / (z - s)` along `γ` exists
-with value `c · D.L`. -/
-theorem hasCauchyPV_simplePole {γ : PiecewiseC1Path x y} {s : ℂ}
-    (D : SingleCrossingData γ s) (c : ℂ) :
-    HasCauchyPV (fun z => c / (z - s)) γ s (c * D.L) :=
-  HungerbuhlerWasem.hasCauchyPV_simplePole_of_inv c D.hasCauchyPV
-
-/-- **Value form: CPV at simple pole equals `2πi · w · c`.** Given a
-`SingleCrossingData γ s`, the CPV of `c / (z - s)` along `γ` exists with value
-`2πi · w · c`, where `w = generalizedWindingNumber γ s`. -/
-theorem hasCauchyPV_simplePole_eq_two_pi_I_mul
-    {γ : PiecewiseC1Path x y} {s : ℂ} (D : SingleCrossingData γ s) (c : ℂ) :
-    HasCauchyPV (fun z => c / (z - s)) γ s
-      (2 * ↑Real.pi * I * generalizedWindingNumber γ s * c) := by
-  have hpi : (2 * ↑Real.pi * I : ℂ) ≠ 0 := Complex.two_pi_I_ne_zero
-  have h_eq : c * D.L =
-      2 * ↑Real.pi * I * generalizedWindingNumber γ s * c := by
-    rw [D.windingNumber_eq]; field_simp
-  exact h_eq ▸ D.hasCauchyPV_simplePole c
-
-end SingleCrossingData
 
 namespace HungerbuhlerWasem
 
@@ -94,19 +70,6 @@ theorem HasCauchyPV.to_singletonOn
     (h : HasCauchyPV f γ z₀ L) : HasCauchyPVOn {z₀} f γ L :=
   h.congr fun _ => intervalIntegral.integral_congr fun _ _ =>
     cpvIntegrand_eq_cpvIntegrandOn_singleton
-
-/-- **Asymmetric variant of T-CC-01.** Given an `AsymmetricSingleCrossingData γ s`
-(separate left/right cutoffs), the simple-pole contribution `c / (z − s)` has a
-Cauchy principal value equal to `2πi · w · c`. The asymmetric form admits curves
-with `‖L_-‖ ≠ ‖L_+‖` (chord-to-tangent constants differing between the two
-sides), which the symmetric `SingleCrossingData` cannot express. -/
-theorem cpv_simplePole_at_crossing_asymmetric
-    {γ : PiecewiseC1Path x y} {s : ℂ} (D : AsymmetricSingleCrossingData γ s)
-    (c : ℂ) :
-    HasCauchyPV (fun z => c / (z - s)) γ s
-      (2 * ↑Real.pi * I * generalizedWindingNumber γ s * c) :=
-  D.hasCauchyPV_simplePole_eq_two_pi_I_mul c
-
 
 end HungerbuhlerWasem
 

@@ -210,64 +210,6 @@ theorem hasWindingNumber (D : AsymmetricSingleCrossingData γ z₀) :
     HasGeneralizedWindingNumber γ z₀ (D.L / (2 * ↑Real.pi * I)) := by
   rw [show D.L / (2 * ↑Real.pi * I) = (2 * ↑Real.pi * I)⁻¹ * D.L by ring]
   exact hasGeneralizedWindingNumber_of_hasCauchyPV D.hasCauchyPV
-
-/-- The generalized winding number equals the concrete value determined by `L`. -/
-theorem windingNumber_eq (D : AsymmetricSingleCrossingData γ z₀) :
-    generalizedWindingNumber γ z₀ = D.L / (2 * ↑Real.pi * I) :=
-  D.hasWindingNumber.eq
-
-/-- **Simple-pole CPV from `AsymmetricSingleCrossingData`.** Given an
-`AsymmetricSingleCrossingData γ z₀` witnessing a (possibly asymmetric) single
-crossing, the CPV of `c / (z - z₀)` along `γ` exists with value `c · D.L`. -/
-theorem hasCauchyPV_simplePole (D : AsymmetricSingleCrossingData γ z₀) (c : ℂ) :
-    HasCauchyPV (fun z => c / (z - z₀)) γ z₀ (c * D.L) := by
-  simpa [div_eq_mul_inv] using D.hasCauchyPV.smul c
-
-/-- **Value form: CPV at simple pole equals `2πi · w · c`.** Given an
-`AsymmetricSingleCrossingData γ z₀`, the CPV of `c / (z - z₀)` along `γ` exists
-with value `2πi · w · c`, where `w = generalizedWindingNumber γ z₀`. -/
-theorem hasCauchyPV_simplePole_eq_two_pi_I_mul
-    (D : AsymmetricSingleCrossingData γ z₀) (c : ℂ) :
-    HasCauchyPV (fun z => c / (z - z₀)) γ z₀
-      (2 * ↑Real.pi * I * generalizedWindingNumber γ z₀ * c) := by
-  have h_eq : c * D.L =
-      2 * ↑Real.pi * I * generalizedWindingNumber γ z₀ * c := by
-    rw [D.windingNumber_eq]
-    field_simp
-  exact h_eq ▸ D.hasCauchyPV_simplePole c
-
 end AsymmetricSingleCrossingData
-
-namespace SingleCrossingData
-
-variable {γ : PiecewiseC1Path x y} {z₀ : ℂ}
-
-end SingleCrossingData
-
-/-- Bundled analytic content for an asymmetric crossing: integrability on the
-left/right segments, FTC equality `∫_0^{t₀-δ_left ε} + ∫_{t₀+δ_right ε}^1 = E ε`,
-and the limit `E(ε) → L`. -/
-structure AsymmetricArcFTCHyp {x y : ℂ} (γ : PiecewiseC1Path x y) (z₀ : ℂ)
-    (t₀ : ℝ) (δ_left δ_right : ℝ → ℝ) (threshold : ℝ) (L : ℂ) where
-  /-- The bookkeeping function whose limit is `L`. -/
-  E : ℝ → ℂ
-  /-- The two far-segment integrals sum to `E ε`. -/
-  h_ftc : ∀ ε, 0 < ε → ε < threshold →
-    (∫ t in (0 : ℝ)..(t₀ - δ_left ε),
-        (γ.toPath.extend t - z₀)⁻¹ * deriv γ.toPath.extend t) +
-    (∫ t in (t₀ + δ_right ε)..1,
-        (γ.toPath.extend t - z₀)⁻¹ * deriv γ.toPath.extend t) = E ε
-  /-- Integrability on the left segment. -/
-  hint_left : ∀ ε, 0 < ε → ε < threshold →
-    IntervalIntegrable
-      (fun t => (γ.toPath.extend t - z₀)⁻¹ * deriv γ.toPath.extend t)
-      volume 0 (t₀ - δ_left ε)
-  /-- Integrability on the right segment. -/
-  hint_right : ∀ ε, 0 < ε → ε < threshold →
-    IntervalIntegrable
-      (fun t => (γ.toPath.extend t - z₀)⁻¹ * deriv γ.toPath.extend t)
-      volume (t₀ + δ_right ε) 1
-  /-- `E(ε) → L` as `ε → 0⁺`. -/
-  h_limit : Tendsto E (𝓝[>] 0) (𝓝 L)
 
 end
