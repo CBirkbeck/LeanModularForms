@@ -3,7 +3,8 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import LeanModularForms.ForMathlib.ValenceFormula.PVChain
+import LeanModularForms.ForMathlib.ValenceFormula.PVChain.Assembly
+import LeanModularForms.ForMathlib.ValenceFormula.PVChain.Assembly.ResidueSide
 
 /-!
 # Residue Side of the Valence Formula
