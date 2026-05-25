@@ -908,28 +908,6 @@ theorem angle_compat_of_condB
   have := h k hk hk_ne
   rwa [h_angle_α] at this
 
-/-- **Crossing scenario** for `γ` relative to a finite pole set `S`.
-
-The two constructors capture the natural cases:
-- `avoidance`: γ avoids every pole in `S`.
-- `oneCrossing t₀ s_cross …`: γ has a single, interior, off-partition
-  crossing at `t₀` with pole `s_cross`, and avoids every other pole. -/
-inductive CrossingScenario (γ : ClosedPwC1Immersion x) (S : Finset ℂ) : Type
-  | avoidance :
-      (∀ s ∈ S, ∀ t ∈ Set.Icc (0 : ℝ) 1,
-        γ.toPwC1Immersion.toPiecewiseC1Path t ≠ s) →
-      CrossingScenario γ S
-  | oneCrossing : ∀ (t₀ : ℝ) (s_cross : ℂ),
-      t₀ ∈ Set.Ioo (0 : ℝ) 1 →
-      s_cross ∈ S →
-      γ.toPwC1Immersion.toPiecewiseC1Path t₀ = s_cross →
-      t₀ ∉ γ.toPwC1Immersion.toPiecewiseC1Path.partition →
-      (∀ t ∈ Set.Icc (0 : ℝ) 1,
-        γ.toPwC1Immersion.toPiecewiseC1Path t = s_cross → t = t₀) →
-      (∀ s' ∈ S, s' ≠ s_cross → ∀ t ∈ Set.Icc (0 : ℝ) 1,
-        γ.toPwC1Immersion.toPiecewiseC1Path t ≠ s') →
-      CrossingScenario γ S
-
 /-- **Per-pole geometric data for a crossing**, used as the optional payload in
 `MultiCrossingScenario`. -/
 structure PerPoleCrossData (γ : ClosedPwC1Immersion x) (s : ℂ) where

@@ -22,8 +22,6 @@ the full CPV existence theorem.
   limits `(γ(t) - s) / (t - t₀) → L_±` as `t → t₀^±`.
 * `exit_chord_tendsto_right` / `exit_chord_tendsto_left`: exit-time variants
   evaluated along a positive cutoff `δ(ε) → 0⁺`.
-* `exit_arg_tendsto_right` / `exit_arg_tendsto_left`: convergence of
-  `arg(γ(t₀ ± δ(ε)) - s)` under a slit-plane hypothesis on `L_±`.
 * `exit_log_tendsto_right` / `exit_log_tendsto_left`: convergence of
   `Complex.log(γ(t₀ ± δ(ε)) - s) - Real.log ε` to `(arg L_±) · I`.
 * `exit_log_diff_tendsto`: the divergent `Real.log ε` parts cancel between the
@@ -169,63 +167,6 @@ theorem exit_chord_tendsto_left
   refine ((chord_div_t_tendsto_left h_deriv h_at).comp h_compose).congr' ?_
   filter_upwards [hδ_pos] with ε _
   simp only [Function.comp_apply, show t₀ - δ_left ε - t₀ = -δ_left ε from by ring]
-
-/-- **Right-side exit-point arg convergence.** If `L_+ ∈ Complex.slitPlane`
-(i.e. is not a non-positive real), then
-`arg(γ(t₀ + δ_right(ε)) - s) → arg L_+` as `ε → 0⁺`.
-
-This follows from `exit_chord_tendsto_right` (giving directional convergence
-to `L_+`) and continuity of `Complex.arg` on the slit plane. Importantly, the
-arg is unchanged under positive real scaling, so the limit of the unit-direction
-`(γ(t₀ + δ_right(ε)) - s) / δ_right(ε)` and the original `γ(t₀ + δ_right(ε)) - s`
-have the same arg. -/
-theorem exit_arg_tendsto_right
-    {γ : ℝ → ℂ} {t₀ : ℝ} {s L : ℂ}
-    (h_deriv : HasDerivWithinAt γ L (Ioi t₀) t₀) (h_at : γ t₀ = s)
-    (hL_slit : L ∈ Complex.slitPlane)
-    {δ_right : ℝ → ℝ}
-    (hδ_pos : ∀ᶠ ε in 𝓝[>] (0 : ℝ), 0 < δ_right ε)
-    (hδ_to_zero : Tendsto δ_right (𝓝[>] (0 : ℝ)) (𝓝[>] (0 : ℝ))) :
-    Tendsto (fun ε : ℝ => Complex.arg (γ (t₀ + δ_right ε) - s))
-      (𝓝[>] (0 : ℝ)) (𝓝 L.arg) := by
-  have h_arg_eq : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
-      Complex.arg ((γ (t₀ + δ_right ε) - s) / ((δ_right ε : ℝ) : ℂ)) =
-        Complex.arg (γ (t₀ + δ_right ε) - s) := by
-    filter_upwards [hδ_pos] with ε hε
-    rw [div_eq_inv_mul, ← Complex.ofReal_inv]
-    exact Complex.arg_real_mul _ (inv_pos.mpr hε)
-  exact ((Complex.continuousAt_arg hL_slit).tendsto.comp
-    (exit_chord_tendsto_right h_deriv h_at hδ_pos hδ_to_zero)).congr' h_arg_eq
-
-/-- **Left-side exit-point arg convergence.** If `-L_- ∈ Complex.slitPlane`, then
-`arg(γ(t₀ - δ_left(ε)) - s) → arg(-L_-)` as `ε → 0⁺`.
-
-(For the LEFT, `t - t₀ = -δ_left(ε) < 0`, so the chord-to-tangent gives
-`(γ(t₀ - δ_left(ε)) - s) ≈ -δ_left(ε) · L_- = δ_left(ε) · (-L_-)`. Hence the arg
-limit is `arg(-L_-)`.) -/
-theorem exit_arg_tendsto_left
-    {γ : ℝ → ℂ} {t₀ : ℝ} {s L : ℂ}
-    (h_deriv : HasDerivWithinAt γ L (Iio t₀) t₀) (h_at : γ t₀ = s)
-    (hnegL_slit : -L ∈ Complex.slitPlane)
-    {δ_left : ℝ → ℝ}
-    (hδ_pos : ∀ᶠ ε in 𝓝[>] (0 : ℝ), 0 < δ_left ε)
-    (hδ_to_zero : Tendsto δ_left (𝓝[>] (0 : ℝ)) (𝓝[>] (0 : ℝ))) :
-    Tendsto (fun ε : ℝ => Complex.arg (γ (t₀ - δ_left ε) - s))
-      (𝓝[>] (0 : ℝ)) (𝓝 (-L).arg) := by
-  have h_quot' :
-      Tendsto (fun ε : ℝ => (γ (t₀ - δ_left ε) - s) / ((δ_left ε : ℝ) : ℂ))
-        (𝓝[>] (0 : ℝ)) (𝓝 (-L)) := by
-    refine (exit_chord_tendsto_left h_deriv h_at hδ_pos hδ_to_zero).neg.congr' ?_
-    filter_upwards [hδ_pos] with ε hε
-    have h_cast : ((-(δ_left ε) : ℝ) : ℂ) = -((δ_left ε : ℝ) : ℂ) := by push_cast; ring
-    rw [h_cast, div_neg, neg_neg]
-  have h_arg_eq : ∀ᶠ ε in 𝓝[>] (0 : ℝ),
-      Complex.arg ((γ (t₀ - δ_left ε) - s) / ((δ_left ε : ℝ) : ℂ)) =
-        Complex.arg (γ (t₀ - δ_left ε) - s) := by
-    filter_upwards [hδ_pos] with ε hε
-    rw [div_eq_inv_mul, ← Complex.ofReal_inv]
-    exact Complex.arg_real_mul _ (inv_pos.mpr hε)
-  exact ((Complex.continuousAt_arg hnegL_slit).tendsto.comp h_quot').congr' h_arg_eq
 
 /-- **Normalized chord close to 1 (right side).** For any `ρ > 0`, eventually
 on `𝓝[>] t₀`, `‖(γ(t) - s) / (L · (t - t₀)) - 1‖ ≤ ρ`.

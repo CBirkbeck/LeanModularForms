@@ -46,18 +46,6 @@ open scoped Interval
 
 namespace SegmentFTC
 
-/-- FTC on two consecutive segments telescopes: if the integral over `[a,b]` is
-`log(f b) - log(f a)` and the integral over `[b,c]` is `log(f c) - log(f b)`,
-then the integral over `[a,c]` is `log(f c) - log(f a)`. -/
-theorem ftc_telescope_two {f : ℝ → ℂ} {a b c : ℝ}
-    (hint_ab : IntervalIntegrable (fun t => deriv f t / f t) volume a b)
-    (hint_bc : IntervalIntegrable (fun t => deriv f t / f t) volume b c)
-    (h_ab : ∫ t in a..b, deriv f t / f t = Complex.log (f b) - Complex.log (f a))
-    (h_bc : ∫ t in b..c, deriv f t / f t = Complex.log (f c) - Complex.log (f b)) :
-    ∫ t in a..c, deriv f t / f t = Complex.log (f c) - Complex.log (f a) := by
-  rw [← intervalIntegral.integral_add_adjacent_intervals hint_ab hint_bc, h_ab, h_bc]
-  ring
-
 /-- Transfer integrability from a local function `h` to `g` given that their
 log-derivatives agree almost everywhere on the interval. -/
 theorem ftc_telescope_integrability {g h : ℝ → ℂ} {a b : ℝ}

@@ -66,10 +66,6 @@ def extendedPath (γ : PiecewiseC1Path x y) : ℝ → E := γ.toPath.extend
 instance : CoeFun (PiecewiseC1Path x y) fun _ => ℝ → E where
   coe := extendedPath
 
-@[simp]
-theorem extendedPath_eq (γ : PiecewiseC1Path x y) :
-    γ.extendedPath = γ.toPath.extend := rfl
-
 /-- The extended path is differentiable at every point of `(0, 1)` outside the partition.
 Same statement as the inherited `differentiable_off` but phrased in terms of `toPath.extend`
 instead of `toFun`. The two forms agree on `Icc 0 1` via `toPath_extend_eq_toFun`. -/
