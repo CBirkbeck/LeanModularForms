@@ -5,7 +5,6 @@ Authors:
 -/
 import LeanModularForms.ForMathlib.FDBoundaryH
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.ArcCalculus
-import LeanModularForms.ForMathlib.GeneralizedResidueTheory.CurveAvoidance
 
 /-!
 # Fundamental Domain Boundary – Bounds

@@ -7,7 +7,6 @@ import LeanModularForms.ForMathlib.FDBoundaryH
 import LeanModularForms.ForMathlib.Instances
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.ArcCalculus
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.CauchyPrimitive
-import LeanModularForms.ForMathlib.GeneralizedResidueTheory.CurveAvoidance
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.Homotopy.Integrality
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.Homotopy.Invariance
 import LeanModularForms.ForMathlib.SegmentFTC
