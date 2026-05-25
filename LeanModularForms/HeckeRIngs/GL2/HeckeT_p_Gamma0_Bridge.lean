@@ -169,11 +169,140 @@ private lemma slash_eq_tRep_gen_of_adj_mem_Gamma0_bridge (k : ℤ) (f : ℍ → 
   rw [hg]
   exact slash_tRep_gen_of_mem k D h₁ h₂ hh₁ hh₂ f hf
 
+/-- If `g₁, g₂` both admit adjugate factorisations `adj(gᵢ) = hᵢ * rep(D) * h'ᵢ`
+through `D` whose left factors are equal in the decomposition quotient
+`decompQuot (Gamma0_pair N) (rep D)`, then `(adj g₁)⁻¹ * adj g₂ ∈ (Gamma0_pair N).H`.
+This is the algebraic core of the injectivity of the rep-matching map. -/
+private lemma adj_inv_mul_mem_H_of_factorisations_Gamma0_bridge
+    (D : HeckeCoset (Gamma0_pair N)) (g₁ g₂ : GL (Fin 2) ℚ)
+    (e₁ : ∃ (h₁ : GL _ ℚ) (_ : h₁ ∈ (Gamma0_pair N).H) (h₂ : GL _ ℚ)
+      (_ : h₂ ∈ (Gamma0_pair N).H),
+      GL_adjugate g₁ = h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂)
+    (e₂ : ∃ (h₁ : GL _ ℚ) (_ : h₁ ∈ (Gamma0_pair N).H) (h₂ : GL _ ℚ)
+      (_ : h₂ ∈ (Gamma0_pair N).H),
+      GL_adjugate g₂ = h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂)
+    (hquot : (⟦⟨e₁.choose, e₁.choose_spec.choose⟩⟧ :
+        decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) =
+      ⟦⟨e₂.choose, e₂.choose_spec.choose⟩⟧) :
+    (GL_adjugate g₁)⁻¹ * GL_adjugate g₂ ∈ (Gamma0_pair N).H := by
+  rw [e₁.choose_spec.choose_spec.choose_spec.choose_spec,
+    e₂.choose_spec.choose_spec.choose_spec.choose_spec]
+  have hrel := QuotientGroup.leftRel_apply.mp (Quotient.exact hquot)
+  rw [Subgroup.mem_subgroupOf] at hrel
+  rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem] at hrel
+  simp only [ConjAct.smul_def, ConjAct.ofConjAct_toConjAct, map_inv, inv_inv] at hrel
+  simp only [Subgroup.coe_mul, Subgroup.coe_inv] at hrel
+  set a₁ := e₁.choose
+  set c₁ := e₁.choose_spec.choose_spec.choose
+  set a₂ := e₂.choose
+  set c₂ := e₂.choose_spec.choose_spec.choose
+  have h_prod : (a₁ * ↑(HeckeCoset.rep D) * c₁)⁻¹ *
+      (a₂ * ↑(HeckeCoset.rep D) * c₂) =
+      c₁⁻¹ * ((↑(HeckeCoset.rep D))⁻¹ * (a₁⁻¹ * a₂) *
+        ↑(HeckeCoset.rep D)) * c₂ := by group
+  rw [h_prod]
+  exact (Gamma0_pair N).H.mul_mem
+    ((Gamma0_pair N).H.mul_mem
+      ((Gamma0_pair N).H.inv_mem e₁.choose_spec.choose_spec.choose_spec.choose) hrel)
+    e₂.choose_spec.choose_spec.choose_spec.choose
+
 /-! ### The matching theorem at `Γ₀(N)` — inline construction of the bijection
 
 This mirrors the level-1 `tRep_gen_D_p_matches_T_p_reps` but works at level Γ₀(N),
 using the Γ₀(N) distinctness lemmas. We rebuild the bijection inline (rather than
 calling `T_p_coset_reps_Gamma0_equiv`) so that definitional equalities go through. -/
+
+/-- The map `Fin (p+1) → decompQuot` built from adjugate factorisations of the
+classical `T_p` representatives: `b < p` maps to the upper coset of `T_p_upper b`,
+and the top index maps to the lower coset of `T_p_lower`. -/
+private noncomputable def phiOfFactorisations_Gamma0_bridge (p : ℕ)
+    (hp : Nat.Prime p) (D : HeckeCoset (Gamma0_pair N))
+    (h_upper_dc : ∀ b : Fin p,
+      ∃ (h₁ : GL _ ℚ) (_ : h₁ ∈ (Gamma0_pair N).H) (h₂ : GL _ ℚ)
+        (_ : h₂ ∈ (Gamma0_pair N).H),
+        GL_adjugate (T_p_upper p hp.pos b.val : GL _ ℚ) =
+          h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂)
+    (h_lower_dc : ∃ (h₁ : GL _ ℚ) (_ : h₁ ∈ (Gamma0_pair N).H) (h₂ : GL _ ℚ)
+      (_ : h₂ ∈ (Gamma0_pair N).H),
+      GL_adjugate (T_p_lower p hp.pos : GL _ ℚ) =
+        h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂) :
+    Fin (p + 1) → decompQuot (Gamma0_pair N) (HeckeCoset.rep D) := fun j =>
+  if h : j.val < p then
+    ⟦⟨(h_upper_dc ⟨j.val, h⟩).choose, (h_upper_dc ⟨j.val, h⟩).choose_spec.choose⟩⟧
+  else
+    ⟦⟨h_lower_dc.choose, h_lower_dc.choose_spec.choose⟩⟧
+
+/-- The map `phiOfFactorisations_Gamma0_bridge` matches the classical `T_p`
+representatives under slashing: the explicit `T_p_upper`/`T_p_lower` slash equals
+the abstract `tRep_gen` slash at `φ j`, for any `(Gamma0_pair N).H`-invariant `f`. -/
+private lemma phiOfFactorisations_slash_eq_tRep_gen_Gamma0_bridge (k : ℤ) (p : ℕ)
+    (hp : Nat.Prime p) (D : HeckeCoset (Gamma0_pair N)) (f : ℍ → ℂ)
+    (hf : ∀ h, h ∈ (Gamma0_pair N).H → f ∣[k] glMap h = f)
+    (h_upper_dc : ∀ b : Fin p,
+      ∃ (h₁ : GL _ ℚ) (_ : h₁ ∈ (Gamma0_pair N).H) (h₂ : GL _ ℚ)
+        (_ : h₂ ∈ (Gamma0_pair N).H),
+        GL_adjugate (T_p_upper p hp.pos b.val : GL _ ℚ) =
+          h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂)
+    (h_lower_dc : ∃ (h₁ : GL _ ℚ) (_ : h₁ ∈ (Gamma0_pair N).H) (h₂ : GL _ ℚ)
+      (_ : h₂ ∈ (Gamma0_pair N).H),
+      GL_adjugate (T_p_lower p hp.pos : GL _ ℚ) =
+        h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂) (j : Fin (p + 1)) :
+    (if _h : j.val < p then f ∣[k] (T_p_upper p hp.pos j.val : GL _ ℚ)
+      else f ∣[k] (T_p_lower p hp.pos : GL _ ℚ)) =
+    f ∣[k] tRep_gen (Gamma0_pair N) D
+      (phiOfFactorisations_Gamma0_bridge p hp D h_upper_dc h_lower_dc j) := by
+  simp only [phiOfFactorisations_Gamma0_bridge]
+  split_ifs with h
+  · exact slash_eq_tRep_gen_of_adj_mem_Gamma0_bridge k f hf D _ _ _
+      (h_upper_dc ⟨j.val, h⟩).choose_spec.choose
+      (h_upper_dc ⟨j.val, h⟩).choose_spec.choose_spec.choose_spec.choose
+      (h_upper_dc ⟨j.val, h⟩).choose_spec.choose_spec.choose_spec.choose_spec
+  · exact slash_eq_tRep_gen_of_adj_mem_Gamma0_bridge k f hf D _ _ _
+      h_lower_dc.choose_spec.choose
+      h_lower_dc.choose_spec.choose_spec.choose_spec.choose
+      h_lower_dc.choose_spec.choose_spec.choose_spec.choose_spec
+
+/-- `phiOfFactorisations_Gamma0_bridge` is injective: distinct indices give distinct
+cosets, using the Γ₀(N) distinctness lemmas (`adj_upper_inv_mul_not_mem_H` etc.)
+combined with `Gamma0_pair_H_le_GL_pair_H`. -/
+private lemma phiOfFactorisations_injective_Gamma0_bridge (p : ℕ) (hp : Nat.Prime p)
+    (D : HeckeCoset (Gamma0_pair N))
+    (h_upper_dc : ∀ b : Fin p,
+      ∃ (h₁ : GL _ ℚ) (_ : h₁ ∈ (Gamma0_pair N).H) (h₂ : GL _ ℚ)
+        (_ : h₂ ∈ (Gamma0_pair N).H),
+        GL_adjugate (T_p_upper p hp.pos b.val : GL _ ℚ) =
+          h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂)
+    (h_lower_dc : ∃ (h₁ : GL _ ℚ) (_ : h₁ ∈ (Gamma0_pair N).H) (h₂ : GL _ ℚ)
+      (_ : h₂ ∈ (Gamma0_pair N).H),
+      GL_adjugate (T_p_lower p hp.pos : GL _ ℚ) =
+        h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂) :
+    Function.Injective
+      (phiOfFactorisations_Gamma0_bridge p hp D h_upper_dc h_lower_dc) := by
+  intro j₁ j₂ heq
+  by_contra hne
+  simp only [phiOfFactorisations_Gamma0_bridge] at heq
+  by_cases h₁ : j₁.val < p <;> by_cases h₂ : j₂.val < p
+  · -- Both upper.
+    simp only [h₁, h₂, dite_true] at heq
+    have hne_val : j₁.val ≠ j₂.val := fun h => hne (Fin.ext h)
+    have hmem := adj_inv_mul_mem_H_of_factorisations_Gamma0_bridge D _ _
+      (h_upper_dc ⟨j₁.val, h₁⟩) (h_upper_dc ⟨j₂.val, h₂⟩) heq
+    exact HeckeRing.GL2.adj_upper_inv_mul_not_mem_H p hp j₁.val j₂.val h₁ h₂ hne_val
+      (Gamma0_pair_H_le_GL_pair_H N hmem)
+  · -- j₁ upper, j₂ lower.
+    simp only [h₁, dite_true, h₂, dite_false] at heq
+    have hmem := adj_inv_mul_mem_H_of_factorisations_Gamma0_bridge D _ _
+      (h_upper_dc ⟨j₁.val, h₁⟩) h_lower_dc heq
+    exact HeckeRing.GL2.adj_upper_inv_mul_lower_not_mem_H p hp j₁.val
+      (Gamma0_pair_H_le_GL_pair_H N hmem)
+  · -- j₁ lower, j₂ upper.
+    simp only [h₁, dite_false, h₂, dite_true] at heq
+    have hmem := adj_inv_mul_mem_H_of_factorisations_Gamma0_bridge D _ _
+      h_lower_dc (h_upper_dc ⟨j₂.val, h₂⟩) heq
+    exact HeckeRing.GL2.adj_lower_inv_mul_upper_not_mem_H p hp j₂.val
+      (Gamma0_pair_H_le_GL_pair_H N hmem)
+  · -- Both ≥ p, but Fin (p+1) forces equality.
+    have := j₁.isLt; have := j₂.isLt; omega
 
 set_option maxHeartbeats 6400000 in
 /-- Γ₀(N)-level analogue of `tRep_gen_D_p_matches_T_p_reps`: for a `Γ₀(N)`-invariant
@@ -202,125 +331,18 @@ theorem tRep_gen_D_p_Gamma0_matches_T_p_reps (k : ℤ) (p : ℕ) (hp : Nat.Prime
           h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂ :=
     adj_mem_dc_factorisation_Gamma0_bridge p hp hpN _
       (T_p_lower_mem_D_p_Gamma0 N p hp hpN)
-  -- Define φ : Fin(p+1) → decompQuot using h₁ from adj factorisations.
-  let φ : Fin (p + 1) → decompQuot (Gamma0_pair N) (HeckeCoset.rep D) := fun j =>
-    if h : j.val < p then
-      ⟦⟨(h_upper_dc ⟨j.val, h⟩).choose,
-        (h_upper_dc ⟨j.val, h⟩).choose_spec.choose⟩⟧
-    else
-      ⟦⟨h_lower_dc.choose, h_lower_dc.choose_spec.choose⟩⟧
-  -- Value equality: `f ∣[k] g_j = f ∣[k] tRep_gen D (φ j)`.
-  have h_val : ∀ j : Fin (p + 1),
-      (if h : j.val < p then
-        f ∣[k] (T_p_upper p hp.pos j.val : GL _ ℚ)
-      else
-        f ∣[k] (T_p_lower p hp.pos : GL _ ℚ)) =
-      f ∣[k] tRep_gen (Gamma0_pair N) D (φ j) := by
-    intro j
-    simp only [φ]
-    split_ifs with h
-    · exact slash_eq_tRep_gen_of_adj_mem_Gamma0_bridge k f hf D _ _ _
-        (h_upper_dc ⟨j.val, h⟩).choose_spec.choose
-        (h_upper_dc ⟨j.val, h⟩).choose_spec.choose_spec.choose_spec.choose
-        (h_upper_dc ⟨j.val, h⟩).choose_spec.choose_spec.choose_spec.choose_spec
-    · exact slash_eq_tRep_gen_of_adj_mem_Gamma0_bridge k f hf D _ _ _
-        h_lower_dc.choose_spec.choose
-        h_lower_dc.choose_spec.choose_spec.choose_spec.choose
-        h_lower_dc.choose_spec.choose_spec.choose_spec.choose_spec
-  -- Injectivity of φ. Replicates the level-1 argument using Γ₀(N) distinctness lemmas.
-  -- Helper for quotient equality → adj factorisation.
-  have h_quot_imp_adj_mem :
-      ∀ (a₁ : GL _ ℚ) (ha₁ : a₁ ∈ (Gamma0_pair N).H)
-        (c₁ : GL _ ℚ) (hc₁ : c₁ ∈ (Gamma0_pair N).H)
-        (a₂ : GL _ ℚ) (ha₂ : a₂ ∈ (Gamma0_pair N).H)
-        (c₂ : GL _ ℚ) (_hc₂ : c₂ ∈ (Gamma0_pair N).H)
-        (g₁ g₂ : GL _ ℚ)
-        (heq₁ : GL_adjugate g₁ = a₁ * (HeckeCoset.rep D : GL _ ℚ) * c₁)
-        (heq₂ : GL_adjugate g₂ = a₂ * (HeckeCoset.rep D : GL _ ℚ) * c₂),
-        (⟦(⟨a₁, ha₁⟩ : (Gamma0_pair N).H)⟧ :
-            decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) = ⟦⟨a₂, ha₂⟩⟧ →
-        (GL_adjugate g₁)⁻¹ * GL_adjugate g₂ ∈ (Gamma0_pair N).H := by
-    intro a₁ ha₁ c₁ hc₁ a₂ ha₂ c₂ hc₂ g₁ g₂ heq₁ heq₂ hquot
-    rw [heq₁, heq₂]
-    have hrel := QuotientGroup.leftRel_apply.mp (Quotient.exact hquot)
-    rw [Subgroup.mem_subgroupOf] at hrel
-    rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem] at hrel
-    simp only [ConjAct.smul_def, ConjAct.ofConjAct_toConjAct, map_inv, inv_inv] at hrel
-    simp only [Subgroup.coe_mul, Subgroup.coe_inv] at hrel
-    have h_prod : (a₁ * ↑(HeckeCoset.rep D) * c₁)⁻¹ *
-        (a₂ * ↑(HeckeCoset.rep D) * c₂) =
-        c₁⁻¹ * ((↑(HeckeCoset.rep D))⁻¹ * (a₁⁻¹ * a₂) *
-          ↑(HeckeCoset.rep D)) * c₂ := by group
-    rw [h_prod]
-    exact (Gamma0_pair N).H.mul_mem
-      ((Gamma0_pair N).H.mul_mem ((Gamma0_pair N).H.inv_mem hc₁) hrel) hc₂
-  have h_inj : Function.Injective φ := by
-    intro j₁ j₂ heq
-    by_contra hne
-    simp only [φ] at heq
-    by_cases h₁ : j₁.val < p <;> by_cases h₂ : j₂.val < p
-    · -- Both upper.
-      simp only [h₁, h₂, dite_true] at heq
-      have hne_val : j₁.val ≠ j₂.val := fun h => hne (Fin.ext h)
-      set e₁ := h_upper_dc ⟨j₁.val, h₁⟩
-      set e₂ := h_upper_dc ⟨j₂.val, h₂⟩
-      have hmem := h_quot_imp_adj_mem
-        e₁.choose e₁.choose_spec.choose
-        e₁.choose_spec.choose_spec.choose
-          e₁.choose_spec.choose_spec.choose_spec.choose
-        e₂.choose e₂.choose_spec.choose
-        e₂.choose_spec.choose_spec.choose
-          e₂.choose_spec.choose_spec.choose_spec.choose
-        (T_p_upper p hp.pos j₁.val) (T_p_upper p hp.pos j₂.val)
-        e₁.choose_spec.choose_spec.choose_spec.choose_spec
-        e₂.choose_spec.choose_spec.choose_spec.choose_spec
-        heq
-      -- Use the public lemma from HeckeT_p_Gamma1.lean combined with
-      -- Gamma0_pair_H_le_GL_pair_H to get a contradiction.
-      exact HeckeRing.GL2.adj_upper_inv_mul_not_mem_H p hp j₁.val j₂.val h₁ h₂ hne_val
-        (Gamma0_pair_H_le_GL_pair_H N hmem)
-    · -- j₁ upper, j₂ lower.
-      simp only [h₁, dite_true, h₂, dite_false] at heq
-      set e₁ := h_upper_dc ⟨j₁.val, h₁⟩
-      have hmem := h_quot_imp_adj_mem
-        e₁.choose e₁.choose_spec.choose
-        e₁.choose_spec.choose_spec.choose
-          e₁.choose_spec.choose_spec.choose_spec.choose
-        h_lower_dc.choose h_lower_dc.choose_spec.choose
-        h_lower_dc.choose_spec.choose_spec.choose
-          h_lower_dc.choose_spec.choose_spec.choose_spec.choose
-        (T_p_upper p hp.pos j₁.val) (T_p_lower p hp.pos)
-        e₁.choose_spec.choose_spec.choose_spec.choose_spec
-        h_lower_dc.choose_spec.choose_spec.choose_spec.choose_spec
-        heq
-      exact HeckeRing.GL2.adj_upper_inv_mul_lower_not_mem_H p hp j₁.val
-        (Gamma0_pair_H_le_GL_pair_H N hmem)
-    · -- j₁ lower, j₂ upper.
-      simp only [h₁, dite_false, h₂, dite_true] at heq
-      set e₂ := h_upper_dc ⟨j₂.val, h₂⟩
-      have hmem := h_quot_imp_adj_mem
-        h_lower_dc.choose h_lower_dc.choose_spec.choose
-        h_lower_dc.choose_spec.choose_spec.choose
-          h_lower_dc.choose_spec.choose_spec.choose_spec.choose
-        e₂.choose e₂.choose_spec.choose
-        e₂.choose_spec.choose_spec.choose
-          e₂.choose_spec.choose_spec.choose_spec.choose
-        (T_p_lower p hp.pos) (T_p_upper p hp.pos j₂.val)
-        h_lower_dc.choose_spec.choose_spec.choose_spec.choose_spec
-        e₂.choose_spec.choose_spec.choose_spec.choose_spec
-        heq
-      exact HeckeRing.GL2.adj_lower_inv_mul_upper_not_mem_H p hp j₂.val
-        (Gamma0_pair_H_le_GL_pair_H N hmem)
-    · -- Both ≥ p, but Fin (p+1) forces equality.
-      have := j₁.isLt; have := j₂.isLt; omega
-  -- Bijectivity via cardinality.
+  -- The matching bijection `φ` and its value/injectivity properties (see helpers).
+  set φ := phiOfFactorisations_Gamma0_bridge p hp D h_upper_dc h_lower_dc
+  have h_val := phiOfFactorisations_slash_eq_tRep_gen_Gamma0_bridge k p hp D f hf
+    h_upper_dc h_lower_dc
   have h_card :
       Fintype.card (decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) = p + 1 := by
     have h := HeckeCoset_deg_D_p_Gamma0 N p hp hpN
     rw [Nat.card_eq_fintype_card] at h; exact h
   have h_bij : Function.Bijective φ := by
     rw [Fintype.bijective_iff_injective_and_card]
-    exact ⟨h_inj, by rw [Fintype.card_fin, h_card]⟩
+    exact ⟨phiOfFactorisations_injective_Gamma0_bridge p hp D h_upper_dc h_lower_dc,
+      by rw [Fintype.card_fin, h_card]⟩
   -- Rewrite the explicit T_p sum as a sum over Fin(p+1) via `dite`.
   symm
   rw [← Fin.sum_univ_eq_sum_range]

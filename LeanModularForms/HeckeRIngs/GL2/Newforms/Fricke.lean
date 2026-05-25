@@ -2010,6 +2010,39 @@ lemma Newform.frickeMatrix_PSL_R_mul_SL2Z_to_PSL2R_eq
       (QuotientGroup.mk_mul _ _ _).symm,
     Newform.frickeMatrix_SL_R_mul_SLmap_eq γ hγ]
 
+/-- The `SL(2, ℝ)` Fricke matrix squares to `-1` at the matrix level:
+`((√N)⁻¹ • W_N)² = N⁻¹ • (W_N · W_N) = N⁻¹ • (-N • 1) = scalar (-1)`. Combines
+`GLPos_to_SLR_frickeMatrix_GLPos_toGL_matrix` with `frickeMatrix_mul_self_val`;
+feeds the `mem_center` reduction in `Newform.frickeMatrix_PSL_R_mul_self`. -/
+private lemma GLPos_to_SLR_frickeMatrix_GLPos_sq_eq_neg_scalar (N : ℕ) [NeZero N] :
+    ((GLPos_to_SLR (Newform.frickeMatrix_GLPos N) : SL(2, ℝ)) :
+        Matrix (Fin 2) (Fin 2) ℝ) *
+      ((GLPos_to_SLR (Newform.frickeMatrix_GLPos N) : SL(2, ℝ)) :
+        Matrix (Fin 2) (Fin 2) ℝ) =
+      Matrix.scalar (Fin 2) (-1) := by
+  rw [show ((GLPos_to_SLR (Newform.frickeMatrix_GLPos N) : SL(2, ℝ)) :
+        Matrix (Fin 2) (Fin 2) ℝ) =
+      (((GLPos_to_SLR (Newform.frickeMatrix_GLPos N) : SL(2, ℝ)) :
+          GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) from
+      (Matrix.SpecialLinearGroup.coe_GL_coe_matrix _).symm]
+  rw [Newform.GLPos_to_SLR_frickeMatrix_GLPos_toGL_matrix]
+  rw [Matrix.smul_mul, Matrix.mul_smul, smul_smul]
+  -- `(√N)⁻¹ * (√N)⁻¹ = N⁻¹` via `√N · √N = N`.
+  have hN_pos : (0 : ℝ) < N := Nat.cast_pos.mpr (Nat.pos_of_ne_zero (NeZero.ne N))
+  have h_sqrt_sq : Real.sqrt (N : ℝ) * Real.sqrt (N : ℝ) = (N : ℝ) :=
+    Real.mul_self_sqrt (le_of_lt hN_pos)
+  rw [show ((Real.sqrt ((N : ℝ)))⁻¹ * (Real.sqrt (N : ℝ))⁻¹ : ℝ) = ((N : ℝ))⁻¹ by
+    rw [← mul_inv, h_sqrt_sq]]
+  rw [show ((Newform.frickeMatrix N : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) *
+        ((Newform.frickeMatrix N : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
+        ((Newform.frickeMatrix N * Newform.frickeMatrix N : GL (Fin 2) ℝ) :
+          Matrix (Fin 2) (Fin 2) ℝ) from (Matrix.GeneralLinearGroup.coe_mul _ _).symm]
+  rw [Newform.frickeMatrix_mul_self_val, smul_smul]
+  rw [show ((N : ℝ))⁻¹ * (-(N : ℝ)) = -1 by field_simp]
+  ext i j
+  fin_cases i <;> fin_cases j <;>
+    simp [Matrix.smul_apply, Matrix.scalar]
+
 /-- **Self-inverseness of `frickeMatrix_PSL_R N` in `PSL(2, ℝ)` (T147 helper).**
 
 `W_N² = -N • 1` at the matrix level (T141 + frickeMatrix_mul_self_val) means
@@ -2046,45 +2079,13 @@ lemma Newform.frickeMatrix_PSL_R_mul_self (N : ℕ) [NeZero N] :
         GLPos_to_SLR (Newform.frickeMatrix_GLPos N) : SL(2, ℝ)) :
         Matrix (Fin 2) (Fin 2) ℝ)
     symm
-    -- (a * b).val = a.val * b.val for SL.
+    -- (a * b).val = a.val * b.val for SL; then the matrix square is `scalar (-1)`.
     show (GLPos_to_SLR (Newform.frickeMatrix_GLPos N) :
           Matrix (Fin 2) (Fin 2) ℝ) *
         (GLPos_to_SLR (Newform.frickeMatrix_GLPos N) :
           Matrix (Fin 2) (Fin 2) ℝ) =
       Matrix.scalar (Fin 2) (-1)
-    -- Use Newform.GLPos_to_SLR_frickeMatrix_GLPos_toGL_matrix via toGL coercion bridge.
-    rw [show ((GLPos_to_SLR (Newform.frickeMatrix_GLPos N) : SL(2, ℝ)) :
-          Matrix (Fin 2) (Fin 2) ℝ) =
-        (((GLPos_to_SLR (Newform.frickeMatrix_GLPos N) : SL(2, ℝ)) :
-            GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) from
-        (Matrix.SpecialLinearGroup.coe_GL_coe_matrix _).symm]
-    rw [Newform.GLPos_to_SLR_frickeMatrix_GLPos_toGL_matrix]
-    rw [Matrix.smul_mul, Matrix.mul_smul, smul_smul]
-    -- (sqrt N)⁻¹ * (sqrt N)⁻¹ = 1/N (using sqrt N > 0).
-    have hN_pos : (0 : ℝ) < N := Nat.cast_pos.mpr (Nat.pos_of_ne_zero (NeZero.ne N))
-    have h_sqrt_pos : 0 < Real.sqrt (N : ℝ) := Real.sqrt_pos.mpr hN_pos
-    have h_sqrt_ne : Real.sqrt (N : ℝ) ≠ 0 := h_sqrt_pos.ne'
-    have h_sqrt_sq : Real.sqrt (N : ℝ) * Real.sqrt (N : ℝ) = (N : ℝ) :=
-      Real.mul_self_sqrt (le_of_lt hN_pos)
-    rw [show ((Real.sqrt ((N : ℝ)))⁻¹ * (Real.sqrt (N : ℝ))⁻¹ : ℝ) =
-        ((N : ℝ))⁻¹ by
-      rw [← mul_inv, h_sqrt_sq]]
-    -- Goal: (1/N) • (W_N · W_N).val = scalar -1
-    rw [show ((Newform.frickeMatrix N : GL (Fin 2) ℝ) :
-          Matrix (Fin 2) (Fin 2) ℝ) *
-        ((Newform.frickeMatrix N : GL (Fin 2) ℝ) :
-          Matrix (Fin 2) (Fin 2) ℝ) =
-        ((Newform.frickeMatrix N * Newform.frickeMatrix N : GL (Fin 2) ℝ) :
-          Matrix (Fin 2) (Fin 2) ℝ) from (Matrix.GeneralLinearGroup.coe_mul _ _).symm]
-    rw [Newform.frickeMatrix_mul_self_val]
-    -- Goal: (1/N) • ((-N) • 1) = scalar (-1).
-    rw [smul_smul]
-    have hN_ne : (N : ℝ) ≠ 0 := hN_pos.ne'
-    rw [show ((N : ℝ))⁻¹ * (-(N : ℝ)) = -1 by field_simp]
-    -- Goal: (-1) • (1 : Matrix _) = scalar (-1)
-    ext i j
-    fin_cases i <;> fin_cases j <;>
-      simp [Matrix.smul_apply, Matrix.scalar]
+    exact GLPos_to_SLR_frickeMatrix_GLPos_sq_eq_neg_scalar N
 
 /-- **Inverse of `frickeMatrix_PSL_R N` is itself (T147 corollary).** -/
 lemma Newform.frickeMatrix_PSL_R_inv (N : ℕ) [NeZero N] :
@@ -2251,6 +2252,38 @@ theorem Newform.sum_peterssonInner_frickeMatrix_smul_q_out_inv_fd_eq_petN
 
 end FrickeAdjoint
 
+/-- The Fricke root-number scalar collapses to `1`: the three `zpow` pairs
+`n^{1-k}·n^{k-1}`, `I^k·I^{-k}`, `x^k·x^{-k}` each cancel, so the bracketed
+product reduces to `fv`. Pure complex `zpow` arithmetic with all bases nonzero;
+used to close `Newform.imAxis_eq_frickeSlash`. -/
+private lemma frickeRootNumber_scalar_collapse {k : ℤ} {n x I fv : ℂ}
+    (hn : n ≠ 0) (hx : x ≠ 0) (hI : I ≠ 0) :
+    n ^ (1 - k) * I ^ k * x ^ k *
+      (fv * n ^ (k - 1) * (x ^ (-k) * I ^ (-k))) = fv := by
+  simp only [zpow_sub₀ hn, zpow_neg]
+  field_simp
+
+/-- Imaginary-axis points lie in the upper half plane: `I · r` has positive
+imaginary part for `0 < r`. Discharges the membership witnesses for the
+`τ_inner`/`τ_outer` points in `Newform.imAxis_eq_frickeSlash`. -/
+private lemma im_I_mul_ofReal_pos {r : ℝ} (hr : 0 < r) :
+    0 < (Complex.I * ((r : ℝ) : ℂ)).im := by
+  rw [Complex.mul_im, Complex.I_im, Complex.I_re, Complex.ofReal_re,
+    Complex.ofReal_im]
+  simpa using hr
+
+/-- The Fricke involution `W_N • z = -1/(N z)` sends the imaginary-axis point
+`I · (x/N)` to `I · (1/x)` (coordinate form). The `Complex.I_sq` reduction of
+`-1 = I²` is the algebraic heart of the involution at imaginary arguments. -/
+private lemma frickeMatrix_smul_imAxis_coe {N : ℕ} [NeZero N] {x : ℝ}
+    (hx : 0 < x) :
+    (-1 : ℂ) / ((N : ℂ) * (Complex.I * ((x / (N : ℝ) : ℝ) : ℂ))) =
+      Complex.I * ((1 / x : ℝ) : ℂ) := by
+  have hN_ne : (N : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (NeZero.ne N)
+  have hx_ne : (x : ℂ) ≠ 0 := by exact_mod_cast hx.ne'
+  push_cast
+  field_simp
+  rw [Complex.I_sq]
 
 /-- **Im-axis FE derived from the Fricke slash formula (T132 H1
 substantive theorem).**
@@ -2281,50 +2314,31 @@ theorem Newform.imAxis_eq_frickeSlash
             Complex.ofReal_re, Complex.ofReal_im]
           have h_div_pos : 0 < x / (N : ℝ) := div_pos hx hN_pos
           simpa using h_div_pos⟩ := by
-  have hN_pos : (0 : ℝ) < (N : ℝ) :=
-    Nat.cast_pos.mpr (Nat.pos_of_ne_zero (NeZero.ne N))
-  have hN_ne : (N : ℂ) ≠ 0 := by
-    have : (N : ℝ) ≠ 0 := hN_pos.ne'
-    exact_mod_cast this
-  have hx_ne : (x : ℂ) ≠ 0 := by
-    have : (x : ℝ) ≠ 0 := hx.ne'
-    exact_mod_cast this
+  have hN_ne : (N : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (NeZero.ne N)
+  have hx_ne : (x : ℂ) ≠ 0 := by exact_mod_cast hx.ne'
   have hI_ne : (Complex.I : ℂ) ≠ 0 := Complex.I_ne_zero
-  -- Setup the inner upper-half-plane element τ_inner = ⟨I · x/N, _⟩.
+  -- Setup the inner/outer imaginary-axis points and apply the slash formula.
   set τ_inner : UpperHalfPlane :=
-    ⟨Complex.I * ((x / (N : ℝ) : ℝ) : ℂ), by
-      show 0 < (Complex.I * ((x / (N : ℝ) : ℝ) : ℂ)).im
-      rw [Complex.mul_im, Complex.I_im, Complex.I_re,
-        Complex.ofReal_re, Complex.ofReal_im]
-      have : 0 < x / (N : ℝ) := div_pos hx hN_pos
-      simpa using this⟩ with hτ_inner
-  -- Apply the slash formula at τ_inner.
+    ⟨Complex.I * ((x / (N : ℝ) : ℝ) : ℂ), im_I_mul_ofReal_pos (div_pos hx
+      (Nat.cast_pos.mpr (Nat.pos_of_ne_zero (NeZero.ne N))))⟩ with hτ_inner
   have h_slash := Newform.frickeMatrix_slash_apply (N := N) (k := k)
     (⇑f.toCuspForm.toModularForm' : UpperHalfPlane → ℂ) τ_inner
-  -- Identify W_N • τ_inner with ⟨I · (1/x), _⟩ via UpperHalfPlane.ext.
   set τ_outer : UpperHalfPlane :=
-    ⟨Complex.I * ((1 / x : ℝ) : ℂ), by
-      show 0 < (Complex.I * ((1 / x : ℝ) : ℂ)).im
-      rw [Complex.mul_im, Complex.I_im, Complex.I_re,
-        Complex.ofReal_re, Complex.ofReal_im]
-      have : 0 < 1 / x := one_div_pos.mpr hx
-      simpa using this⟩ with hτ_outer
+    ⟨Complex.I * ((1 / x : ℝ) : ℂ), im_I_mul_ofReal_pos (one_div_pos.mpr hx)⟩
+    with hτ_outer
+  -- W_N sends τ_inner to τ_outer (Fricke involution at imaginary arguments).
   have h_smul_eq : (Newform.frickeMatrix N • τ_inner : UpperHalfPlane) = τ_outer := by
     apply UpperHalfPlane.ext
-    show ((Newform.frickeMatrix N • τ_inner : UpperHalfPlane) : ℂ) = (τ_outer : ℂ)
-    rw [Newform.frickeMatrix_smul]
-    show (-1 : ℂ) / ((N : ℂ) * (Complex.I * ((x / (N : ℝ) : ℝ) : ℂ))) =
-      Complex.I * ((1 / x : ℝ) : ℂ)
-    push_cast
-    field_simp
-    rw [Complex.I_sq]
+    rw [show ((Newform.frickeMatrix N • τ_inner : UpperHalfPlane) : ℂ) =
+        (-1 : ℂ) / ((N : ℂ) * (Complex.I * ((x / (N : ℝ) : ℝ) : ℂ))) from
+        Newform.frickeMatrix_smul _ _]
+    exact frickeMatrix_smul_imAxis_coe hx
   -- Identify Newform.imAxis f (1/x) with f.toCuspForm.toModularForm' τ_outer.
   have h_imAxis_eq :
       Newform.imAxis f (1 / x) =
         (⇑f.toCuspForm.toModularForm' : UpperHalfPlane → ℂ) τ_outer := by
-    have h_pos : 0 < (1 / x : ℝ) := one_div_pos.mpr hx
     rw [show Newform.imAxis f = ModularForms.imAxis f.toCuspForm from rfl,
-      ModularForms.imAxis_apply_of_pos f.toCuspForm h_pos]
+      ModularForms.imAxis_apply_of_pos f.toCuspForm (one_div_pos.mpr hx)]
     rfl
   -- Now solve.
   rw [h_imAxis_eq, h_slash, h_smul_eq]
@@ -2342,35 +2356,9 @@ theorem Newform.imAxis_eq_frickeSlash
   -- Goal: fv = ((N : ℂ)^{1-k} · I^k · x^k) · (fv · (N : ℂ)^{k-1} · (I · x)^{-k})
   rw [show Complex.I * ((x : ℝ) : ℂ) = ((x : ℝ) : ℂ) * Complex.I by ring,
       mul_zpow]
-  -- Goal: fv = ((N : ℂ)^{1-k} · I^k · x^k) · (fv · (N : ℂ)^{k-1} · (((x : ℝ) : ℂ)^{-k} · I^{-k}))
-  -- Use cancellation:
-  --   N^{1-k} · N^{k-1} = 1, I^k · I^{-k} = 1, x^k · x^{-k} = 1.
-  have hN_cancel : (N : ℂ) ^ (1 - k) * (N : ℂ) ^ (k - 1) = 1 := by
-    rw [← zpow_add₀ hN_ne]
-    have : (1 - k : ℤ) + (k - 1) = 0 := by ring
-    rw [this]; simp
-  have hI_cancel : Complex.I ^ k * Complex.I ^ (-k) = 1 := by
-    rw [← zpow_add₀ hI_ne]; simp
-  have hx_cancel : ((x : ℝ) : ℂ) ^ k * ((x : ℝ) : ℂ) ^ (-k) = 1 := by
-    rw [show ((x : ℝ) : ℂ) = (x : ℂ) by rfl,
-      ← zpow_add₀ hx_ne]; simp
-  -- Group the scalar factors and cancel via the three multiplicative
-  -- identities `N^{1-k} · N^{k-1} = 1`, `I^k · I^{-k} = 1`, `x^k · x^{-k} = 1`.
-  have h_RHS_eq_fv :
-      (N : ℂ) ^ (1 - k) * Complex.I ^ k * ((x : ℝ) : ℂ) ^ k *
-        (fv * (N : ℂ) ^ (k - 1) *
-          (((x : ℝ) : ℂ) ^ (-k) * Complex.I ^ (-k))) = fv := by
-    rw [show
-      (N : ℂ) ^ (1 - k) * Complex.I ^ k * ((x : ℝ) : ℂ) ^ k *
-          (fv * (N : ℂ) ^ (k - 1) *
-            (((x : ℝ) : ℂ) ^ (-k) * Complex.I ^ (-k)))
-        = fv * ((N : ℂ) ^ (1 - k) * (N : ℂ) ^ (k - 1)) *
-            (Complex.I ^ k * Complex.I ^ (-k)) *
-            (((x : ℝ) : ℂ) ^ k * ((x : ℝ) : ℂ) ^ (-k))
-        from by ring]
-    rw [hN_cancel, hI_cancel, hx_cancel]
-    ring
-  exact h_RHS_eq_fv.symm
+  -- Goal: fv = ((N : ℂ)^{1-k} · I^k · x^k) · (fv · (N : ℂ)^{k-1} · (x^{-k} · I^{-k}))
+  -- The three `zpow` pairs cancel: `frickeRootNumber_scalar_collapse`.
+  exact (frickeRootNumber_scalar_collapse hN_ne hx_ne hI_ne).symm
 
 /-- **Im-axis FE from a CuspForm slash equality (T132 H1 compatibility
 layer).**
