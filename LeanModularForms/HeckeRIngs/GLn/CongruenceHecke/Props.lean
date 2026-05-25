@@ -23,23 +23,12 @@ open Matrix Subgroup.Commensurable Pointwise Matrix.SpecialLinearGroup
 open scoped Pointwise MatrixGroups
 
 namespace HeckeRing.GLn
-/-! ### Shimura Theorem 3.35: the surjection R(Γ, Δ) →+* R(Γ₀(N), Δ₀(N))
-
-The level-N Hecke algebra is a quotient of the level-1 algebra. The surjection maps:
-- `T(n) ↦ T'(n)` for all positive integers n
-- `T(p, p) ↦ T'(p, p)` for primes p not dividing N
-- `T(p, p) ↦ 0` for primes p dividing N
-
-Therefore, the level-N multiplication table is obtained from `T_sum_mul` by
-setting `T(p,p) = 0` for `p | N`. -/
 
 /-- The inclusion `Δ₀(N) ↪ Δ` as a submonoid inclusion. -/
 noncomputable def Delta0_inclusion (N : ℕ) [NeZero N] :
     (Gamma0_pair N).Δ → (GL_pair 2).Δ :=
   fun g ↦ ⟨g.1, Delta0_le_posDetInt N g.2⟩
 
-/-- If `Γ₀(N)`-double cosets of `a` and `b` agree, then so do `Γ`-double cosets.
-    This is because `Γ₀(N) ≤ Γ = SL₂(ℤ)`: enlarging the group can only merge cosets. -/
 private lemma doubleCoset_eq_of_Gamma0_eq (N : ℕ) [NeZero N]
     (a b : (Gamma0_pair N).Δ)
     (hab : dcRel (Gamma0_pair N) a b) :
@@ -57,8 +46,7 @@ private lemma doubleCoset_eq_of_Gamma0_eq (N : ℕ) [NeZero N]
   exact (DoubleCoset.doubleCoset_eq_of_mem hb_big).symm
 
 /-- The coset map `HeckeCoset (Gamma0_pair N) → HeckeCoset (GL_pair 2)`:
-    sends `Γ₀(N)αΓ₀(N)` to `ΓαΓ`. Well-defined because `Γ₀(N) ≤ Γ`,
-    so equal `Γ₀(N)`-double cosets map to equal `Γ`-double cosets. -/
+    sends `Γ₀(N)αΓ₀(N)` to `ΓαΓ`. -/
 noncomputable def cosetMap (N : ℕ) [NeZero N] :
     HeckeCoset (Gamma0_pair N) → HeckeCoset (GL_pair 2) :=
   Quotient.lift
@@ -68,20 +56,14 @@ noncomputable def cosetMap (N : ℕ) [NeZero N] :
       exact doubleCoset_eq_of_Gamma0_eq N a b hab)
 
 /-- **Shimura Proposition 3.30**: If `Γ' ⊂ Γ` and `Δ' ⊂ Δ`, the correspondence
-    `Γ'αΓ' ↦ ΓαΓ` defines an additive homomorphism `R(Γ', Δ') → R(Γ, Δ)`.
-
-    The map is defined as `Finsupp.mapDomain` along the coset map
-    `HeckeCoset (Gamma0_pair N) → HeckeCoset (GL_pair 2)` which sends
-    `⟦α⟧_{Γ₀(N)} ↦ ⟦α⟧_{Γ}`. Well-definedness follows from `Γ₀(N) ≤ Γ`:
-    equal `Γ₀(N)`-double cosets map to equal `Γ`-double cosets. -/
+    `Γ'αΓ' ↦ ΓαΓ` defines an additive homomorphism `R(Γ', Δ') → R(Γ, Δ)`. -/
 theorem shimura_prop_3_30 (N : ℕ) [NeZero N] :
     ∃ φ : HeckeRing.𝕋 (Gamma0_pair N) ℤ →+ HeckeRing.𝕋 (GL_pair 2) ℤ,
       True := by
   exact ⟨Finsupp.mapDomain.addMonoidHom (cosetMap N), trivial⟩
 
 /-- An element `g ∈ Δ₀(N)` has **coprime determinant** if `gcd(det(A), N) = 1`
-    where `A` is the integer matrix representing `g`. This condition is automatic
-    when `det(g)` is coprime to `N` and is required for Shimura 3.29(3). -/
+    where `A` is the integer matrix representing `g`. -/
 def CoprimeDet (N : ℕ) [NeZero N] (g : (Gamma0_pair N).Δ) : Prop :=
   ∀ A : Matrix (Fin 2) (Fin 2) ℤ,
     (↑(g : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ) =
@@ -89,19 +71,7 @@ def CoprimeDet (N : ℕ) [NeZero N] (g : (Gamma0_pair N).Δ) : Prop :=
     Int.gcd A.det N = 1
 
 /-- **Shimura Proposition 3.31 (Injectivity of `cosetMap`)**: The coset map
-    `Γ₀(N)αΓ₀(N) ↦ ΓαΓ` is injective on double cosets with coprime determinant.
-
-    If `α, β ∈ Δ₀(N)` both have `gcd(det, N) = 1` and `ΓαΓ = ΓβΓ`, then
-    `Γ₀(N)αΓ₀(N) = Γ₀(N)βΓ₀(N)`. The proof uses Shimura 3.29(3)
-    (`doubleCoset_eq_of_Gamma0_coprimeDet`): since `ΓαΓ ∩ Δ₀(N) = Γ₀(N)αΓ₀(N)`
-    and `ΓβΓ ∩ Δ₀(N) = Γ₀(N)βΓ₀(N)`, equal `Γ`-double cosets give equal
-    intersections with `Δ₀(N)`, hence equal `Γ₀(N)`-double cosets.
-
-    Note: injectivity does NOT hold without the coprime-det condition.
-    For `α ∈ Δ₀(N)` with `gcd(det(α), N) > 1`, the intersection
-    `ΓαΓ ∩ Δ₀(N)` can be strictly larger than `Γ₀(N)αΓ₀(N)`, so
-    distinct `Γ₀(N)`-double cosets within the same `Γ`-double coset
-    may exist. -/
+    `Γ₀(N)αΓ₀(N) ↦ ΓαΓ` is injective on double cosets with coprime determinant. -/
 theorem shimura_prop_3_31 (N : ℕ) [NeZero N]
     (a b : (Gamma0_pair N).Δ)
     (ha : CoprimeDet N a) (hb : CoprimeDet N b)
@@ -117,12 +87,10 @@ theorem shimura_prop_3_31 (N : ℕ) [NeZero N]
     (ha Aa hAa)
   have eq_b := doubleCoset_eq_of_Gamma0_coprimeDet N b.1 b.2 Ab hAb hAbN hAbco
     (hb Ab hAb)
-  -- Convert h to use SLnZ_subgroup 2 and ↑a (definitionally equal but syntactically needed)
   have h' : DoubleCoset.doubleCoset (↑a : GL (Fin 2) ℚ) (SLnZ_subgroup 2)
       (SLnZ_subgroup 2) =
     DoubleCoset.doubleCoset (↑b : GL (Fin 2) ℚ) (SLnZ_subgroup 2)
       (SLnZ_subgroup 2) := h
-  -- Chain: Γ₀(N)aΓ₀(N) = ΓaΓ ∩ Δ₀(N) = ΓbΓ ∩ Δ₀(N) = Γ₀(N)bΓ₀(N)
   have h_inter : DoubleCoset.doubleCoset (↑a : GL (Fin 2) ℚ) (SLnZ_subgroup 2)
       (SLnZ_subgroup 2) ∩ ↑(Delta0_submonoid N) =
     DoubleCoset.doubleCoset (↑b : GL (Fin 2) ℚ) (SLnZ_subgroup 2)
@@ -130,11 +98,9 @@ theorem shimura_prop_3_31 (N : ℕ) [NeZero N]
   rw [eq_a, eq_b] at h_inter
   exact h_inter
 
-/-- `M₂(ℚ)` is countable (needed for `GL₂(ℚ)` countability). -/
 private instance instCountableM2 : Countable (Matrix (Fin 2) (Fin 2) ℚ) :=
   show Countable (Fin 2 → Fin 2 → ℚ) from inferInstance
 
-/-- `GL₂(ℚ)` is countable: it embeds into `M₂(ℚ) × M₂(ℚ)` via `g ↦ (g, g⁻¹)`. -/
 private noncomputable instance instCountableGL2 : Countable (GL (Fin 2) ℚ) := by
   apply Function.Injective.countable
     (f := fun g : GL (Fin 2) ℚ =>
@@ -147,8 +113,6 @@ private lemma divChain_one_succ (k : ℕ) : DivChain 2 (![1, k + 1]) := by
   subst hi0
   simp
 
-/-- `HeckeCoset (GL_pair 2)` is infinite: the diagonal cosets `T(1, n)` for
-    `n = 1, 2, 3, ...` are pairwise distinct by `diagonal_representative_unique`. -/
 private noncomputable instance instInfiniteGLCoset : Infinite (HeckeCoset (GL_pair 2)) :=
   Infinite.of_injective (fun n : ℕ => T_diag (![1, n + 1]))
     (fun m n h ↦ by
@@ -159,7 +123,6 @@ private noncomputable instance instInfiniteGLCoset : Infinite (HeckeCoset (GL_pa
       have h1 := congr_fun this 1
       simp [Matrix.cons_val_one, Matrix.head_cons] at h1; omega)
 
-/-- `diag(1, n+1) ∈ Δ₀(N)` for all `n`: `gcd(1, N) = 1` and `N | 0`. -/
 private lemma diagMat_one_mem_Delta0 (N : ℕ) (n : ℕ) :
     diagMat 2 (![1, n + 1]) ∈ Delta0_submonoid N := by
   refine ⟨diagMat_hasIntEntries 2 _ (fun i ↦ by fin_cases i <;> simp <;> omega),
@@ -169,9 +132,6 @@ private lemma diagMat_one_mem_Delta0 (N : ℕ) (n : ℕ) :
   · simp [Matrix.diagonal]
   · simp [Matrix.diagonal, Int.gcd_one_left]
 
-/-- `HeckeCoset (Gamma0_pair N)` is infinite: `diag(1, n+1) ∈ Δ₀(N)` gives distinct
-    `Γ₀(N)`-double cosets because they map to distinct `Γ`-double cosets via
-    `Gamma0_doubleCoset_subset_Gamma` and `diagonal_representative_unique`. -/
 private noncomputable instance instInfiniteGamma0Coset (N : ℕ) [NeZero N] :
     Infinite (HeckeCoset (Gamma0_pair N)) :=
   Infinite.of_injective
@@ -219,41 +179,18 @@ noncomputable def T_diag_Gamma0 (N : ℕ) [NeZero N] (a : Fin 2 → ℕ)
     HeckeCoset (Gamma0_pair N) :=
   ⟦⟨diagMat 2 a, diagMat_mem_Delta0_of_gcd N a ha hgcd⟩⟧
 
-
-/-! ### Shimura Proposition 3.33: N-power determinant structure
-
-For `p | N` and `β ∈ Δ₀(N)` with `det(β) = p^k`, the `Γ₀(N)`-double coset of `β`
-equals the `Γ₀(N)`-double coset of `diag(1, p^k)`. This means:
-(1) All elements with the same N-power determinant share a double coset.
-(2) `T'(p^k) = T'(p)^k` — the bad-prime tower is generated by `T'(p)`.
-(3) Bad-prime generators commute: `T'(p) * T'(q) = T'(q) * T'(p)` for `p ≠ q`, `p q | N`.
-
-**Proof sketch**: Left-multiply `β` by `[[1, 0], [Nt, 1]] ∈ Γ₀(N)` (choosing `t` via
-`a⁻¹ mod p`, which exists since `gcd(a, N) = 1` forces `gcd(a, p) = 1`) to clear the
-lower-left entry modulo `p`, reducing `det` by one factor of `p`. Induct on `k`. -/
-
-/-- Existence of `t` with `t * a + c ≡ 0 (mod p)` when `gcd(a, p) = 1`.
-Uses Bezout: `gcdA(a,p) * a + gcdB(a,p) * p = 1`, so `t = -c * gcdA(a,p)`
-gives `t*a + c = c * gcdB(a,p) * p`. -/
 private lemma exists_mod_clearing (a c : ℤ) (p : ℕ)
     (hap : Int.gcd a p = 1) :
     ∃ t : ℤ, (p : ℤ) ∣ (t * a + c) := by
   refine ⟨-c * Int.gcdA a p, ⟨c * Int.gcdB a p, ?_⟩⟩
   have bez := Int.gcd_eq_gcd_ab a p
   rw [hap] at bez
-  -- bez : ↑1 = a * a.gcdA ↑p + ↑p * a.gcdB ↑p
-  -- Goal: -c * a.gcdA ↑p * a + c = ↑p * (c * a.gcdB ↑p)
   linear_combination c * (bez - 1)
 
-/-- If  and , then . -/
 private lemma coprime_of_dvd_Npow (a : ℤ) (N : ℕ) (haN : Int.gcd a N = 1)
     (m : ℕ) (k : ℕ) (hm : m ∣ N ^ k) : Int.gcd a m = 1 :=
   Nat.Coprime.coprime_dvd_right hm (Nat.Coprime.pow_right k haN)
 
-/-- The lower-right witness entry is an integer: when `det A = m`, `A 1 0 = N·c₀`,
-`gcd(A 0 0, m) = 1` and `m ∣ A 0 0 · r - A 0 1`, then `m ∣ A 1 1 - N·c₀·r`. From
-`A 0 0 · (A 1 1 - N·c₀·r) = m + (A 0 1 - A 0 0·r)·N·c₀`, `m` divides the product, and
-coprimality of `A 0 0` with `m` transfers divisibility to the second factor. -/
 private lemma dvd_lowerRight_witness (A : Matrix (Fin 2) (Fin 2) ℤ) (N m : ℕ) (c₀ r : ℤ)
     (hc₀ : A 1 0 = (N : ℤ) * c₀) (hdet : A.det = m) (ham : Int.gcd (A 0 0) m = 1)
     (hm_ar_b : (m : ℤ) ∣ (A 0 0 * r - A 0 1)) :
@@ -265,11 +202,6 @@ private lemma dvd_lowerRight_witness (A : Matrix (Fin 2) (Fin 2) ℤ) (N m : ℕ
   exact ((Int.isCoprime_iff_gcd_eq_one.mpr ham).symm).dvd_of_dvd_mul_left
     (h_key ▸ dvd_add (dvd_refl _) (dvd_mul_of_dvd_left hm_ba _))
 
-/-- **Shimura Proposition 3.33** (left coset form): If  has
-with , then  for some  and .
-
-The matrix  is explicitly constructed: since , take ,
-then  has  and . -/
 private lemma Gamma0_left_coset_of_Npow_det (N : ℕ) [NeZero N]
     (A : Matrix (Fin 2) (Fin 2) ℤ)
     (hA_det_pos : 0 < A.det)
@@ -281,12 +213,8 @@ private lemma Gamma0_left_coset_of_Npow_det (N : ℕ) [NeZero N]
       L.det = 1 ∧ (N : ℤ) ∣ L 1 0 ∧
       0 ≤ r ∧ r < m ∧
       A = L * (Matrix.of ![![(1 : ℤ), r], ![0, m]]) := by
-  -- Extract c₀: A 1 0 = N * c₀
   obtain ⟨c₀, hc₀⟩ := hAN
-  -- Choose r ≡ a⁻¹ * b (mod m) via Bezout, with 0 ≤ r < m
-  -- Since gcd(a, m) = 1: ∃ s, s*a ≡ 1 (mod m)
   obtain ⟨t_inv, ht⟩ := exists_mod_clearing (A 0 0) (- A 0 1) m ham
-  -- Set r = t_inv % m ∈ [0, m). Since m | (t_inv*a - b): a*r ≡ b (mod m).
   set r := t_inv % (m : ℤ) with hr_def
   have hr_nonneg : 0 ≤ r := Int.emod_nonneg _ (by omega)
   have hr_lt : r < m := Int.emod_lt_of_pos _ (by omega)
@@ -313,12 +241,10 @@ private lemma Gamma0_left_coset_of_Npow_det (N : ℕ) [NeZero N]
     have := mul_right_cancel₀ (show (↑m : ℤ) ≠ 0 from by omega) (show
       (A 0 0 * q₂ + q₁ * (↑N * c₀)) * ↑m = 1 * ↑m by rw [one_mul]; exact h1)
     linarith
-  · -- N | L 1 0: the (1,0) entry is N*c₀
-    change (↑N : ℤ) ∣ !![A 0 0, -q₁; ↑N * c₀, q₂] 1 0
+  · change (↑N : ℤ) ∣ !![A 0 0, -q₁; ↑N * c₀, q₂] 1 0
     norm_num [Matrix.of_apply, Matrix.cons_val_one, Matrix.head_cons,
       Matrix.cons_val', Matrix.cons_val_zero]
-  · -- A = L · [[1, r], [0, m]]: the 4 entry equations reduce to hq₁, hq₂, hc₀
-    have h00 : A 0 0 = A 0 0 * 1 + (-q₁) * 0 := by ring
+  · have h00 : A 0 0 = A 0 0 * 1 + (-q₁) * 0 := by ring
     have h01 : A 0 1 = A 0 0 * r + (-q₁) * ↑m := by linarith [hq₁]
     have h10 : A 1 0 = ↑N * c₀ * 1 + q₂ * 0 := by linarith [hc₀]
     have h11 : A 1 1 = ↑N * c₀ * r + q₂ * ↑m := by linarith [hq₂]
@@ -328,8 +254,6 @@ private lemma Gamma0_left_coset_of_Npow_det (N : ℕ) [NeZero N]
         Matrix.head_cons, Matrix.head_fin_const, Matrix.empty_val'] <;>
       first | exact h00 | exact h01 | exact h10 | exact h11
 
-/-- Left cosets `Γ₀(N) · [[1, r], [0, m]]` and `Γ₀(N) · [[1, s], [0, m]]` are equal
-iff `r ≡ s (mod m)`. Since `0 ≤ r, s < m`, equality of cosets forces `r = s`. -/
 private lemma Gamma0_left_coset_distinct (N : ℕ) [NeZero N]
     (m : ℕ) (hm_pos : 0 < m)
     (r s : ℤ) (hr : 0 ≤ r) (hr' : r < m) (hs : 0 ≤ s) (hs' : s < m)
@@ -363,15 +287,10 @@ private lemma Gamma0_left_coset_distinct (N : ℕ) [NeZero N]
   have hL01 : L 0 1 = 0 := by nlinarith
   rw [hL01, zero_mul, add_zero] at h01; exact h01
 
-/-- `![0, ↑m] j = ↑m * ![0, 1] j` for `j : Fin 2`. Needed for bridging the
-integer-level factorization `L * [[1,r],[0,m]]` with the GL-level product
-`mapGL(L) * diagMat(1,m) * mapGL([[1,r],[0,1]])`. -/
 private lemma fin2_col_scale (m : ℕ) (j : Fin 2) :
     (![0, (m : ℤ)] : Fin 2 → ℤ) j = (m : ℤ) * (![0, 1] : Fin 2 → ℤ) j := by
   fin_cases j <;> simp
 
-/-- Lower-unipotent injection `Fin k → decompQuot (Gamma0_pair N) g`
-for counting the right-coset quotient. -/
 private noncomputable def lunip_inject (N : ℕ) [NeZero N] (k_exp : ℕ)
     (g : (Gamma0_pair N).Δ) : Fin k_exp → HeckeRing.decompQuot (Gamma0_pair N) g :=
   fun r ↦ ⟦⟨mapGL ℚ ⟨Matrix.of ![![(1 : ℤ), 0], ![↑N * (↑r : ℤ), 1]],
@@ -382,8 +301,7 @@ private noncomputable def lunip_inject (N : ℕ) [NeZero N] (k_exp : ℕ)
       simp [Matrix.of_apply, Matrix.cons_val_one, Matrix.head_cons])⟩⟧
 
 /-- **Generalized Shimura 3.33**: all `β ∈ Δ₀(N)` with `det = m` and
-`gcd(A 0 0, m) = 1` are in `DC(diag(1, m), Γ₀, Γ₀)`.
-Strictly stronger than `shimura_prop_3_33` (which derives `gcd(A 0 0, m) = 1` from `m ∣ N^k`). -/
+`gcd(A 0 0, m) = 1` are in `DC(diag(1, m), Γ₀, Γ₀)`. -/
 lemma shimura_prop_3_33_gen (N : ℕ) [NeZero N]
     (m : ℕ) (hm_pos : 0 < m)
     (β : GL (Fin 2) ℚ) (hβ : β ∈ Delta0_submonoid N)
@@ -445,11 +363,7 @@ lemma shimura_prop_3_33_gen (N : ℕ) [NeZero N]
     norm_cast; linarith [hA_ij])
 
 /-- **Shimura Proposition 3.33** (double coset form): Every element of `Δ₀(N)` with
-determinant `m` (where `m ∣ N^k`) is in the `Γ₀(N)`-double coset of `[[1,0],[0,m]]`.
-
-Concretely: `Γ₀(N) α Γ₀(N) = Γ₀(N) [[1,0],[0,m]] Γ₀(N)` for all `α ∈ Δ₀(N)` with
-`det α = m` and `m ∣ N^k`. This is the `m ∣ N^k` specialisation of `shimura_prop_3_33_gen`
-(the coprimality `gcd(A 0 0, m) = 1` follows from `gcd(A 0 0, N) = 1` via `coprime_of_dvd_Npow`). -/
+determinant `m` (where `m ∣ N^k`) is in the `Γ₀(N)`-double coset of `[[1,0],[0,m]]`. -/
 lemma shimura_prop_3_33 (N : ℕ) [NeZero N]
     (m : ℕ) (hm_pos : 0 < m) (k : ℕ) (hm_dvd : m ∣ N ^ k)
     (β : GL (Fin 2) ℚ) (hβ : β ∈ Delta0_submonoid N)
@@ -461,14 +375,10 @@ lemma shimura_prop_3_33 (N : ℕ) [NeZero N]
   exact shimura_prop_3_33_gen N m hm_pos β hβ A hA hAN hdet
     (coprime_of_dvd_Npow (A 0 0) N hAco m k hm_dvd)
 
-/-- `gcd(a, k) = 1` when `gcd(a, N) = 1` and `k ∣ N^hk`. Every prime factor of `k`
-divides `N`, so is coprime to `a`. -/
 private lemma coprime_of_gcd_one_dvd_pow (a : ℤ) (N : ℕ) (k : ℕ) (hk : ℕ)
     (haN : Int.gcd a N = 1) (hk_dvd : k ∣ N ^ hk) : Int.gcd a k = 1 :=
   Nat.Coprime.coprime_dvd_right hk_dvd (Nat.Coprime.pow_right hk haN)
 
-/-- The (1,0) entry of `σ⁻¹ * !![1,0;c,1] * σ` is `(σ 0 0)² * c` for `σ ∈ SL₂(ℤ)`.
-This is the key entry computation for the stabilizer injectivity argument. -/
 private lemma sl2_conj_lunip_10 (σ : SpecialLinearGroup (Fin 2) ℤ) (c : ℤ) :
     ((σ⁻¹ : SpecialLinearGroup (Fin 2) ℤ).1 *
       Matrix.of ![![(1 : ℤ), 0], ![c, 1]] * σ.1) 1 0 = σ.1 0 0 ^ 2 * c := by
@@ -478,8 +388,6 @@ private lemma sl2_conj_lunip_10 (σ : SpecialLinearGroup (Fin 2) ℤ) (c : ℤ) 
     Matrix.head_cons, Matrix.head_fin_const, Matrix.empty_val', Fin.isValue]
   ring
 
-/-- When `gcd(a, k) = 1`, there is `r ∈ [0, k)` with `a * r ≡ c' (mod k)`: take `r = u·c' mod k`
-for a Bézout coefficient `u` (`u·a ≡ 1 (mod k)`). Used to clear the lower-left entry mod `k`. -/
 private lemma exists_clearing_mod (a c' : ℤ) (k : ℕ) (hk_pos : 0 < k)
     (hak : Int.gcd a k = 1) :
     ∃ r : ℤ, 0 ≤ r ∧ r < k ∧ ∃ c'' : ℤ, a * r - c' = k * c'' := by
@@ -496,9 +404,6 @@ private lemma exists_clearing_mod (a c' : ℤ) (k : ℕ) (hk_pos : 0 < k)
     rw [e]; exact dvd_sub hr₀_mod (dvd_mul_of_dvd_right h2 _)
   exact hd
 
-/-- The conjugation identity behind `lunip_inject_surjective`: with `τ' 1 0 = N·c'` and
-`τ' 0 0 · r - c' = k·c''`, the witness `W = !![d - N·r·b, -b·k; N·c'', a]` satisfies
-`diag(1,k) · W = τ'⁻¹ · !![1,0; N·r, 1] · diag(1,k)` in `GL₂(ℚ)` (`a,b,d` are `τ'` entries). -/
 private lemma lunip_conj_diag_eq (N : ℕ) [NeZero N] (k_exp : ℕ)
     (ha : ∀ i : Fin 2, 0 < (![1, k_exp] : Fin 2 → ℕ) i)
     (τ' : SpecialLinearGroup (Fin 2) ℤ) (r_int c' c'' : ℤ)
@@ -533,9 +438,6 @@ private lemma lunip_conj_diag_eq (N : ℕ) [NeZero N] (k_exp : ℕ)
     (try ring) <;>
     (have := congr_arg (Int.cast (R := ℚ)) hc''; push_cast at this ⊢; nlinarith)
 
-/-- The lower-unipotent injection `Fin k → decompQuot (Gamma0_pair N) (diag(1,k))` is
-surjective: any right coset representative `τ'` can be conjugated by `diag(1,k)` into a
-lower-unipotent matrix `!![1,0; N·r, 1]`, with `r` determined modulo `k` by Bézout. -/
 private lemma lunip_inject_surjective (N : ℕ) [NeZero N]
     (k_exp : ℕ) (hk_pos : 0 < k_exp) (hk : ℕ) (hk_dvd : k_exp ∣ N ^ hk)
     (ha : ∀ i : Fin 2, 0 < (![1, k_exp] : Fin 2 → ℕ) i) :
@@ -587,10 +489,6 @@ private lemma lunip_inject_surjective (N : ℕ) [NeZero N]
     convert this using 2; group
   rw [← h_conj]; exact h_wit_mem
 
-/-- The lower-unipotent injection into `decompQuot (Gamma0_pair N) g` is injective when
-`g` lies in the `Γ₀(N)`-double coset of `diag(1,k)` via `g = γ₁ · diag(1,k) · γ₂`: two
-representatives `r₁, r₂` give the same coset only if `k ∣ r₂ - r₁`, since conjugating by
-`γ₁ = mapGL σ₁` multiplies the lower-left entry by `(σ₁ 0 0)²`, which is coprime to `k`. -/
 private lemma lunip_inject_injective (N : ℕ) [NeZero N]
     (k_exp : ℕ) (hk_pos : 0 < k_exp) (g : (Gamma0_pair N).Δ)
     (γ₁ γ₂ : GL (Fin 2) ℚ) (hγ₂ : γ₂ ∈ (Gamma0_pair N).H)
@@ -618,7 +516,6 @@ private lemma lunip_inject_injective (N : ℕ) [NeZero N]
       γ₂ * ((γ₁ * D * γ₂)⁻¹ * x * (γ₁ * D * γ₂)) * γ₂⁻¹ =
       D⁻¹ * (γ₁⁻¹ * x * γ₁) * D := fun x ↦ by group
   rw [h_grp] at h_conj
-  -- Step 2: Extract τ ∈ Γ₀(N) from H membership
   obtain ⟨τ, hτ_mem, hτ_eq⟩ := Subgroup.mem_map.mp h_conj
   rw [CongruenceSubgroup.Gamma0_mem] at hτ_mem
   rw [← hσ₁_eq] at hτ_eq
@@ -706,7 +603,6 @@ private lemma lunip_inject_injective (N : ℕ) [NeZero N]
         nlinarith [h_e2]
       exact_mod_cast h_q⟩)
 
-/-- Cardinality of `decompQuot` for any `g` in the double coset of `diag(1, k)` is `k`. -/
 private lemma decompQuot_Npow_natcard (N : ℕ) [NeZero N]
     (k_exp : ℕ) (hk_pos : 0 < k_exp) (hk : ℕ) (hk_dvd : k_exp ∣ N ^ hk)
     (g : (Gamma0_pair N).Δ)
@@ -762,7 +658,6 @@ private lemma decompQuot_Npow_natcard (N : ℕ) [NeZero N]
     exact Fintype.card_le_of_injective (lunip_inject N k_exp g)
       (lunip_inject_injective N k_exp hk_pos g γ₁ γ₂ hγ₂ σ₁ hσ₁_eq ha₁k hg_eq)
 
-/-- The degree of the bad-prime Hecke coset `T'(k)` equals `k`. -/
 private lemma Gamma0_bad_deg (N : ℕ) [NeZero N]
     (k_exp : ℕ) (hk_pos : 0 < k_exp) (hk : ℕ) (hk_dvd : k_exp ∣ N ^ hk) :
     HeckeRing.HeckeCoset_deg (Gamma0_pair N)
@@ -772,8 +667,6 @@ private lemma Gamma0_bad_deg (N : ℕ) [NeZero N]
   rw [← Nat.card_eq_fintype_card]
   exact_mod_cast decompQuot_Npow_natcard N k_exp hk_pos hk hk_dvd _ (HeckeCoset.mk_rep _)
 
-/-- The chosen representative of `T_diag_Gamma0 N a` has determinant `∏ aᵢ`: it lies in
-the `Γ₀(N)`-double coset of `diag(a)`, and the `Γ₀(N)`-factors have determinant `1`. -/
 private lemma rep_T_diag_Gamma0_det (N : ℕ) [NeZero N] (a : Fin 2 → ℕ)
     (ha : ∀ i, 0 < a i) (hgcd : Int.gcd (↑(a 0)) ↑N = 1) :
     (↑(HeckeCoset.rep (T_diag_Gamma0 N a ha hgcd)) : GL (Fin 2) ℚ).val.det = ∏ i, (a i : ℚ) := by
@@ -793,10 +686,6 @@ private lemma rep_T_diag_Gamma0_det (N : ℕ) [NeZero N] (a : Fin 2 → ℕ)
     diagMat_det 2 _ ha]
   simp
 
-/-- Every pair of `decompQuot` representatives multiplies into the single output coset
-`T_diag_Gamma0 N (![1, m*n])`: the product of two elements of `Δ₀(N)` with determinants
-`m` and `n` has determinant `m*n ∣ N^(km+kn)`, so by `shimura_prop_3_33` it lies in the
-`Γ₀(N)`-double coset of `diag(1, m*n)`. -/
 private lemma mulMap_rep_T_diag_eq (N : ℕ) [NeZero N]
     (m n : ℕ) (hm_pos : 0 < m) (hn_pos : 0 < n)
     (km : ℕ) (hm_dvd : m ∣ N ^ km) (kn : ℕ) (hn_dvd : n ∣ N ^ kn)
@@ -836,10 +725,7 @@ private lemma mulMap_rep_T_diag_eq (N : ℕ) [NeZero N]
     push_cast; ring
 
 /-- **Bad-part multiplication** (Shimura Prop 3.33 consequence):
-`T'(m) * T'(n) = T'(m*n)` for `m, n ∣ N^∞`.
-
-The proof uses `shimura_prop_3_33` for the unique output coset and
-`HeckeRing.deg_mul` for the coefficient-1 argument. -/
+`T'(m) * T'(n) = T'(m*n)` for `m, n ∣ N^∞`. -/
 theorem T_bad_mul (N : ℕ) [NeZero N]
     (m n : ℕ) (hm_pos : 0 < m) (hn_pos : 0 < n)
     (km : ℕ) (hm_dvd : m ∣ N ^ km) (kn : ℕ) (hn_dvd : n ∣ N ^ kn) :
@@ -853,9 +739,6 @@ theorem T_bad_mul (N : ℕ) [NeZero N]
       (T_diag_Gamma0 N (![1, m * n])
         (by intro i; fin_cases i <;> simp [Nat.mul_pos hm_pos hn_pos])
         (by simp [Int.gcd_one_left])) 1 := by
-  -- Strategy: use T_single_one_mul_eq_single with two conditions:
-  -- (1) heckeMultiplicity = 1 at D_out (from degree argument)
-  -- (2) heckeMultiplicity = 0 at all other cosets (from shimura_prop_3_33)
   set D₁ := T_diag_Gamma0 N (![1, m]) (by intro i; fin_cases i <;> simp [hm_pos])
     (by simp [Int.gcd_one_left])
   set D₂ := T_diag_Gamma0 N (![1, n]) (by intro i; fin_cases i <;> simp [hn_pos])

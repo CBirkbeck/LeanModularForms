@@ -26,7 +26,7 @@ Period-`N` cascade (original convention; sparse at non-multiples of `N`):
 * `eigenvalue_eq_fourierCoeff` — for normalised eigenforms (Miy Thm 4.5.16):
     if `f|T_n = λ_n f` and `a_1(f) = 1`, then `λ_n = a_n(f)`
 
-Canonical period-1 cascade (T082; the standard Miyake / Diamond–Shurman
+Canonical period-1 cascade (the standard Miyake / Diamond–Shurman
 Fourier convention, consumed by `Newforms.lean`):
 
 * `fourierCoeff_heckeT_ppow_period_one`,
@@ -56,8 +56,7 @@ coefficient `a_n`.  A period-`N` q-expansion is also well-defined (every
 integer is a strict period of `Γ₁(N)`) but is *sparse*: its coefficient
 vanishes at every non-multiple of `N`.  The period-`N` formulas in this
 file are retained for historical compatibility; the period-1 variants
-(T082) are the convention used downstream in `Newforms.lean` /
-`LFunction.lean`.
+are the convention used downstream in `Newforms.lean` / `LFunction.lean`.
 
 ## References
 
@@ -116,9 +115,6 @@ private lemma chi_unitOfCoprime_one_eq_one {N : ℕ} (χ : (ZMod N)ˣ →* ℂˣ
   have : ZMod.unitOfCoprime 1 h = 1 := by ext; simp [ZMod.coe_unitOfCoprime]
   rw [this, map_one, Units.val_one]
 
-/-- For coprime `a, b`, the multiplication map `(d₁, d₂) ↦ d₁ * d₂` is injective on the
-product of divisor sets `(m.gcd a).divisors ×ˢ (m.gcd b).divisors`: a common product forces
-the factors to agree, since `d₁` is coprime to `e₂` and `e₁` is coprime to `d₂`. -/
 private theorem mul_injOn_divisors_coprime {m a b : ℕ} (hab : Nat.Coprime a b) :
     Set.InjOn (fun p : ℕ × ℕ ↦ p.1 * p.2)
       (↑((m.gcd a).divisors ×ˢ (m.gcd b).divisors)) := by
@@ -138,10 +134,6 @@ private theorem mul_injOn_divisors_coprime {m a b : ℕ} (hab : Nat.Coprime a b)
   have heq1 : d₁ = e₁ := Nat.le_antisymm (Nat.le_of_dvd he₁_pos h1) (Nat.le_of_dvd hd₁_pos h2)
   exact Prod.ext heq1 (Nat.eq_of_mul_eq_mul_left hd₁_pos (heq1 ▸ hmul'))
 
-/-- The single-`d₁` slice of the coprime divisor-sum convolution: summing the product-character
-weight over `d₂ ∈ (m.gcd b).divisors` factors as the `d₁`-weight times the inner `d₂`-sum.
-Both characters and the `(k-1)`-powers are multiplicative, and `div_sq_product` splits the
-quotient `m·(a·b)/(d₁d₂)²`. -/
 private theorem divisorSum_coprime_summand {N : ℕ} [NeZero N]
     (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (c : ℕ → ℂ) (m a b d₁ : ℕ)
     (hd₁sq : d₁ * d₁ ∣ m * a) (h_inner : (m * a / (d₁ * d₁)).gcd b = m.gcd b) :
@@ -219,8 +211,6 @@ private lemma sum_divisors_ppow_succ {p : ℕ} (hp : Nat.Prime p) (s : ℕ) (f :
   rw [Finset.sum_range_succ' (fun i ↦ f (p ^ i))]
   simp [pow_zero, add_comm]
 
-/-- A `χ`-weighted divisor sum over `(p ^ s).divisors` reindexes as a sum over `Finset.range (s+1)`:
-the only divisors of `p ^ s` are the `p ^ j` for `j ≤ s`, all coprime to `N`. -/
 private theorem sum_divisors_ppow_eq_range {N : ℕ} (k : ℤ) {p : ℕ} (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) (χ : (ZMod N)ˣ →* ℂˣ) (c : ℕ → ℂ) (s n : ℕ) :
     (∑ d ∈ (p ^ s).divisors,
@@ -234,8 +224,6 @@ private theorem sum_divisors_ppow_eq_range {N : ℕ} (k : ℤ) {p : ℕ} (hp : N
   simp only [Function.Embedding.coeFn_mk]
   exact Finset.sum_congr rfl fun j _ ↦ dif_pos (hpN.pow_left j)
 
-/-- The `(p^{j+1})`-weighted summand factors as `p^{k-1}·χ(p)` times the `(p^j)`-weighted summand
-(at the same argument): both the `(k-1)`-power and the character `χ` are multiplicative in `p`. -/
 private theorem ppow_summand_factor {N : ℕ} (k : ℤ) {p : ℕ}
     (hpN : Nat.Coprime p N) (χ : (ZMod N)ˣ →* ℂˣ) (c : ℕ → ℂ) (j n : ℕ) :
     (↑(p ^ (j + 1)) : ℂ) ^ (k - 1) *
@@ -255,9 +243,6 @@ private theorem ppow_summand_factor {N : ℕ} (k : ℤ) {p : ℕ}
     rw [this, map_mul]; push_cast; ring
   rw [h_pow, h_chi]; ring
 
-/-- Pulling the factor `p^{k-1}·χ(p)` out of a `(p^{j+1})`-weighted range sum, simultaneously
-shifting the argument `m·p^{r+2}/(p^{j+1})²` down to `m·p^r/(p^j)²`. Combines `ppow_summand_factor`
-with `Finset.mul_sum` and the divisor cancellation. -/
 private theorem ppow_range_sum_factor {N : ℕ} (k : ℤ) {p : ℕ} (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) (χ : (ZMod N)ˣ →* ℂˣ) (c : ℕ → ℂ) (s m r : ℕ) :
     ∑ j ∈ Finset.range (s + 1),
@@ -276,10 +261,6 @@ private theorem ppow_range_sum_factor {N : ℕ} (k : ℤ) {p : ℕ} (hp : Nat.Pr
         show m * p ^ (r + 2) = p * p * (m * p ^ r) by ring]
       exact Nat.mul_div_mul_left _ _ (Nat.mul_pos hp.pos hp.pos)]
 
-/-- The `p ∣ m` branch of `ppow_divisorSum_recurrence`: when `p ∣ m` all three gcd-divisor sums
-are nonempty powers of `p`, and reindexing each to a `Finset.range` sum (via
-`sum_divisors_ppow_eq_range`) makes the telescoping `T_{p^{r+2}} = T_p T_{p^{r+1}} - p^{k-1}⟨p⟩ T_{p^r}`
-identity collapse to an algebraic equality of range sums. -/
 private theorem ppow_divisorSum_recurrence_dvd [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) (χ : (ZMod N)ˣ →* ℂˣ) (r m : ℕ) (c : ℕ → ℂ) (hdvd : p ∣ m) :
     (((∑ d ∈ ((p * m).gcd (p ^ (r + 1))).divisors,
@@ -347,9 +328,6 @@ private theorem ppow_divisorSum_recurrence_dvd [NeZero N] (k : ℤ) {p : ℕ} (h
       rw [ppow_range_sum_factor k hp hpN χ c s₂ m r]; simp_rw [← h_mp_prod]]
   ring
 
-/-- The `¬ p ∣ m` branch of `ppow_divisorSum_recurrence`: when `p ∤ m`, every `gcd (m, p^v) = 1`,
-so the trailing sums collapse to singletons and only the `gcd (p·m, p^{r+1}) = p` term contributes,
-matching `gcd (m, p^{r+2}) = 1`. -/
 private theorem ppow_divisorSum_recurrence_not_dvd [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) (χ : (ZMod N)ˣ →* ℂˣ) (r m : ℕ) (c : ℕ → ℂ) (hdvd : ¬ p ∣ m) :
     (((∑ d ∈ ((p * m).gcd (p ^ (r + 1))).divisors,
@@ -449,10 +427,6 @@ private theorem diamondOp_ext_charSpace [NeZero N] (k : ℤ) {p : ℕ}
   rw [diamondOp_ext_coprime k hpN]
   exact (mem_modFormCharSpace_iff k χ f).mp hf (ZMod.unitOfCoprime p hpN)
 
-/-- The `heckeT_ppow_succ_succ` operator recurrence, transported to Fourier coefficients
-at an arbitrary strict period `h` of `Γ₁(N)`: on the `χ`-character space the diamond term
-collapses to scalar multiplication by `χ(p)`, so
-`a_m(T_{p^{r+2}} f) = a_m(T_p (T_{p^{r+1}} f)) - p^{k-1}·χ(p)·a_m(T_{p^r} f)`. -/
 private theorem coeff_qExpansion_heckeT_ppow_succ_succ [NeZero N] (k : ℤ) {p : ℕ}
     (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (χ : (ZMod N)ˣ →* ℂˣ) (r : ℕ)
     {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k} (hf : f ∈ modFormCharSpace k χ)
@@ -490,8 +464,6 @@ private theorem coeff_qExpansion_heckeT_ppow_succ_succ [NeZero N] (k : ℤ) {p :
       (cpk * χp) • ⇑(heckeT_ppow k p hp r f) from rfl,
     qExpansion_smul hh0 hh, PowerSeries.coeff_smul, smul_eq_mul]
 
-/-- The Fourier `T_p`-formula at period `t` packaged as a hypothesis on a sequence of forms.
-Instantiated by `fourierCoeff_heckeT_p` (period `N`) and `fourierCoeff_heckeT_p_period_one`. -/
 private abbrev HeckeTpCoeffFormula (k : ℤ) {p N : ℕ} [NeZero N] (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) (χ : (ZMod N)ˣ →* ℂˣ) (t : ℝ) : Prop :=
   ∀ (g : ModularForm ((Gamma1 N).map (mapGL ℝ)) k), g ∈ modFormCharSpace k χ → ∀ m',
@@ -499,8 +471,6 @@ private abbrev HeckeTpCoeffFormula (k : ℤ) {p N : ℕ} [NeZero N] (hp : Nat.Pr
       (qExpansion t g).coeff (p * m') + (↑p : ℂ) ^ (k - 1) * ↑(χ (ZMod.unitOfCoprime p hpN)) *
         (if p ∣ m' then (qExpansion t g).coeff (m' / p) else 0)
 
-/-- Base step `v = 1` of the prime-power Fourier induction: `T_p` itself.  Given the period-`t`
-`T_p`-formula, the divisor sum over `(m.gcd p).divisors` matches by splitting on `p ∣ m`. -/
 private theorem fourierCoeff_heckeT_ppow_one_eq [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) (χ : (ZMod N)ˣ →* ℂˣ) {t : ℝ}
     (hTp : HeckeTpCoeffFormula k hp hpN χ t)
@@ -529,9 +499,6 @@ private theorem fourierCoeff_heckeT_ppow_one_eq [NeZero N] (k : ℤ) {p : ℕ} (
       one_mul, Nat.div_one]
     rw [if_neg hdvd, mul_zero, add_zero, show p * m = m * p from Nat.mul_comm p m]
 
-/-- Inductive step `v = r + 2` of the prime-power Fourier induction.  Given the period-`h`
-`T_p`-formula and the two prior formulas (`ih1` at `r+1`, `ih0` at `r`), the operator recurrence
-`coeff_qExpansion_heckeT_ppow_succ_succ` reduces the goal to `ppow_divisorSum_recurrence`. -/
 private theorem fourierCoeff_heckeT_ppow_succ_succ_eq [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) (χ : (ZMod N)ˣ →* ℂˣ) {t : ℝ} (ht0 : 0 < t)
     (ht : t ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods) (hTp : HeckeTpCoeffFormula k hp hpN χ t)
@@ -611,8 +578,6 @@ private theorem fourierCoeff_heckeT_ppow [NeZero N] (k : ℤ) {p : ℕ} (hp : Na
       (fun g hg m' ↦ ih_v (r + 1) (by omega) g hg m')
       (fun g hg m' ↦ ih_v r (by omega) g hg m')
 
-/-- The Fourier `T_{p^v}`-formula at period `t` packaged as a hypothesis on a sequence of forms.
-Instantiated by `fourierCoeff_heckeT_ppow` (period `N`) and `fourierCoeff_heckeT_ppow_period_one`. -/
 private abbrev HeckeTppowCoeffFormula (k : ℤ) {p N : ℕ} [NeZero N] (hp : Nat.Prime p)
     (χ : (ZMod N)ˣ →* ℂˣ) (t : ℝ) : Prop :=
   ∀ (v : ℕ) (g : ModularForm ((Gamma1 N).map (mapGL ℝ)) k), g ∈ modFormCharSpace k χ → ∀ m',
@@ -623,8 +588,6 @@ private abbrev HeckeTppowCoeffFormula (k : ℤ) {p N : ℕ} [NeZero N] (hp : Nat
             (qExpansion t g).coeff (m' * p ^ v / (d * d))
         else 0
 
-/-- The prime case of the `T_n` Fourier induction: for prime `n`, `T_n = T_p`, and the divisor
-sum over `(m.gcd n).divisors = {1, n}` matches by splitting on `n ∣ m`. -/
 private theorem fourierCoeff_heckeT_n_prime [NeZero N] (k : ℤ) {n : ℕ} [NeZero n]
     (hn_prime : Nat.Prime n) (hnN : Nat.Coprime n N) (χ : (ZMod N)ˣ →* ℂˣ) {t : ℝ}
     (hTp : HeckeTpCoeffFormula k hn_prime hnN χ t)
@@ -654,8 +617,6 @@ private theorem fourierCoeff_heckeT_n_prime [NeZero N] (k : ℤ) {n : ℕ} [NeZe
       one_mul, Nat.div_one]
     rw [if_neg hdvd, mul_zero, add_zero, show n * m = m * n from Nat.mul_comm n m]
 
-/-- The prime-power case of the `T_n` Fourier induction: when the coprime cofactor `q = 1`,
-`n = p^v` and `T_n = T_{p^v}`, so the formula follows from the prime-power formula. -/
 private theorem fourierCoeff_heckeT_n_eq_ppow [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prime p)
     (χ : (ZMod N)ˣ →* ℂˣ) {t : ℝ}
     (hTppow : HeckeTppowCoeffFormula k hp χ t) (n : ℕ) [NeZero n] (v m : ℕ)
@@ -672,8 +633,6 @@ private theorem fourierCoeff_heckeT_n_eq_ppow [NeZero N] (k : ℤ) {p : ℕ} (hp
     hn_ppow]
   exact hTppow v f hf m
 
-/-- The coprime-product case of the `T_n` Fourier induction: for `n = pv * q` with `Coprime pv q`,
-`T_n = T_{pv} ∘ T_q`, and the two inductive formulas combine via `divisorSum_coprime_conv`. -/
 private theorem fourierCoeff_heckeT_n_coprime_split [NeZero N] (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     {t : ℝ} (n pv q m : ℕ) [NeZero n] [NeZero pv] [NeZero q]
     (hcop : Nat.Coprime pv q) (hn_eq : n = pv * q)
@@ -702,8 +661,6 @@ private theorem fourierCoeff_heckeT_n_coprime_split [NeZero N] (k : ℤ) (χ : (
   rw [hn_eq]
   exact (divisorSum_coprime_conv k χ (fun j ↦ (qExpansion t f).coeff j) m pv q hcop).symm
 
-/-- The `T_n` Fourier formula at period `t`, as a predicate on a single index `n`.  This is the
-shape produced by the strong-recursion inductive hypothesis. -/
 private abbrev HeckeTnCoeffFormulaAt (k : ℤ) {N : ℕ} [NeZero N] (χ : (ZMod N)ˣ →* ℂˣ)
     (t : ℝ) (n : ℕ) [NeZero n] : Prop :=
   ∀ (g : ModularForm ((Gamma1 N).map (mapGL ℝ)) k), g ∈ modFormCharSpace k χ → ∀ m',
@@ -714,10 +671,6 @@ private abbrev HeckeTnCoeffFormulaAt (k : ℤ) {N : ℕ} [NeZero N] (χ : (ZMod 
             (qExpansion t g).coeff (m' * n / (d * d))
         else 0
 
-/-- The composite case of the `T_n` Fourier induction: factor `n = p^v · q` with `p = n.minFac`
-and `q = ordCompl[p] n` coprime.  If `q = 1` then `n` is a prime power
-(`fourierCoeff_heckeT_n_eq_ppow`); otherwise `p^v, q < n` and the inductive hypothesis on both
-coprime factors combines via `fourierCoeff_heckeT_n_coprime_split`. -/
 private theorem fourierCoeff_heckeT_n_composite [NeZero N] (k : ℤ) (n : ℕ) [NeZero n]
     (hn_gt : 1 < n) (hnN : Nat.Coprime n N) (χ : (ZMod N)ˣ →* ℂˣ) {t : ℝ}
     (hppow : ∀ {p : ℕ} (hp : Nat.Prime p), Nat.Coprime p N → HeckeTppowCoeffFormula k hp χ t)
@@ -745,8 +698,7 @@ private theorem fourierCoeff_heckeT_n_composite [NeZero N] (k : ℤ) (n : ℕ) [
   have h_unfold := heckeT_n_unfold (N := N) k n hn_gt
   have hcop : Nat.Coprime (p ^ v) q := (Nat.coprime_ordCompl hp hn0).pow_left v
   by_cases hq1 : q = 1
-  · -- Case q = 1: n = p^v.
-    have hn_ppow : n = p ^ v := by rw [hn_eq, hq1, mul_one]
+  · have hn_ppow : n = p ^ v := by rw [hn_eq, hq1, mul_one]
     have h_eq : heckeT_n (N := N) k n f = heckeT_ppow k p hp v f := by
       have h1 := DFunLike.congr_fun h_unfold f
       simp only at h1
@@ -757,8 +709,7 @@ private theorem fourierCoeff_heckeT_n_composite [NeZero N] (k : ℤ) (n : ℕ) [
         simp only [show q = 1 from hq1]; exact heckeT_n_one k
       exact DFunLike.congr_fun this f
     exact fourierCoeff_heckeT_n_eq_ppow k hp χ (hppow hp hpN) n v m hn_ppow hf h_eq
-  · -- Case q > 1: both p^v < n and q < n, use IH on both factors.
-    have hq_gt1 : 1 < q := by omega
+  · have hq_gt1 : 1 < q := by omega
     have hpv_lt : p ^ v < n := hn_eq ▸ lt_mul_of_one_lt_right (pow_pos hp.pos v) hq_gt1
     have hpvN : (p ^ v).Coprime N := hn_eq ▸ hnN |>.coprime_dvd_left (dvd_mul_right (p ^ v) q)
     have hqN : q.Coprime N := hn_eq ▸ hnN |>.coprime_dvd_left (dvd_mul_left q (p ^ v))
@@ -771,16 +722,9 @@ private theorem fourierCoeff_heckeT_n_composite [NeZero N] (k : ℤ) (n : ℕ) [
       (ih (p ^ v) hpv_lt (pow_pos hp.pos v).ne' hpvN (heckeT_n k q f) hf_q m)
       (ih q hq_lt hq_pos.ne' hqN f hf)
 
-/-- **General Fourier coefficient formula for T_n** (DS Prop 5.3.1, Miy Thm 4.5.13).
-
-For `f ∈ M_k(Γ₁(N), χ)` and positive integer `n` coprime to `N`:
-
-  `a_m(T_n f) = Σ_{d | gcd(m,n)} d^{k-1} · χ(d) · a_{mn/d²}(f)`
-
-This generalises `fourierCoeff_heckeT_p` and is proved by induction on
-the prime factorisation of `n`, using the recurrence `T_{p^r}` and
-coprime multiplicativity `T_{mn} = T_m T_n`.
--/
+/-- **General Fourier coefficient formula for `T_n`** (DS Prop 5.3.1, Miy Thm 4.5.13): for
+`f ∈ M_k(Γ₁(N), χ)` and positive integer `n` coprime to `N`,
+`a_m(T_n f) = Σ_{d | gcd(m,n)} d^{k-1} · χ(d) · a_{mn/d²}(f)`. -/
 theorem fourierCoeff_heckeT_n [NeZero N] (k : ℤ) (n : ℕ) [NeZero n]
     (hn : Nat.Coprime n N) (χ : (ZMod N)ˣ →* ℂˣ)
     {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
@@ -808,14 +752,12 @@ theorem fourierCoeff_heckeT_n [NeZero N] (k : ℤ) (n : ℕ) [NeZero n]
   intro hn0 hnN f hf m
   haveI : NeZero n := ⟨hn0⟩
   by_cases hn1 : n = 1
-  · -- Base case: n = 1, T_1 = id
-    subst hn1
+  · subst hn1
     simp only [heckeT_n_one, Module.End.one_apply, Nat.gcd_one_right, Nat.divisors_one,
       Finset.sum_singleton]
     simp only [Nat.Coprime, Nat.gcd_one_left, dite_true]
     simp [unitOfCoprime_one_eq_one]
-  · -- Inductive step: n > 1
-    have hn_gt : 1 < n := by omega
+  · have hn_gt : 1 < n := by omega
     by_cases hn_prime : Nat.Prime n
     · exact fourierCoeff_heckeT_n_prime k hn_prime hnN χ
         (fun g hg m' ↦ fourierCoeff_heckeT_p k hn_prime hnN χ hg m') hf m
@@ -851,11 +793,8 @@ def IsNormalisedEigenform [NeZero N] (k : ℤ)
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
   IsCommonEigenfunction k f ∧ (qExpansion N f).coeff 1 = 1
 
-/-- **Eigenvalue = Fourier coefficient** (Miyake Thm 4.5.16, DS (5.21)).
-
-If `f` is a normalised eigenform (`a_1 = 1`) in `M_k(Γ₁(N), χ)` and
-`(n, N) = 1`, then the eigenvalue of `T_n` equals the n-th Fourier coefficient:
-`λ_n = a_n(f)`. -/
+/-- **Eigenvalue = Fourier coefficient** (Miyake Thm 4.5.16, DS (5.21)): if `f` is a normalised
+eigenform (`a_1 = 1`) in `M_k(Γ₁(N), χ)` and `(n, N) = 1`, then `λ_n = a_n(f)`. -/
 theorem eigenvalue_eq_fourierCoeff [NeZero N] (k : ℤ) (n : ℕ+)
     (hn : Nat.Coprime n.val N) (χ : (ZMod N)ˣ →* ℂˣ)
     {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
@@ -882,14 +821,9 @@ theorem eigenvalue_eq_fourierCoeff [NeZero N] (k : ℤ) (n : ℕ+)
       PowerSeries.coeff_smul, smul_eq_mul, hf_eigen.2, mul_one]
   rw [← h1, h_lhs]
 
-/-- The Fourier coefficients of a normalised eigenform in `M_k(N, χ)` satisfy
-the **Hecke multiplicativity relations**:
-
-  `a_m · a_n = Σ_{d | gcd(m,n)} d^{k-1} χ(d) a_{mn/d²}`
-
-In particular, `a_m a_n = a_{mn}` when `gcd(m,n) = 1`.
-
-Reference: [Miy] Lemma 4.5.15. -/
+/-- The Fourier coefficients of a normalised eigenform in `M_k(N, χ)` satisfy the **Hecke
+multiplicativity relations** `a_m · a_n = Σ_{d | gcd(m,n)} d^{k-1} χ(d) a_{mn/d²}`; in particular
+`a_m a_n = a_{mn}` when `gcd(m,n) = 1` ([Miy] Lemma 4.5.15). -/
 theorem eigenform_coeff_multiplicative [NeZero N] (k : ℤ) (m n : ℕ+)
     (hm : Nat.Coprime m.val N) (_ : Nat.Coprime n.val N)
     (χ : (ZMod N)ˣ →* ℂˣ)
@@ -961,14 +895,9 @@ private theorem fourierCoeff_heckeT_ppow_period_one [NeZero N] (k : ℤ) {p : �
       (fun g hg m' ↦ ih_v (r + 1) (by omega) g hg m')
       (fun g hg m' ↦ ih_v r (by omega) g hg m')
 
-/-- **Period-1 general Fourier coefficient formula for `T_n`.**
-
-For `f ∈ M_k(Γ₁(N), χ)` and positive integer `n` coprime to `N`, at the
-canonical Fourier period `h = 1`:
-```
-a_m(T_n f) = Σ_{d | gcd(m, n)} d^{k-1} · χ(d) · a_{mn/d²}(f)
-```
-Same divisor-sum formula as `fourierCoeff_heckeT_n` but with every `coeff` at period `1`. -/
+/-- **Period-1 general Fourier coefficient formula for `T_n`.** The same divisor-sum formula as
+`fourierCoeff_heckeT_n`, `a_m(T_n f) = Σ_{d | gcd(m, n)} d^{k-1} · χ(d) · a_{mn/d²}(f)`, with
+every `coeff` taken at the canonical Fourier period `h = 1`. -/
 theorem fourierCoeff_heckeT_n_period_one [NeZero N] (k : ℤ) (n : ℕ) [NeZero n]
     (hn : Nat.Coprime n N) (χ : (ZMod N)ˣ →* ℂˣ)
     {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
@@ -1008,24 +937,17 @@ theorem fourierCoeff_heckeT_n_period_one [NeZero N] (k : ℤ) (n : ℕ) [NeZero 
     · exact fourierCoeff_heckeT_n_composite k n hn_gt hnN χ
         (fun hp hpN v g hg m' ↦ fourierCoeff_heckeT_ppow_period_one k hp hpN χ v hg m') ih hf m
 
-/-- **Period-1 normalised eigenform.**  A common eigenfunction `f` with
-canonical Fourier normalisation `a_1 = (qExpansion (1 : ℝ) f).coeff 1 = 1`.
-
-This is the mathematically-correct Miyake / Diamond–Shurman "`a_1 = 1`"
-normalisation and supersedes `IsNormalisedEigenform` (which uses the
-period-`N` condition `(qExpansion N f).coeff 1 = 1`; vacuous for `N > 1`
-because at period `N` a period-`1` form has `coeff 1 = 0`).  The old
-predicate is retained for source compatibility but should not be used
-for new results. -/
+/-- **Period-1 normalised eigenform.**  A common eigenfunction `f` with canonical Fourier
+normalisation `a_1 = (qExpansion (1 : ℝ) f).coeff 1 = 1`. This is the Miyake / Diamond–Shurman
+`a_1 = 1` normalisation and supersedes `IsNormalisedEigenform`, whose period-`N` condition is
+vacuous for `N > 1`. -/
 def IsNormalisedEigenform_one [NeZero N] (k : ℤ)
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
   IsCommonEigenfunction k f ∧ (qExpansion (1 : ℝ) f).coeff 1 = 1
 
-/-- **Period-1 eigenvalue = Fourier coefficient.**
-
-If `f` is a period-1 normalised eigenform in `M_k(Γ₁(N), χ)` and
-`(n, N) = 1`, then `λ_n = a_n(f)`. Period-1 analog of
-`eigenvalue_eq_fourierCoeff`. -/
+/-- **Period-1 eigenvalue = Fourier coefficient** (period-1 analog of
+`eigenvalue_eq_fourierCoeff`): if `f` is a period-1 normalised eigenform in `M_k(Γ₁(N), χ)` and
+`(n, N) = 1`, then `λ_n = a_n(f)`. -/
 theorem eigenvalue_eq_fourierCoeff_one [NeZero N] (k : ℤ) (n : ℕ+)
     (hn : Nat.Coprime n.val N) (χ : (ZMod N)ˣ →* ℂˣ)
     {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}

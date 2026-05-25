@@ -23,10 +23,7 @@ open Matrix Subgroup.Commensurable Pointwise Matrix.SpecialLinearGroup
 open scoped Pointwise MatrixGroups
 
 namespace HeckeRing.GLn
-/-! #### Gamma0 degree coprime multiplicativity: CRT helpers -/
 
-/-- The (1,0) entry of `diag(1,k)⁻¹ * σ * diag(1,k)` is `σ₁₀ / k` in ℚ.
-This is the key entry computation for diagonal stabilizer identification. -/
 private lemma diagConj_10 (k : ℕ) (hk : 0 < k) (σ : GL (Fin 2) ℚ) :
     ((diagMat 2 (![1, k] : Fin 2 → ℕ) : GL (Fin 2) ℚ)⁻¹ * σ *
       (diagMat 2 (![1, k] : Fin 2 → ℕ))).1 1 0 = σ.1 1 0 / k := by
@@ -52,8 +49,6 @@ private lemma diagConj_10 (k : ℕ) (hk : 0 < k) (σ : GL (Fin 2) ℚ) :
   field_simp
   ring
 
-/-- **CRT card formula for subgroup quotients**: if `K₁ ⊓ K₂ = L` and every element
-of `G` factors as `k₁ * k₂`, then `|G/L| = |G/K₁| * |G/K₂|`. -/
 private lemma card_quotient_inf_of_set_mul {G : Type*} [Group G]
     (K₁ K₂ : Subgroup G) [K₁.FiniteIndex] [K₂.FiniteIndex] [(K₁ ⊓ K₂).FiniteIndex]
     (h_prod : ∀ g : G, ∃ k₁ ∈ K₁, ∃ k₂ ∈ K₂, g = k₁ * k₂) :
@@ -88,7 +83,6 @@ private lemma card_quotient_inf_of_set_mul {G : Type*} [Group G]
   exact Nat.card_eq_of_bijective _ ⟨hf_inj, hf_surj⟩
 
 open CongruenceSubgroup in
-/-- `Γ₀(mN) ⊓ Γ₀(nN) = Γ₀(mnN)` when `gcd(m,n) = 1`. -/
 private lemma Gamma0_inf_eq_of_coprime (N m n : ℕ) [NeZero N] [NeZero (m * N)] [NeZero (n * N)]
     [NeZero (m * n * N)] (hcop : Nat.Coprime m n) :
     Gamma0 (m * N) ⊓ Gamma0 (n * N) = Gamma0 (m * n * N) := by
@@ -113,9 +107,6 @@ private lemma Gamma0_inf_eq_of_coprime (N m n : ℕ) [NeZero N] [NeZero (m * N)]
     exact ⟨⟨n * r, by rw [hr]; push_cast; ring⟩,
            ⟨m * r, by rw [hr]; push_cast; ring⟩⟩
 
-/-- **Prime case of the coprime-shift search**: for a prime `p` and `IsCoprime d f`,
-some `b₁` makes `f·b₁ − d` coprime to `p`. If `p ∣ d` then `p ∤ f`, so `b₁ = 1` works
-(as `p ∤ f − d`); if `p ∤ d` then `b₁ = 0` works (as `p ∤ −d`). -/
 private lemma exists_coprime_shift_prime (f d : ℤ) (p : ℕ) (hp : p.Prime)
     (hdf : IsCoprime d f) : ∃ b₁ : ℤ, IsCoprime (f * b₁ - d) (↑p : ℤ) := by
   have hp_int : Prime (↑p : ℤ) := Nat.prime_iff_prime_int.mp hp
@@ -130,9 +121,6 @@ private lemma exists_coprime_shift_prime (f d : ℤ) (p : ℕ) (hp : p.Prime)
       simp only [mul_zero, zero_sub]
       rw [isCoprime_comm, hp_int.coprime_iff_not_dvd, dvd_neg]; exact hpd⟩
 
-/-- **CRT product case of the coprime-shift search**: given shifts `ba, bb` making
-`f·ba − d` coprime to `a` and `f·bb − d` coprime to `b` (with `a, b` coprime), the CRT
-witness `b₁ = ba·b·v + bb·a·u` (where `a·u + b·v = 1`) makes `f·b₁ − d` coprime to `a·b`. -/
 private lemma exists_coprime_shift_mul (f d a b : ℤ) (hab : IsCoprime a b)
     (ha : ∃ ba : ℤ, IsCoprime (f * ba - d) a) (hb : ∃ bb : ℤ, IsCoprime (f * bb - d) b) :
     ∃ b₁ : ℤ, IsCoprime (f * b₁ - d) (a * b) := by
@@ -154,34 +142,24 @@ private lemma exists_coprime_shift_mul (f d a b : ℤ) (hab : IsCoprime a b)
       (f * bb - d) * (a * u) + b * (v * (f * ba - d)) from by ring]
     exact add_mul_coprime _ (isCoprime_comm.mp ((isCoprime_comm.mp hbb).mul_right hau_b))
 
-/-- For `IsCoprime d N` and `IsCoprime d s`, there exists `b₁` with
-`Int.gcd (N*s*b₁ − d) m = 1`. Per prime `p | m`: if `p | d` then `p ∤ Ns` (from
-coprimality), so any `b₁ ≢ 0 (mod p)` works; if `p ∤ d` then avoid the single
-bad class `b₁ ≡ d·(Ns)⁻¹ (mod p)`. CRT over prime factors gives a valid `b₁`. -/
 private lemma exists_coprime_shift (N s d : ℤ) (m : ℕ) (hm_pos : 0 < m)
     (hdN : IsCoprime d N) (hds : IsCoprime d s) :
     ∃ b₁ : ℤ, Int.gcd (N * s * b₁ - d) m = 1 := by
   have hdNs : IsCoprime d (N * s) := hdN.mul_right hds
   set f := N * s
-  -- Lift to IsCoprime (cleaner API than Int.gcd).
   suffices ∃ b₁ : ℤ, IsCoprime (f * b₁ - d) (↑m : ℤ) by
     obtain ⟨b₁, h⟩ := this; exact ⟨b₁, Int.isCoprime_iff_gcd_eq_one.mp h⟩
-  -- Induction on m via prime-power × coprime decomposition.
   revert hm_pos; refine Nat.recOnPosPrimePosCoprime ?_ ?_ ?_ ?_ m
   · intro p n hp hn _
     exact (exists_coprime_shift_prime f d p hp hdNs).imp fun b₁ h => h.pow_right
-  · intro h; omega  -- m = 0: excluded
-  · exact fun _ => ⟨0, by simp [isCoprime_one_right]⟩  -- m = 1
+  · intro h; omega
+  · exact fun _ => ⟨0, by simp [isCoprime_one_right]⟩
   · intro a b ha hb hab iha ihb _
     have hab_int : IsCoprime (↑a : ℤ) (↑b : ℤ) := by exact_mod_cast hab
     rw [show (↑(a * b) : ℤ) = ↑a * ↑b from by push_cast; ring]
     exact exists_coprime_shift_mul f d _ _ hab_int (iha (by omega)) (ihb (by omega))
 
 open CongruenceSubgroup in
-/-- **`Γ₀(mN) · Γ(N) = Γ₀(N)`**: every `γ ∈ Γ₀(N)` factors as `σ · δ` with
-`σ ∈ Γ₀(mN)`, `δ ∈ Γ(N)`. Uses `δ = [[1,Nb₁],[Nc₁,1+N²b₁c₁]] ∈ Γ(N)` (product
-of lower/upper unipotent), choosing `b₁` via `exists_coprime_shift` so that
-`gcd(Nsb₁−d, m) = 1`, then `c₁` so `m | (s + Nsb₁c₁ − dc₁)`. -/
 private lemma Gamma0_mN_mul_GammaN_eq_Gamma0 (N m : ℕ) [NeZero N] [NeZero (m * N)]
     (hm_pos : 0 < m) :
     ∀ γ : SL(2, ℤ), γ ∈ Gamma0 N →
@@ -230,7 +208,6 @@ private lemma Gamma0_mN_mul_GammaN_eq_Gamma0 (N m : ℕ) [NeZero N] [NeZero (m *
         simp [ZMod.natCast_self, hc_cast] <;> ring
     rw [map_mul, map_inv, hmod, inv_mul_cancel]
 
-/-- The (i,j) entry of `diag(1,k)⁻¹ * σ * diag(1,k)` at each index. -/
 private lemma diagConj_entry (k : ℕ) (hk : 0 < k) (σ : GL (Fin 2) ℚ) (i j : Fin 2) :
     ((diagMat 2 (![1, k] : Fin 2 → ℕ) : GL (Fin 2) ℚ)⁻¹ * σ *
       (diagMat 2 (![1, k] : Fin 2 → ℕ))).val i j =
@@ -260,10 +237,6 @@ private lemma diagConj_entry (k : ℕ) (hk : 0 < k) (σ : GL (Fin 2) ℚ) (i j :
       Matrix.cons_val_fin_one, Matrix.head_fin_const] <;>
     field_simp <;> ring
 
-/-- **Forward stabiliser direction**: if `τ ∈ Γ₀(N)` conjugates to `σ` under
-`diag(1,k)` (i.e. `mapGL τ = diag(1,k)⁻¹ · mapGL σ · diag(1,k)`), then `σ ∈ Γ₀(kN)`.
-The conjugation gives `τ₁₀ = σ₁₀/k`, so `k ∣ σ₁₀` with quotient `q = τ₁₀`, and
-`N ∣ τ₁₀ = q` upgrades to `kN ∣ σ₁₀`. -/
 private lemma mem_Gamma0_kN_of_conj_mem_Gamma0_N (N : ℕ) [NeZero N] (k : ℕ) (hk : 0 < k)
     (σ τ : SL(2, ℤ)) (hτ_mem : τ ∈ CongruenceSubgroup.Gamma0 N)
     (h_conj : mapGL ℚ τ = (diagMat 2 (![1, k] : Fin 2 → ℕ) : GL (Fin 2) ℚ)⁻¹ *
@@ -297,10 +270,6 @@ private lemma mem_Gamma0_kN_of_conj_mem_Gamma0_N (N : ℕ) [NeZero N] (k : ℕ) 
   obtain ⟨r, hr⟩ := hq_τ ▸ hN_dvd_τ10
   exact ⟨r, by rw [hq, hr]; push_cast; ring⟩
 
-/-- **Backward stabiliser direction**: if `σ ∈ Γ₀(kN)` then there is `τ ∈ Γ₀(N)`
-conjugating to `σ`, namely `τ = [[σ₀₀, k·σ₀₁],[q, σ₁₁]]` with `q = σ₁₀/k`. Since
-`kN ∣ σ₁₀` we have `k ∣ σ₁₀` and `N ∣ q`, so `τ ∈ Γ₀(N)`, and the entrywise
-diagonal-conjugation identity `mapGL τ = diag(1,k)⁻¹ · mapGL σ · diag(1,k)` holds. -/
 private lemma exists_conj_mem_Gamma0_N_of_mem_Gamma0_kN (N : ℕ) [NeZero N] (k : ℕ) (hk : 0 < k)
     (σ : SL(2, ℤ)) (hσ : σ ∈ CongruenceSubgroup.Gamma0 (k * N)) :
     ∃ τ : SL(2, ℤ), τ ∈ CongruenceSubgroup.Gamma0 N ∧
@@ -367,9 +336,6 @@ lemma stab_diag_eq_Gamma0 (N : ℕ) [NeZero N] (k : ℕ) (hk : 0 < k) :
     obtain ⟨τ, hτ_mem, hτ_eq⟩ := exists_conj_mem_Gamma0_N_of_mem_Gamma0_kN N k hk σ hσ'_mem
     exact Subgroup.mem_map.mpr ⟨τ, hτ_mem, by rw [hτ_eq, hσ_eq]⟩
 
-/-- The `decompQuot` cardinality is unchanged when the double-coset representative
-`g` is replaced by the chosen representative `HeckeCoset.rep ⟦g⟧`: both lie in the
-same `H`-`H` double coset, so `decompQuot_double_H_equiv` gives a bijection. -/
 private lemma decompQuot_rep_card_eq {G : Type*} [Group G] (P : HeckeRing.HeckePair G)
     (g : P.Δ) :
     Nat.card (HeckeRing.decompQuot P (HeckeCoset.rep ⟦g⟧)) =
@@ -388,8 +354,6 @@ private lemma decompQuot_rep_card_eq {G : Type*} [Group G] (P : HeckeRing.HeckeP
     (HeckeRing.decompQuot_double_H_equiv P g ⟨γ₁, hγ₁⟩ ⟨γ₂, hγ₂⟩
       (h_eq ▸ (HeckeCoset.rep ⟦g⟧).2)))
 
-/-- **`Γ₀` is antitone in the divisibility order**: `a ∣ b → Γ₀(b) ≤ Γ₀(a)` (the
-condition `b ∣ σ₁₀` implies `a ∣ σ₁₀`). -/
 private lemma Gamma0_le_of_dvd {a b : ℕ} (hab : a ∣ b) :
     CongruenceSubgroup.Gamma0 b ≤ CongruenceSubgroup.Gamma0 a := by
   intro η hη
@@ -397,8 +361,6 @@ private lemma Gamma0_le_of_dvd {a b : ℕ} (hab : a ∣ b) :
   exact dvd_trans (Int.natCast_dvd_natCast.mpr hab) hη
 
 open CongruenceSubgroup in
-/-- For coprime `m, n`, any `δ ∈ Γ(N)` lies in `Γ(mN) ⊔ Γ(nN)`: since
-`gcd(mN, nN) = N`, `Gamma_gcd_eq_mul` identifies `Γ(mN) ⊔ Γ(nN)` with `Γ(N)`. -/
 private lemma mem_Gamma_mN_sup_nN_of_mem_Gamma_N (N m n : ℕ) [NeZero N]
     [NeZero (m * N)] [NeZero (n * N)] (hcop : Nat.Coprime m n)
     {δ : SL(2, ℤ)} (hδ : δ ∈ CongruenceSubgroup.Gamma N) :
@@ -411,12 +373,6 @@ private lemma mem_Gamma_mN_sup_nN_of_mem_Gamma_N (N m n : ℕ) [NeZero N]
   exact Subgroup.map_injective mapGL_injective h_eq ▸ (h_gcd ▸ hδ)
 
 open CongruenceSubgroup in
-/-- **CRT factorisation `Γ₀(mN)·Γ₀(nN) = Γ₀(N)` at the `H`-level**: for coprime
-`m, n`, every element of `H = Γ₀(N).map(mapGL)` factors as `k₁ · k₂` with
-`k₁ ∈ Γ₀(mN).map(mapGL).subgroupOf H` and `k₂ ∈ Γ₀(nN).map(mapGL).subgroupOf H`.
-First split `γ = σ_m · δ` (`σ_m ∈ Γ₀(mN)`, `δ ∈ Γ(N)`) via `Gamma0_mN_mul_GammaN_eq_Gamma0`,
-then `δ = α · β` (`α ∈ Γ(mN)`, `β ∈ Γ(nN)`) via `Gamma_gcd_eq_mul`, and absorb `α`
-into `σ_m`. -/
 private lemma Gamma0_H_factor_through_mN_nN (N m n : ℕ) [NeZero N]
     (hm_pos : 0 < m) (hn_pos : 0 < n) (hcop : Nat.Coprime m n)
     (g : (Gamma0_pair N).H) :
@@ -450,10 +406,6 @@ private lemma Gamma0_H_factor_through_mN_nN (N m n : ℕ) [NeZero N]
     rw [← hγ_eq, h_factor]
     simp only [map_mul, mul_assoc]
 
-/-- **Degree as quotient cardinality**: for a diagonal Hecke coset `g` with
-`(g : GL₂(ℚ)) = diag(1, k)`, `deg_{Γ₀(N)}(⟦g⟧) = |H / (Γ₀(kN).map(mapGL)).subgroupOf H|`,
-where `H = Γ₀(N).map(mapGL)`. Combines `decompQuot_rep_card_eq` with the stabiliser
-identification `stab_diag_eq_Gamma0`. -/
 private lemma HeckeCoset_deg_diagMat_eq_card_quotient (N k : ℕ) [NeZero N] (hk : 0 < k)
     (g : (Gamma0_pair N).Δ) (hg : (g : GL (Fin 2) ℚ) = diagMat 2 (![1, k] : Fin 2 → ℕ)) :
     (HeckeRing.HeckeCoset_deg (Gamma0_pair N) ⟦g⟧ : ℤ) =
@@ -468,9 +420,6 @@ private lemma HeckeCoset_deg_diagMat_eq_card_quotient (N k : ℕ) [NeZero N] (hk
   rw [← Nat.card_eq_fintype_card, decompQuot_rep_card_eq]
   exact_mod_cast Nat.card_congr (Subgroup.quotientEquivOfEq h_stab)
 
-/-- The diagonal stabiliser `(Γ₀(kN).map(mapGL)).subgroupOf H` has finite index in
-`H = Γ₀(N).map(mapGL)`: via `stab_diag_eq_Gamma0` it is the `decompQuot` stabiliser of a
-`Δ`-element, whose index is nonzero by the commensurability condition `P.h₁`. -/
 private lemma finiteIndex_Gamma0_map_subgroupOf (N k : ℕ) [NeZero N] (hk : 0 < k) :
     (((CongruenceSubgroup.Gamma0 (k * N)).map (mapGL ℚ)).subgroupOf
       (Gamma0_pair N).H).FiniteIndex := by
@@ -478,27 +427,9 @@ private lemma finiteIndex_Gamma0_map_subgroupOf (N k : ℕ) [NeZero N] (hk : 0 <
   exact ⟨((Gamma0_pair N).h₁ (⟨diagMat 2 (![1, k] : Fin 2 → ℕ), diagMat_mem_Delta0_of_gcd N _
     (fun i => by fin_cases i <;> simp [hk]) (by simp)⟩ : (Gamma0_pair N).Δ).2).1⟩
 
-/-- **Gamma0 degree multiplicativity**: `deg(diag(1,m)) * deg(diag(1,n)) = deg(diag(1,mn))`
-when `gcd(m,n) = 1`, where all degrees are at the Gamma0(N) level.
-
-Mathematically: `[Γ₀(N) : Γ₀(Nm)] * [Γ₀(N) : Γ₀(Nn)] = [Γ₀(N) : Γ₀(Nmn)]`.
-This follows from the tower formula plus the product property
-`Γ₀(Nm) · Γ₀(Nn) = Γ₀(N)`, which holds because for coprime `m, n`,
-the conditions `Nm | σ₁₀` and `Nn | σ₁₀` on different prime factors
-are independently satisfiable via lower-unipotent coset representatives.
-
-**Proof**: Two-step CRT decomposition.
-1. `Γ₀(mN) · Γ(N) = Γ₀(N)`: the image of `Γ₀(mN)` in `Γ₀(N)/Γ(N) ≅ B(ℤ/Nℤ)` is
-   the full upper-triangular group (by lifting via `SL₂(ℤ) → SL₂(ℤ/Nℤ)` surjectivity,
-   then adjusting the lower-left entry mod `m` using `gcd(d,b) = 1` from `det = 1`).
-2. `Γ(mN) · Γ(nN) = Γ(N)`: from `Gamma_gcd_eq_mul` since `gcd(mN,nN) = N·gcd(m,n) = N`.
-
-Combining: any `γ ∈ Γ₀(N)` writes as `γ = σ·δ` with `σ ∈ Γ₀(mN), δ ∈ Γ(N)`, then
-`δ = α·β` with `α ∈ Γ(mN) ⊂ Γ₀(mN), β ∈ Γ(nN) ⊂ Γ₀(nN)`, giving
-`γ = (σα)·β ∈ Γ₀(mN)·Γ₀(nN)`.
-
-With `Γ₀(mN) ∩ Γ₀(nN) = Γ₀(mnN)` (from `lcm(mN,nN) = mnN` when `gcd(m,n)=1`),
-the CRT map `Γ₀(N)/Γ₀(mnN) → Γ₀(N)/Γ₀(mN) × Γ₀(N)/Γ₀(nN)` is a bijection. -/
+/-- **Gamma0 degree multiplicativity**: for coprime `m, n`,
+`deg(diag(1,m)) * deg(diag(1,n)) = deg(diag(1,mn))` at the `Γ₀(N)` level, i.e.
+`[Γ₀(N) : Γ₀(Nm)] * [Γ₀(N) : Γ₀(Nn)] = [Γ₀(N) : Γ₀(Nmn)]`. -/
 lemma Gamma0_deg_coprime_mul (N : ℕ) [NeZero N]
     (m n : ℕ) (hm_pos : 0 < m) (hn_pos : 0 < n) (hcop : Nat.Coprime m n) :
     HeckeRing.HeckeCoset_deg (Gamma0_pair N)
@@ -547,8 +478,6 @@ lemma Gamma0_deg_coprime_mul (N : ℕ) [NeZero N]
   exact_mod_cast card_quotient_inf_of_set_mul K_m K_n
     (Gamma0_H_factor_through_mN_nN N m n hm_pos hn_pos hcop)
 
-/-- **Helper: ConjAct-smul by an element of H preserves H.**
-Inlined from the private `conjAct_smul_eq_of_mem` in `GLn/Degree.lean`. -/
 private lemma conjAct_smul_H_eq_of_mem_local {G : Type*} [Group G] (H : Subgroup G)
     {h : G} (hh : h ∈ H) : ConjAct.toConjAct h • H = H := by
   ext x; constructor
@@ -565,9 +494,6 @@ private lemma conjAct_smul_H_eq_of_mem_local {G : Type*} [Group G] (H : Subgroup
       simp [ConjAct.ofConjAct_toConjAct, mul_assoc]
     rw [this]; exact H.mul_mem (H.mul_mem (H.inv_mem hh) hx) hh
 
-/-- **Double-coset representative has the diagonal's relative index**: if `δ` lies in
-the `H`-`H` double coset of `α`, writing `δ = σ₁ · α · σ₂` with `σ₁, σ₂ ∈ H`, conjugation
-by `σ₁, σ₂ ∈ H` fixes `H`, so `(ConjAct δ • H).relIndex H = (ConjAct α • H).relIndex H`. -/
 private lemma relIndex_conjAct_eq_of_mem_doubleCoset (α : GL (Fin 2) ℚ)
     (H : Subgroup (GL (Fin 2) ℚ)) (δ : GL (Fin 2) ℚ)
     (hδ : δ ∈ DoubleCoset.doubleCoset α (H : Set _) (H : Set _)) :
@@ -581,8 +507,6 @@ private lemma relIndex_conjAct_eq_of_mem_doubleCoset (α : GL (Fin 2) ℚ)
   have := Subgroup.relIndex_pointwise_smul (ConjAct.toConjAct σ₁) (ConjAct.toConjAct α • H) H
   rw [conjAct_smul_elt_eq H ⟨σ₁, hσ₁⟩] at this; exact this
 
-/-- **Scalar conjugation is trivial**: conjugation by the scalar matrix `diag(p,…,p)`
-(an element of the centre of `GL₂(ℚ)`) fixes every subgroup. -/
 private lemma conjAct_scalar_diagMat_smul_eq (p : ℕ) (hp : 0 < p)
     (X : Subgroup (GL (Fin 2) ℚ)) :
     ConjAct.toConjAct (diagMat 2 (fun _ : Fin 2 => p) : GL (Fin 2) ℚ) • X = X := by
@@ -596,10 +520,6 @@ private lemma conjAct_scalar_diagMat_smul_eq (p : ℕ) (hp : 0 < p)
     simp only [ConjAct.smul_def, map_inv, ConjAct.ofConjAct_toConjAct, inv_inv]
     rwa [diagMat_scalar_conj_eq 2 p hp]
 
-/-- **Degree as conjugation relative index**: if the representative of `D` lies in the
-`H`-`H` double coset of `α` (`H = Γ₀(N).map(mapGL)`), then `deg(D) = (ConjAct α • H).relIndex H`.
-Unfolds `HeckeCoset_deg` to the stabiliser index and applies
-`relIndex_conjAct_eq_of_mem_doubleCoset`. -/
 private lemma HeckeCoset_deg_eq_relIndex_of_rep_mem_doubleCoset (N : ℕ) [NeZero N]
     (D : HeckeRing.HeckeCoset (Gamma0_pair N)) (α : GL (Fin 2) ℚ)
     (hD : (HeckeCoset.rep D : GL (Fin 2) ℚ) ∈ DoubleCoset.doubleCoset α
@@ -613,14 +533,6 @@ private lemma HeckeCoset_deg_eq_relIndex_of_rep_mem_doubleCoset (N : ℕ) [NeZer
       ← Nat.card_eq_fintype_card]
   rw [h_def, relIndex_conjAct_eq_of_mem_doubleCoset α _ _ hD]
 
-/-- **Bridge: `deg_{Γ₀(N)}(T'(1, k)) = [Γ₀(N) : Γ₀(kN)]`**.
-The Gamma0 Hecke degree of the diagonal coset `diag(1, k)` equals the relative index
-of `Γ₀(kN)` in `Γ₀(N)`. Proof: the representative `δ` of `T_diag_Gamma0 N ![1,k]` lies
-in the double coset of `diag(1,k)`, so writing `δ = σ₁ · diag(1,k) · σ₂` with
-`σ₁, σ₂ ∈ H = Γ₀(N).map(mapGL)`, conjugation by `σ₁, σ₂ ∈ H` preserves `H`, so
-`(ConjAct δ • H).relIndex H = (ConjAct diag(1,k) • H).relIndex H`. Then
-`stab_diag_eq_Gamma0` identifies the stabiliser on `H` with `Γ₀(kN).map(mapGL).subgroupOf H`,
-which via `mapGL` injectivity gives `Γ₀(kN).relIndex Γ₀(N)`. -/
 private lemma HeckeCoset_deg_Gamma0_one_k_eq_relIndex (N : ℕ) [NeZero N]
     (k : ℕ) (hk : 0 < k) :
     HeckeRing.HeckeCoset_deg (Gamma0_pair N)
@@ -649,16 +561,6 @@ private lemma HeckeCoset_deg_Gamma0_one_k_eq_relIndex (N : ℕ) [NeZero N]
       ((CongruenceSubgroup.Gamma0 (k * N)).relIndex (CongruenceSubgroup.Gamma0 N) : ℤ)
   rw [← h_map_relIndex]; rfl
 
-/-- **T1-A: Gamma0 relative index = Gamma0 index for coprime case**.
-For `m, N` coprime (both positive, `N` nonzero), the relative index of `Γ₀(mN)` in `Γ₀(N)`
-equals the absolute index of `Γ₀(m)` in `SL₂(ℤ)`:
-`[Γ₀(N) : Γ₀(mN)] = [SL₂(ℤ) : Γ₀(m)]`.
-
-**Proof**: Apply `Gamma0_deg_coprime_mul` with `N(arg) := 1`, `m(arg) := m`, `n(arg) := N`
-(using `[NeZero 1]`) to get the SL₂-level multiplicativity:
-`[SL₂ : Γ₀(m)] · [SL₂ : Γ₀(N)] = [SL₂ : Γ₀(m·N)]`.
-Tower formula: `[SL₂ : Γ₀(m·N)] = [Γ₀(N) : Γ₀(m·N)] · [SL₂ : Γ₀(N)]`.
-Cancel `[SL₂ : Γ₀(N)]` (finite, positive) to get the result. -/
 private lemma Gamma0_relIndex_eq_Gamma_index_of_coprime (N : ℕ) [NeZero N]
     (m : ℕ) (hm_pos : 0 < m) (hcop : Nat.Coprime m N) :
     (CongruenceSubgroup.Gamma0 (m * N)).relIndex (CongruenceSubgroup.Gamma0 N) =
@@ -696,14 +598,8 @@ private lemma Gamma0_relIndex_eq_Gamma_index_of_coprime (N : ℕ) [NeZero N]
     rw [h_tower]; exact_mod_cast h_deg_level1.symm
   exact (mul_right_cancel_iff_of_pos (Nat.pos_of_ne_zero hN_index_ne)).mp h_mul_cancel
 
-/-- **T1-B1: Degree formula for `T'(1, p^k)` at `Γ₀(N)` level**.
-For prime `p` coprime to `N`, `k ≥ 1`:
-`deg_{Γ₀(N)}(T'(1, p^k)) = p^(k-1) · (p + 1)`.
-
-**Proof**: By the bridge `HeckeCoset_deg_Gamma0_one_k_eq_relIndex`, this equals
-`[Γ₀(N) : Γ₀(p^k · N)]`. By T1-A `Gamma0_relIndex_eq_Gamma_index_of_coprime`
-(using `Nat.Coprime.pow_left`), this equals `(Gamma0 (p^k)).index`. By
-`HeckeRing.GL2.Gamma0_prime_power_index`, this equals `p^(k-1) · (p + 1)`. -/
+/-- **Degree formula for `T'(1, p^k)` at the `Γ₀(N)` level**: for a prime `p` coprime
+to `N` and `k ≥ 1`, `deg_{Γ₀(N)}(T'(1, p^k)) = p^(k-1) · (p + 1)`. -/
 lemma HeckeCoset_deg_Gamma0_one_ppow (N : ℕ) [NeZero N]
     (p : ℕ) (hp : p.Prime) (hpN : Nat.Coprime p N) (k : ℕ) (hk : 0 < k) :
     HeckeRing.HeckeCoset_deg (Gamma0_pair N)
@@ -719,7 +615,6 @@ lemma HeckeCoset_deg_Gamma0_one_ppow (N : ℕ) [NeZero N]
   rw [h_T1A]
   rw [HeckeRing.GL2.Gamma0_prime_power_index p hp k hk]
 
-/-- The `2×2` diagonal matrix `diag(1, 1)` is the identity of `GL₂(ℚ)`. -/
 private lemma diagMat_two_one_one_eq_one :
     (diagMat 2 (![1, 1] : Fin 2 → ℕ) : GL (Fin 2) ℚ) = 1 := by
   apply Units.ext
@@ -729,8 +624,6 @@ private lemma diagMat_two_one_one_eq_one :
     simp [Matrix.diagonal_apply, Matrix.one_apply, Matrix.cons_val_zero,
           Matrix.cons_val_one, Matrix.head_cons]
 
-/-- **Scalar/diagonal factorisation** `diag(p, p^k) = diag(p,p) · diag(1, p^(k-1))`
-for `k ≥ 1`, separating the scalar (central) part from the diagonal Hecke part. -/
 private lemma diagMat_p_ppow_eq_scalar_mul_diag (p k : ℕ) (hp : 0 < p) (hk : 1 ≤ k) :
     (diagMat 2 (![p, p^k] : Fin 2 → ℕ) : GL (Fin 2) ℚ) =
     (diagMat 2 (fun _ : Fin 2 => p) : GL (Fin 2) ℚ) *
@@ -746,15 +639,9 @@ private lemma diagMat_p_ppow_eq_scalar_mul_diag (p k : ℕ) (hp : 0 < p) (hk : 1
   fin_cases i <;> fin_cases j <;> push_cast <;>
     simp [hpk, show (1 : Fin 2) ≠ 0 from by decide]
 
-/-- **T1-B2: Degree formula for `T'(p, p^k)` at `Γ₀(N)` level**.
-For prime `p` coprime to `N`, `k ≥ 1`:
-- `deg_{Γ₀(N)}(T'(p, p)) = 1` (scalar case, k=1)
-- `deg_{Γ₀(N)}(T'(p, p^k)) = p^(k-2) · (p + 1)` for k ≥ 2
-
-**Proof**: Use scalar centrality. `diag(p, p^k) = diag(p,p) · diag(1, p^(k-1))`.
-Scalar element `diag(p,p)` centralizes GL₂(ℚ), so the stabilizer of `diag(p, p^k)` equals
-the stabilizer of `diag(1, p^(k-1))`. Then apply T1-B1 (HeckeCoset_deg_Gamma0_one_ppow)
-for k-1 ≥ 1, or the scalar case for k=1. -/
+/-- **Degree formula for `T'(p, p^k)` at the `Γ₀(N)` level**: for a prime `p` coprime
+to `N` and `k ≥ 1`, `deg_{Γ₀(N)}(T'(p, p^k))` is `1` when `k = 1` and
+`p^(k-2) · (p + 1)` when `k ≥ 2`. -/
 lemma HeckeCoset_deg_Gamma0_p_ppow (N : ℕ) [NeZero N]
     (p : ℕ) (hp : p.Prime) (hpN : Nat.Coprime p N) (k : ℕ) (hk : 1 ≤ k) :
     HeckeRing.HeckeCoset_deg (Gamma0_pair N)
@@ -775,7 +662,6 @@ lemma HeckeCoset_deg_Gamma0_p_ppow (N : ℕ) [NeZero N]
     have h_set : HeckeCoset.toSet D = DoubleCoset.doubleCoset α (↑H : Set _) (↑H : Set _) := by
       simp only [D, T_diag_Gamma0, HeckeCoset.toSet_mk, α]; rfl
     rw [← h_set]; exact HeckeCoset.rep_mem D
-  -- diag(p, p^k) = diag(p,p) * diag(1, p^(k-1)); the scalar part is central.
   have hα_factor : α = α_sc * α_diag := diagMat_p_ppow_eq_scalar_mul_diag p k hp.pos hk
   have h_conj_eq : ConjAct.toConjAct α • H = ConjAct.toConjAct α_diag • H := by
     rw [hα_factor, map_mul, ← smul_smul, conjAct_scalar_diagMat_smul_eq p hp.pos]

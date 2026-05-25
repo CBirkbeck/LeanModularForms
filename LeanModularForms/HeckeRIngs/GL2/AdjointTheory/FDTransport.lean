@@ -19,10 +19,8 @@ import Mathlib.Analysis.InnerProductSpace.Semisimple
 /-!
 # Hecke adjoint theory: FD-transport infrastructure.
 
-First module of the split of `AdjointTheoryPetersson`. Covers the T090 Hecke
-conjugate intersection group `Γ_p(α)`, FD-transport adapters, and the
-PSL(2,ℝ) ambient instantiations, up to (but not including) the SL₂(ℤ)
-continuity instance.
+The Hecke conjugate intersection group `Γ_p(α)`, fundamental-domain transport
+adapters, and their `PSL(2, ℝ)` ambient instantiations.
 -/
 
 noncomputable section
@@ -38,35 +36,13 @@ open CuspForm
 
 variable {N : ℕ} [NeZero N]
 
-/-! ### T090 Hecke conjugate intersection group `Γ_p(α)`
-
-Foundational infrastructure for the **aggregate full-Hecke-family swap**
-`h_HeckeFD_swap` (DS Thm 5.5.3 sum-level Hecke adjoint).  As established in
-prior T090 stints, the per-α individual SL-tile balance is mathematically
-unsatisfiable: `(⟨p⟩⁻¹f) ∣ glMap M_∞` is invariant only under
-`α⁻¹ Γ₁(N) α ∩ Γ₁(N) =: Γ_p(α)`, **not** under Γ₁(N).  The full DS Thm
-5.5.3 route therefore necessarily passes through the conjugate
-intersection group `Γ_p(α)` and its fundamental domain.
-
-Mathlib provides `CongruenceSubgroup.conjGL` (`Mathlib.NumberTheory.ModularForms.CongruenceSubgroups`)
-as the conjugate `α⁻¹ · Γ · α ∩ SL(2,ℤ)`, plus `IsCongruenceSubgroup.conjGL`
-showing it is itself a congruence subgroup.  Combined with the standard
-`Γ₁(N) ⊓ K` intersection, this gives the conjugate intersection group
-`Γ_p(α) := Γ₁(N) ⊓ conjGL Γ₁(N) α`, the kernel of the right Hecke action
-of α on the Γ₁(N)-coset space.
-
-This subsection provides the minimal foundational infrastructure
-(definition + finite-index + congruence-subgroup-ness) needed downstream
-for fundamental-domain transport between Γ₁(N)-FD and α • Γ_p(α)-FD
-(the geometric content underlying `h_HeckeFD_swap`). -/
-
 open CongruenceSubgroup Pointwise ConjAct in
-/-- **T090 Hecke conjugate intersection group `Γ_p(α)`.** -/
+/-- The Hecke conjugate intersection group `Γ_p(α) := conjGL Γ₁(N) α ⊓ Γ₁(N)`. -/
 noncomputable def Gamma_p_α (α : GL (Fin 2) ℚ) : Subgroup SL(2, ℤ) :=
   conjGL (Gamma1 N) (α.map (Rat.castHom ℝ)) ⊓ Gamma1 N
 
 open CongruenceSubgroup Pointwise ConjAct in
-/-- **T090 `Γ_p(α)` has finite index in `SL(2, ℤ)`.** -/
+/-- `Γ_p(α)` has finite index in `SL(2, ℤ)`. -/
 theorem Gamma_p_α_finiteIndex (α : GL (Fin 2) ℚ) :
     (Gamma_p_α (N := N) α).FiniteIndex := by
   show (conjGL (Gamma1 N) (α.map (Rat.castHom ℝ)) ⊓ Gamma1 N).FiniteIndex
@@ -75,23 +51,20 @@ theorem Gamma_p_α_finiteIndex (α : GL (Fin 2) ℚ) :
   exact inferInstance
 
 open CongruenceSubgroup Pointwise ConjAct in
-/-- **T090 `Γ_p(α) ≤ Γ₁(N)`.**
-
-Trivial right-inf inclusion: by definition `Gamma_p_α α := conjGL Γ₁(N) α ⊓ Γ₁(N)`,
-so `Gamma_p_α α ≤ Γ₁(N)` is `inf_le_right`. -/
+/-- `Γ_p(α) ≤ Γ₁(N)`. -/
 lemma Gamma_p_α_le_Gamma1 (α : GL (Fin 2) ℚ) :
     Gamma_p_α (N := N) α ≤ Gamma1 N :=
   inf_le_right
 
 open CongruenceSubgroup Pointwise ConjAct in
-/-- **T090 `Γ_p(α)` has finite index in `Γ₁(N)`.** -/
+/-- `Γ_p(α)` has finite index in `Γ₁(N)`. -/
 theorem Gamma_p_α_finiteIndex_in_Gamma1 (α : GL (Fin 2) ℚ) :
     ((Gamma_p_α (N := N) α).subgroupOf (Gamma1 N)).FiniteIndex := by
   haveI : (Gamma_p_α (N := N) α).FiniteIndex := Gamma_p_α_finiteIndex α
   exact Subgroup.instFiniteIndex_subgroupOf _ _
 
 open CongruenceSubgroup Pointwise ConjAct in
-/-- **T090 `Γ_p(α)` conjugation embedding.** -/
+/-- `Γ_p(α)` conjugation embedding. -/
 lemma Gamma_p_α_conj_mem_Gamma1 (α : GL (Fin 2) ℚ)
     {γ : SL(2, ℤ)} (hγ : γ ∈ Gamma_p_α (N := N) α) :
     ∃ δ ∈ Gamma1 N,
@@ -104,7 +77,7 @@ lemma Gamma_p_α_conj_mem_Gamma1 (α : GL (Fin 2) ℚ)
   exact ⟨δ, hδ_mem, hδ_eq⟩
 
 open CongruenceSubgroup Pointwise ConjAct in
-/-- **T090 conjGL ↔ ConjAct.toConjAct GL-level identity.** -/
+/-- `conjGL` ↔ `ConjAct.toConjAct` GL-level identity. -/
 lemma conjGL_map_eq_conjAct_inv_smul_inter
     (Γ : Subgroup SL(2, ℤ)) (g : GL (Fin 2) ℝ) :
     (conjGL Γ g).map (mapGL ℝ) =
@@ -113,17 +86,15 @@ lemma conjGL_map_eq_conjAct_inv_smul_inter
   rw [conjGL, Subgroup.map_comap_eq, inf_comm]
 
 open CongruenceSubgroup Pointwise ConjAct in
-/-- **T090 conjugation-by-α function `Γ_p(α) → Γ₁(N)`.** -/
+/-- Conjugation-by-α function `Γ_p(α) → Γ₁(N)`. -/
 noncomputable def Gamma_p_α_conjBy (α : GL (Fin 2) ℚ)
     (γ : Gamma_p_α (N := N) α) : Gamma1 N :=
   ⟨Classical.choose (Gamma_p_α_conj_mem_Gamma1 α γ.property),
     (Classical.choose_spec (Gamma_p_α_conj_mem_Gamma1 α γ.property)).1⟩
 
 open CongruenceSubgroup Pointwise ConjAct in
-/-- **T090 defining equality of `Gamma_p_α_conjBy`.**
-
-`mapGL ℝ (Gamma_p_α_conjBy α γ : SL(2, ℤ)) = α · mapGL ℝ γ · α⁻¹`
-in `GL (Fin 2) ℝ`. -/
+/-- Defining equality of `Gamma_p_α_conjBy`:
+`mapGL ℝ (Gamma_p_α_conjBy α γ) = α · mapGL ℝ γ · α⁻¹` in `GL (Fin 2) ℝ`. -/
 lemma Gamma_p_α_conjBy_spec (α : GL (Fin 2) ℚ)
     (γ : Gamma_p_α (N := N) α) :
     (mapGL ℝ ((Gamma_p_α_conjBy α γ : SL(2, ℤ))) : GL (Fin 2) ℝ) =
@@ -133,7 +104,7 @@ lemma Gamma_p_α_conjBy_spec (α : GL (Fin 2) ℚ)
   (Classical.choose_spec (Gamma_p_α_conj_mem_Gamma1 α γ.property)).2
 
 open CongruenceSubgroup Pointwise ConjAct in
-/-- **T090 injectivity of `Gamma_p_α_conjBy`.** -/
+/-- Injectivity of `Gamma_p_α_conjBy`. -/
 lemma Gamma_p_α_conjBy_injective (α : GL (Fin 2) ℚ) :
     Function.Injective (Gamma_p_α_conjBy (N := N) α) := by
   intro γ₁ γ₂ h
@@ -162,7 +133,7 @@ lemma Gamma_p_α_conjBy_injective (α : GL (Fin 2) ℚ) :
   exact mapGL_injective h_γ
 
 open CongruenceSubgroup Pointwise ConjAct UpperHalfPlane MeasureTheory in
-/-- **T090 downstream bridge: slash by α is `Γ_p(α)`-invariant on Γ₁(N)-cusp forms.** -/
+/-- Slash by α is `Γ_p(α)`-invariant on Γ₁(N)-cusp forms. -/
 lemma slash_α_Gamma_p_α_invariant (α : GL (Fin 2) ℚ)
     (f : ℍ → ℂ)
     (hf : ∀ δ ∈ Gamma1 N,
@@ -179,7 +150,7 @@ lemma slash_α_Gamma_p_α_invariant (α : GL (Fin 2) ℚ)
   rw [← SlashAction.slash_mul, hαγ, SlashAction.slash_mul, hf δ hδ_mem]
 
 open CongruenceSubgroup Pointwise ConjAct UpperHalfPlane MeasureTheory in
-/-- **T090 cusp-form specialization of `slash_α_Gamma_p_α_invariant`.** -/
+/-- Cusp-form specialization of `slash_α_Gamma_p_α_invariant`. -/
 lemma slash_α_Gamma_p_α_invariant_cuspForm
     (α : GL (Fin 2) ℚ) (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     {γ : SL(2, ℤ)} (hγ : γ ∈ Gamma_p_α (N := N) α) :
@@ -193,7 +164,7 @@ lemma slash_α_Gamma_p_α_invariant_cuspForm
   exact slash_Gamma1_eq f δ hδ
 
 open CongruenceSubgroup Pointwise ConjAct UpperHalfPlane MeasureTheory in
-/-- **T090 finite-index FD-transport reduction (statement-level).** -/
+/-- Finite-index FD-transport reduction. -/
 lemma slash_α_Gamma_p_α_invariant_at_FD_decomp_witness
     (α : GL (Fin 2) ℚ) (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     ∀ {γ : SL(2, ℤ)}, γ ∈ Gamma_p_α (N := N) α →
@@ -202,10 +173,8 @@ lemma slash_α_Gamma_p_α_invariant_at_FD_decomp_witness
       (⇑f) ∣[k] ((α.map (Rat.castHom ℝ) : GL (Fin 2) ℝ)) :=
   fun {γ} hγ ↦ slash_α_Gamma_p_α_invariant_cuspForm α f hγ
 
-/-! ### T090 FD transport adapters -/
-
 open CongruenceSubgroup Pointwise ConjAct UpperHalfPlane MeasureTheory in
-/-- **T090 / T106 FD-shift adapter (generic GL(2, ℝ)⁺ form)**. -/
+/-- FD-shift adapter (generic `GL(2, ℝ)⁺` form). -/
 theorem isFundamentalDomain_GLPos_smul_conjAct
     (α' : GL(2, ℝ)⁺) {H₁ : Subgroup (GL(2, ℝ)⁺)} {s : Set ℍ}
     (hs : MeasureTheory.IsFundamentalDomain (H₁ : Subgroup (GL(2, ℝ)⁺)) s μ_hyp) :
@@ -215,8 +184,7 @@ theorem isFundamentalDomain_GLPos_smul_conjAct
   MeasureTheory.IsFundamentalDomain.smul_of_eq_conjAct hs rfl
 
 open CongruenceSubgroup Pointwise ConjAct UpperHalfPlane MeasureTheory in
-/-- **T090 / T106 FD-shift adapter for `Γ_p(α)` (GL(2, ℝ)⁺ lift,
-conditional input hypothesis)**. -/
+/-- FD-shift adapter for `Γ_p(α)` (`GL(2, ℝ)⁺` lift). -/
 theorem Gamma_p_α_GLPos_lift_FD_smul_conjAct
     (α : GL (Fin 2) ℚ) (α' : GL(2, ℝ)⁺) {s : Set ℍ}
     (hs : IsFundamentalDomain
@@ -232,8 +200,7 @@ theorem Gamma_p_α_GLPos_lift_FD_smul_conjAct
   isFundamentalDomain_GLPos_smul_conjAct α' hs
 
 open CongruenceSubgroup Pointwise UpperHalfPlane MeasureTheory in
-/-- **T090 / T106 finite-index FD decomposition for `Γ_p(α) ≤ Γ₁(N)`
-(conditional ambient form)**. -/
+/-- Finite-index FD decomposition for `Γ_p(α) ≤ Γ₁(N)` (generic ambient). -/
 theorem Gamma_p_α_FD_finite_index_decomp
     {G_outer : Type*} [Group G_outer] [MulAction G_outer ℍ]
     [MeasurableConstSMul G_outer ℍ] [SMulInvariantMeasure G_outer ℍ μ_hyp]
@@ -250,19 +217,8 @@ theorem Gamma_p_α_FD_finite_index_decomp
       μ_hyp :=
   hD.subgroup_iUnion_out_smul _
 
-/-! ### Phase D: PSL(2, ℝ) ambient instantiations of the FD-shift adapters
-
-We re-instantiate the generic GL(2, ℝ)⁺ adapters from above at the
-projective real ambient `PSL(2, ℝ)`, using the Phase A–C foundation
-(`MulAction PSL(2, ℝ) ℍ`, `instSMulInvMeasure_PSL_R`, `SL2Z_to_PSL2R`,
-`isFundamentalDomain_Gamma1_PSL_R`, `GLPos_to_PSL_R_term`).  Unlike the
-`GL(2, ℝ)⁺`-subgroup version, the projective ambient hosts a satisfiable
-input FD for *any* `[NeZero N]` (no `±I`-kernel obstruction), and the
-`α'`-shift uses the term-level projective representative
-`GLPos_to_PSL_R_term α' : PSL(2, ℝ)`. -/
-
 open CongruenceSubgroup Pointwise ConjAct UpperHalfPlane MeasureTheory in
-/-- **Phase D step 2 — generic projective FD-shift adapter at PSL(2, ℝ)**. -/
+/-- Generic projective FD-shift adapter at `PSL(2, ℝ)`. -/
 theorem isFundamentalDomain_PSL_R_smul_conjAct
     (α : PSL(2, ℝ)) {H₁ : Subgroup (PSL(2, ℝ))} {s : Set ℍ}
     (hs : MeasureTheory.IsFundamentalDomain (H₁ : Subgroup (PSL(2, ℝ))) s μ_hyp) :
@@ -272,8 +228,8 @@ theorem isFundamentalDomain_PSL_R_smul_conjAct
   MeasureTheory.IsFundamentalDomain.smul_of_eq_conjAct hs rfl
 
 open CongruenceSubgroup in
-/-- **Phase E1 — finite-index instance for the projective image of `Γ_p(α)`
-inside the projective image of `Γ₁(N)`.** -/
+/-- Finite-index instance for the projective image of `Γ_p(α)` inside the
+projective image of `Γ₁(N)`. -/
 instance Gamma_p_α_image_PSL_R_finiteIndex_in_Gamma1_image
     (α : GL (Fin 2) ℚ) :
     (((Gamma_p_α (N := N) α).map SL2Z_to_PSL2R).subgroupOf
@@ -290,7 +246,7 @@ instance Gamma_p_α_image_PSL_R_finiteIndex_in_Gamma1_image
     (H := Gamma_p_α (N := N) α ⊔ SL2Z_to_PSL2R.ker)).index_ne_zero
 
 open CongruenceSubgroup in
-/-- **Phase E1 (companion) — `Fintype` of the right-coset space.** -/
+/-- `Fintype` of the right-coset space. -/
 noncomputable instance Gamma_p_α_image_PSL_R_quotient_fintype
     (α : GL (Fin 2) ℚ) :
     Fintype
@@ -300,8 +256,8 @@ noncomputable instance Gamma_p_α_image_PSL_R_quotient_fintype
   Subgroup.fintypeQuotientOfFiniteIndex
 
 open CongruenceSubgroup Pointwise UpperHalfPlane MeasureTheory in
-/-- **Phase D step 3 — finite-index FD decomposition for `Γ_p(α) ≤ Γ₁(N)`
-at the PSL(2, ℝ) ambient.** -/
+/-- Finite-index FD decomposition for `Γ_p(α) ≤ Γ₁(N)` at the `PSL(2, ℝ)`
+ambient. -/
 theorem Gamma_p_α_PSL_R_FD_finite_index_decomp
     (α : GL (Fin 2) ℚ)
     [Countable
@@ -322,7 +278,7 @@ theorem Gamma_p_α_PSL_R_FD_finite_index_decomp
   exact isFundamentalDomain_Gamma1_PSL_R
 
 open CongruenceSubgroup Pointwise UpperHalfPlane MeasureTheory in
-/-- **Phase E2 — `_auto` wrapper for the PSL(2, ℝ) FD decomposition.** -/
+/-- `_auto` wrapper for the `PSL(2, ℝ)` FD decomposition. -/
 theorem Gamma_p_α_PSL_R_FD_finite_index_decomp_auto
     (α : GL (Fin 2) ℚ) :
     IsFundamentalDomain
@@ -337,7 +293,7 @@ theorem Gamma_p_α_PSL_R_FD_finite_index_decomp_auto
   Gamma_p_α_PSL_R_FD_finite_index_decomp α
 
 open CongruenceSubgroup Pointwise ConjAct UpperHalfPlane MeasureTheory in
-/-- **Phase D step 4 — projective FD-shift adapter for `Γ_p(α)` at PSL(2, ℝ)**. -/
+/-- Projective FD-shift adapter for `Γ_p(α)` at `PSL(2, ℝ)`. -/
 theorem Gamma_p_α_PSL_R_lift_FD_smul_conjAct
     (α : GL (Fin 2) ℚ) (α' : GL(2, ℝ)⁺) {s : Set ℍ}
     (hs : IsFundamentalDomain
@@ -350,7 +306,7 @@ theorem Gamma_p_α_PSL_R_lift_FD_smul_conjAct
   isFundamentalDomain_PSL_R_smul_conjAct (GLPos_to_PSL_R_term α') hs
 
 open CongruenceSubgroup Pointwise ConjAct UpperHalfPlane MeasureTheory in
-/-- **Phase G — projective shifted FD-decomposition (general α/α').** -/
+/-- Projective shifted FD-decomposition (general α/α'). -/
 theorem Gamma_p_α_PSL_R_FD_finite_index_decomp_shifted
     (α : GL (Fin 2) ℚ) (α' : GL(2, ℝ)⁺) :
     IsFundamentalDomain
@@ -404,7 +360,7 @@ theorem Gamma_p_α_PSL_R_FD_finite_index_decomp_shifted
   exact h_shifted
 
 open CongruenceSubgroup Pointwise UpperHalfPlane MeasureTheory in
-/-- **Phase H — packaged per-α `Γ_p(α)`-fundamental-domain set.** -/
+/-- Packaged per-α `Γ_p(α)`-fundamental-domain set. -/
 noncomputable def Gamma_p_α_fundDomain_PSL (α : GL (Fin 2) ℚ) : Set ℍ :=
   ⋃ q : ((Gamma1 N).map SL2Z_to_PSL2R) ⧸
           (((Gamma_p_α (N := N) α).map SL2Z_to_PSL2R).subgroupOf
@@ -413,7 +369,7 @@ noncomputable def Gamma_p_α_fundDomain_PSL (α : GL (Fin 2) ℚ) : Set ℍ :=
       (Gamma1_fundDomain_PSL N : Set ℍ)
 
 open CongruenceSubgroup Pointwise UpperHalfPlane MeasureTheory in
-/-- **Phase H — Phase G shifted FD set as `α' • Γ_p(α)-FD` (generic).** -/
+/-- The shifted FD set as `α' • Γ_p(α)-FD`. -/
 theorem Gamma_p_α_PSL_R_FD_finite_index_decomp_shifted_eq_smul
     (α : GL (Fin 2) ℚ) (α' : GL(2, ℝ)⁺) :
     (⋃ q : ((Gamma1 N).map SL2Z_to_PSL2R) ⧸
@@ -428,8 +384,7 @@ theorem Gamma_p_α_PSL_R_FD_finite_index_decomp_shifted_eq_smul
   exact Set.iUnion_congr fun q ↦ mul_smul _ _ _
 
 open CongruenceSubgroup UpperHalfPlane ModularGroup MeasureTheory in
-/-- **Phase J — generic SL outer-quotient ↔ scaled `Gamma1_fundDomain_PSL`
-integral bridge.** -/
+/-- Generic SL outer-quotient ↔ scaled `Gamma1_fundDomain_PSL` integral bridge. -/
 theorem setIntegral_Gamma1_fundDomain_PSL_eq_SL_outer_q_sum
     (h : ℍ → ℂ)
     (h_inv : ∀ γ ∈ Gamma1 N, ∀ τ : ℍ, h (γ • τ) = h τ)
@@ -458,8 +413,7 @@ theorem setIntegral_Gamma1_fundDomain_PSL_eq_SL_outer_q_sum
         rw [← setIntegral_Gamma1_fundDomain_PSL_eq_sum h h_int]
 
 open CongruenceSubgroup UpperHalfPlane ModularGroup MeasureTheory in
-/-- **Phase K — Petersson-integrand specialization of the Phase J generic
-SL outer-quotient bridge.** -/
+/-- Petersson-integrand specialization of the generic SL outer-quotient bridge. -/
 theorem peterssonInner_Gamma1_fundDomain_PSL_eq_SL_outer_q_sum
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
@@ -473,7 +427,7 @@ theorem peterssonInner_Gamma1_fundDomain_PSL_eq_SL_outer_q_sum
     (integrableOn_petersson_Gamma1_fundDomain_PSL f g)
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **Phase L (a) — generic per-`q` SL slash-domain reducer.** -/
+/-- Generic per-`q` SL slash-domain reducer. -/
 theorem peterssonInner_fd_slash_q_eq_setIntegral_shifted_fd
     (F G : ℍ → ℂ) (q : SL(2, ℤ) ⧸ Gamma1 N) :
     peterssonInner k fd (F ∣[k] (q.out : SL(2, ℤ))⁻¹) (G ∣[k] (q.out : SL(2, ℤ))⁻¹) =
@@ -486,7 +440,7 @@ theorem peterssonInner_fd_slash_q_eq_setIntegral_shifted_fd
       (measurableEmbedding_const_smul _)]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **Phase L (b) — DS-LHS branch per-`q` slash-compose + slash-domain reducer.** -/
+/-- Per-`q` slash-compose plus slash-domain reducer. -/
 theorem peterssonInner_slash_compose_q_eq_setIntegral_shifted_fd
     (A B : GL (Fin 2) ℝ) (q : SL(2, ℤ) ⧸ Gamma1 N) (F G : ℍ → ℂ) :
     peterssonInner k fd
@@ -501,20 +455,12 @@ theorem peterssonInner_slash_compose_q_eq_setIntegral_shifted_fd
     (F ∣[k] A) (G ∣[k] B) q
 
 open CongruenceSubgroup ModularGroup MeasureTheory in
-/-- **Phase M (a) — image of `Γ_p(α)` in `PSL(2, ℤ)`.**
-
-Direct PSL projection of `Γ_p(α) ≤ SL(2, ℤ)` via the canonical
-`SL(2, ℤ) →* PSL(2, ℤ) = SL(2, ℤ) / {±I}`.  Mirrors `imageGamma1_PSL`
-(`PeterssonLevelN.lean:508`) at the Γ_p(α) subgroup. -/
+/-- The image of `Γ_p(α)` in `PSL(2, ℤ) = SL(2, ℤ) / {±I}`. -/
 noncomputable def image_Gamma_p_α_PSL (α : GL (Fin 2) ℚ) : Subgroup PSL(2, ℤ) :=
   (Gamma_p_α (N := N) α).map (QuotientGroup.mk' (Subgroup.center SL(2, ℤ)))
 
 open CongruenceSubgroup in
-/-- **Phase M (a) — `image_Gamma_p_α_PSL α` has finite index in `PSL(2, ℤ)`.**
-
-The image of a finite-index subgroup under a surjective hom has finite index;
-applied to the surjection `SL(2, ℤ) →* PSL(2, ℤ)` and the finite-index witness
-`Gamma_p_α_finiteIndex`. -/
+/-- `image_Gamma_p_α_PSL α` has finite index in `PSL(2, ℤ)`. -/
 instance image_Gamma_p_α_PSL_finiteIndex (α : GL (Fin 2) ℚ) :
     (image_Gamma_p_α_PSL (N := N) α).FiniteIndex := by
   haveI : (Gamma_p_α (N := N) α).FiniteIndex :=
@@ -528,21 +474,13 @@ instance image_Gamma_p_α_PSL_finiteIndex (α : GL (Fin 2) ℚ) :
   exact Subgroup.FiniteIndex.index_ne_zero (Nat.eq_zero_of_zero_dvd h_dvd)
 
 open CongruenceSubgroup in
-/-- **Phase M (a) — `Fintype` of the right-coset space `PSL(2, ℤ) ⧸ image_Gamma_p_α_PSL α`.**
-
-Direct `Subgroup.fintypeQuotientOfFiniteIndex` from the FiniteIndex instance
-above.  Used downstream by `Gamma_p_α_fundDomain_PSL_canonical` and any
-finite-sum identity over PSL/image cosets. -/
+/-- `Fintype` of the right-coset space `PSL(2, ℤ) ⧸ image_Gamma_p_α_PSL α`. -/
 noncomputable instance image_Gamma_p_α_PSL_quotient_fintype (α : GL (Fin 2) ℚ) :
     Fintype (PSL(2, ℤ) ⧸ image_Gamma_p_α_PSL (N := N) α) :=
   Subgroup.fintypeQuotientOfFiniteIndex
 
 open CongruenceSubgroup in
-/-- **Phase M (b) — `Fintype` of `SL(2, ℤ) ⧸ Γ_p(α)`.**
-
-Required by `Finset.univ` in the fiber-cardinality and SL→PSL reindex
-identities below.  Direct `Subgroup.fintypeQuotientOfFiniteIndex` on the
-`Gamma_p_α_finiteIndex` witness. -/
+/-- `Fintype` of `SL(2, ℤ) ⧸ Γ_p(α)`. -/
 noncomputable instance Gamma_p_α_quotient_fintype (α : GL (Fin 2) ℚ) :
     Fintype (SL(2, ℤ) ⧸ Gamma_p_α (N := N) α) := by
   haveI : (Gamma_p_α (N := N) α).FiniteIndex :=
@@ -550,14 +488,14 @@ noncomputable instance Gamma_p_α_quotient_fintype (α : GL (Fin 2) ℚ) :
   exact Subgroup.fintypeQuotientOfFiniteIndex
 
 open CongruenceSubgroup UpperHalfPlane ModularGroup MeasureTheory in
-/-- **Phase M (a) — canonical PSL-coset fundamental domain for `image_Gamma_p_α_PSL α`.** -/
+/-- Canonical PSL-coset fundamental domain for `image_Gamma_p_α_PSL α`. -/
 noncomputable def Gamma_p_α_fundDomain_PSL_canonical (α : GL (Fin 2) ℚ) : Set ℍ :=
   ⋃ q : PSL(2, ℤ) ⧸ image_Gamma_p_α_PSL (N := N) α,
     ((q.out : PSL(2, ℤ)))⁻¹ • (fdo : Set ℍ)
 
 open CongruenceSubgroup UpperHalfPlane ModularGroup MeasureTheory in
-/-- **Phase M (a) — `Gamma_p_α_fundDomain_PSL_canonical α` is a fundamental domain
-for `image_Gamma_p_α_PSL α` acting on `ℍ`.** -/
+/-- `Gamma_p_α_fundDomain_PSL_canonical α` is a fundamental domain for
+`image_Gamma_p_α_PSL α` acting on `ℍ`. -/
 theorem isFundamentalDomain_Gamma_p_α_PSL_canonical (α : GL (Fin 2) ℚ) :
     MeasureTheory.IsFundamentalDomain (image_Gamma_p_α_PSL (N := N) α)
       (Gamma_p_α_fundDomain_PSL_canonical (N := N) α) μ_hyp :=
@@ -565,11 +503,8 @@ theorem isFundamentalDomain_Gamma_p_α_PSL_canonical (α : GL (Fin 2) ℚ) :
     (image_Gamma_p_α_PSL (N := N) α)
 
 open CongruenceSubgroup in
-/-- **Phase M (b) — natural quotient map `SL ⧸ Γ_p(α) → PSL ⧸ image_Γ_p(α)_PSL`.**
-
-Mirror of `slToPslQuot` (`PeterssonLevelN.lean:811`) at the Γ_p(α) subgroup.
-Sends each `Γ_p(α)`-coset `[g]` to its `image_Gamma_p_α_PSL`-coset
-`[PSL.mk g]`.  Well-defined by the inclusion `Γ_p(α).map (PSL.mk') ⊆ image_Γ_p(α)_PSL`. -/
+/-- The natural quotient map `SL ⧸ Γ_p(α) → PSL ⧸ image_Γ_p(α)_PSL`,
+sending each `Γ_p(α)`-coset `[g]` to the `image_Gamma_p_α_PSL`-coset `[PSL.mk g]`. -/
 noncomputable def slToPslQuot_Gamma_p_α (α : GL (Fin 2) ℚ) :
     SL(2, ℤ) ⧸ Gamma_p_α (N := N) α →
       PSL(2, ℤ) ⧸ image_Gamma_p_α_PSL (N := N) α :=
@@ -603,7 +538,7 @@ theorem slToPslQuot_Gamma_p_α_surjective (α : GL (Fin 2) ℚ) :
   rw [slToPslQuot_Gamma_p_α_mk, hg_sl, hg_psl]
 
 open CongruenceSubgroup in
-/-- **Phase M (b) — left-multiplication action on `SL ⧸ Γ_p(α)`.** -/
+/-- Left-multiplication action on `SL ⧸ Γ_p(α)`. -/
 noncomputable def slLeftMul_Gamma_p_α (α : GL (Fin 2) ℚ) (h : SL(2, ℤ)) :
     SL(2, ℤ) ⧸ Gamma_p_α (N := N) α → SL(2, ℤ) ⧸ Gamma_p_α (N := N) α :=
   Quotient.lift (fun g : SL(2, ℤ) ↦ (QuotientGroup.mk (h * g) : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α))
@@ -633,10 +568,6 @@ theorem slLeftMul_Gamma_p_α_comp (α : GL (Fin 2) ℚ) (h₁ h₂ : SL(2, ℤ))
       slLeftMul_Gamma_p_α (N := N) α (h₁ * h₂) q := by
   induction q using QuotientGroup.induction_on with | _ g => simp [mul_assoc]
 
-/-- Left-transport of `slToPslQuot_Gamma_p_α` fibers: if `[g]` and `[b]` have the
-same image, then left-multiplying `g` by `a * b⁻¹` lands in the fiber of `[a]`.
-The single algebraic fact shared by both bijection branches of
-`slToPslQuot_Gamma_p_α_fiber_card_uniform`. -/
 private lemma slToPslQuot_mk_left_transport (α : GL (Fin 2) ℚ) (a b g : SL(2, ℤ))
     (hg : slToPslQuot_Gamma_p_α (N := N) α (QuotientGroup.mk g) =
         slToPslQuot_Gamma_p_α (N := N) α (QuotientGroup.mk b)) :
@@ -652,7 +583,7 @@ private lemma slToPslQuot_mk_left_transport (α : GL (Fin 2) ℚ) (a b g : SL(2,
   rw [key]; exact hg
 
 open CongruenceSubgroup Classical in
-/-- **Phase M (b) — uniform fiber size of `slToPslQuot_Gamma_p_α`.** -/
+/-- Uniform fiber size of `slToPslQuot_Gamma_p_α`. -/
 theorem slToPslQuot_Gamma_p_α_fiber_card_uniform (α : GL (Fin 2) ℚ)
     (q₁' q₂' : PSL(2, ℤ) ⧸ image_Gamma_p_α_PSL (N := N) α) :
     haveI : DecidableEq (PSL(2, ℤ) ⧸ image_Gamma_p_α_PSL (N := N) α) := Classical.decEq _
@@ -691,10 +622,8 @@ theorem slToPslQuot_Gamma_p_α_fiber_card_uniform (α : GL (Fin 2) ℚ)
     exact slToPslQuot_mk_left_transport α g₁ g₂ g (hq.trans hq₂.symm)
 
 open CongruenceSubgroup Classical in
-/-- **Phase M (b) — uniform fiber cardinality of `slToPslQuot_Gamma_p_α`.**
-
-Computed at the identity coset.  By
-`slToPslQuot_Gamma_p_α_fiber_card_uniform`, every fiber has this cardinality. -/
+/-- Uniform fiber cardinality of `slToPslQuot_Gamma_p_α`, computed at the
+identity coset. -/
 noncomputable def slToPslQuot_fiberCard_Gamma_p_α (α : GL (Fin 2) ℚ) : ℕ :=
   haveI : DecidableEq (PSL(2, ℤ) ⧸ image_Gamma_p_α_PSL (N := N) α) := Classical.decEq _
   (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α =>
@@ -711,7 +640,7 @@ theorem slToPslQuot_fiberCard_Gamma_p_α_eq (α : GL (Fin 2) ℚ)
   exact slToPslQuot_Gamma_p_α_fiber_card_uniform (N := N) α q' _
 
 open CongruenceSubgroup UpperHalfPlane MeasureTheory in
-/-- **Phase M (b) — fiber-invariance of the SL-tile integral at H = Γ_p(α).** -/
+/-- Fiber-invariance of the SL-tile integral at `H = Γ_p(α)`. -/
 theorem setIntegral_SL_tile_eq_PSL_tile_Gamma_p_α (α : GL (Fin 2) ℚ)
     (h : ℍ → ℂ)
     (h_inv : ∀ γ ∈ Gamma_p_α (N := N) α, ∀ τ : ℍ, h (γ • τ) = h τ)
@@ -765,10 +694,7 @@ theorem setIntegral_SL_tile_eq_PSL_tile_Gamma_p_α (α : GL (Fin 2) ℚ)
   exact h_inv γ⁻¹ ((Gamma_p_α (N := N) α).inv_mem hγ_mem) τ
 
 open CongruenceSubgroup UpperHalfPlane MeasureTheory Classical in
-/-- **Phase M (b) — SL→PSL fiber-sum reindexing for Γ_p(α)-invariant integrands.**
-
-Mirror of `sum_SL_tile_eq_fiberwise_PSL_tile` (`PeterssonLevelN.lean:1099`)
-at the Γ_p(α) subgroup. -/
+/-- SL→PSL fiber-sum reindexing for `Γ_p(α)`-invariant integrands. -/
 theorem sum_SL_tile_eq_fiberwise_PSL_tile_Gamma_p_α (α : GL (Fin 2) ℚ)
     (h : ℍ → ℂ)
     (h_inv : ∀ γ ∈ Gamma_p_α (N := N) α, ∀ τ : ℍ, h (γ • τ) = h τ) :
@@ -799,7 +725,7 @@ theorem sum_SL_tile_eq_fiberwise_PSL_tile_Gamma_p_α (α : GL (Fin 2) ℚ)
         exact Finset.sum_const _
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **Phase M (b) — `fd` ↔ `fdo` SL-tile integral equality at H = Γ_p(α).** -/
+/-- `fd` ↔ `fdo` SL-tile integral equality at `H = Γ_p(α)`. -/
 theorem setIntegral_SL_tile_fd_eq_fdo_Gamma_p_α
     (α : GL (Fin 2) ℚ) (h : ℍ → ℂ)
     (q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α) :
@@ -816,11 +742,7 @@ theorem setIntegral_SL_tile_fd_eq_fdo_Gamma_p_α
     setIntegral_fd_eq_fdo]
 
 open CongruenceSubgroup UpperHalfPlane ModularGroup MeasureTheory in
-/-- **Phase M (b) — pairwise AE-disjointness of canonical PSL coset tiles for Γ_p(α).**
-
-Analog of `aedisjoint_PSL_coset_tiles` (`PeterssonLevelN.lean:549`) at
-H = image_Gamma_p_α_PSL.  Uses `isFundamentalDomain_fdo_PSL.aedisjoint`
-on the distinct PSL representatives `q.out`. -/
+/-- Pairwise AE-disjointness of the canonical PSL coset tiles for `Γ_p(α)`. -/
 theorem aedisjoint_PSL_coset_tiles_Gamma_p_α (α : GL (Fin 2) ℚ) :
     Pairwise (fun q₁ q₂ : PSL(2, ℤ) ⧸ image_Gamma_p_α_PSL (N := N) α =>
       MeasureTheory.AEDisjoint μ_hyp
@@ -835,10 +757,7 @@ theorem aedisjoint_PSL_coset_tiles_Gamma_p_α (α : GL (Fin 2) ℚ) :
   exact isFundamentalDomain_fdo_PSL.aedisjoint h_inv_ne
 
 open CongruenceSubgroup UpperHalfPlane ModularGroup MeasureTheory in
-/-- **Phase M (b) — null-measurability of canonical PSL coset tiles for Γ_p(α).**
-
-Analog of `nullMeasurableSet_PSL_coset_tile` (`PeterssonLevelN.lean:562`)
-at H = image_Gamma_p_α_PSL. -/
+/-- Null-measurability of the canonical PSL coset tiles for `Γ_p(α)`. -/
 theorem nullMeasurableSet_PSL_coset_tile_Gamma_p_α
     (α : GL (Fin 2) ℚ)
     (q : PSL(2, ℤ) ⧸ image_Gamma_p_α_PSL (N := N) α) :
@@ -847,10 +766,7 @@ theorem nullMeasurableSet_PSL_coset_tile_Gamma_p_α
   isFundamentalDomain_fdo_PSL.nullMeasurableSet_smul _
 
 open CongruenceSubgroup UpperHalfPlane ModularGroup MeasureTheory in
-/-- **Phase M (b) — `Gamma_p_α_fundDomain_PSL_canonical` integral as PSL-tile sum.**
-
-Mirror of `setIntegral_Gamma1_fundDomain_PSL_eq_sum` (`PeterssonLevelN.lean:575`)
-at the canonical Γ_p(α) PSL fundamental domain. -/
+/-- `Gamma_p_α_fundDomain_PSL_canonical` integral as a PSL-tile sum. -/
 theorem setIntegral_Gamma_p_α_fundDomain_PSL_canonical_eq_sum
     (α : GL (Fin 2) ℚ) (h : ℍ → ℂ)
     (h_int : IntegrableOn h
@@ -865,8 +781,7 @@ theorem setIntegral_Gamma_p_α_fundDomain_PSL_canonical_eq_sum
     tsum_fintype]
 
 open CongruenceSubgroup UpperHalfPlane ModularGroup MeasureTheory in
-/-- **Phase M (b) — main bridge: SL outer-q sum ↔ scaled `Gamma_p_α_fundDomain_PSL_canonical`
-integral.** -/
+/-- SL outer-q sum ↔ scaled `Gamma_p_α_fundDomain_PSL_canonical` integral. -/
 theorem setIntegral_Gamma_p_α_fundDomain_PSL_canonical_eq_SL_outer_q_sum
     (α : GL (Fin 2) ℚ) (h : ℍ → ℂ)
     (h_inv : ∀ γ ∈ Gamma_p_α (N := N) α, ∀ τ : ℍ, h (γ • τ) = h τ)
@@ -901,11 +816,7 @@ theorem setIntegral_Gamma_p_α_fundDomain_PSL_canonical_eq_SL_outer_q_sum
           (N := N) α h h_int]
 
 open CongruenceSubgroup Pointwise in
-/-- **Phase M (c) — `(Γ_p(α)).map SL2Z_to_PSL2R = (image_Gamma_p_α_PSL α).map PSL2Z_to_PSL2R`.**
-
-Mirror of `map_SL2Z_to_PSL2R_eq_imageGamma1_PSL_R` (`PeterssonLevelN.lean:795`)
-at the Γ_p(α) subgroup.  Identifies the direct integer-to-PSL(2, ℝ) map of
-Γ_p(α) with the two-step composition through `image_Gamma_p_α_PSL α`. -/
+/-- `(Γ_p(α)).map SL2Z_to_PSL2R = (image_Gamma_p_α_PSL α).map PSL2Z_to_PSL2R`. -/
 theorem map_SL2Z_to_PSL2R_eq_image_Gamma_p_α_PSL_R
     (α : GL (Fin 2) ℚ) :
     (Gamma_p_α (N := N) α).map SL2Z_to_PSL2R =
@@ -915,7 +826,7 @@ theorem map_SL2Z_to_PSL2R_eq_image_Gamma_p_α_PSL_R
   rfl
 
 open CongruenceSubgroup Pointwise UpperHalfPlane MeasureTheory in
-/-- **Phase M (c) — canonical FD is also a FD for `(Γ_p(α)).map SL2Z_to_PSL2R`.** -/
+/-- The canonical FD is also a FD for `(Γ_p(α)).map SL2Z_to_PSL2R`. -/
 theorem isFundamentalDomain_Gamma_p_α_PSL_canonical_at_PSL_R
     (α : GL (Fin 2) ℚ) :
     IsFundamentalDomain ((Gamma_p_α (N := N) α).map SL2Z_to_PSL2R)
@@ -958,7 +869,7 @@ theorem isFundamentalDomain_Gamma_p_α_PSL_canonical_at_PSL_R
   rfl
 
 open CongruenceSubgroup Pointwise UpperHalfPlane MeasureTheory in
-/-- **Phase M (c) — Phase H domain is also a FD for `(Γ_p(α)).map SL2Z_to_PSL2R`.** -/
+/-- `Gamma_p_α_fundDomain_PSL` is also a FD for `(Γ_p(α)).map SL2Z_to_PSL2R`. -/
 theorem isFundamentalDomain_Gamma_p_α_fundDomain_PSL_at_PSL_R
     (α : GL (Fin 2) ℚ) :
     IsFundamentalDomain ((Gamma_p_α (N := N) α).map SL2Z_to_PSL2R)
@@ -975,7 +886,7 @@ theorem isFundamentalDomain_Gamma_p_α_fundDomain_PSL_at_PSL_R
   exact h_image
 
 open CongruenceSubgroup Pointwise UpperHalfPlane MeasureTheory in
-/-- **Phase M (c) — `Γ_p(α)`-invariance lifts to `(Γ_p(α)).map SL2Z_to_PSL2R`-invariance.** -/
+/-- `Γ_p(α)`-invariance lifts to `(Γ_p(α)).map SL2Z_to_PSL2R`-invariance. -/
 theorem inv_under_Gamma_p_α_PSL_R_of_inv_under_Gamma_p_α
     (α : GL (Fin 2) ℚ) {h : ℍ → ℂ}
     (h_inv : ∀ γ ∈ Gamma_p_α (N := N) α, ∀ τ : ℍ, h (γ • τ) = h τ)
@@ -990,7 +901,7 @@ theorem inv_under_Gamma_p_α_PSL_R_of_inv_under_Gamma_p_α
   exact h_inv γ hγ_mem τ
 
 open CongruenceSubgroup Pointwise in
-/-- **Phase M (c) — countability of the PSL(2, ℝ)-side image of `Γ_p(α)`.** -/
+/-- Countability of the `PSL(2, ℝ)`-side image of `Γ_p(α)`. -/
 instance Gamma_p_α_PSL_R_countable
     (α : GL (Fin 2) ℚ) :
     Countable ((Gamma_p_α (N := N) α).map SL2Z_to_PSL2R) := by
@@ -1006,8 +917,8 @@ instance Gamma_p_α_PSL_R_countable
     exact Subtype.ext hγ_eq)
 
 open CongruenceSubgroup Pointwise UpperHalfPlane MeasureTheory in
-/-- **Phase M (c) — integral equality between Phase H FD and canonical FD for
-`Γ_p(α)`-invariant integrands.** -/
+/-- Integral equality between `Gamma_p_α_fundDomain_PSL` and the canonical FD
+for `Γ_p(α)`-invariant integrands. -/
 theorem setIntegral_Gamma_p_α_fundDomain_PSL_eq_canonical
     (α : GL (Fin 2) ℚ) (h : ℍ → ℂ)
     (h_inv : ∀ γ ∈ Gamma_p_α (N := N) α, ∀ τ : ℍ, h (γ • τ) = h τ) :
@@ -1018,7 +929,7 @@ theorem setIntegral_Gamma_p_α_fundDomain_PSL_eq_canonical
     (fun g τ ↦ inv_under_Gamma_p_α_PSL_R_of_inv_under_Gamma_p_α (N := N) α h_inv g τ)
 
 open CongruenceSubgroup Pointwise UpperHalfPlane MeasureTheory in
-/-- **Phase M (c) — main transfer: Γ_p(α) outer-SL bridge for the Phase H FD.** -/
+/-- The `Γ_p(α)` outer-SL bridge for `Gamma_p_α_fundDomain_PSL`. -/
 theorem setIntegral_Gamma_p_α_fundDomain_PSL_eq_SL_outer_q_sum
     (α : GL (Fin 2) ℚ) (h : ℍ → ℂ)
     (h_inv : ∀ γ ∈ Gamma_p_α (N := N) α, ∀ τ : ℍ, h (γ • τ) = h τ)
@@ -1033,7 +944,7 @@ theorem setIntegral_Gamma_p_α_fundDomain_PSL_eq_SL_outer_q_sum
     (N := N) α h h_inv h_int
 
 open CongruenceSubgroup UpperHalfPlane ModularGroup MeasureTheory in
-/-- **Phase M (d) — `Gamma_p_α_fundDomain_PSL_canonical α` has finite measure.** -/
+/-- `Gamma_p_α_fundDomain_PSL_canonical α` has finite measure. -/
 theorem hyperbolicMeasure_Gamma_p_α_fundDomain_PSL_canonical_lt_top
     (α : GL (Fin 2) ℚ) :
     μ_hyp (Gamma_p_α_fundDomain_PSL_canonical (N := N) α) < ⊤ := by
@@ -1048,7 +959,7 @@ theorem hyperbolicMeasure_Gamma_p_α_fundDomain_PSL_canonical_lt_top
   exact lt_of_le_of_lt (measure_mono fdo_subset_fd) hyperbolicMeasure_fd_lt_top
 
 open CongruenceSubgroup UpperHalfPlane ModularGroup MeasureTheory in
-/-- **Phase M (d) — Petersson kernel integrable on canonical Γ_p(α) FD.** -/
+/-- The Petersson kernel is integrable on the canonical `Γ_p(α)` FD. -/
 theorem integrableOn_petersson_Gamma_p_α_fundDomain_PSL_canonical
     (α : GL (Fin 2) ℚ) (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     IntegrableOn (fun τ ↦ petersson k ⇑f ⇑g τ)
@@ -1062,7 +973,7 @@ theorem integrableOn_petersson_Gamma_p_α_fundDomain_PSL_canonical
     C (ae_of_all _ fun τ ↦ hC τ)
 
 open CongruenceSubgroup UpperHalfPlane ModularGroup MeasureTheory in
-/-- **Phase M (d) — α-uniform Petersson specialization of the Γ_p(α) outer-SL bridge.** -/
+/-- α-uniform Petersson specialization of the `Γ_p(α)` outer-SL bridge. -/
 theorem peterssonInner_petersson_Gamma_p_α_fundDomain_PSL_eq_SL_outer_q_sum
     (α : GL (Fin 2) ℚ) (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     ∑ q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α,
@@ -1078,10 +989,8 @@ theorem peterssonInner_petersson_Gamma_p_α_fundDomain_PSL_eq_SL_outer_q_sum
     (integrableOn_petersson_Gamma_p_α_fundDomain_PSL_canonical (N := N) α f g)
 
 open CongruenceSubgroup in
-/-- **Phase M (e) — natural quotient map `SL ⧸ Γ_p(α) → SL ⧸ Γ₁(N)`.**
-
-Sends each `Γ_p(α)`-coset `[g]` to its `Γ₁(N)`-coset `[g]`.  Well-defined by
-the inclusion `Γ_p(α) ≤ Γ₁(N)` (`Gamma_p_α_le_Gamma1`). -/
+/-- The natural quotient map `SL ⧸ Γ_p(α) → SL ⧸ Γ₁(N)`, sending each
+`Γ_p(α)`-coset `[g]` to its `Γ₁(N)`-coset `[g]`. -/
 noncomputable def slGamma_p_αToGamma1 (α : GL (Fin 2) ℚ) :
     SL(2, ℤ) ⧸ Gamma_p_α (N := N) α →
       SL(2, ℤ) ⧸ Gamma1 N :=
@@ -1108,11 +1017,7 @@ theorem slGamma_p_αToGamma1_surjective (α : GL (Fin 2) ℚ) :
   rw [slGamma_p_αToGamma1_mk, hg]
 
 open CongruenceSubgroup Classical in
-/-- **Phase M (e) — uniform fiber cardinality** of `slGamma_p_αToGamma1`.
-
-Mirror of `slToPslQuot_Gamma_p_α_fiber_card_uniform` (Phase M(b)) at the
-SL/Γ₁(N) target.  The proof uses the same left-multiplication bijection
-between fibers, exploiting the SL-equivariance of the quotient map. -/
+/-- Uniform fiber cardinality of `slGamma_p_αToGamma1`. -/
 theorem slGamma_p_αToGamma1_fiber_card_uniform (α : GL (Fin 2) ℚ)
     (q₁' q₂' : SL(2, ℤ) ⧸ Gamma1 N) :
     haveI : DecidableEq (SL(2, ℤ) ⧸ Gamma1 N) := Classical.decEq _
@@ -1166,7 +1071,7 @@ theorem slGamma_p_αToGamma1_fiber_card_uniform (α : GL (Fin 2) ℚ)
     rw [this]; exact hq_eq
 
 open CongruenceSubgroup Classical in
-/-- **Phase M (e) — uniform fiber cardinality** of `slGamma_p_αToGamma1` at identity. -/
+/-- Uniform fiber cardinality of `slGamma_p_αToGamma1`, computed at the identity. -/
 noncomputable def slGamma_p_αToGamma1_fiberCard (α : GL (Fin 2) ℚ) : ℕ :=
   haveI : DecidableEq (SL(2, ℤ) ⧸ Gamma1 N) := Classical.decEq _
   (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α =>
@@ -1183,7 +1088,7 @@ theorem slGamma_p_αToGamma1_fiberCard_eq (α : GL (Fin 2) ℚ)
   exact slGamma_p_αToGamma1_fiber_card_uniform (N := N) α q' _
 
 open CongruenceSubgroup UpperHalfPlane MeasureTheory in
-/-- **Phase M (e) — fiber-invariance of the SL-tile integral at H = Γ₁(N), Γ_p(α)-quotient.** -/
+/-- Fiber-invariance of the SL-tile integral at `H = Γ₁(N)`, `Γ_p(α)`-quotient. -/
 theorem setIntegral_SL_tile_Gamma_p_α_eq_SL_tile_Gamma1
     (α : GL (Fin 2) ℚ) (h : ℍ → ℂ)
     (h_inv : ∀ γ ∈ Gamma1 N, ∀ τ : ℍ, h (γ • τ) = h τ)
@@ -1216,7 +1121,7 @@ theorem setIntegral_SL_tile_Gamma_p_α_eq_SL_tile_Gamma1
   exact h_inv γ⁻¹ ((Gamma1 N).inv_mem hγ_mem) τ
 
 open CongruenceSubgroup UpperHalfPlane MeasureTheory Classical in
-/-- **Phase M (e) — SL/Γ_p(α) → SL/Γ₁(N) fiber-sum reindex.** -/
+/-- SL/Γ_p(α) → SL/Γ₁(N) fiber-sum reindex. -/
 theorem sum_SL_tile_Gamma_p_α_eq_fiberCard_mul_SL_tile_Gamma1
     (α : GL (Fin 2) ℚ) (h : ℍ → ℂ)
     (h_inv : ∀ γ ∈ Gamma1 N, ∀ τ : ℍ, h (γ • τ) = h τ) :
@@ -1249,7 +1154,7 @@ theorem sum_SL_tile_Gamma_p_α_eq_fiberCard_mul_SL_tile_Gamma1
         congr
 
 open CongruenceSubgroup UpperHalfPlane ModularGroup MeasureTheory in
-/-- **Phase M (f) — Petersson kernel: `Γ_p(α)` outer-SL sum equals `relIndex • petN`.** -/
+/-- Petersson kernel: `Γ_p(α)` outer-SL sum equals `relIndex • petN`. -/
 theorem sum_SL_Gamma_p_α_setIntegral_fd_petersson_eq_relIndex_mul_petN
     (α : GL (Fin 2) ℚ) (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     ∑ q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α,
@@ -1268,7 +1173,7 @@ theorem sum_SL_Gamma_p_α_setIntegral_fd_petersson_eq_relIndex_mul_petN
   exact (petN_summand_eq_setIntegral f g q').symm
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **Phase M (g) prelude — generic SL-element petersson-fd-slash setIntegral identity.** -/
+/-- Generic SL-element Petersson-fd-slash setIntegral identity. -/
 theorem peterssonInner_fd_slash_SL_eq_setIntegral_shifted_fd
     (F G : ℍ → ℂ) (s : SL(2, ℤ)) :
     peterssonInner k fd (F ∣[k] (s : SL(2, ℤ))⁻¹) (G ∣[k] (s : SL(2, ℤ))⁻¹) =
@@ -1281,7 +1186,7 @@ theorem peterssonInner_fd_slash_SL_eq_setIntegral_shifted_fd
       (measurableEmbedding_const_smul _)]
 
 open CongruenceSubgroup UpperHalfPlane ModularGroup MeasureTheory in
-/-- **Phase M (g) — Petersson kernel: `Γ_p(α)` outer-SL `petN`-summand sum equals `relIndex • petN`.** -/
+/-- Petersson kernel: `Γ_p(α)` outer-SL `petN`-summand sum equals `relIndex • petN`. -/
 theorem sum_SL_Gamma_p_α_petN_summand_eq_relIndex_mul_petN
     (α : GL (Fin 2) ℚ) (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     ∑ q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α,

@@ -15,9 +15,6 @@ infrastructure. This is the basis element in the Hecke algebra `𝕋(Gamma0_pair
 whose image under `heckeRingHom_Gamma0 N k` is the Hecke operator `T_p` at
 level Γ₀(N).
 
-This is step 1 of the refactor to derive Γ₁(N) Hecke operator commutativity
-from commutativity of the Hecke ring `𝕋(Γ₀(N))` via character decomposition.
-
 ## Main definitions
 
 * `D_p_Gamma0 N p hp` — the double coset `Γ₀(N) · diag(1,p) · Γ₀(N)`.
@@ -26,7 +23,7 @@ from commutativity of the Hecke ring `𝕋(Γ₀(N))` via character decompositio
 * `T_p_lower_mem_Delta0` — the lower-triangular rep lives in `Δ₀(N)` when
   `gcd(p,N) = 1`.
 
-## Main results (step 2)
+## Main results
 
 * `HeckeCoset_deg_D_p_Gamma0` — the double coset has exactly `p + 1` left cosets.
 * `T_p_upper_mem_D_p_Gamma0` — `T_p_upper(b) ∈ D_p_Gamma0` for all `b`.
@@ -44,8 +41,6 @@ open scoped Pointwise MatrixGroups
 
 namespace HeckeRing.GL2
 
-/-! ### `diag(1,p) ∈ Δ₀(N)` and the double coset -/
-
 /-- `diag(1,p)` lies in `Δ₀(N)` for any `N` and `p > 0`. -/
 lemma diag_1p_mem_Delta0 (N p : ℕ) [NeZero N] (hp : 0 < p) :
     diagMat 2 ![1, p] ∈ Delta0_submonoid N := by
@@ -59,10 +54,8 @@ lemma diag_1p_mem_Delta0 (N p : ℕ) [NeZero N] (hp : 0 < p) :
       simp [A, Matrix.diagonal, Matrix.map_apply, Int.cast_natCast]
   refine ⟨⟨A, hA_eq⟩, by rw [hcoe, Matrix.det_diagonal]; simp; exact_mod_cast hp,
     A, hA_eq, ?_, ?_⟩
-  · -- N ∣ A 1 0: off-diagonal entry of diagonal matrix is 0
-    simp [A, Matrix.diagonal]
-  · -- Int.gcd (A 0 0) N = 1: top-left entry is 1
-    simp [A, Matrix.diagonal]
+  · simp [A, Matrix.diagonal]
+  · simp [A, Matrix.diagonal]
 
 /-- `diag(1,p)` as an element of `(Gamma0_pair N).Δ`. -/
 noncomputable def diag_1p_delta_Gamma0 (N p : ℕ) [NeZero N] (hp : 0 < p) :
@@ -101,8 +94,7 @@ lemma T_p_lower_mem_Delta0 (N : ℕ) [NeZero N] (p : ℕ) (hp : 0 < p)
   refine ⟨⟨A, hA_eq⟩, ?_, A, hA_eq, ?_, ?_⟩
   · rw [T_p_lower_det]; exact_mod_cast hp
   · simp [A]
-  · -- Int.gcd p N = 1 from Nat.Coprime p N
-    simp only [A]
+  · simp only [A]
     exact_mod_cast hpN
 
 /-- `T_p_upper(b)` as an element of `(Gamma0_pair N).Δ`. -/
@@ -115,13 +107,6 @@ noncomputable def T_p_lower_delta_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : 0 
     (hpN : Nat.Coprime p N) : (Gamma0_pair N).Δ :=
   ⟨T_p_lower p hp, T_p_lower_mem_Delta0 N p hp hpN⟩
 
-/-! ### Degree of `D_p_Gamma0` and coset representatives
-
-For `p` prime coprime to `N`, the double coset `Γ₀(N) · diag(1,p) · Γ₀(N)` decomposes
-into exactly `p + 1` left `Γ₀(N)`-cosets. The standard representatives are the
-classical `T_p` coset reps: `T_p_upper(b) = [[1,b],[0,p]]` for `b = 0, …, p-1` and
-`T_p_lower = [[p,0],[0,1]]`. -/
-
 /-- The cosets `T_diag_Gamma0 N ![1, p]` and `D_p_Gamma0 N p` agree because they are
 represented by the same underlying matrix `diag(1, p)`. -/
 lemma D_p_Gamma0_eq_T_diag (N : ℕ) [NeZero N] (p : ℕ) (hp : 0 < p)
@@ -131,19 +116,15 @@ lemma D_p_Gamma0_eq_T_diag (N : ℕ) [NeZero N] (p : ℕ) (hp : 0 < p)
         (by show Int.gcd ((![1, p] : Fin 2 → ℕ) 0 : ℤ) N = 1; simp) := by
   simp only [D_p_Gamma0, diag_1p_delta_Gamma0, T_diag_Gamma0]
 
-/-- **Phase 1**: The Γ₀(N)-double coset degree of `diag(1,p)` is `p + 1` for `p` prime
-coprime to `N`. Equivalently, the `decompQuot` has exactly `p + 1` elements. -/
+/-- The Γ₀(N)-double coset degree of `diag(1,p)` is `p + 1` for `p` prime
+coprime to `N`: the `decompQuot` has exactly `p + 1` elements. -/
 lemma HeckeCoset_deg_D_p_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) :
     Nat.card (HeckeRing.decompQuot (Gamma0_pair N)
         (HeckeRing.HeckeCoset.rep (D_p_Gamma0 N p hp.pos))) = p + 1 := by
-  -- Use HeckeCoset_deg_Gamma0_one_ppow at k = 1.
   have h_deg := HeckeCoset_deg_Gamma0_one_ppow N p hp hpN 1 (by omega)
-  -- Key: the underlying Δ-element of `D_p_Gamma0` coincides with the one in
-  -- `T_diag_Gamma0 N ![1, p^1]` up to proof irrelevance, because `![1, p] = ![1, p^1]`.
   have hpp : (![1, p] : Fin 2 → ℕ) = ![1, p^1] := by
     ext i; fin_cases i <;> simp
-  -- The two HeckeCosets are equal since their underlying GL elements coincide.
   have h_eq : (D_p_Gamma0 N p hp.pos : HeckeRing.HeckeCoset (Gamma0_pair N)) =
       T_diag_Gamma0 N (![1, p^1])
         (fun i => by
@@ -153,10 +134,7 @@ lemma HeckeCoset_deg_D_p_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.Prime p
     show DoubleCoset.doubleCoset (diagMat 2 (![1, p] : Fin 2 → ℕ) : GL _ ℚ) _ _ =
       DoubleCoset.doubleCoset (diagMat 2 (![1, p^1] : Fin 2 → ℕ) : GL _ ℚ) _ _
     rw [hpp]
-  -- Rewrite and extract the cardinality.
   rw [h_eq]
-  -- h_deg : HeckeCoset_deg (Gamma0_pair N) (T_diag_Gamma0 ...) = ((p^(1-1) * (p + 1) : ℕ) : ℤ)
-  -- HeckeCoset_deg unfolds to (Fintype.card ... : ℤ)
   unfold HeckeRing.HeckeCoset_deg at h_deg
   rw [Nat.card_eq_fintype_card]
   have h_nat : Fintype.card (HeckeRing.decompQuot (Gamma0_pair N)
@@ -167,19 +145,6 @@ lemma HeckeCoset_deg_D_p_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.Prime p
     exact_mod_cast h_deg
   rw [h_nat]; simp
 
-/-! ### Phase 2: membership of `T_p_upper(b)` and `T_p_lower` in `D_p_Gamma0`
-
-Both `T_p_upper(b) = [[1,b],[0,p]]` and `T_p_lower = [[p,0],[0,1]]` lie in the
-Γ₀(N)-double coset of `diag(1,p)`. The upper-triangular case uses the factorization
-`T_p_upper(b) = diag(1,p) · [[1,b],[0,1]]`, where `[[1,b],[0,1]] ∈ Γ₀(N)` since its
-lower-left entry is `0`. The lower-triangular case uses Bezout: for `u·p - v·N = 1`,
-`T_p_lower = [[p, v], [N, u]] · diag(1,p) · [[u·p, -v], [-N, 1]]` with both outer
-factors in Γ₀(N) (lower-left entries `N` and `-N` respectively). -/
-
-/-- Double-coset membership from a factorization through `diag(1,p)`: if
-`g = s · diag(1,p) · t` with `s, t ∈ (Gamma0_pair N).H`, then `g` lies in
-`toSet (D_p_Gamma0 N p)`. Absorbs the representative `rep = a · diag(1,p) · c`
-into the outer factors. -/
 private lemma mem_D_p_Gamma0_of_factor_through_diag (N : ℕ) [NeZero N] (p : ℕ)
     (hp : 0 < p) (g s t : GL (Fin 2) ℚ) (hs : s ∈ (Gamma0_pair N).H)
     (ht : t ∈ (Gamma0_pair N).H)
@@ -196,8 +161,6 @@ private lemma mem_D_p_Gamma0_of_factor_through_diag (N : ℕ) [NeZero N] (p : �
     c⁻¹ * t, (Gamma0_pair N).H.mul_mem ((Gamma0_pair N).H.inv_mem hc) ht, ?_⟩
   rw [hfact, hdiag_eq]; group
 
-/-- Bezout for coprime naturals as integers: `∃ u v, u·p - v·N = 1`. Here
-`u = gcdA p N` and `v = -gcdB p N`, so `p·u + N·(-v) = gcd p N = 1`. -/
 private lemma bezout_int_of_coprime (p N : ℕ) (hpN : Nat.Coprime p N) :
     ∃ u v : ℤ, u * (p : ℤ) - v * (N : ℤ) = 1 := by
   refine ⟨Int.gcdA (p : ℤ) (N : ℤ), -Int.gcdB (p : ℤ) (N : ℤ), ?_⟩
@@ -205,9 +168,6 @@ private lemma bezout_int_of_coprime (p N : ℕ) (hpN : Nat.Coprime p N) :
   rw [show Int.gcd (p : ℤ) (N : ℤ) = 1 by rw [Int.gcd_natCast_natCast]; exact hpN] at h
   push_cast at h; linarith
 
-/-- Bezout factorisation of `T_p_lower` through `diag(1,p)`: there exist
-`s, t ∈ (Gamma0_pair N).H` with `T_p_lower = s · diag(1,p) · t`. With `u·p - v·N = 1`,
-take `s = [[p,v],[N,u]]` and `t = [[u·p,-v],[-N,1]]`, both lower-left `≡ 0 (mod N)`. -/
 private lemma T_p_lower_factor_through_diag_1p (N : ℕ) [NeZero N] (p : ℕ)
     (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
     ∃ (s : GL (Fin 2) ℚ) (_ : s ∈ (Gamma0_pair N).H) (t : GL (Fin 2) ℚ)
@@ -242,15 +202,11 @@ private lemma T_p_lower_factor_through_diag_1p (N : ℕ) [NeZero N] (p : ℕ)
   · ring
   · linear_combination -h_bezout_Q
 
-/-- **Membership of `T_p_upper(b)` in the Γ₀(N)-double coset `D_p_Gamma0`**.
-The factorization `T_p_upper(b) = diag(1,p) · σ_b` with `σ_b = [[1,b],[0,1]]` shows
-that `T_p_upper(b)` is in the right Γ₀(N)-coset of `diag(1,p)`. Combined with the
-representative absorption for the rep of `D_p_Gamma0`, this gives double-coset
-membership. -/
+/-- Membership of `T_p_upper(b)` in the Γ₀(N)-double coset `D_p_Gamma0`, via the
+factorization `T_p_upper(b) = diag(1,p) · σ_b` with `σ_b = [[1,b],[0,1]] ∈ Γ₀(N)`. -/
 lemma T_p_upper_mem_D_p_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.Prime p) (b : ℕ) :
     (T_p_upper p hp.pos b : GL (Fin 2) ℚ) ∈
       HeckeRing.HeckeCoset.toSet (D_p_Gamma0 N p hp.pos) := by
-  -- σ_b = [[1, b], [0, 1]] ∈ SL₂(ℤ) ∩ Γ₀(N) (lower-left is 0)
   have hσ_det : (!![1, (b : ℤ); 0, 1] : Matrix (Fin 2) (Fin 2) ℤ).det = 1 := by
     simp [det_fin_two]
   set σ_b : SL(2, ℤ) := ⟨!![1, (b : ℤ); 0, 1], hσ_det⟩
@@ -258,7 +214,6 @@ lemma T_p_upper_mem_D_p_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.Prime p)
     rw [CongruenceSubgroup.Gamma0_mem]
     show ((!![1, (b : ℤ); 0, 1] : Matrix _ _ ℤ) 1 0 : ZMod N) = 0
     simp
-  -- T_p_upper(b) = 1 · diag(1,p) · σ_b, with σ_b ∈ H
   refine mem_D_p_Gamma0_of_factor_through_diag N p hp.pos _ 1 (mapGL ℚ σ_b)
     (one_mem _) (Subgroup.mem_map_of_mem _ hσ_Gamma0) ?_
   apply Units.ext; ext i j
@@ -272,10 +227,8 @@ lemma T_p_upper_mem_D_p_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.Prime p)
     simp [T_p_upper, GeneralLinearGroup.mkOfDetNeZero, σ_b, mapGL_coe_matrix,
       algebraMap_int_eq]
 
-/-- **Membership of `T_p_lower` in the Γ₀(N)-double coset `D_p_Gamma0`**.
-Uses the Bezout factorization `T_p_lower = σ · diag(1,p) · τ` where for `u,v`
-satisfying `u·p - v·N = 1` (Bezout, since `gcd(p,N) = 1`),
-`σ = [[p,v],[N,u]]` and `τ = [[up,-v],[-N,1]]` are both in Γ₀(N). -/
+/-- Membership of `T_p_lower` in the Γ₀(N)-double coset `D_p_Gamma0`, via the Bezout
+factorization `T_p_lower = σ · diag(1,p) · τ` with `σ, τ ∈ Γ₀(N)`. -/
 lemma T_p_lower_mem_D_p_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) :
     (T_p_lower p hp.pos : GL (Fin 2) ℚ) ∈
@@ -283,24 +236,11 @@ lemma T_p_lower_mem_D_p_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.Prime p)
   obtain ⟨s, hs, t, ht, hfact⟩ := T_p_lower_factor_through_diag_1p N p hp hpN
   exact mem_D_p_Gamma0_of_factor_through_diag N p hp.pos _ s t hs ht hfact
 
-/-! ### Phase 3: distinctness of the `p+1` left `Γ₀(N)`-cosets
-
-For distinct `b₁, b₂ ∈ [0, p)` and `p` prime, the representatives
-`T_p_upper(b₁), T_p_upper(b₂), T_p_lower(p)` give distinct left `Γ₀(N)`-cosets.
-The test is: `Γ₀(N) · A = Γ₀(N) · B  ⟺  A · B⁻¹ ∈ Γ₀(N).H`. We show
-`T_p_upper(b₁) · T_p_upper(b₂)⁻¹ = [[1, (b₁ - b₂)/p], [0, 1]]` has a
-non-integer `(0,1)`-entry, and `T_p_upper(b) · T_p_lower(p)⁻¹ = [[1/p, b], [0, p]]`
-has a non-integer `(0,0)`-entry. Since `(Gamma0_pair N).H` consists of images of
-`SL₂(ℤ)` matrices (integer entries), such matrices cannot lie in it. -/
-
-/-- Elements of `(Gamma0_pair N).H` come from `SL₂(ℤ)` via `mapGL` and
-therefore have integer entries. -/
 private lemma Gamma0_pair_H_entry_is_int {N : ℕ} [NeZero N] (g : GL (Fin 2) ℚ)
     (hg : g ∈ (Gamma0_pair N).H) (i j : Fin 2) : ∃ n : ℤ, g.val i j = (n : ℚ) := by
   obtain ⟨s, _, hs⟩ := Subgroup.mem_map.mp hg
   exact ⟨s.val i j, by rw [← hs]; simp [mapGL_coe_matrix, algebraMap_int_eq]⟩
 
-/-- `T_p_upper(b₁) · T_p_upper(b₂)⁻¹ = [[1, (b₁ - b₂)/p], [0, 1]]` as `GL₂(ℚ)`. -/
 private lemma T_p_upper_mul_upper_inv_eq (p : ℕ) (hp : Nat.Prime p) (b₁ b₂ : ℕ) :
     (T_p_upper p hp.pos b₁ : GL (Fin 2) ℚ) *
       (T_p_upper p hp.pos b₂ : GL (Fin 2) ℚ)⁻¹ =
@@ -313,7 +253,6 @@ private lemma T_p_upper_mul_upper_inv_eq (p : ℕ) (hp : Nat.Prime p) (b₁ b₂
   fin_cases i <;> fin_cases j <;>
     (simp [T_p_upper, GeneralLinearGroup.mkOfDetNeZero, sub_div]; try field_simp; try ring)
 
-/-- `T_p_upper(b) · T_p_lower(p)⁻¹ = [[1/p, b], [0, p]]` as `GL₂(ℚ)`. -/
 private lemma T_p_upper_mul_lower_inv_eq (p : ℕ) (hp : Nat.Prime p) (b : ℕ) :
     (T_p_upper p hp.pos b : GL (Fin 2) ℚ) *
       (T_p_lower p hp.pos : GL (Fin 2) ℚ)⁻¹ =
@@ -326,20 +265,15 @@ private lemma T_p_upper_mul_lower_inv_eq (p : ℕ) (hp : Nat.Prime p) (b : ℕ) 
   fin_cases i <;> fin_cases j <;>
     (simp [T_p_upper, T_p_lower, GeneralLinearGroup.mkOfDetNeZero]; try field_simp; try ring)
 
-/-- **Phase 3 (distinctness of upper reps)**: For distinct `b₁, b₂ < p`, the
-representatives `T_p_upper(b₁)` and `T_p_upper(b₂)` lie in distinct left
-`Γ₀(N)`-cosets. Equivalently, `T_p_upper(b₁) ≠ γ * T_p_upper(b₂)` for any
-`γ ∈ (Gamma0_pair N).H`.
-
-The proof: `T_p_upper(b₁) · T_p_upper(b₂)⁻¹ = [[1, (b₁-b₂)/p], [0, 1]]`. If
-this equalled `γ`, the `(0,1)`-entry `(b₁-b₂)/p` would be an integer. But for
-`b₁ ≠ b₂` with `|b₁-b₂| < p` and `p` prime, this is non-integer. -/
+/-- For distinct `b₁, b₂ < p`, the representatives `T_p_upper(b₁)` and `T_p_upper(b₂)`
+lie in distinct left `Γ₀(N)`-cosets: `T_p_upper(b₁) ≠ γ * T_p_upper(b₂)` for any
+`γ ∈ (Gamma0_pair N).H`, since `T_p_upper(b₁) · T_p_upper(b₂)⁻¹` has the non-integer
+`(0,1)`-entry `(b₁-b₂)/p`. -/
 lemma T_p_upper_distinct_cosets_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.Prime p)
     (b₁ b₂ : ℕ) (hb₁ : b₁ < p) (hb₂ : b₂ < p) (hne : b₁ ≠ b₂) :
     ∀ γ ∈ (Gamma0_pair N).H,
       (T_p_upper p hp.pos b₁ : GL (Fin 2) ℚ) ≠ γ * T_p_upper p hp.pos b₂ := by
   intro γ hγ heq
-  -- From heq: γ = T_p_upper(b₁) * T_p_upper(b₂)⁻¹
   have hγ_eq : γ = (T_p_upper p hp.pos b₁ : GL (Fin 2) ℚ) *
       (T_p_upper p hp.pos b₂ : GL (Fin 2) ℚ)⁻¹ := by
     rw [heq]; group
@@ -358,19 +292,14 @@ lemma T_p_upper_distinct_cosets_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.
     exact absurd hlt (not_lt.mpr (le_mul_of_one_le_left (by omega) (Int.one_le_abs h)))
   simp [hn0] at h_int; omega
 
-/-- **Phase 3 (distinctness upper vs lower)**: The representative `T_p_upper(b)`
-does not lie in the same left `Γ₀(N)`-coset as `T_p_lower(p)`. Equivalently,
-`T_p_upper(b) ≠ γ * T_p_lower(p)` for any `γ ∈ (Gamma0_pair N).H`.
-
-The proof: `T_p_upper(b) · T_p_lower(p)⁻¹ = [[1/p, b], [0, p]]`. If this equalled
-`γ`, the `(0,0)`-entry `1/p` would be an integer. But `p` is prime (so `p ≥ 2`),
-so `1/p` is not an integer. -/
+/-- The representative `T_p_upper(b)` does not lie in the same left `Γ₀(N)`-coset as
+`T_p_lower(p)`: `T_p_upper(b) ≠ γ * T_p_lower(p)` for any `γ ∈ (Gamma0_pair N).H`,
+since `T_p_upper(b) · T_p_lower(p)⁻¹` has the non-integer `(0,0)`-entry `1/p`. -/
 lemma T_p_upper_ne_lower_cosets_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.Prime p)
     (b : ℕ) :
     ∀ γ ∈ (Gamma0_pair N).H,
       (T_p_upper p hp.pos b : GL (Fin 2) ℚ) ≠ γ * T_p_lower p hp.pos := by
   intro γ hγ heq
-  -- From heq: γ = T_p_upper(b) * T_p_lower(p)⁻¹
   have hγ_eq : γ = (T_p_upper p hp.pos b : GL (Fin 2) ℚ) *
       (T_p_lower p hp.pos : GL (Fin 2) ℚ)⁻¹ := by
     rw [heq]; group
@@ -384,16 +313,6 @@ lemma T_p_upper_ne_lower_cosets_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.
   have h_le := Int.le_of_dvd one_pos hp_dvd
   linarith [show (1 : ℤ) < ↑p from Int.ofNat_lt.mpr hp.one_lt]
 
-/-! ### Phase 4: bijection `Fin (p+1) ≃ decompQuot (Gamma0_pair N) (rep (D_p_Gamma0))`
-
-The `decompQuot` parameterizes **right** cosets `H · adj(g)` for `g ∈ D_p_Gamma0`.
-Phase 3 above established that the `p+1` classical representatives `T_p_upper(b)`
-(for `b = 0, …, p-1`) and `T_p_lower(p)` live in distinct **left** Γ₀(N)-cosets;
-the adjugate anti-involution `adj(g) = g⁻¹ · det(g)` swaps left and right cosets, so
-their adjugates live in distinct right cosets. We package this into a `Fin (p+1)`
-indexed function and combine with the `p+1` cardinality from Phase 1 to get the
-`Equiv`. -/
-
 /-- Inclusion `(Gamma0_pair N).H ≤ (GL_pair 2).H = SLnZ_subgroup 2`. Γ₀(N) is the
 image of the inclusion `Γ₀(N) ↪ SL₂(ℤ)` under `mapGL`. -/
 lemma Gamma0_pair_H_le_GL_pair_H (N : ℕ) [NeZero N] :
@@ -402,7 +321,6 @@ lemma Gamma0_pair_H_le_GL_pair_H (N : ℕ) [NeZero N] :
   obtain ⟨s, _, hs⟩ := Subgroup.mem_map.mp hg
   exact ⟨s, hs⟩
 
-/-- The matrix identity `adj(diag(1,p)) = T_p_lower p`. -/
 private lemma adj_diag_1p_eq_T_p_lower (p : ℕ) (hp : Nat.Prime p) :
     GL_adjugate (diagMat 2 ![1, p] : GL (Fin 2) ℚ) = (T_p_lower p hp.pos : GL (Fin 2) ℚ) := by
   apply Units.ext; ext i j
@@ -418,25 +336,18 @@ private lemma adj_diag_1p_eq_T_p_lower (p : ℕ) (hp : Nat.Prime p) :
       Matrix.of_apply, huniv, he0, he1,
       Finset.prod_singleton]
 
-/-- `adj(rep(D_p_Gamma0)) ∈ D_p_Gamma0`: the adjugate of the representative lies
-in the double coset. For `D_p_Gamma0 = ⟦diag(1,p)⟧`, `adj(diag(1,p)) = diag(p,1) =
-T_p_lower`, which by `T_p_lower_mem_D_p_Gamma0` lies in `D_p_Gamma0`. -/
 private lemma adj_rep_mem_D_p_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) :
     GL_adjugate (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) ∈
       HeckeCoset.toSet (D_p_Gamma0 N p hp.pos) := by
-  -- rep ∈ D_p_Gamma0, so rep = a * diag(1,p) * c with a, c ∈ H
   have hrep := HeckeCoset.rep_mem (D_p_Gamma0 N p hp.pos)
   rw [D_p_Gamma0, HeckeCoset.toSet_mk, DoubleCoset.mem_doubleCoset] at hrep
   obtain ⟨a, ha, c, hc, hrep_eq⟩ := hrep
-  -- adj(diag(1,p)) = T_p_lower ∈ D_p_Gamma0
   have hTl := T_p_lower_mem_D_p_Gamma0 N p hp hpN
   rw [HeckeCoset.toSet_eq_rep, DoubleCoset.mem_doubleCoset] at hTl
   obtain ⟨b₁, hb₁, b₂, hb₂, hTl_eq⟩ := hTl
   rw [HeckeCoset.toSet_eq_rep, DoubleCoset.mem_doubleCoset]
   have hadj_diag := adj_diag_1p_eq_T_p_lower p hp
-  -- adj(rep) = adj(a * diag * c) = adj(c) * adj(diag) * adj(a)
-  -- with adj(diag) = T_p_lower = b₁ * rep * b₂.
   refine ⟨GL_adjugate c * b₁,
     (HeckeRing.GLn.Gamma0_pair N).H.mul_mem
       (HeckePairAction.adjugate_mem_H c hc) hb₁,
@@ -450,9 +361,6 @@ private lemma adj_rep_mem_D_p_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.Pr
     rw [GL_adjugate_mul, GL_adjugate_mul, mul_assoc]
   rw [h1, hadj_diag, hTl_eq]; group
 
-/-- Generic: if `adj(rep(D)) ∈ toSet D`, then for any `g ∈ toSet D`, `adj(g) ∈ toSet D`.
-Uses anti-multiplicativity of adj and closure of `H` under adj
-(`HeckePairAction.adjugate_mem_H`). -/
 private lemma GL_adjugate_mem_toSet_Gamma0 (N : ℕ) [NeZero N]
     (D : HeckeCoset (HeckeRing.GLn.Gamma0_pair N))
     (g : GL (Fin 2) ℚ) (hg : g ∈ HeckeCoset.toSet D)
@@ -472,8 +380,6 @@ private lemma GL_adjugate_mem_toSet_Gamma0 (N : ℕ) [NeZero N]
     r₁ * (HeckeCoset.rep D : GL _ ℚ) * r₂ from hrep_eq]
   group
 
-/-- For `g ∈ toSet(D_p_Gamma0)`, there exist `h₁, h₂ ∈ (Gamma0_pair N).H` with
-`adj(g) = h₁ · rep(D_p_Gamma0) · h₂`. -/
 private noncomputable def adj_mem_dc_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N)
     (g : GL (Fin 2) ℚ) (hg : g ∈ HeckeCoset.toSet (D_p_Gamma0 N p hp.pos)) :
@@ -486,8 +392,6 @@ private noncomputable def adj_mem_dc_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp :
   rw [HeckeCoset.toSet_eq_rep, DoubleCoset.mem_doubleCoset] at this
   obtain ⟨a, ha, b, hb, heq⟩ := this; exact ⟨a, ha, b, hb, heq⟩
 
-/-- Quotient equality lifting: if `⟦⟨a₁,_⟩⟧ = ⟦⟨a₂,_⟩⟧` in `decompQuot` and
-`adj(gᵢ) = aᵢ · rep · cᵢ`, then `adj(g₁)⁻¹ · adj(g₂) ∈ H`. -/
 private lemma h_quot_imp_adj_mem_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.Prime p)
     (a₁ : GL _ ℚ) (ha₁ : a₁ ∈ (HeckeRing.GLn.Gamma0_pair N).H)
     (c₁ : GL _ ℚ) (hc₁ : c₁ ∈ (HeckeRing.GLn.Gamma0_pair N).H)
@@ -518,9 +422,6 @@ private lemma h_quot_imp_adj_mem_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat
     ((HeckeRing.GLn.Gamma0_pair N).H.mul_mem
       ((HeckeRing.GLn.Gamma0_pair N).H.inv_mem hc₁) hrel) hc₂
 
-/-- `adj(T_p_upper(b₁))⁻¹ · adj(T_p_upper(b₂)) ∉ (Gamma0_pair N).H` for distinct
-`b₁, b₂ < p`. Follows from the level-1 version since `(Gamma0_pair N).H ≤
-(GL_pair 2).H`. -/
 private lemma adj_upper_inv_mul_upper_not_mem_Gamma0 (N : ℕ) [NeZero N] (p : ℕ)
     (hp : Nat.Prime p) (b₁ b₂ : ℕ) (hb₁ : b₁ < p) (hb₂ : b₂ < p) (hne : b₁ ≠ b₂) :
     (GL_adjugate (T_p_upper p hp.pos b₁ : GL (Fin 2) ℚ))⁻¹ *
@@ -530,8 +431,6 @@ private lemma adj_upper_inv_mul_upper_not_mem_Gamma0 (N : ℕ) [NeZero N] (p : �
   exact adj_upper_inv_mul_not_mem_H p hp b₁ b₂ hb₁ hb₂ hne
     (Gamma0_pair_H_le_GL_pair_H N hmem)
 
-/-- `adj(T_p_upper(b))⁻¹ · adj(T_p_lower) ∉ (Gamma0_pair N).H`. Lifted from the
-level-1 lemma via `Gamma0_pair_H_le_GL_pair_H`. -/
 private lemma adj_upper_inv_mul_lower_not_mem_Gamma0 (N : ℕ) [NeZero N] (p : ℕ)
     (hp : Nat.Prime p) (b : ℕ) :
     (GL_adjugate (T_p_upper p hp.pos b : GL (Fin 2) ℚ))⁻¹ *
@@ -540,8 +439,6 @@ private lemma adj_upper_inv_mul_lower_not_mem_Gamma0 (N : ℕ) [NeZero N] (p : �
   intro hmem
   exact adj_upper_inv_mul_lower_not_mem_H p hp b (Gamma0_pair_H_le_GL_pair_H N hmem)
 
-/-- `adj(T_p_lower)⁻¹ · adj(T_p_upper(b)) ∉ (Gamma0_pair N).H`. Lifted from the
-level-1 lemma via `Gamma0_pair_H_le_GL_pair_H`. -/
 private lemma adj_lower_inv_mul_upper_not_mem_Gamma0 (N : ℕ) [NeZero N] (p : ℕ)
     (hp : Nat.Prime p) (b : ℕ) :
     (GL_adjugate (T_p_lower p hp.pos : GL (Fin 2) ℚ))⁻¹ *
@@ -550,8 +447,6 @@ private lemma adj_lower_inv_mul_upper_not_mem_Gamma0 (N : ℕ) [NeZero N] (p : �
   intro hmem
   exact adj_lower_inv_mul_upper_not_mem_H p hp b (Gamma0_pair_H_le_GL_pair_H N hmem)
 
-/-- Factorisation of `adj(T_p_upper(b))` through the representative of `D_p_Gamma0`:
-`adj(T_p_upper(b)) = h₁ · rep · h₂` with `h₁, h₂ ∈ (Gamma0_pair N).H`. -/
 private lemma adj_T_p_upper_factor_through_rep (N : ℕ) [NeZero N] (p : ℕ)
     (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (b : ℕ) :
     ∃ (h₁ : GL _ ℚ) (_ : h₁ ∈ (HeckeRing.GLn.Gamma0_pair N).H)
@@ -560,8 +455,6 @@ private lemma adj_T_p_upper_factor_through_rep (N : ℕ) [NeZero N] (p : ℕ)
         h₁ * (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) * h₂ :=
   adj_mem_dc_Gamma0 N p hp hpN _ (T_p_upper_mem_D_p_Gamma0 N p hp b)
 
-/-- Factorisation of `adj(T_p_lower)` through the representative of `D_p_Gamma0`:
-`adj(T_p_lower) = h₁ · rep · h₂` with `h₁, h₂ ∈ (Gamma0_pair N).H`. -/
 private lemma adj_T_p_lower_factor_through_rep (N : ℕ) [NeZero N] (p : ℕ)
     (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
     ∃ (h₁ : GL _ ℚ) (_ : h₁ ∈ (HeckeRing.GLn.Gamma0_pair N).H)
@@ -570,9 +463,6 @@ private lemma adj_T_p_lower_factor_through_rep (N : ℕ) [NeZero N] (p : ℕ)
         h₁ * (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) * h₂ :=
   adj_mem_dc_Gamma0 N p hp hpN _ (T_p_lower_mem_D_p_Gamma0 N p hp hpN)
 
-/-- The candidate map `Fin (p+1) → decompQuot`: index `j < p` goes to the right-coset
-class of `adj(T_p_upper(j))`, and `j = p` to that of `adj(T_p_lower)`. The class is
-read off the first factor of the `adj … = h₁ · rep · h₂` factorisation. -/
 private noncomputable def T_p_coset_reps_map (N : ℕ) [NeZero N] (p : ℕ)
     (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (j : Fin (p + 1)) :
     decompQuot (HeckeRing.GLn.Gamma0_pair N)
@@ -584,9 +474,6 @@ private noncomputable def T_p_coset_reps_map (N : ℕ) [NeZero N] (p : ℕ)
     ⟦⟨(adj_T_p_lower_factor_through_rep N p hp hpN).choose,
       (adj_T_p_lower_factor_through_rep N p hp hpN).choose_spec.choose⟩⟧
 
-/-- From a `decompQuot` equality of the first factors of two `adj … = h₁ · rep · h₂`
-factorisations `e₁, e₂` for `g₁, g₂`, deduce `adj(g₁)⁻¹ · adj(g₂) ∈ H`. This packages
-the `Classical.choose` plumbing of `h_quot_imp_adj_mem_Gamma0`. -/
 private lemma adj_inv_mul_mem_of_quot_eq (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.Prime p)
     (g₁ g₂ : GL _ ℚ)
     (e₁ : ∃ (h₁ : GL _ ℚ) (_ : h₁ ∈ (HeckeRing.GLn.Gamma0_pair N).H)
@@ -608,9 +495,6 @@ private lemma adj_inv_mul_mem_of_quot_eq (N : ℕ) [NeZero N] (p : ℕ) (hp : Na
     e₁.choose_spec.choose_spec.choose_spec.choose_spec
     e₂.choose_spec.choose_spec.choose_spec.choose_spec hquot
 
-/-- The map `T_p_coset_reps_map` is injective: distinct indices land in distinct right
-cosets. The three non-trivial branches reduce, via `adj_inv_mul_mem_of_quot_eq`, to the
-Phase-3 non-membership lemmas (`adj_*_not_mem_Gamma0`). -/
 private lemma T_p_coset_reps_map_injective (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) : Function.Injective (T_p_coset_reps_map N p hp hpN) := by
   intro j₁ j₂ heq
@@ -629,13 +513,9 @@ private lemma T_p_coset_reps_map_injective (N : ℕ) [NeZero N] (p : ℕ) (hp : 
       (adj_inv_mul_mem_of_quot_eq N p hp _ _ _ _ heq)
   · have := j₁.isLt; have := j₂.isLt; omega
 
-/-- **Target lemma**: The `p+1` classical representatives `T_p_upper(b)` (for
-`b = 0, …, p-1`) and `T_p_lower(p)` give a bijection `Fin (p+1) ≃ decompQuot
-(Gamma0_pair N) (rep (D_p_Gamma0 N p))` via the adjugate anti-involution.
-
-This is the Γ₀(N)-level analogue of `tRep_gen_D_p_matches_T_p_reps` at level 1:
-combining the Phase 1 cardinality (`HeckeCoset_deg_D_p_Gamma0 = p + 1`) and the
-Phase 3 distinctness lemmas yields a bijection. -/
+/-- The `p+1` classical representatives `T_p_upper(b)` (for `b = 0, …, p-1`) and
+`T_p_lower(p)` give a bijection `Fin (p+1) ≃ decompQuot (Gamma0_pair N)
+(rep (D_p_Gamma0 N p))` via the adjugate anti-involution. -/
 noncomputable def T_p_coset_reps_Gamma0_equiv (N : ℕ) [NeZero N] (p : ℕ)
     (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
     Fin (p + 1) ≃ decompQuot (HeckeRing.GLn.Gamma0_pair N)

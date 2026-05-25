@@ -115,19 +115,13 @@ noncomputable def Gamma1_pair (N : ℕ) [NeZero N] : HeckeRing.HeckePair (GL (Fi
   h₁ := Delta1_le_commensurator N
 
 /-- The slash-action conjugation `σ` is the identity for matrices coming from
-`SL₂(ℤ)`: their determinant is `1 > 0`, so the `σ` branch picks `RingHom.id ℂ`.
-Replaces the inline `simp [UpperHalfPlane.σ, SpecialLinearGroup.mapGL]` idiom. -/
+`SL₂(ℤ)`: their determinant is `1 > 0`, so the `σ` branch picks `RingHom.id ℂ`. -/
 @[simp]
 lemma σ_mapGL_real_eq_id (s : SL(2, ℤ)) :
     UpperHalfPlane.σ (mapGL ℝ s) = RingHom.id ℂ := by
   simp [UpperHalfPlane.σ, SpecialLinearGroup.mapGL]
 
-/-! ### Normality of Γ₁(N) in Γ₀(N) and the diamond operator
-
-`Gamma1(N)` is normal in `Gamma0(N)` because `Gamma1'(N) = ker(Gamma0Map N)` is
-the kernel of a group homomorphism. This normality is the foundation for the
-diamond operator `⟨d⟩` on modular forms for `Gamma1(N)`.
--/
+/-! ### Normality of Γ₁(N) in Γ₀(N) and the diamond operator -/
 
 open CongruenceSubgroup
 
@@ -136,14 +130,11 @@ This is the foundation for the diamond operator `⟨d⟩` on modular forms. -/
 theorem Gamma0_normalizes_Gamma1 (g : ↥(Gamma0 N))
     (h : SL(2, ℤ)) (hh : h ∈ Gamma1 N) :
     (g : SL(2, ℤ)) * h * (g : SL(2, ℤ))⁻¹ ∈ Gamma1 N := by
-  -- Embed h into Gamma0 N, check it's in Gamma1' = ker(Gamma0Map)
   set h₀ : ↥(Gamma0 N) := ⟨h, Gamma1_in_Gamma0 N hh⟩
   have hh1 : h₀ ∈ Gamma1' N := by
     rw [Gamma1_to_Gamma0_mem]; rwa [Gamma1_mem] at hh
-  -- Kernel is normal: conjugation preserves Gamma1'
   have hconj : g * h₀ * g⁻¹ ∈ Gamma1' N :=
     (Gamma0Map N).normal_ker.conj_mem h₀ hh1 g
-  -- Map back: Gamma1 = image of Gamma1' under Gamma0.subtype
   rw [Gamma1_mem]
   rwa [Gamma1_to_Gamma0_mem] at hconj
 
@@ -162,8 +153,7 @@ theorem Gamma1_conjAct_eq (g : ↥(Gamma0 N)) :
     · simp [ConjAct.smul_def, mul_assoc]
 
 /-- `Gamma1(N).map(mapGL ℝ)` is invariant under conjugation by `Gamma0(N)` elements
-in `GL₂(ℝ)`. This is the subgroup-level equality needed for `ModularForm.translate`
-to produce forms for the same level. -/
+in `GL₂(ℝ)`. -/
 theorem Gamma1_map_conjAct_eq (g : ↥(Gamma0 N)) :
     ConjAct.toConjAct ((mapGL ℝ (g : SL(2, ℤ))))⁻¹ •
     (Gamma1 N).map (mapGL ℝ) = (Gamma1 N).map (mapGL ℝ) := by
@@ -182,8 +172,7 @@ theorem Gamma1_map_conjAct_eq (g : ↥(Gamma0 N)) :
       Gamma0_normalizes_Gamma1 g σ hσ, by simp [map_mul, map_inv]⟩
 
 /-- Forward variant of `Gamma1_map_conjAct_eq`: `Gamma1(N).map(mapGL ℝ)` is invariant
-under conjugation by `mapGL ℝ g` (rather than its inverse). Useful when the conjugation
-appears in its non-inverted form (e.g. inside a `convert hc.smul ...`). -/
+under conjugation by `mapGL ℝ g` (rather than its inverse). -/
 theorem Gamma1_map_conjAct_eq_forward (g : ↥(Gamma0 N)) :
     ConjAct.toConjAct (mapGL ℝ (g : SL(2, ℤ))) •
     (Gamma1 N).map (mapGL ℝ) = (Gamma1 N).map (mapGL ℝ) := by
@@ -192,8 +181,7 @@ theorem Gamma1_map_conjAct_eq_forward (g : ↥(Gamma0 N)) :
 
 /-- For a function `f` invariant under `Γ₁(N).map(mapGL ℝ)`, the slash action
 `f ↦ f ∣[k] (mapGL ℝ g)` for `g ∈ Γ₀(N)` produces another `Γ₁(N).map(mapGL ℝ)`-invariant
-function. This packages the slash-action half of the diamond-operator construction
-shared by the modular and cusp-form variants, using normality of `Γ₁(N)` in `Γ₀(N)`. -/
+function. -/
 lemma slash_mapGL_invariant_of_Gamma1_invariant {k : ℤ} (g : ↥(Gamma0 N))
     {f : UpperHalfPlane → ℂ}
     (hf : ∀ γ ∈ (Gamma1 N).map (mapGL ℝ), f ∣[k] γ = f)
@@ -208,9 +196,7 @@ lemma slash_mapGL_invariant_of_Gamma1_invariant {k : ℤ} (g : ↥(Gamma0 N))
     (hf _ (Subgroup.mem_map.mpr ⟨_, Gamma0_normalizes_Gamma1 g σ hσ, rfl⟩))
 
 /-- For `g ∈ Γ₀(N)` and `γ ∈ GL₂(ℝ)` with `γ • ∞ = c`, a cusp `c` for `Γ₁(N).map(mapGL ℝ)`
-transports along the conjugation by `mapGL ℝ g` to a cusp at `(mapGL ℝ g · γ) • ∞`.
-This is the cusp-transport step shared between `diamondOpAux.bdd_at_cusps'` and
-`diamondOpCuspAux.zero_at_cusps'`. -/
+transports along the conjugation by `mapGL ℝ g` to a cusp at `(mapGL ℝ g · γ) • ∞`. -/
 lemma isCusp_mul_mapGL_smul_infty (g : ↥(Gamma0 N))
     {c : OnePoint ℝ} (hc : IsCusp c ((Gamma1 N).map (mapGL ℝ)))
     {γ : GL (Fin 2) ℝ} (hγ : γ • (OnePoint.infty : OnePoint ℝ) = c) :
@@ -224,8 +210,7 @@ lemma isCusp_mul_mapGL_smul_infty (g : ↥(Gamma0 N))
 
 /-- The diamond operator on modular forms for `Gamma1(N)`: for `g ∈ Gamma0(N)`,
 the slash action `f ↦ f ∣[k] g` preserves `ModularForm ((Gamma1 N).map (mapGL ℝ)) k`
-by the normality of `Gamma1` in `Gamma0`. Constructed directly to avoid dependent-type
-casts from `ModularForm.translate`. -/
+by the normality of `Gamma1` in `Gamma0`. -/
 noncomputable def diamondOpAux (k : ℤ) (g : ↥(Gamma0 N)) :
     ModularForm ((Gamma1 N).map (mapGL ℝ)) k →ₗ[ℂ]
     ModularForm ((Gamma1 N).map (mapGL ℝ)) k where
@@ -269,9 +254,7 @@ lemma Gamma0MapUnits_val (g : ↥(Gamma0 N)) :
     (Gamma0MapUnits g : ZMod N) = Gamma0Map N g := rfl
 
 /-- If two `Γ₀(N)` elements have equal image under `Gamma0Map`, their ratio
-`g₁ · g₂⁻¹` lies in `Γ₁(N)` (as an `SL₂(ℤ)` element). This packages the kernel
-computation `Gamma0Map (g₁ * g₂⁻¹) = 1` shared by the diamond-operator
-well-definedness proofs (modular and cusp form variants). -/
+`g₁ · g₂⁻¹` lies in `Γ₁(N)` (as an `SL₂(ℤ)` element). -/
 lemma mul_inv_mem_Gamma1_of_Gamma0Map_eq (g₁ g₂ : ↥(Gamma0 N))
     (heq : Gamma0Map N g₁ = Gamma0Map N g₂) :
     ((g₁ : SL(2, ℤ)) * (g₂ : SL(2, ℤ))⁻¹) ∈ Gamma1 N := by
@@ -286,10 +269,7 @@ lemma mul_inv_mem_Gamma1_of_Gamma0Map_eq (g₁ g₂ : ↥(Gamma0 N))
   rw [Gamma1_mem]; rwa [Gamma1_to_Gamma0_mem] at hker
 
 /-- Slash-transport for `Γ₁(N)`-invariant functions: if `f` is invariant under
-`(Γ₁(N)).map(mapGL ℝ)` and `Gamma0Map N g₁ = Gamma0Map N g₂`, then `f ∣[k] g₁ = f ∣[k] g₂`.
-Packages the kernel computation (`mul_inv_mem_Gamma1_of_Gamma0Map_eq`) and the
-`g₁ = (g₁g₂⁻¹) · g₂` decomposition shared by the diamond-operator well-definedness
-proofs for modular and cusp forms. -/
+`(Γ₁(N)).map(mapGL ℝ)` and `Gamma0Map N g₁ = Gamma0Map N g₂`, then `f ∣[k] g₁ = f ∣[k] g₂`. -/
 lemma slash_eq_of_Gamma0Map_eq {k : ℤ} {f : UpperHalfPlane → ℂ}
     (hf : ∀ γ ∈ (Gamma1 N).map (mapGL ℝ), f ∣[k] γ = f)
     (g₁ g₂ : ↥(Gamma0 N)) (heq : Gamma0Map N g₁ = Gamma0Map N g₂) :
@@ -312,8 +292,7 @@ theorem diamondOpAux_eq_of_Gamma0Map_eq (k : ℤ) (g₁ g₂ : ↥(Gamma0 N))
 /-! ### Public diamond operator indexed by `(ZMod N)ˣ` -/
 
 /-- `Gamma0MapUnits` is surjective: every unit `d ∈ (ZMod N)ˣ` is realized as the
-bottom-right entry of some `g ∈ Gamma0(N)`. The proof lifts the diagonal matrix
-`diag(d⁻¹, d)` from `SL₂(ZMod N)` to `SL₂(ℤ)` via `SL2_reduction_surjective`. -/
+bottom-right entry of some `g ∈ Gamma0(N)`. -/
 theorem Gamma0MapUnits_surjective [NeZero N] :
     Function.Surjective (Gamma0MapUnits (N := N)) := by
   intro d
@@ -331,9 +310,7 @@ theorem Gamma0MapUnits_surjective [NeZero N] :
   simp at this; exact this
 
 /-- The diamond operator `⟨d⟩` on modular forms for `Gamma1(N)`, indexed by
-`d : (ZMod N)ˣ`. Defined by choosing a representative `g ∈ Gamma0(N)` with
-`Gamma0MapUnits g = d` and applying `diamondOpAux`. Well-defined by
-`diamondOpAux_eq_of_Gamma0Map_eq`. -/
+`d : (ZMod N)ˣ`. -/
 noncomputable def diamondOp [NeZero N] (k : ℤ) (d : (ZMod N)ˣ) :
     ModularForm ((Gamma1 N).map (mapGL ℝ)) k →ₗ[ℂ]
     ModularForm ((Gamma1 N).map (mapGL ℝ)) k :=
@@ -353,8 +330,7 @@ theorem diamondOp_one [NeZero N] (k : ℤ) : diamondOp (N := N) k 1 = LinearMap.
   ext f z; show (⇑f ∣[k] mapGL ℝ (1 : SL(2, ℤ))) z = f z
   simp [map_one, SlashAction.slash_one]
 
-/-- Diamond operators compose: `⟨d₁ * d₂⟩ = ⟨d₁⟩ ∘ ⟨d₂⟩`. Uses commutativity
-of `(ZMod N)ˣ` to absorb the order reversal from `SlashAction.slash_mul`. -/
+/-- Diamond operators compose: `⟨d₁ * d₂⟩ = ⟨d₁⟩ ∘ ⟨d₂⟩`. -/
 theorem diamondOp_mul [NeZero N] (k : ℤ) (d₁ d₂ : (ZMod N)ˣ) :
     diamondOp k (d₁ * d₂) = (diamondOp k d₁).comp (diamondOp k d₂) := by
   obtain ⟨g₁, hg₁⟩ := Gamma0MapUnits_surjective (N := N) d₁
@@ -367,8 +343,7 @@ theorem diamondOp_mul [NeZero N] (k : ℤ) (d₁ d₂ : (ZMod N)ˣ) :
     ((⇑f ∣[k] mapGL ℝ (g₂ : SL(2, ℤ))) ∣[k] mapGL ℝ (g₁ : SL(2, ℤ))) z
   rw [map_mul, SlashAction.slash_mul]
 
-/-- The diamond operator as a monoid homomorphism `(ZMod N)ˣ →* Module.End ℂ (...)`.
-Commutativity of `(ZMod N)ˣ` absorbs the order reversal from slash multiplication. -/
+/-- The diamond operator as a monoid homomorphism `(ZMod N)ˣ →* Module.End ℂ (...)`. -/
 noncomputable def diamondOpHom [NeZero N] (k : ℤ) :
     (ZMod N)ˣ →* Module.End ℂ (ModularForm ((Gamma1 N).map (mapGL ℝ)) k) where
   toFun := diamondOp k
@@ -377,8 +352,6 @@ noncomputable def diamondOpHom [NeZero N] (k : ℤ) :
 
 /-! ### Diamond operator on cusp forms -/
 
-/-- Diamond operator restricted to cusp forms for `Gamma1(N)`. Same construction
-as `diamondOpAux` but preserving the cusp vanishing condition. -/
 private noncomputable def diamondOpCuspAux (k : ℤ) (g : ↥(Gamma0 N)) :
     CuspForm ((Gamma1 N).map (mapGL ℝ)) k →ₗ[ℂ]
     CuspForm ((Gamma1 N).map (mapGL ℝ)) k where
@@ -400,7 +373,7 @@ private noncomputable def diamondOpCuspAux (k : ℤ) (g : ↥(Gamma0 N)) :
     ext z; change ((c • ⇑f) ∣[k] mapGL ℝ (g : SL(2, ℤ))) z = c • _
     rw [ModularForm.smul_slash, σ_mapGL_real_eq_id]; rfl
 
-/-- Well-definedness for cusp-form diamond operator (same proof as `ModularForm` version). -/
+/-- Well-definedness for the cusp-form diamond operator. -/
 theorem diamondOpCuspAux_eq_of_Gamma0Map_eq (k : ℤ) (g₁ g₂ : ↥(Gamma0 N))
     (heq : Gamma0Map N g₁ = Gamma0Map N g₂) :
     diamondOpCuspAux k g₁ = diamondOpCuspAux k g₂ := by
@@ -446,11 +419,7 @@ noncomputable def diamondOpCuspHom [NeZero N] (k : ℤ) :
   map_one' := diamondOpCusp_one k
   map_mul' := diamondOpCusp_mul k
 
-/-! ### Nebentypus character spaces
-
-The `χ`-eigenspace of the diamond operators: cusp forms `f` with `⟨d⟩ f = χ(d) • f`
-for all `d ∈ (ZMod N)ˣ`. Defined as a joint eigenspace using mathlib's
-`Module.End.eigenspace`. -/
+/-! ### Nebentypus character spaces -/
 
 /-- The Nebentypus character space `S_k(Γ₁(N), χ)`: cusp forms on which every
 diamond operator `⟨d⟩` acts by the scalar `χ(d)`. -/
@@ -484,11 +453,7 @@ theorem mem_modFormCharSpace_iff [NeZero N] (k : ℤ) (χ : (ZMod N)ˣ →* ℂ�
     ∀ d : (ZMod N)ˣ, diamondOpHom k d f = (↑(χ d) : ℂ) • f := by
   simp [modFormCharSpace, Submodule.mem_iInf]
 
-/-! ### Twisted slash action and Nebentypus invariance
-
-The character-twisted slash action `twistedSlash k χ g f = (χ g)⁻¹ • (f ∣[k] g)` on
-functions `f : ℍ → ℂ`, where `χ : Gamma0 N →* ℂˣ`. Fixed points satisfy the
-Nebentypus relation `f ∣[k] g = χ(g) • f`. -/
+/-! ### Twisted slash action and Nebentypus invariance -/
 
 /-- The character-twisted slash action: `(χ(g))⁻¹ • (f ∣[k] g)`.
 Fixed points are exactly forms satisfying `f ∣[k] g = χ(g) • f`. -/
@@ -515,7 +480,7 @@ theorem isNebentypus_iff (k : ℤ) (χ : ↥(Gamma0 N) →* ℂˣ) (f : UpperHal
   simp only [IsNebentypus, twistedSlash]
   constructor
   · intro h g
-    have := h g -- (χ g)⁻¹ • (f ∣[k] g) = f
+    have := h g
     calc f ∣[k] mapGL ℝ (g : SL(2, ℤ)) = (↑(χ g) : ℂ) • ((↑(χ g) : ℂ)⁻¹ •
         (f ∣[k] mapGL ℝ (g : SL(2, ℤ)))) := by
           rw [smul_smul, mul_inv_cancel₀ (χ g).ne_zero, one_smul]
@@ -524,36 +489,26 @@ theorem isNebentypus_iff (k : ℤ) (χ : ↥(Gamma0 N) →* ℂˣ) (f : UpperHal
     rw [show f ∣[k] mapGL ℝ (g : SL(2, ℤ)) = (↑(χ g) : ℂ) • f from h g]
     rw [smul_smul, inv_mul_cancel₀ (χ g).ne_zero, one_smul]
 
-/-- The twisted slash is multiplicative on `Gamma1`-invariant functions. Uses
-commutativity of `(ZMod N)ˣ` (via `Gamma0MapUnits`) to absorb the order reversal
-from `SlashAction.slash_mul`, and the commutator `[g₁,g₂] ∈ Gamma1` to
-equate `f ∣[k] (g₁g₂)` with `f ∣[k] (g₂g₁)`. -/
+/-- The twisted slash is multiplicative on `Gamma1`-invariant functions. -/
 theorem twistedSlash_mul {k : ℤ} {χ : ↥(Gamma0 N) →* ℂˣ}
     {f : UpperHalfPlane → ℂ}
     (hf : ∀ γ ∈ (Gamma1 N).map (mapGL ℝ), f ∣[k] γ = f)
     (g₁ g₂ : ↥(Gamma0 N)) :
     twistedSlash k χ (g₁ * g₂) f = twistedSlash k χ g₁ (twistedSlash k χ g₂ f) := by
   simp only [twistedSlash, map_mul, Units.val_mul]
-  -- Pull scalar through slash on RHS, then combine nested smuls
   rw [ModularForm.smul_slash, σ_mapGL_real_eq_id, RingHom.id_apply, smul_smul]
-  -- Prove and apply scalar identity separately
   have hscalar : (↑(χ g₁) * ↑(χ g₂) : ℂ)⁻¹ = (↑(χ g₁) : ℂ)⁻¹ * (↑(χ g₂) : ℂ)⁻¹ := by
     rw [_root_.mul_inv_rev, mul_comm]
   rw [hscalar]
-  -- Scalars now match; reduce to slash equality via congr
   congr 1
-  -- Commutator c₀ = g₁g₂g₁⁻¹g₂⁻¹ in Gamma0 subtype (so map_mul/map_inv fire)
   set c₀ := g₁ * g₂ * g₁⁻¹ * g₂⁻¹
-  -- Gamma0MapUnits maps commutator to 1 (abelian target)
   have hc₀_units : Gamma0MapUnits c₀ = 1 := by
     show Gamma0MapUnits (g₁ * g₂ * g₁⁻¹ * g₂⁻¹) = 1
     simp [map_mul, map_inv]
-  -- So c₀ ∈ Gamma1' N, hence ↑c₀ ∈ Gamma1 N
   have hc₀_gamma1 : (c₀ : SL(2, ℤ)) ∈ Gamma1 N := by
     rw [Gamma1_mem]
     exact (Gamma1_to_Gamma0_mem c₀).mp
       (Gamma1_mem'.mpr (by rw [← Gamma0MapUnits_val, hc₀_units, Units.val_one]))
-  -- Factor g₁g₂ = c₀ * g₂g₁
   have hfact : ((g₁ * g₂ : ↥(Gamma0 N)) : SL(2, ℤ)) =
       (c₀ : SL(2, ℤ)) * ((g₂ : SL(2, ℤ)) * (g₁ : SL(2, ℤ))) := by
     show (↑g₁ : SL(2, ℤ)) * ↑g₂ =
@@ -581,15 +536,10 @@ theorem modFormCharSpace_iff_nebentypus [NeZero N] (k : ℤ) (χ₀ : (ZMod N)ˣ
   rw [mem_modFormCharSpace_iff]
   constructor
   · intro h g
-    -- h says: ∀ d, diamondOp k d f = χ₀(d) • f (diamondOpHom k d = diamondOp k d)
-    -- For d = Gamma0MapUnits g: diamondOp k d = diamondOpAux k g
     have hd := h (Gamma0MapUnits g)
-    -- diamondOpHom k d f = diamondOp k d f, and diamondOp k d = diamondOpAux k g
     show (⇑f) ∣[k] mapGL ℝ (g : SL(2, ℤ)) = (↑(χ₀ (Gamma0MapUnits g)) : ℂ) • ⇑f
     rw [show diamondOpHom k (Gamma0MapUnits g) = diamondOp k (Gamma0MapUnits g) from rfl,
         diamondOp_eq_diamondOpAux k _ g rfl] at hd
-    -- hd : diamondOpAux k g f = χ₀(Gamma0MapUnits g) • f (as ModularForm)
-    -- Need: ⇑f ∣[k] g = χ₀(Gamma0MapUnits g) • ⇑f (as functions)
     exact congr_arg (⇑· : ModularForm _ k → _) hd
   · intro h d
     obtain ⟨g, hg⟩ := Gamma0MapUnits_surjective (N := N) d
