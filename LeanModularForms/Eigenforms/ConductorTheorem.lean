@@ -10,350 +10,27 @@ import LeanModularForms.HeckeRIngs.GL2.Gamma1Pair
 import LeanModularForms.HeckeRIngs.GL2.LevelRaise
 
 /-!
-# Miyake Theorem 4.6.4 — Conductor theorem (POST-6b)
+# Miyake Theorem 4.6.4 — Conductor theorem
 
-This file develops the **conductor theorem** of Miyake §4.6.4, the second of
-the three sub-results that feed into Miyake's Main Lemma 4.6.8 (which in turn
-is the engine of the Strong Multiplicity One theorem 4.6.12).
-
-## Mathematical statement
-
-Following the cusp-form-first formulation from the T035 packet:
+This file develops the conductor theorem of Miyake §4.6.4.
 
 > Let `g` be a level-`Γ₁(N)` weight-`k` cusp form lying in the Nebentypus
 > eigenspace `cuspFormCharSpace k χ.toUnitHom`, whose `q`-expansion is
-> supported only on multiples of `l` (i.e., the coefficients at every `n`
-> not divisible by `l` vanish). Then:
+> supported only on multiples of `l`. Then:
 >
->  * if `l * χ.conductor ∣ N`, then `χ` factors as
->    `χ = changeLevel _ χ_low` for a unique
->    `χ_low : DirichletCharacter ℂ (N / l)`, and there is a level-`N/l`
->    cusp form `g'` lying in `cuspFormCharSpace k χ_low.toUnitHom`
+>  * if `l * χ.conductor ∣ N`, then `χ` factors as `χ = changeLevel _ χ_low`
+>    for a unique `χ_low : DirichletCharacter ℂ (N / l)`, and there is a
+>    level-`N/l` cusp form `g'` in `cuspFormCharSpace k χ_low.toUnitHom`
 >    with `g = levelRaise (N/l) l k g'`;
 >  * otherwise (`l * χ.conductor ∤ N`), `g = 0`.
 
-Reference: Miyake, *Modular Forms*, Theorem 4.6.4.
+The main results are `conductor_theorem_dichotomy` /
+`conductor_theorem_dichotomy_cuspForm` and their strengthened variants
+`conductor_theorem_dichotomy_strong` / `conductor_theorem_dichotomy_cuspForm_strong`.
 
-## Imports
+## Reference
 
-By design this file imports only:
-
-* `LeanModularForms.HeckeRIngs.GL2.LevelRaise` — the level-raising operator
-  `levelRaise` and its matrix infrastructure (extracted by ticket T037 from
-  `Newforms.lean` to avoid the heavy `AdjointTheory.lean` /
-  `BlockBijection.lean` chain).
-* `LeanModularForms.HeckeRIngs.GL2.Gamma1Pair` — character spaces
-  `modFormCharSpace` / `cuspFormCharSpace` and the Nebentypus bridges
-  `*_iff_nebentypus`.
-* `Mathlib.NumberTheory.DirichletCharacter.Basic` — `DirichletCharacter`,
-  `conductor`, `changeLevel`, `FactorsThrough`, `primitiveCharacter`.
-* `Mathlib.NumberTheory.ModularForms.QExpansion` — `qExpansion` and the
-  vanishing/uniqueness lemmas `qExpansion_eq_zero_iff` etc.
-
-This file deliberately does NOT import `Newforms.lean`, `AdjointTheory.lean`,
-or `BlockBijection.lean`. The point is to keep POST-6b independent of the
-T001/Epic D blocker chain.
-
-## Main API (this file)
-
-Period-1 invariance for `Γ₁(N)`-cusp forms:
-
-* `ModularGroup_T_mem_Gamma1` — `T = [[1, 1], [0, 1]] ∈ Γ₁(N)`.
-* `ModularGroup_T_zpow_mem_Gamma1` — `T ^ n ∈ Γ₁(N)` for every `n : ℤ`.
-* `cuspForm_T_slash_eq_self` — the slash action of `T` on a `Γ₁(N)`-cusp
-  form is the identity.
-* `cuspForm_T_zpow_slash_eq_self` — the same for `T ^ n`.
-
-(The pointwise evaluation helpers `levelRaiseFun_apply`,
-`denom_levelRaiseMatrix`, `levelRaiseMatrix_det_pos`,
-`abs_levelRaiseMatrix_det_val`, and `σ_levelRaiseMatrix`, plus the
-T043 surjectivity / injectivity helpers `coe_levelRaiseMatrix_smul`,
-`exists_levelRaiseMatrix_smul_eq`, and `levelRaiseFun_injective`,
-all live in `LevelRaise.lean` where they belong as part of the
-level-raise API.)
-
-Case A conductor-lowering bridges:
-
-* `dvd_lower_left_of_dvd_of_mem_Gamma0` — `l ∣ N` + `γ ∈ Γ₀(N)` gives
-  `l ∣ γ.val 1 0`, the divisibility hypothesis needed by
-  `levelRaiseConjOfDvd`.
-* `conductor_slash_levelRaise_eq` — the **level-raised** conductor-lowering
-  slash identity (T042). If `g ∈ modFormCharSpace k χ.toUnitHom` factors as
-  `⇑g = levelRaiseFun l k f` and `l ∣ N`, then for every `γ ∈ Γ₀(N)`,
-  ```
-  levelRaiseFun l k (f ∣[k] mapGL ℝ γ̃) = (χ d_γ) • levelRaiseFun l k f
-  ```
-  where `γ̃ = α_l γ α_l⁻¹`.
-* `smul_levelRaiseFun` — small commutation lemma:
-  `c • levelRaiseFun l k f = levelRaiseFun l k (c • f)`.
-* `conductor_slash_eq` — the **unlifted** conductor-lowering slash identity
-  (T043). Same hypotheses as `conductor_slash_levelRaise_eq`, but the
-  conclusion is the un-rescaled Nebentypus identity for `f` itself:
-  ```
-  f ∣[k] mapGL ℝ γ̃ = (χ d_γ) • f.
-  ```
-  Obtained by combining `conductor_slash_levelRaise_eq` with
-  `smul_levelRaiseFun` and `LevelRaise.levelRaiseFun_injective`.
-
-Case A inverse formula and holomorphy inheritance (T044):
-
-* `fun_eq_apply_levelRaiseMatrix_inv_smul` — pointwise inverse formula:
-  `f τ = g (α_l⁻¹ • τ)` from `⇑g = levelRaiseFun l k f`.
-* `fun_eq_levelRaiseMatrix_inv_smul` — functional version: `f` equals the
-  precomposition of `g` with the `α_l⁻¹`-action.
-* `levelRaiseMatrix_inv_det_pos` — `det α_l⁻¹ = 1/l > 0`.
-* `mdifferentiable_of_levelRaiseFun_eq` — holomorphy of `f` from
-  holomorphy of `g`, via the inverse formula plus
-  `UpperHalfPlane.mdifferentiable_smul`.
-* `mdifferentiable_of_modularForm_levelRaiseFun_eq` — specialisation
-  with `g : ModularForm`, where holomorphy is automatic.
-
-Case A lowered Dirichlet character (T044):
-
-* `loweredCharacter` — given `χ.FactorsThrough (N/l)`, the unique lower
-  level `χ_low : DirichletCharacter ℂ (N/l)` with `χ = changeLevel _ χ_low`.
-* `changeLevel_loweredCharacter` — re-raising recovers `χ`.
-* `toUnitHom_loweredCharacter` — bridge between `χ.toUnitHom` and
-  `χ_low.toUnitHom ∘ ZMod.unitsMap _`.
-
-Case A T-conjugate slash bridge (T044 continuation, the second main
-deliverable of T044):
-
-* `slashStabilizerOfFun` (private) — the subgroup of `SL(2, ℤ)` whose
-  `mapGL ℝ`-image acts trivially on `f` via the slash. Used to extend
-  the period-1 hypothesis to integer powers via `Subgroup.zpow_mem`.
-* `slash_T_zpow_eq_self_of_slash_T_eq` — given `f ∣[k] T = f`, the slash
-  by every integer power of `T` is also trivial: `f ∣[k] T^j = f`.
-* `conductor_slash_T_conj_eq` — the central T-conjugate slash bridge:
-  under the Case A hypotheses plus `f ∣[k] T = f` (Miyake's separate
-  period-1 hypothesis on `f`, NOT inherited from `g`), the slash
-  identity extends to all matrices of the form `T^i · γ̃ · T^j`:
-  ```
-  f ∣[k] (T^i · γ̃ · T^j) = (χ d_γ) • f.
-  ```
-  The character value is unchanged because `χ` only sees the (1,1)-entry
-  of `γ`, which is preserved under both T-translation and α_l-conjugation.
-
-Lowered slash field — full Γ₀(N/l) coverage (T046):
-
-* `conductor_slash_eq_of_mem_Gamma0_div` — combining the T044 slash
-  bridge with the T046 group factorisation
-  (`LevelRaise.exists_T_levelRaiseConj_T_factor`), the slash identity
-  extends to ALL of `Γ₀(N/l)`:
-  ```
-  ∀ γ' ∈ Γ₀(N/l), ∃ γ ∈ Γ₀(N),
-    f ∣[k] mapGL ℝ γ' = (χ.toUnitHom (Gamma0MapUnits ⟨γ, hγ⟩) : ℂ) • f.
-  ```
-
-Lowered character collapse + boundedness at i∞ (T048):
-
-* `conductor_slash_eq_self_of_mem_Gamma1_div` — under the additional
-  `χ.FactorsThrough (N/l)` hypothesis (the Case A factor-through
-  condition), the slash identity collapses to the IDENTITY for every
-  `δ ∈ Γ₁(N/l)`:
-  ```
-  ∀ δ ∈ Γ₁(N/l), f ∣[k] mapGL ℝ δ = f.
-  ```
-  This is the FULL slash field for the lowered modular form bundling.
-  Proof: γ_lift's (1,1) entry mod (N/l) is δ.val 1 1 mod (N/l) = 1 (by
-  Γ₁(N/l)-membership), so `χ_low(1) = 1`.
-* `coe_levelRaiseMatrix_inv_smul`, `im_levelRaiseMatrix_inv_smul` —
-  helpers for the inverse `α_l⁻¹`-action: scaling the ℂ-coordinate
-  by `1/l`.
-* `isBoundedAtImInfty_of_levelRaiseFun_eq` — boundedness at the cusp
-  `i∞` transfers from `g` to `f` via the substitution `τ ↦ α_l⁻¹ • τ`
-  (which sends `Im(τ)` to `Im(τ)/l`).
-
-Slash equation toward all-cusp boundedness (T048 continuation):
-
-* `σ_levelRaiseMatrix_inv` — `σ α_l⁻¹ = id` (positive determinant `1/l`).
-* `slash_inv_eq_smul_of_levelRaiseFun_eq` — the **inverse-slash
-  equation**: `g ∣[k] α_l⁻¹ = (l^(1-k)) • f`. Direct slash-composition
-  proof using `g = (l^(1-k)) • (f ∣[k] α_l)` and `α_l * α_l⁻¹ = 1`.
-* `slash_eq_of_levelRaiseFun_eq` — the **slash-by-SL reduction**:
-  ```
-  f ∣[k] mapGL ℝ A = (l^(k-1)) • g ∣[k] (α_l⁻¹ * mapGL ℝ A)
-  ```
-  for every `A : SL(2, ℤ)`. Combines the inverse-slash equation with
-  scalar pull-out and slash composition.
-* `isBoundedAtImInfty_slash_iff_levelRaiseFun_eq` — the boundedness
-  reduction at i∞:
-  ```
-  IsBoundedAtImInfty (f ∣[k] mapGL ℝ A) ↔
-    IsBoundedAtImInfty (g ∣[k] (α_l⁻¹ * mapGL ℝ A))
-  ```
-  for every `A : SL(2, ℤ)`. Direct from `slash_eq_of_levelRaiseFun_eq`
-  + scalar-multiplication preserves boundedness.
-
-All-cusp boundedness and lowered modular form bundle (T059):
-
-* `cuspWitnessLevelRaiseInv` — the explicit `SL(2, ℤ)` witness
-  whose `mapGL ℝ`-image acts on `∞` to give the same point as
-  `(α_l)⁻¹ * mapGL ℝ A`. Constructed via `IsCoprime.exists_SL2_col`
-  from the primitive form of `(A.val 0 0, l * A.val 1 0)`.
-* `isCusp_levelRaiseMatrix_inv_mul_mapGL_smul_infty` — the cusp
-  `(α_l⁻¹ * mapGL ℝ A) • ∞` is a cusp of every arithmetic subgroup
-  `Γ : Subgroup (GL (Fin 2) ℝ)`. Reduces to `IsCusp _ 𝒮ℒ` via
-  `Subgroup.IsArithmetic.isCusp_iff_isCusp_SL2Z` and
-  `isCusp_SL2Z_iff'` with the explicit witness above.
-* `isBoundedAtImInfty_slash_levelRaiseMatrix_inv_mul_mapGL` —
-  application of `g.bdd_at_cusps'` at the cusp witness yields
-  `IsBoundedAtImInfty (g ∣[k] (α_l⁻¹ * mapGL ℝ A))`.
-* `isBoundedAtImInfty_slash_mapGL_of_levelRaiseFun_eq` — combining the
-  T048 reduction `isBoundedAtImInfty_slash_iff_levelRaiseFun_eq` with the
-  preceding lemma yields `IsBoundedAtImInfty (f ∣[k] mapGL ℝ A)` for
-  every `A : SL(2, ℤ)`.
-* `bdd_at_cusps_of_levelRaiseFun_eq` — the **all-cusp boundedness
-  theorem**: `c.IsBoundedAt f k` for every cusp `c` of
-  `(Gamma1 (N/l)).map (mapGL ℝ)`. Discharges the `bdd_at_cusps'` field
-  via `OnePoint.isBoundedAt_iff_exists_SL2Z` and `ModularForm.SL_slash`.
-* `conductorTheoremCaseA_modularForm` — the **Case A lowered modular
-  form bundle**: combines the slash-invariance field
-  (`conductor_slash_eq_self_of_mem_Gamma1_div`), holomorphy
-  (`mdifferentiable_of_modularForm_levelRaiseFun_eq`), and cusp
-  regularity (`bdd_at_cusps_of_levelRaiseFun_eq`) into the structural
-  `ModularForm ((Gamma1 (N/l)).map (mapGL ℝ)) k` whose underlying
-  function is `f`.
-* `conductorTheoremCaseA_modularForm_apply` — the bundle's coercion is
-  `f` (definitionally, by `rfl`).
-
-CuspForm version of Case A (T064):
-
-* `isZeroAtImInfty_of_levelRaiseFun_eq` — direct zero-at-`i∞` transfer:
-  if `g` vanishes at `i∞` and `g = levelRaiseFun l k f`, then so does `f`.
-* `isZeroAtImInfty_slash_iff_levelRaiseFun_eq` — slash zero-at-`i∞`
-  reduction: `IsZeroAtImInfty (f ∣[k] mapGL ℝ A) ↔
-  IsZeroAtImInfty (g ∣[k] (α_l⁻¹ * mapGL ℝ A))`.
-* `isZeroAtImInfty_slash_levelRaiseMatrix_inv_mul_mapGL` — application
-  of `g.zero_at_cusps'` for `g : CuspForm` at the shared cusp witness
-  yields `IsZeroAtImInfty (g ∣[k] (α_l⁻¹ * mapGL ℝ A))`.
-* `isZeroAtImInfty_slash_mapGL_of_levelRaiseFun_eq` — combining the
-  reduction with the preceding lemma yields
-  `IsZeroAtImInfty (f ∣[k] mapGL ℝ A)` for every `A : SL(2, ℤ)`.
-* `zero_at_cusps_of_levelRaiseFun_eq` — the **all-cusp vanishing
-  theorem**: `c.IsZeroAt f k` for every cusp `c` of
-  `(Gamma1 (N/l)).map (mapGL ℝ)`.
-* `cuspFormToModularForm` — local upgrade `CuspForm → ModularForm` (a
-  cusp form is automatically a modular form via
-  `IsZeroAtImInfty → IsBoundedAtImInfty`); kept local to avoid the heavy
-  `AdjointTheory` chain.
-* `cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace` —
-  the upgrade preserves Nebentypus character space membership, both
-  via `*_iff_nebentypus`.
-* `conductorTheoremCaseA_cuspForm` — the **Case A lowered cusp form
-  bundle**: combines slash invariance, holomorphy, and the new
-  zero-at-cusps regularity into the structural
-  `CuspForm ((Gamma1 (N/l)).map (mapGL ℝ)) k` whose underlying function
-  is `f`.
-* `conductorTheoremCaseA_cuspForm_apply` — the bundle's coercion is `f`
-  (definitionally, by `rfl`).
-
-Case B (vanishing) preparation (T065):
-
-* `exists_unit_of_not_factorsThrough` — from `¬ χ.FactorsThrough d`,
-  extract `u : (ZMod N)ˣ` with `ZMod.unitsMap u = 1` (i.e., `u` in the
-  kernel of unit-group reduction) and `χ.toUnitHom u ≠ 1`.
-* `levelRaiseConjOfDvd_mem_Gamma1_div_of_mem_ker` — the **structural
-  ascent**: for `γ ∈ Γ₀(N)` with `γ.val 1 1 ≡ 1 mod (N/l)`, the
-  conjugate `levelRaiseConjOfDvd l γ : SL(2, ℤ)` lies in `Γ₁(N/l)`.
-* `case_B_slash_relation` — the **central slash relation theorem**:
-  under `¬ χ.FactorsThrough (N/l)`, there exist `δ ∈ Γ₁(N/l)` and `c : ℂ`
-  with `c ≠ 1` such that `f ∣[k] mapGL ℝ δ = c • f`. The witness is
-  `δ = α_l γ_u α_l⁻¹` for some `γ_u ∈ Γ₀(N)` lifting a problematic unit.
-* `fun_eq_zero_of_two_multipliers` — the **algebraic contradiction**:
-  if `f ∣[k] M = c₁ • f = c₂ • f` with `c₁ ≠ c₂`, then `f = 0`.
-  Captures the algebraic core of the Case B argument.
-* `case_B_vanishing_of_two_multipliers` — the **conditional Case B
-  vanishing**: under the Case B hypothesis, `f = 0` provided we can
-  produce a SECOND scalar `c'` (different from the first) such that
-  `f ∣[k] mapGL ℝ δ = c' • f` for the witness matrix `δ`. Discharged
-  unconditionally by T072 below.
-
-Constructive Case B closure (T071 + T072):
-
-* `gamma0LiftLowerLeftN N u` — controlled `Γ₀(N)` lift of
-  `u : (ZMod N)ˣ` with `(1, 0)` entry equal to `N` (Bezout matrix).
-* `case_B_slash_relation_with_controlled_lift` — refined
-  `case_B_slash_relation` exposing `γ_u.val 1 0 = N` for downstream
-  matrix arithmetic.
-* `exists_alt_unit_in_coset_with_char_separation` — for `u : (ZMod N)ˣ`
-  there is `u'` in the same `unitsMap`-coset with `χ(u') ≠ χ(u)`.
-* `T_shift_divisibility_eq_iff` — algebraic restatement of the
-  `(i, j)`-shift divisibility constraint.
-* `t_factor_matrix_identity` — the matrix identity
-  `[[a, l*b; Nl, e]] = T^i * [[a', l*b'; Nl, e']] * T^j` from the
-  shift / determinant relations.
-* `exists_T_factor_with_char_separation` — given the Case B hypothesis,
-  produce explicit `(i, j)` and a separating unit `u'` such that
-  `levelRaiseConjOfDvd l (gamma0LiftLowerLeftN N u) =
-   T^i * levelRaiseConjOfDvd l (gamma0LiftLowerLeftN N u') * T^j` AND
-  `χ(u') ≠ χ(u)`.
-* `conductorTheoremCaseB_vanishing` — the **fully-closed Case B
-  vanishing theorem**: under `¬ χ.FactorsThrough (N/l)` plus the
-  period-1 hypothesis on `f`, the candidate lower-level form is
-  identically zero.
-
-Conductor theorem dichotomy (T075):
-
-* `conductor_theorem_dichotomy` — the **full Miyake §4.6.4 statement**
-  for `g : ModularForm`: EITHER `χ` factors through level `N/l` AND
-  `f` bundles into a lowered `ModularForm` (Case A), OR `f = 0`
-  (Case B). Direct combination of `conductorTheoremCaseA_modularForm` +
-  `conductorTheoremCaseB_vanishing` via `by_cases`.
-* `conductor_theorem_dichotomy_cuspForm` — the **CuspForm flavor** of
-  the dichotomy, using `conductorTheoremCaseA_cuspForm` (T064) and
-  reducing the Case B branch to the modular-form vanishing via
-  `cuspFormToModularForm`.
-
-Lowered character-space packaging (T077):
-
-* `conductorTheoremCaseA_modularForm_mem_modFormCharSpace` — the Case A
-  bundle for `g : ModularForm` lies in
-  `modFormCharSpace k (loweredCharacter h_fac).toUnitHom`. Proof
-  combines `exists_T_levelRaiseConj_T_factor`,
-  `conductor_slash_T_conj_eq`, `toUnitHom_loweredCharacter`, and the
-  private helper `unitsMap_Gamma0MapUnits_lift_eq_of_diag` (which
-  matches the `Gamma0MapUnits` images under the unit-group reduction).
-* `conductorTheoremCaseA_cuspForm_mem_cuspFormCharSpace` — the
-  CuspForm flavor.
-* `conductor_theorem_dichotomy_strong` /
-  `conductor_theorem_dichotomy_cuspForm_strong` — strengthened
-  dichotomy variants whose Case A branch additionally certifies the
-  lowered character-space membership of the lowered bundle. These are
-  the structural inputs to Miyake's Main Lemma 4.6.8 (POST-6e).
-
-## Status
-
-POST-6b is **feature-complete**. All declarations in this file are
-sorry-free, axiom-clean (only `propext`, `Classical.choice`,
-`Quot.sound`).
-
-* **Case A** (T041–T064) — `f` bundles into the lowered modular/cusp
-  form via `conductorTheoremCaseA_modularForm` /
-  `conductorTheoremCaseA_cuspForm` under
-  `χ.FactorsThrough (N/l)`.
-* **Case B vanishing** (T065 + T071 + T072) — `f = 0` under
-  `¬ χ.FactorsThrough (N/l)`, packaged as
-  `conductorTheoremCaseB_vanishing`. The proof composes
-  `case_B_slash_relation_with_controlled_lift` with
-  `exists_T_factor_with_char_separation` and the algebraic
-  two-multiplier contradiction.
-* **Dichotomy** (T075) — `conductor_theorem_dichotomy` (modular form
-  flavor) and `conductor_theorem_dichotomy_cuspForm` (cusp form flavor)
-  combine the two cases into the full Miyake §4.6.4 statement.
-* **Lowered character-space packaging** (T077) — the strengthened
-  variants `conductor_theorem_dichotomy_strong` and
-  `conductor_theorem_dichotomy_cuspForm_strong` additionally certify that
-  the Case A bundle lies in `modFormCharSpace` /
-  `cuspFormCharSpace` of the lowered Dirichlet character
-  `loweredCharacter h_fac`.
-
-These strong dichotomy theorems are the structural input to Miyake's
-Main Lemma 4.6.8 (POST-6e): given a level-`N` eigenform `g` with
-q-expansion supported on multiples of `l` and conductor
-`l * χ.conductor ∣ N`, Case A produces the lowered eigenform at
-`Γ₁(N/l)` carrying the lowered Nebentypus character; Case B handles the
-contrapositive direction.
+* Miyake, *Modular Forms*, Theorem 4.6.4.
 -/
 
 open Matrix Matrix.SpecialLinearGroup CongruenceSubgroup CuspForm
@@ -404,27 +81,10 @@ private lemma dvd_lower_left_of_dvd_of_mem_Gamma0
   exact dvd_trans (Int.natCast_dvd_natCast.mpr h_dvd)
     ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp hγ)
 
-/-- **Case A conductor-lowering bridge (level-raised slash identity).**
-
-Suppose `g : ModularForm Γ₁(N) k` lies in the Nebentypus eigenspace
-`modFormCharSpace k χ.toUnitHom` (so `g ∣[k] γ = χ(d_γ) • g` for every
-`γ ∈ Γ₀(N)`), and suppose furthermore that the underlying function of `g`
-is the level-raise of some `f : ℍ → ℂ`: `⇑g = levelRaiseFun l k f`. Then for
-every `γ ∈ Γ₀(N)` (with the divisibility `l ∣ N` automatic from the
-structure), the level-raise of the slash action of `mapGL ℝ γ̃` on `f`
-equals the Nebentypus-twisted level-raise of `f`:
-
-```
-levelRaiseFun l k (f ∣[k] mapGL ℝ γ̃) = (χ.toUnitHom (Gamma0MapUnits ⟨γ, hγ⟩) : ℂ)
-                                          • levelRaiseFun l k f
-```
-
-where `γ̃ = α_l γ α_l⁻¹` is built by `levelRaiseConjOfDvd`. This is the
-"lifted" form of the conductor lowering: it expresses the slash identity at
-the level-`N/l` matrix `γ̃` modulo the level-raise. The corresponding
-"unlifted" identity `f ∣[k] mapGL ℝ γ̃ = χ(d_γ) • f` follows by
-post-composing with `levelRaiseFun_apply` and the surjectivity of the
-`α_l`-action on `ℍ`; this reduction will land in a follow-on ticket. -/
+/-- Case A conductor-lowering bridge, level-raised form: if
+`g ∈ modFormCharSpace k χ.toUnitHom` factors as `⇑g = levelRaiseFun l k f` and
+`l ∣ N`, then for every `γ ∈ Γ₀(N)`, with `γ̃ = α_l γ α_l⁻¹`,
+`levelRaiseFun l k (f ∣[k] mapGL ℝ γ̃) = (χ d_γ) • levelRaiseFun l k f`. -/
 lemma conductor_slash_levelRaise_eq (l N : ℕ) [NeZero l] [NeZero N]
     (h_dvd : l ∣ N) (k : ℤ) (χ : DirichletCharacter ℂ N)
     (f : UpperHalfPlane → ℂ)
@@ -440,26 +100,16 @@ lemma conductor_slash_levelRaise_eq (l N : ℕ) [NeZero l] [NeZero N]
   have h_neb := (modFormCharSpace_iff_nebentypus k χ.toUnitHom g).mp hg_char ⟨γ, hγ⟩
   rwa [hg_eq, slash_mapGL_levelRaiseFun] at h_neb
 
-/-- Auxiliary: the scalar multiplication commutes with the level-raise operator.
-For `c : ℂ` and `f : ℍ → ℂ`, `c • levelRaiseFun l k f = levelRaiseFun l k (c • f)`.
-The slash action by `α_l` (positive determinant, σ trivial) commutes with the
-complex scalar action. -/
+/-- Scalar multiplication commutes with the level-raise operator:
+`c • levelRaiseFun l k f = levelRaiseFun l k (c • f)`. -/
 lemma smul_levelRaiseFun (l : ℕ) [NeZero l] (k : ℤ) (c : ℂ)
     (f : UpperHalfPlane → ℂ) :
     c • levelRaiseFun l k f = levelRaiseFun l k (c • f) := by
   funext τ; simp [levelRaiseFun_apply, smul_eq_mul]
 
-/-- **Unlifted Case A conductor-lowering bridge.** Same hypotheses as
-`conductor_slash_levelRaise_eq`, but the conclusion is the un-rescaled
-Nebentypus identity for `f`:
-
-```
-f ∣[k] mapGL ℝ γ̃ = (χ d_γ) • f
-```
-
-where `γ̃ = α_l γ α_l⁻¹`. Obtained from the lifted form by cancelling the
-`levelRaiseFun l k` wrapper via `levelRaiseFun_injective` and the auxiliary
-`smul_levelRaiseFun`. -/
+/-- Unlifted Case A conductor-lowering bridge: same hypotheses as
+`conductor_slash_levelRaise_eq`, with the un-rescaled Nebentypus identity for
+`f`, namely `f ∣[k] mapGL ℝ γ̃ = (χ d_γ) • f` where `γ̃ = α_l γ α_l⁻¹`. -/
 lemma conductor_slash_eq (l N : ℕ) [NeZero l] [NeZero N]
     (h_dvd : l ∣ N) (k : ℤ) (χ : DirichletCharacter ℂ N)
     (f : UpperHalfPlane → ℂ)
@@ -476,13 +126,9 @@ lemma conductor_slash_eq (l N : ℕ) [NeZero l] [NeZero N]
   rw [smul_levelRaiseFun] at h_lifted
   exact levelRaiseFun_injective l k h_lifted
 
-/-- **Inverse formula for the level-raise.** From `⇑g = levelRaiseFun l k f`,
-recover `f` as the precomposition of `g` with the inverse `α_l⁻¹`-action:
-`f τ = g (α_l⁻¹ • τ)`.
-
-This is the cleanest pointwise inversion of `levelRaiseFun_apply`
-(`g τ = f (α_l • τ)`): substituting `τ ← α_l⁻¹ • τ'` and using
-`α_l · α_l⁻¹ = 1`. -/
+/-- Inverse formula for the level-raise: from `⇑g = levelRaiseFun l k f`,
+recover `f` as the precomposition of `g` with the inverse `α_l⁻¹`-action,
+`f τ = g (α_l⁻¹ • τ)`. -/
 lemma fun_eq_apply_levelRaiseMatrix_inv_smul (l : ℕ) [NeZero l] (k : ℤ)
     (f g : UpperHalfPlane → ℂ) (hg : g = levelRaiseFun l k f)
     (τ : UpperHalfPlane) :
@@ -498,8 +144,7 @@ lemma fun_eq_levelRaiseMatrix_inv_smul (l : ℕ) [NeZero l] (k : ℤ)
   funext (fun_eq_apply_levelRaiseMatrix_inv_smul l k f g hg)
 
 /-- Positive determinant of `(levelRaiseMatrix l)⁻¹`: the inverse has det
-`1 / l > 0`. Used to invoke `UpperHalfPlane.mdifferentiable_smul` for the
-inverse action. -/
+`1 / l > 0`. -/
 lemma levelRaiseMatrix_inv_det_pos (l : ℕ) [NeZero l] :
     (0 : ℝ) < (Matrix.GeneralLinearGroup.det (levelRaiseMatrix l)⁻¹ : ℝ) := by
   rw [show (Matrix.GeneralLinearGroup.det (levelRaiseMatrix l)⁻¹ : ℝˣ) =
@@ -507,14 +152,8 @@ lemma levelRaiseMatrix_inv_det_pos (l : ℕ) [NeZero l] :
     map_inv Matrix.GeneralLinearGroup.det _, Units.val_inv_eq_inv_val]
   exact inv_pos.mpr (levelRaiseMatrix_det_pos l)
 
-/-- **Holomorphy inheritance.** If `g : ℍ → ℂ` is holomorphic
-(`MDifferentiable`) and `g = levelRaiseFun l k f`, then `f` is also
-holomorphic on `ℍ`.
-
-Proof: `f τ = g (α_l⁻¹ • τ)` (by `fun_eq_levelRaiseMatrix_inv_smul`), and
-the action `τ ↦ α_l⁻¹ • τ` is `MDifferentiable` (by Mathlib's
-`UpperHalfPlane.mdifferentiable_smul` since `det α_l⁻¹ > 0`), so `f` is
-the composition of two `MDifferentiable` maps. -/
+/-- Holomorphy inheritance: if `g : ℍ → ℂ` is holomorphic and
+`g = levelRaiseFun l k f`, then `f` is also holomorphic on `ℍ`. -/
 lemma mdifferentiable_of_levelRaiseFun_eq (l : ℕ) [NeZero l] (k : ℤ)
     (f g : UpperHalfPlane → ℂ)
     (hg_diff : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) g)
@@ -524,9 +163,8 @@ lemma mdifferentiable_of_levelRaiseFun_eq (l : ℕ) [NeZero l] (k : ℤ)
   exact hg_diff.comp
     (UpperHalfPlane.mdifferentiable_smul (levelRaiseMatrix_inv_det_pos l))
 
-/-- **Holomorphy of `f` from a `ModularForm` `g`.** Specialisation of
-`mdifferentiable_of_levelRaiseFun_eq` to the case where `g` is bundled as a
-`ModularForm`: holomorphy is automatic via `ModularFormClass.holo`. -/
+/-- Holomorphy of `f` from a `ModularForm` `g`: specialisation of
+`mdifferentiable_of_levelRaiseFun_eq` where holomorphy of `g` is automatic. -/
 lemma mdifferentiable_of_modularForm_levelRaiseFun_eq
     {Γ : Subgroup (GL (Fin 2) ℝ)} (l : ℕ) [NeZero l] (k : ℤ)
     (f : UpperHalfPlane → ℂ) (g : ModularForm Γ k)
@@ -537,7 +175,7 @@ lemma mdifferentiable_of_modularForm_levelRaiseFun_eq
 
 /-- The Case A lowered character: when `χ` factors through level `N/l`,
 this is the unique `χ_low : DirichletCharacter ℂ (N/l)` with
-`χ = changeLevel _ χ_low`. Just `FactorsThrough.χ₀`. -/
+`χ = changeLevel _ χ_low`. -/
 noncomputable def loweredCharacter {N : ℕ} {l : ℕ}
     {χ : DirichletCharacter ℂ N} (hfac : χ.FactorsThrough (N / l)) :
     DirichletCharacter ℂ (N / l) :=
@@ -551,18 +189,7 @@ lemma changeLevel_loweredCharacter {N : ℕ} {l : ℕ}
 
 /-- The unit-group hom of `χ_low` agrees with `χ.toUnitHom` after composition
 with the unit-group reduction `(ZMod N)ˣ → (ZMod (N/l))ˣ`:
-
-```
-χ.toUnitHom = χ_low.toUnitHom ∘ ZMod.unitsMap (N/l ∣ N).
-```
-
-Direct unfolding of `changeLevel_toUnitHom` after rewriting via
-`changeLevel_loweredCharacter`. This is the bridge that lets downstream
-code rephrase "`χ.toUnitHom (Gamma0MapUnits ⟨γ, hγ⟩)`" (which appears in
-the conclusion of `conductor_slash_eq`) as
-"`χ_low.toUnitHom (ZMod.unitsMap _ (Gamma0MapUnits ⟨γ, hγ⟩))`" — which
-in turn, when `γ ∈ Γ₀(N/l)` lifts a level-`N/l` γ̃, makes the
-"d-coordinate" naturally live in `(ZMod (N/l))ˣ`. -/
+`χ.toUnitHom = χ_low.toUnitHom ∘ ZMod.unitsMap (N/l ∣ N)`. -/
 lemma toUnitHom_loweredCharacter {N : ℕ} {l : ℕ}
     {χ : DirichletCharacter ℂ N} (hfac : χ.FactorsThrough (N / l)) :
     χ.toUnitHom =
@@ -589,31 +216,18 @@ private def slashStabilizerOfFun (k : ℤ) (f : UpperHalfPlane → ℂ) :
     exact h_mul.symm
 
 /-- Given the period-1 hypothesis `f ∣[k] T = f`, the slash by every integer
-power of `T` is also trivial: `f ∣[k] T^j = f` for all `j : ℤ`. Proof via
-the slash-stabilizer subgroup: `T` is in the stabilizer by hypothesis, so
-`T^j` is in it for every `j : ℤ` by `Subgroup.zpow_mem`. -/
+power of `T` is also trivial: `f ∣[k] T^j = f` for all `j : ℤ`. -/
 lemma slash_T_zpow_eq_self_of_slash_T_eq (k : ℤ) (f : UpperHalfPlane → ℂ)
     (hf : f ∣[k] (mapGL ℝ ModularGroup.T : GL (Fin 2) ℝ) = f) (j : ℤ) :
     f ∣[k] (mapGL ℝ (ModularGroup.T ^ j) : GL (Fin 2) ℝ) = f := by
   have hT_mem : ModularGroup.T ∈ slashStabilizerOfFun k f := hf
   exact zpow_mem hT_mem j
 
-/-- **Slash bridge for T-conjugates of the α_l-conjugation image.**
-
-Given the Case A hypotheses (`g ∈ modFormCharSpace k χ.toUnitHom`,
-`⇑g = levelRaiseFun l k f`, `l ∣ N`) plus the period-1 hypothesis on `f`
-(`f ∣[k] T = f` — Miyake's separate hypothesis, NOT inherited from `g`),
-the slash identity for `f` extends from the α_l-conjugation image to all
-matrices of the form `T^i · γ̃ · T^j` for `γ̃ = α_l γ α_l⁻¹` (γ ∈ Γ₀(N))
-and arbitrary integer powers `i, j`:
-
-```
-f ∣[k] (T^i · γ̃ · T^j) = (χ d_γ) • f.
-```
-
-The character value is the same as in `conductor_slash_eq`: it depends
-only on the (1,1)-entry of `γ`, which is preserved under both T-translation
-and α_l-conjugation. -/
+/-- Slash bridge for T-conjugates of the α_l-conjugation image: under the
+Case A hypotheses plus the period-1 hypothesis `f ∣[k] T = f`, the slash
+identity for `f` extends to all matrices `T^i · γ̃ · T^j` with
+`γ̃ = α_l γ α_l⁻¹` (`γ ∈ Γ₀(N)`), giving
+`f ∣[k] (T^i · γ̃ · T^j) = (χ d_γ) • f`. -/
 lemma conductor_slash_T_conj_eq (l N : ℕ) [NeZero l] [NeZero N]
     (h_dvd : l ∣ N) (k : ℤ) (χ : DirichletCharacter ℂ N)
     (f : UpperHalfPlane → ℂ)
@@ -647,20 +261,10 @@ lemma conductor_slash_T_conj_eq (l N : ℕ) [NeZero l] [NeZero N]
   rw [ModularForm.smul_slash, hσ_T, RingHom.id_apply,
     slash_T_zpow_eq_self_of_slash_T_eq k f hf_period j]
 
-/-- **Lowered slash field for Γ₀(N/l).** Under the T044 / T046 hypotheses
-(g ∈ modFormCharSpace, ⇑g = levelRaiseFun l k f, period-1 of f, l ∣ N),
-for every `γ' ∈ Γ₀(N/l)`, the slash action of `mapGL ℝ γ'` on `f`
-yields a Nebentypus character value times `f`:
-
-```
-f ∣[k] mapGL ℝ γ' = (χ.toUnitHom (Gamma0MapUnits ⟨γ_lift, hγ_lift⟩) : ℂ) • f
-```
-
-where `(γ_lift, hγ_lift)` is the lifted element of `Γ₀(N)` produced by
-`exists_T_levelRaiseConj_T_factor`.
-
-Proof: extract the factorisation `γ' = T^i · γ̃ · T^j` and apply the
-T044 bridge `conductor_slash_T_conj_eq`. -/
+/-- Lowered slash field for `Γ₀(N/l)`: under the Case A hypotheses, for every
+`γ' ∈ Γ₀(N/l)` the slash action of `mapGL ℝ γ'` on `f` yields a Nebentypus
+character value times `f`, with character coordinate read off a `Γ₀(N)`-lift
+of `γ'`. -/
 lemma conductor_slash_eq_of_mem_Gamma0_div
     (l N : ℕ) [NeZero l] [NeZero N] (h_dvd : l ∣ N) (k : ℤ)
     (χ : DirichletCharacter ℂ N)
@@ -679,11 +283,9 @@ lemma conductor_slash_eq_of_mem_Gamma0_div
   rw [hfact]
   exact conductor_slash_T_conj_eq l N h_dvd k χ f g hg_char hg_eq hf_period i j γ hγ
 
-/-- **Slash invariance of `f` under `Γ₁(N/l)`.** Under the Case A
-hypotheses including `χ.FactorsThrough (N/l)`, the function `f`
-transforms trivially under the slash action of `mapGL ℝ δ` for every
-`δ ∈ Γ₁(N/l)`. This is the "slash field" needed to bundle `f` into a
-modular form at the lowered level. -/
+/-- Slash invariance of `f` under `Γ₁(N/l)`: under the Case A hypotheses
+including `χ.FactorsThrough (N/l)`, the function `f` transforms trivially
+under the slash action of `mapGL ℝ δ` for every `δ ∈ Γ₁(N/l)`. -/
 lemma conductor_slash_eq_self_of_mem_Gamma1_div
     (l N : ℕ) [NeZero l] [NeZero N] (h_dvd : l ∣ N) (k : ℤ)
     (χ : DirichletCharacter ℂ N) (h_fac : χ.FactorsThrough (N / l))
@@ -713,9 +315,7 @@ lemma conductor_slash_eq_self_of_mem_Gamma1_div
   rw [h_red, map_one]
 
 /-- The action of `(levelRaiseMatrix l)⁻¹` on `ℍ` scales the underlying
-ℂ-coordinate by `1/l`: `(α_l⁻¹ • z).coe = z.coe / l`. Derived from the
-diagonal action of `α_l` (`coe_levelRaiseMatrix_smul`) by inverting
-`α_l • (α_l⁻¹ • z) = z`. -/
+ℂ-coordinate by `1/l`: `(α_l⁻¹ • z).coe = z.coe / l`. -/
 lemma coe_levelRaiseMatrix_inv_smul (l : ℕ) [NeZero l] (z : UpperHalfPlane) :
     (((levelRaiseMatrix l)⁻¹ • z : UpperHalfPlane) : ℂ) = (↑z : ℂ) / (l : ℂ) := by
   have h_unit : (levelRaiseMatrix l) • ((levelRaiseMatrix l)⁻¹ • z) = z := by
@@ -734,10 +334,8 @@ lemma im_levelRaiseMatrix_inv_smul (l : ℕ) [NeZero l] (z : UpperHalfPlane) :
     Complex.div_ofReal_im]
   rfl
 
-/-- **Boundedness at `i∞` transfer.** If `g = levelRaiseFun l k f` and `g` is
-bounded at `i∞`, then so is `f`. The proof: `f τ = g (α_l⁻¹ • τ)`
-(by `fun_eq_apply_levelRaiseMatrix_inv_smul`); as `Im(τ) → ∞`,
-`Im(α_l⁻¹ • τ) = Im(τ)/l → ∞`, so `g (α_l⁻¹ • τ)` stays bounded. -/
+/-- Boundedness at `i∞` transfer: if `g = levelRaiseFun l k f` and `g` is
+bounded at `i∞`, then so is `f`. -/
 lemma isBoundedAtImInfty_of_levelRaiseFun_eq
     (l : ℕ) [NeZero l] (k : ℤ)
     (f g : UpperHalfPlane → ℂ)
@@ -759,13 +357,7 @@ lemma σ_levelRaiseMatrix_inv (l : ℕ) [NeZero l] :
   unfold UpperHalfPlane.σ
   rw [if_pos (levelRaiseMatrix_inv_det_pos l)]
 
-/-- **Inverse-slash equation**: `g ∣[k] α_l⁻¹ = (l^(1-k)) • f`.
-
-Direct slash-composition from `g = levelRaiseFun l k f`:
-`g ∣[k] α_l⁻¹ = ((l^(1-k)) • (f ∣[k] α_l)) ∣[k] α_l⁻¹
-            = (l^(1-k)) • (f ∣[k] (α_l * α_l⁻¹))
-            = (l^(1-k)) • (f ∣[k] 1) = (l^(1-k)) • f`.
-The scalar pulls through `α_l⁻¹`-slash because `σ α_l⁻¹ = id`. -/
+/-- Inverse-slash equation: `g ∣[k] α_l⁻¹ = (l^(1-k)) • f`. -/
 lemma slash_inv_eq_smul_of_levelRaiseFun_eq (l : ℕ) [NeZero l] (k : ℤ)
     (f g : UpperHalfPlane → ℂ) (hg_eq : g = levelRaiseFun l k f) :
     g ∣[k] ((levelRaiseMatrix l)⁻¹ : GL (Fin 2) ℝ) = ((l : ℂ) ^ (1 - k)) • f := by
@@ -777,13 +369,8 @@ lemma slash_inv_eq_smul_of_levelRaiseFun_eq (l : ℕ) [NeZero l] (k : ℤ)
     show (levelRaiseMatrix l : GL (Fin 2) ℝ) * (levelRaiseMatrix l)⁻¹ = 1
       from mul_inv_cancel _, SlashAction.slash_one]
 
-/-- **Slash-by-SL reduction.** For any `A : SL(2, ℤ)`,
-```
-f ∣[k] mapGL ℝ A = (l^(k-1)) • g ∣[k] ((levelRaiseMatrix l)⁻¹ * mapGL ℝ A).
-```
-Combines `slash_inv_eq_smul_of_levelRaiseFun_eq` (the key inverse-slash
-equation) with `slash_mul` (slash composition), inverting the scalar
-factor on the way. -/
+/-- Slash-by-SL reduction: for any `A : SL(2, ℤ)`,
+`f ∣[k] mapGL ℝ A = (l^(k-1)) • g ∣[k] ((levelRaiseMatrix l)⁻¹ * mapGL ℝ A)`. -/
 lemma slash_eq_of_levelRaiseFun_eq (l : ℕ) [NeZero l] (k : ℤ)
     (f g : UpperHalfPlane → ℂ) (hg_eq : g = levelRaiseFun l k f)
     (A : SL(2, ℤ)) :
@@ -804,9 +391,9 @@ lemma slash_eq_of_levelRaiseFun_eq (l : ℕ) [NeZero l] (k : ℤ)
     rw [Matrix.SpecialLinearGroup.det_mapGL]; norm_num
   rw [ModularForm.smul_slash, hσA, RingHom.id_apply, ← SlashAction.slash_mul]
 
-/-- **Slash-boundedness reduction.** For any `A : SL(2, ℤ)`, the
-boundedness of `f ∣[k] mapGL ℝ A` at `i∞` is equivalent to the
-boundedness of `g ∣[k] (α_l⁻¹ * mapGL ℝ A)` at `i∞`. -/
+/-- Slash-boundedness reduction: for any `A : SL(2, ℤ)`, the boundedness of
+`f ∣[k] mapGL ℝ A` at `i∞` is equivalent to the boundedness of
+`g ∣[k] (α_l⁻¹ * mapGL ℝ A)` at `i∞`. -/
 lemma isBoundedAtImInfty_slash_iff_levelRaiseFun_eq
     (l : ℕ) [NeZero l] (k : ℤ)
     (f g : UpperHalfPlane → ℂ) (hg_eq : g = levelRaiseFun l k f)
@@ -913,8 +500,7 @@ private lemma gcd_levelRaise_first_col_ne_zero (l : ℕ) [NeZero l] (A : SL(2, �
     norm_num at hdet
 
 /-- The `SL(2, ℤ)` cusp witness whose `mapGL ℝ`-image acts on `∞` to give the same
-point as `(α_l)⁻¹ * mapGL ℝ A`. Constructed via `IsCoprime.exists_SL2_col` from the
-primitive form of `(A.val 0 0, l * A.val 1 0)`. -/
+point as `(α_l)⁻¹ * mapGL ℝ A`. -/
 noncomputable def cuspWitnessLevelRaiseInv (l : ℕ) [NeZero l] (A : SL(2, ℤ)) :
     SL(2, ℤ) :=
   Classical.choose <|
@@ -978,11 +564,8 @@ private lemma mapGL_cuspWitnessLevelRaiseInv_smul_infty_eq
     field_simp
 
 open OnePoint in
-/-- **IsCusp transfer.** The cusp `(α_l⁻¹ * mapGL ℝ A) • ∞` is a cusp of any
-arithmetic subgroup `Γ : Subgroup (GL (Fin 2) ℝ)`. Specifically, it is the
-image under `mapGL ℝ` of `cuspWitnessLevelRaiseInv l A : SL(2, ℤ)` acting on `∞`,
-hence rational, hence a cusp of `𝒮ℒ` (and therefore of every arithmetic subgroup
-by `Subgroup.IsArithmetic.isCusp_iff_isCusp_SL2Z`). -/
+/-- The cusp `(α_l⁻¹ * mapGL ℝ A) • ∞` is a cusp of any arithmetic subgroup
+`Γ : Subgroup (GL (Fin 2) ℝ)`. -/
 lemma isCusp_levelRaiseMatrix_inv_mul_mapGL_smul_infty
     (l : ℕ) [NeZero l] (A : SL(2, ℤ))
     (Γ : Subgroup (GL (Fin 2) ℝ)) [Γ.IsArithmetic] :
@@ -993,9 +576,7 @@ lemma isCusp_levelRaiseMatrix_inv_mul_mapGL_smul_infty
     (mapGL_cuspWitnessLevelRaiseInv_smul_infty_eq l A).symm⟩
 
 open OnePoint in
-/-- **Boundedness of `g ∣[k] (α_l⁻¹ * mapGL ℝ A)` at `i∞`.** Direct application of
-the structural cusp condition `bdd_at_cusps'` of `g` at the cusp
-`(α_l⁻¹ * mapGL ℝ A) • ∞`. -/
+/-- Boundedness of `g ∣[k] (α_l⁻¹ * mapGL ℝ A)` at `i∞`. -/
 lemma isBoundedAtImInfty_slash_levelRaiseMatrix_inv_mul_mapGL
     (l N : ℕ) [NeZero l] [NeZero N] (k : ℤ)
     (g : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) (A : SL(2, ℤ)) :
@@ -1005,9 +586,7 @@ lemma isBoundedAtImInfty_slash_levelRaiseMatrix_inv_mul_mapGL
   exact ModularFormClass.bdd_at_cusps g
     (isCusp_levelRaiseMatrix_inv_mul_mapGL_smul_infty l A ((Gamma1 N).map (mapGL ℝ))) _ rfl
 
-/-- **All-cusp boundedness for `f` at every SL(2, ℤ) translate.** Combining the
-reduction `isBoundedAtImInfty_slash_iff_levelRaiseFun_eq` with the structural
-cusp condition on `g`, we obtain `IsBoundedAtImInfty (f ∣[k] mapGL ℝ A)` for
+/-- All-cusp boundedness for `f`: `IsBoundedAtImInfty (f ∣[k] mapGL ℝ A)` for
 every `A : SL(2, ℤ)`. -/
 lemma isBoundedAtImInfty_slash_mapGL_of_levelRaiseFun_eq
     (l N : ℕ) [NeZero l] [NeZero N] (k : ℤ)
@@ -1018,10 +597,8 @@ lemma isBoundedAtImInfty_slash_mapGL_of_levelRaiseFun_eq
   exact isBoundedAtImInfty_slash_levelRaiseMatrix_inv_mul_mapGL l N k g A
 
 open OnePoint in
-/-- **All-cusp boundedness theorem (T059).** The candidate lower-level form `f`
-is bounded at every cusp of the lowered congruence subgroup
-`(Gamma1 (N/l)).map (mapGL ℝ)`. This is the slash-action version of
-`bdd_at_cusps' f`. -/
+/-- All-cusp boundedness theorem: the candidate lower-level form `f` is
+bounded at every cusp of `(Gamma1 (N/l)).map (mapGL ℝ)`. -/
 theorem bdd_at_cusps_of_levelRaiseFun_eq
     (l N : ℕ) [NeZero l] [NeZero N] (h_dvd : l ∣ N) (k : ℤ)
     (f : UpperHalfPlane → ℂ) (g : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
@@ -1039,11 +616,9 @@ theorem bdd_at_cusps_of_levelRaiseFun_eq
   rw [ModularForm.SL_slash]
   exact isBoundedAtImInfty_slash_mapGL_of_levelRaiseFun_eq l N k f g hg_eq γ
 
-/-- **Case A lowered modular form bundle.** Given the Case A hypotheses
-(level `N`, divisibility `l ∣ N`, character `χ` factoring through `N/l`,
-underlying function relation `⇑g = levelRaiseFun l k f`, and the period-1
-hypothesis `f ∣[k] T = f`), the candidate function `f` bundles into a
-`ModularForm` at the lowered level `(Gamma1 (N/l)).map (mapGL ℝ)`. -/
+/-- Case A lowered modular form bundle: under the Case A hypotheses, the
+candidate function `f` bundles into a `ModularForm` at the lowered level
+`(Gamma1 (N/l)).map (mapGL ℝ)`. -/
 noncomputable def conductorTheoremCaseA_modularForm
     (l N : ℕ) [NeZero l] [NeZero N] (h_dvd : l ∣ N) (k : ℤ)
     (χ : DirichletCharacter ℂ N) (h_fac : χ.FactorsThrough (N / l))
@@ -1073,10 +648,8 @@ lemma conductorTheoremCaseA_modularForm_apply
     ⇑(conductorTheoremCaseA_modularForm l N h_dvd k χ h_fac f g hg_char hg_eq hf_period) = f :=
   rfl
 
-/-- **Inverse zero-at-i∞ transfer.** If `g = levelRaiseFun l k f` and `g`
-is zero at `i∞`, then so is `f`. The proof: `f τ = g (α_l⁻¹ • τ)`
-(by `fun_eq_apply_levelRaiseMatrix_inv_smul`); as `Im(τ) → ∞`,
-`Im(α_l⁻¹ • τ) = Im(τ)/l → ∞`, so `g (α_l⁻¹ • τ) → 0`. -/
+/-- Inverse zero-at-`i∞` transfer: if `g = levelRaiseFun l k f` and `g` is
+zero at `i∞`, then so is `f`. -/
 lemma isZeroAtImInfty_of_levelRaiseFun_eq
     (l : ℕ) [NeZero l] (k : ℤ)
     (f g : UpperHalfPlane → ℂ)
@@ -1092,9 +665,9 @@ lemma isZeroAtImInfty_of_levelRaiseFun_eq
   rw [im_levelRaiseMatrix_inv_smul]
   rwa [le_div_iff₀ (Nat.cast_pos.mpr (Nat.pos_of_neZero l))]
 
-/-- **Slash zero-at-i∞ reduction.** For any `A : SL(2, ℤ)`, the
-zero-at-`i∞` of `f ∣[k] mapGL ℝ A` is equivalent to the
-zero-at-`i∞` of `g ∣[k] (α_l⁻¹ * mapGL ℝ A)`. -/
+/-- Slash zero-at-`i∞` reduction: for any `A : SL(2, ℤ)`, the zero-at-`i∞` of
+`f ∣[k] mapGL ℝ A` is equivalent to the zero-at-`i∞` of
+`g ∣[k] (α_l⁻¹ * mapGL ℝ A)`. -/
 lemma isZeroAtImInfty_slash_iff_levelRaiseFun_eq
     (l : ℕ) [NeZero l] (k : ℤ)
     (f g : UpperHalfPlane → ℂ) (hg_eq : g = levelRaiseFun l k f)
@@ -1126,9 +699,7 @@ lemma isZeroAtImInfty_slash_iff_levelRaiseFun_eq
     rwa [le_div_iff₀ hc_norm_pos, mul_comm] at h
 
 open OnePoint in
-/-- **Zero-at-i∞ of `g ∣[k] (α_l⁻¹ * mapGL ℝ A)`.** Direct application of the
-structural cusp condition `zero_at_cusps'` of `g : CuspForm` at the cusp
-`(α_l⁻¹ * mapGL ℝ A) • ∞`. -/
+/-- Zero-at-`i∞` of `g ∣[k] (α_l⁻¹ * mapGL ℝ A)` for `g : CuspForm`. -/
 lemma isZeroAtImInfty_slash_levelRaiseMatrix_inv_mul_mapGL
     (l N : ℕ) [NeZero l] [NeZero N] (k : ℤ)
     (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (A : SL(2, ℤ)) :
@@ -1138,9 +709,7 @@ lemma isZeroAtImInfty_slash_levelRaiseMatrix_inv_mul_mapGL
   exact CuspFormClass.zero_at_cusps g
     (isCusp_levelRaiseMatrix_inv_mul_mapGL_smul_infty l A ((Gamma1 N).map (mapGL ℝ))) _ rfl
 
-/-- **All-SL2 zero-at-i∞ for `f`.** Combining the reduction
-`isZeroAtImInfty_slash_iff_levelRaiseFun_eq` with the structural cusp
-condition on `g`, we obtain `IsZeroAtImInfty (f ∣[k] mapGL ℝ A)` for
+/-- All-SL2 zero-at-`i∞` for `f`: `IsZeroAtImInfty (f ∣[k] mapGL ℝ A)` for
 every `A : SL(2, ℤ)`. -/
 lemma isZeroAtImInfty_slash_mapGL_of_levelRaiseFun_eq
     (l N : ℕ) [NeZero l] [NeZero N] (k : ℤ)
@@ -1151,10 +720,8 @@ lemma isZeroAtImInfty_slash_mapGL_of_levelRaiseFun_eq
   exact isZeroAtImInfty_slash_levelRaiseMatrix_inv_mul_mapGL l N k g A
 
 open OnePoint in
-/-- **All-cusp vanishing theorem (T064).** The candidate lower-level form `f`
-vanishes at every cusp of the lowered congruence subgroup
-`(Gamma1 (N/l)).map (mapGL ℝ)`. This is the slash-action version of
-`zero_at_cusps' f`. -/
+/-- All-cusp vanishing theorem: the candidate lower-level form `f` vanishes at
+every cusp of `(Gamma1 (N/l)).map (mapGL ℝ)`. -/
 theorem zero_at_cusps_of_levelRaiseFun_eq
     (l N : ℕ) [NeZero l] [NeZero N] (h_dvd : l ∣ N) (k : ℤ)
     (f : UpperHalfPlane → ℂ) (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
@@ -1172,9 +739,8 @@ theorem zero_at_cusps_of_levelRaiseFun_eq
   rw [ModularForm.SL_slash]
   exact isZeroAtImInfty_slash_mapGL_of_levelRaiseFun_eq l N k f g hg_eq γ
 
-/-- **Local `CuspForm.toModularForm'` upgrade.** A cusp form is canonically a
-modular form via the inclusion `c.IsZeroAt → c.IsBoundedAt`. Defined locally
-to avoid pulling the heavy `AdjointTheory` chain. -/
+/-- A cusp form is canonically a modular form via the inclusion
+`c.IsZeroAt → c.IsBoundedAt`. -/
 def cuspFormToModularForm {Γ : Subgroup (GL (Fin 2) ℝ)} {k : ℤ}
     (g : CuspForm Γ k) : ModularForm Γ k where
   toFun := g.toFun
@@ -1188,8 +754,7 @@ lemma cuspFormToModularForm_coe {Γ : Subgroup (GL (Fin 2) ℝ)} {k : ℤ}
     (g : CuspForm Γ k) : ⇑(cuspFormToModularForm g) = ⇑g := rfl
 
 /-- A cusp form lies in the modular-form Nebentypus eigenspace iff it lies in
-the cusp-form Nebentypus eigenspace, since both unfold to the same Nebentypus
-slash identity via `*_iff_nebentypus`. -/
+the cusp-form Nebentypus eigenspace. -/
 lemma cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace
     {N : ℕ} [NeZero N] (k : ℤ) (χ₀ : (ZMod N)ˣ →* ℂˣ)
     (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
@@ -1198,12 +763,9 @@ lemma cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace
   rw [modFormCharSpace_iff_nebentypus, cuspFormCharSpace_iff_nebentypus]
   simp [cuspFormToModularForm_coe]
 
-/-- **Case A lowered cusp form bundle.** Given the Case A hypotheses
-(level `N`, divisibility `l ∣ N`, character `χ` factoring through `N/l`,
-underlying function relation `⇑g = levelRaiseFun l k f` for some
-`g : CuspForm`, the Nebentypus character condition `g ∈ cuspFormCharSpace`,
-and the period-1 hypothesis `f ∣[k] T = f`), the candidate function `f`
-bundles into a `CuspForm` at the lowered level `(Gamma1 (N/l)).map (mapGL ℝ)`. -/
+/-- Case A lowered cusp form bundle: under the Case A hypotheses with
+`g : CuspForm`, the candidate function `f` bundles into a `CuspForm` at the
+lowered level `(Gamma1 (N/l)).map (mapGL ℝ)`. -/
 noncomputable def conductorTheoremCaseA_cuspForm
     (l N : ℕ) [NeZero l] [NeZero N] (h_dvd : l ∣ N) (k : ℤ)
     (χ : DirichletCharacter ℂ N) (h_fac : χ.FactorsThrough (N / l))
@@ -1235,10 +797,9 @@ lemma conductorTheoremCaseA_cuspForm_apply
     ⇑(conductorTheoremCaseA_cuspForm l N h_dvd k χ h_fac f g hg_char hg_eq hf_period) = f :=
   rfl
 
-/-- **Unit extraction from `¬ FactorsThrough`.** If `χ : DirichletCharacter ℂ N`
+/-- Unit extraction from `¬ FactorsThrough`: if `χ : DirichletCharacter ℂ N`
 does not factor through level `d`, there is a unit `u : (ZMod N)ˣ` with
-`ZMod.unitsMap hd u = 1` (i.e., `u` reduces to `1` modulo `d`) and
-`χ.toUnitHom u ≠ 1`. -/
+`ZMod.unitsMap hd u = 1` and `χ.toUnitHom u ≠ 1`. -/
 lemma exists_unit_of_not_factorsThrough
     {N : ℕ} [NeZero N] {d : ℕ} (hd : d ∣ N)
     {χ : DirichletCharacter ℂ N} (h_not_fac : ¬ χ.FactorsThrough d) :
@@ -1249,15 +810,12 @@ lemma exists_unit_of_not_factorsThrough
   · rwa [MonoidHom.mem_ker] at hu_ker
   · exact hu_chi ∘ MonoidHom.mem_ker.mpr
 
-/-- For `l ∣ N`, the integer cast factors as `N = l * (N / l)`. -/
 private lemma natCast_eq_mul_natCast_div {l N : ℕ} (h_dvd : l ∣ N) :
     (N : ℤ) = (l : ℤ) * ((N / l : ℕ) : ℤ) := by
   rw [mul_comm]; exact_mod_cast (Nat.div_mul_cancel h_dvd).symm
 
-/-- **Structural ascent**: if `γ ∈ Γ₀(N)` has `γ.val 1 1 ≡ 1 mod (N/l)`
-(i.e., `Gamma0MapUnits ⟨γ, hγ⟩` lies in the kernel of the unit-group
-reduction `(ZMod N)ˣ → (ZMod (N/l))ˣ`), then `levelRaiseConjOfDvd l γ`
-lies in the smaller subgroup `Γ₁(N/l)`. -/
+/-- Structural ascent: if `γ ∈ Γ₀(N)` has `γ.val 1 1 ≡ 1 mod (N/l)`, then
+`levelRaiseConjOfDvd l γ` lies in the smaller subgroup `Γ₁(N/l)`. -/
 lemma levelRaiseConjOfDvd_mem_Gamma1_div_of_mem_ker
     (l N : ℕ) [NeZero l] [NeZero N] (h_dvd : l ∣ N)
     {γ : SL(2, ℤ)} (hγ : γ ∈ Gamma0 N)
@@ -1310,16 +868,8 @@ lemma levelRaiseConjOfDvd_mem_Gamma1_div_of_mem_ker
       Int.mul_ediv_cancel_left _ (Nat.cast_ne_zero.mpr (NeZero.ne l))]
     exact ⟨m, rfl⟩
 
-/-- **Case B slash relation theorem.** Under the Case B hypothesis
-`¬ χ.FactorsThrough (N/l)`, there exists `δ ∈ Γ₁(N/l)` and `c : ℂ` with
-`c ≠ 1` such that `f ∣[k] mapGL ℝ δ = c • f`. This is the structural
-slash-incompatibility condition: `f` is forced to satisfy a non-trivial
-scalar slash relation under a level-`Γ₁(N/l)` matrix, which is incompatible
-with `f` being a (non-zero) modular form at level `Γ₁(N/l)`.
-
-The downstream conclusion `f = 0` is closed by T072 via the constructive
-two-multiplier route — see `conductorTheoremCaseB_vanishing` and
-`exists_T_factor_with_char_separation`. -/
+/-- Case B slash relation: under `¬ χ.FactorsThrough (N/l)`, there exist
+`δ ∈ Γ₁(N/l)` and `c : ℂ` with `c ≠ 1` such that `f ∣[k] mapGL ℝ δ = c • f`. -/
 theorem case_B_slash_relation
     (l N : ℕ) [NeZero l] [NeZero N] (h_dvd : l ∣ N) (k : ℤ)
     (χ : DirichletCharacter ℂ N) (h_not_fac : ¬ χ.FactorsThrough (N / l))
@@ -1352,11 +902,8 @@ theorem case_B_slash_relation
     exact hu_chi (Units.ext h_eq)
   · exact conductor_slash_eq l N h_dvd k χ f g hg_char hg_eq γ_u hγu_mem
 
-/-- **Algebraic two-multiplier contradiction.** If `f ∣[k] M` is BOTH `c₁ • f`
-AND `c₂ • f` for two distinct scalars, then `f = 0`. This captures the
-algebraic core of the Case B vanishing argument: when two factorizations of
-the same matrix produce different `χ` multipliers, the underlying function
-must vanish. -/
+/-- Algebraic two-multiplier contradiction: if `f ∣[k] M` is both `c₁ • f` and
+`c₂ • f` for two distinct scalars, then `f = 0`. -/
 lemma fun_eq_zero_of_two_multipliers (k : ℤ) (f : UpperHalfPlane → ℂ)
     (M : GL (Fin 2) ℝ) {c₁ c₂ : ℂ} (hne : c₁ ≠ c₂)
     (h₁ : f ∣[k] M = c₁ • f) (h₂ : f ∣[k] M = c₂ • f) :
@@ -1367,16 +914,9 @@ lemma fun_eq_zero_of_two_multipliers (k : ℤ) (f : UpperHalfPlane → ℂ)
   · exact absurd hc (sub_ne_zero.mpr hne)
   · exact hf
 
-/-- **Case B vanishing — conditional form.** Under the Case B hypothesis
-`¬ χ.FactorsThrough (N/l)`, the function `f` vanishes provided we have a
-hypothesis `h_second_mult` producing a SECOND scalar `c' ≠ c` such that
-`f ∣[k] mapGL ℝ δ = c' • f` for the witness matrix `δ`.
-
-This is the algebraic interface used by the unconditional Case B
-vanishing `conductorTheoremCaseB_vanishing` (T072): the latter discharges
-`h_second_mult` by combining `case_B_slash_relation_with_controlled_lift`
-with `exists_T_factor_with_char_separation` and then invoking
-`conductor_slash_T_conj_eq` on the alternate `Γ₀(N)`-lift. -/
+/-- Case B vanishing, conditional form: under `¬ χ.FactorsThrough (N/l)`, the
+function `f` vanishes provided a hypothesis `h_second_mult` produces a second
+scalar `c' ≠ c` such that `f ∣[k] mapGL ℝ δ = c' • f` for the witness `δ`. -/
 theorem case_B_vanishing_of_two_multipliers
     (l N : ℕ) [NeZero l] [NeZero N] (h_dvd : l ∣ N) (k : ℤ)
     (χ : DirichletCharacter ℂ N) (h_not_fac : ¬ χ.FactorsThrough (N / l))
@@ -1394,12 +934,9 @@ theorem case_B_vanishing_of_two_multipliers
   exact fun_eq_zero_of_two_multipliers k f
     ((mapGL ℝ δ : GL (Fin 2) ℝ)) hc'_ne.symm hc_eq hc'_eq
 
-/-- **Controlled `Γ₀(N)` lift.** Explicit Bezout-style matrix
-`!![a, b; N, e]` with `a = (u⁻¹ : ZMod N).val`, `e = (u : ZMod N).val`
-(canonical integer representatives in `[0, N)`), and `b = (a*e - 1) / N`
-(integer because `a*e ≡ 1 mod N`). This lies in `SL(2, ℤ)` (det = 1) and
-in `Γ₀(N)` (lower-left entry `N ≡ 0 mod N`); its `Gamma0MapUnits` value is
-exactly `u`. -/
+/-- Controlled `Γ₀(N)` lift of `u : (ZMod N)ˣ`: the Bezout-style matrix
+`!![a, b; N, e]` with `a = (u⁻¹ : ZMod N).val`, `e = (u : ZMod N).val`, and
+`b = (a*e - 1) / N`. -/
 noncomputable def gamma0LiftLowerLeftN (N : ℕ) [NeZero N] (u : (ZMod N)ˣ) :
     ↥(Gamma0 N) := by
   let e : ℤ := ((u.val : ZMod N).val : ℤ)
@@ -1452,11 +989,9 @@ lemma gamma0LiftLowerLeftN_Gamma0MapUnits (N : ℕ) [NeZero N] (u : (ZMod N)ˣ) 
   push_cast
   rw [ZMod.natCast_zmod_val]
 
-/-- **Refined Case B slash relation** using the controlled lift
-`gamma0LiftLowerLeftN`. Same conclusion as `case_B_slash_relation` but
-uses an explicit `Γ₀(N)` lift `γ_u` with `γ_u.val 1 0 = N`, exposing this
-property for downstream constructive analysis (e.g., the `(i, j)`-shift
-divisibility solver in T071). -/
+/-- Refined Case B slash relation using the controlled lift
+`gamma0LiftLowerLeftN`: same conclusion as `case_B_slash_relation` but with an
+explicit `Γ₀(N)` lift `γ_u` satisfying `γ_u.val 1 0 = N`. -/
 lemma case_B_slash_relation_with_controlled_lift
     (l N : ℕ) [NeZero l] [NeZero N] (h_dvd : l ∣ N) (k : ℤ)
     (χ : DirichletCharacter ℂ N) (h_not_fac : ¬ χ.FactorsThrough (N / l))
@@ -1484,18 +1019,8 @@ lemma case_B_slash_relation_with_controlled_lift
       (gamma0LiftLowerLeftN N u).property⟩ = u from
     gamma0LiftLowerLeftN_Gamma0MapUnits N u] at h_slash
 
-/-- **Algebraic obstruction summary**: the `(0, 1)` entry of the shifted
-matrix `T^{-i} γ̃_u T^{-j}` (where `γ̃_u = α_l γ_u α_l⁻¹` with
-`γ_u.val 1 0 = N`) equals
-`-j*(γ_u.val 0 0 - i*(N/l)) + l*γ_u.val 0 1 - i*γ_u.val 1 1`.
-Divisibility by `l` reduces (since `l | l*γ_u.val 0 1`) to the
-congruence
-`l ∣ i*γ_u.val 1 1 + j*γ_u.val 0 0 - i*j*(N/l)`. This is the precise
-condition that `(i, j)` must satisfy for the alternate factorization
-to yield a `Γ₀(N)`-lift.
-
-(Stated as a separate identity for downstream use; the divisibility
-analysis itself remains an open construction in T071.) -/
+/-- Algebraic restatement of the `(i, j)`-shift divisibility constraint:
+`l ∣ -j*(a₀ - i*(N/l)) + l*b₀ - i*e₀ ↔ l ∣ i*e₀ + j*a₀ - i*j*(N/l)`. -/
 lemma T_shift_divisibility_eq_iff
     (l N : ℕ) (i j : ℤ) (a₀ b₀ e₀ : ℤ) :
     (l : ℤ) ∣ (-j * (a₀ - i * ((N / l : ℕ) : ℤ)) + l * b₀ - i * e₀) ↔
@@ -1517,12 +1042,9 @@ lemma T_shift_divisibility_eq_iff
         (- j * (a₀ - i * ((N / l : ℕ) : ℤ)) + l * b₀ - i * e₀) := by ring
     rwa [h2] at this
 
-/-- **Multiplicative character separation in the kernel.** Given any
-`u : (ZMod N)ˣ` and `χ` not factoring through level `d`, there is a
-kernel element `v` (with `ZMod.unitsMap hd v = 1`) such that
-`χ.toUnitHom (u * v) ≠ χ.toUnitHom u`. The witness is any
-`v ∈ ker(ZMod.unitsMap hd) ∖ ker(χ.toUnitHom)`, which exists by
-`exists_unit_of_not_factorsThrough`. -/
+/-- Multiplicative character separation in the kernel: given `u : (ZMod N)ˣ`
+and `χ` not factoring through level `d`, there is a kernel element `v` (with
+`ZMod.unitsMap hd v = 1`) such that `χ.toUnitHom (u * v) ≠ χ.toUnitHom u`. -/
 lemma exists_kernel_unit_with_char_shift
     {N : ℕ} [NeZero N] {d : ℕ} (hd : d ∣ N)
     {χ : DirichletCharacter ℂ N} (h_not_fac : ¬ χ.FactorsThrough d)
@@ -1535,12 +1057,9 @@ lemma exists_kernel_unit_with_char_shift
   exact hv_chi <| mul_left_cancel <| show χ.toUnitHom u * χ.toUnitHom v = χ.toUnitHom u * 1 by
     rw [← map_mul, h, mul_one]
 
-/-- **Integer-`j`-shift bridge** (T071 ZMod arithmetic). For `v : (ZMod N)ˣ`
-in `ker((ZMod N)ˣ → (ZMod (N/l))ˣ)`, the integer representative `v.val`
-of the underlying `ZMod N` element satisfies `(N/l) ∣ (v.val - 1)` (in `ℤ`).
-This converts the multiplicative kernel data into an integer
-divisibility, the form needed by the `T_shift_divisibility_eq_iff`
-analysis. -/
+/-- Integer-`j`-shift bridge: for `v : (ZMod N)ˣ` in the kernel of
+`(ZMod N)ˣ → (ZMod (N/l))ˣ`, the integer representative `v.val` satisfies
+`(N/l) ∣ (v.val - 1)` in `ℤ`. -/
 lemma natCast_val_sub_one_dvd_of_mem_ker
     {N l : ℕ} [NeZero N] [NeZero l] (h_dvd : l ∣ N)
     (v : (ZMod N)ˣ)
@@ -1558,12 +1077,9 @@ lemma natCast_val_sub_one_dvd_of_mem_ker
     h_cast_one]
   ring
 
-/-- **Coset character separation** (T071 main existence theorem).
-Under the Case B hypothesis `¬ χ.FactorsThrough d`, for any `u : (ZMod N)ˣ`,
-there exists `u' : (ZMod N)ˣ` in the same `ZMod.unitsMap hd`-coset as `u`
-(equivalently, `u' = u * v` for some kernel unit `v`) with
-`χ.toUnitHom u' ≠ χ.toUnitHom u`. This is the precise multiplicative
-form of the χ-separation needed by Case B vanishing. -/
+/-- Coset character separation: under `¬ χ.FactorsThrough d`, for any
+`u : (ZMod N)ˣ` there exists `u' : (ZMod N)ˣ` in the same `ZMod.unitsMap hd`-coset
+as `u` with `χ.toUnitHom u' ≠ χ.toUnitHom u`. -/
 lemma exists_alt_unit_in_coset_with_char_separation
     {N : ℕ} [NeZero N] {d : ℕ} (hd : d ∣ N)
     {χ : DirichletCharacter ℂ N} (h_not_fac : ¬ χ.FactorsThrough d)
@@ -1576,11 +1092,8 @@ lemma exists_alt_unit_in_coset_with_char_separation
   · rw [map_mul, hv_ker, mul_one]
   · exact hv_chi
 
-/-- **Generalized integer-shift bridge** (T072): if two units `u, u'` lie in
-the same `ZMod.unitsMap hd`-coset, then `(N/l) ∣ (u.val.val - u'.val.val)` in
-`ℤ`. Companion to `natCast_val_sub_one_dvd_of_mem_ker`; this is the
-two-unit form needed to construct the integer shift `j = (e₀ - e₀')/(N/l)`
-in the matrix identity for `exists_T_factor_with_char_separation`. -/
+/-- Generalized integer-shift bridge: if two units `u, u'` lie in the same
+`ZMod.unitsMap hd`-coset, then `(N/l) ∣ (u.val.val - u'.val.val)` in `ℤ`. -/
 lemma natCast_val_sub_dvd_of_unitsMap_eq
     {N l : ℕ} [NeZero N] [NeZero l] (h_dvd : l ∣ N)
     (u u' : (ZMod N)ˣ)
@@ -1604,7 +1117,7 @@ lemma natCast_val_sub_dvd_of_unitsMap_eq
 
 /-- The `(0, 1)` entry of the controlled lift `gamma0LiftLowerLeftN N u` is
 the Bezout coefficient `b = (a*e - 1) / N` (where `a = u⁻¹.val.val`,
-`e = u.val.val`). Proved by direct unfolding. -/
+`e = u.val.val`). -/
 @[simp]
 lemma gamma0LiftLowerLeftN_upper_right (N : ℕ) [NeZero N] (u : (ZMod N)ˣ) :
     ((gamma0LiftLowerLeftN N u : SL(2, ℤ)).val 0 1 : ℤ) =
@@ -1643,9 +1156,6 @@ private lemma controlled_lift_det_identity (N : ℕ) [NeZero N] (u : (ZMod N)ˣ)
         (N : ℤ) = 1 := by
   linarith [Int.ediv_mul_cancel (N_dvd_inv_val_mul_val_sub_one N u)]
 
-/-- The underlying matrix of the level-raising conjugate of the controlled lift
-`gamma0LiftLowerLeftN N u`: it is `!![a, l*b; N/l, e]` where `a, b, e` are the
-entries of `gamma0LiftLowerLeftN N u`. -/
 private lemma levelRaiseConjOfDvd_gamma0LiftLowerLeftN_val
     (l N : ℕ) [NeZero l] [NeZero N] (h_dvd : l ∣ N) (u : (ZMod N)ˣ) :
     (levelRaiseConjOfDvd l (gamma0LiftLowerLeftN N u : SL(2, ℤ))
@@ -1672,19 +1182,11 @@ private lemma levelRaiseConjOfDvd_gamma0LiftLowerLeftN_val
       gamma0LiftLowerLeftN_upper_right, gamma0LiftLowerLeftN_lower_left,
       gamma0LiftLowerLeftN_lower_right, h_div_eq]
 
-/-- **Explicit T-factor with character separation** (T072 main theorem).
-Given the Case B hypothesis (`¬ FactorsThrough`) and a unit `u`, construct
-an integer pair `(i, j)` and a separating unit `u'` (in the same
-`unitsMap`-coset as `u`) such that:
-  (a) `χ.toUnitHom u' ≠ χ.toUnitHom u`, AND
-  (b) the matrix identity
-      `levelRaiseConjOfDvd l γ_u = T^i · levelRaiseConjOfDvd l γ' · T^j`
-      holds for `γ_u = gamma0LiftLowerLeftN N u` and
-      `γ' = gamma0LiftLowerLeftN N u'`.
-
-Combined with `conductor_slash_T_conj_eq` (T044), this yields the SECOND
-slash multiplier needed by `case_B_vanishing_of_two_multipliers` to
-deduce `f = 0`. -/
+/-- Explicit T-factor with character separation: under `¬ χ.FactorsThrough (N/l)`
+and given a unit `u`, there are integers `(i, j)` and a separating unit `u'`
+in the same `unitsMap`-coset as `u` with `χ.toUnitHom u' ≠ χ.toUnitHom u` and
+`levelRaiseConjOfDvd l γ_u = T^i · levelRaiseConjOfDvd l γ' · T^j`, where
+`γ_u = gamma0LiftLowerLeftN N u` and `γ' = gamma0LiftLowerLeftN N u'`. -/
 theorem exists_T_factor_with_char_separation
     (l N : ℕ) [NeZero l] [NeZero N] (h_dvd : l ∣ N)
     (χ : DirichletCharacter ℂ N) (h_not_fac : ¬ χ.FactorsThrough (N / l))
@@ -1748,13 +1250,8 @@ theorem exists_T_factor_with_char_separation
     levelRaiseConjOfDvd_gamma0LiftLowerLeftN_val l N h_dvd u'
   rwa [h_lhs_val, h_rhs_val]
 
-/-- **Case B vanishing theorem (T072 closure)**: under the Case B hypothesis
-`¬ χ.FactorsThrough (N/l)` plus the period-1 hypothesis on `f`, the
-candidate lower-level form `f` vanishes. The proof composes the slash
-relation from `case_B_slash_relation_with_controlled_lift` with the
-alternative slash multiplier produced by `exists_T_factor_with_char_separation`
-+ `conductor_slash_T_conj_eq` (T044), then closes via the algebraic
-two-multiplier contradiction `fun_eq_zero_of_two_multipliers`. -/
+/-- Case B vanishing theorem: under `¬ χ.FactorsThrough (N/l)` plus the period-1
+hypothesis on `f`, the candidate lower-level form `f` vanishes. -/
 theorem conductorTheoremCaseB_vanishing
     (l N : ℕ) [NeZero l] [NeZero N] (h_dvd : l ∣ N) (k : ℤ)
     (χ : DirichletCharacter ℂ N) (h_not_fac : ¬ χ.FactorsThrough (N / l))
@@ -1777,9 +1274,9 @@ theorem conductorTheoremCaseB_vanishing
   exact fun_eq_zero_of_two_multipliers k f _
     (fun h ↦ hu'_chi.symm (Units.ext h)) h_slash h_slash_alt
 
-/-- **Miyake 4.6.4 Conductor theorem (modular form flavor)**: under the
-generic Case A/B hypotheses, EITHER `χ` factors through level `N/l` and
-`f` bundles into a `ModularForm` at the lowered level, OR `f = 0`. -/
+/-- Miyake 4.6.4 Conductor theorem, modular form flavor: under the generic
+Case A/B hypotheses, either `χ` factors through level `N/l` and `f` bundles
+into a `ModularForm` at the lowered level, or `f = 0`. -/
 theorem conductor_theorem_dichotomy
     (l N : ℕ) [NeZero l] [NeZero N] (h_dvd : l ∣ N) (k : ℤ)
     (χ : DirichletCharacter ℂ N)
@@ -1802,11 +1299,9 @@ theorem conductor_theorem_dichotomy
     exact conductorTheoremCaseB_vanishing l N h_dvd k χ h_fac f g hg_char hg_eq
       hf_period
 
-/-- **Miyake 4.6.4 Conductor theorem (cusp form flavor)**: under the
-generic Case A/B hypotheses with `g : CuspForm`, EITHER `χ` factors
-through level `N/l` and `f` bundles into a `CuspForm` at the lowered
-level, OR `f = 0`. The Case B branch reduces to the modular-form
-`conductorTheoremCaseB_vanishing` via `cuspFormToModularForm`. -/
+/-- Miyake 4.6.4 Conductor theorem, cusp form flavor: under the generic
+Case A/B hypotheses with `g : CuspForm`, either `χ` factors through level
+`N/l` and `f` bundles into a `CuspForm` at the lowered level, or `f = 0`. -/
 theorem conductor_theorem_dichotomy_cuspForm
     (l N : ℕ) [NeZero l] [NeZero N] (h_dvd : l ∣ N) (k : ℤ)
     (χ : DirichletCharacter ℂ N)
@@ -1864,9 +1359,8 @@ private lemma unitsMap_Gamma0MapUnits_lift_eq_of_diag
   rw [h10_zero]
   ring
 
-/-- **Lowered character space membership for the modular-form Case A bundle**
-(T077 main result, modular-form flavor). The bundle
-`conductorTheoremCaseA_modularForm` lies in
+/-- Lowered character space membership for the modular-form Case A bundle: the
+bundle `conductorTheoremCaseA_modularForm` lies in
 `modFormCharSpace k (loweredCharacter h_fac).toUnitHom`. -/
 theorem conductorTheoremCaseA_modularForm_mem_modFormCharSpace
     (l N : ℕ) [NeZero l] [NeZero N] [NeZero (N / l)] (h_dvd : l ∣ N) (k : ℤ)
@@ -1889,8 +1383,9 @@ theorem conductorTheoremCaseA_modularForm_mem_modFormCharSpace
   congr 1
   exact unitsMap_Gamma0MapUnits_lift_eq_of_diag l N h_dvd γ hγ γ'_pkg j hdiag
 
-/-- **Lowered character space membership for the cusp-form Case A bundle**
-(T077 main result, cusp-form flavor). -/
+/-- Lowered character space membership for the cusp-form Case A bundle: the
+bundle `conductorTheoremCaseA_cuspForm` lies in
+`cuspFormCharSpace k (loweredCharacter h_fac).toUnitHom`. -/
 theorem conductorTheoremCaseA_cuspForm_mem_cuspFormCharSpace
     (l N : ℕ) [NeZero l] [NeZero N] [NeZero (N / l)] (h_dvd : l ∣ N) (k : ℤ)
     (χ : DirichletCharacter ℂ N) (h_fac : χ.FactorsThrough (N / l))
@@ -1914,9 +1409,9 @@ theorem conductorTheoremCaseA_cuspForm_mem_cuspFormCharSpace
   congr 1
   exact unitsMap_Gamma0MapUnits_lift_eq_of_diag l N h_dvd γ hγ γ'_pkg j hdiag
 
-/-- **Strengthened modular-form dichotomy** (T077): same as
-`conductor_theorem_dichotomy` but the Case A branch also asserts that
-the lowered bundle lies in the lowered Nebentypus character space. -/
+/-- Strengthened modular-form dichotomy: same as `conductor_theorem_dichotomy`
+but the Case A branch also asserts that the lowered bundle lies in the lowered
+Nebentypus character space. -/
 theorem conductor_theorem_dichotomy_strong
     (l N : ℕ) [NeZero l] [NeZero N] [NeZero (N / l)] (h_dvd : l ∣ N) (k : ℤ)
     (χ : DirichletCharacter ℂ N)
@@ -1942,7 +1437,8 @@ theorem conductor_theorem_dichotomy_strong
     exact conductorTheoremCaseB_vanishing l N h_dvd k χ h_fac f g hg_char hg_eq
       hf_period
 
-/-- **Strengthened cusp-form dichotomy** (T077). -/
+/-- Strengthened cusp-form dichotomy: the cusp-form analogue of
+`conductor_theorem_dichotomy_strong`. -/
 theorem conductor_theorem_dichotomy_cuspForm_strong
     (l N : ℕ) [NeZero l] [NeZero N] [NeZero (N / l)] (h_dvd : l ∣ N) (k : ℤ)
     (χ : DirichletCharacter ℂ N)
