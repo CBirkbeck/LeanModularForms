@@ -201,6 +201,21 @@ theorem heckeMultiplicity_block_embed_target_mulMap_sandwich {k : ℕ} (hk : 1 �
   ⟨heckeMultiplicity_block_embed_le_diagMat_target_mulMap hk a b c ha hb hc hda hdb hdc,
    heckeMultiplicity_block_embed_ge_diagMat_target_mulMap a b c ha hb hc⟩
 
+/-- **Left-cancellation of a fixed `H`-element on `decompQuot` classes.**
+Multiplying the canonical representatives `x.out`, `y.out` on the left by the
+same `n : P.H` and taking quotient classes is injective: if
+`⟦n * x.out⟧ = ⟦n * y.out⟧` then `x = y`.  This is the rep-invariant cancellation
+underlying the j-side injectivity step of
+`_le_diagMat_target_mulMap_via_iFunctional`, where the two corrected-j embeds
+share the same conjugator `N_of_i i` once the i-classes agree. -/
+private lemma decompQuot_out_left_mul_cancel {G : Type*} [Group G] {P : HeckePair G}
+    {g : P.Δ} (n : P.H) {x y : decompQuot P g}
+    (h : (⟦n * x.out⟧ : decompQuot P g) = ⟦n * y.out⟧) : x = y := by
+  rw [Quotient.eq, QuotientGroup.leftRel_apply] at h
+  have h_simp : (n * x.out)⁻¹ * (n * y.out) = x.out⁻¹ * y.out := by group
+  rw [h_simp] at h
+  exact Quotient.out_equiv_out.mp (QuotientGroup.leftRel_apply.mpr h)
+
 /-- **Route A: ≤_diagMat target-mulMap reduction to an i-functional `N_i` extractor.**
 
 Provides a sorry-free proof of the dim-(k+2) → dim-(k+1) `heckeMultiplicity` ≤
@@ -273,31 +288,12 @@ lemma heckeMultiplicity_block_embed_le_diagMat_target_mulMap_via_iFunctional
         (diagMat_delta (k + 1) a) (diagMat_delta (k + 1) b)
         (diagMat_delta (k + 1) c) := by
   let _ := hda; let _ := hdb; let _ := hc
-  let SrcType : Type := { p : decompQuot (GL_pair (k + 2))
-            (diagMat_delta (k + 2) (Fin.cons 1 a)) ×
-            decompQuot (GL_pair (k + 2)) (diagMat_delta (k + 2) (Fin.cons 1 b)) |
-            ({(p.1.out : GL (Fin (k + 2)) ℚ) *
-              (diagMat_delta (k + 2) (Fin.cons 1 a) : GL (Fin (k + 2)) ℚ)} : Set _) *
-            {(p.2.out : GL (Fin (k + 2)) ℚ) *
-              (diagMat_delta (k + 2) (Fin.cons 1 b) : GL (Fin (k + 2)) ℚ)} *
-            ((GL_pair (k + 2)).H : Set _) =
-            {(diagMat_delta (k + 2) (Fin.cons 1 c) : GL (Fin (k + 2)) ℚ)} *
-              ((GL_pair (k + 2)).H : Set _) }
-  let MulMapTgtType : Type := { p : decompQuot (GL_pair (k + 1))
-            (diagMat_delta (k + 1) a) ×
-            decompQuot (GL_pair (k + 1)) (diagMat_delta (k + 1) b) |
-            HeckeRing.mulMap (GL_pair (k + 1))
-                (diagMat_delta (k + 1) a) (diagMat_delta (k + 1) b) ⟨p.1, p.2⟩ =
-              (⟦diagMat_delta (k + 1) c⟧ : HeckeRing.HeckeCoset (GL_pair (k + 1))) }
-  let f : SrcType → MulMapTgtType := fun ⟨⟨i, j⟩, hfib⟩ ↦
-    let spec := h_iFunctional i j hfib
-    let i_m := spec.choose
-    let spec' := spec.choose_spec
-    let j_m := spec'.choose
-    ⟨(i_m, j_m), spec'.choose_spec.2.2⟩
   simp only [HeckeRing.heckeMultiplicity, HeckeRing.heckeMultiplicityMulMap]
   norm_cast
-  refine Nat.card_le_card_of_injective f ?_
+  refine Nat.card_le_card_of_injective
+    (fun ⟨⟨i, j⟩, hfib⟩ ↦
+      ⟨((h_iFunctional i j hfib).choose, (h_iFunctional i j hfib).choose_spec.choose),
+        (h_iFunctional i j hfib).choose_spec.choose_spec.2.2⟩) ?_
   rintro ⟨⟨i₁, j₁⟩, hfib₁⟩ ⟨⟨i₂, j₂⟩, hfib₂⟩ heq
   set spec₁ := h_iFunctional i₁ j₁ hfib₁ with hspec₁
   set spec₂ := h_iFunctional i₂ j₂ hfib₂ with hspec₂
@@ -333,22 +329,7 @@ lemma heckeMultiplicity_block_embed_le_diagMat_target_mulMap_via_iFunctional
             (GL_pair (k + 2)).H) * j₂.out⟧ := by
       rw [← h_j_corr₁, ← h_j_corr₂, h_j_m_eq]
     rw [h_i_final] at h_class_eq
-    rw [Quotient.eq] at h_class_eq
-    rw [QuotientGroup.leftRel_apply] at h_class_eq
-    have h_simp :
-        ((⟨mapGL ℚ (N_of_i i₂)⁻¹, coe_mem_SLnZ (k + 2) (N_of_i i₂)⁻¹⟩ :
-            (GL_pair (k + 2)).H) * j₁.out)⁻¹ *
-        ((⟨mapGL ℚ (N_of_i i₂)⁻¹, coe_mem_SLnZ (k + 2) (N_of_i i₂)⁻¹⟩ :
-            (GL_pair (k + 2)).H) * j₂.out) =
-        (j₁.out)⁻¹ * j₂.out := by
-      group
-    rw [h_simp] at h_class_eq
-    rw [show j₁ = ⟦j₁.out⟧ from (Quotient.out_eq j₁).symm,
-        show j₂ = ⟦j₂.out⟧ from (Quotient.out_eq j₂).symm]
-    apply Quotient.sound
-    change QuotientGroup.leftRel _ (Quotient.out j₁) (Quotient.out j₂)
-    rw [QuotientGroup.leftRel_apply]
-    exact h_class_eq
+    exact decompQuot_out_left_mul_cancel _ h_class_eq
   exact Subtype.ext (Prod.ext h_i_final h_j_final)
 
 /-- **i-only block-witness existence proposition.**
@@ -571,6 +552,94 @@ theorem heckeMultiplicity_block_embed_target_mulMap_sandwich_sorryFree
       hda hdb hdc,
    heckeMultiplicity_block_embed_ge_diagMat_target_mulMap a b c ha hb hc⟩
 
+/-- **Determinant of the trailing `(k+1)×(k+1)` block equals the full determinant
+when the first row is `e₀`.**  Cofactor expansion along row `0`: all but the
+`(0,0)` term vanish (`hrow0`), and the surviving `(0,0)`-minor is exactly the
+trailing block.  Used to transport `det (Y * M) = 1` to `det τ_raw = 1`. -/
+private lemma trailing_block_det_of_first_row_e0 {k : ℕ} {R : Type*} [CommRing R]
+    (N : Matrix (Fin (k + 2)) (Fin (k + 2)) R)
+    (h00 : N 0 0 = 1) (hrow0 : ∀ l : Fin (k + 1), N 0 l.succ = 0) :
+    (Matrix.of fun I J : Fin (k + 1) ↦ N I.succ J.succ).det = N.det := by
+  symm
+  rw [Matrix.det_succ_row_zero, Fin.sum_univ_succ]
+  have h_zero_terms : ∀ j : Fin (k + 1),
+      (-1 : R) ^ (j.succ : ℕ) * N 0 j.succ *
+        (N.submatrix Fin.succ j.succ.succAbove).det = 0 := by
+    intro j; rw [hrow0 j]; ring
+  rw [Finset.sum_eq_zero (fun j _ ↦ h_zero_terms j), add_zero, h00]
+  simp only [Fin.val_zero, pow_zero, one_mul, mul_one]
+  have h_submat :
+      N.submatrix Fin.succ (0 : Fin (k + 2)).succAbove =
+        Matrix.of fun I J : Fin (k + 1) ↦ N I.succ J.succ := by
+    ext I J
+    show N I.succ ((0 : Fin (k + 2)).succAbove J) = N I.succ J.succ
+    rw [Fin.succAbove_zero]
+  rw [h_submat]
+
+/-- **A matrix with `e₀` first column and first row, and trailing block `τ`,
+equals `slSuccEmbed τ`.**  Checked entrywise on the four `Fin.cases` corner
+regions against the `slSuccEmbed_val_*` characterizations. -/
+private lemma eq_slSuccEmbed_of_border_e0 {k : ℕ}
+    (N : SpecialLinearGroup (Fin (k + 2)) ℤ) (τ : SpecialLinearGroup (Fin (k + 1)) ℤ)
+    (h00 : N.val 0 0 = 1) (hrow0 : ∀ l : Fin (k + 1), N.val 0 l.succ = 0)
+    (hcol0 : ∀ I : Fin (k + 1), N.val I.succ 0 = 0)
+    (hblock : ∀ I J : Fin (k + 1), N.val I.succ J.succ = τ.val I J) :
+    N = slSuccEmbed τ := by
+  apply Subtype.ext
+  ext I J
+  refine Fin.cases ?_ ?_ I
+  · refine Fin.cases ?_ ?_ J
+    · rw [h00, slSuccEmbed_val_zero_zero]
+    · intro J'; rw [hrow0 J', slSuccEmbed_val_zero_succ]
+  · intro I'
+    refine Fin.cases ?_ ?_ J
+    · rw [hcol0 I', slSuccEmbed_val_succ_zero]
+    · intro J'; rw [hblock I' J', slSuccEmbed_val_succ_succ]
+
+/-- **`b`-stabilizer membership is closed under products.**  Conjugation by
+`diagMat (k+2) (Fin.cons 1 b)` distributes over the product `P * Q` (via
+`map_mul` + `group`), so membership of each factor's conjugate gives membership
+of the product's conjugate. -/
+private lemma diagMat_conj_mem_H_mul {k : ℕ} (b : Fin (k + 1) → ℕ)
+    (P Q : SpecialLinearGroup (Fin (k + 2)) ℤ)
+    (hP : (diagMat (k + 2) (Fin.cons 1 b))⁻¹ *
+        (mapGL ℚ P : GL (Fin (k + 2)) ℚ) *
+        diagMat (k + 2) (Fin.cons 1 b) ∈ (GL_pair (k + 2)).H)
+    (hQ : (diagMat (k + 2) (Fin.cons 1 b))⁻¹ *
+        (mapGL ℚ Q : GL (Fin (k + 2)) ℚ) *
+        diagMat (k + 2) (Fin.cons 1 b) ∈ (GL_pair (k + 2)).H) :
+    (diagMat (k + 2) (Fin.cons 1 b))⁻¹ *
+      (mapGL ℚ (P * Q) : GL (Fin (k + 2)) ℚ) *
+      diagMat (k + 2) (Fin.cons 1 b) ∈ (GL_pair (k + 2)).H := by
+  have h_split : (diagMat (k + 2) (Fin.cons 1 b))⁻¹ *
+      (mapGL ℚ (P * Q) : GL (Fin (k + 2)) ℚ) *
+      diagMat (k + 2) (Fin.cons 1 b) =
+      ((diagMat (k + 2) (Fin.cons 1 b))⁻¹ *
+        (mapGL ℚ P : GL (Fin (k + 2)) ℚ) *
+        diagMat (k + 2) (Fin.cons 1 b)) *
+      ((diagMat (k + 2) (Fin.cons 1 b))⁻¹ *
+        (mapGL ℚ Q : GL (Fin (k + 2)) ℚ) *
+        diagMat (k + 2) (Fin.cons 1 b)) := by
+    rw [map_mul]; group
+  rw [h_split]
+  exact mul_mem hP hQ
+
+/-- **`Y · M₀` has first column `e₀` when `M₀`'s first column equals `Y⁻¹`'s.**
+Expanding the matrix product on column `0` and substituting `M₀ p 0 = (Y⁻¹) p 0`
+collapses the column to `(Y · Y⁻¹) · 0 = 1 · 0 = e₀`.  This is the first-column
+clearance step feeding the trailing-block construction. -/
+private lemma mul_first_col_eq_one_of_col_eq_inv_col {k : ℕ}
+    (Y M_0 : SpecialLinearGroup (Fin (k + 2)) ℤ)
+    (h_col : ∀ p, M_0.val p 0 = (Y⁻¹ : SpecialLinearGroup (Fin (k + 2)) ℤ).val p 0) :
+    ∀ r : Fin (k + 2),
+      (Y * M_0).val r 0 = (1 : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ) r 0 := by
+  intro r
+  have h_to_inv :
+      (Y * M_0).val r 0 = (Y * Y⁻¹ : SpecialLinearGroup _ ℤ).val r 0 := by
+    simp only [Matrix.SpecialLinearGroup.coe_mul, Matrix.mul_apply]
+    exact Finset.sum_congr rfl (fun p _ ↦ by rw [h_col p])
+  rw [h_to_inv, mul_inv_cancel, Matrix.SpecialLinearGroup.coe_one]
+
 /-- **Generic block-form witness from column-zero divisibility.**
 
 Given any `Y ∈ SL(k+2, ℤ)` together with a `DivChain b` and the column-zero
@@ -614,16 +683,8 @@ private lemma exists_stab_block_form_of_col_div {k : ℕ}
       (fun r ↦ (Y⁻¹ : SpecialLinearGroup _ ℤ).val r 0)
       hw_primitive h_col_div_b
   have h_col_e0 : ∀ r : Fin (k + 2),
-      (Y * M_0).val r 0 =
-        (1 : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ) r 0 := by
-    intro r
-    have h_to_inv :
-        (Y * M_0).val r 0 =
-          (Y * Y⁻¹ : SpecialLinearGroup _ ℤ).val r 0 := by
-      simp only [Matrix.SpecialLinearGroup.coe_mul, Matrix.mul_apply]
-      refine Finset.sum_congr rfl (fun p _ ↦ ?_)
-      rw [hM_0_col p]
-    rw [h_to_inv, mul_inv_cancel, Matrix.SpecialLinearGroup.coe_one]
+      (Y * M_0).val r 0 = (1 : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ) r 0 :=
+    mul_first_col_eq_one_of_col_eq_inv_col Y M_0 hM_0_col
   obtain ⟨T_clear, hT_col0, hT_S, _, _, hT_stab⟩ :=
     sl_first_row_clear_with_col0_e0 b hb (Y * M_0) h_col_e0 Finset.univ
   set M : SpecialLinearGroup (Fin (k + 2)) ℤ := M_0 * T_clear with hM_def
@@ -641,68 +702,22 @@ private lemma exists_stab_block_form_of_col_div {k : ℕ}
     show (Y * M).val 0 l.succ = _
     rw [hM_assoc]
     exact hT_S l (Finset.mem_univ l)
-  have hN_00 : N_full 0 0 = 1 := by
-    have h := hN_col0 0
-    rw [Matrix.one_apply_eq] at h
-    exact h
-  have hN_succ0 : ∀ I : Fin (k + 1), N_full I.succ 0 = 0 := by
-    intro I
-    have h := hN_col0 I.succ
-    rw [Matrix.one_apply_ne (Fin.succ_ne_zero I)] at h
-    exact h
+  have hN_00 : N_full 0 0 = 1 := by simpa using hN_col0 0
+  have hN_succ0 : ∀ I : Fin (k + 1), N_full I.succ 0 = 0 := fun I ↦ by
+    simpa [Matrix.one_apply_ne (Fin.succ_ne_zero I)] using hN_col0 I.succ
   set τ_raw : Matrix (Fin (k + 1)) (Fin (k + 1)) ℤ :=
     fun I J ↦ N_full I.succ J.succ with hτ_raw_def
-  have h_det : τ_raw.det = 1 := by
-    have h_det_N : N_full.det = 1 := by
-      rw [hN_def]; exact (Y * M).2
-    rw [Matrix.det_succ_row_zero] at h_det_N
-    rw [Fin.sum_univ_succ] at h_det_N
-    have h_zero_terms :
-        ∀ j : Fin (k + 1),
-          (-1 : ℤ) ^ (j.succ : ℕ) * N_full 0 j.succ *
-            (N_full.submatrix Fin.succ j.succ.succAbove).det = 0 := by
-      intro j
-      rw [hN_row0 j]; ring
-    rw [Finset.sum_eq_zero (fun j _ ↦ h_zero_terms j), add_zero,
-      hN_00] at h_det_N
-    simp only [Fin.val_zero, pow_zero, one_mul, mul_one] at h_det_N
-    have h_submat :
-        N_full.submatrix Fin.succ (0 : Fin (k + 2)).succAbove = τ_raw := by
-      ext I J
-      show N_full I.succ ((0 : Fin (k + 2)).succAbove J) = τ_raw I J
-      rw [Fin.succAbove_zero]
-    rw [h_submat] at h_det_N
-    exact h_det_N
+  have h_det : τ_raw.det = 1 :=
+    (trailing_block_det_of_first_row_e0 N_full hN_00 hN_row0).trans
+      (hN_def ▸ (Y * M).2)
   set τ : SpecialLinearGroup (Fin (k + 1)) ℤ := ⟨τ_raw, h_det⟩ with hτ_def
-  have h_block : Y * M = slSuccEmbed τ := by
-    apply Subtype.ext
-    ext I J
-    show N_full I J = (slSuccEmbed τ).val I J
-    refine Fin.cases ?_ ?_ I
-    · refine Fin.cases ?_ ?_ J
-      · rw [hN_00, slSuccEmbed_val_zero_zero]
-      · intro J'
-        rw [hN_row0 J', slSuccEmbed_val_zero_succ]
-    · intro I'
-      refine Fin.cases ?_ ?_ J
-      · rw [hN_succ0 I', slSuccEmbed_val_succ_zero]
-      · intro J'
-        rw [slSuccEmbed_val_succ_succ]
+  have h_block : Y * M = slSuccEmbed τ :=
+    eq_slSuccEmbed_of_border_e0 (Y * M) τ hN_00 hN_row0 hN_succ0 (fun _ _ ↦ rfl)
   have h_M_stab : (diagMat (k + 2) (Fin.cons 1 b))⁻¹ *
       (mapGL ℚ M : GL (Fin (k + 2)) ℚ) *
       diagMat (k + 2) (Fin.cons 1 b) ∈ (GL_pair (k + 2)).H := by
-    have h_split : (diagMat (k + 2) (Fin.cons 1 b))⁻¹ *
-        (mapGL ℚ M : GL (Fin (k + 2)) ℚ) *
-        diagMat (k + 2) (Fin.cons 1 b) =
-        ((diagMat (k + 2) (Fin.cons 1 b))⁻¹ *
-          (mapGL ℚ M_0 : GL (Fin (k + 2)) ℚ) *
-          diagMat (k + 2) (Fin.cons 1 b)) *
-        ((diagMat (k + 2) (Fin.cons 1 b))⁻¹ *
-          (mapGL ℚ T_clear : GL (Fin (k + 2)) ℚ) *
-          diagMat (k + 2) (Fin.cons 1 b)) := by
-      rw [hM_def, map_mul]; group
-    rw [h_split]
-    exact mul_mem hM_0_stab hT_stab
+    rw [hM_def]
+    exact diagMat_conj_mem_H_mul b M_0 T_clear hM_0_stab hT_stab
   exact ⟨M, τ, h_block, h_M_stab⟩
 
 /-- **j-side block-form witness, conditional on `hfib_col_div_b`.**

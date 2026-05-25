@@ -284,6 +284,59 @@ theorem Newform.frickeSlashCuspForm_preserves_cuspFormsOldExtended_iff_on_genera
       rw [map_smul]
       exact Submodule.smul_mem _ c ihx
 
+/-- **T173 — function-level Fricke-slash / level-raise identity for the
+trivial-inclusion case.**
+
+The Atkin-Lehner / Fricke slash of a trivially-included level-`M` cusp form
+equals a scalar multiple of a level-raise: with the matrix identity
+`W_(d*M) = W_M · α_d` (`Newform.frickeMatrix_mul_levelRaiseMatrix`) and
+`SlashAction.slash_mul`, the slash by `W_(d*M)` factors through the slash by
+`W_M` followed by the level-raise slash by `α_d`, whose scalar prefactor
+`(d:ℂ)^(1-k)` cancels the `(d:ℂ)^(k-1)` on the right. -/
+private lemma frickeSlashCuspForm_levelInclude_cusp_eq_smul_levelRaise
+    {M : ℕ} [NeZero M] {d : ℕ} [NeZero d] (hMN : M ∣ d * M) {k : ℤ}
+    (g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) :
+    haveI : NeZero (d * M) := ⟨Nat.mul_ne_zero (NeZero.ne d) (NeZero.ne M)⟩
+    Newform.frickeSlashCuspForm (levelInclude_cusp hMN k g) =
+      (d : ℂ) ^ (k - 1) • levelRaise M d k (Newform.frickeSlashCuspForm g) := by
+  haveI : NeZero (d * M) := ⟨Nat.mul_ne_zero (NeZero.ne d) (NeZero.ne M)⟩
+  set Y : CuspForm ((Gamma1 M).map (mapGL ℝ)) k := Newform.frickeSlashCuspForm g
+  apply CuspForm.ext
+  intro τ
+  have h_matrix : (Newform.frickeMatrix (d * M) : GL (Fin 2) ℝ) =
+      (Newform.frickeMatrix M : GL (Fin 2) ℝ) *
+        (HeckeRing.GL2.levelRaiseMatrix d : GL (Fin 2) ℝ) :=
+    (Newform.frickeMatrix_mul_levelRaiseMatrix (M := M) (d := d)).symm
+  have hd_ne : (d : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (NeZero.ne d)
+  have h_zpow_cancel : ((d : ℂ) ^ (k - 1)) * ((d : ℂ) ^ (1 - k)) = 1 := by
+    rw [← zpow_add₀ hd_ne, show (k - 1) + (1 - k) = (0 : ℤ) from by ring, zpow_zero]
+  show (⇑(Newform.frickeSlashCuspForm
+      (levelInclude_cusp hMN k g)) : UpperHalfPlane → ℂ) τ =
+      (⇑((d : ℂ) ^ (k - 1) • levelRaise M d k Y) : UpperHalfPlane → ℂ) τ
+  rw [show (⇑(Newform.frickeSlashCuspForm
+        (levelInclude_cusp hMN k g)) : UpperHalfPlane → ℂ) =
+      (⇑(levelInclude_cusp hMN k g) : UpperHalfPlane → ℂ) ∣[k]
+        (Newform.frickeMatrix (d * M) : GL (Fin 2) ℝ) from rfl]
+  rw [show (⇑(levelInclude_cusp hMN k g) : UpperHalfPlane → ℂ) = ⇑g from rfl]
+  rw [h_matrix, SlashAction.slash_mul]
+  show ((⇑g ∣[k] (Newform.frickeMatrix M : GL (Fin 2) ℝ)) ∣[k]
+        (HeckeRing.GL2.levelRaiseMatrix d : GL (Fin 2) ℝ)) τ =
+    ((d : ℂ) ^ (k - 1)) * ((⇑(levelRaise M d k Y) : UpperHalfPlane → ℂ) τ)
+  rw [show (⇑(levelRaise M d k Y) : UpperHalfPlane → ℂ) τ =
+      ((d : ℂ) ^ (1 - k)) *
+        ((⇑Y : UpperHalfPlane → ℂ) ∣[k]
+          (HeckeRing.GL2.levelRaiseMatrix d : GL (Fin 2) ℝ)) τ from rfl]
+  rw [show (⇑Y : UpperHalfPlane → ℂ) = ⇑g ∣[k]
+      (Newform.frickeMatrix M : GL (Fin 2) ℝ) from rfl]
+  rw [show ((d : ℂ) ^ (k - 1)) *
+        (((d : ℂ) ^ (1 - k)) *
+          (((⇑g ∣[k] (Newform.frickeMatrix M : GL (Fin 2) ℝ)) ∣[k]
+            (HeckeRing.GL2.levelRaiseMatrix d : GL (Fin 2) ℝ)) τ)) =
+      (((d : ℂ) ^ (k - 1)) * ((d : ℂ) ^ (1 - k))) *
+        (((⇑g ∣[k] (Newform.frickeMatrix M : GL (Fin 2) ℝ)) ∣[k]
+          (HeckeRing.GL2.levelRaiseMatrix d : GL (Fin 2) ℝ)) τ) from by ring]
+  rw [h_zpow_cancel, one_mul]
+
 /-- **T173 — Fricke slash of a trivial-inclusion oldform generator lands in
 `cuspFormsOldExtended` (Case B per-generator residual).**
 
@@ -329,60 +382,11 @@ theorem Newform.frickeSlashCuspForm_levelInclude_cusp_mem_cuspFormsOldExtended
   -- Replace N with d * M via subst (d is a free var now, so this should work).
   have heq_N : N = d * M := by rw [mul_comm]; exact hd
   subst heq_N
-  -- After subst, the goal references d * M instead of N.
-  let Y : CuspForm ((Gamma1 M).map (mapGL ℝ)) k :=
-    @Newform.frickeSlashCuspForm M _ k g
-  let f_witness : CuspForm ((Gamma1 (d * M)).map (mapGL ℝ)) k :=
-    levelRaise M d k Y
-  have h_gen : IsOldformGenerator f_witness :=
-    ⟨M, d, inferInstance, inferInstance, hd_lt, rfl, Y, rfl⟩
-  suffices h_eq : Newform.frickeSlashCuspForm (levelInclude_cusp hMN k g) =
-      (d : ℂ) ^ (k - 1) • f_witness by
-    rw [h_eq]
-    exact Submodule.smul_mem _ _
-      (cuspFormsOld_le_cuspFormsOldExtended (Submodule.subset_span h_gen))
-  apply CuspForm.ext
-  intro τ
-  -- Matrix identity W_(d*M) = W_M * α_d.
-  have h_matrix : (Newform.frickeMatrix (d * M) : GL (Fin 2) ℝ) =
-      (Newform.frickeMatrix M : GL (Fin 2) ℝ) *
-        (HeckeRing.GL2.levelRaiseMatrix d : GL (Fin 2) ℝ) :=
-    (Newform.frickeMatrix_mul_levelRaiseMatrix (M := M) (d := d)).symm
-  have hd_ne : (d : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (NeZero.ne d)
-  have h_zpow_cancel : ((d : ℂ) ^ (k - 1)) * ((d : ℂ) ^ (1 - k)) = 1 := by
-    rw [← zpow_add₀ hd_ne]
-    rw [show (k - 1) + (1 - k) = (0 : ℤ) from by ring]
-    exact zpow_zero _
-  show (⇑(Newform.frickeSlashCuspForm
-      (levelInclude_cusp hMN k g)) : UpperHalfPlane → ℂ) τ =
-      (⇑((d : ℂ) ^ (k - 1) • f_witness) : UpperHalfPlane → ℂ) τ
-  rw [show (⇑(Newform.frickeSlashCuspForm
-        (levelInclude_cusp hMN k g)) : UpperHalfPlane → ℂ) =
-      (⇑(levelInclude_cusp hMN k g) : UpperHalfPlane → ℂ) ∣[k]
-        (Newform.frickeMatrix (d * M) : GL (Fin 2) ℝ) from rfl]
-  rw [show (⇑(levelInclude_cusp hMN k g) : UpperHalfPlane → ℂ) = ⇑g from rfl]
-  rw [h_matrix, SlashAction.slash_mul]
-  show ((⇑g ∣[k] (Newform.frickeMatrix M : GL (Fin 2) ℝ)) ∣[k]
-        (HeckeRing.GL2.levelRaiseMatrix d : GL (Fin 2) ℝ)) τ =
-    ((d : ℂ) ^ (k - 1)) * ((⇑f_witness : UpperHalfPlane → ℂ) τ)
-  -- f_witness = levelRaise M d k Y at level d*M (no heq cast, by def).
-  show ((⇑g ∣[k] (Newform.frickeMatrix M : GL (Fin 2) ℝ)) ∣[k]
-        (HeckeRing.GL2.levelRaiseMatrix d : GL (Fin 2) ℝ)) τ =
-    ((d : ℂ) ^ (k - 1)) * ((⇑(levelRaise M d k Y) : UpperHalfPlane → ℂ) τ)
-  rw [show (⇑(levelRaise M d k Y) : UpperHalfPlane → ℂ) τ =
-      ((d : ℂ) ^ (1 - k)) *
-        ((⇑Y : UpperHalfPlane → ℂ) ∣[k]
-          (HeckeRing.GL2.levelRaiseMatrix d : GL (Fin 2) ℝ)) τ from rfl]
-  rw [show (⇑Y : UpperHalfPlane → ℂ) = ⇑g ∣[k]
-      (Newform.frickeMatrix M : GL (Fin 2) ℝ) from rfl]
-  rw [show ((d : ℂ) ^ (k - 1)) *
-        (((d : ℂ) ^ (1 - k)) *
-          (((⇑g ∣[k] (Newform.frickeMatrix M : GL (Fin 2) ℝ)) ∣[k]
-            (HeckeRing.GL2.levelRaiseMatrix d : GL (Fin 2) ℝ)) τ)) =
-      (((d : ℂ) ^ (k - 1)) * ((d : ℂ) ^ (1 - k))) *
-        (((⇑g ∣[k] (Newform.frickeMatrix M : GL (Fin 2) ℝ)) ∣[k]
-          (HeckeRing.GL2.levelRaiseMatrix d : GL (Fin 2) ℝ)) τ) from by ring]
-  rw [h_zpow_cancel, one_mul]
+  -- The Fricke slash is a scalar multiple of a level-raise oldform generator.
+  rw [frickeSlashCuspForm_levelInclude_cusp_eq_smul_levelRaise hMN g]
+  refine Submodule.smul_mem _ _ (cuspFormsOld_le_cuspFormsOldExtended
+    (Submodule.subset_span ?_))
+  exact ⟨M, d, inferInstance, inferInstance, hd_lt, rfl, _, rfl⟩
 
 /-- **T173 — UpperHalfPlane action identity `α_d • (W_(d*M) • τ) = W_M • τ`.**
 
@@ -408,50 +412,47 @@ private lemma alpha_d_smul_frickeMatrix_dM_smul_eq_frickeMatrix_M_smul
   push_cast
   field_simp
 
-/-- **T173 — Fricke slash of a level-raise oldform generator lands in
-`cuspFormsOldExtended` (Case A per-generator residual).**
+/-- **T173 — scalar weight/denominator identity for the level-raise Fricke slash.**
 
-For any proper divisor `M` of `N` with `d := N/M > 1`, the Atkin-Lehner / Fricke
-involution applied to a level-raised cusp form `levelRaise M d k g₀` lands in the
-extended oldspace `cuspFormsOldExtended N k`.
+The complex-scalar identity obtained after expanding both Fricke slashes:
+splitting the `(d·M·τ)` automorphy factor into its `d`, `M`, `τ` pieces via
+`mul_zpow`, the prefactor `(d:ℂ)^(k-1)·(d:ℂ)^(-k)` collapses to `(d:ℂ)⁻¹`.
+Here `X` stands for the (opaque) value `⇑g₀ (W_M • τ)`. -/
+private lemma levelRaise_frickeSlash_scalar_eq
+    {d M : ℕ} {k : ℤ} (hd : (d : ℂ) ≠ 0) (X τ : ℂ) :
+    X * ((↑(d * M) : ℝ) : ℂ) ^ (k - 1) * (((d * M : ℕ) : ℂ) * τ) ^ (-k) =
+      (d : ℂ)⁻¹ * (X * ((M : ℝ) : ℂ) ^ (k - 1) * ((M : ℂ) * τ) ^ (-k)) := by
+  rw [show (((d * M : ℕ) : ℝ) : ℂ) = (d : ℂ) * (M : ℂ) from by push_cast; ring]
+  rw [show (((d * M : ℕ) : ℂ) * τ) = (d : ℂ) * (M : ℂ) * τ from by push_cast; ring]
+  rw [mul_zpow, mul_zpow ((d : ℂ) * (M : ℂ)) τ (-k), mul_zpow (d : ℂ) (M : ℂ) (-k)]
+  rw [show (((M : ℝ) : ℂ) ^ (k - 1) : ℂ) = (M : ℂ) ^ (k - 1) from by push_cast; rfl]
+  rw [mul_zpow (M : ℂ) τ (-k)]
+  have h_d_combine : (d : ℂ) ^ (k - 1) * (d : ℂ) ^ (-k) = (d : ℂ)⁻¹ := by
+    rw [← zpow_add₀ hd, show (k - 1) + (-k) = (-1 : ℤ) from by ring, zpow_neg_one]
+  rw [show X * ((d : ℂ) ^ (k - 1) * (M : ℂ) ^ (k - 1)) *
+        ((d : ℂ) ^ (-k) * (M : ℂ) ^ (-k) * τ ^ (-k)) =
+      ((d : ℂ) ^ (k - 1) * (d : ℂ) ^ (-k)) *
+        (X * (M : ℂ) ^ (k - 1) * ((M : ℂ) ^ (-k) * τ ^ (-k))) from by ring]
+  rw [h_d_combine]
 
-**Mathematical content.** With `N = d * M`, the matrix identity
-`W_M · α_d = W_N` (`Newform.frickeMatrix_mul_levelRaiseMatrix`) plus the
-UpperHalfPlane action equality `α_d • (W_N • τ) = W_M • τ`
-(`alpha_d_smul_frickeMatrix_dM_smul_eq_frickeMatrix_M_smul`) yields the
-function-level identity
+/-- **T173 — function-level Fricke-slash / trivial-inclusion identity for the
+level-raise case.**
 
-```
-frickeSlashCuspForm (heq ▸ levelRaise M d k g₀)
-  = (d : ℂ)⁻¹ • levelInclude_cusp hMN k (frickeSlashCuspForm-at-M g₀)
-```
-
-The right-hand side is a scalar multiple of the trivial inclusion of the level-`M`
-Fricke, hence in `cuspFormsOldExtended N k` via
-`levelInclude_cusp_mem_cuspFormsOldExtended`. -/
-theorem Newform.frickeSlashCuspForm_levelRaise_mem_cuspFormsOldExtended
-    {N : ℕ} [NeZero N] {M : ℕ} [NeZero M]
-    {d : ℕ} [NeZero d] (hd_lt : 1 < d) (heq : d * M = N) {k : ℤ}
+The Atkin-Lehner / Fricke slash of a level-raised cusp form equals a scalar
+multiple of a trivial inclusion: the slash formula `Newform.frickeMatrix_slash_apply`,
+the level-raise expansion `levelRaiseFun_apply`, and the action identity
+`α_d • (W_(d*M) • τ) = W_M • τ`
+(`alpha_d_smul_frickeMatrix_dM_smul_eq_frickeMatrix_M_smul`) reduce the slash to
+`⇑g₀ ∣[k] W_M` scaled by `(d:ℂ)^(k-1)·(d:ℂ)^(-k) = (d:ℂ)⁻¹`. -/
+private lemma frickeSlashCuspForm_levelRaise_eq_smul_levelInclude_cusp
+    {M : ℕ} [NeZero M] {d : ℕ} [NeZero d] (hMN : M ∣ d * M) {k : ℤ}
     (g₀ : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) :
-    Newform.frickeSlashCuspForm (heq ▸ levelRaise M d k g₀) ∈
-      cuspFormsOldExtended N k := by
-  -- Replace N with d * M everywhere via subst.
-  subst heq
-  -- After subst, [NeZero (d * M)] is in scope from the original [NeZero N].
-  -- Goal is now: frickeSlashCuspForm (levelRaise M d k g₀) ∈ cuspFormsOldExtended (d * M) k.
-  -- M ∣ d * M and M < d * M.
-  have hMN : M ∣ d * M := ⟨d, (mul_comm d M)⟩
-  have hMltN : M < d * M := by
-    have hM_pos : 0 < M := Nat.pos_of_neZero M
-    nlinarith [hd_lt, hM_pos]
+    haveI : NeZero (d * M) := ⟨Nat.mul_ne_zero (NeZero.ne d) (NeZero.ne M)⟩
+    Newform.frickeSlashCuspForm (levelRaise M d k g₀) =
+      (d : ℂ)⁻¹ • levelInclude_cusp hMN k (Newform.frickeSlashCuspForm g₀) := by
+  haveI : NeZero (d * M) := ⟨Nat.mul_ne_zero (NeZero.ne d) (NeZero.ne M)⟩
   set h_inclusion : CuspForm ((Gamma1 (d * M)).map (mapGL ℝ)) k :=
     levelInclude_cusp hMN k (Newform.frickeSlashCuspForm g₀) with h_inc_def
-  have h_inc_mem : h_inclusion ∈ cuspFormsOldExtended (d * M) k :=
-    levelInclude_cusp_mem_cuspFormsOldExtended hMN hMltN _
-  suffices h_eq : Newform.frickeSlashCuspForm (levelRaise M d k g₀) =
-      (d : ℂ)⁻¹ • h_inclusion by
-    rw [h_eq]
-    exact Submodule.smul_mem _ _ h_inc_mem
   apply CuspForm.ext
   intro τ
   have hd_ne : (d : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (NeZero.ne d)
@@ -485,28 +486,48 @@ theorem Newform.frickeSlashCuspForm_levelRaise_mem_cuspFormsOldExtended
         (⇑g₀ : UpperHalfPlane → ℂ) ∣[k]
           (Newform.frickeMatrix M : GL (Fin 2) ℝ) from rfl]
   rw [Newform.frickeMatrix_slash_apply]
-  -- Convert (d * M : ℕ) casts to (d : ℂ) * (M : ℂ).
-  rw [show (((d * M : ℕ) : ℝ) : ℂ) = (d : ℂ) * (M : ℂ) from by push_cast; ring]
-  rw [show (((d * M : ℕ) : ℂ) * (τ : ℂ)) =
-        (d : ℂ) * (M : ℂ) * (τ : ℂ) from by push_cast; ring]
-  rw [mul_zpow]
-  rw [show ((d : ℂ) * (M : ℂ) * (τ : ℂ)) ^ (-k) =
-        ((d : ℂ) * (M : ℂ)) ^ (-k) * (τ : ℂ) ^ (-k) from
-      mul_zpow ((d : ℂ) * (M : ℂ)) (τ : ℂ) (-k)]
-  rw [show (((d : ℂ) * (M : ℂ)) ^ (-k) : ℂ) = (d : ℂ) ^ (-k) * (M : ℂ) ^ (-k) from
-      mul_zpow (d : ℂ) (M : ℂ) (-k)]
-  rw [show (((M : ℝ) : ℂ) ^ (k - 1) : ℂ) = (M : ℂ) ^ (k - 1) from by push_cast; rfl]
-  rw [show ((M : ℂ) * (τ : ℂ)) ^ (-k) = (M : ℂ) ^ (-k) * (τ : ℂ) ^ (-k) from
-      mul_zpow (M : ℂ) (τ : ℂ) (-k)]
-  have h_d_combine : (d : ℂ) ^ (k - 1) * (d : ℂ) ^ (-k) = (d : ℂ)⁻¹ := by
-    rw [← zpow_add₀ hd_ne, show (k - 1) + (-k) = (-1 : ℤ) from by ring, zpow_neg_one]
-  rw [show ⇑g₀ ((Newform.frickeMatrix M : GL (Fin 2) ℝ) • τ) *
-        ((d : ℂ) ^ (k - 1) * (M : ℂ) ^ (k - 1)) *
-          ((d : ℂ) ^ (-k) * (M : ℂ) ^ (-k) * (τ : ℂ) ^ (-k)) =
-      ((d : ℂ) ^ (k - 1) * (d : ℂ) ^ (-k)) *
-        (⇑g₀ ((Newform.frickeMatrix M : GL (Fin 2) ℝ) • τ) *
-          (M : ℂ) ^ (k - 1) * ((M : ℂ) ^ (-k) * (τ : ℂ) ^ (-k))) from by ring]
-  rw [h_d_combine]
+  -- Remaining equality is the pure scalar weight/denominator identity.
+  exact levelRaise_frickeSlash_scalar_eq hd_ne
+    (⇑g₀ ((Newform.frickeMatrix M : GL (Fin 2) ℝ) • τ)) (τ : ℂ)
+
+/-- **T173 — Fricke slash of a level-raise oldform generator lands in
+`cuspFormsOldExtended` (Case A per-generator residual).**
+
+For any proper divisor `M` of `N` with `d := N/M > 1`, the Atkin-Lehner / Fricke
+involution applied to a level-raised cusp form `levelRaise M d k g₀` lands in the
+extended oldspace `cuspFormsOldExtended N k`.
+
+**Mathematical content.** With `N = d * M`, the matrix identity
+`W_M · α_d = W_N` (`Newform.frickeMatrix_mul_levelRaiseMatrix`) plus the
+UpperHalfPlane action equality `α_d • (W_N • τ) = W_M • τ`
+(`alpha_d_smul_frickeMatrix_dM_smul_eq_frickeMatrix_M_smul`) yields the
+function-level identity
+
+```
+frickeSlashCuspForm (heq ▸ levelRaise M d k g₀)
+  = (d : ℂ)⁻¹ • levelInclude_cusp hMN k (frickeSlashCuspForm-at-M g₀)
+```
+
+The right-hand side is a scalar multiple of the trivial inclusion of the level-`M`
+Fricke, hence in `cuspFormsOldExtended N k` via
+`levelInclude_cusp_mem_cuspFormsOldExtended`. -/
+theorem Newform.frickeSlashCuspForm_levelRaise_mem_cuspFormsOldExtended
+    {N : ℕ} [NeZero N] {M : ℕ} [NeZero M]
+    {d : ℕ} [NeZero d] (hd_lt : 1 < d) (heq : d * M = N) {k : ℤ}
+    (g₀ : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) :
+    Newform.frickeSlashCuspForm (heq ▸ levelRaise M d k g₀) ∈
+      cuspFormsOldExtended N k := by
+  -- Replace N with d * M everywhere via subst.
+  subst heq
+  -- M ∣ d * M and M < d * M.
+  have hMN : M ∣ d * M := ⟨d, (mul_comm d M)⟩
+  have hMltN : M < d * M := by
+    have hM_pos : 0 < M := Nat.pos_of_neZero M
+    nlinarith [hd_lt, hM_pos]
+  -- The Fricke slash is a scalar multiple of a trivial-inclusion oldform.
+  rw [frickeSlashCuspForm_levelRaise_eq_smul_levelInclude_cusp hMN g₀]
+  exact Submodule.smul_mem _ _
+    (levelInclude_cusp_mem_cuspFormsOldExtended hMN hMltN _)
 
 /-- **T173 — Unconditional Fricke slash preservation for `cuspFormsOldExtended`.**
 
@@ -905,6 +926,19 @@ def Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended_min
     (g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k),
     heckeT_n_cusp k p (levelInclude_cusp hMN k g) ∈ cuspFormsOldExtended N k
 
+/-- **Bad-prime `T_p` evaluation.** At a prime `p` non-coprime to the level `L`,
+the cusp-form Hecke operator `heckeT_n_cusp k p` is, pointwise, the
+upper-triangular piece `heckeT_p_ut` (the diamond/lower piece vanishes), via
+`heckeT_n_prime` and `heckeT_p_all_not_coprime_apply`. -/
+private lemma heckeT_n_cusp_prime_apply_of_not_coprime
+    {L : ℕ} [NeZero L] {k : ℤ} {p : ℕ} [NeZero p] (hp : Nat.Prime p)
+    (hpL : ¬ Nat.Coprime p L)
+    (F : CuspForm ((Gamma1 L).map (mapGL ℝ)) k) (z : UpperHalfPlane) :
+    (heckeT_n_cusp k p F) z = heckeT_p_ut k p hp.pos ⇑F z := by
+  show (heckeT_n k p F.toModularForm').toFun z = _
+  rw [heckeT_n_prime k hp]
+  exact congrFun (heckeT_p_all_not_coprime_apply k hp hpL _) z
+
 /-- **T176 — trivial-inclusion preservation (proof, partial).**
 
 Proves the trivial-inclusion preservation Prop using:
@@ -925,20 +959,8 @@ theorem Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended
     have h_eq : heckeT_n_cusp k p (levelInclude_cusp hMN k g) =
         levelInclude_cusp hMN k (heckeT_n_cusp k p g) := by
       apply CuspForm.ext; intro z
-      show (heckeT_n k p (levelInclude_cusp hMN k g).toModularForm').toFun z =
-           (heckeT_n k p g.toModularForm').toFun z
-      rw [heckeT_n_prime k hp]
-      change ⇑((heckeT_p_all k p hp) (levelInclude_cusp hMN k g).toModularForm') z =
-             ⇑(heckeT_n k p g.toModularForm') z
-      rw [heckeT_n_prime k hp]
-      rw [show (⇑((heckeT_p_all k p hp) (levelInclude_cusp hMN k g).toModularForm') :
-          UpperHalfPlane → ℂ) = heckeT_p_ut k p hp.pos
-            ⇑(levelInclude_cusp hMN k g).toModularForm' from
-        heckeT_p_all_not_coprime_apply k hp hpN _]
-      rw [show (⇑((heckeT_p_all k p hp) g.toModularForm') :
-          UpperHalfPlane → ℂ) = heckeT_p_ut k p hp.pos ⇑g.toModularForm' from
-        heckeT_p_all_not_coprime_apply k hp hpcop_M _]
-      rfl
+      rw [levelInclude_cusp_coe, heckeT_n_cusp_prime_apply_of_not_coprime hp hpN,
+        heckeT_n_cusp_prime_apply_of_not_coprime hp hpcop_M, levelInclude_cusp_coe]
     rw [h_eq]
     exact levelInclude_cusp_mem_cuspFormsOldExtended hMN hMltN _
   · -- Case 2: Coprime p M
@@ -956,21 +978,9 @@ theorem Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended
           levelInclude_cusp hpM_dvd k
             (heckeT_n_cusp k p (levelInclude_cusp hM_dvd_pM k g)) := by
         apply CuspForm.ext; intro z
-        show (heckeT_n k p (levelInclude_cusp hMN k g).toModularForm').toFun z =
-             (heckeT_n k p (levelInclude_cusp hM_dvd_pM k g).toModularForm').toFun z
-        rw [heckeT_n_prime k hp]
-        change ⇑((heckeT_p_all k p hp) (levelInclude_cusp hMN k g).toModularForm') z =
-               ⇑(heckeT_n k p (levelInclude_cusp hM_dvd_pM k g).toModularForm') z
-        rw [heckeT_n_prime k hp]
-        rw [show (⇑((heckeT_p_all k p hp) (levelInclude_cusp hMN k g).toModularForm') :
-            UpperHalfPlane → ℂ) = heckeT_p_ut k p hp.pos
-              ⇑(levelInclude_cusp hMN k g).toModularForm' from
-          heckeT_p_all_not_coprime_apply k hp hpN _]
-        rw [show (⇑((heckeT_p_all k p hp) (levelInclude_cusp hM_dvd_pM k g).toModularForm') :
-            UpperHalfPlane → ℂ) = heckeT_p_ut k p hp.pos
-              ⇑(levelInclude_cusp hM_dvd_pM k g).toModularForm' from
-          heckeT_p_all_not_coprime_apply k hp hpcop_pM _]
-        rfl
+        rw [levelInclude_cusp_coe, heckeT_n_cusp_prime_apply_of_not_coprime hp hpN,
+          heckeT_n_cusp_prime_apply_of_not_coprime hp hpcop_pM]
+        simp only [levelInclude_cusp_coe]
       rw [h_eq]
       exact levelInclude_cusp_mem_cuspFormsOldExtended hpM_dvd hpM_lt _
     · -- Case 2b: p*M = N. Dispatch to _minimal sub-Prop.
@@ -1038,6 +1048,44 @@ private lemma diamondOp_slash_T_p_lower_apply
   rw [show ((p : ℝ) ^ (k - 1) : ℂ) = (p : ℂ) ^ (k - 1) from by push_cast; rfl]
   ring
 
+/-- **T177 — bad-prime `T_p` recursion on a trivial inclusion.**
+
+For a prime `p` coprime to `M`, the bad-prime cusp Hecke operator at level `p*M`
+applied to the trivial inclusion of `g` decomposes as the inclusion of `T_p g`
+minus the level-raise of its diamond part: the upper-triangular pieces agree
+(`heckeT_n_cusp_prime_apply_of_not_coprime` at the bad level `p*M`), and the
+remaining `T_p_lower` slash at the coprime level `M` (`heckeT_p_all_coprime`)
+becomes the `(p:ℂ)^(k-1)`-scaled level-raise via `diamondOp_slash_T_p_lower_apply`. -/
+private lemma heckeT_n_cusp_levelInclude_cusp_eq_sub_smul_levelRaise_diamond
+    {M : ℕ} [NeZero M] {k : ℤ} {p : ℕ} [NeZero p] (hp : Nat.Prime p)
+    (hpcop_M : Nat.Coprime p M) (hMN : M ∣ p * M)
+    (g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) :
+    haveI : NeZero (p * M) := ⟨Nat.mul_ne_zero hp.ne_zero (NeZero.ne M)⟩
+    heckeT_n_cusp k p (levelInclude_cusp hMN k g) =
+      levelInclude_cusp hMN k (heckeT_n_cusp k p g) -
+        (p : ℂ) ^ (k - 1) •
+          levelRaise M p k (diamondOp_cusp k (ZMod.unitOfCoprime p hpcop_M) g) := by
+  haveI : NeZero (p * M) := ⟨Nat.mul_ne_zero hp.ne_zero (NeZero.ne M)⟩
+  have hpN : ¬ Nat.Coprime p (p * M) := fun h => hp.coprime_iff_not_dvd.mp h ⟨M, rfl⟩
+  set a : (ZMod M)ˣ := ZMod.unitOfCoprime p hpcop_M with ha_def
+  set LR_p_D : CuspForm ((Gamma1 (p * M)).map (mapGL ℝ)) k :=
+    levelRaise M p k (diamondOp_cusp k a g) with hLR_def
+  apply CuspForm.ext; intro z
+  -- LHS: bad prime at level p*M reduces T_p to its upper-triangular piece.
+  rw [heckeT_n_cusp_prime_apply_of_not_coprime hp hpN, levelInclude_cusp_coe]
+  -- RHS: (f - c • h) z = f z - c * h z, then T_p g via the coprime decomposition.
+  show heckeT_p_ut k p hp.pos ⇑g z =
+      (heckeT_n_cusp k p g) z - (p : ℂ) ^ (k - 1) * (LR_p_D : CuspForm _ _) z
+  have h_T_M_apply : (heckeT_n_cusp k p g : CuspForm _ _) z =
+      heckeT_p_ut k p hp.pos ⇑g z +
+        ((⇑(diamondOp k a g.toModularForm') ∣[k]
+          (T_p_lower p hp.pos : GL (Fin 2) ℚ)) z) := by
+    show (heckeT_n k p g.toModularForm').toFun z = _
+    rw [heckeT_n_prime k hp, heckeT_p_all_coprime k hp hpcop_M]
+    rfl
+  rw [h_T_M_apply, diamondOp_slash_T_p_lower_apply hp hpcop_M g z]
+  ring
+
 /-- **T177 — minimal corner case proof.**
 
 Proves `Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended_minimal`
@@ -1057,58 +1105,12 @@ theorem Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended
       N k p hp hpN := by
   intro M _ hMN hMltN hpcop_M hpM_eq g
   subst hpM_eq
-  set a : (ZMod M)ˣ := ZMod.unitOfCoprime p hpcop_M with ha_def
-  set D : CuspForm ((Gamma1 M).map (mapGL ℝ)) k := diamondOp_cusp k a g with hD_def
-  set LR_p_D : CuspForm ((Gamma1 (p * M)).map (mapGL ℝ)) k :=
-    levelRaise M p k D with hLR_def
-  have h_eq : heckeT_n_cusp k p (levelInclude_cusp hMN k g) =
-      levelInclude_cusp hMN k (heckeT_n_cusp k p g) -
-      ((p : ℂ) ^ (k - 1)) • LR_p_D := by
-    apply CuspForm.ext; intro z
-    -- Unfold LHS to heckeT_p_ut k p hp.pos ⇑g z (since p ∣ p*M, bad-prime case at p*M)
-    have h_LHS :
-        (heckeT_n_cusp k p (levelInclude_cusp hMN k g) : CuspForm _ _) z =
-        heckeT_p_ut k p hp.pos ⇑g z := by
-      show (heckeT_n k p (levelInclude_cusp hMN k g).toModularForm').toFun z = _
-      rw [heckeT_n_prime k hp]
-      change ⇑((heckeT_p_all k p hp) (levelInclude_cusp hMN k g).toModularForm') z = _
-      rw [heckeT_p_all_not_coprime_apply k hp hpN _]
-      rfl
-    -- Decompose ⇑(heckeT_n_cusp k p g) z via heckeT_p_fun (Coprime p M case)
-    have h_T_M_apply :
-        (heckeT_n_cusp k p g : CuspForm _ _) z =
-        heckeT_p_ut k p hp.pos ⇑g z +
-          ((⇑(diamondOp k a g.toModularForm') ∣[k]
-            (T_p_lower p hp.pos : GL (Fin 2) ℚ)) z) := by
-      show (heckeT_n k p g.toModularForm').toFun z = _
-      rw [heckeT_n_prime k hp, heckeT_p_all_coprime k hp hpcop_M]
-      rfl
-    -- Slash-by-T_p_lower bridge
-    have h_slash :
-        (⇑(diamondOp k a g.toModularForm') ∣[k]
-          (T_p_lower p hp.pos : GL (Fin 2) ℚ)) z =
-        ((p : ℂ) ^ (k - 1)) * ⇑LR_p_D z :=
-      diamondOp_slash_T_p_lower_apply hp hpcop_M g z
-    -- Now combine
-    rw [h_LHS]
-    -- RHS: (levelInclude_cusp hMN k (heckeT_n_cusp k p g) - ((p:ℂ)^(k-1)) • LR_p_D) z
-    -- Step: (f - g) z = f z - g z, levelInclude_cusp_coe rfl, smul.
-    show heckeT_p_ut k p hp.pos ⇑g z =
-         (levelInclude_cusp hMN k (heckeT_n_cusp k p g)) z -
-         ((p : ℂ) ^ (k - 1) • LR_p_D) z
-    show heckeT_p_ut k p hp.pos ⇑g z =
-         (heckeT_n_cusp k p g) z -
-         (p : ℂ) ^ (k - 1) * (LR_p_D : CuspForm _ _) z
-    rw [h_T_M_apply, h_slash]
-    ring
-  rw [h_eq]
+  rw [heckeT_n_cusp_levelInclude_cusp_eq_sub_smul_levelRaise_diamond hp hpcop_M hMN g]
   apply Submodule.sub_mem
   · exact levelInclude_cusp_mem_cuspFormsOldExtended hMN hMltN _
-  · apply Submodule.smul_mem
-    apply cuspFormsOld_le_cuspFormsOldExtended
-    refine Submodule.subset_span ?_
-    refine ⟨M, p, inferInstance, inferInstance, hp.one_lt, rfl, D, ?_⟩
-    rfl
+  · refine Submodule.smul_mem _ _ (cuspFormsOld_le_cuspFormsOldExtended
+      (Submodule.subset_span ?_))
+    exact ⟨M, p, inferInstance, inferInstance, hp.one_lt, rfl, _, rfl⟩
 
 /-- **T177 — Trivial-inclusion preservation, unconditional.**
 
@@ -1722,6 +1724,59 @@ theorem NewformExtended.heckeT_pp_cusp_mem_cuspFormsNewExtended_at_bad_of_T170
     exact Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_T170
       hp hpN h_adj _ ih
 
+/-- **T180 — strong-induction step for the bad-only `T_n` consumer.**
+
+Peels off the smallest prime factor's prime-power contribution from `m > 1`
+via `heckeT_n_cusp_unfold`: writing `p = m.minFac`, `v = m.factorization p`,
+the recursion hypothesis `ih` gives `T_{m/p^v} g ∈ cuspFormsNewExtended` (the
+quotient inherits the bad-only/adjoint data since its prime factors are among
+`m`'s), and the bad-prime-power theorem
+`NewformExtended.heckeT_pp_cusp_mem_cuspFormsNewExtended_at_bad_of_T170`
+applies `T_{p^v}` to land back in `cuspFormsNewExtended`. -/
+private lemma heckeT_n_cusp_mem_cuspFormsNewExtended_bad_only_step
+    {N : ℕ} [NeZero N] {k : ℤ} (m : ℕ) (hm_gt : 1 < m)
+    (h_bad : ∀ p, p.Prime → p ∣ m → ¬ Nat.Coprime p N)
+    (h_adj : ∀ (p : ℕ) [NeZero p], p.Prime → p ∣ m →
+      Newform.HasBadPrimeFrickePetNAdjoint N k p)
+    (ih : ∀ j, j < m → (hj : 0 < j) →
+      (∀ p, p.Prime → p ∣ j → ¬ Nat.Coprime p N) →
+      (∀ (p : ℕ) [NeZero p], p.Prime → p ∣ j →
+        Newform.HasBadPrimeFrickePetNAdjoint N k p) →
+      ∀ (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k),
+        g ∈ cuspFormsNewExtended N k →
+        haveI : NeZero j := ⟨by omega⟩
+        heckeT_n_cusp k j g ∈ cuspFormsNewExtended N k)
+    (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (hg : g ∈ cuspFormsNewExtended N k) :
+    haveI : NeZero m := ⟨by omega⟩
+    heckeT_n_cusp k m g ∈ cuspFormsNewExtended N k := by
+  haveI : NeZero m := ⟨by omega⟩
+  set p := m.minFac with hp_def
+  have hpp : p.Prime := Nat.minFac_prime (by omega : m ≠ 1)
+  set v := m.factorization p with hv_def
+  have hpv_pos : 0 < p ^ v := pow_pos hpp.pos v
+  have hdiv_pos : 0 < m / p ^ v :=
+    Nat.div_pos (Nat.le_of_dvd (by omega) (Nat.ordProj_dvd m p)) hpv_pos
+  have hdiv_lt : m / p ^ v < m := heckeT_n_unfold_lt m hm_gt
+  haveI : NeZero (p ^ v) := ⟨hpv_pos.ne'⟩
+  haveI : NeZero (m / p ^ v) := ⟨hdiv_pos.ne'⟩
+  haveI : NeZero p := ⟨hpp.ne_zero⟩
+  have hpN : ¬ Nat.Coprime p N := h_bad p hpp (Nat.minFac_dvd m)
+  -- Function-level decomposition T_m = T_{p^v} ∘ T_{m/p^v}, then recurse + bad-prime power.
+  have h_decomp : heckeT_n_cusp k m g =
+      heckeT_n_cusp k (p ^ v) (heckeT_n_cusp k (m / p ^ v) g) :=
+    CuspForm.ext fun z => heckeT_n_cusp_unfold m hm_gt g z
+  have h_mid : heckeT_n_cusp k (m / p ^ v) g ∈ cuspFormsNewExtended N k :=
+    ih (m / p ^ v) hdiv_lt hdiv_pos
+      (fun q hq hqdiv =>
+        h_bad q hq (hqdiv.trans (Nat.div_dvd_of_dvd (Nat.ordProj_dvd m p))))
+      (fun q _ hq_prime hqdiv =>
+        h_adj q hq_prime (hqdiv.trans (Nat.div_dvd_of_dvd (Nat.ordProj_dvd m p))))
+      g hg
+  rw [h_decomp]
+  exact NewformExtended.heckeT_pp_cusp_mem_cuspFormsNewExtended_at_bad_of_T170
+    hpp hpN (h_adj p hpp (Nat.minFac_dvd m)) v _ h_mid
+
 /-- **T180 — bad-only arbitrary-`n` consumer for `cuspFormsNewExtended`.**
 
 For `n : ℕ` whose every prime factor divides `N` (i.e., `n` is supported on
@@ -1758,45 +1813,12 @@ theorem NewformExtended.heckeT_n_cusp_mem_cuspFormsNewExtended_of_bad_only_T170
     haveI : NeZero m := ⟨by omega⟩
     by_cases hm1 : m = 1
     · subst hm1
-      have h_eq : heckeT_n_cusp k 1 g = g := by
-        apply CuspForm.ext; intro z
-        show (heckeT_n k 1 g.toModularForm').toFun z = g z
-        rw [heckeT_n_one]; rfl
+      have h_eq : heckeT_n_cusp k 1 g = g :=
+        CuspForm.ext fun z => by rw [show (heckeT_n_cusp k 1 g) z =
+          (heckeT_n k 1 g.toModularForm').toFun z from rfl, heckeT_n_one]; rfl
       rw [h_eq]; exact hg
-    · have hm_gt : 1 < m := by omega
-      set p := m.minFac with hp_def
-      have hpp : p.Prime := Nat.minFac_prime (by omega : m ≠ 1)
-      set v := m.factorization p with hv_def
-      have hv_pos : 0 < v :=
-        hpp.factorization_pos_of_dvd (by omega) (Nat.minFac_dvd m)
-      have hpv_pos : 0 < p ^ v := pow_pos hpp.pos v
-      have hdiv_pos : 0 < m / p ^ v :=
-        Nat.div_pos (Nat.le_of_dvd (by omega) (Nat.ordProj_dvd m p)) hpv_pos
-      have hdiv_lt : m / p ^ v < m := heckeT_n_unfold_lt m hm_gt
-      haveI : NeZero (p ^ v) := ⟨hpv_pos.ne'⟩
-      haveI : NeZero (m / p ^ v) := ⟨hdiv_pos.ne'⟩
-      haveI : NeZero p := ⟨hpp.ne_zero⟩
-      -- p is bad (since p ∣ m, and m is bad-only).
-      have hpN : ¬ Nat.Coprime p N := h_bad p hpp (Nat.minFac_dvd m)
-      have h_adj_p : Newform.HasBadPrimeFrickePetNAdjoint N k p :=
-        h_adj p hpp (Nat.minFac_dvd m)
-      -- Function-level decomposition via heckeT_n_cusp_unfold.
-      have h_decomp : heckeT_n_cusp k m g =
-          heckeT_n_cusp k (p ^ v) (heckeT_n_cusp k (m / p ^ v) g) := by
-        apply CuspForm.ext; intro z
-        exact heckeT_n_cusp_unfold m hm_gt g z
-      rw [h_decomp]
-      -- IH: T_{m/p^v} g ∈ cuspFormsNewExtended (m/p^v < m, divisors of m/p^v ⊆ divisors of m).
-      have h_mid : heckeT_n_cusp k (m / p ^ v) g ∈ cuspFormsNewExtended N k :=
-        ih (m / p ^ v) hdiv_lt hdiv_pos
-          (fun q hq hqdiv =>
-            h_bad q hq (hqdiv.trans (Nat.div_dvd_of_dvd (Nat.ordProj_dvd m p))))
-          (fun q _hq_NeZ hq_prime hqdiv =>
-            h_adj q hq_prime (hqdiv.trans (Nat.div_dvd_of_dvd (Nat.ordProj_dvd m p))))
-          g hg
-      -- Apply T_{p^v} preservation at bad prime p.
-      exact NewformExtended.heckeT_pp_cusp_mem_cuspFormsNewExtended_at_bad_of_T170
-        hpp hpN h_adj_p v _ h_mid
+    · exact heckeT_n_cusp_mem_cuspFormsNewExtended_bad_only_step m (by omega)
+        h_bad h_adj ih g hg
 
 /-- **T180 — bad-only arbitrary-`n` `NewformExtended` consumer.**
 
@@ -1881,6 +1903,32 @@ lemma Newform.frickeMatrix_mul_glMap_T_p_upper_mul_frickeMatrix_val
       Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply] <;>
     ring
 
+/-- **Matrix-level half-conjugation identity `W_N · β_b = !![p,0;-Nb,1] · W_N`.**
+
+Moving the Fricke matrix `W_N = !![0,-1;N,0]` past the bad-prime upper-triangular
+coset rep `β_b = glMap (T_p_upper p hp b) = !![1,b;0,p]` turns it into the
+lower-triangular rep `!![p,0;-Nb,1]`. A direct `fin_cases` matrix computation
+using `frickeMatrix_coe` and `T_p_upper_coe`. -/
+private lemma frickeMatrix_mul_glMap_T_p_upper_eq_mul_frickeMatrix
+    (N : ℕ) [NeZero N] {p : ℕ} (hp : 0 < p) (b : ℕ) :
+    ((Newform.frickeMatrix N : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) *
+        ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
+      (!![(p : ℝ), 0; -((N : ℝ) * b), 1] : Matrix (Fin 2) (Fin 2) ℝ) *
+        ((Newform.frickeMatrix N : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) := by
+  rw [Newform.frickeMatrix_coe]
+  rw [show ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
+      !![(1 : ℝ), (b : ℝ); 0, (p : ℝ)] by
+    show (T_p_upper p hp b : Matrix (Fin 2) (Fin 2) ℚ).map (algebraMap ℚ ℝ) =
+        !![(1 : ℝ), (b : ℝ); 0, (p : ℝ)]
+    rw [T_p_upper_coe]
+    ext i j
+    fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply]]
+  ext i j
+  fin_cases i <;> fin_cases j <;>
+    simp [Matrix.mul_apply, Fin.sum_univ_two,
+      Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val',
+      Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply]
+
 /-- **Matrix-level Fricke / bad-prime upper coset INVERSE-conjugation
 identity (T149 inverse-conjugation main matrix helper).**
 
@@ -1891,11 +1939,10 @@ classical Atkin-Lehner inverse-conjugation `W_N · β_b · W_N⁻¹` equals
 the double-conjugation `W_N · β_b · W_N` cancels against `W_N⁻¹ = -1/N · W_N`
 that comes from `W_N² = -N • 1`).
 
-Proof: combine the double-conjugation identity
-`Newform.frickeMatrix_mul_glMap_T_p_upper_mul_frickeMatrix_val` with
-`Matrix.coe_units_inv` to convert between the GL inverse and the matrix
-inverse, and `Newform.frickeMatrix_mul_self_val` for the `W_N²` scalar
-identity. -/
+Proof: rewrite the GL inverse via `Matrix.coe_units_inv`, move `W_N` past `β_b`
+using `frickeMatrix_mul_glMap_T_p_upper_eq_mul_frickeMatrix`, then cancel the
+trailing `W_N · W_N⁻¹ = 1` (`Matrix.mul_nonsing_inv` with
+`Newform.frickeMatrix_det`). -/
 lemma Newform.frickeMatrix_mul_glMap_T_p_upper_mul_frickeMatrix_inv_val
     (N : ℕ) [NeZero N] {p : ℕ} (hp : 0 < p) (b : ℕ) :
     ((Newform.frickeMatrix N : GL (Fin 2) ℝ) :
@@ -1905,28 +1952,7 @@ lemma Newform.frickeMatrix_mul_glMap_T_p_upper_mul_frickeMatrix_inv_val
         (((Newform.frickeMatrix N)⁻¹ : GL (Fin 2) ℝ) :
           Matrix (Fin 2) (Fin 2) ℝ) =
       (!![(p : ℝ), 0; -((N : ℝ) * b), 1] : Matrix (Fin 2) (Fin 2) ℝ) := by
-  -- Strategy: multiply both sides of the doubled identity on the right by
-  -- (W_N²)⁻¹ = -1/N • 1, using W_N · W_N⁻¹ = 1.
-  have h_double := Newform.frickeMatrix_mul_glMap_T_p_upper_mul_frickeMatrix_val N hp b
-  -- (A * β * W_N) * W_N⁻¹ = A * β * (W_N * W_N⁻¹) = A * β * 1 = A * β.
-  -- But that's NOT what we want — we want A * β * W_N⁻¹, which equals
-  -- (A * β * W_N) * W_N⁻¹ * W_N⁻¹⁻¹ = (A * β * W_N) * W_N⁻¹ = ...
-  -- Actually direct: (W_N · β_b · W_N⁻¹) = (W_N · β_b · W_N) · W_N⁻²
-  --                                       = (-N • !![p,0;-Nb,1]) · ((-N)⁻¹ • 1)
-  --                                       = !![p,0;-Nb,1].
   have hN_ne : (N : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (NeZero.ne N)
-  have hN_neg_ne : -(N : ℝ) ≠ 0 := neg_ne_zero.mpr hN_ne
-  -- W_N⁻¹.val = (W_N.val)⁻¹ via Matrix.coe_units_inv.
-  have h_inv : (((Newform.frickeMatrix N)⁻¹ : GL (Fin 2) ℝ) :
-        Matrix (Fin 2) (Fin 2) ℝ) =
-      ((Newform.frickeMatrix N : GL (Fin 2) ℝ) :
-        Matrix (Fin 2) (Fin 2) ℝ)⁻¹ :=
-    Matrix.coe_units_inv (Newform.frickeMatrix N)
-  rw [h_inv]
-  -- Goal: A * β * W_N⁻¹ = M (where M is the target matrix).
-  -- Multiply both sides by W_N on the right: A * β * W_N⁻¹ * W_N = A * β,
-  -- so A * β = M * W_N. We can then use h_double + cancellation.
-  -- Equivalently, show A * β = (M : Matrix) * W_N.val using both sides.
   have hW_inv_mul : ((Newform.frickeMatrix N : GL (Fin 2) ℝ) :
           Matrix (Fin 2) (Fin 2) ℝ) *
         ((Newform.frickeMatrix N : GL (Fin 2) ℝ) :
@@ -1935,43 +1961,10 @@ lemma Newform.frickeMatrix_mul_glMap_T_p_upper_mul_frickeMatrix_inv_val
     rw [show ((Newform.frickeMatrix N : GL (Fin 2) ℝ) :
         Matrix (Fin 2) (Fin 2) ℝ).det = (N : ℝ) from Newform.frickeMatrix_det N]
     exact isUnit_iff_ne_zero.mpr hN_ne
-  -- Use: A * β * W_N⁻¹ = (A * β * W_N) * (W_N⁻¹)² ... actually simpler:
-  -- LHS' = (A * β) * W_N⁻¹. Use h_double with the FACT that A * β * W_N =
-  -- (-N) • M, divide by -N: A * β = (-N)⁻¹ • ((-N) • M * W_N⁻¹) =
-  -- This is still convoluted. Let me try yet another approach.
-  --
-  -- Multiply both sides by W_N on the right:
-  --   LHS · W_N = (A * β * W_N⁻¹) * W_N = A * β * (W_N⁻¹ * W_N) = A * β * 1 = A * β
-  -- And RHS · W_N = M * W_N
-  -- Need: A * β = M * W_N where M = !![p, 0; -Nb, 1].
-  -- This is a separate matrix identity; let me verify and prove.
-  --
-  -- M * W_N = !![p, 0; -Nb, 1] * !![0, -1; N, 0]
-  --        = !![p·0 + 0·N, p·(-1)+0·0; -Nb·0+1·N, -Nb·(-1)+1·0]
-  --        = !![0, -p; N, Nb] = A * β (computed in docstring).
-  -- So A * β = M * W_N. Then A * β * W_N⁻¹ = M * W_N * W_N⁻¹ = M.
-  rw [show ((Newform.frickeMatrix N : GL (Fin 2) ℝ) :
-        Matrix (Fin 2) (Fin 2) ℝ) *
-        ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) :
-          Matrix (Fin 2) (Fin 2) ℝ) =
-      (!![(p : ℝ), 0; -((N : ℝ) * b), 1] : Matrix (Fin 2) (Fin 2) ℝ) *
-        ((Newform.frickeMatrix N : GL (Fin 2) ℝ) :
-          Matrix (Fin 2) (Fin 2) ℝ) by
-    rw [Newform.frickeMatrix_coe]
-    rw [show ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) :
-          Matrix (Fin 2) (Fin 2) ℝ) =
-        !![(1 : ℝ), (b : ℝ); 0, (p : ℝ)] by
-      show (T_p_upper p hp b : Matrix (Fin 2) (Fin 2) ℚ).map (algebraMap ℚ ℝ) =
-          !![(1 : ℝ), (b : ℝ); 0, (p : ℝ)]
-      rw [T_p_upper_coe]
-      ext i j
-      fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply]]
-    ext i j
-    fin_cases i <;> fin_cases j <;>
-      simp [Matrix.mul_apply, Fin.sum_univ_two,
-        Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val',
-        Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply]]
-  rw [Matrix.mul_assoc, hW_inv_mul, Matrix.mul_one]
+  -- W_N · β_b · W_N⁻¹ = (M · W_N) · W_N⁻¹ = M · (W_N · W_N⁻¹) = M.
+  rw [Matrix.coe_units_inv (Newform.frickeMatrix N),
+    frickeMatrix_mul_glMap_T_p_upper_eq_mul_frickeMatrix, Matrix.mul_assoc,
+    hW_inv_mul, Matrix.mul_one]
 
 
 end HeckeRing.GL2

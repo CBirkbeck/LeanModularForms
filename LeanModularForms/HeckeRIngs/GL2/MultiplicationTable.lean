@@ -376,6 +376,89 @@ lemma heckeMultiplicity_deg_sum_eq (D1 D2 D_out1 D_out2 : HeckeCoset (GL_pair 2)
   linarith
 
 include hp in
+/-- The degree of the diagonal coset `T(1, pʲ)` is `p^{j-1}(p+1)` for `j ≥ 1`. -/
+private lemma HeckeCoset_deg_T_diag_one_ppow (j : ℕ) (hj : 0 < j) :
+    HeckeCoset_deg (GL_pair 2) (T_diag (![1, p ^ j])) = ↑(p ^ (j - 1) * (p + 1)) :=
+  HeckeCoset_deg_T_diag_two_prime p hp _
+    (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos j)
+    (fun i hi => by (have : i = 0 := by omega); subst this; simp) j hj (by simp)
+
+include hp in
+/-- The degree of the diagonal coset `T(p, pᵏ)` is `p^{k-2}(p+1)` for `k ≥ 2`. -/
+private lemma HeckeCoset_deg_T_diag_p_ppow (k : ℕ) (hk2 : 2 ≤ k) :
+    HeckeCoset_deg (GL_pair 2) (T_diag (![p, p ^ k])) = ↑(p ^ (k - 2) * (p + 1)) := by
+  have := HeckeCoset_deg_T_diag_two_prime p hp (![p, p ^ k])
+    (by intro i; fin_cases i <;> first | exact hp.pos | exact pow_pos hp.pos k)
+    (fun i hi => by
+      have hi0 : i = 0 := by omega
+      subst hi0; simpa using dvd_pow_self p (show k ≠ 0 by omega))
+    (k - 1) (by omega)
+    (by show p ^ k / p = p ^ (k - 1)
+        have : p ^ k = p ^ (k - 1) * p := by rw [← pow_succ]; congr 1; omega
+        rw [this, Nat.mul_div_cancel _ hp.pos])
+  rwa [show k - 1 - 1 = k - 2 from by omega] at this
+
+include hp in
+/-- Scalar case: the degree of `T(p, p)` is `1`. -/
+private lemma HeckeCoset_deg_T_diag_p_p_eq_one :
+    HeckeCoset_deg (GL_pair 2) (T_diag (![p, p ^ 1])) = 1 :=
+  HeckeCoset_deg_T_diag_two_scalar _
+    (fun i => by fin_cases i <;> first | exact hp.pos | exact pow_pos hp.pos 1)
+    (fun i hi => by (have : i = 0 := by omega); subst this; simp [pow_one])
+    (by show (![p, p ^ 1] : Fin 2 → ℕ) 0 = (![p, p ^ 1] : Fin 2 → ℕ) 1; simp [pow_one])
+
+include hp in
+/-- The diagonal cosets `T(1, p^{k+1})` and `T(p, pᵏ)` are distinct: a uniqueness argument on
+    elementary divisors, since the leading divisors `1` and `p` differ. -/
+private lemma T_diag_one_ppow_succ_ne_T_diag_p_ppow (k : ℕ) (hk : 0 < k) :
+    T_diag (![1, p ^ (k + 1)]) ≠ T_diag (![p, p ^ k]) := by
+  intro heq
+  have h1_pos : ∀ i : Fin 2, 0 < (![1, p ^ (k + 1)]) i := by
+    intro i; fin_cases i <;> simp [pow_pos hp.pos]
+  have h2_pos : ∀ i : Fin 2, 0 < (![p, p ^ k]) i := by
+    intro i; fin_cases i <;> simp [hp.pos, pow_pos hp.pos]
+  have h1_div : DivChain 2 (![1, p ^ (k + 1)]) := fun i hi => by
+    have hi0 : i = 0 := by omega
+    subst hi0; simp
+  have h2_div : DivChain 2 (![p, p ^ k]) := fun i hi => by
+    have hi0 : i = 0 := by omega
+    subst hi0; simpa using dvd_pow_self p (show k ≠ 0 by omega)
+  have := congr_fun (diagonal_representative_unique 2 _ _
+    h1_pos h2_pos h1_div h2_div heq) 0
+  exact absurd this.symm (Nat.Prime.one_lt hp).ne'
+
+/-- Arithmetic core of the `k ≥ 2` branch: from the degree balance `m₁·pᵏ(p+1) +
+    m₂·p^{k-2}(p+1) = (p+1)·p^{k-1}(p+1)` with `1 ≤ m₁`, `0 ≤ m₂`, deduce `m₁ = 1` and `m₂ = P`. -/
+private lemma m1_eq_one_and_m2_eq_of_deg_two_le (P m1 m2 : ℤ) (k : ℕ) (hk2 : 2 ≤ k)
+    (hP : 2 ≤ P) (hm1 : 1 ≤ m1) (hm2 : 0 ≤ m2)
+    (h_deg : m1 * (P ^ k * (P + 1)) + m2 * (P ^ (k - 2) * (P + 1)) =
+      (P + 1) * (P ^ (k - 1) * (P + 1))) :
+    m1 = 1 ∧ m2 = P := by
+  have hpk : P ^ k = P ^ (k - 2) * P ^ 2 := by rw [← pow_add]; congr 1; omega
+  have hpk1 : P ^ (k - 1) = P ^ (k - 2) * P := by
+    rw [show k - 1 = (k - 2) + 1 from by omega, pow_succ]
+  have h_eq : m1 * P ^ 2 + m2 = P * (P + 1) := by
+    have h := h_deg; rw [hpk, hpk1] at h
+    have key : P ^ (k - 2) * (P + 1) ≠ 0 := by positivity
+    have := mul_right_cancel₀ key (show
+      (m1 * P ^ 2 + m2) * (P ^ (k - 2) * (P + 1)) =
+      (P * (P + 1)) * (P ^ (k - 2) * (P + 1)) by nlinarith)
+    linarith
+  have h_m1_eq : m1 = 1 := by
+    have h_le : m1 * P ^ 2 ≤ P ^ 2 + P := by linarith [h_eq, hm2]
+    nlinarith [show P ^ 2 ≥ 4 by nlinarith]
+  exact ⟨h_m1_eq, by rw [h_m1_eq] at h_eq; linarith⟩
+
+/-- Arithmetic core of the `k = 1` branch: from the degree balance `m₁·p(p+1) + m₂ =
+    (p+1)²` with `1 ≤ m₁`, `0 ≤ m₂`, deduce `m₁ = 1` and `m₂ = P + 1`. -/
+private lemma m1_eq_one_and_m2_eq_of_deg_eq_one (P m1 m2 : ℤ) (hP : 2 ≤ P)
+    (hm1 : 1 ≤ m1) (hm2 : 0 ≤ m2)
+    (h_deg : m1 * (P ^ 1 * (P + 1)) + m2 * 1 = (P + 1) * (P + 1)) :
+    m1 = 1 ∧ m2 = P + 1 := by
+  have h_m1_eq : m1 = 1 := by nlinarith [mul_self_nonneg (P - 1)]
+  exact ⟨h_m1_eq, by rw [h_m1_eq] at h_deg; nlinarith⟩
+
+include hp in
 private lemma heckeMultiplicity_values (k : ℕ) (hk : 0 < k) :
     HeckeRing.heckeMultiplicity (GL_pair 2) (HeckeCoset.rep (T_diag (![1, p])))
       (HeckeCoset.rep (T_diag (![1, p ^ k])))
@@ -391,21 +474,7 @@ private lemma heckeMultiplicity_values (k : ℕ) (hk : 0 < k) :
     (HeckeCoset.rep D2) (HeckeCoset.rep D_out1)
   set m2 := HeckeRing.heckeMultiplicity (GL_pair 2) (HeckeCoset.rep D1)
     (HeckeCoset.rep D2) (HeckeCoset.rep D_out2)
-  have h_ne : D_out1 ≠ D_out2 := by
-    intro heq
-    have h1_pos : ∀ i : Fin 2, 0 < (![1, p ^ (k + 1)]) i := by
-      intro i; fin_cases i <;> simp [pow_pos hp.pos]
-    have h2_pos : ∀ i : Fin 2, 0 < (![p, p ^ k]) i := by
-      intro i; fin_cases i <;> simp [hp.pos, pow_pos hp.pos]
-    have h1_div : DivChain 2 (![1, p ^ (k + 1)]) := fun i hi => by
-      have hi0 : i = 0 := by omega
-      subst hi0; simp
-    have h2_div : DivChain 2 (![p, p ^ k]) := fun i hi => by
-      have hi0 : i = 0 := by omega
-      subst hi0; simpa using dvd_pow_self p (show k ≠ 0 by omega)
-    have := diagonal_representative_unique 2 _ _ h1_pos h2_pos h1_div h2_div heq
-    have := congr_fun this 0; simp only [Matrix.cons_val_zero] at this
-    exact absurd this.symm (Nat.Prime.one_lt hp).ne'
+  have h_ne : D_out1 ≠ D_out2 := T_diag_one_ppow_succ_ne_T_diag_p_ppow p hp k hk
   have h_zero : ∀ A, A ≠ D_out1 → A ≠ D_out2 →
       HeckeRing.heckeMultiplicity (GL_pair 2) (HeckeCoset.rep D1) (HeckeCoset.rep D2)
         (HeckeCoset.rep A) = 0 := by
@@ -415,8 +484,6 @@ private lemma heckeMultiplicity_values (k : ℕ) (hk : 0 < k) :
       m2 * HeckeCoset_deg (GL_pair 2) D_out2 =
       HeckeCoset_deg (GL_pair 2) D1 * HeckeCoset_deg (GL_pair 2) D2 :=
     heckeMultiplicity_deg_sum_eq D1 D2 D_out1 D_out2 h_ne h_zero
-  have hm1_nn := HeckeRing.heckeMultiplicity_nonneg (GL_pair 2) (HeckeCoset.rep D1)
-    (HeckeCoset.rep D2) (HeckeCoset.rep D_out1)
   have hm2_nn := HeckeRing.heckeMultiplicity_nonneg (GL_pair 2) (HeckeCoset.rep D1)
     (HeckeCoset.rep D2) (HeckeCoset.rep D_out2)
   have hm1_pos : 1 ≤ m1 := by
@@ -424,64 +491,22 @@ private lemma heckeMultiplicity_values (k : ℕ) (hk : 0 < k) :
         D_out1 ≠ 0 := by
       rw [← Finsupp.mem_support_iff, HeckeRing.m_support]
       exact D_out1_pp_in_mulSupport p hp k hk
-    exact Int.lt_iff_add_one_le.mp (lt_of_le_of_ne hm1_nn (Ne.symm hne))
+    exact Int.lt_iff_add_one_le.mp (lt_of_le_of_ne
+      (HeckeRing.heckeMultiplicity_nonneg ..) (Ne.symm hne))
   rw [show HeckeCoset_deg (GL_pair 2) D1 = ↑(p + 1) from by
-      simpa using HeckeCoset_deg_T_diag_two_prime p hp (![1, p])
-        (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact hp.pos)
-        (fun i hi => by (have : i = 0 := by omega); subst this; simp) 1 one_pos
-        (by simp [pow_one]),
+        simpa using HeckeCoset_deg_T_diag_one_ppow p hp 1 one_pos,
     show HeckeCoset_deg (GL_pair 2) D2 = ↑(p ^ (k - 1) * (p + 1)) from
-      HeckeCoset_deg_T_diag_two_prime p hp _
-        (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos k)
-        (fun i hi => by (have : i = 0 := by omega); subst this; simp) k hk (by simp),
-    show HeckeCoset_deg (GL_pair 2) D_out1 = ↑(p ^ k * (p + 1)) from
-      HeckeCoset_deg_T_diag_two_prime p hp _
-        (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos (k + 1))
-        (fun i hi => by (have : i = 0 := by omega); subst this; simp)
-        (k + 1) (by omega) (by simp)] at h_deg
+      HeckeCoset_deg_T_diag_one_ppow p hp k hk,
+    show HeckeCoset_deg (GL_pair 2) D_out1 = ↑(p ^ k * (p + 1)) from by
+      simpa using HeckeCoset_deg_T_diag_one_ppow p hp (k + 1) (by omega)] at h_deg
+  have hp2 : (2 : ℤ) ≤ p := by exact_mod_cast hp.two_le
   by_cases hk1 : k = 1
   · subst hk1; simp only [ite_true, show 1 - 1 = 0 from rfl, pow_zero, one_mul] at h_deg ⊢
-    have hd_o2 : HeckeCoset_deg (GL_pair 2) D_out2 = 1 :=
-      HeckeCoset_deg_T_diag_two_scalar _
-        (fun i => by fin_cases i <;> first | exact hp.pos | exact pow_pos hp.pos 1)
-        (fun i hi => by (have : i = 0 := by omega); subst this; simp [pow_one])
-        (by show (![p, p ^ 1] : Fin 2 → ℕ) 0 = (![p, p ^ 1] : Fin 2 → ℕ) 1; simp [pow_one])
-    rw [hd_o2] at h_deg; push_cast at h_deg ⊢
-    have h_m1_eq : m1 = 1 := by
-      nlinarith [mul_self_nonneg ((p : ℤ) - 1),
-        show (2 : ℤ) ≤ p from by exact_mod_cast hp.two_le]
-    exact ⟨h_m1_eq, by rw [h_m1_eq] at h_deg; linarith⟩
+    rw [HeckeCoset_deg_T_diag_p_p_eq_one p hp] at h_deg; push_cast at h_deg ⊢
+    exact m1_eq_one_and_m2_eq_of_deg_eq_one (p : ℤ) m1 m2 hp2 hm1_pos hm2_nn h_deg
   · simp only [show k ≠ 1 from hk1, ite_false]; have hk2 : 2 ≤ k := by omega
-    have hd_o2 : HeckeCoset_deg (GL_pair 2) D_out2 = ↑(p ^ (k - 2) * (p + 1)) :=
-      HeckeCoset_deg_T_diag_two_prime p hp _
-        (by intro i; fin_cases i <;> first | exact hp.pos | exact pow_pos hp.pos k)
-        (fun i hi => by
-          have hi0 : i = 0 := by omega
-          subst hi0; simpa using dvd_pow_self p (show k ≠ 0 by omega))
-        (k - 1) (by omega)
-        (by show p ^ k / p = p ^ (k - 1)
-            have : p ^ k = p ^ (k - 1) * p := by
-              rw [← pow_succ]; congr 1; omega
-            rw [this, Nat.mul_div_cancel _ hp.pos])
-    rw [hd_o2] at h_deg
-    have hp2 : (2 : ℤ) ≤ p := by exact_mod_cast hp.two_le
-    have hpk : (p : ℤ) ^ k = (p : ℤ) ^ (k - 2) * (p : ℤ) ^ 2 := by
-      exact_mod_cast show (p : ℕ) ^ k = p ^ (k - 2) * p ^ 2 by rw [← pow_add]; congr 1; omega
-    have hpk1 : (p : ℤ) ^ (k - 1) = (p : ℤ) ^ (k - 2) * p := by
-      have : (p : ℕ) ^ (k - 1) = p ^ (k - 2) * p ^ 1 := by rw [← pow_add]; congr 1; omega
-      simp only [pow_one] at this; exact_mod_cast this
-    push_cast at h_deg ⊢
-    have h_eq : m1 * (p : ℤ) ^ 2 + m2 = (p : ℤ) * ((p : ℤ) + 1) := by
-      have h := h_deg; rw [hpk, hpk1] at h
-      have key : (p : ℤ) ^ (k - 2) * ((p : ℤ) + 1) ≠ 0 := by positivity
-      have := mul_right_cancel₀ key (show
-        (m1 * (p : ℤ) ^ 2 + m2) * ((p : ℤ) ^ (k - 2) * ((p : ℤ) + 1)) =
-        ((p : ℤ) * ((p : ℤ) + 1)) * ((p : ℤ) ^ (k - 2) * ((p : ℤ) + 1)) by nlinarith)
-      linarith
-    have h_m1_eq : m1 = 1 := by
-      have h_le : m1 * (p : ℤ) ^ 2 ≤ (p : ℤ) ^ 2 + p := by linarith [h_eq, hm2_nn]
-      nlinarith [show (p : ℤ) ^ 2 ≥ 4 by nlinarith]
-    exact ⟨h_m1_eq, by rw [h_m1_eq] at h_eq; linarith⟩
+    rw [HeckeCoset_deg_T_diag_p_ppow p hp k hk2] at h_deg; push_cast at h_deg ⊢
+    exact m1_eq_one_and_m2_eq_of_deg_two_le (p : ℤ) m1 m2 k hk2 hp2 hm1_pos hm2_nn h_deg
 
 /-- Theorem 3.24(5): `T(p) · T(1, pᵏ) = T(1, p^{k+1}) + m · T(p, pᵏ)` -/
 theorem T_sum_prime_mul_T_ad (k : ℕ) (hk : 0 < k) :
@@ -493,21 +518,7 @@ theorem T_sum_prime_mul_T_ad (k : ℕ) (hk : 0 < k) :
   set D_out1 := T_diag (![1, p ^ (k + 1)])
   set D_out2 := T_diag (![p, p ^ k])
   set c : ℤ := (if k = 1 then (↑(p + 1) : ℤ) else (↑p : ℤ))
-  have h_ne : D_out1 ≠ D_out2 := by
-    intro heq
-    have h1_pos : ∀ i : Fin 2, 0 < (![1, p ^ (k + 1)]) i := by
-      intro i; fin_cases i <;> simp [pow_pos hp.pos]
-    have h2_pos : ∀ i : Fin 2, 0 < (![p, p ^ k]) i := by
-      intro i; fin_cases i <;> simp [hp.pos, pow_pos hp.pos]
-    have h1_div : DivChain 2 (![1, p ^ (k + 1)]) := fun i hi => by
-      have hi0 : i = 0 := by omega
-      subst hi0; simp
-    have h2_div : DivChain 2 (![p, p ^ k]) := fun i hi => by
-      have hi0 : i = 0 := by omega
-      subst hi0; simpa using dvd_pow_self p (show k ≠ 0 by omega)
-    have := congr_fun (diagonal_representative_unique 2 _ _
-      h1_pos h2_pos h1_div h2_div heq) 0
-    exact absurd this.symm (Nat.Prime.one_lt hp).ne'
+  have h_ne : D_out1 ≠ D_out2 := T_diag_one_ppow_succ_ne_T_diag_p_ppow p hp k hk
   have h_ad_1p : T_ad 1 p = T_elem (![1, p]) := T_ad_of_pos 1 p Nat.one_pos hp.pos (one_dvd _)
   have h_ad_1pk : T_ad 1 (p ^ k) = T_elem (![1, p ^ k]) :=
     T_ad_of_pos 1 (p ^ k) Nat.one_pos (pow_pos hp.pos k) (one_dvd _)
@@ -775,6 +786,67 @@ private lemma T_sum_ppow_mul_last_two_terms (r s : ℕ) (hrs : r + 2 ≤ s) :
   have hnat1 : s - r = r + 2 + s - 2 * (r + 1) := by omega
   rw [hnat2, hnat1]
 
+include hp in
+/-- Inductive step of Theorem 3.24(4): given the formula for prime-power exponents `r` and
+    `r+1` (against `s`), it follows for `r+2`. Combines the recurrence `T(p^{r+2}) =
+    T(p)·T(p^{r+1}) − p·T(p,p)·T(p^r)` with the two inductive hypotheses, then reindexes. -/
+private lemma T_sum_ppow_mul_step (r s : ℕ) (hrs : r + 2 ≤ s)
+    (ih1 : T_sum ⟨p ^ (r + 1), pow_pos hp.pos (r + 1)⟩ * T_sum ⟨p ^ s, pow_pos hp.pos s⟩ =
+      ∑ i ∈ Finset.range (r + 1 + 1), (p : ℤ) ^ i •
+        (T_pp p ^ i * T_sum ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos _⟩))
+    (ih0 : T_sum ⟨p ^ r, pow_pos hp.pos r⟩ * T_sum ⟨p ^ s, pow_pos hp.pos s⟩ =
+      ∑ i ∈ Finset.range (r + 1), (p : ℤ) ^ i •
+        (T_pp p ^ i * T_sum ⟨p ^ (r + s - 2 * i), pow_pos hp.pos _⟩)) :
+    T_sum ⟨p ^ (r + 2), pow_pos hp.pos (r + 2)⟩ * T_sum ⟨p ^ s, pow_pos hp.pos s⟩ =
+    ∑ i ∈ Finset.range (r + 2 + 1), (p : ℤ) ^ i •
+      (T_pp p ^ i * T_sum ⟨p ^ (r + 2 + s - 2 * i), pow_pos hp.pos _⟩) := by
+  have h_rec := T_sum_ppow_recurrence p hp (r + 1) (by omega)
+  simp only [show r + 1 - 1 = r from by omega] at h_rec
+  rw [show r + 1 + 1 = r + 2 from by omega] at h_rec
+  rw [h_rec, sub_mul, mul_assoc, ih1, smul_mul_assoc, mul_assoc (T_pp p), ih0]
+  set Tp := T_sum ⟨p, hp.pos⟩ with Tp_def
+  set Tpp := T_pp p with Tpp_def
+  set S1 := ∑ i ∈ Finset.range (r + 1 + 1),
+    (p : ℤ) ^ i • (Tpp ^ i * T_sum ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos _⟩)
+  set S2 := ∑ i ∈ Finset.range (r + 1),
+    (p : ℤ) ^ i • (Tpp ^ i * T_sum ⟨p ^ (r + s - 2 * i), pow_pos hp.pos _⟩)
+  have h_lhs1 : Tp * S1 = ∑ i ∈ Finset.range (r + 1 + 1), (p : ℤ) ^ i • (Tpp ^ i *
+        (Tp * T_sum ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos _⟩)) :=
+    T_sum_ppow_mul_lhs1_distrib p hp r s
+  have h_lhs2 : (p : ℤ) • (Tpp * S2) = ∑ i ∈ Finset.range (r + 1), (p : ℤ) ^ (i + 1) •
+        (Tpp ^ (i + 1) * T_sum ⟨p ^ (r + s - 2 * i), pow_pos hp.pos _⟩) :=
+    T_sum_ppow_mul_lhs2_shift p hp r s
+  have h_peel1 : ∑ i ∈ Finset.range (r + 1 + 1), (p : ℤ) ^ i • (Tpp ^ i *
+        (Tp * T_sum ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos _⟩)) =
+    (∑ i ∈ Finset.range (r + 1), (p : ℤ) ^ i • (Tpp ^ i *
+        (Tp * T_sum ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos _⟩))) +
+    (p : ℤ) ^ (r + 1) • (Tpp ^ (r + 1) *
+      (Tp * T_sum ⟨p ^ (r + 1 + s - 2 * (r + 1)), pow_pos hp.pos _⟩)) :=
+    Finset.sum_range_succ _ _
+  have h_sum_split : ∑ i ∈ Finset.range (r + 1), (p : ℤ) ^ i • (Tpp ^ i *
+        (Tp * T_sum ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos _⟩)) =
+    (∑ i ∈ Finset.range (r + 1), (p : ℤ) ^ i • (Tpp ^ i *
+        T_sum ⟨p ^ (r + 2 + s - 2 * i), pow_pos hp.pos _⟩)) +
+    (∑ i ∈ Finset.range (r + 1), (p : ℤ) ^ (i + 1) • (Tpp ^ (i + 1) *
+        T_sum ⟨p ^ (r + s - 2 * i), pow_pos hp.pos _⟩)) := by
+    rw [← Finset.sum_add_distrib]
+    exact Finset.sum_congr rfl fun i hi => by
+      rw [Finset.mem_range] at hi
+      exact T_sum_ppow_mul_summand_split p hp r s i (by omega) (by omega)
+  rw [h_lhs1, h_peel1, h_sum_split, h_lhs2]
+  set A := ∑ i ∈ Finset.range (r + 1),
+      (p : ℤ) ^ i • (Tpp ^ i * T_sum ⟨p ^ (r + 2 + s - 2 * i), pow_pos hp.pos _⟩)
+  set B := ∑ i ∈ Finset.range (r + 1),
+      (p : ℤ) ^ (i + 1) • (Tpp ^ (i + 1) * T_sum ⟨p ^ (r + s - 2 * i), pow_pos hp.pos _⟩)
+  set C := (p : ℤ) ^ (r + 1) • (Tpp ^ (r + 1) *
+    (Tp * T_sum ⟨p ^ (r + 1 + s - 2 * (r + 1)), pow_pos hp.pos _⟩))
+  show A + B + C - B = _
+  rw [add_assoc, add_comm B C, ← add_assoc, add_sub_cancel_right,
+    show r + 2 + 1 = (r + 1) + 1 + 1 from by omega,
+    Finset.sum_range_succ, Finset.sum_range_succ, add_assoc]
+  congr 1
+  exact T_sum_ppow_mul_last_two_terms p hp r s hrs
+
 /-- Theorem 3.24(4): `T(p^r) T(p^s) = sum_{i=0}^{r} p^i T(p^i,p^i) T(p^{r+s-2i})` for r <= s. -/
 theorem T_sum_ppow_mul : ∀ r s : ℕ, r ≤ s →
     T_sum ⟨p ^ r, pow_pos hp.pos r⟩ * T_sum ⟨p ^ s, pow_pos hp.pos s⟩ =
@@ -799,55 +871,8 @@ theorem T_sum_ppow_mul : ∀ r s : ℕ, r ≤ s →
           show 1 + s - 2 * 1 = s - 1 from by omega]
     exact (eq_sub_iff_add_eq.mp (T_sum_ppow_recurrence p hp s (by omega))).symm
   | r + 2 =>
-    have h_rec := T_sum_ppow_recurrence p hp (r + 1) (by omega)
-    simp only [show r + 1 - 1 = r from by omega] at h_rec
-    rw [show r + 1 + 1 = r + 2 from by omega] at h_rec
-    rw [h_rec, sub_mul]
-    have ih1 := ih (r + 1) (by omega) s (by omega)
-    have ih0 := ih r (by omega) s (by omega)
-    rw [mul_assoc, ih1, smul_mul_assoc, mul_assoc (T_pp p), ih0]
-    set Tp := T_sum ⟨p, hp.pos⟩ with Tp_def
-    set Tpp := T_pp p with Tpp_def
-    set S1 := ∑ i ∈ Finset.range (r + 1 + 1),
-      (p : ℤ) ^ i • (Tpp ^ i * T_sum ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos _⟩)
-    set S2 := ∑ i ∈ Finset.range (r + 1),
-      (p : ℤ) ^ i • (Tpp ^ i * T_sum ⟨p ^ (r + s - 2 * i), pow_pos hp.pos _⟩)
-    have h_lhs1 : Tp * S1 = ∑ i ∈ Finset.range (r + 1 + 1), (p : ℤ) ^ i • (Tpp ^ i *
-          (Tp * T_sum ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos _⟩)) :=
-      T_sum_ppow_mul_lhs1_distrib p hp r s
-    have h_lhs2 : (p : ℤ) • (Tpp * S2) = ∑ i ∈ Finset.range (r + 1), (p : ℤ) ^ (i + 1) •
-          (Tpp ^ (i + 1) * T_sum ⟨p ^ (r + s - 2 * i), pow_pos hp.pos _⟩) :=
-      T_sum_ppow_mul_lhs2_shift p hp r s
-    have h_peel1 : ∑ i ∈ Finset.range (r + 1 + 1), (p : ℤ) ^ i • (Tpp ^ i *
-          (Tp * T_sum ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos _⟩)) =
-      (∑ i ∈ Finset.range (r + 1), (p : ℤ) ^ i • (Tpp ^ i *
-          (Tp * T_sum ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos _⟩))) +
-      (p : ℤ) ^ (r + 1) • (Tpp ^ (r + 1) *
-        (Tp * T_sum ⟨p ^ (r + 1 + s - 2 * (r + 1)), pow_pos hp.pos _⟩)) :=
-      Finset.sum_range_succ _ _
-    have h_sum_split : ∑ i ∈ Finset.range (r + 1), (p : ℤ) ^ i • (Tpp ^ i *
-          (Tp * T_sum ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos _⟩)) =
-      (∑ i ∈ Finset.range (r + 1), (p : ℤ) ^ i • (Tpp ^ i *
-          T_sum ⟨p ^ (r + 2 + s - 2 * i), pow_pos hp.pos _⟩)) +
-      (∑ i ∈ Finset.range (r + 1), (p : ℤ) ^ (i + 1) • (Tpp ^ (i + 1) *
-          T_sum ⟨p ^ (r + s - 2 * i), pow_pos hp.pos _⟩)) := by
-      rw [← Finset.sum_add_distrib]
-      exact Finset.sum_congr rfl fun i hi => by
-        rw [Finset.mem_range] at hi
-        exact T_sum_ppow_mul_summand_split p hp r s i (by omega) (by omega)
-    rw [h_lhs1, h_peel1, h_sum_split, h_lhs2]
-    set A := ∑ i ∈ Finset.range (r + 1),
-        (p : ℤ) ^ i • (Tpp ^ i * T_sum ⟨p ^ (r + 2 + s - 2 * i), pow_pos hp.pos _⟩)
-    set B := ∑ i ∈ Finset.range (r + 1),
-        (p : ℤ) ^ (i + 1) • (Tpp ^ (i + 1) * T_sum ⟨p ^ (r + s - 2 * i), pow_pos hp.pos _⟩)
-    set C := (p : ℤ) ^ (r + 1) • (Tpp ^ (r + 1) *
-      (Tp * T_sum ⟨p ^ (r + 1 + s - 2 * (r + 1)), pow_pos hp.pos _⟩))
-    show A + B + C - B = _
-    rw [add_assoc, add_comm B C, ← add_assoc, add_sub_cancel_right,
-      show r + 2 + 1 = (r + 1) + 1 + 1 from by omega,
-      Finset.sum_range_succ, Finset.sum_range_succ, add_assoc]
-    congr 1
-    exact T_sum_ppow_mul_last_two_terms p hp r s hrs
+    exact T_sum_ppow_mul_step p hp r s hrs (ih (r + 1) (by omega) s (by omega))
+      (ih r (by omega) s (by omega))
 
 /-! ### Identity 3: General multiplicativity -/
 
