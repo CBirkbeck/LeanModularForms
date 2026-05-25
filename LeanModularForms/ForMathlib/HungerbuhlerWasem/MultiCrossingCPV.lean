@@ -3219,6 +3219,25 @@ theorem hasCauchyPVOn_multiCrossing_higherOrder_corner
 
 /-! ### Composed multi-crossing CPV for `decomp.polarPart s` (T-BR-Y9f) -/
 
+/-- Shared computation for the two `cpv_polarPart_at_multiCrossed_pole_under_condB*`
+theorems: the sum `∑ k, L k` over Laurent coefficient slots, where `L k` is
+`2πi · w · a k` on `k = 0` and `0` otherwise, equals `2πi · w · residue f s`. -/
+private lemma sum_simplePole_only_eq_residue
+    {s : ℂ} {S : Finset ℂ} (hs : s ∈ S) {f : ℂ → ℂ} {U : Set ℂ}
+    (decomp : PolarPartDecomposition f S U) (w : ℂ) :
+    (∑ k : Fin (decomp.order s),
+        if k.val = 0 then 2 * ↑Real.pi * I * w * decomp.coeff s k else 0) =
+      2 * ↑Real.pi * I * w * residue f s := by
+  rw [decomp.residue_eq s hs]
+  by_cases h_pos : 0 < decomp.order s
+  · rw [dif_pos h_pos, Finset.sum_eq_single (⟨0, h_pos⟩ : Fin (decomp.order s))]
+    · rw [if_pos rfl]
+    · intro k _ hk
+      rw [if_neg (fun h_eq => hk (Fin.ext h_eq))]
+    · exact fun h => absurd (Finset.mem_univ _) h
+  · rw [dif_neg h_pos, mul_zero]
+    exact Finset.sum_eq_zero fun k _ => absurd k.isLt (by omega)
+
 /-- **Per-pole polar-part CPV for the multi-crossing case, conditional-angle form
 (T-BR-Y9g).**
 
@@ -3308,17 +3327,7 @@ theorem cpv_polarPart_at_multiCrossed_pole_under_condB
       (L := L) (fun k _ => h_each k) (fun k _ => h_term_int k)
   have h_sum_L_eq : (∑ k : Fin N, L k) =
       2 * ↑Real.pi * I * w * residue f s := by
-    rw [decomp.residue_eq s hs]
-    by_cases h_pos : 0 < N
-    · rw [dif_pos h_pos, Finset.sum_eq_single (⟨0, h_pos⟩ : Fin N)]
-      · show (if ((⟨0, h_pos⟩ : Fin N) : ℕ) = 0 then _ else _) = _
-        rw [if_pos rfl]
-      · intro k _ hk
-        show (if (k : ℕ) = 0 then _ else (0 : ℂ)) = 0
-        rw [if_neg (fun h_eq => hk (Fin.ext h_eq))]
-      · exact fun h => absurd (Finset.mem_univ _) h
-    · rw [dif_neg h_pos, mul_zero]
-      exact Finset.sum_eq_zero fun k _ => absurd k.isLt (by omega)
+    simp only [hL_def]; exact sum_simplePole_only_eq_residue hs decomp w
   refine HasCauchyPV.to_singletonOn ?_
   rw [← h_sum_L_eq]
   exact HasCauchyPV.congr_pointwise h_sum_cpv
@@ -3387,11 +3396,10 @@ theorem cpv_polarPart_at_multiCrossed_pole_under_condB_corner
   -- Per-term integrability.
   have h_term_int : ∀ k : Fin N, ∀ ε > 0, IntervalIntegrable
       (fun t => cpvIntegrand (fun z => a k / (z - s) ^ (k.val + 1))
-        γP.toPath.extend s ε t) volume 0 1 := fun k ε hε => by
-    have h := HungerbuhlerWasem.cpvIntegrandOn_singleMonomial_intervalIntegrable
-      γ (S := {s}) (Finset.mem_singleton.mpr rfl) (a k) (k.val + 1) hε
-    refine h.congr fun t _ => ?_
-    exact (cpvIntegrand_eq_cpvIntegrandOn_singleton (z₀ := s)).symm
+        γP.toPath.extend s ε t) volume 0 1 := fun k ε hε =>
+    (HungerbuhlerWasem.cpvIntegrandOn_singleMonomial_intervalIntegrable
+      γ (S := {s}) (Finset.mem_singleton.mpr rfl) (a k) (k.val + 1) hε).congr
+      (fun _ _ => (cpvIntegrand_eq_cpvIntegrandOn_singleton (z₀ := s)).symm)
   -- Per-term CPV.
   set L : Fin N → ℂ := fun k =>
     if k.val = 0 then 2 * ↑Real.pi * I * w * a k else 0 with hL_def
@@ -3451,19 +3459,7 @@ theorem cpv_polarPart_at_multiCrossed_pole_under_condB_corner
       (L := L) (fun k _ => h_each k) (fun k _ => h_term_int k)
   have h_sum_L_eq : (∑ k : Fin N, L k) =
       2 * ↑Real.pi * I * w * residue f s := by
-    rw [decomp.residue_eq s hs]
-    by_cases h_pos : 0 < N
-    · rw [dif_pos h_pos, Finset.sum_eq_single (⟨0, h_pos⟩ : Fin N)]
-      · change (if ((⟨0, h_pos⟩ : Fin N) : ℕ) = 0 then
-          2 * ↑Real.pi * I * w * a ⟨0, h_pos⟩ else 0) =
-            2 * ↑Real.pi * I * w * decomp.coeff s ⟨0, h_pos⟩
-        rw [if_pos rfl]
-      · intro k _ hk
-        change (if (k : ℕ) = 0 then _ else (0 : ℂ)) = 0
-        rw [if_neg (fun h_eq => hk (Fin.ext h_eq))]
-      · exact fun h => absurd (Finset.mem_univ _) h
-    · rw [dif_neg h_pos, mul_zero]
-      exact Finset.sum_eq_zero fun k _ => absurd k.isLt (by omega)
+    simp only [hL_def]; exact sum_simplePole_only_eq_residue hs decomp w
   have h_pp_eq : ∀ z, z ≠ s →
       (∑ k : Fin N, a k / (z - s) ^ (k.val + 1)) = decomp.polarPart s z :=
     fun z hz => (decomp.polarPart_eq s hs z hz).symm
