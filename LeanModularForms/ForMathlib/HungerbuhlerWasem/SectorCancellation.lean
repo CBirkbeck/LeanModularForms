@@ -7,7 +7,6 @@ import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
 import LeanModularForms.ForMathlib.FlatnessConditions
 import LeanModularForms.ForMathlib.HungerbuhlerWasem.ExitTimeExcision
 import LeanModularForms.ForMathlib.HungerbuhlerWasem.HigherOrderAsymptotics
-import LeanModularForms.ForMathlib.SectorCurve
 
 /-!
 # Sector-even cancellation under condition (B) (T-SC-01)
