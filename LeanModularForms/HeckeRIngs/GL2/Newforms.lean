@@ -800,6 +800,65 @@ Combined with `conductor_theorem_dichotomy_cuspForm_strong` it yields the
 descent of `g` to a `CuspForm` at level `Γ₁(N/l)` (Case A) or forces the
 preimage function to vanish (Case B). -/
 
+/-- The inverse level-raise action turns a unit `T`-translation upstairs into a
+`(1/l)`-translation downstairs: `α_l⁻¹ • (1 +ᵥ τ) = (1/l) +ᵥ (α_l⁻¹ • τ)`. -/
+private lemma levelRaiseMatrix_inv_smul_vadd_one_eq
+    {l : ℕ} [NeZero l] (τ : UpperHalfPlane) :
+    ((levelRaiseMatrix l)⁻¹ • ((1 : ℝ) +ᵥ τ) : UpperHalfPlane) =
+      ((1 : ℝ) / (l : ℝ)) +ᵥ ((levelRaiseMatrix l)⁻¹ • τ) := by
+  apply UpperHalfPlane.ext
+  rw [coe_levelRaiseMatrix_inv_smul, UpperHalfPlane.coe_vadd, UpperHalfPlane.coe_vadd,
+    coe_levelRaiseMatrix_inv_smul]
+  push_cast
+  ring
+
+/-- An `l`-th root of unity: `exp(2πi / l) ^ l = 1`. -/
+private lemma exp_two_pi_mul_I_div_natCast_pow_eq_one (l : ℕ) [NeZero l] :
+    Complex.exp (2 * (Real.pi : ℂ) * Complex.I / (l : ℂ)) ^ l = 1 := by
+  have hl_ne : (l : ℂ) ≠ 0 := by exact_mod_cast NeZero.ne l
+  rw [← Complex.exp_nat_mul,
+    show (l : ℂ) * (2 * (Real.pi : ℂ) * Complex.I / (l : ℂ)) =
+        2 * (Real.pi : ℂ) * Complex.I from by field_simp]
+  exact Complex.exp_two_pi_mul_I
+
+/-- Term-wise invariance of the period-1 `q`-expansion summand under a
+`(1/l)`-shift, given that the coefficients are supported on multiples of `l`.
+The shifted `q`-parameter picks up a factor `exp(2πi / l)`; on a multiple of `l`
+this is an `l`-th root of unity raised to a power (hence `1`), and off multiples
+of `l` the coefficient vanishes. -/
+private lemma qExpansion_coeff_smul_qParam_pow_shift_eq
+    {N : ℕ} [NeZero N] {l : ℕ} [NeZero l] {k : ℤ}
+    (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (hg_supp : ∀ n : ℕ, ¬ l ∣ n →
+      (ModularFormClass.qExpansion (1 : ℝ) g).coeff n = 0)
+    (σ : UpperHalfPlane) (n : ℕ) :
+    (ModularFormClass.qExpansion (1 : ℝ) g).coeff n •
+        Function.Periodic.qParam (1 : ℝ)
+          ((((1 : ℝ) / (l : ℝ)) +ᵥ σ : UpperHalfPlane) : ℂ) ^ n =
+      (ModularFormClass.qExpansion (1 : ℝ) g).coeff n •
+        Function.Periodic.qParam (1 : ℝ) (σ : ℂ) ^ n := by
+  -- qParam 1 σ' = qParam 1 σ · exp(2πi/l), where σ' = (1/l) +ᵥ σ.
+  have hqP :
+      Function.Periodic.qParam (1 : ℝ) ((((1 : ℝ) / (l : ℝ)) +ᵥ σ : UpperHalfPlane) : ℂ) =
+        Function.Periodic.qParam (1 : ℝ) (σ : ℂ) *
+          Complex.exp (2 * (Real.pi : ℂ) * Complex.I / (l : ℂ)) := by
+    have hσ'_eq : ((((1 : ℝ) / (l : ℝ)) +ᵥ σ : UpperHalfPlane) : ℂ) = (σ : ℂ) + 1 / (l : ℂ) := by
+      rw [UpperHalfPlane.coe_vadd]; push_cast; ring
+    unfold Function.Periodic.qParam
+    rw [hσ'_eq, ← Complex.exp_add]
+    congr 1
+    push_cast
+    ring
+  by_cases hln : l ∣ n
+  · -- l ∣ n: qParam^n is invariant since exp(2πi · m) = 1 for `n = l · m`.
+    obtain ⟨m, rfl⟩ := hln
+    rw [hqP, mul_pow,
+      show Complex.exp (2 * (Real.pi : ℂ) * Complex.I / (l : ℂ)) ^ (l * m) =
+          (Complex.exp (2 * (Real.pi : ℂ) * Complex.I / (l : ℂ)) ^ l) ^ m from pow_mul _ l m,
+      exp_two_pi_mul_I_div_natCast_pow_eq_one l, one_pow, mul_one]
+  · -- ¬ l ∣ n: coeff = 0 by hypothesis.
+    rw [hg_supp n hln, zero_smul, zero_smul]
+
 theorem exists_levelRaise_preimage_of_coeff_support_multiples
     {N : ℕ} [NeZero N] {l : ℕ} [NeZero l] (_hl : 1 < l) (_hlN : l ∣ N) {k : ℤ}
     (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
@@ -835,37 +894,15 @@ theorem exists_levelRaise_preimage_of_coeff_support_multiples
           (ModularGroup.T : SL(2, ℤ))) from rfl,
       modular_slash_T_apply]
     -- Goal: g ((levelRaiseMatrix l)⁻¹ • (1 +ᵥ τ)) = g ((levelRaiseMatrix l)⁻¹ • τ).
-    -- Match the ℍ-level action on the left to `((1/l : ℝ) +ᵥ σ)` where
-    -- σ := (levelRaiseMatrix l)⁻¹ • τ, via `coe_levelRaiseMatrix_inv_smul`.
-    set σ : UpperHalfPlane := (levelRaiseMatrix l)⁻¹ • τ with hσ_def
-    set σ' : UpperHalfPlane := ((1 : ℝ) / (l : ℝ)) +ᵥ σ with hσ'_def
-    have h_coord :
-        ((levelRaiseMatrix l)⁻¹ • ((1 : ℝ) +ᵥ τ) : UpperHalfPlane) = σ' := by
-      apply UpperHalfPlane.ext
-      show (((levelRaiseMatrix l)⁻¹ • ((1 : ℝ) +ᵥ τ) : UpperHalfPlane) : ℂ) =
-          (σ' : ℂ)
-      rw [coe_levelRaiseMatrix_inv_smul]
-      show (↑((1 : ℝ) +ᵥ τ : UpperHalfPlane) / (l : ℂ) : ℂ) =
-          (σ' : ℂ)
-      rw [UpperHalfPlane.coe_vadd, hσ'_def, UpperHalfPlane.coe_vadd, hσ_def,
-        coe_levelRaiseMatrix_inv_smul]
-      push_cast
-      ring
-    rw [h_coord]
-    -- Now reduce `g σ' = g σ` to a HasSum comparison.
-    -- qParam 1 σ' = qParam 1 σ · exp(2πi/l).
-    have hqP :
-        Function.Periodic.qParam (1 : ℝ) (σ' : ℂ) =
-        Function.Periodic.qParam (1 : ℝ) (σ : ℂ) *
-          Complex.exp (2 * (Real.pi : ℂ) * Complex.I / (l : ℂ)) := by
-      have hσ'_eq : (σ' : ℂ) = (σ : ℂ) + 1 / (l : ℂ) := by
-        rw [hσ'_def, UpperHalfPlane.coe_vadd]; push_cast; ring
-      unfold Function.Periodic.qParam
-      rw [hσ'_eq, ← Complex.exp_add]
-      congr 1
-      push_cast
-      ring
-    -- Use `hasSum_qExpansion` at σ and σ', then compare term-by-term.
+    -- Set σ := (levelRaiseMatrix l)⁻¹ • τ and rewrite the LHS action to a
+    -- `(1/l)`-shift of σ (`levelRaiseMatrix_inv_smul_vadd_one_eq`), reducing to
+    -- `g σ' = g σ`.
+    set σ : UpperHalfPlane := (levelRaiseMatrix l)⁻¹ • τ
+    rw [levelRaiseMatrix_inv_smul_vadd_one_eq τ]
+    set σ' : UpperHalfPlane := ((1 : ℝ) / (l : ℝ)) +ᵥ σ
+    -- Compare the period-1 `q`-expansions at σ and σ' term-by-term: both have
+    -- the same summand sequence (`qExpansion_coeff_smul_qParam_pow_shift_eq`),
+    -- so `g σ' = g σ` by uniqueness of the `HasSum` limit.
     have Hσ : HasSum (fun n : ℕ =>
         (ModularFormClass.qExpansion (1 : ℝ) g).coeff n •
           Function.Periodic.qParam (1 : ℝ) (σ : ℂ) ^ n) ((⇑g : _ → ℂ) σ) :=
@@ -874,41 +911,7 @@ theorem exists_levelRaise_preimage_of_coeff_support_multiples
         (ModularFormClass.qExpansion (1 : ℝ) g).coeff n •
           Function.Periodic.qParam (1 : ℝ) (σ' : ℂ) ^ n) ((⇑g : _ → ℂ) σ') :=
       ModularFormClass.hasSum_qExpansion (f := g) h1_pos h1_period σ'
-    -- Term-wise equality: both sequences are equal for every n.
-    have h_term_eq : ∀ n : ℕ,
-        (ModularFormClass.qExpansion (1 : ℝ) g).coeff n •
-          Function.Periodic.qParam (1 : ℝ) (σ' : ℂ) ^ n =
-        (ModularFormClass.qExpansion (1 : ℝ) g).coeff n •
-          Function.Periodic.qParam (1 : ℝ) (σ : ℂ) ^ n := by
-      intro n
-      by_cases hln : l ∣ n
-      · -- l ∣ n: qParam^n is invariant since exp(2πi · m) = 1 for `n = l · m`.
-        obtain ⟨m, rfl⟩ := hln
-        rw [hqP, mul_pow]
-        rw [show Complex.exp (2 * (Real.pi : ℂ) * Complex.I / (l : ℂ)) ^ (l * m) =
-            (Complex.exp (2 * (Real.pi : ℂ) * Complex.I / (l : ℂ)) ^ l) ^ m from by
-          rw [pow_mul]]
-        have hl_ne : (l : ℂ) ≠ 0 := by exact_mod_cast NeZero.ne l
-        have h_exp_l :
-            Complex.exp (2 * (Real.pi : ℂ) * Complex.I / (l : ℂ)) ^ l = 1 := by
-          rw [← Complex.exp_nat_mul]
-          rw [show (l : ℂ) * (2 * (Real.pi : ℂ) * Complex.I / (l : ℂ)) =
-              2 * (Real.pi : ℂ) * Complex.I from by
-            field_simp]
-          exact Complex.exp_two_pi_mul_I
-        rw [h_exp_l, one_pow, mul_one]
-      · -- ¬ l ∣ n: coeff = 0 by hypothesis.
-        rw [hg_supp n hln, zero_smul, zero_smul]
-    -- Combine to get `g σ' = g σ` via funext + `HasSum.unique`.
-    have h_fun_eq :
-        (fun n : ℕ =>
-          (ModularFormClass.qExpansion (1 : ℝ) g).coeff n •
-            Function.Periodic.qParam (1 : ℝ) (σ' : ℂ) ^ n) =
-        (fun n : ℕ =>
-          (ModularFormClass.qExpansion (1 : ℝ) g).coeff n •
-            Function.Periodic.qParam (1 : ℝ) (σ : ℂ) ^ n) :=
-      funext h_term_eq
-    rw [h_fun_eq] at Hσ'
+    rw [funext (qExpansion_coeff_smul_qParam_pow_shift_eq g hg_supp σ)] at Hσ'
     exact (Hσ.unique Hσ').symm
 
 /-! ### Conditional Strong Multiplicity One from the newSubspace zero criterion -/
