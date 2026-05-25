@@ -379,34 +379,6 @@ theorem norm_sub_strictAntiOn_left
   intro a ha b hb hab
   exact lt_of_pow_lt_pow_left₀ 2 (norm_nonneg _) (h_f_strictAnti ha hb hab)
 
-/-- Bundled geometric scaffolding: cutoffs and far/near bounds derived from
-immersion data (`γ, t₀, h_at, h_unique, h_flat`). -/
-structure DerivedAsymmetricCutoffs {x : ℂ} (γ : ClosedPwC1Immersion x) (s : ℂ)
-    (t₀ : ℝ) where
-  /-- Left cutoff function. -/
-  δ_left : ℝ → ℝ
-  /-- Right cutoff function. -/
-  δ_right : ℝ → ℝ
-  /-- Threshold below which all bounds hold. -/
-  threshold : ℝ
-  hthresh : 0 < threshold
-  hδ_left_pos : ∀ ε, 0 < ε → ε < threshold → 0 < δ_left ε
-  hδ_right_pos : ∀ ε, 0 < ε → ε < threshold → 0 < δ_right ε
-  hδ_left_small : ∀ ε, 0 < ε → ε < threshold → δ_left ε < t₀
-  hδ_right_small : ∀ ε, 0 < ε → ε < threshold → δ_right ε < 1 - t₀
-  h_far_left : ∀ ε, 0 < ε → ε < threshold →
-    ∀ t ∈ Icc (0 : ℝ) 1, t ≤ t₀ → δ_left ε < t₀ - t →
-      ε < ‖γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t - s‖
-  h_far_right : ∀ ε, 0 < ε → ε < threshold →
-    ∀ t ∈ Icc (0 : ℝ) 1, t₀ ≤ t → δ_right ε < t - t₀ →
-      ε < ‖γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t - s‖
-  h_near_left : ∀ ε, 0 < ε → ε < threshold →
-    ∀ t, t ≤ t₀ → t₀ - t ≤ δ_left ε →
-      ‖γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t - s‖ ≤ ε
-  h_near_right : ∀ ε, 0 < ε → ε < threshold →
-    ∀ t, t₀ ≤ t → t - t₀ ≤ δ_right ε →
-      ‖γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t - s‖ ≤ ε
-
 /-- **Integrability of `(γ - s)⁻¹ * γ'` on segments away from the
 singularity**. If `γ(t) ≠ s` on the closed interval `[a, b] ⊆ [0, 1]`, then
 the integrand `(γ(t) - s)⁻¹ * γ'(t)` is interval-integrable on `[a, b]`.
