@@ -967,6 +967,29 @@ namespace ClosedPwC1Immersion
 variable {x : E}
 
 /-- On each piece of the cyclic shift, the (within-`Icc a b`) derivative is
+nonzero — branch helper for a fixed shift `φ : ℝ → ℝ` with constant derivative `1`. -/
+private theorem cyclicShift_derivWithin_ne_zero_branch (γ : ClosedPwC1Immersion x)
+    {τ : ℝ} (hτ : τ ∈ Ioo (0 : ℝ) 1) {a b : ℝ}
+    (h_cons : (cyclicShiftPartitionExt γ.closedPartition τ).IsConsecutive a b)
+    {t : ℝ} (ht : t ∈ Icc a b)
+    {c d : ℝ} (h_cons_cd : γ.closedPartition.IsConsecutive c d)
+    (φ : ℝ → ℝ) (hφ_deriv : HasDerivWithinAt φ 1 (Icc a b) t)
+    (h_eq_shifted : Set.EqOn (γ.toPath.cyclicShift hτ).extend
+      (fun u => γ.toPath.extend (φ u)) (Icc a b))
+    (h_maps_to : MapsTo φ (Icc a b) (Icc c d)) :
+    derivWithin (γ.toPath.cyclicShift hτ).extend (Icc a b) t ≠ 0 := by
+  have h_unique : UniqueDiffWithinAt ℝ (Icc a b) t :=
+    uniqueDiffOn_Icc h_cons.2.2.1 t ht
+  set L : E := derivWithin γ.toPath.extend (Icc c d) (φ t)
+  have h_HDwa_γ : HasDerivWithinAt γ.toPath.extend L (Icc c d) (φ t) :=
+    ((γ.contDiffOn_pieces c d h_cons_cd).differentiableOn_one
+      (φ t) (h_maps_to ht)).hasDerivWithinAt
+  have h_comp' : HasDerivWithinAt (fun u : ℝ => γ.toPath.extend (φ u)) L (Icc a b) t := by
+    simpa [Function.comp_def, one_smul] using h_HDwa_γ.scomp t hφ_deriv h_maps_to
+  rw [(h_comp'.congr h_eq_shifted (h_eq_shifted ht)).derivWithin h_unique]
+  exact γ.derivWithin_ne_zero_pieces c d h_cons_cd _ (h_maps_to ht)
+
+/-- On each piece of the cyclic shift, the (within-`Icc a b`) derivative is
 nonzero. -/
 private theorem cyclicShift_derivWithin_ne_zero_piece (γ : ClosedPwC1Immersion x)
     {τ : ℝ} (hτ : τ ∈ Ioo (0 : ℝ) 1) {a b : ℝ}
@@ -977,8 +1000,6 @@ private theorem cyclicShift_derivWithin_ne_zero_piece (γ : ClosedPwC1Immersion 
   have hb_Icc := cyclicShiftPartitionExt_subset_Icc γ.closedPartition hτ h_cons.2.1
   have hab_Icc : Icc a b ⊆ Icc (0:ℝ) 1 :=
     fun u hu => ⟨ha_Icc.1.trans hu.1, hu.2.trans hb_Icc.2⟩
-  have hab_lt : a < b := h_cons.2.2.1
-  have h_unique : UniqueDiffWithinAt ℝ (Icc a b) t := uniqueDiffOn_Icc hab_lt t ht
   have hclosed : γ.toPath.extend 0 = γ.toPath.extend 1 := by
     rw [γ.toPath.extend_zero, γ.toPath.extend_one]
   have h_eq_csf : Set.EqOn (γ.toPath.cyclicShift hτ).extend
@@ -986,45 +1007,18 @@ private theorem cyclicShift_derivWithin_ne_zero_piece (γ : ClosedPwC1Immersion 
     Path.cyclicShift_extend_on_Icc γ.toPath hτ (hab_Icc hu)
   rcases γ.toClosedPwC1Curve.cyclicShift_consecutive_lift hτ h_cons with
     ⟨h_b_le, c, d, h_cons_cd, h_sub⟩ | ⟨h_a_ge, c, d, h_cons_cd, h_sub⟩
-  · have hab_sub : Icc a b ⊆ Icc (0:ℝ) (1 - τ) :=
-      fun _ hu => ⟨ha_Icc.1.trans hu.1, hu.2.trans h_b_le⟩
-    have h_eq_shifted : Set.EqOn (γ.toPath.cyclicShift hτ).extend
-        (fun u => γ.toPath.extend (u + τ)) (Icc a b) := fun u hu => by
-      rw [h_eq_csf hu]
-      exact cyclicShiftFun_eq_on_no_wrap γ.toPath.extend hτ (hab_sub hu)
-    have ht_shift : t + τ ∈ Icc c d := h_sub ⟨by linarith [ht.1], by linarith [ht.2]⟩
-    set L : E := derivWithin γ.toPath.extend (Icc c d) (t + τ)
-    have h_HDwa_γ : HasDerivWithinAt γ.toPath.extend L (Icc c d) (t + τ) :=
-      ((γ.contDiffOn_pieces c d h_cons_cd).differentiableOn_one (t + τ) ht_shift).hasDerivWithinAt
-    have h_HDwa_shift : HasDerivWithinAt (fun u : ℝ => u + τ) 1 (Icc a b) t :=
-      ((hasDerivAt_id t).add_const τ).hasDerivWithinAt
-    have h_maps_to : MapsTo (fun u : ℝ => u + τ) (Icc a b) (Icc c d) :=
-      fun _ hu => h_sub ⟨by linarith [hu.1], by linarith [hu.2]⟩
-    have h_comp' : HasDerivWithinAt (fun u : ℝ => γ.toPath.extend (u + τ)) L (Icc a b) t := by
-      simpa [Function.comp_def, one_smul] using h_HDwa_γ.scomp t h_HDwa_shift h_maps_to
-    rw [(h_comp'.congr h_eq_shifted (h_eq_shifted ht)).derivWithin h_unique]
-    exact γ.derivWithin_ne_zero_pieces c d h_cons_cd (t + τ) ht_shift
-  · have hab_sub : Icc a b ⊆ Icc (1 - τ) 1 :=
-      fun _ hu => ⟨h_a_ge.trans hu.1, hu.2.trans hb_Icc.2⟩
-    have h_eq_shifted : Set.EqOn (γ.toPath.cyclicShift hτ).extend
-        (fun u => γ.toPath.extend (u + τ - 1)) (Icc a b) := fun u hu => by
-      rw [h_eq_csf hu]
-      exact cyclicShiftFun_eq_on_wrap γ.toPath.extend hτ hclosed (hab_sub hu)
-    have ht_shift : t + τ - 1 ∈ Icc c d :=
-      h_sub ⟨by linarith [ht.1], by linarith [ht.2]⟩
-    set L : E := derivWithin γ.toPath.extend (Icc c d) (t + τ - 1)
-    have h_HDwa_γ : HasDerivWithinAt γ.toPath.extend L (Icc c d) (t + τ - 1) :=
-      ((γ.contDiffOn_pieces c d h_cons_cd).differentiableOn_one (t + τ - 1)
-        ht_shift).hasDerivWithinAt
-    have h_HDwa_shift : HasDerivWithinAt (fun u : ℝ => u + τ - 1) 1 (Icc a b) t :=
-      (((hasDerivAt_id t).add_const τ).sub_const 1).hasDerivWithinAt
-    have h_maps_to : MapsTo (fun u : ℝ => u + τ - 1) (Icc a b) (Icc c d) :=
-      fun _ hu => h_sub ⟨by linarith [hu.1], by linarith [hu.2]⟩
-    have h_comp' : HasDerivWithinAt (fun u : ℝ => γ.toPath.extend (u + τ - 1))
-        L (Icc a b) t := by
-      simpa [Function.comp_def, one_smul] using h_HDwa_γ.scomp t h_HDwa_shift h_maps_to
-    rw [(h_comp'.congr h_eq_shifted (h_eq_shifted ht)).derivWithin h_unique]
-    exact γ.derivWithin_ne_zero_pieces c d h_cons_cd (t + τ - 1) ht_shift
+  · refine γ.cyclicShift_derivWithin_ne_zero_branch hτ h_cons ht h_cons_cd
+      (fun u => u + τ) ((hasDerivAt_id t).add_const τ).hasDerivWithinAt
+      (fun u hu => ?_) (fun _ hu => h_sub ⟨by linarith [hu.1], by linarith [hu.2]⟩)
+    rw [h_eq_csf hu]
+    exact cyclicShiftFun_eq_on_no_wrap γ.toPath.extend hτ
+      ⟨ha_Icc.1.trans hu.1, hu.2.trans h_b_le⟩
+  · refine γ.cyclicShift_derivWithin_ne_zero_branch hτ h_cons ht h_cons_cd
+      (fun u => u + τ - 1) (((hasDerivAt_id t).add_const τ).sub_const 1).hasDerivWithinAt
+      (fun u hu => ?_) (fun _ hu => h_sub ⟨by linarith [hu.1], by linarith [hu.2]⟩)
+    rw [h_eq_csf hu]
+    exact cyclicShiftFun_eq_on_wrap γ.toPath.extend hτ hclosed
+      ⟨h_a_ge.trans hu.1, hu.2.trans hb_Icc.2⟩
 
 /-- **Step 3: Cyclic shift of a `ClosedPwC1Immersion`.** -/
 noncomputable def cyclicShift (γ : ClosedPwC1Immersion x) {τ : ℝ}
