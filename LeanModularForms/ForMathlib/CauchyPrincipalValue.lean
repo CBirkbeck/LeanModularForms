@@ -72,12 +72,6 @@ theorem cpvIntegrand_of_gt {f : ℂ → ℂ} {γ : ℝ → ℂ} {z₀ : ℂ} {ε
     cpvIntegrand f γ z₀ ε t = f (γ t) * deriv γ t :=
   if_pos h
 
-@[simp]
-theorem cpvIntegrand_of_le {f : ℂ → ℂ} {γ : ℝ → ℂ} {z₀ : ℂ} {ε : ℝ} {t : ℝ}
-    (h : ‖γ t - z₀‖ ≤ ε) :
-    cpvIntegrand f γ z₀ ε t = 0 :=
-  if_neg h.not_gt
-
 /-- The Cauchy principal value of `∮_γ f(z) dz` exists and equals `L`, where the integral
 is computed by excluding ε-neighborhoods of `z₀` and taking the limit as `ε → 0⁺`.
 
