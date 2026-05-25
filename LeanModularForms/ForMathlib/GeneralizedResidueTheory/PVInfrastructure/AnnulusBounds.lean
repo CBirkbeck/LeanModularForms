@@ -6,6 +6,7 @@ Authors:
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.PVInfrastructure.GammaAnalysis
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.PVInfrastructure.RemainderAnalysis
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.PVInfrastructure.StepBounds
+import LeanModularForms.ForMathlib.Instances
 
 /-!
 # PV Infrastructure: Annulus Bounds
@@ -26,8 +27,6 @@ the dyadic PV convergence proof.
 
 open Complex MeasureTheory Set Filter Topology
 open scoped Real Interval
-
-private instance : NormSMulClass ℝ ℂ := NormedSpace.toNormSMulClass
 
 noncomputable section
 
