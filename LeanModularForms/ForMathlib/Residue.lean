@@ -40,20 +40,6 @@ def HasSimplePoleAt (f : ℂ → ℂ) (z₀ : ℂ) : Prop :=
 def HasSimplePoleAt.coeff {f : ℂ → ℂ} {z₀ : ℂ} (h : HasSimplePoleAt f z₀) : ℂ :=
   h.choose
 
-/-- The analytic part of a simple pole decomposition. -/
-def HasSimplePoleAt.regularPart {f : ℂ → ℂ} {z₀ : ℂ} (h : HasSimplePoleAt f z₀) :
-    ℂ → ℂ :=
-  h.choose_spec.choose
-
-theorem HasSimplePoleAt.regularPart_analyticAt {f : ℂ → ℂ} {z₀ : ℂ}
-    (h : HasSimplePoleAt f z₀) : AnalyticAt ℂ h.regularPart z₀ :=
-  h.choose_spec.choose_spec.1
-
-theorem HasSimplePoleAt.eventually_eq {f : ℂ → ℂ} {z₀ : ℂ}
-    (h : HasSimplePoleAt f z₀) :
-    ∀ᶠ z in 𝓝[≠] z₀, f z = h.coeff / (z - z₀) + h.regularPart z :=
-  h.choose_spec.choose_spec.2
-
 /-- The residue of `f` at `z₀`, defined as the limit of normalized circle integrals:
 `Res(f, z₀) = lim_{r→0⁺} (2πi)⁻¹ ∮_{|z-z₀|=r} f(z) dz`. -/
 def residue (f : ℂ → ℂ) (z₀ : ℂ) : ℂ :=

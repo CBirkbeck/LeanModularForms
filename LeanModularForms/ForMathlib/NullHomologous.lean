@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
 import LeanModularForms.ForMathlib.GeneralizedWindingNumber
-import LeanModularForms.ForMathlib.PoincareBridge
 import LeanModularForms.ForMathlib.CurveUtilities
 import LeanModularForms.ForMathlib.WindingArgDiff
 
@@ -109,33 +108,6 @@ theorem avoids_finset_delta_bound (γ : PiecewiseC1Path x x) (S : Finset ℂ)
     rcases Finset.mem_insert.mp hs with rfl | hs_T
     · exact (min_le_right _ _).trans (hδ_a_bd t ht)
     · exact (min_le_left _ _).trans (hδ_T_bd s hs_T t ht)
-
-/-- The contour integral of `(w - z)⁻¹` along a closed piecewise C^1 path in a convex
-set not containing `z` is zero.
-
-The proof handles two cases:
-- If the contour integrand is interval integrable, the FTC telescope gives
-  `F(x) - F(x) = 0` using the primitive `F` from the convex domain theorem.
-- If not integrable, the integral is `0` by mathlib's `integral_undef` convention. -/
-private theorem contourIntegral_inv_eq_zero_of_convex {U : Set ℂ}
-    (hU : Convex ℝ U) (hUo : IsOpen U) (hUne : U.Nonempty)
-    (γ : PiecewiseC1Path x x)
-    (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U) (z : ℂ) (hz : z ∉ U) :
-    γ.contourIntegral (fun w => (w - z)⁻¹) = 0 := by
-  by_cases h_int : IntervalIntegrable
-      (fun t => (γ t - z)⁻¹ * deriv γ.toPath.extend t) volume 0 1
-  · -- Case 1: integrand is integrable → use FTC
-    have h_ne : ∀ w ∈ U, w - z ≠ 0 :=
-      fun w hw h => hz (sub_eq_zero.mp h ▸ hw)
-    have h_holo : DifferentiableOn ℂ (fun w => (w - z)⁻¹) U := fun w hw =>
-      ((differentiableAt_id.sub (differentiableAt_const z)).inv
-        (h_ne w hw)).differentiableWithinAt
-    obtain ⟨F, hF⟩ := h_holo.hasPrimitive_of_convex hU hUo hUne
-    exact γ.contourIntegral_eq_zero_of_hasDerivAt_of_closed rfl hγ hF h_int
-  · -- Case 2: integrand not integrable → integral is 0 by convention
-    exact intervalIntegral.integral_undef h_int
-
-/-! ### Winding vanishes in neighborhoods of exterior points -/
 
 /-! ### Lipschitz implies bounded image -/
 
@@ -296,25 +268,5 @@ theorem IsNullHomologous.winding_zero_nhds_of_not_mem_of_closed
   exact ⟨ε, hε_pos, fun w' hw' => by rw [h_const w' hw', h_null.winding_zero w hw]⟩
 
 /-! ### Convex domains -/
-
-/-- Every closed piecewise C^1 immersion in a convex open set is null-homologous.
-
-The proof: for `z ∉ U`, the path avoids `z` (since image ⊆ U). The generalized winding
-number reduces to `(2πi)⁻¹ · ∮_γ (w-z)⁻¹ dw` by `hasGeneralizedWindingNumber_of_avoids`.
-The contour integral vanishes: either by the FTC telescope (if the integrand is integrable),
-or by mathlib's convention that the integral of a non-integrable function is zero. -/
-theorem isNullHomologous_of_convex {U : Set ℂ}
-    (hU : Convex ℝ U) (hUo : IsOpen U) (hUne : U.Nonempty)
-    (γ : PwC1Immersion x x)
-    (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ∈ U) :
-    IsNullHomologous γ U where
-  image_subset := hγ
-  winding_zero z hz := by
-    have h_avoids : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ z :=
-      fun t ht heq => hz (heq ▸ hγ t ht)
-    rw [(hasGeneralizedWindingNumber_of_avoids
-        (avoids_delta_bound γ.toPiecewiseC1Path z h_avoids)).eq,
-      contourIntegral_inv_eq_zero_of_convex hU hUo hUne γ.toPiecewiseC1Path hγ z hz,
-      mul_zero]
 
 end

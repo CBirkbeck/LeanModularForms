@@ -116,11 +116,6 @@ theorem residue_eq_of_simple_pole_decomp {f : ℂ → ℂ} {z₀ c : ℂ} {g : �
     residue f z₀ = c :=
   (tendsto_nhds_of_eventually_eq (circleIntegral_simple_pole_eq hg hf_eq)).limUnder_eq
 
-/-- For a function with a simple pole at `z₀`, the residue equals `h.coeff`. -/
-theorem residue_eq_coeff {f : ℂ → ℂ} {z₀ : ℂ}
-    (h : HasSimplePoleAt f z₀) : residue f z₀ = h.coeff :=
-  residue_eq_of_simple_pole_decomp h.regularPart_analyticAt h.eventually_eq
-
 /-- If `f` and `g` agree in a punctured neighborhood of `z₀`, they have the same
 residue. The proof shows that the circle integrals agree for all sufficiently small
 radii, so the `limUnder`s coincide. -/
