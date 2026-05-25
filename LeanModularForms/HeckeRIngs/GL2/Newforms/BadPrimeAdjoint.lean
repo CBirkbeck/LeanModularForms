@@ -25,10 +25,9 @@ import LeanModularForms.HeckeRIngs.GL2.Newforms.MellinBridges
 /-!
 # Newforms: bad-prime Fricke adjoint candidate and the extended newspace
 
-The bad-prime Hecke linear map and Fricke adjoint candidate (T148) with its auxiliary discharges, the scalar-corrected bad-prime Fricke `petN` adjoint (T149), and the T174-T180 extended-oldspace / extended-newspace API (`NewformExtended`) for the SMO route.
-
-This module is part of the split of `Newforms.lean`; see that file's header
-for the overall design.  Declarations are kept in their original order.
+The bad-prime Hecke linear map and Fricke adjoint candidate with its auxiliary
+discharges, the scalar-corrected bad-prime Fricke `petN` adjoint, and the
+extended-oldspace / extended-newspace API (`NewformExtended`) for the SMO route.
 -/
 
 noncomputable section
@@ -40,14 +39,10 @@ open HeckeRing.GL2.Unified
 open scoped MatrixGroups ModularForm Pointwise DirectSum
 
 variable {N : ℕ} [NeZero N] {k : ℤ}
-/-! ### Bad-prime Hecke linear-map and Fricke adjoint candidate (T148) -/
 
-/-- **`heckeT_n_cusp k n` packaged as a `ℂ`-linear endomorphism of cusp forms (T148).**
-
-The bad-prime Hecke operator `heckeT_n_cusp k n` is linear (proven separately as
-`heckeT_n_cusp_add` / `heckeT_n_cusp_smul`); this lemma packages it as a
-`LinearMap` so it can be composed with `Newform.frickeSlashCuspForm` to form
-the Fricke-conjugated adjoint candidate. -/
+/-- The bad-prime Hecke operator `heckeT_n_cusp k n` packaged as a `ℂ`-linear
+endomorphism of cusp forms, so it can be composed with
+`Newform.frickeSlashCuspForm`. -/
 noncomputable def Newform.heckeT_n_cusp_lin
     {N : ℕ} [NeZero N] (k : ℤ) (n : ℕ) [NeZero n] :
     CuspForm ((Gamma1 N).map (mapGL ℝ)) k →ₗ[ℂ]
@@ -63,20 +58,9 @@ lemma Newform.heckeT_n_cusp_lin_apply
     Newform.heckeT_n_cusp_lin k n f = heckeT_n_cusp k n f :=
   rfl
 
-/-- **Bad-prime Fricke-conjugated adjoint candidate (T148).**
-
-Definition `T_adj := frickeSlashCuspForm ∘ heckeT_n_cusp_lin k p ∘ frickeSlashCuspForm`,
-the `W_N · T_p · W_N`-style conjugate operator (with the involution-up-to-scalar
-T144 `frickeSquareScalar = (-1)^k · N^{k-2}` absorbed at the petN level).
-
-For the bad-prime case `p ∣ N`, the classical Atkin-Lehner adjoint formula
-asserts that `pet (T_p f) g = (some scalar) · pet f (T_adj g)` and that
-`T_adj` preserves the old subspace; both are needed to apply the T140
-conditional newspace-preservation reducer.
-
-This definition packages the operator. The petN adjoint identity and oldspace
-preservation are stated separately as named hypotheses for downstream
-discharge. -/
+/-- Bad-prime Fricke-conjugated adjoint candidate
+`frickeSlashCuspForm ∘ heckeT_n_cusp_lin k p ∘ frickeSlashCuspForm`, the
+`W_N · T_p · W_N`-style conjugate operator. -/
 noncomputable def Newform.frickeBadAdjointCandidate
     {N : ℕ} [NeZero N] (k : ℤ) (p : ℕ) [NeZero p] :
     CuspForm ((Gamma1 N).map (mapGL ℝ)) k →ₗ[ℂ]
@@ -93,21 +77,9 @@ lemma Newform.frickeBadAdjointCandidate_apply
         (heckeT_n_cusp k p (Newform.frickeSlashCuspForm g)) := by
   rfl
 
-/-- **Bad-prime newspace preservation, conditional on the petN-adjoint identity
-and the Fricke-bad-adjoint oldspace preservation (T148 main partial).**
-
-For p prime with p ∣ N (i.e., `¬ Nat.Coprime p N`), the bad-prime Hecke operator
-`heckeT_n_cusp k p` preserves `cuspFormsNew N k` provided two named hypotheses:
-
-* `h_adj`: the petN adjoint relation
-  `petN (heckeT_n_cusp k p f) g = petN f (frickeBadAdjointCandidate k p g)`.
-
-* `h_old`: `frickeBadAdjointCandidate k p` preserves `cuspFormsOld N k`.
-
-Both hypotheses follow from the classical Atkin-Lehner adjoint theory. The
-proof is a direct application of T140's
-`heckeT_n_cusp_preserves_cuspFormsNew_at_divN_of_petersson_adjoint` with
-`T_adj := frickeBadAdjointCandidate k p`. -/
+/-- For `p` prime with `p ∣ N`, the bad-prime Hecke operator `heckeT_n_cusp k p`
+preserves `cuspFormsNew N k`, given the petN adjoint relation `h_adj` and
+oldspace preservation `h_old` for `frickeBadAdjointCandidate k p`. -/
 theorem Newform.heckeT_n_cusp_preserves_cuspFormsNew_at_divN_of_fricke_adjoint
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p] (hp : p.Prime)
     (hpN : ¬ Nat.Coprime p N)
@@ -122,45 +94,16 @@ theorem Newform.heckeT_n_cusp_preserves_cuspFormsNew_at_divN_of_fricke_adjoint
   heckeT_n_cusp_preserves_cuspFormsNew_at_divN_of_petersson_adjoint hp hpN
     (Newform.frickeBadAdjointCandidate k p) h_adj h_old f hf
 
-/-! ### Auxiliary discharges for `frickeBadAdjointCandidate` (T148) -/
-
-/-- **`Newform.frickeSlashCuspForm` preserves `cuspFormsOld N k` (T148 helper).**
-
-The Atkin-Lehner involution `f ↦ f ∣[k] W_N` maps oldforms to oldforms. This
-is reduced to the structural claim that for any `levelRaise`-image
-`heq ▸ levelRaise M d k h` (where `d * M = N, d > 1`), its Fricke slash is
-again a level-raised form, i.e., it lies in the span of oldform generators.
-
-This claim is **not yet proved** in the present pass. Stated as a named
-hypothesis for downstream discharge. The classical proof: lifting via the
-explicit `levelRaise` matrix and using `frickeMatrix_mul_self_val` (T141) to
-conjugate level-raise matrices, reducing to a level-raise identity at level
-`d`. The full proof requires a non-trivial level-raise / Atkin-Lehner
-commutativity statement that is a substantial theorem in its own right. -/
+/-- `Newform.frickeSlashCuspForm` preserves `cuspFormsOld N k`: the Atkin-Lehner
+involution `f ↦ f ∣[k] W_N` maps oldforms to oldforms. Stated as a named Prop
+for downstream discharge. -/
 def Newform.HasFrickeSlashCuspFormPreservesCuspFormsOld
     (N : ℕ) [NeZero N] (k : ℤ) : Prop :=
   ∀ (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k),
     g ∈ cuspFormsOld N k → Newform.frickeSlashCuspForm g ∈ cuspFormsOld N k
 
-/-- **Matrix-level Fricke / level-raise commutation identity (T172 support).**
-
-The Atkin-Lehner / Fricke matrix `W_M = !![0, -1; M, 0]` post-multiplied by the
-level-raising matrix `α_d = !![d, 0; 0, 1]` equals `W_N` where `N = d * M`:
-
-```
-W_M · α_d = !![0, -1; M, 0] · !![d, 0; 0, 1]
-          = !![0·d + (-1)·0, 0·0 + (-1)·1; M·d + 0·0, M·0 + 0·1]
-          = !![0, -1; M·d, 0]
-          = !![0, -1; N, 0]
-          = W_N.
-```
-
-This is the **clean matrix identity** linking `W_N` and `W_M` via the level-raise
-matrix `α_d`, the foundation for the function-level `g ∣[k] W_N = (g ∣[k] W_M) ∣[k] α_d`
-slash identity used in the Atkin-Lehner / oldspace preservation chain.
-
-Proof: `Units.ext` reduces to entry-wise equality of `2 × 2` matrices, then
-`fin_cases` + `simp` with the explicit matrix entries closes each case. -/
+/-- The Atkin-Lehner / Fricke matrix `W_M` post-multiplied by the level-raising
+matrix `α_d` equals `W_N` where `N = d * M`. -/
 lemma Newform.frickeMatrix_mul_levelRaiseMatrix
     {M : ℕ} [NeZero M] {d : ℕ} [NeZero d] :
     haveI : NeZero (d * M) := ⟨Nat.mul_ne_zero (NeZero.ne d) (NeZero.ne M)⟩
@@ -175,24 +118,8 @@ lemma Newform.frickeMatrix_mul_levelRaiseMatrix
       Matrix.GeneralLinearGroup.mkOfDetNeZero, Units.val_mul, Matrix.mul_apply,
       Fin.sum_univ_two, mul_comm d M]
 
-/-- **T172 reduction: `HasFrickeSlashCuspFormPreservesCuspFormsOld` reduces
-to its level-raise generators.**
-
-Direct consumer reducing `Newform.HasFrickeSlashCuspFormPreservesCuspFormsOld`
-to the **single explicit residual statement**: that for every level-raise
-oldform generator `f = heq ▸ levelRaise M d k g` (with `1 < d` and `d * M = N`),
-the Fricke slash `Newform.frickeSlashCuspForm f` lies in `cuspFormsOld N k`.
-
-This is a clean equivalence: the forward direction follows by applying the
-preservation Prop to any generator (a generator lies in the span hence in
-`cuspFormsOld`); the backward direction extends the per-generator statement
-to all of `cuspFormsOld N k` via `Submodule.span_induction`, using linearity
-of `Newform.frickeSlashCuspForm` (a `LinearMap`) and the standard
-zero/add/smul closure of `cuspFormsOld N k` (a `Submodule`).
-
-This packages the Prop's content cleanly so any future worker only needs to
-prove the per-generator statement, without re-doing the span-induction
-plumbing every time. -/
+/-- `Newform.HasFrickeSlashCuspFormPreservesCuspFormsOld` holds iff the Fricke
+slash of every level-raise oldform generator lies in `cuspFormsOld N k`. -/
 theorem Newform.hasFrickeSlashCuspFormPreservesCuspFormsOld_iff_on_generators
     {N : ℕ} [NeZero N] {k : ℤ} :
     Newform.HasFrickeSlashCuspFormPreservesCuspFormsOld N k ↔
@@ -222,37 +149,10 @@ theorem Newform.hasFrickeSlashCuspFormPreservesCuspFormsOld_iff_on_generators
       rw [map_smul]
       exact Submodule.smul_mem _ c ihx
 
-/-- **T172 — Conditional preservation theorem for `cuspFormsOldExtended`
-(Round 2 deliverable).**
-
-`Newform.frickeSlashCuspForm` preserves `cuspFormsOldExtended N k`, conditional
-on the **per-generator preservation hypothesis**: that for every member of the
-disjoint generator family `IsOldformGenerator f ∨ IsLevelInclusionOldformGenerator f`
-of `cuspFormsOldExtended`, the Fricke slash `frickeSlashCuspForm f` lies in
-`cuspFormsOldExtended N k`.
-
-This is the **direct consumer** packaging the span-induction plumbing for
-Primary's extended oldspace API: any future worker discharging the
-per-generator obligation on the disjunction (which decomposes into:
-
-* **level-raise generator case** `f = heq ▸ levelRaise M d k g₀`:
-  by `Newform.frickeMatrix_mul_levelRaiseMatrix` (the matrix identity
-  `W_M · α_d = W_(d*M)`) plus slash-formula computation, the Fricke slash
-  rewrites to a scalar multiple of the **trivial inclusion** of the level-`M`
-  Fricke `frickeSlashCuspForm-at-M g₀`, and that lies in
-  `cuspFormsOldExtended` via `levelInclude_cusp_mem_cuspFormsOldExtended`;
-
-* **trivial-inclusion generator case** `f = levelInclude_cusp hMN k g₀`:
-  by the same matrix identity plus slash composition, the Fricke slash rewrites
-  to a scalar multiple of a **level-raise** of the level-`M` Fricke, which is
-  an `IsOldformGenerator` and hence in `cuspFormsOld N k ⊆ cuspFormsOldExtended`)
-
-immediately closes the full preservation theorem via this consumer.
-
-Forward direction is trivial (`Submodule.subset_span` from generator → span).
-Backward direction is the standard `Submodule.span_induction` with the
-disjunction generator case + zero/add/smul closure via `LinearMap` linearity
-of `Newform.frickeSlashCuspForm` and `Submodule` closure properties. -/
+/-- `Newform.frickeSlashCuspForm` preserves `cuspFormsOldExtended N k` iff it
+maps every generator of the family
+`IsOldformGenerator f ∨ IsLevelInclusionOldformGenerator f` into
+`cuspFormsOldExtended N k`. -/
 theorem Newform.frickeSlashCuspForm_preserves_cuspFormsOldExtended_iff_on_generators
     {N : ℕ} [NeZero N] {k : ℤ} :
     (∀ (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k),
@@ -284,15 +184,6 @@ theorem Newform.frickeSlashCuspForm_preserves_cuspFormsOldExtended_iff_on_genera
       rw [map_smul]
       exact Submodule.smul_mem _ c ihx
 
-/-- **T173 — function-level Fricke-slash / level-raise identity for the
-trivial-inclusion case.**
-
-The Atkin-Lehner / Fricke slash of a trivially-included level-`M` cusp form
-equals a scalar multiple of a level-raise: with the matrix identity
-`W_(d*M) = W_M · α_d` (`Newform.frickeMatrix_mul_levelRaiseMatrix`) and
-`SlashAction.slash_mul`, the slash by `W_(d*M)` factors through the slash by
-`W_M` followed by the level-raise slash by `α_d`, whose scalar prefactor
-`(d:ℂ)^(1-k)` cancels the `(d:ℂ)^(k-1)` on the right. -/
 private lemma frickeSlashCuspForm_levelInclude_cusp_eq_smul_levelRaise
     {M : ℕ} [NeZero M] {d : ℕ} [NeZero d] (hMN : M ∣ d * M) {k : ℤ}
     (g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) :
@@ -337,33 +228,13 @@ private lemma frickeSlashCuspForm_levelInclude_cusp_eq_smul_levelRaise
           (HeckeRing.GL2.levelRaiseMatrix d : GL (Fin 2) ℝ)) τ) from by ring]
   rw [h_zpow_cancel, one_mul]
 
-/-- **T173 — Fricke slash of a trivial-inclusion oldform generator lands in
-`cuspFormsOldExtended` (Case B per-generator residual).**
-
-For any proper divisor `M < N` (with `M ∣ N`), the Atkin-Lehner / Fricke
-involution applied to a trivially-included level-`M` cusp form lands in the
-extended oldspace `cuspFormsOldExtended N k` at level `N`.
-
-**Mathematical content.** With `d := N / M > 1`, the matrix identity
-`Newform.frickeMatrix_mul_levelRaiseMatrix` gives `W_N = W_M · α_d`, so
-slashing `g` at level `M` by `W_N` factors as `g ∣[k] W_N = (g ∣[k] W_M) ∣[k] α_d`.
-The outer slash by `α_d` is exactly `d^{k-1} · levelRaiseFun d k ·`, so the
-overall identity is
-
-```
-frickeSlashCuspForm (levelInclude_cusp hMN k g)
-  = (d : ℂ)^(k - 1) • (heq ▸ levelRaise M d k (frickeSlashCuspForm-at-M g))
-```
-
-where the right-hand side is a scalar multiple of an `IsOldformGenerator`
-(level-raise from `M` with `d > 1`), hence in `cuspFormsOld N k ⊆
-cuspFormsOldExtended N k`. -/
+/-- For a proper divisor `M < N`, the Fricke slash of a trivially-included
+level-`M` cusp form lands in the extended oldspace `cuspFormsOldExtended N k`. -/
 theorem Newform.frickeSlashCuspForm_levelInclude_cusp_mem_cuspFormsOldExtended
     {N : ℕ} [NeZero N] {M : ℕ} [NeZero M] (hMN : M ∣ N) (hMltN : M < N) {k : ℤ}
     (g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) :
     Newform.frickeSlashCuspForm (levelInclude_cusp hMN k g) ∈
       cuspFormsOldExtended N k := by
-  -- Clone hMN, then destructure the clone to get a free `d` (not let-bound).
   have hMN_copy : M ∣ N := hMN
   obtain ⟨d, hd⟩ := hMN_copy
   have hd_pos : 0 < d := by
@@ -379,24 +250,13 @@ theorem Newform.frickeSlashCuspForm_levelInclude_cusp_mem_cuspFormsOldExtended
     rw [hd_eq, Nat.mul_one] at hd
     exact hMltN.ne hd.symm
   haveI : NeZero (d * M) := ⟨Nat.mul_ne_zero (NeZero.ne d) (NeZero.ne M)⟩
-  -- Replace N with d * M via subst (d is a free var now, so this should work).
   have heq_N : N = d * M := by rw [mul_comm]; exact hd
   subst heq_N
-  -- The Fricke slash is a scalar multiple of a level-raise oldform generator.
   rw [frickeSlashCuspForm_levelInclude_cusp_eq_smul_levelRaise hMN g]
   refine Submodule.smul_mem _ _ (cuspFormsOld_le_cuspFormsOldExtended
     (Submodule.subset_span ?_))
   exact ⟨M, d, inferInstance, inferInstance, hd_lt, rfl, _, rfl⟩
 
-/-- **T173 — UpperHalfPlane action identity `α_d • (W_(d*M) • τ) = W_M • τ`.**
-
-The matrix identity `W_M · α_d = W_(d*M)` (via `Newform.frickeMatrix_mul_levelRaiseMatrix`)
-combined with the GL₂-action on `ℍ` gives the pointwise equality
-`α_d • (W_(d*M) • τ) = W_M • τ`. Both sides equal `-1/(M · τ)` as complex numbers
-(since `(W_(d*M) • τ).val = -1/(d*M·τ)` and `α_d` scales by `d`, so
-`d · (-1/(d*M·τ)) = -1/(M·τ)` matches `(W_M • τ).val`).
-
-This is the key equality used in the level-raise generator case of T173. -/
 private lemma alpha_d_smul_frickeMatrix_dM_smul_eq_frickeMatrix_M_smul
     {M : ℕ} [NeZero M] {d : ℕ} [NeZero d] (τ : UpperHalfPlane) :
     haveI : NeZero (d * M) := ⟨Nat.mul_ne_zero (NeZero.ne d) (NeZero.ne M)⟩
@@ -412,12 +272,6 @@ private lemma alpha_d_smul_frickeMatrix_dM_smul_eq_frickeMatrix_M_smul
   push_cast
   field_simp
 
-/-- **T173 — scalar weight/denominator identity for the level-raise Fricke slash.**
-
-The complex-scalar identity obtained after expanding both Fricke slashes:
-splitting the `(d·M·τ)` automorphy factor into its `d`, `M`, `τ` pieces via
-`mul_zpow`, the prefactor `(d:ℂ)^(k-1)·(d:ℂ)^(-k)` collapses to `(d:ℂ)⁻¹`.
-Here `X` stands for the (opaque) value `⇑g₀ (W_M • τ)`. -/
 private lemma levelRaise_frickeSlash_scalar_eq
     {d M : ℕ} {k : ℤ} (hd : (d : ℂ) ≠ 0) (X τ : ℂ) :
     X * ((↑(d * M) : ℝ) : ℂ) ^ (k - 1) * (((d * M : ℕ) : ℂ) * τ) ^ (-k) =
@@ -435,15 +289,6 @@ private lemma levelRaise_frickeSlash_scalar_eq
         (X * (M : ℂ) ^ (k - 1) * ((M : ℂ) ^ (-k) * τ ^ (-k))) from by ring]
   rw [h_d_combine]
 
-/-- **T173 — function-level Fricke-slash / trivial-inclusion identity for the
-level-raise case.**
-
-The Atkin-Lehner / Fricke slash of a level-raised cusp form equals a scalar
-multiple of a trivial inclusion: the slash formula `Newform.frickeMatrix_slash_apply`,
-the level-raise expansion `levelRaiseFun_apply`, and the action identity
-`α_d • (W_(d*M) • τ) = W_M • τ`
-(`alpha_d_smul_frickeMatrix_dM_smul_eq_frickeMatrix_M_smul`) reduce the slash to
-`⇑g₀ ∣[k] W_M` scaled by `(d:ℂ)^(k-1)·(d:ℂ)^(-k) = (d:ℂ)⁻¹`. -/
 private lemma frickeSlashCuspForm_levelRaise_eq_smul_levelInclude_cusp
     {M : ℕ} [NeZero M] {d : ℕ} [NeZero d] (hMN : M ∣ d * M) {k : ℤ}
     (g₀ : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) :
@@ -458,8 +303,6 @@ private lemma frickeSlashCuspForm_levelRaise_eq_smul_levelInclude_cusp
   have hd_ne : (d : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (NeZero.ne d)
   have hM_ne : (M : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (NeZero.ne M)
   have hτ_ne : (τ : ℂ) ≠ 0 := UpperHalfPlane.ne_zero τ
-  -- LHS: ⇑(frickeSlashCuspForm (levelRaise M d k g₀)) τ
-  --    = (⇑(levelRaise M d k g₀) ∣[k] W_(d*M)) τ
   show (⇑(Newform.frickeSlashCuspForm
         (levelRaise M d k g₀)) : UpperHalfPlane → ℂ) τ =
       (⇑((d : ℂ)⁻¹ • h_inclusion) : UpperHalfPlane → ℂ) τ
@@ -473,7 +316,6 @@ private lemma frickeSlashCuspForm_levelRaise_eq_smul_levelInclude_cusp
       levelRaiseFun d k (⇑g₀)
         ((Newform.frickeMatrix (d * M) : GL (Fin 2) ℝ) • τ) from rfl]
   rw [levelRaiseFun_apply]
-  -- UpperHalfPlane action equality: α_d • (W_(d*M) • τ) = W_M • τ.
   rw [alpha_d_smul_frickeMatrix_dM_smul_eq_frickeMatrix_M_smul]
   show ⇑g₀ ((Newform.frickeMatrix M : GL (Fin 2) ℝ) • τ) *
         ((↑(d * M) : ℝ) : ℂ) ^ (k - 1) * (((d * M : ℕ) : ℂ) * (τ : ℂ)) ^ (-k) =
@@ -486,65 +328,29 @@ private lemma frickeSlashCuspForm_levelRaise_eq_smul_levelInclude_cusp
         (⇑g₀ : UpperHalfPlane → ℂ) ∣[k]
           (Newform.frickeMatrix M : GL (Fin 2) ℝ) from rfl]
   rw [Newform.frickeMatrix_slash_apply]
-  -- Remaining equality is the pure scalar weight/denominator identity.
   exact levelRaise_frickeSlash_scalar_eq hd_ne
     (⇑g₀ ((Newform.frickeMatrix M : GL (Fin 2) ℝ) • τ)) (τ : ℂ)
 
-/-- **T173 — Fricke slash of a level-raise oldform generator lands in
-`cuspFormsOldExtended` (Case A per-generator residual).**
-
-For any proper divisor `M` of `N` with `d := N/M > 1`, the Atkin-Lehner / Fricke
-involution applied to a level-raised cusp form `levelRaise M d k g₀` lands in the
-extended oldspace `cuspFormsOldExtended N k`.
-
-**Mathematical content.** With `N = d * M`, the matrix identity
-`W_M · α_d = W_N` (`Newform.frickeMatrix_mul_levelRaiseMatrix`) plus the
-UpperHalfPlane action equality `α_d • (W_N • τ) = W_M • τ`
-(`alpha_d_smul_frickeMatrix_dM_smul_eq_frickeMatrix_M_smul`) yields the
-function-level identity
-
-```
-frickeSlashCuspForm (heq ▸ levelRaise M d k g₀)
-  = (d : ℂ)⁻¹ • levelInclude_cusp hMN k (frickeSlashCuspForm-at-M g₀)
-```
-
-The right-hand side is a scalar multiple of the trivial inclusion of the level-`M`
-Fricke, hence in `cuspFormsOldExtended N k` via
-`levelInclude_cusp_mem_cuspFormsOldExtended`. -/
+/-- For a proper divisor `M` of `N` with `d := N/M > 1`, the Fricke slash of a
+level-raised cusp form `levelRaise M d k g₀` lands in the extended oldspace
+`cuspFormsOldExtended N k`. -/
 theorem Newform.frickeSlashCuspForm_levelRaise_mem_cuspFormsOldExtended
     {N : ℕ} [NeZero N] {M : ℕ} [NeZero M]
     {d : ℕ} [NeZero d] (hd_lt : 1 < d) (heq : d * M = N) {k : ℤ}
     (g₀ : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) :
     Newform.frickeSlashCuspForm (heq ▸ levelRaise M d k g₀) ∈
       cuspFormsOldExtended N k := by
-  -- Replace N with d * M everywhere via subst.
   subst heq
-  -- M ∣ d * M and M < d * M.
   have hMN : M ∣ d * M := ⟨d, (mul_comm d M)⟩
   have hMltN : M < d * M := by
     have hM_pos : 0 < M := Nat.pos_of_neZero M
     nlinarith [hd_lt, hM_pos]
-  -- The Fricke slash is a scalar multiple of a trivial-inclusion oldform.
   rw [frickeSlashCuspForm_levelRaise_eq_smul_levelInclude_cusp hMN g₀]
   exact Submodule.smul_mem _ _
     (levelInclude_cusp_mem_cuspFormsOldExtended hMN hMltN _)
 
-/-- **T173 — Unconditional Fricke slash preservation for `cuspFormsOldExtended`.**
-
-`Newform.frickeSlashCuspForm` preserves `cuspFormsOldExtended N k`. This is the
-T173 main theorem: the Atkin-Lehner / Fricke involution maps the extended
-oldspace `cuspFormsOldExtended N k` (= span of level-raise generators ∪
-trivial-inclusion generators per T171) to itself.
-
-Proof: combine the two per-generator residual theorems
-`Newform.frickeSlashCuspForm_levelRaise_mem_cuspFormsOldExtended` (Case A:
-level-raise generator → trivial-inclusion scaled witness) and
-`Newform.frickeSlashCuspForm_levelInclude_cusp_mem_cuspFormsOldExtended`
-(Case B: trivial-inclusion generator → level-raise scaled witness) via the
-T172 reduction `frickeSlashCuspForm_preserves_cuspFormsOldExtended_iff_on_generators`.
-
-The disjunction `IsOldformGenerator f ∨ IsLevelInclusionOldformGenerator f`
-splits into the two cases, each handled by its respective per-generator theorem. -/
+/-- `Newform.frickeSlashCuspForm` preserves `cuspFormsOldExtended N k`: the
+Atkin-Lehner / Fricke involution maps the extended oldspace to itself. -/
 theorem Newform.frickeSlashCuspForm_preserves_cuspFormsOldExtended
     {N : ℕ} [NeZero N] {k : ℤ} (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (hg : g ∈ cuspFormsOldExtended N k) :
@@ -565,46 +371,29 @@ theorem Newform.frickeSlashCuspForm_preserves_cuspFormsOldExtended
         exact Newform.frickeSlashCuspForm_levelInclude_cusp_mem_cuspFormsOldExtended
           hMN hMltN g₀)) g hg
 
-/-- **T173 — Named Prop form: Fricke preservation on `cuspFormsOldExtended`.**
-
-A named-Prop wrapper around `Newform.frickeSlashCuspForm_preserves_cuspFormsOldExtended`
-matching the convention of `Newform.HasFrickeSlashCuspFormPreservesCuspFormsOld`. -/
+/-- Named-Prop form of `Fricke` preservation on `cuspFormsOldExtended`. -/
 def Newform.HasFrickeSlashCuspFormPreservesCuspFormsOldExtended
     (N : ℕ) [NeZero N] (k : ℤ) : Prop :=
   ∀ (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k),
     g ∈ cuspFormsOldExtended N k →
     Newform.frickeSlashCuspForm g ∈ cuspFormsOldExtended N k
 
-/-- **T173 — `HasFrickeSlashCuspFormPreservesCuspFormsOldExtended` holds unconditionally.** -/
+/-- `HasFrickeSlashCuspFormPreservesCuspFormsOldExtended` holds unconditionally. -/
 theorem Newform.hasFrickeSlashCuspFormPreservesCuspFormsOldExtended
     (N : ℕ) [NeZero N] (k : ℤ) :
     Newform.HasFrickeSlashCuspFormPreservesCuspFormsOldExtended N k :=
   fun g hg => Newform.frickeSlashCuspForm_preserves_cuspFormsOldExtended g hg
 
-/-- **`heckeT_n_cusp k p` preserves `cuspFormsOld N k` at bad primes (T148 helper).**
-
-For the bad-prime case `p ∣ N`, the Hecke operator `heckeT_n_cusp k p` preserves
-`cuspFormsOld N k`. Classical proof: reduce to oldform generators
-`levelRaise M d k h` (with `d * M = N, d > 1`) and use the level-raise / Hecke
-commutativity at the appropriate level.
-
-This claim is **not yet proved** in the present pass. Stated as a named
-hypothesis for downstream discharge. The corresponding coprime-prime case is
-already proved as `heckeT_n_preserves_cuspFormsOld`; the bad-prime version
-requires a generalisation of `heckeT_n_levelRaise_comm` to the
-`¬ Nat.Coprime p N` case. -/
+/-- For the bad-prime case `p ∣ N`, the Hecke operator `heckeT_n_cusp k p`
+preserves `cuspFormsOld N k`. Stated as a named Prop for downstream discharge. -/
 def Newform.HasHeckeT_n_cusp_at_divN_PreservesCuspFormsOld
     (N : ℕ) [NeZero N] (k : ℤ) (p : ℕ) [NeZero p]
     (_hp : p.Prime) (_hpN : ¬ Nat.Coprime p N) : Prop :=
   ∀ (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k),
     g ∈ cuspFormsOld N k → heckeT_n_cusp k p g ∈ cuspFormsOld N k
 
-/-- **`frickeBadAdjointCandidate k p` preserves `cuspFormsOld N k` (T148 helper),
-assuming Fricke and bad-prime Hecke each preserve `cuspFormsOld N k`.**
-
-Composing the two preservation properties (Fricke, then T_p, then Fricke)
-through the definition `frickeBadAdjointCandidate := frickeSlashCuspForm ∘ₗ
-heckeT_n_cusp_lin k p ∘ₗ frickeSlashCuspForm`. -/
+/-- `frickeBadAdjointCandidate k p` preserves `cuspFormsOld N k`, assuming Fricke
+and bad-prime Hecke each preserve `cuspFormsOld N k`. -/
 lemma Newform.frickeBadAdjointCandidate_preserves_cuspFormsOld
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
     {hp : p.Prime} {hpN : ¬ Nat.Coprime p N}
@@ -617,27 +406,17 @@ lemma Newform.frickeBadAdjointCandidate_preserves_cuspFormsOld
   rw [Newform.frickeBadAdjointCandidate_apply]
   exact h_fricke_old _ (h_T_p_old _ (h_fricke_old _ hg))
 
-/-! ### Scalar-corrected bad-prime Fricke petN adjoint (T149 audit) -/
-
-/-- **Audit (T149): the T148 candidate `frickeBadAdjointCandidate` is
-`W_N · T_p · W_N`, but `W_N⁻¹ = (frickeSquareScalar N k)⁻¹ • W_N` (T144
-involution-up-to-scalar).**
-
-The classical Atkin-Lehner adjoint is
-`T_p^σ := W_N⁻¹ T_p W_N = (frickeSquareScalar N k)⁻¹ • frickeBadAdjointCandidate`.
-This `Newform.frickeBadAdjointCandidateNormalized` packages the scalar-
-corrected candidate; it is the operator whose petN identity matches
-`petN (T_p f) g = petN f (...)` on the nose, with no extra scalar.
-
-The original `Newform.frickeBadAdjointCandidate` (T148) remains usable but
-satisfies the petN identity only up to `frickeSquareScalar N k`. -/
+/-- Scalar-corrected bad-prime Fricke adjoint candidate
+`(frickeSquareScalar N k)⁻¹ • frickeBadAdjointCandidate k p`, the operator whose
+`petN` adjoint identity holds with no extra scalar (the classical
+`W_N⁻¹ T_p W_N`). -/
 noncomputable def Newform.frickeBadAdjointCandidateNormalized
     {N : ℕ} [NeZero N] (k : ℤ) (p : ℕ) [NeZero p] :
     CuspForm ((Gamma1 N).map (mapGL ℝ)) k →ₗ[ℂ]
       CuspForm ((Gamma1 N).map (mapGL ℝ)) k :=
   (Newform.frickeSquareScalar N k)⁻¹ • Newform.frickeBadAdjointCandidate k p
 
-/-- **Underlying-function form of the normalized candidate (T149 helper).** -/
+/-- Underlying-function form of the normalized candidate. -/
 @[simp]
 lemma Newform.frickeBadAdjointCandidateNormalized_apply
     {N : ℕ} [NeZero N] (k : ℤ) (p : ℕ) [NeZero p]
@@ -649,20 +428,17 @@ lemma Newform.frickeBadAdjointCandidateNormalized_apply
         Newform.frickeBadAdjointCandidate k p) g = _
   rfl
 
-/-- **Named petN adjoint Prop for the normalized bad-prime Fricke candidate
-(T149 main reduction)**.
-
-The petN adjoint identity in its scalar-correct form, packaged as a Prop. The
-heart of the bad-prime Atkin-Lehner adjoint theorem. -/
+/-- The `petN` adjoint identity for the normalized bad-prime Fricke candidate,
+packaged as a Prop. The heart of the bad-prime Atkin-Lehner adjoint theorem. -/
 def Newform.HasBadPrimeFrickePetNAdjoint
     (N : ℕ) [NeZero N] (k : ℤ) (p : ℕ) [NeZero p] : Prop :=
   ∀ (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k),
     petN (heckeT_n_cusp k p f) g =
       petN f (Newform.frickeBadAdjointCandidateNormalized k p g)
 
-/-- **Equivalent unnormalized form (T149 helper)**: the petN adjoint Prop for
-the original T148 candidate `frickeBadAdjointCandidate` is equivalent to a
-`frickeSquareScalar N k`-scaled identity. -/
+/-- The `petN` adjoint Prop for the normalized candidate is equivalent to a
+`frickeSquareScalar N k`-scaled identity for the unnormalized
+`frickeBadAdjointCandidate`. -/
 lemma Newform.hasBadPrimeFrickePetNAdjoint_iff
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
     (h_c_ne : Newform.frickeSquareScalar N k ≠ 0) :
@@ -683,16 +459,9 @@ lemma Newform.hasBadPrimeFrickePetNAdjoint_iff
       rw [h f g]]
     field_simp
 
-/-- **Bad-prime newspace preservation, conditional on the scalar-corrected
-petN-adjoint identity and oldspace preservation (T149 main).**
-
-For p prime with p ∣ N: the bad-prime Hecke operator `heckeT_n_cusp k p`
-preserves `cuspFormsNew N k`, conditional on the named Prop
-`Newform.HasBadPrimeFrickePetNAdjoint N k p` and oldspace preservation of the
-*normalized* candidate `frickeBadAdjointCandidateNormalized k p`. The
-normalized candidate's oldspace preservation reduces to oldspace preservation
-of the unnormalized candidate (a scalar multiple is the same submodule
-membership). -/
+/-- For `p` prime with `p ∣ N`, the bad-prime Hecke operator `heckeT_n_cusp k p`
+preserves `cuspFormsNew N k`, given the normalized petN-adjoint Prop `h_adj` and
+oldspace preservation `h_old` of the normalized candidate. -/
 theorem Newform.heckeT_n_cusp_preserves_cuspFormsNew_at_divN_of_normalized_fricke_adjoint
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p] (hp : p.Prime)
     (hpN : ¬ Nat.Coprime p N)
@@ -705,8 +474,8 @@ theorem Newform.heckeT_n_cusp_preserves_cuspFormsNew_at_divN_of_normalized_frick
   heckeT_n_cusp_preserves_cuspFormsNew_at_divN_of_petersson_adjoint hp hpN
     (Newform.frickeBadAdjointCandidateNormalized k p) h_adj h_old f hf
 
-/-- **`frickeBadAdjointCandidateNormalized` preserves cuspFormsOld follows from
-unnormalized preservation (T149 helper).** -/
+/-- `frickeBadAdjointCandidateNormalized` preserves `cuspFormsOld`, from the
+unnormalized preservation. -/
 lemma Newform.frickeBadAdjointCandidateNormalized_preserves_cuspFormsOld
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
     (h_unnormalized :
@@ -718,41 +487,10 @@ lemma Newform.frickeBadAdjointCandidateNormalized_preserves_cuspFormsOld
   rw [Newform.frickeBadAdjointCandidateNormalized_apply]
   exact (cuspFormsOld N k).smul_mem _ (h_unnormalized g hg)
 
-/-- **Bad-prime newspace preservation from the three classical inputs (T169
-non-overlapping consumer wrapper).**
-
-For `p` prime with `p ∣ N`, the bad-prime Hecke operator `heckeT_n_cusp k p`
-preserves `cuspFormsNew N k`, given the **three named classical inputs** that
-each correspond to a separate worker lane in the post-T148 chain:
-
-* `h_adj : Newform.HasBadPrimeFrickePetNAdjoint N k p` — the Petersson-level
-  bad-prime Atkin-Lehner adjoint identity (the petN-adjoint lane endpoint
-  reached from T155 ShiftedFD via T156 → T154-bridge → T153 (→ T160 / T161 /
-  T163 / T166) chain).
-* `h_fricke_old : Newform.HasFrickeSlashCuspFormPreservesCuspFormsOld N k` —
-  the Atkin-Lehner involution preserves the old subspace (oldspace lane H1).
-* `h_T_p_old : Newform.HasHeckeT_n_cusp_at_divN_PreservesCuspFormsOld N k p
-  hp hpN` — the bad-prime Hecke operator preserves the old subspace
-  (oldspace lane H2).
-
-Composes mechanically:
-
-1. `Newform.frickeBadAdjointCandidate_preserves_cuspFormsOld`
-   (T148 helper, lines 11209-11219) — combines `h_fricke_old + h_T_p_old`
-   into the unnormalized oldspace preservation
-   `Newform.frickeBadAdjointCandidate k p g ∈ cuspFormsOld N k`.
-2. `Newform.frickeBadAdjointCandidateNormalized_preserves_cuspFormsOld`
-   (T149 helper, immediately above) — lifts unnormalized to normalized
-   oldspace preservation.
-3. `Newform.heckeT_n_cusp_preserves_cuspFormsNew_at_divN_of_normalized_fricke_adjoint`
-   (T149 main, line 11297) — combines the petN adjoint `h_adj` with the
-   normalized oldspace preservation to conclude bad-prime newspace
-   preservation.
-
-This is the **single named consumer endpoint** of the bad-prime newspace
-chain: any future worker discharging the three classical inputs (one
-petN-adjoint, two oldspace) immediately closes bad-prime newspace
-preservation via this theorem with no further plumbing.
+/-- For `p` prime with `p ∣ N`, the bad-prime Hecke operator `heckeT_n_cusp k p`
+preserves `cuspFormsNew N k`, given the three classical inputs: the petN-adjoint
+identity `h_adj` and the two oldspace-preservation Props `h_fricke_old`,
+`h_T_p_old`.
 
 References: Diamond–Shurman §5.5.1 (Atkin-Lehner involutions),
 §5.6 Prop 5.6.2 (T_p preserves new/old subspaces); Miyake §4.6.5–4.6.6. -/
@@ -774,28 +512,11 @@ theorem Newform.heckeT_n_cusp_preserves_cuspFormsNew_at_divN_of_classicalInputs
         g hg)
     f hf
 
-/-! ### T174: Extended-oldspace integration of the bad-prime newspace chain
-
-After T171 found that the classical bad-prime preservation is only true at
-the *extended* oldspace level (which includes trivial-inclusion generators),
-and T173 proved Fricke preservation of `cuspFormsOldExtended` unconditionally,
-this section integrates the two live workers (T170: petN-adjoint identity;
-T171: Hecke preservation of `cuspFormsOldExtended`) plus the done T173 into
-the final bad-prime newspace preservation consumer.
-
-The substantive theorem at the bad-prime case is *only* mathematically true
-for `cuspFormsOldExtended` / `cuspFormsNewExtended`. The classical
-`cuspFormsNew` (orthogonal of the smaller `cuspFormsOld`) is NOT preserved by
-`T_p` at bad primes (e.g., at `N = p²`). -/
-
-/-- **Extended new subspace** — petN-orthogonal of `cuspFormsOldExtended N k`.
-
-Defined as the set of cusp forms orthogonal (w.r.t. `petN`) to every form
-in the extended oldspace `cuspFormsOldExtended N k` (= span of all level-raise
-generators ∪ trivial-inclusion generators per T171).
-
-Since `cuspFormsOld ⊆ cuspFormsOldExtended`, the extended newspace is a
-*sub*module of the classical newspace: `cuspFormsNewExtended ⊆ cuspFormsNew`. -/
+/-- The **extended new subspace**: cusp forms `petN`-orthogonal to every form in
+the extended oldspace `cuspFormsOldExtended N k`. It is a submodule of the
+classical newspace (`cuspFormsNewExtended ⊆ cuspFormsNew`), and is the correct
+object at bad primes, where classical `cuspFormsNew` is not preserved by `T_p`
+(e.g. at `N = p²`). -/
 def cuspFormsNewExtended (N : ℕ) [NeZero N] (k : ℤ) :
     Submodule ℂ (CuspForm ((Gamma1 N).map (mapGL ℝ)) k) where
   carrier := {f | ∀ g, g ∈ cuspFormsOldExtended N k → petN f g = 0}
@@ -807,16 +528,14 @@ def cuspFormsNewExtended (N : ℕ) [NeZero N] (k : ℤ) :
     show petN (c • f) g = 0
     rw [petN_conj_smul_left, hf g hg, mul_zero]
 
-/-- **`cuspFormsNewExtended ⊆ cuspFormsNew`**: every form orthogonal to the
-extended oldspace is in particular orthogonal to the (smaller) classical
-oldspace `cuspFormsOld N k`. -/
+/-- `cuspFormsNewExtended ⊆ cuspFormsNew`. -/
 lemma cuspFormsNewExtended_le_cuspFormsNew {N : ℕ} [NeZero N] {k : ℤ} :
     cuspFormsNewExtended N k ≤ cuspFormsNew N k :=
   fun _ hf g hg => hf g (cuspFormsOld_le_cuspFormsOldExtended hg)
 
-/-- **T140-style strict reducer at the extended level**: for `p ∣ N`, given an
-explicit Petersson-adjoint `T_adj` for `T_p` that preserves `cuspFormsOldExtended`,
-the bad-prime Hecke operator preserves `cuspFormsNewExtended`. -/
+/-- For `p ∣ N`, given a Petersson-adjoint `T_adj` for `T_p` that preserves
+`cuspFormsOldExtended`, the bad-prime Hecke operator preserves
+`cuspFormsNewExtended`. -/
 theorem heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_petersson_adjoint
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p] (hp : p.Prime)
     (hpN : ¬ Nat.Coprime p N)
@@ -835,25 +554,17 @@ theorem heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_petersson_adjoin
   rw [h_adj f g]
   exact hf _ (h_old g hg)
 
-/-- **Bad-prime Hecke preservation of `cuspFormsOldExtended` Prop (T171 territory).**
-
-Companion of `Newform.HasHeckeT_n_cusp_at_divN_PreservesCuspFormsOld` adapted
-to the extended oldspace. T171 (Primary's lane) is responsible for proving
-this Prop. -/
+/-- Bad-prime Hecke preservation of `cuspFormsOldExtended`, as a named Prop;
+the extended-oldspace companion of
+`Newform.HasHeckeT_n_cusp_at_divN_PreservesCuspFormsOld`. -/
 def Newform.HasHeckeT_n_cusp_at_divN_PreservesCuspFormsOldExtended
     (N : ℕ) [NeZero N] (k : ℤ) (p : ℕ) [NeZero p]
     (_hp : p.Prime) (_hpN : ¬ Nat.Coprime p N) : Prop :=
   ∀ (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k),
     g ∈ cuspFormsOldExtended N k → heckeT_n_cusp k p g ∈ cuspFormsOldExtended N k
 
-/-- **T171 — trivial-inclusion preservation gap Prop.**
-
-For the level-raise summand `IsOldformGenerator`, T171's
-`HasHeckeT_p_divN_LRpd_in_cuspFormsOldExtended_proof` (`p ∣ d` case) and
-T168's `heckeT_p_all_levelRaise_comm_divN` (`Coprime p d` case) cover the
-cases. For the trivial-inclusion summand `IsLevelInclusionOldformGenerator`,
-the remaining gap is preservation of `levelInclude_cusp` images under
-`heckeT_n_cusp k p`. This Prop names that gap. -/
+/-- Named Prop for the gap that `heckeT_n_cusp k p` preserves `levelInclude_cusp`
+images (the trivial-inclusion summand of `cuspFormsOldExtended`). -/
 def Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended
     (N : ℕ) [NeZero N] (k : ℤ) (p : ℕ) [NeZero p]
     (_hp : Nat.Prime p) (_hpN : ¬ Nat.Coprime p N) : Prop :=
@@ -861,13 +572,8 @@ def Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended
     (g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k),
     heckeT_n_cusp k p (levelInclude_cusp hMN k g) ∈ cuspFormsOldExtended N k
 
-/-- **T171 — bad-prime Hecke preservation of `cuspFormsOldExtended` (proof).**
-
-Composes the level-raise summand cases (`HasHeckeT_p_divN_LRpd_in_cuspFormsOldExtended_proof`
-for `p ∣ d`, `heckeT_p_all_levelRaise_comm_divN` for `Coprime p d`) with
-the trivial-inclusion preservation gap Prop. The result instantiates the
-public-API Prop `Newform.HasHeckeT_n_cusp_at_divN_PreservesCuspFormsOldExtended`
-for downstream T174/T175 consumers. -/
+/-- Bad-prime Hecke preservation of `cuspFormsOldExtended`, given the
+trivial-inclusion preservation gap Prop `h_trivial`. -/
 theorem Newform.HasHeckeT_n_cusp_at_divN_PreservesCuspFormsOldExtended_proof
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
     (hp : Nat.Prime p) (hpN : ¬ Nat.Coprime p N)
@@ -879,45 +585,31 @@ theorem Newform.HasHeckeT_n_cusp_at_divN_PreservesCuspFormsOldExtended_proof
   refine Submodule.span_induction
     (p := fun x _ => heckeT_n_cusp k p x ∈ cuspFormsOldExtended N k)
     ?_ ?_ ?_ ?_ hf
-  · -- Generator case
-    rintro f₀ (⟨M, d, _, _, hd, heq, g, rfl⟩ | ⟨M, _, hMN, hMltN, g, rfl⟩)
-    · -- IsOldformGenerator
-      by_cases hpd : p ∣ d
-      · -- p ∣ d
-        exact Newform.HasHeckeT_p_divN_LRpd_in_cuspFormsOldExtended_proof hp hpN
+  · rintro f₀ (⟨M, d, _, _, hd, heq, g, rfl⟩ | ⟨M, _, hMN, hMltN, g, rfl⟩)
+    · by_cases hpd : p ∣ d
+      · exact Newform.HasHeckeT_p_divN_LRpd_in_cuspFormsOldExtended_proof hp hpN
           M d heq hd hpd g
-      · -- Coprime p d (since p prime)
-        have hpd_cop : Nat.Coprime p d := (hp.coprime_iff_not_dvd).mpr hpd
+      · have hpd_cop : Nat.Coprime p d := (hp.coprime_iff_not_dvd).mpr hpd
         rw [heckeT_p_all_levelRaise_comm_divN p hp hpN M d heq hpd_cop g]
         apply cuspFormsOld_le_cuspFormsOldExtended
         refine Submodule.subset_span ?_
         exact ⟨M, d, inferInstance, inferInstance, hd, heq, _, rfl⟩
-    · -- IsLevelInclusionOldformGenerator
-      exact h_trivial M hMN hMltN g
-  · -- Zero
-    show heckeT_n_cusp k p (0 : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) ∈
+    · exact h_trivial M hMN hMltN g
+  · show heckeT_n_cusp k p (0 : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) ∈
       cuspFormsOldExtended N k
     rw [heckeT_n_cusp_zero]
     exact (cuspFormsOldExtended N k).zero_mem
-  · -- Add
-    intros f₁ f₂ _ _ ih₁ ih₂
+  · intros f₁ f₂ _ _ ih₁ ih₂
     show heckeT_n_cusp k p (f₁ + f₂) ∈ cuspFormsOldExtended N k
     rw [heckeT_n_cusp_add]
     exact (cuspFormsOldExtended N k).add_mem ih₁ ih₂
-  · -- Smul
-    intros c f₁ _ ih
+  · intros c f₁ _ ih
     show heckeT_n_cusp k p (c • f₁) ∈ cuspFormsOldExtended N k
     rw [heckeT_n_cusp_smul]
     exact (cuspFormsOldExtended N k).smul_mem c ih
 
-/-- **T176 — sub-Prop for the `Coprime p M ∧ p*M = N` corner case.**
-
-In the proof of `HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended`,
-the case-split goes:
-- `p ∣ M`: bad-prime case at level `M`, direct via `heckeT_p_all_not_coprime_apply`.
-- `Coprime p M ∧ p*M < N`: lift through level `p*M` (also bad-prime).
-- `Coprime p M ∧ p*M = N`: requires the `T_p^M = T_p_ut + ⟨p⟩∣α_p` decomposition
-  and is genuinely separate. This Prop names that corner case. -/
+/-- Named Prop for the `Coprime p M ∧ p * M = N` corner case of trivial-inclusion
+preservation. -/
 def Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended_minimal
     (N : ℕ) [NeZero N] (k : ℤ) (p : ℕ) [NeZero p]
     (_hp : Nat.Prime p) (_hpN : ¬ Nat.Coprime p N) : Prop :=
@@ -926,10 +618,6 @@ def Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended_min
     (g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k),
     heckeT_n_cusp k p (levelInclude_cusp hMN k g) ∈ cuspFormsOldExtended N k
 
-/-- **Bad-prime `T_p` evaluation.** At a prime `p` non-coprime to the level `L`,
-the cusp-form Hecke operator `heckeT_n_cusp k p` is, pointwise, the
-upper-triangular piece `heckeT_p_ut` (the diamond/lower piece vanishes), via
-`heckeT_n_prime` and `heckeT_p_all_not_coprime_apply`. -/
 private lemma heckeT_n_cusp_prime_apply_of_not_coprime
     {L : ℕ} [NeZero L] {k : ℤ} {p : ℕ} [NeZero p] (hp : Nat.Prime p)
     (hpL : ¬ Nat.Coprime p L)
@@ -939,12 +627,8 @@ private lemma heckeT_n_cusp_prime_apply_of_not_coprime
   rw [heckeT_n_prime k hp]
   exact congrFun (heckeT_p_all_not_coprime_apply k hp hpL _) z
 
-/-- **T176 — trivial-inclusion preservation (proof, partial).**
-
-Proves the trivial-inclusion preservation Prop using:
-- `p ∣ M`: bad-prime at `M`, direct.
-- `Coprime p M ∧ p*M < N`: bad-prime at intermediate level `p*M`.
-- `Coprime p M ∧ p*M = N`: dispatched to `_minimal` sub-Prop. -/
+/-- Trivial-inclusion preservation, reduced to the `Coprime p M ∧ p * M = N`
+corner case `h_minimal`. -/
 theorem Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended_proof
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
     (hp : Nat.Prime p) (hpN : ¬ Nat.Coprime p N)
@@ -954,8 +638,7 @@ theorem Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended
     Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended N k p hp hpN := by
   intro M _ hMN hMltN g
   by_cases hpM : p ∣ M
-  · -- Case 1: p ∣ M (bad prime at level M)
-    have hpcop_M : ¬ Nat.Coprime p M := fun h => hp.coprime_iff_not_dvd.mp h hpM
+  · have hpcop_M : ¬ Nat.Coprime p M := fun h => hp.coprime_iff_not_dvd.mp h hpM
     have h_eq : heckeT_n_cusp k p (levelInclude_cusp hMN k g) =
         levelInclude_cusp hMN k (heckeT_n_cusp k p g) := by
       apply CuspForm.ext; intro z
@@ -963,14 +646,12 @@ theorem Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended
         heckeT_n_cusp_prime_apply_of_not_coprime hp hpcop_M, levelInclude_cusp_coe]
     rw [h_eq]
     exact levelInclude_cusp_mem_cuspFormsOldExtended hMN hMltN _
-  · -- Case 2: Coprime p M
-    have hpcop_M : Nat.Coprime p M := hp.coprime_iff_not_dvd.mpr hpM
+  · have hpcop_M : Nat.Coprime p M := hp.coprime_iff_not_dvd.mpr hpM
     have hp_dvd_N : p ∣ N := by
       by_contra h_ndvd; exact hpN (hp.coprime_iff_not_dvd.mpr h_ndvd)
     have hpM_dvd : p * M ∣ N := hpcop_M.mul_dvd_of_dvd_of_dvd hp_dvd_N hMN
     by_cases hpM_lt : p * M < N
-    · -- Case 2a: p*M < N. Use intermediate level p*M (bad-prime case there).
-      haveI : NeZero (p * M) := ⟨Nat.mul_ne_zero hp.ne_zero (NeZero.ne M)⟩
+    · haveI : NeZero (p * M) := ⟨Nat.mul_ne_zero hp.ne_zero (NeZero.ne M)⟩
       have hM_dvd_pM : M ∣ p * M := Dvd.intro_left p rfl
       have hpcop_pM : ¬ Nat.Coprime p (p * M) := fun h =>
         hp.coprime_iff_not_dvd.mp h ⟨M, rfl⟩
@@ -983,25 +664,11 @@ theorem Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended
         simp only [levelInclude_cusp_coe]
       rw [h_eq]
       exact levelInclude_cusp_mem_cuspFormsOldExtended hpM_dvd hpM_lt _
-    · -- Case 2b: p*M = N. Dispatch to _minimal sub-Prop.
-      push_neg at hpM_lt
+    · push_neg at hpM_lt
       have hpM_eq : p * M = N := le_antisymm
         (Nat.le_of_dvd (NeZero.pos N) hpM_dvd) hpM_lt
       exact h_minimal M hMN hMltN hpcop_M hpM_eq g
 
-/-- **T177 — slash by `T_p_lower` reduces to a level-raise scalar.**
-
-For `Coprime p M` and any cusp form `g : CuspForm Γ₁(M) k`, the slash of
-the diamond image by `T_p_lower` equals `(p:ℂ)^(k-1) • LR_p(⟨p⟩ g)` at
-every point on `ℍ`.  Bridges:
-1. Slash via `(T_p_lower : GL ℚ)` ≡ slash via `glMap T_p_lower` (definitional via
-   `monoidHomSlashAction glMap` instance).
-2. `glMap (T_p_lower p hp)` equals `levelRaiseMatrix p` as `GL (Fin 2) ℝ`
-   (both have matrix `!![p, 0; 0, 1]` over ℝ).
-3. Slash by `levelRaiseMatrix p` reduces via `slash_apply` and the
-   `σ/det/denom` helpers.
-4. `levelRaiseFun_apply` rewrites the result as `⇑D (α_p • z)`.
-5. Defeq bridge `⇑(diamondOp_cusp k a g) = ⇑(diamondOp k a g.toModularForm')`. -/
 private lemma diamondOp_slash_T_p_lower_apply
     {M : ℕ} [NeZero M] {k : ℤ} {p : ℕ} [NeZero p]
     (hp : Nat.Prime p) (hpcop : Nat.Coprime p M)
@@ -1010,7 +677,6 @@ private lemma diamondOp_slash_T_p_lower_apply
         (T_p_lower p hp.pos : GL (Fin 2) ℚ)) z =
       ((p : ℂ) ^ (k - 1)) * ⇑(levelRaise M p k
         (diamondOp_cusp k (ZMod.unitOfCoprime p hpcop) g)) z := by
-  -- Bridge T_p_lower (ℚ) → levelRaiseMatrix p (ℝ)
   have h_glMap_eq : (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) = levelRaiseMatrix p := by
     apply Units.ext
     ext i j
@@ -1025,21 +691,17 @@ private lemma diamondOp_slash_T_p_lower_apply
     · fin_cases j
       · show ((0 : ℚ) : ℝ) = 0; norm_num
       · show ((1 : ℚ) : ℝ) = (1 : ℝ); norm_num
-  -- Convert ℚ slash to ℝ slash via SlashAction definitional equality
   show (⇑(diamondOp k (ZMod.unitOfCoprime p hpcop) g.toModularForm') ∣[k]
         glMap (T_p_lower p hp.pos)) z = _
   rw [h_glMap_eq]
-  -- Apply slash formula for levelRaiseMatrix p
   rw [ModularForm.slash_apply, σ_levelRaiseMatrix, RingHom.id_apply,
       abs_levelRaiseMatrix_det_val, denom_levelRaiseMatrix, one_zpow, mul_one]
-  -- Replace LR_p ⟨p⟩ g via levelRaiseFun_apply
   have h_LR_apply : ⇑(levelRaise M p k
         (diamondOp_cusp k (ZMod.unitOfCoprime p hpcop) g)) z =
       ⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpcop) g) (levelRaiseMatrix p • z) := by
     show levelRaiseFun p k ⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpcop) g) z = _
     rw [levelRaiseFun_apply]
   rw [h_LR_apply]
-  -- Bridge ⇑(diamondOp_cusp ...) = ⇑(diamondOp ...) (defeq)
   show ⇑(diamondOp k (ZMod.unitOfCoprime p hpcop) g.toModularForm')
         (levelRaiseMatrix p • z) * ((p : ℝ) ^ (k - 1) : ℂ) =
       (p : ℂ) ^ (k - 1) *
@@ -1048,14 +710,6 @@ private lemma diamondOp_slash_T_p_lower_apply
   rw [show ((p : ℝ) ^ (k - 1) : ℂ) = (p : ℂ) ^ (k - 1) from by push_cast; rfl]
   ring
 
-/-- **T177 — bad-prime `T_p` recursion on a trivial inclusion.**
-
-For a prime `p` coprime to `M`, the bad-prime cusp Hecke operator at level `p*M`
-applied to the trivial inclusion of `g` decomposes as the inclusion of `T_p g`
-minus the level-raise of its diamond part: the upper-triangular pieces agree
-(`heckeT_n_cusp_prime_apply_of_not_coprime` at the bad level `p*M`), and the
-remaining `T_p_lower` slash at the coprime level `M` (`heckeT_p_all_coprime`)
-becomes the `(p:ℂ)^(k-1)`-scaled level-raise via `diamondOp_slash_T_p_lower_apply`. -/
 private lemma heckeT_n_cusp_levelInclude_cusp_eq_sub_smul_levelRaise_diamond
     {M : ℕ} [NeZero M] {k : ℤ} {p : ℕ} [NeZero p] (hp : Nat.Prime p)
     (hpcop_M : Nat.Coprime p M) (hMN : M ∣ p * M)
@@ -1071,9 +725,7 @@ private lemma heckeT_n_cusp_levelInclude_cusp_eq_sub_smul_levelRaise_diamond
   set LR_p_D : CuspForm ((Gamma1 (p * M)).map (mapGL ℝ)) k :=
     levelRaise M p k (diamondOp_cusp k a g) with hLR_def
   apply CuspForm.ext; intro z
-  -- LHS: bad prime at level p*M reduces T_p to its upper-triangular piece.
   rw [heckeT_n_cusp_prime_apply_of_not_coprime hp hpN, levelInclude_cusp_coe]
-  -- RHS: (f - c • h) z = f z - c * h z, then T_p g via the coprime decomposition.
   show heckeT_p_ut k p hp.pos ⇑g z =
       (heckeT_n_cusp k p g) z - (p : ℂ) ^ (k - 1) * (LR_p_D : CuspForm _ _) z
   have h_T_M_apply : (heckeT_n_cusp k p g : CuspForm _ _) z =
@@ -1086,18 +738,8 @@ private lemma heckeT_n_cusp_levelInclude_cusp_eq_sub_smul_levelRaise_diamond
   rw [h_T_M_apply, diamondOp_slash_T_p_lower_apply hp hpcop_M g z]
   ring
 
-/-- **T177 — minimal corner case proof.**
-
-Proves `Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended_minimal`
-via the function-level decomposition:
-```
-heckeT_n_cusp k p (levelInclude_cusp hMN k g) =
-  levelInclude_cusp hMN k (heckeT_n_cusp k p g) -
-    (p:ℂ)^(k-1) • levelRaise M p k (⟨p⟩ g)
-```
-where the first RHS term is in `cuspFormsOldExtended` via `levelInclude_cusp_mem`,
-and the second RHS term is in `cuspFormsOld ⊆ cuspFormsOldExtended` via
-`IsOldformGenerator` (since `p * M = N`). -/
+/-- Proof of the `Coprime p M ∧ p * M = N` minimal corner case of
+trivial-inclusion preservation. -/
 theorem Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended_minimal_proof
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
     (hp : Nat.Prime p) (hpN : ¬ Nat.Coprime p N) :
@@ -1112,11 +754,7 @@ theorem Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended
       (Submodule.subset_span ?_))
     exact ⟨M, p, inferInstance, inferInstance, hp.one_lt, rfl, _, rfl⟩
 
-/-- **T177 — Trivial-inclusion preservation, unconditional.**
-
-Combines `_proof` (T176, the case-split scaffold) with `_minimal_proof`
-(T177, the corner case) to obtain the unconditional trivial-inclusion
-preservation. -/
+/-- Trivial-inclusion preservation, unconditional. -/
 theorem Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended_unconditional
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
     (hp : Nat.Prime p) (hpN : ¬ Nat.Coprime p N) :
@@ -1125,10 +763,7 @@ theorem Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended
     (Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended_minimal_proof
       hp hpN)
 
-/-- **T177 — Bad-prime Hecke preservation of `cuspFormsOldExtended`, unconditional.**
-
-Combines T171's conditional package with T177's unconditional trivial-inclusion
-preservation, instantiating the public-API Prop unconditionally. -/
+/-- Bad-prime Hecke preservation of `cuspFormsOldExtended`, unconditional. -/
 theorem Newform.HasHeckeT_n_cusp_at_divN_PreservesCuspFormsOldExtended_unconditional
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
     (hp : Nat.Prime p) (hpN : ¬ Nat.Coprime p N) :
@@ -1137,11 +772,8 @@ theorem Newform.HasHeckeT_n_cusp_at_divN_PreservesCuspFormsOldExtended_unconditi
     (Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended_unconditional
       hp hpN)
 
-/-- **Extended companion: `frickeBadAdjointCandidate k p` preserves
-`cuspFormsOldExtended`** assuming Fricke and bad-prime Hecke each preserve it.
-
-Composition: `frickeBadAdjointCandidate := frickeSlash ∘ T_p ∘ frickeSlash`,
-each step preserving `cuspFormsOldExtended`. -/
+/-- `frickeBadAdjointCandidate k p` preserves `cuspFormsOldExtended`, assuming
+Fricke and bad-prime Hecke each preserve it. -/
 lemma Newform.frickeBadAdjointCandidate_preserves_cuspFormsOldExtended
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
     {hp : p.Prime} {hpN : ¬ Nat.Coprime p N}
@@ -1155,8 +787,8 @@ lemma Newform.frickeBadAdjointCandidate_preserves_cuspFormsOldExtended
   rw [Newform.frickeBadAdjointCandidate_apply]
   exact h_fricke_old _ (h_T_p_old _ (h_fricke_old _ hg))
 
-/-- **Extended companion: `frickeBadAdjointCandidateNormalized` preserves
-`cuspFormsOldExtended` from unnormalized preservation.** -/
+/-- `frickeBadAdjointCandidateNormalized` preserves `cuspFormsOldExtended`, from
+the unnormalized preservation. -/
 lemma Newform.frickeBadAdjointCandidateNormalized_preserves_cuspFormsOldExtended
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
     (h_unnormalized :
@@ -1170,9 +802,8 @@ lemma Newform.frickeBadAdjointCandidateNormalized_preserves_cuspFormsOldExtended
   rw [Newform.frickeBadAdjointCandidateNormalized_apply]
   exact (cuspFormsOldExtended N k).smul_mem _ (h_unnormalized g hg)
 
-/-- **T149-style extended consumer**: bad-prime newspace-extended preservation
-from the petN-adjoint identity and oldspace-extended preservation of the
-*normalized* candidate. -/
+/-- Bad-prime newspace-extended preservation from the petN-adjoint identity
+`h_adj` and oldspace-extended preservation `h_old` of the normalized candidate. -/
 theorem Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_normalized_fricke_adjoint
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p] (hp : p.Prime)
     (hpN : ¬ Nat.Coprime p N)
@@ -1188,20 +819,9 @@ theorem Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_normaliz
     hp hpN
     (Newform.frickeBadAdjointCandidateNormalized k p) h_adj h_old f hf
 
-/-- **T148/T174 final consumer (extended)**: bad-prime Hecke preservation
-of `cuspFormsNewExtended` from the three classical inputs at the *extended*
-level.
-
-This is the integration endpoint of the bad-prime newspace chain after
-T170/T171/T173. It consumes:
-* `h_adj : HasBadPrimeFrickePetNAdjoint N k p` — **T170 territory** (live).
-* `h_fricke_old : HasFrickeSlashCuspFormPreservesCuspFormsOldExtended N k` —
-  **T173 (DONE)**: see `Newform.hasFrickeSlashCuspFormPreservesCuspFormsOldExtended`.
-* `h_T_p_old : HasHeckeT_n_cusp_at_divN_PreservesCuspFormsOldExtended` —
-  **T171 territory** (live).
-
-Once T170 and T171 land, this theorem yields the unconditional bad-prime
-newspace preservation for the (mathematically correct) extended newspace. -/
+/-- Bad-prime Hecke preservation of `cuspFormsNewExtended` from the three
+classical inputs (the petN-adjoint identity `h_adj` and the two extended
+oldspace-preservation Props) at the extended level. -/
 theorem Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_classicalInputs
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p] (hp : p.Prime)
     (hpN : ¬ Nat.Coprime p N)
@@ -1223,16 +843,9 @@ theorem Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_classica
         g hg)
     f hf
 
-/-- **T174 streamlined endpoint**: bad-prime newspace-extended preservation
-reduced to *exactly* T170 + T171.
-
-Since T173 (`HasFrickeSlashCuspFormPreservesCuspFormsOldExtended`) is
-unconditional via `Newform.hasFrickeSlashCuspFormPreservesCuspFormsOldExtended`,
-the final consumer needs only the two live dependencies — T170's petN-adjoint
-identity and T171's extended-oldspace Hecke preservation.
-
-This is the **single named consumer endpoint** of the post-T173 bad-prime
-newspace chain. -/
+/-- Bad-prime newspace-extended preservation needing only the petN-adjoint
+identity `h_adj` and the extended-oldspace Hecke preservation `h_T_p_old`
+(Fricke preservation being unconditional). -/
 theorem Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_T170_T171
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p] (hp : p.Prime)
     (hpN : ¬ Nat.Coprime p N)
@@ -1247,29 +860,9 @@ theorem Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_T170_T17
     (Newform.hasFrickeSlashCuspFormPreservesCuspFormsOldExtended N k)
     h_T_p_old f hf
 
-/-! ### T175: Downstream extended-newspace API for the SMO route
-
-After T174 lifted bad-prime preservation to `cuspFormsNewExtended`, this
-section provides the downstream API needed for the strong multiplicity one
-route at the *extended* level: `IsInNewSubspaceExtended`, the disjointness of
-extended old/new, and `IsNewformExtended` / `NewformExtended` — analogues of
-the existing `IsInNewSubspace`, `cuspFormsOld_disjoint_cuspFormsNew`,
-`IsNewform`, and `Newform N k` structures, but using the (mathematically
-correct) extended subspaces.
-
-The classical narrow `Newform N k` structure (defined via `cuspFormsNew`)
-remains the standard handle for downstream code; `NewformExtended` is
-strictly stronger (every `NewformExtended` is in particular a `Newform`,
-since `cuspFormsNewExtended ⊆ cuspFormsNew`). For the bad-prime preservation
-side of the SMO route, downstream consumers should require the stronger
-`NewformExtended` hypothesis. -/
-
-/-- A cusp form is in the **extended new subspace** if it is orthogonal
-(w.r.t. `petN`) to every form in `cuspFormsOldExtended N k` (i.e., every
-level-raise generator AND every trivial-inclusion generator).
-
-Strictly stronger than `IsInNewSubspace` (which only requires orthogonality
-to level-raise generators). -/
+/-- A cusp form is in the **extended new subspace** if it is `petN`-orthogonal to
+every form in `cuspFormsOldExtended N k`. Strictly stronger than
+`IsInNewSubspace`. -/
 def IsInNewSubspaceExtended (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
   ∀ g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k,
     g ∈ cuspFormsOldExtended N k → petN f g = 0
@@ -1286,12 +879,8 @@ lemma IsInNewSubspaceExtended.isInNewSubspace
     IsInNewSubspace f :=
   fun g hg => h g (cuspFormsOld_le_cuspFormsOldExtended hg)
 
-/-- The intersection of `cuspFormsOldExtended` and `cuspFormsNewExtended`
-is trivial. Mirrors `cuspFormsOld_disjoint_cuspFormsNew`.
-
-If `f ∈ cuspFormsOldExtended ∩ cuspFormsNewExtended`, then `f ∈ cuspFormsNewExtended`
-means `petN f g = 0` for all `g ∈ cuspFormsOldExtended`. Taking `g = f`, we get
-`petN f f = 0`, hence `f = 0` by `petN_definite`. -/
+/-- The intersection of `cuspFormsOldExtended` and `cuspFormsNewExtended` is
+trivial. Mirrors `cuspFormsOld_disjoint_cuspFormsNew`. -/
 theorem cuspFormsOldExtended_disjoint_cuspFormsNewExtended
     {N : ℕ} [NeZero N] {k : ℤ} :
     Disjoint (cuspFormsOldExtended N k) (cuspFormsNewExtended N k) := by
@@ -1306,23 +895,15 @@ theorem cuspFormsOldExtended_disjoint_cuspFormsNew
     Disjoint (cuspFormsOldExtended N k) (cuspFormsNewExtended N k) :=
   cuspFormsOldExtended_disjoint_cuspFormsNewExtended
 
-/-- **`IsNewformExtended` predicate (T175 downstream).**
-
-A cusp form is an *extended newform* if it is a common Hecke eigenform, lies
-in the *extended* new subspace `cuspFormsNewExtended`, and is normalised
-(`a_1 = 1`).  Strictly stronger than `IsNewform` (which uses the smaller
-classical `cuspFormsNew`). The bad-prime Hecke preservation only holds for
-the extended newspace, so downstream SMO consumers requiring full Hecke
-stability should use `IsNewformExtended`. -/
+/-- A cusp form is an *extended newform* if it is a Hecke eigenform, lies in the
+extended new subspace `cuspFormsNewExtended`, and is normalised (`a₁ = 1`).
+Strictly stronger than `IsNewform`. -/
 structure IsNewformExtended (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop where
   isEigen : IsEigenform f
   isNew : f ∈ cuspFormsNewExtended N k
   isNorm : (ModularFormClass.qExpansion (1 : ℝ) f).coeff 1 = 1
 
-/-- An extended newform is in particular a (classical) newform.
-
-Since `cuspFormsNewExtended ⊆ cuspFormsNew`, the membership is preserved.
-Eigenform and normalisation conditions transfer directly. -/
+/-- An extended newform is in particular a (classical) newform. -/
 theorem IsNewformExtended.isNewform
     {f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k}
     (h : IsNewformExtended f) : IsNewform f where
@@ -1330,16 +911,8 @@ theorem IsNewformExtended.isNewform
   isNew := cuspFormsNewExtended_le_cuspFormsNew h.isNew
   isNorm := h.isNorm
 
-/-- **`NewformExtended` structure (T175 downstream).**
-
-Bundled extended newform: an `Eigenform` together with extended-newspace
-membership and normalisation. Strictly stronger than `Newform N k` (every
-`NewformExtended` gives a `Newform` via the inclusion `cuspFormsNewExtended ⊆
-cuspFormsNew`).
-
-The bad-prime Hecke preservation (T174) operates at this strengthened
-level, so SMO downstream consumers requiring unconditional Hecke stability
-should use `NewformExtended`. -/
+/-- Bundled extended newform: an `Eigenform` together with extended-newspace
+membership and normalisation. Strictly stronger than `Newform N k`. -/
 structure NewformExtended (N : ℕ) [NeZero N] (k : ℤ)
     extends Eigenform N k where
   /-- The form is in the *extended* new subspace `cuspFormsNewExtended`. -/
@@ -1355,35 +928,15 @@ theorem NewformExtended.isNewformExtended (f : NewformExtended N k) :
   isNew := f.isNew
   isNorm := f.isNorm
 
-/-- Every `NewformExtended` gives a (classical) `Newform`.
-
-Combines the structure projections with the inclusion
-`cuspFormsNewExtended ⊆ cuspFormsNew`. -/
+/-- Every `NewformExtended` gives a (classical) `Newform`. -/
 def NewformExtended.toNewform (f : NewformExtended N k) : Newform N k where
   toEigenform := f.toEigenform
   isNew := cuspFormsNewExtended_le_cuspFormsNew f.isNew
   isNorm := f.isNorm
 
-/-- **T175: Combined Hecke preservation through `cuspFormsNew` for an extended
-newform.**
-
-For `f ∈ cuspFormsNewExtended` and *any* prime `p`, the bad-prime Hecke
-operator `heckeT_n_cusp k p f` lies in the (classical) `cuspFormsNew N k`,
-provided either `(p, N) = 1` (coprime, no extra hypotheses needed) or
-`p ∣ N` and the T170+T171 conditions hold.
-
-This is the **integration endpoint** for the SMO downstream chain combining:
-* the existing classical-coprime `heckeT_n_preserves_cuspFormsNew`
-  (`Nat.Coprime p N`), and
-* the T174 extended-bad-prime
-  `heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_T170_T171`
-  combined with `cuspFormsNewExtended ⊆ cuspFormsNew`.
-
-The conclusion is in (classical) `cuspFormsNew`, not `cuspFormsNewExtended`,
-because the coprime case lifts directly via the existing classical preservation;
-this is sufficient for SMO consumers that operate at the classical
-`cuspFormsNew` level. For the strictly extended conclusion, use
-`heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_T170_T171` directly. -/
+/-- For `f ∈ cuspFormsNewExtended` and `p ∣ N`, the bad-prime Hecke operator
+`heckeT_n_cusp k p f` lies in the classical `cuspFormsNew N k`, given the
+petN-adjoint identity `h_adj` and extended-oldspace preservation `h_T_p_old`. -/
 theorem heckeT_n_cusp_preserves_cuspFormsNew_of_NewformExtended_at_divN
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p] (hp : p.Prime)
     (hpN : ¬ Nat.Coprime p N)
@@ -1397,28 +950,8 @@ theorem heckeT_n_cusp_preserves_cuspFormsNew_of_NewformExtended_at_divN
     (Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_T170_T171
       hp hpN h_adj h_T_p_old f hf)
 
-/-! ### T178: Post-T177 strictly-lower consumers (T170-only)
-
-After T177 made `Newform.HasHeckeT_n_cusp_at_divN_PreservesCuspFormsOldExtended`
-unconditional via
-`Newform.HasHeckeT_n_cusp_at_divN_PreservesCuspFormsOldExtended_unconditional`,
-the consumer endpoints `..._of_T170_T171` no longer need the T171 hypothesis
-explicitly; they reduce to taking only the petN-adjoint identity (T170).
-
-These wrappers expose the strictly-lower consumer signatures so downstream
-callers requiring bad-prime newspace preservation no longer need to thread
-the T171 input. The single remaining theorem to make these unconditional is
-`Newform.HasBadPrimeFrickePetNAdjoint N k p` (T170 territory). -/
-
-/-- **T178 — bad-prime newspace-extended preservation, T170-only.**
-
-Strictly-lower consumer of
-`Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_T170_T171`:
-since T177 makes the T171 input unconditional, this theorem drops `h_T_p_old`
-and takes only the petN-adjoint identity `h_adj : HasBadPrimeFrickePetNAdjoint`.
-
-Single remaining input for unconditional bad-prime newspace-extended
-preservation: `Newform.HasBadPrimeFrickePetNAdjoint N k p` (T170 territory). -/
+/-- Bad-prime newspace-extended preservation needing only the petN-adjoint
+identity `h_adj` (the extended-oldspace input being unconditional). -/
 theorem Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_T170
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p] (hp : p.Prime)
     (hpN : ¬ Nat.Coprime p N)
@@ -1432,13 +965,8 @@ theorem Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_T170
       hp hpN)
     f hf
 
-/-- **T178 — Newform-extended classical-newspace consumer, T170-only.**
-
-Strictly-lower consumer of
-`heckeT_n_cusp_preserves_cuspFormsNew_of_NewformExtended_at_divN`:
-since T177 makes the T171 input unconditional, this theorem drops `h_T_p_old`
-and takes only the petN-adjoint identity. The conclusion is in the classical
-`cuspFormsNew N k` (sufficient for SMO consumers operating at the classical level). -/
+/-- Bad-prime classical-newspace consumer needing only the petN-adjoint identity
+`h_adj`; the conclusion is in the classical `cuspFormsNew N k`. -/
 theorem heckeT_n_cusp_preserves_cuspFormsNew_of_NewformExtended_at_divN_of_T170
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p] (hp : p.Prime)
     (hpN : ¬ Nat.Coprime p N)
@@ -1450,15 +978,8 @@ theorem heckeT_n_cusp_preserves_cuspFormsNew_of_NewformExtended_at_divN_of_T170
     (Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_T170
       hp hpN h_adj f hf)
 
-/-- **T178 — final extended consumer, T170-only (T173 + T177 already
-discharged).**
-
-Strictly-lower consumer of
-`Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_classicalInputs`:
-T173 (`HasFrickeSlashCuspFormPreservesCuspFormsOldExtended`) is unconditional
-via `Newform.hasFrickeSlashCuspFormPreservesCuspFormsOldExtended`, and T177
-(via `_unconditional`) makes T171 unconditional. So the only remaining
-hypothesis is the petN-adjoint identity (T170). -/
+/-- Final extended consumer needing only the petN-adjoint identity `h_adj` (the
+Fricke and extended-oldspace inputs being unconditional). -/
 theorem Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_classicalInputs_T170_only
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p] (hp : p.Prime)
     (hpN : ¬ Nat.Coprime p N)
@@ -1473,23 +994,7 @@ theorem Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_classica
       hp hpN)
     f hf
 
-/-! ### T179: SMO downstream — unified Hecke consumer at all primes
-
-Building on the T178 strictly-lower consumers (post-T177 T171 unconditional),
-this section provides:
-* unconditional unconditional `frickeBadAdjointCandidate` preservation lemmas;
-* a unified `cuspFormsNew` Hecke-stability statement for `f ∈ cuspFormsNewExtended`
-  covering *every prime* `p`, conditional only on T170 at bad primes;
-* `NewformExtended`-level convenience wrappers;
-* a dependency-audit theorem documenting the post-T177 SMO route status. -/
-
-/-- **T179: `frickeBadAdjointCandidate` preserves `cuspFormsOldExtended`
-unconditionally.**
-
-T173 makes `HasFrickeSlashCuspFormPreservesCuspFormsOldExtended` unconditional;
-T177 makes `HasHeckeT_n_cusp_at_divN_PreservesCuspFormsOldExtended` unconditional.
-The T148 helper composing these closes the Fricke-bad adjoint candidate's
-preservation of `cuspFormsOldExtended` without any hypothesis. -/
+/-- `frickeBadAdjointCandidate` preserves `cuspFormsOldExtended` unconditionally. -/
 lemma Newform.frickeBadAdjointCandidate_preserves_cuspFormsOldExtended_unconditional
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
     (hp : p.Prime) (hpN : ¬ Nat.Coprime p N)
@@ -1503,12 +1008,8 @@ lemma Newform.frickeBadAdjointCandidate_preserves_cuspFormsOldExtended_unconditi
       hp hpN)
     g hg
 
-/-- **T179: `frickeBadAdjointCandidateNormalized` preserves `cuspFormsOldExtended`
-unconditionally.**
-
-The `frickeSquareScalar`-normalized variant of the bad-prime Fricke adjoint
-candidate, with unconditional oldspace-extended preservation derived from the
-unnormalized version. -/
+/-- `frickeBadAdjointCandidateNormalized` preserves `cuspFormsOldExtended`
+unconditionally. -/
 lemma Newform.frickeBadAdjointCandidateNormalized_preserves_cuspFormsOldExtended_unconditional
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
     (hp : p.Prime) (hpN : ¬ Nat.Coprime p N)
@@ -1522,23 +1023,9 @@ lemma Newform.frickeBadAdjointCandidateNormalized_preserves_cuspFormsOldExtended
         hp hpN g' hg')
     g hg
 
-/-- **T179 unified prime Hecke consumer**: for `f ∈ cuspFormsNewExtended`, the
-Hecke operator `heckeT_n_cusp k p f` lies in (classical) `cuspFormsNew N k`
-for **every prime `p`**, with T170 needed only at bad primes.
-
-Combines:
-* The classical coprime case `heckeT_n_preserves_cuspFormsNew` (`Nat.Coprime p N`),
-  applied via `cuspFormsNewExtended ⊆ cuspFormsNew`.
-* The post-T177/T178 bad-prime consumer
-  `heckeT_n_cusp_preserves_cuspFormsNew_of_NewformExtended_at_divN_of_T170`
-  (`¬ Nat.Coprime p N`), needing T170 only.
-
-The hypothesis `h_adj_at_bad : ¬ Coprime p N → HasBadPrimeFrickePetNAdjoint`
-makes T170 only required where it applies (bad primes). The result reaches the
-classical `cuspFormsNew`, sufficient for downstream SMO consumers operating
-at the classical newspace level. The strengthened input hypothesis `f ∈
-cuspFormsNewExtended` (rather than `f ∈ cuspFormsNew`) is what enables the
-bad-prime case via T174/T177/T178. -/
+/-- For `f ∈ cuspFormsNewExtended` and every prime `p`, the Hecke operator
+`heckeT_n_cusp k p f` lies in the classical `cuspFormsNew N k`, with the
+petN-adjoint hypothesis `h_adj_at_bad` required only at bad primes. -/
 theorem heckeT_n_cusp_preserves_cuspFormsNew_of_NewformExtended_of_T170_unified
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p] (hp : p.Prime)
     (h_adj_at_bad : ¬ Nat.Coprime p N → Newform.HasBadPrimeFrickePetNAdjoint N k p)
@@ -1546,15 +1033,12 @@ theorem heckeT_n_cusp_preserves_cuspFormsNew_of_NewformExtended_of_T170_unified
     (hf : f ∈ cuspFormsNewExtended N k) :
     heckeT_n_cusp k p f ∈ cuspFormsNew N k := by
   by_cases hpN : Nat.Coprime p N
-  · -- Coprime case: f ∈ cuspFormsNew via inclusion; classical preservation.
-    exact heckeT_n_preserves_cuspFormsNew p hpN f
+  · exact heckeT_n_preserves_cuspFormsNew p hpN f
       (cuspFormsNewExtended_le_cuspFormsNew hf)
-  · -- Bad-prime case: T178 endpoint with T170 hypothesis.
-    exact heckeT_n_cusp_preserves_cuspFormsNew_of_NewformExtended_at_divN_of_T170
+  · exact heckeT_n_cusp_preserves_cuspFormsNew_of_NewformExtended_at_divN_of_T170
       hp hpN (h_adj_at_bad hpN) f hf
 
-/-- **T179 NewformExtended-level convenience**: bundled `NewformExtended` form
-of the unified Hecke consumer. -/
+/-- Bundled `NewformExtended` form of the unified Hecke consumer. -/
 theorem NewformExtended.heckeT_n_cusp_mem_cuspFormsNew_of_T170
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p] (hp : p.Prime)
     (h_adj_at_bad : ¬ Nat.Coprime p N → Newform.HasBadPrimeFrickePetNAdjoint N k p)
@@ -1563,11 +1047,8 @@ theorem NewformExtended.heckeT_n_cusp_mem_cuspFormsNew_of_T170
   heckeT_n_cusp_preserves_cuspFormsNew_of_NewformExtended_of_T170_unified
     hp h_adj_at_bad f.toCuspForm f.isNew
 
-/-- **T179: For `(p, N) = 1`, every `NewformExtended` is preserved (cuspFormsNew)
-without any T170 hypothesis.**
-
-Pure-classical case extracted as a clean unconditional consumer (no T170
-needed for coprime primes). -/
+/-- For `(p, N) = 1`, every `NewformExtended` is preserved in `cuspFormsNew`
+without any petN-adjoint hypothesis. -/
 theorem NewformExtended.heckeT_n_cusp_mem_cuspFormsNew_of_coprime
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
     (hp_cop : Nat.Coprime p N) (f : NewformExtended N k) :
@@ -1575,31 +1056,9 @@ theorem NewformExtended.heckeT_n_cusp_mem_cuspFormsNew_of_coprime
   heckeT_n_preserves_cuspFormsNew p hp_cop f.toCuspForm
     (cuspFormsNewExtended_le_cuspFormsNew f.isNew)
 
-/-- **T179 dependency audit (post-T177)**: namespace-level documentation of
-the SMO downstream dependency state.
-
-After T177 (`HasHeckeT_n_cusp_at_divN_PreservesCuspFormsOldExtended_unconditional`)
-and T173 (`hasFrickeSlashCuspFormPreservesCuspFormsOldExtended`), the
-unconditional bad-prime newspace preservation reduces to the **single live
-dependency** `Newform.HasBadPrimeFrickePetNAdjoint N k p` (T170 territory).
-
-The streamlined consumer chain is:
-1. `Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_T170` (T178)
-   — bad-prime extended-newspace preservation, T170 only.
-2. `heckeT_n_cusp_preserves_cuspFormsNew_of_NewformExtended_at_divN_of_T170` (T178)
-   — bad-prime classical-newspace consumer.
-3. `heckeT_n_cusp_preserves_cuspFormsNew_of_NewformExtended_of_T170_unified` (T179)
-   — unified all-prime Hecke consumer combining classical coprime with T178/T170.
-4. `NewformExtended.heckeT_n_cusp_mem_cuspFormsNew_of_T170` (T179) — bundled
-   `NewformExtended`-level all-prime Hecke consumer.
-
-Once T170 is discharged unconditionally (a future
-`Newform.hasBadPrimeFrickePetNAdjoint N k p` theorem), all four become
-unconditional and SMO downstream consumers can iterate Hecke on
-`NewformExtended` forms without conditional hypotheses.
-
-This is **not** a theorem with mathematical content — it is a `True`-valued
-declaration whose proof type-checks the named theorems above for accessibility. -/
+/-- A `True`-valued declaration whose proof type-checks the SMO downstream
+consumer theorems for accessibility; it records that the bad-prime newspace
+chain reduces to the single dependency `Newform.HasBadPrimeFrickePetNAdjoint`. -/
 theorem T179_dependency_audit_after_T177 : True := by
   let _ := @Newform.HasBadPrimeFrickePetNAdjoint
   let _ := @Newform.HasHeckeT_n_cusp_at_divN_PreservesCuspFormsOldExtended_unconditional
@@ -1613,33 +1072,8 @@ theorem T179_dependency_audit_after_T177 : True := by
   let _ := @Newform.frickeBadAdjointCandidateNormalized_preserves_cuspFormsOldExtended_unconditional
   trivial
 
-/-! ### T180: Arbitrary-`n` Hecke stability for `NewformExtended`
-
-Building on the T179 prime-level unified consumer, this section extends the
-`NewformExtended` Hecke stability statement to arbitrary `n : ℕ`. The current
-Hecke API supports the following routes:
-
-* **Coprime `(n, N) = 1`**: classical `heckeT_n_preserves_cuspFormsNew` gives
-  unconditional preservation; combined with `cuspFormsNewExtended ⊆ cuspFormsNew`
-  this yields a clean delegation theorem (no T170 needed).
-* **Prime power `p^v` for bad `p ∣ N`**: by `heckeT_ppow_eq_pow_of_not_coprime`,
-  `T_{p^v} = (T_p)^v` at the operator level; iterating T178's bad-prime
-  preservation gives `T_{p^v}` preservation of `cuspFormsNewExtended`.
-* **Bad-only arbitrary `n`** (all prime factors of `n` divide `N`): strong
-  induction over the prime factorization, peeling off `T_{p^v}` for each
-  bad prime power and applying the iterated T178 preservation.
-
-The fully-general arbitrary-`n` consumer requires combining the bad-only
-stability with the coprime classical preservation via the multiplicative
-factorization `n = n_bad · n_cop` with `(n_bad, n_cop) = 1`; this section
-provides the components required for that final step. -/
-
-/-- **T180 — coprime arbitrary-`n` consumer for `NewformExtended`.**
-
-Trivial delegation: `NewformExtended` lives in `cuspFormsNewExtended ⊆ cuspFormsNew`,
-and classical `heckeT_n_preserves_cuspFormsNew` handles arbitrary `n` coprime to `N`.
-
-No T170 hypothesis needed; this is the unconditional coprime consumer. -/
+/-- Coprime arbitrary-`n` consumer for `NewformExtended`, by delegation to the
+classical `heckeT_n_preserves_cuspFormsNew`. No petN-adjoint hypothesis needed. -/
 theorem NewformExtended.heckeT_n_cusp_mem_cuspFormsNew_of_coprime_arbitrary_n
     {N : ℕ} [NeZero N] {k : ℤ} {n : ℕ} [NeZero n] (hn : Nat.Coprime n N)
     (f : NewformExtended N k) :
@@ -1647,12 +1081,6 @@ theorem NewformExtended.heckeT_n_cusp_mem_cuspFormsNew_of_coprime_arbitrary_n
   heckeT_n_preserves_cuspFormsNew n hn f.toCuspForm
     (cuspFormsNewExtended_le_cuspFormsNew f.isNew)
 
-/-- **T180 helper — operator-level decomposition `T_{p^(v+1)} = T_p · T_{p^v}` at
-bad primes.**
-
-For a bad prime `p ∣ N`, the diamond term in the Hecke recursion vanishes
-(`heckeT_ppow_eq_pow_of_not_coprime`), so `T_{p^v} = (T_p)^v` at the operator
-level. This lemma packages the operator equation needed for the iteration. -/
 private lemma heckeT_n_succ_pp_eq_at_bad_prime
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p] (hp : p.Prime)
     (hpN : ¬ Nat.Coprime p N) (v : ℕ) :
@@ -1663,32 +1091,21 @@ private lemma heckeT_n_succ_pp_eq_at_bad_prime
   haveI : NeZero (p ^ v) := ⟨pow_ne_zero _ hp.ne_zero⟩
   haveI : NeZero (p ^ (v + 1)) := ⟨pow_ne_zero _ hp.ne_zero⟩
   rcases Nat.eq_zero_or_pos v with hv0 | hv_pos
-  · -- v = 0: p^(0+1) = p^1 = p (defeq via pow). Use heckeT_n_prime_pow + heckeT_ppow_one.
-    subst hv0
+  · subst hv0
     have h1 : heckeT_n (N := N) k (p ^ 1) = heckeT_n k p := by
       haveI : NeZero (p ^ 1) := ⟨pow_ne_zero _ hp.ne_zero⟩
       rw [heckeT_n_prime_pow k hp 1 Nat.one_pos, heckeT_ppow_one, heckeT_n_prime k hp]
     have h2 : heckeT_n (N := N) k (p ^ 0) = 1 := heckeT_n_one k
     rw [h1, h2, mul_one]
-  · -- v ≥ 1: use heckeT_n_prime_pow + heckeT_ppow_eq_pow_of_not_coprime + pow_succ'.
-    rw [heckeT_n_prime_pow k hp (v + 1) (Nat.succ_pos v),
+  · rw [heckeT_n_prime_pow k hp (v + 1) (Nat.succ_pos v),
       heckeT_n_prime k hp,
       heckeT_n_prime_pow k hp v hv_pos,
       heckeT_ppow_eq_pow_of_not_coprime k hp hpN (v + 1),
       heckeT_ppow_eq_pow_of_not_coprime k hp hpN v,
       pow_succ' (heckeT_p_all k p hp) v]
 
-/-- **T180 — Hecke `T_{p^v}` preservation of `cuspFormsNewExtended` at bad primes.**
-
-For a bad prime `p ∣ N` with the T170 hypothesis `HasBadPrimeFrickePetNAdjoint`
-discharged, `T_{p^v}` preserves `cuspFormsNewExtended` for every `v : ℕ`.
-
-Proof: induction on `v`.
-* `v = 0`: `T_{p^0} = T_1 = id`, preservation is trivial.
-* `v + 1`: `T_{p^(v+1)} = T_p · T_{p^v}` at the operator level (via the bad-prime
-  diamond-vanishing recursion), so at the function level
-  `T_{p^(v+1)} f = T_p (T_{p^v} f)`. Apply the IH to get `T_{p^v} f ∈
-  cuspFormsNewExtended`, then T178's prime-level bad-prime preservation. -/
+/-- For a bad prime `p ∣ N` with the petN-adjoint hypothesis `h_adj`, `T_{p^v}`
+preserves `cuspFormsNewExtended` for every `v : ℕ`. -/
 theorem NewformExtended.heckeT_pp_cusp_mem_cuspFormsNewExtended_at_bad_of_T170
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p] (hp : p.Prime)
     (hpN : ¬ Nat.Coprime p N)
@@ -1701,7 +1118,6 @@ theorem NewformExtended.heckeT_pp_cusp_mem_cuspFormsNewExtended_at_bad_of_T170
   induction v with
   | zero =>
     haveI : NeZero (p ^ 0) := ⟨by simp⟩
-    -- T_{p^0} = T_1 = id, applied to f gives f.
     have h_op : heckeT_n (N := N) k (p ^ 0) = 1 := heckeT_n_one k
     have h_eq : heckeT_n_cusp k (p ^ 0) f = f := by
       apply CuspForm.ext; intro z
@@ -1711,8 +1127,6 @@ theorem NewformExtended.heckeT_pp_cusp_mem_cuspFormsNewExtended_at_bad_of_T170
   | succ v ih =>
     haveI : NeZero (p ^ v) := ⟨pow_ne_zero _ hp.ne_zero⟩
     haveI : NeZero (p ^ (v + 1)) := ⟨pow_ne_zero _ hp.ne_zero⟩
-    -- Function-level decomposition: T_{p^(v+1)} f = T_p (T_{p^v} f), via the
-    -- operator equation `heckeT_n_succ_pp_eq_at_bad_prime`.
     have h_step : heckeT_n_cusp k (p ^ (v + 1)) f =
         heckeT_n_cusp k p (heckeT_n_cusp k (p ^ v) f) := by
       apply CuspForm.ext; intro z
@@ -1720,19 +1134,9 @@ theorem NewformExtended.heckeT_pp_cusp_mem_cuspFormsNewExtended_at_bad_of_T170
         ((heckeT_n k p) ((heckeT_n k (p ^ v)) f.toModularForm')).toFun z
       rw [heckeT_n_succ_pp_eq_at_bad_prime hp hpN v]; rfl
     rw [h_step]
-    -- T_{p^v} f ∈ cuspFormsNewExtended (IH); T_p applied at bad p preserves it (T178).
     exact Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_T170
       hp hpN h_adj _ ih
 
-/-- **T180 — strong-induction step for the bad-only `T_n` consumer.**
-
-Peels off the smallest prime factor's prime-power contribution from `m > 1`
-via `heckeT_n_cusp_unfold`: writing `p = m.minFac`, `v = m.factorization p`,
-the recursion hypothesis `ih` gives `T_{m/p^v} g ∈ cuspFormsNewExtended` (the
-quotient inherits the bad-only/adjoint data since its prime factors are among
-`m`'s), and the bad-prime-power theorem
-`NewformExtended.heckeT_pp_cusp_mem_cuspFormsNewExtended_at_bad_of_T170`
-applies `T_{p^v}` to land back in `cuspFormsNewExtended`. -/
 private lemma heckeT_n_cusp_mem_cuspFormsNewExtended_bad_only_step
     {N : ℕ} [NeZero N] {k : ℤ} (m : ℕ) (hm_gt : 1 < m)
     (h_bad : ∀ p, p.Prime → p ∣ m → ¬ Nat.Coprime p N)
@@ -1762,7 +1166,6 @@ private lemma heckeT_n_cusp_mem_cuspFormsNewExtended_bad_only_step
   haveI : NeZero (m / p ^ v) := ⟨hdiv_pos.ne'⟩
   haveI : NeZero p := ⟨hpp.ne_zero⟩
   have hpN : ¬ Nat.Coprime p N := h_bad p hpp (Nat.minFac_dvd m)
-  -- Function-level decomposition T_m = T_{p^v} ∘ T_{m/p^v}, then recurse + bad-prime power.
   have h_decomp : heckeT_n_cusp k m g =
       heckeT_n_cusp k (p ^ v) (heckeT_n_cusp k (m / p ^ v) g) :=
     CuspForm.ext fun z => heckeT_n_cusp_unfold m hm_gt g z
@@ -1777,17 +1180,9 @@ private lemma heckeT_n_cusp_mem_cuspFormsNewExtended_bad_only_step
   exact NewformExtended.heckeT_pp_cusp_mem_cuspFormsNewExtended_at_bad_of_T170
     hpp hpN (h_adj p hpp (Nat.minFac_dvd m)) v _ h_mid
 
-/-- **T180 — bad-only arbitrary-`n` consumer for `cuspFormsNewExtended`.**
-
-For `n : ℕ` whose every prime factor divides `N` (i.e., `n` is supported on
-bad primes), with T170 hypotheses discharged for each such prime, `T_n`
-preserves `cuspFormsNewExtended`.
-
-Proof: strong induction on `n`. Peel off the smallest prime factor's
-prime-power contribution via `heckeT_n_unfold`; apply the bad prime power
-preservation theorem (T180) for the peeled-off piece, then recurse on the
-quotient (which inherits the bad-only property since divisors of `n` keep
-their prime factors among `n`'s primes). -/
+/-- For `n : ℕ` whose every prime factor divides `N`, with the petN-adjoint
+hypothesis `h_adj_at_each` for each such prime, `T_n` preserves
+`cuspFormsNewExtended`. -/
 theorem NewformExtended.heckeT_n_cusp_mem_cuspFormsNewExtended_of_bad_only_T170
     {N : ℕ} [NeZero N] {k : ℤ} (n : ℕ) [NeZero n]
     (h_bad_only : ∀ p, p.Prime → p ∣ n → ¬ Nat.Coprime p N)
@@ -1796,7 +1191,6 @@ theorem NewformExtended.heckeT_n_cusp_mem_cuspFormsNewExtended_of_bad_only_T170
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (hf : f ∈ cuspFormsNewExtended N k) :
     heckeT_n_cusp k n f ∈ cuspFormsNewExtended N k := by
-  -- Strengthen IH to be over all forms in cuspFormsNewExtended.
   suffices h : ∀ (m : ℕ) (_ : 0 < m),
       (∀ p, p.Prime → p ∣ m → ¬ Nat.Coprime p N) →
       (∀ (p : ℕ) [NeZero p], p.Prime → p ∣ m →
@@ -1820,9 +1214,8 @@ theorem NewformExtended.heckeT_n_cusp_mem_cuspFormsNewExtended_of_bad_only_T170
     · exact heckeT_n_cusp_mem_cuspFormsNewExtended_bad_only_step m (by omega)
         h_bad h_adj ih g hg
 
-/-- **T180 — bad-only arbitrary-`n` `NewformExtended` consumer.**
-
-Bundled `NewformExtended`-level wrapper of the bad-only arbitrary-`n` consumer. -/
+/-- Bundled `NewformExtended`-level wrapper of the bad-only arbitrary-`n`
+consumer. -/
 theorem NewformExtended.heckeT_n_cusp_mem_cuspFormsNew_of_bad_only_T170
     {N : ℕ} [NeZero N] {k : ℤ} {n : ℕ} [NeZero n]
     (h_bad_only : ∀ p, p.Prime → p ∣ n → ¬ Nat.Coprime p N)
@@ -1834,22 +1227,8 @@ theorem NewformExtended.heckeT_n_cusp_mem_cuspFormsNew_of_bad_only_T170
     (NewformExtended.heckeT_n_cusp_mem_cuspFormsNewExtended_of_bad_only_T170
       n h_bad_only h_adj_at_each f.toCuspForm f.isNew)
 
-/-- **T180 dependency audit (post-T179)**: refined dependency state for SMO route.
-
-After T179 (unified prime-level consumer) and T180 (bad-only arbitrary-`n`,
-coprime arbitrary-`n`, bad-prime-power consumers), the remaining gap to a fully
-unconditional arbitrary-`n` Hecke stability theorem for `NewformExtended` is:
-
-1. **Combining bad and coprime parts** for mixed-`n`: requires factorizing
-   `n = n_bad · n_cop` with `Nat.Coprime n_bad n_cop` and applying
-   `heckeT_n_mul_coprime` plus the existing bad-only and coprime arbitrary-`n`
-   consumers. This is a Nat-factorization manipulation, not a deep theorem.
-2. **T170 itself**: `Newform.HasBadPrimeFrickePetNAdjoint N k p` (Secondary's
-   territory); once unconditional, all T180 hypotheses about T170 vanish.
-
-This is **not** a theorem with mathematical content — it is a `True`-valued
-declaration whose proof type-checks the named theorems above for accessibility
-and records the post-T180 dependency state. -/
+/-- A `True`-valued declaration whose proof type-checks the arbitrary-`n`
+`NewformExtended` Hecke consumers for accessibility. -/
 theorem T180_dependency_audit_after_T179 : True := by
   let _ := @NewformExtended.heckeT_n_cusp_mem_cuspFormsNew_of_coprime_arbitrary_n
   let _ := @NewformExtended.heckeT_pp_cusp_mem_cuspFormsNewExtended_at_bad_of_T170
@@ -1858,25 +1237,9 @@ theorem T180_dependency_audit_after_T179 : True := by
   let _ := @heckeT_n_mul_coprime
   trivial
 
-/-- **Matrix-level Fricke / bad-prime upper coset double-conjugation
-identity (T149 main matrix helper).**
-
-For the bad-prime upper-triangular coset rep `β_b := T_p_upper p hp b` (matrix
-`!![1, b; 0, p]` in `GL (Fin 2) ℚ`), embedded into `GL (Fin 2) ℝ` via `glMap`,
-the double-conjugation `W_N · β_b · W_N` (with `W_N` *twice*, no inverse) is
-the scalar matrix `(-N) • !![p, 0; -N·b, 1]` at the matrix level.
-
-Direct matrix computation:
-```
-W_N · β_b = !![0, -1; N, 0] · !![1, b; 0, p] = !![0, -p; N, N·b].
-W_N · β_b · W_N = !![0, -p; N, N·b] · !![0, -1; N, 0]
-              = !![-N·p, 0; N²·b, -N]
-              = (-N) • !![p, 0; -N·b, 1].
-```
-The factor `(-N)` is exactly the underlying scalar of `W_N · W_N` from T141
-(`Newform.frickeMatrix_mul_self_val`); after dividing by it (i.e. using the
-INVERSE-conjugation `W_N · β_b · W_N⁻¹`), the scalar cancels — see the
-companion lemma `Newform.frickeMatrix_mul_glMap_T_p_upper_mul_frickeMatrix_inv_val`. -/
+/-- For the bad-prime upper-triangular coset rep `β_b := T_p_upper p hp b`
+embedded via `glMap`, the double-conjugation `W_N · β_b · W_N` equals the scalar
+matrix `(-N) • !![p, 0; -N·b, 1]`. -/
 lemma Newform.frickeMatrix_mul_glMap_T_p_upper_mul_frickeMatrix_val
     (N : ℕ) [NeZero N] {p : ℕ} (hp : 0 < p) (b : ℕ) :
     ((Newform.frickeMatrix N : GL (Fin 2) ℝ) :
@@ -1903,12 +1266,6 @@ lemma Newform.frickeMatrix_mul_glMap_T_p_upper_mul_frickeMatrix_val
       Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply] <;>
     ring
 
-/-- **Matrix-level half-conjugation identity `W_N · β_b = !![p,0;-Nb,1] · W_N`.**
-
-Moving the Fricke matrix `W_N = !![0,-1;N,0]` past the bad-prime upper-triangular
-coset rep `β_b = glMap (T_p_upper p hp b) = !![1,b;0,p]` turns it into the
-lower-triangular rep `!![p,0;-Nb,1]`. A direct `fin_cases` matrix computation
-using `frickeMatrix_coe` and `T_p_upper_coe`. -/
 private lemma frickeMatrix_mul_glMap_T_p_upper_eq_mul_frickeMatrix
     (N : ℕ) [NeZero N] {p : ℕ} (hp : 0 < p) (b : ℕ) :
     ((Newform.frickeMatrix N : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) *
@@ -1929,20 +1286,9 @@ private lemma frickeMatrix_mul_glMap_T_p_upper_eq_mul_frickeMatrix
       Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val',
       Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply]
 
-/-- **Matrix-level Fricke / bad-prime upper coset INVERSE-conjugation
-identity (T149 inverse-conjugation main matrix helper).**
-
-For the bad-prime upper-triangular coset rep `β_b := T_p_upper p hp b`
-(matrix `!![1, b; 0, p]`), embedded into `GL (Fin 2) ℝ` via `glMap`, the
-classical Atkin-Lehner inverse-conjugation `W_N · β_b · W_N⁻¹` equals
-`!![p, 0; -N·b, 1]` at the matrix level (no scalar — the `(-N)` factor from
-the double-conjugation `W_N · β_b · W_N` cancels against `W_N⁻¹ = -1/N · W_N`
-that comes from `W_N² = -N • 1`).
-
-Proof: rewrite the GL inverse via `Matrix.coe_units_inv`, move `W_N` past `β_b`
-using `frickeMatrix_mul_glMap_T_p_upper_eq_mul_frickeMatrix`, then cancel the
-trailing `W_N · W_N⁻¹ = 1` (`Matrix.mul_nonsing_inv` with
-`Newform.frickeMatrix_det`). -/
+/-- The classical Atkin-Lehner inverse-conjugation `W_N · β_b · W_N⁻¹` of the
+bad-prime upper-triangular coset rep `β_b := T_p_upper p hp b` equals
+`!![p, 0; -N·b, 1]` (the `(-N)` factor cancelling against `W_N⁻¹`). -/
 lemma Newform.frickeMatrix_mul_glMap_T_p_upper_mul_frickeMatrix_inv_val
     (N : ℕ) [NeZero N] {p : ℕ} (hp : 0 < p) (b : ℕ) :
     ((Newform.frickeMatrix N : GL (Fin 2) ℝ) :
@@ -1961,7 +1307,6 @@ lemma Newform.frickeMatrix_mul_glMap_T_p_upper_mul_frickeMatrix_inv_val
     rw [show ((Newform.frickeMatrix N : GL (Fin 2) ℝ) :
         Matrix (Fin 2) (Fin 2) ℝ).det = (N : ℝ) from Newform.frickeMatrix_det N]
     exact isUnit_iff_ne_zero.mpr hN_ne
-  -- W_N · β_b · W_N⁻¹ = (M · W_N) · W_N⁻¹ = M · (W_N · W_N⁻¹) = M.
   rw [Matrix.coe_units_inv (Newform.frickeMatrix N),
     frickeMatrix_mul_glMap_T_p_upper_eq_mul_frickeMatrix, Matrix.mul_assoc,
     hW_inv_mul, Matrix.mul_one]
