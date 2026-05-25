@@ -177,23 +177,9 @@ noncomputable def heckeMultiplicity (g₁ g₂ d : P.Δ) : ℤ :=
       {(j.out : G) * (g₂ : G)} * P.H =
     {(d : G)} * (P.H : Set G)}
 
-/-- **`mulMap`-form Hecke multiplicity** (T001 Option C compatibility prototype).
-
-Alternative formulation of `heckeMultiplicity` using the **rep-invariant**
-`mulMap`-equality predicate `mulMap P g₁ g₂ ⟨i, j⟩ = ⟦d⟧` (in `HeckeCoset P`)
-instead of the rep-dependent left-coset/set-form predicate
-`{i.out * g₁} * {j.out * g₂} * H = {d} * H`.
-
-The `mulMap`-form predicate is class-invariant by construction (since
-`HeckeCoset P` is a quotient and `mulMap` produces a class), so this count
-depends only on the input quotient classes and on the target double coset
-`⟦d⟧ ∈ HeckeCoset P`.
-
-**Compatibility note.**  The existing `heckeMultiplicity` (set-form) is
-**not deleted** by this prototype.  Instead, this definition is added in
-parallel, and the bridge `heckeMultiplicity_le_heckeMultiplicityMulMap`
-below shows the set-form count is at most the `mulMap` count (a one-way
-inclusion via `doubleCoset_eq_of_rightCoset_eq`). -/
+/-- An alternative formulation of `heckeMultiplicity` using the rep-invariant
+predicate `mulMap P g₁ g₂ ⟨i, j⟩ = ⟦d⟧` in place of the rep-dependent set-form
+predicate `{i.out * g₁} * {j.out * g₂} * H = {d} * H`. -/
 noncomputable def heckeMultiplicityMulMap (g₁ g₂ d : P.Δ) : ℤ :=
   Nat.card {⟨i, j⟩ : decompQuot P g₁ × decompQuot P g₂ |
     mulMap P g₁ g₂ ⟨i, j⟩ = (⟦d⟧ : HeckeCoset P)}
@@ -224,34 +210,11 @@ lemma doubleCoset_eq_of_rightCoset_eq (g₁ g₂ d : P.Δ)
   rw [← hprod]
   exact DoubleCoset.doubleCoset_mul_right_eq_self P ⟨h, hh⟩ _
 
-/-- **Set-form ⊆ mulMap-form bridge** (T001 Option C bridge — easy direction).
-
-The set-form Hecke multiplicity is at most the `mulMap`-form multiplicity:
-every pair satisfying the (rep-dependent) set-form predicate also satisfies
-the (rep-invariant) `mulMap` predicate (via `doubleCoset_eq_of_rightCoset_eq`).
-Hence the set-form-witness set is a subset of the `mulMap`-witness set, and
-the cardinalities satisfy `≤`.
-
-This is the **first half of the set-form ↔ mulMap-form bridge**: the bridge
-established here is **one-way only**.  The reverse inequality
-(`heckeMultiplicityMulMap ≤ heckeMultiplicity`) is not provided by this lemma
-and would require extra hypotheses on `d` (or a separate compensation
-construction).  The intuition is structural: `mulMap p = ⟦d⟧` only constrains
-the product `p.1.out * g₁ * p.2.out * g₂` to land somewhere in the full
-double coset `HdH`, whereas the set-form predicate fixes the product to a
-single left-coset representative `dH`.  Since `HdH` decomposes into a finite
-disjoint union of left cosets, the mulMap-form witness set is in general a
-strict superset of the set-form witness set, and the cardinality inequality
-runs only in the direction proved below.
-
-Downstream consumers in `BlockBijection.lean` use this bridge to expose
-mulMap-form parallels of the existing diagMat `_le_` and `_ge_` directions:
-`heckeMultiplicity_block_embed_le_diagMat_target_mulMap` and
-`heckeMultiplicity_block_embed_ge_diagMat_target_mulMap`. -/
+/-- The set-form Hecke multiplicity is at most the `mulMap`-form multiplicity, since
+every set-form witness is a `mulMap`-form witness via `doubleCoset_eq_of_rightCoset_eq`. -/
 lemma heckeMultiplicity_le_heckeMultiplicityMulMap (g₁ g₂ d : P.Δ) :
     heckeMultiplicity P g₁ g₂ d ≤ heckeMultiplicityMulMap P g₁ g₂ d := by
   unfold heckeMultiplicity heckeMultiplicityMulMap
-  -- Both sides are casts of `Nat.card` of subtypes; reduce to Nat-level cardinality.
   have h_sub : {p : decompQuot P g₁ × decompQuot P g₂ |
         ({(p.1.out : G) * (g₁ : G)} : Set G) *
           {(p.2.out : G) * (g₂ : G)} * P.H =
@@ -259,8 +222,6 @@ lemma heckeMultiplicity_le_heckeMultiplicityMulMap (g₁ g₂ d : P.Δ) :
       {p : decompQuot P g₁ × decompQuot P g₂ |
         mulMap P g₁ g₂ p = (⟦d⟧ : HeckeCoset P)} := by
     intro p hp
-    -- `hp` is the set-form predicate; conclude `mulMap p = ⟦d⟧` via
-    -- `doubleCoset_eq_of_rightCoset_eq`.
     exact doubleCoset_eq_of_rightCoset_eq P g₁ g₂ d p hp
   have h_card : Nat.card {p : decompQuot P g₁ × decompQuot P g₂ |
         ({(p.1.out : G) * (g₁ : G)} : Set G) *
@@ -330,14 +291,11 @@ lemma decompQuot_fst_eq_of_snd_mem_H (g₁ g₂ d : P.Δ)
   simp only [mul_assoc, Subgroup.singleton_mul_subgroup hj] at h₁ h₂
   exact h₁.trans h₂.symm
 
-/-- When `dcRel P g₁ d`, some representative pair `(k, j₀)` realizes the set-form
-predicate for right multiplication by `HeckeCoset.one`: the left coset `dH` is hit. -/
 private lemma nonempty_mul_one_witness_of_dcRel (g₁ d : P.Δ) (hg₁d : dcRel P g₁ d) :
     Nonempty ↑{x : decompQuot P g₁ × decompQuot P (HeckeCoset.one P).rep |
       ({(↑x.1.out : G) * (↑g₁ : G)} : Set G) *
         {(↑x.2.out : G) * (↑(HeckeCoset.one P).rep : G)} * P.H =
         {(↑d : G)} * (P.H : Set G)} := by
-  -- d ∈ Hg₁H since dcRel P g₁ d, so some k ∈ decompQuot P g₁ maps d into its coset.
   have hd_in_g₁ : (↑d : G) ∈ doubleCoset (↑g₁ : G) P.H P.H :=
     hg₁d ▸ DoubleCoset.mem_doubleCoset_self P.H P.H _
   rw [DoubleCoset.doubleCoset_eq_iUnion_leftCosets] at hd_in_g₁
@@ -350,7 +308,6 @@ private lemma nonempty_mul_one_witness_of_dcRel (g₁ d : P.Δ) (hg₁d : dcRel 
   have hmem : (j₀.out : G) * ((HeckeCoset.one P).rep : G) ∈ P.H :=
     Subgroup.mul_mem _ (SetLike.coe_mem j₀.out) (HeckeCoset.one_rep_mem_H P)
   rw [mul_assoc, Subgroup.singleton_mul_subgroup hmem]
-  -- Now goal is {k.out * g₁} * H = {d} * H
   apply (leftCoset_eq_of_not_disjoint (H := P.H) _ _ _).symm
   rw [not_disjoint_iff]
   refine ⟨↑d, Set.mem_smul_set.mpr ⟨1, P.H.one_mem, by simp⟩, ?_⟩
@@ -404,8 +361,6 @@ private lemma mulMap_one_T_eq (g₁ : P.Δ)
       ⟨(HeckeCoset.one P).rep, HeckeCoset.one_rep_mem_H P⟩,
     doset_mul_left_eq_self]
 
-/-- From a witnessing double-coset equality `H(σᵢ τⱼ)H = HcH`, build a representative
-pair `(i', j')` whose set-form product realizes the left coset `cH`. -/
 private lemma nonempty_witness_of_doubleCoset_eq (g₁ g₂ : P.Δ) (c : G)
     (i₀ : decompQuot P g₁) (j₀ : decompQuot P g₂)
     (hset_eq : DoubleCoset.doubleCoset
@@ -466,7 +421,6 @@ lemma heckeMultiplicity_pos_of_mem_mulSupport (g₁ g₂ : P.Δ) (d : HeckeCoset
   simp only [Finset.top_eq_univ, Finset.mem_image, Finset.mem_univ, true_and,
     Prod.exists] at hd
   obtain ⟨i₀, j₀, hmap⟩ := hd
-  -- `hmap : mulMap P g₁ g₂ (i₀, j₀) = d` gives a witnessing double-coset equality.
   have hset_eq : DoubleCoset.doubleCoset
       ((↑i₀.out : G) * (↑g₁ : G) * ((↑j₀.out : G) * (↑g₂ : G)))
       (P.H : Set G) (P.H : Set G) =
@@ -515,7 +469,6 @@ lemma mem_mulSupport_of_product_mem (g₁ g₂ d : P.Δ) (h₁ h₂ : P.H)
   rw [mulSupport]; simp only [Finset.top_eq_univ, Finset.mem_image, Finset.mem_univ,
     true_and, Prod.exists]
   refine ⟨⟦⟨h₁, h₁.2⟩⟧, ⟦⟨h₂, h₂.2⟩⟧, ?_⟩
-  -- mulMap returns ⟦⟨i.out * g₁ * (j.out * g₂)⟩⟧; need = ⟦d⟧ (double coset equality)
   unfold mulMap; rw [HeckeCoset.eq_iff]; dsimp only
   obtain ⟨n₁, hn₁⟩ := QuotientGroup.mk_out_eq_mul
     ((ConjAct.toConjAct (g₁ : G) • P.H).subgroupOf P.H) ⟨(h₁ : G), h₁.2⟩
@@ -532,10 +485,7 @@ lemma mem_mulSupport_of_product_mem (g₁ g₂ d : P.Δ) (h₁ h₂ : P.H)
     have := n₂.2; rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
       ConjAct.smul_def] at this; simpa [ConjAct.ofConjAct_toConjAct]
   rw [hi, hj]
-  -- Goal: H((h₁↑↑n₁)g₁((h₂↑↑n₂)g₂))H = HdH
-  -- Use doubleCoset_eq_of_mem: show the product ∈ HdH
   apply HeckeCoset.doubleCoset_eq_of_mem
-  -- (h₁n₁)g₁(h₂n₂g₂) = (h₁n₁h₁⁻¹ * a) * d * (b * g₂⁻¹n₂g₂) with both in H
   rw [DoubleCoset.mem_doubleCoset] at hmem; obtain ⟨a, ha, b, hb, hab⟩ := hmem
   rw [DoubleCoset.mem_doubleCoset]
   exact ⟨(h₁ : G) * ↑↑n₁ * (h₁ : G)⁻¹ * a,
@@ -553,13 +503,10 @@ lemma mem_mulSupport_of_product_mem (g₁ g₂ d : P.Δ) (h₁ h₂ : P.H)
             _ = (↑h₁ * ↑↑n₁) * ↑g₁ * ((↑h₂ * ↑↑n₂) * ↑g₂) := by group
       exact key.symm⟩
 
-/-- When `dcRel P g₁ d`, some representative pair `(i₀, j₀)` realizes the set-form
-predicate for left multiplication by `HeckeCoset.one`: the left coset `dH` is hit. -/
 private lemma nonempty_one_mul_witness_of_dcRel (g₁ d : P.Δ) (hg₁d : dcRel P g₁ d) :
     Nonempty ↑{x : decompQuot P (HeckeCoset.one P).rep × decompQuot P g₁ |
       ({(↑x.1.out : G) * (↑(HeckeCoset.one P).rep : G)} : Set G) *
         {(↑x.2.out : G) * (↑g₁ : G)} * P.H = {(↑d : G)} * (P.H : Set G)} := by
-  -- d ∈ Hg₁H, find j' such that d ∈ {j'.out * g₁} * H
   have hd_in : (↑d : G) ∈ doubleCoset (↑g₁ : G) P.H P.H :=
     hg₁d ▸ DoubleCoset.mem_doubleCoset_self P.H P.H _
   rw [DoubleCoset.doubleCoset_eq_iUnion_leftCosets] at hd_in
@@ -568,8 +515,6 @@ private lemma nonempty_one_mul_witness_of_dcRel (g₁ d : P.Δ) (hg₁d : dcRel 
   rw [smul_eq_singleton_mul] at hj'
   rw [singleton_mul] at hj'
   simp only [image_mul_left, mem_preimage, SetLike.mem_coe] at hj'
-  -- hj' : (j'.out * g₁)⁻¹ * d ∈ P.H
-  -- Pick j₀ := ⟦⟨h₀⁻¹ * j'.out, _⟩⟧ where h₀ = i₀.out * one.rep ∈ H
   obtain ⟨i₀⟩ := one_in_decompQuot_T_one P
   have h₀_mem : (↑i₀.out : G) * ((HeckeCoset.one P).rep : G) ∈ P.H :=
     Subgroup.mul_mem _ (SetLike.coe_mem i₀.out) (HeckeCoset.one_rep_mem_H P)

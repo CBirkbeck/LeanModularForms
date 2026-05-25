@@ -142,13 +142,9 @@ private lemma units_coe_mul_inv_mul_right_cancel (a b : ℂˣ) :
   rw [Units.val_mul, _root_.mul_inv_rev, mul_assoc, mul_comm (↑a : ℂ)⁻¹ (↑b : ℂ),
     ← mul_assoc, inv_mul_cancel₀ b.ne_zero, one_mul]
 
-/-- The restriction of the `Δ₀(N)` upper-left character to `Γ₀(N) = H`.
-
-The abstract twisted fixed-space relation below evaluates this character on
-`adj(h)`. Since the existing generalized Hecke action slashes by adjugated
-representatives, this is the convention that matches `tRep_gen = adj(σᵢδ)`.
-For `h ∈ Γ₀(N)`, the upper-left entry of `adj(h)` is the usual lower-right
-Nebentypus entry. -/
+/-- The restriction of the `Δ₀(N)` upper-left character to `Γ₀(N) = H`. It is
+evaluated on `adj(h)` to match the adjugated representatives of the generalized
+Hecke action; for `h ∈ Γ₀(N)` this is the usual lower-right Nebentypus entry. -/
 noncomputable def delta0NebentypusHChar
     (χ : (ZMod N)ˣ →* ℂˣ)
     (h : GL (Fin 2) ℚ) (hh : h ∈ (Gamma0_pair N).H) : ℂˣ :=
@@ -174,12 +170,9 @@ noncomputable def delta0NebentypusWeight
   delta0NebentypusDeltaChar (N := N) χ (deltaRep_gen (N := N) D i)
 
 /-- The twisted Hecke slash action attached to the existing `Γ₀(N)` Hecke coset.
-
-The existing generalized Hecke action uses the adjugated representatives
-`tRep_gen = adj(σᵢ · rep(D))`. Consequently the coefficient attached to the
-raw `Δ₀(N)` representative `σᵢ · rep(D)` is the inverse of the upper-left
-Nebentypus character. This is the convention compatible with the twisted
-fixed-space law `f ∣ h = η(h)⁻¹ f` for `h ∈ Γ₀(N)`. -/
+Since the slash uses the adjugated representatives `tRep_gen = adj(σᵢ · rep(D))`,
+each summand carries the inverse of the upper-left Nebentypus character, matching
+the twisted fixed-space law `f ∣ h = η(h)⁻¹ f` for `h ∈ Γ₀(N)`. -/
 noncomputable def twistedHeckeSlash_gen
     (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (D : HeckeCoset (Gamma0_pair N)) (f : ℍ → ℂ) : ℍ → ℂ :=
@@ -243,8 +236,7 @@ noncomputable def twistedHeckeSlash_gen
     delta0NebentypusDeltaChar]
 
 /-- The weighted Hecke slash action extended by `ℤ`-linearity to the existing
-Hecke ring `𝕋 (Gamma0_pair N) ℤ`. This is the intended source object for the
-general-`χ` ring action; no replacement or polynomial source ring is introduced. -/
+Hecke ring `𝕋 (Gamma0_pair N) ℤ`. -/
 noncomputable def twistedHeckeSlashExt_gen
     (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (T : 𝕋 (Gamma0_pair N) ℤ) (f : ℍ → ℂ) : ℍ → ℂ :=
@@ -283,11 +275,7 @@ lemma twistedHeckeSlashExt_gen_single
   ext z
   simp [twistedHeckeSlashExt_gen, heckeSlashExt_gen]
 
-/-- The raw function-space `Γ₀(N),χ` condition for the existing Hecke pair.
-
-This is the algebraic target for the double-coset action. It deliberately lives
-on functions first: holomorphicity and cusp-boundedness can then be transported
-after the Hecke-ring action is established at the abstract level. -/
+/-- The raw function-space `Γ₀(N),χ` condition for the existing Hecke pair. -/
 def IsGamma0TwistedInvariant
     (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (f : ℍ → ℂ) : Prop :=
   ∀ h : GL (Fin 2) ℚ, ∀ hh : h ∈ (Gamma0_pair N).H,
@@ -325,8 +313,7 @@ noncomputable def gamma0TwistedInvariantFunctionSubmodule
   Iff.rfl
 
 /-- Positivity of the real determinant of an adjugated `Γ₀(N)` Hecke
-representative. This is the local form of the private determinant lemma used by
-`heckeSlash_gen_smul`. -/
+representative. -/
 lemma tRep_gen_Gamma0_det_pos
     (D : HeckeCoset (Gamma0_pair N))
     (i : decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) :
@@ -344,8 +331,6 @@ lemma tRep_gen_Gamma0_det_pos
     simpa using hdelta
   exact glMap_det_pos_of_rat_det_pos _ hRat
 
-/-- The `UpperHalfPlane.σ` field automorphism of a `Γ₀(N)` Hecke representative is
-the identity, since the representative has positive real determinant. -/
 private lemma tRep_gen_sigma_eq_id
     (D : HeckeCoset (Gamma0_pair N))
     (i : decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) :
@@ -353,7 +338,6 @@ private lemma tRep_gen_sigma_eq_id
   unfold UpperHalfPlane.σ
   simp only [tRep_gen_Gamma0_det_pos (N := N) D i, ↓reduceIte]
 
-/-- Scalar multiplication commutes with slashing by a `Γ₀(N)` Hecke representative. -/
 private lemma smul_slash_tRep_gen
     (k : ℤ) (D : HeckeCoset (Gamma0_pair N))
     (i : decompQuot (Gamma0_pair N) (HeckeCoset.rep D))
@@ -441,8 +425,6 @@ lemma gamma0TripleDelta_eq_deltaRep_mul_correction
   simp [gamma0Correction]
   group
 
-/-- Slashing by the adjugate of `h₁ · rep D · h₂` factors through the `H`
-correction and the chosen representative `tRep_gen D q`. -/
 private lemma slash_GL_adjugate_triple_eq_correction_slash
     (k : ℤ) (D : HeckeCoset (Gamma0_pair N))
     (q : decompQuot (Gamma0_pair N) (HeckeCoset.rep D))
@@ -455,8 +437,6 @@ private lemma slash_GL_adjugate_triple_eq_correction_slash
       tRep_gen (Gamma0_pair N) D q) = _
   rw [map_mul, SlashAction.slash_mul]
 
-/-- The Nebentypus `H`-character of the double adjugate of the correction matrix
-equals the Nebentypus character of the correction `Δ₀(N)` element. -/
 private lemma delta0NebentypusHChar_adjugate_adjugate_correction
     (χ : (ZMod N)ˣ →* ℂˣ)
     (D : HeckeCoset (Gamma0_pair N))
@@ -544,7 +524,6 @@ private lemma units_inv_smul_inv_smul_eq_mul_inv_smul
   simp [Pi.smul_apply, smul_eq_mul, Units.val_mul, _root_.mul_inv_rev,
     mul_left_comm, mul_comm]
 
-/-- Left multiplication by a `Γ₀(N)` element on the right-coset decomposition. -/
 private noncomputable def gamma0LeftMulQuot
     (D : HeckeCoset (Gamma0_pair N)) (σ : (Gamma0_pair N).H) :
     decompQuot (Gamma0_pair N) (HeckeCoset.rep D) →
@@ -576,7 +555,6 @@ private lemma gamma0LeftMulQuot_injective
       · rw [smul_eq_singleton_mul]
         exact ⟨_, rfl, 1, (Gamma0_pair N).H.one_mem, by group⟩))
 
-/-- Left multiplication by a `Γ₀(N)` element is a permutation of the quotient. -/
 private noncomputable def gamma0LeftMulEquiv
     (D : HeckeCoset (Gamma0_pair N)) (σ : (Gamma0_pair N).H) :
     decompQuot (Gamma0_pair N) (HeckeCoset.rep D) ≃
@@ -612,7 +590,6 @@ private lemma delta0Nebentypus_left_weight
   rw [gamma0TripleDelta_left_eq_h_mul_deltaRep (N := N) D σ hσ i]
   exact map_mul _ _ _
 
-/-- Distribute the slash over the finite twisted representative sum. -/
 private lemma twistedHeckeSlash_gen_slash_distrib
     (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (D : HeckeCoset (Gamma0_pair N)) (f : ℍ → ℂ)
@@ -627,8 +604,6 @@ private lemma twistedHeckeSlash_gen_slash_distrib
   | empty => simp [SlashAction.zero_slash]
   | cons a s has ih => simp [Finset.sum_cons, SlashAction.add_slash, ih]
 
-/-- Right-multiplying `tRep_gen D i` by `σ_Q` equals the adjugate of the
-left-multiplied representative `(GL_adjugate σ_Q) · i.out · rep D`. -/
 private lemma tRep_gen_mul_eq_adjugate_leftMul
     (D : HeckeCoset (Gamma0_pair N)) (σ_Q : GL (Fin 2) ℚ)
     (i : decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) :
@@ -646,9 +621,6 @@ private lemma tRep_gen_mul_eq_adjugate_leftMul
       ((i.out : GL (Fin 2) ℚ) * (HeckeCoset.rep D : GL (Fin 2) ℚ)) from by
         group]
 
-/-- Slashing one weighted summand by `σ_Q ∈ Γ₀(N)` reproduces the `H`-character
-times the summand at the left-multiplied index `π i`. This is the per-index
-permutation step behind invariance of the twisted operator. -/
 private lemma twistedHeckeSlash_gen_perm_summand
     (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (D : HeckeCoset (Gamma0_pair N))
@@ -738,9 +710,6 @@ lemma twistedHeckeSlash_gen_preserves_invariant
         (f ∣[k] tRep_gen (Gamma0_pair N) D i)) (fun _ ↦ rfl)]
   rfl
 
-/-- The product of the two coset weights equals the Nebentypus character of the
-merged `Δ₀(N)` representative `h₁ · rep D · h₂`, using the matrix factorization
-`heq`. -/
 private lemma delta0NebentypusWeight_mul_eq_tripleDelta
     (χ : (ZMod N)ˣ →* ℂˣ)
     (D₁ D₂ D : HeckeCoset (Gamma0_pair N))
@@ -771,9 +740,6 @@ private lemma delta0NebentypusWeight_mul_eq_tripleDelta
       (gamma0TripleDelta (N := N) D h₁ hh₁ h₂ hh₂)
   rw [← map_mul, hdelta_prod]
 
-/-- The weighted two-step slash for a pair `p` equals the single weighted slash
-of the merged double-coset representative `⟦⟨h₁, hh₁⟩⟧`, once the matrix
-factorization `heq` of the product into `h₁ · rep D · h₂` is known. -/
 private lemma twisted_weighted_slash_product_eq
     (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (D₁ D₂ D : HeckeCoset (Gamma0_pair N))
@@ -835,9 +801,6 @@ private lemma twisted_weighted_slash_product_eq
           simpa [q, delta0NebentypusWeight] using
             twisted_weighted_slash_tRep_gen_of_mem (N := N) k χ D h₁ hh₁ h₂ hh₂ f hf
 
-/-- Weighted analogue of `slash_and_coset_of_mulMap_eq_gen`: if a pair of
-representatives in `D₁ × D₂` maps to `D`, its twisted contribution is the
-corresponding twisted contribution for one representative of `D`. -/
 private lemma twisted_slash_and_coset_of_mulMap_eq
     (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (D₁ D₂ D : HeckeCoset (Gamma0_pair N))
@@ -942,9 +905,6 @@ private lemma gamma0_mulMap_eq_of_rightCoset
       exact ⟨_, hm, hd⟩))
 
 open Classical in
-/-- The fiber of the chosen-representative map over `q` matches the right-coset
-fiber set, so their cardinalities agree. The choice function `q_of` enters only
-through its defining right-coset compatibility `h_coset_eq`. -/
 private lemma twisted_fiber_filter_card_eq
     (D₁ D₂ D : HeckeCoset (Gamma0_pair N))
     (q_of : decompQuot (Gamma0_pair N) (HeckeCoset.rep D₁) ×
@@ -988,9 +948,6 @@ private lemma twisted_fiber_filter_card_eq
     left_inv := fun ⟨_, _⟩ ↦ rfl
     right_inv := fun ⟨_, _⟩ ↦ rfl }
 
-/-- Reindexing a summand `F` over the pairs hitting `D` by a choice function
-`q_of` collapses to the `m`-weighted per-`D` sum of `G`, provided `F p = G (q_of p)`
-on those pairs and `q_of` is right-coset compatible. The summand type is generic. -/
 private lemma twisted_filtered_sum_collapse_of_qOf
     {M : Type*} [AddCommGroup M]
     [DecidableEq (HeckeCoset (Gamma0_pair N))]
@@ -1058,10 +1015,6 @@ private lemma twisted_filtered_sum_collapse_of_qOf
   rw [Finset.sum_nsmul]
   simp only [m, Finsupp.coe_mk, heckeMultiplicity, n, Nat.cast_smul_eq_nsmul ℤ]
 
-/-- The weighted fiber-sum identity for the existing `Γ₀(N)` Hecke-ring
-multiplication. This is the twisted analogue of `heckeSlash_gen_fiber_sum`: the
-same `m (Gamma0_pair N)` multiplicities are used, and only the summands are
-weighted by the semigroup character. -/
 private lemma twistedHeckeSlash_gen_fiber_sum
     [DecidableEq (HeckeCoset (Gamma0_pair N))]
     (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
@@ -1121,8 +1074,6 @@ private lemma twistedHeckeSlash_gen_fiber_sum
       (f ∣[k] tRep_gen (Gamma0_pair N) D q))
     h_term_eq h_coset_eq
 
-/-- Iterating two twisted slash operators expands as a single sum over the
-product index set of the two right-coset decompositions. -/
 private lemma twistedHeckeSlash_gen_comp_eq_prod_sum
     (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (D₁ D₂ : HeckeCoset (Gamma0_pair N)) (f : ℍ → ℂ) :
@@ -1173,8 +1124,7 @@ private lemma twistedHeckeSlash_gen_comp_eq_prod_sum
   rw [← Fintype.sum_prod_type']
 
 /-- Multiplicativity of the twisted slash action on `Γ₀(N),χ`-invariant
-functions, using the existing `Γ₀(N)` Hecke-ring multiplication. The product
-appears in the same adjugate order as `heckeSlash_gen_comp`. -/
+functions, using the existing `Γ₀(N)` Hecke-ring multiplication. -/
 theorem twistedHeckeSlash_gen_comp
     (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (D₁ D₂ : HeckeCoset (Gamma0_pair N)) (f : ℍ → ℂ)
@@ -1213,7 +1163,6 @@ theorem twistedHeckeSlash_gen_comp
   exact Finset.sum_congr rfl fun D hD ↦
     twistedHeckeSlash_gen_fiber_sum (N := N) k χ D₁ D₂ D hD f hf
 
-/-- `twistedHeckeSlashExt_gen` is `ℤ`-linear in the existing Hecke-ring argument. -/
 private lemma twistedHeckeSlashExt_gen_zsmul
     (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (n : ℤ) (T : 𝕋 (Gamma0_pair N) ℤ) (f : ℍ → ℂ) :
@@ -1299,8 +1248,6 @@ lemma twistedHeckeSumFunction_apply_coe
         (c : ℤ) • (twistedHeckeSlash_gen (N := N) k χ D (f : ℍ → ℂ)) z
       simp [Pi.smul_apply, smul_eq_mul, zsmul_eq_mul]
 
-/-- Multiplicativity on two `T_single` generators, with coefficients, for the
-endomorphism-valued twisted action. -/
 private lemma twistedHeckeSumFunction_mul_T_single
     (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (D₁ D₂ : HeckeCoset (Gamma0_pair N)) (a b : ℤ) :
@@ -1358,9 +1305,6 @@ lemma twistedHeckeSumFunction_mul
       | single D₂ b =>
           exact twistedHeckeSumFunction_mul_T_single (N := N) k χ D₁ D₂ a b
 
-/-- The twisted Hecke slash of the identity double coset is the identity on
-`Γ₀(N),χ`-invariant functions. The single summand is a `Γ₀(N)` element, and
-the Nebentypus weight cancels the twisted fixed-space scalar. -/
 private lemma twistedHeckeSlash_gen_identity_coset
     (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (f : ℍ → ℂ)
     (hf : IsGamma0TwistedInvariant (N := N) k χ f) :

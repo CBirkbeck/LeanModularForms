@@ -29,8 +29,6 @@ foundational double-coset lemmas (Shimura §3.3, 3.28–3.29), including the
 Chinese-remainder machinery `Gamma_gcd_eq_mul` and the coprime-determinant
 double-coset comparison `doubleCoset_eq_of_Gamma0_coprimeDet`.
 
-This is the base module of the `CongruenceHecke` chain.
-
 ## References
 
 * Shimura, *Introduction to the Arithmetic Theory of Automorphic Functions*, §3.3
@@ -41,8 +39,6 @@ open Matrix Subgroup.Commensurable Pointwise Matrix.SpecialLinearGroup
 open scoped Pointwise MatrixGroups
 
 namespace HeckeRing.GLn
-
-/-! ### The Hecke pair for Γ₀(N) -/
 
 /-- `Δ₀(N)`: integer matrices with `c ≡ 0 (mod N)`, `(a, N) = 1`, positive determinant.
     Shimura (3.3.1). -/
@@ -109,10 +105,7 @@ private lemma Gamma0_map_commensurable_SLnZ (N : ℕ) [NeZero N] :
         Subgroup.relIndex_top_left]
     exact one_ne_zero
 
-/-- `Δ₀(N) ≤ commensurator(Γ₀(N))`. Follows from Shimura Lemma 3.10.
-    The proof uses: Δ₀(N) ≤ Δ (positive-determinant integer matrices),
-    Δ ≤ commensurator(SL₂(ℤ)), and commensurator(Γ₀(N)) = commensurator(SL₂(ℤ))
-    (since Γ₀(N) has finite index in SL₂(ℤ), making them commensurable). -/
+/-- `Δ₀(N) ≤ commensurator(Γ₀(N))`. Follows from Shimura Lemma 3.10. -/
 lemma Delta0_le_commensurator (N : ℕ) [NeZero N] :
     Delta0_submonoid N ≤
     (commensurator ((CongruenceSubgroup.Gamma0 N).map (mapGL ℚ))).toSubmonoid := by
@@ -127,27 +120,10 @@ noncomputable def Gamma0_pair (N : ℕ) [NeZero N] : HeckePair (GL (Fin 2) ℚ) 
   h₀ := Gamma0_le_Delta0 N
   h₁ := Delta0_le_commensurator N
 
-/-! ### Shimura §3.3 Foundation Lemmas (3.28–3.29)
-
-These lemmas establish the relationship between double cosets for `Γ = SL₂(ℤ)` and
-for a congruence subgroup `Γ' ⊃ Γ_N`. The key result (Shimura 3.29(3)) is:
-`ΓαΓ ∩ Δ₀(N) = Γ₀(N)αΓ₀(N)` for `α ∈ Δ₀(N)` — the `Γ₀(N)`-double coset equals
-the intersection of the full `SL₂(ℤ)`-double coset with `Δ₀(N)`.
--/
-
 section FoundationLemmas
 
 variable (N : ℕ) [NeZero N]
 
-/-- **Key number-theoretic lemma for Shimura 3.29(3)**:
-    For `α ∈ Δ₀(N)` (integer matrix with `gcd(a,N) = 1`, `N | c`, `det > 0`) and
-    `σ ∈ SL₂(ℤ)`, if the product `σ · A` also satisfies `N | (σA)_{10}` (the `Δ₀(N)`
-    congruence condition), then there exist `δ₁, δ₂ ∈ Γ₀(N)` such that
-    `σ · A = δ₁ · A · δ₂`.
-
-    The additional hypothesis `N | (σA)_{10}` corresponds to the intersection
-    `ΓαΓ ∩ Δ₀(N)` in Shimura's formulation of Lemma 3.29(3). Under this condition,
-    `σ ∈ Γ₀(N)` (by coprimality `gcd(a,N) = 1`), so `δ₁ = σ, δ₂ = 1` works. -/
 private lemma SL2_mul_Delta0_in_Gamma0_doubleCoset
     (A : Matrix (Fin 2) (Fin 2) ℤ) (hAN : (N : ℤ) ∣ A 1 0)
     (hAco : Int.gcd (A 0 0) N = 1) (hAdet : 0 < A.det)
@@ -212,10 +188,6 @@ private lemma left_mul_mem_Gamma0_doubleCoset
   simp only [Matrix.mul_apply, Fin.sum_univ_two] at h_eq_ij
   exact_mod_cast h_eq_ij
 
-/-- **Right version of the integer-level decomposition**: `A · σ = δ₁ · A · δ₂`.
-    Under the hypothesis that `N | (Aσ)_{10}` and `gcd(d, N) = 1` (where `d = A 1 1`),
-    we deduce `σ ∈ Γ₀(N)` and take `δ₁ = 1, δ₂ = σ`. The condition `gcd(d, N) = 1`
-    follows from `gcd(det(A), N) = 1` (since `det ≡ ad (mod N)` and `gcd(a,N) = 1`). -/
 private lemma SL2_mul_Delta0_in_Gamma0_doubleCoset_right
     (A : Matrix (Fin 2) (Fin 2) ℤ) (hAN : (N : ℤ) ∣ A 1 0)
     (hAco : Int.gcd (A 0 0) N = 1) (hAdet : 0 < A.det)
@@ -302,9 +274,6 @@ lemma GammaN_le_Gamma0 :
   rw [CongruenceSubgroup.Gamma0_mem]
   exact hσ.2.2.1
 
-/-- `gcd(det(A), N) = 1` with `N | c` and `gcd(a, N) = 1` implies `gcd(d, N) = 1`
-    where `A = [[a,b],[c,d]]`. Since `det(A) = ad - bc ≡ ad (mod N)` and
-    `gcd(a, N) = 1`, coprimality of `det(A)` with `N` forces `gcd(d, N) = 1`. -/
 private lemma gcd_A11_N_eq_one
     (A : Matrix (Fin 2) (Fin 2) ℤ) (hAN : (N : ℤ) ∣ A 1 0)
     (_hAco : Int.gcd (A 0 0) N = 1)
@@ -336,7 +305,6 @@ private lemma intCast_eq_zero_of_dvd {m n : ℕ} (h : m ∣ n) (x : ℤ)
     (dvd_trans (by exact_mod_cast h) this)
 
 open CongruenceSubgroup in
-/-- If `m ∣ n`, then `Γ(n) ≤ Γ(m)`: higher level means smaller subgroup. -/
 private lemma Gamma_le_of_dvd {m n : ℕ} (h : m ∣ n) : Gamma n ≤ Gamma m := by
   intro γ hγ
   rw [Gamma_mem] at hγ ⊢
@@ -345,7 +313,6 @@ private lemma Gamma_le_of_dvd {m n : ℕ} (h : m ∣ n) : Gamma n ≤ Gamma m :=
     intCast_eq_zero_of_dvd h _ hγ.2.2.1,
     intCast_eq_one_of_dvd h _ hγ.2.2.2⟩
 
-/-- Functoriality of the SL₂ map: `map f ∘ map g = map (f.comp g)`. -/
 private lemma SL_map_comp
     {R S T : Type*} [CommRing R] [CommRing S] [CommRing T]
     (f : S →+* T) (g : R →+* S) (σ : SpecialLinearGroup (Fin 2) R) :
@@ -353,8 +320,6 @@ private lemma SL_map_comp
     SpecialLinearGroup.map (f.comp g) σ := by
   ext i j; simp [map_apply_coe, RingHom.mapMatrix_apply, map_apply]
 
-/-- **Generalized Chinese Remainder Theorem for integers**: given `x ≡ y mod gcd(m,n)`,
-    there exists `z` with `z ≡ x mod m` and `z ≡ y mod n`. -/
 private lemma int_crt {m n x y : ℤ} (h : x ≡ y [ZMOD ↑(Int.gcd m n)]) :
     ∃ z : ℤ, z ≡ x [ZMOD m] ∧ z ≡ y [ZMOD n] := by
   rw [Int.modEq_iff_dvd] at h; obtain ⟨k, hk⟩ := h
@@ -365,7 +330,6 @@ private lemma int_crt {m n x y : ℤ} (h : x ≡ y [ZMOD ↑(Int.gcd m n)]) :
     exact ⟨Int.gcdB m n * k,
       by rw [show y = x + g * k from by linarith, hbez]; ring⟩
 
-/-- `Int.ModEq` implies equal casts to `ZMod`. -/
 private lemma intModEq_to_zmod {m : ℕ} [NeZero m] {a b : ℤ}
     (h : a ≡ b [ZMOD ↑m]) : (a : ZMod m) = (b : ZMod m) := by
   rw [Int.modEq_iff_dvd] at h
@@ -374,7 +338,6 @@ private lemma intModEq_to_zmod {m : ℕ} [NeZero m] {a b : ℤ}
   have h2 : (b : ZMod m) - (a : ZMod m) = 0 := by push_cast at h1; exact h1
   exact eq_of_sub_eq_zero h2 |>.symm
 
-/-- Entries of `γ ∈ Γ(N)` are congruent to entries of the identity mod `N`. -/
 private lemma SL2_gamma_entry_modEq (N : ℕ) [NeZero N]
     (γ : SpecialLinearGroup (Fin 2) ℤ)
     (hγ : γ ∈ CongruenceSubgroup.Gamma N) (i j : Fin 2) :
@@ -390,9 +353,6 @@ private lemma SL2_gamma_entry_modEq (N : ℕ) [NeZero N]
     simp only [coe_one, Int.cast_sub, sub_eq_zero]; rw [h]; simp [one_apply]
   exact_mod_cast (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp this
 
-/-- The reduction modulo `m ∣ lcm(a,b)` of a lift `β` of an integer matrix `M`
-    (reduced mod `lcm`) has entries `M i j` reduced mod `m`. Used to check
-    `β ∈ Γ(a)` and `β⁻¹γ ∈ Γ(b)` from the single CRT lift in `Gamma_gcd_eq_mul`. -/
 private lemma crt_lift_reduces_mod {a b : ℕ} [NeZero (Nat.lcm a b)]
     (M : Matrix (Fin 2) (Fin 2) ℤ) (β : SpecialLinearGroup (Fin 2) ℤ)
     (hβ : (↑(SpecialLinearGroup.map (Int.castRingHom (ZMod (Nat.lcm a b))) β) :
@@ -410,9 +370,6 @@ private lemma crt_lift_reduces_mod {a b : ℕ} [NeZero (Nat.lcm a b)]
   simpa only [map_apply_coe, RingHom.mapMatrix_apply, Matrix.map_apply, Int.coe_castRingHom,
     map_intCast] using this
 
-/-- The hard direction of `Gamma_gcd_eq_mul`: any `γ ∈ Γ(gcd(a,b))` factors as
-    `y * z` with `y ∈ Γ(a)` and `z ∈ Γ(b)`. A single Chinese-remainder lift `β`
-    of the CRT-combined entries gives `y = β` and `z = β⁻¹γ`. -/
 private lemma exists_Gamma_factor_of_mem_Gamma_gcd (a b : ℕ) [NeZero a] [NeZero b]
     [NeZero (Nat.gcd a b)] [NeZero (Nat.lcm a b)]
     (γ : SpecialLinearGroup (Fin 2) ℤ) (hγ : γ ∈ CongruenceSubgroup.Gamma (Nat.gcd a b)) :
@@ -467,14 +424,7 @@ private lemma exists_Gamma_factor_of_mem_Gamma_gcd (a b : ℕ) [NeZero a] [NeZer
 
 open CongruenceSubgroup in
 /-- **Shimura Lemma 3.28**: `Γ(gcd(a,b)) = Γ(a) · Γ(b)` — the product of principal
-    congruence subgroups is the congruence subgroup of the gcd.
-
-    The proof uses the surjectivity of `SL₂(ℤ) → SL₂(ℤ/dℤ)` (`SL2_reduction_surjective`)
-    combined with the generalized Chinese Remainder Theorem. For the hard direction
-    `Γ(gcd) ≤ Γ(a) ⊔ Γ(b)`: given `γ ∈ Γ(gcd)`, the integer CRT (using `gcd(a,b) |
-    (I_{ij} - γ_{ij})`) provides entries `z_{ij}` with `z ≡ I mod a` and `z ≡ γ mod b`.
-    The matrix `(z_{ij})` has `det ≡ 1 mod lcm(a,b)`, giving an element of
-    `SL₂(ℤ/lcm ℤ)` which lifts to `β ∈ SL₂(ℤ)` with `β ∈ Γ(a)` and `β⁻¹γ ∈ Γ(b)`. -/
+    congruence subgroups is the congruence subgroup of the gcd. -/
 theorem Gamma_gcd_eq_mul (a b : ℕ) [NeZero a] [NeZero b]
     [NeZero (Nat.gcd a b)] :
     (Gamma (Nat.gcd a b)).map (mapGL ℚ) =
@@ -491,9 +441,6 @@ theorem Gamma_gcd_eq_mul (a b : ℕ) [NeZero a] [NeZero b]
   · exact sup_le (Gamma_le_of_dvd (Nat.gcd_dvd_left a b))
       (Gamma_le_of_dvd (Nat.gcd_dvd_right a b))
 
-/-- If `N ∣ (P · Q)_{10}`, `N ∣ P_{10}`, and `gcd(P_{11}, N) = 1`, then `N ∣ Q_{10}`.
-    The product entry expands as `P_{10} Q_{00} + P_{11} Q_{10}`, so coprimality of
-    `P_{11}` with `N` transfers the divisibility to `Q_{10}`. -/
 private lemma dvd_apply_one_zero_of_dvd_mul (P Q : Matrix (Fin 2) (Fin 2) ℤ)
     (hPQ : (N : ℤ) ∣ (P * Q) 1 0) (hP10 : (N : ℤ) ∣ P 1 0)
     (hP11 : Int.gcd (P 1 1) N = 1) : (N : ℤ) ∣ Q 1 0 := by
@@ -507,10 +454,6 @@ private lemma dvd_apply_one_zero_of_dvd_mul (P Q : Matrix (Fin 2) (Fin 2) ℤ)
   rw [mul_comm] at h2
   exact (Int.isCoprime_iff_gcd_eq_one.mpr hP11).symm.dvd_of_dvd_mul_right h2
 
-/-- For `τ` with `N ∣ τ_{10}` and `N ∣ (τ_{11} - 1)` (a `Γ(N)`-type condition) and
-    `A` with `N ∣ A_{10}` and `gcd(A_{11}, N) = 1`, the product `C = τ · A` inherits
-    both: `N ∣ C_{10}` and `gcd(C_{11}, N) = 1`. Used for the matrix `τ_N · A` in
-    `doubleCoset_eq_of_Gamma0_coprimeDet`. -/
 private lemma Gamma0_mul_apply_one_zero_and_gcd (τ A : Matrix (Fin 2) (Fin 2) ℤ)
     (hτ10 : (N : ℤ) ∣ τ 1 0) (hτ11 : (N : ℤ) ∣ (τ 1 1 - 1))
     (hAN : (N : ℤ) ∣ A 1 0) (hAco2 : Int.gcd (A 1 1) N = 1) :
@@ -530,9 +473,6 @@ private lemma Gamma0_mul_apply_one_zero_and_gcd (τ A : Matrix (Fin 2) (Fin 2) �
     rw [show (τ * A) 1 1 = A 1 1 + k * ↑N from by linarith]
     exact (Int.isCoprime_iff_gcd_eq_one.mpr hAco2).add_mul_right_left k
 
-/-- The rational matrix of `mapGL τ · g · mapGL δ` is the integer matrix product
-    `τ · A · δ` cast to `ℚ`, where `↑g = A.map (Int.cast)`. Lets one read off the
-    integer witness of a `Γ₀(N)`-translated double-coset element. -/
 private lemma mapGL_mul_coe_eq_intMatrix (τ δ : SpecialLinearGroup (Fin 2) ℤ)
     (g : GL (Fin 2) ℚ) (A : Matrix (Fin 2) (Fin 2) ℤ)
     (hA : (↑g : Matrix (Fin 2) (Fin 2) ℚ) = A.map (Int.cast : ℤ → ℚ)) :
@@ -544,12 +484,6 @@ private lemma mapGL_mul_coe_eq_intMatrix (τ δ : SpecialLinearGroup (Fin 2) ℤ
   ext i j; simp [Matrix.mul_apply, Matrix.map_apply]
 
 open CongruenceSubgroup in
-/-- The forward (`⊆`) direction of `doubleCoset_eq_of_Gamma0_coprimeDet`: an
-    `SL₂(ℤ)`-double-coset element `σ₁ · α · σ₂` that lies in `Δ₀(N)` is already a
-    `Γ₀(N)`-double-coset element. Factor `σ₁ = τ_N · τ_a` (Shimura 3.28) with
-    `τ_N ∈ Γ(N)` and `τ_a ∈ Γ(det α)`; the conjugation `Γ(det α) ⊆ αΓα⁻¹`
-    rewrites the element as `τ_N · α · γ₂'`, and coprimality of `τ_N · A` forces
-    `γ₂' ∈ Γ₀(N)`. -/
 private lemma mem_Gamma0_doubleCoset_of_mem_Delta0
     (α : GL (Fin 2) ℚ) (A : Matrix (Fin 2) (Fin 2) ℤ)
     (hA : (↑α : Matrix (Fin 2) (Fin 2) ℚ) = A.map (Int.cast : ℤ → ℚ))
@@ -604,13 +538,7 @@ private lemma mem_Gamma0_doubleCoset_of_mem_Delta0
 open CongruenceSubgroup in
 /-- **Shimura Lemma 3.29(3)**: For `α ∈ Δ₀(N)` with `gcd(det(α), N) = 1`,
     the intersection of the full double coset `ΓαΓ` with `Δ₀(N)` equals the
-    `Γ₀(N)`-double coset: `ΓαΓ ∩ Δ₀(N) = Γ₀(N)αΓ₀(N)`.
-
-    The `⊇` direction is immediate since `Γ₀(N) ⊆ Γ` and `Δ₀(N)` is a submonoid.
-    The `⊆` direction uses `Gamma_gcd_eq_mul` (Shimura 3.28) to factor `γ₁ = τ_N · τ_a`
-    with `τ_N ∈ Γ(N) ⊂ Γ₀(N)` and `τ_a ∈ Γ(det α)`, then the conjugation identity
-    `Γ(det α) ⊂ αΓα⁻¹` (`conj_ker_mem_SLnZ`) to rewrite `x = τ_N · α · γ₂'`.
-    Coprimality of the product matrix `τ_N · A` then forces `γ₂' ∈ Γ₀(N)`. -/
+    `Γ₀(N)`-double coset: `ΓαΓ ∩ Δ₀(N) = Γ₀(N)αΓ₀(N)`. -/
 theorem doubleCoset_eq_of_Gamma0_coprimeDet
     (α : GL (Fin 2) ℚ) (hα : α ∈ Delta0_submonoid N)
     (A : Matrix (Fin 2) (Fin 2) ℤ)
@@ -639,51 +567,21 @@ theorem doubleCoset_eq_of_Gamma0_coprimeDet
     rw [hx_eq] at hx_delta ⊢
     exact mem_Gamma0_doubleCoset_of_mem_Delta0 N α A hA hAN hAco2
       (ne_of_gt hAdet_pos) hdet_coprime σ₁ σ₂ hx_delta
-  · -- (⊇): x ∈ Γ₀(N)αΓ₀(N) → x ∈ ΓαΓ ∩ Δ₀(N)
-    intro hx
+  · intro hx
     rw [DoubleCoset.mem_doubleCoset] at hx
     obtain ⟨δ₁, hδ₁, δ₂, hδ₂, hx_eq⟩ := hx
     refine ⟨?_, ?_⟩
-    · -- x ∈ ΓαΓ: since Γ₀(N) ⊆ Γ
-      rw [DoubleCoset.mem_doubleCoset]
+    · rw [DoubleCoset.mem_doubleCoset]
       obtain ⟨τ₁, hτ₁, rfl⟩ := Subgroup.mem_map.mp hδ₁
       obtain ⟨τ₂, hτ₂, rfl⟩ := Subgroup.mem_map.mp hδ₂
       exact ⟨mapGL ℚ τ₁, ⟨τ₁, rfl⟩, mapGL ℚ τ₂, ⟨τ₂, rfl⟩, hx_eq⟩
-    · -- x ∈ Δ₀(N): since δ₁, δ₂ ∈ Γ₀(N) ⊆ Δ₀(N) and α ∈ Δ₀(N)
-      rw [hx_eq, SetLike.mem_coe]
+    · rw [hx_eq, SetLike.mem_coe]
       have hδ₁_delta : δ₁ ∈ Delta0_submonoid N :=
         Gamma0_le_Delta0 N ((Subgroup.mem_toSubmonoid _ _).mpr hδ₁)
       have hδ₂_delta : δ₂ ∈ Delta0_submonoid N :=
         Gamma0_le_Delta0 N ((Subgroup.mem_toSubmonoid _ _).mpr hδ₂)
       exact (Delta0_submonoid N).mul_mem
         ((Delta0_submonoid N).mul_mem hδ₁_delta hα) hδ₂_delta
-
-/-! **Note on the original `leftCoset_decomp_refines_Gamma0`**: The originally
-    intended statement claimed that if the left `Γ₀(N)`-cosets `{rᵢ} * Γ₀(N)` are
-    pairwise disjoint (for representatives `rᵢ` of the `Γ₀(N)`-double coset
-    decomposition), then the left `Γ`-cosets `{rᵢ} * Γ` are also pairwise
-    disjoint for the **same** representatives. This is **false**.
-
-    **Counterexample**: Take `N = 2`, `α = diag(1, 2)`. The index
-    `[SL₂(ℤ) : Γ₀(2)] = 3`, so the `Γ₀(2)`-double coset `Γ₀(2)·α·Γ₀(2)`
-    decomposes into `3k` left `Γ₀(2)`-cosets (where `k` is the number of left
-    `SL₂(ℤ)`-cosets in `SL₂(ℤ)·α·SL₂(ℤ)`). Each left `SL₂(ℤ)`-coset
-    `{βⱼ} * SL₂(ℤ)` contains exactly `3` left `Γ₀(2)`-cosets. If `rᵢ, rⱼ` are
-    `Γ₀(2)`-representatives from different `Γ₀(2)`-cosets within the **same**
-    `SL₂(ℤ)`-coset (i.e., `rⱼ = rᵢ · γ` for `γ ∈ SL₂(ℤ) \ Γ₀(2)`), then:
-    - `{rᵢ} * Γ₀(2) ∩ {rⱼ} * Γ₀(2) = ∅` (disjoint as `Γ₀(2)`-cosets), but
-    - `{rᵢ} * SL₂(ℤ) = {rⱼ} * SL₂(ℤ)` (same `SL₂(ℤ)`-coset).
-
-    **Correct formalization of Shimura 3.29(5)**: The actual content is the
-    **degree equality** `deg_{Γ₀(N)}(Γ₀(N)αΓ₀(N)) = [Γ:Γ₀(N)] · deg_Γ(ΓαΓ)`.
-    Combined with the double coset equality `Γ₀(N)αΓ₀(N) = ΓαΓ ∩ Δ₀(N)` from
-    Shimura 3.29(3) (`doubleCoset_eq_of_Gamma0_coprimeDet` above), this shows
-    that `Γ`-coset decompositions are obtained by **grouping** `[Γ:Γ₀(N)]` many
-    `Γ₀(N)`-cosets into each `Γ`-coset. The representatives do NOT carry over.
-
-    **What IS true**: The `Γ₀(N)`-double coset is contained in the `Γ`-double
-    coset: `Γ₀(N)αΓ₀(N) ⊆ ΓαΓ` (trivially, since `Γ₀(N) ≤ Γ`). This is
-    `Gamma0_doubleCoset_subset_Gamma` below. -/
 
 open CongruenceSubgroup in
 /-- `Γ₀(N)αΓ₀(N) ⊆ ΓαΓ`: the `Γ₀(N)`-double coset is contained in

@@ -13,8 +13,7 @@ import LeanModularForms.HeckeRIngs.GL2.Prop334_HeckeSlash
 # Strong Multiplicity One via Miyake §4.6 — Lemma 4.6.5
 
 CuspForm-level preservation lemmas and Miyake's Lemma 4.6.5 (single-prime
-coprime filter and its iterated forms). Part of a multi-file split of
-`SMOObligations.lean`.
+coprime filter and its iterated forms).
 -/
 
 open CongruenceSubgroup Matrix.SpecialLinearGroup
@@ -25,10 +24,7 @@ namespace HeckeRing.GL2
 variable {N : ℕ} [NeZero N] {k : ℤ}
 
 /-- CuspForm-level subgroup-restriction preserves the Nebentypus
-character space (with the natural pullback of `χ` along the unit map).
-
-Derived from `restrictSubgroup_mem_modFormCharSpace` (ModularForm
-version) via the CuspForm ↔ ModularForm character-space iff. -/
+character space (with the natural pullback of `χ` along the unit map). -/
 lemma cuspForm_restrictSubgroup_mem_cuspFormCharSpace
     {M N : ℕ} [NeZero M] [NeZero N] {k : ℤ} (χ : (ZMod M)ˣ →* ℂˣ) (h : M ∣ N)
     {f : CuspForm ((Gamma1 M).map (mapGL ℝ)) k} (hf : f ∈ cuspFormCharSpace k χ) :
@@ -44,10 +40,7 @@ lemma cuspForm_restrictSubgroup_mem_cuspFormCharSpace
       (k := k) χ f).mpr hf)
 
 /-- CuspForm-level `V_p` (`levelRaise`) preserves the Nebentypus
-character space, with the lifted character on the higher level.
-
-Derived from `modularFormLevelRaise_mem_modFormCharSpace` via the
-CuspForm ↔ ModularForm character-space iff. -/
+character space, with the lifted character on the higher level. -/
 lemma cuspForm_levelRaise_mem_cuspFormCharSpace
     (M : ℕ) [NeZero M] (d : ℕ) [NeZero d] (k : ℤ) (χ : (ZMod M)ˣ →* ℂˣ)
     {f : CuspForm ((Gamma1 M).map (mapGL ℝ)) k} (hf : f ∈ cuspFormCharSpace k χ) :
@@ -61,10 +54,6 @@ lemma cuspForm_levelRaise_mem_cuspFormCharSpace
     ((cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace
       (k := k) χ f).mpr hf)
 
-/-- Bad-prime variant of `heckeT_n_cusp_preserves_cuspFormCharSpace`:
-for prime `p ∣ N`, the operator `heckeT_n_cusp k p` (which equals
-`heckeT_p_divN` at the function level) preserves the cusp-form
-character space `cuspFormCharSpace k χ`. -/
 private lemma heckeT_n_cusp_preserves_cuspFormCharSpace_divN
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
     (hp : Nat.Prime p) (hpN : ¬ Nat.Coprime p N) (χ : (ZMod N)ˣ →* ℂˣ)
@@ -87,11 +76,6 @@ private lemma heckeT_n_cusp_preserves_cuspFormCharSpace_divN
     rw [heckeT_n_prime k hp]; exact dif_neg hpN]
   exact congr_arg (fun (m : ModularForm _ k) => m.toFun τ) h_diamond
 
-/-- `q`-expansion of the single-prime coprime filter `f₀ − V_p(U_p f₀)`
-at the function level: `aₙ = aₙ(f₀) · [p ∤ n]`.  Shared computation for
-the single-prime cases below (`p ∣ N` and `p` coprime to `N`).  Combines
-`qExpansion_sub` with `qExpansion_one_pSupportedRaise_coeff`, after
-identifying `V_p (U_p f₀)` with `pSupportedRaise` via `heckeT_p_divN`. -/
 private lemma qExpansion_restrict_sub_levelRaise_heckeT_coeff
     {N₀ : ℕ} [NeZero N₀] {k : ℤ} {p : ℕ} [NeZero p]
     (hp : p.Prime) (hpN : ¬ Nat.Coprime p N₀)
@@ -139,10 +123,6 @@ private lemma qExpansion_restrict_sub_levelRaise_heckeT_coeff
   have h_toMF : (⇑f₀.toModularForm' : UpperHalfPlane → ℂ) = ⇑f₀ := rfl
   by_cases hpn : p ∣ n <;> simp [hpn, f_pN, h_toMF]
 
-/-- Coprime-filter composition for `q`-expansion coefficients: nesting the
-`(n, m) = 1` filter outside the `p ∤ n` filter equals the single
-`(n, q · m) = 1` filter (for `q` prime).  Used to assemble the iterated
-coprime filter from one peeling step plus the recursive remainder. -/
 private lemma ite_coprime_filter_compose {α : Type*} [Zero α]
     {q : ℕ} (hq : q.Prime) (n m : ℕ) (a : α) :
     (if Nat.Coprime n m then (if ¬ q ∣ n then a else 0) else 0)
@@ -154,11 +134,6 @@ private lemma ite_coprime_filter_compose {α : Type*} [Zero α]
        fun h ↦ (hq.coprime_iff_not_dvd.mpr h).symm⟩
   by_cases h_rest : Nat.Coprime n m <;> by_cases h_q : q ∣ n <;> simp_all
 
-/-- Divisibility bookkeeping for the `q ∣ N` peeling step at level `q · N`.
-A distinct prime `r` keeps its level conditions when the base level is
-multiplied by `q`: if `r ∤ q · N` then `r² ∣ M`, and if `r ∣ q · N` then
-`r ∣ M / (q · N)`, given that `r` already satisfies the conditions at
-level `N` and `q ∣ M / N`. -/
 private lemma dvd_conditions_mul_left_of_dvd
     {N M q r : ℕ} (hq : q.Prime) (hr : r.Prime) (hr_ne_q : r ≠ q)
     (hr_cond : (¬ r ∣ N → r ^ 2 ∣ M) ∧ (r ∣ N → r ∣ M / N))
@@ -175,11 +150,6 @@ private lemma dvd_conditions_mul_left_of_dvd
     (hr_dvd hr_dvd_N) hq_div
   exact ⟨c, by rw [hc, show r * q * c = r * c * q by ring, Nat.mul_div_cancel _ hq.pos]⟩
 
-/-- Divisibility bookkeeping for the `q ∤ N` peeling step at level `N · q²`.
-A distinct prime `r` keeps its level conditions when the base level is
-multiplied by `q²`: if `r ∤ N · q²` then `r² ∣ M`, and if `r ∣ N · q²`
-then `r ∣ M / (N · q²)`, given that `r` already satisfies the conditions
-at level `N`, `q ∤ N`, and `q² ∣ M`. -/
 private lemma dvd_conditions_mul_right_sq_of_not_dvd
     {N M q r : ℕ} (hq : q.Prime) (hr : r.Prime) (hr_ne_q : r ≠ q)
     (hqN : ¬ q ∣ N) (hNM : N ∣ M)
@@ -202,23 +172,6 @@ private lemma dvd_conditions_mul_right_sq_of_not_dvd
   exact ⟨c, by rw [hc, show r * q ^ 2 * c = r * c * q ^ 2 by ring,
     Nat.mul_div_cancel _ (pow_pos hq.pos 2)]⟩
 
-/-- **Single-prime case of Miyake 4.6.5** (helper for the general `L` case).
-
-For a prime `p ∣ N`, the coprime-to-`p` filter is
-`g = f − V_p(U_p f) ∈ M_k(Γ_1(p·N), χ_lifted)`.  See the section
-docstring above for the construction recipe.
-
-**Construction (CuspForm level)**:
-```
-U_p f := heckeT_n_cusp k p f                  -- CuspForm Γ_1(N)
-V_p (U_p f) := levelRaise N p k (U_p f)       -- CuspForm Γ_1(p · N)
-f_at_pN := CuspForm.restrictSubgroup _ f      -- CuspForm Γ_1(p · N)
-g := f_at_pN - V_p (U_p f)                    -- CuspForm Γ_1(p · N)
-```
-
-Character preservation uses the bad-prime `heckeT_n_cusp` preservation
-helper above plus the project's existing
-`levelRaise_mem_cuspFormCharSpace` and a CuspForm restriction lemma. -/
 private theorem miyake_4_6_5_single_prime_dvd_N
     {N : ℕ} [NeZero N] {k : ℤ}
     (χ : (ZMod N)ˣ →* ℂˣ)
@@ -246,11 +199,9 @@ private theorem miyake_4_6_5_single_prime_dvd_N
       (heckeT_n_cusp_preserves_cuspFormCharSpace_divN hp hpN χ hfχ)), fun n ↦
     qExpansion_restrict_sub_levelRaise_heckeT_coeff hp hpN f n⟩
 
-/-- The single-prime case of Miyake 4.6.5 exposed as a public lemma, in the
-form `miyake_4_6_8_main_lemma_cuspForm` needs.  The general `L` case
-(iterating over primes of `L`) reduces to this by induction on
-`L.primeFactors.card` and is omitted here; only the single-prime case is
-on the SMO critical path. -/
+/-- The single-prime case of Miyake 4.6.5: for a prime `p ∣ N` and
+`f ∈ S_k(Γ_1(N), χ)`, the coprime-to-`p` filter `f − V_p(U_p f)` lives at
+level `Γ_1(p·N)` with `q`-expansion `aₙ(f) · [p ∤ n]`. -/
 theorem miyake_4_6_5_coprime_filter_cuspForm
     {N : ℕ} [NeZero N] {k : ℤ}
     (χ : (ZMod N)ˣ →* ℂˣ)
@@ -268,19 +219,6 @@ theorem miyake_4_6_5_coprime_filter_cuspForm
         else 0 :=
   miyake_4_6_5_single_prime_dvd_N χ f hfχ p hp hpN
 
-/-- **T1a: Generalized inductive helper for M1.**
-
-The induction in M1's proof varies the level (`M → q·M`) and the
-character (`χ_M → χ_M ∘ unitsMap`) at each step.  This helper is
-parameterised by `(M, χ_M)` and the induction parameter is `S.card`
-where `S ⊆ M.primeFactors`.
-
-* **Base** `S = ∅`: `g := f`, `M' := M`, trivial.
-* **Step**: pick `q ∈ S`, apply `miyake_4_6_5_single_prime_dvd_N` at
-  level `M` with `q` to get `h` at level `q·M` with q-coprime filter,
-  recurse with `(q·M, χ_M.comp ..., S.erase q)`.
-
-Strong induction on `S.card`. -/
 private theorem miyake_4_6_5_iterated_helper
     (n_iter : ℕ) :
     ∀ {M : ℕ} [NeZero M] {k : ℤ}
@@ -343,10 +281,8 @@ private theorem miyake_4_6_5_iterated_helper
       rw [hg'_qexp n, hg_step_qexp n, h_prod_eq]
       exact ite_coprime_filter_compose hq_prime n _ _
 
-/-- **M1: Iterated single-prime coprime filter.**
-
-For `f ∈ S_k(Γ_1(N), χ)` and `L ∣ N` squarefree, there is a form `g`
-at level `Γ_1(L · N)` (one factor of each prime of `L` added) with
+/-- Iterated single-prime coprime filter: for `f ∈ S_k(Γ_1(N), χ)` and
+`L ∣ N` squarefree, there is a form `g` at level `Γ_1(L · N)` with
 `q`-expansion `aₙ(g) = aₙ(f) · [(n, L) = 1]`. -/
 theorem miyake_4_6_5_iterated_L
     {N : ℕ} [NeZero N] {k : ℤ}
@@ -401,8 +337,6 @@ private theorem miyake_4_6_5_single_prime_coprime_to_N
   have hM_eq' : p * (p * N) = N * p ^ 2 := by ring
   haveI hppN_NeZero : NeZero (p * (p * N)) := ⟨by rw [hM_eq']; exact hM_NeZero.ne⟩
   have hN_dvd_ppN : N ∣ p * (p * N) := by rw [hM_eq']; exact Nat.dvd_mul_right N (p ^ 2)
-  -- The coprime-to-`N` filter at level `N · p²` is the `p ∣ N`-filter applied
-  -- once more at the raised level `p · N` (where `p ∣ p · N`).
   obtain ⟨g_ppN, h_g_ppN_χ, h_g_ppN_qexp⟩ :=
     miyake_4_6_5_single_prime_dvd_N (χ.comp (ZMod.unitsMap hN_dvd_pN))
       (CuspForm.restrictSubgroup (Gamma1_map_le_Gamma1_map_of_dvd hN_dvd_pN) f)
@@ -416,13 +350,6 @@ private theorem miyake_4_6_5_single_prime_coprime_to_N
   subst hM_eq'
   exact ⟨g_ppN, by convert h_g_ppN_χ using 2, h_g_ppN_qexp⟩
 
-/-- Common tail of one peeling step in `miyake_4_6_5_iterated_helper_general`.
-Given the single-prime result `g_int` at the intermediate level `N'`
-(with `N ∣ N' ∣ M`) whose `q`-expansion is the `q ∤ ·` filter of `f`,
-and the divisibility-preservation data `h_pf_dvd_new` for `S.erase q` at
-level `N'`, the recursion `ih` produces a form at level `M` whose
-`q`-expansion is the `(·, S.prod) = 1` filter of `f`.  Both the `q ∣ N`
-and `q ∤ N` branches reduce to this. -/
 private theorem finish_peel_step
     {N N' M : ℕ} [NeZero N] [NeZero N'] [NeZero M] {k : ℤ} {q : ℕ} {n_pred : ℕ}
     (hq_prime : q.Prime)
@@ -472,9 +399,6 @@ private theorem finish_peel_step
   · rw [hg'_qexp n, hg_int_qexp n, h_S_prod_split]
     exact ite_coprime_filter_compose hq_prime n _ _
 
-/-- Peeling step for a prime `q ∣ N` (adds one factor of `q`, level
-`N → q · N`).  Applies `miyake_4_6_5_single_prime_dvd_N` at level `N`,
-then recurses via `finish_peel_step`. -/
 private theorem peel_step_of_dvd_N
     {N M : ℕ} [NeZero N] [NeZero M] {k : ℤ} {q : ℕ} {n_pred : ℕ}
     (hq_prime : q.Prime) (hqN : q ∣ N)
@@ -525,9 +449,6 @@ private theorem peel_step_of_dvd_N
     hS_erase_prime hS_erase_card hS_erase_sqfree h_S_erase_prod_dvd_M g_int hg_int_χ
     hg_int_qexp h_pf_dvd_new ih
 
-/-- Peeling step for a prime `q ∤ N` (adds `q²`, level `N → N · q²`).
-Applies `miyake_4_6_5_single_prime_coprime_to_N` at level `N`, then
-recurses via `finish_peel_step`. -/
 private theorem peel_step_of_not_dvd_N
     {N M : ℕ} [NeZero N] [NeZero M] {k : ℤ} {q : ℕ} {n_pred : ℕ}
     (hq_prime : q.Prime) (hqN : ¬ q ∣ N)
@@ -631,22 +552,6 @@ private theorem miyake_4_6_5_iterated_helper_general (n_iter : ℕ) :
         h_pf_dvd hq_pf_not_dvd hS_erase_prime hS_erase_card hS_erase_sqfree
         h_S_erase_prod_dvd_M ih
 
-/-- **Generalized iterated single-prime peeling** (no `L ⊆ N.primeFactors`
-hypothesis).
-
-For squarefree positive `L`, the coprime-to-`L` filter exists at level
-`L_N · L_coprime² · N`, where `L_N := L.gcd N` (the part of `L` dividing
-`N`) and `L_coprime := L / L_N` (the part coprime to `N`).  Equivalently,
-at level `L * (L_coprime) * N`.
-
-Combines:
-* For each prime `p ∈ L.primeFactors` with `p ∣ N`: use
-  `miyake_4_6_5_single_prime_dvd_N` (level `N → N · p`).
-* For each prime `p ∈ L.primeFactors` with `p ∤ N`: use
-  `miyake_4_6_5_single_prime_coprime_to_N` (level `N → N · p²`).
-
-This corresponds to Miyake Lemma 4.6.5 *in full generality* (allowing
-primes of `L` that need not divide `N`). -/
 private theorem miyake_4_6_5_iterated_L_general
     {N : ℕ} [NeZero N] {k : ℤ}
     (χ : (ZMod N)ˣ →* ℂˣ)
@@ -673,11 +578,9 @@ private theorem miyake_4_6_5_iterated_L_general
       L.primeFactors hS_prime rfl hS_sqfree ‹NeZero M› hNM hS_dvd_M h_pf_dvd
   exact ⟨g, hg_χ, fun n ↦ by simpa only [hS_prod] using hg_qexp n⟩
 
-/-- **Generalized `h_form`** (no `l' ⊆ N.primeFactors` hypothesis).
-
-For `f ∈ S_k(Γ_1(N), χ)` and `l'` squarefree positive, there exists
+/-- For `f ∈ S_k(Γ_1(N), χ)` and `l'` squarefree positive, there exists
 `h_form` at level `Γ_1(l'² · N)` with `q`-expansion supported on
-`(n, l') ≠ 1`, *regardless* of whether the primes of `l'` divide `N`. -/
+`(n, l') ≠ 1`. -/
 theorem miyake_h_form_general
     {N : ℕ} [NeZero N] {k : ℤ}
     (χ : (ZMod N)ˣ →* ℂˣ)

@@ -24,18 +24,7 @@ open Matrix Subgroup.Commensurable Pointwise Matrix.SpecialLinearGroup
 open scoped Pointwise MatrixGroups
 
 namespace HeckeRing.GLn
-/-! ### Shimura Theorem 3.35: Surjective ring hom R(Γ, Δ) →+* R(Γ₀(N), Δ₀(N))
 
-The construction factors through a free polynomial ring presentation:
-`ℤ[X_{(p,k)}] →→ HeckeAlgebra 2 →+* 𝕋 (Gamma0_pair N) ℤ`. -/
-
-/-! #### Atkin-Lehner anti-involution for `Gamma0_pair N`
-
-The map `ι(g) = w · gᵀ · w⁻¹` where `w = diag(1, N)` is an anti-involution
-that preserves `Γ₀(N)` and `Δ₀(N)`, and fixes every diagonal double coset.
-This gives commutativity of `𝕋 (Gamma0_pair N) ℤ` via Shimura Prop 3.8. -/
-
-/-- The conjugation element `w = diag(1, N)` in `GL₂(ℚ)`. -/
 private noncomputable def wN (N : ℕ) [NeZero N] : GL (Fin 2) ℚ :=
   diagMat 2 (![1, N])
 
@@ -47,8 +36,6 @@ private lemma wN_val (N : ℕ) [NeZero N] :
     Matrix.diagonal (![1, (N : ℚ)]) := by
   simp [wN, wN_pos N]
 
-/-- The Atkin-Lehner anti-involution `g ↦ w · gᵀ · w⁻¹` as a monoid hom
-    `GL₂(ℚ) →* GL₂(ℚ)ᵐᵒᵖ`. -/
 private noncomputable def Gamma0_AL_hom (N : ℕ) [NeZero N] :
     GL (Fin 2) ℚ →* (GL (Fin 2) ℚ)ᵐᵒᵖ where
   toFun g := MulOpposite.op (wN N * (GL_transposeEquiv 2 g).unop * (wN N)⁻¹)
@@ -62,7 +49,6 @@ private noncomputable def Gamma0_AL_hom (N : ℕ) [NeZero N] :
       rw [map_mul]; rfl
     rw [h1]; group
 
-/-- The Atkin-Lehner map is involutive. -/
 private lemma Gamma0_AL_involutive (N : ℕ) [NeZero N] (g : GL (Fin 2) ℚ) :
     (Gamma0_AL_hom N (Gamma0_AL_hom N g).unop).unop = g := by
   simp only [Gamma0_AL_hom, MonoidHom.coe_mk, OneHom.coe_mk, MulOpposite.unop_op]
@@ -81,7 +67,6 @@ private lemma Gamma0_AL_involutive (N : ℕ) [NeZero N] (g : GL (Fin 2) ℚ) :
     rw [map_inv, MulOpposite.unop_inv, h_wN]
   rw [h_inv]; group
 
-/-- The Atkin-Lehner map preserves `Γ₀(N)`: if `σ ∈ Γ₀(N)` then `ι(σ) ∈ Γ₀(N)`. -/
 private lemma Gamma0_AL_map_H (N : ℕ) [NeZero N]
     (g : GL (Fin 2) ℚ) (hg : g ∈ (Gamma0_pair N).H) :
     (Gamma0_AL_hom N g).unop ∈ (Gamma0_pair N).H := by
@@ -123,9 +108,6 @@ private lemma Gamma0_AL_map_H (N : ℕ) [NeZero N]
     · exact_mod_cast show c' * ↑N = A 1 0 by rw [hc']; ring
     · ring
 
-/-- The Atkin-Lehner map preserves `Δ₀(N)`.
-    Proof: `w gᵀ w⁻¹ = [[a, c/N], [Nb, d]]` has integer entries (since `N|c`),
-    `det = ad-bc > 0`, `N | Nb`, `gcd(a,N) = 1`. Same matrix computation as `map_H`. -/
 private lemma Gamma0_AL_map_Δ (N : ℕ) [NeZero N]
     (g : GL (Fin 2) ℚ) (hg : g ∈ (Gamma0_pair N).Δ) :
     (Gamma0_AL_hom N g).unop ∈ (Gamma0_pair N).Δ := by
@@ -170,7 +152,6 @@ private lemma Gamma0_AL_map_Δ (N : ℕ) [NeZero N]
   · simp only [B, Matrix.cons_val_zero, Matrix.of_apply]
     exact hAco
 
-/-- The Atkin-Lehner anti-involution for `Gamma0_pair N`. -/
 private noncomputable def Gamma0_antiInvolution (N : ℕ) [NeZero N] :
     AntiInvolution (Gamma0_pair N) where
   toFun := Gamma0_AL_hom N
@@ -178,7 +159,6 @@ private noncomputable def Gamma0_antiInvolution (N : ℕ) [NeZero N] :
   map_H := Gamma0_AL_map_H N
   map_Δ := Gamma0_AL_map_Δ N
 
-/-- The Atkin-Lehner anti-involution preserves determinants. -/
 private lemma Gamma0_AL_bar_det (N : ℕ) [NeZero N] (g : GL (Fin 2) ℚ) :
     ((Gamma0_antiInvolution N).bar g : Matrix (Fin 2) (Fin 2) ℚ).det =
     (g : Matrix (Fin 2) (Fin 2) ℚ).det := by
@@ -193,8 +173,6 @@ private lemma Gamma0_AL_bar_det (N : ℕ) [NeZero N] (g : GL (Fin 2) ℚ) :
     g.val.det * ((wN N : GL (Fin 2) ℚ).val.det * ((wN N)⁻¹ : GL (Fin 2) ℚ).val.det) := by ring
   rw [h2, h1, mul_one]
 
-/-- The first invariant factor of a 2×2 SNF divides every matrix entry.
-Uses Cramer: from `L * M = diag(d) * R⁻¹` and `det(L) = 1`, solve for `M i j`. -/
 private lemma snf_first_dvd_entry₂ (M : Matrix (Fin 2) (Fin 2) ℤ)
     (d : Fin 2 → ℤ) (hd_div : d 0 ∣ d 1)
     (L R : SpecialLinearGroup (Fin 2) ℤ)
@@ -236,8 +214,6 @@ private lemma snf_first_dvd_entry₂ (M : Matrix (Fin 2) (Fin 2) ℤ)
   · exact h_M0 j
   · exact h_M1 j
 
-/-- **Bad-det branch**: for `g ∈ Δ₀(N)` with `det(g) | N^k`,
-`bar(g) ∈ DC(g)` by `shimura_prop_3_33` applied to both `g` and `bar(g)`. -/
 private lemma Gamma0_AL_in_DC_bad (N : ℕ) [NeZero N]
     (g : GL (Fin 2) ℚ) (hg : g ∈ (Gamma0_pair N).Δ)
     (m : ℕ) (hm_pos : 0 < m) (k : ℕ) (hm_dvd : m ∣ N ^ k)
@@ -251,8 +227,6 @@ private lemma Gamma0_AL_in_DC_bad (N : ℕ) [NeZero N]
     (Gamma0_AL_bar_det N g ▸ hdet)
   rw [DoubleCoset.doubleCoset_eq_of_mem h_g_dc]; exact h_bar_dc
 
-/-- If `d` divides every entry of a 2×2 integer matrix `M` and `L * M * R = diag(dvec)`
-with `L, R ∈ SL₂(ℤ)`, then `d ∣ dvec 0` (read off the `(0,0)` entry of `L * M * R`). -/
 private lemma dvd_snf_first_of_dvd_entries (M : Matrix (Fin 2) (Fin 2) ℤ) (d : ℤ)
     (dvec : Fin 2 → ℤ) (L R : SpecialLinearGroup (Fin 2) ℤ)
     (hSNF : (L : Matrix (Fin 2) (Fin 2) ℤ) * M * (R : Matrix _ _ ℤ) = Matrix.diagonal dvec)
@@ -266,10 +240,6 @@ private lemma dvd_snf_first_of_dvd_entries (M : Matrix (Fin 2) (Fin 2) ℤ) (d :
     (dvd_mul_of_dvd_left (dvd_add (dvd_mul_of_dvd_right (hd 0 1) _)
       (dvd_mul_of_dvd_right (hd 1 1) _)) _)
 
-/-- **Same Smith normal form from mutual content divisibility**: if two 2×2 integer matrices
-`A`, `B` have equal determinants and SNF decompositions `LA·A·RA = diag dA`, `LB·B·RB = diag dB`,
-and the first divisor of each divides every entry of the other (`dA 0 ∣ B`, `dB 0 ∣ A`), then
-`dA = dB` as diagonals, so `(LB⁻¹·LA)·A·(RA·RB⁻¹) = B` exhibits `A ∼ B` over `SL₂(ℤ)`. -/
 private lemma snf_mutual_dvd_eq (A B : Matrix (Fin 2) (Fin 2) ℤ)
     (dA dB : Fin 2 → ℤ) (hdA_pos : ∀ i, 0 < dA i) (hdB_pos : ∀ i, 0 < dB i)
     (LA RA LB RB : SpecialLinearGroup (Fin 2) ℤ)
@@ -310,8 +280,6 @@ private lemma snf_mutual_dvd_eq (A B : Matrix (Fin 2) (Fin 2) ℤ)
             (LB⁻¹).val * (LB.val * (B * 1)) from by rw [hRR]]
         rw [Matrix.mul_one, ← Matrix.mul_assoc (LB⁻¹).val, hLL, Matrix.one_mul]
 
-/-- The AL image `bar(g)` of `g` with integer matrix `A` (and `A 1 0 = N·c₀`) has integer
-matrix `[[A 0 0, c₀], [N·A 0 1, A 1 1]]`: the swap exchanging the off-diagonal `N`-factor. -/
 private lemma bar_val_eq_swap (N : ℕ) [NeZero N] (g : GL (Fin 2) ℚ)
     (A : Matrix (Fin 2) (Fin 2) ℤ) (hA : (g : Matrix (Fin 2) (Fin 2) ℚ) = A.map (Int.cast : ℤ → ℚ))
     (c₀ : ℤ) (hc₀ : A 1 0 = ↑N * c₀) :
@@ -345,9 +313,6 @@ private lemma bar_val_eq_swap (N : ℕ) [NeZero N] (g : GL (Fin 2) ℚ)
     · ring
   rw [hg'_eq]; rfl
 
-/-- A divisor `e` of every entry of `A`, coprime to `N`, also divides every entry of the swap
-`[[A 0 0, c₀], [N·A 0 1, A 1 1]]` (where `A 1 0 = N·c₀`): the new off-diagonal `c₀` is divisible
-because `e ∣ A 1 0 = N·c₀` and `gcd(e, N) = 1`; the `N·A 0 1` entry inherits `e ∣ A 0 1`. -/
 private lemma dvd_swap_entries (A : Matrix (Fin 2) (Fin 2) ℤ) (N e c₀ : ℤ)
     (hc₀ : A 1 0 = N * c₀) (he : ∀ i j, e ∣ A i j) (heN : IsCoprime e N) :
     ∀ i j, e ∣ (Matrix.of ![![A 0 0, c₀], ![N * A 0 1, A 1 1]] : Matrix (Fin 2) (Fin 2) ℤ) i j := by
@@ -357,8 +322,6 @@ private lemma dvd_swap_entries (A : Matrix (Fin 2) (Fin 2) ℤ) (N e c₀ : ℤ)
   · simpa using dvd_mul_of_dvd_right (he 0 1) _
   · simpa using he 1 1
 
-/-- **GL equation from an integer-matrix equation**: if `P·A·Q = B` over `ℤ` (`P, Q ∈ SL₂(ℤ)`)
-and `g`, `h` have integer matrices `A`, `B`, then `h = mapGL P · g · mapGL Q`. -/
 private lemma gl_eq_of_intMat_eq (g h : GL (Fin 2) ℚ)
     (A B : Matrix (Fin 2) (Fin 2) ℤ)
     (hA : (g : Matrix (Fin 2) (Fin 2) ℚ) = A.map (Int.cast : ℤ → ℚ))
@@ -378,11 +341,6 @@ private lemma gl_eq_of_intMat_eq (g h : GL (Fin 2) ℚ)
   rw [hB] at *; simp only [Matrix.map_apply] at hcast ⊢
   linarith
 
-/-- **AL image is an `SL₂(ℤ)`-conjugate**: for `g ∈ Δ₀(N)` with integer matrix `A`, `N ∣ A 1 0`
-and `gcd(A 0 0, N) = 1`, there are `P, Q ∈ SL₂(ℤ)` with `bar(g) = mapGL P · g · mapGL Q`.
-Both `A` and the swap matrix `B = [[A 0 0, c₀],[N·A 0 1, A 1 1]]` of `bar(g)` share their
-determinant and (by coprimality) their first SNF divisor divides the other, so `snf_mutual_dvd_eq`
-makes `A` and `B` `SL₂(ℤ)`-equivalent on both sides. -/
 private lemma bar_eq_SL2_conj (N : ℕ) [NeZero N] (g : GL (Fin 2) ℚ) (hg : g ∈ (Gamma0_pair N).Δ)
     (A : Matrix (Fin 2) (Fin 2) ℤ)
     (hA : (g : Matrix (Fin 2) (Fin 2) ℚ) = A.map (Int.cast : ℤ → ℚ))
@@ -426,10 +384,6 @@ private lemma bar_eq_SL2_conj (N : ℕ) [NeZero N] (g : GL (Fin 2) ℚ) (hg : g 
   exact ⟨LB⁻¹ * LA, RA * RB⁻¹, gl_eq_of_intMat_eq g ((Gamma0_antiInvolution N).bar g) A B
     hA hbar_val (LB⁻¹ * LA) (RA * RB⁻¹) h_int⟩
 
-/-- **Coprime-det branch**: for `g ∈ Δ₀(N)` with `gcd(det(g), N) = 1`,
-`bar(g) ∈ DC(g)` by `doubleCoset_eq_of_Gamma0_coprimeDet` + same SL₂-DC
-(same elementary divisors, since `gcd(a₀, N) = 1` makes `gcd` of entries
-invariant under the AL transformation `[[a,b],[Nc,d]] ↦ [[a,c],[Nb,d]]`). -/
 private lemma Gamma0_AL_in_DC_coprime (N : ℕ) [NeZero N]
     (g : GL (Fin 2) ℚ) (hg : g ∈ (Gamma0_pair N).Δ)
     (A : Matrix (Fin 2) (Fin 2) ℤ)
@@ -439,7 +393,6 @@ private lemma Gamma0_AL_in_DC_coprime (N : ℕ) [NeZero N]
     ((Gamma0_antiInvolution N).bar g) ∈
       DoubleCoset.doubleCoset g ((Gamma0_pair N).H : Set _) ((Gamma0_pair N).H : Set _) := by
   have h_bar_delta := Gamma0_AL_map_Δ N g hg
-  -- Build Δ-subtypes for shimura_prop_3_31
   set a_sub : (Gamma0_pair N).Δ := ⟨g, hg⟩
   set b_sub : (Gamma0_pair N).Δ := ⟨(Gamma0_antiInvolution N).bar g, h_bar_delta⟩
   have ha_cop : CoprimeDet N a_sub := fun A' hA' ↦ by
@@ -466,11 +419,6 @@ private lemma Gamma0_AL_in_DC_coprime (N : ℕ) [NeZero N]
   rw [h_Gamma0_eq]
   exact DoubleCoset.mem_doubleCoset_self _ _ _
 
-/-- **Prime-local clearing**: if not all entries of a 2×2 integer matrix are divisible by
-a prime `p` coprime to `N`, then some `(l, t) ∈ {0,1}²` makes
-`A 0 0 + l * A 1 0 + N * t * (A 0 1 + l * A 1 1)` coprime to `p`.
-Four cases on which entry avoids `p`: `A 0 0` → `(0,0)`; `A 1 0` → `(1,0)`;
-`A 0 1` → `(0,1)`; `A 1 1` → `(1,1)`. -/
 private lemma entry_clear_prime (A : Matrix (Fin 2) (Fin 2) ℤ) (N : ℤ)
     (p : ℕ) (hp : p.Prime) (hpN : ¬((p : ℤ) ∣ N))
     (hprim : ¬((p : ℤ) ∣ A 0 0 ∧ (p : ℤ) ∣ A 0 1 ∧ (p : ℤ) ∣ A 1 0 ∧ (p : ℤ) ∣ A 1 1)) :
@@ -499,8 +447,6 @@ private lemma entry_clear_prime (A : Matrix (Fin 2) (Fin 2) ℤ) (N : ℤ)
   · exact ⟨0, 0, by rwa [show A 0 0 + 0 * A 1 0 + N * 0 * (A 0 1 + 0 * A 1 1) =
       A 0 0 from by ring]⟩
 
-/-- Congruence of the affine expression: if `l ≡ l' [ZMOD p]` and `t ≡ t' [ZMOD p]`,
-then `f(l,t) ≡ f(l',t') [ZMOD p]` where `f(l,t) = a + l*c₀ + N*t*(b + l*d)`. -/
 private lemma f_congr_mod (p : ℕ) (l l' t t' a b c₀ d N : ℤ)
     (hl : (p : ℤ) ∣ (l - l')) (ht : (p : ℤ) ∣ (t - t')) :
     (p : ℤ) ∣ ((a + l * c₀ + N * t * (b + l * d)) -
@@ -566,8 +512,6 @@ lemma Gamma0_content_quotient (N : ℕ) [NeZero N]
     have : q ≤ 1 := Nat.le_of_mul_le_mul_right (by linarith) hd_pos
     exact absurd hq.two_le (by omega)
 
-/-- From `n ≡ (x mod p).toNat [MOD p]` deduce `p ∣ (n : ℤ) - x`: combine the `Nat.ModEq`
-witness with `(x mod p).toNat ≡ x` (`p ≠ 0`). Used to transfer a CRT solution back to `ℤ`. -/
 private lemma int_dvd_sub_of_modEq_toNat (n p : ℕ) (x : ℤ) (hp_ne : (p : ℤ) ≠ 0)
     (h : Nat.ModEq p n (x % (p : ℤ)).toNat) : (p : ℤ) ∣ ((n : ℤ) - x) := by
   obtain ⟨a', ha'⟩ := Nat.modEq_iff_dvd.mp h
@@ -576,10 +520,6 @@ private lemma int_dvd_sub_of_modEq_toNat (n p : ℕ) (x : ℤ) (hp_ne : (p : ℤ
     exact ⟨-(x / p), by rw [Int.emod_def]; ring⟩
   exact ⟨-a' + b', by linear_combination -ha' + hb'⟩
 
-/-- **CRT assembly**: given per-prime avoidance for each prime factor of `c`,
-produce a single `(l, t)` making the affine expression coprime to `c`.
-Uses `entry_clear_prime` to produce per-prime witnesses, then swaps quantifiers
-via `Nat.chineseRemainderOfFinset` on `c.primeFactors`. -/
 private lemma exists_coprime_entry (A : Matrix (Fin 2) (Fin 2) ℤ) (N : ℤ)
     (c : ℕ) (hc_pos : 0 < c)
     (hprim : ∀ (p : ℕ), p.Prime → ¬((p : ℤ) ∣ A 0 0 ∧ (p : ℤ) ∣ A 0 1 ∧
@@ -633,8 +573,6 @@ private lemma exists_coprime_entry (A : Matrix (Fin 2) (Fin 2) ℤ) (N : ℤ)
   obtain ⟨k, hk⟩ := hcongr; obtain ⟨m, hm⟩ := hpf
   exact ⟨m - k, by linear_combination hm - hk⟩
 
-/-- Conjugating `g` (integer matrix `A`) by `mapGL P`, `mapGL Q` (`P, Q ∈ SL₂(ℤ)`) gives a GL
-element with integer matrix `P · A · Q`. -/
 private lemma mapGL_conj_val (g : GL (Fin 2) ℚ) (A : Matrix (Fin 2) (Fin 2) ℤ)
     (hA : (g : Matrix (Fin 2) (Fin 2) ℚ) = A.map (Int.cast : ℤ → ℚ))
     (P Q : SpecialLinearGroup (Fin 2) ℤ) :
@@ -646,7 +584,6 @@ private lemma mapGL_conj_val (g : GL (Fin 2) ℚ) (A : Matrix (Fin 2) (Fin 2) �
   ext i j
   simp only [Matrix.mul_apply, Fin.sum_univ_two, Matrix.map_apply, Int.cast_add, Int.cast_mul]
 
-/-- A prime dividing `c` (coprime to `N`) cannot divide `N`, stated over `ℤ`. -/
 private lemma not_intCast_dvd_of_coprime (c N p : ℕ) (hp : p.Prime)
     (hc_cop : Nat.Coprime c N) (hpc : (p : ℤ) ∣ ↑c) : ¬((p : ℤ) ∣ ↑N) := by
   intro hpN
@@ -655,13 +592,9 @@ private lemma not_intCast_dvd_of_coprime (c N p : ℕ) (hp : p.Prime)
   have h1 := (hc_cop.coprime_dvd_right hp_N).coprime_dvd_left hp_c
   rw [Nat.Coprime, Nat.gcd_self] at h1; exact absurd h1 hp.one_lt.ne'
 
-/-- Two-sided Γ₀(N) clearing for **primitive** matrices: given `g ∈ Δ₀(N)` with
-`gcd(entries of A) = 1` and coprime-to-N target `c | det`, find `γL, γR ∈ Γ₀(N)` such that
-`γL * g * γR` has integer matrix A' with `gcd(A' 0 0, c) = 1`.
-
-Primitive hypothesis ensures that for each bad prime `p | gcd(A 0 0, c)` (with `p ∤ N`),
-at least one entry of A avoids p, and a combined row/column Γ₀(N) operation clears p.
-CRT handles all bad primes simultaneously. -/
+/-- Two-sided `Γ₀(N)` clearing for primitive matrices: given `g ∈ Δ₀(N)` with
+`gcd(entries of A) = 1` and coprime-to-`N` target `c ∣ det`, find `γL, γR ∈ Γ₀(N)` such that
+`γL * g * γR` has integer matrix `A'` with `gcd(A' 0 0, c) = 1`. -/
 lemma Gamma0_two_sided_coprime_rep_prim (N : ℕ) [NeZero N]
     (g : GL (Fin 2) ℚ) (hg : g ∈ (Gamma0_pair N).Δ)
     (A : Matrix (Fin 2) (Fin 2) ℤ)
@@ -719,9 +652,6 @@ lemma Gamma0_two_sided_coprime_rep_prim (N : ℕ) [NeZero N]
       A 0 0 + l₀ * A 1 0 + ↑N * t₀ * (A 0 1 + l₀ * A 1 1) from by ring]
     exact hlt
 
-/-- Scalar centrality for the AL involution: `bar(s · g) ∈ DC(s · g)` follows from
-`bar(g) ∈ DC(g)` when `s` is a scalar matrix, since `s` commutes with all Γ₀(N)
-elements and `bar(s) = s` for scalar matrices. -/
 private lemma Gamma0_AL_scalar_reduce (N : ℕ) [NeZero N]
     (g : GL (Fin 2) ℚ) (s : GL (Fin 2) ℚ)
     (hs_central : ∀ h : GL (Fin 2) ℚ, s * h = h * s)
@@ -735,9 +665,6 @@ private lemma Gamma0_AL_scalar_reduce (N : ℕ) [NeZero N]
   rw [DoubleCoset.mem_doubleCoset] at h_prim ⊢
   obtain ⟨γ₁, hγ₁, γ₂, hγ₂, h_eq⟩ := h_prim
   exact ⟨γ₁, hγ₁, γ₂, hγ₂, by rw [h_eq]; simp only [mul_assoc, hs_central]⟩
-/-- The AL involution preserves the (0,0) entry of integer matrices:
-if `bar(g)` has integer matrix `B` and `g` has integer matrix `A`, then `B 0 0 = A 0 0`.
-Proof: `bar(g) * wN = wN * g^T`, so `(bar(g))₀₀ * 1 = 1 * g₀₀`. -/
 private lemma Gamma0_AL_preserves_00 (N : ℕ) [NeZero N]
     (g : GL (Fin 2) ℚ)
     (A : Matrix (Fin 2) (Fin 2) ℤ) (hA : g.val = A.map (Int.cast : ℤ → ℚ))
@@ -758,9 +685,6 @@ private lemma Gamma0_AL_preserves_00 (N : ℕ) [NeZero N]
     (by rw [show (A 0 0 : ℚ) = (A.map (Int.cast : ℤ → ℚ)) 0 0 from by
         simp [Matrix.map_apply], ← hA] : g.val 0 0 = (A 0 0 : ℚ))
 
-/-- **`gcd(A₀₀, m) = 1` branch**: when `g ∈ Δ₀(N)` has `det = m` and `gcd(A 0 0, m) = 1`,
-both `g` and `bar(g)` lie in `DC(diag(1, m))` by `shimura_prop_3_33_gen`
-(`bar(g)` keeps the `(0,0)` entry and the determinant), so `bar(g) ∈ DC(g)`. -/
 private lemma Gamma0_AL_in_DC_of_gcd_a00_m_coprime (N : ℕ) [NeZero N]
     (g : GL (Fin 2) ℚ) (hg : g ∈ (Gamma0_pair N).Δ) (m : ℕ) (hm_pos : 0 < m)
     (A : Matrix (Fin 2) (Fin 2) ℤ)
@@ -779,21 +703,16 @@ private lemma Gamma0_AL_in_DC_of_gcd_a00_m_coprime (N : ℕ) [NeZero N]
     (Gamma0_AL_map_Δ N g hg) B hB hBN hbar_det (hB00 ▸ ham)
   rw [DoubleCoset.doubleCoset_eq_of_mem h_g_dc]; exact h_bar_dc
 
-/-- Elements of `Γ₀(N) ⊆ GL₂(ℚ)` have determinant `1` (they come from `SL₂(ℤ)`). -/
 private lemma det_H_elem_eq_one (N : ℕ) [NeZero N] (γ : (Gamma0_pair N).H) :
     (γ : GL (Fin 2) ℚ).val.det = 1 := by
   obtain ⟨σ, _, hσ⟩ := Subgroup.mem_map.mp γ.2
   rw [← hσ]; simp [mapGL_coe_matrix, algebraMap_int_eq, det_intMat_cast, σ.prop]
 
-/-- Conjugating `g` by `Γ₀(N)` elements preserves the determinant. -/
 private lemma det_conj_H_eq (N : ℕ) [NeZero N] (g : GL (Fin 2) ℚ)
     (γL γR : (Gamma0_pair N).H) :
     ((γL : GL (Fin 2) ℚ) * g * (γR : GL (Fin 2) ℚ)).val.det = g.val.det := by
   simp only [Units.val_mul, Matrix.det_mul, det_H_elem_eq_one, one_mul, mul_one]
 
-/-- **Conjugation transport**: if the AL image of a `Γ₀(N)`-conjugate `γL g γR` lands in `DC(g)`,
-then so does `bar(g)` itself (undo the conjugation with the AL images of `γL`, `γR`,
-which are again in `Γ₀(N)` by `Gamma0_AL_map_H`). -/
 private lemma bar_mem_DC_of_bar_conj_mem (N : ℕ) [NeZero N] (g : GL (Fin 2) ℚ)
     (γL γR : (Gamma0_pair N).H)
     (h : ((Gamma0_antiInvolution N).bar ((γL : GL (Fin 2) ℚ) * g * (γR : GL (Fin 2) ℚ))) ∈
@@ -822,8 +741,6 @@ private lemma bar_mem_DC_of_bar_conj_mem (N : ℕ) [NeZero N] (g : GL (Fin 2) �
           ((Gamma0_antiInvolution N).bar (γL : GL _ ℚ))⁻¹ := by group
       _ = _ := by rw [h_eq]; group⟩
 
-/-- If `gcd(x, N) = 1`, `gcd(x, c) = 1`, `m = b * c`, and `b ∣ N ^ m`, then `gcd(x, m) = 1`:
-`x` is coprime to `N ^ m ⊇ b` and to `c`, hence to `b * c = m`. -/
 private lemma gcd_eq_one_of_factor_split (x : ℤ) (N m b c : ℕ)
     (hbc : m = b * c) (hb_dvd : b ∣ N ^ m)
     (hxN : Int.gcd x N = 1) (hxc : Int.gcd x c = 1) :
@@ -835,8 +752,6 @@ private lemma gcd_eq_one_of_factor_split (x : ℤ) (N m b c : ℕ)
       (by exact_mod_cast hb_dvd))
     (Int.isCoprime_iff_gcd_eq_one.mpr hxc))
 
-/-- The quotient `m / gcd(m, N ^ m)` is coprime to `N`: any prime `p ∣ gcd(·, N)` would
-have `p ^ k ∣ m` for all `k` (since `p ^ k ∣ N ^ m ⊇ gcd(m, N ^ m)` once `k ≤ m`), absurd. -/
 private lemma coprime_div_gcd_npow (N m : ℕ) (hm_pos : 0 < m) :
     Nat.Coprime (m / Nat.gcd m (N ^ m)) N := by
   set b := Nat.gcd m (N ^ m) with hb_def
@@ -864,11 +779,6 @@ private lemma coprime_div_gcd_npow (N m : ℕ) (hm_pos : 0 < m) :
     (not_le.mpr (lt_of_lt_of_le (Nat.lt_pow_self hp.one_lt)
       (Nat.pow_le_pow_right hp.pos (Nat.le_succ m))))
 
-/-- **Primitive case of double-coset stability**: for `g ∈ Δ₀(N)` whose integer matrix `A`
-is primitive (no prime divides all four entries), `bar(g) ∈ DC(g)`. The four sub-cases on the
-determinant `m`: coprime-to-`N` (`Gamma0_AL_in_DC_coprime`), `m ∣ N ^ m` (`Gamma0_AL_in_DC_bad`),
-`gcd(A 0 0, m) = 1` (`Gamma0_AL_in_DC_of_gcd_a00_m_coprime`), and otherwise a two-sided
-`Γ₀(N)`-clearing (`Gamma0_two_sided_coprime_rep_prim`) reducing to the third case. -/
 private lemma Gamma0_AL_in_DC_primitive (N : ℕ) [NeZero N]
     (g : GL (Fin 2) ℚ) (hg : g ∈ (Gamma0_pair N).Δ)
     (A : Matrix (Fin 2) (Fin 2) ℤ)
@@ -894,7 +804,6 @@ private lemma Gamma0_AL_in_DC_primitive (N : ℕ) [NeZero N]
     · exact Gamma0_AL_in_DC_bad N g hg m hm_pos m (hbm ▸ hb_dvd_Npow) hdet_m
     by_cases ham : Int.gcd (A 0 0) (m : ℤ) = 1
     · exact Gamma0_AL_in_DC_of_gcd_a00_m_coprime N g hg m hm_pos A hA hAN hdet_m ham
-    -- Two-sided clearing: `c := m / b` is coprime to `N` and divides `det`
     set c := m / b with hc_def
     have hbc : m = b * c := (Nat.mul_div_cancel' (Nat.gcd_dvd_left m _)).symm
     have hc_pos : 0 < c :=
@@ -922,8 +831,6 @@ private lemma Gamma0_AL_in_DC_primitive (N : ℕ) [NeZero N]
     apply bar_mem_DC_of_bar_conj_mem N g γL γR
     rw [← hg'_def, ← DoubleCoset.doubleCoset_eq_of_mem hg'_dc]; exact h_bar_g'_dc
 
-/-- **Scalar reduction**: if `g = d • g₀` (`d > 0`) and `bar(g₀) ∈ DC(g₀)`, then `bar(g) ∈ DC(g)`.
-Writing `g = s · g₀` with `s = d • 1` central and AL-fixed, apply `Gamma0_AL_scalar_reduce`. -/
 private lemma Gamma0_AL_in_DC_of_smul (N : ℕ) [NeZero N] (g g₀ : GL (Fin 2) ℚ) (d : ℚ)
     (hd_pos : 0 < d) (hg_smul : g.val = d • g₀.val)
     (h_bar_g₀ : ((Gamma0_antiInvolution N).bar g₀) ∈
@@ -960,7 +867,6 @@ private lemma Gamma0_AL_in_DC_of_smul (N : ℕ) [NeZero N] (g g₀ : GL (Fin 2) 
   rw [hg_eq]
   exact Gamma0_AL_scalar_reduce N g₀ s hs_central hs_bar h_bar_g₀
 
-/-- The Atkin-Lehner anti-involution fixes every double coset of `Gamma0_pair N`. -/
 private lemma Gamma0_AL_in_doubleCoset (N : ℕ) [NeZero N]
     (g : GL (Fin 2) ℚ) (hg : g ∈ (Gamma0_pair N).Δ) :
     ((Gamma0_antiInvolution N).bar g) ∈
@@ -970,7 +876,6 @@ private lemma Gamma0_AL_in_doubleCoset (N : ℕ) [NeZero N]
   have hg : g ∈ (Gamma0_pair N).Δ := ⟨hint, hdet_pos_g, A, hA, hAN, hAco⟩
   have hA_det_pos : 0 < A.det := by
     rwa [← Int.cast_pos (R := ℚ), ← det_intMat_cast 2 A, ← hA]
-  -- Extract the content `d = gcd of all entries`; the quotient `A₀ = A / d` is primitive.
   set d := Nat.gcd (Nat.gcd (A 0 0).natAbs (A 0 1).natAbs)
             (Nat.gcd (A 1 0).natAbs (A 1 1).natAbs) with hd_def
   have hd_dvd : ∀ i j : Fin 2, (d : ℤ) ∣ A i j := by
@@ -1000,7 +905,6 @@ private lemma Gamma0_AL_in_doubleCoset (N : ℕ) [NeZero N]
   have hg_scalar : g.val = (d : ℚ) • g₀.val := by
     ext i j; rw [hA, Matrix.smul_apply, hA₀_val, Matrix.map_apply, Matrix.map_apply]
     simp only [smul_eq_mul]; push_cast [hA₀_eq i j]; ring
-  -- The primitive part is handled by `Gamma0_AL_in_DC_primitive`; scalar `d` is recovered.
   exact Gamma0_AL_in_DC_of_smul N g g₀ d (by exact_mod_cast hd_pos) hg_scalar
     (Gamma0_AL_in_DC_primitive N g₀ hg₀ A₀ hA₀_val hA₀N hA₀co hA₀_prim)
 private lemma Gamma0_onHeckeCoset_eq (N : ℕ) [NeZero N]
@@ -1010,9 +914,7 @@ private lemma Gamma0_onHeckeCoset_eq (N : ℕ) [NeZero N]
   rw [hD_eq, AntiInvolution.onHeckeCoset_mk]
   exact HeckeCoset.eq_mk_of_mem (Gamma0_AL_in_doubleCoset N _ (HeckeCoset.rep D).2)
 
-/-- `𝕋 (Gamma0_pair N) ℤ` is a commutative ring (Shimura Prop 3.8 for Gamma0).
-    Uses the Atkin-Lehner anti-involution `ι(g) = w · gᵀ · w⁻¹` where
-    `w = diag(1, N)`. -/
+/-- `𝕋 (Gamma0_pair N) ℤ` is a commutative ring (Shimura Prop 3.8 for `Γ₀(N)`). -/
 noncomputable def instCommRing_Gamma0 (N : ℕ) [NeZero N] :
     CommRing (HeckeRing.𝕋 (Gamma0_pair N) ℤ) :=
   instCommRing_of_antiInvolution (Gamma0_antiInvolution N) (Gamma0_onHeckeCoset_eq N)
@@ -1020,9 +922,7 @@ noncomputable def instCommRing_Gamma0 (N : ℕ) [NeZero N] :
 attribute [local instance] instCommRing_Gamma0
 
 /-- Shimura Prop 3.8 for `Gamma0_pair N`: the Hecke algebra multiplication is
-commutative. Exposed as a public `theorem` so downstream files (e.g.
-`HeckeModularForm_Gamma0`) can use it without importing the private
-`instCommRing_Gamma0`. -/
+commutative. -/
 theorem Gamma0_pair_HeckeAlgebra_mul_comm (N : ℕ) [NeZero N]
     (T₁ T₂ : HeckeRing.𝕋 (Gamma0_pair N) ℤ) : T₁ * T₂ = T₂ * T₁ :=
   mul_comm T₁ T₂

@@ -46,8 +46,6 @@ open scoped Pointwise ModularForm MatrixGroups UpperHalfPlane
 
 namespace HeckeRing.GL2
 
-/-! ### GL₂ adjugate map -/
-
 private lemma GL_det_ne_zero (g : GL (Fin 2) ℚ) : g.val.det ≠ 0 := by
   intro h; have := congr_arg det g.val_inv; rw [det_mul, h, det_one] at this; simp at this
 
@@ -110,18 +108,11 @@ lemma GL_adjugate_mem_SLnZ {g : GL (Fin 2) ℚ} (hg : g ∈ SLnZ_subgroup 2) :
   rw [GL_adjugate_eq_inv_of_det_one g (SLnZ_det_one g hg)]
   exact (SLnZ_subgroup 2).inv_mem hg
 
-/-! ### HeckePairAction typeclass -/
-
 /-- A Hecke pair `P` inside `GL₂(ℚ)` whose `Δ`-elements have positive real determinant
-and whose `H` is closed under the adjugate anti-involution.
-- `det_pos` ensures the slash action uses `σ = id` (no complex conjugation).
-- `adjugate_mem_H` ensures that applying the adjugate to right-coset reps gives
-  left-coset reps in the same group. -/
+and whose `H` is closed under the adjugate anti-involution. -/
 class HeckePairAction (P : HeckePair (GL (Fin 2) ℚ)) where
   det_pos : ∀ g : P.Δ, 0 < (glMap (g : GL _ ℚ)).det.val
   adjugate_mem_H : ∀ h, h ∈ P.H → GL_adjugate h ∈ P.H
-
-/-! ### Instance for GL_pair 2 -/
 
 private lemma glMap_det_val_aux (g : GL (Fin 2) ℚ) :
     (glMap g).det.val = algebraMap ℚ ℝ g.det.val :=
@@ -132,8 +123,6 @@ noncomputable instance : HeckePairAction (GL_pair 2) where
     rw [glMap_det_val_aux, GeneralLinearGroup.val_det_apply]
     exact Rat.cast_pos.mpr g.prop.2
   adjugate_mem_H h hh := GL_adjugate_mem_SLnZ hh
-
-/-! ### Instance for Gamma1_pair N -/
 
 /-- Det-positivity for Gamma1_pair (used independently of HeckePairAction). -/
 theorem Gamma1_pair_det_pos (N : ℕ) [NeZero N] (g : (Gamma1_pair N).Δ) :
@@ -159,8 +148,6 @@ noncomputable instance (N : ℕ) [NeZero N] : HeckePairAction (Gamma1_pair N) wh
     rw [GL_adjugate_eq_inv_of_det_one h (SLnZ_det_one h h_SL)]
     exact (Gamma1_pair N).H.inv_mem hh
 
-/-! ### Instance for Gamma0_pair N -/
-
 /-- Det-positivity for `Gamma0_pair N`. -/
 theorem Gamma0_pair_det_pos (N : ℕ) [NeZero N] (g : (HeckeRing.GLn.Gamma0_pair N).Δ) :
     0 < (glMap (g : GL _ ℚ)).det.val := by
@@ -184,8 +171,6 @@ noncomputable instance (N : ℕ) [NeZero N] :
       exact this hh
     rw [GL_adjugate_eq_inv_of_det_one h (SLnZ_det_one h h_SL)]
     exact (HeckeRing.GLn.Gamma0_pair N).H.inv_mem hh
-
-/-! ### Generic det-positivity lemmas -/
 
 section DetPositivity
 
@@ -229,8 +214,6 @@ private lemma sigma_eq_id_of_pos_det_gen {g : GL (Fin 2) ℝ} (hg : 0 < g.det.va
 
 end DetPositivity
 
-/-! ### Generalized definitions -/
-
 section Definitions
 
 variable (P : HeckePair (GL (Fin 2) ℚ))
@@ -243,11 +226,9 @@ noncomputable abbrev tRep_gen
   GL_adjugate
     ((i.out : GL (Fin 2) ℚ) * (HeckeCoset.rep D : GL (Fin 2) ℚ))
 
-/-- The Hecke slash action of a double coset `D` on a function `f : ℍ → ℂ`,
-for an arbitrary Hecke pair `P`.
-
-Uses left coset representatives via the adjugate anti-involution (Shimura Prop 3.30):
-`T_k(D)(f) = Σᵢ f ∣[k] adj(σᵢδ)`. -/
+/-- The Hecke slash action of a double coset `D` on a function `f : ℍ → ℂ`, for an
+arbitrary Hecke pair `P`, via left coset representatives `T_k(D)(f) = Σᵢ f ∣[k] adj(σᵢδ)`
+(Shimura Prop 3.30). -/
 noncomputable def heckeSlash_gen [HeckePairAction P] (k : ℤ)
     (D : HeckeCoset P) (f : ℍ → ℂ) : ℍ → ℂ :=
   ∑ i : decompQuot P (HeckeCoset.rep D), f ∣[k] tRep_gen P D i
@@ -259,8 +240,6 @@ noncomputable def heckeSlashExt_gen [HeckePairAction P] (k : ℤ)
   T.sum (fun D c => c • heckeSlash_gen P k D f)
 
 end Definitions
-
-/-! ### Basic algebraic lemmas -/
 
 section BasicLemmas
 
@@ -298,20 +277,16 @@ lemma heckeSlash_gen_neg (k : ℤ) (D : HeckeCoset P) (f : ℍ → ℂ) :
 
 end BasicLemmas
 
-/-! ### Slash invariance -/
-
 section SlashInvariance
 
 variable {P : HeckePair (GL (Fin 2) ℚ)} [HeckePairAction P]
 
 omit [HeckePairAction P] in
-/-- `f ∣[k] h = f` for `h ∈ P.H`, given P.H-invariance of f (via glMap). -/
 private lemma slash_H_eq_gen (k : ℤ) (f : ℍ → ℂ)
     (hf : ∀ h, h ∈ P.H → f ∣[k] (glMap h) = f)
     (h : GL (Fin 2) ℚ) (hh : h ∈ P.H) : f ∣[k] h = f :=
   hf h hh
 
-/-- Left multiplication by an H-element on `decompQuot P`. -/
 private noncomputable def leftMulQuot_gen (D : HeckeCoset P) (σ : P.H) :
     decompQuot P (HeckeCoset.rep D) →
     decompQuot P (HeckeCoset.rep D) :=
@@ -341,14 +316,12 @@ private lemma leftMulQuot_gen_injective (D : HeckeCoset P) (σ : P.H) :
       · rw [smul_eq_singleton_mul]
         exact ⟨_, rfl, 1, P.H.one_mem, by group⟩))
 
-/-- Left multiplication by an H-element on `decompQuot` is an equivalence. -/
 private noncomputable def leftMulEquiv_gen (D : HeckeCoset P) (σ : P.H) :
     decompQuot P (HeckeCoset.rep D) ≃
     decompQuot P (HeckeCoset.rep D) :=
   Equiv.ofBijective _ ⟨leftMulQuot_gen_injective D σ,
     Finite.surjective_of_injective (leftMulQuot_gen_injective D σ)⟩
 
-/-- Distribute the ℚ-slash over a heckeSlash_gen sum. -/
 private lemma heckeSlash_gen_slash (k : ℤ) (D : HeckeCoset P) (f : ℍ → ℂ)
     (g : GL (Fin 2) ℚ) : (heckeSlash_gen P k D f) ∣[k] g =
     ∑ i : decompQuot P (HeckeCoset.rep D), (f ∣[k] tRep_gen P D i) ∣[k] g := by
@@ -358,8 +331,6 @@ private lemma heckeSlash_gen_slash (k : ℤ) (D : HeckeCoset P) (f : ℍ → ℂ
   | empty => simp [SlashAction.zero_slash]
   | cons a s has ih => simp [Finset.sum_cons, SlashAction.add_slash, ih]
 
-/-- Left multiplication by an adjugated H-element preserves the slash action
-under P.H-invariance. -/
 private lemma slash_left_H_adjugate_mul_gen (k : ℤ) (f : ℍ → ℂ)
     (hf : ∀ h, h ∈ P.H → f ∣[k] (glMap h) = f) (h : GL (Fin 2) ℚ)
     (hh : h ∈ P.H) (g : GL (Fin 2) ℚ) :
@@ -370,7 +341,6 @@ private lemma slash_left_H_adjugate_mul_gen (k : ℤ) (f : ℍ → ℂ)
   exact hf _ (HeckePairAction.adjugate_mem_H h hh)
 
 omit [HeckePairAction P] in
-/-- The K-correction element lies in H (generalized). -/
 private lemma h_coset_mem_H_gen (D : HeckeCoset P)
     (q : decompQuot P (HeckeCoset.rep D)) (h₁ : GL (Fin 2) ℚ)
     (hh₁ : h₁ ∈ P.H)
@@ -385,7 +355,6 @@ private lemma h_coset_mem_H_gen (D : HeckeCoset P)
   exact P.H.mul_mem (by convert h_K using 1) hh₂
 
 omit [HeckePairAction P] in
-/-- The adjugate decomposition for the product of two coset reps (generalized). -/
 private lemma adjugate_decomp_eq_gen (D : HeckeCoset P)
     (q : decompQuot P (HeckeCoset.rep D))
     (h₁ h₂ : GL (Fin 2) ℚ) :
@@ -424,8 +393,6 @@ lemma tRep_gen_mul_anti (D₁ D₂ : HeckeCoset P)
   show GL_adjugate _ * GL_adjugate _ = _
   rw [← GL_adjugate_mul]
 
-/-- Left coset representatives from distinct quotient elements give distinct left cosets
-(generalized). -/
 private lemma left_coset_disjoint_gen (D : HeckeCoset P)
     (i j : decompQuot P (HeckeCoset.rep D)) (hij : i ≠ j) :
     (P.H : Set (GL (Fin 2) ℚ)) * {tRep_gen P D i} ≠
@@ -467,7 +434,6 @@ lemma heckeSlash_gen_slash_invariant (k : ℤ) (D : HeckeCoset P) (f : ℍ → �
   set σ_QA : P.H :=
     ⟨GL_adjugate σ_Q, HeckePairAction.adjugate_mem_H σ_Q hσ⟩
   set π := leftMulEquiv_gen D σ_QA
-  -- Each term: slash_mul then adjugate round-trip
   have h_perm : ∀ i, (f ∣[k] tRep_gen P D i) ∣[k] (σ_Q : GL _ ℚ) =
       f ∣[k] tRep_gen P D (π i) := by
     intro i
@@ -500,14 +466,10 @@ lemma heckeSlash_gen_slash_invariant (k : ℤ) (D : HeckeCoset P) (f : ℍ → �
 
 end SlashInvariance
 
-/-! ### Fiber sum (technical core) -/
-
 section FiberSum
 
 variable {P : HeckePair (GL (Fin 2) ℚ)} [HeckePairAction P]
 
-/-- For each pair `(i,j)` with `mulMap(i,j) = D`, decompose `σᵢδ₁·σⱼδ₂ = h₁·δ_D·h₂`
-to get both the slash equality and the right-coset condition (generalized). -/
 private lemma slash_and_coset_of_mulMap_eq_gen (k : ℤ) (D₁ D₂ D : HeckeCoset P)
     (f : ℍ → ℂ) (hf : ∀ h, h ∈ P.H → f ∣[k] (glMap h) = f)
     (p : decompQuot P (HeckeCoset.rep D₁) ×
@@ -546,8 +508,6 @@ private lemma slash_and_coset_of_mulMap_eq_gen (k : ℤ) (D₁ D₂ D : HeckeCos
       ⟨κ * h₂, P.H.mul_mem h_K hh₂, by simp only [smul_eq_mul, κ]; group⟩⟩
 
 omit [HeckePairAction P] in
-/-- The product `σᵢδ₁ · σⱼδ₂` lies in `toSet D` when a right-coset witness exists
-(generalized). -/
 private lemma prod_mem_D_of_rightCoset_gen (D : HeckeCoset P) (g : GL (Fin 2) ℚ)
     (q : decompQuot P (HeckeCoset.rep D)) (h : GL (Fin 2) ℚ)
     (hh : h ∈ (P.H : Set (GL (Fin 2) ℚ)))
@@ -557,7 +517,6 @@ private lemma prod_mem_D_of_rightCoset_gen (D : HeckeCoset P) (g : GL (Fin 2) �
   exact ⟨(q.out : GL (Fin 2) ℚ), SetLike.coe_mem q.out, h, hh, hprod⟩
 
 omit [HeckePairAction P] in
-/-- The product `σᵢδ₁ · σⱼδ₂` lies in `toSet (mulMap p)` (generalized). -/
 private lemma prod_mem_mulMap_gen (D₁ D₂ : HeckeCoset P)
     (p : decompQuot P (HeckeCoset.rep D₁) ×
          decompQuot P (HeckeCoset.rep D₂)) :
@@ -569,7 +528,6 @@ private lemma prod_mem_mulMap_gen (D₁ D₂ : HeckeCoset P)
   simp only [HeckeCoset.toSet_mk]; exact DoubleCoset.mem_doubleCoset_self _ _ _
 
 omit [HeckePairAction P] in
-/-- From a right-coset condition, derive that `mulMap(p) = D` (generalized). -/
 private lemma mulMap_eq_of_rightCoset_gen (D₁ D₂ D : HeckeCoset P)
     (p : decompQuot P (HeckeCoset.rep D₁) ×
          decompQuot P (HeckeCoset.rep D₂))
@@ -601,9 +559,6 @@ private lemma mulMap_eq_of_rightCoset_gen (D₁ D₂ D : HeckeCoset P)
 
 open scoped Classical in
 omit [HeckePairAction P] in
-/-- The fiber of `q_of` over `q` (within the `mulMap = D` selection set `S`) is in
-bijection with the pairs satisfying the right-coset condition for `q`, hence the
-cardinalities agree. Extracted from `heckeSlash_gen_fiber_sum`. -/
 private lemma fiber_card_eq_gen (D₁ D₂ D : HeckeCoset P)
     (q_of : decompQuot P (HeckeCoset.rep D₁) ×
         decompQuot P (HeckeCoset.rep D₂) → decompQuot P (HeckeCoset.rep D))
@@ -647,8 +602,6 @@ private lemma fiber_card_eq_gen (D₁ D₂ D : HeckeCoset P)
     left_inv := fun ⟨_, _⟩ => rfl
     right_inv := fun ⟨_, _⟩ => rfl }
 
-/-- The fiber sum lemma: pairs mapping to a fixed double coset D contribute
-`heckeMultiplicity · ∑ q, f ∣[k] tRep_gen D q` (generalized). -/
 private lemma heckeSlash_gen_fiber_sum [DecidableEq (HeckeCoset P)] (k : ℤ)
     (D₁ D₂ D : HeckeCoset P)
     (_hD : D ∈ mulSupport P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂))
@@ -708,8 +661,6 @@ private lemma heckeSlash_gen_fiber_sum [DecidableEq (HeckeCoset P)] (k : ℤ)
 
 end FiberSum
 
-/-! ### Hecke algebra action -/
-
 section HeckeAlgebraAction
 
 variable {P : HeckePair (GL (Fin 2) ℚ)} [HeckePairAction P]
@@ -768,15 +719,12 @@ theorem heckeSlash_gen_comp (k : ℤ) (D₁ D₂ : HeckeCoset P) (f : ℍ → �
 
 end HeckeAlgebraAction
 
-/-! ### Commutativity -/
-
 section Commutativity
 
 variable {P : HeckePair (GL (Fin 2) ℚ)} [HeckePairAction P]
 
 /-- When the Hecke algebra multiplication is commutative, the Hecke operators commute
-on P.H-invariant functions. This is the one-line proof replacing 500+ lines of
-direct computation. -/
+on P.H-invariant functions. -/
 theorem heckeSlash_gen_comm (k : ℤ) (D₁ D₂ : HeckeCoset P) (f : ℍ → ℂ)
     (hf : ∀ h, h ∈ P.H → f ∣[k] (glMap h) = f)
     (hcomm : ∀ A B : HeckeCoset P,
@@ -790,24 +738,5 @@ theorem heckeSlash_gen_comm (k : ℤ) (D₁ D₂ : HeckeCoset P) (f : ℍ → �
   exact hcomm D₂ D₁
 
 end Commutativity
-
-/-! ### Usage note
-
-The explicit `hcomm` hypothesis of `heckeSlash_gen_comp`/`heckeSlash_gen_comm` lets
-callers supply commutativity from whatever source is natural. When a canonical
-`CommRing (𝕋 P ℤ)` instance is in scope, the call becomes
-`heckeSlash_gen_comm k D₁ D₂ f hf (fun _ _ => mul_comm _ _)` — see
-`HeckeT_p_GLpair.lean` for an example at `GL_pair 2`. An abstract
-`[CommRing (𝕋 P ℤ)]` typeclass parameter is intentionally avoided here because it
-introduces an instance that does not coincide definitionally with `instMul𝕋Int P`,
-yielding a diamond that blocks direct application of `mul_comm`. -/
-
-/-! ### Connection to GL_pair 2 level-1 theory
-
-The level-1 `tRep` (in `HeckeAction.lean`) uses transpose, while `tRep_gen` uses the
-adjugate anti-involution. For `GL_pair 2`, both produce the same Hecke operator values
-on SL₂(ℤ)-invariant functions because `adj(g) = gᵀ` up to SL₂(ℤ) conjugation when
-`det(g)` is a positive integer. The level-1 theory in `HeckeAction.lean` and
-`HeckeModularForm.lean` is independent and unaffected by this generalization. -/
 
 end HeckeRing.GL2

@@ -23,12 +23,6 @@ Hecke operators with respect to the Petersson inner product: the cusp-form
 Hecke operators, the cuspidality-preservation API, the algebraic double-coset
 identity, and the GL₂⁺ change-of-variables lemma `peterssonInner_slash_adjoint`.
 
-The long Petersson development (the T090/T024/T128/T205 double-coset tile
-calculation) and the eigenform diagonalization built on top of it live in the
-downstream module `LeanModularForms.HeckeRIngs.GL2.AdjointTheoryPetersson`,
-including `heckeT_p_adjoint`, `diamondOp_petersson_unitary`, `heckeT_n_normal`
-and `exists_simultaneous_eigenform_basis`.
-
 ## Main results
 
 * `heckeT_n_cusp` — the Hecke operator `T_n` on cusp forms
@@ -50,12 +44,6 @@ open scoped Pointwise MatrixGroups ModularForm
 
 variable {k : ℤ}
 
-/-! ### CuspForm ↪ ModularForm coercion
-
-In Mathlib, `CuspForm` and `ModularForm` are parallel structures over
-`SlashInvariantForm`. A cusp form is also a modular form since
-`IsZeroAt → IsBoundedAt`. -/
-
 namespace CuspForm
 
 /-- Every cusp form is a modular form (zero at cusps implies bounded at cusps). -/
@@ -72,11 +60,6 @@ namespace HeckeRing.GL2
 open CuspForm
 
 variable {N : ℕ} [NeZero N]
-
-/-! ### Hecke operators on cusp forms
-
-The Hecke operators preserve cuspidality — `IsZeroAt` is preserved by
-the coset-sum construction. -/
 
 private lemma Gamma1_isCusp_glMap_smul' (A : GL (Fin 2) ℚ) {c : OnePoint ℝ}
     (hc : IsCusp c ((Gamma1 N).map (mapGL ℝ))) :
@@ -340,18 +323,6 @@ theorem heckeT_n_cusp_mul_apply (n₁ n₂ : ℕ) [NeZero n₁] [NeZero n₂]
     (heckeT_n k n₁ (heckeT_n k n₂ f.toModularForm')).toFun z
   rw [h_eq]; rfl
 
-/-! ### Double coset identity for the adjoint (DS Theorem 5.5.3, algebraic part)
-
-For `p` coprime to `N`, choose `m, n ∈ ℤ` with `mp - nN = 1` (Bezout).
-Then the matrix factorization `[p,0;0,1] = [1,n;N,mp]⁻¹ · [1,0;0,p] · [p,n;N,m]`
-(where `[1,n;N,mp] ∈ Γ₁(N)` and `[p,n;N,m] ∈ Γ₀(N)` with `m ≡ p⁻¹ mod N`)
-gives the double coset identity:
-
-  `Γ₁(N) [p,0;0,1] Γ₁(N) = Γ₁(N) [1,0;0,p] Γ₁(N) · γ₀`
-
-where `γ₀ = [p,n;N,m]` represents `⟨p⁻¹⟩`. This is the algebraic heart of
-`T_p* = ⟨p⟩⁻¹ T_p`. -/
-
 noncomputable def adjointGamma0Rep (p N : ℕ) (hpN : Nat.Coprime p N) :
     ↥(Gamma0 N) :=
   let m := Int.gcdA p N
@@ -504,8 +475,6 @@ lemma adjointGamma1Rep_mem_Gamma1 (p N : ℕ) [NeZero N]
     show (((adjointGamma1Rep p N hpN).val 1 0 : ℤ) : ZMod N) = 0
     unfold adjointGamma1Rep; simp
 
-/-- `γ₀ · σ_p` has reduction `1` in its `(0,0)` entry mod `N`: a quick `Matrix.mul_apply`
-expansion plus `aInvOfCoprime · p ≡ 1`. -/
 private lemma adjointGamma0Rep_mul_sigma_p_entry_00
     (p N : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) :
     (((((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) *
@@ -530,8 +499,6 @@ private lemma adjointGamma0Rep_mul_sigma_p_entry_00
   rw [add_zero, mul_comm]
   exact aInvOfCoprime_mul_eq_one N p hpN
 
-/-- `γ₀ · σ_p` has reduction `1` in its `(1,1)` entry mod `N`: the `N`-column drops out and
-Bézout gives `(gcdA p N) · p ≡ 1`. -/
 private lemma adjointGamma0Rep_mul_sigma_p_entry_11
     (p N : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) :
     (((((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) *
@@ -557,8 +524,6 @@ private lemma adjointGamma0Rep_mul_sigma_p_entry_11
     ZMod.natCast_self] at this
   linear_combination -this
 
-/-- `γ₀ · σ_p` has reduction `0` in its `(1,0)` entry mod `N`: every term carries a factor of
-`N`, so the entry vanishes mod `N`. -/
 private lemma adjointGamma0Rep_mul_sigma_p_entry_10
     (p N : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) :
     (((((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) *
@@ -631,50 +596,15 @@ private lemma adjointGamma0Rep_mul_M_infty_eq_gamma1_mul_T_p_lower
   rw [← mul_assoc, ← map_mul]
   rfl
 
-/-! ### Hermitian adjoint of Hecke operators
-
-The adjoint is defined via the Petersson inner product:
-`⟨T f, g⟩ = ⟨f, T* g⟩` for all cusp forms f, g.
-
-Diamond–Shurman Proposition 5.5.2 gives the key identity:
-`⟨f|[α], g⟩ = ⟨f, g|[α']⟩` where `α' = det(α) · α⁻¹`.
-
-For T_p, this yields T_p* = ⟨p⟩⁻¹ T_p (Theorem 5.5.3). -/
-
-/-! ### DS Proposition 5.5.2: GL₂⁺ change of variables for Petersson
-
-The key analytic lemma for the Hecke adjoint. For `α ∈ GL₂⁺(ℝ)`:
-
-```
-∫_{D} petersson k (f|α) g dμ = ∫_{α⁻¹•D} petersson k f (g|α') dμ
-```
-where `α' = det(α)·α⁻¹`, using `instSMulInvMeasure_GLpos` for the change of
-variables and `petersson_slash` for the integrand transformation.
-
-This is combined with the coset sum structure of `petN` and the algebraic
-double coset identity to prove `T_p* = ⟨p⟩⁻¹ T_p` (DS Theorem 5.5.3). -/
-
 section PeterssonAdjoint
 
 open UpperHalfPlane MeasureTheory
 
--- Proof sketch for peterssonInner_slash_adjoint (DS Lemma 5.5.1 / Prop 5.5.2a):
--- 1. Insert `g = (g∣α)∣α⁻¹` to get both functions slashed by α:
---    `petersson k (f∣α) ((g∣α⁻¹)∣α) τ = |det α|^{k-2} · σ α · petersson k f (g∣α⁻¹) (α•τ)`.
--- 2. Change variables `τ → α⁻¹•τ` using `instSMulInvMeasure_GLpos`:
---    `∫_D h(τ) dμ = ∫_{α⁻¹•D} h(α•τ) dμ`.
--- 3. Simplify: the `|det α|^{k-2}` factor combines with `g∣α⁻¹` to give
---    `g∣(det(α)·α⁻¹) = g∣adjugate(α)` in the `petersson` integrand.
-
-/-- The "Petersson adjoint" of a GL₂(ℝ) element: `α† = det(α) · α⁻¹ = adjugate(α)`.
-As a 2x2 matrix, `adjugate [[a,b],[c,d]] = [[d,-b],[-c,a]]`.
-Since `det(adjugate α) = det(α)^{n-1} ≠ 0`, the adjugate is in GL₂(ℝ). -/
+/-- The "Petersson adjoint" of a GL₂(ℝ) element: `α† = det(α) · α⁻¹ = adjugate(α)`. -/
 noncomputable def peterssonAdj (α : GL (Fin 2) ℝ) : GL (Fin 2) ℝ :=
   .mkOfDetNeZero (α : Matrix (Fin 2) (Fin 2) ℝ).adjugate (by
     rw [Matrix.det_adjugate]
     exact pow_ne_zero _ α.det_ne_zero)
-
--- API for `slash_peterssonAdj_eq`: key facts about adjugate in GL₂.
 
 /-- `det(peterssonAdj α) = det(α)` for 2×2 matrices (since det(adjugate) = det^{n-1}). -/
 lemma peterssonAdj_det (α : GL (Fin 2) ℝ) :
@@ -722,8 +652,7 @@ private lemma sum_Gamma1Quot_mul_right_inv_eq
   exact congrArg F (Quotient.out_eq q)
 
 /-- **Double-adjoint identity**: `peterssonAdj (peterssonAdj α) = α` for
-any `α : GL (Fin 2) ℝ`.  Follows from `Matrix.adjugate_adjugate` at
-`Fintype.card (Fin 2) = 2`, where `(det α)^(2 - 2) • α = α`. -/
+any `α : GL (Fin 2) ℝ`. -/
 lemma peterssonAdj_peterssonAdj (α : GL (Fin 2) ℝ) :
     peterssonAdj (peterssonAdj α) = α := by
   apply Units.ext
@@ -806,13 +735,7 @@ private lemma peterssonAdj_denom (α : GL (Fin 2) ℝ) (τ : ℍ) :
     Complex.ofReal_ne_zero.mpr (Units.ne_zero α.det)
   field_simp
 
-/-- Pointwise: `g ∣[k] peterssonAdj α = |det α|^{k-2} • (g ∣[k] α⁻¹)`.
-
-Proof: By `ext τ; simp [slash_apply]`, both sides evaluate to
-`g(α⁻¹•τ) * (det-power) * (denom)^{-k}`. Using `peterssonAdj_smul_eq` (same Möbius
-action), `peterssonAdj_det` (same det), and `peterssonAdj_denom` (denom scales by det),
-the det powers `|det|^{k-1} · det^{-k}` on the LHS vs `|det|^{k-2} · |det⁻¹|^{k-1}`
-on the RHS both equal `det^{-1}`, so the ratio is `|det|^{k-2}`. -/
+/-- Pointwise: `g ∣[k] peterssonAdj α = |det α|^{k-2} • (g ∣[k] α⁻¹)`. -/
 lemma slash_peterssonAdj_eq (α : GL (Fin 2) ℝ) (hα : 0 < α.det.val)
     (g : ℍ → ℂ) :
     g ∣[k] peterssonAdj α = (↑(|α.det.val| ^ (k - 2)) : ℂ) • (g ∣[k] α⁻¹) := by
@@ -881,8 +804,7 @@ theorem peterssonInner_slash_adjoint
   exact (measurePreserving_smul α' μ_hyp).setIntegral_image_emb
     (measurableEmbedding_const_smul α') _ D
 
-/-- **Hecke-representative wrapper around `peterssonInner_slash_adjoint`**
-(Step 1 of the T205-d-SYMM chain, per expert review 2026-05-11). -/
+/-- **Hecke-representative wrapper around `peterssonInner_slash_adjoint`**. -/
 theorem peterssonInner_slash_adjoint_for_heckeRep
     (D : Set ℍ) (β : GL (Fin 2) ℝ) (hβ : 0 < β.det.val)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
@@ -891,7 +813,7 @@ theorem peterssonInner_slash_adjoint_for_heckeRep
   peterssonInner_slash_adjoint D β hβ ⇑f ⇑g
 
 /-- **Per-`q`-coset Hecke-rep wrapper** (companion to
-`peterssonInner_slash_adjoint_for_heckeRep`, Step 1 of T205-d-SYMM chain). -/
+`peterssonInner_slash_adjoint_for_heckeRep`). -/
 theorem peterssonInner_slash_adjoint_for_heckeRep_per_q
     (q : SL(2, ℤ) ⧸ Gamma1 N) (β : GL (Fin 2) ℝ) (hβ : 0 < β.det.val)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
@@ -907,8 +829,7 @@ theorem peterssonInner_slash_adjoint_for_heckeRep_per_q
   exact peterssonInner_slash_adjoint_for_heckeRep _ β hβ f g
 
 /-- **LHS-distributed-summand → tile-form bridge** (consumer of
-`peterssonInner_slash_adjoint_for_heckeRep_per_q`, immediate use by
-T205-d-ADJ-CORR). -/
+`peterssonInner_slash_adjoint_for_heckeRep_per_q`). -/
 theorem peterssonInner_LHS_distributed_summand_to_tile_form
     (q : SL(2, ℤ) ⧸ Gamma1 N) (β : GL (Fin 2) ℝ) (hβ : 0 < β.det.val)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
