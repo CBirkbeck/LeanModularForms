@@ -170,23 +170,6 @@ structure PiecewiseC1Immersion extends PiecewiseC1Curve where
   right_deriv_limit : ∀ p ∈ partition, p < b →
     ∃ L : ℂ, L ≠ 0 ∧ Tendsto (deriv toPiecewiseC1PathOn.toFun) (𝓝[>] p) (𝓝 L)
 
-/-- The Cauchy principal value integrand at cutoff ε. -/
-def cauchyPrincipalValueIntegrand' (f : ℂ → ℂ) (γ : ℝ → ℂ)
-    (z₀ : ℂ) (ε : ℝ) (t : ℝ) : ℂ :=
-  if ‖γ t - z₀‖ > ε then f (γ t) * deriv γ t else 0
-
-@[simp]
-theorem cauchyPrincipalValueIntegrand'_of_gt {f : ℂ → ℂ} {γ : ℝ → ℂ} {z₀ : ℂ} {ε : ℝ} {t : ℝ}
-    (h : ε < ‖γ t - z₀‖) :
-    cauchyPrincipalValueIntegrand' f γ z₀ ε t = f (γ t) * deriv γ t := by
-  simp only [cauchyPrincipalValueIntegrand', if_pos h]
-
-@[simp]
-theorem cauchyPrincipalValueIntegrand'_of_le {f : ℂ → ℂ} {γ : ℝ → ℂ} {z₀ : ℂ} {ε : ℝ} {t : ℝ}
-    (h : ‖γ t - z₀‖ ≤ ε) :
-    cauchyPrincipalValueIntegrand' f γ z₀ ε t = 0 := by
-  simp only [cauchyPrincipalValueIntegrand', if_neg (not_lt.mpr h)]
-
 /-- The Cauchy principal value of ∮_γ f(z) dz, excluding ε-neighborhoods of z₀. -/
 def cauchyPrincipalValue' (f : ℂ → ℂ) (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) : ℂ :=
   limUnder (𝓝[>] (0 : ℝ)) fun ε ↦
