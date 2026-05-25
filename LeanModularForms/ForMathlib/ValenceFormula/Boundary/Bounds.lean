@@ -218,10 +218,6 @@ lemma fdBoundary_H_re_abs_le_half (H : ℝ) :
   rw [fdBoundary_H_eq_seg5_H h4, seg5_H_re, abs_le]
   constructor <;> linarith
 
-theorem fdBoundary_continuous : Continuous fdBoundary := by
-  rw [fdBoundary_eq_fdBoundary_H]
-  exact fdBoundary_H_continuous heightCutoff
-
 lemma fdBoundary_H_im_le_H {H : ℝ} (hH : 1 ≤ H) :
     ∀ t ∈ Icc (0 : ℝ) 5, (fdBoundary_H H t).im ≤ H := by
   intro t ⟨ht0, ht5⟩

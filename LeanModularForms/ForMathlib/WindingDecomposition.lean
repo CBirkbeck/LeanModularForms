@@ -64,25 +64,4 @@ theorem angleAtCrossing_smooth (γ : PwC1Immersion x y) (t₀ : ℝ) (ht₀ : t�
     angleAtCrossing γ t₀ ht₀ = Real.pi := by
   simp [angleAtCrossing, hsmooth]
 
-/-- The external winding contribution at a single crossing point. For a closed piecewise C¹
-immersion passing through `z₀`, this measures the winding of the curve around `z₀` apart
-from the local crossing angle.
-
-The H-W decomposition is `n_{z₀}(γ) = N - α/(2π)`, so `N = n_{z₀}(γ) + α/(2π)`.
-When `N = 0`, the generalized winding number equals `-α/(2π)`. -/
-def externalWindingContribution (γ : PwC1Immersion x y) (z₀ : ℂ) (t₀ : ℝ)
-    (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1) : ℂ :=
-  generalizedWindingNumber γ.toPiecewiseC1Path z₀ +
-    (angleAtCrossing γ t₀ ht₀ : ℂ) / (2 * ↑Real.pi)
-
-/-- **H-W Proposition 2.3**: The generalized winding number decomposes as the external
-winding contribution minus the crossing angle contribution:
-`n_{z₀}(γ) = N - α/(2π)` where `N` is the external winding contribution. -/
-theorem generalizedWindingNumber_eq_external_sub_angle (γ : PwC1Immersion x y) (z₀ : ℂ)
-    (t₀ : ℝ) (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1) :
-    (generalizedWindingNumber γ.toPiecewiseC1Path z₀ : ℂ) =
-      externalWindingContribution γ z₀ t₀ ht₀ -
-        (angleAtCrossing γ t₀ ht₀ : ℂ) / (2 * ↑Real.pi) := by
-  simp [externalWindingContribution]
-
 end

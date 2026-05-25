@@ -246,39 +246,4 @@ structure SatisfiesConditionB (γ : PwC1Immersion x y) (f : ℂ → ℂ)
           ∃ m : ℤ, (↑k.val : ℝ) * angleAtCrossing γ t₀ ht₀ =
             ↑m * (2 * Real.pi))
 
-/-- Condition (A') is automatically satisfied when all poles are simple and the
-pole order function assigns order 1 to each pole. Flatness of order 1 is automatic
-for any piecewise C¹ immersion. -/
-theorem satisfiesConditionA'_of_simplePoles
-    (γ : PwC1Immersion x y) (f : ℂ → ℂ) (S0 : Finset ℂ)
-    (_hSimplePoles : ∀ s ∈ S0, HasSimplePoleAt f s) :
-    SatisfiesConditionA' γ f S0 (fun _ => 1) :=
-  fun _ _ t₀ _ _ ht => isFlatOfOrder_one γ t₀ ht
-
-/-- Condition (B) for simple poles requires angle rationality at corner crossings
-as an explicit hypothesis. The Laurent coefficient condition is vacuously true
-(the only singular term has `k = 0`, so `k ≥ 1` is never satisfied).
-
-At smooth crossings the angle is `π = 1 · π / 1`, so this is automatic.
-At corner crossings, the angle depends on the curve geometry. -/
-theorem satisfiesConditionB_of_simplePoles
-    (γ : PwC1Immersion x y) (f : ℂ → ℂ) (S0 : Finset ℂ)
-    (hSimplePoles : ∀ s ∈ S0, HasSimplePoleAt f s)
-    (hAngles : ∀ s ∈ S0, ∀ t₀ ∈ Icc (0 : ℝ) 1, (γ : ℝ → ℂ) t₀ = s →
-      ∀ ht₀_Ioo : t₀ ∈ Ioo (0 : ℝ) 1,
-        t₀ ∈ γ.toPiecewiseC1Path.partition →
-          ∃ p q : ℕ, q ≠ 0 ∧ Nat.Coprime p q ∧
-            angleAtCrossing γ t₀ ht₀_Ioo = ↑p * Real.pi / ↑q) :
-    SatisfiesConditionB γ f S0 := by
-  refine ⟨fun s hs t₀ ht₀ hcross ht₀_Ioo => ?_, fun s hs t₀ _ _ _ => ?_⟩
-  · by_cases hp : t₀ ∈ γ.toPiecewiseC1Path.partition
-    · exact hAngles s hs t₀ ht₀ hcross ht₀_Ioo hp
-    · exact ⟨1, 1, one_ne_zero, Nat.coprime_one_left 1, by
-        simp [angleAtCrossing_smooth γ t₀ ht₀_Ioo hp]⟩
-  · obtain ⟨c, g, hg, hf_eq⟩ := hSimplePoles s hs
-    refine ⟨1, ![c], g, hg, ?_, ?_⟩
-    · filter_upwards [hf_eq] with z hz
-      simp [hz, pow_one, add_comm]
-    · exact fun ⟨_, hk⟩ _ hk1 => absurd hk1 (by lia)
-
 end
