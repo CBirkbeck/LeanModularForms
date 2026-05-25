@@ -73,19 +73,6 @@ theorem HasGeneralizedWindingNumber.eq {γ : PiecewiseC1Path x y} {z₀ w : ℂ}
   rw [generalizedWindingNumber, h.cauchyPV_eq, ← mul_assoc,
     inv_mul_cancel₀ Complex.two_pi_I_ne_zero, one_mul]
 
-/-- The generalized winding number value is unique. -/
-theorem HasGeneralizedWindingNumber.unique {γ : PiecewiseC1Path x y} {z₀ w₁ w₂ : ℂ}
-    (h₁ : HasGeneralizedWindingNumber γ z₀ w₁)
-    (h₂ : HasGeneralizedWindingNumber γ z₀ w₂) : w₁ = w₂ :=
-  mul_left_cancel₀ Complex.two_pi_I_ne_zero (HasCauchyPV.unique h₁ h₂)
-
-/-- Negation: if the winding number of `γ` around `z₀` is `w`, then the winding number of
-`γ` with the negated integrand corresponds to `-w`. -/
-theorem HasGeneralizedWindingNumber.neg {γ : PiecewiseC1Path x y} {z₀ w : ℂ}
-    (h : HasGeneralizedWindingNumber γ z₀ w) :
-    HasCauchyPV (fun z => -(z - z₀)⁻¹) γ z₀ (-(2 * ↑Real.pi * I * w)) :=
-  HasCauchyPV.neg h
-
 /-- If `γ` avoids `z₀` (with positive minimum distance), the generalized winding number
 equals the classical contour integral formula. -/
 theorem hasGeneralizedWindingNumber_of_avoids {γ : PiecewiseC1Path x y} {z₀ : ℂ}
@@ -104,13 +91,6 @@ theorem hasGeneralizedWindingNumber_of_hasCauchyPV {γ : PiecewiseC1Path x y} {z
   rw [HasGeneralizedWindingNumber, mul_inv_cancel_left₀ Complex.two_pi_I_ne_zero]
   exact h
 
-
-/-- Scalar multiplication compatibility: if the winding number is `w`, then scaling the
-integrand by `c` gives `c * w`. -/
-theorem HasGeneralizedWindingNumber.const_mul {γ : PiecewiseC1Path x y} {z₀ w : ℂ}
-    (c : ℂ) (h : HasGeneralizedWindingNumber γ z₀ w) :
-    HasCauchyPV (fun z => c * (z - z₀)⁻¹) γ z₀ (c * (2 * ↑Real.pi * I * w)) :=
-  h.smul c
 
 /-- Helper: distance lower bound for points in a small ball around `w₀` (off the curve). -/
 lemma ball_dist_to_curve_lb {γ : PiecewiseC1Path x y} {w₀ : ℂ}
