@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import Mathlib.Analysis.Calculus.FDeriv.Extend
 import LeanModularForms.ForMathlib.Instances
-import LeanModularForms.ForMathlib.PrincipalPart
+import LeanModularForms.ForMathlib.MeromorphicBridge
 import LeanModularForms.ForMathlib.WindingDecomposition
 
 /-!

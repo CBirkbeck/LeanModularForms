@@ -9,7 +9,7 @@ import LeanModularForms.ForMathlib.PaperPwC1Immersion
 import LeanModularForms.ForMathlib.SimplePoleIntegral
 import LeanModularForms.ForMathlib.MultipointPV
 import LeanModularForms.ForMathlib.PiecewiseContourIntegral
-import LeanModularForms.ForMathlib.MeromorphicCauchy
+import LeanModularForms.ForMathlib.ResidueCircleIntegral
 import LeanModularForms.ForMathlib.CurveMeasureZero
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.Residue.MeasureHelpers
 
