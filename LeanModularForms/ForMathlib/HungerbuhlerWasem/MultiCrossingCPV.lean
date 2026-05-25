@@ -66,6 +66,29 @@ private lemma exists_pos_min_image {α : Type*} {S : Finset α} (h_nonempty : S.
     (fun ⟨a, ha⟩ => f a ha) (Finset.attach_nonempty_iff.mpr h_nonempty)
   exact ⟨_, hf_pos a₀ ha₀, fun a ha => h_min ⟨a, ha⟩ (Finset.mem_attach _ _)⟩
 
+/-- Shared boilerplate for the four CPV existence theorems: given crossing
+endpoint/pairwise data at the geometric radius `r_geom` and a shrunk radius
+`r ≤ r_geom` with `r < r_geom`, derive: window inclusion in `[0, 1]`, endpoint
+bounds (loose and strict) at `r`, and the pairwise `2r < |t - t'|`. -/
+private lemma multiCrossing_window_data {crossings : Finset ℝ} {r r_geom : ℝ}
+    (hr_le_geom : r ≤ r_geom) (hr_lt_geom : r < r_geom)
+    (hr_geom_endpts : ∀ t ∈ crossings, r_geom ≤ t ∧ t ≤ 1 - r_geom)
+    (hr_geom_pair : ∀ t ∈ crossings, ∀ t' ∈ crossings, t' ≠ t → 2 * r_geom < |t - t'|) :
+    (∀ t_i ∈ crossings, Set.Icc (t_i - r) (t_i + r) ⊆ Set.Icc (0 : ℝ) 1) ∧
+    (∀ t ∈ crossings, r ≤ t ∧ t ≤ 1 - r) ∧
+    (∀ t ∈ crossings, r < t ∧ t < 1 - r) ∧
+    (∀ t ∈ crossings, ∀ t' ∈ crossings, t' ≠ t → 2 * r < |t - t'|) :=
+  ⟨fun t_i ht_i_mem t ht =>
+      ⟨by linarith [ht.1, (hr_geom_endpts t_i ht_i_mem).1],
+       by linarith [ht.2, (hr_geom_endpts t_i ht_i_mem).2]⟩,
+   fun t ht =>
+      ⟨hr_le_geom.trans (hr_geom_endpts t ht).1,
+       by linarith [(hr_geom_endpts t ht).2]⟩,
+   fun t ht =>
+      ⟨hr_lt_geom.trans_le (hr_geom_endpts t ht).1,
+       by linarith [(hr_geom_endpts t ht).2]⟩,
+   fun t ht t' ht' hne => by linarith [hr_geom_pair t ht t' ht' hne]⟩
+
 /-! ### Per-crossing radius bundle: per-crossing chord-quotient thresholds -/
 
 /-- **Per-crossing radius existence**: for each crossing `t_i`, extract a
@@ -708,23 +731,8 @@ theorem hasCauchyPV_inv_sub_multiCrossing
     have hr_le_chord : r ≤ r_chord := min_le_left _ _
     have hr_lt_geom : r < r_geom := lt_of_le_of_lt (min_le_right _ _) (by linarith)
     have hr_le_geom : r ≤ r_geom := hr_lt_geom.le
-    -- For each crossing t_i: window in [0, 1].
-    have h_window_in_unit : ∀ t_i ∈ D.crossings,
-        Set.Icc (t_i - r) (t_i + r) ⊆ Set.Icc (0 : ℝ) 1 := fun t_i ht_i_mem t ht => by
-      have ⟨ht_i_ge, ht_i_le⟩ := hr_geom_endpts t_i ht_i_mem
-      exact ⟨by linarith [ht.1, hr_le_geom], by linarith [ht.2, hr_le_geom]⟩
-    -- Endpts of crossings: STRICT inequality (r < t and t < 1 - r) since
-    -- r < r_geom ≤ t and t ≤ 1 - r_geom < 1 - r.
-    have h_endpts_r : ∀ t ∈ D.crossings, r ≤ t ∧ t ≤ 1 - r := fun t ht => by
-      have ⟨hg1, hg2⟩ := hr_geom_endpts t ht
-      exact ⟨hr_le_geom.trans hg1, by linarith [hr_le_geom]⟩
-    have h_endpts_r_strict : ∀ t ∈ D.crossings, r < t ∧ t < 1 - r := fun t ht => by
-      have ⟨hg1, hg2⟩ := hr_geom_endpts t ht
-      exact ⟨hr_lt_geom.trans_le hg1, by linarith [hr_lt_geom]⟩
-    -- Pairwise.
-    have h_pair_r : ∀ t ∈ D.crossings, ∀ t' ∈ D.crossings, t' ≠ t →
-        2 * r < |t - t'| := fun t ht t' ht' hne => by
-      linarith [hr_geom_pair t ht t' ht' hne, hr_le_geom]
+    obtain ⟨h_window_in_unit, h_endpts_r, h_endpts_r_strict, h_pair_r⟩ :=
+      multiCrossing_window_data hr_le_geom hr_lt_geom hr_geom_endpts hr_geom_pair
     -- Local uniqueness at each crossing.
     have h_local_unique_at : ∀ t_i ∈ D.crossings,
         ∀ t ∈ Set.Icc (t_i - r) (t_i + r), γf t = s → t = t_i := by
@@ -938,19 +946,8 @@ theorem hasCauchyPV_inv_sub_multiCrossing_corner
     have hr_le_chord : r ≤ r_chord := min_le_left _ _
     have hr_lt_geom : r < r_geom := lt_of_le_of_lt (min_le_right _ _) (by linarith)
     have hr_le_geom : r ≤ r_geom := hr_lt_geom.le
-    have h_window_in_unit : ∀ t_i ∈ crossings,
-        Set.Icc (t_i - r) (t_i + r) ⊆ Set.Icc (0 : ℝ) 1 := fun t_i ht_i_mem t ht => by
-      have ⟨ht_i_ge, ht_i_le⟩ := hr_geom_endpts t_i ht_i_mem
-      exact ⟨by linarith [ht.1, hr_le_geom], by linarith [ht.2, hr_le_geom]⟩
-    have h_endpts_r : ∀ t ∈ crossings, r ≤ t ∧ t ≤ 1 - r := fun t ht => by
-      have ⟨hg1, hg2⟩ := hr_geom_endpts t ht
-      exact ⟨hr_le_geom.trans hg1, by linarith [hr_le_geom]⟩
-    have h_endpts_r_strict : ∀ t ∈ crossings, r < t ∧ t < 1 - r := fun t ht => by
-      have ⟨hg1, hg2⟩ := hr_geom_endpts t ht
-      exact ⟨hr_lt_geom.trans_le hg1, by linarith [hr_lt_geom]⟩
-    have h_pair_r : ∀ t ∈ crossings, ∀ t' ∈ crossings, t' ≠ t →
-        2 * r < |t - t'| := fun t ht t' ht' hne => by
-      linarith [hr_geom_pair t ht t' ht' hne, hr_le_geom]
+    obtain ⟨h_window_in_unit, h_endpts_r, h_endpts_r_strict, h_pair_r⟩ :=
+      multiCrossing_window_data hr_le_geom hr_lt_geom hr_geom_endpts hr_geom_pair
     have h_local_unique_at : ∀ t_i ∈ crossings,
         ∀ t ∈ Set.Icc (t_i - r) (t_i + r), γf t = s → t = t_i := by
       intro t_i ht_i_mem t ht_in h_eq
@@ -2042,26 +2039,8 @@ theorem hasCauchyPVOn_multiCrossing_higherOrder
     have hr_le_chord : r ≤ r_chord := min_le_left _ _
     have hr_lt_geom : r < r_geom := lt_of_le_of_lt (min_le_right _ _) (by linarith)
     have hr_le_geom : r ≤ r_geom := hr_lt_geom.le
-    have h_window_in_unit : ∀ t_i ∈ D.crossings,
-        Set.Icc (t_i - r) (t_i + r) ⊆ Set.Icc (0 : ℝ) 1 := by
-      intro t_i ht_i_mem t ht
-      have ⟨ht_i_ge, ht_i_le⟩ := hr_geom_endpts t_i ht_i_mem
-      refine ⟨?_, ?_⟩
-      · linarith [ht.1, hr_le_geom]
-      · linarith [ht.2, hr_le_geom]
-    have h_endpts_r : ∀ t ∈ D.crossings, r ≤ t ∧ t ≤ 1 - r := by
-      intro t ht
-      have ⟨hg1, hg2⟩ := hr_geom_endpts t ht
-      exact ⟨le_trans hr_le_geom hg1, by linarith [hr_le_geom]⟩
-    have h_endpts_r_strict : ∀ t ∈ D.crossings, r < t ∧ t < 1 - r := by
-      intro t ht
-      have ⟨hg1, hg2⟩ := hr_geom_endpts t ht
-      exact ⟨lt_of_lt_of_le hr_lt_geom hg1, by linarith [hr_lt_geom]⟩
-    have h_pair_r : ∀ t ∈ D.crossings, ∀ t' ∈ D.crossings, t' ≠ t →
-        2 * r < |t - t'| := by
-      intro t ht t' ht' hne
-      have h_pair := hr_geom_pair t ht t' ht' hne
-      linarith [hr_le_geom]
+    obtain ⟨h_window_in_unit, h_endpts_r, h_endpts_r_strict, h_pair_r⟩ :=
+      multiCrossing_window_data hr_le_geom hr_lt_geom hr_geom_endpts hr_geom_pair
     have h_local_unique_at : ∀ t_i ∈ D.crossings,
         ∀ t ∈ Set.Icc (t_i - r) (t_i + r), γf t = s → t = t_i := by
       intro t_i ht_i_mem t ht_in h_eq
@@ -2984,19 +2963,8 @@ theorem hasCauchyPVOn_multiCrossing_higherOrder_corner
     have hr_le_chord : r ≤ r_chord := min_le_left _ _
     have hr_lt_geom : r < r_geom := lt_of_le_of_lt (min_le_right _ _) (by linarith)
     have hr_le_geom : r ≤ r_geom := hr_lt_geom.le
-    have h_window_in_unit : ∀ t_i ∈ crossings,
-        Set.Icc (t_i - r) (t_i + r) ⊆ Set.Icc (0 : ℝ) 1 := fun t_i ht_i_mem t ht => by
-      have ⟨ht_i_ge, ht_i_le⟩ := hr_geom_endpts t_i ht_i_mem
-      exact ⟨by linarith [ht.1, hr_le_geom], by linarith [ht.2, hr_le_geom]⟩
-    have h_endpts_r : ∀ t ∈ crossings, r ≤ t ∧ t ≤ 1 - r := fun t ht => by
-      have ⟨hg1, hg2⟩ := hr_geom_endpts t ht
-      exact ⟨hr_le_geom.trans hg1, by linarith [hr_le_geom]⟩
-    have h_endpts_r_strict : ∀ t ∈ crossings, r < t ∧ t < 1 - r := fun t ht => by
-      have ⟨hg1, hg2⟩ := hr_geom_endpts t ht
-      exact ⟨hr_lt_geom.trans_le hg1, by linarith [hr_lt_geom]⟩
-    have h_pair_r : ∀ t ∈ crossings, ∀ t' ∈ crossings, t' ≠ t →
-        2 * r < |t - t'| := fun t ht t' ht' hne => by
-      linarith [hr_geom_pair t ht t' ht' hne, hr_le_geom]
+    obtain ⟨h_window_in_unit, h_endpts_r, h_endpts_r_strict, h_pair_r⟩ :=
+      multiCrossing_window_data hr_le_geom hr_lt_geom hr_geom_endpts hr_geom_pair
     have h_local_unique_at : ∀ t_i ∈ crossings,
         ∀ t ∈ Set.Icc (t_i - r) (t_i + r), γf t = s → t = t_i := by
       intro t_i ht_i_mem t ht_in h_eq
