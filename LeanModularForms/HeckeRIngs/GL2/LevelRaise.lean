@@ -10,12 +10,6 @@ import Mathlib.NumberTheory.ModularForms.QExpansion
 /-!
 # Level-raising operator for cusp forms (Miyake §4.6 Lemma 4.6.1)
 
-This file extracts the level-raising machinery from `Newforms.lean` so that
-downstream theory (notably `Eigenforms/ConductorTheorem.lean`) can depend on
-just this lightweight file rather than pulling the entire `Newforms.lean`
-infrastructure (which transitively depends on `AdjointTheory.lean` /
-`BlockBijection.lean`).
-
 The level-raising operator `ι_d : S_k(Γ₁(M)) → S_k(Γ₁(d·M))` sends a cusp
 form `f` for `Γ₁(M)` to the cusp form `(ι_d f)(τ) = f(d·τ)` for the deeper
 level `Γ₁(d·M)`, normalised so that the Fourier coefficient at `q^d`
@@ -49,34 +43,18 @@ noncomputable section
 
 namespace HeckeRing.GL2
 
-/-! ### The level-raising matrix `α_d` and function-level operator `ι_d` -/
-
 /-- The level-raising matrix `α_d = [[d, 0], [0, 1]]` in `GL(2, ℝ)`. -/
 def levelRaiseMatrix (d : ℕ) [NeZero d] : GL (Fin 2) ℝ :=
   Matrix.GeneralLinearGroup.mkOfDetNeZero
     !![(d : ℝ), 0; 0, 1]
     (by simp [Matrix.det_fin_two, Nat.cast_ne_zero.mpr (NeZero.ne d)])
 
-/-- The level-raising operator at the FUNCTION level: `(ι_d f)(τ) = f(d·τ)`.
-
-In matrix form: `f ∣[k] [[d,0],[0,1]] · d^{(k-1)/?}`. Mathlib's slash action
-includes a `det^(k-1)` factor for GL₂(ℝ) elements, so the formula is:
-`(f ∣[k] α_d)(τ) = d^{k-1} · 1^{-k} · σ(α_d)(f(α_d · τ)) = d^{k-1} · f(d·τ)`.
-
-The level-raising `ι_d` removes the `d^{k-1}` to get `f(d·τ)`:
-`ι_d f = d^{1-k} · (f ∣[k] α_d)`. -/
+/-- The level-raising operator at the function level: `(ι_d f)(τ) = f(d·τ)`,
+realised as `ι_d f = d^{1-k} · (f ∣[k] α_d)` (the `d^{1-k}` scalar cancels the
+`det^{k-1}` factor in the slash action). -/
 def levelRaiseFun (d : ℕ) [NeZero d] (k : ℤ) (f : UpperHalfPlane → ℂ) :
     UpperHalfPlane → ℂ :=
   ((d : ℂ) ^ (1 - k)) • (f ∣[k] levelRaiseMatrix d)
-
-/-! ### The δ_d conjugation (Miyake Lemma 4.6.1)
-
-For γ ∈ Γ₁(d*M), the conjugation `δ_d * γ * δ_d⁻¹` (where `δ_d = [[d, 0], [0, 1]]`)
-gives an element of Γ₁(M). The explicit formula is:
-
-  γ = [[a, b], [c, e]]    →    δ_d γ δ_d⁻¹ = [[a, d*b], [c/d, e]]
-
-This is the key matrix calculation for the level-raising operator. -/
 
 /-- For γ ∈ Γ₁(d*M), the entry `γ.val 1 0` is divisible by `d`. -/
 lemma Gamma1_dmul_lower_left_dvd (d M : ℕ) (γ : SL(2, ℤ)) (hγ : γ ∈ Gamma1 (d * M)) :
@@ -120,7 +98,6 @@ lemma levelRaiseConjOfDvd_mem_Gamma0 (d M : ℕ) [NeZero d]
     (γ : SL(2, ℤ)) (hγ : γ ∈ Gamma0 (d * M)) :
     levelRaiseConjOfDvd d γ (Gamma0_dmul_lower_left_dvd d M γ hγ) ∈ Gamma0 M := by
   rw [Gamma0_mem]
-  -- (1,0) entry of conjugate is γ.val 1 0 / d
   have h_eq : ((levelRaiseConjOfDvd d γ
       (Gamma0_dmul_lower_left_dvd d M γ hγ)).val 1 0 : ℤ) = γ.val 1 0 / d := rfl
   show (((levelRaiseConjOfDvd d γ
@@ -167,20 +144,17 @@ lemma levelRaiseConj_mem_Gamma1 (d M : ℕ) [NeZero d]
   obtain ⟨ha, he, hc⟩ := (Gamma1_mem _ _).mp hγ
   rw [Gamma1_mem]
   refine ⟨?_, ?_, ?_⟩
-  · -- (0,0) entry of conjugate is γ.val 0 0
-    have h_eq : ((levelRaiseConj d M γ hγ).val 0 0 : ℤ) = γ.val 0 0 := rfl
+  · have h_eq : ((levelRaiseConj d M γ hγ).val 0 0 : ℤ) = γ.val 0 0 := rfl
     show (((levelRaiseConj d M γ hγ).val 0 0 : ℤ) : ZMod M) = 1
     rw [h_eq]
     have := congr_arg (ZMod.castHom (Nat.dvd_mul_left M d) (ZMod M)) ha
     simpa using this
-  · -- (1,1) entry of conjugate is γ.val 1 1
-    have h_eq : ((levelRaiseConj d M γ hγ).val 1 1 : ℤ) = γ.val 1 1 := rfl
+  · have h_eq : ((levelRaiseConj d M γ hγ).val 1 1 : ℤ) = γ.val 1 1 := rfl
     show (((levelRaiseConj d M γ hγ).val 1 1 : ℤ) : ZMod M) = 1
     rw [h_eq]
     have := congr_arg (ZMod.castHom (Nat.dvd_mul_left M d) (ZMod M)) he
     simpa using this
-  · -- (1,0) entry of conjugate is γ.val 1 0 / d, which is M * (something)
-    have h_eq : ((levelRaiseConj d M γ hγ).val 1 0 : ℤ) = γ.val 1 0 / d := rfl
+  · have h_eq : ((levelRaiseConj d M γ hγ).val 1 0 : ℤ) = γ.val 1 0 / d := rfl
     show (((levelRaiseConj d M γ hγ).val 1 0 : ℤ) : ZMod M) = 0
     rw [h_eq, ZMod.intCast_zmod_eq_zero_iff_dvd]
     have hdvd_dM : ((d * M : ℕ) : ℤ) ∣ γ.val 1 0 :=
@@ -251,23 +225,12 @@ lemma Gamma1_dmul_le_conj (M : ℕ) [NeZero M] (d : ℕ) [NeZero d] :
   rw [Subgroup.mem_smul_pointwise_iff_exists]
   refine ⟨mapGL ℝ (levelRaiseConj d M γ hγ_mem),
     Subgroup.mem_map.mpr ⟨_, levelRaiseConj_mem_Gamma1 d M γ hγ_mem, rfl⟩, ?_⟩
-  -- Goal: ConjAct.toConjAct (levelRaiseMatrix d)⁻¹ • mapGL ℝ (levelRaiseConj d M γ hγ_mem) =
-  --       mapGL ℝ γ
-  -- i.e. (levelRaiseMatrix d)⁻¹ * mapGL ℝ (levelRaiseConj ...) * (levelRaiseMatrix d) = mapGL ℝ γ
-  -- This is the matrix calculation: δ_d⁻¹ * (δ_d * γ * δ_d⁻¹) * δ_d = γ (which is trivially true)
-  -- Or equivalently: levelRaiseMatrix d * mapGL ℝ γ = mapGL ℝ (levelRaiseConj ...) * levelRaiseMatrix d
   rw [ConjAct.toConjAct_smul, inv_inv, mul_assoc, inv_mul_eq_iff_eq_mul]
   exact levelRaiseMatrix_mul_mapGL d γ (Gamma1_dmul_lower_left_dvd d M γ hγ_mem)
 
 /-- The level-raising operator `ι_d : S_k(Γ₁(M)) → S_k(Γ₁(d*M))`, defined as
-`(ι_d f)(τ) = f(d·τ)`, equivalently `d^{1-k} · (f ∣[k] [[d,0],[0,1]])`.
-
-DS (5.16): inclusion `S_k(Γ₁(M)) ↪ S_k(Γ₁(N))` for `M | N`.
-
-**Construction (following Miyake §4.6 Lemma 4.6.1):**
-1. Apply `CuspForm.translate f α_d` to get a cusp form for `α_d⁻¹ Γ₁(M) α_d`
-2. Restrict via the inclusion `Γ₁(d*M) ≤ α_d⁻¹ Γ₁(M) α_d` (matrix conjugation)
-3. Scale by `d^{1-k}` -/
+`(ι_d f)(τ) = f(d·τ)`, equivalently `d^{1-k} · (f ∣[k] [[d,0],[0,1]])`
+(DS (5.16); Miyake §4.6 Lemma 4.6.1). -/
 def levelRaise (M : ℕ) [NeZero M] (d : ℕ) [NeZero d] (k : ℤ) :
     CuspForm ((Gamma1 M).map (mapGL ℝ)) k →ₗ[ℂ]
     CuspForm ((Gamma1 (d * M)).map (mapGL ℝ)) k where
@@ -295,21 +258,10 @@ def levelRaise (M : ℕ) [NeZero M] (d : ℕ) [NeZero d] (k : ℤ) :
       smul_eq_mul]
     ring
 
-/-- The level-raising operator on `ModularForm`:
+/-- The `ModularForm` analogue of `levelRaise`:
 `ι_d : M_k(Γ₁(M)) → M_k(Γ₁(d*M))`, sending `f ↦ d^{1-k} · (f ∣[k] α_d)` where
-`α_d = [[d, 0], [0, 1]]`.  This is the `ModularForm` analogue of `levelRaise`
-(whose target is `CuspForm`); it is the infrastructure blocker identified in
-`LeanModularForms/Eigenforms/MainLemma.lean` for bundling `f(dτ)` as a modular
-form at the deeper level, needed for Miyake §4.6.5 (coprime sieving).
-
-**Construction** (mirrors `levelRaise`):
-1. Apply `ModularForm.translate f α_d` to obtain a modular form for the
-   conjugated group `α_d⁻¹ · Γ₁(M) · α_d`.
-2. Restrict via `Gamma1_dmul_le_conj` to land in the subgroup `Γ₁(d*M)`.
-3. Scale by `d^{1-k}` so that `(ι_d f)(τ) = f(d·τ)` (cf. `levelRaiseFun_apply`).
-
-The pointwise formula `(ι_d f)(τ) = f(d·τ)` is provided by
-`modularFormLevelRaise_apply`. -/
+`α_d = [[d, 0], [0, 1]]`. The pointwise formula `(ι_d f)(τ) = f(d·τ)` is provided
+by `modularFormLevelRaise_apply`. -/
 def modularFormLevelRaise (M : ℕ) [NeZero M] (d : ℕ) [NeZero d] (k : ℤ) :
     ModularForm ((Gamma1 M).map (mapGL ℝ)) k →ₗ[ℂ]
     ModularForm ((Gamma1 (d * M)).map (mapGL ℝ)) k where
@@ -347,28 +299,11 @@ lemma coe_modularFormLevelRaise (M : ℕ) [NeZero M] (d : ℕ) [NeZero d] (k : �
     ⇑(modularFormLevelRaise M d k f) = levelRaiseFun d k ⇑f :=
   rfl
 
-/-! ### Down-conjugation bridge for the slash action
-
-The matrix identity `α_l · γ = γ̃ · α_l` (where `γ̃ = α_l γ α_l⁻¹` constructed
-by `levelRaiseConjOfDvd`) lifts to a slash-action equality: applying the
-`mapGL ℝ γ`-slash to a level-raised function `levelRaiseFun l k f` is the
-same as level-raising the `mapGL ℝ γ̃`-slash of `f`. This packages the
-matrix identity (`levelRaiseMatrix_mul_mapGL`) as the level-raise-equivariant
-slash bridge needed by Miyake §4.6.4 (Conductor theorem) for transporting
-slash conditions across `α_l`. -/
-
 /-- **Down-conjugation bridge.** For `γ : SL(2, ℤ)` with `l ∣ γ.val 1 0` and
 `γ̃ := levelRaiseConjOfDvd l γ hdvd = α_l γ α_l⁻¹`, the slash action by
 `mapGL ℝ γ` on `levelRaiseFun l k f` equals the level-raise of the slash
-action by `mapGL ℝ γ̃` on `f`:
-
-```
-(levelRaiseFun l k f) ∣[k] (mapGL ℝ γ) = levelRaiseFun l k (f ∣[k] mapGL ℝ γ̃).
-```
-
-This is the slash-action incarnation of `levelRaiseMatrix_mul_mapGL`,
-combining `slash_mul`, `smul_slash`, and the determinant-1 fact for `γ ∈
-SL(2, ℤ)` (which makes `σ (mapGL ℝ γ)` trivial). -/
+action by `mapGL ℝ γ̃` on `f`. This is the slash-action incarnation of
+`levelRaiseMatrix_mul_mapGL`. -/
 lemma slash_mapGL_levelRaiseFun (l : ℕ) [NeZero l] (k : ℤ)
     (γ : SL(2, ℤ)) (hdvd : (l : ℤ) ∣ γ.val 1 0)
     (f : UpperHalfPlane → ℂ) :
@@ -385,20 +320,6 @@ lemma slash_mapGL_levelRaiseFun (l : ℕ) [NeZero l] (k : ℤ)
   rw [ModularForm.smul_slash, hσγ, RingHom.id_apply, ← SlashAction.slash_mul,
     ← levelRaiseMatrix_mul_mapGL l γ hdvd, SlashAction.slash_mul]
   rfl
-
-/-! ### Pointwise evaluation, surjectivity of `α_l`-action, and injectivity
-
-The `α_l = levelRaiseMatrix l`-action on the upper half plane is the diagonal
-scaling `τ ↦ l · τ`, which is surjective with explicit inverse
-`τ' ↦ τ' / l`. Combined with the pointwise evaluation
-`(levelRaiseFun l k f) τ = f (α_l • τ)`, this yields injectivity of
-`levelRaiseFun l k : (ℍ → ℂ) → (ℍ → ℂ)`.
-
-These facts are the missing piece of the Case A direction of
-Miyake §4.6.4: they let downstream callers cancel the `levelRaiseFun l k`
-wrapper from the level-raised slash identity provided by
-`conductor_slash_levelRaise_eq` to obtain the unlifted Nebentypus
-relation for the candidate lower-level form `f`. -/
 
 /-- The denominator of `levelRaiseMatrix l` at any point is `1` (bottom row
 of `α_l` is `(0, 1)`). -/
@@ -427,16 +348,9 @@ lemma σ_levelRaiseMatrix (l : ℕ) [NeZero l] :
   unfold UpperHalfPlane.σ
   rw [if_pos (levelRaiseMatrix_det_pos l)]
 
-/-- **Pointwise evaluation of the level-raise operator.**
-`levelRaiseFun l k f` evaluates to `f` at the scaled point `α_l • τ`:
-
-```
-(levelRaiseFun l k f) τ = f (levelRaiseMatrix l • τ).
-```
-
-The `l^{1-k}` scalar prefactor in the definition of `levelRaiseFun` exactly
-cancels the `l^{k-1}` factor from the slash action, yielding the un-rescaled
-evaluation `f (α_l • τ)`. -/
+/-- **Pointwise evaluation of the level-raise operator.** `levelRaiseFun l k f`
+evaluates to `f` at the scaled point `α_l • τ`; the `l^{1-k}` prefactor exactly
+cancels the `l^{k-1}` factor from the slash action. -/
 lemma levelRaiseFun_apply (l : ℕ) [NeZero l] (k : ℤ) (f : UpperHalfPlane → ℂ)
     (τ : UpperHalfPlane) :
     levelRaiseFun l k f τ = f ((levelRaiseMatrix l) • τ) := by
@@ -451,8 +365,7 @@ lemma levelRaiseFun_apply (l : ℕ) [NeZero l] (k : ℤ) (f : UpperHalfPlane →
     ← zpow_add₀ hl_ne, show (1 - k) + (k - 1) = 0 from by ring, zpow_zero, one_mul]
 
 /-- The action of `levelRaiseMatrix l = [[l, 0], [0, 1]]` on `ℍ` is the diagonal
-scaling: `(α_l • τ : ℂ) = l · (↑τ : ℂ)`. Direct unfolding of the GL action via
-`coe_smul_of_det_pos` together with `num α_l τ = l · τ` and `denom α_l τ = 1`. -/
+scaling `(α_l • τ : ℂ) = l · (↑τ : ℂ)`. -/
 lemma coe_levelRaiseMatrix_smul (l : ℕ) [NeZero l] (τ : UpperHalfPlane) :
     ((levelRaiseMatrix l • τ : UpperHalfPlane) : ℂ) = (l : ℂ) * (↑τ : ℂ) := by
   rw [UpperHalfPlane.coe_smul_of_det_pos (levelRaiseMatrix_det_pos l)]
@@ -461,8 +374,7 @@ lemma coe_levelRaiseMatrix_smul (l : ℕ) [NeZero l] (τ : UpperHalfPlane) :
 
 /-- **Pointwise evaluation** of the `ModularForm` level-raising operator:
 `(modularFormLevelRaise M d k f) τ = f (α_d • τ)`, where `α_d` acts as
-`τ ↦ d · τ` on `ℍ`.  Derived from `levelRaiseFun_apply` via
-`coe_modularFormLevelRaise`. -/
+`τ ↦ d · τ` on `ℍ`. -/
 lemma modularFormLevelRaise_apply (M : ℕ) [NeZero M] (d : ℕ) [NeZero d] (k : ℤ)
     (f : ModularForm ((Gamma1 M).map (mapGL ℝ)) k) (τ : UpperHalfPlane) :
     modularFormLevelRaise M d k f τ = f ((levelRaiseMatrix d) • τ) := by
@@ -471,8 +383,7 @@ lemma modularFormLevelRaise_apply (M : ℕ) [NeZero M] (d : ℕ) [NeZero d] (k :
 
 /-- **Scaled pointwise formula** for the `ModularForm` level-raising operator:
 the level-raised form at `τ` equals `f` at the complex number `d · τ` (viewed
-as an upper-half-plane point).  Follows from `modularFormLevelRaise_apply` and
-`coe_levelRaiseMatrix_smul`. -/
+as an upper-half-plane point). -/
 lemma modularFormLevelRaise_apply_mul (M : ℕ) [NeZero M] (d : ℕ) [NeZero d] (k : ℤ)
     (f : ModularForm ((Gamma1 M).map (mapGL ℝ)) k) (τ : UpperHalfPlane) :
     (modularFormLevelRaise M d k f τ : ℂ) =
@@ -503,9 +414,7 @@ lemma exists_levelRaiseMatrix_smul_eq (l : ℕ) [NeZero l] (τ' : UpperHalfPlane
   field_simp
 
 /-- **Injectivity of `levelRaiseFun l k`.** If two functions `f₁, f₂ : ℍ → ℂ`
-have the same level-raise, they are equal. Combines `levelRaiseFun_apply`
-(level-raising is precomposition with `α_l • _`) with
-`exists_levelRaiseMatrix_smul_eq` (the surjectivity of `α_l • _`). -/
+have the same level-raise, they are equal. -/
 lemma levelRaiseFun_injective (l : ℕ) [NeZero l] (k : ℤ) :
     Function.Injective (levelRaiseFun (k := k) l) := by
   intro f₁ f₂ heq
@@ -515,42 +424,9 @@ lemma levelRaiseFun_injective (l : ℕ) [NeZero l] (k : ℤ) :
   rw [levelRaiseFun_apply, levelRaiseFun_apply, hτ] at h
   exact h
 
-/-! ### Lower-level T-factorisation for slash invariance (T046)
-
-The slash bridge `conductor_slash_T_conj_eq` from T044 gives the slash
-identity for matrices of the form `T^i · γ̃ · T^j` where γ̃ is in the
-α_l-conjugation image. To extend the slash identity to ALL of `Γ₀(N/l)`,
-we need a group-theoretic factorisation: every `γ' ∈ Γ₀(N/l)` decomposes
-as `T^i · γ̃ · T^j` for some integers `i, j` and γ̃ in the image.
-
-The math: for `γ' = [[a, b], [c, d]] ∈ Γ₀(N/l)`,
-
-* Choose `i ∈ ℤ` so that `gcd(a - i·c, l) = 1`. Such `i` exists because
-  `gcd(a, c) = 1` (from `det γ' = 1`); concretely, take `i` to be the
-  product of primes `p ∣ l` with `p ∤ a`. — `exists_shift_isCoprime`.
-* Choose `j ∈ ℤ` so that `l ∣ (b - i·d) - j·(a - i·c)`. Solvable because
-  `(a - i·c)` is invertible mod `l` (from the previous step) via Bezout.
-  — `shiftJ_spec`.
-* Then `T^(-i) · γ' · T^(-j)` has upper-right entry divisible by `l`,
-  hence equals `levelRaiseConjOfDvd l γ` for an explicit
-  `γ ∈ Γ₀(N)` — the actual matrix construction and the equality
-  `γ' = T^i · (levelRaiseConjOfDvd l γ) · T^j` is the remaining
-  composition step (next ticket).
-
-The two private helper lemmas (`exists_shift_isCoprime` and
-`shiftJ_spec`) provide the non-trivial existence/CRT content; the
-final assembly into `exists_T_levelRaiseConj_T_factor` is the
-mechanical matrix arithmetic — both layers are landed sorry-free in
-this file. -/
-
-/-- Auxiliary integer: the product of primes `p` dividing `l` but not
-dividing `a`. Casting `Nat → ℤ` for use in the SL(2, ℤ) matrix
-calculations. -/
 private noncomputable def primeProductCoprime (a : ℤ) (l : ℕ) : ℤ :=
   ((l.primeFactors.filter (fun (p : ℕ) => ¬ ((p : ℤ) ∣ a))).prod id : ℕ)
 
-/-- For a prime `p` dividing `l` but not `a`, `p` divides the auxiliary
-shift integer `primeProductCoprime a l`. -/
 private lemma dvd_primeProductCoprime_of_not_dvd
     {a : ℤ} {l : ℕ} {p : ℕ} (hp : p ∈ l.primeFactors) (hpa : ¬ ((p : ℤ) ∣ a)) :
     (p : ℤ) ∣ primeProductCoprime a l := by
@@ -561,9 +437,6 @@ private lemma dvd_primeProductCoprime_of_not_dvd
     Finset.dvd_prod_of_mem _ h_mem
   exact_mod_cast hp_dvd_prod
 
-/-- For a prime `p` dividing `l` AND dividing `a`, `p` does NOT divide
-the auxiliary shift integer `primeProductCoprime a l`: by construction
-it is a product of primes excluded by the filter. -/
 private lemma not_dvd_primeProductCoprime_of_dvd
     {a : ℤ} {l : ℕ} {p : ℕ} (hp_prime : p.Prime) (hpa : (p : ℤ) ∣ a) :
     ¬ ((p : ℤ) ∣ primeProductCoprime a l) := by
@@ -576,27 +449,20 @@ private lemma not_dvd_primeProductCoprime_of_dvd
     (Prime.dvd_finset_prod_iff hp_prime' id).mp h_dvd_nat
   rw [Finset.mem_filter] at hq_mem
   obtain ⟨hq_pf, hqa⟩ := hq_mem
-  -- hq_dvd : p ∣ id q = q. p prime divides prime q ⟹ p = q.
   have hq_prime : q.Prime := Nat.prime_of_mem_primeFactors hq_pf
   have h_eq : p = q := by
     show id p = id q
     exact (Nat.prime_dvd_prime_iff_eq hp_prime hq_prime).mp hq_dvd
   exact hqa (h_eq ▸ hpa)
 
-/-- **Coprime shift existence.** Given `a, c : ℤ` with `IsCoprime a c` and
-`l : ℕ` with `l ≠ 0`, there exists `i : ℤ` (concretely
-`primeProductCoprime a l`) such that `IsCoprime (a - i*c) (l : ℤ)`. -/
 private lemma exists_shift_isCoprime (a c : ℤ) (l : ℕ) [NeZero l]
     (hac : IsCoprime a c) :
     IsCoprime (a - primeProductCoprime a l * c) (l : ℤ) := by
   rw [Int.isCoprime_iff_gcd_eq_one, Int.gcd, Int.natAbs_natCast]
-  -- Goal: (a - i*c).natAbs.gcd l = 1
   by_contra h_ne_one
-  -- pick a prime divisor p of the gcd
   obtain ⟨p, hp_prime, hp_dvd⟩ := Nat.exists_prime_and_dvd h_ne_one
   rw [Nat.dvd_gcd_iff] at hp_dvd
   obtain ⟨hp_dvd_x, hp_dvd_l⟩ := hp_dvd
-  -- p divides x = (a - i*c).natAbs and p divides l
   have hp_in_pf : p ∈ l.primeFactors := by
     rw [Nat.mem_primeFactors]
     exact ⟨hp_prime, hp_dvd_l, NeZero.ne l⟩
@@ -605,14 +471,11 @@ private lemma exists_shift_isCoprime (a c : ℤ) (l : ℕ) [NeZero l]
     exact hp_dvd_x
   have hp_isPrime : Prime (p : ℤ) := Nat.prime_iff_prime_int.mp hp_prime
   by_cases hpa : (p : ℤ) ∣ a
-  · -- Case: p ∣ a. Then p ∤ i (by construction), p ∤ c (gcd(a,c) = 1),
-    -- so p ∤ i*c, hence (a - i*c) ≡ -i*c ≢ 0 (mod p). Contradiction.
-    have hp_not_dvd_i : ¬ ((p : ℤ) ∣ primeProductCoprime a l) :=
+  · have hp_not_dvd_i : ¬ ((p : ℤ) ∣ primeProductCoprime a l) :=
       not_dvd_primeProductCoprime_of_dvd hp_prime hpa
     have hp_not_dvd_c : ¬ ((p : ℤ) ∣ c) := by
       intro hpc
       exact hp_isPrime.not_unit (hac.isUnit_of_dvd' hpa hpc)
-    -- a ≡ 0, so a - i*c ≡ -i*c (mod p). p ∣ (a - i*c) and p ∣ a give p ∣ i*c.
     have hp_dvd_ic : (p : ℤ) ∣ primeProductCoprime a l * c := by
       have h1 : (p : ℤ) ∣ (a - (a - primeProductCoprime a l * c)) :=
         dvd_sub hpa hp_dvd_x_int
@@ -620,41 +483,27 @@ private lemma exists_shift_isCoprime (a c : ℤ) (l : ℕ) [NeZero l]
     rcases hp_isPrime.dvd_mul.mp hp_dvd_ic with h | h
     · exact hp_not_dvd_i h
     · exact hp_not_dvd_c h
-  · -- Case: p ∤ a. Then p ∣ i, so p ∣ i*c, so a - i*c ≡ a (mod p), and p ∤ a.
-    have hp_dvd_i : (p : ℤ) ∣ primeProductCoprime a l :=
+  · have hp_dvd_i : (p : ℤ) ∣ primeProductCoprime a l :=
       dvd_primeProductCoprime_of_not_dvd hp_in_pf hpa
     have hp_dvd_ic : (p : ℤ) ∣ primeProductCoprime a l * c :=
       Dvd.dvd.mul_right hp_dvd_i _
-    -- a - i*c ≡ a (mod p), but p ∤ a. p ∣ (a - i*c) and p ∣ i*c ⟹ p ∣ a.
     have hp_dvd_a : (p : ℤ) ∣ a := by
       have h1 : (p : ℤ) ∣ ((a - primeProductCoprime a l * c) +
         primeProductCoprime a l * c) := dvd_add hp_dvd_x_int hp_dvd_ic
       simpa using h1
     exact hpa hp_dvd_a
 
-/-- Auxiliary integer for the second shift: given the coprime shift result
-`gcd(α, l) = 1`, this returns an integer `j := Bezout coeff · β` such that
-`l ∣ (β - j · α)`. Built from `Int.gcdA` (the Bezout coefficient). -/
 private noncomputable def shiftJ (α β : ℤ) (l : ℤ) : ℤ :=
   Int.gcdA α l * β
 
-/-- Specification of `shiftJ`: when `Int.gcd α l = 1`, the integer
-`j := shiftJ α β l` satisfies `l ∣ (β - j · α)`. Direct consequence of
-Bezout: `α · gcdA + l · gcdB = 1` ⟹ `gcdA · α ≡ 1 (mod l)` ⟹
-`gcdA · β · α ≡ β (mod l)`. -/
 private lemma shiftJ_spec {α β : ℤ} {l : ℕ} (h : Int.gcd α (l : ℤ) = 1) :
     (l : ℤ) ∣ (β - shiftJ α β (l : ℤ) * α) := by
   unfold shiftJ
-  -- Bezout: gcd α l = α * Int.gcdA α l + l * Int.gcdB α l
   have hBezout := Int.gcd_eq_gcd_ab α (l : ℤ)
   rw [show ((Int.gcd α (l : ℤ) : ℕ) : ℤ) = 1 from by exact_mod_cast h] at hBezout
-  -- hBezout : 1 = α * Int.gcdA α (l : ℤ) + ↑l * Int.gcdB α (l : ℤ)
-  -- Want: l ∣ β - (Int.gcdA α l * β) * α = β - β * (α * Int.gcdA α l) = β * (1 - α * Int.gcdA α l)
-  --     = β * (l * Int.gcdB α l)  (from Bezout: α*gcdA = 1 - l*gcdB)
   refine ⟨β * Int.gcdB α (l : ℤ), ?_⟩
   linear_combination β * hBezout
 
-/-- Helper: if `l ∣ N` and `γ ∈ Γ₀(N)`, then `(l : ℤ) ∣ γ.val 1 0`. -/
 private lemma dvd_lower_left_of_dvd
     {l N : ℕ} (h_dvd : l ∣ N) {γ : SL(2, ℤ)} (hγ : γ ∈ Gamma0 N) :
     (l : ℤ) ∣ γ.val 1 0 := by
@@ -662,9 +511,6 @@ private lemma dvd_lower_left_of_dvd
   have h := (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp hγ
   exact dvd_trans (Int.natCast_dvd_natCast.mpr h_dvd) h
 
-/-- The lifted matrix's lower-left entry `l·c` is divisible by `N`: when
-`l ∣ N` and the quotient `(N / l)` divides `c`, then `N ∣ l·c`. This is the
-`Γ₀(N)`-membership step of the T-factorisation construction. -/
 private lemma natCast_dvd_levelRaiseConj_lower_left
     {l N : ℕ} (h_dvd : l ∣ N) {c : ℤ} (hc : ((N / l : ℕ) : ℤ) ∣ c) :
     (N : ℤ) ∣ (l : ℤ) * c := by
@@ -673,11 +519,6 @@ private lemma natCast_dvd_levelRaiseConj_lower_left
   rw [hN]
   exact mul_dvd_mul_left _ hc
 
-/-- The matrix identity `[[a,b],[c,d]] = T^i · (α_l γ α_l⁻¹) · T^j` underlying the
-T-factorisation, with the lift `γ.val = [[a - i·c, k], [l·c, d - c·j]]` (so
-`(α_l γ α_l⁻¹).val = [[a - i·c, l·k], [c, d - c·j]]`) and the Bezout relation
-`(b - i·d) - j·(a - i·c) = l·k`. This packages the mechanical matrix arithmetic
-of `exists_T_levelRaiseConj_T_factor`. -/
 private lemma eq_T_zpow_mul_levelRaiseConj_mul_T_zpow
     (l : ℕ) [NeZero l] (a b c d i j k : ℤ) (M γ : SL(2, ℤ))
     (hMval : (M.val : Matrix (Fin 2) (Fin 2) ℤ) = !![a, b; c, d])
@@ -698,20 +539,7 @@ private lemma eq_T_zpow_mul_levelRaiseConj_mul_T_zpow
 
 /-- **Lower-level T-factorisation.** Every `γ' ∈ Γ₀(N/l)` can be written as
 `T^i · (levelRaiseConjOfDvd l γ ...) · T^j` for explicit integers `i, j`
-and an explicit `γ ∈ Γ₀(N)`.
-
-This is the central group-theoretic input for extending the slash bridge
-`conductor_slash_T_conj_eq` from T044 to the full lower level `Γ₀(N/l)`.
-
-**Construction.** For `γ' = [[a, b], [c, d]] ∈ Γ₀(N/l)`:
-* `i := primeProductCoprime a l` (CRT shift, makes `gcd(a - i·c, l) = 1`).
-* `j := shiftJ (a - i·c) (b - i·d) (l : ℤ)` (Bezout shift, makes
-  `l ∣ (b - i·d) - j·(a - i·c)`).
-* The lifted `γ ∈ Γ₀(N)` is `[[a - i·c, k; l·c, d - c·j]]` where
-  `k = ((b - i·d) - j·(a - i·c))/l`.
-
-The product `T^i · γ̃ · T^j` (with `γ̃ = α_l γ α_l⁻¹`) recovers `γ'`
-by direct matrix calculation. -/
+and an explicit `γ ∈ Γ₀(N)`. -/
 lemma exists_T_levelRaiseConj_T_factor
     (l N : ℕ) [NeZero l] [NeZero N] (h_dvd : l ∣ N)
     (γ' : SL(2, ℤ)) (hγ' : γ' ∈ Gamma0 (N / l)) :
@@ -720,89 +548,43 @@ lemma exists_T_levelRaiseConj_T_factor
             (levelRaiseConjOfDvd l γ (dvd_lower_left_of_dvd h_dvd hγ)) *
             ModularGroup.T ^ j ∧
       γ.val 1 1 = γ'.val 1 1 - γ'.val 1 0 * j := by
-  -- Step 1: extract entries of γ'.
   set a := γ'.val 0 0 with ha_def
   set b := γ'.val 0 1 with hb_def
   set c := γ'.val 1 0 with hc_def
   set d := γ'.val 1 1 with hd_def
-  -- Step 2: derive IsCoprime a c from det = 1.
   have hdet : a * d - b * c = 1 := by
     have hp := γ'.property
     rw [Matrix.det_fin_two] at hp
     simpa [a, b, c, d] using hp
   have hac : IsCoprime a c := ⟨d, -b, by linear_combination hdet⟩
-  -- Step 3: apply exists_shift_isCoprime.
   set i := primeProductCoprime a l with hi_def
   set α := a - i * c with hα_def
   have hα_iscop : IsCoprime α (l : ℤ) := exists_shift_isCoprime a c l hac
   have hα_gcd : Int.gcd α (l : ℤ) = 1 := Int.isCoprime_iff_gcd_eq_one.mp hα_iscop
-  -- Step 4: apply shiftJ_spec to obtain k. Specify β explicitly.
   set β := b - i * d with hβ_def
   set j := shiftJ α β (l : ℤ) with hj_def
   obtain ⟨k, hk⟩ := shiftJ_spec (β := β) hα_gcd
-  -- hk : β - j * α = (l : ℤ) * k, equivalently β - j * α = l * k
-  -- Step 5: construct γ and verify det = 1.
   refine ⟨i, j, ⟨!![α, k; (l : ℤ) * c, d - c * j], ?det⟩,
     ?gamma0_mem, ?eq, ?diag⟩
-  · -- det = 1
-    rw [Matrix.det_fin_two_of]
-    -- Goal: α * (d - c * j) - k * ((l : ℤ) * c) = 1
-    -- Use: hdet (a*d - b*c = 1), hk (β - j*α = l*k), unfolds α = a - i*c, β = b - i*d.
+  · rw [Matrix.det_fin_two_of]
     show α * (d - c * j) - k * ((l : ℤ) * c) = 1
     have : α = a - i * c := hα_def
     have : β = b - i * d := hβ_def
     linear_combination hdet + c * hk
-  · -- γ ∈ Gamma0 N: lower-left entry `l*c` divisible by `N` since `(N/l) ∣ c`.
-    rw [Gamma0_mem]
+  · rw [Gamma0_mem]
     show (((l : ℤ) * c : ℤ) : ZMod N) = 0
     rw [Gamma0_mem] at hγ'
     rw [ZMod.intCast_zmod_eq_zero_iff_dvd]
     exact natCast_dvd_levelRaiseConj_lower_left h_dvd
       ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp hγ')
-  · -- Product equality, by the matrix-arithmetic helper.
-    refine eq_T_zpow_mul_levelRaiseConj_mul_T_zpow l a b c d i j k γ' _
+  · refine eq_T_zpow_mul_levelRaiseConj_mul_T_zpow l a b c d i j k γ' _
       (Matrix.eta_fin_two γ'.val) rfl ?_ _
     show β - j * α = (l : ℤ) * k
     linear_combination hk
-  · -- Diagonal entry: γ.val 1 1 = d - c*j = γ'.val 1 1 - γ'.val 1 0 * j.
-    rfl
+  · rfl
 
-/-! ### q-expansion scaling formula for `modularFormLevelRaise` (T068)
-
-The bundled level-raise `modularFormLevelRaise N d k f` sends `f` to the
-modular form whose underlying function is `τ ↦ f (d · τ)`.  Its Fourier
-coefficients at the base period `(N : ℝ)` are obtained by **d-dilation
-with zeros at non-multiples of `d`**: the coefficient at `n` is
-`(qExpansion N f).coeff (n / d)` if `d ∣ n`, and `0` otherwise.
-
-**Scope note for Miyake §4.6.5 (coprime sieving).**  T068 provides the
-d-dilation coefficient formula *only*.  The plain Möbius-weighted sum
-`Σ_{d ∣ L} μ(d) · modularFormLevelRaise N d k f` has `n`-th coefficient
-`Σ_{d ∣ gcd(n, L)} μ(d) · (qExpansion N f).coeff (n / d)`, which in
-general does **not** equal the sieved coefficient
-`(qExpansion N f).coeff n · [gcd(n, L) = 1]`: the Möbius indicator
-identity `coprime_indicator_eq_sum_moebius` applies only to a fixed
-scalar coefficient, whereas here the coefficient `a_{n/d}` depends on
-`d`.  Miyake's Theorem 4.6.5 collapses the two via additional
-eigenform/normalization hypotheses (Hecke eigenvalue relations linking
-`a_{n/d}` to `a_n`) that are **not** encoded by T068 alone.  Deriving
-`sievedQExpansion` from the level-raise sum therefore requires further
-infrastructure; T068 is the first ingredient, not the full assembly.
-
-## Pure-hasSum / qParam helpers
-
-These two helpers are standalone power-series / complex-exponential
-facts with no dependency on the level-raising infrastructure; they are
-kept private to avoid namespace pollution.  Analogous lemmas exist in
-`Eigenforms.HeckeLemma` (`qParam_mul_nat`, `hasSum_pow_mul_reindex`),
-duplicated here to keep `LevelRaise.lean`'s import footprint minimal. -/
-
-/-- **qParam scaling under `d`-dilation.**  For positive `N : ℝ` and
-positive integer `d`, `qParam N (d · z) = (qParam N z) ^ d`.
-
-This is the pure-exponential identity behind the q-expansion dilation:
-substituting `d · τ` in place of `τ` inside the q-parameter raises it to
-the `d`-th power. -/
+/-- **qParam scaling under `d`-dilation.** For positive `N : ℝ` and
+positive integer `d`, `qParam N (d · z) = (qParam N z) ^ d`. -/
 lemma qParam_nat_mul_eq_pow (h : ℝ) (d : ℕ) (z : ℂ) :
     Function.Periodic.qParam h ((d : ℂ) * z) =
       (Function.Periodic.qParam h z) ^ d := by
@@ -838,36 +620,10 @@ lemma hasSum_pow_dvd_reindex {d : ℕ} (hd : 0 < d) {a : ℕ → ℂ} {q : ℂ}
   rw [← Function.Injective.hasSum_iff hinj h_zero, h_eq]
   exact h
 
-/-- **q-expansion scaling formula for `modularFormLevelRaise`** (T068).
-
-For `f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k` and positive integer
-`d`, the level-raised form `modularFormLevelRaise N d k f` has
-`(N : ℝ)`-level Fourier coefficients:
-
-```
-(qExpansion (N : ℝ) (modularFormLevelRaise N d k f)).coeff n =
-  if d ∣ n then (qExpansion (N : ℝ) f).coeff (n / d) else 0.
-```
-
-**Scaling factor cancellation.**  By
-`slash_diagGL_Q_lower_apply`/pointwise, `(f ∣[k] α_d)(τ) = d^{k-1} ·
-f(d·τ)`, and `modularFormLevelRaise` multiplies by `d^{1-k}`; the factors
-cancel exactly, so the level-raised form is `τ ↦ f(d·τ)` with **no
-residual scalar**.  The coefficient formula is therefore pure d-dilation
-(no `d^{k-1}` prefactor), which is what `coprime_indicator_eq_sum_moebius`
-and the Möbius sieving assembly consume.
-
-**Proof outline.**
-1. Pointwise `(modularFormLevelRaise N d k f) τ = f (α_d • τ) = f(d·τ)`
-   via `modularFormLevelRaise_apply`.
-2. `hasSum_qExpansion f` evaluated at `α_d • τ` gives
-   `HasSum (n ↦ (qExpansion N f).coeff n • qParam N ((α_d • τ) : ℂ) ^ n)
-     (f (α_d • τ))`.
-3. `coe_levelRaiseMatrix_smul` + `qParam_nat_mul_eq_pow` rewrite
-   `qParam N ((α_d • τ) : ℂ) = qParam N τ ^ d`.
-4. `hasSum_pow_dvd_reindex` reindexes sparsely `(q^d)^n ↦ q^j` with
-   zero coefficients at non-multiples of `d`.
-5. `qExpansion_coeff_unique` reads off the coefficient at index `n`. -/
+/-- **q-expansion scaling formula for `modularFormLevelRaise`.** The
+level-raised form `modularFormLevelRaise N d k f` has `(N : ℝ)`-level Fourier
+coefficients given by `d`-dilation of those of `f`: the coefficient at `n` is
+`(qExpansion (N : ℝ) f).coeff (n / d)` when `d ∣ n` and `0` otherwise. -/
 theorem qExpansion_modularFormLevelRaise_coeff
     {N : ℕ} [NeZero N] {d : ℕ} [NeZero d] {k : ℤ}
     (hN_period : (N : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods)
@@ -881,19 +637,14 @@ theorem qExpansion_modularFormLevelRaise_coeff
     rw [show (Gamma1 (d * N)).map (mapGL ℝ) =
       (Gamma1 (d * N) : Subgroup (GL (Fin 2) ℝ)) from rfl, strictPeriods_Gamma1]
     exact ⟨(N : ℤ), by simp⟩
-  -- Build a HasSum for `(modularFormLevelRaise N d k f) τ` at period `N`
-  -- with sparse d-dilated coefficients.
   have h_sum_g : ∀ τ : UpperHalfPlane,
       HasSum (fun j : ℕ =>
         (if d ∣ j then (qExpansion (N : ℝ) f).coeff (j / d) else 0) •
           Function.Periodic.qParam (N : ℝ) (τ : ℂ) ^ j)
         (modularFormLevelRaise N d k f τ) := by
     intro τ
-    -- Pointwise: (modularFormLevelRaise N d k f) τ = f (α_d • τ).
     rw [modularFormLevelRaise_apply N d k f τ]
-    -- f's q-expansion HasSum at the scaled point.
     have hfsum := hasSum_qExpansion f hN_pos hN_period (levelRaiseMatrix d • τ)
-    -- qParam N ((α_d • τ) : ℂ) = qParam N τ ^ d.
     have hqeq :
         Function.Periodic.qParam (N : ℝ) ((levelRaiseMatrix d • τ :
           UpperHalfPlane) : ℂ) =
@@ -901,29 +652,18 @@ theorem qExpansion_modularFormLevelRaise_coeff
       rw [coe_levelRaiseMatrix_smul d τ]
       exact qParam_nat_mul_eq_pow (N : ℝ) d (τ : ℂ)
     rw [hqeq] at hfsum
-    -- Reindex sparsely via hasSum_pow_dvd_reindex, and move the `if`
-    -- inside the `•` via `ite_smul`.
     have hreidx := hasSum_pow_dvd_reindex hd_pos hfsum
     convert hreidx using 1
     funext j
     split_ifs with hdvd
     · rfl
     · simp
-  -- Apply qExpansion_coeff_unique to read off the coefficient.
   exact (qExpansion_coeff_unique hN_pos hN_period_dN h_sum_g n).symm
 
 /-- **Period-general q-expansion scaling formula for `modularFormLevelRaise`.**
-
-Generalises `qExpansion_modularFormLevelRaise_coeff` to an arbitrary
-positive period `h` that is a strict period of **both** `Γ₁(N)` (the
-source level of `f`) and `Γ₁(d · N)` (the target level of `ι_d f`).
-Since every integer is a strict period of every `Γ₁(M)`, the natural
-applications are at period `h = 1` (canonical Fourier period) or at any
-integer divisor of the coarser level.
-
-The proof is structurally identical to
-`qExpansion_modularFormLevelRaise_coeff` with `h` substituted for
-`(N : ℝ)` throughout. -/
+Generalises `qExpansion_modularFormLevelRaise_coeff` to an arbitrary positive
+period `h` that is a strict period of both `Γ₁(N)` (the source level of `f`)
+and `Γ₁(d · N)` (the target level of `ι_d f`). -/
 theorem qExpansion_modularFormLevelRaise_coeff'
     {N : ℕ} [NeZero N] {d : ℕ} [NeZero d] {k : ℤ} {h : ℝ}
     (hh_pos : 0 < h)
@@ -957,15 +697,8 @@ theorem qExpansion_modularFormLevelRaise_coeff'
   exact (qExpansion_coeff_unique hh_pos hh_period_dN h_sum_g n).symm
 
 /-- **Period-1 specialisation** of `qExpansion_modularFormLevelRaise_coeff'`:
-for any `f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k`, the canonical
-Fourier expansion of `modularFormLevelRaise N d k f` satisfies
-
-`(qExpansion 1 (modularFormLevelRaise N d k f)).coeff n =
-  if d ∣ n then (qExpansion 1 f).coeff (n / d) else 0`.
-
-This is the version suitable for consumption by Miyake-style single-prime
-sieve arguments (T070/T073 period-1 variants in `MainLemma.lean`), where
-the witness no-diamond hypothesis is naturally stated at period 1. -/
+the canonical Fourier expansion of `modularFormLevelRaise N d k f` is the
+`d`-dilation of that of `f`. -/
 theorem qExpansion_one_modularFormLevelRaise_coeff
     {N : ℕ} [NeZero N] {d : ℕ} [NeZero d] {k : ℤ}
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) (n : ℕ) :
