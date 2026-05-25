@@ -203,11 +203,6 @@ theorem hasWindingNumber (D : SingleCrossingData γ z₀) :
   rw [div_eq_inv_mul]
   exact hasGeneralizedWindingNumber_of_hasCauchyPV D.hasCauchyPV
 
-/-- The generalized winding number equals the concrete value determined by `L`. -/
-theorem windingNumber_eq (D : SingleCrossingData γ z₀) :
-    generalizedWindingNumber γ z₀ = D.L / (2 * ↑Real.pi * I) :=
-  D.hasWindingNumber.eq
-
 end SingleCrossingData
 
 end
