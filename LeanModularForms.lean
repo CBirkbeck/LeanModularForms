@@ -1,7 +1,6 @@
 import LeanModularForms.ForMathlib.ContourIntegral.CrossingLimit
 import LeanModularForms.ForMathlib.ContourIntegral.PVSplit
 import LeanModularForms.ForMathlib.ContourIntegral.SegmentFTC
-import LeanModularForms.ForMathlib.ContourIntegral.WindingNumber
 import LeanModularForms.ForMathlib.ClassicalCPV
 import LeanModularForms.ForMathlib.EllipticPoints
 import LeanModularForms.ForMathlib.FDBoundaryH
