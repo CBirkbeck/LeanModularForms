@@ -168,7 +168,6 @@ private theorem strip_lintegral_lt_top {c : ℝ} (hc : 0 < c) :
         fun y _ => Real.ofReal_le_enorm _)
         (integrableOn_zpow_neg_two_Ioi hc).hasFiniteIntegral
 
-set_option maxHeartbeats 1600000 in
 /-- The hyperbolic measure of the standard fundamental domain is finite. The proof
 transfers `∫_fd y⁻² dν` from `ℍ` to `ℂ` (via `MeasurePreserving.setLIntegral_comp_emb`),
 then to `ℝ × ℝ` (via `Complex.volume_preserving_equiv_real_prod`), bounds by the strip
@@ -363,7 +362,6 @@ theorem isOpen_fdo : IsOpen (fdo : Set ℍ) :=
 theorem fdo_subset_fd : (fdo : Set ℍ) ⊆ fd :=
   fun _ ⟨h1, h2⟩ => ⟨le_of_lt h1, le_of_lt h2⟩
 
-set_option maxHeartbeats 800000 in
 /-- `𝒟 ⊆ closure 𝒟ᵒ`: every point of the closed fundamental domain is a limit of
 points in the open fundamental domain. The proof perturbs `z ∈ fd` to
 `((1−t) Re z, Im z + t)` for small `t > 0`, using the lower bound `Im z > 1/2`
@@ -503,7 +501,6 @@ private lemma petersson_self_re_eq (z : ℂ) (y : ℝ) (k : ℤ) :
   rw [show starRingEnd ℂ z * z = ↑(Complex.normSq z) from Complex.normSq_eq_conj_mul_self.symm,
     ← Complex.ofReal_zpow, ← Complex.ofReal_mul, Complex.ofReal_re]
 
-set_option maxHeartbeats 800000 in
 theorem eq_zero_on_fd_of_peterssonInner_self_eq_zero {F : Type*} [FunLike F ℍ ℂ]
     {k : ℤ} {Γ : Subgroup (GL (Fin 2) ℝ)} [Γ.IsArithmetic]
     [CuspFormClass F Γ k]
@@ -644,91 +641,85 @@ private lemma mem_fd_image_iff (x y : ℝ) :
     refine ⟨⟨x, y⟩, ⟨⟨⟨x, y⟩, hy⟩, ?_, rfl⟩, by simp [measurableEquivRealProd]⟩
     exact ⟨by simp [Complex.normSq_apply]; nlinarith, habs⟩
 
-set_option maxHeartbeats 800000 in
+/-- The image of the fundamental domain under `ℍ → ℂ → ℝ²` is measurable. -/
+private theorem measurableSet_fd_realProd_image :
+    MeasurableSet (measurableEquivRealProd '' (UpperHalfPlane.coe '' (fd : Set ℍ))) := by
+  rw [measurableEquivRealProd.measurableSet_image]
+  exact isOpenEmbedding_coe.measurableEmbedding.measurableSet_image.mpr
+    ((isClosed_le continuous_const (continuous_normSq.comp continuous_coe)).inter
+    (isClosed_le (continuous_abs.comp continuous_re) continuous_const)).measurableSet
+
+/-- For `|x| ≤ 1/2`, the indicator of the fundamental-domain region at `(x, y)` equals,
+as a function of `y`, the indicator of the half-line `[√(1-x²), ∞)`. -/
+private theorem fd_region_indicator_section_eq {x : ℝ} (hx : |x| ≤ 1 / 2) (y : ℝ) :
+    (measurableEquivRealProd '' (UpperHalfPlane.coe '' (fd : Set ℍ))).indicator
+        (fun p : ℝ × ℝ => ENNReal.ofReal (p.2 ^ (-2 : ℤ))) (x, y) =
+    (Ici (Real.sqrt (1 - x ^ 2))).indicator
+      (fun y => ENNReal.ofReal (y ^ (-2 : ℤ))) y := by
+  have h1x : 0 ≤ 1 - x ^ 2 := by nlinarith [abs_le.mp hx]
+  have hsc : 0 < Real.sqrt (1 - x ^ 2) := Real.sqrt_pos_of_pos (by nlinarith [abs_le.mp hx])
+  by_cases hmem : (x, y) ∈ measurableEquivRealProd '' (UpperHalfPlane.coe '' (fd : Set ℍ))
+  · rw [Set.indicator_of_mem hmem, Set.indicator_of_mem]
+    rw [mem_Ici, ← Real.sqrt_sq (le_of_lt ((mem_fd_image_iff x y).mp hmem).2.2)]
+    exact Real.sqrt_le_sqrt (by linarith [((mem_fd_image_iff x y).mp hmem).2.1])
+  · rw [Set.indicator_of_notMem hmem]
+    by_cases hy_mem : y ∈ Ici (Real.sqrt (1 - x ^ 2))
+    · exfalso; apply hmem; rw [mem_fd_image_iff, mem_Ici] at *
+      exact ⟨hx, by nlinarith [Real.sq_sqrt h1x, sq_le_sq' (by linarith) hy_mem],
+        lt_of_lt_of_le hsc hy_mem⟩
+    · rw [Set.indicator_of_notMem hy_mem]
+
+/-- The `x`-section of the fundamental-domain lintegral: integrating `y⁻²` over the
+fiber gives `1/√(1-x²)` for `|x| ≤ 1/2`, and `0` otherwise. -/
+private theorem fd_region_lintegral_section_eq (x : ℝ) :
+    ∫⁻ y, (measurableEquivRealProd '' (UpperHalfPlane.coe '' (fd : Set ℍ))).indicator
+        (fun p : ℝ × ℝ => ENNReal.ofReal (p.2 ^ (-2 : ℤ))) (x, y) ∂volume =
+    (Icc (-1/2 : ℝ) (1/2)).indicator
+      (fun x => ENNReal.ofReal (1 / Real.sqrt (1 - x ^ 2))) x := by
+  by_cases hx : |x| ≤ 1 / 2
+  · have hx_mem : x ∈ Icc (-1/2 : ℝ) (1/2) := by
+      simp only [abs_le, mem_Icc] at hx ⊢; constructor <;> linarith
+    have hsc : 0 < Real.sqrt (1 - x ^ 2) := Real.sqrt_pos_of_pos (by nlinarith [abs_le.mp hx])
+    rw [Set.indicator_of_mem hx_mem]
+    simp_rw [fd_region_indicator_section_eq hx]
+    rw [lintegral_indicator measurableSet_Ici, setLIntegral_congr Ioi_ae_eq_Ici.symm,
+      ← ofReal_integral_eq_lintegral_ofReal (integrableOn_zpow_neg_two_Ioi hsc)
+        (ae_of_all _ fun y => by positivity), integral_zpow_neg_two_Ioi hsc]
+  · push_neg at hx
+    have hx_nmem : x ∉ Icc (-1/2 : ℝ) (1/2) := fun ⟨h1, h2⟩ =>
+      absurd (abs_le.mpr ⟨by linarith, h2⟩) (not_le.mpr hx)
+    rw [Set.indicator_of_notMem hx_nmem]
+    refine MeasureTheory.lintegral_eq_zero_of_ae_eq_zero (.of_forall fun y => ?_)
+    show (measurableEquivRealProd '' (UpperHalfPlane.coe '' (fd : Set ℍ))).indicator
+      (fun p : ℝ × ℝ => ENNReal.ofReal (p.2 ^ (-2 : ℤ))) (x, y) = 0
+    rw [Set.indicator_apply_eq_zero]
+    exact fun h => absurd ((mem_fd_image_iff x y).mp h).1 (not_le.mpr hx)
+
+/-- `1/√(1-x²)` is integrable on `[-½, ½]`. -/
+private theorem integrableOn_one_div_sqrt_one_sub_sq_Icc :
+    IntegrableOn (fun x => 1 / Real.sqrt (1 - x ^ 2)) (Icc (-1/2 : ℝ) (1/2)) volume := by
+  rw [← intervalIntegrable_iff_integrableOn_Icc_of_le (by norm_num : (-1/2 : ℝ) ≤ 1/2)]
+  refine ContinuousOn.intervalIntegrable (ContinuousOn.div continuousOn_const
+    (ContinuousOn.sqrt (continuousOn_const.sub (continuousOn_pow 2))) (fun x hx => ?_))
+  rw [Set.uIcc_of_le (by norm_num : (-1/2 : ℝ) ≤ 1/2)] at hx
+  exact Real.sqrt_ne_zero'.mpr (by nlinarith [hx.1, hx.2])
+
 private theorem lintegral_fd_region_eq :
     ∫⁻ p in measurableEquivRealProd '' (UpperHalfPlane.coe '' (fd : Set ℍ)),
       ENNReal.ofReal (p.2 ^ (-2 : ℤ)) ∂(volume : Measure (ℝ × ℝ)) =
     ENNReal.ofReal (∫ x in (-1/2 : ℝ)..(1/2), 1 / Real.sqrt (1 - x ^ 2)) := by
-  set D := measurableEquivRealProd '' (UpperHalfPlane.coe '' (fd : Set ℍ)) with hD_def
-  -- Measurability of D
-  have hDm : MeasurableSet D := by
-    rw [measurableEquivRealProd.measurableSet_image]
-    exact isOpenEmbedding_coe.measurableEmbedding.measurableSet_image.mpr
-      ((isClosed_le continuous_const (continuous_normSq.comp continuous_coe)).inter
-      (isClosed_le (continuous_abs.comp continuous_re) continuous_const)).measurableSet
-  -- Step 1: Convert setLIntegral to indicator, apply volume_eq_prod, then Tonelli
-  rw [← lintegral_indicator hDm, volume_eq_prod ℝ ℝ,
-      lintegral_prod _ (AEMeasurable.indicator (by fun_prop) hDm)]
-  -- Goal: ∫⁻ x, ∫⁻ y, D.indicator (fun p => ofReal(p.2⁻²)) (x,y) = RHS
-  -- Step 2: Show the inner lintegral = Icc(-1/2)(1/2).indicator(fun x => ofReal(1/√(1-x²))) x
-  have inner_eq : ∀ x : ℝ,
-      ∫⁻ y, D.indicator (fun p : ℝ × ℝ => ENNReal.ofReal (p.2 ^ (-2 : ℤ))) (x, y) ∂volume =
-      (Icc (-1/2 : ℝ) (1/2)).indicator
-        (fun x => ENNReal.ofReal (1 / Real.sqrt (1 - x ^ 2))) x := by
-    intro x
-    by_cases hx : |x| ≤ 1 / 2
-    · -- Case |x| ≤ 1/2: inner lintegral = ofReal(1/√(1-x²))
-      have hx_mem : x ∈ Icc (-1/2 : ℝ) (1/2) := by
-        simp only [abs_le, mem_Icc] at hx ⊢; constructor <;> linarith
-      rw [Set.indicator_of_mem hx_mem]
-      have hx2 : x ^ 2 ≤ 1 / 4 := by nlinarith [abs_le.mp hx]
-      have h1x : 0 ≤ 1 - x ^ 2 := by linarith
-      have hsc : 0 < Real.sqrt (1 - x ^ 2) := Real.sqrt_pos_of_pos (by linarith)
-      -- Show D.indicator f (x, y) = Ici(√(1-x²)).indicator g y pointwise
-      have ind_eq : ∀ y : ℝ,
-          D.indicator (fun p : ℝ × ℝ => ENNReal.ofReal (p.2 ^ (-2 : ℤ))) (x, y) =
-          (Ici (Real.sqrt (1 - x ^ 2))).indicator
-            (fun y => ENNReal.ofReal (y ^ (-2 : ℤ))) y := by
-        intro y
-        by_cases hmem : (x, y) ∈ D
-        · rw [Set.indicator_of_mem hmem, Set.indicator_of_mem]
-          rw [mem_Ici, ← Real.sqrt_sq (le_of_lt ((mem_fd_image_iff x y).mp hmem).2.2)]
-          exact Real.sqrt_le_sqrt (by linarith [((mem_fd_image_iff x y).mp hmem).2.1])
-        · rw [Set.indicator_of_notMem hmem]
-          by_cases hy_mem : y ∈ Ici (Real.sqrt (1 - x ^ 2))
-          · exfalso; apply hmem; rw [mem_fd_image_iff]
-            rw [mem_Ici] at hy_mem
-            exact ⟨hx,
-              by nlinarith [Real.sq_sqrt h1x, sq_le_sq' (by linarith) hy_mem],
-              lt_of_lt_of_le hsc hy_mem⟩
-          · rw [Set.indicator_of_notMem hy_mem]
-      simp_rw [ind_eq]
-      rw [lintegral_indicator measurableSet_Ici, setLIntegral_congr Ioi_ae_eq_Ici.symm,
-        ← ofReal_integral_eq_lintegral_ofReal
-          (integrableOn_zpow_neg_two_Ioi hsc)
-          (ae_of_all _ fun y => by positivity),
-        integral_zpow_neg_two_Ioi hsc]
-    · -- Case |x| > 1/2: inner lintegral = 0
-      push_neg at hx
-      have hx_nmem : x ∉ Icc (-1/2 : ℝ) (1/2) := by
-        intro ⟨h1, h2⟩; linarith [abs_le.mpr ⟨by linarith, h2⟩]
-      rw [Set.indicator_of_notMem hx_nmem]
-      apply MeasureTheory.lintegral_eq_zero_of_ae_eq_zero
-      filter_upwards with y
-      show D.indicator (fun p : ℝ × ℝ => ENNReal.ofReal (p.2 ^ (-2 : ℤ))) (x, y) = 0
-      rw [Set.indicator_apply_eq_zero]
-      intro h; exfalso; exact not_le.mpr hx ((mem_fd_image_iff x y).mp h).1
-  -- Step 3: Substitute inner integral result
-  simp_rw [inner_eq]
-  -- Goal: ∫⁻ x, Icc(-1/2)(1/2).indicator g x = ofReal(∫ x in (-1/2)..(1/2), 1/√(1-x²))
-  -- Step 4: Convert indicator lintegral to setLIntegral on Icc
-  rw [lintegral_indicator measurableSet_Icc]
-  -- Goal: ∫⁻ x in Icc(-1/2)(1/2), ofReal(1/√(1-x²)) = ofReal(∫ x in (-1/2)..(1/2), 1/√(1-x²))
-  -- Step 5: Convert lintegral to ofReal of Bochner integral
-  have hint : IntegrableOn (fun x => 1 / Real.sqrt (1 - x ^ 2))
-      (Icc (-1/2 : ℝ) (1/2)) volume := by
-    rw [← intervalIntegrable_iff_integrableOn_Icc_of_le (by norm_num : (-1/2 : ℝ) ≤ 1/2)]
-    apply ContinuousOn.intervalIntegrable
-    apply ContinuousOn.div continuousOn_const
-    · exact ContinuousOn.sqrt (continuousOn_const.sub (continuousOn_pow 2))
-    · intro x hx
-      rw [Set.uIcc_of_le (by norm_num : (-1/2 : ℝ) ≤ 1/2)] at hx
-      exact Real.sqrt_ne_zero'.mpr (by nlinarith [hx.1, hx.2])
-  rw [← ofReal_integral_eq_lintegral_ofReal hint (ae_of_all _ fun x => by positivity)]
+  -- Step 1: setLIntegral → indicator, then Tonelli over the product `ℝ × ℝ`.
+  rw [← lintegral_indicator measurableSet_fd_realProd_image, volume_eq_prod ℝ ℝ,
+    lintegral_prod _ (AEMeasurable.indicator (by fun_prop) measurableSet_fd_realProd_image)]
+  -- Step 2: evaluate the `x`-sections and reduce to the lintegral of the section function.
+  simp_rw [fd_region_lintegral_section_eq, lintegral_indicator measurableSet_Icc]
+  -- Step 3: lintegral over `Icc` → `ofReal` of the Bochner interval integral.
+  rw [← ofReal_integral_eq_lintegral_ofReal integrableOn_one_div_sqrt_one_sub_sq_Icc
+    (ae_of_all _ fun x => by positivity)]
   congr 1
   rw [intervalIntegral.intervalIntegral_eq_integral_uIoc,
-      if_pos (by norm_num : (-1/2 : ℝ) ≤ 1/2), one_smul,
-      uIoc_of_le (by norm_num : (-1/2 : ℝ) ≤ 1/2), integral_Icc_eq_integral_Ioc]
+    if_pos (by norm_num : (-1/2 : ℝ) ≤ 1/2), one_smul,
+    uIoc_of_le (by norm_num : (-1/2 : ℝ) ≤ 1/2), integral_Icc_eq_integral_Ioc]
 
 /-- **Fubini transfer**: the lintegral of `y⁻²` over `𝒟` equals the iterated integral
 `∫_{-1/2}^{1/2} (∫_{√(1-x²)}^∞ y⁻² dy) dx`. The proof transfers `ℍ → ℂ → ℝ²` via
@@ -756,7 +747,7 @@ private theorem fd_lintegral_density_eq :
   -- Step 3: Transfer ℂ → ℝ²
   set G : ℝ × ℝ → ENNReal := fun p => ENNReal.ofReal (p.2 ^ (-2 : ℤ))
   have hFG : ∀ z : ℂ, F z = G (measurableEquivRealProd z) := fun z => by
-    simp [F, G, measurableEquivRealProd, equivRealProd_apply]
+    simp [F, G, measurableEquivRealProd]
   simp_rw [hFG]
   rw [volume_preserving_equiv_real_prod.setLIntegral_comp_emb
     measurableEquivRealProd.measurableEmbedding G (UpperHalfPlane.coe '' fd)]

@@ -842,7 +842,6 @@ private lemma twistedTpPsi_val_eq (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprim
     rw [adjLowerΔ_weight (χ := χ) p hp, Units.val_one, inv_one, one_smul] at hval
     exact hval
 
-set_option maxHeartbeats 6400000 in
 /-- **Twisted matching theorem.** For a `Γ₀(N),χ`-twisted-invariant function `f`, the
 abstract χ-weighted Hecke slash `twistedHeckeSlash_gen` at the prime double coset
 `D_p_Gamma0` equals the χ-weighted explicit `T_p` coset-sum: each upper representative
@@ -1157,7 +1156,6 @@ private lemma diagScalar_triple_weight (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.C
       : GL _ ℚ) * h₂ = diagMat 2 (fun _ : Fin 2 => p)
   rw [← hfact, adj_diag_scalar p hp.pos]
 
-set_option maxHeartbeats 1600000 in
 /-- **The scalar/diamond coset `T(p,p)`, good prime `p ∤ N`.**
 
 For `p ∤ N` and `f ∈ modFormCharSpace k χ`, the operator at the scalar double coset

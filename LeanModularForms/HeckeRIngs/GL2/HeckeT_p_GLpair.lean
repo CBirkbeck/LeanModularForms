@@ -215,7 +215,6 @@ subgroup. -/
 
 -- Key matrix identity for 2x2 matrices: the transpose of M equals
 -- J * adj(M) * J_inv, J = [[0,1],[-1,0]] in SL2(Z).
-set_option maxHeartbeats 800000 in
 private lemma transpose_eq_J_adj_Jinv (M : GL (Fin 2) ℚ) :
     (GL_transposeEquiv 2 M).unop =
     mapGL ℚ (⟨!![(0 : ℤ), 1; -1, 0], by simp [det_fin_two]⟩ : SL(2, ℤ)) *
@@ -420,7 +419,6 @@ private lemma card_decompQuot_D_p (p : ℕ) (hp : Nat.Prime p) :
     · simp
   simp only [HeckeCoset_deg] at h2; exact_mod_cast h2
 
-set_option maxHeartbeats 1600000 in
 /-- `adj(T_p_upper(b₁))⁻¹ · adj(T_p_upper(b₂)) ∉ SL₂(ℤ)` for distinct `b₁, b₂ < p`.
 The product has `(0,1)`-entry `(b₁ - b₂)/p ∉ ℤ`. -/
 lemma adj_upper_inv_mul_not_mem_H (p : ℕ) (hp : Nat.Prime p)
@@ -454,7 +452,6 @@ lemma adj_upper_inv_mul_not_mem_H (p : ℕ) (hp : Nat.Prime p)
     by_contra h; exact absurd hlt (not_lt.mpr (le_mul_of_one_le_left (by omega) (Int.one_le_abs h)))
   simp [hn0] at h_int; omega
 
-set_option maxHeartbeats 1600000 in
 /-- `adj(T_p_upper(b))⁻¹ · adj(T_p_lower) ∉ SL₂(ℤ)`.
 The product has `(0,0)`-entry `1/p ∉ ℤ`. -/
 lemma adj_upper_inv_mul_lower_not_mem_H (p : ℕ) (hp : Nat.Prime p) (b : ℕ) :
@@ -480,7 +477,6 @@ lemma adj_upper_inv_mul_lower_not_mem_H (p : ℕ) (hp : Nat.Prime p) (b : ℕ) :
   have h_le := Int.le_of_dvd one_pos this
   linarith [show (1 : ℤ) < ↑p from Int.ofNat_lt.mpr hp.one_lt]
 
-set_option maxHeartbeats 1600000 in
 /-- `adj(T_p_lower)⁻¹ · adj(T_p_upper(b)) ∉ SL₂(ℤ)`.
 The product has `(1,1)`-entry `1/p ∉ ℤ`. -/
 lemma adj_lower_inv_mul_upper_not_mem_H (p : ℕ) (hp : Nat.Prime p) (b : ℕ) :
@@ -595,7 +591,6 @@ private lemma sum_tRep_gen_eq_sum_of_adj_factored {ι : Type*} [Fintype ι] (k :
     rw [Fintype.bijective_iff_injective_and_card]; exact ⟨h_inj, hcard⟩
   exact (Fintype.sum_bijective φ h_bij _ _ h_val).symm
 
-set_option maxHeartbeats 6400000 in
 theorem tRep_gen_D_p_matches_T_p_reps (k : ℤ) (p : ℕ) (hp : Nat.Prime p) (f : ℍ → ℂ)
     (hf : ∀ γ ∈ 𝒮ℒ, f ∣[k] γ = f) :
     ∑ i : decompQuot (GL_pair 2) (HeckeCoset.rep (D_p p hp.pos)),
