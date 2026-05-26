@@ -210,7 +210,7 @@ private def slashStabilizerOfFun (k : ℤ) (f : UpperHalfPlane → ℂ) :
     show f ∣[k] (mapGL ℝ a⁻¹ : GL (Fin 2) ℝ) = f
     have h_mul := SlashAction.slash_mul k
       (mapGL ℝ a) (mapGL ℝ a⁻¹) f
-    rw [show (mapGL ℝ a : GL (Fin 2) ℝ) * mapGL ℝ a⁻¹ = 1 from by
+    rw [show (mapGL ℝ a : GL (Fin 2) ℝ) * mapGL ℝ a⁻¹ = 1 by
         rw [← map_mul, mul_inv_cancel, map_one],
       SlashAction.slash_one, ha] at h_mul
     exact h_mul.symm
@@ -219,9 +219,8 @@ private def slashStabilizerOfFun (k : ℤ) (f : UpperHalfPlane → ℂ) :
 power of `T` is also trivial: `f ∣[k] T^j = f` for all `j : ℤ`. -/
 lemma slash_T_zpow_eq_self_of_slash_T_eq (k : ℤ) (f : UpperHalfPlane → ℂ)
     (hf : f ∣[k] (mapGL ℝ ModularGroup.T : GL (Fin 2) ℝ) = f) (j : ℤ) :
-    f ∣[k] (mapGL ℝ (ModularGroup.T ^ j) : GL (Fin 2) ℝ) = f := by
-  have hT_mem : ModularGroup.T ∈ slashStabilizerOfFun k f := hf
-  exact zpow_mem hT_mem j
+    f ∣[k] (mapGL ℝ (ModularGroup.T ^ j) : GL (Fin 2) ℝ) = f :=
+  zpow_mem (show ModularGroup.T ∈ slashStabilizerOfFun k f from hf) j
 
 /-- Slash bridge for T-conjugates of the α_l-conjugation image: under the
 Case A hypotheses plus the period-1 hypothesis `f ∣[k] T = f`, the slash
@@ -330,7 +329,7 @@ lemma im_levelRaiseMatrix_inv_smul (l : ℕ) [NeZero l] (z : UpperHalfPlane) :
     ((levelRaiseMatrix l)⁻¹ • z : UpperHalfPlane).im = z.im / (l : ℝ) := by
   show (((levelRaiseMatrix l)⁻¹ • z : UpperHalfPlane) : ℂ).im = z.im / (l : ℝ)
   rw [coe_levelRaiseMatrix_inv_smul]
-  rw [show (l : ℂ) = ((l : ℝ) : ℂ) from by push_cast; rfl,
+  rw [show (l : ℂ) = ((l : ℝ) : ℂ) by push_cast; rfl,
     Complex.div_ofReal_im]
   rfl
 
@@ -382,7 +381,7 @@ lemma slash_eq_of_levelRaiseFun_eq (l : ℕ) [NeZero l] (k : ℤ)
       (g ∣[k] ((levelRaiseMatrix l)⁻¹ : GL (Fin 2) ℝ)) := by
     rw [slash_inv_eq_smul_of_levelRaiseFun_eq l k f g hg_eq, smul_smul,
       ← zpow_add₀ (Nat.cast_ne_zero.mpr (NeZero.ne l) : (l : ℂ) ≠ 0),
-      show k - 1 + (1 - k) = 0 from by ring, zpow_zero, one_smul]
+      show k - 1 + (1 - k) = 0 by ring, zpow_zero, one_smul]
   conv_lhs => rw [hf_eq]
   have hσA : UpperHalfPlane.σ (mapGL ℝ A : GL (Fin 2) ℝ) = RingHom.id ℂ := by
     unfold UpperHalfPlane.σ
@@ -484,7 +483,7 @@ private lemma levelRaiseMatrix_inv_mul_mapGL_apply_zero_zero
   rw [levelRaiseMatrix_inv_apply_zero_zero, levelRaiseMatrix_inv_apply_zero_one,
     zero_mul, add_zero]
   show (l : ℝ)⁻¹ * (mapGL ℝ A : GL (Fin 2) ℝ) 0 0 = (A.val 0 0 : ℝ) / (l : ℝ)
-  rw [show ((mapGL ℝ A : GL (Fin 2) ℝ)) 0 0 = (A.val 0 0 : ℝ) from by
+  rw [show ((mapGL ℝ A : GL (Fin 2) ℝ)) 0 0 = (A.val 0 0 : ℝ) by
     simp [Matrix.SpecialLinearGroup.mapGL_coe_matrix]]
   ring
 
@@ -541,20 +540,19 @@ private lemma mapGL_cuspWitnessLevelRaiseInv_smul_infty_eq
     (l : ℕ) [NeZero l] (A : SL(2, ℤ)) :
     (mapGL ℝ (cuspWitnessLevelRaiseInv l A) : GL (Fin 2) ℝ) • (∞ : OnePoint ℝ) =
       (((levelRaiseMatrix l)⁻¹ : GL (Fin 2) ℝ) * (mapGL ℝ A : GL (Fin 2) ℝ)) • ∞ := by
-  set d : ℤ := gcd (A.val 0 0) ((l : ℤ) * A.val 1 0) with hd_def
-  have hd_ne : d ≠ 0 := gcd_levelRaise_first_col_ne_zero l A
-  have hd_real_ne : (d : ℝ) ≠ 0 := Int.cast_ne_zero.mpr hd_ne
+  set d : ℤ := gcd (A.val 0 0) ((l : ℤ) * A.val 1 0)
+  have hd_real_ne : (d : ℝ) ≠ 0 :=
+    Int.cast_ne_zero.mpr (gcd_levelRaise_first_col_ne_zero l A)
   rw [OnePoint.smul_infty_eq_ite, OnePoint.smul_infty_eq_ite,
     mapGL_cuspWitnessLevelRaiseInv_apply_one_zero,
     mapGL_cuspWitnessLevelRaiseInv_apply_zero_zero,
     levelRaiseMatrix_inv_mul_mapGL_apply_one_zero,
     levelRaiseMatrix_inv_mul_mapGL_apply_zero_zero]
-  have h_int_div_a : (((A.val 0 0) / d : ℤ) : ℝ) = (A.val 0 0 : ℝ) / (d : ℝ) :=
-    Int.cast_div (gcd_dvd_left _ _) hd_real_ne
   have h_int_div_lc : ((((l : ℤ) * A.val 1 0) / d : ℤ) : ℝ) =
       ((l : ℝ) * A.val 1 0) / (d : ℝ) := by
     rw [Int.cast_div (gcd_dvd_right _ _) hd_real_ne]; push_cast; ring
-  rw [h_int_div_a, h_int_div_lc]
+  rw [show (((A.val 0 0) / d : ℤ) : ℝ) = (A.val 0 0 : ℝ) / (d : ℝ) from
+      Int.cast_div (gcd_dvd_left _ _) hd_real_ne, h_int_div_lc]
   by_cases hc : (A.val 1 0 : ℝ) = 0
   · have h_lc_zero : ((l : ℝ) * (A.val 1 0 : ℝ)) / (d : ℝ) = 0 := by
       rw [hc, mul_zero, zero_div]
@@ -841,7 +839,7 @@ lemma levelRaiseConjOfDvd_mem_Gamma1_div_of_mem_ker
     exact (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp hγ
   have hNl_dvd_N : ((N / l : ℕ) : ℤ) ∣ (N : ℤ) := by
     refine ⟨(l : ℤ), ?_⟩
-    rw [show ((N : ℕ) : ℤ) = (((N / l) * l : ℕ) : ℤ) from by rw [Nat.div_mul_cancel h_dvd],
+    rw [show ((N : ℕ) : ℤ) = (((N / l) * l : ℕ) : ℤ) by rw [Nat.div_mul_cancel h_dvd],
       Nat.cast_mul]
   have h10_mod : ((γ.val 1 0 : ℤ) : ZMod (N / l)) = 0 :=
     (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr (dvd_trans hNl_dvd_N hN_dvd_c)
@@ -864,7 +862,7 @@ lemma levelRaiseConjOfDvd_mem_Gamma1_div_of_mem_ker
       ZMod.intCast_zmod_eq_zero_iff_dvd]
     obtain ⟨m, hm⟩ := hN_dvd_c
     rw [hm, natCast_eq_mul_natCast_div h_dvd,
-      show ((l : ℤ) * ((N / l : ℕ) : ℤ)) * m = (l : ℤ) * (((N / l : ℕ) : ℤ) * m) from by ring,
+      show ((l : ℤ) * ((N / l : ℕ) : ℤ)) * m = (l : ℤ) * (((N / l : ℕ) : ℤ) * m) by ring,
       Int.mul_ediv_cancel_left _ (Nat.cast_ne_zero.mpr (NeZero.ne l))]
     exact ⟨m, rfl⟩
 
@@ -950,7 +948,7 @@ noncomputable def gamma0LiftLowerLeftN (N : ℕ) [NeZero N] (u : (ZMod N)ˣ) :
     rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
     push_cast
     rw [show ((a : ZMod N) * (e : ZMod N) - 1 : ZMod N) =
-        ((a * e : ℤ) : ZMod N) - 1 from by push_cast; ring, h_ae]
+        ((a * e : ℤ) : ZMod N) - 1 by push_cast; ring, h_ae]
     ring
   let b : ℤ := (a * e - 1) / (N : ℤ)
   refine ⟨⟨!![a, b; (N : ℤ), e], ?det⟩, ?gamma0⟩
@@ -1032,12 +1030,10 @@ lemma T_shift_divisibility_eq_iff
     have h2 : (-(- j * (a₀ - i * ((N / l : ℕ) : ℤ)) + l * b₀ - i * e₀)) =
         (i * e₀ + j * a₀ - i * j * ((N / l : ℕ) : ℤ)) - l * b₀ := by ring
     rw [h2] at h1
-    have hl_lb₀ : (l : ℤ) ∣ l * b₀ := ⟨b₀, rfl⟩
-    simpa using dvd_add h1 hl_lb₀
+    simpa using dvd_add h1 ⟨b₀, rfl⟩
   · intro h
-    have hl_lb₀ : (l : ℤ) ∣ l * b₀ := ⟨b₀, rfl⟩
     have : (l : ℤ) ∣ -((i * e₀ + j * a₀ - i * j * ((N / l : ℕ) : ℤ)) - l * b₀) :=
-      dvd_neg.mpr (dvd_sub h hl_lb₀)
+      dvd_neg.mpr (dvd_sub h ⟨b₀, rfl⟩)
     have h2 : -((i * e₀ + j * a₀ - i * j * ((N / l : ℕ) : ℤ)) - l * b₀) =
         (- j * (a₀ - i * ((N / l : ℕ) : ℤ)) + l * b₀ - i * e₀) := by ring
     rwa [h2] at this
@@ -1211,19 +1207,15 @@ theorem exists_T_factor_with_char_separation
   set b₀ : ℤ := (a₀ * e₀ - 1) / (N : ℤ)
   set b₀' : ℤ := (a₀' * e₀' - 1) / (N : ℤ)
   set Nl : ℤ := ((N / l : ℕ) : ℤ)
-  have h_dvd_e : Nl ∣ (e₀ - e₀') :=
-    natCast_val_sub_dvd_of_unitsMap_eq h_dvd u u' hu'_coset.symm
   have h_dvd_a : Nl ∣ (a₀ - a₀') := by
     apply natCast_val_sub_dvd_of_unitsMap_eq h_dvd u⁻¹ u'⁻¹
     rw [map_inv, map_inv, hu'_coset]
   set i : ℤ := (a₀ - a₀') / Nl
   set j : ℤ := (e₀ - e₀') / Nl
   refine ⟨i, j, u', hu'_chi, ?_⟩
-  have h_i_eq : i * Nl = a₀ - a₀' := Int.ediv_mul_cancel h_dvd_a
-  have h_j_eq : j * Nl = e₀ - e₀' := Int.ediv_mul_cancel h_dvd_e
   have hN_eq : (N : ℤ) = (l : ℤ) * Nl := natCast_eq_mul_natCast_div h_dvd
   have hNl_ne : Nl ≠ 0 :=
-    show ((N / l : ℕ) : ℤ) ≠ 0 from by
+    show ((N / l : ℕ) : ℤ) ≠ 0 by
       exact_mod_cast (Nat.div_pos (Nat.le_of_dvd (Nat.pos_of_neZero N) h_dvd)
         (Nat.pos_of_neZero l)).ne'
   have h_det_u : a₀ * e₀ - b₀ * ((l : ℤ) * Nl) = 1 := by
@@ -1234,21 +1226,15 @@ theorem exists_T_factor_with_char_separation
       (!![a₀, (l : ℤ) * b₀; Nl, e₀] : Matrix (Fin 2) (Fin 2) ℤ) =
         !![(1 : ℤ), i; 0, 1] * !![a₀', (l : ℤ) * b₀'; Nl, e₀'] *
           !![(1 : ℤ), j; 0, 1] :=
-    t_factor_matrix_identity hNl_ne h_i_eq h_j_eq h_det_u h_det_u'
+    t_factor_matrix_identity hNl_ne (Int.ediv_mul_cancel h_dvd_a)
+      (Int.ediv_mul_cancel
+        (natCast_val_sub_dvd_of_unitsMap_eq h_dvd u u' hu'_coset.symm))
+      h_det_u h_det_u'
   apply Subtype.ext
   rw [Matrix.SpecialLinearGroup.coe_mul, Matrix.SpecialLinearGroup.coe_mul,
     ModularGroup.coe_T_zpow, ModularGroup.coe_T_zpow]
-  have h_lhs_val : (levelRaiseConjOfDvd l (gamma0LiftLowerLeftN N u : SL(2, ℤ))
-      (dvd_lower_left_of_dvd_of_mem_Gamma0 h_dvd
-        (gamma0LiftLowerLeftN N u).property)).val =
-      (!![a₀, (l : ℤ) * b₀; Nl, e₀] : Matrix (Fin 2) (Fin 2) ℤ) :=
-    levelRaiseConjOfDvd_gamma0LiftLowerLeftN_val l N h_dvd u
-  have h_rhs_val : (levelRaiseConjOfDvd l (gamma0LiftLowerLeftN N u' : SL(2, ℤ))
-      (dvd_lower_left_of_dvd_of_mem_Gamma0 h_dvd
-        (gamma0LiftLowerLeftN N u').property)).val =
-      (!![a₀', (l : ℤ) * b₀'; Nl, e₀'] : Matrix (Fin 2) (Fin 2) ℤ) :=
-    levelRaiseConjOfDvd_gamma0LiftLowerLeftN_val l N h_dvd u'
-  rwa [h_lhs_val, h_rhs_val]
+  rwa [levelRaiseConjOfDvd_gamma0LiftLowerLeftN_val l N h_dvd u,
+    levelRaiseConjOfDvd_gamma0LiftLowerLeftN_val l N h_dvd u']
 
 /-- Case B vanishing theorem: under `¬ χ.FactorsThrough (N/l)` plus the period-1
 hypothesis on `f`, the candidate lower-level form `f` vanishes. -/

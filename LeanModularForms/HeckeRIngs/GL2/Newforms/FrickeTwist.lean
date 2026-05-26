@@ -81,12 +81,10 @@ private lemma imAxis_div_const_isBigO_rpow {N : ℕ} [NeZero N] {k : ℤ}
     Asymptotics.IsBigO Filter.atTop
       (fun x : ℝ => _root_.ModularForms.imAxis twist (x / c) - 0)
       (fun x : ℝ => x ^ r) := by
-  have h_twist_decay :=
-    (_root_.ModularForms.HasImAxisRapidDecay_of_HasImAxisExponentialDecay
-      twist (Newform.cuspForm_Gamma1_hasImAxisExponentialDecay twist)) r
-  refine ((h_twist_decay.comp_tendsto
+  refine (((_root_.ModularForms.HasImAxisRapidDecay_of_HasImAxisExponentialDecay
+    twist (Newform.cuspForm_Gamma1_hasImAxisExponentialDecay twist)) r).comp_tendsto
     (Filter.tendsto_id.atTop_div_const hc)).trans
-    (Asymptotics.IsBigO.of_bound (c ^ (-r)) ?_))
+    (Asymptotics.IsBigO.of_bound (c ^ (-r)) ?_)
   filter_upwards [Filter.eventually_gt_atTop (0 : ℝ)] with t ht
   simp only [Function.comp_apply, id_eq]
   have h_div_rpow : (t / c) ^ r = c ^ (-r) * t ^ r := by
@@ -113,38 +111,27 @@ noncomputable def Newform.ImAxisMellinData.ofSlashEq
   have hN_ne : (N : ℂ) ≠ 0 := by exact_mod_cast hN_pos.ne'
   let G : ℝ → ℂ := fun t => _root_.ModularForms.imAxis twist (t / (N : ℝ))
   let ε : ℂ := (N : ℂ) ^ (1 - k) * Complex.I ^ k
-  have hε_ne : ε ≠ 0 := mul_ne_zero (zpow_ne_zero _ hN_ne) (zpow_ne_zero _ Complex.I_ne_zero)
-  have hG_continuousOn : ContinuousOn G (Set.Ioi (0 : ℝ)) := by
-    have h_div_cts : ContinuousOn
-        (fun t : ℝ => t / (N : ℝ)) (Set.Ioi (0 : ℝ)) :=
-      Continuous.continuousOn (by fun_prop)
-    have h_maps : Set.MapsTo (fun t : ℝ => t / (N : ℝ))
-        (Set.Ioi 0) (Set.Ioi 0) := fun t ht => div_pos ht hN_pos
-    exact (_root_.ModularForms.continuousOn_imAxis twist).comp h_div_cts h_maps
-  have hG_int : MeasureTheory.LocallyIntegrableOn G (Set.Ioi (0 : ℝ)) :=
-    hG_continuousOn.locallyIntegrableOn measurableSet_Ioi
-  have hG_top : ∀ r : ℝ, Asymptotics.IsBigO Filter.atTop
-      (fun x : ℝ => G x - 0) (fun x : ℝ => x ^ r) :=
-    fun r => imAxis_div_const_isBigO_rpow twist hN_pos r
+  have hG_continuousOn : ContinuousOn G (Set.Ioi (0 : ℝ)) :=
+    (_root_.ModularForms.continuousOn_imAxis twist).comp
+      (Continuous.continuousOn (by fun_prop)) (fun t ht => div_pos ht hN_pos)
   have h_feq : ∀ x ∈ Set.Ioi (0 : ℝ),
       Newform.imAxis f (1 / x) = (ε * ((x ^ (k : ℝ) : ℝ) : ℂ)) • G x := by
     intro x hx
-    have h := Newform.imAxis_feq_of_slashEq f twist slash_eq hx
     have h_cast : ((x ^ (k : ℝ) : ℝ) : ℂ) = ((x : ℝ) : ℂ) ^ k := by
       rw [Real.rpow_intCast x k, Complex.ofReal_zpow]
     show Newform.imAxis f (1 / x) =
       (((N : ℂ) ^ (1 - k) * Complex.I ^ k) * ((x ^ (k : ℝ) : ℝ) : ℂ)) •
         _root_.ModularForms.imAxis twist (x / (N : ℝ))
-    rw [h, h_cast, smul_eq_mul]
+    rw [Newform.imAxis_feq_of_slashEq f twist slash_eq hx, h_cast, smul_eq_mul]
   exact {
     G := G
     ε := ε
-    hG_int := hG_int
+    hG_int := hG_continuousOn.locallyIntegrableOn measurableSet_Ioi
     hk_pos := hk_pos
-    hε_ne := hε_ne
+    hε_ne := mul_ne_zero (zpow_ne_zero _ hN_ne) (zpow_ne_zero _ Complex.I_ne_zero)
     h_feq := h_feq
     hF_top := Newform.imAxis_rapidDecay f
-    hG_top := hG_top
+    hG_top := imAxis_div_const_isBigO_rpow twist hN_pos
     h_bridge := h_bridge
   }
 
@@ -266,12 +253,9 @@ private lemma differentiable_LFunction_comp {N : ℕ} [NeZero N]
 private lemma eq_of_eqOn_halfPlane {F G : ℂ → ℂ} (hF : Differentiable ℂ F)
     (hG : Differentiable ℂ G) (σ : ℝ) (h : ∀ s : ℂ, σ < s.re → F s = G s) :
     F = G := by
-  have hF_an : AnalyticOnNhd ℂ F Set.univ :=
-    Complex.analyticOnNhd_univ_iff_differentiable.mpr hF
-  have hG_an : AnalyticOnNhd ℂ G Set.univ :=
-    Complex.analyticOnNhd_univ_iff_differentiable.mpr hG
   have hz₀ : σ < ((σ + 1 : ℝ) : ℂ).re := by rw [Complex.ofReal_re]; linarith
-  exact hF_an.eq_of_eventuallyEq hG_an
+  exact (Complex.analyticOnNhd_univ_iff_differentiable.mpr hF).eq_of_eventuallyEq
+    (Complex.analyticOnNhd_univ_iff_differentiable.mpr hG)
     (((isOpen_lt continuous_const Complex.continuous_re).eventually_mem hz₀).mono
       (fun s hs => h s hs))
 
@@ -279,21 +263,21 @@ private lemma LFunction_comp_affine_punctured_ne_zero {N : ℕ} [NeZero N]
     {ψ : DirichletCharacter ℂ N} (hψ : ψ ≠ 1) {k : ℤ} (s₀ : ℂ) :
     ∀ᶠ s in nhdsWithin s₀ {s₀}ᶜ,
       DirichletCharacter.LFunction ψ (2 * s - k + 1) ≠ 0 := by
-  set g : ℂ → ℂ := fun s => DirichletCharacter.LFunction ψ (2 * s - k + 1) with hg_def
+  set g : ℂ → ℂ := fun s => DirichletCharacter.LFunction ψ (2 * s - k + 1)
   have hg_diff : Differentiable ℂ g :=
     differentiable_LFunction_comp hψ (by fun_prop)
   have hg_an : AnalyticAt ℂ g s₀ :=
     Complex.analyticOnNhd_univ_iff_differentiable.mpr hg_diff s₀ (Set.mem_univ _)
-  set s' : ℂ := (((k : ℝ) / 2 + 2 : ℝ) : ℂ) with hs'_def
+  set s' : ℂ := (((k : ℝ) / 2 + 2 : ℝ) : ℂ)
   have h_re : (1 : ℝ) < (2 * s' - (k : ℂ) + 1).re := by
     have : (2 * s' - (k : ℂ) + 1).re = 5 := by
       simp [s', Complex.add_re, Complex.sub_re, Complex.mul_re,
         Complex.intCast_re, Complex.intCast_im]; ring
     rw [this]; norm_num
-  have hg_s' : g s' ≠ 0 := LFunction_dirichletLift_ne_zero_of_one_lt_re h_re
   refine hg_an.eventually_eq_zero_or_eventually_ne_zero.resolve_left (fun h_ev => ?_)
-  exact hg_s' (congrFun ((Complex.analyticOnNhd_univ_iff_differentiable.mpr hg_diff).eq_of_eventuallyEq
-    (fun _ _ => analyticAt_const) (h_ev.mono (fun _ h => h))) s')
+  exact LFunction_dirichletLift_ne_zero_of_one_lt_re h_re
+    (congrFun ((Complex.analyticOnNhd_univ_iff_differentiable.mpr hg_diff).eq_of_eventuallyEq
+      (fun _ _ => analyticAt_const) (h_ev.mono (fun _ h => h))) s')
 
 private lemma t111_re_conditions {k : ℤ} {s : ℂ} (hs_re : (k : ℝ) / 2 + 1 < s.re) :
     1 < (2 * s - k + 1).re ∧ 1 < (2 * (2 * s - k + 1)).re := by
@@ -329,10 +313,9 @@ private lemma differentiable_prod_linearFactor {N : ℕ} [NeZero N]
   have hg_an : ∀ s, AnalyticAt ℂ g s := fun s =>
     Complex.analyticOnNhd_univ_iff_differentiable.mpr hg s (Set.mem_univ _)
   refine Differentiable.fun_finset_prod (fun p _ => ?_)
-  have h_slit : ((p : ℕ) : ℂ) ∈ Complex.slitPlane :=
-    Complex.natCast_mem_slitPlane.mpr p.prop.pos.ne'
   have h_pow : Differentiable ℂ (fun s : ℂ => ((p : ℕ) : ℂ) ^ (-(g s))) := fun s =>
-    (AnalyticAt.cpow analyticAt_const (hg_an s).neg h_slit).differentiableAt
+    (AnalyticAt.cpow analyticAt_const (hg_an s).neg
+      (Complex.natCast_mem_slitPlane.mpr p.prop.pos.ne')).differentiableAt
   exact (differentiable_const _).sub (h_pow.const_mul _)
 
 private lemma prod_linearFactor_eventually_ne_zero {N : ℕ} [NeZero N]
@@ -401,24 +384,24 @@ theorem Newform.dirichletQuotient_pole_witness_of_dirichletZero
         F =ᶠ[nhdsWithin s₀' {s₀'}ᶜ] (num / den) := by
   set num : ℂ → ℂ := fun s => DirichletCharacter.LFunction
     (Newform.dirichletLift χ * Newform.dirichletLift χ : DirichletCharacter ℂ N)
-    (2 * (2 * s - k + 1)) with hnum
+    (2 * (2 * s - k + 1))
   set den : ℂ → ℂ := fun s => DirichletCharacter.LFunction
-    (Newform.dirichletLift χ : DirichletCharacter ℂ N) (2 * s - k + 1) with hden
-  have h_num_diff : Differentiable ℂ num := differentiable_LFunction_comp h_chi_sq_ne_one (by fun_prop)
+    (Newform.dirichletLift χ : DirichletCharacter ℂ N) (2 * s - k + 1)
   have h_den_diff : Differentiable ℂ den := differentiable_LFunction_comp h_χ_ne_one (by fun_prop)
   have h_num_an : AnalyticAt ℂ num s₀ :=
-    Complex.analyticOnNhd_univ_iff_differentiable.mpr h_num_diff s₀ (Set.mem_univ _)
+    Complex.analyticOnNhd_univ_iff_differentiable.mpr
+      (differentiable_LFunction_comp h_chi_sq_ne_one (by fun_prop)) s₀ (Set.mem_univ _)
   have h_den_an : AnalyticAt ℂ den s₀ :=
     Complex.analyticOnNhd_univ_iff_differentiable.mpr h_den_diff s₀ (Set.mem_univ _)
-  set s' : ℂ := (((k : ℝ) / 2 + 2 : ℝ) : ℂ) with hs'_def
+  set s' : ℂ := (((k : ℝ) / 2 + 2 : ℝ) : ℂ)
   have h_re_gt_one : (1 : ℝ) < (2 * s' - (k : ℂ) + 1).re := by
     have : (2 * s' - (k : ℂ) + 1).re = 5 := by
       simp [s', Complex.add_re, Complex.sub_re, Complex.mul_re,
         Complex.intCast_re, Complex.intCast_im]; ring
     rw [this]; norm_num
-  have h_den_ne_at_s' : den s' ≠ 0 := LFunction_dirichletLift_ne_zero_of_one_lt_re h_re_gt_one
   have h_den_fin : meromorphicOrderAt den s₀ ≠ ⊤ :=
-    meromorphicOrderAt_ne_top_of_ne_zero_somewhere h_den_diff s₀ s' h_den_ne_at_s'
+    meromorphicOrderAt_ne_top_of_ne_zero_somewhere h_den_diff s₀ s'
+      (LFunction_dirichletLift_ne_zero_of_one_lt_re h_re_gt_one)
   exact ⟨num, den, s₀, h_num_an.meromorphicAt, h_den_an.meromorphicAt,
     meromorphicOrderAt_ne_top_of_analyticAt_ne_zero h_num_an h_num_ne_zero, h_den_fin,
     meromorphicOrderAt_lt_of_ne_zero_of_zero h_num_an h_den_an h_num_ne_zero h_den_zero h_den_fin,
@@ -500,12 +483,10 @@ theorem strongMultiplicityOne_of_HeckeEntireExtension_of_dirichletZeroCertificat
     (h : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S →
       f.eigenvalue n = g.eigenvalue n) :
     f.toCuspForm = g.toCuspForm := by
-  have h_no_ext : Newform.NoEntireExtensionUnderBadPrime :=
-    Newform.noEntireExtensionUnderBadPrime_of_dirichletZeroCertificate h_cert
-  have h_ana : Newform.AnalyticContradiction :=
-    Newform.analyticContradiction_of_HeckeEntireExtension_of_NoEntireExtensionUnderBadPrime
-      h_hecke h_no_ext
-  exact strongMultiplicityOne_of_analyticContradiction h_ana f g χ hfχ hgχ S h
+  exact strongMultiplicityOne_of_analyticContradiction
+    (Newform.analyticContradiction_of_HeckeEntireExtension_of_NoEntireExtensionUnderBadPrime
+      h_hecke (Newform.noEntireExtensionUnderBadPrime_of_dirichletZeroCertificate h_cert))
+    f g χ hfχ hgχ S h
 
 /-- Mirrors `strongMultiplicityOne_of_analyticContradiction` but takes the
 uniqueness content as an explicit hypothesis `h_unique`, isolating the analytic
@@ -547,16 +528,15 @@ theorem strongMultiplicityOne_of_analyticContradiction_of_newformUnique
       exact Nat.mul_div_cancel_left _ hn_pos
     let q_pnat : ℕ+ := ⟨q, hq_pos⟩
     let nq_pnat : ℕ+ := ⟨n.val * q, Nat.mul_pos hn_pos hq_pos⟩
-    have hnq_N : Nat.Coprime (n.val * q) N := hn.mul_left hq_N
-    have hq_eq : f.eigenvalue q_pnat = g.eigenvalue q_pnat := h q_pnat hq_N hq_notin_S
-    have hnq_eq : f.eigenvalue nq_pnat = g.eigenvalue nq_pnat := h nq_pnat hnq_N hnq_notin_S
+    have hnq_eq : f.eigenvalue nq_pnat = g.eigenvalue nq_pnat :=
+      h nq_pnat (hn.mul_left hq_N) hnq_notin_S
     have hmul_f : f.eigenvalue nq_pnat = f.eigenvalue n * f.eigenvalue q_pnat :=
       Newform.eigenvalue_coprime_mul f n q_pnat hn hq_N hn_coprime_q χ hfχ
     have hmul_g : g.eigenvalue nq_pnat = g.eigenvalue n * g.eigenvalue q_pnat :=
       Newform.eigenvalue_coprime_mul g n q_pnat hn hq_N hn_coprime_q χ hgχ
     have hcomb :
         f.eigenvalue n * f.eigenvalue q_pnat = g.eigenvalue n * f.eigenvalue q_pnat := by
-      rw [← hmul_f, hnq_eq, hmul_g, hq_eq]
+      rw [← hmul_f, hnq_eq, hmul_g, h q_pnat hq_N hq_notin_S]
     exact mul_right_cancel₀ hq_ne hcomb
   · exact h n hn hn_S
 
@@ -603,13 +583,10 @@ theorem strongMultiplicityOne_of_HeckeEntireExtension_of_dirichletZeroCertificat
     (h : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S →
       f.eigenvalue n = g.eigenvalue n) :
     f.toCuspForm = g.toCuspForm := by
-  have h_no_ext : Newform.NoEntireExtensionUnderBadPrime :=
-    Newform.noEntireExtensionUnderBadPrime_of_dirichletZeroCertificate h_cert
-  have h_ana : Newform.AnalyticContradiction :=
-    Newform.analyticContradiction_of_HeckeEntireExtension_of_NoEntireExtensionUnderBadPrime
-      h_hecke h_no_ext
-  exact strongMultiplicityOne_of_analyticContradiction_of_newformUnique
-    h_unique h_ana f g χ hfχ hgχ S h
+  exact strongMultiplicityOne_of_analyticContradiction_of_newformUnique h_unique
+    (Newform.analyticContradiction_of_HeckeEntireExtension_of_NoEntireExtensionUnderBadPrime
+      h_hecke (Newform.noEntireExtensionUnderBadPrime_of_dirichletZeroCertificate h_cert))
+    f g χ hfχ hgχ S h
 
 /-- The per-newform analytic certificate consumed by the SMO chain: an explicit
 pole point `s₀`, the character non-trivialities `χ̃ ≠ 1` and `χ̃² ≠ 1`, the
@@ -817,18 +794,15 @@ theorem Newform.DirichletQuotientUniversalFClause_of_halfPlane_identity
   intro F hF h_F_eq
   set num : ℂ → ℂ := fun s => DirichletCharacter.LFunction
     (Newform.dirichletLift χ * Newform.dirichletLift χ : DirichletCharacter ℂ N)
-    (2 * (2 * s - k + 1)) with hnum_def
+    (2 * (2 * s - k + 1))
   set den : ℂ → ℂ := fun s => DirichletCharacter.LFunction
-    (Newform.dirichletLift χ : DirichletCharacter ℂ N) (2 * s - k + 1) with hden_def
-  have h_num_diff : Differentiable ℂ num := differentiable_LFunction_comp h_chi_sq_ne_one (by fun_prop)
-  have h_den_diff : Differentiable ℂ den := differentiable_LFunction_comp h_χ_ne_one (by fun_prop)
-  have h_F_den_eq_num : ∀ s : ℂ, F s * den s = num s := by
-    have h_eq : (fun s => F s * den s) = num :=
-      eq_of_eqOn_halfPlane (hF.mul h_den_diff) h_num_diff σ (fun s hs => by
-        have hs_abscissa : LSeries.abscissaOfAbsConv f.lCoeff_stripped < (s.re : EReal) :=
-          lt_of_lt_of_le h_abscissa_lt (by exact_mod_cast hs.le)
-        rw [h_F_eq hs_abscissa]; exact h_halfPlane_id s hs)
-    exact fun s => congrFun h_eq s
+    (Newform.dirichletLift χ : DirichletCharacter ℂ N) (2 * s - k + 1)
+  have h_F_den_eq_num : ∀ s : ℂ, F s * den s = num s :=
+    congrFun (eq_of_eqOn_halfPlane
+      (hF.mul (differentiable_LFunction_comp h_χ_ne_one (by fun_prop)))
+      (differentiable_LFunction_comp h_chi_sq_ne_one (by fun_prop)) σ (fun s hs => by
+        rw [h_F_eq (lt_of_lt_of_le h_abscissa_lt (by exact_mod_cast hs.le))]
+        exact h_halfPlane_id s hs))
   refine (LFunction_comp_affine_punctured_ne_zero (k := k) h_χ_ne_one s₀).mono
     (fun s h_den_s_ne => ?_)
   show F s = num s / den s
@@ -856,39 +830,14 @@ theorem Newform.DirichletQuotientUniversalFClause_of_T111_T_empty
     h_χ_ne_one h_chi_sq_ne_one ((k : ℝ) / 2 + 1) h_abscissa_lt ?_
   intro s hs_re
   obtain ⟨hs', hs''⟩ := t111_re_conditions hs_re
-  have h_geom : ∀ q : ℕ, ∀ (hq : Nat.Prime q) (hqN : Nat.Coprime q N), q ∉ S →
-      ‖((χ (ZMod.unitOfCoprime q hqN) : ℂ) * (q : ℂ) ^ (k - 1)) *
-        ((q : ℂ) ^ (-s)) ^ 2‖ < 1 := fun q hq hqN _ => t111_geom_bound χ hs_re hq hqN
-  have h_pos_neg : ∀ q : ℕ, ∀ (hq : Nat.Prime q) (hqN : Nat.Coprime q N), q ∉ S →
-      (1 : ℂ) + (χ (ZMod.unitOfCoprime q hqN) : ℂ) * (q : ℂ) ^ (-(2 * s - k + 1)) ≠ 0 ∧
-      (1 : ℂ) - (χ (ZMod.unitOfCoprime q hqN) : ℂ) * (q : ℂ) ^ (-(2 * s - k + 1)) ≠ 0 :=
-    fun q hq hqN _ => t111_one_pm_ne χ hs_re hq hqN
-  have hT_iff : ∀ p : Nat.Primes, p ∈ (∅ : Finset Nat.Primes) ↔
-      (p : ℕ) ∈ S ∧ Nat.Coprime (p : ℕ) N := by
-    intro p
-    refine iff_of_false (Finset.notMem_empty p) ?_
-    exact h_T_empty p
   have h_T111 := f.lSeries_stripped_eq_dirichlet_quotient_value χ hfχ S h_bad
-    hs_re hs' hs'' h_geom ∅ hT_iff h_pos_neg
+    hs_re hs' hs'' (fun q hq hqN _ => t111_geom_bound χ hs_re hq hqN) ∅
+    (fun p => iff_of_false (Finset.notMem_empty p) (h_T_empty p))
+    (fun q hq hqN _ => t111_one_pm_ne χ hs_re hq hqN)
   simp only [Finset.prod_empty, mul_one] at h_T111
-  have h_LF_eq : DirichletCharacter.LFunction
-      (Newform.dirichletLift χ : DirichletCharacter ℂ N) (2 * s - k + 1) =
-        LSeries (fun n => (Newform.dirichletLift χ : DirichletCharacter ℂ N) n)
-          (2 * s - k + 1) :=
-    DirichletCharacter.LFunction_eq_LSeries _ hs'
-  have h_LF_sq_eq : DirichletCharacter.LFunction
-      (Newform.dirichletLift χ * Newform.dirichletLift χ
-        : DirichletCharacter ℂ N) (2 * (2 * s - k + 1)) =
-        LSeries (fun n => (Newform.dirichletLift χ * Newform.dirichletLift χ
-          : DirichletCharacter ℂ N) n) (2 * (2 * s - k + 1)) :=
-    DirichletCharacter.LFunction_eq_LSeries _ hs''
-  rw [h_LF_eq, h_LF_sq_eq]
-  have h_den_ne :
-      LSeries (fun n => (Newform.dirichletLift χ : DirichletCharacter ℂ N) n)
-          (2 * s - k + 1) ≠ 0 :=
-    DirichletCharacter.LSeries_ne_zero_of_one_lt_re _ hs'
-  rw [eq_div_iff h_den_ne] at h_T111
-  exact h_T111
+  rw [DirichletCharacter.LFunction_eq_LSeries _ hs',
+    DirichletCharacter.LFunction_eq_LSeries _ hs'']
+  rwa [eq_div_iff (DirichletCharacter.LSeries_ne_zero_of_one_lt_re _ hs')] at h_T111
 
 /-- Reduce `Newform.FullDirichletQuotientUniversalFClause f χ S T s₀` to a
 half-plane multiplicative entire identity (inverses cleared by
@@ -955,9 +904,8 @@ theorem Newform.FullDirichletQuotientUniversalFClause_of_halfPlane_multIdentity
         ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1)))))
     ((hF.mul h_LF_chi_diff).mul h_LinFP1_diff)
     ((h_LF_chi_sq_diff.mul h_EFP_diff).mul h_LinFP2_diff) σ (fun s hs => by
-      have hs_abscissa : LSeries.abscissaOfAbsConv f.lCoeff_stripped < (s.re : EReal) :=
-        lt_of_lt_of_le h_abscissa_lt (by exact_mod_cast hs.le)
-      simp only [h_F_eq hs_abscissa]; exact h_halfPlane_id s hs)
+      simp only [h_F_eq (lt_of_lt_of_le h_abscissa_lt (by exact_mod_cast hs.le))]
+      exact h_halfPlane_id s hs)
   filter_upwards [prod_linearFactor_eventually_ne_zero
       (Newform.dirichletLift χ : DirichletCharacter ℂ N) T (g := fun s => 2 * s - k + 1)
       (by fun_prop) s₀ h_LinFP1_factor_ne_s₀,
@@ -1002,27 +950,16 @@ theorem Newform.FullDirichletQuotientUniversalFClause_of_T111
     h_abscissa_lt h_EFP_diff ?_ h_LinFP1_factor_ne_s₀ h_LinFP2_factor_ne_s₀
   intro s hs_re
   obtain ⟨hs', hs''⟩ := t111_re_conditions hs_re
-  have h_geom : ∀ q : ℕ, ∀ (hq : Nat.Prime q) (hqN : Nat.Coprime q N), q ∉ S →
-      ‖((χ (ZMod.unitOfCoprime q hqN) : ℂ) * (q : ℂ) ^ (k - 1)) *
-        ((q : ℂ) ^ (-s)) ^ 2‖ < 1 := fun q hq hqN _ => t111_geom_bound χ hs_re hq hqN
-  have h_pos_neg : ∀ q : ℕ, ∀ (hq : Nat.Prime q) (hqN : Nat.Coprime q N), q ∉ S →
-      (1 : ℂ) + (χ (ZMod.unitOfCoprime q hqN) : ℂ) * (q : ℂ) ^ (-(2 * s - k + 1)) ≠ 0 ∧
-      (1 : ℂ) - (χ (ZMod.unitOfCoprime q hqN) : ℂ) * (q : ℂ) ^ (-(2 * s - k + 1)) ≠ 0 :=
-    fun q hq hqN _ => t111_one_pm_ne χ hs_re hq hqN
   have h_T111_mult := f.lSeries_stripped_value_identity χ hfχ S h_bad
-    hs_re hs' hs'' h_geom T hT_iff h_pos_neg
+    hs_re hs' hs'' (fun q hq hqN _ => t111_geom_bound χ hs_re hq hqN) T hT_iff
+    (fun q hq hqN _ => t111_one_pm_ne χ hs_re hq hqN)
   rw [DirichletCharacter.LFunction_eq_LSeries _ hs',
     DirichletCharacter.LFunction_eq_LSeries _ hs'']
-  have h_C_ne : (∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-      : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-      ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))) ≠ 0 :=
-    Finset.prod_ne_zero_iff.mpr fun p _ => linearFactor_ne_zero_of_one_lt_re _ p.prop hs''
-  have h_F_ne : (∏ p ∈ T, (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-      ((p : ℕ) : ZMod N) * ((p : ℕ) : ℂ) ^ (-(2 * s - k + 1)))) ≠ 0 :=
-    Finset.prod_ne_zero_iff.mpr fun p _ => linearFactor_ne_zero_of_one_lt_re _ p.prop hs'
   rw [Finset.prod_mul_distrib, Finset.prod_inv_distrib, Finset.prod_inv_distrib]
     at h_T111_mult
-  exact mul_eq_mul_of_mul_inv_eq h_T111_mult h_C_ne h_F_ne
+  exact mul_eq_mul_of_mul_inv_eq h_T111_mult
+    (Finset.prod_ne_zero_iff.mpr fun p _ => linearFactor_ne_zero_of_one_lt_re _ p.prop hs'')
+    (Finset.prod_ne_zero_iff.mpr fun p _ => linearFactor_ne_zero_of_one_lt_re _ p.prop hs')
 
 /-- The full-clause analogue of
 `Newform.dirichletQuotient_pole_witness_of_dirichletZero`, consuming the full
@@ -1090,13 +1027,13 @@ theorem Newform.dirichletQuotient_pole_witness_of_dirichletZero_full
     ∏ p ∈ T, Newform.eulerFactor_stripped f χ S s p *
       (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
           ((p : ℕ) : ZMod N) *
-        ((p : ℕ) : ℂ) ^ (-(2 * s - k + 1)))⁻¹ with hnum
+        ((p : ℕ) : ℂ) ^ (-(2 * s - k + 1)))⁻¹
   set den : ℂ → ℂ := fun s =>
     DirichletCharacter.LFunction
       (Newform.dirichletLift χ : DirichletCharacter ℂ N) (2 * s - k + 1) *
     ∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
       : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-      ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹ with hden
+      ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹
   exact ⟨num, den, s₀, h_num_an.meromorphicAt, h_den_an.meromorphicAt,
     meromorphicOrderAt_ne_top_of_analyticAt_ne_zero h_num_an h_num_ne_zero, h_den_finite,
     meromorphicOrderAt_lt_of_ne_zero_of_zero h_num_an h_den_an h_num_ne_zero h_den_zero
@@ -1223,13 +1160,10 @@ theorem strongMultiplicityOne_of_HeckeEntireExtension_of_full_dirichletZeroCerti
     (h : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S →
       f.eigenvalue n = g.eigenvalue n) :
     f.toCuspForm = g.toCuspForm := by
-  have h_no_ext : Newform.NoEntireExtensionUnderBadPrime :=
-    Newform.noEntireExtensionUnderBadPrime_of_full_dirichletZeroCertificate h_data
-  have h_ana : Newform.AnalyticContradiction :=
-    Newform.analyticContradiction_of_HeckeEntireExtension_of_NoEntireExtensionUnderBadPrime
-      h_hecke h_no_ext
-  exact strongMultiplicityOne_of_analyticContradiction_of_newformUnique
-    h_unique h_ana f g χ hfχ hgχ S h
+  exact strongMultiplicityOne_of_analyticContradiction_of_newformUnique h_unique
+    (Newform.analyticContradiction_of_HeckeEntireExtension_of_NoEntireExtensionUnderBadPrime
+      h_hecke (Newform.noEntireExtensionUnderBadPrime_of_full_dirichletZeroCertificate h_data))
+    f g χ hfχ hgχ S h
 
 /-- **Direct full-quotient bridge to `Newform.AnalyticContradiction` (T132 step).**
 
@@ -1284,10 +1218,8 @@ theorem Newform.analyticContradiction_of_HeckeEntireExtension_of_full_dirichletZ
                 ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀ ≠ ⊤ ∧
           Newform.FullDirichletQuotientUniversalFClause f χ S T s₀) :
     Newform.AnalyticContradiction := by
-  have h_no_ext : Newform.NoEntireExtensionUnderBadPrime :=
-    Newform.noEntireExtensionUnderBadPrime_of_full_dirichletZeroCertificate h_data
   exact Newform.analyticContradiction_of_HeckeEntireExtension_of_NoEntireExtensionUnderBadPrime
-    h_hecke h_no_ext
+    h_hecke (Newform.noEntireExtensionUnderBadPrime_of_full_dirichletZeroCertificate h_data)
 
 /-- **Direct full-quotient bridge to `exists_nonzero_prime_eigenvalue` (T132 step).**
 
@@ -1346,11 +1278,9 @@ theorem Newform.exists_nonzero_prime_eigenvalue_of_HeckeEntireExtension_of_full_
     (S : Finset ℕ) :
     ∃ q : ℕ, ∃ hq : Nat.Prime q, Nat.Coprime q N ∧ q ∉ S ∧
       f.eigenvalue ⟨q, hq.pos⟩ ≠ 0 := by
-  have h_ana : Newform.AnalyticContradiction :=
-    Newform.analyticContradiction_of_HeckeEntireExtension_of_full_dirichletZeroCertificate
-      h_hecke h_data
   exact Newform.exists_nonzero_prime_eigenvalue_of_analyticContradiction
-    h_ana f χ hfχ S
+    (Newform.analyticContradiction_of_HeckeEntireExtension_of_full_dirichletZeroCertificate
+      h_hecke h_data) f χ hfχ S
 
 /-- The `Newform.HeckeFEData` analogue of
 `Newform.analyticContradiction_of_HeckeEntireExtension_of_full_dirichletZeroCertificate`,

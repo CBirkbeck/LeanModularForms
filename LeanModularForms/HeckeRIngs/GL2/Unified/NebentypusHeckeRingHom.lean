@@ -82,9 +82,7 @@ lemma char_bridge (χ : (ZMod N)ˣ →* ℂˣ) (g : ↥(Gamma0 N))
     simp only [RingHom.mapMatrix_apply, Int.coe_castRingHom] at hcomm ⊢
     rw [algebraMap_int_eq]
     exact hcomm
-  have hwit : delta0IntegralMatrix (N := N) dEl = gZ.adjugate :=
-    delta0IntegralMatrix_witness_unique (N := N) dEl _ hval
-  rw [hwit, Matrix.adjugate_fin_two]
+  rw [delta0IntegralMatrix_witness_unique (N := N) dEl _ hval, Matrix.adjugate_fin_two]
   simp only [Matrix.of_apply, Matrix.cons_val', Matrix.cons_val_zero, Matrix.empty_val',
     Matrix.cons_val_fin_one]
   rfl
@@ -95,23 +93,19 @@ theorem coe_mem_twistedInvariant
     {k : ℤ} {χ : (ZMod N)ˣ →* ℂˣ}
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) (hf : f ∈ modFormCharSpace k χ) :
     IsGamma0TwistedInvariant k χ (⇑f) := by
-  have hneb := (modFormCharSpace_iff_nebentypus k χ f).mp hf
   intro h hh
   obtain ⟨σ, hσ, hσh⟩ := Subgroup.mem_map.mp hh
   set g : ↥(Gamma0 N) := ⟨σ, hσ⟩ with hg
-  have hng := hneb g
   have hgl : glMap h = (mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (g : SL(2, ℤ)) := by
     rw [← hσh]
-    apply Units.ext; ext i j
+    apply Units.ext
+    ext i j
     simp only [glMap, GeneralLinearGroup.map]
     exact (IsScalarTower.algebraMap_apply ℤ ℚ ℝ ((g : SL(2, ℤ)).1 i j)).symm
-  rw [hgl, hng]
-  have hmem : (mapGL ℚ (g : SL(2, ℤ)) : GL (Fin 2) ℚ) ∈ (Gamma0_pair N).H :=
-    Subgroup.mem_map.mpr ⟨σ, hσ, rfl⟩
-  have hh_eq : h = mapGL ℚ (g : SL(2, ℤ)) := hσh.symm
-  subst hh_eq
+  rw [hgl, (modFormCharSpace_iff_nebentypus k χ f).mp hf g]
+  subst hσh
   congr 1
-  rw [← char_bridge (N := N) χ g hmem]
+  rw [← char_bridge (N := N) χ g (Subgroup.mem_map.mpr ⟨σ, hσ, rfl⟩)]
 
 /-- Specialization of `IsGamma0TwistedInvariant` to `h = mapGL ℚ g` for `g ∈ Γ₀(N)`: the
 classical nebentypus slash relation `F ∣[k] mapGL ℝ g = χ(Gamma0MapUnits g) • F`. -/
@@ -124,7 +118,8 @@ theorem twistedInvariant_nebentypus
     Subgroup.mem_map.mpr ⟨(g : SL(2, ℤ)), g.2, rfl⟩
   have hgl : glMap (mapGL ℚ (g : SL(2, ℤ))) =
       (mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (g : SL(2, ℤ)) := by
-    apply Units.ext; ext i j
+    apply Units.ext
+    ext i j
     simp only [glMap, GeneralLinearGroup.map]
     exact (IsScalarTower.algebraMap_apply ℤ ℚ ℝ ((g : SL(2, ℤ)).1 i j)).symm
   have hinv := hF (mapGL ℚ (g : SL(2, ℤ))) hmem
@@ -191,11 +186,10 @@ noncomputable def nebentypusHeckeOpModularForm
     obtain ⟨σ, hσ_Gamma1, rfl⟩ := Subgroup.mem_map.mp hγ
     have hσ_Gamma0 : σ ∈ Gamma0 N := Gamma1_le_Gamma0 N hσ_Gamma1
     have h_units : Gamma0MapUnits (⟨σ, hσ_Gamma0⟩ : ↥(Gamma0 N)) = 1 := by
-      have h := (Gamma1_mem N σ).mp hσ_Gamma1
       ext
       simp only [Gamma0MapUnits_val, Gamma0Map, MonoidHom.coe_mk, OneHom.coe_mk,
         Units.val_one]
-      exact h.2.1
+      exact ((Gamma1_mem N σ).mp hσ_Gamma1).2.1
     have hneb := twistedInvariant_nebentypus
       (coe_mem_twistedInvariant f hf
         |> twistedHeckeSlash_gen_preserves_invariant (N := N) k χ D (⇑f))
@@ -331,11 +325,9 @@ lemma nebentypusHeckeSum_apply_coe
   | add T₁ T₂ h₁ h₂ =>
       rw [nebentypusHeckeSum_add, twistedHeckeSlashExt_gen_add]
       funext z
-      have e₁ := congrFun h₁ z
-      have e₂ := congrFun h₂ z
       simp only [LinearMap.add_apply, Submodule.coe_add, ModularForm.add_apply,
         Pi.add_apply]
-      rw [e₁, e₂]
+      rw [congrFun h₁ z, congrFun h₂ z]
   | single D c =>
       rw [nebentypusHeckeSum_T_single]
       funext z
@@ -436,7 +428,8 @@ private lemma adj_rep_mem (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
     (Gamma0_pair N).H.mul_mem hb₂ (HeckePairAction.adjugate_mem_H a ha), ?_⟩
   have hadj_diag : GL_adjugate (diagMat 2 ![1, p] : GL (Fin 2) ℚ) =
       (T_p_lower p hp.pos : GL (Fin 2) ℚ) := by
-    apply Units.ext; ext i j
+    apply Units.ext
+    ext i j
     have hpos : ∀ m : Fin 2, 0 < (![1, p] : Fin 2 → Nat) m := fun m => by
       fin_cases m <;> simp [hp.pos]
     simp only [GL_adjugate_val, diagMat_val _ _ hpos]
@@ -452,7 +445,8 @@ private lemma adj_rep_mem (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
     conv_lhs => rw [show (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) =
       a * diagMat 2 ![1, p] * c from hrep_eq]
     rw [GL_adjugate_mul, GL_adjugate_mul, mul_assoc]
-  rw [h1, hadj_diag, hTl_eq]; group
+  rw [h1, hadj_diag, hTl_eq]
+  group
 
 private lemma adj_factorisation (p : ℕ) (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) (g : GL (Fin 2) ℚ)
@@ -478,12 +472,12 @@ private lemma delta0Char_congr (χ : (ZMod N)ˣ →* ℂˣ)
     (g₁ g₂ : (Gamma0_pair N).Δ) (h : (g₁ : GL (Fin 2) ℚ) = (g₂ : GL (Fin 2) ℚ)) :
     delta0NebentypusDeltaChar (N := N) χ g₁ =
       delta0NebentypusDeltaChar (N := N) χ g₂ := by
-  apply congrArg (delta0NebentypusDeltaChar (N := N) χ); exact Subtype.ext h
+  apply congrArg (delta0NebentypusDeltaChar (N := N) χ)
+  exact Subtype.ext h
 
 private lemma weighted_value_eq (p : ℕ) (hp : Nat.Prime p)
     {f : ℍ → ℂ} (hf : IsGamma0TwistedInvariant (N := N) k χ f)
-    (g : GL (Fin 2) ℚ)
-    (gΔ : (Gamma0_pair N).Δ)
+    (g : GL (Fin 2) ℚ) (gΔ : (Gamma0_pair N).Δ)
     (h₁ : GL (Fin 2) ℚ) (hh₁ : h₁ ∈ (Gamma0_pair N).H)
     (h₂ : GL (Fin 2) ℚ) (hh₂ : h₂ ∈ (Gamma0_pair N).H)
     (hadj : GL_adjugate g = h₁ * (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) * h₂)
@@ -514,11 +508,13 @@ private noncomputable def adjUpperΔ (p : ℕ) (hp : Nat.Prime p)
     ext i j; fin_cases i <;> fin_cases j <;> simp [A]
   refine ⟨⟨A, hA_eq⟩, ?_, A, hA_eq, ?_, ?_⟩
   · rw [GL_adjugate_val, Matrix.det_adjugate, Fintype.card_fin, T_p_upper_coe]
-    simp only [det_fin_two_of]; push_cast; ring_nf; exact_mod_cast hp.pos
+    simp only [det_fin_two_of]
+    push_cast
+    ring_nf
+    exact_mod_cast hp.pos
   · simp [A]
   · simpa [A] using hpN
 
-/-- `adj(T_p_lower)` as a `Δ₀(N)` element (matrix `!![1,0;0,p]`). -/
 private noncomputable def adjLowerΔ (p : ℕ) (hp : Nat.Prime p) :
     (Gamma0_pair N).Δ := by
   refine ⟨GL_adjugate (T_p_lower p hp.pos), ?_⟩
@@ -529,7 +525,10 @@ private noncomputable def adjLowerΔ (p : ℕ) (hp : Nat.Prime p) :
     ext i j; fin_cases i <;> fin_cases j <;> simp [A]
   refine ⟨⟨A, hA_eq⟩, ?_, A, hA_eq, ?_, ?_⟩
   · rw [GL_adjugate_val, Matrix.det_adjugate, Fintype.card_fin, T_p_lower_coe]
-    simp only [det_fin_two_of]; push_cast; ring_nf; exact_mod_cast hp.pos
+    simp only [det_fin_two_of]
+    push_cast
+    ring_nf
+    exact_mod_cast hp.pos
   · simp [A]
   · simp [A]
 
@@ -556,7 +555,8 @@ private lemma adjUpperΔ_weight (p : ℕ) (hp : Nat.Prime p)
     apply delta0IntegralMatrix_witness_unique
     rw [adjUpperΔ_coe, GL_adjugate_val, T_p_upper_coe, Matrix.adjugate_fin_two]
     ext i j; fin_cases i <;> fin_cases j <;> simp
-  rw [hwit]; simp
+  rw [hwit]
+  simp
 
 private lemma adjLowerΔ_weight (p : ℕ) (hp : Nat.Prime p) :
     delta0NebentypusDeltaChar (N := N) χ (adjLowerΔ (N := N) p hp) = 1 := by
@@ -571,7 +571,8 @@ private lemma adjLowerΔ_weight (p : ℕ) (hp : Nat.Prime p) :
     apply delta0IntegralMatrix_witness_unique
     rw [adjLowerΔ_coe, GL_adjugate_val, T_p_lower_coe, Matrix.adjugate_fin_two]
     ext i j; fin_cases i <;> fin_cases j <;> simp
-  rw [hwit]; simp
+  rw [hwit]
+  simp
 
 private lemma adj_T_p_upper_factorisation (p : ℕ) (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) (b : ℕ) :
@@ -665,7 +666,9 @@ private lemma twistedTpPsi_injective (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Cop
         (HeckeCoset.rep (D_p_Gamma0 N p hp.pos)) _ _
         (adj_T_p_lower_factorisation (N := N) p hp hpN)
         (adj_T_p_upper_factorisation (N := N) p hp hpN j₂.val) heq))
-  · have := j₁.isLt; have := j₂.isLt; omega
+  · have hj₁ := j₁.isLt
+    have hj₂ := j₂.isLt
+    omega
 
 private lemma twistedTpPsi_bijective (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
     Function.Bijective (twistedTpPsi (N := N) p hp hpN) := by
@@ -673,7 +676,8 @@ private lemma twistedTpPsi_bijective (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Cop
   refine ⟨twistedTpPsi_injective p hp hpN, ?_⟩
   rw [Fintype.card_fin]
   have h := HeckeCoset_deg_D_p_Gamma0 N p hp hpN
-  rw [Nat.card_eq_fintype_card] at h; rw [h]
+  rw [Nat.card_eq_fintype_card] at h
+  rw [h]
 
 private lemma twistedTpPsi_val_eq (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     {f : ℍ → ℂ} (hf : IsGamma0TwistedInvariant (N := N) k χ f) (j : Fin (p + 1)) :
@@ -717,23 +721,25 @@ theorem twisted_matches_T_p (p : ℕ) (hp : Nat.Prime p)
       (↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ)⁻¹ •
           (∑ b ∈ Finset.range p, f ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ)) +
         f ∣[k] (T_p_lower p hp.pos : GL (Fin 2) ℚ) := by
-  have h_val := twistedTpPsi_val_eq (N := N) (k := k) (χ := χ) p hp hpN hf
-  have h_bij := twistedTpPsi_bijective (N := N) p hp hpN
   rw [twistedHeckeSlash_gen]
   symm
-  rw [Finset.smul_sum, ← Fin.sum_univ_eq_sum_range]
-  rw [show (∑ j : Fin p, (↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ)⁻¹ •
+  rw [Finset.smul_sum, ← Fin.sum_univ_eq_sum_range,
+    show (∑ j : Fin p, (↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ)⁻¹ •
         (f ∣[k] (T_p_upper p hp.pos j.val : GL _ ℚ))) +
       f ∣[k] (T_p_lower p hp.pos : GL _ ℚ) =
     ∑ j : Fin (p + 1),
       if h : j.val < p then (↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ)⁻¹ •
         (f ∣[k] (T_p_upper p hp.pos j.val : GL _ ℚ))
-      else f ∣[k] (T_p_lower p hp.pos : GL _ ℚ) from by
-    rw [Fin.sum_univ_castSucc]; congr 1
-    · congr 1; ext j; simp [j.isLt]
+      else f ∣[k] (T_p_lower p hp.pos : GL _ ℚ) by
+    rw [Fin.sum_univ_castSucc]
+    congr 1
+    · congr 1
+      ext j
+      simp [j.isLt]
     · simp]
-  rw [Finset.sum_congr rfl (fun j _ => h_val j)]
-  exact h_bij.sum_comp
+  rw [Finset.sum_congr rfl
+    (fun j _ => twistedTpPsi_val_eq (N := N) (k := k) (χ := χ) p hp hpN hf j)]
+  exact (twistedTpPsi_bijective (N := N) p hp hpN).sum_comp
     (fun i => (↑(delta0NebentypusWeight (N := N) χ (D_p_Gamma0 N p hp.pos) i) : ℂ)⁻¹ •
       (f ∣[k] tRep_gen (Gamma0_pair N) (D_p_Gamma0 N p hp.pos) i))
 
@@ -751,7 +757,7 @@ private lemma heckeT_p_all_coe_eq (p : ℕ) (hp : Nat.Prime p)
       (↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ) • f :=
     (mem_modFormCharSpace_iff k χ f).mp hf (ZMod.unitOfCoprime p hpN)
   rw [show (⇑(diamondOp k (ZMod.unitOfCoprime p hpN) f) : ℍ → ℂ) =
-      (↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ) • (⇑f : ℍ → ℂ) from by rw [hdiam]; rfl]
+      (↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ) • (⇑f : ℍ → ℂ) by rw [hdiam]; rfl]
   rw [smul_slash_pos_det k _ _ _ (T_p_lower_det_pos p hp.pos)]
 
 /-- For a good prime `p ∤ N` and `f ∈ modFormCharSpace k χ`, the canonical χ-twisted operator
@@ -788,7 +794,6 @@ theorem heckeRingHomCharSpace_D_p_eq_heckeT_p_all (p : ℕ) (hp : Nat.Prime p)
 private lemma slash_diag_scalar (k : ℤ) (c : ℕ) (hc : 0 < c) (f : ℍ → ℂ) :
     f ∣[k] (diagMat 2 (fun _ : Fin 2 => c) : GL (Fin 2) ℚ) = (c : ℂ) ^ (k - 2) • f := by
   have hcpos : ∀ i : Fin 2, 0 < (fun _ : Fin 2 => c) i := fun _ => hc
-  have hcQ : (0 : ℚ) < (c : ℚ) := by exact_mod_cast hc
   have hdetpos : 0 < (diagMat 2 (fun _ : Fin 2 => c) : GL (Fin 2) ℚ).det.val := by
     rw [GeneralLinearGroup.val_det_apply, diagMat_val _ _ hcpos, Matrix.det_diagonal,
       Fin.prod_univ_two]
@@ -823,12 +828,15 @@ private lemma slash_diag_scalar (k : ℤ) (c : ℕ) (hc : 0 < c) (f : ℍ → �
     rw [hdet, GeneralLinearGroup.val_det_apply, diagMat_val _ _ hcpos, Matrix.det_diagonal,
       Fin.prod_univ_two]
     simp only [map_mul, map_natCast]
-    rw [abs_of_nonneg (by positivity)]; push_cast; ring
+    rw [abs_of_nonneg (by positivity)]
+    push_cast
+    ring
   rw [hsmul, hdenom, habsdet, RingHom.id_apply]
   show f z * ((c : ℂ) ^ 2) ^ (k - 1) * (c : ℂ) ^ (-k) = (c : ℂ) ^ (k - 2) * f z
-  rw [show ((c : ℂ) ^ 2) = (c : ℂ) ^ (2 : ℤ) from by norm_cast, ← zpow_mul, mul_assoc,
+  rw [show ((c : ℂ) ^ 2) = (c : ℂ) ^ (2 : ℤ) by norm_cast, ← zpow_mul, mul_assoc,
     ← zpow_add₀ hcne, mul_comm]
-  congr 1; ring_nf
+  congr 1
+  ring_nf
 
 private lemma subsingleton_decompQuot_scalar (c : ℕ) (hc : 0 < c)
     (hgcd : Int.gcd (c : ℤ) (N : ℤ) = 1) :
@@ -842,16 +850,20 @@ private lemma subsingleton_decompQuot_scalar (c : ℕ) (hc : 0 < c)
   suffices hsmul : ConjAct.toConjAct (δ : GL (Fin 2) ℚ) • H = H by
     have h_def : (Fintype.card (decompQuot (Gamma0_pair N) δ) : ℤ) =
         ↑((ConjAct.toConjAct (δ : GL (Fin 2) ℚ) • H).relIndex H) := by
-      simp only [Subgroup.relIndex, Subgroup.index, ← Nat.card_eq_fintype_card]; rfl
+      simp only [Subgroup.relIndex, Subgroup.index, ← Nat.card_eq_fintype_card]
+      rfl
     have : (Fintype.card (decompQuot (Gamma0_pair N) δ) : ℤ) = 1 := by
-      rw [h_def, hsmul, Subgroup.relIndex_self]; simp
+      rw [h_def, hsmul, Subgroup.relIndex_self]
+      simp
     exact_mod_cast this
   have hδ_mem : (δ : GL (Fin 2) ℚ) ∈
       DoubleCoset.doubleCoset (diagMat 2 (fun _ : Fin 2 => c) : GL (Fin 2) ℚ) H H := by
     have h1 : HeckeCoset.toSet D =
         DoubleCoset.doubleCoset (diagMat 2 (fun _ : Fin 2 => c) : GL (Fin 2) ℚ) H H := by
-      simp only [hD, T_diag_Gamma0, HeckeCoset.toSet_mk]; rfl
-    rw [← h1]; exact HeckeCoset.rep_mem D
+      simp only [hD, T_diag_Gamma0, HeckeCoset.toSet_mk]
+      rfl
+    rw [← h1]
+    exact HeckeCoset.rep_mem D
   rw [DoubleCoset.mem_doubleCoset] at hδ_mem
   obtain ⟨h₁, hh₁, h₂, hh₂, hδ_eq⟩ := hδ_mem
   have hδ_simp : (δ : GL (Fin 2) ℚ) = (h₁ * h₂) * diagMat 2 (fun _ : Fin 2 => c) := by
@@ -877,9 +889,9 @@ private lemma subsingleton_decompQuot_scalar (c : ℕ) (hc : 0 < c)
 private lemma adj_diag_scalar (c : ℕ) (hc : 0 < c) :
     GL_adjugate (diagMat 2 (fun _ : Fin 2 => c) : GL (Fin 2) ℚ) =
       (diagMat 2 (fun _ : Fin 2 => c) : GL (Fin 2) ℚ) := by
-  have hcpos : ∀ i : Fin 2, 0 < (fun _ : Fin 2 => c) i := fun _ => hc
-  apply Units.ext; ext i j
-  rw [GL_adjugate_val, diagMat_val _ _ hcpos, Matrix.adjugate_fin_two]
+  apply Units.ext
+  ext i j
+  rw [GL_adjugate_val, diagMat_val _ _ (fun _ => hc), Matrix.adjugate_fin_two]
   fin_cases i <;> fin_cases j <;>
     simp [Matrix.diagonal, Matrix.of_apply]
 
@@ -893,7 +905,6 @@ private lemma diag_scalar_mem_Delta0 (c : ℕ) (hc : 0 < c)
     rw [diagMat_val _ _ hcpos]
     ext i j; fin_cases i <;> fin_cases j <;>
       simp [A, Matrix.diagonal, Matrix.map_apply]
-  have hcQ : (0 : ℚ) < (c : ℚ) := by exact_mod_cast hc
   refine ⟨⟨A, hA_eq⟩, ?_, A, hA_eq, ?_, ?_⟩
   · rw [diagMat_val _ _ hcpos, Matrix.det_diagonal, Fin.prod_univ_two]
     positivity
@@ -913,7 +924,6 @@ private lemma diagScalarΔ_weight (χ : (ZMod N)ˣ →* ℂˣ) (c : ℕ) (hc : 0
     (hgcd : Int.gcd (c : ℤ) (N : ℤ) = 1) (hcop : Nat.Coprime c N) :
     delta0NebentypusDeltaChar (N := N) χ (diagScalarΔ (N := N) c hc hgcd) =
       χ (ZMod.unitOfCoprime c hcop) := by
-  have hcpos : ∀ i : Fin 2, 0 < (fun _ : Fin 2 => c) i := fun _ => hc
   unfold delta0NebentypusDeltaChar
   simp only [MonoidHom.coe_mk, OneHom.coe_mk]
   congr 1
@@ -922,9 +932,10 @@ private lemma diagScalarΔ_weight (χ : (ZMod N)ˣ →* ℂˣ) (c : ℕ) (hc : 0
   have hwit : delta0IntegralMatrix (N := N) (diagScalarΔ (N := N) c hc hgcd) =
       Matrix.diagonal (fun _ : Fin 2 => (c : ℤ)) := by
     apply delta0IntegralMatrix_witness_unique
-    rw [diagScalarΔ_coe, diagMat_val _ _ hcpos]
+    rw [diagScalarΔ_coe, diagMat_val _ _ (fun _ => hc)]
     ext i j; fin_cases i <;> fin_cases j <;> simp [Matrix.diagonal, Matrix.map_apply]
-  rw [hwit]; simp [Matrix.diagonal]
+  rw [hwit]
+  simp [Matrix.diagonal]
 
 private lemma adj_diagScalar_factorisation (p : ℕ) (hp : Nat.Prime p)
     (hgcd : Int.gcd (p : ℤ) (N : ℤ) = 1) :
@@ -976,9 +987,8 @@ theorem heckeRingHomCharSpace_T_pp_eq_scalar (p : ℕ) (hp : Nat.Prime p)
   set D := T_diag_Gamma0 N (fun _ : Fin 2 => p) (fun _ => hp.pos) hgcd with hD
   set f0 : ModularForm ((Gamma1 N).map (mapGL ℝ)) k :=
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) with hf0
-  have hf0mem : f0 ∈ modFormCharSpace k χ := f.2
   have hf0inv : IsGamma0TwistedInvariant (N := N) k χ (⇑f0) :=
-    coe_mem_twistedInvariant f0 hf0mem
+    coe_mem_twistedInvariant f0 f.2
   have hLHS : (⇑((heckeRingHomCharSpace (k := k) (χ := χ) (T_single (Gamma0_pair N) ℤ D 1) f :
       modFormCharSpace k χ) : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) : ℍ → ℂ) =
         twistedHeckeSlash_gen (N := N) k χ D (⇑f0) := by
@@ -1088,7 +1098,7 @@ theorem heckeRingHomCharSpace_table_transports_coprime_via_shimura
     (m n : ℕ+) (hcop : Nat.Coprime m n) :
     ∃ Φ : 𝕋 (GL_pair 2) ℤ →+* Module.End ℂ (modFormCharSpace k χ),
       Φ (T_sum m) * Φ (T_sum n) = Φ (T_sum ⟨m * n, Nat.mul_pos m.pos n.pos⟩) := by
-  obtain ⟨φ, _hφ⟩ := shimura_thm_3_35 N
+  obtain ⟨φ, -⟩ := shimura_thm_3_35 N
   refine ⟨(heckeRingHomCharSpace (N := N) (k := k) (χ := χ)).comp φ, ?_⟩
   exact heckeRingHomCharSpace_table_transports_coprime (k := k) (χ := χ) φ m n hcop
 
@@ -1154,9 +1164,9 @@ theorem heckeT_p_all_comm_on_charSpace_via_ring
     heckeT_p_all k p hp (heckeT_p_all k q hq (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) =
       heckeT_p_all k q hq (heckeT_p_all k p hp
         (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) := by
-  have hcomm := heckeT_p_all_charRestrict_commute_via_ring (k := k) (χ := χ) hp hq hpN hqN
-  have := congrArg (fun (T : Module.End ℂ (modFormCharSpace k χ)) => T f) hcomm
-  exact congrArg (Subtype.val) this
+  exact congrArg Subtype.val
+    (congrArg (fun (T : Module.End ℂ (modFormCharSpace k χ)) => T f)
+      (heckeT_p_all_charRestrict_commute_via_ring (k := k) (χ := χ) hp hq hpN hqN))
 
 end OperatorCommutativityFromRing
 
@@ -1216,7 +1226,8 @@ theorem heckeT_ppow_preserves_charSpace' (p : ℕ) (hp : Nat.Prime p)
     match r, ih with
     | 0, _ => simpa using hf
     | 1, _ =>
-      rw [heckeT_ppow_one]; exact heckeT_p_all_preserves_modFormCharSpace k p hp χ hf
+      rw [heckeT_ppow_one]
+      exact heckeT_p_all_preserves_modFormCharSpace k p hp χ hf
     | (r + 2), ih =>
       rw [heckeT_ppow_succ_succ]
       have ih1 : heckeT_ppow k p hp (r + 1) f ∈ modFormCharSpace k χ := ih (r + 1) (by omega)
@@ -1257,7 +1268,8 @@ noncomputable def heckeT_ppow_charRestrict (p : ℕ) (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) :
     heckeT_ppow_charRestrict (k := k) (χ := χ) p hp hpN 0 = 1 := by
   refine LinearMap.ext fun f => Subtype.ext ?_
-  rw [heckeT_ppow_charRestrict_coe]; simp
+  rw [heckeT_ppow_charRestrict_coe]
+  simp
 
 @[simp] theorem heckeT_ppow_charRestrict_one (p : ℕ) (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) :
@@ -1331,28 +1343,25 @@ theorem heckeRingHomCharSpace_heckeRingD_ppow (p : ℕ) (hp : Nat.Prime p)
       rw [heckeRingD_ppow_one, heckeT_ppow_charRestrict_one, pow_one,
         heckeRingHomCharSpace_heckeRingDp p hp hpN]
     | (r + 2), ih =>
-      have ih1 := ih (r + 1) (by omega)
-      have ihr := ih r (by omega)
       rw [heckeRingD_ppow_succ_succ, map_sub, map_mul, map_zsmul, map_mul,
         heckeRingHomCharSpace_heckeRingDp p hp hpN,
-        heckeRingHomCharSpace_heckeRingTpp p hp hpN, ih1, ihr,
+        heckeRingHomCharSpace_heckeRingTpp p hp hpN, ih (r + 1) (by omega), ih r (by omega),
         heckeT_ppow_charRestrict_succ_succ p hp hpN r]
       simp only [smul_mul_assoc, mul_smul_comm, one_mul, smul_smul, smul_sub, ← hc]
       rw [show ((↑p : ℤ) • ((c⁻¹ ^ r * (c⁻¹ * (↑p : ℂ) ^ (k - 2))) •
           heckeT_ppow_charRestrict (k := k) (χ := χ) p hp hpN r)) =
         ((p : ℂ) * (c⁻¹ ^ r * (c⁻¹ * (↑p : ℂ) ^ (k - 2)))) •
-          heckeT_ppow_charRestrict (k := k) (χ := χ) p hp hpN r from by
+          heckeT_ppow_charRestrict (k := k) (χ := χ) p hp hpN r by
         rw [← Int.cast_smul_eq_zsmul ℂ, smul_smul]; norm_cast]
-      have hpne : (p : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr hp.pos.ne'
-      have h1 : c⁻¹ ^ (r + 1) * c⁻¹ = c⁻¹ ^ (r + 2) := (pow_succ c⁻¹ (r + 1)).symm
       have h2 : (p : ℂ) * (c⁻¹ ^ r * (c⁻¹ * (p : ℂ) ^ (k - 2))) =
           c⁻¹ ^ (r + 2) * (c * (p : ℂ) ^ (k - 1)) := by
         rw [show (c⁻¹ ^ (r + 2) * (c * (p : ℂ) ^ (k - 1))) =
-          (c⁻¹ ^ (r + 1) * (c⁻¹ * c)) * (p : ℂ) ^ (k - 1) from by rw [pow_succ]; ring,
+          (c⁻¹ ^ (r + 1) * (c⁻¹ * c)) * (p : ℂ) ^ (k - 1) by rw [pow_succ]; ring,
           inv_mul_cancel₀ hcne, mul_one, pow_succ,
-          show (k - 1) = (k - 2) + 1 from by ring, zpow_add₀ hpne, zpow_one]
+          show (k - 1) = (k - 2) + 1 by ring, zpow_add₀ (Nat.cast_ne_zero.mpr hp.pos.ne'),
+          zpow_one]
         ring
-      rw [h1, h2]
+      rw [(pow_succ c⁻¹ (r + 1)).symm, h2]
 
 /-- On a prime power `p^v` (good `p ∤ N`), `heckeT_n_charRestrict` agrees with the
 prime-power restriction `heckeT_ppow_charRestrict`. -/
@@ -1432,7 +1441,8 @@ decreasing_by
     (hp.factorization_pos_of_dvd (by omega) (Nat.minFac_dvd n)).ne' hp.one_lt)
 
 @[simp] theorem heckeRingD_n_one : heckeRingD_n (N := N) 1 = 1 := by
-  rw [heckeRingD_n]; simp
+  rw [heckeRingD_n]
+  simp
 
 private lemma heckeRingD_n_peel (n p v : ℕ) (hn2 : 1 < n) (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) (hpe : p = n.minFac) (hve : v = n.factorization p) :
@@ -1478,7 +1488,7 @@ private lemma heckeRingHomCharSpace_heckeRingD_n_step (n : ℕ) [NeZero n] (hn1 
         (Nat.one_lt_pow hvpos.ne' hp.one_lt)) ⟨hquot_pos.ne'⟩ hquotN,
     ← heckeT_n_charRestrict_ppow p hp hpN v hvpos]
   rw [show (↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ)⁻¹ ^ v =
-      (↑(χ (ZMod.unitOfCoprime (p ^ v) hpvN)) : ℂ)⁻¹ from by
+      (↑(χ (ZMod.unitOfCoprime (p ^ v) hpvN)) : ℂ)⁻¹ by
     rw [inv_pow, ← chi_unitOfCoprime_pow χ v hpN], smul_mul_smul_comm, hTn]
   congr 1
   rw [chi_eq_ordProj_mul_ordCompl χ hn p hpvN hquotN, mul_inv]
@@ -1503,7 +1513,7 @@ theorem heckeRingHomCharSpace_heckeRingD_n (n : ℕ) [NeZero n] (hn : Nat.Coprim
       refine LinearMap.ext fun f => Subtype.ext ?_
       simp only [LinearMap.smul_apply, Module.End.one_apply, SetLike.val_smul,
         heckeT_n_charRestrict_coe, heckeT_n_one]
-      rw [show (ZMod.unitOfCoprime 1 hn) = 1 from by ext; simp [ZMod.coe_unitOfCoprime]]
+      rw [show (ZMod.unitOfCoprime 1 hn) = 1 by ext; simp [ZMod.coe_unitOfCoprime]]
       simp
     · exact heckeRingHomCharSpace_heckeRingD_n_step (k := k) (χ := χ) n hn1 hn ih
 
@@ -1516,7 +1526,7 @@ theorem cuspFormCharSpace_toModularForm'_mem
   have hcusp : diamondOpCusp k d f = (↑(χ d) : ℂ) • f :=
     diamondOpCusp_apply_charSpace k χ d hf
   show diamondOp k d f.toModularForm' = (↑(χ d) : ℂ) • f.toModularForm'
-  rw [show diamondOp k d f.toModularForm' = (diamondOpCusp k d f).toModularForm' from by
+  rw [show diamondOp k d f.toModularForm' = (diamondOpCusp k d f).toModularForm' by
     apply DFunLike.ext; intro τ; rfl, hcusp]
   rfl
 
@@ -1527,13 +1537,11 @@ theorem cuspFormCharSpace_of_toModularForm'_mem
     f ∈ cuspFormCharSpace k χ := by
   rw [mem_cuspFormCharSpace_iff]
   intro d
-  have hmod : diamondOp k d f.toModularForm' = (↑(χ d) : ℂ) • f.toModularForm' :=
-    ((mem_modFormCharSpace_iff k χ f.toModularForm').mp hf) d
   show diamondOpCusp k d f = (↑(χ d) : ℂ) • f
   apply DFunLike.ext
   intro τ
-  have := DFunLike.congr_fun hmod τ
-  simpa using this
+  simpa using
+    DFunLike.congr_fun (((mem_modFormCharSpace_iff k χ f.toModularForm').mp hf) d) τ
 
 /-- For a `χ`-cusp form `f` and `n` coprime to `N`,
 `(heckeT_n_cusp k n f).toModularForm' = χ(n) • heckeRingHomCharSpace (heckeRingD_n n) (↑f)`. -/
@@ -1545,10 +1553,9 @@ theorem heckeT_n_cusp_eq_heckeRingHom (n : ℕ) [NeZero n] (hn : Nat.Coprime n N
           ⟨f.toModularForm', cuspFormCharSpace_toModularForm'_mem hf⟩ :
           modFormCharSpace k χ).val := by
   rw [heckeT_n_cusp_toModularForm' n f]
-  have hbridge := heckeRingHomCharSpace_heckeRingD_n (k := k) (χ := χ) n hn
   have happ := congrArg (fun (T : Module.End ℂ (modFormCharSpace k χ)) =>
     (T ⟨f.toModularForm', cuspFormCharSpace_toModularForm'_mem hf⟩ : modFormCharSpace k χ).val)
-    hbridge
+    (heckeRingHomCharSpace_heckeRingD_n (k := k) (χ := χ) n hn)
   simp only [LinearMap.smul_apply, SetLike.val_smul, heckeT_n_charRestrict_coe] at happ
   rw [happ, smul_smul, mul_inv_cancel₀ (by exact_mod_cast Units.ne_zero _), one_smul]
 
