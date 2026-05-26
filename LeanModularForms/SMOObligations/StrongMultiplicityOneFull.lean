@@ -230,8 +230,9 @@ theorem levelRaise_cuspFormsNew_le_cuspFormsOldChar
     (hcond : m_χ ∣ M) (hML : M ≠ N) (heq : l * M = N)
     (g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k)
     (hg_new : g ∈ cuspFormsNew M k) :
-    (heq ▸ levelRaise M l k g) ∈ cuspFormsOldChar N k χ m_χ := by
-  sorry
+    (heq ▸ levelRaise M l k g) ∈ cuspFormsOldChar N k χ m_χ :=
+  Submodule.subset_span
+    ⟨M, l, ‹NeZero M›, ‹NeZero l›, hcond, hML, heq, g, hg_new, rfl⟩
 
 /-- **Miyake Lemma 4.6.9(1)**: if `χ` is primitive of conductor `N` (`m_χ = N`), then the
 old space is trivial, equivalently the whole χ-space is new.  (The new∩old decomposition
@@ -240,7 +241,9 @@ theorem cuspFormsOldChar_eq_bot_of_conductor_eq
     (χ : DirichletCharacter ℂ N)
     (hcond : χ.conductor = N) :
     cuspFormsOldChar N k χ.toUnitHom χ.conductor = ⊥ := by
-  sorry
+  rw [hcond, cuspFormsOldChar, Submodule.span_eq_bot]
+  rintro f ⟨M, l, _, _, hMdvd, hMne, heq, g, -, rfl⟩
+  exact absurd (Nat.dvd_antisymm hMdvd ⟨l, by rw [← heq, Nat.mul_comm]⟩).symm hMne
 
 /-- **Miyake Lemma 4.6.9(3) (generation)**: every element of the χ-refined old space is a
 finite sum of `V_l`-images of **eigenforms** in new spaces at proper divisor levels that
@@ -271,7 +274,17 @@ theorem cuspFormsOldChar_le_cuspFormsOld
   -- `χ` records the intended Nebentypus of the source spaces; it is currently
   -- not referenced by `cuspFormsOldChar`'s body (the project's `cuspFormsNew`
   -- is character-agnostic) — see decomposition.md gap #4.
-  sorry
+  rw [cuspFormsOldChar, cuspFormsOld]
+  refine Submodule.span_le.mpr ?_
+  rintro f ⟨M, l, hM, hl, -, hMne, heq, g, -, rfl⟩
+  -- Each `cuspFormsOldChar` generator is a `cuspFormsOld` generator once we know `1 < l`.
+  have hl1 : 1 < l := by
+    rcases Nat.lt_or_ge 1 l with h | h
+    · exact h
+    · interval_cases l
+      · exact absurd heq.symm (by simpa using (NeZero.ne N))
+      · exact absurd (by simpa using heq) hMne
+  exact Submodule.subset_span ⟨M, l, hM, hl, hl1, heq, g, rfl⟩
 
 /-! ## Linear independence of distinct-eigenvalue eigenforms (step (i) helper)
 
@@ -291,8 +304,9 @@ theorem petN_eq_zero_of_ne_eigenvalues
     (hf_eig : heckeT_n_cusp k n f = a • f)
     (hg_eig : heckeT_n_cusp k n g = b • g)
     (h_diff_ab : a ≠ b) :
-    petN f g = 0 := by
-  sorry
+    petN f g = 0 :=
+  eigenforms_orthogonal_of_ne_eigenvalues χ hf_char hg_char hf_ne hg_ne hn hf_eig hg_eig
+    h_diff_ab
 
 /-! ## Step: the new part equals `b₁ • f`
 

@@ -807,7 +807,7 @@ private lemma heckeT_n_eigenvalue_chi_hecke
   rw [hf_eig, petN_conj_smul_left', petN_smul_right, ← mul_assoc] at h_adj
   exact mul_right_cancel₀ (fun hpet ↦ hf_ne (petN_definite f hpet)) h_adj
 
-private lemma eigenforms_orthogonal_of_ne_eigenvalues
+lemma eigenforms_orthogonal_of_ne_eigenvalues
     (χ : (ZMod N)ˣ →* ℂˣ)
     {f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k}
     (hf_char : f ∈ cuspFormCharSpace k χ) (hg_char : g ∈ cuspFormCharSpace k χ)
