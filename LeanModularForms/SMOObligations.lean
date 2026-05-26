@@ -72,9 +72,8 @@ theorem miyake_4_6_8_main_lemma_cuspForm
     refine ⟨fun h ↦ ?_, fun h ↦ h.coprime_dvd_right (Nat.prod_primeFactors_dvd N)⟩
     rw [Nat.coprime_prod_right_iff] at h
     by_contra h_not
-    have h_gcd_pos : 0 < Nat.gcd n N := Nat.gcd_pos_of_pos_right _ (Nat.pos_of_ne_zero hN0)
-    obtain ⟨q, hq_prime, hq_dvd⟩ :=
-      Nat.exists_prime_and_dvd (lt_of_le_of_ne h_gcd_pos (Ne.symm h_not)).ne'
+    obtain ⟨q, hq_prime, hq_dvd⟩ := Nat.exists_prime_and_dvd
+      (lt_of_le_of_ne (Nat.gcd_pos_of_pos_right _ (Nat.pos_of_ne_zero hN0)) (Ne.symm h_not)).ne'
     exact hq_prime.coprime_iff_not_dvd.mp
       (h q (Nat.mem_primeFactors.mpr
         ⟨hq_prime, hq_dvd.trans (Nat.gcd_dvd_right _ _), hN0⟩)).symm
@@ -104,17 +103,14 @@ theorem coprimeSieve_admits_squarefree_decomposition_in_charSpace
         f_d d ∈ HeckeRing.GL2.AtkinLehner.qSupportedOnDvdSubmodule N k d) ∧
       (∀ d ∈ N.divisors.filter (1 < ·),
         f_d d ∈ cuspFormCharSpace k χ) := by
-  set χ_dir : DirichletCharacter ℂ N := Newform.dirichletLift χ with hχ_dir
+  set χ_dir : DirichletCharacter ℂ N := Newform.dirichletLift χ
   have h_round : χ_dir.toUnitHom = χ :=
     MulChar.equivToUnitHom.apply_symm_apply χ
   have hfχ' : f ∈ cuspFormCharSpace k χ_dir.toUnitHom := by rwa [h_round]
   have h_chi_factor' :
       ∀ (p : ℕ) (hp_in : p ∈ N.primeFactors),
-        haveI : NeZero (N / p) := ⟨by
-          have hp_prime : p.Prime := Nat.prime_of_mem_primeFactors hp_in
-          have hpN : p ∣ N := Nat.dvd_of_mem_primeFactors hp_in
-          have hN_pos : 0 < N := Nat.pos_of_ne_zero (NeZero.ne N)
-          exact (Nat.div_pos (Nat.le_of_dvd hN_pos hpN) hp_prime.pos).ne'⟩
+        haveI : NeZero (N / p) := ⟨(Nat.div_pos (Nat.le_of_dvd (Nat.pos_of_ne_zero (NeZero.ne N))
+          (Nat.dvd_of_mem_primeFactors hp_in)) (Nat.prime_of_mem_primeFactors hp_in).pos).ne'⟩
         ∃ (χ' : (ZMod (N / p))ˣ →* ℂˣ),
           χ_dir.toUnitHom = χ'.comp (ZMod.unitsMap
             (Nat.div_dvd_of_dvd (Nat.dvd_of_mem_primeFactors hp_in))) := by
@@ -151,9 +147,6 @@ theorem coprimeSieve_admits_squarefree_decomposition_in_charSpace
     · simp only [h_prime, if_false]
       exact Submodule.zero_mem _
 
-/-- Operator-level recurrence `T_{q^2} = T_q ∘ T_q - q^{k-1} • ⟨q⟩` on
-`S_k(Γ_1(N))` for a prime `q ∤ N`, the engine behind the eigenvalue recurrence
-`newform_eigenvalue_at_prime_sq`. -/
 private theorem heckeT_n_prime_sq_eq_heckeT_p_sq_sub_diamond
     {N : ℕ} [NeZero N] {k : ℤ} {q : ℕ} (hq : Nat.Prime q) (hqN : Nat.Coprime q N) :
     haveI : NeZero (q ^ 2) := ⟨(pow_pos hq.pos 2).ne'⟩
@@ -169,22 +162,19 @@ private theorem heckeT_n_prime_sq_eq_heckeT_p_sq_sub_diamond
   rw [heckeT_ppow_zero, heckeT_ppow_one, mul_one,
     heckeT_p_all_coprime k hq hqN, diamondOp_ext_coprime k hqN]
 
-/-- A newform is nonzero as a modular form: its first `q`-expansion coefficient
-is `1` (the normalisation `Newform.isNorm`), so it cannot be the zero form. -/
 private theorem newform_toModularForm_ne_zero
     {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) :
     f.toCuspForm.toModularForm' ≠ 0 := by
   intro hF_zero
   have h1 : (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm.toModularForm').coeff 1 = 1 := by
-    show (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm.toModularForm').coeff 1 = 1
     rw [show (⇑f.toCuspForm.toModularForm' : UpperHalfPlane → ℂ) = ⇑f.toCuspForm from rfl]
     exact f.isNorm
   have h0 : (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm.toModularForm').coeff 1 = 0 := by
     show (ModularFormClass.qExpansion (1 : ℝ)
         (⇑f.toCuspForm.toModularForm' : UpperHalfPlane → ℂ)).coeff 1 = 0
     rw [show (⇑f.toCuspForm.toModularForm' : UpperHalfPlane → ℂ)
-        = (⇑(0 : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) : UpperHalfPlane → ℂ) from by
-      rw [hF_zero],
+        = (⇑(0 : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) : UpperHalfPlane → ℂ) by
+          rw [hF_zero],
       show (⇑(0 : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) : UpperHalfPlane → ℂ)
         = (0 : UpperHalfPlane → ℂ) from rfl, qExpansion_zero]
     simp
@@ -200,13 +190,12 @@ theorem newform_eigenvalue_at_prime_sq
     f.eigenvalue ⟨q ^ 2, pow_pos hq.pos 2⟩ =
       (f.eigenvalue ⟨q, hq.pos⟩) ^ 2 -
         (χ (ZMod.unitOfCoprime q hqN) : ℂ) * (q : ℂ) ^ (k - 1) := by
-  set lamq := f.eigenvalue ⟨q, hq.pos⟩ with hlamq_def
-  set lamqsq := f.eigenvalue ⟨q ^ 2, pow_pos hq.pos 2⟩ with hlamqsq_def
-  set chiq : ℂ := (χ (ZMod.unitOfCoprime q hqN) : ℂ) with hchiq_def
-  set F : ModularForm ((Gamma1 N).map (mapGL ℝ)) k := f.toCuspForm.toModularForm' with hF_def
+  set lamq := f.eigenvalue ⟨q, hq.pos⟩
+  set lamqsq := f.eigenvalue ⟨q ^ 2, pow_pos hq.pos 2⟩
+  set chiq : ℂ := (χ (ZMod.unitOfCoprime q hqN) : ℂ)
+  set F : ModularForm ((Gamma1 N).map (mapGL ℝ)) k := f.toCuspForm.toModularForm'
   have hq_pos : 0 < q := hq.pos
   have hqsq_pos : 0 < q ^ 2 := pow_pos hq_pos 2
-  have hqsq_N : Nat.Coprime (q ^ 2) N := Nat.Coprime.pow_left 2 hqN
   haveI : NeZero q := ⟨hq_pos.ne'⟩
   haveI : NeZero (q ^ 2) := ⟨hqsq_pos.ne'⟩
   have h_eig_q : heckeT_n k q F = lamq • F := by
@@ -216,16 +205,8 @@ theorem newform_eigenvalue_at_prime_sq
   have h_eig_qsq : heckeT_n k (q ^ 2) F = lamqsq • F := by
     have h_lift : (heckeT_n_cusp k (q ^ 2) f.toCuspForm).toModularForm' =
         (lamqsq • f.toCuspForm).toModularForm' :=
-      congr_arg _ (f.isEigen ⟨q ^ 2, hqsq_pos⟩ hqsq_N)
+      congr_arg _ (f.isEigen ⟨q ^ 2, hqsq_pos⟩ (Nat.Coprime.pow_left 2 hqN))
     rwa [heckeT_n_cusp_toModularForm'] at h_lift
-  have h_recur :
-      heckeT_n (N := N) k (q ^ 2) =
-        heckeT_p k q hq hqN * heckeT_p k q hq hqN -
-          (q : ℂ) ^ (k - 1) • diamondOp k (ZMod.unitOfCoprime q hqN) :=
-    heckeT_n_prime_sq_eq_heckeT_p_sq_sub_diamond hq hqN
-  have h_diamond_F :
-      diamondOp k (ZMod.unitOfCoprime q hqN) F = chiq • F :=
-    (mem_modFormCharSpace_iff k χ F).mp hfχ (ZMod.unitOfCoprime q hqN)
   have h_Tq_F : heckeT_p k q hq hqN F = lamq • F :=
     (heckeT_n_prime_coprime k hq hqN) ▸ h_eig_q
   have h_TqTq_F :
@@ -236,18 +217,17 @@ theorem newform_eigenvalue_at_prime_sq
     have h_apply : heckeT_n k (q ^ 2) F =
         heckeT_p k q hq hqN (heckeT_p k q hq hqN F) -
           (q : ℂ) ^ (k - 1) • diamondOp k (ZMod.unitOfCoprime q hqN) F := by
-      simpa [Module.End.mul_apply] using congr_arg (fun T : Module.End ℂ _ ↦ T F) h_recur
-    rw [h_apply, h_TqTq_F, h_diamond_F, smul_smul, sub_smul]
+      simpa [Module.End.mul_apply] using congr_arg (fun T : Module.End ℂ _ ↦ T F)
+        (heckeT_n_prime_sq_eq_heckeT_p_sq_sub_diamond hq hqN)
+    rw [h_apply, h_TqTq_F, show diamondOp k (ZMod.unitOfCoprime q hqN) F = chiq • F from
+      (mem_modFormCharSpace_iff k χ F).mp hfχ (ZMod.unitOfCoprime q hqN), smul_smul, sub_smul]
     congr 1
     rw [mul_comm]
   have h_scalar_smul :
       (lamqsq - (lamq ^ 2 - chiq * (q : ℂ) ^ (k - 1))) • F = 0 := by
     rw [sub_smul, ← h_combined, ← h_eig_qsq, sub_self]
-  have hF_ne : F ≠ 0 := newform_toModularForm_ne_zero f
-  have h_scalar :
-      lamqsq - (lamq ^ 2 - chiq * (q : ℂ) ^ (k - 1)) = 0 :=
-    (smul_eq_zero.mp h_scalar_smul).resolve_right hF_ne
-  exact sub_eq_zero.mp h_scalar
+  exact sub_eq_zero.mp
+    ((smul_eq_zero.mp h_scalar_smul).resolve_right (newform_toModularForm_ne_zero f))
 
 theorem mainLemma_charSpace_routeB
     (χ : (ZMod N)ˣ →* ℂˣ)
@@ -271,9 +251,8 @@ theorem mainLemma_charSpace_routeB
       h_chi_factor
   refine HeckeRing.GL2.AtkinLehner.mainLemma_charSpace_of_sameLevelDivisorDecomposition
     (Newform.dirichletLift χ) f f_d h_sum fun d hd ↦ ⟨h_supp d hd, ?_⟩
-  have h_round : (Newform.dirichletLift χ).toUnitHom = χ :=
-    MulChar.equivToUnitHom.apply_symm_apply χ
-  rw [h_round]
+  rw [show (Newform.dirichletLift χ).toUnitHom = χ from
+    MulChar.equivToUnitHom.apply_symm_apply χ]
   exact h_char d hd
 
 theorem newform_unique_routeB
@@ -294,12 +273,6 @@ theorem newform_unique_routeB
           (Nat.div_dvd_of_dvd (Nat.dvd_of_mem_primeFactors hp_in)))) :
     f.toCuspForm = g.toCuspForm := by
   suffices hfg : f.toCuspForm - g.toCuspForm = 0 from sub_eq_zero.mp hfg
-  have hf_charSpace : f.toCuspForm ∈ cuspFormCharSpace k χ :=
-    (cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace
-      (k := k) χ f.toCuspForm).mp (by convert hfχ using 1)
-  have hg_charSpace : g.toCuspForm ∈ cuspFormCharSpace k χ :=
-    (cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace
-      (k := k) χ g.toCuspForm).mp (by convert hgχ using 1)
   have h_vanish : ∀ n : ℕ, Nat.Coprime n N →
       (ModularFormClass.qExpansion (1 : ℝ) (f.toCuspForm - g.toCuspForm)).coeff n = 0 := by
     intro n hn
@@ -321,47 +294,45 @@ theorem newform_unique_routeB
           (CuspFormClass.zero_at_infty f.toCuspForm).valueAtInfty_eq_zero,
           (CuspFormClass.zero_at_infty g.toCuspForm).valueAtInfty_eq_zero]
     · have hn_pos : 0 < n := Nat.pos_of_ne_zero hn0
-      have h_eq := h ⟨n, hn_pos⟩ hn
-      rwa [Newform.eigenvalue_eq_coeff f ⟨n, hn_pos⟩ hn χ hfχ,
-          Newform.eigenvalue_eq_coeff g ⟨n, hn_pos⟩ hn χ hgχ] at h_eq
+      simpa only [Newform.eigenvalue_eq_coeff f ⟨n, hn_pos⟩ hn χ hfχ,
+        Newform.eigenvalue_eq_coeff g ⟨n, hn_pos⟩ hn χ hgχ] using h ⟨n, hn_pos⟩ hn
   exact Submodule.disjoint_def.mp cuspFormsOld_disjoint_cuspFormsNew _
-    (mainLemma_charSpace_routeB χ (f.toCuspForm - g.toCuspForm)
-      ((cuspFormCharSpace k χ).sub_mem hf_charSpace hg_charSpace) h_vanish h_chi_factor)
+    (mainLemma_charSpace_routeB χ (f.toCuspForm - g.toCuspForm) ((cuspFormCharSpace k χ).sub_mem
+      ((cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace (k := k) χ
+        f.toCuspForm).mp (by convert hfχ using 1))
+      ((cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace (k := k) χ
+        g.toCuspForm).mp (by convert hgχ using 1))) h_vanish h_chi_factor)
     ((cuspFormsNew N k).sub_mem f.isNew g.isNew)
 
-/-- Given a finite set `S` and a positive `n`, there is a prime `q` larger than
-everything relevant: coprime to `N` and to `n`, with `q`, `q²`, `nq`, `nq²` all
-avoiding `S`. This is the prime-selection step of strong multiplicity one. -/
 private theorem exists_prime_coprime_avoiding_finset
     {N : ℕ} [NeZero N] (n : ℕ+) (S : Finset ℕ) :
     ∃ q, Nat.Prime q ∧ Nat.Coprime q N ∧ Nat.Coprime n.val q ∧
       q ∉ S ∧ q ^ 2 ∉ S ∧ n.val * q ∉ S ∧ n.val * q ^ 2 ∉ S := by
   obtain ⟨q, hq_le, hq_prime⟩ := Nat.exists_infinite_primes (S.sup id + N + n.val + 2)
   have hq_gt_S : ∀ s, s ∈ S → s < q := fun s hs ↦ by
-    have hs_le : s ≤ S.sup id := Finset.le_sup (f := id) hs
+    have : s ≤ S.sup id := Finset.le_sup (f := id) hs
     lia
   have hq_ndvd_N : ¬ q ∣ N := fun hqN ↦ by
-    have : q ≤ N := Nat.le_of_dvd (Nat.pos_of_ne_zero (NeZero.ne N)) hqN; lia
+    have : q ≤ N := Nat.le_of_dvd (Nat.pos_of_ne_zero (NeZero.ne N)) hqN
+    lia
   have hq_ndvd_n : ¬ q ∣ n.val := fun hqn ↦ by
-    have : q ≤ n.val := Nat.le_of_dvd n.pos hqn; lia
-  have hqsq_ge_q : q ≤ q ^ 2 := by nlinarith
-  have hnq_ge_q : q ≤ n.val * q := by
-    calc q = 1 * q := (one_mul q).symm
-      _ ≤ n.val * q := Nat.mul_le_mul_right q n.pos
-  have hnqsq_ge_q : q ≤ n.val * q ^ 2 := by
-    calc q ≤ q ^ 2 := hqsq_ge_q
-      _ = 1 * q ^ 2 := (one_mul _).symm
-      _ ≤ n.val * q ^ 2 := Nat.mul_le_mul_right _ n.pos
+    have : q ≤ n.val := Nat.le_of_dvd n.pos hqn
+    lia
+  have hqsq_ge_q : q ≤ q ^ 2 := Nat.le_self_pow (by norm_num) q
+  have hnq_ge_q : q ≤ n.val * q := Nat.le_mul_of_pos_left q n.pos
+  have hnqsq_ge_q : q ≤ n.val * q ^ 2 := hqsq_ge_q.trans (Nat.le_mul_of_pos_left _ n.pos)
   refine ⟨q, hq_prime, hq_prime.coprime_iff_not_dvd.mpr hq_ndvd_N,
     (hq_prime.coprime_iff_not_dvd.mpr hq_ndvd_n).symm,
     fun hqS ↦ ?_, fun hqsqS ↦ ?_, fun hnqS ↦ ?_, fun hnqsqS ↦ ?_⟩
-  · have := hq_gt_S q hqS; lia
-  · have := hq_gt_S _ hqsqS; lia
-  · have := hq_gt_S _ hnqS; lia
-  · have := hq_gt_S _ hnqsqS; lia
+  · have := hq_gt_S q hqS
+    lia
+  · have := hq_gt_S _ hqsqS
+    lia
+  · have := hq_gt_S _ hnqS
+    lia
+  · have := hq_gt_S _ hnqsqS
+    lia
 
-/-- When `λ_q(f) = 0` the prime-square recurrence collapses to
-`λ_{q^2}(f) = -χ(q) q^{k-1}`. -/
 private theorem newform_eigenvalue_prime_sq_of_eigenvalue_prime_eq_zero
     {N : ℕ} [NeZero N] {k : ℤ}
     (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
@@ -370,11 +341,9 @@ private theorem newform_eigenvalue_prime_sq_of_eigenvalue_prime_eq_zero
     (hLamq : f.eigenvalue ⟨q, hq.pos⟩ = 0) :
     f.eigenvalue ⟨q ^ 2, pow_pos hq.pos 2⟩ =
       -((χ (ZMod.unitOfCoprime q hqN) : ℂ)) * (q : ℂ) ^ (k - 1) := by
-  rw [newform_eigenvalue_at_prime_sq f χ hfχ q hq hqN, hLamq]; ring
+  rw [newform_eigenvalue_at_prime_sq f χ hfχ q hq hqN, hLamq]
+  ring
 
-/-- Cancellation step of strong multiplicity one: if `f, g` have the same
-nonzero eigenvalue at a cofactor `m` coprime to `n` (and both coprime to `N`),
-and agree at `n * m`, then they agree at `n`. -/
 private theorem newform_eigenvalue_agree_of_coprime_cofactor_ne_zero
     {N : ℕ} [NeZero N] {k : ℤ}
     (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
@@ -404,25 +373,22 @@ theorem eigenvalues_eq_all_coprime_of_eq_off_finite
   · obtain ⟨q, hq_prime, hq_N, hn_coprime_q, hq_notin_S, hqsq_notin_S,
       hnq_notin_S, hnqsq_notin_S⟩ := exists_prime_coprime_avoiding_finset (N := N) n S
     have hqsq_N : Nat.Coprime (q ^ 2) N := Nat.Coprime.pow_left 2 hq_N
-    have hn_coprime_qsq : Nat.Coprime n.val (q ^ 2) := Nat.Coprime.pow_right 2 hn_coprime_q
     let q_pnat : ℕ+ := ⟨q, hq_prime.pos⟩
     let qsq_pnat : ℕ+ := ⟨q ^ 2, pow_pos hq_prime.pos 2⟩
     by_cases hLamq : f.eigenvalue q_pnat = 0
-    · -- `λ_q = 0`: cancel against the (nonzero) eigenvalue at `q²`.
-      have hLamq_g : g.eigenvalue q_pnat = 0 := (hyp q_pnat hq_N hq_notin_S).symm.trans hLamq
-      have hf_qsq := newform_eigenvalue_prime_sq_of_eigenvalue_prime_eq_zero f χ hfχ hq_prime hq_N hLamq
-      have hg_qsq := newform_eigenvalue_prime_sq_of_eigenvalue_prime_eq_zero g χ hgχ hq_prime hq_N hLamq_g
+    · have hf_qsq := newform_eigenvalue_prime_sq_of_eigenvalue_prime_eq_zero f χ hfχ hq_prime
+        hq_N hLamq
       have hLamqsq_ne : f.eigenvalue qsq_pnat ≠ 0 := by
-        rw [show f.eigenvalue qsq_pnat =
-            -((χ (ZMod.unitOfCoprime q hq_N) : ℂ)) * (q : ℂ) ^ (k - 1) from hf_qsq]
+        rw [show f.eigenvalue qsq_pnat = _ from hf_qsq]
         exact mul_ne_zero (neg_ne_zero.mpr (Units.ne_zero _))
           (zpow_ne_zero _ (Nat.cast_ne_zero.mpr hq_prime.pos.ne'))
       exact newform_eigenvalue_agree_of_coprime_cofactor_ne_zero f g χ hfχ hgχ n qsq_pnat
-        hn hqsq_N hn_coprime_qsq hLamqsq_ne (hf_qsq.trans hg_qsq.symm)
+        hn hqsq_N (Nat.Coprime.pow_right 2 hn_coprime_q) hLamqsq_ne
+        (hf_qsq.trans (newform_eigenvalue_prime_sq_of_eigenvalue_prime_eq_zero g χ hgχ hq_prime
+          hq_N ((hyp q_pnat hq_N hq_notin_S).symm.trans hLamq)).symm)
         (hyp ⟨n.val * q ^ 2, Nat.mul_pos n.pos (pow_pos hq_prime.pos 2)⟩
           (Nat.Coprime.mul_left hn hqsq_N) hnqsq_notin_S)
-    · -- `λ_q ≠ 0`: cancel directly against the eigenvalue at `q`.
-      exact newform_eigenvalue_agree_of_coprime_cofactor_ne_zero f g χ hfχ hgχ n q_pnat
+    · exact newform_eigenvalue_agree_of_coprime_cofactor_ne_zero f g χ hfχ hgχ n q_pnat
         hn hq_N hn_coprime_q hLamq (hyp q_pnat hq_N hq_notin_S)
         (hyp ⟨n.val * q, Nat.mul_pos n.pos hq_prime.pos⟩
           (Nat.Coprime.mul_left hn hq_N) hnq_notin_S)
