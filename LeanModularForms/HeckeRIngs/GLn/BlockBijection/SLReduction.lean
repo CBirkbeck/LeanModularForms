@@ -27,39 +27,30 @@ lemma sl_first_col_primitive {n : ℕ} [NeZero n]
   obtain ⟨n', rfl⟩ : ∃ n', n = n' + 1 := Nat.exists_eq_succ_of_ne_zero (NeZero.ne n)
   have h_dvd_det : d ∣ N.1.det := by
     rw [Matrix.det_succ_column_zero]
-    refine Finset.dvd_sum fun i _ ↦ ?_
-    exact ((hd i).mul_left _).mul_right _
-  rw [show N.1.det = 1 from N.2] at h_dvd_det
-  exact isUnit_of_dvd_one h_dvd_det
+    exact Finset.dvd_sum fun i _ ↦ ((hd i).mul_left _).mul_right _
+  exact isUnit_of_dvd_one (N.2 ▸ h_dvd_det)
 
 private lemma sl_row_primitive {n : ℕ} (N : SpecialLinearGroup (Fin n.succ) ℤ)
     (r : Fin n.succ) (d : ℤ) (hd : ∀ k : Fin n.succ, d ∣ N.1 r k) : IsUnit d := by
   have h_dvd_det : d ∣ N.1.det := by
     rw [Matrix.det_succ_row N.1 r]
-    refine Finset.dvd_sum fun j _ ↦ ?_
-    exact ((hd j).mul_left _).mul_right _
-  rw [show N.1.det = 1 from N.2] at h_dvd_det
-  exact isUnit_of_dvd_one h_dvd_det
+    exact Finset.dvd_sum fun j _ ↦ ((hd j).mul_left _).mul_right _
+  exact isUnit_of_dvd_one (N.2 ▸ h_dvd_det)
 
 private lemma sl_row_exists_not_dvd {n : ℕ} (N : SpecialLinearGroup (Fin n.succ) ℤ)
     (r : Fin n.succ) (p : ℤ) (hp_not_unit : ¬ IsUnit p) :
     ∃ k : Fin n.succ, ¬ p ∣ N.1 r k := by
-  by_contra h
-  push_neg at h
+  by_contra! h
   exact hp_not_unit (sl_row_primitive N r p h)
 
 private lemma sl_row_exists_not_dvd_of_prime {n : ℕ}
     (N : SpecialLinearGroup (Fin n.succ) ℤ) (r : Fin n.succ)
     (p : ℕ) (hp : p.Prime) :
     ∃ k : Fin n.succ, ¬ (p : ℤ) ∣ N.1 r k := by
-  refine sl_row_exists_not_dvd N r (p : ℤ) ?_
-  intro h_unit
-  have h := Int.isUnit_iff.mp h_unit
-  rcases h with h | h
-  · have hp1 : p = 1 := by exact_mod_cast h
-    exact hp.one_lt.ne' hp1
-  · have : (p : ℤ) ≥ 0 := Int.natCast_nonneg _
-    have hpos : (p : ℤ) > 0 := by exact_mod_cast hp.pos
+  refine sl_row_exists_not_dvd N r (p : ℤ) fun h_unit ↦ ?_
+  rcases Int.isUnit_iff.mp h_unit with h | h
+  · exact hp.one_lt.ne' (by exact_mod_cast h)
+  · have hpos : (p : ℤ) > 0 := by exact_mod_cast hp.pos
     linarith
 
 private lemma sl_row_bezout {n : ℕ} (N : SpecialLinearGroup (Fin n.succ) ℤ)
@@ -82,11 +73,7 @@ private lemma sl_row_clear_mod {n : ℕ} (N : SpecialLinearGroup (Fin n.succ) �
   obtain ⟨c₀, hc₀⟩ := sl_row_bezout N r
   refine ⟨fun k ↦ -x * c₀ k, ?_⟩
   have h_sum : ∑ k, (-x * c₀ k) * N.1 r k = -x := by
-    have : ∑ k, (-x * c₀ k) * N.1 r k = -x * ∑ k, c₀ k * N.1 r k := by
-      rw [Finset.mul_sum]
-      refine Finset.sum_congr rfl fun k _ ↦ ?_
-      ring
-    rw [this, hc₀, mul_one]
+    simp only [mul_assoc, ← Finset.mul_sum, hc₀, mul_one]
   rw [h_sum, add_neg_cancel]
   exact dvd_zero m
 
@@ -100,11 +87,7 @@ private lemma sl_row_clear_mod_avoiding {n : ℕ}
   obtain ⟨c₀, hc₀_zero, hc₀_sum⟩ := h_redundant
   refine ⟨fun k ↦ -x * c₀ k, by simp [hc₀_zero], ?_⟩
   have h_sum : ∑ k, (-x * c₀ k) * N.1 r k = -x := by
-    have : ∑ k, (-x * c₀ k) * N.1 r k = -x * ∑ k, c₀ k * N.1 r k := by
-      rw [Finset.mul_sum]
-      refine Finset.sum_congr rfl fun k _ ↦ ?_
-      ring
-    rw [this, hc₀_sum, mul_one]
+    simp only [mul_assoc, ← Finset.mul_sum, hc₀_sum, mul_one]
   rw [h_sum, add_neg_cancel]
   exact dvd_zero m
 
@@ -147,12 +130,11 @@ private lemma sl2_bezout_zero_out (a b : ℤ) (h_ne : a ≠ 0 ∨ b ≠ 0) :
       exact hbez.symm
     have h1 : -b' * a + a' * b = 0 := by
       have step : -b' * ((Int.gcd a b : ℤ) * a') + a' * ((Int.gcd a b : ℤ) * b') = 0 := by ring
-      rw [← ha', ← hb'] at step
-      exact step
+      rwa [← ha', ← hb'] at step
     ext i
     fin_cases i
-    · change Int.gcdA a b * a + Int.gcdB a b * b = (Int.gcd a b : ℤ); exact h0
-    · change -b' * a + a' * b = 0; exact h1
+    · exact h0
+    · exact h1
 
 private noncomputable def sl2_row_embed_01 {n : ℕ} (B : SpecialLinearGroup (Fin 2) ℤ) :
     SpecialLinearGroup (Fin (n + 3)) ℤ :=
@@ -227,10 +209,7 @@ private lemma sl2_row_embed_01_mulVec {n : ℕ} (B : SpecialLinearGroup (Fin 2) 
     simp only [Sum.elim_inr, Matrix.zero_mulVec, zero_add,
       Matrix.one_mulVec, Function.comp_apply]
     rw [sl2_row_embed_01_equiv_symm_inr]
-    apply congr_arg
-    apply Fin.ext
-    show (i.val - 2) + 2 = i.val
-    omega
+    exact congr_arg v (Fin.ext (show (i.val - 2) + 2 = i.val by omega))
 
 private lemma sl_bezout_reduce_dim {n : ℕ} (w : Fin (n + 3) → ℤ)
     (h_ne : w 0 ≠ 0 ∨ w 1 ≠ 0) :
@@ -295,8 +274,7 @@ private lemma sl_extend_at_1_col_0_ge_2 {n : ℕ} (M : SpecialLinearGroup (Fin (
     apply Fin.ne_of_val_ne; show i.val + 2 ≠ 1; omega
   rw [Equiv.swap_apply_of_ne_of_ne h_ne_0 h_ne_1, Equiv.swap_apply_left]
   have : (⟨i.val + 2, by omega⟩ : Fin (n + 3)) =
-      (⟨i.val + 1, by omega⟩ : Fin (n + 2)).succ := by
-    apply Fin.ext; rfl
+      (⟨i.val + 1, by omega⟩ : Fin (n + 2)).succ := Fin.ext rfl
   rw [this, show (1 : Fin (n + 3)) = (0 : Fin (n + 2)).succ from rfl,
       slSuccEmbed_val_succ_succ]
 
@@ -315,11 +293,9 @@ private lemma sl_extend_at_1_col_0_matches_reduce {n : ℕ}
     ∀ i : Fin (n + 3), (sl_extend_at_1 N').1 i 0 = (E.1 *ᵥ w_ok) i := by
   intro i
   by_cases h0 : i.val = 0
-  · have hi_eq : i = 0 := Fin.ext h0
-    rw [hi_eq, sl_extend_at_1_col_0_zero, hE0, hN' 0, hw'_0]
+  · rw [(Fin.ext h0 : i = 0), sl_extend_at_1_col_0_zero, hE0, hN' 0, hw'_0]
   · by_cases h1 : i.val = 1
-    · have hi_eq : i = 1 := Fin.ext h1
-      rw [hi_eq, sl_extend_at_1_col_0_one, hE1]
+    · rw [(Fin.ext h1 : i = 1), sl_extend_at_1_col_0_one, hE1]
     · have h_ge : 2 ≤ i.val := by omega
       have h_lt : i.val < n + 3 := i.isLt
       let i' : Fin (n + 1) := ⟨i.val - 2, by omega⟩
@@ -340,8 +316,7 @@ private lemma sl_exists_col_of_primitive_fin_2 (w : Fin 2 → ℤ)
       fin_cases i
       · exact Int.gcd_dvd_left _ _
       · exact Int.gcd_dvd_right _ _
-    have hunit := hw _ h_dvd
-    rcases Int.isUnit_iff.mp hunit with hpos | hneg
+    rcases Int.isUnit_iff.mp (hw _ h_dvd) with hpos | hneg
     · exact_mod_cast hpos
     · exfalso
       have hnn : (0 : ℤ) ≤ (Int.gcd (w 0) (w 1) : ℤ) := Int.natCast_nonneg _
@@ -358,8 +333,7 @@ private lemma sl_exists_transvection_first_two_ne {n : ℕ} (w : Fin (n + 3) →
     ∃ T : SpecialLinearGroup (Fin (n + 3)) ℤ,
       (T.1 *ᵥ w) 0 ≠ 0 ∨ (T.1 *ᵥ w) 1 ≠ 0 := by
   have h_has_ne : ∃ j : Fin (n + 3), w j ≠ 0 := by
-    by_contra h_all_zero
-    push_neg at h_all_zero
+    by_contra! h_all_zero
     have : IsUnit (2 : ℤ) := hw 2 (fun i ↦ by rw [h_all_zero i]; exact dvd_zero _)
     rw [Int.isUnit_iff] at this; omega
   by_cases h_ne : w 0 ≠ 0 ∨ w 1 ≠ 0
@@ -367,20 +341,14 @@ private lemma sl_exists_transvection_first_two_ne {n : ℕ} (w : Fin (n + 3) →
     rcases h_ne with h0 | h1
     · left; rwa [Matrix.SpecialLinearGroup.coe_one, Matrix.one_mulVec]
     · right; rwa [Matrix.SpecialLinearGroup.coe_one, Matrix.one_mulVec]
-  · push_neg at h_ne
+  · push Not at h_ne
     obtain ⟨hw0, hw1⟩ := h_ne
     obtain ⟨j, hj_ne⟩ := h_has_ne
     have hj_ge : 2 ≤ j.val := by
-      by_contra hlt
-      push_neg at hlt
-      have h_01 : j.val = 0 ∨ j.val = 1 := by omega
-      rcases h_01 with h0 | h1
-      · apply hj_ne
-        have : j = 0 := Fin.ext h0
-        rw [this]; exact hw0
-      · apply hj_ne
-        have : j = 1 := Fin.ext h1
-        rw [this]; exact hw1
+      by_contra! hlt
+      rcases (by omega : j.val = 0 ∨ j.val = 1) with h0 | h1
+      · exact hj_ne ((Fin.ext h0 : j = 0).symm ▸ hw0)
+      · exact hj_ne ((Fin.ext h1 : j = 1).symm ▸ hw1)
     have hj_ne_1 : (1 : Fin (n + 3)) ≠ j := by
       apply Fin.ne_of_val_ne; show 1 ≠ j.val; omega
     have h_det : (Matrix.transvection (1 : Fin (n + 3)) j (1 : ℤ)).det = 1 :=
@@ -404,12 +372,10 @@ private lemma sl_reduced_vector_primitive {n : ℕ}
   intro k
   by_cases hk0 : k.val = 0
   · rw [show k = (⟨0, by omega⟩ : Fin (n + 3)) from Fin.ext hk0]
-    have h_d_dvd_gcd : d ∣ (Int.gcd (w_ok 0) (w_ok 1) : ℤ) := hw'_0 ▸ hd 0
-    exact h_d_dvd_gcd.trans (Int.gcd_dvd_left _ _)
+    exact (hw'_0 ▸ hd 0 : d ∣ (Int.gcd (w_ok 0) (w_ok 1) : ℤ)).trans (Int.gcd_dvd_left _ _)
   · by_cases hk1 : k.val = 1
     · rw [show k = (⟨1, by omega⟩ : Fin (n + 3)) from Fin.ext hk1]
-      have h_d_dvd_gcd : d ∣ (Int.gcd (w_ok 0) (w_ok 1) : ℤ) := hw'_0 ▸ hd 0
-      exact h_d_dvd_gcd.trans (Int.gcd_dvd_right _ _)
+      exact (hw'_0 ▸ hd 0 : d ∣ (Int.gcd (w_ok 0) (w_ok 1) : ℤ)).trans (Int.gcd_dvd_right _ _)
     · have h_ge : 2 ≤ k.val := by omega
       have h_lt : k.val < n + 3 := k.isLt
       let k' : Fin (n + 1) := ⟨k.val - 2, by omega⟩
@@ -428,8 +394,6 @@ lemma sl_exists_col_of_primitive : ∀ {n : ℕ} (w : Fin (n + 2) → ℤ)
   | n + 1, w, hw => by
     obtain ⟨T, hT_ne⟩ := sl_exists_transvection_first_two_ne w hw
     set w_ok := T.1 *ᵥ w with hw_ok_def
-    have hw_ok_prim : ∀ d : ℤ, (∀ i, d ∣ w_ok i) → IsUnit d := fun d hd ↦
-      hw d (sl_dvd_of_mulVec_dvd T w d hd)
     obtain ⟨E, hE0, hE1, hErest⟩ := sl_bezout_reduce_dim w_ok hT_ne
     let w' : Fin (n + 2) → ℤ := fun i ↦
       if i.val = 0 then (Int.gcd (w_ok 0) (w_ok 1) : ℤ)
@@ -441,13 +405,11 @@ lemma sl_exists_col_of_primitive : ∀ {n : ℕ} (w : Fin (n + 2) → ℤ)
       show (if ((⟨i.val + 1, by omega⟩ : Fin (n + 2)).val = 0) then _ else _) = _
       rw [if_neg (by show i.val + 1 ≠ 0; omega)]
     have hw'_prim : ∀ d : ℤ, (∀ i, d ∣ w' i) → IsUnit d :=
-      sl_reduced_vector_primitive w_ok w' hw_ok_prim hw'_0 hw'_succ
+      sl_reduced_vector_primitive w_ok w'
+        (fun d hd ↦ hw d (sl_dvd_of_mulVec_dvd T w d hd)) hw'_0 hw'_succ
     obtain ⟨N', hN'⟩ := sl_exists_col_of_primitive w' hw'_prim
     refine ⟨T⁻¹ * (E⁻¹ * sl_extend_at_1 N'), ?_⟩
     intro i
-    have h_col0_eq : ∀ (j : Fin (n + 3)),
-        (sl_extend_at_1 N').1 j 0 = (E.1 *ᵥ w_ok) j :=
-      sl_extend_at_1_col_0_matches_reduce w_ok w' N' hN' hw'_0 hw'_succ E hE0 hE1 hErest
     have h_inv_mul_E : E⁻¹.1 * E.1 = (1 : Matrix (Fin (n + 3)) (Fin (n + 3)) ℤ) := by
       rw [← Matrix.SpecialLinearGroup.coe_mul, inv_mul_cancel,
           Matrix.SpecialLinearGroup.coe_one]
@@ -457,7 +419,7 @@ lemma sl_exists_col_of_primitive : ∀ {n : ℕ} (w : Fin (n + 2) → ℤ)
     have h_col_inner : (sl_extend_at_1 N').1 *ᵥ (Pi.single 0 (1 : ℤ)) = E.1 *ᵥ w_ok := by
       funext k
       rw [Matrix.mulVec_single_one]
-      exact h_col0_eq k
+      exact sl_extend_at_1_col_0_matches_reduce w_ok w' N' hN' hw'_0 hw'_succ E hE0 hE1 hErest k
     have h_N_col0 : (T⁻¹ * (E⁻¹ * sl_extend_at_1 N')).1 *ᵥ (Pi.single 0 (1 : ℤ)) = w := by
       show (T⁻¹.1 * (E⁻¹.1 * (sl_extend_at_1 N').1)) *ᵥ (Pi.single 0 (1 : ℤ)) = w
       rw [← Matrix.mulVec_mulVec, ← Matrix.mulVec_mulVec, h_col_inner]
@@ -467,8 +429,7 @@ lemma sl_exists_col_of_primitive : ∀ {n : ℕ} (w : Fin (n + 2) → ℤ)
       show T⁻¹.1 *ᵥ w_ok = w
       rw [hw_ok_def, Matrix.mulVec_mulVec, h_inv_mul_T, Matrix.one_mulVec]
     have := congr_fun h_N_col0 i
-    rw [Matrix.mulVec_single_one] at this
-    exact this
+    rwa [Matrix.mulVec_single_one] at this
 
 /-- **Fiber ⟹ mem_H bridge.** The dim-`k+2` set-form fiber condition on
 `(i.out, j.out)` with `diagMat_delta` entries rewrites to the `diagMat`-shaped
@@ -512,7 +473,6 @@ lemma h_int_conj_GL_of_int_mat {k : ℕ}
           (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ))) :
     diagMat (k + 2) (Fin.cons 1 a) * (mapGL ℚ N_i : GL (Fin (k + 2)) ℚ) =
       (mapGL ℚ M_i : GL (Fin (k + 2)) ℚ) * diagMat (k + 2) (Fin.cons 1 a) := by
-  have hcons_pos : ∀ j, 0 < (Fin.cons 1 a : Fin (k + 2) → ℕ) j := cons_one_pos ha
   apply Units.ext
   show ((diagMat (k + 2) (Fin.cons 1 a) * (mapGL ℚ N_i : GL _ ℚ)).val :
         Matrix (Fin (k + 2)) (Fin (k + 2)) ℚ) =
@@ -521,15 +481,14 @@ lemma h_int_conj_GL_of_int_mat {k : ℕ}
   have h_Da : ((diagMat (k + 2) (Fin.cons 1 a) : GL _ ℚ).val : Matrix _ _ ℚ) =
       (Matrix.diagonal (fun r : Fin (k + 2) ↦
         (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ))).map (algebraMap ℤ ℚ) := by
-    rw [diagMat_val (k + 2) _ hcons_pos,
+    rw [diagMat_val (k + 2) _ (cons_one_pos ha),
         Matrix.diagonal_map (map_zero (algebraMap ℤ ℚ))]
     congr 1
   have h_N : ((mapGL ℚ N_i : GL _ ℚ).val : Matrix _ _ ℚ) =
       N_i.val.map (algebraMap ℤ ℚ) := rfl
   have h_M : ((mapGL ℚ M_i : GL _ ℚ).val : Matrix _ _ ℚ) =
       M_i.val.map (algebraMap ℤ ℚ) := rfl
-  rw [h_Da, h_N, h_M]
-  rw [← Matrix.map_mul, ← Matrix.map_mul]
+  rw [h_Da, h_N, h_M, ← Matrix.map_mul, ← Matrix.map_mul]
   exact congr_arg (fun M : Matrix _ _ ℤ ↦ M.map (algebraMap ℤ ℚ)) h_int_conj
 
 /-- **GL-level fiber equation from the fiber condition.**
@@ -550,17 +509,9 @@ lemma hfib_GL_eq {k : ℕ}
       (i.out : GL (Fin (k + 2)) ℚ) * diagMat (k + 2) (Fin.cons 1 a) *
           (j.out : GL (Fin (k + 2)) ℚ) * diagMat (k + 2) (Fin.cons 1 b) =
         diagMat (k + 2) (Fin.cons 1 c) * (mapGL ℚ ν : GL (Fin (k + 2)) ℚ) := by
-  have hcons_a := cons_one_pos ha
-  have hcons_b := cons_one_pos hb
-  have hcons_c := cons_one_pos hc
   obtain ⟨ν, hν⟩ := hfib_to_mem_H a b c ha hb hc i j hfib
   refine ⟨ν, ?_⟩
-  have h_eq : diagMat (k + 2) (Fin.cons 1 c) *
-      (mapGL ℚ ν : GL (Fin (k + 2)) ℚ) =
-      (i.out : GL (Fin (k + 2)) ℚ) * diagMat (k + 2) (Fin.cons 1 a) *
-          (j.out : GL (Fin (k + 2)) ℚ) * diagMat (k + 2) (Fin.cons 1 b) := by
-    rw [hν]; group
-  exact h_eq.symm
+  rw [eq_comm, hν]; group
 
 /-- **Integer matrix equation from the fiber condition**. The H-membership from
 `hfib_to_mem_H` is witnessed by some `ν : SL_{k+2}(ℤ)`; because every factor on
@@ -587,11 +538,7 @@ lemma hfib_int_mat_eq {k : ℕ}
             (((Fin.cons 1 b : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) =
         Matrix.diagonal (fun r : Fin (k + 2) ↦
             (((Fin.cons 1 c : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) * ν.1 := by
-  have hcons_a := cons_one_pos ha
-  have hcons_b := cons_one_pos hb
-  have hcons_c := cons_one_pos hc
-  have h_mem := hfib_to_mem_H a b c ha hb hc i j hfib
-  obtain ⟨ν, hν⟩ := h_mem
+  obtain ⟨ν, hν⟩ := hfib_to_mem_H a b c ha hb hc i j hfib
   refine ⟨ν, ?_⟩
   have hmul : diagMat (k + 2) (Fin.cons 1 c) *
       (mapGL ℚ ν : GL (Fin (k + 2)) ℚ) =
@@ -611,23 +558,23 @@ lemma hfib_int_mat_eq {k : ℕ}
   have h_Da : ((diagMat (k + 2) (Fin.cons 1 a) : GL _ ℚ) : Matrix _ _ ℚ) =
       (Matrix.diagonal (fun r : Fin (k + 2) ↦
         (((Fin.cons 1 a : Fin (k + 2) → ℕ) r : ℕ) : ℤ))).map (algebraMap ℤ ℚ) := by
-    rw [diagMat_val (k + 2) _ hcons_a,
+    rw [diagMat_val (k + 2) _ (cons_one_pos ha),
         Matrix.diagonal_map (map_zero (algebraMap ℤ ℚ))]
     congr 1
   have h_Db : ((diagMat (k + 2) (Fin.cons 1 b) : GL _ ℚ) : Matrix _ _ ℚ) =
       (Matrix.diagonal (fun r : Fin (k + 2) ↦
         (((Fin.cons 1 b : Fin (k + 2) → ℕ) r : ℕ) : ℤ))).map (algebraMap ℤ ℚ) := by
-    rw [diagMat_val (k + 2) _ hcons_b,
+    rw [diagMat_val (k + 2) _ (cons_one_pos hb),
         Matrix.diagonal_map (map_zero (algebraMap ℤ ℚ))]
     congr 1
   have h_Dc : ((diagMat (k + 2) (Fin.cons 1 c) : GL _ ℚ) : Matrix _ _ ℚ) =
       (Matrix.diagonal (fun r : Fin (k + 2) ↦
         (((Fin.cons 1 c : Fin (k + 2) → ℕ) r : ℕ) : ℤ))).map (algebraMap ℤ ℚ) := by
-    rw [diagMat_val (k + 2) _ hcons_c,
+    rw [diagMat_val (k + 2) _ (cons_one_pos hc),
         Matrix.diagonal_map (map_zero (algebraMap ℤ ℚ))]
     congr 1
-  rw [h_i, h_j, h_ν, h_Da, h_Db, h_Dc] at hmat
-  rw [← Matrix.map_mul, ← Matrix.map_mul, ← Matrix.map_mul, ← Matrix.map_mul] at hmat
+  rw [h_i, h_j, h_ν, h_Da, h_Db, h_Dc, ← Matrix.map_mul, ← Matrix.map_mul,
+    ← Matrix.map_mul, ← Matrix.map_mul] at hmat
   exact (Matrix.map_injective (algebraMap ℤ ℚ).injective_int hmat).symm
 
 private lemma adjugate_rearrange_of_matrix_eq {p : ℕ}
@@ -696,11 +643,6 @@ lemma hfib_col_div_a {k : ℕ}
   set D_c : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ :=
     Matrix.diagonal (fun r : Fin (k + 2) ↦
       (((Fin.cons 1 c : Fin (k + 2) → ℕ) r : ℕ) : ℤ)) with hD_c
-  have hdetA : A_i.det = 1 := (toSL i.out).2
-  have hdetν : ν.1.det = 1 := ν.2
-  have h_rearr : D_a * A_j * D_b * Matrix.adjugate ν.1 =
-      Matrix.adjugate A_i * D_c :=
-    adjugate_rearrange_of_matrix_eq A_i A_j D_a D_b D_c ν.1 hdetA hdetν hν
   intro r
   rw [show ((toSL i.out)⁻¹ : SpecialLinearGroup (Fin (k + 2)) ℤ).1 r.succ 0
         = Matrix.adjugate A_i r.succ 0 by rw [SpecialLinearGroup.coe_inv],
@@ -710,7 +652,7 @@ lemma hfib_col_div_a {k : ℕ}
     (fun s ↦ (((Fin.cons 1 c : Fin (k + 2) → ℕ) s : ℕ) : ℤ))
     (A_j * D_b * Matrix.adjugate ν.1) (Matrix.adjugate A_i) r.succ (by simp [Fin.cons_zero]) ?_
   rw [← hD_a, ← hD_c, ← Matrix.mul_assoc, ← Matrix.mul_assoc]
-  exact h_rearr
+  exact adjugate_rearrange_of_matrix_eq A_i A_j D_a D_b D_c ν.1 (toSL i.out).2 ν.2 hν
 
 private lemma hfib_row_div_b_nu_top_row {k : ℕ}
     (a b c : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 < b i) (hc : ∀ i, 0 < c i)
@@ -794,11 +736,8 @@ private lemma sl_addCol_finset_target_aux {n : ℕ}
       · intro a k _; simp
       · intro a; simp
   | insert k T hkT ih =>
-      have hk_ne_k₀ : k ≠ k₀ := by
-        intro h; apply hS; rw [h]; exact Finset.mem_insert_self _ _
-      have hT_no_k₀ : k₀ ∉ T :=
-        fun h ↦ hS (Finset.mem_insert_of_mem h)
-      obtain ⟨U, hU_pres, hU_target⟩ := ih hT_no_k₀
+      have hk_ne_k₀ : k ≠ k₀ := fun h ↦ hS (h ▸ Finset.mem_insert_self k T)
+      obtain ⟨U, hU_pres, hU_target⟩ := ih (fun h ↦ hS (Finset.mem_insert_of_mem h))
       refine ⟨U * slTransvecG k k₀ hk_ne_k₀ (c k), ?_, ?_⟩
       · intro a k' hk'
         rw [← mul_assoc, sl_addCol_preserves_col k k₀ hk_ne_k₀ (c k) (N * U) a hk']
@@ -815,9 +754,8 @@ private lemma sl_addCol_finset_target {n : ℕ}
     ∃ U : SpecialLinearGroup (Fin n.succ) ℤ,
       (∀ a (k : Fin n.succ), k ≠ k₀ → (N * U).1 a k = N.1 a k) ∧
       (∀ a, (N * U).1 a k₀ = N.1 a k₀ + ∑ k, c k * N.1 a k) := by
-  have hS : k₀ ∉ Finset.univ.erase k₀ := Finset.notMem_erase _ _
   obtain ⟨U, hU_pres, hU_target⟩ :=
-    sl_addCol_finset_target_aux N k₀ c (Finset.univ.erase k₀) hS
+    sl_addCol_finset_target_aux N k₀ c (Finset.univ.erase k₀) (Finset.notMem_erase _ _)
   refine ⟨U, hU_pres, ?_⟩
   intro a
   rw [hU_target a]
@@ -849,13 +787,11 @@ private lemma sl_addCol_emod_step {m : ℕ} (i j : Fin m) (hij : i ≠ j)
   · intro a k hk
     exact sl_addCol_preserves_col i j hij _ M a hk
   · rw [sl_addCol_target_col i j hij _ M r]
-    have := Int.emod_def (M.1 r j) (M.1 r i)
-    linarith [this]
+    linarith [Int.emod_def (M.1 r j) (M.1 r i)]
 
 private lemma dvd_entry_add_mul_of_shift {d e c c₀ p : ℤ}
     (h₀ : d ∣ e + c₀ * p) (hshift : d ∣ c - c₀) : d ∣ e + c * p := by
-  have : e + c * p = (e + c₀ * p) + (c - c₀) * p := by ring
-  rw [this]
+  rw [show e + c * p = (e + c₀ * p) + (c - c₀) * p by ring]
   exact dvd_add h₀ (hshift.mul_right p)
 
 private lemma sl_addCol_make_dvd {m : ℕ} (i j : Fin m) (hij : i ≠ j)
@@ -952,11 +888,10 @@ private lemma sl_addCol_make_dvd_finset_insert_step {m : ℕ} (i j : Fin m) (hij
       (∀ r ∈ insert r₀ R, d r ∣ (M * U).1 r j) := by
   have h_cop_prod : IsCoprime (∏ r ∈ R, d r) (d r₀) := by
     refine (IsCoprime.prod_right (fun r hr ↦ ?_)).symm
-    have hr_ne : r₀ ≠ r := fun h ↦ hr₀ (h ▸ hr)
     exact h_pairwise r₀ (Finset.mem_insert_self _ _) r
-      (Finset.mem_insert_of_mem hr) hr_ne
-  have h_cop_r₀ : IsCoprime (M.1 r₀ i) (d r₀) := h_cop r₀ (Finset.mem_insert_self _ _)
-  obtain ⟨s, t, hst⟩ := h_cop_prod.mul_left h_cop_r₀
+      (Finset.mem_insert_of_mem hr) (fun h ↦ hr₀ (h ▸ hr))
+  obtain ⟨s, t, hst⟩ :=
+    h_cop_prod.mul_left (h_cop r₀ (Finset.mem_insert_self _ _))
   set D : ℤ := ∏ r ∈ R, d r with hD_def
   set v : ℤ := -((M * U_R).1 r₀ j) * s with hv_def
   set c' : ℤ := D * v with hc'_def
@@ -1025,14 +960,10 @@ private lemma sl_addCol_make_dvd_chain_top
       (∀ r ∈ R, d r ∣ (M * U).1 r j) := by
   refine sl_addCol_make_dvd_common i j hij M R d (c r_top) ?_
   intro r hr
-  have h_diff : d r ∣ (c r_top - c r) * M.1 r i :=
-    Dvd.dvd.mul_right (h_chain r hr) _
   have h_sum : d r ∣ (M.1 r j + c r * M.1 r i) + (c r_top - c r) * M.1 r i :=
-    dvd_add (h_dvd r hr) h_diff
-  have h_eq :
-      (M.1 r j + c r * M.1 r i) + (c r_top - c r) * M.1 r i
-        = M.1 r j + c r_top * M.1 r i := by ring
-  rw [h_eq] at h_sum
+    dvd_add (h_dvd r hr) ((h_chain r hr).mul_right _)
+  rw [show (M.1 r j + c r * M.1 r i) + (c r_top - c r) * M.1 r i
+      = M.1 r j + c r_top * M.1 r i by ring] at h_sum
   exact h_sum
 
 private lemma sl_exists_col_stab_divChain_of_lower_clearance {k : ℕ}
@@ -1056,31 +987,17 @@ private lemma sl_exists_col_stab_divChain_of_lower_clearance {k : ℕ}
   · intro i'
     refine Fin.cases ?_ ?_ j
     · simp only [Fin.cons_succ, Fin.cons_zero, Nat.cast_one, mul_one]
-      have hcol_i := hcol i'.succ
-      rw [hcol_i]
+      rw [hcol i'.succ]
       exact hw_col_div i'
     · intro j'
       simp only [Fin.cons_succ]
       by_cases hij : j' < i'
-      · have hdvd_q : ((a i' / a j' : ℕ) : ℤ) ∣ N.1 i'.succ j'.succ :=
-          h_lower i' j' hij
-        have hji_le : j' ≤ i' := le_of_lt hij
-        have ha_dvd : a j' ∣ a i' := divChain_dvd (n := k + 1) hda hji_le
-        have hmul : (((a i' / a j' : ℕ) : ℤ) * (a j' : ℤ)) ∣
-            N.1 i'.succ j'.succ * (a j' : ℤ) :=
-          mul_dvd_mul_right hdvd_q _
-        have hcancel : (a i' / a j') * a j' = a i' :=
-          Nat.div_mul_cancel ha_dvd
-        have hcancel_int : ((a i' / a j' : ℕ) : ℤ) * (a j' : ℤ) = (a i' : ℤ) := by
-          have := congr_arg (fun n : ℕ ↦ (n : ℤ)) hcancel
-          push_cast at this
-          exact this
-        rw [hcancel_int] at hmul
-        exact hmul
-      · push_neg at hij
-        have ha_dvd : a i' ∣ a j' := divChain_dvd (n := k + 1) hda hij
-        have ha_dvd_int : (a i' : ℤ) ∣ (a j' : ℤ) := by exact_mod_cast ha_dvd
-        exact Dvd.dvd.mul_left ha_dvd_int _
+      · have hcancel_int : ((a i' / a j' : ℕ) : ℤ) * (a j' : ℤ) = (a i' : ℤ) := by
+          exact_mod_cast Nat.div_mul_cancel (divChain_dvd (n := k + 1) hda (le_of_lt hij))
+        rw [← hcancel_int]
+        exact mul_dvd_mul_right (h_lower i' j' hij) _
+      · exact ((by exact_mod_cast divChain_dvd (n := k + 1) hda (not_lt.mp hij) :
+          (a i' : ℤ) ∣ (a j' : ℤ))).mul_left _
 
 private lemma sl_clear_one_column_lower_divChain_of_donor_coprime_and_residue
     {k : ℕ}
@@ -1145,9 +1062,7 @@ private lemma exists_chain_solution_iff_compatible
         (∀ i j : Fin n, i ≤ j → d i ∣ c_per j - c_per i)) := by
   refine ⟨?_, ?_⟩
   · rintro ⟨c, hc⟩
-    refine ⟨fun _ ↦ c, hc, ?_⟩
-    intro i j _hij
-    simp
+    exact ⟨fun _ ↦ c, hc, fun i j _ ↦ by simp⟩
   · rintro ⟨c_per, h_row, h_compat⟩
     rcases Nat.eq_zero_or_pos n with hn0 | hnpos
     · refine ⟨0, ?_⟩
@@ -1160,12 +1075,9 @@ private lemma exists_chain_solution_iff_compatible
         refine Fin.mk_le_of_le_val ?_
         have : i.val ≤ n - 1 := by have := i.isLt; omega
         simpa using this
-      have hcompat : d i ∣ c_per last - c_per i := h_compat i last hi_le
-      have hdvd_diff : d i ∣ (c_per last - c_per i) * m i := hcompat.mul_right _
-      have hsum := (h_row i).add hdvd_diff
-      have heq : c_per i * m i + b i + (c_per last - c_per i) * m i =
-          c_per last * m i + b i := by ring
-      rw [heq] at hsum
+      have hsum := (h_row i).add ((h_compat i last hi_le).mul_right (m i))
+      rw [show c_per i * m i + b i + (c_per last - c_per i) * m i =
+          c_per last * m i + b i by ring] at hsum
       exact hsum
 
 private lemma sl_clear_one_column_lower_divChain_of_chain_residues
@@ -1186,16 +1098,11 @@ private lemma sl_clear_one_column_lower_divChain_of_chain_residues
   refine sl_clear_one_column_lower_divChain_of_donor_coprime_and_residue
     a ha hda j N i_don h_don_ne (c (Fin.last k)) ?_
   intro i hi_lt
-  have hrow := h_per_row i hi_lt
-  have hcompat := h_chain_compat i (Fin.last k) hi_lt (Fin.le_last _)
-  have hdiff : (((a i / a j : ℕ) : ℤ)) ∣
-      (c (Fin.last k) - c i) * N.1 i.succ i_don :=
-    hcompat.mul_right _
-  have hsum := hrow.add hdiff
-  have heq : N.1 i.succ j.succ + c i * N.1 i.succ i_don +
+  have hsum := (h_per_row i hi_lt).add
+    ((h_chain_compat i (Fin.last k) hi_lt (Fin.le_last _)).mul_right (N.1 i.succ i_don))
+  rw [show N.1 i.succ j.succ + c i * N.1 i.succ i_don +
       (c (Fin.last k) - c i) * N.1 i.succ i_don =
-      N.1 i.succ j.succ + c (Fin.last k) * N.1 i.succ i_don := by ring
-  rw [heq] at hsum
+      N.1 i.succ j.succ + c (Fin.last k) * N.1 i.succ i_don by ring] at hsum
   exact hsum
 
 private lemma sl_clear_one_column_step
@@ -1222,17 +1129,12 @@ private lemma sl_clear_one_column_step
       a ha hda j N i_don h_don_ne c h_per_row h_chain_compat
   refine ⟨N * U, ?_, ?_⟩
   · intro i
-    have h0_ne : (0 : Fin (k + 2)) ≠ j.succ := (Fin.succ_ne_zero j).symm
-    have := hU_pres i 0 h0_ne
-    rw [this]
+    rw [hU_pres i 0 (Fin.succ_ne_zero j).symm]
     exact hcol i
   · intro i j' hj'_le_j hj'_lt_i
     rcases lt_or_eq_of_le hj'_le_j with hlt | heq
-    · have hne : j'.succ ≠ j.succ := by
-        intro h
-        exact (ne_of_lt hlt) (Fin.succ_inj.mp h)
-      have hpres := hU_pres i.succ j'.succ hne
-      rw [hpres]
+    · have hne : j'.succ ≠ j.succ := fun h ↦ (ne_of_lt hlt) (Fin.succ_inj.mp h)
+      rw [hU_pres i.succ j'.succ hne]
       exact h_prev i j' hlt hj'_lt_i
     · subst heq
       exact hU_clear i hj'_lt_i
@@ -1276,14 +1178,11 @@ private lemma sl_clear_all_columns_of_donor_supply
     exact absurd hj' (Nat.not_lt_zero _)
   | succ j_max ih =>
     intro hj_max_le
-    have hj_max_lt : j_max < k + 1 := Nat.lt_of_succ_le hj_max_le
     obtain ⟨N, hcolN, hclear_prev⟩ := ih (Nat.le_of_succ_le hj_max_le)
-    set j : Fin (k + 1) := ⟨j_max, hj_max_lt⟩ with hj_def
+    set j : Fin (k + 1) := ⟨j_max, Nat.lt_of_succ_le hj_max_le⟩ with hj_def
     have h_prev : ∀ i j' : Fin (k + 1), j' < j → j' < i →
-        (((a i / a j' : ℕ) : ℤ) ∣ N.1 i.succ j'.succ) := by
-      intro i j' hj'_lt_j hj'_lt_i
-      have : j'.val < j_max := hj'_lt_j
-      exact hclear_prev i j' this hj'_lt_i
+        (((a i / a j' : ℕ) : ℤ) ∣ N.1 i.succ j'.succ) :=
+      fun i j' hj'_lt_j hj'_lt_i ↦ hclear_prev i j' hj'_lt_j hj'_lt_i
     obtain ⟨i_don, h_don_ne, c, h_per_row, h_chain_compat⟩ :=
       h_supply j N hcolN h_prev
     obtain ⟨N', hcolN', hclear_new⟩ :=
@@ -1291,10 +1190,7 @@ private lemma sl_clear_all_columns_of_donor_supply
         i_don h_don_ne c h_per_row h_chain_compat
     refine ⟨N', hcolN', ?_⟩
     intro i j' hj'_lt_succ hj'_lt_i
-    have hj'_le_j : j' ≤ j := by
-      show j'.val ≤ j.val
-      exact Nat.lt_succ_iff.mp hj'_lt_succ
-    exact hclear_new i j' hj'_le_j hj'_lt_i
+    exact hclear_new i j' (Nat.lt_succ_iff.mp hj'_lt_succ) hj'_lt_i
 
 private lemma sl_exists_col_stab_divChain_of_donor_supply {k : ℕ}
     (a : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i) (hda : DivChain (k + 1) a)
@@ -1347,9 +1243,7 @@ private lemma h_supply_of_common_c {k : ℕ}
           (((a i / a j : ℕ) : ℤ) ∣ c i' - c i)) := by
   intro j N hcol h_prev
   obtain ⟨i_don, h_don_ne, c0, h_clear⟩ := h_common j N hcol h_prev
-  refine ⟨i_don, h_don_ne, fun _ ↦ c0, h_clear, ?_⟩
-  intro _ _ _ _
-  simp
+  exact ⟨i_don, h_don_ne, fun _ ↦ c0, h_clear, fun _ _ _ _ ↦ by simp⟩
 
 private lemma sl_exists_col_stab_divChain_of_common_c {k : ℕ}
     (a : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i) (hda : DivChain (k + 1) a)
@@ -1414,17 +1308,12 @@ private lemma sl_clear_one_column_step_multi_donor
       a ha hda j N c h_zero h_clear
   refine ⟨N * U, ?_, ?_⟩
   · intro i
-    have h0_ne : (0 : Fin (k + 2)) ≠ j.succ := (Fin.succ_ne_zero j).symm
-    have := hU_pres i 0 h0_ne
-    rw [this]
+    rw [hU_pres i 0 (Fin.succ_ne_zero j).symm]
     exact hcol i
   · intro i j' hj'_le_j hj'_lt_i
     rcases lt_or_eq_of_le hj'_le_j with hlt | heq
-    · have hne : j'.succ ≠ j.succ := by
-        intro h
-        exact (ne_of_lt hlt) (Fin.succ_inj.mp h)
-      have hpres := hU_pres i.succ j'.succ hne
-      rw [hpres]
+    · have hne : j'.succ ≠ j.succ := fun h ↦ (ne_of_lt hlt) (Fin.succ_inj.mp h)
+      rw [hU_pres i.succ j'.succ hne]
       exact h_prev i j' hlt hj'_lt_i
     · subst heq
       exact hU_clear i hj'_lt_i
@@ -1464,24 +1353,18 @@ private lemma sl_clear_all_columns_of_multi_donor_supply {k : ℕ}
     exact absurd hj' (Nat.not_lt_zero _)
   | succ j_max ih =>
     intro hj_max_le
-    have hj_max_lt : j_max < k + 1 := Nat.lt_of_succ_le hj_max_le
     obtain ⟨N, hcolN, hclear_prev⟩ := ih (Nat.le_of_succ_le hj_max_le)
-    set j : Fin (k + 1) := ⟨j_max, hj_max_lt⟩ with hj_def
+    set j : Fin (k + 1) := ⟨j_max, Nat.lt_of_succ_le hj_max_le⟩ with hj_def
     have h_prev : ∀ i j' : Fin (k + 1), j' < j → j' < i →
-        (((a i / a j' : ℕ) : ℤ) ∣ N.1 i.succ j'.succ) := by
-      intro i j' hj'_lt_j hj'_lt_i
-      have : j'.val < j_max := hj'_lt_j
-      exact hclear_prev i j' this hj'_lt_i
+        (((a i / a j' : ℕ) : ℤ) ∣ N.1 i.succ j'.succ) :=
+      fun i j' hj'_lt_j hj'_lt_i ↦ hclear_prev i j' hj'_lt_j hj'_lt_i
     obtain ⟨c, h_zero, h_clear⟩ := h_supply j N hcolN h_prev
     obtain ⟨N', hcolN', hclear_new⟩ :=
       sl_clear_one_column_step_multi_donor a ha hda w j N hcolN h_prev
         c h_zero h_clear
     refine ⟨N', hcolN', ?_⟩
     intro i j' hj'_lt_succ hj'_lt_i
-    have hj'_le_j : j' ≤ j := by
-      show j'.val ≤ j.val
-      exact Nat.lt_succ_iff.mp hj'_lt_succ
-    exact hclear_new i j' hj'_le_j hj'_lt_i
+    exact hclear_new i j' (Nat.lt_succ_iff.mp hj'_lt_succ) hj'_lt_i
 
 private lemma sl_exists_col_stab_divChain_of_multi_donor_supply {k : ℕ}
     (a : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i) (hda : DivChain (k + 1) a)
@@ -1515,9 +1398,7 @@ private lemma exists_vector_chain_solution
       d a ∣ c_per b k - c_per a k) :
     ∃ c : Fin n' → ℤ, ∀ a : Fin (n + 1), ∀ k : Fin n',
       d a ∣ c k - c_per a k := by
-  refine ⟨fun k ↦ c_per (Fin.last n) k, ?_⟩
-  intro a k
-  exact h_compat a (Fin.last n) (Fin.le_last _) k
+  exact ⟨fun k ↦ c_per (Fin.last n) k, fun a k ↦ h_compat a (Fin.last n) (Fin.le_last _) k⟩
 
 private lemma row_clear_avoiding_of_bezout
     {n : ℕ} (x : Fin n → ℤ) (j : Fin n)
@@ -1526,11 +1407,7 @@ private lemma row_clear_avoiding_of_bezout
     ∃ c : Fin n → ℤ, c j = 0 ∧ d ∣ xj + ∑ k, c k * x k := by
   refine ⟨fun k ↦ -xj * u k, by simp [h_zero], ?_⟩
   have h_sum : ∑ k, (-xj * u k) * x k = -xj := by
-    have h1 : ∑ k, (-xj * u k) * x k = -xj * ∑ k, u k * x k := by
-      rw [Finset.mul_sum]
-      refine Finset.sum_congr rfl fun k _ ↦ ?_
-      ring
-    rw [h1, h_bez, mul_one]
+    simp only [mul_assoc, ← Finset.mul_sum, h_bez, mul_one]
   rw [h_sum, add_neg_cancel]
   exact dvd_zero d
 
@@ -1570,16 +1447,10 @@ private lemma h_per_row_via_avoiding_bezout {k : ℕ}
   · intro i hi_lt
     have h_sum : ∑ k', (-(N.1 i.succ j.succ) * u i k') * N.1 i.succ k' =
         -(N.1 i.succ j.succ) := by
-      have h1 : ∑ k', (-(N.1 i.succ j.succ) * u i k') * N.1 i.succ k' =
-          -(N.1 i.succ j.succ) * ∑ k', u i k' * N.1 i.succ k' := by
-        rw [Finset.mul_sum]
-        refine Finset.sum_congr rfl fun k' _ ↦ ?_
-        ring
-      rw [h1, hu_bez i hi_lt, mul_one]
+      simp only [mul_assoc, ← Finset.mul_sum, hu_bez i hi_lt, mul_one]
     rw [h_sum, add_neg_cancel]
     exact dvd_zero _
-  · intro i i' hi_lt hi_le k'
-    exact hu_compat i i' hi_lt hi_le k'
+  · exact hu_compat
 
 private lemma h_supply_of_row_residues {k : ℕ}
     (a : Fin (k + 1) → ℕ) (_ha : ∀ i, 0 < a i) (_hda : DivChain (k + 1) a)
@@ -1610,15 +1481,11 @@ private lemma h_supply_of_row_residues {k : ℕ}
     h_per_row j N hcol h_prev
   refine ⟨fun k' ↦ c_per (Fin.last k) k', h_zero_per (Fin.last k), ?_⟩
   intro i hi_lt
-  have hrow := h_clear_per i hi_lt
-  have hcompat_k : ∀ k' : Fin (k + 2),
-      (((a i / a j : ℕ) : ℤ) ∣ c_per (Fin.last k) k' - c_per i k') := by
-    intro k'
-    exact h_compat i (Fin.last k) hi_lt (Fin.le_last _) k'
   have hdiff_sum : (((a i / a j : ℕ) : ℤ)) ∣
       ∑ k', (c_per (Fin.last k) k' - c_per i k') * N.1 i.succ k' :=
-    Finset.dvd_sum (fun k' _ ↦ (hcompat_k k').mul_right _)
-  have hsum := hrow.add hdiff_sum
+    Finset.dvd_sum fun k' _ ↦
+      (h_compat i (Fin.last k) hi_lt (Fin.le_last _) k').mul_right _
+  have hsum := (h_clear_per i hi_lt).add hdiff_sum
   have heq : N.1 i.succ j.succ + ∑ k', c_per i k' * N.1 i.succ k' +
       ∑ k', (c_per (Fin.last k) k' - c_per i k') * N.1 i.succ k' =
       N.1 i.succ j.succ +
@@ -1684,16 +1551,11 @@ private lemma h_avoiding_compat_of_common_nu {k : ℕ}
               (-(N.1 i.succ j.succ) * u i k'))) := by
   intro j N hcol h_prev
   obtain ⟨ν, hν_zero, hν_bez, hν_col⟩ := h_common j N hcol h_prev
-  refine ⟨fun _ k' ↦ ν k', ?_, ?_, ?_⟩
-  · intro _; exact hν_zero
-  · intro i hi_lt; exact hν_bez i hi_lt
-  · intro i i' hi_lt hi_le k'
-    have hdvd : (((a i / a j : ℕ) : ℤ)) ∣
-        N.1 i'.succ j.succ - N.1 i.succ j.succ := hν_col i i' hi_lt hi_le
-    have heq : (-(N.1 i'.succ j.succ) * ν k') - (-(N.1 i.succ j.succ) * ν k')
-        = -((N.1 i'.succ j.succ - N.1 i.succ j.succ) * ν k') := by ring
-    rw [heq]
-    exact (hdvd.mul_right _).neg_right
+  refine ⟨fun _ k' ↦ ν k', fun _ ↦ hν_zero, hν_bez, ?_⟩
+  intro i i' hi_lt hi_le k'
+  rw [show (-(N.1 i'.succ j.succ) * ν k') - (-(N.1 i.succ j.succ) * ν k')
+      = -((N.1 i'.succ j.succ - N.1 i.succ j.succ) * ν k') by ring]
+  exact ((hν_col i i' hi_lt hi_le).mul_right _).neg_right
 
 private lemma h_per_row_of_common_nu {k : ℕ}
     (a : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i) (hda : DivChain (k + 1) a)
@@ -1763,9 +1625,8 @@ lemma sl_exists_col_stab_divChain_zero
   refine sl_exists_col_stab_divChain_of_lower_clearance a ha hda w hw_col_div
     N₀ hcol₀ ?_
   intro i j hji
-  have hi : i.val = 0 := Nat.lt_one_iff.mp i.isLt
-  have hj : j.val = 0 := Nat.lt_one_iff.mp j.isLt
-  simp only [Fin.lt_def, hj, hi, lt_irrefl] at hji
+  simp only [Fin.lt_def, Nat.lt_one_iff.mp j.isLt, Nat.lt_one_iff.mp i.isLt,
+    lt_irrefl] at hji
 
 /-- **Strengthened completion target.**  An `N ∈ SL_{k+2}(ℤ)` with prescribed
 first column `w` AND with strictly-lower-triangular entries (below the leading
