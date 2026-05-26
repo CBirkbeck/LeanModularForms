@@ -931,4 +931,131 @@ theorem exists_simultaneous_eigenform_basis
     obtain ⟨y, _, rfl⟩ := hg
     exact h_orthonormal.inner_eq_zero (fun h ↦ hfg (by rw [h]))
 
+/-! ## Eigenform decomposition of a Hecke-invariant submodule
+
+`exists_simultaneous_eigenform_basis` diagonalises the **whole** character space.  For
+the strong-multiplicity-one descent we additionally need the analogous statement for an
+arbitrary `T_n`-invariant submodule `W` (e.g. the new subspace `S_k^♯`): every element of
+`W ∩ S_k(Γ₁(N),χ)` is a finite sum of common Hecke eigenfunctions that **remain in `W`**.
+
+The proof restricts the commuting family of Hecke operators to the invariant submodule and
+re-runs the simultaneous-triangularisation / semisimplicity argument there. -/
+
+/-- The Hecke family `heckeFamily k χ` maps a submodule `p ≤ S_k(Γ₁(N),χ)` into itself,
+provided the underlying cusp-form submodule `W` (with `p = W.comap (subtype)`) is preserved
+by every `heckeT_n_cusp`. -/
+private lemma heckeFamily_mapsTo_comap
+    (χ : (ZMod N)ˣ →* ℂˣ)
+    (W : Submodule ℂ (CuspForm ((Gamma1 N).map (mapGL ℝ)) k))
+    (hW : ∀ (n : ℕ), ∀ [NeZero n], Nat.Coprime n N →
+      ∀ f ∈ W, heckeT_n_cusp k n f ∈ W)
+    (i : CoprimeIndex N) :
+    ∀ x ∈ W.comap (cuspFormCharSpace k χ).subtype,
+      heckeFamily k χ i x ∈ W.comap (cuspFormCharSpace k χ).subtype := by
+  obtain ⟨⟨n, hn_pos⟩, hn⟩ := i
+  haveI : NeZero n := ⟨hn_pos.ne'⟩
+  intro x hx
+  simp only [Submodule.mem_comap, Submodule.coe_subtype] at hx ⊢
+  exact hW n hn x hx
+
+/-- **Eigenform decomposition of an invariant submodule.**  Let `W` be a submodule of cusp
+forms preserved by every Hecke operator `T_n` with `(n,N)=1`, and let `g ∈ W` lie in the
+Nebentypus space `S_k(Γ₁(N),χ)`.  Then `g` is a finite sum of common Hecke eigenfunctions,
+each of which lies in `W ∩ S_k(Γ₁(N),χ)`.
+
+Applied with `W = S_k^♯(N)` (the new subspace, `heckeT_n_preserves_cuspFormsNew`) this is
+the spectral input to Miyake 4.6.12's descent (ticket T008a). -/
+theorem exists_eigenform_decomposition_of_invariant
+    (χ : (ZMod N)ˣ →* ℂˣ)
+    [FiniteDimensional ℂ (cuspFormCharSpace k χ)]
+    (W : Submodule ℂ (CuspForm ((Gamma1 N).map (mapGL ℝ)) k))
+    (hW : ∀ (n : ℕ), ∀ [NeZero n], Nat.Coprime n N →
+      ∀ f ∈ W, heckeT_n_cusp k n f ∈ W)
+    (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (hg_char : g ∈ cuspFormCharSpace k χ) (hg_W : g ∈ W) :
+    ∃ (ι : Type) (_ : Fintype ι) (h : ι → CuspForm ((Gamma1 N).map (mapGL ℝ)) k),
+      (∀ i, h i ∈ W) ∧ (∀ i, h i ∈ cuspFormCharSpace k χ) ∧
+      (∀ i, IsCommonEigenfunctionCusp k (h i)) ∧ g = ∑ i, h i := by
+  classical
+  set p : Submodule ℂ (cuspFormCharSpace k χ) :=
+    W.comap (cuspFormCharSpace k χ).subtype with hp_def
+  -- The restricted Hecke family on the invariant submodule `p`.
+  have hmaps : ∀ i, ∀ x ∈ p, heckeFamily k χ i x ∈ p :=
+    fun i ↦ heckeFamily_mapsTo_comap χ W hW i
+  set F : CoprimeIndex N → Module.End ℂ p :=
+    fun i ↦ (heckeFamily k χ i).restrict (hmaps i) with hF_def
+  -- `F` is a commuting family.
+  have hF_comm : Pairwise fun i j ↦ Commute (F i) (F j) := by
+    intro i j _hij
+    show F i * F j = F j * F i
+    refine LinearMap.ext (fun x ↦ Subtype.ext ?_)
+    have hc := heckeFamily_commute_all (k := k) χ i j
+    have hcfun := DFunLike.congr_fun hc (x : cuspFormCharSpace k χ)
+    simp only [Module.End.mul_apply] at hcfun ⊢
+    simp only [hF_def, LinearMap.restrict_coe_apply]
+    exact hcfun
+  -- Each `F i` is triangularizable on `p`.
+  have hF_tri : ∀ i, ⨆ μ : ℂ, (F i).maxGenEigenspace μ = ⊤ := fun i ↦
+    Module.End.genEigenspace_restrict_eq_top (k := ⊤) (hmaps i)
+      (heckeFamily_triangularizable k χ i)
+  -- Each `F i` is finitely semisimple on `p`.
+  have hF_ss : ∀ i, (F i).IsFinitelySemisimple := fun i ↦
+    (heckeFamily_isFinitelySemisimple k χ i).restrict (hmaps i)
+  -- Simultaneous triangularisation, then semisimplicity ⇒ eigenspace spanning on `p`.
+  have h_top : ⨆ ev : CoprimeIndex N → ℂ,
+      ⨅ i, Module.End.eigenspace (F i) (ev i) = ⊤ := by
+    have h_max : ⨆ ev : CoprimeIndex N → ℂ,
+        ⨅ i, (F i).maxGenEigenspace (ev i) = ⊤ :=
+      Module.End.iSup_iInf_maxGenEigenspace_eq_top_of_iSup_maxGenEigenspace_eq_top_of_commute
+        F hF_comm hF_tri
+    rw [← h_max]
+    refine iSup_congr (fun ev ↦ iInf_congr (fun i ↦ ?_))
+    exact ((hF_ss i).maxGenEigenspace_eq_eigenspace (ev i)).symm
+  -- Lift `g` into `p` and decompose using `mem_iSup_iff_exists_finsupp`.
+  have hg_p : (⟨g, hg_char⟩ : cuspFormCharSpace k χ) ∈ p := by
+    simp only [hp_def, Submodule.mem_comap, Submodule.coe_subtype]; exact hg_W
+  set gp : p := ⟨⟨g, hg_char⟩, hg_p⟩ with hgp_def
+  have hg_mem : gp ∈
+      ⨆ ev : CoprimeIndex N → ℂ, ⨅ i, Module.End.eigenspace (F i) (ev i) := by
+    rw [h_top]; trivial
+  obtain ⟨fc, hfc_mem, hfc_sum⟩ := Submodule.mem_iSup_iff_exists_finsupp _ _ |>.mp hg_mem
+  -- The eigenform attached to an index `ev` is `((fc ev : p) : V) : CuspForm`.
+  set hForm : (CoprimeIndex N → ℂ) → CuspForm ((Gamma1 N).map (mapGL ℝ)) k :=
+    fun ev ↦ (((fc ev : p) : cuspFormCharSpace k χ) :
+      CuspForm ((Gamma1 N).map (mapGL ℝ)) k) with hForm_def
+  -- Each such form lies in `W`, in the χ-space, and is a common Hecke eigenfunction.
+  have h_in_W : ∀ ev, hForm ev ∈ W := by
+    intro ev
+    have hmem : (fc ev : p).1 ∈ W.comap (cuspFormCharSpace k χ).subtype := by
+      rw [← hp_def]; exact (fc ev).2
+    exact Submodule.mem_comap.mp hmem
+  have h_in_char : ∀ ev, hForm ev ∈ cuspFormCharSpace k χ := fun ev ↦ (fc ev : p).1.2
+  have h_eigen : ∀ ev, IsCommonEigenfunctionCusp k (hForm ev) := by
+    intro ev n hn_cop
+    haveI : NeZero n.val := ⟨n.pos.ne'⟩
+    refine ⟨ev ⟨n, hn_cop⟩, ?_⟩
+    -- `fc ev` lies in the joint eigenspace, so it is an `ev ⟨n,_⟩`-eigenvector of `F ⟨n,_⟩`.
+    have hmem : (fc ev) ∈ Module.End.eigenspace (F ⟨n, hn_cop⟩) (ev ⟨n, hn_cop⟩) :=
+      (Submodule.mem_iInf _).mp (hfc_mem ev) ⟨n, hn_cop⟩
+    have heq := Module.End.mem_eigenspace_iff.mp hmem
+    -- Push down through the two `Subtype.val` coercions.
+    have heq_V : (heckeFamily k χ ⟨n, hn_cop⟩) (fc ev : p).1 =
+        ev ⟨n, hn_cop⟩ • (fc ev : p).1 := by
+      have := congr_arg (Subtype.val) heq
+      simpa only [hF_def, LinearMap.restrict_coe_apply, SetLike.val_smul] using this
+    have heq_cusp := congr_arg (Subtype.val) heq_V
+    simpa only [hForm_def, SetLike.val_smul] using heq_cusp
+  -- Assemble.  The output index set is the support of `fc`.
+  refine ⟨{ev // ev ∈ fc.support}, inferInstance, fun e ↦ hForm e.1,
+    fun e ↦ h_in_W e.1, fun e ↦ h_in_char e.1, fun e ↦ h_eigen e.1, ?_⟩
+  -- The sum identity: `g = ∑ e, hForm e` follows from `fc.sum = gp` pushed down.
+  have hsum_form : g = ∑ ev ∈ fc.support, hForm ev := by
+    have hsum_p : ∑ ev ∈ fc.support, (fc ev : p) = gp := hfc_sum
+    have hval : (gp : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) =
+        ∑ ev ∈ fc.support, hForm ev := by
+      rw [← hsum_p, hForm_def]
+      simp only [AddSubmonoidClass.coe_finset_sum]
+    exact hval
+  rw [hsum_form, ← Finset.sum_coe_sort fc.support (fun ev ↦ hForm ev)]
+
 end HeckeRing.GL2

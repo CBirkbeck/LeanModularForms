@@ -286,6 +286,37 @@ theorem cuspFormsOldChar_le_cuspFormsOld
       · exact absurd (by simpa using heq) hMne
   exact Submodule.subset_span ⟨M, l, hM, hl, hl1, heq, g, rfl⟩
 
+/-! ## New eigenform decomposition (spectral input for step (i))
+
+Every **new** cusp form lying in a Nebentypus space `S_k(Γ₁(N),χ)` is a finite sum of
+common Hecke eigenforms that are **themselves new**.  This is the spectral input consumed
+by Theorem 4.6.12's descent: T008 `span_induction`s over the `cuspFormsOldChar`
+generators `Vₗ(g)`, applies this lemma per generator `g`, and `Vₗ`-distributes the
+resulting eigenforms via Lemma 4.6.2 (`heckeT_n_levelRaise_eigen`). -/
+
+/-- **New eigenbasis decomposition.**  A new cusp form `g ∈ S_k^♯(N)` whose underlying
+modular form lies in the Nebentypus space `M_k(Γ₁(N),χ)` is a finite sum of common Hecke
+eigenforms, each of which is again **new** (lies in `S_k^♯(N)`).
+
+Proof: the new subspace is `T_n`-invariant (`heckeT_n_preserves_cuspFormsNew`), so the
+simultaneous Hecke diagonalisation of `S_k(Γ₁(N),χ)`
+(`exists_eigenform_decomposition_of_invariant`) restricts to it, yielding eigenform
+summands that remain new. -/
+theorem exists_eigenform_decomposition_mem_cuspFormsNew
+    (χ : (ZMod N)ˣ →* ℂˣ)
+    (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (hg_new : g ∈ cuspFormsNew N k)
+    (hgχ : g.toModularForm' ∈ modFormCharSpace k χ) :
+    ∃ (ι : Type) (_ : Fintype ι) (h : ι → CuspForm ((Gamma1 N).map (mapGL ℝ)) k),
+      (∀ i, h i ∈ cuspFormsNew N k) ∧ (∀ i, IsEigenform (h i)) ∧ g = ∑ i, h i := by
+  have hg_char : g ∈ cuspFormCharSpace k χ :=
+    (cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace (k := k) χ g).mp
+      (by convert hgχ using 1)
+  obtain ⟨ι, hι, h, h_new, h_char, h_eigen, h_sum⟩ :=
+    exists_eigenform_decomposition_of_invariant χ (cuspFormsNew N k)
+      (fun n _ hn f hf ↦ heckeT_n_preserves_cuspFormsNew n hn f hf) g hg_char hg_new
+  exact ⟨ι, hι, h, h_new, fun i ↦ (isEigenform_iff (h i)).mpr (h_eigen i), h_sum⟩
+
 /-! ## Linear independence of distinct-eigenvalue eigenforms (step (i) helper)
 
 Public restatement of the orthogonality fact `eigenforms_orthogonal_of_ne_eigenvalues`
