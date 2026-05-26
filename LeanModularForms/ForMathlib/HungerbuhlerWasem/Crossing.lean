@@ -671,6 +671,47 @@ theorem corner_angle_compat_to_h_B
     at h_angle_raw
   exact h_B_of_angle_compat_corner hL_minus_ne hL_plus_ne hk h_angle_raw
 
+/-- **Crossing-set existence at a pole with endpoint avoidance.**
+
+For a `ClosedPwC1Immersion γ`, a target pole `s ∈ ℂ`, and the hypothesis that
+the basepoint `x ∉ S` with `s ∈ S`, the level-set `{t ∈ [0,1] | γ(t) = s}` is
+finite (`crossingSet_finite`) and forms a `Finset ℝ` of crossings strictly in
+`Ioo 0 1` (since `γ(0) = γ(1) = x ≠ s`).  Returns an `Exists` bundle with
+the standard four predicates `(Ioo, at, complete)` required by the corner-form
+multi-crossing CPV API. -/
+theorem crossings_finset_of_endpts_off
+    (γ : ClosedPwC1Immersion x) {s : ℂ} {S : Finset ℂ} (hs : s ∈ S)
+    (hx_notin_S : x ∉ (↑S : Set ℂ)) :
+    ∃ crossings : Finset ℝ,
+      (∀ t ∈ crossings, t ∈ Set.Ioo (0 : ℝ) 1) ∧
+      (∀ t ∈ crossings, γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t = s) ∧
+      (∀ t ∈ Set.Icc (0 : ℝ) 1,
+        γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t = s →
+          t ∈ crossings) := by
+  have h0_ne : (γ.toPwC1Immersion : ℝ → ℂ) 0 ≠ s := by
+    simp only [show (γ.toPwC1Immersion : ℝ → ℂ) 0 =
+      γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend 0 from rfl,
+      γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend_zero]
+    exact fun h_eq => hx_notin_S (h_eq ▸ hs)
+  have h1_ne : (γ.toPwC1Immersion : ℝ → ℂ) 1 ≠ s := by
+    simp only [show (γ.toPwC1Immersion : ℝ → ℂ) 1 =
+      γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend 1 from rfl,
+      γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend_one]
+    exact fun h_eq => hx_notin_S (h_eq ▸ hs)
+  have hfin : Set.Finite (γ.toPwC1Immersion.crossingSet s) :=
+    PwC1Immersion.crossingSet_finite γ.toPwC1Immersion s h0_ne h1_ne
+  refine ⟨hfin.toFinset, ?_, ?_, ?_⟩
+  · intro t ht
+    rw [Set.Finite.mem_toFinset] at ht
+    refine ⟨lt_of_le_of_ne ht.1.1 fun h_eq => h0_ne ?_,
+            lt_of_le_of_ne ht.1.2 fun h_eq => h1_ne ?_⟩
+    · rw [← h_eq] at ht; exact ht.2
+    · rw [h_eq] at ht; exact ht.2
+  · intro t ht
+    rw [Set.Finite.mem_toFinset] at ht; exact ht.2
+  · intro t ht h_eq
+    rw [Set.Finite.mem_toFinset]; exact ⟨ht, h_eq⟩
+
 /-- **Canonical one-sided derivative limits at a `Finset` of crossings.**
 
 For a closed `ClosedPwC1Immersion γ` and a `Finset` of crossings in `Ioo 0 1`,

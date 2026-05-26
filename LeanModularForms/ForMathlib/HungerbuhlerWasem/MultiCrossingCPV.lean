@@ -1759,33 +1759,9 @@ theorem residueTheorem_crossing_paper_faithful_clean
   · -- Uncrossed: γ avoids s.
     exact cpv_polarPart_at_uncrossed_pole hU_open hU_ne hS_in_U γ h_null decomp s hs
       h_avoid
-  · -- Crossed: build crossings via `crossingSet_finite` (uses `hx_notin_S`).
-    have h0_ne : (γ.toPwC1Immersion : ℝ → ℂ) 0 ≠ s := by
-      simp only [show (γ.toPwC1Immersion : ℝ → ℂ) 0 =
-        γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend 0 from rfl,
-        γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend_zero]
-      exact fun h_eq => hx_notin_S (h_eq ▸ hs)
-    have h1_ne : (γ.toPwC1Immersion : ℝ → ℂ) 1 ≠ s := by
-      simp only [show (γ.toPwC1Immersion : ℝ → ℂ) 1 =
-        γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend 1 from rfl,
-        γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend_one]
-      exact fun h_eq => hx_notin_S (h_eq ▸ hs)
-    have hfin : Set.Finite (γ.toPwC1Immersion.crossingSet s) :=
-      PwC1Immersion.crossingSet_finite γ.toPwC1Immersion s h0_ne h1_ne
-    set crossings : Finset ℝ := hfin.toFinset with hcrossings_def
-    have h_Ioo' : ∀ t ∈ crossings, t ∈ Set.Ioo (0 : ℝ) 1 := fun t ht => by
-      rw [hcrossings_def, Set.Finite.mem_toFinset] at ht
-      refine ⟨lt_of_le_of_ne ht.1.1 fun h_eq => h0_ne ?_,
-              lt_of_le_of_ne ht.1.2 fun h_eq => h1_ne ?_⟩
-      · rw [← h_eq] at ht; exact ht.2
-      · rw [h_eq] at ht; exact ht.2
-    have h_at' : ∀ t ∈ crossings,
-        γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t = s := fun t ht => by
-      rw [hcrossings_def, Set.Finite.mem_toFinset] at ht; exact ht.2
-    have h_complete' : ∀ t ∈ Set.Icc (0 : ℝ) 1,
-        γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t = s →
-          t ∈ crossings := fun t ht h_eq => by
-      rw [hcrossings_def, Set.Finite.mem_toFinset]; exact ⟨ht, h_eq⟩
+  · -- Crossed: build crossings via `crossings_finset_of_endpts_off` (uses `hx_notin_S`).
+    obtain ⟨crossings, h_Ioo', h_at', h_complete'⟩ :=
+      crossings_finset_of_endpts_off γ hs hx_notin_S
     have h_flat_at_each : ∀ t₀ ∈ crossings,
         IsFlatOfOrder γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t₀
           (decomp.order s) := fun t₀ ht₀ =>
