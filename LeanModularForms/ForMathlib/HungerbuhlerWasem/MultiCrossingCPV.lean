@@ -1790,50 +1790,15 @@ theorem residueTheorem_crossing_paper_faithful_clean
         IsFlatOfOrder γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t₀
           (decomp.order s) := fun t₀ ht₀ =>
       hCondA s hs t₀ (Ioo_subset_Icc_self (h_Ioo' t₀ ht₀)) (h_at' t₀ ht₀) (h_Ioo' t₀ ht₀)
-    let L_plus : ℝ → ℂ := fun t =>
-      if h_part : t ∈ γ.toPwC1Immersion.toPiecewiseC1Path.partition then
-        Classical.choose (γ.toPwC1Immersion.right_deriv_limit t h_part)
-      else
-        deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t
-    let L_minus : ℝ → ℂ := fun t =>
-      if h_part : t ∈ γ.toPwC1Immersion.toPiecewiseC1Path.partition then
-        Classical.choose (γ.toPwC1Immersion.left_deriv_limit t h_part)
-      else
-        deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t
-    have hL_plus_ne : ∀ t ∈ crossings, L_plus t ≠ 0 := fun t ht => by
-      by_cases h_part : t ∈ γ.toPwC1Immersion.toPiecewiseC1Path.partition
-      · simpa [L_plus, dif_pos h_part] using
-          (Classical.choose_spec (γ.toPwC1Immersion.right_deriv_limit t h_part)).1
-      · simpa [L_plus, dif_neg h_part] using
-          (deriv_limit_eq_at_off_partition γ (h_Ioo' t ht) h_part).1
-    have hL_minus_ne : ∀ t ∈ crossings, L_minus t ≠ 0 := fun t ht => by
-      by_cases h_part : t ∈ γ.toPwC1Immersion.toPiecewiseC1Path.partition
-      · simpa [L_minus, dif_pos h_part] using
-          (Classical.choose_spec (γ.toPwC1Immersion.left_deriv_limit t h_part)).1
-      · simpa [L_minus, dif_neg h_part] using
-          (deriv_limit_eq_at_off_partition γ (h_Ioo' t ht) h_part).1
-    have hL_right' : ∀ t ∈ crossings,
-        Tendsto (deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend)
-          (𝓝[>] t) (𝓝 (L_plus t)) := fun t ht => by
-      by_cases h_part : t ∈ γ.toPwC1Immersion.toPiecewiseC1Path.partition
-      · simpa [L_plus, dif_pos h_part] using
-          (Classical.choose_spec (γ.toPwC1Immersion.right_deriv_limit t h_part)).2
-      · simpa [L_plus, dif_neg h_part] using
-          (deriv_limit_eq_at_off_partition γ (h_Ioo' t ht) h_part).2.1
-    have hL_left' : ∀ t ∈ crossings,
-        Tendsto (deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend)
-          (𝓝[<] t) (𝓝 (L_minus t)) := fun t ht => by
-      by_cases h_part : t ∈ γ.toPwC1Immersion.toPiecewiseC1Path.partition
-      · simpa [L_minus, dif_pos h_part] using
-          (Classical.choose_spec (γ.toPwC1Immersion.left_deriv_limit t h_part)).2
-      · simpa [L_minus, dif_neg h_part] using
-          (deriv_limit_eq_at_off_partition γ (h_Ioo' t ht) h_part).2.2
+    obtain ⟨L_plus, L_minus, hL_plus_def, hL_minus_def,
+        hL_plus_ne, hL_minus_ne, hL_right', hL_left'⟩ :=
+      canonical_derivLimits_at_crossings_exists γ h_Ioo'
     have h_B' : ∀ (k : Fin (decomp.order s)), 1 ≤ k.val →
         decomp.coeff s k ≠ 0 → ∀ t ∈ crossings,
           (L_plus t / (↑‖L_plus t‖ : ℂ)) ^ k.val =
           ((-(L_minus t)) / (↑‖L_minus t‖ : ℂ)) ^ k.val :=
       condB_to_h_B_at_crossings_corner hU_open hS_in_U γ decomp hCondB hs
-        h_Ioo' h_at' L_plus L_minus (fun _ _ => rfl) (fun _ _ => rfl)
+        h_Ioo' h_at' L_plus L_minus hL_plus_def hL_minus_def
         hL_plus_ne hL_minus_ne
     have h_flat_one : ∀ t₀ ∈ crossings,
         IsFlatOfOrder γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t₀ 1 :=
