@@ -83,8 +83,7 @@ theorem norm_exp_sub_exp (θ φ : ℝ) :
     ‖exp (↑θ * I) - exp (↑φ * I)‖ = 2 * |Real.sin ((θ - φ) / 2)| := by
   rw [exp_mul_I, exp_mul_I, ← ofReal_cos, ← ofReal_sin, ← ofReal_cos, ← ofReal_sin,
     show (↑(Real.cos θ) + ↑(Real.sin θ) * I) - (↑(Real.cos φ) + ↑(Real.sin φ) * I) =
-      ↑(Real.cos θ - Real.cos φ) + ↑(Real.sin θ - Real.sin φ) * I from by
-        push_cast; ring,
+      ↑(Real.cos θ - Real.cos φ) + ↑(Real.sin θ - Real.sin φ) * I by push_cast; ring,
     norm_add_mul_I, cos_sin_sub_sq_eq_half_angle_sq]
   exact Real.sqrt_sq (by positivity)
 
@@ -95,7 +94,7 @@ theorem fdBoundaryFun_arc_eq_exp (H : ℝ) (t : ℝ) (ht1 : 1/5 < t) (ht2 : t �
   rcases le_or_gt t (2/5) with ht | ht
   · simp only [fdBoundaryFun, fdArcAngle, hh, ht, ite_false, ite_true]
     congr 1; push_cast; ring
-  · simp only [fdBoundaryFun, fdArcAngle, hh, ht2, show ¬t ≤ 2/5 from by linarith,
+  · simp only [fdBoundaryFun, fdArcAngle, hh, ht2, show ¬t ≤ 2/5 by linarith,
       ite_false, ite_true]
     congr 1; push_cast; ring
 
@@ -107,7 +106,7 @@ theorem fdBoundaryFun_arc_dist_I (H : ℝ) (t : ℝ) (ht1 : 1/5 < t) (ht2 : t �
   rw [fdBoundaryFun_arc_eq_exp H t ht1 ht2, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
     show (↑(Real.cos θ) + ↑(Real.sin θ) * I : ℂ) - I =
         ↑(Real.cos θ - Real.cos (Real.pi / 2)) +
-        ↑(Real.sin θ - Real.sin (Real.pi / 2)) * I from by
+        ↑(Real.sin θ - Real.sin (Real.pi / 2)) * I by
       rw [Real.cos_pi_div_two, Real.sin_pi_div_two]; push_cast; ring,
     norm_add_mul_I, cos_sin_sub_sq_eq_half_angle_sq]
   exact Real.sqrt_sq (by positivity)
@@ -121,9 +120,9 @@ theorem fdBoundaryFun_arc_dist_rho (H : ℝ) (t : ℝ) (ht1 : 1/5 < t) (ht2 : t 
   rw [fdBoundaryFun_arc_eq_exp H t ht1 ht2, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
     show (↑(Real.cos θ) + ↑(Real.sin θ) * I : ℂ) - ellipticPointRho =
         ↑(Real.cos θ - Real.cos (2 * Real.pi / 3)) +
-        ↑(Real.sin θ - Real.sin (2 * Real.pi / 3)) * I from by
+        ↑(Real.sin θ - Real.sin (2 * Real.pi / 3)) * I by
       simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
-      rw [show (2 * Real.pi / 3 : ℝ) = Real.pi - Real.pi / 3 from by ring,
+      rw [show (2 * Real.pi / 3 : ℝ) = Real.pi - Real.pi / 3 by ring,
           Real.cos_pi_sub, Real.cos_pi_div_three, Real.sin_pi_sub, Real.sin_pi_div_three]
       push_cast; ring,
     norm_add_mul_I, cos_sin_sub_sq_eq_half_angle_sq]
@@ -139,7 +138,7 @@ theorem fdBoundaryFun_arc_dist_rhoPlusOne (H : ℝ) (t : ℝ)
   rw [fdBoundaryFun_arc_eq_exp H t ht1 ht2, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
     show (↑(Real.cos θ) + ↑(Real.sin θ) * I : ℂ) - ellipticPointRhoPlusOne =
         ↑(Real.cos θ - Real.cos (Real.pi / 3)) +
-        ↑(Real.sin θ - Real.sin (Real.pi / 3)) * I from by
+        ↑(Real.sin θ - Real.sin (Real.pi / 3)) * I by
       simp only [ellipticPointRhoPlusOne, ellipticPointRhoPlusOne', UpperHalfPlane.coe_mk]
       rw [Real.cos_pi_div_three, Real.sin_pi_div_three]
       push_cast; ring,
@@ -266,7 +265,7 @@ def mkSingleCrossingData_atI {H : ℝ} (hH : 1 < H)
   hδ_pos := hδ_pos
   hδ_small := fun ε hε hεt => by
     have hδ := hδ_small ε hε hεt
-    simp only [show (1 : ℝ) - 2/5 = 3/5 from by norm_num]
+    simp only [show (1 : ℝ) - 2/5 = 3/5 by norm_num]
     exact lt_min (by linarith) (by linarith)
   h_far := fun ε hε hεt t ht hδt => by
     have hε_half : ε < 1/2 := hεt.trans_le (hthresh_le.trans (min_le_left _ _))

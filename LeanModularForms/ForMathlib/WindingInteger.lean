@@ -64,8 +64,7 @@ theorem exists_uniform_modulus_avoiding {γ : ℝ → ℂ} {w : ℂ}
     intro t ht
     have h1 : Metric.infDist w (γ '' Icc (0 : ℝ) 1) ≤ dist w (γ t) :=
       Metric.infDist_le_dist_of_mem (mem_image_of_mem γ ht)
-    rw [Complex.dist_eq, norm_sub_rev] at h1
-    exact h1
+    rwa [Complex.dist_eq, norm_sub_rev] at h1
   -- Step 2: by uniform continuity on compact, get δ' for variation < ρ/2
   have h_unif : UniformContinuousOn γ (Icc (0 : ℝ) 1) :=
     isCompact_Icc.uniformContinuousOn_of_continuous hγ
@@ -83,11 +82,9 @@ theorem mem_slitPlane_of_ball_one (z : ℂ) (hz : ‖z - 1‖ < 1 / 2) :
     z ∈ Complex.slitPlane := by
   rw [Complex.mem_slitPlane_iff]
   left
-  have h_re : |z.re - 1| ≤ ‖z - 1‖ := by
-    simpa using Complex.abs_re_le_norm (z - 1)
+  have h_re : |z.re - 1| ≤ ‖z - 1‖ := by simpa using Complex.abs_re_le_norm (z - 1)
   have : |z.re - 1| < 1 / 2 := h_re.trans_lt hz
-  rw [abs_sub_lt_iff] at this
-  linarith
+  rw [abs_sub_lt_iff] at this; linarith
 
 /-! ### W-1 helpers (deferred main theorem)
 
@@ -110,25 +107,20 @@ theorem segClamp_mem_Icc (s_j s_jp1 t : ℝ) (h : s_j ≤ s_jp1) :
   refine ⟨le_max_left _ _, ?_⟩
   unfold segClamp
   rcases le_total t s_jp1 with ht | ht
-  · simp only [min_eq_left ht]
-    exact max_le h ht
-  · rw [min_eq_right ht, max_le_iff]
-    exact ⟨h, le_refl _⟩
+  · simpa [min_eq_left ht] using max_le h ht
+  · rw [min_eq_right ht, max_le_iff]; exact ⟨h, le_refl _⟩
 
 theorem segClamp_eq_left {s_j s_jp1 t : ℝ} (h : s_j ≤ s_jp1) (ht : t ≤ s_j) :
     segClamp s_j s_jp1 t = s_j := by
-  unfold segClamp
-  rw [min_eq_left (ht.trans h), max_eq_left ht]
+  rw [segClamp, min_eq_left (ht.trans h), max_eq_left ht]
 
 theorem segClamp_eq_self {s_j s_jp1 t : ℝ} (ht_lo : s_j ≤ t) (ht_hi : t ≤ s_jp1) :
     segClamp s_j s_jp1 t = t := by
-  unfold segClamp
-  rw [min_eq_left ht_hi, max_eq_right ht_lo]
+  rw [segClamp, min_eq_left ht_hi, max_eq_right ht_lo]
 
 theorem segClamp_eq_right {s_j s_jp1 t : ℝ} (h : s_j ≤ s_jp1) (ht : s_jp1 ≤ t) :
     segClamp s_j s_jp1 t = s_jp1 := by
-  unfold segClamp
-  rw [min_eq_right ht, max_eq_right h]
+  rw [segClamp, min_eq_right ht, max_eq_right h]
 
 /-- Helper: the segment ratio `(γ(clamp t) - w) / (γ s_j - w)`. -/
 noncomputable def segRatio (γ : ℝ → ℂ) (w : ℂ) (s_j s_jp1 t : ℝ) : ℂ :=
@@ -137,20 +129,17 @@ noncomputable def segRatio (γ : ℝ → ℂ) (w : ℂ) (s_j s_jp1 t : ℝ) : �
 theorem segRatio_eq_one_of_le {γ : ℝ → ℂ} {w : ℂ} {s_j s_jp1 t : ℝ}
     (h : s_j ≤ s_jp1) (ht : t ≤ s_j) (h_ne : γ s_j - w ≠ 0) :
     segRatio γ w s_j s_jp1 t = 1 := by
-  unfold segRatio
-  rw [segClamp_eq_left h ht, div_self h_ne]
+  rw [segRatio, segClamp_eq_left h ht, div_self h_ne]
 
 theorem segRatio_eq_self_div {γ : ℝ → ℂ} {w : ℂ} {s_j s_jp1 t : ℝ}
     (ht_lo : s_j ≤ t) (ht_hi : t ≤ s_jp1) :
     segRatio γ w s_j s_jp1 t = (γ t - w) / (γ s_j - w) := by
-  unfold segRatio
-  rw [segClamp_eq_self ht_lo ht_hi]
+  rw [segRatio, segClamp_eq_self ht_lo ht_hi]
 
 theorem segRatio_eq_full {γ : ℝ → ℂ} {w : ℂ} {s_j s_jp1 t : ℝ}
     (h : s_j ≤ s_jp1) (ht : s_jp1 ≤ t) :
     segRatio γ w s_j s_jp1 t = (γ s_jp1 - w) / (γ s_j - w) := by
-  unfold segRatio
-  rw [segClamp_eq_right h ht]
+  rw [segRatio, segClamp_eq_right h ht]
 
 /-- For partition with mesh < δ' and segments [s_j, s_{j+1}] of length ≤ mesh,
 on the j-th segment, `γ(clamp t) - γ s_j` is small, so `segRatio j t ∈ ball(1, 1/2)`. -/
@@ -168,8 +157,7 @@ theorem segRatio_mem_ball_one
     ⟨hsj.1.trans h_clamp_mem.1, h_clamp_mem.2.trans hsjp1.2⟩
   have h_dist : |segClamp s_j s_jp1 t - s_j| < δ' := by
     have h_nn : 0 ≤ segClamp s_j s_jp1 t - s_j := by linarith [h_clamp_mem.1]
-    rw [abs_of_nonneg h_nn]
-    linarith [h_clamp_mem.2]
+    rw [abs_of_nonneg h_nn]; linarith [h_clamp_mem.2]
   have h_lb : ρ ≤ ‖γ s_j - w‖ := h_dist_lb _ hsj
   have h_pos : 0 < ‖γ s_j - w‖ := hρ_pos.trans_le h_lb
   have h_ne : γ s_j - w ≠ 0 := norm_pos_iff.mp h_pos
@@ -311,8 +299,7 @@ private lemma partition_segment_exists {N : ℕ} (hN : 0 < N) {t : ℝ}
     · rw [le_div_iff₀ hN_real]
       have h_lt : t * N < ⌊t * N⌋₊ + 1 := Nat.lt_floor_add_one _
       have h_cast : ((⌊t * N⌋₊ + 1 : ℕ) : ℝ) = (⌊t * N⌋₊ : ℝ) + 1 := by
-        push_cast
-        ring
+        push_cast; ring
       rw [h_cast]
       linarith
   · refine ⟨N - 1, Nat.sub_lt hN zero_lt_one, ?_, ?_⟩
@@ -370,19 +357,14 @@ theorem exists_continuous_arg_lift_with_partition
   have hs_avoid : ∀ j ≤ N, γ (s j) - w ≠ 0 := fun j hj =>
     sub_ne_zero.mpr (h_avoid (s j) (hs_in j hj))
   have hs_mesh : ∀ j, s (j + 1) - s j = 1 / N := by
-    intro j
-    simp only [hs_def]
-    push_cast
-    ring
+    intro j; simp only [hs_def]; push_cast; ring
   have hs_le : ∀ j, s j ≤ s (j + 1) := fun j => hs_mono (Nat.le_succ _)
   have h_slit : ∀ j, j < N → ∀ t ∈ Icc (s j) (s (j + 1)),
       (γ t - w) / (γ (s j) - w) ∈ Complex.slitPlane := by
     intro j hj t ht
     rw [show (γ t - w) / (γ (s j) - w) = segRatio γ w (s j) (s (j + 1)) t from
       (segRatio_eq_self_div ht.1 ht.2).symm]
-    have h_mesh_j : s (j + 1) - s j < δ' := by
-      rw [hs_mesh j]
-      exact hN_mesh
+    have h_mesh_j : s (j + 1) - s j < δ' := by rw [hs_mesh j]; exact hN_mesh
     exact segRatio_mem_slitPlane hρ_pos h_dist_lb h_unif
       (hs_in j hj.le) (hs_in (j + 1) hj) (hs_le j) h_mesh_j t
   refine ⟨N, s, hN_pos, hs_zero, hs_N, hs_mono, hs_in, hs_avoid, h_slit, ?_, ?_⟩
@@ -393,8 +375,7 @@ theorem exists_continuous_arg_lift_with_partition
     refine continuousOn_im_log_segRatio hγ hρ_pos h_dist_lb h_unif
       (hs_in j (Finset.mem_range.mp hj).le) (hs_in (j + 1) (Finset.mem_range.mp hj))
       (hs_le j) ?_
-    rw [hs_mesh j]
-    exact hN_mesh
+    rw [hs_mesh j]; exact hN_mesh
   -- Lift property
   · intro t ht
     have h_avoid_t : γ t - w ≠ 0 := sub_ne_zero.mpr (h_avoid t ht)
@@ -404,9 +385,7 @@ theorem exists_continuous_arg_lift_with_partition
     have h_telescope := prod_segRatio_telescope hs_zero hs_mono hs_avoid hk_lt hk_lo hk_hi
     have h_ratio_ne : ∀ j ∈ Finset.range N,
         segRatio γ w (s j) (s (j + 1)) t ≠ 0 := fun j hj =>
-      have h_mesh_j : s (j + 1) - s j < δ' := by
-        rw [hs_mesh j]
-        exact hN_mesh
+      have h_mesh_j : s (j + 1) - s j < δ' := by rw [hs_mesh j]; exact hN_mesh
       Complex.slitPlane_ne_zero
         (segRatio_mem_slitPlane hρ_pos h_dist_lb h_unif
           (hs_in j (Finset.mem_range.mp hj).le)

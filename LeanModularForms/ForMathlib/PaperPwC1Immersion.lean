@@ -377,7 +377,7 @@ private lemma lipschitzOnWith_Icc_trans {E : Type*} [NormedAddCommGroup E]
         abs_of_nonpos (by linarith : x - b ≤ 0), abs_of_nonpos (by linarith : b - y ≤ 0)]
       ring
     calc ‖f x - f y‖
-        = ‖(f x - f b) + (f b - f y)‖ := by congr 1; abel
+        = ‖(f x - f b) + (f b - f y)‖ := by rw [sub_add_sub_cancel]
       _ ≤ ‖f x - f b‖ + ‖f b - f y‖ := norm_add_le _ _
       _ ≤ (C : ℝ) * ‖x - b‖ + (C : ℝ) * ‖b - y‖ := by gcongr
       _ = (C : ℝ) * ‖x - y‖ := by rw [← mul_add, ← h_dist]

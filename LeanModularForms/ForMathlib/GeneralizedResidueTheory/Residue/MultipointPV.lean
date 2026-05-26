@@ -1,31 +1,35 @@
 /-
 Copyright (c) 2024. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors:
+Authors: Chris Birkbeck
 -/
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.Residue.MeasureHelpers
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.Residue
 
 /-!
-# Multi-point Principal Value Infrastructure
+# Multi-point principal value: measurability and integrability
 
-Lemmas for multi-point Cauchy principal values: minimum separation,
-disjoint balls, boundedness, integrability, measurability, and the
-dominated convergence argument for decomposing multi-point PVs into
-sums of single-point PVs.
+Measurability and integrability lemmas for the multi-point Cauchy principal value
+integrand. Includes the AE-strong-measurability of the cutout integrand on the
+"good set" `{t : ∀ s ∈ S, ε < ‖γ t - s‖}`, a domination-by-bound integrability
+helper, and a dominated-convergence wrapper specialised to the PV setting.
 
-## Main Results
+## Main results
 
-* `dominated_convergence_multipoint_helper` — dominated convergence
-  for multi-point PV decomposition
-* `multipointPV_diff_tendsto` — difference integrand converges
-* `multipointPV_eq_sum_of_integral_zero` — multi-point PV equals
-  sum of single-point PVs when regular integral vanishes
+* `aEStronglyMeasurable_of_continuousOn_off_finite` — continuous-off-finite ⇒ AE strongly
+  measurable on `Icc a b`.
+* `aEStronglyMeasurable_pv_integrand_decomposed` — AE strong measurability for the
+  decomposed (regular + residue) cutout integrand.
+* `integrableOn_of_bounded_aeMeasurable` — bounded + AE measurable ⇒ integrable on `Icc a b`.
+* `tendsto_integral_of_dominated'` — dominated convergence specialised to right
+  filters of `ε ↘ 0`.
+* `intervalIntegrable_residueTerm` — interval integrability of a single residue term.
+* `aEStronglyMeasurable_pv_sum_residue` — measurability of the residue sum integrand.
 
-Note: `finset_discrete_min_sep` and `disjoint_balls_of_small_epsilon`
-were duplicated here and in `LeanModularForms.ForMathlib.MultipointPV`;
-the duplicates are removed and the canonical versions live in
-`LeanModularForms.ForMathlib.MultipointPV`.
+The dominated-convergence helpers used downstream
+(`dominated_convergence_multipoint_helper`, `multipointPV_diff_tendsto`,
+`multipointPV_eq_sum_of_integral_zero`) live in
+`LeanModularForms.ForMathlib.GeneralizedResidueTheory.Residue.MultipointPV.DominatedConvergence`.
 -/
 
 open Complex MeasureTheory Set Filter Topology Metric
@@ -235,7 +239,6 @@ private lemma piecewiseC1Immersion_deriv_continuousOn_off_partition (γ : Piecew
         γ.toPiecewiseC1Curve.endpoints_in_partition.2) ht_notP
     · exact absurd (h ▸ γ.toPiecewiseC1Curve.endpoints_in_partition.1) ht_notP
 
-
 /-- Residue term integrand is interval integrable. -/
 lemma intervalIntegrable_residueTerm {γ : PiecewiseC1Immersion} {s c : ℂ} {ε : ℝ}
     (hε : 0 < ε) :
@@ -278,6 +281,5 @@ lemma aEStronglyMeasurable_pv_sum_residue (S : Finset ℂ) (f : ℂ → ℂ) (γ
       (s := x) (c := residueSimplePole f x) hε hγ_cont hγ'_off_P) ih).congr ?_
     refine ae_of_all _ (fun t => ?_)
     simp only [Pi.add_apply, Finset.sum_insert hx]
-
 
 end

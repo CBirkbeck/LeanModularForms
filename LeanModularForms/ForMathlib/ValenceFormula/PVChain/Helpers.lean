@@ -212,8 +212,6 @@ lemma sVertOfS_im_lt_height_bound (S : Finset UpperHalfPlane) (s : ℂ)
     ⟨p, ⟨hp_mem, _⟩, rfl⟩⟩ | ⟨p, ⟨hp_mem, _⟩, rfl⟩ <;>
     first | exact h_bound p hp_mem | simpa using h_bound p hp_mem
 
-include hf in
-
 omit hf in
 /-- Summing `gWN · ord` over all of `S` equals summing over just zeros. -/
 theorem sum_gWN_ord_eq_filter_zeros (S : Finset UpperHalfPlane) (g : ℂ → ℂ) :

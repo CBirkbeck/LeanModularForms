@@ -35,11 +35,9 @@ theorem arg_mem_arc_range {z : ℂ} (hz_norm : ‖z‖ = 1) (hz_im : 0 < z.im)
   have h_cos : Real.cos z.arg = z.re := by rw [Complex.cos_arg hz_ne, hz_norm, div_one]
   have h_sin : Real.sin z.arg = z.im := by rw [Complex.sin_arg, hz_norm, div_one]
   have h_arg_pos : 0 < z.arg := (Complex.arg_nonneg_iff.mpr hz_im.le).lt_of_ne fun h => by
-    have := Real.sin_zero ▸ h ▸ h_sin
-    linarith
+    rw [← h, Real.sin_zero] at h_sin; linarith
   have h_arg_lt_pi : z.arg < Real.pi := (Complex.arg_le_pi z).lt_of_ne fun h => by
-    have := h_sin.symm.trans (h ▸ Real.sin_pi)
-    linarith
+    rw [h, Real.sin_pi] at h_sin; linarith
   have h_cos_2pi3 : Real.cos (2 * Real.pi / 3) = -(1/2) := by
     rw [show (2 * Real.pi / 3 : ℝ) = Real.pi - Real.pi / 3 by ring,
       Real.cos_pi_sub, Real.cos_pi_div_three]

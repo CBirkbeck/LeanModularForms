@@ -12,7 +12,7 @@ Utility lemmas for working with `PiecewiseC1Path` partition structure and curve 
 
 ## Main definitions
 
-* `PiecewiseC1Path.infDist` -- infimum distance from `z_0` to the path image on [0, 1].
+* `PiecewiseC1Path.infDist` — infimum distance from `z₀` to the path image on `[0, 1]`.
 -/
 
 open Set Complex Metric
@@ -23,9 +23,7 @@ variable {x y : ℂ}
 
 namespace PiecewiseC1Path
 
-/-! ### Avoidance -/
-
-/-- Infimum distance from `z_0` to the path image on `[0, 1]`. -/
+/-- Infimum distance from `z₀` to the path image on `[0, 1]`. -/
 noncomputable def infDist (γ : PiecewiseC1Path x y) (z₀ : ℂ) : ℝ :=
   Metric.infDist z₀ (γ.toPath.extend '' Icc 0 1)
 

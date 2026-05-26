@@ -44,10 +44,8 @@ theorem oncurve_arc_capture
   have h_im_pos : 0 < z.im :=
     lt_of_lt_of_le (by positivity : (0:ℝ) < Real.sqrt 3 / 2) h_im_ge
   have h_normSq : z.re ^ 2 + z.im ^ 2 = 1 := by
-    have : ‖z‖ ^ 2 = z.re ^ 2 + z.im ^ 2 := by
-      rw [Complex.sq_norm, Complex.normSq_apply]
-      ring
-    rw [h_norm] at this
+    have := Complex.sq_norm z
+    rw [Complex.normSq_apply, h_norm] at this
     linarith
   have h_im_sq_ge : z.im ^ 2 ≥ 3/4 := by
     nlinarith [mul_self_le_mul_self (by positivity : 0 ≤ Real.sqrt 3 / 2) h_im_ge,
@@ -98,7 +96,7 @@ theorem oncurve_vert_capture
       nlinarith [mul_self_lt_mul_self (by positivity : 0 ≤ Real.sqrt 3 / 2) h_im_gt,
         Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num)]
     rw [Complex.norm_eq_sqrt_sq_add_sq]
-    calc 1 = Real.sqrt 1 := by simp only [Real.sqrt_one]
+    calc 1 = Real.sqrt 1 := Real.sqrt_one.symm
       _ < Real.sqrt (z.re ^ 2 + z.im ^ 2) :=
           Real.sqrt_lt_sqrt (by norm_num) (by linarith)
   let p : ℍ := ⟨z, h_im_pos⟩
@@ -188,7 +186,7 @@ theorem oncurve_seg4_capture
       nlinarith [mul_self_lt_mul_self (by positivity : 0 ≤ Real.sqrt 3 / 2) h_im_gt,
         Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num)]
     rw [Complex.norm_eq_sqrt_sq_add_sq]
-    calc 1 = Real.sqrt 1 := by simp only [Real.sqrt_one]
+    calc 1 = Real.sqrt 1 := Real.sqrt_one.symm
       _ < Real.sqrt ((fdBoundary_seg1_H H s).re ^ 2 + (fdBoundary_seg1_H H s).im ^ 2) :=
         Real.sqrt_lt_sqrt (by norm_num) (by linarith)
   let p : ℍ := ⟨fdBoundary_seg1_H H s, h_im_pos⟩

@@ -168,7 +168,7 @@ lemma modform_comp_ofComplex_S_identity (z : ℂ) (hz : 0 < z.im) :
     f (UpperHalfPlane.ofComplex (-(1:ℂ)/z)) = (z : ℂ) ^ k * f (UpperHalfPlane.ofComplex z) := by
   have hz_ne : z ≠ 0 := fun h => by simp [h] at hz
   have h_neg_inv_im : 0 < (-(1:ℂ)/z).im := by
-    rw [show -(1:ℂ)/z = (-z)⁻¹ from by field_simp, Complex.inv_im]
+    rw [show -(1:ℂ)/z = (-z)⁻¹ by field_simp, Complex.inv_im]
     exact div_pos (by simp [hz]) (Complex.normSq_pos.mpr (neg_ne_zero.mpr hz_ne))
   rw [UpperHalfPlane.ofComplex_apply_of_im_pos hz,
     UpperHalfPlane.ofComplex_apply_of_im_pos h_neg_inv_im]
@@ -180,9 +180,7 @@ lemma modform_comp_ofComplex_S_identity (z : ℂ) (hz : 0 < z.im) :
       field_simp)
   rw [h_eq]
   have hS : ModularGroup.S ∈ Gamma 1 := by rw [Gamma_one_top]; exact Subgroup.mem_top _
-  have h := SlashInvariantForm.slash_action_eqn_SL'' f hS z_uhp
-  rw [ModularGroup.denom_S] at h
-  exact h
+  simpa [ModularGroup.denom_S] using SlashInvariantForm.slash_action_eqn_SL'' f hS z_uhp
 
 /-- S-invariance of vanishing order: `ord(f, S·z) = ord(f, z)`. -/
 lemma ord_S_eq (p : ℍ) :
@@ -208,10 +206,10 @@ lemma ord_S_eq (p : ℍ) :
           exact div_pos (by simp [hz]) (Complex.normSq_pos.mpr (neg_ne_zero.mpr hz_ne))
         simp only [smul_eq_mul, hG_def, dif_pos h_neg_inv_im, dif_pos hz]
         have h_eq := modform_comp_ofComplex_S_identity f z hz
-        rw [show -(1:ℂ)/z = -z⁻¹ from by field_simp,
-          show f (↑(UpperHalfPlane.ofComplex (-z⁻¹))) = f ⟨-z⁻¹, h_neg_inv_im⟩ from by
+        rw [show -(1:ℂ)/z = -z⁻¹ by field_simp,
+          show f (↑(UpperHalfPlane.ofComplex (-z⁻¹))) = f ⟨-z⁻¹, h_neg_inv_im⟩ by
             congr 1; exact UpperHalfPlane.ofComplex_apply_of_im_pos h_neg_inv_im,
-          show f (↑(UpperHalfPlane.ofComplex z)) = f ⟨z, hz⟩ from by
+          show f (↑(UpperHalfPlane.ofComplex z)) = f ⟨z, hz⟩ by
             congr 1; exact UpperHalfPlane.ofComplex_apply_of_im_pos hz] at h_eq
         exact h_eq
     _ = meromorphicOrderAt G (p : ℂ) :=
@@ -231,13 +229,13 @@ theorem modularForm_finitely_many_zeros_in_fdBox (hf : f ≠ 0) {M : ℝ} (hM : 
     isBounded_iff_forall_norm_le.mpr ⟨1 + M, fun z hz =>
       (Complex.norm_le_abs_re_add_abs_im z).trans (by
         have : |z.re| < 1 := abs_lt.mpr ⟨by linarith [hz.1], hz.2.1⟩
-        have : |z.im| ≤ M := abs_le.mpr ⟨by linarith [hz.2.2.1], le_of_lt hz.2.2.2⟩
+        have : |z.im| ≤ M := abs_le.mpr ⟨by linarith [hz.2.2.1], hz.2.2.2.le⟩
         linarith)⟩
   obtain ⟨z₀, hz₀K, hz₀_acc⟩ :=
     (show Set.Infinite _ from h_inf).exists_accPt_of_subset_isCompact hBdd.isCompact_closure
       ((sep_subset _ _).trans subset_closure)
   have hz₀_pos : 0 < z₀.im := by
-    have : (1:ℝ)/2 ≤ z₀.im := closure_minimal (fun z hz => le_of_lt hz.2.2.1)
+    have : (1:ℝ)/2 ≤ z₀.im := closure_minimal (fun z hz => hz.2.2.1.le)
       (isClosed_le continuous_const Complex.continuous_im) hz₀K
     linarith
   have h_freq : ∃ᶠ y in 𝓝[≠] z₀, modularFormCompOfComplex f y = 0 :=
@@ -305,7 +303,7 @@ theorem exists_height_cusp_nonvanishing (hf : f ≠ 0) :
         q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f) q ≠ 0 := by
   obtain ⟨r, hr_pos, hr_nonvan⟩ := exists_radius_cusp_nonvanishing f hf
   let H₀ := max (heightOfRadius r) (Real.sqrt 3 / 2 + 1)
-  refine ⟨H₀, lt_of_lt_of_le (by linarith : Real.sqrt 3 / 2 < Real.sqrt 3 / 2 + 1)
+  refine ⟨H₀, (by linarith : Real.sqrt 3 / 2 < Real.sqrt 3 / 2 + 1).trans_le
     (le_max_right _ _), fun q hq hq_ne => ?_⟩
   apply hr_nonvan q _ hq_ne
   apply Metric.closedBall_subset_closedBall _ hq
@@ -314,7 +312,7 @@ theorem exists_height_cusp_nonvanishing (hf : f ≠ 0) :
       ≤ Real.exp (-2 * Real.pi * heightOfRadius r) :=
         Real.exp_le_exp.mpr (by nlinarith [Real.pi_pos])
     _ = r := by
-        rw [show -2 * Real.pi * heightOfRadius r = Real.log r from by
+        rw [show -2 * Real.pi * heightOfRadius r = Real.log r by
           unfold heightOfRadius; field_simp]
         exact Real.exp_log hr_pos
 

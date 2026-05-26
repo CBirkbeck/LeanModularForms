@@ -172,9 +172,9 @@ theorem fdBoundaryFun_seg1_re_dist {z : ℂ} (_hz_re : |z.re| < 1/2)
     {H : ℝ} {t : ℝ} (ht : t ≤ 1/5) :
     1/2 - |z.re| ≤ ‖fdBoundaryFun H t - z‖ := by
   calc 1/2 - |z.re| ≤ |1/2 - z.re| := by
-        have := abs_sub_abs_le_abs_sub (1/2 : ℝ) z.re
-        simp only [show |(1 : ℝ)/2| = 1/2 from by norm_num] at this
-        linarith
+        have h := abs_sub_abs_le_abs_sub (1/2 : ℝ) z.re
+        rw [abs_of_pos (by norm_num : (0 : ℝ) < 1/2)] at h
+        exact h
     _ = |(fdBoundaryFun H t - z).re| := by rw [sub_re, fdBoundaryFun_seg1_re H t ht]
     _ ≤ ‖fdBoundaryFun H t - z‖ := Complex.abs_re_le_norm _
 
@@ -193,9 +193,9 @@ theorem fdBoundaryFun_seg4_re_dist {z : ℂ} (_hz_re : |z.re| < 1/2)
     {H : ℝ} {t : ℝ} (ht3 : 3/5 < t) (ht4 : t ≤ 4/5) :
     1/2 - |z.re| ≤ ‖fdBoundaryFun H t - z‖ := by
   calc 1/2 - |z.re| ≤ |-1/2 - z.re| := by
-        have := abs_sub_abs_le_abs_sub (-1/2 : ℝ) z.re
-        simp only [show |(-1 : ℝ)/2| = 1/2 from by norm_num] at this
-        linarith
+        have h := abs_sub_abs_le_abs_sub (-1/2 : ℝ) z.re
+        rw [show |(-1 : ℝ)/2| = 1/2 by norm_num] at h
+        exact h
     _ = |(fdBoundaryFun H t - z).re| := by rw [sub_re, fdBoundaryFun_seg4_re H t ht3 ht4]
     _ ≤ ‖fdBoundaryFun H t - z‖ := Complex.abs_re_le_norm _
 

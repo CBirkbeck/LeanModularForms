@@ -8,48 +8,13 @@ import LeanModularForms.ForMathlib.WindingWeightProofs
 /-!
 # Arc FTC — Crossing Angles and Winding Numbers for FD Boundary
 
-This file computes the crossing angles at the three on-curve points of the
-fundamental domain boundary (`i`, `ρ`, `ρ+1`) and provides geometric lemmas
-for the `ArcFTCHyp` construction.
-
-## Mathematical content
-
-The FD boundary crosses three special points:
-- `i` at `t₀ = 2/5` (smooth crossing on the unit circle arc)
-- `ρ` at `t₀ = 3/5` (corner: arc meets left vertical)
-- `ρ+1` at `t₀ = 1/5` (corner: right vertical meets arc)
-
-At each crossing, the **FTC limit** `L` satisfies `L/(2πi) = -α/(2π)`:
-- At `i`: `L = -πi`, giving winding number `-1/2`
-- At `ρ`, `ρ+1`: `L = -πi/3`, giving winding number `-1/6`
-
-## Strategy
-
-1. Compute tangent directions on each segment of the FD boundary
-2. Compute the arg of each tangent at the crossing points
-3. Derive the crossing angle `α = arg(L_right) - arg(-L_left)`
-4. Verify consistency of FTC limits with winding numbers
+Geometric lemmas for crossings of the fundamental domain boundary at the three
+on-curve points `i`, `ρ`, `ρ+1`, used in the `ArcFTCHyp` construction.
 
 ## Main results
 
-### Auxiliary
-* `arg_exp_mul_I` — `arg(exp(iθ)) = θ` for `θ ∈ (-π, π]`
-* `arg_ofReal_mul_I` — `arg(r·I) = π/2` for `r > 0`
-
-### Tangent directions
-* `fdBoundary_arc_deriv_eq` — derivative of arc parametrization
-* `fdBoundary_arc_deriv_at_two_fifths` — arc tangent at `i`
-* `fdBoundary_seg1_deriv` — right vertical tangent
-* `fdBoundary_seg4_deriv` — left vertical tangent
-
-### Crossing angles
-* `fdBoundary_crossing_angle_at_rhoPlusOne` — angle at `ρ+1` is `π/3`
-* `fdBoundary_crossing_angle_at_rho` — angle at `ρ` is `π/3`
-* `fdBoundary_angle_at_I_partition` — angle at `i` is `π`
-
-### Limit targets
-* `arcFTC_limit_target_I` — `-(πi)/(2πi) = -1/2`
-* `arcFTC_limit_target_rho` — `-(πi/3)/(2πi) = -1/6`
+* `arg_ofReal_mul_I` — `arg(r·I) = π/2` for `r > 0`.
+* `fdBoundary_arc_deriv_eq` — derivative of the arc parametrization of the FD boundary.
 
 ## References
 

@@ -115,7 +115,7 @@ theorem contourIntegral_higherOrder_eq_zero_of_avoids
     push_cast
     ring
   exact PiecewiseC1Path.contourIntegral_eq_zero_of_hasDerivAt_of_closed γ rfl
-    (fun t ht => h_avoids t ht) hF h_int
+    h_avoids hF h_int
 
 variable {x : ℂ}
 
@@ -237,7 +237,7 @@ private theorem cpv_badSet_measurableSet (γP : PiecewiseC1Path x x) (S : Finset
     (ε : ℝ) : MeasurableSet (cpv_badSet γP S ε) := by
   classical
   have h_eq : cpv_badSet γP S ε = ⋃ s ∈ S, {t : ℝ | ‖γP.toPath.extend t - s‖ ≤ ε} := by
-    ext t; simp [cpv_badSet, Set.mem_setOf_eq]
+    ext t; simp [cpv_badSet]
   rw [h_eq]
   exact (isClosed_biUnion_finset fun s _ => isClosed_le
     ((γP.toPath.continuous_extend.sub continuous_const).norm) continuous_const).measurableSet
@@ -286,7 +286,7 @@ private theorem cpv_ae_not_mem_S (γ : ClosedPwC1Immersion x) (S : Finset ℂ) :
   refine MeasureTheory.measure_mono_null ?_ (volume_preimage_finset_in_Icc01_zero γ S)
   intro t ht
   push Not at ht
-  exact ⟨ht.1, ht.2⟩
+  exact ht
 
 /-- For a function `g` differentiable on `U` and γ ⊆ U, the cutoff integrands
 converge pointwise a.e. on `Icc 0 1` to the contour integrand as `ε → 0⁺`. -/

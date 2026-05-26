@@ -80,8 +80,8 @@ theorem contourIntegral_inv_eq_sum_log_segRatio
   have hγ_diff : ∀ t ∈ Ioo (s j) (s (j + 1)) \ (γ.partition : Set ℝ),
       HasDerivAt γ.toPath.extend (deriv γ.toPath.extend t) t := fun t ht =>
     (γ.differentiable_off_extend t
-      ⟨lt_of_le_of_lt (hs_in j hj.le).1 ht.1.1,
-       lt_of_lt_of_le ht.1.2 (hs_in (j + 1) hj).2⟩ ht.2).hasDerivAt
+      ⟨(hs_in j hj.le).1.trans_lt ht.1.1,
+       ht.1.2.trans_le (hs_in (j + 1) hj).2⟩ ht.2).hasDerivAt
   exact segment_log_FTC (hs_mono (Nat.le_succ j)) γ.partition.countable_toSet
     γ.toPath.continuous_extend.continuousOn hγ_diff (h_avoid j hj.le) (h_slit j hj)
     (h_int_seg j hj)
@@ -186,7 +186,7 @@ theorem hasGeneralizedWindingNumber_eq_arg_diff_W1_closed
     rw [h_θ_one, h_θ_zero]; ring
   have h_re_zero : Real.log ‖γ.toPath.extend 1 - w‖ -
       Real.log ‖γ.toPath.extend 0 - w‖ = 0 := by
-    rw [γ.toPath.extend_one, γ.toPath.extend_zero]; ring
+    simp
   have h_w := hasGeneralizedWindingNumber_of_avoids (γ := γ) (z₀ := w) ⟨d, hd_pos, hd_bd⟩
   rw [h_contour, h_re_zero, Complex.ofReal_zero, zero_add, ← h_θ_diff] at h_w
   rw [show ((θ 1 - θ 0 : ℝ) : ℂ) / (2 * Real.pi) =
@@ -227,9 +227,7 @@ theorem hasGeneralizedWindingNumber_integer_of_closed
           rw [h_eq_endpoints]
   have h_exp_diff_one : Complex.exp (Complex.I * ((θ 1 - θ 0 : ℝ) : ℂ)) = 1 := by
     have h_split : Complex.I * ((θ 1 - θ 0 : ℝ) : ℂ) =
-        Complex.I * (θ 1 : ℂ) - Complex.I * (θ 0 : ℂ) := by
-      push_cast
-      ring
+        Complex.I * (θ 1 : ℂ) - Complex.I * (θ 0 : ℂ) := by push_cast; ring
     rw [h_split, Complex.exp_sub, h_exp_eq, div_self (Complex.exp_ne_zero _)]
   obtain ⟨n, hn⟩ := Complex.exp_eq_one_iff.mp h_exp_diff_one
   have h_diff_eq : ((θ 1 - θ 0 : ℝ) : ℂ) = (n : ℂ) * (2 * (Real.pi : ℂ)) := by
@@ -284,7 +282,7 @@ theorem generalizedWindingNumber_locally_const_of_closed
   intro w' hw'
   rw [Metric.mem_ball] at hw'
   have hw'_in_ε₀ : w' ∈ Metric.ball w ε₀ :=
-    Metric.mem_ball.mpr (lt_of_lt_of_le hw' (min_le_right _ _))
+    Metric.mem_ball.mpr (hw'.trans_le (min_le_right _ _))
   have hw_in : w ∈ Metric.ball w ε₀ := Metric.mem_ball_self hε₀_pos
   have winding_int : ∀ w'' ∈ Metric.ball w ε₀,
       ∃ n : ℤ, HasGeneralizedWindingNumber γ w'' (n : ℂ) := fun w'' hw'' =>
@@ -296,15 +294,14 @@ theorem generalizedWindingNumber_locally_const_of_closed
   have h_eq_w' : generalizedWindingNumber γ w' = (n_w' : ℂ) := h_n_w'.eq
   have h_eq_w : generalizedWindingNumber γ w = (n_w : ℂ) := h_n_w.eq
   have h_dist_int : dist ((n_w' : ℂ)) ((n_w : ℂ)) < 1 / 2 :=
-    h_eq_w' ▸ h_eq_w ▸ h_close (lt_of_lt_of_le hw' (min_le_left _ _))
+    h_eq_w' ▸ h_eq_w ▸ h_close (hw'.trans_le (min_le_left _ _))
   have h_int_eq : n_w' = n_w := by
     by_contra h_ne
     have h_one_le : (1 : ℝ) ≤ |((n_w' - n_w : ℤ) : ℝ)| :=
       mod_cast Int.one_le_abs (sub_ne_zero.mpr h_ne)
     have h_norm_eq : ‖((n_w' : ℂ) - (n_w : ℂ))‖ = |((n_w' - n_w : ℤ) : ℝ)| := by
-      rw [show ((n_w' : ℂ) - (n_w : ℂ)) = (((n_w' - n_w : ℤ) : ℂ)) by
-            push_cast
-            ring, Complex.norm_intCast]
+      rw [show ((n_w' : ℂ) - (n_w : ℂ)) = (((n_w' - n_w : ℤ) : ℂ)) by push_cast; ring,
+        Complex.norm_intCast]
     rw [Complex.dist_eq, h_norm_eq] at h_dist_int
     linarith
   rw [h_eq_w', h_eq_w, h_int_eq]

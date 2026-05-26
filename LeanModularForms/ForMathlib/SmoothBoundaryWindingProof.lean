@@ -108,10 +108,10 @@ theorem smooth_boundary_classification (z : ℂ)
     (hz_re : |z.re| ≤ 1/2) :
     (|z.re| = 1/2 ∧ ‖z‖ > 1) ∨ (‖z‖ = 1 ∧ z.re ≠ 0 ∧ |z.re| ≠ 1/2) := by
   have hnorm_ge : (1 : ℝ) ≤ ‖z‖ := by
-    rw [Complex.norm_def]; exact Real.one_le_sqrt.mpr (by linarith)
+    rw [Complex.norm_def]; exact Real.one_le_sqrt.mpr hz_nsq
   rcases hnorm_ge.eq_or_lt with h_eq | h_gt
   · have h_nsq_1 : Complex.normSq z = 1 := by
-      rw [Complex.normSq_eq_norm_sq, h_eq.symm]; ring
+      rw [Complex.normSq_eq_norm_sq, ← h_eq]; ring
     refine Or.inr ⟨h_eq.symm, fun hre_zero => ?_, fun hre_half => ?_⟩
     · rw [Complex.normSq_apply, hre_zero, mul_zero, zero_add] at h_nsq_1
       exact hz_ne_I <| Complex.ext (hre_zero.trans I_re.symm) <| by

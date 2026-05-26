@@ -45,7 +45,6 @@ in a Hausdorff space and cancellation of `2πi`:
 
 * `cpv_residue_side_forMathlib` — CPV integral tends to `2πi · Σ gWN · ord`
 * `cpv_modular_side_forMathlib` — CPV integral tends to `-(2πi)(k/12 - ord_∞)`
-* `pv_chain_identity_forMathlib` — equating the two sides
 
 ## References
 
@@ -99,5 +98,4 @@ theorem cpv_modular_side_forMathlib (S : Finset UpperHalfPlane) (hS : ∀ p ∈ 
         (𝓝 (-(2 * ↑Real.pi * I * ((k : ℂ) / 12 - (orderAtCusp' f : ℂ))))) :=
   cpv_modular_side_tendsto f hf S hS hS_complete
 
-include hf in
 end

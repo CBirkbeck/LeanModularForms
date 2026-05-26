@@ -50,14 +50,14 @@ theorem hasDerivAt_antiderivative_pow_inv_complex
   have h_pow : HasDerivAt (fun w : ℂ => (w - s) ^ (k - 1))
       (↑(k - 1) * (z - s) ^ (k - 1 - 1) * 1) z :=
     ((hasDerivAt_id z).sub_const s).pow (k - 1)
-  rw [show k - 1 - 1 = k - 2 from by omega] at h_pow
+  rw [show k - 1 - 1 = k - 2 from by lia] at h_pow
   have h_const := (h_pow.inv (pow_ne_zero _ (sub_ne_zero.mpr hz))).const_mul
     (-(↑(k - 1) : ℂ)⁻¹)
   convert h_const using 1
-  have hk1 : (↑(k - 1) : ℂ) ≠ 0 := by exact_mod_cast (by omega : 0 < k - 1).ne'
+  have hk1 : (↑(k - 1) : ℂ) ≠ 0 := by exact_mod_cast (by lia : 0 < k - 1).ne'
   have h_pow_k2_ne : (z - s) ^ (k - 2) ≠ 0 := pow_ne_zero _ (sub_ne_zero.mpr hz)
   have h_pow2 : ((z - s) ^ (k - 1)) ^ 2 = (z - s) ^ k * (z - s) ^ (k - 2) := by
-    rw [← pow_mul, ← pow_add]; congr 1; omega
+    rw [← pow_mul, ← pow_add]; congr 1; lia
   rw [h_pow2]
   field_simp
 
@@ -148,7 +148,7 @@ theorem eventually_ne_right
     self_mem_nhdsWithin] with t h_b ht
   have h_pos : 0 < t - t₀ := sub_pos.mpr ht
   intro h_eq
-  have h_diff_zero : γ t - γ t₀ = 0 := by rw [h_s]; exact sub_eq_zero.mpr h_eq
+  have h_diff_zero : γ t - γ t₀ = 0 := h_s ▸ sub_eq_zero.mpr h_eq
   simp only [h_diff_zero, zero_sub, norm_neg, norm_smul, Real.norm_eq_abs,
     abs_of_pos h_pos] at h_b
   nlinarith
@@ -163,7 +163,7 @@ theorem eventually_ne_left
     self_mem_nhdsWithin] with t h_b ht
   have h_neg : t - t₀ < 0 := sub_neg.mpr ht
   intro h_eq
-  have h_diff_zero : γ t - γ t₀ = 0 := by rw [h_s]; exact sub_eq_zero.mpr h_eq
+  have h_diff_zero : γ t - γ t₀ = 0 := h_s ▸ sub_eq_zero.mpr h_eq
   simp only [h_diff_zero, zero_sub, norm_neg, norm_smul, Real.norm_eq_abs,
     abs_of_neg h_neg] at h_b
   nlinarith
@@ -279,9 +279,7 @@ theorem norm_sq_segment_to_pole_lower_bound
     linarith
   rw [h_expand, h_cross, h₁, h₂]
   have h_ab_le : α * β ≤ 1 / 4 := by nlinarith [sq_nonneg (α - β)]
-  have h_quad : α ^ 2 + 2 * α * β + β ^ 2 = 1 := by
-    have : (α + β) ^ 2 = 1 := by rw [h_sum]; ring
-    nlinarith [this]
+  have h_quad : α ^ 2 + 2 * α * β + β ^ 2 = 1 := by nlinarith [h_sum]
   nlinarith [h_quad, h_ab_le, sq_nonneg (‖z₁ - z₂‖)]
 
 /-- When the chord between two equidistant points is at most `d`, the segment from
@@ -397,9 +395,8 @@ theorem F_diff_at_tangent_target_tendsto_zero_right
       2 ^ k * (‖γ t - s - (‖γ t - s‖ / ‖L‖ : ℝ) • L‖ / ‖γ t - s‖ ^ k) := by
     filter_upwards [eventually_ne_right hL h_deriv h_s, h_chord_le_d] with t h_ne hcd
     have hcd' : ‖γ t - (s + (‖γ t - s‖ / ‖L‖ : ℝ) • L)‖ ≤ ‖γ t - s‖ := by
-      rw [show γ t - (s + (‖γ t - s‖ / ‖L‖ : ℝ) • L) =
+      rwa [show γ t - (s + (‖γ t - s‖ / ‖L‖ : ℝ) • L) =
             γ t - s - (‖γ t - s‖ / ‖L‖ : ℝ) • L by ring]
-      exact hcd
     have h_bound := norm_F_diff_at_tangent_target_le hk hL h_ne hcd'
     rw [show ‖γ t - (s + (‖γ t - s‖ / ‖L‖ : ℝ) • L)‖ =
           ‖γ t - s - (‖γ t - s‖ / ‖L‖ : ℝ) • L‖ by congr 1; ring] at h_bound
@@ -455,9 +452,8 @@ theorem F_diff_at_tangent_target_tendsto_zero_left
       2 ^ k * (‖γ t - s - (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L)‖ / ‖γ t - s‖ ^ k) := by
     filter_upwards [eventually_ne_left hL h_deriv h_s, h_chord_le_d] with t h_ne hcd
     have hcd' : ‖γ t - (s + (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L))‖ ≤ ‖γ t - s‖ := by
-      rw [show γ t - (s + (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L)) =
+      rwa [show γ t - (s + (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L)) =
             γ t - s - (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L) by ring]
-      exact hcd
     have h_bound := norm_F_diff_at_tangent_target_le hk hLneg h_ne hcd'
     rw [show ‖γ t - (s + (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L))‖ =
           ‖γ t - s - (‖γ t - s‖ / ‖(-L)‖ : ℝ) • (-L)‖ by congr 1; ring] at h_bound

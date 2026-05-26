@@ -52,7 +52,7 @@ theorem arcsin_le_pi_half_mul {x : ℝ} (hx : 0 ≤ x) (hx1 : x ≤ 1) :
   rw [Real.sin_arcsin (by linarith) hx1] at h_jordan
   have h1 : Real.pi / 2 * (2 / Real.pi * Real.arcsin x) ≤ Real.pi / 2 * x :=
     mul_le_mul_of_nonneg_left h_jordan (by positivity)
-  rwa [← mul_assoc, show Real.pi / 2 * (2 / Real.pi) = (1 : ℝ) from by field_simp,
+  rwa [← mul_assoc, show Real.pi / 2 * (2 / Real.pi) = (1 : ℝ) by field_simp,
     one_mul] at h1
 
 /-- `arcsinDelta(ε) < 1/5` for `0 < ε < 1/3`. -/
@@ -71,7 +71,7 @@ private theorem halfAngle_eq (t : ℝ) :
 
 private theorem abs_halfAngle_eq (t : ℝ) :
     |5 * (t - 2/5) * Real.pi / 12| = 5 * Real.pi / 12 * |t - 2/5| := by
-  rw [show 5 * (t - 2/5) * Real.pi / 12 = 5 * Real.pi / 12 * (t - 2/5) from by ring,
+  rw [show 5 * (t - 2/5) * Real.pi / 12 = 5 * Real.pi / 12 * (t - 2/5) by ring,
     abs_mul, abs_of_pos (by positivity)]
 
 private theorem abs_halfAngle_le_pi12 {t : ℝ}

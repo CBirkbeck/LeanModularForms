@@ -19,7 +19,6 @@ path and proves basic properties including linearity and the fundamental theorem
 
 ## Main results
 
-* `contourIntegral_neg` — `∮_γ (-f) = -∮_γ f`
 * `contourIntegral_add` — `∮_γ (f + g) = ∮_γ f + ∮_γ g` (under integrability)
 * `contourIntegral_smul` — `∮_γ (c • f) = c • ∮_γ f`
 * `contourIntegral_eq_sub_of_hasDerivAt` — if `F' = f` along the path, then
@@ -58,7 +57,6 @@ def contourIntegral (f : ℂ → ℂ) (γ : PiecewiseC1Path x y) : ℂ :=
 def contourIntegrand (f : ℂ → ℂ) (γ : PiecewiseC1Path x y) (t : ℝ) : ℂ :=
   f (γ t) * deriv γ.toPath.extend t
 
-
 /-- Addition: `∮_γ (f + g) = ∮_γ f + ∮_γ g` when both integrands are integrable. -/
 theorem contourIntegral_add (f g : ℂ → ℂ) (γ : PiecewiseC1Path x y)
     (hf : IntervalIntegrable (contourIntegrand f γ) volume 0 1)
@@ -78,7 +76,6 @@ theorem contourIntegral_smul (c : ℂ) (f : ℂ → ℂ) (γ : PiecewiseC1Path x
 theorem contourIntegral_zero (γ : PiecewiseC1Path x y) :
     contourIntegral (fun _ => 0) γ = 0 := by
   simp [contourIntegral]
-
 
 /-- **Finset sum linearity for contour integrals.** When each integrand
 `contourIntegrand (f i) γ` is interval-integrable on `[0, 1]`,
@@ -217,7 +214,6 @@ theorem contourIntegral_eq_sub_of_hasDerivAt {F f : ℂ → ℂ}
         (γ.differentiable_off_extend t ht htp).hasDerivAt rfl
   have h := ftc_induction γ _ 0 1 hFγ_cont hFγ_deriv h_int le_rfl zero_le_one subset_rfl
   rwa [γ.apply_one, γ.apply_zero] at h
-
 
 /-- **FTC for closed piecewise C¹ paths.** If `F' = f` along a closed path, then `∮_γ f = 0`. -/
 theorem contourIntegral_eq_zero_of_hasDerivAt_of_closed {F f : ℂ → ℂ}

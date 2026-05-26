@@ -266,8 +266,8 @@ lemma finset_discrete (S0 : Finset ℂ) :
 
 omit f hf in
 /-- CPV of `c/(z - s)` exists when the curve avoids `s` (limit is just the regular integral). -/
-lemma cpvExists_of_off_curve (γ : ℝ → ℂ) (hγ_cont : Continuous γ)
-    (a b : ℝ) (s : ℂ) (c : ℂ) (hab : a ≤ b) (h_off : ∀ t ∈ Icc a b, γ t ≠ s) :
+lemma cpvExists_of_off_curve (γ : ℝ → ℂ) (hγ_cont : Continuous γ) (a b : ℝ) (s : ℂ)
+    (c : ℂ) (hab : a ≤ b) (h_off : ∀ t ∈ Icc a b, γ t ≠ s) :
     CauchyPrincipalValueExists' (fun z => c / (z - s)) γ a b s := by
   obtain ⟨t₀, ht₀, ht₀_min⟩ := isCompact_Icc.exists_isMinOn ⟨a, left_mem_Icc.mpr hab⟩
     ((hγ_cont.continuousOn.sub continuousOn_const).norm)
@@ -396,7 +396,6 @@ lemma fdBoundary_H_norm_ge_one {H : ℝ} (hH : 1 ≤ H) (t : ℝ) (ht : t ∈ Ic
     ‖fdBoundary_H H t‖ ≥ 1 := by
   have hH_sqrt3 : Real.sqrt 3 / 2 ≤ H := by
     nlinarith [Real.sq_sqrt (show (0:ℝ) ≤ 3 by norm_num)]
-  -- Side-segment helper: when `|re| = 1/2` and `im ≥ √3/2`, the norm is ≥ 1.
   have side : ∀ (w : ℂ), |w.re| = 1/2 → w.im ≥ Real.sqrt 3 / 2 → ‖w‖ ≥ 1 := by
     intro w hre him
     have h_re_sq : w.re ^ 2 = 1/4 := by
@@ -567,7 +566,6 @@ lemma winding_zero_for_non_fd_point_H_geo (S : Finset UpperHalfPlane)
       tauto))
   have hγ_deriv_cont := (fdBoundary_HCurve H).deriv_continuous_off_partition
   have hγ_deriv_bdd := piecewiseC1Immersion_deriv_bounded (fdBoundary_HImmersion H hH_sqrt3)
-  -- Wrap the FTC call once: the slit-plane proof is the only varying argument.
   have go : ∀ {ω : ℂ}, ω ≠ 0 → (∀ t ∈ Icc (0:ℝ) 5, ω * (fdBoundary_H H t - z₀) ∈ Complex.slitPlane) →
       ∫ t in (0:ℝ)..5, (fdBoundary_H H t - z₀)⁻¹ * deriv (fdBoundary_H H) t = 0 := fun hω hslit =>
     ftc_integral_zero_of_closed_slit hω (fdBoundary_H_continuous H) (fdBoundary_H_closed H)

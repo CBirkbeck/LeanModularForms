@@ -199,7 +199,8 @@ lemma circleIntegral_logDeriv_cuspFunction_of_radius (hf : f ≠ 0)
       logDeriv F q = ↑m / q + logDeriv g q := by
     intro q hq
     have hq_ne : q ≠ 0 := fun h => by
-      simp [h] at hq; exact absurd hq.symm hR_pos.ne'
+      simp only [h, Metric.mem_sphere, dist_self] at hq
+      exact hR_pos.ne' hq.symm
     have hq_ball : q ∈ Metric.ball (0 : ℂ) 1 :=
       Metric.sphere_subset_closedBall.trans (Metric.closedBall_subset_ball hR_lt) hq
     have hF_eq : F =ᶠ[𝓝 q] (fun z => z ^ m * g z) :=
@@ -221,8 +222,7 @@ lemma circleIntegral_logDeriv_cuspFunction_of_radius (hf : f ≠ 0)
     refine (continuousOn_const.mul (ContinuousOn.inv₀ continuousOn_id fun z hz => ?_)).circleIntegrable
       hR_pos.le
     simp only [Metric.mem_sphere, dist_zero_right] at hz
-    simp only [id]
-    exact norm_ne_zero_iff.mp (by linarith)
+    exact norm_ne_zero_iff.mp (show ‖z‖ ≠ 0 by linarith)
   have hci_logDeriv : CircleIntegrable (fun q => logDeriv g q) 0 R := by
     refine ContinuousOn.circleIntegrable hR_pos.le ?_
     have h_sphere_sub : Metric.sphere (0 : ℂ) R ⊆ Metric.ball 0 1 :=
@@ -336,7 +336,7 @@ lemma seg5_integral_eq_circleIntegral_H {H : ℝ} (hH : 0 < H) :
     push_cast
     ring
   rw [h_eq_integral]
-  erw [intervalIntegral.integral_smul]
+  rw [intervalIntegral.integral_smul]
   have hpi_ne : (2 * Real.pi : ℝ) ≠ 0 := by positivity
   rw [show (fun t : ℝ => g (2 * Real.pi * (t - 9 / 2))) =
     (fun t : ℝ => g (2 * Real.pi * t + (2 * Real.pi * (-9 / 2)))) by

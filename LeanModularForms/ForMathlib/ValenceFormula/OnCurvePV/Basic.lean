@@ -95,7 +95,7 @@ private lemma fdBoundary_H_cutout_cont_inv (s : ℂ) (H : ℝ) (ε : ℝ) (hε :
   · exact continuousOn_id.sub continuousOn_const
   · intro z ⟨_, hz_ball⟩
     simp only [Metric.mem_ball, not_lt] at hz_ball
-    refine sub_ne_zero.mpr (fun heq => ?_)
+    refine sub_ne_zero.mpr fun heq => ?_
     subst heq
     simp [dist_self] at hz_ball
     linarith

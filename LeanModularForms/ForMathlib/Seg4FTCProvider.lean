@@ -208,7 +208,7 @@ private lemma seg4_junction_15 (H : ℝ) (z₀ : ℂ) :
 private lemma seg4_closed (H : ℝ) (z₀ : ℂ) :
     seg4_h₀ H z₀ 0 = seg4_h₅ H z₀ 1 := by
   unfold seg4_h₀ vertSeg_h₀ seg4_h₅ vertSeg_h₅
-  apply Complex.ext <;> simp <;> ring
+  apply Complex.ext <;> simp; ring
 
 private lemma seg4_log_diff_eq_neg_pi_I {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
     {z₀ : ℂ} (hz_re : z₀.re = -1/2) {δ : ℝ} (hδ_pos : 0 < δ) :

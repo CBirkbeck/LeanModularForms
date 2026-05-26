@@ -54,7 +54,7 @@ private theorem neg_pow_eq_self_of_even_sub_one
     (-z) ^ (k - 1) = z ^ (k - 1) := by
   refine Even.neg_pow ?_ z
   have h_eq : ((k - 1 : ℕ) : ℤ) = 2 * m := by exact_mod_cast hm
-  exact ⟨m.toNat, by omega⟩
+  exact ⟨m.toNat, by lia⟩
 
 /-- At an off-partition interior point, the right and left derivative limits both
 equal `deriv γ t₀` and are nonzero. -/
@@ -142,8 +142,7 @@ theorem cpvIntegrandOn_singleMonomial_intervalIntegrable
     · rw [cpvIntegrandOn_of_exists_le ht_in,
         Set.indicator_of_notMem (Set.notMem_compl_iff.mpr ht_in)]
     · have h_forall : ∀ s' ∈ S, ε < ‖γP.toPath.extend t - s'‖ := by
-        simp only [Set.mem_setOf_eq, not_exists, not_and, not_le, badSet_def] at ht_in
-        exact ht_in
+        simpa only [Set.mem_setOf_eq, not_exists, not_and, not_le, badSet_def] using ht_in
       rw [cpvIntegrandOn_of_forall_gt h_forall, Set.indicator_of_mem ht_in]
   set M_polar : ℝ := ‖c‖ / ε ^ k
   set M : ℝ := M_polar * K

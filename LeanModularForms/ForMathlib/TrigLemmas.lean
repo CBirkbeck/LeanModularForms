@@ -8,16 +8,14 @@ import Mathlib.Analysis.SpecialFunctions.Complex.CircleAddChar
 /-!
 # Shared Trigonometric Identities
 
-Euler-formula expansion of `exp(θ * I)` and exact values at `2π/3`,
-used by both `WindingWeights/Common.lean` and `RectHomotopy/HomotopyDef.lean`.
+Euler-formula expansion of `exp(θ * I)` and exact values of `cos` and `sin` at `2π/3`.
 -/
 
 open Complex
 
 theorem exp_real_angle_I (θ : ℝ) :
     Complex.exp (↑θ * I) = ↑(Real.cos θ) + ↑(Real.sin θ) * I := by
-  rw [Complex.exp_mul_I]
-  simp [Complex.ofReal_cos, Complex.ofReal_sin]
+  simp [Complex.exp_mul_I]
 
 theorem cos_two_pi_div_three : Real.cos (2 * Real.pi / 3) = -1 / 2 := by
   rw [show (2 : ℝ) * Real.pi / 3 = Real.pi - Real.pi / 3 from by ring,

@@ -159,7 +159,6 @@ theorem hasCauchyPVOn_of_avoids {S : Finset ℂ} {f : ℂ → ℂ} {γ : Piecewi
   rw [Set.uIcc_of_le zero_le_one] at ht
   exact (cpvIntegrandOn_of_forall_gt fun s hs => hε.2.trans_le (hδ_bound s hs t ht)).symm
 
-
 /-- The limit in `HasCauchyPV` is unique. -/
 theorem HasCauchyPV.unique {f : ℂ → ℂ} {γ : PiecewiseC1Path x y} {z₀ : ℂ}
     {L₁ L₂ : ℂ} (h₁ : HasCauchyPV f γ z₀ L₁) (h₂ : HasCauchyPV f γ z₀ L₂) :

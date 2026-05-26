@@ -67,16 +67,11 @@ has positive measure and in particular is nonempty. -/
 theorem exists_mem_not_mem_image_of_isOpen_of_lipschitz {U : Set ℂ} (hU_open : IsOpen U)
     (hU_ne : U.Nonempty) {K : NNReal} {f : ℝ → ℂ} (hf : LipschitzWith K f) (s : Set ℝ) :
     ∃ w₀ ∈ U, w₀ ∉ f '' s := by
-  by_contra h
-  push Not at h
+  by_contra! h
   have h_zero : volume U ≤ 0 := by
     rw [← volume_image_lipschitz_real_zero hf s]
     exact measure_mono h
   exact (h_zero.trans_lt (hU_open.measure_pos _ hU_ne)).false
-
-/-! ### Lipschitz from bounded derivative on a convex set -/
-
-/-! ### Specialized to `PiecewiseC1Path` -/
 
 /-- If `γ.toPath.extend` is Lipschitz and `U` is open nonempty, there exists
 `w₀ ∈ U` with `γ` avoiding `w₀`.

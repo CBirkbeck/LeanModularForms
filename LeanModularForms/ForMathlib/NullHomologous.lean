@@ -215,8 +215,7 @@ theorem winding_eventually_zero_cocompact_of_lipschitz
     rw [Filter.mem_cocompact]
     exact ⟨Metric.closedBall 0 RR, isCompact_closedBall 0 RR, fun w hw => by
       simpa [mem_compl_iff, Metric.mem_closedBall, dist_zero_right, not_le] using hw⟩
-  apply Filter.Eventually.mono h_mem
-  intro w (hw : RR < ‖w‖)
+  filter_upwards [h_mem] with w (hw : RR < ‖w‖)
   have h_2pi_pos : (0 : ℝ) < 2 * Real.pi := by positivity
   have h_K_div_2pi_nn : (0 : ℝ) ≤ (K : ℝ) / (2 * Real.pi) :=
     div_nonneg (NNReal.coe_nonneg _) h_2pi_pos.le

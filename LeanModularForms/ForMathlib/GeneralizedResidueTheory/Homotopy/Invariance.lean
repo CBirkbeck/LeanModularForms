@@ -1,26 +1,20 @@
 /-
 Copyright (c) 2024. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors:
+Authors: Chris Birkbeck
 -/
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.Homotopy.Integrality
 
 /-!
-# Homotopy Invariance of Winding Numbers
+# Generalized winding number for curves avoiding `z₀`
 
-Homotopy invariance for generalized winding numbers (both piecewise C¹ and
-smooth), plus the classical winding number formula for curves avoiding a point.
+Reduces the generalized (PV) winding number to the classical contour integral when the
+curve avoids the point `z₀`.
 
-## Main Results
+## Main results
 
-* `windingNumber_eq_of_piecewise_homotopic` — winding number invariant
-    under piecewise homotopy
-* `windingNumber_eq_of_homotopic_closed` — winding number invariant
-    under smooth homotopy
-* `generalizedWindingNumber_eq_classical_away` — PV winding number
-    equals classical integral when curve avoids z₀
-* `contourIntegral_eq_of_homotopic` — contour integrals equal under
-    homotopy for holomorphic integrands
+* `generalizedWindingNumber_eq_classical_away` — PV winding number equals the classical
+  integral `(2πi)⁻¹ ∫ (γ - z₀)⁻¹ γ'` when `γ` avoids `z₀` on `[a, b]`.
 -/
 
 open Complex MeasureTheory Set Filter Topology
@@ -43,14 +37,12 @@ theorem generalizedWindingNumber_eq_classical_away
   filter_upwards [Ioo_mem_nhdsGT hδ] with ε hε
   apply intervalIntegral.integral_congr_ae
   filter_upwards with t ht
-  simp only [sub_zero]
   rw [Set.uIoc_of_le γ.hab.le] at ht
   have ht' : t ∈ Icc γ.a γ.b := Ioc_subset_Icc_self ht
   have hbound : ε < ‖γ.toFun t - z₀‖ := by
-    calc ε < Metric.infDist z₀ (γ.toFun '' Icc γ.a γ.b) := (mem_Ioo.mp hε).2
-      _ ≤ dist z₀ (γ.toFun t) :=
-            Metric.infDist_le_dist_of_mem (mem_image_of_mem γ.toFun ht')
-      _ = ‖γ.toFun t - z₀‖ := by rw [Complex.dist_eq, norm_sub_rev]
-  simp only [hbound, ↓reduceIte, deriv_sub_const]
+    rw [← norm_sub_rev, ← Complex.dist_eq]
+    exact (mem_Ioo.mp hε).2.trans_le
+      (Metric.infDist_le_dist_of_mem (mem_image_of_mem γ.toFun ht'))
+  simp [hbound, deriv_sub_const]
 
 end

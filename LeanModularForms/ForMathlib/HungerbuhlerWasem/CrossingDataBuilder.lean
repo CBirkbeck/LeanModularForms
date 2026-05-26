@@ -192,14 +192,14 @@ private theorem reInner_lower_bound_right_eventually
   have hη_pos : 0 < η := by rw [hη_def]; positivity
   have h_deriv_close : ∀ᶠ t in 𝓝[>] t₀, ‖deriv γ t - L‖ < η := by
     filter_upwards [(Metric.tendsto_nhds.mp hL_right) η hη_pos] with t ht
-    rw [dist_eq_norm] at ht; exact ht
+    rwa [dist_eq_norm] at ht
   filter_upwards [hr.def hη_pos, h_deriv_close, self_mem_nhdsWithin] with
     t h_chord_t h_dclose_t h_t_gt
   have h_t_pos : 0 < t - t₀ := sub_pos.mpr h_t_gt
   set R : ℂ := γ t - γ t₀ - (t - t₀) • L with hR_def
   set D : ℂ := deriv γ t - L with hD_def
   have hR_norm : ‖R‖ ≤ η * (t - t₀) := by
-    rw [Real.norm_eq_abs, abs_of_pos h_t_pos] at h_chord_t; exact h_chord_t
+    rwa [Real.norm_eq_abs, abs_of_pos h_t_pos] at h_chord_t
   have hD_norm : ‖D‖ ≤ η := le_of_lt h_dclose_t
   rw [show γ t - s = (t - t₀) • L + R by rw [hR_def, h_at]; ring,
       show deriv γ t = L + D by rw [hD_def]; ring,
@@ -252,7 +252,7 @@ theorem norm_sub_strictMonoOn_right
     rw [Metric.mem_ball, Real.dist_eq, abs_of_pos (sub_pos.mpr ht.1)]
     linarith [ht.2]
   refine ⟨r, hr_pos, ?_⟩
-  set f : ℝ → ℝ := fun t => ‖γ t - s‖^2 with hf_def
+  set f : ℝ → ℝ := fun t => ‖γ t - s‖^2
   have h_γ_continuousOn : ContinuousOn γ (Icc t₀ (t₀ + r)) := fun t ht => by
     rcases eq_or_lt_of_le ht.1 with h_eq | h_gt
     · rw [← h_eq]; exact hγ_cont.continuousWithinAt
@@ -297,14 +297,14 @@ private theorem reInner_upper_bound_left_eventually
   have hη_pos : 0 < η := by rw [hη_def]; positivity
   have h_deriv_close : ∀ᶠ t in 𝓝[<] t₀, ‖deriv γ t - L‖ < η := by
     filter_upwards [(Metric.tendsto_nhds.mp hL_left) η hη_pos] with t ht
-    rw [dist_eq_norm] at ht; exact ht
+    rwa [dist_eq_norm] at ht
   filter_upwards [hr.def hη_pos, h_deriv_close, self_mem_nhdsWithin] with
     t h_chord_t h_dclose_t h_t_lt
   have h_t₀t_pos : 0 < t₀ - t := sub_pos.mpr h_t_lt
   set R : ℂ := γ t - γ t₀ - (t - t₀) • L with hR_def
   set D : ℂ := deriv γ t - L with hD_def
   have hR_norm : ‖R‖ ≤ η * (t₀ - t) := by
-    rw [Real.norm_eq_abs, abs_sub_comm, abs_of_pos h_t₀t_pos] at h_chord_t; exact h_chord_t
+    rwa [Real.norm_eq_abs, abs_sub_comm, abs_of_pos h_t₀t_pos] at h_chord_t
   have hD_norm : ‖D‖ ≤ η := le_of_lt h_dclose_t
   rw [show γ t - s = (t - t₀) • L + R by rw [hR_def, h_at]; ring,
       show deriv γ t = L + D by rw [hD_def]; ring,
@@ -349,7 +349,7 @@ theorem norm_sub_strictAntiOn_left
     rw [Metric.mem_ball, Real.dist_eq, abs_sub_comm, abs_of_pos (sub_pos.mpr ht.2)]
     linarith [ht.1]
   refine ⟨r, hr_pos, ?_⟩
-  set f : ℝ → ℝ := fun t => ‖γ t - s‖^2 with hf_def
+  set f : ℝ → ℝ := fun t => ‖γ t - s‖^2
   have h_γ_continuousOn : ContinuousOn γ (Icc (t₀ - r) t₀) := fun t ht => by
     rcases eq_or_lt_of_le ht.2 with h_eq | h_lt
     · rw [h_eq]; exact hγ_cont.continuousWithinAt
@@ -371,7 +371,6 @@ theorem norm_sub_strictAntiOn_left
       exact h_d_normSq.hasDerivWithinAt
     · intro t ht
       rw [h_int] at ht
-      have hL_pos : 0 < ‖L‖ := norm_pos_iff.mpr hL
       have hL_sq_pos : 0 < ‖L‖^2 := by positivity
       have h_neg_inner : (t - t₀) * ‖L‖^2 / 2 < 0 := by
         nlinarith [sub_neg_of_lt ht.2, hL_sq_pos]

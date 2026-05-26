@@ -251,7 +251,7 @@ private lemma d_mul_linear_nonneg {c d : ℤ} {z : ℍ}
     linarith [show |(z : ℂ).re| ≤ 1/2 from hz.2]
   rcases le_or_gt (d : ℤ) 0 with hd | hd
   · rcases eq_or_lt_of_le hd with hd0 | hd_neg
-    · simp [show (d : ℝ) = 0 from by exact_mod_cast hd0]
+    · simp [show (d : ℝ) = 0 by exact_mod_cast hd0]
     · have hd_le : (d : ℝ) ≤ -1 := by exact_mod_cast Int.le_sub_one_of_lt hd_neg
       exact mul_nonneg_iff.mpr (Or.inr ⟨by linarith, by linarith [abs_le.mp h_bound]⟩)
   · have hd_ge : (d : ℝ) ≥ 1 := by exact_mod_cast hd

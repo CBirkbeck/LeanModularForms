@@ -54,8 +54,6 @@ private lemma gwnPrime_eq_gwn_of_mem_fd {H : ℝ} (hH : 1 < H)
   set D := fdWindingDataFull_unconditional hH
   set γ := D.boundary
   have hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t := D.boundary_eq
-  -- In each case, produce a `HasGeneralizedWindingNumber γ s w` witness and
-  -- bridge `gWN' = w = gWN` via the reparametrization and `.eq`.
   suffices h : ∃ w : ℂ, HasGeneralizedWindingNumber γ (↑s : ℂ) w by
     obtain ⟨w, h_gwn⟩ := h
     exact (generalizedWindingNumberPrime_eq_of_hasGeneralizedWindingNumber γ hγ h_gwn).trans
@@ -90,12 +88,10 @@ theorem valence_formula_textbook_unconditional_FM
         p ≠ ellipticPointRho' ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0),
       ↑(orderOfVanishingAt' (⇑f) s) =
     (k : ℂ) / 12 := by
-  -- Get the residue and modular side bridges.
   obtain ⟨H₀_res, hH₀_res, h_res_bridge⟩ :=
     cpv_residue_side_HasCauchyPVOn f hf S hS hS_complete
   obtain ⟨H₀_mod, hH₀_mod, h_mod_bridge⟩ :=
     cpv_modular_side_HasCauchyPVOn f hf S hS hS_complete
-  -- Choose `H_res := max(H₀_res, H₀_mod, H_S, 1) + 1` so it exceeds every bound.
   set M := max (max (max H₀_res H₀_mod) H_S) 1
   set H_res := M + 1
   have hM_res : H₀_res ≤ M := by simp [M]
@@ -106,16 +102,13 @@ theorem valence_formula_textbook_unconditional_FM
   have hH₀_res_le : H₀_res ≤ H_res := by linarith
   have hH₀_mod_le : H₀_mod ≤ H_res := by linarith
   have hH_S_le : H_S ≤ H_res := by linarith
-  -- Apply `valence_formula_unconditional_mkD` with explicit residue/modular sides.
   refine valence_formula_unconditional_mkD f S hS hS_complete H_S hH_S (F_int_FM f S)
     H_res hH_res_gt ?_ H_res hH_res_gt ?_
-  · -- Residue side: `F_int → 2πi · Σ gWN · ord`.
-    intro H hH_ge hH
+  · intro H hH_ge hH
     have hH_ge_res : H₀_res ≤ H := hH₀_res_le.trans hH_ge
     set γ := (fdWindingDataFull_unconditional hH).boundary with hγ_def
     have hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t :=
       (fdWindingDataFull_unconditional hH).boundary_eq
-    -- For each `s ∈ S ⊆ 𝒟` below `H`, convert the old-chain `gWN'` to the new-chain `gWN`.
     have hH_above : ∀ s ∈ S, (s : ℂ).im < H := fun s hs =>
       (hH_S s hs).trans_le (hH_S_le.trans hH_ge)
     have h_sum_eq :
@@ -129,8 +122,7 @@ theorem valence_formula_textbook_unconditional_FM
     refine (h_res_bridge hH_ge_res γ hγ).congr' ?_
     filter_upwards with ε
     simp only [F_int_FM, dif_pos hH, hγ_def]
-  · -- Modular side: `F_int → -(2πi · (k/12 - ord_cusp))`.
-    intro H hH_ge hH
+  · intro H hH_ge hH
     have hH_ge_mod : H₀_mod ≤ H := hH₀_mod_le.trans hH_ge
     set γ := (fdWindingDataFull_unconditional hH).boundary with hγ_def
     have hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t :=
@@ -158,7 +150,6 @@ theorem valence_formula_textbook_orbit_finsum_FM :
     ∑ᶠ (q : NonEllOrbitFM), ordOrbitQ f q =
     (k : ℂ) / 12 := by
   refine valence_formula_textbook_orbit_finsum f hf fun S hS hS_complete => ?_
-  -- Pick a height bound strictly above every imaginary part in `S`.
   set H_S := S.sum (fun s : UpperHalfPlane => (s : ℂ).im) + 1
   have hH_S : ∀ s ∈ S, (s : ℂ).im < H_S := fun s hs => by
     have h_le : (s : ℂ).im ≤ S.sum (fun s : UpperHalfPlane => (s : ℂ).im) :=

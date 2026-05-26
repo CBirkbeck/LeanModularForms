@@ -254,7 +254,7 @@ private lemma log_neg_eq_sub_pi_I {z : ℂ} (hz_im : 0 < z.im) :
 
 private lemma fdBoundary_sub_I_at_45_im_pos (H : ℝ) (hH : 1 < H) :
     0 < (fdBoundaryFun H (4/5) - I).im := by
-  rw [fdBoundaryFun_at_four_fifths]; simp; linarith
+  simp [fdBoundaryFun_at_four_fifths]; linarith
 
 private lemma fdBoundary_sub_I_at_2p_im_neg (H : ℝ) {δ : ℝ} (hδ : 0 < δ) (hδ' : δ < 1/5) :
     (fdBoundaryFun H (2/5 + δ) - I).im < 0 := by

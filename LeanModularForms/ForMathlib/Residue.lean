@@ -28,8 +28,6 @@ open scoped Interval Real
 
 noncomputable section
 
-variable {x y : ℂ}
-
 /-- Simple pole decomposition: `f(z) = c/(z-z₀) + g(z)` near `z₀`, where `g` is analytic
 at `z₀` and `c` is the residue. -/
 def HasSimplePoleAt (f : ℂ → ℂ) (z₀ : ℂ) : Prop :=

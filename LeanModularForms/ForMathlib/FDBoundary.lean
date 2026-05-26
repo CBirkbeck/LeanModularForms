@@ -71,8 +71,8 @@ theorem fdBoundaryFun_at_one_fifth (H : ℝ) :
 /-- At `t = 3/5` the boundary function equals the elliptic point `ρ`. -/
 theorem fdBoundaryFun_at_three_fifths (H : ℝ) :
     fdBoundaryFun H (3/5) = ellipticPointRho := by
-  simp only [fdBoundaryFun, show ¬(3/5 : ℝ) ≤ 1/5 from by norm_num,
-    show ¬(3/5 : ℝ) ≤ 2/5 from by norm_num, le_refl, ite_true, ite_false]
+  simp only [fdBoundaryFun, show ¬(3/5 : ℝ) ≤ 1/5 by norm_num,
+    show ¬(3/5 : ℝ) ≤ 2/5 by norm_num, le_refl, ite_true, ite_false]
   rw [show ((↑Real.pi / 2 + (5 * (↑(3/5 : ℝ)) - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I : ℂ)
       = ↑(2 * Real.pi / 3) * I by push_cast; ring, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
     show (2 * Real.pi / 3 : ℝ) = Real.pi - Real.pi / 3 by ring,
@@ -83,21 +83,19 @@ theorem fdBoundaryFun_at_three_fifths (H : ℝ) :
 /-- At `t = 4/5` the boundary function equals the upper-left corner `-1/2 + Hi`. -/
 theorem fdBoundaryFun_at_four_fifths (H : ℝ) :
     fdBoundaryFun H (4/5) = -1/2 + ↑H * I := by
-  simp only [fdBoundaryFun, show ¬(4/5 : ℝ) ≤ 1/5 from by norm_num,
-    show ¬(4/5 : ℝ) ≤ 2/5 from by norm_num,
-    show ¬(4/5 : ℝ) ≤ 3/5 from by norm_num, le_refl, ite_true, ite_false]
-  push_cast
-  ring
+  simp only [fdBoundaryFun, show ¬(4/5 : ℝ) ≤ 1/5 by norm_num,
+    show ¬(4/5 : ℝ) ≤ 2/5 by norm_num,
+    show ¬(4/5 : ℝ) ≤ 3/5 by norm_num, le_refl, ite_true, ite_false]
+  push_cast; ring
 
 /-- At `t = 1` the boundary function returns to the starting point `fdStart H`. -/
 theorem fdBoundaryFun_at_one (H : ℝ) :
     fdBoundaryFun H 1 = fdStart H := by
-  simp only [fdBoundaryFun, show ¬(1 : ℝ) ≤ 1/5 from by norm_num,
-    show ¬(1 : ℝ) ≤ 2/5 from by norm_num,
-    show ¬(1 : ℝ) ≤ 3/5 from by norm_num,
-    show ¬(1 : ℝ) ≤ 4/5 from by norm_num, ite_false, fdStart]
-  push_cast
-  ring
+  simp only [fdBoundaryFun, show ¬(1 : ℝ) ≤ 1/5 by norm_num,
+    show ¬(1 : ℝ) ≤ 2/5 by norm_num,
+    show ¬(1 : ℝ) ≤ 3/5 by norm_num,
+    show ¬(1 : ℝ) ≤ 4/5 by norm_num, ite_false, fdStart]
+  push_cast; ring
 
 /-- The FD boundary contour is closed. -/
 theorem fdBoundaryFun_closed (H : ℝ) :
@@ -137,9 +135,7 @@ private lemma fdBoundaryFun_inner45_cont (H : ℝ) :
     Continuous (fdBoundaryFun_inner45 H) :=
   Continuous.if_le (fdBoundaryFun_seg4_cont H) (fdBoundaryFun_seg5_cont H)
     continuous_id continuous_const (fun t (ht : t = 4/5) => by
-      subst ht
-      push_cast
-      ring)
+      subst ht; push_cast; ring)
 
 private def fdBoundaryFun_inner345 (H : ℝ) : ℝ → ℂ := fun t =>
   if t ≤ 3/5 then
@@ -154,13 +150,12 @@ private lemma fdBoundaryFun_inner345_cont (H : ℝ) :
   simp only [id] at ht
   obtain rfl : t = 3/5 := by linarith
   unfold fdBoundaryFun_inner45
-  simp only [show (3/5 : ℝ) ≤ 4/5 from by norm_num, ite_true]
+  simp only [show (3/5 : ℝ) ≤ 4/5 by norm_num, ite_true]
   rw [show ((↑Real.pi / 2 + (5 * (↑(3/5 : ℝ)) - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I : ℂ) =
       ↑(2 * Real.pi / 3) * I by push_cast; ring, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
     show (2 * Real.pi / 3 : ℝ) = Real.pi - Real.pi / 3 by ring,
     Real.cos_pi_sub, Real.cos_pi_div_three, Real.sin_pi_sub, Real.sin_pi_div_three]
-  push_cast
-  ring
+  push_cast; ring
 
 private def fdBoundaryFun_inner2345 (H : ℝ) : ℝ → ℂ := fun t =>
   if t ≤ 2/5 then
@@ -175,7 +170,7 @@ private lemma fdBoundaryFun_inner2345_cont (H : ℝ) :
   simp only [id] at ht
   obtain rfl : t = 2/5 := by linarith
   unfold fdBoundaryFun_inner345
-  simp only [show (2/5 : ℝ) ≤ 3/5 from by norm_num, ite_true]
+  simp only [show (2/5 : ℝ) ≤ 3/5 by norm_num, ite_true]
   rw [show ((↑Real.pi / 3 + (5 * (↑(2/5 : ℝ)) - 1) * (↑Real.pi / 2 - ↑Real.pi / 3)) * I : ℂ)
       = ↑(Real.pi / 2) * I by push_cast; ring,
     show ((↑Real.pi / 2 + (5 * (↑(2/5 : ℝ)) - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I : ℂ)
@@ -202,12 +197,11 @@ theorem fdBoundaryFun_continuous (H : ℝ) :
   simp only [id] at ht
   obtain rfl : t = 1/5 := by linarith
   unfold fdBoundaryFun_inner2345
-  simp only [show (1/5 : ℝ) ≤ 2/5 from by norm_num, ite_true]
+  simp only [show (1/5 : ℝ) ≤ 2/5 by norm_num, ite_true]
   rw [show ((↑Real.pi / 3 + (5 * (↑(1/5 : ℝ)) - 1) * (↑Real.pi / 2 - ↑Real.pi / 3)) * I : ℂ)
       = ↑(Real.pi / 3) * I by push_cast; ring, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
     Real.cos_pi_div_three, Real.sin_pi_div_three]
-  push_cast
-  ring
+  push_cast; ring
 
 /-- The FD boundary as a `Path` from `fdStart H` to `fdStart H`. -/
 def fdBoundaryPath (H : ℝ) : Path (fdStart H) (fdStart H) where
@@ -259,30 +253,30 @@ theorem fdBoundaryFun_seg1_re (H : ℝ) (t : ℝ) (ht : t ≤ 1/5) :
 /-- The left vertical segment stays at `re = -1/2`. -/
 theorem fdBoundaryFun_seg4_re (H : ℝ) (t : ℝ) (ht3 : 3/5 < t) (ht4 : t ≤ 4/5) :
     (fdBoundaryFun H t).re = -1/2 := by
-  simp only [fdBoundaryFun, show ¬t ≤ 1/5 from by linarith,
-    show ¬t ≤ 2/5 from by linarith, show ¬t ≤ 3/5 from by linarith,
+  simp only [fdBoundaryFun, show ¬t ≤ 1/5 by linarith,
+    show ¬t ≤ 2/5 by linarith, show ¬t ≤ 3/5 by linarith,
     ht4, ite_true, ite_false]
   simp
 
 /-- The horizontal segment stays at `im = H`. -/
 theorem fdBoundaryFun_seg5_im (H : ℝ) (t : ℝ) (ht : 4/5 < t) :
     (fdBoundaryFun H t).im = H := by
-  simp only [fdBoundaryFun, show ¬t ≤ 1/5 from by linarith,
-    show ¬t ≤ 2/5 from by linarith, show ¬t ≤ 3/5 from by linarith,
-    show ¬t ≤ 4/5 from by linarith, ite_false]
+  simp only [fdBoundaryFun, show ¬t ≤ 1/5 by linarith,
+    show ¬t ≤ 2/5 by linarith, show ¬t ≤ 3/5 by linarith,
+    show ¬t ≤ 4/5 by linarith, ite_false]
   simp
 
 /-- Arc segments (2 and 3) lie on the unit circle. -/
 theorem fdBoundaryFun_arc_norm (H : ℝ) (t : ℝ) (ht1 : 1/5 < t) (ht2 : t ≤ 3/5) :
     ‖fdBoundaryFun H t‖ = 1 := by
   by_cases ht : t ≤ 2/5
-  · simp only [fdBoundaryFun, show ¬t ≤ 1/5 from by linarith, ht, ite_true, ite_false]
+  · simp only [fdBoundaryFun, show ¬t ≤ 1/5 by linarith, ht, ite_true, ite_false]
     rw [show ((↑Real.pi / 3 + (5 * ↑t - 1) * (↑Real.pi / 2 - ↑Real.pi / 3)) * I : ℂ) =
         ↑(Real.pi / 3 + (5 * t - 1) * (Real.pi / 2 - Real.pi / 3)) * I by push_cast; ring]
     exact Complex.norm_exp_ofReal_mul_I _
   · push Not at ht
-    simp only [fdBoundaryFun, show ¬t ≤ 1/5 from by linarith,
-      show ¬t ≤ 2/5 from by linarith, ht2, ite_true, ite_false]
+    simp only [fdBoundaryFun, show ¬t ≤ 1/5 by linarith,
+      show ¬t ≤ 2/5 by linarith, ht2, ite_true, ite_false]
     rw [show ((↑Real.pi / 2 + (5 * ↑t - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I : ℂ) =
         ↑(Real.pi / 2 + (5 * t - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I by push_cast; ring]
     exact Complex.norm_exp_ofReal_mul_I _

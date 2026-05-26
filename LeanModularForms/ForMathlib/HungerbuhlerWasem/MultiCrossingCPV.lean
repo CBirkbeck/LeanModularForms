@@ -89,8 +89,6 @@ private lemma multiCrossing_window_data {crossings : Finset ℝ} {r r_geom : ℝ
        by linarith [(hr_geom_endpts t ht).2]⟩,
    fun t ht t' ht' hne => by linarith [hr_geom_pair t ht t' ht' hne]⟩
 
-/-! ### Per-crossing radius bundle: per-crossing chord-quotient thresholds -/
-
 /-- **Per-crossing radius existence**: for each crossing `t_i`, extract a
 positive radius `r_i` such that all four slit-plane chord-quotient/boundary
 conditions hold uniformly on `[t_i - r_i, t_i + r_i]`. -/
@@ -146,14 +144,6 @@ private theorem exists_per_crossing_radius
   · exact fun r' hr'_pos hr'_le h_γ_ne =>
       hr_L₂_endpoint r' hr'_pos (hr'_le.trans hr_le_L₂) h_γ_ne
 
-/-! ### Corner-friendly recursive helper (T-BR-Y11c)
-
-The corner-aware twin of `cpv_tendsto_along_sorted` for the simple-pole case.
-The only structural change is that it drops the `h_t_off` hypothesis: in the
-smooth-only aggregator, that hypothesis is propagated through the recursion
-but never used to derive anything. Removing it lets the helper handle corner
-crossings. -/
-
 /-- **Inductive convergence statement, corner-friendly form** (T-BR-Y11c).
 
 Counterpart to `cpv_tendsto_along_sorted` that drops the off-partition
@@ -169,15 +159,12 @@ private theorem cpv_tendsto_along_sorted_corner
         γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t' = s → t' = t) →
       (∀ t ∈ sorted, t ∈ Set.Ioo (0 : ℝ) 1) →
       (∀ t ∈ sorted, γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t = s) →
-      -- Per-crossing convergence: each window's cutoff integral converges.
       (∀ t ∈ sorted, ∃ lam_t : ℂ,
         Tendsto (fun ε : ℝ =>
           ∫ u in (t - r)..(t + r),
             cpvIntegrand (fun z => (z - s)⁻¹)
               γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend s ε u)
           (𝓝[>] (0 : ℝ)) (𝓝 lam_t)) →
-      -- Smooth bound (uniform): for ε < m, on `[a, 1] \ ⋃_t (t-r, t+r)`,
-      -- ‖γ(u) - s‖ > ε.
       (∃ m : ℝ, 0 < m ∧ ∀ u ∈ Set.Icc a 1,
         (∀ t ∈ sorted, u ∉ Set.Ioo (t - r) (t + r)) → m ≤
           ‖γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend u - s‖) →
@@ -387,22 +374,6 @@ private theorem cpv_tendsto_along_sorted_corner
       Tendsto.congr' h_smooth_left_const.symm tendsto_const_nhds
     exact ((h_tendsto_left.add h_lam_t).add hL_rest)
 
-/-! ### Corner-friendly multi-crossing simple-pole CPV existence (T-BR-Y11c)
-
-Counterpart to `hasCauchyPV_inv_sub_multiCrossing` (T-BR-Y9d) that admits
-**corner crossings** (crossings on the legacy partition). The
-caller supplies a `Finset ℝ` of crossings together with the
-completeness/interiority/at-pole data — paralleling
-`hasCauchyPVOn_multiCrossing_higherOrder_corner` (T-BR-Y11b).
-
-For smooth crossings the per-window convergence follows from
-`perCrossing_window_integral_tendsto_exact` (now corner-friendly after
-T-BR-Y11c). For corner crossings the same per-window infrastructure applies
-since the underlying `localDerivedCutoffs` and FTC machinery already tolerate
-finitely many corner points (handled via the countable exception set in the
-FTC). The recursive aggregation is the corner-friendly variant
-`cpv_tendsto_along_sorted_corner`. -/
-
 /-- **Corner-friendly common local-uniqueness radius** (T-BR-Y11c / T-BR-Y11b).
 Returns `r > 0` such that for every `t_i ∈ crossings`:
 * `t_i - r ≥ 0`, `t_i + r ≤ 1`;
@@ -418,20 +389,14 @@ private theorem multi_pole_common_radius_corner_simple
         2 * r < |t - t'|) ∧
       (∀ t ∈ crossings, ∀ p ∈ partition, p ∉ crossings → r < |t - p|) := by
   classical
-  -- Use the original lemma with `partition \ crossings`.
-  set P' : Finset ℝ := partition \ crossings with hP'_def
-  have h_off' : ∀ t ∈ crossings, t ∉ P' := by
-    intro t ht hP'
-    rw [hP'_def, Finset.mem_sdiff] at hP'
-    exact hP'.2 ht
+  set P' : Finset ℝ := partition \ crossings
+  have h_off' : ∀ t ∈ crossings, t ∉ P' := fun _ ht hP' =>
+    (Finset.mem_sdiff.mp hP').2 ht
   obtain ⟨r, hr_pos, h_endpts, h_pair, h_part⟩ :=
     multi_pole_common_radius (crossings := crossings) (partition := P')
       h_nonempty h_Ioo h_off'
-  refine ⟨r, hr_pos, h_endpts, h_pair, ?_⟩
-  intro t ht p hp hp_notin
-  refine h_part t ht p ?_
-  rw [hP'_def, Finset.mem_sdiff]
-  exact ⟨hp, hp_notin⟩
+  exact ⟨r, hr_pos, h_endpts, h_pair, fun t ht p hp hp_notin =>
+    h_part t ht p (Finset.mem_sdiff.mpr ⟨hp, hp_notin⟩)⟩
 
 /-- **Corner-friendly multi-crossing simple-pole CPV existence (T-BR-Y11c).**
 
@@ -460,7 +425,6 @@ theorem hasCauchyPV_inv_sub_multiCrossing_corner
   classical
   set γf : ℝ → ℂ :=
     (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend : ℝ → ℂ) with hγf_def
-  -- Case 0: empty crossings → γ avoids s on Icc 0 1.
   by_cases h_empty : crossings = ∅
   · have h_avoid : ∀ t ∈ Set.Icc (0 : ℝ) 1, γf t ≠ s := fun t ht h_eq =>
       absurd (h_empty ▸ h_complete t ht h_eq) (Finset.notMem_empty t)
@@ -472,7 +436,6 @@ theorem hasCauchyPV_inv_sub_multiCrossing_corner
       ⟨‖γf t_min - s‖, norm_pos_iff.mpr (sub_ne_zero.mpr (h_avoid t_min ht_min_mem)),
        fun t ht => ht_min ht⟩⟩
   · have h_nonempty : crossings.Nonempty := Finset.nonempty_iff_ne_empty.mpr h_empty
-    -- Step 1: per-crossing radius data (chord/slit-plane bounds at each t_i).
     have h_per_cross : ∀ t_i ∈ crossings, ∃ (r : ℝ) (L_R L_L : ℂ),
         0 < r ∧ L_R ≠ 0 ∧ L_L ≠ 0 ∧
         HasDerivWithinAt γf L_R (Set.Ioi t_i) t_i ∧
@@ -494,7 +457,6 @@ theorem hasCauchyPV_inv_sub_multiCrossing_corner
       fun t_i ht_i_mem => (h_per_cross t_i ht_i_mem).choose_spec.choose_spec.choose_spec.1
     obtain ⟨r_chord, hr_chord_pos, hr_chord_min⟩ :=
       exists_pos_min_image h_nonempty r_at hr_at_pos
-    -- Step 2: corner-friendly common geometric radius (avoids partition \ crossings).
     obtain ⟨r_geom, hr_geom_pos, hr_geom_endpts, hr_geom_pair, _hr_geom_part⟩ :=
       multi_pole_common_radius_corner_simple (crossings := crossings)
         (partition := γ.toPwC1Immersion.toPiecewiseC1Path.partition)
@@ -520,7 +482,6 @@ theorem hasCauchyPV_inv_sub_multiCrossing_corner
     have hr_le_r_at : ∀ t_i (ht_i_mem : t_i ∈ crossings),
         r ≤ r_at t_i ht_i_mem := fun t_i ht_i_mem =>
       le_trans hr_le_chord (hr_chord_min t_i ht_i_mem)
-    -- Step 3: per-window convergence at each crossing (corner-friendly).
     have h_per_window_conv : ∀ t_i ∈ crossings, ∃ L_i : ℂ,
         Tendsto (fun ε : ℝ =>
           ∫ u in (t_i - r)..(t_i + r), cpvIntegrand (fun z => (z - s)⁻¹) γf s ε u)
@@ -549,7 +510,6 @@ theorem hasCauchyPV_inv_sub_multiCrossing_corner
       exact perCrossing_window_integral_tendsto_exact γ ht_i_Ioo h_at_t_i hr_pos
         h_w_unit h_lu hL_R_ne hL_L_ne h_deriv_right h_deriv_left
         h_slit_R h_slit_L h_γPlus_div_LR h_LL_neg_div_γMinus
-    -- Step 4: apply the corner-friendly recursive helper.
     set sortedList : List ℝ := crossings.sort (· ≤ ·)
     have hsorted_lt : sortedList.SortedLT := Finset.sortedLT_sort crossings
     have h_sorted_eq : ∀ t, t ∈ sortedList ↔ t ∈ crossings := by
@@ -594,8 +554,6 @@ theorem hasCauchyPV_inv_sub_multiCrossing_corner
     unfold HasCauchyPV
     exact hL
 
-/-! ### Higher-order multi-crossing CPV vanishing (T-BR-Y9e) -/
-
 /-- **Integrability of `c · γ' / (γ - s)^k` on an interval avoiding `s`.**
 
 For a closed piecewise-`C¹` immersion `γ` and an interval `[a, b] ⊆ [0, 1]`
@@ -630,10 +588,7 @@ private theorem pow_inv_mul_deriv_intervalIntegrable
       (ContinuousAt.div continuousAt_const ?_ h_pow_ne)
     refine ContinuousAt.pow ?_ k
     exact (hγ_cont.continuousAt).sub continuousAt_const
-  -- The product `deriv γf * (c / (γf - s)^k)` is integrable.
-  have h_prod := hγ_int.mul_continuousOn h_pow_inv_cont
-  -- Convert to the required form `c * deriv γf / (γf - s)^k`.
-  exact h_prod.congr (fun t _ => by ring)
+  exact (hγ_int.mul_continuousOn h_pow_inv_cont).congr (fun t _ => by ring)
 
 /-- **Cutoff integrand bounded by `‖c‖ / ε^k · ‖γ'‖`**, integrable on `[a, b]`. -/
 private theorem cpvIntegrand_higherOrder_intervalIntegrable
@@ -670,13 +625,6 @@ private theorem cpvIntegrand_higherOrder_intervalIntegrable
     · simp only [norm_zero]; positivity
   exact IntervalIntegrable.mono_fun' ((hγ_int.norm).const_mul M) h_sm.aestronglyMeasurable
     (Filter.Eventually.of_forall h_bd)
-
-/-! ### Helper: per-crossing higher-order window vanishing
-
-For a single crossing `t_i` of γ at `s`, the per-window cutoff integral of
-`cpvIntegrand (fun z => c / (z - s)^k)` over `[t_i - r, t_i + r]` converges to
-the FTC-difference constant `c · (F(γ(t_i + r)) - F(γ(t_i - r)))`, where
-`F(z) = -(k-1)⁻¹ · (z - s)^{-(k-1)}` is the antiderivative. -/
 
 /-- Antiderivative `F(z) = -(k-1)⁻¹ · (z - s)^{-(k-1)}` for `k ≥ 2`. -/
 private noncomputable def antiderivPow (s : ℂ) (k : ℕ) (z : ℂ) : ℂ :=
@@ -760,15 +708,11 @@ private theorem hasCauchyPVOn_higherOrder_of_avoids
   rw [h_contour] at h_pv
   exact h_pv
 
-/-! ### Corner-friendly recursive helper for higher-order multi-crossing
+/-- **Inductive higher-order convergence statement, corner-friendly form**.
 
-This is the corner-aware twin of `cpv_higherOrder_tendsto_along_sorted`. The
-only structural change is that it drops the `h_t_off` hypothesis: in the
-smooth-only aggregator that hypothesis is propagated through the recursion
-but never used to derive anything (the FTC machinery uses
-`integral_eq_of_hasDerivAt_off_countable_of_le` which already tolerates
-finite exceptions). Removing it lets the helper handle corner crossings. -/
-
+Counterpart to `cpv_higherOrder_tendsto_along_sorted` that drops the
+off-partition hypothesis per crossing — the FTC machinery already tolerates
+finite exceptions, so corner crossings are admitted. -/
 private theorem cpv_higherOrder_tendsto_along_sorted_corner
     (γ : ClosedPwC1Immersion x) {s : ℂ} (r : ℝ) (hr_pos : 0 < r)
     (c : ℂ) (k : ℕ) (hk : 2 ≤ k) :
@@ -1058,28 +1002,6 @@ private theorem cpv_higherOrder_tendsto_along_sorted_corner
     rw [← h_target_simplify]
     exact h_combined
 
-/-! ### T-BR-Y11b — Corner-friendly multi-crossing higher-order CPV
-
-Generalises `hasCauchyPVOn_multiCrossing_higherOrder` (T-BR-Y9e) from
-SMOOTH-only crossings (each crossing `t_i ∉ partition`, smooth-form angle
-equation `(k-1)·π ∈ 2π·ℤ`) to **arbitrary** crossings (corner or smooth),
-using the general-angle form of `h_B` per crossing.
-
-The aggregation strategy is identical to the smooth case; the only change is
-that the per-window helper accepts separate one-sided derivative limits
-`L_-`, `L_+` and the corner-form `h_B` directly, dispatching to the
-corner-friendly relaxed FTC machinery
-(`hw_theorem_3_3_parametric_relaxed`).
-
-For the typical caller (HW3.3 with condition (B)), the per-crossing
-`h_B` is supplied by `corner_angle_compat_to_h_B` (smooth pegs at
-`L_+ = L_- = deriv γ t_i`; corners pegged at the canonical one-sided
-limits via `left_deriv_limit` / `right_deriv_limit`).
-
-This eliminates the final structural gap behind the paper-faithful spec
-form, unblocking `residueTheorem_crossing_paper_faithful_clean` with the
-canonical eight HW3.3 hypotheses and no residual disjunction. -/
-
 /-- **Per-crossing higher-order window convergence (corner-friendly form).**
 
 Generalises `perCrossing_higherOrder_window_integral_tendsto` to accept
@@ -1128,12 +1050,10 @@ private theorem perCrossing_higherOrder_window_integral_tendsto_corner
     eventually_differentiable_right γ ht_i_Ioo
   have hγ_diff_left : ∀ᶠ t in 𝓝[<] t_i, DifferentiableAt ℝ f t :=
     eventually_differentiable_left γ ht_i_Ioo
-  -- Build the strict mono / anti radii (with separate L_+, L_-).
   obtain ⟨r_R, hr_R_pos, hγ_mono_at_radius⟩ :=
     norm_sub_strictMonoOn_right h_at hL_plus_ne hL_right hγ_cont_t_i hγ_diff_right
   obtain ⟨r_L, hr_L_pos, hγ_anti_at_radius⟩ :=
     norm_sub_strictAntiOn_left h_at hL_minus_ne hL_left hγ_cont_t_i hγ_diff_left
-  -- Shrink the original radius r to fit r_R, r_L.
   set r_mono : ℝ := min r (min r_R r_L) / 2
   have hr_mono_pos : 0 < r_mono :=
     half_pos (lt_min hr_pos (lt_min hr_R_pos hr_L_pos))
@@ -1165,12 +1085,10 @@ private theorem perCrossing_higherOrder_window_integral_tendsto_corner
     have h_strict' : ‖f t_i - s‖ < ‖f t - s‖ :=
       hγ_anti ⟨ht.1, ht.2.le⟩ ⟨by linarith [hr_mono_pos], le_rfl⟩ ht.2
     rw [h_ft_i, heq] at h_strict'; simp at h_strict'
-  -- HasDerivWithinAt at t_i (separate one-sided limits).
   have h_deriv_right : HasDerivWithinAt f L_plus (Set.Ioi t_i) t_i :=
     hasDerivWithinAt_Ioi_of_tendsto hγ_cont_t_i hγ_diff_right hL_right
   have h_deriv_left : HasDerivWithinAt f L_minus (Set.Iio t_i) t_i :=
     hasDerivWithinAt_Iio_of_tendsto hγ_cont_t_i hγ_diff_left hL_left
-  -- Exit times.
   set t_eps_plus := LeanModularForms.firstExitTimeRight f t_i r_mono s
   set t_eps_minus := LeanModularForms.firstExitTimeLeft f t_i r_mono s
   have h_plus_to : Tendsto t_eps_plus (𝓝[>] (0 : ℝ)) (𝓝[>] t_i) :=
@@ -1185,7 +1103,6 @@ private theorem perCrossing_higherOrder_window_integral_tendsto_corner
   have h_minus_radius : ∀ᶠ ε in 𝓝[>] (0 : ℝ), ‖f (t_eps_minus ε) - s‖ = ε :=
     LeanModularForms.firstExitTimeLeft_radius_eventually hr_mono_pos
       hγ_cont_left_delta h_at h_leave_left
-  -- F-curve difference tendsto zero under condition (B).
   have h_F_curve_diff :=
     F_curve_diff_tendsto_zero_under_conditionB
       (γ := f) (t₀ := t_i) (s := s) (L_minus := L_minus) (L_plus := L_plus)
@@ -1493,12 +1410,6 @@ private theorem perCrossing_higherOrder_window_integral_tendsto_corner
   rw [h_lim_eq] at h_combined
   exact h_combined
 
-/-! ### Corner-friendly multi-pole common radius
-
-The corner-friendly variant of `multi_pole_common_radius` admitting
-partition points THAT COINCIDE with crossing parameters is supplied above
-as `multi_pole_common_radius_corner_simple`. -/
-
 /-- **Corner-friendly multi-crossing higher-order CPV vanishing (T-BR-Y11b).**
 
 Generalises `hasCauchyPVOn_multiCrossing_higherOrder` (T-BR-Y9e) to admit
@@ -1542,13 +1453,10 @@ theorem hasCauchyPVOn_multiCrossing_higherOrder_corner
   classical
   set γf : ℝ → ℂ :=
     (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend : ℝ → ℂ) with hγf_def
-  -- Case 0: empty crossings → γ avoids s on Icc 0 1. FTC + closedness gives 0.
   by_cases h_empty : crossings = ∅
   · refine hasCauchyPVOn_higherOrder_of_avoids γ hk c fun t ht h_eq => ?_
     exact absurd (h_empty ▸ h_complete t ht h_eq) (Finset.notMem_empty t)
-  · -- Case: non-empty crossings.
-    have h_nonempty : crossings.Nonempty := Finset.nonempty_iff_ne_empty.mpr h_empty
-    -- Step 1: extract per-crossing radius data for strict mono/anti.
+  · have h_nonempty : crossings.Nonempty := Finset.nonempty_iff_ne_empty.mpr h_empty
     have h_per_cross : ∀ t_i ∈ crossings, ∃ rr : ℝ, 0 < rr ∧
         StrictMonoOn (fun t => ‖γf t - s‖) (Set.Icc t_i (t_i + rr)) ∧
         StrictAntiOn (fun t => ‖γf t - s‖) (Set.Icc (t_i - rr) t_i) := by
@@ -1577,7 +1485,6 @@ theorem hasCauchyPVOn_multiCrossing_higherOrder_corner
       fun t_i ht_i_mem => (h_per_cross t_i ht_i_mem).choose_spec.1
     obtain ⟨r_chord, hr_chord_pos, hr_chord_min⟩ :=
       exists_pos_min_image h_nonempty r_at hr_at_pos
-    -- Step 2: corner-friendly common radius (avoid partition \ crossings).
     obtain ⟨r_geom, hr_geom_pos, hr_geom_endpts, hr_geom_pair, hr_geom_part⟩ :=
       multi_pole_common_radius_corner_simple (crossings := crossings)
         (partition := γ.toPwC1Immersion.toPiecewiseC1Path.partition)
@@ -1600,7 +1507,6 @@ theorem hasCauchyPVOn_multiCrossing_higherOrder_corner
     obtain ⟨m, hm_pos, h_smooth_bound⟩ :=
       multi_pole_smooth_complement_far_bound (γ := γ) (s := s)
         (crossings := crossings) h_complete (fun _ => r) (fun _ _ => hr_pos)
-    -- Per-window FTC-difference convergence using the corner-friendly helper.
     have h_per_window_higher_conv : ∀ t_i ∈ crossings,
         Tendsto (fun ε : ℝ =>
           ∫ u in (t_i - r)..(t_i + r),
@@ -1620,7 +1526,6 @@ theorem hasCauchyPVOn_multiCrossing_higherOrder_corner
         (hL_minus_ne t_i ht_i_mem) (hL_plus_ne t_i ht_i_mem)
         (hL_right t_i ht_i_mem) (hL_left t_i ht_i_mem)
         hk hkn hn1 h_flat_t_i (h_B t_i ht_i_mem) c
-    -- Apply recursive helper.
     set sortedList : List ℝ := crossings.sort (· ≤ ·)
     have hsorted_lt : sortedList.SortedLT := Finset.sortedLT_sort crossings
     have h_sorted_eq : ∀ t, t ∈ sortedList ↔ t ∈ crossings := by
@@ -1661,13 +1566,6 @@ theorem hasCauchyPVOn_multiCrossing_higherOrder_corner
       intro t_i ht_i_in
       have ht_i_sort : t_i ∈ sortedList := (h_sorted_eq t_i).mpr ht_i_in
       exact h_avoid t_i ht_i_sort
-    -- The recursive helper requires `t ∉ partition` per crossing, but the
-    -- corner-friendly variant tolerates corners. The helper itself does NOT use
-    -- the off-partition hypothesis directly — it only uses it as a propagated
-    -- hypothesis. We re-derive the helper inline below for the corner case.
-    -- Approach: we cannot directly use `cpv_higherOrder_tendsto_along_sorted`
-    -- since it requires `t ∉ partition` per crossing. Instead, we build the
-    -- recursion inline using the corner-friendly per-window helper.
     have h_recursive : Tendsto (fun ε : ℝ =>
         ∫ t in (0 : ℝ)..1,
           cpvIntegrand (fun z => c / (z - s) ^ k) γf s ε t)
@@ -1690,8 +1588,6 @@ theorem hasCauchyPVOn_multiCrossing_higherOrder_corner
     intro t _
     exact cpvIntegrand_eq_cpvIntegrandOn_singleton
 
-/-! ### Composed multi-crossing CPV for `decomp.polarPart s` (T-BR-Y9f) -/
-
 /-- Shared computation for the two `cpv_polarPart_at_multiCrossed_pole_under_condB*`
 theorems: the sum `∑ k, L k` over Laurent coefficient slots, where `L k` is
 `2πi · w · a k` on `k = 0` and `0` otherwise, equals `2πi · w · residue f s`. -/
@@ -1710,18 +1606,6 @@ private lemma sum_simplePole_only_eq_residue
     · exact fun h => absurd (Finset.mem_univ _) h
   · rw [dif_neg h_pos, mul_zero]
     exact Finset.sum_eq_zero fun k _ => absurd k.isLt (by omega)
-
-/-! ### T-BR-Y11b — Corner-friendly polar-part multi-crossing CPV
-
-Combines the corner-friendly higher-order theorem
-`hasCauchyPVOn_multiCrossing_higherOrder_corner` with a per-call simple-pole
-CPV existence hypothesis. Allows BOTH multi-crossings AND corner crossings
-simultaneously, with the corner-form `h_B` supplied per crossing.
-
-For typical HW3.3 callers, the simple-pole CPV existence is supplied via
-`hasCauchyPV_inv_sub_of_flat_one_full` (corner-friendly single-crossing form,
-T-BR-Y10b) for unique crossings, or `hasCauchyPV_inv_sub_multiCrossing`
-(smooth multi-crossings, T-BR-Y9d) otherwise. -/
 
 /-- **Corner-friendly per-pole polar-part multi-crossing CPV (T-BR-Y11b).**
 
@@ -1771,22 +1655,19 @@ theorem cpv_polarPart_at_multiCrossed_pole_under_condB_corner
   set N : ℕ := decomp.order s with hN_def
   set a : Fin N → ℂ := decomp.coeff s
   set w : ℂ := generalizedWindingNumber γP s
-  -- Per-term integrability.
   have h_term_int : ∀ k : Fin N, ∀ ε > 0, IntervalIntegrable
       (fun t => cpvIntegrand (fun z => a k / (z - s) ^ (k.val + 1))
         γP.toPath.extend s ε t) volume 0 1 := fun k ε hε =>
     (HungerbuhlerWasem.cpvIntegrandOn_singleMonomial_intervalIntegrable
       γ (S := {s}) (Finset.mem_singleton.mpr rfl) (a k) (k.val + 1) hε).congr
       (fun _ _ => (cpvIntegrand_eq_cpvIntegrandOn_singleton (z₀ := s)).symm)
-  -- Per-term CPV.
   set L : Fin N → ℂ := fun k =>
     if k.val = 0 then 2 * ↑Real.pi * I * w * a k else 0 with hL_def
   have h_each : ∀ k : Fin N,
       HasCauchyPV (fun z => a k / (z - s) ^ (k.val + 1)) γP s (L k) := by
     intro k
     by_cases hk : k.val = 0
-    · -- Simple-pole case: use the supplied `h_simple_cpv` hypothesis.
-      have h_pow_one : (k.val + 1 : ℕ) = 1 := by omega
+    · have h_pow_one : (k.val + 1 : ℕ) = 1 := by omega
       have h_term_eq :
           (fun z => a k / (z - s) ^ (k.val + 1)) = fun z => a k / (z - s) := by
         funext z; rw [h_pow_one, pow_one]
@@ -1801,8 +1682,7 @@ theorem cpv_polarPart_at_multiCrossed_pole_under_condB_corner
         HungerbuhlerWasem.hasCauchyPV_simplePole_of_inv (a k) h_inv_cpv
       rw [show 2 * ↑Real.pi * I * w * a k = a k * L_inv by rw [h_L_inv_eq]; ring]
       exact h_scaled
-    · -- Higher-order case: corner-friendly form.
-      have hk_ge_one : 1 ≤ k.val := by omega
+    · have hk_ge_one : 1 ≤ k.val := by omega
       have h_L_eq : L k = (0 : ℂ) := by simp [L, hk]
       rw [h_L_eq]
       by_cases h_zero : a k = 0
@@ -1814,8 +1694,6 @@ theorem cpv_polarPart_at_multiCrossed_pole_under_condB_corner
       · have hk_succ_ge_two : 2 ≤ k.val + 1 := by omega
         have hk_succ_le_N : k.val + 1 ≤ N := k.isLt
         have hN_pos : 1 ≤ N := le_trans (by omega : 1 ≤ k.val + 1) hk_succ_le_N
-        -- Build the corner-form h_B for power (k.val + 1) using the conditional
-        -- hypothesis at index `k` with `coeff s k ≠ 0`.
         have h_B_at_each : ∀ t ∈ crossings,
             (L_plus t / (↑‖L_plus t‖ : ℂ)) ^ ((k.val + 1) - 1) =
             ((-(L_minus t)) / (↑‖L_minus t‖ : ℂ)) ^ ((k.val + 1) - 1) := fun t ht => by
@@ -1827,7 +1705,6 @@ theorem cpv_polarPart_at_multiCrossed_pole_under_condB_corner
             (n := N) (k := k.val + 1) hk_succ_ge_two hk_succ_le_N hN_pos
             h_flat_at_each L_plus L_minus hL_plus_ne hL_minus_ne hL_right hL_left
             h_B_at_each (a k))
-  -- Combine via `HasCauchyPV.finset_sum`.
   have h_sum_cpv : HasCauchyPV
       (fun z => ∑ k : Fin N, a k / (z - s) ^ (k.val + 1)) γP s
       (∑ k : Fin N, L k) :=
@@ -1846,19 +1723,6 @@ theorem cpv_polarPart_at_multiCrossed_pole_under_condB_corner
     rw [← h_sum_L_eq]
     exact HasCauchyPV.congr_pointwise h_sum_cpv h_pp_eq
   exact HasCauchyPV.to_singletonOn h_cpv_polar
-
-/-! ### Final HW3.3 form: `residueTheorem_crossing_full_spec` (T-BR-Y9g)
-
-Eliminates the `h_multi_cpv_polar_part` oracle from
-`residueTheorem_crossing_no_basepoint_no_unique_constraint` by discharging the
-per-pole multi-crossing CPV witness internally via
-`cpv_polarPart_at_multiCrossed_pole_under_condB` (T-BR-Y9g), which decomposes
-the polar part into simple-pole and higher-order contributions and applies
-`hasCauchyPV_inv_sub_multiCrossing` + `hasCauchyPVOn_multiCrossing_higherOrder`.
-
-Compared to `_no_basepoint_no_unique_constraint`, this theorem drops the
-`h_multi_cpv_polar_part` oracle entirely. The only residual technical hypothesis
-beyond the paper-faithful spec is `h_no_corner_crossings`. -/
 
 /-- **HW3.3 — Corner-friendly clean spec form (T-BR-Y11c).**
 
@@ -1922,12 +1786,10 @@ theorem residueTheorem_crossing_paper_faithful_clean
         γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t = s →
           t ∈ crossings := fun t ht h_eq => by
       rw [hcrossings_def, Set.Finite.mem_toFinset]; exact ⟨ht, h_eq⟩
-    -- Per-crossing flatness from condition (A').
     have h_flat_at_each : ∀ t₀ ∈ crossings,
         IsFlatOfOrder γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t₀
           (decomp.order s) := fun t₀ ht₀ =>
       hCondA s hs t₀ (Ioo_subset_Icc_self (h_Ioo' t₀ ht₀)) (h_at' t₀ ht₀) (h_Ioo' t₀ ht₀)
-    -- Per-crossing L_+ / L_- via case-split on partition membership.
     let L_plus : ℝ → ℂ := fun t =>
       if h_part : t ∈ γ.toPwC1Immersion.toPiecewiseC1Path.partition then
         Classical.choose (γ.toPwC1Immersion.right_deriv_limit t h_part)
@@ -1940,37 +1802,32 @@ theorem residueTheorem_crossing_paper_faithful_clean
         deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t
     have hL_plus_ne : ∀ t ∈ crossings, L_plus t ≠ 0 := fun t ht => by
       by_cases h_part : t ∈ γ.toPwC1Immersion.toPiecewiseC1Path.partition
-      · simp only [L_plus, dif_pos h_part]
-        exact (Classical.choose_spec
-          (γ.toPwC1Immersion.right_deriv_limit t h_part)).1
-      · simp only [L_plus, dif_neg h_part]
-        exact (deriv_limit_eq_at_off_partition γ (h_Ioo' t ht) h_part).1
+      · simpa [L_plus, dif_pos h_part] using
+          (Classical.choose_spec (γ.toPwC1Immersion.right_deriv_limit t h_part)).1
+      · simpa [L_plus, dif_neg h_part] using
+          (deriv_limit_eq_at_off_partition γ (h_Ioo' t ht) h_part).1
     have hL_minus_ne : ∀ t ∈ crossings, L_minus t ≠ 0 := fun t ht => by
       by_cases h_part : t ∈ γ.toPwC1Immersion.toPiecewiseC1Path.partition
-      · simp only [L_minus, dif_pos h_part]
-        exact (Classical.choose_spec
-          (γ.toPwC1Immersion.left_deriv_limit t h_part)).1
-      · simp only [L_minus, dif_neg h_part]
-        exact (deriv_limit_eq_at_off_partition γ (h_Ioo' t ht) h_part).1
+      · simpa [L_minus, dif_pos h_part] using
+          (Classical.choose_spec (γ.toPwC1Immersion.left_deriv_limit t h_part)).1
+      · simpa [L_minus, dif_neg h_part] using
+          (deriv_limit_eq_at_off_partition γ (h_Ioo' t ht) h_part).1
     have hL_right' : ∀ t ∈ crossings,
         Tendsto (deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend)
           (𝓝[>] t) (𝓝 (L_plus t)) := fun t ht => by
       by_cases h_part : t ∈ γ.toPwC1Immersion.toPiecewiseC1Path.partition
-      · simp only [L_plus, dif_pos h_part]
-        exact (Classical.choose_spec
-          (γ.toPwC1Immersion.right_deriv_limit t h_part)).2
-      · simp only [L_plus, dif_neg h_part]
-        exact (deriv_limit_eq_at_off_partition γ (h_Ioo' t ht) h_part).2.1
+      · simpa [L_plus, dif_pos h_part] using
+          (Classical.choose_spec (γ.toPwC1Immersion.right_deriv_limit t h_part)).2
+      · simpa [L_plus, dif_neg h_part] using
+          (deriv_limit_eq_at_off_partition γ (h_Ioo' t ht) h_part).2.1
     have hL_left' : ∀ t ∈ crossings,
         Tendsto (deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend)
           (𝓝[<] t) (𝓝 (L_minus t)) := fun t ht => by
       by_cases h_part : t ∈ γ.toPwC1Immersion.toPiecewiseC1Path.partition
-      · simp only [L_minus, dif_pos h_part]
-        exact (Classical.choose_spec
-          (γ.toPwC1Immersion.left_deriv_limit t h_part)).2
-      · simp only [L_minus, dif_neg h_part]
-        exact (deriv_limit_eq_at_off_partition γ (h_Ioo' t ht) h_part).2.2
-    -- Per-crossing conditional h_B (only when coeff ≠ 0).
+      · simpa [L_minus, dif_pos h_part] using
+          (Classical.choose_spec (γ.toPwC1Immersion.left_deriv_limit t h_part)).2
+      · simpa [L_minus, dif_neg h_part] using
+          (deriv_limit_eq_at_off_partition γ (h_Ioo' t ht) h_part).2.2
     have h_B' : ∀ (k : Fin (decomp.order s)), 1 ≤ k.val →
         decomp.coeff s k ≠ 0 → ∀ t ∈ crossings,
           (L_plus t / (↑‖L_plus t‖ : ℂ)) ^ k.val =
@@ -1981,8 +1838,7 @@ theorem residueTheorem_crossing_paper_faithful_clean
       have hk_two : 2 ≤ k.val + 1 := by omega
       have h_kval_eq : k.val + 1 - 1 = k.val := by omega
       by_cases h_part : t ∈ γ.toPwC1Immersion.toPiecewiseC1Path.partition
-      · -- Corner case: use canonical L_+, L_- via `corner_angle_compat_to_h_B`.
-        have hL_plus_eq : L_plus t =
+      · have hL_plus_eq : L_plus t =
             Classical.choose (γ.toPwC1Immersion.right_deriv_limit t h_part) := by
           simp only [L_plus, dif_pos h_part]
         have hL_minus_eq : L_minus t =
@@ -1999,8 +1855,7 @@ theorem residueTheorem_crossing_paper_faithful_clean
           (hL_plus_ne t ht) hL_minus_eq hL_plus_eq hk_two h_angle_pwr
         rw [h_kval_eq] at h_result
         exact h_result
-      · -- Smooth case: L_+ = L_- = deriv γ t.
-        have h_L_eq := deriv_limit_eq_at_off_partition γ ht_Ioo h_part
+      · have h_L_eq := deriv_limit_eq_at_off_partition γ ht_Ioo h_part
         have hL_plus_unfold : L_plus t =
             deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t := by
           simp only [L_plus, dif_neg h_part]
@@ -2019,8 +1874,6 @@ theorem residueTheorem_crossing_paper_faithful_clean
           h_L_eq.1 (k.val + 1) hk_two h_angle_pwr
         rw [h_kval_eq] at h_result
         exact h_result
-    -- Internal derivation of `h_simple_cpv` via the corner-friendly
-    -- multi-crossing simple-pole CPV existence (T-BR-Y11c).
     have h_flat_one : ∀ t₀ ∈ crossings,
         IsFlatOfOrder γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t₀ 1 :=
       fun t₀ ht₀ => isFlatOfOrder_one γ.toPwC1Immersion t₀ (h_Ioo' t₀ ht₀)
@@ -2029,7 +1882,6 @@ theorem residueTheorem_crossing_paper_faithful_clean
           γ.toPwC1Immersion.toPiecewiseC1Path s L :=
       hasCauchyPV_inv_sub_multiCrossing_corner (γ := γ) (s := s)
         (crossings := crossings) h_Ioo' h_at' h_complete' h_flat_one
-    -- Convert HasCauchyPVOn {s} → HasCauchyPV s → HasCauchyPVOn S via Multi-Pole DCT.
     exact MultiPoleDCT.hasCauchyPVOn_polarPart_of_hasCauchyPV_multipole
       hS_in_U decomp γ hs h_null
       (hasCauchyPV_of_hasCauchyPVOn_singleton

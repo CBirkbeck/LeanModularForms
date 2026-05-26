@@ -89,9 +89,9 @@ theorem seg4_near_of_linDelta {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
     ‖fdBoundaryFun H t - z₀‖ ≤ ε := by
   have hK_pos : 0 < seg1Speed H := seg1Speed_pos hH
   have h_lo_gap : ε / seg1Speed H < seg4T₀ H z₀.im - 3/5 := by
-    rw [div_lt_iff₀ hK_pos, mul_comm, seg1Speed_mul_t₀_sub_three_fifths hH]; exact hε_lo
+    rwa [div_lt_iff₀ hK_pos, mul_comm, seg1Speed_mul_t₀_sub_three_fifths hH]
   have h_hi_gap : ε / seg1Speed H < 4/5 - seg4T₀ H z₀.im := by
-    rw [div_lt_iff₀ hK_pos, mul_comm, seg1Speed_mul_four_fifths_sub_t₀ hH]; exact hε_hi
+    rwa [div_lt_iff₀ hK_pos, mul_comm, seg1Speed_mul_four_fifths_sub_t₀ hH]
   have h_t_lo : 3/5 < t := by linarith [(abs_le.mp ht).1]
   have h_t_hi : t ≤ 4/5 := by linarith [(abs_le.mp ht).2]
   rw [fdBoundaryFun_seg4_dist_eq hH hz_re h_t_lo h_t_hi]
