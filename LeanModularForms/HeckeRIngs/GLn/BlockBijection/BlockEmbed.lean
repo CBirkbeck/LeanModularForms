@@ -127,9 +127,8 @@ private lemma slSuccEmbed_H_one {k : ℕ} :
     slSuccEmbed_H (1 : (GL_pair (k + 1)).H) = 1 := by
   apply Subtype.ext
   show (mapGL ℚ (slSuccEmbed (toSL 1)) : GL _ ℚ) = 1
-  have htoSL : toSL (1 : (GL_pair (k + 1)).H) = 1 :=
-    mapGL_injective (k + 1) (by rw [toSL_spec]; simp [map_one])
-  rw [htoSL, slSuccEmbed_one, map_one]
+  rw [mapGL_injective (k + 1) (show mapGL ℚ (toSL 1) = mapGL ℚ 1 by rw [toSL_spec]; simp),
+    slSuccEmbed_one, map_one]
 
 private lemma slSuccEmbed_injective {k : ℕ} :
     Function.Injective (slSuccEmbed : SpecialLinearGroup (Fin (k + 1)) ℤ →
@@ -152,10 +151,8 @@ private lemma slSuccEmbed_injective {k : ℕ} :
         ((fromBlocks 1 0 0 B.1).submatrix e e).submatrix e.symm e.symm := by
       simp [submatrix_submatrix, Equiv.self_comp_symm]
     rw [h1, h2, hSub']
-  have hAB : A.1 = B.1 := by
-    have := congr_arg Matrix.toBlocks₂₂ hFromBlocks
-    simpa [toBlocks_fromBlocks₂₂] using this
-  exact Subtype.ext hAB
+  refine Subtype.ext ?_
+  simpa [toBlocks_fromBlocks₂₂] using congr_arg Matrix.toBlocks₂₂ hFromBlocks
 
 private lemma slSuccEmbed_H_inv {k : ℕ} (σ : (GL_pair (k + 1)).H) :
     slSuccEmbed_H σ⁻¹ = (slSuccEmbed_H σ)⁻¹ := by
@@ -169,11 +166,8 @@ private lemma slSuccEmbed_H_injective {k : ℕ} :
       (slSuccEmbed_H σ₂ : GL (Fin (k + 2)) ℚ) :=
     congr_arg (fun x : (GL_pair (k + 2)).H ↦ (x : GL (Fin (k + 2)) ℚ)) h
   rw [slSuccEmbed_H_val, slSuccEmbed_H_val] at hval
-  have hSL : slSuccEmbed (toSL σ₁) = slSuccEmbed (toSL σ₂) :=
-    mapGL_injective (k + 2) hval
-  have htoSL : toSL σ₁ = toSL σ₂ := slSuccEmbed_injective hSL
   apply Subtype.ext
-  rw [← toSL_spec σ₁, ← toSL_spec σ₂, htoSL]
+  rw [← toSL_spec σ₁, ← toSL_spec σ₂, slSuccEmbed_injective (mapGL_injective (k + 2) hval)]
 
 end SlSuccEmbedHelpers
 
@@ -242,9 +236,8 @@ lemma slSuccEmbed_H_stab_diagMat {k : ℕ}
   have h_hyp : (diagMat (k + 1) a)⁻¹ * mapGL ℚ (toSL σ) * diagMat (k + 1) a =
       mapGL ℚ ν := by
     rw [toSL_spec σ]; exact hν.symm
-  have h_block := block_conj_identity a ha (toSL σ) ν h_hyp
   rw [slSuccEmbed_H_val]
-  exact ⟨slSuccEmbed ν, h_block.symm⟩
+  exact ⟨slSuccEmbed ν, (block_conj_identity a ha (toSL σ) ν h_hyp).symm⟩
 
 
 /-- Positivity lifts through `Fin.cons 1`: if every `a i` is positive, so is every
@@ -263,9 +256,7 @@ private lemma diagConjWitnessMat_entry_cast {n : ℕ} (c : Fin n → ℕ)
     (N : SpecialLinearGroup (Fin n) ℤ)
     (h_dvd : ∀ i j, (c i : ℤ) ∣ N.1 i j * (c j : ℤ)) (i j : Fin n) :
     (diagConjWitnessMat c N i j : ℚ) * (c i : ℤ) = (N.1 i j : ℚ) * (c j : ℤ) := by
-  have hmul : diagConjWitnessMat c N i j * (c i : ℤ) = N.1 i j * (c j : ℤ) :=
-    Int.ediv_mul_cancel (h_dvd i j)
-  exact_mod_cast congr_arg (fun z : ℤ ↦ (z : ℚ)) hmul
+  exact_mod_cast congr_arg (fun z : ℤ ↦ (z : ℚ)) (Int.ediv_mul_cancel (h_dvd i j))
 
 private lemma diagConjWitnessMat_mat_eq {n : ℕ} (c : Fin n → ℕ) (hc : ∀ i, 0 < c i)
     (N : SpecialLinearGroup (Fin n) ℤ)
@@ -296,10 +287,9 @@ private lemma diagConjWitnessMat_det_one {n : ℕ} (c : Fin n → ℕ) (hc : ∀
     rw [show ((mapGL ℚ N).val).det = (N.val.map (Int.cast : ℤ → ℚ)).det by
       rw [mapGL_coe_matrix]; simp [algebraMap_int_eq], ← Int.cast_det, N.2]; simp
   rw [hN1, one_mul] at hdet
-  have hcast : (((diagConjWitnessMat c N).det : ℤ) : ℚ) =
-      ((diagConjWitnessMat c N).map (Int.cast : ℤ → ℚ)).det := Int.cast_det _
   have : (((diagConjWitnessMat c N).det : ℤ) : ℚ) = (1 : ℚ) := by
-    rw [hcast]; exact mul_left_cancel₀ hD_det_ne (by rw [mul_one]; linarith [hdet])
+    rw [Int.cast_det _]
+    exact mul_left_cancel₀ hD_det_ne (by rw [mul_one]; linarith [hdet])
   exact_mod_cast this
 
 /-- Sufficient direction for diag-conjugation membership: if `N ∈ SL(k+2, ℤ)` satisfies the
@@ -314,11 +304,11 @@ lemma diagMat_cons_one_conj_mapGL_mem_H_of_entry_dvd
     (diagMat (k + 2) (Fin.cons 1 a))⁻¹ *
       (mapGL ℚ N : GL (Fin (k + 2)) ℚ) *
       diagMat (k + 2) (Fin.cons 1 a) ∈ (GL_pair (k + 2)).H := by
-  set c : Fin (k + 2) → ℕ := Fin.cons 1 a with hc_def
+  set c : Fin (k + 2) → ℕ := Fin.cons 1 a
   have hc_pos : ∀ i, 0 < c i := cons_one_pos ha
-  set D : GL (Fin (k + 2)) ℚ := diagMat (k + 2) c with hD_def
+  set D : GL (Fin (k + 2)) ℚ := diagMat (k + 2) c
   set M : SpecialLinearGroup (Fin (k + 2)) ℤ :=
-    ⟨diagConjWitnessMat c N, diagConjWitnessMat_det_one c hc_pos N h_dvd⟩ with hM_def
+    ⟨diagConjWitnessMat c N, diagConjWitnessMat_det_one c hc_pos N h_dvd⟩
   refine ⟨M, ?_⟩
   have h_units : (mapGL ℚ N : GL (Fin (k + 2)) ℚ) * D = D * mapGL ℚ M := by
     apply Units.ext
@@ -404,15 +394,13 @@ private lemma slSuccEmbed_conj_entry {k : ℕ}
       diagMat (k + 2) (Fin.cons 1 a) * mapGL ℚ ν) (i j : Fin (k + 2)) :
     ((slSuccEmbed (toSL σ)).val i j : ℚ) * ((Fin.cons 1 a : Fin (k + 2) → ℕ) j : ℚ) =
       ((Fin.cons 1 a : Fin (k + 2) → ℕ) i : ℚ) * (ν.val i j : ℚ) := by
-  have hcons_pos := cons_one_pos ha
-  have h := congr_arg (fun (x : GL (Fin (k + 2)) ℚ) ↦ (x : Matrix _ _ ℚ) i j) hflip
-  simp only [Units.val_mul, Matrix.mul_apply, slSuccEmbed_H_val,
-             mapGL_coe_matrix, algebraMap_int_eq, diagMat_val _ _ hcons_pos,
+  simpa only [Units.val_mul, Matrix.mul_apply, slSuccEmbed_H_val,
+             mapGL_coe_matrix, algebraMap_int_eq, diagMat_val _ _ (cons_one_pos ha),
              Matrix.diagonal_apply, mul_ite, mul_zero, ite_mul, zero_mul,
              Finset.sum_ite_eq', Finset.sum_ite_eq, Finset.mem_univ, if_true,
              SpecialLinearGroup.map_apply_coe, RingHom.mapMatrix_apply,
-             Matrix.map_apply] at h
-  exact h
+             Matrix.map_apply] using
+    congr_arg (fun (x : GL (Fin (k + 2)) ℚ) ↦ (x : Matrix _ _ ℚ) i j) hflip
 
 private lemma slSuccEmbed_conj_ν_zero_zero {k : ℕ}
     (a : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i)
@@ -449,10 +437,7 @@ private lemma slSuccEmbed_conj_ν_succ_zero {k : ℕ}
   rw [slSuccEmbed_val_succ_zero] at h
   simp only [Int.cast_zero, Fin.cons_zero, Nat.cast_one, mul_one, Fin.cons_succ] at h
   have hai : (0 : ℚ) < (a i : ℚ) := by exact_mod_cast ha i
-  have hν_zero : (ν.val i.succ 0 : ℚ) = 0 := by
-    have h' : (a i : ℚ) * (ν.val i.succ 0 : ℚ) = 0 := h.symm
-    exact (mul_eq_zero.mp h').resolve_left hai.ne'
-  exact_mod_cast hν_zero
+  exact_mod_cast (mul_eq_zero.mp h.symm).resolve_left hai.ne'
 
 private lemma slSuccEmbed_conj_ν_succ_succ {k : ℕ}
     (a : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i)
@@ -476,18 +461,16 @@ private lemma ν_bottomBlock_det {k : ℕ}
       Matrix (Fin (k + 1)) (Fin (k + 1)) ℤ)) = 1 := by
   set ν'_mat : Matrix (Fin (k + 1)) (Fin (k + 1)) ℤ :=
     fun i j ↦ ν.val i.succ j.succ with hν'_mat_def
-  have h00 := slSuccEmbed_conj_ν_zero_zero a ha σ ν hflip
-  have h_col : ∀ i : Fin (k + 1), ν.val i.succ 0 = 0 :=
-    fun i ↦ slSuccEmbed_conj_ν_succ_zero a ha σ ν hflip i
   have h_expand := Matrix.det_succ_column ν.val 0
   rw [Fin.sum_univ_succ] at h_expand
-  simp only [Fin.val_zero, add_zero, pow_zero, one_mul, h00] at h_expand
+  simp only [Fin.val_zero, add_zero, pow_zero, one_mul,
+    slSuccEmbed_conj_ν_zero_zero a ha σ ν hflip] at h_expand
   have h_zero_sum :
       (∑ x : Fin (k + 1), (-1 : ℤ) ^ (x.succ : Fin (k + 2)).val * ν.val x.succ 0 *
         (ν.val.submatrix x.succ.succAbove (Fin.succAbove 0)).det) = 0 := by
     apply Finset.sum_eq_zero
     intro x _
-    rw [h_col]; ring
+    rw [slSuccEmbed_conj_ν_succ_zero a ha σ ν hflip]; ring
   rw [h_zero_sum, add_zero] at h_expand
   rw [ν.prop] at h_expand
   have h_sub : ν'_mat = ν.val.submatrix (Fin.succAbove 0) (Fin.succAbove 0) := by
@@ -524,12 +507,9 @@ private lemma ν_bottomBlock_mapGL_eq {k : ℕ}
                SpecialLinearGroup.map_apply_coe, RingHom.mapMatrix_apply,
                Matrix.map_apply]
     have h_σ : (σ : GL (Fin (k + 1)) ℚ).val i j = ((toSL σ).val i j : ℚ) := by
-      have : mapGL ℚ (toSL σ) = σ := toSL_spec σ
-      have h' := congr_arg (fun (x : GL _ ℚ) ↦ x.val i j) this
-      simp only [mapGL_coe_matrix, algebraMap_int_eq,
-                 SpecialLinearGroup.map_apply_coe, RingHom.mapMatrix_apply,
-                 Matrix.map_apply] at h'
-      exact h'.symm
+      simpa only [mapGL_coe_matrix, algebraMap_int_eq, SpecialLinearGroup.map_apply_coe,
+        RingHom.mapMatrix_apply, Matrix.map_apply] using
+        (congr_arg (fun (x : GL _ ℚ) ↦ x.val i j) (toSL_spec σ)).symm
     rw [h_σ]
     exact slSuccEmbed_conj_ν_succ_succ a ha σ ν hflip i j
   have : (diagMat (k + 1) a)⁻¹ * ((σ : GL _ ℚ) * diagMat (k + 1) a) =
@@ -564,14 +544,12 @@ lemma decompQuot_slSuccEmbed_diagMat_injective {k : ℕ}
   have h_mul : (slSuccEmbed_H σ₁)⁻¹ * slSuccEmbed_H σ₂ =
       slSuccEmbed_H (σ₁⁻¹ * σ₂) := by
     rw [← slSuccEmbed_H_inv, ← slSuccEmbed_H_mul]
-  rw [h_mul] at h
-  rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
+  rw [h_mul, Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
       ConjAct.smul_def] at h
   simp only [map_inv, ConjAct.ofConjAct_toConjAct, inv_inv] at h
   rw [show ((diagMat_delta (k + 2) (Fin.cons 1 a) : (GL_pair (k + 2)).Δ) :
         GL (Fin (k + 2)) ℚ) = diagMat (k + 2) (Fin.cons 1 a) from
       diagMat_delta_val (k + 2) (Fin.cons 1 a) (cons_one_pos ha)] at h
-  have h_stab := slSuccEmbed_H_stab_diagMat_converse a ha (σ₁⁻¹ * σ₂) h
   apply Quotient.sound
   change QuotientGroup.leftRel _ σ₁ σ₂
   rw [QuotientGroup.leftRel_apply,
@@ -580,7 +558,7 @@ lemma decompQuot_slSuccEmbed_diagMat_injective {k : ℕ}
   simp only [map_inv, ConjAct.ofConjAct_toConjAct, inv_inv]
   rw [show ((diagMat_delta (k + 1) a : (GL_pair (k + 1)).Δ) : GL (Fin (k + 1)) ℚ) =
         diagMat (k + 1) a from diagMat_delta_val (k + 1) a ha]
-  exact h_stab
+  exact slSuccEmbed_H_stab_diagMat_converse a ha (σ₁⁻¹ * σ₂) h
 
 /-! ### GL-level block embedding -/
 
@@ -689,7 +667,6 @@ private noncomputable def slPredEmbed {k : ℕ}
     (h_col : ∀ i : Fin (k + 1), M.1 i.succ 0 = 0) :
     SpecialLinearGroup (Fin (k + 1)) ℤ :=
   ⟨M.1.submatrix Fin.succ Fin.succ, by
-    have h_det_M : M.1.det = 1 := M.2
     have h_laplace := Matrix.det_succ_column_zero M.1
     rw [Fin.sum_univ_succ] at h_laplace
     simp only [Fin.val_zero, pow_zero, h_diag, one_mul, Fin.succAbove_zero] at h_laplace
@@ -699,8 +676,7 @@ private noncomputable def slPredEmbed {k : ℕ}
       apply Finset.sum_eq_zero
       intro i _
       rw [h_col i]; ring
-    rw [h_tail, add_zero] at h_laplace
-    rw [h_det_M] at h_laplace
+    rw [h_tail, add_zero, M.2] at h_laplace
     exact h_laplace.symm⟩
 
 private lemma slPredEmbed_val_eq {k : ℕ}
@@ -814,8 +790,8 @@ private lemma blockEmbedGL_mem_H_imp {k : ℕ} (h : GL (Fin (k + 1)) ℚ)
   have hν_val : ∀ p q : Fin (k + 2),
       ((ν.1 p q : ℤ) : ℚ) = (blockEmbedGL h).val p q := by
     intro p q
-    have := congr_arg (fun (u : GL (Fin (k + 2)) ℚ) ↦ u.val p q) hν
-    simpa [mapGL_coe_matrix, algebraMap_int_eq, Matrix.map_apply] using this
+    simpa [mapGL_coe_matrix, algebraMap_int_eq, Matrix.map_apply] using
+      congr_arg (fun (u : GL (Fin (k + 2)) ℚ) ↦ u.val p q) hν
   have h_ν_diag : ν.1 0 0 = 1 := by
     have h0 := hν_val 0 0
     rw [blockEmbedGL_val_eq] at h0
@@ -836,12 +812,9 @@ private lemma blockEmbedGL_mem_H_imp {k : ℕ} (h : GL (Fin (k + 1)) ℚ)
     simp [Matrix.submatrix_apply, Matrix.fromBlocks, Matrix.of_apply,
       Fin.castOrderIso, finSumFinEquiv, Fin.addCases, Fin.subNat] at hj
     exact_mod_cast hj
-  set ν_m := slPredEmbed ν h_ν_diag h_ν_col with hν_m_def
-  refine ⟨ν_m, ?_⟩
+  refine ⟨slPredEmbed ν h_ν_diag h_ν_col, ?_⟩
   apply blockEmbedGL_injective
-  have h_section : slSuccEmbed ν_m = ν :=
-    slSuccEmbed_slPredEmbed_eq ν h_ν_diag h_ν_col h_ν_row
-  rw [blockEmbedGL_mapGL_eq, h_section, hν]
+  rw [blockEmbedGL_mapGL_eq, slSuccEmbed_slPredEmbed_eq ν h_ν_diag h_ν_col h_ν_row, hν]
 
 /-- Block-form fiber descent (converse of `slSuccEmbed_H_fiber_transfer`): if the lifted
 dim-`k+2` H-membership condition holds for the `slSuccEmbed_H` images of `σ_m, τ_m`, then
@@ -885,9 +858,8 @@ lemma slSuccEmbed_H_fiber_transfer {k : ℕ}
   obtain ⟨ν, hν⟩ := h
   refine ⟨slSuccEmbed ν, ?_⟩
   have h_img := congr_arg (blockEmbedGL (k := k)) hν
-  rw [blockEmbedGL_mapGL_eq] at h_img
-  rw [blockEmbedGL_mul, blockEmbedGL_mul, blockEmbedGL_mul, blockEmbedGL_mul,
-      blockEmbedGL_inv, blockEmbedGL_diagMat _ hc, blockEmbedGL_diagMat _ ha,
+  rw [blockEmbedGL_mapGL_eq, blockEmbedGL_mul, blockEmbedGL_mul, blockEmbedGL_mul,
+      blockEmbedGL_mul, blockEmbedGL_inv, blockEmbedGL_diagMat _ hc, blockEmbedGL_diagMat _ ha,
       blockEmbedGL_diagMat _ hb, blockEmbedGL_slSuccEmbed_H_eq σ,
       blockEmbedGL_slSuccEmbed_H_eq τ] at h_img
   exact h_img

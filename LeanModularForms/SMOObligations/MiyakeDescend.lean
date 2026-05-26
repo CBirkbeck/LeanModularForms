@@ -129,7 +129,7 @@ lemma multipass_gamma1_conjugate_in_gamma1
     α ∈ Gamma1 N := by
   rw [Gamma1_mem]
   have h : ∀ i j : Fin 2, Int.cast (α i j) = (1 : Matrix (Fin 2) (Fin 2) (ZMod N)) i j :=
-    fun i j => congr_fun (congr_fun h_α_mod_N i) j ▸ by simp [Matrix.map_apply]
+    fun i j ↦ congr_fun (congr_fun h_α_mod_N i) j ▸ by simp [Matrix.map_apply]
   simp only [Matrix.one_apply] at h
   exact ⟨h 0 0, h 1 1, h 1 0⟩
 
@@ -160,10 +160,8 @@ private lemma matrix_intCast_map_eq_one_of_dvd {ι : Type*} [DecidableEq ι]
   have h_factor : ∀ a : ℤ, ((a : ZMod d)) =
       (ZMod.castHom hdm (ZMod d)) ((a : ZMod m)) := by
     intro a
-    have hh : (Int.castRingHom (ZMod d) : ℤ →+* ZMod d) =
-        (ZMod.castHom hdm (ZMod d)).comp (Int.castRingHom (ZMod m)) :=
-      Subsingleton.elim _ _
-    exact congr_fun (congr_arg DFunLike.coe hh) a
+    exact congr_fun (congr_arg DFunLike.coe (show (Int.castRingHom (ZMod d) : ℤ →+* ZMod d) =
+      (ZMod.castHom hdm (ZMod d)).comp (Int.castRingHom (ZMod m)) from Subsingleton.elim _ _)) a
   ext i j
   have h_entry : (((M i j : ℤ) : ZMod m)) = ((1 : Matrix ι ι (ZMod m)) i j) := by
     simpa [Matrix.map_apply] using congr_fun (congr_fun hM i) j
@@ -244,8 +242,7 @@ private lemma specialLinearGroup_map_intCast_mul_inv_eq_one
     simp [RingHom.mapMatrix_apply]
   rw [h_φ_def, show φ (a * b⁻¹) = φ a * (φ b)⁻¹ from by rw [map_mul, map_inv]]
   have hEq : φ a = φ b := by
-    apply Matrix.SpecialLinearGroup.ext
-    intro i j
+    ext i j
     simp only [← h_φ_def]
     exact congr_fun (congr_fun (ha.trans hb.symm) i) j
   rw [hEq, mul_inv_cancel]
@@ -301,8 +298,7 @@ private lemma diag_p_mapGL_conj_eq
   simp only [Units.val_mul, mapGL_coe_matrix, map_apply_coe, RingHom.mapMatrix_apply]
   rw [hD]
   simp only [hβval]
-  apply Matrix.ext
-  intro i j
+  ext i j
   fin_cases i <;> fin_cases j <;>
     simp [Matrix.mul_apply, Fin.sum_univ_two, Matrix.map_apply] <;>
     linarith [hk', mul_comm (p : ℝ) (k' : ℝ),
@@ -332,9 +328,8 @@ private lemma exists_Gamma0_conj_of_delta_mod
   let β : Matrix.SpecialLinearGroup (Fin 2) ℤ := ⟨!![a, k'; (p : ℤ) * c, d], h_det_β⟩
   have hδ_10_Np : ((N / p : ℕ) : ℤ) ∣ (δ : Matrix (Fin 2) (Fin 2) ℤ) 1 0 := by
     rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
-    have := congr_fun (congr_fun hδ_mod_Np 1) 0
-    simpa [Matrix.map_apply,
-      Matrix.one_apply_ne (show (1 : Fin 2) ≠ 0 by decide)] using this
+    simpa [Matrix.map_apply, Matrix.one_apply_ne (show (1 : Fin 2) ≠ 0 by decide)]
+      using congr_fun (congr_fun hδ_mod_Np 1) 0
   have hβ_mem : β ∈ Gamma0 N := by
     rw [Gamma0_mem]
     show (((p : ℤ) * c : ℤ) : ZMod N) = 0
@@ -403,20 +398,19 @@ lemma m6_2_extra_rep_levelRaise_bridge
   have h_γtilde_mod_Np :
       (γtilde : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod (N / p)) = 1 :=
     levelRaiseConjOfDvd_intCast_map_eq_one γ_lN hdvd_lN h_γ_lN_mod_Np
-      (levelRaiseConjOfDvd_lower_left_dvd hp hpN (Nat.cast_ne_zero.mpr (NeZero.ne l))
-        γ_lN hdvd_lN h_γ_lN_10_dvd_lNp)
+      (levelRaiseConjOfDvd_lower_left_dvd hp hpN (Nat.cast_ne_zero.mpr (NeZero.ne l)) γ_lN hdvd_lN
+        ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp (Gamma0_mem.mp h_γ_lN_spec.1)))
   set δ : Matrix.SpecialLinearGroup (Fin 2) ℤ := γtilde * γ_N⁻¹ with hδ_def
   have hδ_mod_Np : (δ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod (N / p)) = 1 :=
     specialLinearGroup_map_intCast_mul_inv_eq_one γtilde γ_N h_γtilde_mod_Np h_γ_N_spec.2.2
+  -- Conjugating `δ` by `D = diag(1, p)` lands in `Γ₀(N)` with trivial character;
   -- `δ 0 1` is divisible by `p`, from the mod-`p` reductions of `γ_lN` and `γ_N`.
-  have hδ_01_p : (p : ℤ) ∣ (δ : Matrix (Fin 2) (Fin 2) ℤ) 0 1 :=
-    levelRaiseConj_mul_inv_zero_one_dvd_p γ_lN γ_N hdvd_lN h_γ_lN_spec.2.1 h_γ_N_spec.2.1
-  -- Conjugating `δ` by `D = diag(1, p)` lands in `Γ₀(N)` with trivial character.
   let D : GL (Fin 2) ℝ := Matrix.GeneralLinearGroup.mkOfDetNeZero
       !![(1 : ℝ), 0; 0, (p : ℝ)]
       (by simp [Matrix.det_fin_two]; exact_mod_cast hp.ne_zero)
   obtain ⟨β, hβ_mem, h_chi_β, hD_δ⟩ :=
-    exists_Gamma0_conj_of_delta_mod hpN χ χ' hχ_eq δ hδ_mod_Np hδ_01_p D rfl
+    exists_Gamma0_conj_of_delta_mod hpN χ χ' hχ_eq δ hδ_mod_Np
+      (levelRaiseConj_mul_inv_zero_one_dvd_p γ_lN γ_N hdvd_lN h_γ_lN_spec.2.1 h_γ_N_spec.2.1) D rfl
   change ((⇑f ∣[k] D) ∣[k] (mapGL ℝ γtilde : GL (Fin 2) ℝ)) z =
       ((⇑f ∣[k] D) ∣[k] (mapGL ℝ γ_N : GL (Fin 2) ℝ)) z
   have h_γtilde_eq : mapGL ℝ γtilde = mapGL ℝ δ * mapGL ℝ γ_N := by
@@ -479,8 +473,7 @@ lemma multipass_V_p_slash_descendCoset
   unfold descendCosetList
   split_ifs with h_v
   · exact multipass_V_p_slash_upper_aux p hp g_low v.val z
-  · have h_p_sq : ¬ p ^ 2 ∣ N := not_p_sq_dvd_of_not_lt h_v
-    rw [SlashAction.slash_mul]
+  · rw [SlashAction.slash_mul]
     have h_inner_fun : ((⇑(HeckeRing.GL2.modularFormLevelRaise (N / p) p k g_low)) ∣[k]
         (Matrix.GeneralLinearGroup.mkOfDetNeZero
             !![(1 : ℝ), 0; 0, (p : ℝ)]
@@ -489,11 +482,11 @@ lemma multipass_V_p_slash_descendCoset
       ext w
       simpa using multipass_V_p_slash_upper_aux p hp g_low 0 w
     have h_γ_in_Γ1 : descendExtraGamma p N ∈ Gamma1 (N / p) := by
-      have h_mod := (descendExtraGamma_spec hp hpN h_p_sq).2.2
       rw [Gamma1_mem]
       refine ⟨?_, ?_, ?_⟩ <;>
         · simpa [Matrix.map_apply, Matrix.one_apply_ne (show (1 : Fin 2) ≠ 0 by decide)]
-            using congr_fun (congr_fun h_mod _) _
+            using congr_fun (congr_fun
+              (descendExtraGamma_spec hp hpN (not_p_sq_dvd_of_not_lt h_v)).2.2 _) _
     have h_g_low_inv : (⇑g_low : UpperHalfPlane → ℂ) ∣[k]
         (mapGL ℝ (descendExtraGamma p N) : GL (Fin 2) ℝ) = ⇑g_low :=
       g_low.slash_action_eq' _ ⟨descendExtraGamma p N, h_γ_in_Γ1, rfl⟩
@@ -525,15 +518,9 @@ lemma descendCosetList_lift_eq_glMap
         !![(1 : ℚ), (v.val : ℚ); 0, (p : ℚ)]
         (by simp [Matrix.det_fin_two]; exact_mod_cast hp.ne_zero), ?_⟩
     apply Units.ext
-    rw [show (glMap (Matrix.GeneralLinearGroup.mkOfDetNeZero
-            !![(1 : ℚ), (v.val : ℚ); 0, (p : ℚ)] _)).val =
-          (Matrix.GeneralLinearGroup.mkOfDetNeZero
-            !![(1 : ℚ), (v.val : ℚ); 0, (p : ℚ)] _).val.map (algebraMap ℚ ℝ) from rfl,
-        Matrix.GeneralLinearGroup.val_mkOfDetNeZero,
-        Matrix.GeneralLinearGroup.val_mkOfDetNeZero]
     ext i j
     fin_cases i <;> fin_cases j <;>
-      simp [Matrix.map_apply, algebraMap]
+      simp [glMap, Matrix.GeneralLinearGroup.val_mkOfDetNeZero, algebraMap]
   · refine ⟨Matrix.GeneralLinearGroup.mkOfDetNeZero
           !![(1 : ℚ), 0; 0, (p : ℚ)]
           (by simp [Matrix.det_fin_two]; exact_mod_cast hp.ne_zero) *
@@ -541,15 +528,9 @@ lemma descendCosetList_lift_eq_glMap
     rw [map_mul, glMap_mapGL_eq]
     congr 1
     apply Units.ext
-    rw [show (glMap (Matrix.GeneralLinearGroup.mkOfDetNeZero
-            !![(1 : ℚ), 0; 0, (p : ℚ)] _)).val =
-          (Matrix.GeneralLinearGroup.mkOfDetNeZero
-            !![(1 : ℚ), 0; 0, (p : ℚ)] _).val.map (algebraMap ℚ ℝ) from rfl,
-        Matrix.GeneralLinearGroup.val_mkOfDetNeZero,
-        Matrix.GeneralLinearGroup.val_mkOfDetNeZero]
     ext i j
     fin_cases i <;> fin_cases j <;>
-      simp [Matrix.map_apply, algebraMap]
+      simp [glMap, Matrix.GeneralLinearGroup.val_mkOfDetNeZero, algebraMap]
 
 /-- **M5a: Explicit GL₂(ℝ) coset reps with the action property** (Miyake,
 p. 161, Lemma 4.5.6 and 4.5.11).
@@ -659,12 +640,12 @@ theorem miyake_hecke_descend_cusp
   have hc_N : IsCusp c ((Gamma1 N).map (mapGL ℝ)) :=
     (Subgroup.IsArithmetic.isCusp_iff_isCusp_SL2Z ((Gamma1 N).map (mapGL ℝ))).mpr
       ((Subgroup.IsArithmetic.isCusp_iff_isCusp_SL2Z ((Gamma1 (N / p)).map (mapGL ℝ))).mp hc)
-  rw [show (fun z => ∑ v : Fin (descendCosetCount p N),
+  rw [show (fun z ↦ ∑ v : Fin (descendCosetCount p N),
               (⇑f ∣[k] (descendCosetList p N hp v)) z) =
         ∑ v : Fin (descendCosetCount p N),
-              (⇑f ∣[k] (descendCosetList p N hp v)) by
-          ext z; rw [Finset.sum_apply]]
-  refine Finset.sum_induction _ (fun g => c.IsZeroAt g k)
+              (⇑f ∣[k] (descendCosetList p N hp v)) from
+          funext fun z ↦ (Finset.sum_apply z _ _).symm]
+  refine Finset.sum_induction _ (fun g ↦ c.IsZeroAt g k)
     (fun _ _ ha hb ↦ ha.add hb)
     ((0 : CuspForm ((Gamma1 N).map (mapGL ℝ)) k).zero_at_cusps' hc_N) fun v _ ↦ ?_
   obtain ⟨A, hA⟩ := descendCosetList_lift_eq_glMap hp v
@@ -737,8 +718,7 @@ theorem miyake_hecke_descend_char
   have h_det_pos : ∀ w : Fin (descendCosetCount p N),
       (0 : ℝ) < (descendCosetList p N hp w).det.val := by
     intro w
-    have h := descendCosetList_det p N hp w
-    rw [Matrix.GeneralLinearGroup.val_det_apply, h]
+    rw [Matrix.GeneralLinearGroup.val_det_apply, descendCosetList_det p N hp w]
     exact_mod_cast hp.pos
   ext z
   have h_sum_form : (fun z' : UpperHalfPlane ↦ ∑ v : Fin (descendCosetCount p N),
@@ -746,9 +726,8 @@ theorem miyake_hecke_descend_char
       (∑ v : Fin (descendCosetCount p N), (⇑f ∣[k] descendCosetList p N hp v)) := by
     ext z'
     rw [Finset.sum_apply]
-  rw [h_sum_form, SlashAction.sum_slash, Pi.smul_apply, Finset.sum_apply, Finset.sum_apply]
-  rw [(Equiv.sum_comp σ (fun v ↦ (⇑f ∣[k] descendCosetList p N hp v) z)).symm]
-  rw [Finset.smul_sum]
+  rw [h_sum_form, SlashAction.sum_slash, Pi.smul_apply, Finset.sum_apply, Finset.sum_apply,
+    (Equiv.sum_comp σ (fun v ↦ (⇑f ∣[k] descendCosetList p N hp v) z)).symm, Finset.smul_sum]
   refine Finset.sum_congr rfl fun v _ ↦ ?_
   rw [(SlashAction.slash_mul k _ _ _).symm, h_action_eq v, SlashAction.slash_mul,
       multipass_modFormCharSpace_slash_apply χ hfχ (α v) (h_α_mem v),

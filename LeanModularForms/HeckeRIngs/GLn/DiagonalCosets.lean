@@ -71,7 +71,8 @@ lemma diagMat_hasIntEntries (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) : HasIntEn
 
 lemma diagMat_det_pos (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
     0 < (↑(diagMat n a) : Matrix (Fin n) (Fin n) ℚ).det := by
-  simp [ha, Matrix.det_diagonal]; exact Finset.prod_pos (fun i _ => by positivity [ha i])
+  simp only [ha, implies_true, diagMat_val, det_diagonal]
+  exact Finset.prod_pos (fun i _ => by positivity [ha i])
 
 lemma diagMat_mem_posDetInt (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
     diagMat n a ∈ posDetInt_submonoid n :=
@@ -258,8 +259,7 @@ private lemma mulVecLin_preimage_linearIndependent_and_span (A : Matrix (Fin n) 
       have hw_sum : (w : Fin n → ℤ) = ∑ i, c i • (ab' i : Fin n → ℤ) := by
         conv_lhs => rw [show w = ∑ i, c i • ab' i from (ab'.sum_repr w).symm]
         simp only [Submodule.coe_sum, Submodule.coe_smul_of_tower]
-      have hw_eq : (w : Fin n → ℤ) = A.mulVecLin v := rfl
-      rw [← hw_eq, hw_sum, map_sum]
+      rw [← show (w : Fin n → ℤ) = A.mulVecLin v from rfl, hw_sum, map_sum]
       congr 1; ext i; rw [LinearMap.map_smul, hr i]
     rw [hinj hAeq]
     exact Submodule.sum_mem _ fun i _ =>
@@ -350,8 +350,7 @@ private lemma exists_SL_diagonal_of_unit_diagonalization (A P Q : Matrix (Fin n)
     · exact hone
     · exfalso
       have hmul_eq : L_mat.det * Q.det * A.det = ∏ i, d i := by
-        have : L_mat.det * Q.det * A.det = L_mat.det * A.det * Q.det := by ring
-        linarith [h_prod]
+        rw [mul_right_comm]; exact h_prod
       rw [hneg] at hmul_eq
       have hprod_pos : (0 : ℤ) < ∏ i, d i := Finset.prod_pos fun i _ => hd_pos i
       nlinarith
@@ -365,11 +364,9 @@ theorem exists_diagonal_of_posdet (A : Matrix (Fin n) (Fin n) ℤ) (hdet : 0 < A
       (L : Matrix (Fin n) (Fin n) ℤ) * A * (R : Matrix (Fin n) (Fin n) ℤ) =
       Matrix.diagonal d := by
   have hdet_ne : A.det ≠ 0 := ne_of_gt hdet
-  have hinj := mulVecLin_injective_of_det_ne_zero (n := n) A hdet_ne
-  have hrank : Module.finrank ℤ (LinearMap.range A.mulVecLin) = Module.finrank ℤ (Fin n → ℤ) :=
-    finrank_range_mulVecLin (n := n) A hdet_ne
   obtain ⟨b', a, ab', hsnf⟩ :=
-    Submodule.exists_smith_normal_form_of_rank_eq (Pi.basisFun ℤ (Fin n)) hrank
+    Submodule.exists_smith_normal_form_of_rank_eq (Pi.basisFun ℤ (Fin n))
+      (finrank_range_mulVecLin (n := n) A hdet_ne)
   have ha_ne : ∀ i, a i ≠ 0 := by
     intro i hi
     have : (ab' i : Fin n → ℤ) = 0 := by rw [hsnf i, hi, zero_smul]
@@ -377,9 +374,7 @@ theorem exists_diagonal_of_posdet (A : Matrix (Fin n) (Fin n) ℤ) (hdet : 0 < A
   choose r hr using fun i => LinearMap.mem_range.mp (ab' i).2
   have hkey : ∀ j, A *ᵥ r j = a j • b' j := by
     intro j
-    have h1 : A.mulVecLin (r j) = ↑(ab' j) := hr j
-    have h2 : (↑(ab' j) : Fin n → ℤ) = a j • b' j := hsnf j
-    show A *ᵥ r j = a j • b' j; rw [← h2, ← h1]; rfl
+    show A *ᵥ r j = a j • b' j; rw [← hsnf j, ← hr j]; rfl
   set e := Pi.basisFun ℤ (Fin n)
   set P_mat : Matrix (Fin n) (Fin n) ℤ := Matrix.of (fun k j => b' j k) with hP_def
   set Q_mat : Matrix (Fin n) (Fin n) ℤ := Matrix.of (fun k j => r j k) with hQ_def
@@ -392,7 +387,8 @@ theorem exists_diagonal_of_posdet (A : Matrix (Fin n) (Fin n) ℤ) (hdet : 0 < A
     ext k j; show b' j k = e.toMatrix b' k j; rw [e.toMatrix_apply, Pi.basisFun_repr]
   have hP_unit : IsUnit P_mat.det := by rw [hP_eq]; exact e.isUnit_det b'
   obtain ⟨hr_li, hr_span⟩ :=
-    mulVecLin_preimage_linearIndependent_and_span (n := n) A hinj ab' r hr
+    mulVecLin_preimage_linearIndependent_and_span (n := n) A
+      (mulVecLin_injective_of_det_ne_zero (n := n) A hdet_ne) ab' r hr
   have hQ_eq : Q_mat = e.toMatrix r := by
     ext k j; show r j k = e.toMatrix r k j; rw [e.toMatrix_apply, Pi.basisFun_repr]
   have hQ_unit : IsUnit Q_mat.det := by
@@ -682,7 +678,6 @@ private lemma gcd_step_general (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : ∀ i, 
   have hR_det_big : R_big.det = 1 := by
     simp only [R_big]; rw [det_submatrix_equiv_self, det_fromBlocks_zero₂₁, det_one, mul_one,
       gcd_2x2_det_R a b]
-  have hj_ne_zero : j ≠ (0 : Fin (k + 2)) := fun h => hj (by rw [h]; rfl)
   refine ⟨⟨L_big, hL_det_big⟩, ⟨R_big, hR_det_big⟩, d', hd'_pos,
     by show d' ⟨0, _⟩ = g; simp [d'], ?_, ?_, ?_, ?_⟩
   · intro i hi1 hi2; show d' i = d i
@@ -697,7 +692,7 @@ private lemma gcd_step_general (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : ∀ i, 
       (fun i => by simp only [e]; exact genEquiv_symm_inr_ne_j k j hj i)
       (diagonal_submatrix_genEquiv k j hj)
     · show (if j = (0 : Fin (k + 2)) then g else if j = j then p * q * g else d j) = _
-      rw [if_neg hj_ne_zero, if_pos rfl]
+      rw [if_neg (fun h => hj (by rw [h]; rfl)), if_pos rfl]
     · intro i hi0 hij; simp only [d', if_neg hi0, if_neg hij]
 
 private lemma dvd_diag_of_SL_transform (m : ℕ) (d d' : Fin m → ℤ) (c : ℤ) (hc : ∀ i, c ∣ d i)
@@ -751,8 +746,8 @@ private lemma make_first_divide_all (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : �
       obtain ⟨L₁, R₁, d₁, hd₁_pos, hd₁_zero, hd₁_rest, _, hlt, hmul₁⟩ :=
         gcd_step_general k d hd j hj_ne
       have hN₁ : (d₁ (0 : Fin (k + 2))).natAbs < N := by
-        have : d₁ (0 : Fin (k + 2)) = d₁ ⟨0, by omega⟩ := rfl
-        rw [this, hd₁_zero, ← hN]; exact hlt hj_ndvd
+        rw [show d₁ (0 : Fin (k + 2)) = d₁ ⟨0, by omega⟩ from rfl, hd₁_zero, ← hN]
+        exact hlt hj_ndvd
       obtain ⟨d₂, hd₂_pos, hd₂_div, L₂, R₂, hmul₂⟩ :=
         ih _ hN₁ d₁ hd₁_pos (hd₁_pos 0) rfl
       refine ⟨d₂, hd₂_pos, hd₂_div, L₂ * L₁, R₁ * R₂, ?_⟩
@@ -863,28 +858,27 @@ private lemma exists_divchain_of_posdiag (d : Fin n → ℤ) (hd : ∀ i, 0 < d 
     | succ k =>
       intro d hd
       obtain ⟨d₁, hd₁_pos, hd₁_div, L₁, R₁, hmul₁⟩ := make_first_divide_all k d hd
-      have ih_tail := ih (fun i : Fin (k + 1) => d₁ ⟨i.val + 1, by omega⟩)
-        (fun i => hd₁_pos ⟨i.val + 1, by omega⟩)
-      obtain ⟨d_tail', hd_tail'_pos, hd_tail'_chain, L_tail, R_tail, hmul_tail⟩ := ih_tail
-      have hmul_embed := slSuccEmbed_mul_diagonal k d₁ L_tail R_tail d_tail' hmul_tail
+      obtain ⟨d_tail', hd_tail'_pos, hd_tail'_chain, L_tail, R_tail, hmul_tail⟩ :=
+        ih (fun i : Fin (k + 1) => d₁ ⟨i.val + 1, by omega⟩)
+          (fun i => hd₁_pos ⟨i.val + 1, by omega⟩)
       set d₂ : Fin (k + 2) → ℤ := fun i =>
         if i = (0 : Fin (k + 2)) then d₁ 0
         else d_tail' ⟨i.val - 1, by omega⟩
       have hd₂_pos : ∀ i, 0 < d₂ i := by
         intro i; simp only [d₂]; split_ifs <;> [exact hd₁_pos 0; exact hd_tail'_pos _]
-      have hc : ∀ i, d₁ 0 ∣ d_tail' i := dvd_diag_of_SL_transform (k + 1)
-        (fun i : Fin (k + 1) => d₁ ⟨i.val + 1, by omega⟩) d_tail' (d₁ 0)
-        (fun i => hd₁_div ⟨i.val + 1, by omega⟩) (L_tail : Matrix _ _ ℤ)
-        (R_tail : Matrix _ _ ℤ) hmul_tail
       have hd₂_chain : ∀ (i : ℕ) (hi : i + 1 < k + 2), d₂ ⟨i, by omega⟩ ∣ d₂ ⟨i + 1, hi⟩ :=
-        divChain_prepend k (d₁ 0) d_tail' hc hd_tail'_chain
+        divChain_prepend k (d₁ 0) d_tail'
+          (dvd_diag_of_SL_transform (k + 1) (fun i : Fin (k + 1) => d₁ ⟨i.val + 1, by omega⟩)
+            d_tail' (d₁ 0) (fun i => hd₁_div ⟨i.val + 1, by omega⟩)
+            (L_tail : Matrix _ _ ℤ) (R_tail : Matrix _ _ ℤ) hmul_tail) hd_tail'_chain
       refine ⟨d₂, hd₂_pos, hd₂_chain, slSuccEmbed L_tail * L₁, R₁ * slSuccEmbed R_tail, ?_⟩
       simp only [SpecialLinearGroup.coe_mul]
       rw [show ((slSuccEmbed L_tail : Matrix _ _ ℤ) * (L₁ : Matrix _ _ ℤ)) * Matrix.diagonal d *
         ((R₁ : Matrix _ _ ℤ) * (slSuccEmbed R_tail : Matrix _ _ ℤ)) =
         (slSuccEmbed L_tail : Matrix _ _ ℤ) * ((L₁ : Matrix _ _ ℤ) * Matrix.diagonal d *
         (R₁ : Matrix _ _ ℤ)) * (slSuccEmbed R_tail : Matrix _ _ ℤ)
-        by simp [Matrix.mul_assoc], hmul₁, hmul_embed]
+        by simp [Matrix.mul_assoc], hmul₁,
+        slSuccEmbed_mul_diagonal k d₁ L_tail R_tail d_tail' hmul_tail]
 
 theorem exists_divchain_diagonal_of_posdet (A : Matrix (Fin n) (Fin n) ℤ)
     (hdet : 0 < A.det) :
@@ -946,11 +940,10 @@ theorem exists_diagonal_representative (α : (GL_pair n).Δ) :
     ∃ (a : Fin n → ℕ) (_ha : ∀ i, 0 < a i) (_hdiv : DivChain n a),
       (⟦α⟧ : HeckeCoset (GL_pair n)) = T_diag a := by
   obtain ⟨A, hA⟩ : HasIntEntries n (↑α : GL (Fin n) ℚ) := α.2.1
-  have h_det : (0 : ℚ) < (↑(↑α : GL (Fin n) ℚ) : Matrix (Fin n) (Fin n) ℚ).det := α.2.2
   have hdet_pos : 0 < A.det := by
     have h1 : (A.det : ℚ) = (↑(↑α : GL (Fin n) ℚ) : Matrix (Fin n) (Fin n) ℚ).det := by
       rw [hA]; exact (det_intMat_cast (n := n) A).symm
-    exact_mod_cast h1 ▸ h_det
+    exact_mod_cast h1 ▸ α.2.2
   obtain ⟨d, hd_pos, hd_div, L, R, hLR⟩ := exists_divchain_diagonal_of_posdet n A hdet_pos
   have hd_pos_nat : ∀ i, 0 < (d i).toNat := by
     intro i; linarith [hd_pos i, (Int.toNat_of_nonneg (le_of_lt (hd_pos i))).symm]
@@ -1069,13 +1062,12 @@ theorem diagonal_representative_unique (a b : Fin n → ℕ) (ha : ∀ i, 0 < a 
   funext i
   have hprod₁ :=
     partialProd_eq_of_SLnZ_equiv (n := n) ha hb hda hdb L R hmat (i.val + 1) (by omega)
-  have hprod₂ :=
-    partialProd_eq_of_SLnZ_equiv (n := n) ha hb hda hdb L R hmat i.val (by omega)
   have split_eq : ∀ (c : Fin n → ℕ),
       ∏ j : Fin (i.val + 1), c ⟨j.val, by omega⟩ =
       (∏ j : Fin i.val, c ⟨j.val, by omega⟩) * c i := by
     intro c; rw [Fin.prod_univ_castSucc]; congr 1
-  rw [split_eq a, split_eq b, hprod₂] at hprod₁
+  rw [split_eq a, split_eq b,
+    partialProd_eq_of_SLnZ_equiv (n := n) ha hb hda hdb L R hmat i.val (by omega)] at hprod₁
   exact Nat.eq_of_mul_eq_mul_left
     (Finset.prod_pos (fun j _ => hb ⟨j.val, by omega⟩)) hprod₁
 
@@ -1087,17 +1079,11 @@ theorem T_diag_span (f : HeckeAlgebra n) :
       ∃ (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (hdiv : DivChain n a), t = T_diag a := by
     intro t
     obtain ⟨a, ha, hdiv, hT⟩ := exists_diagonal_representative n (HeckeCoset.rep t)
-    have ht : (⟦HeckeCoset.rep t⟧ : HeckeCoset (GL_pair n)) = t := Quotient.out_eq t
-    exact ⟨a, ha, hdiv, ht ▸ hT⟩
+    exact ⟨a, ha, hdiv, Quotient.out_eq t ▸ hT⟩
   choose a_fn ha_fn hdiv_fn hrep_fn using h_rep
   let toSub : HeckeCoset (GL_pair n) → { p : Fin n → ℕ // (∀ i, 0 < p i) ∧ DivChain n p } :=
     fun t => ⟨a_fn t, ha_fn t, hdiv_fn t⟩
   set S : Finset { p : Fin n → ℕ // (∀ i, 0 < p i) ∧ DivChain n p } := f.support.image toSub
-  have htoSub_inj : ∀ t₁ t₂ : HeckeCoset (GL_pair n), toSub t₁ = toSub t₂ → t₁ = t₂ := by
-    intro t₁ t₂ h; have ha : a_fn t₁ = a_fn t₂ := congr_arg Subtype.val h
-    calc t₁ = T_diag (a_fn t₁) := hrep_fn t₁
-      _ = T_diag (a_fn t₂) := by simp only [T_diag, diagMat_delta, ha]
-      _ = t₂ := (hrep_fn t₂).symm
   refine ⟨S, fun s => f.toFun (T_diag s.1.1), ?_⟩
   have h_smul : ∀ (a : Fin n → ℕ) (c : ℤ), c • T_elem a = Finsupp.single (T_diag a) c := by
     intro a c; unfold T_elem; rw [Finsupp.smul_single, smul_eq_mul, mul_one]
@@ -1108,10 +1094,8 @@ theorem T_diag_span (f : HeckeAlgebra n) :
   apply Finsupp.ext; intro x
   rw [Finsupp.finset_sum_apply]
   by_cases hx : x ∈ f.support
-  · have hmem : (⟨a_fn x, ha_fn x, hdiv_fn x⟩ :
-        { p : Fin n → ℕ // (∀ i, 0 < p i) ∧ DivChain n p }) ∈ S :=
-      Finset.mem_image.mpr ⟨x, hx, rfl⟩
-    rw [Finset.sum_eq_single_of_mem ⟨⟨a_fn x, ha_fn x, hdiv_fn x⟩, hmem⟩
+  · rw [Finset.sum_eq_single_of_mem
+      ⟨⟨a_fn x, ha_fn x, hdiv_fn x⟩, Finset.mem_image.mpr ⟨x, hx, rfl⟩⟩
       (Finset.mem_attach _ _)]
     · simp only [show T_diag (a_fn x) = x from (hrep_fn x).symm, Finsupp.single_eq_same]; rfl
     · intro s _ hs; apply Finsupp.single_eq_of_ne
