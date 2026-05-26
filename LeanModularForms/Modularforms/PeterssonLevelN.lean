@@ -161,17 +161,12 @@ theorem petN_definite
     (hpet : petN f f = 0) : f = 0 := by
   apply CuspForm.pet_definite f
   rw [← identity_coset_eq_pet f f]
-  have hsumm : ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
-      ∃ r : ℝ, 0 ≤ r ∧
-        peterssonInner k fd (⇑f ∣[k] (q.out)⁻¹) (⇑f ∣[k] (q.out)⁻¹) = ↑r :=
-    petN_summand_nonneg f
-  choose r hr_nonneg hr_eq using hsumm
+  choose r hr_nonneg hr_eq using petN_summand_nonneg f
   have hsum : (↑(∑ q, r q) : ℂ) = 0 := by
     rw [Complex.ofReal_sum]; simp_rw [← hr_eq]; exact hpet
-  have hsum_real : ∑ q, r q = 0 := Complex.ofReal_eq_zero.mp hsum
-  have hzero : ∀ q, r q = 0 := by
-    have := (Finset.sum_eq_zero_iff_of_nonneg (fun q _ ↦ hr_nonneg q)).mp hsum_real
-    exact fun q ↦ this q (Finset.mem_univ q)
+  have hzero : ∀ q, r q = 0 := fun q ↦
+    (Finset.sum_eq_zero_iff_of_nonneg fun q _ ↦ hr_nonneg q).mp
+      (Complex.ofReal_eq_zero.mp hsum) q (Finset.mem_univ q)
   rw [hr_eq ⟦1⟧, hzero ⟦1⟧, Complex.ofReal_zero]
 
 /-! ### Sesquilinearity -/
@@ -274,12 +269,10 @@ theorem IsFundamentalDomain.subgroup_iUnion_out_smul
     (hs : IsFundamentalDomain G s μ) :
     IsFundamentalDomain H (⋃ q : G ⧸ H, ((q.out : G))⁻¹ • s) μ := by
   set T : Set α := ⋃ q : G ⧸ H, ((q.out : G))⁻¹ • s with hT_def
-  have hT_meas : NullMeasurableSet T μ :=
-    .iUnion fun q ↦ hs.nullMeasurableSet_smul _
-  refine ⟨hT_meas, ?_, ?_⟩
+  refine ⟨.iUnion fun q ↦ hs.nullMeasurableSet_smul _, ?_, ?_⟩
   · filter_upwards [hs.ae_covers] with τ hτ
     obtain ⟨g, hg⟩ := hτ
-    set q : G ⧸ H := QuotientGroup.mk g with hq_def
+    set q : G ⧸ H := QuotientGroup.mk g
     have hmem : q.out⁻¹ * g ∈ H := by
       rw [← QuotientGroup.leftRel_apply]
       exact Quotient.exact q.out_eq
@@ -369,12 +362,9 @@ theorem IsFundamentalDomain.aedisjoint_smul_of_mul_inv_mem
     refine hD.aedisjoint ?_
     intro heq
     apply h_ne
-    have h_val := congr_arg (Subtype.val : H → G_outer) heq
-    simpa [Subgroup.coe_one, eq_comm] using h_val
-  have h_one_smul : ((1 : H) • D : Set α) = D := one_smul H D
-  have h_smul_coe :
-      ((⟨g₁⁻¹ * g₂, h_mem⟩ : H) • D : Set α) = (g₁⁻¹ * g₂) • D := rfl
-  rw [h_one_smul, h_smul_coe] at h_core
+    simpa [Subgroup.coe_one, eq_comm] using congr_arg (Subtype.val : H → G_outer) heq
+  rw [show ((1 : H) • D : Set α) = D from one_smul H D,
+    show ((⟨g₁⁻¹ * g₂, h_mem⟩ : H) • D : Set α) = (g₁⁻¹ * g₂) • D from rfl] at h_core
   have h_inter : (g₁ • D) ∩ (g₂ • D) = g₁ • (D ∩ ((g₁⁻¹ * g₂) • D)) := by
     rw [Set.smul_set_inter, ← mul_smul, mul_inv_cancel_left]
   show μ ((g₁ • D) ∩ (g₂ • D)) = 0
@@ -430,8 +420,7 @@ theorem aedisjoint_PSL_coset_tiles :
   have h_inv_ne : (q₁.out : PSL(2, ℤ))⁻¹ ≠ (q₂.out : PSL(2, ℤ))⁻¹ := by
     intro hg
     apply hne
-    have h_out : (q₁.out : PSL(2, ℤ)) = q₂.out := inv_injective hg
-    rw [← q₁.out_eq, ← q₂.out_eq, h_out]
+    rw [← q₁.out_eq, ← q₂.out_eq, inv_injective hg]
   exact isFundamentalDomain_fdo_PSL.aedisjoint h_inv_ne
 
 /-- Each PSL-coset tile is null-measurable. -/
@@ -460,10 +449,7 @@ theorem hyperbolicMeasure_Gamma1_fundDomain_PSL_lt_top :
   refine lt_of_le_of_lt (measure_iUnion_le _) ?_
   rw [tsum_fintype]
   refine ENNReal.sum_lt_top.mpr fun q' _ ↦ ?_
-  have hmeas : μ_hyp ((q'.out : PSL(2, ℤ))⁻¹ • (fdo : Set ℍ)) =
-      μ_hyp (fdo : Set ℍ) :=
-    (isFundamentalDomain_fdo_PSL.smul _).measure_eq isFundamentalDomain_fdo_PSL
-  rw [hmeas]
+  rw [(isFundamentalDomain_fdo_PSL.smul _).measure_eq isFundamentalDomain_fdo_PSL]
   exact lt_of_le_of_lt (measure_mono fdo_subset_fd) hyperbolicMeasure_fd_lt_top
 
 /-- The Petersson integrand `petersson k f g` is integrable on the Γ₁(N)-
@@ -537,12 +523,10 @@ noncomputable def imageGamma1_PSL_R (N : ℕ) [NeZero N] : Subgroup PSL(2, ℝ) 
 `imageGamma1_PSL_R N`-fundamental domain at the `PSL(2, ℝ)` ambient. -/
 theorem isFundamentalDomain_Gamma1_PSL_R :
     IsFundamentalDomain (imageGamma1_PSL_R N) (Gamma1_fundDomain_PSL N) μ_hyp := by
-  have h_base : IsFundamentalDomain (imageGamma1_PSL N) (Gamma1_fundDomain_PSL N) μ_hyp :=
-    isFundamentalDomain_Gamma1_PSL
   have h_image_eq : (Equiv.refl ℍ) '' (Gamma1_fundDomain_PSL N) = Gamma1_fundDomain_PSL N := by
     simp
   rw [← h_image_eq]
-  refine h_base.image_of_equiv (Equiv.refl ℍ)
+  refine isFundamentalDomain_Gamma1_PSL.image_of_equiv (Equiv.refl ℍ)
     (MeasureTheory.Measure.QuasiMeasurePreserving.id μ_hyp)
     ((Subgroup.equivMapOfInjective (imageGamma1_PSL N) PSL2Z_to_PSL2R
       PSL2Z_to_PSL2R_injective).toEquiv.symm) ?_
@@ -552,13 +536,11 @@ theorem isFundamentalDomain_Gamma1_PSL_R :
       ((g : imageGamma1_PSL_R N) : PSL(2, ℝ)) • (Equiv.refl ℍ) τ
   simp only [Equiv.refl_apply]
   set g' : imageGamma1_PSL N := (Subgroup.equivMapOfInjective (imageGamma1_PSL N)
-    PSL2Z_to_PSL2R PSL2Z_to_PSL2R_injective).toEquiv.symm g with hg'_def
+    PSL2Z_to_PSL2R PSL2Z_to_PSL2R_injective).toEquiv.symm g
   have h_g_coe :
       ((g : imageGamma1_PSL_R N) : PSL(2, ℝ)) = PSL2Z_to_PSL2R (g' : PSL(2, ℤ)) := by
-    have : ((Subgroup.equivMapOfInjective (imageGamma1_PSL N) PSL2Z_to_PSL2R
-        PSL2Z_to_PSL2R_injective) g' : PSL(2, ℝ)) = PSL2Z_to_PSL2R (g' : PSL(2, ℤ)) :=
-      Subgroup.coe_equivMapOfInjective_apply _ _ _ _
-    rw [← this]
+    rw [← Subgroup.coe_equivMapOfInjective_apply (imageGamma1_PSL N) PSL2Z_to_PSL2R
+      PSL2Z_to_PSL2R_injective g']
     congr 1
     exact ((Subgroup.equivMapOfInjective (imageGamma1_PSL N) PSL2Z_to_PSL2R
       PSL2Z_to_PSL2R_injective).toEquiv.apply_symm_apply g).symm
@@ -983,13 +965,12 @@ theorem petN_slash_invariant
         (⟦δ * γ⁻¹⟧ : SL(2, ℤ) ⧸ Gamma1 N).out) *
       (⟦δ * γ⁻¹⟧ : SL(2, ℤ) ⧸ Gamma1 N).out⁻¹ from by group, mul_smul]
   exact G1_tile _ (by
-    have hα := out_mem δ; have hβ := out_mem (δ * γ⁻¹)
     rw [show γ * (⟦δ⟧ : SL(2, ℤ) ⧸ Gamma1 N).out⁻¹ *
         (⟦δ * γ⁻¹⟧ : SL(2, ℤ) ⧸ Gamma1 N).out =
       ((⟦δ * γ⁻¹⟧ : SL(2, ℤ) ⧸ Gamma1 N).out⁻¹ * (δ * γ⁻¹) *
        (γ * ((⟦δ⟧ : SL(2, ℤ) ⧸ Gamma1 N).out⁻¹ * δ)⁻¹ * γ⁻¹))⁻¹ from by group]
-    exact (Gamma1 N).inv_mem ((Gamma1 N).mul_mem hβ
-      (HeckeRing.GL2.Gamma0_normalizes_Gamma1 ⟨γ, hγ⟩ _ ((Gamma1 N).inv_mem hα)))) _
+    exact (Gamma1 N).inv_mem ((Gamma1 N).mul_mem (out_mem (δ * γ⁻¹))
+      (HeckeRing.GL2.Gamma0_normalizes_Gamma1 ⟨γ, hγ⟩ _ ((Gamma1 N).inv_mem (out_mem δ))))) _
 
 /-! ### `petN` as a fiber-weighted PSL-tile sum -/
 
@@ -1273,10 +1254,9 @@ theorem peterssonInner_sum_eq_of_AEDisjoint_unions_AEEq
     (hint : IntegrableOn (fun τ ↦ petersson k f g τ) (⋃ i, S₁ i) μ_hyp) :
     ∑ i : ι₁, peterssonInner k (S₁ i) f g =
     ∑ j : ι₂, peterssonInner k (S₂ j) f g := by
-  have hint₂ : IntegrableOn (fun τ ↦ petersson k f g τ) (⋃ j, S₂ j) μ_hyp :=
-    (integrableOn_petersson_congr_set_ae h_union_eq f g).mp hint
   rw [← peterssonInner_iUnion_finite_aedisjoint S₁ hm₁ hd₁ f g hint,
-      ← peterssonInner_iUnion_finite_aedisjoint S₂ hm₂ hd₂ f g hint₂]
+      ← peterssonInner_iUnion_finite_aedisjoint S₂ hm₂ hd₂ f g
+        ((integrableOn_petersson_congr_set_ae h_union_eq f g).mp hint)]
   unfold peterssonInner
   exact setIntegral_congr_set h_union_eq
 
@@ -1294,10 +1274,9 @@ theorem FiniteTileFundamentalDomain.peterssonInner_sum_eq_of_target_aeEq
     (hint : IntegrableOn (fun τ ↦ petersson k f g τ) F₁.union μ_hyp) :
     ∑ i : ι₁, peterssonInner k (F₁.tile i) f g =
     ∑ j : ι₂, peterssonInner k (F₂.tile j) f g := by
-  have h_union_eq : F₁.union =ᵐ[μ_hyp] F₂.union :=
-    F₁.aeCover.symm.trans (hT.trans F₂.aeCover)
   exact peterssonInner_sum_eq_of_AEDisjoint_unions_AEEq F₁.tile F₂.tile
     F₁.nullMeasurableSet_tile F₂.nullMeasurableSet_tile
-    F₁.pairwiseAEDisjoint F₂.pairwiseAEDisjoint h_union_eq f g hint
+    F₁.pairwiseAEDisjoint F₂.pairwiseAEDisjoint
+    (F₁.aeCover.symm.trans (hT.trans F₂.aeCover)) f g hint
 
 end

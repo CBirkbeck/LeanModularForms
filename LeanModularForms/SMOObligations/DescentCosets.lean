@@ -221,10 +221,8 @@ theorem descendExtraGamma_exists
   have h_mat_Np : γ_mat.map (Int.cast : ℤ → ZMod (N / p)) = 1 := by
     ext i j
     fin_cases i <;> fin_cases j <;> simp [γ_mat, h_vb_Np, h_ua_Np]
-  have hdet_N : (γ_mat.map (Int.cast : ℤ → ZMod N)).det = 1 :=
-    descend_rotation_mat_det_map_eq_one h_bez h_ab
   obtain ⟨γ, hγ⟩ := SL2Reduction.SL2_reduction_surjective N
-    ⟨γ_mat.map (Int.cast : ℤ → ZMod N), hdet_N⟩
+    ⟨γ_mat.map (Int.cast : ℤ → ZMod N), descend_rotation_mat_det_map_eq_one h_bez h_ab⟩
   have h_γ_mat_N : (γ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod N) =
       γ_mat.map (Int.cast : ℤ → ZMod N) := (hγ ▸ coe_matrix_coe (R := ZMod N) γ).symm
   have h_mod_p : (γ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod p) =
@@ -246,23 +244,21 @@ theorem int_exists_coprime_adjust
     (h_gcd : Nat.Coprime (Int.gcd c d) N.toNat) :
     ∃ t : ℤ, Int.gcd (c + t * N) d = 1 := by
   classical
-  have hn_pos : 0 < d.natAbs := Int.natAbs_pos.mpr hd_ne
   let a_fn : ℕ → ℕ := fun q => if (q : ℤ) ∣ c then 1 else 0
   have h_pairwise : (d.natAbs.primeFactors : Set ℕ).Pairwise
       (Function.onFun Nat.Coprime id) := by
     intro p hp q hq hpq
     grind [Nat.coprime_primes, Nat.prime_of_mem_primeFactors]
-  have h_nonzero : ∀ q ∈ d.natAbs.primeFactors, id q ≠ 0 := fun q hq =>
-    (Nat.prime_of_mem_primeFactors hq).ne_zero
   obtain ⟨t_nat, h_t_modeq⟩ := Nat.chineseRemainderOfFinset
-    a_fn id d.natAbs.primeFactors h_nonzero h_pairwise
+    a_fn id d.natAbs.primeFactors
+    (fun q hq => (Nat.prime_of_mem_primeFactors hq).ne_zero) h_pairwise
   refine ⟨(t_nat : ℤ), ?_⟩
   change Nat.gcd (c + (t_nat : ℤ) * N).natAbs d.natAbs = 1
   apply Nat.Coprime.symm
   apply Nat.coprime_of_dvd
   intro q hq_prime hq_dvd_d hq_dvd_ctN
   have hq_in_pf : q ∈ d.natAbs.primeFactors :=
-    Nat.mem_primeFactors.mpr ⟨hq_prime, hq_dvd_d, hn_pos.ne'⟩
+    Nat.mem_primeFactors.mpr ⟨hq_prime, hq_dvd_d, (Int.natAbs_pos.mpr hd_ne).ne'⟩
   have h_t_mod_int : ((t_nat : ℤ)) ≡ ((a_fn q : ℕ) : ℤ) [ZMOD (q : ℤ)] :=
     by exact_mod_cast h_t_modeq q hq_in_pf
   have hq_dvd_aN : (q : ℤ) ∣ c + ((a_fn q : ℕ) : ℤ) * N := by
@@ -979,10 +975,9 @@ private lemma descend_diamond_reg_lhs_extra_target
     simpa [Matrix.map_apply] using congr_fun (congr_fun h_γ_p_spec 0) 1
   have hγ_p_11 : ((γ_p : Matrix (Fin 2) (Fin 2) ℤ) 1 1 : ZMod (N/p)) = 1 := by
     simpa [Matrix.map_apply] using congr_fun (congr_fun h_γ_p_spec 1) 1
-  have h_β_10_mod := beta_10_zmod_eq_zero (p := p) hpN hβ
   have h_zmod := congr_arg (Int.cast : ℤ → ZMod (N/p)) h_11
   push_cast at h_zmod
-  rw [hγ_p_01, hγ_p_11, h_β_10_mod] at h_zmod
+  rw [hγ_p_01, hγ_p_11, beta_10_zmod_eq_zero (p := p) hpN hβ] at h_zmod
   linear_combination h_zmod
 
 private lemma descend_diamond_extra_lhs_reg_target
@@ -1002,7 +997,6 @@ private lemma descend_diamond_extra_lhs_reg_target
     simpa [Matrix.map_apply] using congr_fun (congr_fun h_γ_p_spec 1) 0
   have hγ_p_11 : ((γ_p : Matrix (Fin 2) (Fin 2) ℤ) 1 1 : ZMod (N/p)) = 1 := by
     simpa [Matrix.map_apply] using congr_fun (congr_fun h_γ_p_spec 1) 1
-  have h_β_10_mod := beta_10_zmod_eq_zero (p := p) hpN hβ
   have hdcl_t11 : (descendCosetList p N hp t : Matrix (Fin 2) (Fin 2) ℝ) 1 1 = p := by
     rw [descendCosetList_lt_matrix hp ht]; simp
   have hdcl_t01 : (descendCosetList p N hp t : Matrix (Fin 2) (Fin 2) ℝ) 0 1 =
@@ -1025,7 +1019,7 @@ private lemma descend_diamond_extra_lhs_reg_target
     exact_mod_cast h_11r
   have h_zmod := congr_arg (Int.cast : ℤ → ZMod (N/p)) h_11
   push_cast at h_zmod
-  rw [hγ_p_10, hγ_p_11, h_β_10_mod] at h_zmod
+  rw [hγ_p_10, hγ_p_11, beta_10_zmod_eq_zero (p := p) hpN hβ] at h_zmod
   linear_combination h_zmod
 
 private lemma descend_diamond_extra_lhs_extra_target
@@ -1047,7 +1041,6 @@ private lemma descend_diamond_extra_lhs_extra_target
     simpa [Matrix.map_apply] using congr_fun (congr_fun h_γ_p_spec 1) 1
   have hγ_p_01 : ((γ_p : Matrix (Fin 2) (Fin 2) ℤ) 0 1 : ZMod (N/p)) = 0 := by
     simpa [Matrix.map_apply] using congr_fun (congr_fun h_γ_p_spec 0) 1
-  have h_β_10_mod := beta_10_zmod_eq_zero (p := p) hpN hβ
   have h_ℝ := congr_arg Units.val h_main
   simp only [Units.val_mul, Matrix.GeneralLinearGroup.val_mkOfDetNeZero,
     Matrix.SpecialLinearGroup.mapGL_coe_matrix,
@@ -1065,7 +1058,7 @@ private lemma descend_diamond_extra_lhs_extra_target
     exact_mod_cast h_11r
   have h_zmod := congr_arg (Int.cast : ℤ → ZMod (N/p)) h_11
   push_cast at h_zmod
-  rw [hγ_p_10, hγ_p_11, h_β_10_mod, hγ_p_01] at h_zmod
+  rw [hγ_p_10, hγ_p_11, beta_10_zmod_eq_zero (p := p) hpN hβ, hγ_p_01] at h_zmod
   linear_combination h_zmod
 
 private lemma descendCosetList_per_v_witness
@@ -1120,10 +1113,9 @@ private lemma descendCosetList_cross_regular_extra_aux
   intro heq_cross
   have hp_sq : ¬ p ^ 2 ∣ N := not_p_sq_dvd_of_not_lt hvb
   have hpExtra : p < descendCosetCount p N := p_lt_descendCosetCount_of_not_p_sq_dvd hp_sq
-  have h_γp_spec := (descendExtraGamma_spec hp hpN hp_sq).2.1
   have h_γp_00 : ((descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 0 0 : ZMod p) = 0 := by
-    simpa [Matrix.map_apply] using congr_fun (congr_fun h_γp_spec 0) 0
-  have h_vb_eq_fin : vb = ⟨p, hpExtra⟩ := Fin.ext (descendCosetCount_val_eq_p vb hvb)
+    simpa [Matrix.map_apply] using
+      congr_fun (congr_fun (descendExtraGamma_spec hp hpN hp_sq).2.1 0) 0
   have hLHS_00 : (descendCosetList p N hp va : Matrix (Fin 2) (Fin 2) ℝ) 0 0 = 1 := by
     rw [descendCosetList_lt_matrix hp hva]
     simp
@@ -1135,6 +1127,7 @@ private lemma descendCosetList_cross_regular_extra_aux
       (p : ℝ) * ((descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ℝ) := by
     rw [descendCosetList_extra_matrix_entry hp (lt_irrefl p) 1 0]
     simp [Matrix.mul_apply, Fin.sum_univ_two]
+  have h_vb_eq_fin : vb = ⟨p, hpExtra⟩ := Fin.ext (descendCosetCount_val_eq_p vb hvb)
   have hRHS_00 := congr_fun (congr_fun heq_cross 0) 0
   rw [hLHS_00, h_vb_eq_fin, Matrix.mul_apply, Fin.sum_univ_two,
     hdcl_extra_00, hdcl_extra_10,
@@ -1168,11 +1161,11 @@ private lemma descendCosetList_cross_extra_regular_aux
       (mapGL ℝ α : GL (Fin 2) ℝ) * descendCosetList p N hp vb := by
   intro h_mat
   have hp_sq : ¬ p ^ 2 ∣ N := not_p_sq_dvd_of_not_lt hva
-  have hpExtra : p < descendCosetCount p N := p_lt_descendCosetCount_of_not_p_sq_dvd hp_sq
-  have hva_extra : va = ⟨p, hpExtra⟩ := Fin.ext (descendCosetCount_val_eq_p va hva)
-  have h_γp_spec := (descendExtraGamma_spec hp hpN hp_sq).2.1
+  have hva_extra : va = ⟨p, p_lt_descendCosetCount_of_not_p_sq_dvd hp_sq⟩ :=
+    Fin.ext (descendCosetCount_val_eq_p va hva)
   have h_γp_00 : ((descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 0 0 : ZMod p) = 0 := by
-    simpa [Matrix.map_apply] using congr_fun (congr_fun h_γp_spec 0) 0
+    simpa [Matrix.map_apply] using
+      congr_fun (congr_fun (descendExtraGamma_spec hp hpN hp_sq).2.1 0) 0
   have hdcl_va_00 : (descendCosetList p N hp va : Matrix (Fin 2) (Fin 2) ℝ) 0 0 =
       ((descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 0 0 : ℝ) := by
     rw [hva_extra, descendCosetList_extra_matrix_entry hp (lt_irrefl p) 0 0]
@@ -1204,14 +1197,13 @@ private lemma descendCosetList_cross_extra_regular_aux
   have hα00_dvd : (p : ℤ) ∣ (α : Matrix (Fin 2) (Fin 2) ℤ) 0 0 := by
     rw [hα00_eq]
     exact (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp (by exact_mod_cast h_γp_00)
-  have hα10_dvd : (p : ℤ) ∣ (α : Matrix (Fin 2) (Fin 2) ℤ) 1 0 := ⟨_, hα10_eq.symm⟩
   have hdet : (α : Matrix (Fin 2) (Fin 2) ℤ) 0 0 * (α : Matrix (Fin 2) (Fin 2) ℤ) 1 1 -
       (α : Matrix (Fin 2) (Fin 2) ℤ) 0 1 * (α : Matrix (Fin 2) (Fin 2) ℤ) 1 0 = 1 := by
     rw [← Matrix.det_fin_two]
     exact α.property
   have hp_dvd_one : (p : ℤ) ∣ 1 := by
     rw [← hdet]
-    exact dvd_sub (dvd_mul_of_dvd_left hα00_dvd _) (dvd_mul_of_dvd_right hα10_dvd _)
+    exact dvd_sub (dvd_mul_of_dvd_left hα00_dvd _) (dvd_mul_of_dvd_right ⟨_, hα10_eq.symm⟩ _)
   linarith [Int.le_of_dvd one_pos hp_dvd_one, show (2 : ℤ) ≤ p by exact_mod_cast hp.two_le]
 
 private lemma descendCosetList_sigma_aux_injective
@@ -1225,12 +1217,11 @@ private lemma descendCosetList_sigma_aux_injective
     Function.Injective σ_fn := by
   intro v₁ v₂ h_σ
   have heq₁ := h_eq_fn v₁
-  have heq₂ := h_eq_fn v₂
   rw [h_σ] at heq₁
   have h_gl : descendCosetList p N hp v₁ =
       mapGL ℝ (α_fn v₁ * (α_fn v₂)⁻¹) * descendCosetList p N hp v₂ :=
     mul_right_cancel (b := mapGL ℝ γ') <| by
-      rw [mul_assoc, heq₂, ← mul_assoc, ← map_mul]
+      rw [mul_assoc, h_eq_fn v₂, ← mul_assoc, ← map_mul]
       simp [heq₁]
   have h_mat : (descendCosetList p N hp v₁ : Matrix (Fin 2) (Fin 2) ℝ) =
       (mapGL ℝ (α_fn v₁ * (α_fn v₂)⁻¹) : GL (Fin 2) ℝ) *
@@ -1290,23 +1281,17 @@ theorem descendCosetList_action
     fun v ↦ (per_v v).choose
   let α_fn : Fin (descendCosetCount p N) → Matrix.SpecialLinearGroup (Fin 2) ℤ :=
     fun v ↦ (per_v v).choose_spec.choose
-  have h_mem_fn : ∀ v, α_fn v ∈ Gamma0 N :=
-    fun v ↦ (per_v v).choose_spec.choose_spec.choose
   have h_eq_fn : ∀ v, descendCosetList p N hp v * mapGL ℝ γ' =
       mapGL ℝ (α_fn v) * descendCosetList p N hp (σ_fn v) :=
     fun v ↦ (per_v v).choose_spec.choose_spec.choose_spec.1
-  have h_diamond_fn : ∀ v,
-      ((α_fn v : Matrix (Fin 2) (Fin 2) ℤ) 1 1 : ZMod (N / p)) =
-      ((γ' : Matrix (Fin 2) (Fin 2) ℤ) 1 1 : ZMod (N / p)) :=
-    fun v ↦ (per_v v).choose_spec.choose_spec.choose_spec.2
   have h_inj : Function.Injective σ_fn :=
     descendCosetList_sigma_aux_injective p hp hpN γ' α_fn σ_fn h_eq_fn
   let σ : Equiv.Perm (Fin (descendCosetCount p N)) :=
     Equiv.ofBijective σ_fn ⟨h_inj, Finite.injective_iff_surjective.mp h_inj⟩
-  refine ⟨σ, α_fn, h_mem_fn, h_eq_fn, fun v ↦ ?_⟩
+  refine ⟨σ, α_fn, fun v ↦ (per_v v).choose_spec.choose_spec.choose, h_eq_fn, fun v ↦ ?_⟩
   apply Units.ext
   simp only [ZMod.unitsMap_val, Gamma0MapUnits_val, Gamma0Map, MonoidHom.coe_mk, OneHom.coe_mk]
   rw [ZMod.cast_intCast (Nat.div_dvd_of_dvd hpN)]
-  exact h_diamond_fn v
+  exact (per_v v).choose_spec.choose_spec.choose_spec.2
 
 end HeckeRing.GL2

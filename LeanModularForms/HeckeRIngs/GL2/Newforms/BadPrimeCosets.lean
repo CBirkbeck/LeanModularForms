@@ -56,6 +56,16 @@ lemma Newform.T_p_lower_with_offset_coe
       !![(p : ℝ), 0; -((N : ℝ) * b), 1] := by
   simp [Newform.T_p_lower_with_offset, Matrix.GeneralLinearGroup.mkOfDetNeZero]
 
+private lemma Newform.glMap_T_p_upper_coe_real
+    {p : ℕ} (hp : 0 < p) (b : ℕ) :
+    ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
+      !![(1 : ℝ), (b : ℝ); 0, (p : ℝ)] := by
+  show (T_p_upper p hp b : Matrix (Fin 2) (Fin 2) ℚ).map (algebraMap ℚ ℝ) =
+      !![(1 : ℝ), (b : ℝ); 0, (p : ℝ)]
+  rw [T_p_upper_coe]
+  ext i j
+  fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply]
+
 /-- GL-level Fricke / bad-prime upper coset rewrite:
 `W_N * glMap (T_p_upper p hp b) = T_p_lower_with_offset N hp b * W_N`. -/
 lemma Newform.frickeMatrix_mul_glMap_T_p_upper_eq_lower_offset_mul_frickeMatrix
@@ -65,16 +75,8 @@ lemma Newform.frickeMatrix_mul_glMap_T_p_upper_eq_lower_offset_mul_frickeMatrix
         (Newform.frickeMatrix N : GL (Fin 2) ℝ) := by
   apply Units.ext
   rw [Matrix.GeneralLinearGroup.coe_mul, Matrix.GeneralLinearGroup.coe_mul,
-      Newform.T_p_lower_with_offset_coe]
-  rw [Newform.frickeMatrix_coe]
-  rw [show ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) :
-        Matrix (Fin 2) (Fin 2) ℝ) =
-      !![(1 : ℝ), (b : ℝ); 0, (p : ℝ)] by
-    show (T_p_upper p hp b : Matrix (Fin 2) (Fin 2) ℚ).map (algebraMap ℚ ℝ) =
-        !![(1 : ℝ), (b : ℝ); 0, (p : ℝ)]
-    rw [T_p_upper_coe]
-    ext i j
-    fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply]]
+      Newform.T_p_lower_with_offset_coe, Newform.frickeMatrix_coe,
+      Newform.glMap_T_p_upper_coe_real hp b]
   ext i j
   fin_cases i <;> fin_cases j <;>
     simp [Matrix.mul_apply, Fin.sum_univ_two,
@@ -90,8 +92,8 @@ lemma Newform.slash_frickeMatrix_T_p_upper_rewrite
         (glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) =
       (f ∣[k] (Newform.T_p_lower_with_offset N hp b : GL (Fin 2) ℝ)) ∣[k]
         (Newform.frickeMatrix N : GL (Fin 2) ℝ) := by
-  rw [← SlashAction.slash_mul, ← SlashAction.slash_mul]
-  rw [Newform.frickeMatrix_mul_glMap_T_p_upper_eq_lower_offset_mul_frickeMatrix]
+  rw [← SlashAction.slash_mul, ← SlashAction.slash_mul,
+    Newform.frickeMatrix_mul_glMap_T_p_upper_eq_lower_offset_mul_frickeMatrix]
 
 open UpperHalfPlane MeasureTheory ModularGroup in
 private lemma Newform.slash_W_N_T_p_upper_W_N_eq_smul_T_p_lower_with_offset
@@ -102,8 +104,8 @@ private lemma Newform.slash_W_N_T_p_upper_W_N_eq_smul_T_p_lower_with_offset
           (Newform.frickeMatrix N : GL (Fin 2) ℝ) =
       Newform.frickeSquareScalar N k •
         (g ∣[k] (Newform.T_p_lower_with_offset N hp b : GL (Fin 2) ℝ)) := by
-  rw [← SlashAction.slash_mul, ← SlashAction.slash_mul]
-  rw [show (Newform.frickeMatrix N : GL (Fin 2) ℝ) *
+  rw [← SlashAction.slash_mul, ← SlashAction.slash_mul,
+    show (Newform.frickeMatrix N : GL (Fin 2) ℝ) *
           ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) *
             (Newform.frickeMatrix N : GL (Fin 2) ℝ)) =
         (Newform.T_p_lower_with_offset N hp b : GL (Fin 2) ℝ) *
@@ -112,8 +114,8 @@ private lemma Newform.slash_W_N_T_p_upper_W_N_eq_smul_T_p_lower_with_offset
     rw [← mul_assoc,
         Newform.frickeMatrix_mul_glMap_T_p_upper_eq_lower_offset_mul_frickeMatrix,
         mul_assoc]]
-  rw [SlashAction.slash_mul, SlashAction.slash_mul]
-  rw [Newform.slash_frickeMatrix_frickeMatrix]
+  rw [SlashAction.slash_mul, SlashAction.slash_mul,
+    Newform.slash_frickeMatrix_frickeMatrix]
 
 open UpperHalfPlane MeasureTheory ModularGroup in
 /-- The function representation of the normalized bad-prime Fricke adjoint candidate
@@ -130,9 +132,8 @@ lemma Newform.frickeBadAdjointCandidateNormalized_coe_eq_bsum_lower
   rw [Newform.frickeBadAdjointCandidateNormalized_apply]
   show ((Newform.frickeSquareScalar N k)⁻¹ •
       (⇑(Newform.frickeBadAdjointCandidate k p g) : UpperHalfPlane → ℂ)) = _
-  rw [Newform.frickeBadAdjointCandidate_apply]
-  rw [Newform.frickeSlashCuspForm_coe]
-  rw [show (⇑(heckeT_n_cusp k p (Newform.frickeSlashCuspForm g)) :
+  rw [Newform.frickeBadAdjointCandidate_apply, Newform.frickeSlashCuspForm_coe,
+    show (⇑(heckeT_n_cusp k p (Newform.frickeSlashCuspForm g)) :
         UpperHalfPlane → ℂ) =
       ∑ b ∈ Finset.range p,
         (⇑(Newform.frickeSlashCuspForm g) ∣[k]
@@ -161,9 +162,7 @@ lemma Newform.frickeBadAdjointCandidateNormalized_coe_eq_bsum_lower
           ((⇑g : UpperHalfPlane → ℂ) ∣[k]
             (Newform.T_p_lower_with_offset N hp.pos b : GL (Fin 2) ℝ))
     exact Newform.slash_W_N_T_p_upper_W_N_eq_smul_T_p_lower_with_offset hp.pos b ⇑g
-  rw [SlashAction.sum_slash]
-  rw [Finset.sum_congr rfl h_term]
-  rw [← Finset.smul_sum, smul_smul]
+  rw [SlashAction.sum_slash, Finset.sum_congr rfl h_term, ← Finset.smul_sum, smul_smul]
   have h_c_ne : Newform.frickeSquareScalar N k ≠ 0 := by
     unfold Newform.frickeSquareScalar
     exact mul_ne_zero (zpow_ne_zero _ (by norm_num))
@@ -197,8 +196,8 @@ lemma Newform.badPrime_lowerOffset_bsum_slash_Gamma1_right
       (mapGL ℝ γ : GL (Fin 2) ℝ) from by
     rw [SlashAction.sum_slash]
     refine Finset.sum_congr rfl fun b _ => ?_
-    rw [SlashAction.slash_mul]]
-  rw [← Newform.frickeBadAdjointCandidateNormalized_coe_eq_bsum_lower hp hpN g]
+    rw [SlashAction.slash_mul],
+    ← Newform.frickeBadAdjointCandidateNormalized_coe_eq_bsum_lower hp hpN g]
   exact (Newform.frickeBadAdjointCandidateNormalized k p g).slash_action_eq'
     (mapGL ℝ γ : GL (Fin 2) ℝ) (Subgroup.mem_map.mpr ⟨γ, hγ, rfl⟩)
 
@@ -217,20 +216,14 @@ private lemma Newform.glMap_T_p_upper_coe_real_intMap
 private lemma Newform.fin_eq_of_mul_eq_sub
     {p : ℕ} (hp : 0 < p) (b1 b2 : Fin p) (m : ℤ)
     (h : m * (p : ℤ) = (b2.val : ℤ) - (b1.val : ℤ)) : b1 = b2 := by
-  have hb1_lt : (b1.val : ℤ) < (p : ℤ) := by exact_mod_cast b1.isLt
-  have hb2_lt : (b2.val : ℤ) < (p : ℤ) := by exact_mod_cast b2.isLt
-  have hb1_nn : (0 : ℤ) ≤ (b1.val : ℤ) := Int.natCast_nonneg _
-  have hb2_nn : (0 : ℤ) ≤ (b2.val : ℤ) := Int.natCast_nonneg _
-  have hp_pos_int : (0 : ℤ) < (p : ℤ) := by exact_mod_cast hp
-  have h_abs2 : |m * (p : ℤ)| < (p : ℤ) := by
-    rw [h, abs_lt]; constructor <;> linarith
-  have hm : m = 0 := by
-    by_contra h_ne
-    have h_abs_m : 1 ≤ |m| := Int.one_le_abs h_ne
-    rw [abs_mul, abs_of_pos hp_pos_int] at h_abs2
-    have : (p : ℤ) ≤ |m| * (p : ℤ) := by nlinarith
-    linarith
-  rw [hm, zero_mul] at h
+  have hb1 : (b1.val : ℤ) < (p : ℤ) := by exact_mod_cast b1.isLt
+  have hb2 : (b2.val : ℤ) < (p : ℤ) := by exact_mod_cast b2.isLt
+  have hn1 : (0 : ℤ) ≤ (b1.val : ℤ) := Int.natCast_nonneg _
+  have hn2 : (0 : ℤ) ≤ (b2.val : ℤ) := Int.natCast_nonneg _
+  have key : (b2.val : ℤ) - (b1.val : ℤ) = 0 :=
+    Int.eq_zero_of_abs_lt_dvd (m := (p : ℤ)) ⟨m, by rw [← h]; ring⟩
+      (by have : (0 : ℤ) < (p : ℤ) := by exact_mod_cast hp
+          rw [abs_lt]; constructor <;> linarith)
   exact Fin.ext (by exact_mod_cast (by linarith : (b1.val : ℤ) = (b2.val : ℤ)))
 
 /-- Left-coset injectivity for the bad-prime upper family at level `Γ₁(N)`: if
@@ -251,26 +244,11 @@ theorem Newform.T_p_upper_left_coset_injective_Gamma1
         Matrix (Fin 2) (Fin 2) ℝ) := by
     have := congrArg Units.val h
     simpa [Matrix.GeneralLinearGroup.coe_mul] using this
-  have hβ1 : ((glMap (T_p_upper p hp b1.val) : GL (Fin 2) ℝ) :
-        Matrix (Fin 2) (Fin 2) ℝ) =
-      !![(1 : ℝ), (b1.val : ℝ); 0, (p : ℝ)] := by
-    show (T_p_upper p hp b1.val : Matrix (Fin 2) (Fin 2) ℚ).map (algebraMap ℚ ℝ) =
-        !![(1 : ℝ), (b1.val : ℝ); 0, (p : ℝ)]
-    rw [T_p_upper_coe]
-    ext i j
-    fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply]
-  have hβ2 : ((glMap (T_p_upper p hp b2.val) : GL (Fin 2) ℝ) :
-        Matrix (Fin 2) (Fin 2) ℝ) =
-      !![(1 : ℝ), (b2.val : ℝ); 0, (p : ℝ)] := by
-    show (T_p_upper p hp b2.val : Matrix (Fin 2) (Fin 2) ℚ).map (algebraMap ℚ ℝ) =
-        !![(1 : ℝ), (b2.val : ℝ); 0, (p : ℝ)]
-    rw [T_p_upper_coe]
-    ext i j
-    fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply]
   have hγ_mat : ((mapGL ℝ γ : GL (Fin 2) ℝ) :
         Matrix (Fin 2) (Fin 2) ℝ) =
       γ.val.map (algebraMap ℤ ℝ) := mapGL_coe_matrix γ
-  rw [hβ1, hβ2, hγ_mat] at hmat
+  rw [Newform.glMap_T_p_upper_coe_real hp b1.val,
+    Newform.glMap_T_p_upper_coe_real hp b2.val, hγ_mat] at hmat
   have h00 := congr_fun (congr_fun hmat 0) 0
   have h01 := congr_fun (congr_fun hmat 0) 1
   simp only [Matrix.mul_apply, Fin.sum_univ_two, Matrix.map_apply, algebraMap_int_eq,
@@ -298,8 +276,7 @@ theorem Newform.T_p_upper_left_cosets_pairwiseDisjoint_Gamma1
   rw [Function.onFun, Set.disjoint_left]
   rintro x ⟨g1, hg1, β1, hβ1_in, hx_eq1⟩ ⟨g2, hg2, β2, hβ2_in, hx_eq2⟩
   rw [Set.mem_singleton_iff] at hβ1_in hβ2_in
-  subst hβ1_in
-  subst hβ2_in
+  subst hβ1_in hβ2_in
   dsimp only at hx_eq1 hx_eq2
   rw [← hx_eq2] at hx_eq1
   obtain ⟨γ1, hγ1, rfl⟩ := Subgroup.mem_map.mp hg1
@@ -322,18 +299,15 @@ private lemma Newform.intCast_eq_one_of_dvd_of_eq_one
     (a : ZMod p) = 1 := by
   have hN_int_dvd : (N : ℤ) ∣ (a - 1) := by
     rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]; push_cast; rw [ha]; ring
-  have hp_dvd : (p : ℤ) ∣ (a - 1) :=
-    dvd_trans (Int.natCast_dvd_natCast.mpr hpN) hN_int_dvd
-  rw [show (a : ZMod p) = ((a - 1 : ℤ) : ZMod p) + 1 by push_cast; ring]
-  rw [(ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hp_dvd, zero_add]
+  rw [show (a : ZMod p) = ((a - 1 : ℤ) : ZMod p) + 1 by push_cast; ring,
+    (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr
+      (dvd_trans (Int.natCast_dvd_natCast.mpr hpN) hN_int_dvd), zero_add]
 
 private lemma Newform.det_alpha_p_factor_eq_one
     (p a b' c d B bb : ℤ) (hBp : B * p = b' - a * bb) (h_det : a * d - b' * c = 1) :
     (!![a, B; p * c, d - c * bb] : Matrix (Fin 2) (Fin 2) ℤ).det = 1 := by
   rw [Matrix.det_fin_two_of]
-  have step1 : a * (d - c * bb) - B * (p * c) = a * d - c * (a * bb + B * p) := by ring
-  rw [step1, hBp]
-  linarith [h_det]
+  linear_combination h_det - c * hBp
 
 private lemma Newform.glMap_T_p_upper_zero_mul_mapGL_eq_of_int
     {p : ℕ} (hp : 0 < p) (γ γ' : SL(2, ℤ)) (b : ℕ)
@@ -374,12 +348,9 @@ private lemma Newform.exists_Gamma1_mul_T_p_upper_int
   have ha_mod_N : (a : ZMod N) = 1 := by exact_mod_cast hg.1
   have hd_mod_N : (d : ZMod N) = 1 := by exact_mod_cast hg.2.1
   have hc_mod_N : (c : ZMod N) = 0 := by exact_mod_cast hg.2.2
-  have ha_mod_p : (a : ZMod p) = 1 :=
-    Newform.intCast_eq_one_of_dvd_of_eq_one hp_dvd_N ha_mod_N
   have h_det_γ : a * d - b' * c = 1 := by
-    have := γ.property
-    show γ.val 0 0 * γ.val 1 1 - γ.val 0 1 * γ.val 1 0 = 1
-    rw [Matrix.det_fin_two] at this; exact this
+    have hdet := γ.property
+    rw [Matrix.det_fin_two] at hdet; exact hdet
   set b : Fin p := ⟨((b' : ZMod p)).val, ZMod.val_lt _⟩ with hb_def
   have hbval_zmod : ((b.val : ℕ) : ZMod p) = (b' : ZMod p) := by
     show (((b' : ZMod p).val : ℕ) : ZMod p) = (b' : ZMod p)
@@ -387,7 +358,7 @@ private lemma Newform.exists_Gamma1_mul_T_p_upper_int
   have hp_dvd_diff : (p : ℤ) ∣ (b' - a * (b.val : ℤ)) := by
     refine (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp ?_
     push_cast
-    rw [ha_mod_p, hbval_zmod]
+    rw [Newform.intCast_eq_one_of_dvd_of_eq_one hp_dvd_N ha_mod_N, hbval_zmod]
     ring
   obtain ⟨B, hB_eq⟩ := hp_dvd_diff
   have hBp_int : B * (p : ℤ) = b' - a * (b.val : ℤ) := by linarith
@@ -531,9 +502,8 @@ theorem Newform.existsUnique_T_p_upper_left_coset_index_of_mem_alpha_p_doubleCos
   refine ⟨b, hb, ?_⟩
   intro c hc
   by_contra hne
-  have hbc : b ≠ c := fun h => hne h.symm
   exact Set.disjoint_left.mp
-    (hpart.2 (Set.mem_univ b) (Set.mem_univ c) hbc) hb hc
+    (hpart.2 (Set.mem_univ b) (Set.mem_univ c) (fun h => hne h.symm)) hb hc
 
 open scoped Pointwise in
 /-- Each element `x` of the bad-prime double coset factors as `x = γ · β_b` with
@@ -583,9 +553,7 @@ theorem Newform.mem_alpha_p_Gamma1_doubleCoset_iff_exists_T_p_upper_left_factor
         N (p := p) hp hpN hx
     exact ⟨b, hb⟩
   · rintro ⟨b, γ, hγ, hmul⟩
-    have hpart := Newform.alpha_p_Gamma1_doubleCoset_partition_T_p_upper_left_cosets
-      N (p := p) hp hpN
-    rw [hpart.1]
+    rw [(Newform.alpha_p_Gamma1_doubleCoset_partition_T_p_upper_left_cosets N (p := p) hp hpN).1]
     exact Set.mem_iUnion.mpr
       ⟨b, ⟨γ, hγ, glMap (T_p_upper p hp.pos b.val), rfl, hmul⟩⟩
 
@@ -731,12 +699,7 @@ theorem Newform.iUnion_Gamma1_T_p_upper_left_factor_smul_eq_Gamma1_smul_T_p_uppe
     -- reduce the beta-redexes left by `rcases`/`simp` to literal `•`.
     have hyw' : (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ) • w = y := hyw
     have hzy' : γ • y = z := hzy
-    calc
-      ((γ * (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)) : GL (Fin 2) ℝ) • w =
-          γ • ((glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ) • w) := by
-            rw [mul_smul]
-      _ = γ • y := by rw [hyw']
-      _ = z := hzy'
+    rw [mul_smul, hyw']; exact hzy'
 
 open scoped Pointwise in
 /-- `Γ₁`-action form of the bad-prime double-coset tile equality. -/
@@ -911,12 +874,12 @@ lemma Newform.peterssonInner_fricke_T_p_upper_rewrite_adjoint
         ((g ∣[k] peterssonAdj (Newform.frickeMatrix N : GL (Fin 2) ℝ)) ∣[k]
           peterssonAdj (Newform.T_p_lower_with_offset N hp b :
             GL (Fin 2) ℝ)) := by
-  rw [Newform.slash_frickeMatrix_T_p_upper_rewrite hp b f]
-  rw [peterssonInner_slash_adjoint (k := k) D
+  rw [Newform.slash_frickeMatrix_T_p_upper_rewrite hp b f,
+    peterssonInner_slash_adjoint (k := k) D
       (Newform.frickeMatrix N : GL (Fin 2) ℝ)
       (Newform.frickeMatrix_det_pos N)
-      (f ∣[k] (Newform.T_p_lower_with_offset N hp b : GL (Fin 2) ℝ)) g]
-  rw [peterssonInner_slash_adjoint (k := k)
+      (f ∣[k] (Newform.T_p_lower_with_offset N hp b : GL (Fin 2) ℝ)) g,
+    peterssonInner_slash_adjoint (k := k)
       ((Newform.frickeMatrix N : GL (Fin 2) ℝ) • D)
       (Newform.T_p_lower_with_offset N hp b : GL (Fin 2) ℝ)
       (Newform.T_p_lower_with_offset_det_pos N hp b) f
@@ -997,26 +960,20 @@ lemma Newform.peterssonInner_fricke_T_p_upper_right_slot_rewrite
           (Newform.T_p_lower_with_offset_adjugate N hp b :
             GL (Fin 2) ℝ)) := by
   rw [Newform.slash_peterssonAdj_frickeMatrix g,
-      Newform.slash_peterssonAdj_T_p_lower_with_offset hp b]
-  rw [ModularForm.smul_slash]
-  have hadj_M_pos : 0 <
-      (Newform.T_p_lower_with_offset_adjugate N hp b : GL (Fin 2) ℝ).det.val :=
-    Newform.T_p_lower_with_offset_adjugate_det_pos N hp b
-  rw [show UpperHalfPlane.σ
+      Newform.slash_peterssonAdj_T_p_lower_with_offset hp b, ModularForm.smul_slash,
+    show UpperHalfPlane.σ
         (Newform.T_p_lower_with_offset_adjugate N hp b : GL (Fin 2) ℝ) =
       RingHom.id ℂ from by
     unfold UpperHalfPlane.σ
-    rw [if_pos hadj_M_pos]]
+    rw [if_pos (Newform.T_p_lower_with_offset_adjugate_det_pos N hp b)]]
   rfl
 
 /-- `frickeSquareScalar N k = (-1 : ℂ)^k * (N : ℂ)^(k - 2)` is non-zero. -/
 lemma Newform.frickeSquareScalar_ne_zero (N : ℕ) [NeZero N] (k : ℤ) :
     Newform.frickeSquareScalar N k ≠ 0 := by
   unfold Newform.frickeSquareScalar
-  have h_neg_one_ne : ((-1 : ℂ) ^ k) ≠ 0 := zpow_ne_zero _ (by norm_num)
-  have hN_ne : (N : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (NeZero.ne N)
-  have hN_pow_ne : (N : ℂ) ^ (k - 2) ≠ 0 := zpow_ne_zero _ hN_ne
-  exact mul_ne_zero h_neg_one_ne hN_pow_ne
+  exact mul_ne_zero (zpow_ne_zero _ (by norm_num))
+    (zpow_ne_zero _ (Nat.cast_ne_zero.mpr (NeZero.ne N)))
 
 open UpperHalfPlane MeasureTheory ModularGroup in
 /-- Per-`Γ₁(N)`-coset aggregation residual for the bad-prime Fricke `petN`
@@ -1137,8 +1094,8 @@ lemma Newform.peterssonInner_fricke_T_p_upper_rewrite_adjoint_t152
           ((g ∣[k] (Newform.frickeMatrix N : GL (Fin 2) ℝ)) ∣[k]
             (Newform.T_p_lower_with_offset_adjugate N hp b :
               GL (Fin 2) ℝ))) := by
-  rw [Newform.peterssonInner_fricke_T_p_upper_rewrite_adjoint D N hp b f g]
-  rw [Newform.peterssonInner_fricke_T_p_upper_right_slot_rewrite hp b g]
+  rw [Newform.peterssonInner_fricke_T_p_upper_rewrite_adjoint D N hp b f g,
+    Newform.peterssonInner_fricke_T_p_upper_right_slot_rewrite hp b g]
 
 /-- Inverse form of `slash_frickeMatrix_frickeMatrix`, rewriting `f` as
 `(frickeSquareScalar N k)⁻¹ • ((f|W_N)|W_N)`. -/
@@ -1147,10 +1104,8 @@ lemma Newform.fricke_square_inv_smul
     (Newform.frickeSquareScalar N k)⁻¹ •
         ((f ∣[k] (Newform.frickeMatrix N : GL (Fin 2) ℝ)) ∣[k]
           (Newform.frickeMatrix N : GL (Fin 2) ℝ)) = f := by
-  rw [Newform.slash_frickeMatrix_frickeMatrix, smul_smul]
-  rw [show (Newform.frickeSquareScalar N k)⁻¹ * Newform.frickeSquareScalar N k = 1 from
-    inv_mul_cancel₀ (Newform.frickeSquareScalar_ne_zero N k)]
-  rw [one_smul]
+  rw [Newform.slash_frickeMatrix_frickeMatrix, smul_smul,
+    inv_mul_cancel₀ (Newform.frickeSquareScalar_ne_zero N k), one_smul]
 
 open UpperHalfPlane MeasureTheory ModularGroup in
 /-- Per-`q` Fricke-squared `b`-sum residual after the combined per-coset
@@ -1238,16 +1193,15 @@ theorem Newform.hasBadPrimeFrickePerCosetSumTransport
           ((q.out : SL(2, ℤ))⁻¹)) τ) (fd : Set UpperHalfPlane) μ_hyp :=
     fun b _ => integrableOn_petersson_cuspform_mixed_slash_on_fd g f
       (T_p_upper p hp.pos b) ((q.out : SL(2, ℤ))⁻¹)
-  rw [SlashAction.sum_slash, peterssonInner_sum_left _ _ _ _ h_int]
-  rw [Finset.mul_sum]
+  rw [SlashAction.sum_slash, peterssonInner_sum_left _ _ _ _ h_int, Finset.mul_sum]
   refine Finset.sum_congr rfl (fun b _ => ?_)
-  have h_det_pos := Newform.mapGL_SL_det_val_pos ((q.out : SL(2, ℤ))⁻¹)
   rw [show ((⇑f ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ)) ∣[k]
         ((q.out : SL(2, ℤ))⁻¹) : UpperHalfPlane → ℂ) =
       ((⇑f ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ)) ∣[k]
         (mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ)) from rfl,
     peterssonInner_slash_adjoint (k := k) (fd : Set UpperHalfPlane)
-      (mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) h_det_pos
+      (mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ)
+      (Newform.mapGL_SL_det_val_pos ((q.out : SL(2, ℤ))⁻¹))
       (⇑f ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ))
       (⇑g ∣[k] ((q.out : SL(2, ℤ))⁻¹))]
   rw [peterssonAdj_mapGL_SL_eq_inv,
@@ -1262,9 +1216,9 @@ theorem Newform.hasBadPrimeFrickePerCosetSumTransport
         (Newform.frickeMatrix N : GL (Fin 2) ℝ)) from
       (Newform.fricke_square_inv_smul ⇑f).symm]
   rw [smul_slash_pos_det k (Newform.frickeSquareScalar N k)⁻¹ _
-      (T_p_upper p hp.pos b) (T_p_upper_det_pos p hp.pos b)]
-  rw [UpperHalfPlane.peterssonInner_conj_smul_left]
-  rw [show (((⇑f ∣[k] (Newform.frickeMatrix N : GL (Fin 2) ℝ)) ∣[k]
+      (T_p_upper p hp.pos b) (T_p_upper_det_pos p hp.pos b),
+    UpperHalfPlane.peterssonInner_conj_smul_left,
+    show (((⇑f ∣[k] (Newform.frickeMatrix N : GL (Fin 2) ℝ)) ∣[k]
         (Newform.frickeMatrix N : GL (Fin 2) ℝ)) ∣[k]
         (T_p_upper p hp.pos b : GL (Fin 2) ℚ) : UpperHalfPlane → ℂ) =
       (((⇑f ∣[k] (Newform.frickeMatrix N : GL (Fin 2) ℝ)) ∣[k]
