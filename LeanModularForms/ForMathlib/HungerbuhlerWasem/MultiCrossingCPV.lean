@@ -1831,49 +1831,10 @@ theorem residueTheorem_crossing_paper_faithful_clean
     have h_B' : ∀ (k : Fin (decomp.order s)), 1 ≤ k.val →
         decomp.coeff s k ≠ 0 → ∀ t ∈ crossings,
           (L_plus t / (↑‖L_plus t‖ : ℂ)) ^ k.val =
-          ((-(L_minus t)) / (↑‖L_minus t‖ : ℂ)) ^ k.val := by
-      intro k hk_ge h_coeff_ne t ht
-      have ht_Ioo : t ∈ Set.Ioo (0 : ℝ) 1 := h_Ioo' t ht
-      have h_at_t : γ.toPwC1Immersion.toPiecewiseC1Path t = s := h_at' t ht
-      have hk_two : 2 ≤ k.val + 1 := by omega
-      have h_kval_eq : k.val + 1 - 1 = k.val := by omega
-      by_cases h_part : t ∈ γ.toPwC1Immersion.toPiecewiseC1Path.partition
-      · have hL_plus_eq : L_plus t =
-            Classical.choose (γ.toPwC1Immersion.right_deriv_limit t h_part) := by
-          simp only [L_plus, dif_pos h_part]
-        have hL_minus_eq : L_minus t =
-            Classical.choose (γ.toPwC1Immersion.left_deriv_limit t h_part) := by
-          simp only [L_minus, dif_pos h_part]
-        have h_angle_pwr : ∃ m : ℤ,
-            (((k.val + 1) - 1 : ℕ) : ℝ) *
-              angleAtCrossing γ.toPwC1Immersion t ht_Ioo =
-            (m : ℝ) * (2 * Real.pi) := by
-          rw [show ((k.val + 1) - 1 : ℕ) = k.val from by omega]
-          exact angle_compat_of_condB_anywhere hU_open hS_in_U γ
-            decomp hCondB hs ht_Ioo h_at_t k hk_ge h_coeff_ne
-        have h_result := corner_angle_compat_to_h_B γ ht_Ioo h_part (hL_minus_ne t ht)
-          (hL_plus_ne t ht) hL_minus_eq hL_plus_eq hk_two h_angle_pwr
-        rw [h_kval_eq] at h_result
-        exact h_result
-      · have h_L_eq := deriv_limit_eq_at_off_partition γ ht_Ioo h_part
-        have hL_plus_unfold : L_plus t =
-            deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t := by
-          simp only [L_plus, dif_neg h_part]
-        have hL_minus_unfold : L_minus t =
-            deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t := by
-          simp only [L_minus, dif_neg h_part]
-        rw [hL_plus_unfold, hL_minus_unfold]
-        have h_angle_pwr : ∃ m : ℤ,
-            (((k.val + 1) - 1 : ℕ) : ℝ) * Real.pi =
-            (m : ℝ) * (2 * Real.pi) := by
-          rw [show ((k.val + 1) - 1 : ℕ) = k.val from by omega]
-          exact angle_compat_of_condB hU_open hS_in_U γ decomp
-            hCondB hs ht_Ioo h_at_t h_part k hk_ge h_coeff_ne
-        have h_result := h_B_of_angle_compat_smooth
-          (deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t)
-          h_L_eq.1 (k.val + 1) hk_two h_angle_pwr
-        rw [h_kval_eq] at h_result
-        exact h_result
+          ((-(L_minus t)) / (↑‖L_minus t‖ : ℂ)) ^ k.val :=
+      condB_to_h_B_at_crossings_corner hU_open hS_in_U γ decomp hCondB hs
+        h_Ioo' h_at' L_plus L_minus (fun _ _ => rfl) (fun _ _ => rfl)
+        hL_plus_ne hL_minus_ne
     have h_flat_one : ∀ t₀ ∈ crossings,
         IsFlatOfOrder γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t₀ 1 :=
       fun t₀ ht₀ => isFlatOfOrder_one γ.toPwC1Immersion t₀ (h_Ioo' t₀ ht₀)
