@@ -288,6 +288,60 @@ private lemma g_rho'_norm_ge_one_seg3 {t : ℝ} (ht3 : 3 ≤ t) (ht4 : t ≤ 4) 
       _ = |(fdBoundary_H H t - (ellipticPointRhoPlusOne : ℂ)).re| := by rw [hre]
       _ ≤ ‖fdBoundary_H H t - (ellipticPointRhoPlusOne : ℂ)‖ := Complex.abs_re_le_norm _
 
+/-- **Triple property of `g = fdBoundary_H H t - ellipticPointRhoPlusOne` on
+`[1 + δ_R, 3]`** (the right half of the arc-1 piece): nonneg imaginary part,
+nonzero, and interior in `slitPlane`. -/
+private lemma g_rho'_arc_right_triple (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
+    {δ_R : ℝ} (hδ_R : 0 < δ_R) :
+    (∀ t ∈ Icc (1 + δ_R) (3:ℝ),
+      0 ≤ (fdBoundary_H H t - (ellipticPointRhoPlusOne : ℂ)).im) ∧
+    (∀ t ∈ Icc (1 + δ_R) (3:ℝ),
+      fdBoundary_H H t - (ellipticPointRhoPlusOne : ℂ) ≠ 0) ∧
+    (∀ t ∈ Ioo (1 + δ_R) (3:ℝ),
+      fdBoundary_H H t - (ellipticPointRhoPlusOne : ℂ) ∈ slitPlane) := by
+  refine ⟨?_, ?_, ?_⟩
+  · intro t ⟨ht1, ht3⟩
+    rcases eq_or_lt_of_le ht3 with rfl | _
+    · exact g_rho'_im_nonneg hH ⟨by norm_num, by norm_num⟩ (by norm_num)
+    · exact g_rho'_im_nonneg hH ⟨by linarith, by linarith⟩ (by linarith)
+  · intro t ⟨ht1, ht3⟩
+    rcases eq_or_lt_of_le ht3 with rfl | _
+    · exact g_rho'_ne_zero hH ⟨by norm_num, by norm_num⟩ (by norm_num)
+    · exact g_rho'_ne_zero hH ⟨by linarith, by linarith⟩ (by linarith)
+  · intro t ⟨ht1, ht3⟩
+    exact g_rho'_slitPlane hH ⟨by linarith, by linarith⟩ (by linarith) (by linarith)
+
+/-- **Triple property of `g = fdBoundary_H H t - ellipticPointRhoPlusOne` on
+`[3, 4]`** (segment 3): nonneg imaginary part, nonzero, and interior in
+`slitPlane`. -/
+private lemma g_rho'_seg3_triple (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
+    (∀ t ∈ Icc (3:ℝ) 4,
+      0 ≤ (fdBoundary_H H t - (ellipticPointRhoPlusOne : ℂ)).im) ∧
+    (∀ t ∈ Icc (3:ℝ) 4,
+      fdBoundary_H H t - (ellipticPointRhoPlusOne : ℂ) ≠ 0) ∧
+    (∀ t ∈ Ioo (3:ℝ) 4,
+      fdBoundary_H H t - (ellipticPointRhoPlusOne : ℂ) ∈ slitPlane) := by
+  refine ⟨?_, ?_, ?_⟩
+  · intro t ⟨ht3, ht4⟩
+    rcases eq_or_lt_of_le ht3 with rfl | _
+    · exact g_rho'_im_nonneg hH ⟨by norm_num, by norm_num⟩ (by norm_num)
+    · exact g_rho'_im_nonneg hH ⟨by linarith, by linarith⟩ (by linarith)
+  · intro t ⟨ht3, ht4⟩
+    rcases eq_or_lt_of_le ht3 with rfl | _
+    · exact g_rho'_ne_zero hH ⟨by norm_num, by norm_num⟩ (by norm_num)
+    · exact g_rho'_ne_zero hH ⟨by linarith, by linarith⟩ (by linarith)
+  · intro t ⟨ht3, ht4⟩
+    exact g_rho'_slitPlane hH ⟨by linarith, by linarith⟩ (by linarith) (by linarith)
+
+/-- **Slit-plane membership of `g = fdBoundary_H H t - ellipticPointRhoPlusOne`
+on `[4, 5]`** (segment 4). -/
+private lemma g_rho'_seg4_slit (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
+    ∀ t ∈ Icc (4:ℝ) 5,
+      fdBoundary_H H t - (ellipticPointRhoPlusOne : ℂ) ∈ slitPlane := fun t ⟨ht4, ht5⟩ => by
+  rcases eq_or_lt_of_le ht4 with rfl | ht4'
+  · exact g_rho'_slitPlane hH ⟨by norm_num, by norm_num⟩ (by norm_num) (by norm_num)
+  · exact g_rho'_slitPlane hH ⟨by linarith, ht5⟩ (by linarith) (by linarith)
+
 private lemma ftc_logDeriv_telescope_rho_plus_one (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
     {δ_L δ_R : ℝ} (hδ_L : 0 < δ_L) (hδ_L1 : δ_L < 1) (hδ_R : 0 < δ_R) (hδ_R1 : δ_R < 1) :
     let g := fun t => fdBoundary_H H t - (ellipticPointRhoPlusOne : ℂ)
@@ -398,21 +452,13 @@ private lemma ftc_logDeriv_telescope_rho_plus_one (H : ℝ) (hH : Real.sqrt 3 / 
     rcases eq_or_lt_of_le ht3 with rfl | ht3'
     · exact hg3_1
     · exact hg_eq_h₁ t (by linarith) ht3'
+  obtain ⟨hg_im_nn_arc_R, hg_ne_arc_R, hg_slit_arc_R⟩ := g_rho'_arc_right_triple H hH hδ_R
   have hh₁_im_nn : ∀ t ∈ Icc (1 + δ_R) (3:ℝ), 0 ≤ (h₁ t).im := fun t ht => by
-    rw [← hg_eq_h₁_on t ht]
-    obtain ⟨ht1, ht3⟩ := ht
-    rcases eq_or_lt_of_le ht3 with rfl | _
-    · exact g_rho'_im_nonneg hH ⟨by norm_num, by norm_num⟩ (by norm_num)
-    · exact g_rho'_im_nonneg hH ⟨by linarith, by linarith⟩ (by linarith)
+    rw [← hg_eq_h₁_on t ht]; exact hg_im_nn_arc_R t ht
   have hh₁_ne : ∀ t ∈ Icc (1 + δ_R) (3:ℝ), h₁ t ≠ 0 := fun t ht => by
-    rw [← hg_eq_h₁_on t ht]
-    obtain ⟨ht1, ht3⟩ := ht
-    rcases eq_or_lt_of_le ht3 with rfl | _
-    · exact g_rho'_ne_zero hH ⟨by norm_num, by norm_num⟩ (by norm_num)
-    · exact g_rho'_ne_zero hH ⟨by linarith, by linarith⟩ (by linarith)
+    rw [← hg_eq_h₁_on t ht]; exact hg_ne_arc_R t ht
   have hh₁_slit_interior : ∀ t ∈ Ioo (1 + δ_R) (3:ℝ), h₁ t ∈ slitPlane := fun t ⟨ht1, ht3⟩ => by
-    rw [← hg_eq_h₁ t (by linarith) ht3]
-    exact g_rho'_slitPlane hH ⟨by linarith, by linarith⟩ (by linarith) (by linarith)
+    rw [← hg_eq_h₁ t (by linarith) ht3]; exact hg_slit_arc_R t ⟨ht1, ht3⟩
   have piece₁ := ftc_log_piece_upper (by linarith : (1 + δ_R) ≤ 3) hh₁_cont hh₁_diff
     hh₁_deriv_cont hh₁_im_nn hh₁_ne hh₁_slit_interior
     heq_1pδ_3 hg1pδ (hg3_2.symm ▸ hg3_1)
@@ -420,29 +466,20 @@ private lemma ftc_logDeriv_telescope_rho_plus_one (H : ℝ) (hH : Real.sqrt 3 / 
     rcases eq_or_lt_of_le ht3 with rfl | ht3'
     · exact hg3_2
     · exact hg_eq_h₂ t ht3' ht4
+  obtain ⟨hg_im_nn_seg3, hg_ne_seg3, hg_slit_seg3⟩ := g_rho'_seg3_triple H hH
   have hh₂_im_nn : ∀ t ∈ Icc (3:ℝ) 4, 0 ≤ (h₂ t).im := fun t ht => by
-    rw [← hg_eq_h₂_on t ht]
-    obtain ⟨ht3, ht4⟩ := ht
-    rcases eq_or_lt_of_le ht3 with rfl | _
-    · exact g_rho'_im_nonneg hH ⟨by norm_num, by norm_num⟩ (by norm_num)
-    · exact g_rho'_im_nonneg hH ⟨by linarith, by linarith⟩ (by linarith)
+    rw [← hg_eq_h₂_on t ht]; exact hg_im_nn_seg3 t ht
   have hh₂_ne : ∀ t ∈ Icc (3:ℝ) 4, h₂ t ≠ 0 := fun t ht => by
-    rw [← hg_eq_h₂_on t ht]
-    obtain ⟨ht3, ht4⟩ := ht
-    rcases eq_or_lt_of_le ht3 with rfl | _
-    · exact g_rho'_ne_zero hH ⟨by norm_num, by norm_num⟩ (by norm_num)
-    · exact g_rho'_ne_zero hH ⟨by linarith, by linarith⟩ (by linarith)
+    rw [← hg_eq_h₂_on t ht]; exact hg_ne_seg3 t ht
   have hh₂_slit_interior : ∀ t ∈ Ioo (3:ℝ) 4, h₂ t ∈ slitPlane := fun t ⟨ht3, ht4⟩ => by
-    rw [← hg_eq_h₂ t ht3 ht4.le]
-    exact g_rho'_slitPlane hH ⟨by linarith, by linarith⟩ (by linarith) (by linarith)
+    rw [← hg_eq_h₂ t ht3 ht4.le]; exact hg_slit_seg3 t ⟨ht3, ht4⟩
   have piece₂ := ftc_log_piece_upper (by norm_num : (3:ℝ) ≤ 4) hh₂_cont hh₂_diff
     hh₂_deriv_cont hh₂_im_nn hh₂_ne hh₂_slit_interior heq_34 hg3_2 (hg4_3.symm ▸ hg4_2)
+  have hg_slit_seg4 := g_rho'_seg4_slit H hH
   have hh₃_slit : ∀ t ∈ Icc (4:ℝ) 5, h₃ t ∈ slitPlane := fun t ⟨ht4, ht5⟩ => by
     rcases eq_or_lt_of_le ht4 with rfl | ht4'
-    · rw [← hg4_3]
-      exact g_rho'_slitPlane hH ⟨by norm_num, by norm_num⟩ (by norm_num) (by norm_num)
-    · rw [← hg_eq_h₃ t ht4']
-      exact g_rho'_slitPlane hH ⟨by linarith, ht5⟩ (by linarith) (by linarith)
+    · rw [← hg4_3]; exact hg_slit_seg4 4 ⟨le_rfl, by linarith⟩
+    · rw [← hg_eq_h₃ t ht4']; exact hg_slit_seg4 t ⟨ht4'.le, ht5⟩
   have piece₃ := ftc_log_pieceFM (by norm_num : (4:ℝ) ≤ 5)
     hh₃_cont hh₃_diff hh₃_deriv_cont hh₃_slit heq_45 hg4_3 hg5
   refine ⟨piece₀.1, piece₁.1.trans (piece₂.1.trans piece₃.1), ?_⟩
