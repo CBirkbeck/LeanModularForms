@@ -671,6 +671,86 @@ theorem corner_angle_compat_to_h_B
     at h_angle_raw
   exact h_B_of_angle_compat_corner hL_minus_ne hL_plus_ne hk h_angle_raw
 
+/-- **Condition (B) bridged to the corner-form `h_B` predicate at all crossings.**
+
+Given condition (B), a polar-part decomposition, and a `Finset` of crossing
+parameters `crossings ⊆ Ioo 0 1` all hitting the same pole `s`, package the
+condition-(B) angle equation as the corner-form `h_B` predicate
+`(L_+/‖L_+‖)^k = ((-L_-)/‖L_-‖)^k`, where `L_±` are the canonical one-sided
+derivative limits (`Classical.choose` of `right_deriv_limit`/`left_deriv_limit`
+at corners, `deriv γ t` at smooth crossings).
+
+The dispatching `corner_angle_compat_to_h_B` / `h_B_of_angle_compat_smooth`
+discharge is performed internally.  This is the unified discharge consumed by
+`cpv_polarPart_at_multiCrossed_pole_under_condB_corner` inside
+`residueTheorem_crossing_paper_faithful_clean`. -/
+theorem condB_to_h_B_at_crossings_corner
+    {U : Set ℂ} {S : Finset ℂ} {f : ℂ → ℂ} (hU_open : IsOpen U) (hS_in_U : ↑S ⊆ U)
+    (γ : ClosedPwC1Immersion x)
+    (decomp : PolarPartDecomposition f S U)
+    (hCondB : SatisfiesConditionB γ.toPwC1Immersion f S)
+    {s : ℂ} (hs : s ∈ S)
+    {crossings : Finset ℝ}
+    (h_Ioo : ∀ t ∈ crossings, t ∈ Set.Ioo (0 : ℝ) 1)
+    (h_at : ∀ t ∈ crossings, γ.toPwC1Immersion.toPiecewiseC1Path t = s)
+    (L_plus L_minus : ℝ → ℂ)
+    (hL_plus_def : ∀ t ∈ crossings,
+      L_plus t = if h_part : t ∈ γ.toPwC1Immersion.toPiecewiseC1Path.partition then
+        Classical.choose (γ.toPwC1Immersion.right_deriv_limit t h_part)
+      else deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t)
+    (hL_minus_def : ∀ t ∈ crossings,
+      L_minus t = if h_part : t ∈ γ.toPwC1Immersion.toPiecewiseC1Path.partition then
+        Classical.choose (γ.toPwC1Immersion.left_deriv_limit t h_part)
+      else deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t)
+    (hL_plus_ne : ∀ t ∈ crossings, L_plus t ≠ 0)
+    (hL_minus_ne : ∀ t ∈ crossings, L_minus t ≠ 0) :
+    ∀ (k : Fin (decomp.order s)), 1 ≤ k.val →
+      decomp.coeff s k ≠ 0 → ∀ t ∈ crossings,
+        (L_plus t / (↑‖L_plus t‖ : ℂ)) ^ k.val =
+        ((-(L_minus t)) / (↑‖L_minus t‖ : ℂ)) ^ k.val := by
+  intro k hk_ge h_coeff_ne t ht
+  have ht_Ioo : t ∈ Set.Ioo (0 : ℝ) 1 := h_Ioo t ht
+  have h_at_t : γ.toPwC1Immersion.toPiecewiseC1Path t = s := h_at t ht
+  have hk_two : 2 ≤ k.val + 1 := by omega
+  have h_kval_eq : k.val + 1 - 1 = k.val := by omega
+  by_cases h_part : t ∈ γ.toPwC1Immersion.toPiecewiseC1Path.partition
+  · have hL_plus_eq : L_plus t =
+        Classical.choose (γ.toPwC1Immersion.right_deriv_limit t h_part) := by
+      rw [hL_plus_def t ht, dif_pos h_part]
+    have hL_minus_eq : L_minus t =
+        Classical.choose (γ.toPwC1Immersion.left_deriv_limit t h_part) := by
+      rw [hL_minus_def t ht, dif_pos h_part]
+    have h_angle_pwr : ∃ m : ℤ,
+        (((k.val + 1) - 1 : ℕ) : ℝ) *
+          angleAtCrossing γ.toPwC1Immersion t ht_Ioo =
+        (m : ℝ) * (2 * Real.pi) := by
+      rw [show ((k.val + 1) - 1 : ℕ) = k.val from by omega]
+      exact angle_compat_of_condB_anywhere hU_open hS_in_U γ
+        decomp hCondB hs ht_Ioo h_at_t k hk_ge h_coeff_ne
+    have h_result := corner_angle_compat_to_h_B γ ht_Ioo h_part (hL_minus_ne t ht)
+      (hL_plus_ne t ht) hL_minus_eq hL_plus_eq hk_two h_angle_pwr
+    rw [h_kval_eq] at h_result
+    exact h_result
+  · have h_L_eq := deriv_limit_eq_at_off_partition γ ht_Ioo h_part
+    have hL_plus_unfold : L_plus t =
+        deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t := by
+      rw [hL_plus_def t ht, dif_neg h_part]
+    have hL_minus_unfold : L_minus t =
+        deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t := by
+      rw [hL_minus_def t ht, dif_neg h_part]
+    rw [hL_plus_unfold, hL_minus_unfold]
+    have h_angle_pwr : ∃ m : ℤ,
+        (((k.val + 1) - 1 : ℕ) : ℝ) * Real.pi =
+        (m : ℝ) * (2 * Real.pi) := by
+      rw [show ((k.val + 1) - 1 : ℕ) = k.val from by omega]
+      exact angle_compat_of_condB hU_open hS_in_U γ decomp
+        hCondB hs ht_Ioo h_at_t h_part k hk_ge h_coeff_ne
+    have h_result := h_B_of_angle_compat_smooth
+      (deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t)
+      h_L_eq.1 (k.val + 1) hk_two h_angle_pwr
+    rw [h_kval_eq] at h_result
+    exact h_result
+
 end HungerbuhlerWasem
 
 end
