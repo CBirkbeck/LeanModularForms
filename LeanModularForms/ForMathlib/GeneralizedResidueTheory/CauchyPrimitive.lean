@@ -84,8 +84,7 @@ private lemma integral_t_mul_deriv_eq {f : ℂ → ℂ} {S : Set ℂ}
   exact h_parts
 
 private lemma continuous_segmentMap (c w : ℂ) :
-    Continuous (fun t : ℝ => c + t • (w - c)) :=
-  continuous_const.add (continuous_ofReal.smul continuous_const)
+    Continuous (fun t : ℝ => c + t • (w - c)) := by fun_prop
 
 private lemma segmentIntegrand_aestronglyMeasurable
     {f : ℂ → ℂ} {S : Set ℂ} {c w : ℂ}

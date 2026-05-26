@@ -82,7 +82,6 @@ theorem hasGeneralizedWindingNumber_of_avoids {γ : PiecewiseC1Path x y} {z₀ :
   rw [HasGeneralizedWindingNumber, mul_inv_cancel_left₀ Complex.two_pi_I_ne_zero]
   exact hasCauchyPV_of_avoids hδ
 
-
 /-- If the CPV exists with some limit, then `HasGeneralizedWindingNumber` holds for the
 corresponding winding number value. -/
 theorem hasGeneralizedWindingNumber_of_hasCauchyPV {γ : PiecewiseC1Path x y} {z₀ L : ℂ}
@@ -90,7 +89,6 @@ theorem hasGeneralizedWindingNumber_of_hasCauchyPV {γ : PiecewiseC1Path x y} {z
     HasGeneralizedWindingNumber γ z₀ ((2 * ↑Real.pi * I)⁻¹ * L) := by
   rw [HasGeneralizedWindingNumber, mul_inv_cancel_left₀ Complex.two_pi_I_ne_zero]
   exact h
-
 
 /-- Helper: distance lower bound for points in a small ball around `w₀` (off the curve). -/
 lemma ball_dist_to_curve_lb {γ : PiecewiseC1Path x y} {w₀ : ℂ}
@@ -110,7 +108,7 @@ lemma ball_dist_to_curve_lb {γ : PiecewiseC1Path x y} {w₀ : ℂ}
   have h2 : ‖w - w₀‖ < Metric.infDist w₀ (γ.toPath.extend '' Icc (0 : ℝ) 1) / 2 := by
     rw [← Complex.dist_eq]; exact Metric.mem_ball.mp hw
   have h3 : ‖γ t - w₀‖ ≤ ‖γ t - w‖ + ‖w - w₀‖ := by
-    rw [show γ t - w₀ = (γ t - w) + (w - w₀) from by ring]
+    rw [show γ t - w₀ = (γ t - w) + (w - w₀) by ring]
     exact norm_add_le _ _
   linarith
 

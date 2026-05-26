@@ -8,29 +8,17 @@ import LeanModularForms.ForMathlib.GeneralizedWindingNumber
 /-!
 # Winding Number Decomposition — Proposition 2.3
 
-This file formalizes the Hungerbühler–Wasem decomposition of the generalized winding
-number into an integer "external winding" part and a crossing angle contribution.
+Geometric crossing angle for the Hungerbühler–Wasem decomposition of the generalized
+winding number.
 
 ## Main definitions
 
-* `angleAtCrossing` — the signed angle at a crossing point where γ passes through z₀.
-  At a smooth point (not in the partition), the angle is π. At a partition (corner) point,
-  the angle is `arg(L_right) - arg(-L_left)` where `L_left`, `L_right` are the one-sided
-  derivative limits.
-
-* `externalWindingContribution` — the external winding contribution at a crossing:
-  `generalizedWindingNumber γ z₀ + angleAtCrossing γ t₀ ht₀ / (2π)`.
+* `angleAtCrossing` — the signed angle at a crossing point where `γ` passes through
+  `z₀`: `π` at a smooth point, `arg(L_right) - arg(-L_left)` at a partition (corner) point.
 
 ## Main results
 
-* `generalizedWindingNumber_eq_external_sub_angle` — H-W Proposition 2.3 decomposition:
-  `n_{z₀}(γ) = N - α/(2π)` where `N` is the external winding contribution.
-
-* `generalizedWindingNumber_eq_neg_angleContribution_single` — when the external winding
-  is zero, the generalized winding number equals `-α/(2π)`.
-
-* `generalizedWindingNumber_eq_neg_half_smooth_crossing` — at a smooth crossing with zero
-  external winding, the generalized winding number is `-1/2`.
+* `angleAtCrossing_smooth` — at a smooth crossing point, the angle is `π`.
 
 ## References
 

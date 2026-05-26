@@ -120,7 +120,7 @@ theorem residue_of_laurent_expansion {f g : ℂ → ℂ} {s : ℂ} (N : ℕ) (a 
         · refine Finset.sum_congr rfl fun k _ => ?_
           by_cases hk : k.val = 0
           · simp [show k = ⟨0, hN_pos⟩ from Fin.ext hk]
-          · simp [hk, show k.val ≥ 1 from by omega]
+          · simp [hk, show k.val ≥ 1 by omega]
       rw [hsplit]; ring
     unfold residue
     apply Filter.Tendsto.limUnder_eq
@@ -166,7 +166,7 @@ theorem residue_of_laurent_expansion {f g : ℂ → ℂ} {s : ℂ} (N : ℕ) (a 
       rw [show (fun z => ∑ k : Fin N,
           (if k.val ≥ 1 then a k / (z - s) ^ (k.val + 1) else 0 : ℂ)) =
           ∑ k ∈ (Finset.univ : Finset (Fin N)),
-            fun z => if k.val ≥ 1 then a k / (z - s) ^ (k.val + 1) else 0 from by
+            fun z => if k.val ≥ 1 then a k / (z - s) ^ (k.val + 1) else 0 by
         funext z; rw [Finset.sum_apply]]
       exact CircleIntegrable.sum _ (fun k _ => h_ci_higher_each k)
     have h_ci_rest : CircleIntegrable rest s r := h_ci_g.add h_ci_higher_sum
@@ -194,8 +194,6 @@ theorem residue_of_laurent_expansion {f g : ℂ → ℂ} {s : ℂ} (N : ℕ) (a 
     rw [residue_congr hf_eq_g]
     exact residue_eq_zero_of_analyticAt hg
 
-/-- Peeling lemma: if `g : ℂ → ℂ` is analytic at `s`, then
-`g(z) = g(s) + (z - s) * g₁(z)` near `s` for some `g₁` analytic at `s`. -/
 private lemma analyticAt_peel_one {g : ℂ → ℂ} {s : ℂ} (hg : AnalyticAt ℂ g s) :
     ∃ g₁ : ℂ → ℂ, AnalyticAt ℂ g₁ s ∧
       ∀ᶠ z in 𝓝 s, g z = g s + (z - s) * g₁ z := by
@@ -212,10 +210,6 @@ private lemma analyticAt_peel_one {g : ℂ → ℂ} {s : ℂ} (hg : AnalyticAt �
   have heq : g z - g s = (z - s) * g₁ z := by simpa using hz
   linear_combination heq
 
-/-- Taylor decomposition for an analytic function: for any `g` analytic at `s` and
-`k : ℕ`, there exist coefficients `c : Fin k → ℂ` and an analytic remainder
-`R : ℂ → ℂ` (analytic at `s`) with
-`g(z) = ∑_{j : Fin k} c j · (z - s)^j + (z - s)^k · R(z)` near `s`. -/
 private lemma analyticAt_taylor_decomp {g : ℂ → ℂ} {s : ℂ}
     (hg : AnalyticAt ℂ g s) (k : ℕ) :
     ∃ (c : Fin k → ℂ) (R : ℂ → ℂ), AnalyticAt ℂ R s ∧
@@ -235,15 +229,12 @@ private lemma analyticAt_taylor_decomp {g : ℂ → ℂ} {s : ℂ}
         Fin.val_castSucc]
       ring
 
-/-- Algebraic helper: `w^j / w^k = w^{-(k-j)}` (as inverses) for `j < k` and `w ≠ 0`. -/
 private lemma pow_div_pow_neg {w : ℂ} (hw : w ≠ 0) {k j : ℕ} (hjk : j < k) :
     w ^ j * (w ^ k)⁻¹ = (w ^ (k - j))⁻¹ := by
   have h_exp : (k - j) + j = k := by omega
-  rw [show (w ^ k)⁻¹ = (w ^ ((k - j) + j))⁻¹ from by rw [h_exp], pow_add]
+  rw [show (w ^ k)⁻¹ = (w ^ ((k - j) + j))⁻¹ by rw [h_exp], pow_add]
   field_simp
 
-/-- Reindex helper: a sum `∑ j : Fin k, c j / w^(k-j)` equals
-`∑ i : Fin k, c (rev i) / w^(i+1)` via the involution `j ↦ k - 1 - j`. -/
 private lemma reindex_sum_fin_neg {k : ℕ} (_hk : 0 < k) (c : Fin k → ℂ) (w : ℂ) :
     (∑ j : Fin k, c j / w ^ (k - j.val)) =
       ∑ i : Fin k,
@@ -296,7 +287,7 @@ theorem mero_laurent_data_exists {f : ℂ → ℂ} {s : ℂ} (hMero : Meromorphi
         ∑ j : Fin k, c j / (z - s) ^ (k - j.val) from
       Finset.sum_congr rfl fun j _ => by
         rw [div_eq_mul_inv, show ((z - s) ^ k)⁻¹ * (c j * (z - s) ^ j.val) =
-            c j * ((z - s) ^ j.val * ((z - s) ^ k)⁻¹) from by ring,
+            c j * ((z - s) ^ j.val * ((z - s) ^ k)⁻¹) by ring,
           pow_div_pow_neg hz_sub j.isLt]]
     exact reindex_sum_fin_neg hk_pos c (z - s)
   · set m : ℕ := n.toNat
@@ -398,8 +389,6 @@ noncomputable def meroPolarPartTotal {S : Finset ℂ} {f : ℂ → ℂ}
     (hMero : ∀ s ∈ S, MeromorphicAt f s) (z : ℂ) : ℂ :=
   ∑ s ∈ S.attach, meroPolarPartAt (hMero s.1 s.2) z
 
-/-- Local Laurent decomposition for the OTHER polar parts (not at `s`):
-their sum is analytic at `s`. -/
 private theorem mero_otherPolar_analyticAt {S : Finset ℂ} {f : ℂ → ℂ}
     (hMero : ∀ s ∈ S, MeromorphicAt f s) {s : ℂ} (_hs : s ∈ S) :
     AnalyticAt ℂ (fun z => ∑ s' ∈ S.attach.filter (fun s' => s'.1 ≠ s),
@@ -408,9 +397,6 @@ private theorem mero_otherPolar_analyticAt {S : Finset ℂ} {f : ℂ → ℂ}
   have h_ne : s'.1 ≠ s := (Finset.mem_filter.mp hs').2
   exact meroPolarPartAt_analyticAt_off (hMero s'.1 s'.2) h_ne.symm
 
-/-- **Local analytic decomposition near `s`** under `MeromorphicAt`:
-`f - ∑_{s' ∈ S} polarPart_s' = analyticPart_s - ∑_{s' ≠ s} polarPart_s'`
-is analytic at `s`. -/
 private theorem mero_f_minus_total_eventuallyEq_analytic {S : Finset ℂ} {f : ℂ → ℂ}
     (hMero : ∀ s ∈ S, MeromorphicAt f s) {s : ℂ} (hs : s ∈ S) :
     ∃ g_s : ℂ → ℂ, AnalyticAt ℂ g_s s ∧
@@ -513,10 +499,7 @@ noncomputable def PolarPartDecomposition.ofMeromorphicWithCondB
       simp only [coeff, hs, ↓reduceDIte]
       rfl
     · rw [dif_neg h_pos]
-      have h_order_zero : order s = 0 := by omega
-      have h_zero : meroPolarOrderAt (hMero s hs) = 0 := by
-        rw [← h_order]
-        exact h_order_zero
+      have h_zero : meroPolarOrderAt (hMero s hs) = 0 := by rw [← h_order]; omega
       have h_data := mero_laurent_data_exists (hMero s hs)
       set N := h_data.choose
       set a := h_data.choose_spec.choose

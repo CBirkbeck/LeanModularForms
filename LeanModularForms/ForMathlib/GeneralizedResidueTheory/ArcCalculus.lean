@@ -46,9 +46,8 @@ theorem unitArc_hasDerivAt (θ₁ θ₂ a b t : ℝ) (hab : a < b) :
     HasDerivAt (unitArc θ₁ θ₂ a b)
       (unitArc θ₁ θ₂ a b t * (↑((θ₂ - θ₁) / (b - a)) * I)) t := by
   have hba : b - a ≠ 0 := sub_ne_zero.mpr hab.ne'
-  have hangle := unitArc_angle_hasDerivAt θ₁ θ₂ a b t hba
   have hlift : HasDerivAt (fun s => (↑(θ₁ + (s - a) / (b - a) * (θ₂ - θ₁)) : ℂ))
-      (↑((θ₂ - θ₁) / (b - a))) t := hangle.ofReal_comp
+      (↑((θ₂ - θ₁) / (b - a))) t := (unitArc_angle_hasDerivAt θ₁ θ₂ a b t hba).ofReal_comp
   simp only [unitArc]
   exact (hlift.mul_const I).cexp
 
@@ -61,8 +60,7 @@ theorem abs_cos_le_half_of_mem_Icc {θ : ℝ} (hθ : θ ∈ Icc (π / 3) (2 * π
     |Real.cos θ| ≤ 1 / 2 := by
   have hpi := Real.pi_pos
   obtain ⟨h1, h2⟩ := hθ
-  rw [abs_le]
-  refine ⟨?_, ?_⟩
+  refine abs_le.mpr ⟨?_, ?_⟩
   · have hle : Real.cos (2 * π / 3) ≤ Real.cos θ :=
       Real.cos_le_cos_of_nonneg_of_le_pi (by linarith) (by linarith) h2
     rw [show (2 * π / 3 : ℝ) = π - π / 3 by ring, Real.cos_pi_sub,

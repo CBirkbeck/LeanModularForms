@@ -55,18 +55,16 @@ private lemma rho_normSq_eq_one : Complex.normSq (ellipticPointRho' : ℂ) = 1 :
   change Complex.normSq (-1/2 + (Real.sqrt 3 / 2) * I : ℂ) = 1
   have h1 : (-1/2 + (Real.sqrt 3 / 2) * I : ℂ) =
       ((-1/2 : ℝ) : ℂ) + ((Real.sqrt 3 / 2 : ℝ) : ℂ) * I := by push_cast; ring
-  have h3 : (Real.sqrt 3 / 2) ^ 2 = 3 / 4 := by
-    rw [div_pow, Real.sq_sqrt (by norm_num : (3 : ℝ) ≥ 0)]; norm_num
-  rw [h1, Complex.normSq_add_mul_I, h3]; ring
+  rw [h1, Complex.normSq_add_mul_I]
+  nlinarith [Real.sq_sqrt (show (3 : ℝ) ≥ 0 by norm_num)]
 
 private lemma rho_plus_one_normSq_eq_one :
     Complex.normSq (ellipticPointRhoPlusOne' : ℂ) = 1 := by
   change Complex.normSq (1/2 + (Real.sqrt 3 / 2) * I : ℂ) = 1
   have h1 : (1/2 + (Real.sqrt 3 / 2) * I : ℂ) =
       ((1/2 : ℝ) : ℂ) + ((Real.sqrt 3 / 2 : ℝ) : ℂ) * I := by push_cast; ring
-  have h3 : (Real.sqrt 3 / 2) ^ 2 = 3 / 4 := by
-    rw [div_pow, Real.sq_sqrt (by norm_num : (3 : ℝ) ≥ 0)]; norm_num
-  rw [h1, Complex.normSq_add_mul_I, h3]; ring
+  rw [h1, Complex.normSq_add_mul_I]
+  nlinarith [Real.sq_sqrt (show (3 : ℝ) ≥ 0 by norm_num)]
 
 theorem ellipticPointRhoPlusOne_norm : ‖ellipticPointRhoPlusOne‖ = 1 := by
   change Real.sqrt (Complex.normSq _) = 1

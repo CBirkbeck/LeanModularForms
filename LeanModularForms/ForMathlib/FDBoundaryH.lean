@@ -39,8 +39,6 @@ def fdBoundary_seg2 : ℝ → ℂ := fun t =>
 def fdBoundary_seg3 : ℝ → ℂ := fun t =>
   Complex.exp ((Real.pi / 2 + (t - 2) * (2 * Real.pi / 3 - Real.pi / 2)) * I)
 
-
-
 /-- Boundary of the standard fundamental domain at fixed
 height `heightCutoff`, parameterized over [0, 5]. -/
 def fdBoundary : ℝ → ℂ := fun t =>
@@ -76,7 +74,6 @@ lemma fdBoundary_at_three :
     Real.cos_pi_sub, Real.cos_pi_div_three, Real.sin_pi_sub, Real.sin_pi_div_three]
   simp [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
   ring
-
 
 /-- Segment 1 at height H: right vertical from (1/2 + H·i) down
 to ρ+1. -/
@@ -130,7 +127,6 @@ lemma fdBoundary_H_at_zero (H : ℝ) :
 lemma fdBoundary_H_at_one (H : ℝ) :
     fdBoundary_H H 1 = ellipticPointRhoPlusOne := by
   simp [fdBoundary_H, ellipticPointRhoPlusOne, ellipticPointRhoPlusOne']
-
 
 lemma fdBoundary_H_at_three (H : ℝ) :
     fdBoundary_H H 3 = ellipticPointRho := by

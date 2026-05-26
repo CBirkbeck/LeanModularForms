@@ -65,7 +65,7 @@ theorem dslope_eq_integral_deriv {U : Set ℂ} (hU : Convex ℝ U) (hU_open : Is
   · subst hwc; simp
   · have hne : w - c ≠ 0 := sub_ne_zero.mpr hwc
     have h_mul : (w - c) * ∫ t in (0 : ℝ)..1, deriv f (c + t • (w - c)) = f w - f c := by
-      rw [← smul_eq_mul]; exact h_int
+      rwa [← smul_eq_mul]
     rw [dslope_of_ne f hwc, slope_def_module, smul_eq_mul]
     rw [show (w - c)⁻¹ * (f w - f c) = ∫ t in (0 : ℝ)..1, deriv f (c + t • (w - c)) from ?_]
     rw [← h_mul, ← mul_assoc, inv_mul_cancel₀ hne, one_mul]

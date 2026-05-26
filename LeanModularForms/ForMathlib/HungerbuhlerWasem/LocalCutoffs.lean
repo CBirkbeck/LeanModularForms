@@ -64,7 +64,7 @@ private theorem strict_mono_inverse_exists_local
     ∀ ε ∈ Set.Ioo (0 : ℝ) (f r),
       ∃! τ : ℝ, τ ∈ Set.Ioo (0 : ℝ) r ∧ f τ = ε := by
   intro ε hε
-  have hε_in : ε ∈ Set.Ioo (f 0) (f r) := by rw [hf₀]; exact hε
+  have hε_in : ε ∈ Set.Ioo (f 0) (f r) := by rwa [hf₀]
   obtain ⟨τ, hτ_mem, hfτ⟩ := intermediate_value_Ioo hr.le hf_cont hε_in
   refine ⟨τ, ⟨hτ_mem, hfτ⟩, fun τ' ⟨hτ'_mem, hfτ'⟩ =>
     hf_strict.injOn (Set.Ioo_subset_Icc_self hτ'_mem)
@@ -162,7 +162,7 @@ private theorem exists_right_cutoff_local
         ⟨hδ_in.1.le, hδ_in.2.le⟩
       have h_lt : f (δ_right ε) < f (t - t₀) :=
         hf_strict hδ_τ_mem ht_τ_mem (by linarith)
-      rw [hfδ, h_eq_t] at h_lt; exact h_lt
+      rwa [hfδ, h_eq_t] at h_lt
     · push Not at ht_le_eff
       linarith [h_far_right t ⟨ht_le_eff.le, ht_le⟩, hε_lt.trans_le hthresh_le_m]
   · intro ε hε_pos hε_lt t ht_ge hgap
@@ -172,12 +172,12 @@ private theorem exists_right_cutoff_local
     have hδ_τ_mem : δ_right ε ∈ Set.Icc (0 : ℝ) r_eff_mono :=
       ⟨hδ_in.1.le, hδ_in.2.le⟩
     by_cases h_t_eq : t = t₀
-    · rw [h_t_eq, h_at, sub_self, norm_zero]; exact hε_pos.le
+    · simp [h_t_eq, h_at, hε_pos.le]
     · have h_le : f (t - t₀) ≤ f (δ_right ε) := by
         rcases lt_or_eq_of_le hgap with h_lt | h_eq
         · exact (hf_strict ht_τ_mem hδ_τ_mem h_lt).le
         · rw [show t - t₀ = δ_right ε from h_eq]
-      rw [hfδ, h_eq_t] at h_le; exact h_le
+      rwa [hfδ, h_eq_t] at h_le
 
 /-- **Localized left cutoff existence (corner-friendly).** Symmetric
 counterpart of `exists_right_cutoff_local`. -/
@@ -268,7 +268,7 @@ private theorem exists_left_cutoff_local
         ⟨hδ_in.1.le, hδ_in.2.le⟩
       have h_lt : f (δ_left ε) < f (t₀ - t) :=
         hf_strict hδ_τ_mem ht_τ_mem (by linarith)
-      rw [hfδ, h_eq_t] at h_lt; exact h_lt
+      rwa [hfδ, h_eq_t] at h_lt
     · push Not at ht_ge_eff
       linarith [h_far_left t ⟨ht_ge, ht_ge_eff.le⟩, hε_lt.trans_le hthresh_le_m]
   · intro ε hε_pos hε_lt t ht_ge ht_le
@@ -278,13 +278,13 @@ private theorem exists_left_cutoff_local
     have hδ_τ_mem : δ_left ε ∈ Set.Icc (0 : ℝ) r_eff_mono :=
       ⟨hδ_in.1.le, hδ_in.2.le⟩
     by_cases h_t_eq : t = t₀
-    · rw [h_t_eq, h_at, sub_self, norm_zero]; exact hε_pos.le
+    · simp [h_t_eq, h_at, hε_pos.le]
     · have h_le : f (t₀ - t) ≤ f (δ_left ε) := by
         rcases lt_or_eq_of_le ht_ge with h_lt | h_eq
         · exact (hf_strict ht_τ_mem hδ_τ_mem (by linarith)).le
-        · have : t₀ - t = δ_left ε := by linarith [h_eq]
-          rw [this]
-      rw [hfδ, h_eq_t] at h_le; exact h_le
+        · have h_eq' : t₀ - t = δ_left ε := by linarith
+          rw [h_eq']
+      rwa [hfδ, h_eq_t] at h_le
 
 /-- **Per-crossing local cutoffs** for a multi-crossing scenario. Each
 crossing parameter `t₀` is equipped with its own asymmetric cutoffs
@@ -472,8 +472,7 @@ theorem exists_chord_div_endpoint_slitPlane_left
   have hq_close : ‖-q - 1‖ ≤ 1 / 4 := by
     have h_eq : (γ (t₀ - r') - s) / (L * -((r' : ℝ) : ℂ)) = -q := by
       rw [hq_def, mul_neg, div_neg]
-    rw [h_eq] at h_close
-    exact h_close
+    rwa [h_eq] at h_close
   have hq_norm : 3 / 4 ≤ ‖q‖ := by
     have h_rev : ‖(-1 : ℂ)‖ - ‖q‖ ≤ ‖-1 - q‖ := norm_sub_norm_le _ _
     rw [norm_neg, norm_one, show (-1 : ℂ) - q = -(q + 1) from by ring,
@@ -967,7 +966,6 @@ theorem perCrossing_window_integral_tendsto_exact
       rw [← norm_pos_iff, h_eq_R]; exact hε_pos
     have h_γL_ne : γf (t₀ - D.δ_left ε) - s ≠ 0 := by
       rw [← norm_pos_iff, h_eq_L]; exact hε_pos
-    -- Helper: decompose Complex.log (a/b) into log_norm + arg·I.
     have h_log_decomp : ∀ (a b : ℂ), a ≠ 0 → b ≠ 0 →
         Complex.log (a / b) =
           ((Real.log ‖a‖ - Real.log ‖b‖ : ℝ) : ℂ) + ((a / b).arg : ℂ) * Complex.I := by

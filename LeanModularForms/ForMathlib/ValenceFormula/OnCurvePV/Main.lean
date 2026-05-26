@@ -544,7 +544,7 @@ private theorem cpv_exists_generic_seg5_normSq_one (H : ℝ) (hH : Real.sqrt 3 /
           Real.cos_pi_div_three]
         linarith
   obtain ⟨t₁, ht₁_mem, ht₁_cos⟩ := h_ivt
-  simp only [] at ht₁_cos
+  beta_reduce at ht₁_cos
   have ht₁_gt1 : 1 < t₁ := ht₁_mem.1.lt_of_ne fun h => by
     rw [← h, show Real.pi * (1 + 1) / 6 = Real.pi / 3 by ring,
       Real.cos_pi_div_three] at ht₁_cos
@@ -797,8 +797,8 @@ theorem fdBoundary_H_cpv_exists_of_onCurve (H : ℝ) (hH : Real.sqrt 3 / 2 < H) 
             ((h1.symm.trans h_eq).trans (h2.symm.trans hγ2).symm)
         · rintro rfl; exact hγ2
       have hγ3_ne_I : fdBoundary_H H 3 ≠ I := by
-        rw [fdBoundary_H_at_three H]; exact fun h_eq => hs_rho h_eq.symm
-      rcases lt_or_eq_of_le hH1 with hH_lt | hH_eq
+        rw [fdBoundary_H_at_three H]; exact (hs_rho ·.symm)
+      rcases hH1.lt_or_eq with hH_lt | hH_eq
       · refine cpv_exists_at_I_H_lt_one H hH h_arc_cpv h_arc_I_iff ?_ hγ3_ne_I
         intro t ht4 ht5 h_eq
         have := fdBoundary_H_seg5_im' H ht4 ht5

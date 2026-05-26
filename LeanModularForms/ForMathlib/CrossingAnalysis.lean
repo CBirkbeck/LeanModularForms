@@ -43,8 +43,6 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] {x y : E}
 
 namespace PwC1Immersion
 
-/-! ### Crossing set -/
-
 /-- The crossing set: parameter values in `[0, 1]` where the path passes through `z₀`. -/
 def crossingSet (γ : PwC1Immersion x y) (z₀ : E) : Set ℝ :=
   {t ∈ Icc (0 : ℝ) 1 | (γ : ℝ → E) t = z₀}
@@ -52,8 +50,6 @@ def crossingSet (γ : PwC1Immersion x y) (z₀ : E) : Set ℝ :=
 theorem crossingSet_subset_Icc (γ : PwC1Immersion x y) (z₀ : E) :
     γ.crossingSet z₀ ⊆ Icc (0 : ℝ) 1 :=
   fun _ ht => ht.1
-
-/-! ### Crossing set is closed -/
 
 /-- The crossing set is closed. -/
 theorem crossingSet_isClosed (γ : PwC1Immersion x y) (z₀ : E) :
@@ -63,8 +59,6 @@ theorem crossingSet_isClosed (γ : PwC1Immersion x y) (z₀ : E) :
     simp only [crossingSet, mem_sep_iff, mem_inter_iff, mem_preimage, mem_singleton_iff]
   rw [this]
   exact isClosed_Icc.inter (isClosed_singleton.preimage γ.toPiecewiseC1Path.continuous)
-
-/-! ### Helper: eventually not in partition -/
 
 /-- Near `p` from the left, points are eventually not in the partition. -/
 private theorem eventually_not_in_partition_left
@@ -98,8 +92,6 @@ private theorem Icc_subset_of_Ioo_subset {q p : ℝ} (hqp : q < p)
   have := closure_mono h
   rwa [closure_Ioo (ne_of_lt hqp), closure_Ioo (by norm_num : (0:ℝ) ≠ 1)] at this
 
-/-! ### Isolation at smooth points -/
-
 /-- At a smooth point where `γ(t₀) = z₀`, there is a punctured neighborhood in which
 `γ(t) ≠ z₀`. -/
 theorem crossing_isolated_smooth (γ : PwC1Immersion x y) (z₀ : E) (t₀ : ℝ)
@@ -109,8 +101,6 @@ theorem crossing_isolated_smooth (γ : PwC1Immersion x y) (z₀ : E) (t₀ : ℝ
   rw [← hcross]
   exact (γ.toPiecewiseC1Path.differentiable_off_extend t₀ ht₀ hsmooth).hasDerivAt.eventually_ne
     (γ.deriv_ne_zero t₀ ht₀ hsmooth)
-
-/-! ### Isolation at partition points -/
 
 /-- At a partition point `p` with `0 < p`, `γ(t) ≠ γ(p)` for `t` sufficiently close
 to `p` from the left. -/
@@ -208,8 +198,6 @@ theorem crossing_isolated_right (γ : PwC1Immersion x y) (z₀ : E) (p : ℝ)
     have : h p < h t := hh_mono (left_mem_Icc.mpr hr_gt_p.le) (Ioo_subset_Icc_self ht) ht.1
     linarith⟩
 
-/-! ### Isolation: crossings in (0,1) -/
-
 /-- At any crossing `t₀ ∈ (0, 1)`, there is a punctured neighborhood with no other
 crossings in `[0, 1]`. Combines the smooth-point and partition-point cases. -/
 theorem crossing_isolated (γ : PwC1Immersion x y) (z₀ : E) (t₀ : ℝ)
@@ -221,8 +209,6 @@ theorem crossing_isolated (γ : PwC1Immersion x y) (z₀ : E) (t₀ : ℝ)
            (crossing_isolated_right γ z₀ t₀ hpart ht₀.2 hcross).mono fun t ht => Or.inl ht⟩
   · exact (crossing_isolated_smooth γ z₀ t₀ ht₀ hcross hpart).mono fun t ht => Or.inl ht
 
-/-! ### No accumulation points -/
-
 /-- No point of the crossing set in `(0, 1)` is an accumulation point. -/
 theorem crossing_not_accPt (γ : PwC1Immersion x y) (z₀ : E) (t₀ : ℝ)
     (ht₀ : t₀ ∈ Ioo (0 : ℝ) 1) (hcross : (γ : ℝ → E) t₀ = z₀) :
@@ -231,8 +217,6 @@ theorem crossing_not_accPt (γ : PwC1Immersion x y) (z₀ : E) (t₀ : ℝ)
   exact (crossing_isolated γ z₀ t₀ ht₀ hcross).mono fun t ht ht_mem => by
     simp only [crossingSet, mem_sep_iff] at ht_mem
     exact ht.elim (fun h => h ht_mem.2) (fun h => h ht_mem.1)
-
-/-! ### Main theorem: Proposition 2.2 -/
 
 /-- **Proposition 2.2** (Hungerbühler–Wasem): The crossing set of a piecewise C¹
 immersion is finite, provided the endpoints avoid `z₀`. -/

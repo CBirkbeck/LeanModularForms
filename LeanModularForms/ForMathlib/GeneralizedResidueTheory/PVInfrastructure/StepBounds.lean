@@ -160,8 +160,7 @@ lemma exists_dyadic_bracket {δ ε : ℝ} (hδ_pos : 0 < δ) (hε_pos : 0 < ε) 
     refine ⟨?_, ?_⟩
     · rw [show n + 1 = m from hn_eq.symm]
       exact hm_lt
-    · by_contra h_not
-      push Not at h_not
+    · by_contra! h_not
       exact Nat.find_min h_exists (by omega : n < m) h_not
 
 /-- Telescoping sum bound for geometric step bounds. -/

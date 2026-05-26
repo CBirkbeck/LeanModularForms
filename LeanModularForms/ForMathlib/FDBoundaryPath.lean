@@ -81,7 +81,7 @@ private lemma fdBoundaryFun_eventuallyEq_seg1 (H : ℝ) (t : ℝ)
     (ht1 : t < 1/5) :
     fdBoundaryFun H =ᶠ[𝓝 t] seg1Fun H :=
   Filter.eventually_of_mem (Iio_mem_nhds ht1) fun s (hs : s < 1/5) => by
-    simp only [fdBoundaryFun, seg1Fun, show s ≤ 1/5 from le_of_lt hs, ite_true]
+    simp only [fdBoundaryFun, seg1Fun, if_pos hs.le]
 
 private lemma fdBoundaryFun_eventuallyEq_seg2 (H : ℝ) (t : ℝ)
     (ht1 : 1/5 < t) (ht2 : t < 2/5) :

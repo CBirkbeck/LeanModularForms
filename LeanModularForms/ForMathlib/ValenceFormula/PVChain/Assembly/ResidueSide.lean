@@ -47,8 +47,7 @@ private lemma fd_point_mem_fdBox (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, 
       rw [UpperHalfPlane.coe_re, UpperHalfPlane.coe_im] at this
       linarith [h_fd.1]
     nlinarith [(abs_le.mp h_fd.2).1, (abs_le.mp h_fd.2).2, p.im_pos]
-  · simp only [modularFormCompOfComplex, Function.comp_apply,
-      UpperHalfPlane.ofComplex_apply_of_im_pos p.im_pos, hp_zero]
+  · simp [modularFormCompOfComplex, UpperHalfPlane.ofComplex_apply_of_im_pos p.im_pos, hp_zero]
 
 omit f hf in
 private lemma exists_height_above_sqrt3_and_S (S : Finset UpperHalfPlane) :
@@ -236,9 +235,7 @@ private lemma cpv_residue_side_sum_convert (S : Finset UpperHalfPlane)
     have h_not_S : ∀ p ∈ S, (↑p : ℂ) ≠ s := by
       intro p hp h_eq
       have h_mfcc_eq : modularFormCompOfComplex f (↑p : ℂ) = f p := by
-        simp only [modularFormCompOfComplex, Function.comp_apply]
-        congr 1
-        exact UpperHalfPlane.ofComplex_apply_of_im_pos p.im_pos
+        simp [modularFormCompOfComplex, UpperHalfPlane.ofComplex_apply_of_im_pos p.im_pos]
       exact hs_ni (Finset.mem_image.mpr ⟨p, Finset.mem_filter.mpr ⟨hp, by
         rw [← h_mfcc_eq, h_eq]
         exact ((mem_allZerosInFdBox_iff f hf hM_half).mp hs).2⟩, h_eq⟩)
@@ -344,10 +341,9 @@ theorem cpv_residue_side_tendsto (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, 
     split_ifs with h
     · rfl
     · push Not at h
-      have h_not : γ t ∉ S0 := by
-        intro habs
+      have h_not : γ t ∉ S0 := fun habs => by
         have := h (γ t) habs
-        simp [sub_self] at this
+        simp only [sub_self, norm_zero] at this
         linarith [mem_Ioi.mp hε]
       change Fp (γ t) * _ = F (γ t) * _
       congr 1
@@ -399,9 +395,6 @@ theorem cpv_residue_side_tendsto (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, 
     exact cpv_residue_side_sum_convert f hf S hS hS_complete
       hH_sqrt3 hH_ge1 hH_bound S_on hS_on_def
   rw [h_sum_convert] at hL_tendsto_S_on
-  exact hL_tendsto_S_on.congr (fun ε => by
-    apply intervalIntegral.integral_congr
-    intro t _
-    rfl)
+  exact hL_tendsto_S_on.congr fun _ => intervalIntegral.integral_congr fun _ _ => rfl
 
 end

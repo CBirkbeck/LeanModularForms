@@ -146,14 +146,10 @@ theorem dixonH1_eq_dixonH2_sub_winding_f {f : ℂ → ℂ} {γ : PiecewiseC1Path
     integral_inv_sub_eq_winding (avoids_delta_bound γ w hoff)]
   ring
 
-
 /-- On `U`, the Dixon function equals `h1`. -/
 theorem dixonFunction_eq_dixonH1 {f : ℂ → ℂ} {U : Set ℂ}
     {γ : PiecewiseC1Path x x} {w : ℂ} (hw : w ∈ U) :
     dixonFunction f U γ w = dixonH1 f γ w :=
   if_pos hw
-
-
-
 
 end

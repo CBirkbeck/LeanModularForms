@@ -145,8 +145,7 @@ private theorem modularFormCompOfComplexFM_eq' (p : ℍ) :
 
 /-- A point in the fundamental domain `𝒟` has imaginary part strictly above `1/2`. -/
 theorem fd_im_gt_halfFM (p : ℍ) (hp : p ∈ 𝒟) : (1:ℝ)/2 < (p : ℂ).im := by
-  by_contra h_le
-  push Not at h_le
+  by_contra! h_le
   obtain ⟨hnormSq, habs_re⟩ := hp
   have hre := abs_le.mp habs_re
   nlinarith [normSq_apply (↑p : ℂ), p.im_pos, mul_self_nonneg (p : ℂ).re,
@@ -183,8 +182,7 @@ theorem finite_zeros_in_fdFM (hf : f ≠ 0) :
   have hre := abs_le.mp hp_fd.2
   refine ⟨⟨by linarith [hre_bridge], by linarith [hre_bridge],
     fd_im_gt_halfFM p hp_fd, ?_⟩, (modularFormCompOfComplexFM_eq' f p).symm ▸ hp_zero⟩
-  by_contra h_ge
-  push Not at h_ge
+  by_contra! h_ge
   exact absurd hp_zero (hH₀_no_zeros p (by linarith))
 
 /-- The set of orbits with nonzero `ordOrbitFM` is finite. -/
@@ -195,9 +193,7 @@ theorem finite_support_ordOrbitFM (hf : f ≠ 0) :
   have h_image : rep '' S ⊆
       {p : ℍ | p ∈ 𝒟 ∧ orderOfVanishingAt' (⇑f) p ≠ 0} := by
     rintro _ ⟨q, hq, rfl⟩
-    exact ⟨(hrep q).2, by
-      rw [← ordOrbit_mkFM f (rep q), (hrep q).1]
-      exact hq⟩
+    exact ⟨(hrep q).2, by rwa [← ordOrbit_mkFM f (rep q), (hrep q).1]⟩
   have h_inj : Set.InjOn rep S := fun q₁ _ q₂ _ h => by
     have := congrArg orbFM h
     rwa [(hrep q₁).1, (hrep q₂).1] at this

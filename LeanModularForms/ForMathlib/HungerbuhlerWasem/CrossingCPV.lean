@@ -58,7 +58,6 @@ theorem HungerbuhlerWasem.hasCauchyPV_simplePole_of_inv
     HasCauchyPV (fun z => c / (z - s)) γ s (c * L) := by
   simpa [div_eq_mul_inv] using h.smul c
 
-
 namespace HungerbuhlerWasem
 
 /-- **`HasCauchyPV` upgrades to `HasCauchyPVOn {z₀}`.** The single-point CPV

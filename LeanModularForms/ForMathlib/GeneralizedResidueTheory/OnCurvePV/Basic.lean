@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2024. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors:
+Authors: Chris Birkbeck
 -/
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.PVInfrastructure.UniformStepBound
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.Residue
@@ -105,7 +105,7 @@ lemma pv_limit_via_dyadic {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
       calc ‖I ε - I (δ / 2 ^ N)‖
           ≤ K * δ / 2 ^ N := h_first_piece
         _ ≤ K * δ / 2 ^ N + K * δ / 2 ^ N := by
-            linarith [show (0:ℝ) ≤ K * δ / 2 ^ N from by positivity]
+            linarith [show (0:ℝ) ≤ K * δ / 2 ^ N by positivity]
         _ = 2 * K * δ / 2 ^ N := by ring
     · have h_sum_bound : ‖I (δ / 2 ^ M) - I (δ / 2 ^ N)‖ ≤
           2 * K * δ / 2 ^ N - 2 * K * δ / 2 ^ M :=
@@ -118,13 +118,13 @@ lemma pv_limit_via_dyadic {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : ℂ}
             linarith [h_first_piece, h_sum_bound]
         _ = 2 * K * δ / 2 ^ N - K * δ / 2 ^ M := by ring
         _ ≤ 2 * K * δ / 2 ^ N := by
-            linarith [show (0 : ℝ) ≤ K * δ / 2 ^ M from by positivity]
+            linarith [show (0 : ℝ) ≤ K * δ / 2 ^ M by positivity]
   have h_Kδ_bound : K * δ / 2 ^ N < η / 4 :=
     (div_le_div_of_nonneg_left (mul_nonneg hK_pos.le hδ_pos.le) (by positivity)
       (pow_le_pow_right₀ (by norm_num : (1 : ℝ) ≤ 2) (le_max_right _ _))).trans_lt hN₂
   have h_first_small : 2 * K * δ / 2 ^ N < η / 2 := by
-    rw [show 2 * K * δ / 2 ^ N = 2 * (K * δ / 2 ^ N) from by ring,
-        show (η : ℝ) / 2 = 2 * (η / 4) from by ring]
+    rw [show 2 * K * δ / 2 ^ N = 2 * (K * δ / 2 ^ N) by ring,
+        show (η : ℝ) / 2 = 2 * (η / 4) by ring]
     exact mul_lt_mul_of_pos_left h_Kδ_bound (by norm_num : (0 : ℝ) < 2)
   calc dist (I ε) limit_dyadic
       ≤ dist (I ε) (I (δ / 2 ^ N)) + dist (I (δ / 2 ^ N)) limit_dyadic :=
@@ -239,8 +239,8 @@ lemma arc_angle_injective {t t' : ℝ}
     have h2 : (↑(Real.pi * (1 + t) / 6 - Real.pi * (1 + t') / 6) : ℂ) * I =
         ↑(2 * Real.pi * ↑n) * I := by
       rw [show (↑(Real.pi * (1 + t) / 6 - Real.pi * (1 + t') / 6) : ℂ) * I =
-            ↑(Real.pi * (1 + t) / 6) * I - ↑(Real.pi * (1 + t') / 6) * I from
-          by push_cast; ring, hn]
+            ↑(Real.pi * (1 + t) / 6) * I - ↑(Real.pi * (1 + t') / 6) * I by
+          push_cast; ring, hn]
       push_cast
       ring
     exact_mod_cast Complex.ofReal_injective (mul_right_cancel₀ I_ne_zero h2)

@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Chris Birkbeck
 -/
 import LeanModularForms.ForMathlib.ContourIntegral.PVSplit
 import LeanModularForms.ForMathlib.ContourIntegral.SegmentFTC
@@ -59,9 +60,7 @@ theorem pv_tendsto_of_crossing_limit {γ : ℝ → ℂ} {a b : ℝ} {s L : ℂ} 
   have hab : a < b := ht₀.1.trans ht₀.2
   have h_ev : (fun ε => ∫ t in a..b, if ‖γ t - s‖ > ε then (γ t - s)⁻¹ * deriv γ t else 0)
       =ᶠ[nhdsWithin 0 (Ioi 0)] E := by
-    filter_upwards [Ioo_mem_nhdsGT hthresh] with ε hε
-    have hε_pos : 0 < ε := hε.1
-    have hε_lt : ε < threshold := hε.2
+    filter_upwards [Ioo_mem_nhdsGT hthresh] with ε ⟨hε_pos, hε_lt⟩
     rw [pv_split_at_crossing hab ht₀ hε_pos (hδ_pos ε hε_pos hε_lt)
         (hδ_small ε hε_pos hε_lt) (h_far ε hε_pos hε_lt) (h_near ε hε_pos hε_lt)
         (hint_left ε hε_pos hε_lt) (hint_right ε hε_pos hε_lt)]
@@ -106,25 +105,22 @@ theorem pv_tendsto_of_crossing_limit_asymmetric {γ : ℝ → ℂ} {a b : ℝ} {
     have h_left_lt : a < t₀ - δ_left ε := by linarith
     have h_right_lt : t₀ + δ_right ε < b := by linarith
     have h_mid_lt : t₀ - δ_left ε < t₀ + δ_right ε := by linarith
-    set F := fun t => if ‖γ t - s‖ > ε then (γ t - s)⁻¹ * deriv γ t else (0 : ℂ) with hF_def
+    set F := fun t => if ‖γ t - s‖ > ε then (γ t - s)⁻¹ * deriv γ t else (0 : ℂ)
     have hF_mid : ∀ t ∈ uIoc (t₀ - δ_left ε) (t₀ + δ_right ε), F t = 0 := fun t ht => by
       rw [uIoc_of_le h_mid_lt.le] at ht
-      simp only [hF_def]
       exact if_neg (not_lt.mpr (h_near ε hε_pos hε_lt t ⟨ht.1.le, ht.2⟩))
-    have h_finite_ae : ∀ x : ℝ, ({x} : Set ℝ)ᶜ ∈ ae volume := fun x =>
-      mem_ae_iff.mpr (by rw [compl_compl]; exact (Set.finite_singleton _).measure_zero volume)
+    have h_finite_ae : ∀ x : ℝ, ({x} : Set ℝ)ᶜ ∈ ae volume := fun _ =>
+      compl_mem_ae_iff.mpr ((Set.finite_singleton _).measure_zero volume)
     have hF_left : ∀ᵐ t ∂volume, t ∈ uIoc a (t₀ - δ_left ε) →
         F t = (γ t - s)⁻¹ * deriv γ t := by
       filter_upwards [h_finite_ae (t₀ - δ_left ε)] with t ht_ne ht_mem
       rw [uIoc_of_le h_left_lt.le] at ht_mem
-      simp only [hF_def]
       exact if_pos (h_far_left ε hε_pos hε_lt t ⟨ht_mem.1.le,
         ht_mem.2.lt_of_ne fun h => ht_ne (Set.mem_singleton_iff.mpr h)⟩)
     have hF_right : ∀ᵐ t ∂volume, t ∈ uIoc (t₀ + δ_right ε) b →
         F t = (γ t - s)⁻¹ * deriv γ t := by
-      filter_upwards [h_finite_ae (t₀ + δ_right ε)] with t _ht_ne ht_mem
+      filter_upwards [h_finite_ae (t₀ + δ_right ε)] with t _ ht_mem
       rw [uIoc_of_le h_right_lt.le] at ht_mem
-      simp only [hF_def]
       exact if_pos (h_far_right ε hε_pos hε_lt t ht_mem)
     have hF_int_left : IntervalIntegrable F volume a (t₀ - δ_left ε) :=
       (hint_left ε hε_pos hε_lt).congr_ae
@@ -138,7 +134,7 @@ theorem pv_tendsto_of_crossing_limit_asymmetric {γ : ℝ → ℂ} {a b : ℝ} {
       (hint_right ε hε_pos hε_lt).congr_ae
         ((ae_restrict_iff' measurableSet_uIoc).mpr
           (hF_right.mono fun t ht hm => (ht hm).symm))
-    show ∫ t in a..b, F t = E ε
+    change ∫ t in a..b, F t = E ε
     rw [← intervalIntegral.integral_add_adjacent_intervals
           (hF_int_left.trans hF_int_mid) hF_int_right,
         ← intervalIntegral.integral_add_adjacent_intervals hF_int_left hF_int_mid,

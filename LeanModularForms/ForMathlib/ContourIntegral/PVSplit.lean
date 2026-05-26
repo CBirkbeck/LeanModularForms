@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Chris Birkbeck
 -/
 import LeanModularForms.ForMathlib.ClassicalCPV
 import Mathlib
@@ -45,40 +46,31 @@ theorem pv_split_at_crossing {γ : ℝ → ℂ} {a b : ℝ} {s : ℂ} {ε δ t�
     (∫ t in a..b, if ‖γ t - s‖ > ε then (γ t - s)⁻¹ * deriv γ t else 0) =
       (∫ t in a..(t₀ - δ), (γ t - s)⁻¹ * deriv γ t) +
         (∫ t in (t₀ + δ)..b, (γ t - s)⁻¹ * deriv γ t) := by
-  set F := fun t => if ‖γ t - s‖ > ε then (γ t - s)⁻¹ * deriv γ t else (0 : ℂ) with hF_def
-  have hδ_lt_left : δ < t₀ - a := lt_of_lt_of_le hδ_small (min_le_left _ _)
-  have hδ_lt_right : δ < b - t₀ := lt_of_lt_of_le hδ_small (min_le_right _ _)
+  set F := fun t => if ‖γ t - s‖ > ε then (γ t - s)⁻¹ * deriv γ t else (0 : ℂ)
   obtain ⟨ha_lt, hlt_b⟩ := ht₀
-  have h_left_lt : a < t₀ - δ := by linarith
-  have h_right_lt : t₀ + δ < b := by linarith
-  have hF_mid : ∀ t ∈ uIoc (t₀ - δ) (t₀ + δ), F t = 0 := by
-    intro t ht
+  have h_left_lt : a < t₀ - δ := by
+    have := lt_of_lt_of_le hδ_small (min_le_left (t₀ - a) (b - t₀)); linarith
+  have h_right_lt : t₀ + δ < b := by
+    have := lt_of_lt_of_le hδ_small (min_le_right (t₀ - a) (b - t₀)); linarith
+  have hF_mid : ∀ t ∈ uIoc (t₀ - δ) (t₀ + δ), F t = 0 := fun t ht => by
     rw [uIoc_of_le (by linarith)] at ht
-    simp only [hF_def]
-    rw [if_neg (not_lt.mpr <| h_near _ <|
-      abs_le.mpr ⟨by linarith [ht.1], by linarith [ht.2]⟩)]
+    exact if_neg (not_lt.mpr <| h_near _ <|
+      abs_le.mpr ⟨by linarith [ht.1], by linarith [ht.2]⟩)
+  have h_ne : ∀ x : ℝ, ({x} : Set ℝ)ᶜ ∈ ae volume := fun _ =>
+    compl_mem_ae_iff.mpr ((Set.finite_singleton _).measure_zero volume)
   have hF_left : ∀ᵐ t ∂volume, t ∈ uIoc a (t₀ - δ) →
       F t = (γ t - s)⁻¹ * deriv γ t := by
-    have h_ne : ({t₀ - δ} : Set ℝ)ᶜ ∈ ae volume :=
-      compl_mem_ae_iff.mpr ((Set.finite_singleton _).measure_zero volume)
-    filter_upwards [h_ne] with t ht_ne ht
+    filter_upwards [h_ne (t₀ - δ)] with t ht_ne ht
     rw [uIoc_of_le h_left_lt.le] at ht
     have ht_lt : t < t₀ - δ :=
       lt_of_le_of_ne ht.2 (fun h => ht_ne (Set.mem_singleton_iff.mpr h))
-    simp only [hF_def]
-    rw [if_pos]
-    refine h_far t ⟨ht.1.le, ht.2.trans (by linarith)⟩ ?_
-    rw [abs_of_nonpos (by linarith)]
-    linarith
+    refine if_pos (h_far t ⟨ht.1.le, ht.2.trans (by linarith)⟩ ?_)
+    rw [abs_of_nonpos (by linarith)]; linarith
   have hF_right : ∀ᵐ t ∂volume, t ∈ uIoc (t₀ + δ) b →
       F t = (γ t - s)⁻¹ * deriv γ t := by
-    have h_ne : ({t₀ + δ} : Set ℝ)ᶜ ∈ ae volume :=
-      compl_mem_ae_iff.mpr ((Set.finite_singleton _).measure_zero volume)
-    filter_upwards [h_ne] with t ht_ne ht
+    filter_upwards [h_ne (t₀ + δ)] with t _ ht
     rw [uIoc_of_le h_right_lt.le] at ht
-    simp only [hF_def]
-    rw [if_pos]
-    refine h_far t ⟨by linarith [ht.1], ht.2⟩ ?_
+    refine if_pos (h_far t ⟨by linarith [ht.1], ht.2⟩ ?_)
     rw [abs_of_nonneg (by linarith [ht.1])]
     linarith [ht.1]
   have hF_int_left : IntervalIntegrable F volume a (t₀ - δ) :=
@@ -90,15 +82,9 @@ theorem pv_split_at_crossing {γ : ℝ → ℂ} {a b : ℝ} {s : ℂ} {ε δ t�
   have hF_int_right : IntervalIntegrable F volume (t₀ + δ) b :=
     hint_right.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
       (hF_right.mono (fun _ ht hm => (ht hm).symm)))
-  have h_split : ∫ t in a..b, F t =
-      (∫ t in a..(t₀ - δ), F t) + (∫ t in (t₀ - δ)..(t₀ + δ), F t) +
-        (∫ t in (t₀ + δ)..b, F t) := by
-    rw [← integral_add_adjacent_intervals (hF_int_left.trans hF_int_mid) hF_int_right,
-      ← integral_add_adjacent_intervals hF_int_left hF_int_mid]
-  have h_mid_zero : ∫ t in (t₀ - δ)..(t₀ + δ), F t = 0 := by
-    rw [integral_congr_ae (ae_of_all _ hF_mid)]
-    exact integral_zero
-  rw [h_split, h_mid_zero, integral_congr_ae hF_left, integral_congr_ae hF_right]
-  ring
+  rw [← integral_add_adjacent_intervals (hF_int_left.trans hF_int_mid) hF_int_right,
+    ← integral_add_adjacent_intervals hF_int_left hF_int_mid,
+    integral_zero_ae (ae_of_all _ hF_mid),
+    integral_congr_ae hF_left, integral_congr_ae hF_right, add_zero]
 
 end ContourIntegral

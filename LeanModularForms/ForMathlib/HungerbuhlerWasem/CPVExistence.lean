@@ -179,8 +179,7 @@ theorem normalized_chord_close_right
     field_simp
   rw [Metric.tendsto_nhds] at h_tendsto_one
   filter_upwards [h_tendsto_one ρ hρ_pos] with t ht
-  rw [dist_eq_norm] at ht
-  exact ht.le
+  rw [dist_eq_norm] at ht; exact ht.le
 
 /-- **Normalized chord close to 1 (left side).** Note the sign: on the left, the
 relevant tangent is `-L_-` and `t - t₀ < 0`, so we work with `(t₀ - t) > 0`. -/
@@ -201,8 +200,7 @@ theorem normalized_chord_close_left
     field_simp
   rw [Metric.tendsto_nhds] at h_tendsto_one
   filter_upwards [h_tendsto_one ρ hρ_pos] with t ht
-  rw [dist_eq_norm] at ht
-  exact ht.le
+  rw [dist_eq_norm] at ht; exact ht.le
 
 /-- **Fixed-radius normalized chord bound (right side).** From the eventual
 bound, extract a positive radius `r > 0` such that the bound holds uniformly
@@ -252,10 +250,8 @@ The proof uses `‖z/w - 1‖ = ‖z-w‖/‖w‖ ≤ (1/2)/(3/4) = 2/3 < 1`, gi
 theorem div_mem_slitPlane_of_close_to_one {z w : ℂ}
     (hz : ‖z - 1‖ ≤ 1 / 4) (hw : ‖w - 1‖ ≤ 1 / 4) :
     z / w ∈ Complex.slitPlane := by
-  have hw_ne : w ≠ 0 := by
-    intro hw_eq
-    rw [hw_eq, zero_sub, norm_neg, norm_one] at hw
-    linarith
+  have hw_ne : w ≠ 0 := fun hw_eq => by
+    rw [hw_eq, zero_sub, norm_neg, norm_one] at hw; linarith
   have h_zw : ‖z - w‖ ≤ 1 / 2 := by
     calc ‖z - w‖ = ‖(z - 1) - (w - 1)‖ := by congr 1; ring
       _ ≤ ‖z - 1‖ + ‖w - 1‖ := norm_sub_le _ _
@@ -284,12 +280,8 @@ private lemma ofReal_pos_mul_mem_slitPlane {c : ℝ} (hc : 0 < c) {z : ℂ}
     (hz : z ∈ Complex.slitPlane) : ((c : ℝ) : ℂ) * z ∈ Complex.slitPlane := by
   rw [Complex.mem_slitPlane_iff] at hz ⊢
   rcases hz with h_re | h_im
-  · left
-    simp only [Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im, zero_mul, sub_zero]
-    exact mul_pos hc h_re
-  · right
-    simp only [Complex.mul_im, Complex.ofReal_re, Complex.ofReal_im, zero_mul, add_zero]
-    exact mul_ne_zero hc.ne' h_im
+  · exact Or.inl <| by simpa using mul_pos hc h_re
+  · exact Or.inr <| by simpa using mul_ne_zero hc.ne' h_im
 
 /-- **Slit-plane on small right interval.** There exists `r > 0` such that for
 all `a, b` with `t₀ < a ≤ b ≤ t₀ + r`, the chord quotient

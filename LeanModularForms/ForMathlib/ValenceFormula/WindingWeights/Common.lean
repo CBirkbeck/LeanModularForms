@@ -30,25 +30,22 @@ theorem fdBoundary_H_at_one_eq_rho_plus_one (H : ℝ) :
 
 theorem fdBoundary_H_at_two_eq_I (H : ℝ) :
     fdBoundary_H H 2 = I := by
-  simp only [fdBoundary_H, show ¬((2 : ℝ) ≤ 1) by norm_num,
-    show (2 : ℝ) ≤ 2 from le_refl 2, ↓reduceIte]
+  simp only [fdBoundary_H, show ¬((2 : ℝ) ≤ 1) by norm_num, le_refl, ↓reduceIte]
   rw [show ((↑(Real.pi : ℝ) / 3 + (↑(2:ℝ) - 1) *
       (↑(Real.pi : ℝ) / 2 - ↑(Real.pi : ℝ) / 3)) * I = ↑(Real.pi / 2) * I) by push_cast; ring,
     exp_real_angle_I, Real.cos_pi_div_two, Real.sin_pi_div_two]
-  push_cast
-  ring
+  push_cast; ring
 
 theorem fdBoundary_H_at_three_eq_rho (H : ℝ) :
     fdBoundary_H H 3 = ellipticPointRho := by
   simp only [fdBoundary_H, show ¬((3 : ℝ) ≤ 1) by norm_num,
-    show ¬((3 : ℝ) ≤ 2) by norm_num, show (3 : ℝ) ≤ 3 from le_refl 3, ↓reduceIte]
+    show ¬((3 : ℝ) ≤ 2) by norm_num, le_refl, ↓reduceIte]
   rw [show ((↑(Real.pi : ℝ) / 2 + (↑(3:ℝ) - 2) *
       (2 * ↑(Real.pi : ℝ) / 3 - ↑(Real.pi : ℝ) / 2)) * I = ↑(2 * Real.pi / 3) * I) by
     push_cast; ring,
     exp_real_angle_I, cos_two_pi_div_three, sin_two_pi_div_three]
   simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
-  push_cast
-  ring
+  push_cast; ring
 
 theorem fdBoundary_H_seg1 (H : ℝ) {t : ℝ} (ht : t ≤ 1) :
     fdBoundary_H H t = 1/2 + (↑H - ↑t * (↑H - ↑(Real.sqrt 3) / 2)) * I := by
@@ -80,7 +77,7 @@ theorem fdBoundary_H_eq_arc {H : ℝ} {t : ℝ} (ht1 : 1 < t) (ht3 : t < 3) :
     fdBoundary_H H t = Complex.exp (↑(Real.pi * (1 + t) / 6) * I) := by
   simp only [fdBoundary_H, show ¬(t ≤ 1) by linarith, ↓reduceIte]
   by_cases h2 : t ≤ 2 <;>
-    simp only [h2, ↓reduceIte, show t ≤ 3 from le_of_lt ht3] <;>
+    simp only [h2, ↓reduceIte, ht3.le] <;>
     congr 1 <;> push_cast <;> ring
 
 lemma ftc_log_pieceFM {g h : ℝ → ℂ} {a b : ℝ} (hab : a ≤ b)
@@ -120,9 +117,7 @@ private lemma ftc_log_piece_congr_aux {g h : ℝ → ℂ} {a b : ℝ} (hab : a �
     (hint_h : IntervalIntegrable (fun t => deriv h t / h t) volume a b) :
     (∀ᵐ t ∂volume, t ∈ Ι a b → deriv g t / g t = deriv h t / h t) ∧
     IntervalIntegrable (fun t => deriv g t / g t) volume a b := by
-  have hb_ae : ({b} : Set ℝ)ᶜ ∈ ae volume := by
-    rw [mem_ae_iff, compl_compl]
-    exact measure_singleton b
+  have hb_ae : ({b} : Set ℝ)ᶜ ∈ ae volume := by simp [mem_ae_iff]
   have h_congr : ∀ᵐ t ∂volume, t ∈ Ι a b → deriv g t / g t = deriv h t / h t := by
     filter_upwards [hb_ae] with t ht_ne_b ht_mem
     have ht_ne : t ≠ b := fun h => ht_ne_b (mem_singleton_iff.mpr h)
@@ -279,9 +274,7 @@ lemma inv_mul_deriv_eq_logDeriv_sub (H : ℝ) (c : ℂ) :
 lemma arg_ofReal_mul_I {r : ℝ} (hr : 0 < r) : ((↑r : ℂ) * I).arg = Real.pi / 2 := by
   rw [Complex.arg_eq_pi_div_two_iff]
   refine ⟨by simp [Complex.mul_re], ?_⟩
-  simp only [Complex.mul_im, Complex.ofReal_re, Complex.I_im, Complex.ofReal_im, Complex.I_re,
-    mul_zero, add_zero, mul_one]
-  exact hr
+  simpa using hr
 
 /-- `0 < sin(π/12)`. -/
 lemma sin_pi_div_twelve_pos : 0 < Real.sin (Real.pi / 12) :=
@@ -313,9 +306,7 @@ lemma delta_pi_div_twelve_lt_eps {δ ε : ℝ} (hδ_pos : 0 < δ) (hδ_le_one : 
   set x := δ * Real.pi / 12 with hx_def
   have hx_pos : 0 < x := by positivity
   have hx_le_one : x ≤ 1 := by nlinarith [Real.pi_le_four]
-  have h_sin_lb := Real.sin_gt_sub_cube hx_pos hx_le_one
-  have h_lb : x - x ^ 3 / 4 > x / 2 := by nlinarith [sq_nonneg x, sq_nonneg (1 - x)]
-  linarith
+  nlinarith [Real.sin_gt_sub_cube hx_pos hx_le_one, sq_nonneg x, sq_nonneg (1 - x)]
 
 /-- `12/π · arcsin(ε/2) < 1` for ε in the threshold range. -/
 lemma twelve_div_pi_arcsin_half_lt_one {ε : ℝ} (hε_half_neg : -1 ≤ ε / 2)

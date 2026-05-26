@@ -25,7 +25,6 @@ open scoped Real Interval
 
 noncomputable section
 
--- The arc on t ∈ (1,3) is ArcCalculus.unitArc (π/3) (2π/3) 1 3.
 private lemma arc_hasDerivAt (s : ℝ) :
     HasDerivAt (fun s' : ℝ => exp ((↑Real.pi * (↑s' + 1) / 6) * I))
       (exp ((↑Real.pi * (↑s + 1) / 6) * I) * (↑Real.pi / 6 * I)) s := by
@@ -38,8 +37,7 @@ private lemma arc_hasDerivAt (s : ℝ) :
   convert h using 1
   congr 2; push_cast; ring
 
-private lemma fdBoundary_H_eq_arc_near {H : ℝ} {s : ℝ}
-    (hs1 : 1 < s) (hs3 : s < 3) :
+private lemma fdBoundary_H_eq_arc_near {H : ℝ} {s : ℝ} (hs1 : 1 < s) (hs3 : s < 3) :
     fdBoundary_H H =ᶠ[𝓝 s] fun s' => exp ((↑Real.pi * (↑s' + 1) / 6) * I) := by
   filter_upwards [Ioi_mem_nhds hs1, Iio_mem_nhds hs3] with s' hs1' hs3'
   simp only [fdBoundary_H, show ¬s' ≤ 1 from not_le.mpr hs1']
@@ -186,16 +184,14 @@ lemma fdBoundary_H_deriv_continuousAt_off_fullPartition (H : ℝ) (t : ℝ)
         filter_upwards [Ioo_mem_nhds (lt_of_le_of_ne h4 (Ne.symm ht4)) ht.2] with s hs
         exact (fdBoundary_H_hasDerivAt_seg5' H s hs).deriv.symm
 
-private lemma tendsto_of_eventually_const_left {c : ℂ} {p : ℝ}
-    {f : ℝ → ℂ} {a : ℝ} (ha : a < p)
-    (hf : ∀ s ∈ Ioo a p, f s = c) : Tendsto f (𝓝[<] p) (𝓝 c) :=
+private lemma tendsto_of_eventually_const_left {c : ℂ} {p : ℝ} {f : ℝ → ℂ} {a : ℝ}
+    (ha : a < p) (hf : ∀ s ∈ Ioo a p, f s = c) : Tendsto f (𝓝[<] p) (𝓝 c) :=
   tendsto_const_nhds.congr' (by
     filter_upwards [Ioo_mem_nhdsLT ha] with s hs
     exact (hf s hs).symm)
 
-private lemma tendsto_of_eventually_const_right {c : ℂ} {p : ℝ}
-    {f : ℝ → ℂ} {b : ℝ} (hb : p < b)
-    (hf : ∀ s ∈ Ioo p b, f s = c) : Tendsto f (𝓝[>] p) (𝓝 c) :=
+private lemma tendsto_of_eventually_const_right {c : ℂ} {p : ℝ} {f : ℝ → ℂ} {b : ℝ}
+    (hb : p < b) (hf : ∀ s ∈ Ioo p b, f s = c) : Tendsto f (𝓝[>] p) (𝓝 c) :=
   tendsto_const_nhds.congr' (by
     filter_upwards [Ioo_mem_nhdsGT hb] with s hs
     exact (hf s hs).symm)
@@ -239,9 +235,6 @@ lemma fdBoundary_H_left_deriv_limit (H : ℝ) (hH : Real.sqrt 3 / 2 < H) (p : �
 lemma fdBoundary_H_hasDerivAt_seg4 (H : ℝ) {t : ℝ} (h3 : 3 < t) (h4 : t < 4) :
     HasDerivAt (fdBoundary_H H) ((H - Real.sqrt 3 / 2) * I) t :=
   fdBoundary_H_hasDerivAt_seg4' H t ⟨h3, h4⟩
-
-
-
 
 lemma hasDerivAt_fdBoundary_seg1_H (H t : ℝ) :
     HasDerivAt (fdBoundary_seg1_H H) (-(↑(H - Real.sqrt 3 / 2) : ℂ) * I) t := by

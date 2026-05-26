@@ -59,8 +59,7 @@ theorem preimage_singleton_measure_zero_of_deriv_ne_zero {γ : ℝ → ℂ} {a b
     obtain ⟨ε, hε_pos, h_ball⟩ := h_ev
     refine ⟨ε, hε_pos, ?_⟩
     intro t ⟨_, ht_eq⟩ ht_ne
-    by_contra h_lt
-    push Not at h_lt
+    by_contra! h_lt
     exact h_ball (by simpa [Real.dist_eq] using h_lt) (by simp [ht_ne]) ht_eq
   have h_countable : S.Countable := by
     rw [show S = (S ∩ ↑P) ∪ (S \ ↑P) from (Set.inter_union_diff S ↑P).symm]

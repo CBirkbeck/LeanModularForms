@@ -89,9 +89,9 @@ private def arc_h₅ (H : ℝ) (z₀ : ℂ) (t : ℝ) : ℂ :=
 
 private lemma fdBoundary_sub_eq_arc_h₅ (H : ℝ) (z₀ : ℂ) {t : ℝ} (ht : 4/5 < t) :
     fdBoundaryFun H t - z₀ = arc_h₅ H z₀ t := by
-  simp only [fdBoundaryFun, show ¬t ≤ 1/5 from by linarith,
-    show ¬t ≤ 2/5 from by linarith, show ¬t ≤ 3/5 from by linarith,
-    show ¬t ≤ 4/5 from by linarith, ite_false, arc_h₅]
+  simp only [fdBoundaryFun, show ¬t ≤ 1/5 by linarith,
+    show ¬t ≤ 2/5 by linarith, show ¬t ≤ 3/5 by linarith,
+    show ¬t ≤ 4/5 by linarith, ite_false, arc_h₅]
   apply Complex.ext <;> simp
 
 private lemma arc_h₅_continuous (H : ℝ) (z₀ : ℂ) : Continuous (arc_h₅ H z₀) := by
@@ -116,8 +116,7 @@ private lemma arc_h₅_slitPlane {H : ℝ} (hH : 1 < H) {θ₀ : ℝ} (t : ℝ) 
   simp only [Complex.add_im, Complex.mul_im, Complex.ofReal_re, Complex.ofReal_im,
     Complex.I_re, Complex.I_im, mul_zero, mul_one, zero_add]
   rw [arcZ₀_im_eq]
-  have := Real.sin_le_one θ₀
-  intro h; linarith
+  nlinarith [Real.sin_le_one θ₀]
 
 private def arc_h₃ (H : ℝ) (z₀ : ℂ) (t : ℝ) : ℂ :=
   ((-1/2 - z₀.re : ℝ) : ℂ) +
@@ -126,8 +125,8 @@ private def arc_h₃ (H : ℝ) (z₀ : ℂ) (t : ℝ) : ℂ :=
 private lemma fdBoundary_sub_eq_arc_h₃ (H : ℝ) (z₀ : ℂ) {t : ℝ}
     (ht3 : 3/5 < t) (ht4 : t ≤ 4/5) :
     fdBoundaryFun H t - z₀ = arc_h₃ H z₀ t := by
-  simp only [fdBoundaryFun, show ¬t ≤ 1/5 from by linarith,
-    show ¬t ≤ 2/5 from by linarith, show ¬t ≤ 3/5 from by linarith,
+  simp only [fdBoundaryFun, show ¬t ≤ 1/5 by linarith,
+    show ¬t ≤ 2/5 by linarith, show ¬t ≤ 3/5 by linarith,
     ht4, ite_true, ite_false, arc_h₃]
   apply Complex.ext <;> simp
 
@@ -164,7 +163,7 @@ private lemma neg_arc_h₃_slitPlane {H : ℝ} {θ₀ : ℝ}
   rw [arcZ₀_re_eq]
   have hpi := Real.pi_pos
   have h_cos_2pi3 : Real.cos (2 * Real.pi / 3) = -1/2 := by
-    rw [show (2 * Real.pi / 3 : ℝ) = Real.pi - Real.pi / 3 from by ring,
+    rw [show (2 * Real.pi / 3 : ℝ) = Real.pi - Real.pi / 3 by ring,
         Real.cos_pi_sub, Real.cos_pi_div_three]; norm_num
   linarith [Real.strictAntiOn_cos (a := θ₀) ⟨by linarith, by linarith⟩
     ⟨by linarith, by linarith⟩ h_hi]
@@ -342,7 +341,7 @@ private lemma arc_junction_35 (H : ℝ) (z₀ : ℂ) :
   unfold arc_h_arc arc_h₃
   have hθ : (fdArcAngle (3/5) : ℝ) = 2 * Real.pi / 3 := by unfold fdArcAngle; ring
   rw [hθ, exp_mul_I, ← ofReal_cos, ← ofReal_sin,
-    show (2 * Real.pi / 3 : ℝ) = Real.pi - Real.pi / 3 from by ring,
+    show (2 * Real.pi / 3 : ℝ) = Real.pi - Real.pi / 3 by ring,
     Real.cos_pi_sub, Real.sin_pi_sub, Real.cos_pi_div_three, Real.sin_pi_div_three]
   apply Complex.ext <;>
   · simp only [Complex.sub_re, Complex.add_re, Complex.mul_re, Complex.ofReal_re,
@@ -369,7 +368,7 @@ private lemma arc_branch_correction_45 {H : ℝ} (hH : 1 < H) (θ₀ : ℝ) :
       ((-1/2 - Real.cos θ₀ : ℝ) : ℂ) + ((H - Real.sin θ₀ : ℝ) : ℂ) * I := by
     unfold arc_h₅
     rw [arcZ₀_re_eq, arcZ₀_im_eq, show ((5 * (4/5) - 9/2 - Real.cos θ₀ : ℝ) : ℂ) =
-      ((-1/2 - Real.cos θ₀ : ℝ) : ℂ) from by push_cast; ring]
+      ((-1/2 - Real.cos θ₀ : ℝ) : ℂ) by push_cast; ring]
   rw [h_val]
   set w := ((-1/2 - Real.cos θ₀ : ℝ) : ℂ) + ((H - Real.sin θ₀ : ℝ) : ℂ) * I with hw_def
   have h_im_pos : 0 < w.im := by
@@ -407,8 +406,8 @@ private lemma arc_ae_eq_h_arc (H : ℝ) (z₀ : ℂ) {a b : ℝ} (hab : a ≤ b)
   rw [uIoc_of_le hab] at ht_mem
   have ht_lt_b : t < b :=
     lt_of_le_of_ne ht_mem.2 (fun h => ht_ne (Set.mem_insert_iff.mpr (Or.inr h)))
-  have ht1 : 1/5 < t := lt_of_le_of_lt ha_ge ht_mem.1
-  have ht3_lt : t < 3/5 := lt_of_lt_of_le ht_lt_b hb_le
+  have ht1 : 1/5 < t := ha_ge.trans_lt ht_mem.1
+  have ht3_lt : t < 3/5 := ht_lt_b.trans_le hb_le
   have h_evEq : (fun s => fdBoundaryFun H s - z₀) =ᶠ[𝓝 t] arc_h_arc z₀ :=
     Filter.eventually_of_mem (Filter.inter_mem (Ioi_mem_nhds ht1) (Iio_mem_nhds ht3_lt))
       fun _ ⟨hs1, hs3⟩ => fdBoundary_sub_eq_arc_h_arc z₀ hs1 hs3.le
@@ -493,11 +492,7 @@ private lemma arc_hint_seg5 {H : ℝ} (hH : 1 < H) (θ₀ : ℝ) :
       volume (4/5) 1 :=
   arc_hint_of_ftc (arc_seg5_ftc hH (θ₀ := θ₀)).1 (arc_ae_eq_h₅ H _)
 
-/-- The trimmed integral for an arc crossing equals
-`log(h_arc(t₀-δ)) - log(-h_arc(t₀+δ)) + (-π·I)`. The first part is the
-"crossing contribution" (which → 0 as δ → 0), and the second is the branch
-correction at the 4/5 junction. -/
-theorem fdBoundary_ftc_telescope_arc_aux {H : ℝ} (hH : 1 < H) {θ₀ : ℝ}
+private theorem fdBoundary_ftc_telescope_arc_aux {H : ℝ} (hH : 1 < H) {θ₀ : ℝ}
     (h_lo : Real.pi / 3 < θ₀) (h_hi : θ₀ < 2 * Real.pi / 3)
     {δ : ℝ} (hδ_pos : 0 < δ) (hδ_lt_lo : δ < arcT₀ θ₀ - 1/5)
     (hδ_lt_hi : δ < 3/5 - arcT₀ θ₀) :
@@ -679,13 +674,12 @@ private lemma arc_log_diff_tendsto {θ₀ : ℝ}
     filter_upwards [Iio_mem_nhds h_gap_pos] with δ hδ_lt hδ_pos
     rw [mem_Ioi] at hδ_pos
     rw [mem_Iio] at hδ_lt
-    have h_δ_lt_fifth : δ < 1/5 := lt_of_lt_of_le hδ_lt h_gap_le_fifth
+    have h_δ_lt_fifth : δ < 1/5 := hδ_lt.trans_le h_gap_le_fifth
     have hδ_small : δ * (5 * Real.pi / 6) < Real.pi := by
-      have := mul_lt_mul_of_pos_right h_δ_lt_fifth (show (0:ℝ) < 5 * Real.pi / 6 by positivity)
-      linarith [show (1/5 : ℝ) * (5 * Real.pi / 6) = Real.pi / 6 from by ring]
+      nlinarith [Real.pi_pos, h_δ_lt_fifth]
     have harc := fdArcAngle_arcT₀ θ₀
-    have h_δ_lt_gap_l : δ < arcT₀ θ₀ - 1/5 := lt_of_lt_of_le hδ_lt (min_le_left _ _)
-    have h_δ_lt_gap_r : δ < 3/5 - arcT₀ θ₀ := lt_of_lt_of_le hδ_lt (min_le_right _ _)
+    have h_δ_lt_gap_l : δ < arcT₀ θ₀ - 1/5 := hδ_lt.trans_le (min_le_left _ _)
+    have h_δ_lt_gap_r : δ < 3/5 - arcT₀ θ₀ := hδ_lt.trans_le (min_le_right _ _)
     have h_a_re : 0 < (arc_h_arc (exp (↑θ₀ * I)) (arcT₀ θ₀ - δ)).re := by
       unfold arc_h_arc
       rw [exp_mul_I, exp_mul_I, ← ofReal_cos, ← ofReal_sin, ← ofReal_cos, ← ofReal_sin]
@@ -721,7 +715,7 @@ private lemma arc_arcsinDelta_tendsto :
         12 / (5 * Real.pi) * Real.arcsin (ε / 2)) 0 := by fun_prop
     simpa [Real.arcsin_zero] using hcont.tendsto.mono_left nhdsWithin_le_nhds
   · rw [eventually_nhdsWithin_iff]
-    filter_upwards [Iio_mem_nhds (show (0:ℝ) < 1 from by norm_num)] with ε _ hε
+    filter_upwards [Iio_mem_nhds (show (0:ℝ) < 1 by norm_num)] with ε _ hε
     exact mem_Ioi.mpr (arcsinDelta_pos (by rwa [mem_Ioi] at hε))
 
 private def arc_E (θ₀ : ℝ) (ε : ℝ) : ℂ :=
@@ -753,8 +747,8 @@ private lemma arc_h_ftc_helper {H : ℝ} (hH : 1 < H)
   have h_δ_lt_hi : arcsinDelta ε < 3/5 - arcT₀ θ₀ := h_lt_gap.trans_le (min_le_right _ _)
   have h_t₀_lo : (1/5 : ℝ) < arcT₀ θ₀ := arcT₀_gt_one_fifth h_lo
   have h_t₀_hi : arcT₀ θ₀ < 3/5 := arcT₀_lt_three_fifths h_hi
-  rw [transfer_integral (exp (↑θ₀ * I)) (by linarith) (le_refl 0) (by linarith) hγ,
-      transfer_integral (exp (↑θ₀ * I)) (by linarith) (by linarith) (le_refl 1) hγ]
+  rw [transfer_integral (exp (↑θ₀ * I)) (by linarith) le_rfl (by linarith) hγ,
+      transfer_integral (exp (↑θ₀ * I)) (by linarith) (by linarith) le_rfl hγ]
   unfold arc_E
   exact fdBoundary_ftc_telescope_arc_aux hH h_lo h_hi h_δ_pos h_δ_lt_lo h_δ_lt_hi
 
@@ -768,10 +762,10 @@ private lemma arc_hint_left_helper {H : ℝ} (_hH : 1 < H)
       volume 0 (arcT₀ θ₀ - arcsinDelta ε) := by
   have h_δ_pos : 0 < arcsinDelta ε := arcsinDelta_pos hε
   have h_δ_lt_lo : arcsinDelta ε < arcT₀ θ₀ - 1/5 :=
-    lt_of_lt_of_le (arcsinDelta_lt_arcGap h_lo h_hi hε hε_thr) (min_le_left _ _)
+    (arcsinDelta_lt_arcGap h_lo h_hi hε hε_thr).trans_le (min_le_left _ _)
   have h_t₀_lo : (1/5 : ℝ) < arcT₀ θ₀ := arcT₀_gt_one_fifth h_lo
   have h_t₀_hi : arcT₀ θ₀ < 3/5 := arcT₀_lt_three_fifths h_hi
-  apply transfer_integrability (exp (↑θ₀ * I)) (by linarith) (le_refl 0) (by linarith) hγ
+  apply transfer_integrability (exp (↑θ₀ * I)) (by linarith) le_rfl (by linarith) hγ
   exact (arc_hint_seg1 H h_lo h_hi).trans
     (arc_hint_arc_left H h_lo h_hi h_δ_pos h_δ_lt_lo)
 
@@ -785,10 +779,10 @@ private lemma arc_hint_right_helper {H : ℝ} (hH : 1 < H)
       volume (arcT₀ θ₀ + arcsinDelta ε) 1 := by
   have h_δ_pos : 0 < arcsinDelta ε := arcsinDelta_pos hε
   have h_δ_lt_hi : arcsinDelta ε < 3/5 - arcT₀ θ₀ :=
-    lt_of_lt_of_le (arcsinDelta_lt_arcGap h_lo h_hi hε hε_thr) (min_le_right _ _)
+    (arcsinDelta_lt_arcGap h_lo h_hi hε hε_thr).trans_le (min_le_right _ _)
   have h_t₀_lo : (1/5 : ℝ) < arcT₀ θ₀ := arcT₀_gt_one_fifth h_lo
   have h_t₀_hi : arcT₀ θ₀ < 3/5 := arcT₀_lt_three_fifths h_hi
-  apply transfer_integrability (exp (↑θ₀ * I)) (by linarith) (by linarith) (le_refl 1) hγ
+  apply transfer_integrability (exp (↑θ₀ * I)) (by linarith) (by linarith) le_rfl hγ
   exact ((arc_hint_arc_right H h_lo h_hi h_δ_pos h_δ_lt_hi).trans
     (arc_hint_seg4 H h_lo h_hi)).trans (arc_hint_seg5 hH θ₀)
 

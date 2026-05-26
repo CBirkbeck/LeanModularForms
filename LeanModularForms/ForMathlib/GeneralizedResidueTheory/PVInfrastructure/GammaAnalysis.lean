@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2024. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors:
+Authors: Chris Birkbeck
 -/
 import Mathlib.Analysis.Calculus.ContDiff.Basic
 import Mathlib.Analysis.Calculus.ContDiff.Comp
@@ -44,8 +44,6 @@ private lemma hasDerivAt_remainder_bound {γ : ℝ → ℂ} {t₀ : ℝ} {L : �
 
 private lemma norm_real_smul (x : ℝ) (L : ℂ) : ‖x • L‖ = |x| * ‖L‖ := by simp
 
-
-
 /-- Lower bound on ‖γ t - γ t₀‖ from non-zero derivative.
 Uses `hasDerivAt_remainder_bound` + reverse triangle inequality. -/
 lemma gamma_lower_bound_of_hasDerivAt {γ : ℝ → ℂ} {t₀ : ℝ} {L : ℂ} (hL : L ≠ 0)
@@ -59,8 +57,7 @@ lemma gamma_lower_bound_of_hasDerivAt {γ : ℝ → ℂ} {t₀ : ℝ} {L : ℂ} 
   have h_rem : ‖γ t - γ t₀ - (t - t₀) • L‖ ≤ (‖L‖ / 2) * |t - t₀| :=
     hδ_bound t ht_pos ht_lt
   have h_tri : ‖γ t - γ t₀‖ ≥ ‖(t - t₀) • L‖ - ‖γ t - γ t₀ - (t - t₀) • L‖ := by
-    have h1 : ‖γ t - γ t₀‖ = ‖(t - t₀) • L + (γ t - γ t₀ - (t - t₀) • L)‖ := by ring_nf
-    rw [h1]
+    rw [show ‖γ t - γ t₀‖ = ‖(t - t₀) • L + (γ t - γ t₀ - (t - t₀) • L)‖ by ring_nf]
     exact norm_sub_le_norm_add _ _
   calc ‖γ t - γ t₀‖
       ≥ ‖(t - t₀) • L‖ - ‖γ t - γ t₀ - (t - t₀) • L‖ := h_tri
@@ -81,8 +78,7 @@ lemma gamma_upper_bound_of_hasDerivAt {γ : ℝ → ℂ} {t₀ : ℝ} {L : ℂ} 
   refine ⟨δ, hδ_pos, fun t ht_pos ht_lt => ?_⟩
   have h_rem : ‖γ t - γ t₀ - (t - t₀) • L‖ ≤ ‖L‖ * |t - t₀| := hδ_bound t ht_pos ht_lt
   have h_tri : ‖γ t - γ t₀‖ ≤ ‖(t - t₀) • L‖ + ‖γ t - γ t₀ - (t - t₀) • L‖ := by
-    have h1 : ‖γ t - γ t₀‖ = ‖(t - t₀) • L + (γ t - γ t₀ - (t - t₀) • L)‖ := by ring_nf
-    rw [h1]
+    rw [show ‖γ t - γ t₀‖ = ‖(t - t₀) • L + (γ t - γ t₀ - (t - t₀) • L)‖ by ring_nf]
     exact norm_add_le _ _
   calc ‖γ t - γ t₀‖
       ≤ ‖(t - t₀) • L‖ + ‖γ t - γ t₀ - (t - t₀) • L‖ := h_tri
@@ -113,7 +109,5 @@ lemma no_return_of_inj_continuous {γ : ℝ → ℂ} {a b t₀ : ℝ} {c : ℝ} 
     linarith
   obtain ⟨ρ, hρ_pos, hρ_le⟩ := hS_compact.exists_forall_le' hf_cont hf_pos
   exact ⟨ρ, hρ_pos, fun t ht h_dist => hρ_le t ⟨ht, h_dist⟩⟩
-
-
 
 end

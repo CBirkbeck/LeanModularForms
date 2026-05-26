@@ -69,7 +69,7 @@ private lemma ball_dist_lower_bound (γ : PiecewiseC1Path x x) (w : ℂ)
   have h2 := Metric.mem_ball.mp hw'
   rw [Complex.dist_eq] at h2
   have h5 := norm_sub_norm_le (γ t - w) (γ t - w')
-  rw [show (γ t - w) - (γ t - w') = w' - w from by ring] at h5
+  rw [show (γ t - w) - (γ t - w') = w' - w by ring] at h5
   linarith [norm_sub_rev w' w, norm_sub_rev w (γ t)]
 
 private lemma h2_pointwise_hasDerivAt (fz c z w : ℂ) (hne : z - w ≠ 0) :
@@ -81,8 +81,6 @@ private lemma h2_pointwise_hasDerivAt (fz c z w : ℂ) (hne : z - w ≠ 0) :
     simpa [inv_pow] using HasDerivAt.inv h_sub hne
   exact ((h_inv.const_mul fz).mul_const c).congr_deriv (by ring)
 
-/-- Norm bound for the h2 integrand: `‖f(γ t) * (γ t - w')⁻¹ ^ 2 * γ'(t)‖ ≤ M * ε⁻¹² * D`
-when `w'` is in a ball of radius `ε` around `w` and the curve stays at distance `≥ ε`. -/
 private lemma h2_integrand_norm_bound {f : ℂ → ℂ} {γ : PiecewiseC1Path x x}
     {M ε D : ℝ} (hM_nn : 0 ≤ M) (hε_pos : 0 < ε)
     (hM : ∀ t ∈ Icc (0 : ℝ) 1, ‖f (γ t)‖ ≤ M)
@@ -148,8 +146,6 @@ theorem dixonH2_differentiableAt {f : ℂ → ℂ}
         exact h2_pointwise_hasDerivAt (f (γ t)) (deriv γ.toPath.extend t) (γ t) w'
           (sub_ne_zero.mpr (h_ball_avoids w' hw' t (Ioc_subset_Icc_self ht))))).2.differentiableAt
 
-/-- Strong measurability of the `dixonH2` integrand. The product decomposes as
-(continuous f∘γ) · (continuous (γ-w')⁻¹) · (strongly measurable deriv γ.extend). -/
 private lemma dixonH2_integrand_stronglyMeasurable
     {f : ℂ → ℂ} {γ : PiecewiseC1Path x x} {w' : ℂ}
     (hf_cont : ContinuousOn f (γ.toPath.extend '' Icc (0 : ℝ) 1))
@@ -169,7 +165,6 @@ private lemma dixonH2_integrand_stronglyMeasurable
     ((h_cont_fγ.mul h_cont_inv).mono Ioc_subset_Icc_self).aestronglyMeasurable measurableSet_Ioc
   exact h_meas_prod.mul ((stronglyMeasurable_deriv _).aestronglyMeasurable)
 
-/-- Strong measurability of the `dixonH2` derivative integrand (second-order variant). -/
 private lemma dixonH2_deriv_integrand_stronglyMeasurable
     {f : ℂ → ℂ} {γ : PiecewiseC1Path x x} {w : ℂ}
     (hf_cont : ContinuousOn f (γ.toPath.extend '' Icc (0 : ℝ) 1))
@@ -243,16 +238,11 @@ theorem dixonH2_differentiableAt_of_regular {f : ℂ → ℂ}
       (mul_nonneg hM₀_nn (inv_nonneg.mpr hε_pos.le))
   exact dixonH2_differentiableAt hoff h_int ⟨max M 0, hM₀_nn, hM_bd⟩ ⟨K, hD⟩ h_meas h_F'_meas
 
-/-- **Symmetry of `dslope`**: `dslope f a b = dslope f b a`. Follows from `slope_comm`
-for distinct points and from `dslope f a a = deriv f a` otherwise. -/
 private lemma dslope_comm (f : ℂ → ℂ) (a b : ℂ) : dslope f a b = dslope f b a := by
   by_cases h : b = a
   · rw [h]
   · rw [dslope_of_ne f h, dslope_of_ne f (Ne.symm h), slope_comm]
 
-/-- `dslope f w' c`, viewed as a function of the first argument `w'`, has derivative
-`deriv (dslope f c) w` at `w ∈ U`. Uses `dslope_comm` to reduce to the standard
-`Complex.differentiableOn_dslope`. -/
 private lemma dslope_hasDerivAt_first_arg {f : ℂ → ℂ} {U : Set ℂ}
     (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
     {c w : ℂ} (hc : c ∈ U) (hw : w ∈ U) :
@@ -261,9 +251,6 @@ private lemma dslope_hasDerivAt_first_arg {f : ℂ → ℂ} {U : Set ℂ}
     (hU.mem_nhds hw)).hasDerivAt.congr_of_eventuallyEq
     (Filter.Eventually.of_forall fun _ => dslope_comm f _ _)
 
-/-- Continuity of `fun t => dslope f w (γ t)` on `Icc 0 1` when γ avoids the curve
-into U and f is differentiable on U. Uses `dslope_comm` + `Complex.differentiableOn_dslope`
-+ composition with continuous γ. -/
 private lemma dslope_fixed_continuousOn {f : ℂ → ℂ} {U : Set ℂ}
     (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
     {γ : PiecewiseC1Path x x} (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U)
@@ -272,7 +259,6 @@ private lemma dslope_fixed_continuousOn {f : ℂ → ℂ} {U : Set ℂ}
   ((Complex.differentiableOn_dslope (hU.mem_nhds hw)).mpr hf).continuousOn.comp
     γ.toPath.continuous_extend.continuousOn hγ
 
-/-- The ball of radius `min (min a b) c / 2` is contained in balls of radius `a`, `b`, and `c`. -/
 private lemma min3_ball_subsets (w₀ : ℂ) {ε_m ε_d δ_C : ℝ}
     (hε_m_pos : 0 < ε_m) (hε_d_pos : 0 < ε_d) (hδ_C_pos : 0 < δ_C) :
     let ε := min (min ε_m ε_d) δ_C / 2
@@ -285,7 +271,6 @@ private lemma min3_ball_subsets (w₀ : ℂ) {ε_m ε_d δ_C : ℝ}
     Metric.ball_subset_ball (by linarith [min_le_left (min ε_m ε_d) δ_C, min_le_right ε_m ε_d]),
     Metric.ball_subset_ball (by linarith [min_le_right (min ε_m ε_d) δ_C])⟩
 
-/-- Product bound for dslope derivative times path derivative. -/
 private lemma dslope_deriv_product_bound
     {C D : ℝ} {γ : PiecewiseC1Path x x}
     (h_deriv_bd : ∀ t ∈ Icc (0 : ℝ) 1, ∀ w ∈ Metric.ball w₀ δ_C,
@@ -354,8 +339,6 @@ theorem dixonH1_differentiableOn {f : ℂ → ℂ} {U : Set ℂ}
       rw [Set.uIoc_of_le zero_le_one] at ht
       exact h_dslope_hda t (Ioc_subset_Icc_self ht) w (hball_sub_εd hw))).2.differentiableAt
 
-/-- Strong measurability of the `dixonH1` integrand, from f DifferentiableOn U +
-γ.image ⊆ U. Uses `dslope_fixed_continuousOn`. -/
 private lemma dixonH1_integrand_stronglyMeasurable
     {f : ℂ → ℂ} {U : Set ℂ} (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
     {γ : PiecewiseC1Path x x} (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ t ∈ U)
@@ -468,9 +451,6 @@ theorem dixonH1_differentiableOn_of_regular_open {f : ℂ → ℂ} {U : Set ℂ}
       h_bd (γ.toPiecewiseC1Path t) ⟨t, ht, rfl⟩ w hw⟩
   exact dixonH1_differentiableOn_of_regular hU hf γ hγ hLip h_F'_meas h_dslope_deriv_bound
 
-/-- Measurability of `t ↦ deriv (dslope f (γt)) w₀ · γ'(t)` on `[0,1]`, obtained as the
-pointwise a.e. limit of continuous difference quotients `q_n` in `t`. Used to discharge
-`h_F'_meas` in the fully-closed B-2 wrappers; works on any open `U` (no convexity). -/
 private lemma dslope_deriv_mul_extend_aestronglyMeasurable
     {f : ℂ → ℂ} {U : Set ℂ} (hU : IsOpen U) (hf : DifferentiableOn ℂ f U)
     (γ : PwC1Immersion x x) (hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ∈ U)
@@ -542,7 +522,7 @@ private lemma dslope_deriv_mul_extend_aestronglyMeasurable
       (slope (dslope f (γ.toPiecewiseC1Path t)) w₀ (w₀ + h_seq n)) *
         deriv γ.toPiecewiseC1Path.toPath.extend t := fun n => by
     simp only [q, slope_def_field]
-    rw [show w₀ + h_seq n - w₀ = h_seq n from by ring, div_eq_inv_mul,
+    rw [show w₀ + h_seq n - w₀ = h_seq n by ring, div_eq_inv_mul,
       mul_comm (h_seq n)⁻¹]
   simp_rw [h_q_eq]
   exact (h_diff.hasDerivAt.tendsto_slope.comp hy_within).mul_const _
@@ -555,7 +535,7 @@ theorem dixonH1_differentiableOn_of_regular_open_full {f : ℂ → ℂ} {U : Set
     {K : NNReal} (hLip : LipschitzWith K γ.toPiecewiseC1Path.toPath.extend) :
     DifferentiableOn ℂ (dixonH1 f γ.toPiecewiseC1Path) U :=
   dixonH1_differentiableOn_of_regular_open hU hf γ hγ hLip
-    (fun _ hw₀ => dslope_deriv_mul_extend_aestronglyMeasurable hU hf γ hγ hw₀)
+    (fun _ => dslope_deriv_mul_extend_aestronglyMeasurable hU hf γ hγ)
 
 /-- **The Dixon function is entire.**
 

@@ -74,13 +74,6 @@ variable {a b : ℝ} {hab : a < b} {x y : E}
 instance : CoeFun (PiecewiseC1PathOn a b hab x y) fun _ => ℝ → E where
   coe := PiecewiseC1PathOn.toFun
 
-@[simp]
-theorem coe_mk (toFun : ℝ → E) (source target continuous_toFun partition partition_subset
-    differentiable_off deriv_continuous_off) :
-    ((PiecewiseC1PathOn.mk toFun source target continuous_toFun partition partition_subset
-      differentiable_off deriv_continuous_off : PiecewiseC1PathOn a b hab x y) : ℝ → E) = toFun :=
-  rfl
-
 end PiecewiseC1PathOn
 
 end

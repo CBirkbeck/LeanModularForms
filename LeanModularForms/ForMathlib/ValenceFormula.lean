@@ -96,7 +96,7 @@ private lemma normSq_denom_eq_one_of_smul_i_in_fd (g : SL(2, ℤ))
   have h_pos : (c : ℝ) ^ 2 + (d : ℝ) ^ 2 > 0 := by
     exact_mod_cast show (0 : ℤ) < c ^ 2 + d ^ 2 by omega
   have h_lt2 : (c : ℝ) ^ 2 + (d : ℝ) ^ 2 < 2 := by
-    nlinarith [mul_lt_mul_of_pos_right h_gt h_pos, div_mul_cancel₀ (1 : ℝ) (ne_of_gt h_pos)]
+    nlinarith [mul_lt_mul_of_pos_right h_gt h_pos, div_mul_cancel₀ (1 : ℝ) h_pos.ne']
   have : c ^ 2 + d ^ 2 < 2 := by exact_mod_cast h_lt2
   exact_mod_cast show c ^ 2 + d ^ 2 = 1 by omega
 
@@ -178,7 +178,7 @@ private lemma normSq_denom_eq_one_of_smul_rho_in_fd (g : SL(2, ℤ))
   have h_lt2 : (c : ℝ) ^ 2 - (c : ℝ) * (d : ℝ) + (d : ℝ) ^ 2 < 2 := by
     nlinarith [Real.mul_self_sqrt (show (3 : ℝ) ≥ 0 by norm_num),
       mul_lt_mul_of_pos_right h_gt h_pos,
-      div_mul_cancel₀ ((Real.sqrt 3 / 2 : ℝ)) (ne_of_gt h_pos),
+      div_mul_cancel₀ ((Real.sqrt 3 / 2 : ℝ)) h_pos.ne',
       sq_nonneg (Real.sqrt 3 - 2)]
   have : (0 : ℤ) < c ^ 2 - c * d + d ^ 2 := by exact_mod_cast h_pos
   have : c ^ 2 - c * d + d ^ 2 < (2 : ℤ) := by exact_mod_cast h_lt2

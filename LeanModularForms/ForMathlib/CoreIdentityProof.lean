@@ -82,13 +82,11 @@ structure FDWindingDataFull (H : ℝ) extends FDWindingData H where
 
 omit f hf in
 private lemma ellipticPointRho_re_neg : (ellipticPointRho' : ℂ).re < 0 := by
-  change (-1/2 + (Real.sqrt 3 / 2) * I : ℂ).re < 0
-  simp; norm_num
+  change (-1/2 + (Real.sqrt 3 / 2) * I : ℂ).re < 0; norm_num
 
 omit f hf in
 private lemma ellipticPointRhoPlusOne_re_pos : (ellipticPointRhoPlusOne' : ℂ).re > 0 := by
-  change (1/2 + (Real.sqrt 3 / 2) * I : ℂ).re > 0
-  simp
+  change (1/2 + (Real.sqrt 3 / 2) * I : ℂ).re > 0; simp
 
 omit f hf in
 private lemma ellipticPoint_ne_iρ1FM : ellipticPointI' ≠ ellipticPointRhoPlusOne' := by
@@ -100,11 +98,11 @@ omit f hf in
 private lemma ellipticPoint_ne_ρρ1FM : ellipticPointRho' ≠ ellipticPointRhoPlusOne' := by
   intro h
   have := congr_arg (fun z : UpperHalfPlane => (z : ℂ).re) h
-  simp [ellipticPointRho', ellipticPointRhoPlusOne'] at this; norm_num at this
+  norm_num [ellipticPointRho', ellipticPointRhoPlusOne'] at this
 
 omit f hf in
 private lemma elliptic_finset_sum_eq_three (S : Finset UpperHalfPlane)
-    (g : UpperHalfPlane → ℂ) (_hS : ∀ p ∈ S, p ∈ 𝒟)
+    (g : UpperHalfPlane → ℂ)
     (hS_complete_zero : ∀ p, p ∈ 𝒟 → p ∉ S → g p = 0) :
     let P := fun (p : UpperHalfPlane) =>
       p = ellipticPointI' ∨ p = ellipticPointRho' ∨ p = ellipticPointRhoPlusOne'
@@ -135,7 +133,7 @@ private lemma elliptic_finset_sum_eq_three (S : Finset UpperHalfPlane)
 
 /-- Substitute explicit winding weights at the three elliptic points. -/
 private theorem explicit_coefficients_of_pvChain
-    (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟)
+    (S : Finset UpperHalfPlane)
     (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
     {H : ℝ} (D : FDWindingDataFull H)
     (h_pv : ∑ s ∈ S,
@@ -160,7 +158,7 @@ private theorem explicit_coefficients_of_pvChain
   have h_split := (Finset.sum_filter_add_sum_filter_not S P g).symm
   have h_ell_sum : ∑ s ∈ S.filter P, g s =
       g ellipticPointI' + g ellipticPointRho' + g ellipticPointRhoPlusOne' :=
-    elliptic_finset_sum_eq_three S g hS (fun p hp hp_not => by
+    elliptic_finset_sum_eq_three S g (fun p hp hp_not => by
       simp [hg_def, by_contra fun h_ne => hp_not (hS_complete _ hp h_ne)])
   have hg_i : g ellipticPointI' =
       (-1/2 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointI') := by
@@ -428,7 +426,7 @@ theorem valence_formula_orbit_sum_of_pvChain
       ↑(orderOfVanishingAt' (⇑f) s) =
     (k : ℂ) / 12 := by
   obtain ⟨H, D, hH_above, h_pv⟩ := h_pvChain
-  have h_explicit := explicit_coefficients_of_pvChain f S hS hS_complete D h_pv
+  have h_explicit := explicit_coefficients_of_pvChain f S hS_complete D h_pv
   rw [ord_rho_plus_one_eq_ord_rho_via_vAddFM f] at h_explicit
   have h_formula : (orderAtCusp' f : ℂ) +
       (1/2 : ℂ) * ↑(orderOfVanishingAt' (⇑f) ellipticPointI') +

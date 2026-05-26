@@ -22,8 +22,6 @@ This file defines piecewise C¹ paths in normed spaces, wrapping mathlib's `Path
 * `PwC1Immersion x y` — a `PiecewiseC1Path x y` whose derivative is nonzero away
   from partition points, with nonzero one-sided derivative limits at partition points.
 
-* `PiecewiseC1Path.IsClosed` — predicate that a path is closed (`x = y`).
-
 ## Design notes
 
 `PiecewiseC1Path` extends `PiecewiseC1PathOn 0 1 zero_lt_one x y` (the free-interval
@@ -70,21 +68,18 @@ instance : CoeFun (PiecewiseC1Path x y) fun _ => ℝ → E where
 Same statement as the inherited `differentiable_off` but phrased in terms of `toPath.extend`
 instead of `toFun`. The two forms agree on `Icc 0 1` via `toPath_extend_eq_toFun`. -/
 theorem differentiable_off_extend (γ : PiecewiseC1Path x y) :
-    ∀ t ∈ Ioo (0:ℝ) 1, t ∉ γ.partition → DifferentiableAt ℝ γ.toPath.extend t := by
-  intro t ht htp
-  exact (γ.differentiable_off t ht htp).congr_of_eventuallyEq
+    ∀ t ∈ Ioo (0:ℝ) 1, t ∉ γ.partition → DifferentiableAt ℝ γ.toPath.extend t :=
+  fun t ht htp => (γ.differentiable_off t ht htp).congr_of_eventuallyEq
     (Filter.eventuallyEq_of_mem (isOpen_Ioo.mem_nhds ht)
       fun u hu => γ.toPath_extend_eq_toFun u (Ioo_subset_Icc_self hu))
 
 /-- The derivative of the extended path is continuous at every point of `(0, 1)` outside
 the partition. Same statement as `deriv_continuous_off` but in terms of `toPath.extend`. -/
 theorem deriv_continuous_off_extend (γ : PiecewiseC1Path x y) :
-    ∀ t ∈ Ioo (0:ℝ) 1, t ∉ γ.partition → ContinuousAt (deriv γ.toPath.extend) t := by
-  intro t ht htp
-  have h_eq : γ.toPath.extend =ᶠ[𝓝 t] γ.toFun :=
-    Filter.eventuallyEq_of_mem (isOpen_Ioo.mem_nhds ht)
-      fun u hu => γ.toPath_extend_eq_toFun u (Ioo_subset_Icc_self hu)
-  exact (γ.deriv_continuous_off t ht htp).congr h_eq.deriv.symm
+    ∀ t ∈ Ioo (0:ℝ) 1, t ∉ γ.partition → ContinuousAt (deriv γ.toPath.extend) t :=
+  fun t ht htp => (γ.deriv_continuous_off t ht htp).congr
+    (Filter.eventuallyEq_of_mem (isOpen_Ioo.mem_nhds ht)
+      fun u hu => γ.toPath_extend_eq_toFun u (Ioo_subset_Icc_self hu)).deriv.symm
 
 @[simp]
 theorem apply_zero (γ : PiecewiseC1Path x y) : γ 0 = x :=
@@ -93,9 +88,6 @@ theorem apply_zero (γ : PiecewiseC1Path x y) : γ 0 = x :=
 @[simp]
 theorem apply_one (γ : PiecewiseC1Path x y) : γ 1 = y :=
   γ.toPath.extend_one
-
-/-- A piecewise C¹ path is closed if its endpoints coincide. -/
-def IsClosed (_γ : PiecewiseC1Path x y) : Prop := x = y
 
 /-- The underlying extended path is continuous. -/
 theorem continuous (γ : PiecewiseC1Path x y) : Continuous (γ : ℝ → E) :=

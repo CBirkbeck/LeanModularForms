@@ -58,14 +58,14 @@ theorem fdBoundaryFun_sub_i_ne_zero_seg3 (H : ℝ) (t : ℝ) (ht2 : 2/5 < t) (ht
 theorem fdBoundaryFun_sub_i_norm_left (H : ℝ) {δ : ℝ} (hδ : 0 < δ) (hδs : δ < 1/5) :
     ‖fdBoundaryFun H (2/5 - δ) - I‖ = 2 * |Real.sin (5 * δ * Real.pi / 12)| := by
   rw [fdBoundaryFun_arc_dist_I H (2/5 - δ) (by linarith) (by linarith),
-    show (fdArcAngle (2/5 - δ) - Real.pi / 2) / 2 = -(5 * δ * Real.pi / 12) from by
+    show (fdArcAngle (2/5 - δ) - Real.pi / 2) / 2 = -(5 * δ * Real.pi / 12) by
       unfold fdArcAngle; ring, Real.sin_neg, abs_neg]
 
 /-- Norm of `γ(2/5 + δ) - i` equals `2|sin(5δπ/12)|`. -/
 theorem fdBoundaryFun_sub_i_norm_right (H : ℝ) {δ : ℝ} (hδ : 0 < δ) (hδs : δ < 1/5) :
     ‖fdBoundaryFun H (2/5 + δ) - I‖ = 2 * |Real.sin (5 * δ * Real.pi / 12)| := by
   rw [fdBoundaryFun_arc_dist_I H (2/5 + δ) (by linarith) (by linarith),
-    show (fdArcAngle (2/5 + δ) - Real.pi / 2) / 2 = 5 * δ * Real.pi / 12 from by
+    show (fdArcAngle (2/5 + δ) - Real.pi / 2) / 2 = 5 * δ * Real.pi / 12 by
       unfold fdArcAngle; ring]
 
 /-- The norms are equal: `‖γ(2/5-δ) - i‖ = ‖γ(2/5+δ) - i‖`. -/
@@ -168,7 +168,7 @@ theorem fdBoundaryFun_log_diff_core_tendsto (H : ℝ) :
       Complex.log (fdBoundaryFun H (2/5 + δ) - I) =
       ↑(Real.pi - 5 * δ * Real.pi / 6) * I := by
     rw [eventually_nhdsWithin_iff]
-    filter_upwards [Iio_mem_nhds (show (0:ℝ) < 1/5 from by norm_num)] with δ hδ hδ_pos
+    filter_upwards [Iio_mem_nhds (show (0:ℝ) < 1/5 by norm_num)] with δ hδ hδ_pos
     rw [mem_Ioi] at hδ_pos
     rw [mem_Iio] at hδ
     rw [log_sub_eq_of_equal_norm

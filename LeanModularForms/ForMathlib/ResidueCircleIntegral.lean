@@ -36,11 +36,8 @@ open scoped Interval Real
 
 noncomputable section
 
-/-- Two `limUnder`s agree when the functions are eventually equal. -/
-private lemma limUnder_eq_of_eventuallyEq {α β : Type*}
-    [TopologicalSpace β] [Nonempty β]
-    {l : Filter α} {f g : α → β} (h : f =ᶠ[l] g) :
-    l.limUnder f = l.limUnder g := by
+private lemma limUnder_eq_of_eventuallyEq {α β : Type*} [TopologicalSpace β] [Nonempty β]
+    {l : Filter α} {f g : α → β} (h : f =ᶠ[l] g) : l.limUnder f = l.limUnder g := by
   grind [Filter.limUnder, Filter.map_congr]
 
 /-- The circle integral of `f` vanishes when `f` is analytic on an open ball strictly
@@ -60,7 +57,6 @@ theorem residue_eq_zero_of_analyticAt {f : ℂ → ℂ} {z₀ : ℂ}
   rw [eventually_nhdsWithin_iff]
   filter_upwards [Iio_mem_nhds hR_pos] with r hr_lt hr_pos
   rw [circleIntegral_eq_zero_of_analyticOnNhd_ball hr_pos hr_lt hR_an, mul_zero]
-
 
 /-- If `f` and `g` agree in a punctured neighborhood of `z₀`, they have the same
 residue. The proof shows that the circle integrals agree for all sufficiently small
