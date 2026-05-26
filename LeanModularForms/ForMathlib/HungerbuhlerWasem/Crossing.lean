@@ -671,6 +671,72 @@ theorem corner_angle_compat_to_h_B
     at h_angle_raw
   exact h_B_of_angle_compat_corner hL_minus_ne hL_plus_ne hk h_angle_raw
 
+/-- **Canonical one-sided derivative limits at a `Finset` of crossings.**
+
+For a closed `ClosedPwC1Immersion γ` and a `Finset` of crossings in `Ioo 0 1`,
+produce the canonical one-sided derivative limit functions
+`L_+ t, L_- t : ℝ → ℂ` plus the four spec predicates needed by the corner-form
+CPV API (nonvanishing and right/left `Tendsto` of `deriv γ`):
+
+* at corners (`t ∈ partition`), `L_± t = Classical.choose (right/left_deriv_limit t)`,
+* at smooth crossings, `L_± t = deriv γ t`.
+
+Returned as an `Exists` bundle so the caller can `obtain` all six pieces in one
+step. -/
+theorem canonical_derivLimits_at_crossings_exists
+    (γ : ClosedPwC1Immersion x) {crossings : Finset ℝ}
+    (h_Ioo : ∀ t ∈ crossings, t ∈ Set.Ioo (0 : ℝ) 1) :
+    ∃ L_plus L_minus : ℝ → ℂ,
+      (∀ t ∈ crossings,
+        L_plus t = if h_part : t ∈ γ.toPwC1Immersion.toPiecewiseC1Path.partition then
+          Classical.choose (γ.toPwC1Immersion.right_deriv_limit t h_part)
+        else deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t) ∧
+      (∀ t ∈ crossings,
+        L_minus t = if h_part : t ∈ γ.toPwC1Immersion.toPiecewiseC1Path.partition then
+          Classical.choose (γ.toPwC1Immersion.left_deriv_limit t h_part)
+        else deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t) ∧
+      (∀ t ∈ crossings, L_plus t ≠ 0) ∧
+      (∀ t ∈ crossings, L_minus t ≠ 0) ∧
+      (∀ t ∈ crossings,
+        Tendsto (deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend)
+          (𝓝[>] t) (𝓝 (L_plus t))) ∧
+      (∀ t ∈ crossings,
+        Tendsto (deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend)
+          (𝓝[<] t) (𝓝 (L_minus t))) := by
+  refine ⟨fun t =>
+    if h_part : t ∈ γ.toPwC1Immersion.toPiecewiseC1Path.partition then
+      Classical.choose (γ.toPwC1Immersion.right_deriv_limit t h_part)
+    else deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t,
+    fun t =>
+    if h_part : t ∈ γ.toPwC1Immersion.toPiecewiseC1Path.partition then
+      Classical.choose (γ.toPwC1Immersion.left_deriv_limit t h_part)
+    else deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t,
+    fun _ _ => rfl, fun _ _ => rfl, ?_, ?_, ?_, ?_⟩
+  · intro t ht
+    by_cases h_part : t ∈ γ.toPwC1Immersion.toPiecewiseC1Path.partition
+    · simpa [dif_pos h_part] using
+        (Classical.choose_spec (γ.toPwC1Immersion.right_deriv_limit t h_part)).1
+    · simpa [dif_neg h_part] using
+        (deriv_limit_eq_at_off_partition γ (h_Ioo t ht) h_part).1
+  · intro t ht
+    by_cases h_part : t ∈ γ.toPwC1Immersion.toPiecewiseC1Path.partition
+    · simpa [dif_pos h_part] using
+        (Classical.choose_spec (γ.toPwC1Immersion.left_deriv_limit t h_part)).1
+    · simpa [dif_neg h_part] using
+        (deriv_limit_eq_at_off_partition γ (h_Ioo t ht) h_part).1
+  · intro t ht
+    by_cases h_part : t ∈ γ.toPwC1Immersion.toPiecewiseC1Path.partition
+    · simpa [dif_pos h_part] using
+        (Classical.choose_spec (γ.toPwC1Immersion.right_deriv_limit t h_part)).2
+    · simpa [dif_neg h_part] using
+        (deriv_limit_eq_at_off_partition γ (h_Ioo t ht) h_part).2.1
+  · intro t ht
+    by_cases h_part : t ∈ γ.toPwC1Immersion.toPiecewiseC1Path.partition
+    · simpa [dif_pos h_part] using
+        (Classical.choose_spec (γ.toPwC1Immersion.left_deriv_limit t h_part)).2
+    · simpa [dif_neg h_part] using
+        (deriv_limit_eq_at_off_partition γ (h_Ioo t ht) h_part).2.2
+
 /-- **Condition (B) bridged to the corner-form `h_B` predicate at all crossings.**
 
 Given condition (B), a polar-part decomposition, and a `Finset` of crossing
