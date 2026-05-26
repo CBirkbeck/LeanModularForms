@@ -747,6 +747,52 @@ theorem LocalDerivedCutoffs.δ_left_tendsto_zero
   · filter_upwards [Ioo_mem_nhdsGT D.hthresh] with ε hε
     exact D.hδ_left_pos ε hε.1 hε.2
 
+/-- **`D.δ_right ε < r` for `ε` near `0⁺`** (within the threshold window). -/
+private lemma LocalDerivedCutoffs.δ_right_lt_r_eventually
+    {γ : ClosedPwC1Immersion x} {s : ℂ} {t₀ r : ℝ}
+    (D : LocalDerivedCutoffs γ s t₀ r) :
+    ∀ᶠ ε in 𝓝[>] (0 : ℝ), D.δ_right ε < r := by
+  filter_upwards [Ioo_mem_nhdsGT D.hthresh] with ε hε
+  exact D.hδ_right_lt ε hε.1 hε.2
+
+/-- **`D.δ_left ε < r` for `ε` near `0⁺`** (within the threshold window). -/
+private lemma LocalDerivedCutoffs.δ_left_lt_r_eventually
+    {γ : ClosedPwC1Immersion x} {s : ℂ} {t₀ r : ℝ}
+    (D : LocalDerivedCutoffs γ s t₀ r) :
+    ∀ᶠ ε in 𝓝[>] (0 : ℝ), D.δ_left ε < r := by
+  filter_upwards [Ioo_mem_nhdsGT D.hthresh] with ε hε
+  exact D.hδ_left_lt ε hε.1 hε.2
+
+/-- **`0 < D.δ_right ε` for `ε` near `0⁺`** (within the threshold window). -/
+private lemma LocalDerivedCutoffs.δ_right_pos_eventually
+    {γ : ClosedPwC1Immersion x} {s : ℂ} {t₀ r : ℝ}
+    (D : LocalDerivedCutoffs γ s t₀ r) :
+    ∀ᶠ ε in 𝓝[>] (0 : ℝ), 0 < D.δ_right ε := by
+  filter_upwards [Ioo_mem_nhdsGT D.hthresh] with ε hε
+  exact D.hδ_right_pos ε hε.1 hε.2
+
+/-- **`0 < D.δ_left ε` for `ε` near `0⁺`** (within the threshold window). -/
+private lemma LocalDerivedCutoffs.δ_left_pos_eventually
+    {γ : ClosedPwC1Immersion x} {s : ℂ} {t₀ r : ℝ}
+    (D : LocalDerivedCutoffs γ s t₀ r) :
+    ∀ᶠ ε in 𝓝[>] (0 : ℝ), 0 < D.δ_left ε := by
+  filter_upwards [Ioo_mem_nhdsGT D.hthresh] with ε hε
+  exact D.hδ_left_pos ε hε.1 hε.2
+
+/-- **Real/imaginary decomposition of `Complex.log (a / b)`** for nonzero `a`, `b`:
+the real part is `log ‖a‖ - log ‖b‖` and the imaginary part is `arg (a / b)`. -/
+private lemma log_div_re_im_decomp {a b : ℂ} (ha : a ≠ 0) (hb : b ≠ 0) :
+    Complex.log (a / b) =
+      ((Real.log ‖a‖ - Real.log ‖b‖ : ℝ) : ℂ) + ((a / b).arg : ℂ) * Complex.I := by
+  refine Complex.ext ?_ ?_
+  · simp only [Complex.add_re, Complex.ofReal_re, Complex.mul_re, Complex.I_re,
+      Complex.I_im, mul_zero, mul_one, Complex.ofReal_im, sub_zero, add_zero]
+    rw [Complex.log_re, norm_div,
+      Real.log_div (norm_ne_zero_iff.mpr ha) (norm_ne_zero_iff.mpr hb)]
+  · simp only [Complex.add_im, Complex.ofReal_im, Complex.mul_im, Complex.I_re,
+      Complex.I_im, mul_one, Complex.ofReal_re, zero_add]
+    rw [Complex.log_im]; ring
+
 /-- **Per-window cutoff integral converges, exact-radius form** (T-BR-Y9c).
 
 Like `perCrossing_window_integral_tendsto`, but takes the window radius `r`
@@ -803,20 +849,14 @@ theorem perCrossing_window_integral_tendsto_exact
     LocalDerivedCutoffs.δ_right_tendsto_zero hr_pos h_window_Icc h_local_unique_r D
   have hδL_tendsto : Tendsto D.δ_left (𝓝[>] (0 : ℝ)) (𝓝[>] (0 : ℝ)) :=
     LocalDerivedCutoffs.δ_left_tendsto_zero hr_pos h_window_Icc h_local_unique_r D
-  have hδR_lt_r : ∀ᶠ ε in 𝓝[>] (0 : ℝ), D.δ_right ε < r := by
-    filter_upwards [(hδR_tendsto.mono_right nhdsWithin_le_nhds).eventually
-      (Metric.ball_mem_nhds (0 : ℝ) hr_pos)] with ε hε
-    rw [Real.dist_eq, sub_zero] at hε; linarith [le_abs_self (D.δ_right ε)]
-  have hδL_lt_r : ∀ᶠ ε in 𝓝[>] (0 : ℝ), D.δ_left ε < r := by
-    filter_upwards [(hδL_tendsto.mono_right nhdsWithin_le_nhds).eventually
-      (Metric.ball_mem_nhds (0 : ℝ) hr_pos)] with ε hε
-    rw [Real.dist_eq, sub_zero] at hε; linarith [le_abs_self (D.δ_left ε)]
-  have hδR_pos_ev : ∀ᶠ ε in 𝓝[>] (0 : ℝ), 0 < D.δ_right ε := by
-    filter_upwards [Ioo_mem_nhdsGT D.hthresh] with ε hε
-    exact D.hδ_right_pos ε hε.1 hε.2
-  have hδL_pos_ev : ∀ᶠ ε in 𝓝[>] (0 : ℝ), 0 < D.δ_left ε := by
-    filter_upwards [Ioo_mem_nhdsGT D.hthresh] with ε hε
-    exact D.hδ_left_pos ε hε.1 hε.2
+  have hδR_lt_r : ∀ᶠ ε in 𝓝[>] (0 : ℝ), D.δ_right ε < r :=
+    D.δ_right_lt_r_eventually
+  have hδL_lt_r : ∀ᶠ ε in 𝓝[>] (0 : ℝ), D.δ_left ε < r :=
+    D.δ_left_lt_r_eventually
+  have hδR_pos_ev : ∀ᶠ ε in 𝓝[>] (0 : ℝ), 0 < D.δ_right ε :=
+    D.δ_right_pos_eventually
+  have hδL_pos_ev : ∀ᶠ ε in 𝓝[>] (0 : ℝ), 0 < D.δ_left ε :=
+    D.δ_left_pos_eventually
   set Λ_R : ℝ → ℂ := fun ε =>
     Complex.log ((γf (t₀ + r) - s) / (γf (t₀ + D.δ_right ε) - s)) with hΛR_def
   set Λ_L : ℝ → ℂ := fun ε =>
@@ -966,26 +1006,14 @@ theorem perCrossing_window_integral_tendsto_exact
       rw [← norm_pos_iff, h_eq_R]; exact hε_pos
     have h_γL_ne : γf (t₀ - D.δ_left ε) - s ≠ 0 := by
       rw [← norm_pos_iff, h_eq_L]; exact hε_pos
-    have h_log_decomp : ∀ (a b : ℂ), a ≠ 0 → b ≠ 0 →
-        Complex.log (a / b) =
-          ((Real.log ‖a‖ - Real.log ‖b‖ : ℝ) : ℂ) + ((a / b).arg : ℂ) * Complex.I := by
-      intro a b ha hb
-      refine Complex.ext ?_ ?_
-      · simp only [Complex.add_re, Complex.ofReal_re, Complex.mul_re, Complex.I_re,
-          Complex.I_im, mul_zero, mul_one, Complex.ofReal_im, sub_zero, add_zero]
-        rw [Complex.log_re, norm_div,
-          Real.log_div (norm_ne_zero_iff.mpr ha) (norm_ne_zero_iff.mpr hb)]
-      · simp only [Complex.add_im, Complex.ofReal_im, Complex.mul_im, Complex.I_re,
-          Complex.I_im, mul_one, Complex.ofReal_re, zero_add]
-        rw [Complex.log_im]; ring
     have h_log_R_decomp : Λ_R ε =
         ((Real.log ‖γf (t₀ + r) - s‖ - Real.log ‖γf (t₀ + D.δ_right ε) - s‖ : ℝ) : ℂ) +
         (((γf (t₀ + r) - s) / (γf (t₀ + D.δ_right ε) - s)).arg : ℂ) * Complex.I :=
-      h_log_decomp _ _ h_γPlus_ne h_γR_ne
+      log_div_re_im_decomp h_γPlus_ne h_γR_ne
     have h_log_L_decomp : Λ_L ε =
         ((Real.log ‖γf (t₀ - D.δ_left ε) - s‖ - Real.log ‖γf (t₀ - r) - s‖ : ℝ) : ℂ) +
         (((γf (t₀ - D.δ_left ε) - s) / (γf (t₀ - r) - s)).arg : ℂ) * Complex.I :=
-      h_log_decomp _ _ h_γL_ne h_γMinus_ne
+      log_div_re_im_decomp h_γL_ne h_γMinus_ne
     rw [h_log_L_decomp, h_log_R_decomp, h_eq_R, h_eq_L]
     simp only [hlogND_def]; push_cast; ring
   have h_decomp' : (fun ε : ℝ => ((logNorm_diff : ℝ) : ℂ) +
