@@ -85,16 +85,15 @@ lemma σ_levelRaiseMatrix (l : ℕ) [NeZero l] :
 
 /-- For γ ∈ Γ₁(d*M), the entry `γ.val 1 0` is divisible by `d`. -/
 lemma Gamma1_dmul_lower_left_dvd (d M : ℕ) (γ : SL(2, ℤ)) (hγ : γ ∈ Gamma1 (d * M)) :
-    (d : ℤ) ∣ γ.val 1 0 := by
-  obtain ⟨_, _, hc⟩ := (Gamma1_mem _ _).mp hγ
-  exact dvd_trans ⟨M, by push_cast; ring⟩ ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp hc)
+    (d : ℤ) ∣ γ.val 1 0 :=
+  dvd_trans ⟨M, by push_cast; ring⟩
+    ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp ((Gamma1_mem _ _).mp hγ).2.2)
 
 /-- For `γ ∈ Γ₀(d*M)`, the entry `γ.val 1 0` is divisible by `d`. -/
 lemma Gamma0_dmul_lower_left_dvd (d M : ℕ) (γ : SL(2, ℤ)) (hγ : γ ∈ Gamma0 (d * M)) :
-    (d : ℤ) ∣ γ.val 1 0 := by
-  have hc : ((d * M : ℕ) : ℤ) ∣ γ.val 1 0 :=
-    (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp (Gamma0_mem.mp hγ)
-  exact dvd_trans ⟨M, by push_cast; ring⟩ hc
+    (d : ℤ) ∣ γ.val 1 0 :=
+  dvd_trans ⟨M, by push_cast; ring⟩
+    ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp (Gamma0_mem.mp hγ))
 
 /-- Construction of `δ_d γ δ_d⁻¹` as an explicit `SL(2, ℤ)` element when
 `d ∣ γ.val 1 0`. The formula `[[a, d*b], [c/d, e]]` is integer by hypothesis. -/
@@ -102,10 +101,9 @@ noncomputable def levelRaiseConjOfDvd (d : ℕ) [NeZero d]
     (γ : SL(2, ℤ)) (hdvd : (d : ℤ) ∣ γ.val 1 0) : SL(2, ℤ) := by
   refine ⟨!![γ.val 0 0, d * γ.val 0 1;
              γ.val 1 0 / d, γ.val 1 1], ?_⟩
-  have hdet : γ.val.det = 1 := γ.property
-  rw [Matrix.det_fin_two] at hdet
   rw [Matrix.det_fin_two_of]
-  linear_combination hdet - γ.val 0 1 * Int.ediv_mul_cancel hdvd
+  linear_combination (Matrix.det_fin_two γ.val).symm.trans γ.property -
+    γ.val 0 1 * Int.ediv_mul_cancel hdvd
 
 /-- Construction of `δ_d γ δ_d⁻¹` as an explicit `SL(2, ℤ)` element when
 `γ ∈ Γ₁(d*M)`. The formula `[[a, d*b], [c/d, e]]` is integer because `d ∣ c`. -/
@@ -246,8 +244,8 @@ def levelRaise (M : ℕ) [NeZero M] (d : ℕ) [NeZero d] (k : ℤ) :
     ext z
     show ((d : ℂ) ^ (1 - k)) • ((⇑(c • f) ∣[k] levelRaiseMatrix d) z) =
       c • (((d : ℂ) ^ (1 - k)) • ((⇑f ∣[k] levelRaiseMatrix d) z))
-    have hcoe : (⇑(c • f) : UpperHalfPlane → ℂ) = c • ⇑f := rfl
-    simp only [hcoe, ModularForm.smul_slash, σ_levelRaiseMatrix d, RingHom.id_apply,
+    simp only [show (⇑(c • f) : UpperHalfPlane → ℂ) = c • ⇑f from rfl,
+      ModularForm.smul_slash, σ_levelRaiseMatrix d, RingHom.id_apply,
       Pi.smul_apply, smul_eq_mul]
     ring
 
@@ -272,8 +270,8 @@ def modularFormLevelRaise (M : ℕ) [NeZero M] (d : ℕ) [NeZero d] (k : ℤ) :
     ext z
     show ((d : ℂ) ^ (1 - k)) • ((⇑(c • f) ∣[k] levelRaiseMatrix d) z) =
       c • (((d : ℂ) ^ (1 - k)) • ((⇑f ∣[k] levelRaiseMatrix d) z))
-    have hcoe : (⇑(c • f) : UpperHalfPlane → ℂ) = c • ⇑f := rfl
-    simp only [hcoe, ModularForm.smul_slash, σ_levelRaiseMatrix d, RingHom.id_apply,
+    simp only [show (⇑(c • f) : UpperHalfPlane → ℂ) = c • ⇑f from rfl,
+      ModularForm.smul_slash, σ_levelRaiseMatrix d, RingHom.id_apply,
       Pi.smul_apply, smul_eq_mul]
     ring
 
@@ -356,13 +354,13 @@ lemma modularFormLevelRaise_apply_mul (M : ℕ) [NeZero M] (d : ℕ) [NeZero d] 
 `τ'.im > 0` and `l > 0`). -/
 lemma exists_levelRaiseMatrix_smul_eq (l : ℕ) [NeZero l] (τ' : UpperHalfPlane) :
     ∃ τ : UpperHalfPlane, levelRaiseMatrix l • τ = τ' := by
-  have hl_ne : (l : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (NeZero.ne l)
   have him : 0 < ((↑τ' / (l : ℂ) : ℂ)).im := by
     rw [Complex.div_natCast_im]
     exact div_pos τ'.im_pos (Nat.cast_pos.mpr (Nat.pos_of_neZero l))
   refine ⟨UpperHalfPlane.mk (↑τ' / (l : ℂ)) him, ?_⟩
   apply UpperHalfPlane.ext
-  rw [coe_levelRaiseMatrix_smul, UpperHalfPlane.coe_mk, mul_div_cancel₀ _ hl_ne]
+  rw [coe_levelRaiseMatrix_smul, UpperHalfPlane.coe_mk,
+    mul_div_cancel₀ _ (Nat.cast_ne_zero.mpr (NeZero.ne l))]
 
 /-- **Injectivity of `levelRaiseFun l k`.** If two functions `f₁, f₂ : ℍ → ℂ`
 have the same level-raise, they are equal. -/
@@ -371,8 +369,7 @@ lemma levelRaiseFun_injective (l : ℕ) [NeZero l] (k : ℤ) :
   intro f₁ f₂ heq
   funext τ'
   obtain ⟨τ, hτ⟩ := exists_levelRaiseMatrix_smul_eq l τ'
-  have h := congr_fun heq τ
-  rwa [levelRaiseFun_apply, levelRaiseFun_apply, hτ] at h
+  simpa only [levelRaiseFun_apply, hτ] using congr_fun heq τ
 
 private noncomputable def primeProductCoprime (a : ℤ) (l : ℕ) : ℤ :=
   ((l.primeFactors.filter (fun (p : ℕ) ↦ ¬ ((p : ℤ) ∣ a))).prod id : ℕ)
@@ -391,8 +388,8 @@ private lemma not_dvd_primeProductCoprime_of_dvd
   obtain ⟨q, hq_mem, hq_dvd⟩ := (Prime.dvd_finset_prod_iff (Nat.prime_iff.mp hp_prime) id).mp
     (by exact_mod_cast h_dvd)
   obtain ⟨hq_pf, hqa⟩ := Finset.mem_filter.mp hq_mem
-  have hq_prime := Nat.prime_of_mem_primeFactors hq_pf
-  exact hqa ((Nat.prime_dvd_prime_iff_eq hp_prime hq_prime).mp hq_dvd ▸ hpa)
+  exact hqa ((Nat.prime_dvd_prime_iff_eq hp_prime
+    (Nat.prime_of_mem_primeFactors hq_pf)).mp hq_dvd ▸ hpa)
 
 private lemma exists_shift_isCoprime (a c : ℤ) (l : ℕ) [NeZero l]
     (hac : IsCoprime a c) :
@@ -402,24 +399,19 @@ private lemma exists_shift_isCoprime (a c : ℤ) (l : ℕ) [NeZero l]
   obtain ⟨p, hp_prime, hp_dvd⟩ := Nat.exists_prime_and_dvd h_ne_one
   rw [Nat.dvd_gcd_iff] at hp_dvd
   obtain ⟨hp_dvd_x, hp_dvd_l⟩ := hp_dvd
-  have hp_in_pf : p ∈ l.primeFactors := by
-    rw [Nat.mem_primeFactors]
-    exact ⟨hp_prime, hp_dvd_l, NeZero.ne l⟩
   have hp_dvd_x_int : (p : ℤ) ∣ (a - primeProductCoprime a l * c) := by
     rwa [← Int.natAbs_dvd_natAbs, Int.natAbs_natCast]
   have hp_isPrime : Prime (p : ℤ) := Nat.prime_iff_prime_int.mp hp_prime
   by_cases hpa : (p : ℤ) ∣ a
-  · have hp_not_dvd_c : ¬ ((p : ℤ) ∣ c) := fun hpc ↦
-      hp_isPrime.not_unit (hac.isUnit_of_dvd' hpa hpc)
-    have hp_dvd_ic : (p : ℤ) ∣ primeProductCoprime a l * c := by
+  · have hp_dvd_ic : (p : ℤ) ∣ primeProductCoprime a l * c := by
       simpa using dvd_sub hpa hp_dvd_x_int
     rcases hp_isPrime.dvd_mul.mp hp_dvd_ic with h | h
     · exact not_dvd_primeProductCoprime_of_dvd hp_prime hpa h
-    · exact hp_not_dvd_c h
+    · exact hp_isPrime.not_unit (hac.isUnit_of_dvd' hpa h)
   · refine hpa ?_
-    have hp_dvd_ic : (p : ℤ) ∣ primeProductCoprime a l * c :=
-      (dvd_primeProductCoprime_of_not_dvd hp_in_pf hpa).mul_right _
-    simpa using dvd_add hp_dvd_x_int hp_dvd_ic
+    simpa using dvd_add hp_dvd_x_int
+      ((dvd_primeProductCoprime_of_not_dvd
+        (Nat.mem_primeFactors.mpr ⟨hp_prime, hp_dvd_l, NeZero.ne l⟩) hpa).mul_right c)
 
 private noncomputable def shiftJ (α β : ℤ) (l : ℤ) : ℤ :=
   Int.gcdA α l * β
@@ -452,14 +444,13 @@ private lemma eq_T_zpow_mul_levelRaiseConj_mul_T_zpow
     (hdvd : (l : ℤ) ∣ γ.val 1 0) :
     M = ModularGroup.T ^ i * levelRaiseConjOfDvd l γ hdvd * ModularGroup.T ^ j := by
   apply Subtype.ext
-  have hl_ne : (l : ℤ) ≠ 0 := Nat.cast_ne_zero.mpr (NeZero.ne l)
-  have h_div : ((l : ℤ) * c) / (l : ℤ) = c := Int.mul_ediv_cancel_left c hl_ne
   rw [hMval, Matrix.SpecialLinearGroup.coe_mul, Matrix.SpecialLinearGroup.coe_mul,
     ModularGroup.coe_T_zpow, ModularGroup.coe_T_zpow]
   apply Matrix.ext
   intro p q
   fin_cases p <;> fin_cases q <;>
-    (simp [Matrix.mul_apply, Fin.sum_univ_two, levelRaiseConjOfDvd, hγval, h_div];
+    (simp [Matrix.mul_apply, Fin.sum_univ_two, levelRaiseConjOfDvd, hγval,
+      Int.mul_ediv_cancel_left c (Nat.cast_ne_zero.mpr (NeZero.ne l))];
      try linear_combination hk)
 
 /-- **Lower-level T-factorisation.** Every `γ' ∈ Γ₀(N/l)` can be written as
@@ -473,22 +464,20 @@ lemma exists_T_levelRaiseConj_T_factor
             (levelRaiseConjOfDvd l γ (dvd_lower_left_of_dvd h_dvd hγ)) *
             ModularGroup.T ^ j ∧
       γ.val 1 1 = γ'.val 1 1 - γ'.val 1 0 * j := by
-  set a := γ'.val 0 0 with ha_def
-  set b := γ'.val 0 1 with hb_def
-  set c := γ'.val 1 0 with hc_def
-  set d := γ'.val 1 1 with hd_def
+  set a := γ'.val 0 0
+  set b := γ'.val 0 1
+  set c := γ'.val 1 0
+  set d := γ'.val 1 1
   have hdet : a * d - b * c = 1 := by
     have hp := γ'.property
     rw [Matrix.det_fin_two] at hp
     simpa [a, b, c, d] using hp
-  have hac : IsCoprime a c := ⟨d, -b, by linear_combination hdet⟩
-  set i := primeProductCoprime a l with hi_def
-  set α := a - i * c with hα_def
-  have hα_iscop : IsCoprime α (l : ℤ) := exists_shift_isCoprime a c l hac
-  have hα_gcd : Int.gcd α (l : ℤ) = 1 := Int.isCoprime_iff_gcd_eq_one.mp hα_iscop
-  set β := b - i * d with hβ_def
-  set j := shiftJ α β (l : ℤ) with hj_def
-  obtain ⟨k, hk⟩ := shiftJ_spec (β := β) hα_gcd
+  set i := primeProductCoprime a l
+  set α := a - i * c
+  set β := b - i * d
+  set j := shiftJ α β (l : ℤ)
+  obtain ⟨k, hk⟩ := shiftJ_spec (β := β) (Int.isCoprime_iff_gcd_eq_one.mp
+    (exists_shift_isCoprime a c l ⟨d, -b, by linear_combination hdet⟩))
   refine ⟨i, j, ⟨!![α, k; (l : ℤ) * c, d - c * j], ?det⟩,
     ?gamma0_mem, ?eq, ?diag⟩
   · rw [Matrix.det_fin_two_of]
@@ -511,8 +500,7 @@ lemma qParam_nat_mul_eq_pow (h : ℝ) (d : ℕ) (z : ℂ) :
     Function.Periodic.qParam h ((d : ℂ) * z) =
       (Function.Periodic.qParam h z) ^ d := by
   simp only [Function.Periodic.qParam, ← Complex.exp_nat_mul]
-  congr 1
-  ring
+  ring_nf
 
 /-- **Sparse reindexing** of a HasSum over `(q^d)^j` as a HasSum over
 `q^n` with zero coefficients at non-multiples of `d`.  For
@@ -534,8 +522,7 @@ lemma hasSum_pow_dvd_reindex {d : ℕ} (hd : 0 < d) {a : ℕ → ℂ} {q : ℂ}
     funext j
     simp only [Function.comp_apply]
     rw [if_pos ⟨j, rfl⟩, Nat.mul_div_cancel_left j hd, pow_mul]
-  rw [← hinj.hasSum_iff h_zero, h_eq]
-  exact h
+  rwa [← hinj.hasSum_iff h_zero, h_eq]
 
 /-- **q-expansion scaling formula for `modularFormLevelRaise`.** The
 level-raised form `modularFormLevelRaise N d k f` has `(N : ℝ)`-level Fourier
@@ -547,7 +534,6 @@ theorem qExpansion_modularFormLevelRaise_coeff
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) (n : ℕ) :
     (qExpansion (N : ℝ) (modularFormLevelRaise N d k f)).coeff n =
       if d ∣ n then (qExpansion (N : ℝ) f).coeff (n / d) else 0 := by
-  have hd_pos : 0 < d := Nat.pos_of_neZero d
   have hN_pos : (0 : ℝ) < (N : ℝ) := Nat.cast_pos.mpr (Nat.pos_of_neZero N)
   have hN_period_dN : (N : ℝ) ∈ ((Gamma1 (d * N)).map (mapGL ℝ)).strictPeriods := by
     rw [strictPeriods_Gamma1]
@@ -560,7 +546,7 @@ theorem qExpansion_modularFormLevelRaise_coeff
     rw [modularFormLevelRaise_apply N d k f τ]
     have hfsum := hasSum_qExpansion f hN_pos hN_period (levelRaiseMatrix d • τ)
     rw [coe_levelRaiseMatrix_smul d τ, qParam_nat_mul_eq_pow (N : ℝ) d (τ : ℂ)] at hfsum
-    convert hasSum_pow_dvd_reindex hd_pos hfsum using 1
+    convert hasSum_pow_dvd_reindex (Nat.pos_of_neZero d) hfsum using 1
     funext j
     split_ifs with hdvd
     · rfl
@@ -579,7 +565,6 @@ theorem qExpansion_modularFormLevelRaise_coeff'
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) (n : ℕ) :
     (qExpansion h (modularFormLevelRaise N d k f)).coeff n =
       if d ∣ n then (qExpansion h f).coeff (n / d) else 0 := by
-  have hd_pos : 0 < d := Nat.pos_of_neZero d
   have h_sum_g : ∀ τ : UpperHalfPlane,
       HasSum (fun j : ℕ ↦
         (if d ∣ j then (qExpansion h f).coeff (j / d) else 0) •
@@ -588,7 +573,7 @@ theorem qExpansion_modularFormLevelRaise_coeff'
     rw [modularFormLevelRaise_apply N d k f τ]
     have hfsum := hasSum_qExpansion f hh_pos hh_period_N (levelRaiseMatrix d • τ)
     rw [coe_levelRaiseMatrix_smul d τ, qParam_nat_mul_eq_pow h d (τ : ℂ)] at hfsum
-    convert hasSum_pow_dvd_reindex hd_pos hfsum using 1
+    convert hasSum_pow_dvd_reindex (Nat.pos_of_neZero d) hfsum using 1
     funext j
     split_ifs with hdvd
     · rfl

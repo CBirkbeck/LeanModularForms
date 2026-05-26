@@ -133,18 +133,17 @@ private theorem mul_injOn_divisors_coprime {m a b : ℕ} (hab : Nat.Coprime a b)
       (↑((m.gcd a).divisors ×ˢ (m.gcd b).divisors)) := by
   intro ⟨d₁, d₂⟩ hd ⟨e₁, e₂⟩ he hmul
   simp only [Finset.coe_product, Set.mem_prod, Finset.mem_coe] at hd he
-  have hd₁a : d₁ ∣ a := (Nat.dvd_of_mem_divisors hd.1).trans (Nat.gcd_dvd_right m a)
-  have hd₂b : d₂ ∣ b := (Nat.dvd_of_mem_divisors hd.2).trans (Nat.gcd_dvd_right m b)
-  have he₁a : e₁ ∣ a := (Nat.dvd_of_mem_divisors he.1).trans (Nat.gcd_dvd_right m a)
-  have he₂b : e₂ ∣ b := (Nat.dvd_of_mem_divisors he.2).trans (Nat.gcd_dvd_right m b)
-  have hd₁e₂ : Nat.Coprime d₁ e₂ := hab.coprime_dvd_left hd₁a |>.coprime_dvd_right he₂b
-  have he₁d₂ : Nat.Coprime e₁ d₂ := hab.coprime_dvd_left he₁a |>.coprime_dvd_right hd₂b
   have hmul' : d₁ * d₂ = e₁ * e₂ := hmul
-  have h1 : d₁ ∣ e₁ := hd₁e₂.dvd_of_dvd_mul_right (hmul' ▸ dvd_mul_right d₁ d₂)
-  have h2 : e₁ ∣ d₁ := he₁d₂.dvd_of_dvd_mul_right (hmul'.symm ▸ dvd_mul_right e₁ e₂)
   have hd₁_pos : 0 < d₁ := Nat.pos_of_mem_divisors hd.1
-  have he₁_pos : 0 < e₁ := Nat.pos_of_mem_divisors he.1
-  have heq1 : d₁ = e₁ := Nat.le_antisymm (Nat.le_of_dvd he₁_pos h1) (Nat.le_of_dvd hd₁_pos h2)
+  have heq1 : d₁ = e₁ := Nat.dvd_antisymm
+    (((hab.coprime_dvd_left
+        ((Nat.dvd_of_mem_divisors hd.1).trans (Nat.gcd_dvd_right m a))).coprime_dvd_right
+        ((Nat.dvd_of_mem_divisors he.2).trans (Nat.gcd_dvd_right m b))).dvd_of_dvd_mul_right
+      (hmul' ▸ dvd_mul_right d₁ d₂))
+    (((hab.coprime_dvd_left
+        ((Nat.dvd_of_mem_divisors he.1).trans (Nat.gcd_dvd_right m a))).coprime_dvd_right
+        ((Nat.dvd_of_mem_divisors hd.2).trans (Nat.gcd_dvd_right m b))).dvd_of_dvd_mul_right
+      (hmul'.symm ▸ dvd_mul_right e₁ e₂))
   exact Prod.ext heq1 (Nat.eq_of_mul_eq_mul_left hd₁_pos (heq1 ▸ hmul'))
 
 private theorem divisorSum_coprime_summand {N : ℕ} [NeZero N]
@@ -172,16 +171,13 @@ private theorem divisorSum_coprime_summand {N : ℕ} [NeZero N]
       rw [dif_pos h₁₂, dif_pos h₂, show (↑(d₁ * d₂) : ℂ) = (↑d₁ : ℂ) * ↑d₂ by push_cast; ring,
         mul_zpow, div_sq_product hd₁sq, unitOfCoprime_mul h₁ h₂ h₁₂ χ]
       ring
-    · have h₁₂ : ¬(d₁ * d₂).Coprime N := fun h ↦
-        h₂ (h.coprime_dvd_left (dvd_mul_left d₂ d₁))
-      rw [dif_neg h₁₂, dif_neg h₂]
+    · rw [dif_neg fun h ↦ h₂ (h.coprime_dvd_left (dvd_mul_left d₂ d₁)), dif_neg h₂]
       simp
   · rw [dif_neg h₁]
     apply Finset.sum_eq_zero
     intro d₂ _
-    have h₁₂ : ¬(d₁ * d₂).Coprime N := fun h ↦
-      h₁ (h.coprime_dvd_left (dvd_mul_right d₁ d₂))
-    simp [h₁₂]
+    simp [show ¬(d₁ * d₂).Coprime N from
+      fun h ↦ h₁ (h.coprime_dvd_left (dvd_mul_right d₁ d₂))]
 
 private theorem divisorSum_coprime_conv {N : ℕ} [NeZero N]
     (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (c : ℕ → ℂ) (m a b : ℕ)
@@ -386,9 +382,8 @@ private theorem ppow_divisorSum_recurrence_not_dvd [NeZero N] (k : ℤ) {p : ℕ
   simp only [Nat.Coprime, Nat.gcd_one_left, dite_true]
   rw [gcd_m r, Nat.divisors_one, Finset.sum_singleton,
     gcd_pm_eq, hp.divisors, Finset.sum_insert (by simp; exact Ne.symm hp.one_lt.ne')]
-  simp only [Finset.sum_singleton]
-  simp only [Nat.gcd_one_left, dite_true, Nat.cast_one, one_zpow, one_mul, Nat.div_one]
-  simp only [hpN, dite_true]
+  simp only [Finset.sum_singleton, Nat.gcd_one_left, dite_true, Nat.cast_one, one_zpow, one_mul,
+    Nat.div_one, hpN]
   rw [show p * m * p ^ (r + 1) / (p * p) = m * p ^ r by
       rw [show p * m * p ^ (r + 1) = p * p * (m * p ^ r) by ring]
       exact Nat.mul_div_cancel_left _ (Nat.mul_pos hp.pos hp.pos),
@@ -435,10 +430,9 @@ private theorem heckeT_ppow_preserves_charSpace [NeZero N] (k : ℤ) {p : ℕ} (
     heckeT_ppow k p hp r f ∈ modFormCharSpace k χ := by
   rw [mem_modFormCharSpace_iff] at hf ⊢
   intro d
-  have : diamondOpHom k d (heckeT_ppow k p hp r f) =
-      heckeT_ppow k p hp r (diamondOpHom k d f) :=
-    DFunLike.congr_fun (heckeT_ppow_comm_diamondOp k hp hpN r d) f
-  rw [this, hf d, map_smul]
+  rw [show diamondOpHom k d (heckeT_ppow k p hp r f) =
+      heckeT_ppow k p hp r (diamondOpHom k d f) from
+    DFunLike.congr_fun (heckeT_ppow_comm_diamondOp k hp hpN r d) f, hf d, map_smul]
 
 private theorem diamondOp_ext_charSpace [NeZero N] (k : ℤ) {p : ℕ}
     (hpN : Nat.Coprime p N)
@@ -461,30 +455,20 @@ private theorem coeff_qExpansion_heckeT_ppow_succ_succ [NeZero N] (k : ℤ) {p :
       heckeT_p_all k p hp (heckeT_ppow k p hp (r + 1) f) -
       (↑p : ℂ) ^ (k - 1) • (diamondOp_ext k p (heckeT_ppow k p hp r f)) :=
     DFunLike.congr_fun (heckeT_ppow_succ_succ (N := N) k p hp r) f
-  have h_diamond : diamondOp_ext k p (heckeT_ppow k p hp r f) =
-      (↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ) • heckeT_ppow k p hp r f :=
-    diamondOp_ext_charSpace k hpN χ (heckeT_ppow_preserves_charSpace k hp hpN r χ hf)
-  rw [h_diamond, smul_smul, heckeT_p_all_coprime k hp hpN] at h_apply
+  rw [diamondOp_ext_charSpace k hpN χ (heckeT_ppow_preserves_charSpace k hp hpN r χ hf),
+    smul_smul, heckeT_p_all_coprime k hp hpN] at h_apply
   set χp := (↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ)
   set cpk := (↑p : ℂ) ^ (k - 1)
   have h_coe : (⇑(heckeT_ppow k p hp (r + 2) f) : ℍ → ℂ) =
       ⇑(heckeT_p k p hp hpN (heckeT_ppow k p hp (r + 1) f)) -
       ⇑((cpk * χp) • heckeT_ppow k p hp r f : ModularForm _ k) := by
-    change (⇑(heckeT_ppow k p hp (r + 2) f) : ℍ → ℂ) = _
-    rw [show (⇑((cpk * χp) • heckeT_ppow k p hp r f : ModularForm _ k) : ℍ → ℂ) =
-        (cpk * χp) • ⇑(heckeT_ppow k p hp r f) from rfl]
+    rw [ModularForm.IsGLPos.coe_smul]
     exact congr_arg (↑· : ModularForm _ k → ℍ → ℂ) h_apply
-  rw [show (qExpansion h (heckeT_ppow k p hp (r + 2) f)).coeff m =
-      (qExpansion h (heckeT_ppow k p hp (r + 2) f : ModularForm _ k)).coeff m from rfl]
-  conv_lhs => rw [show (⇑(heckeT_ppow k p hp (r + 2) f : ModularForm _ k) : ℍ → ℂ) =
-      ⇑(heckeT_p k p hp hpN (heckeT_ppow k p hp (r + 1) f)) -
-      ⇑((cpk * χp) • heckeT_ppow k p hp r f : ModularForm _ k) from h_coe]
+  conv_lhs => rw [h_coe]
   rw [qExpansion_sub hh0 hh]
   simp only [map_sub]
   congr 1
-  rw [show (⇑((cpk * χp) • heckeT_ppow k p hp r f : ModularForm _ k) : ℍ → ℂ) =
-      (cpk * χp) • ⇑(heckeT_ppow k p hp r f) from rfl,
-    qExpansion_smul hh0 hh, PowerSeries.coeff_smul, smul_eq_mul]
+  rw [ModularForm.IsGLPos.coe_smul, qExpansion_smul hh0 hh, PowerSeries.coeff_smul, smul_eq_mul]
 
 private abbrev HeckeTpCoeffFormula (k : ℤ) {p N : ℕ} [NeZero N] (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) (χ : (ZMod N)ˣ →* ℂˣ) (t : ℝ) : Prop :=
@@ -506,18 +490,14 @@ private theorem fourierCoeff_heckeT_ppow_one_eq [NeZero N] (k : ℤ) {p : ℕ} (
   rw [pow_one, heckeT_ppow_one_eq_heckeT_p k hp hpN, hTp f hf m]
   by_cases hdvd : p ∣ m
   · rw [Nat.gcd_eq_right hdvd, hp.divisors, Finset.sum_insert (by simp; exact hp.one_lt.ne)]
-    simp only [Finset.sum_singleton]
-    simp only [Nat.Coprime, Nat.gcd_one_left, dite_true, Nat.cast_one, one_zpow,
-      unitOfCoprime_one_eq_one, map_one, Units.val_one, one_mul, Nat.div_one]
-    simp only [hpN, dite_true, if_pos hdvd]
+    simp only [Finset.sum_singleton, Nat.Coprime, Nat.gcd_one_left, dite_true, Nat.cast_one,
+      one_zpow, unitOfCoprime_one_eq_one, map_one, Units.val_one, one_mul, Nat.div_one, hpN,
+      if_pos hdvd]
     rw [Nat.mul_div_mul_right m p hp.pos, Nat.mul_comm p m]
-  · have hgcd : Nat.gcd m p = 1 :=
-      (hp.eq_one_or_self_of_dvd _ (Nat.gcd_dvd_right m p)).resolve_right fun h ↦
-        hdvd (h ▸ Nat.gcd_dvd_left m p)
-    rw [hgcd, Nat.divisors_one, Finset.sum_singleton]
-    simp only [Nat.Coprime, Nat.gcd_one_left, dite_true]
-    simp only [unitOfCoprime_one_eq_one, map_one, Units.val_one, Nat.cast_one, one_zpow,
-      one_mul, Nat.div_one]
+  · rw [(hp.eq_one_or_self_of_dvd _ (Nat.gcd_dvd_right m p)).resolve_right fun h ↦
+        hdvd (h ▸ Nat.gcd_dvd_left m p), Nat.divisors_one, Finset.sum_singleton]
+    simp only [Nat.Coprime, Nat.gcd_one_left, dite_true, unitOfCoprime_one_eq_one, map_one,
+      Units.val_one, Nat.cast_one, one_zpow, one_mul, Nat.div_one]
     rw [if_neg hdvd, mul_zero, add_zero, Nat.mul_comm p m]
 
 private theorem fourierCoeff_heckeT_ppow_succ_succ_eq [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prime p)
@@ -544,10 +524,8 @@ private theorem fourierCoeff_heckeT_ppow_succ_succ_eq [NeZero N] (k : ℤ) {p : 
           (↑d : ℂ) ^ (k - 1) * ↑(χ (ZMod.unitOfCoprime d h)) *
             (qExpansion t f).coeff (m * p ^ (r + 2) / (d * d))
         else 0 := by
-  have hf1 : heckeT_ppow k p hp (r + 1) f ∈ modFormCharSpace k χ :=
-    heckeT_ppow_preserves_charSpace k hp hpN (r + 1) χ hf
-  rw [coeff_qExpansion_heckeT_ppow_succ_succ k hp hpN χ r hf ht0 ht m, hTp _ hf1 m,
-    ih1 f hf (p * m), ih0 f hf m]
+  rw [coeff_qExpansion_heckeT_ppow_succ_succ k hp hpN χ r hf ht0 ht m,
+    hTp _ (heckeT_ppow_preserves_charSpace k hp hpN (r + 1) χ hf) m, ih1 f hf (p * m), ih0 f hf m]
   conv_lhs => rw [show (if p ∣ m then (qExpansion t ⇑((heckeT_ppow k p hp (r + 1)) f)).coeff (m / p)
         else 0) =
       if p ∣ m then ∑ d ∈ ((m / p).gcd (p ^ (r + 1))).divisors,
@@ -568,8 +546,6 @@ private theorem fourierCoeff_heckeT_ppow [NeZero N] (k : ℤ) {p : ℕ} (hp : Na
           (↑d : ℂ) ^ (k - 1) * ↑(χ (ZMod.unitOfCoprime d h)) *
             (qExpansion N f).coeff (m * p ^ v / (d * d))
         else 0 := by
-  have hN_pos : (0 : ℝ) < N := Nat.cast_pos.mpr (Nat.pos_of_neZero N)
-  have hN_period := natCast_mem_strictPeriods_Gamma1_map N
   have hTp : HeckeTpCoeffFormula k hp hpN χ (N : ℝ) :=
     fun g hg m' ↦ fourierCoeff_heckeT_p k hp hpN χ hg m'
   suffices key : ∀ v, ∀ f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k,
@@ -586,13 +562,12 @@ private theorem fourierCoeff_heckeT_ppow [NeZero N] (k : ℤ) {p : ℕ} (hp : Na
   intro f hf m
   match v with
   | 0 =>
-    simp only [pow_zero, heckeT_ppow, Module.End.one_apply, Nat.gcd_one_right,
-      Nat.divisors_one, Finset.sum_singleton]
-    simp only [Nat.Coprime, Nat.gcd_one_left, dite_true]
-    simp [unitOfCoprime_one_eq_one]
+    simp [pow_zero, heckeT_ppow, Module.End.one_apply, Nat.gcd_one_right, Nat.divisors_one,
+      Finset.sum_singleton, Nat.Coprime, unitOfCoprime_one_eq_one]
   | 1 => exact fourierCoeff_heckeT_ppow_one_eq k hp hpN χ hTp hf m
   | r + 2 =>
-    exact fourierCoeff_heckeT_ppow_succ_succ_eq k hp hpN χ hN_pos hN_period hTp hf r m
+    exact fourierCoeff_heckeT_ppow_succ_succ_eq k hp hpN χ
+      (Nat.cast_pos.mpr (Nat.pos_of_neZero N)) (natCast_mem_strictPeriods_Gamma1_map N) hTp hf r m
       (fun g hg m' ↦ ih_v (r + 1) (by omega) g hg m')
       (fun g hg m' ↦ ih_v r (by omega) g hg m')
 
@@ -620,18 +595,14 @@ private theorem fourierCoeff_heckeT_n_prime [NeZero N] (k : ℤ) {n : ℕ} [NeZe
   by_cases hdvd : n ∣ m
   · rw [Nat.gcd_eq_right hdvd, hn_prime.divisors,
       Finset.sum_insert (by simp; exact hn_prime.one_lt.ne)]
-    simp only [Finset.sum_singleton]
-    simp only [Nat.Coprime, Nat.gcd_one_left, dite_true, Nat.cast_one, one_zpow,
-      unitOfCoprime_one_eq_one, map_one, Units.val_one, one_mul, Nat.div_one]
-    simp only [hnN, dite_true, if_pos hdvd]
+    simp only [Finset.sum_singleton, Nat.Coprime, Nat.gcd_one_left, dite_true, Nat.cast_one,
+      one_zpow, unitOfCoprime_one_eq_one, map_one, Units.val_one, one_mul, Nat.div_one, hnN,
+      if_pos hdvd]
     rw [Nat.mul_div_mul_right m n hn_prime.pos, Nat.mul_comm n m]
-  · have hgcd : Nat.gcd m n = 1 :=
-      (hn_prime.eq_one_or_self_of_dvd _ (Nat.gcd_dvd_right m n)).resolve_right fun h ↦
-        hdvd (h ▸ Nat.gcd_dvd_left m n)
-    rw [hgcd, Nat.divisors_one, Finset.sum_singleton]
-    simp only [Nat.Coprime, Nat.gcd_one_left, dite_true]
-    simp only [unitOfCoprime_one_eq_one, map_one, Units.val_one, Nat.cast_one, one_zpow,
-      one_mul, Nat.div_one]
+  · rw [(hn_prime.eq_one_or_self_of_dvd _ (Nat.gcd_dvd_right m n)).resolve_right fun h ↦
+        hdvd (h ▸ Nat.gcd_dvd_left m n), Nat.divisors_one, Finset.sum_singleton]
+    simp only [Nat.Coprime, Nat.gcd_one_left, dite_true, unitOfCoprime_one_eq_one, map_one,
+      Units.val_one, Nat.cast_one, one_zpow, one_mul, Nat.div_one]
     rw [if_neg hdvd, mul_zero, add_zero, Nat.mul_comm n m]
 
 private theorem fourierCoeff_heckeT_n_eq_ppow [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prime p)
@@ -704,15 +675,11 @@ private theorem fourierCoeff_heckeT_n_composite [NeZero N] (k : ℤ) (n : ℕ) [
   have hp : Nat.Prime p := Nat.minFac_prime (by omega)
   set v := n.factorization p with hv_def
   set q := n / p ^ v with hq_def
-  have hpN : Nat.Coprime p N := hnN.coprime_dvd_left (Nat.minFac_dvd n)
-  have hv_pos : 0 < v := hp.factorization_pos_of_dvd (by omega) (Nat.minFac_dvd n)
   have hq_pos : 0 < q :=
     Nat.div_pos (Nat.le_of_dvd (by omega) (Nat.ordProj_dvd n p)) (pow_pos hp.pos v)
-  have hq_lt : q < n := heckeT_n_unfold_lt n hn_gt
   have hn_eq : n = p ^ v * q := (Nat.ordProj_mul_ordCompl_eq_self n p).symm
-  haveI : NeZero q := ⟨hq_pos.ne'⟩
+  have : NeZero q := ⟨hq_pos.ne'⟩
   have h_unfold := heckeT_n_unfold (N := N) k n hn_gt
-  have hcop : Nat.Coprime (p ^ v) q := (Nat.coprime_ordCompl hp hn0).pow_left v
   by_cases hq1 : q = 1
   · have hn_ppow : n = p ^ v := by rw [hn_eq, hq1, mul_one]
     have h_eq : heckeT_n (N := N) k n f = heckeT_ppow k p hp v f := by
@@ -725,20 +692,21 @@ private theorem fourierCoeff_heckeT_n_composite [NeZero N] (k : ℤ) (n : ℕ) [
         simp only [show q = 1 from hq1]
         exact heckeT_n_one k
       exact DFunLike.congr_fun this f
-    exact fourierCoeff_heckeT_n_eq_ppow k hp χ (hppow hp hpN) n v m hn_ppow hf h_eq
+    exact fourierCoeff_heckeT_n_eq_ppow k hp χ
+      (hppow hp (hnN.coprime_dvd_left (Nat.minFac_dvd n))) n v m hn_ppow hf h_eq
   · have hq_gt1 : 1 < q := by omega
-    have hpv_lt : p ^ v < n := hn_eq ▸ lt_mul_of_one_lt_right (pow_pos hp.pos v) hq_gt1
-    have hpvN : (p ^ v).Coprime N := hn_eq ▸ hnN |>.coprime_dvd_left (dvd_mul_right (p ^ v) q)
     have hqN : q.Coprime N := hn_eq ▸ hnN |>.coprime_dvd_left (dvd_mul_left q (p ^ v))
-    haveI : NeZero (p ^ v) := ⟨(pow_pos hp.pos v).ne'⟩
+    have : NeZero (p ^ v) := ⟨(pow_pos hp.pos v).ne'⟩
     have h_apply : heckeT_n k n f = heckeT_n k (p ^ v) (heckeT_n k q f) := by
-      rw [h_unfold, heckeT_n_prime_pow k hp v hv_pos]
+      rw [h_unfold, heckeT_n_prime_pow k hp v
+        (hp.factorization_pos_of_dvd (by omega) (Nat.minFac_dvd n))]
       rfl
-    have hf_q : heckeT_n k q f ∈ modFormCharSpace k χ :=
-      heckeT_n_preserves_charSpace k q hqN χ hf
-    exact fourierCoeff_heckeT_n_coprime_split k χ n (p ^ v) q m hcop hn_eq h_apply
-      (ih (p ^ v) hpv_lt (pow_pos hp.pos v).ne' hpvN (heckeT_n k q f) hf_q m)
-      (ih q hq_lt hq_pos.ne' hqN f hf)
+    exact fourierCoeff_heckeT_n_coprime_split k χ n (p ^ v) q m
+      ((Nat.coprime_ordCompl hp hn0).pow_left v) hn_eq h_apply
+      (ih (p ^ v) (hn_eq ▸ lt_mul_of_one_lt_right (pow_pos hp.pos v) hq_gt1)
+        (pow_pos hp.pos v).ne' (hn_eq ▸ hnN |>.coprime_dvd_left (dvd_mul_right (p ^ v) q))
+        (heckeT_n k q f) (heckeT_n_preserves_charSpace k q hqN χ hf) m)
+      (ih q (heckeT_n_unfold_lt n hn_gt) hq_pos.ne' hqN f hf)
 
 /-- **General Fourier coefficient formula for `T_n`** (DS Prop 5.3.1, Miy Thm 4.5.13): for
 `f ∈ M_k(Γ₁(N), χ)` and positive integer `n` coprime to `N`,
@@ -768,13 +736,11 @@ theorem fourierCoeff_heckeT_n [NeZero N] (k : ℤ) (n : ℕ) [NeZero n]
   induction n using Nat.strongRecOn with
   | _ n ih =>
   intro hn0 hnN f hf m
-  haveI : NeZero n := ⟨hn0⟩
+  have : NeZero n := ⟨hn0⟩
   by_cases hn1 : n = 1
   · subst hn1
-    simp only [heckeT_n_one, Module.End.one_apply, Nat.gcd_one_right, Nat.divisors_one,
-      Finset.sum_singleton]
-    simp only [Nat.Coprime, Nat.gcd_one_left, dite_true]
-    simp [unitOfCoprime_one_eq_one]
+    simp [heckeT_n_one, Module.End.one_apply, Nat.gcd_one_right, Nat.divisors_one,
+      Finset.sum_singleton, Nat.Coprime, unitOfCoprime_one_eq_one]
   · have hn_gt : 1 < n := by omega
     by_cases hn_prime : Nat.Prime n
     · exact fourierCoeff_heckeT_n_prime k hn_prime hnN χ
@@ -819,20 +785,16 @@ theorem eigenvalue_eq_fourierCoeff [NeZero N] (k : ℤ) (n : ℕ+)
     (hf_char : f ∈ modFormCharSpace k χ)
     (hf_eigen : IsNormalisedEigenform k f) :
     eigenvalue k f hf_eigen.1 n hn = (qExpansion N f).coeff n.val := by
-  have hne : NeZero n.val := ⟨n.pos.ne'⟩
+  have : NeZero n.val := ⟨n.pos.ne'⟩
   have h1 := fourierCoeff_heckeT_n k n.val hn χ hf_char 1
   simp only [Nat.gcd_one_left, Nat.divisors_one, Finset.sum_singleton, Nat.Coprime, dite_true,
     Nat.cast_one, one_zpow, unitOfCoprime_one_eq_one, map_one, Units.val_one, one_mul,
     Nat.div_one] at h1
-  have hN_period := natCast_mem_strictPeriods_Gamma1_map N
   have h_lhs : (qExpansion N (heckeT_n k n.val f)).coeff 1 =
       eigenvalue k f hf_eigen.1 n hn := by
-    have h_fun : (⇑(heckeT_n k n.val f) : ℍ → ℂ) =
-        eigenvalue k f hf_eigen.1 n hn • ⇑f := by
-      change ⇑(heckeT_n k n.val f) = ⇑(eigenvalue k f hf_eigen.1 n hn • f : ModularForm _ k)
-      exact congr_arg (↑· : ModularForm _ k → ℍ → ℂ) (eigenvalue_spec k f hf_eigen.1 n hn)
-    simp only [h_fun, qExpansion_smul (Nat.cast_pos.mpr (Nat.pos_of_neZero N)) hN_period,
-      PowerSeries.coeff_smul, smul_eq_mul, hf_eigen.2, mul_one]
+    rw [eigenvalue_spec k f hf_eigen.1 n hn]
+    simp [qExpansion_smul (Nat.cast_pos.mpr (Nat.pos_of_neZero N))
+      (natCast_mem_strictPeriods_Gamma1_map N), hf_eigen.2]
   rw [← h1, h_lhs]
 
 /-- The Fourier coefficients of a normalised eigenform in `M_k(N, χ)` satisfy the **Hecke
@@ -850,21 +812,16 @@ theorem eigenform_coeff_multiplicative [NeZero N] (k : ℤ) (m n : ℕ+)
           (↑d : ℂ) ^ (k - 1) * ↑(χ (ZMod.unitOfCoprime d h)) *
             (qExpansion N f).coeff (m.val * n.val / (d * d))
         else 0 := by
-  haveI : NeZero m.val := ⟨m.pos.ne'⟩
-  haveI : NeZero n.val := ⟨n.pos.ne'⟩
-  have h_fourier := fourierCoeff_heckeT_n k m.val hm χ hf_char n.val
+  have : NeZero m.val := ⟨m.pos.ne'⟩
+  have : NeZero n.val := ⟨n.pos.ne'⟩
   have h_smul : (qExpansion N (heckeT_n k m.val f)).coeff n.val =
       eigenvalue k f hf_eigen.1 m hm * (qExpansion N f).coeff n.val := by
-    have hN_period := natCast_mem_strictPeriods_Gamma1_map N
-    rw [show (⇑(heckeT_n k m.val f) : ℍ → ℂ) =
-        ⇑(eigenvalue k f hf_eigen.1 m hm • f : ModularForm _ k) from
-        congr_arg (↑· : ModularForm _ k → ℍ → ℂ) (eigenvalue_spec k f hf_eigen.1 m hm),
-      ModularForm.IsGLPos.coe_smul,
-      qExpansion_smul (Nat.cast_pos.mpr (Nat.pos_of_neZero N)) hN_period,
+    rw [eigenvalue_spec k f hf_eigen.1 m hm, ModularForm.IsGLPos.coe_smul, qExpansion_smul
+      (Nat.cast_pos.mpr (Nat.pos_of_neZero N)) (natCast_mem_strictPeriods_Gamma1_map N),
       PowerSeries.coeff_smul, smul_eq_mul]
-  rw [← eigenvalue_eq_fourierCoeff k m hm χ hf_char hf_eigen, ← h_smul]
-  rw [Nat.gcd_comm, Nat.mul_comm] at h_fourier
-  exact h_fourier
+  rw [← eigenvalue_eq_fourierCoeff k m hm χ hf_char hf_eigen, ← h_smul, Nat.gcd_comm m.val,
+    Nat.mul_comm m.val]
+  exact fourierCoeff_heckeT_n k m.val hm χ hf_char n.val
 
 private theorem fourierCoeff_heckeT_ppow_period_one [NeZero N] (k : ℤ) {p : ℕ}
     (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (χ : (ZMod N)ˣ →* ℂˣ) (v : ℕ)
@@ -876,7 +833,6 @@ private theorem fourierCoeff_heckeT_ppow_period_one [NeZero N] (k : ℤ) {p : �
           (↑d : ℂ) ^ (k - 1) * ↑(χ (ZMod.unitOfCoprime d h)) *
             (qExpansion (1 : ℝ) f).coeff (m * p ^ v / (d * d))
         else 0 := by
-  have h1_period := one_mem_strictPeriods_Gamma1_map N
   have hTp : HeckeTpCoeffFormula k hp hpN χ (1 : ℝ) :=
     fun g hg m' ↦ fourierCoeff_heckeT_p_period_one k hp hpN χ hg m'
   suffices key : ∀ v, ∀ f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k,
@@ -893,13 +849,12 @@ private theorem fourierCoeff_heckeT_ppow_period_one [NeZero N] (k : ℤ) {p : �
   intro f hf m
   match v with
   | 0 =>
-    simp only [pow_zero, heckeT_ppow, Module.End.one_apply, Nat.gcd_one_right,
-      Nat.divisors_one, Finset.sum_singleton]
-    simp only [Nat.Coprime, Nat.gcd_one_left, dite_true]
-    simp [unitOfCoprime_one_eq_one]
+    simp [pow_zero, heckeT_ppow, Module.End.one_apply, Nat.gcd_one_right, Nat.divisors_one,
+      Finset.sum_singleton, Nat.Coprime, unitOfCoprime_one_eq_one]
   | 1 => exact fourierCoeff_heckeT_ppow_one_eq k hp hpN χ hTp hf m
   | r + 2 =>
-    exact fourierCoeff_heckeT_ppow_succ_succ_eq k hp hpN χ one_pos h1_period hTp hf r m
+    exact fourierCoeff_heckeT_ppow_succ_succ_eq k hp hpN χ one_pos
+      (one_mem_strictPeriods_Gamma1_map N) hTp hf r m
       (fun g hg m' ↦ ih_v (r + 1) (by omega) g hg m')
       (fun g hg m' ↦ ih_v r (by omega) g hg m')
 
@@ -931,13 +886,11 @@ theorem fourierCoeff_heckeT_n_period_one [NeZero N] (k : ℤ) (n : ℕ) [NeZero 
   induction n using Nat.strongRecOn with
   | _ n ih =>
   intro hn0 hnN f hf m
-  haveI : NeZero n := ⟨hn0⟩
+  have : NeZero n := ⟨hn0⟩
   by_cases hn1 : n = 1
   · subst hn1
-    simp only [heckeT_n_one, Module.End.one_apply, Nat.gcd_one_right, Nat.divisors_one,
-      Finset.sum_singleton]
-    simp only [Nat.Coprime, Nat.gcd_one_left, dite_true]
-    simp [unitOfCoprime_one_eq_one]
+    simp [heckeT_n_one, Module.End.one_apply, Nat.gcd_one_right, Nat.divisors_one,
+      Finset.sum_singleton, Nat.Coprime, unitOfCoprime_one_eq_one]
   · have hn_gt : 1 < n := by omega
     by_cases hn_prime : Nat.Prime n
     · exact fourierCoeff_heckeT_n_prime k hn_prime hnN χ
@@ -962,20 +915,15 @@ theorem eigenvalue_eq_fourierCoeff_one [NeZero N] (k : ℤ) (n : ℕ+)
     (hf_char : f ∈ modFormCharSpace k χ)
     (hf_eigen : IsNormalisedEigenform_one k f) :
     eigenvalue k f hf_eigen.1 n hn = (qExpansion (1 : ℝ) f).coeff n.val := by
-  have hne : NeZero n.val := ⟨n.pos.ne'⟩
+  have : NeZero n.val := ⟨n.pos.ne'⟩
   have h1 := fourierCoeff_heckeT_n_period_one k n.val hn χ hf_char 1
   simp only [Nat.gcd_one_left, Nat.divisors_one, Finset.sum_singleton, Nat.Coprime, dite_true,
     Nat.cast_one, one_zpow, unitOfCoprime_one_eq_one, map_one, Units.val_one, one_mul,
     Nat.div_one] at h1
-  have h1_period := one_mem_strictPeriods_Gamma1_map N
   have h_lhs : (qExpansion (1 : ℝ) (heckeT_n k n.val f)).coeff 1 =
       eigenvalue k f hf_eigen.1 n hn := by
-    have h_fun : (⇑(heckeT_n k n.val f) : ℍ → ℂ) =
-        eigenvalue k f hf_eigen.1 n hn • ⇑f := by
-      change ⇑(heckeT_n k n.val f) = ⇑(eigenvalue k f hf_eigen.1 n hn • f : ModularForm _ k)
-      exact congr_arg (↑· : ModularForm _ k → ℍ → ℂ) (eigenvalue_spec k f hf_eigen.1 n hn)
-    simp only [h_fun, qExpansion_smul one_pos h1_period, PowerSeries.coeff_smul,
-      smul_eq_mul, hf_eigen.2, mul_one]
+    rw [eigenvalue_spec k f hf_eigen.1 n hn]
+    simp [qExpansion_smul one_pos (one_mem_strictPeriods_Gamma1_map N), hf_eigen.2]
   rw [← h1, h_lhs]
 
 /-- **Period-1 Hecke multiplicativity relations** for Fourier coefficients of a normalised
@@ -994,19 +942,15 @@ theorem eigenform_coeff_multiplicative_one [NeZero N] (k : ℤ) (m n : ℕ+)
           (↑d : ℂ) ^ (k - 1) * ↑(χ (ZMod.unitOfCoprime d h)) *
             (qExpansion (1 : ℝ) f).coeff (m.val * n.val / (d * d))
         else 0 := by
-  haveI : NeZero m.val := ⟨m.pos.ne'⟩
-  haveI : NeZero n.val := ⟨n.pos.ne'⟩
-  have h_fourier := fourierCoeff_heckeT_n_period_one k m.val hm χ hf_char n.val
+  have : NeZero m.val := ⟨m.pos.ne'⟩
+  have : NeZero n.val := ⟨n.pos.ne'⟩
   have h_smul : (qExpansion (1 : ℝ) (heckeT_n k m.val f)).coeff n.val =
       eigenvalue k f hf_eigen.1 m hm * (qExpansion (1 : ℝ) f).coeff n.val := by
-    have h1_period := one_mem_strictPeriods_Gamma1_map N
-    rw [show (⇑(heckeT_n k m.val f) : ℍ → ℂ) =
-        ⇑(eigenvalue k f hf_eigen.1 m hm • f : ModularForm _ k) from
-        congr_arg (↑· : ModularForm _ k → ℍ → ℂ) (eigenvalue_spec k f hf_eigen.1 m hm),
-      ModularForm.IsGLPos.coe_smul, qExpansion_smul one_pos h1_period,
+    rw [eigenvalue_spec k f hf_eigen.1 m hm, ModularForm.IsGLPos.coe_smul,
+      qExpansion_smul one_pos (one_mem_strictPeriods_Gamma1_map N),
       PowerSeries.coeff_smul, smul_eq_mul]
-  rw [← eigenvalue_eq_fourierCoeff_one k m hm χ hf_char hf_eigen, ← h_smul]
-  rw [Nat.gcd_comm, Nat.mul_comm] at h_fourier
-  exact h_fourier
+  rw [← eigenvalue_eq_fourierCoeff_one k m hm χ hf_char hf_eigen, ← h_smul, Nat.gcd_comm m.val,
+    Nat.mul_comm m.val]
+  exact fourierCoeff_heckeT_n_period_one k m.val hm χ hf_char n.val
 
 end HeckeRing.GL2

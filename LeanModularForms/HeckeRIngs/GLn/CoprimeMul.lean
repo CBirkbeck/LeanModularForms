@@ -38,11 +38,11 @@ section DiagMul
 
 /-- Pointwise product of positive sequences is positive. -/
 lemma pi_mul_pos (a b : Fin n → ℕ) (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 < b i) :
-    ∀ i, 0 < (a * b) i := fun i => Nat.mul_pos (ha i) (hb i)
+    ∀ i, 0 < (a * b) i := fun i ↦ Nat.mul_pos (ha i) (hb i)
 
 /-- Pointwise product of two divisibility chains is a divisibility chain. -/
 lemma DivChain_mul (a b : Fin n → ℕ) (ha : DivChain n a) (hb : DivChain n b) :
-    DivChain n (a * b) := fun i hi => Nat.mul_dvd_mul (ha i hi) (hb i hi)
+    DivChain n (a * b) := fun i hi ↦ Nat.mul_dvd_mul (ha i hi) (hb i hi)
 
 /-- Product of diagonal `GL_n(ℚ)` elements is diagonal with pointwise product. -/
 @[simp] lemma diagMat_mul (a b : Fin n → ℕ) (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 < b i) :
@@ -78,6 +78,13 @@ private lemma doubleCoset_eq_of_mem' (g δ : GL (Fin n) ℚ)
   rw [heq]
   exact (DoubleCoset.doubleCoset_mul_right_eq_self (GL_pair n) ⟨h₂, hh₂⟩ (h₁ * δ)).trans
     (doset_mul_left_eq_self (GL_pair n) ⟨h₁, hh₁⟩ δ)
+
+private lemma nonempty_decompQuot (D : HeckeCoset (GL_pair n)) :
+    Nonempty (decompQuot (GL_pair n) (HeckeCoset.rep D)) :=
+  Fintype.card_pos_iff.mp (by
+    have := HeckeRing.HeckeCoset_deg_pos (GL_pair n) D
+    simp only [HeckeRing.HeckeCoset_deg] at this
+    lia)
 
 section Scalar
 open scoped Classical
@@ -139,8 +146,7 @@ lemma HeckeCoset_deg_scalar (c : ℕ) (hc : 0 < c) :
   rw [DoubleCoset.mem_doubleCoset] at hδ_mem
   obtain ⟨h₁, hh₁, h₂, hh₂, hδ_eq⟩ := hδ_mem
   have hδ_simp : (δ : GL (Fin n) ℚ) = (h₁ * h₂) * diagMat n (fun _ => c) := by
-    rw [hδ_eq, show (↑(diagMat_delta n (fun _ => c)) : GL (Fin n) ℚ) =
-        diagMat n (fun _ => c) from diagMat_delta_val n (fun _ => c) (fun _ => hc),
+    rw [hδ_eq, diagMat_delta_val n (fun _ => c) (fun _ => hc),
       mul_assoc, diagMat_scalar_comm n c hc h₂, ← mul_assoc]
   rw [hδ_simp, map_mul, ← smul_smul, conjAct_scalar_smul_eq n c hc]
   exact conjAct_mem_smul_eq n (h₁ * h₂) (H.mul_mem hh₁ hh₂)
@@ -152,7 +158,6 @@ private lemma mulMap_scalar_eq (c : ℕ) (hc : 0 < c) (b : Fin n → ℕ) (hb_po
     mulMap (GL_pair n) (HeckeCoset.rep (T_diag (fun _ : Fin n => c)))
       (HeckeCoset.rep (T_diag b)) p =
       T_diag ((fun _ => c) * b) := by
-  have hcb_pos := pi_mul_pos n (fun _ => c) b (fun _ => hc) hb_pos
   obtain ⟨L_c, hL_c, R_c, hR_c, hα_eq⟩ :=
     T_diag_rep_decompose (fun _ : Fin n => c) (fun _ => hc)
   obtain ⟨L_b, hL_b, R_b, hR_b, hβ_eq⟩ := T_diag_rep_decompose b hb_pos
@@ -181,7 +186,7 @@ private lemma mulMap_scalar_eq (c : ℕ) (hc : 0 < c) (b : Fin n → ℕ) (hb_po
   apply HeckeCoset_ext_toSet (P := GL_pair n)
   rw [mulMap, HeckeCoset.toSet_mk]
   simp only [T_diag, HeckeCoset.toSet_mk,
-    diagMat_delta_val n ((fun _ => c) * b) hcb_pos]
+    diagMat_delta_val n ((fun _ => c) * b) (pi_mul_pos n (fun _ => c) b (fun _ => hc) hb_pos)]
   exact doubleCoset_eq_of_mem' n _ _ h_prod_mem
 
 private lemma heckeMultiplicity_scalar_eq_one (c : ℕ) (hc : 0 < c) (b : Fin n → ℕ)
@@ -222,14 +227,10 @@ private lemma heckeMultiplicity_scalar_eq_one (c : ℕ) (hc : 0 < c) (b : Fin n 
         true_and, Prod.exists]
       have ⟨i₀⟩ : Nonempty (decompQuot (GL_pair n) (HeckeCoset.rep D_c)) :=
         Fintype.card_pos_iff.mp (h_card ▸ Nat.one_pos)
-      have ⟨j₀⟩ : Nonempty (decompQuot (GL_pair n) (HeckeCoset.rep D_b)) :=
-        Fintype.card_pos_iff.mp (by
-          have := HeckeRing.HeckeCoset_deg_pos (GL_pair n) D_b
-          simp only [HeckeRing.HeckeCoset_deg] at this
-          omega)
+      have ⟨j₀⟩ := nonempty_decompQuot n D_b
       exact ⟨i₀, j₀, mulMap_scalar_eq n c hc b hb_pos hb hab (i₀, j₀)⟩
     exact HeckeRing.heckeMultiplicity_pos_of_mem (GL_pair n) _ _ _ h_mem
-  omega
+  lia
 
 private lemma heckeMultiplicity_scalar_eq_zero (c : ℕ) (hc : 0 < c) (b : Fin n → ℕ)
     (hb_pos : ∀ i, 0 < b i) (hb : DivChain n b) (hab : DivChain n ((fun _ => c) * b))
@@ -275,11 +276,8 @@ private lemma slTransvec_mul (i j : Fin n) (hij : i ≠ j) (a b : ℤ) :
     slTransvec n i j hij a * slTransvec n i j hij b =
       slTransvec n i j hij (a + b) := by
   apply Subtype.ext
-  show (Matrix.TransvectionStruct.mk i j hij a).toMatrix *
-      (Matrix.TransvectionStruct.mk i j hij b).toMatrix =
-    (Matrix.TransvectionStruct.mk i j hij (a + b)).toMatrix
-  simp only [Matrix.TransvectionStruct.toMatrix]
-  exact Matrix.transvection_mul_transvection_same (n := Fin n) (i := i) (j := j) hij a b
+  simpa only [slTransvec, Matrix.TransvectionStruct.toMatrix] using
+    Matrix.transvection_mul_transvection_same (n := Fin n) (i := i) (j := j) hij a b
 
 omit [NeZero n] in
 private lemma slTransvec_congMod (d : ℕ) (i j : Fin n) (hij : i ≠ j) (c : ℤ)
@@ -309,7 +307,7 @@ private lemma slTransvec_CRT (d d' : ℕ) (hcop : Nat.Coprime d d')
 
 omit [NeZero n] in
 private lemma congMod_one (d : ℕ) : congMod n d 1 :=
-  fun i j => by simp [SpecialLinearGroup.coe_one, Matrix.one_apply]
+  fun i j ↦ by simp [SpecialLinearGroup.coe_one, Matrix.one_apply]
 
 omit [NeZero n] in
 private lemma congMod_mul (d : ℕ) (a b : SpecialLinearGroup (Fin n) ℤ)
@@ -327,7 +325,7 @@ private lemma congMod_mul (d : ℕ) (a b : SpecialLinearGroup (Fin n) ℤ)
   rw [show (∑ k, a.1 i k * b.1 k j) - (if i = j then 1 else 0) =
       (∑ k, (a.1 i k - if i = k then 1 else 0) * b.1 k j) +
       (b.1 i j - if i = j then 1 else 0) by linarith [h2]]
-  exact dvd_add (Finset.dvd_sum (fun k _ => dvd_mul_of_dvd_left (ha i k) _)) (hb i j)
+  exact dvd_add (Finset.dvd_sum fun k _ ↦ dvd_mul_of_dvd_left (ha i k) _) (hb i j)
 
 omit [NeZero n] in
 private lemma congMod_inv (d : ℕ) (a : SpecialLinearGroup (Fin n) ℤ)
@@ -338,9 +336,6 @@ private lemma congMod_inv (d : ℕ) (a : SpecialLinearGroup (Fin n) ℤ)
     exact congr_arg Subtype.val (mul_inv_cancel a)
   have h_entry : ∑ k : Fin n, a.1 i k * (a⁻¹).1 k j = if i = j then 1 else 0 := by
     simpa [Matrix.mul_apply, Matrix.one_apply] using congr_fun (congr_fun h_mul_inv i) j
-  have h_div : (d : ℤ) ∣
-      ∑ k : Fin n, (a.1 i k - if i = k then 1 else 0) * (a⁻¹).1 k j :=
-    Finset.dvd_sum (fun k _ => dvd_mul_of_dvd_left (ha i k) _)
   have h_sum_eq : ∑ k : Fin n, (a.1 i k - if i = k then 1 else 0) * (a⁻¹).1 k j =
       (if i = j then 1 else 0) - (a⁻¹).1 i j := by
     trans (∑ k, a.1 i k * (a⁻¹).1 k j) -
@@ -354,7 +349,7 @@ private lemma congMod_inv (d : ℕ) (a : SpecialLinearGroup (Fin n) ℤ)
   rw [show (a⁻¹).1 i j - (if i = j then 1 else 0) =
       -(∑ k : Fin n, (a.1 i k - if i = k then 1 else 0) * (a⁻¹).1 k j) by
     linarith [h_sum_eq]]
-  exact dvd_neg.mpr h_div
+  exact dvd_neg.mpr (Finset.dvd_sum fun k _ ↦ dvd_mul_of_dvd_left (ha i k) _)
 
 omit [NeZero n] in
 private lemma congMod_conj (d : ℕ) (σ τ : SpecialLinearGroup (Fin n) ℤ)
@@ -393,8 +388,8 @@ private lemma congMod_conj (d : ℕ) (σ τ : SpecialLinearGroup (Fin n) ℤ)
       ring
     rw [h3, h_inv]
     ring]
-  exact Finset.dvd_sum (fun k _ => dvd_mul_of_dvd_right
-    (Finset.dvd_sum (fun l _ => dvd_mul_of_dvd_left (hτ k l) _)) _)
+  exact Finset.dvd_sum fun k _ ↦ dvd_mul_of_dvd_right
+    (Finset.dvd_sum fun l _ ↦ dvd_mul_of_dvd_left (hτ k l) _) _
 
 omit [NeZero n] in
 private lemma CRTProd_mul' (d d' : ℕ) (a b : SpecialLinearGroup (Fin n) ℤ)
@@ -440,7 +435,7 @@ private lemma list_prod_in_CRTProd (d d' : ℕ) (_hcop : Nat.Coprime d d')
   | cons E L ihL =>
     simp only [List.prod_cons]
     exact CRTProd_mul' n d d' E L.prod (hL E (by simp))
-      (ihL (fun F hF => hL F (by simp [hF])))
+      (ihL fun F hF ↦ hL F (by simp [hF]))
 
 omit [NeZero n] in
 private lemma SLnZ_in_CRTProd (d d' : ℕ) (_hd : 0 < d) (_hd' : 0 < d')
@@ -450,7 +445,7 @@ private lemma SLnZ_in_CRTProd (d d' : ℕ) (_hd : 0 < d) (_hd' : 0 < d')
   obtain ⟨L, hL_transvec, hL_prod⟩ := SLnZ_transvec_gen n σ
   rw [hL_prod]
   exact list_prod_in_CRTProd n d d' hcop L
-    (fun E hE => isTransvec_in_CRTProd n d d' hcop E (hL_transvec E hE))
+    fun E hE ↦ isTransvec_in_CRTProd n d d' hcop E (hL_transvec E hE)
 
 omit [NeZero n] in
 /-- Chinese Remainder Theorem for `SL_n(ℤ)`: every element decomposes as a product of
@@ -484,15 +479,15 @@ lemma conjugate_congruent_mem_SLnZ (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (_h
       exact dvd_mul_right _ _
     · exact dvd_mul_of_dvd_right (dvd_trans (Finset.dvd_prod_of_mem _ (Finset.mem_univ j))
         (by simpa [hij] using hcong i j)) _
-  set M : Matrix (Fin n) (Fin n) ℤ := Matrix.of fun i j => (a i : ℤ) * τ.val i j / (a j : ℤ)
-  set diag_a := Matrix.diagonal (fun i => (a i : ℤ))
+  set M : Matrix (Fin n) (Fin n) ℤ := Matrix.of fun i j ↦ (a i : ℤ) * τ.val i j / (a j : ℤ)
+  set diag_a := Matrix.diagonal fun i ↦ (a i : ℤ)
   have h_int_eq : diag_a * τ.val = M * diag_a := by
     ext i j
-    simp only [diag_a, M, Matrix.diagonal_mul, Matrix.mul_diagonal, Matrix.of_apply]
-    exact (Int.ediv_mul_cancel (hdvd i j)).symm
+    simpa only [diag_a, M, Matrix.diagonal_mul, Matrix.mul_diagonal, Matrix.of_apply] using
+      (Int.ediv_mul_cancel (hdvd i j)).symm
   have h_det_ne : diag_a.det ≠ 0 := by
-    simp only [diag_a, Matrix.det_diagonal]
-    exact ne_of_gt (Finset.prod_pos (fun i _ => Nat.cast_pos.mpr (ha i)))
+    simpa only [diag_a, Matrix.det_diagonal] using
+      ne_of_gt (Finset.prod_pos fun i _ => Nat.cast_pos.mpr (ha i))
   have hM_det : M.det = 1 := by
     have h := congr_arg Matrix.det h_int_eq
     rw [Matrix.det_mul, Matrix.det_mul, τ.prop, mul_one] at h
@@ -507,8 +502,8 @@ lemma conjugate_congruent_mem_SLnZ (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (_h
         M.map (Int.cast) := by
       simp [mapGL_coe_matrix, algebraMap_int_eq, RingHom.mapMatrix_apply]
     simp only [Units.val_mul, hτ_val, hM_val, diagMat_val _ _ ha]
-    have h_diag_map : (Matrix.diagonal (fun i => (a i : ℤ))).map (Int.cast : ℤ → ℚ) =
-        Matrix.diagonal (fun i => (a i : ℚ)) := Matrix.diagonal_map (by simp)
+    have h_diag_map : (Matrix.diagonal fun i ↦ (a i : ℤ)).map (Int.cast : ℤ → ℚ) =
+        Matrix.diagonal fun i ↦ (a i : ℚ) := Matrix.diagonal_map (by simp)
     rw [← h_diag_map, ← map_intCast_mul_aux, ← map_intCast_mul_aux, h_int_eq]
   exact eq_mul_inv_iff_mul_eq.mpr h_Q_eq.symm
 
@@ -527,8 +522,8 @@ lemma inv_conjugate_congruent_mem_SLnZ (b : Fin n → ℕ) (hb : ∀ i, 0 < b i)
       exact dvd_mul_right _ _
     · exact dvd_mul_of_dvd_right (dvd_trans (Finset.dvd_prod_of_mem _ (Finset.mem_univ i))
         (by simpa [hij] using hcong i j)) _
-  set N : Matrix (Fin n) (Fin n) ℤ := Matrix.of fun i j => (b j : ℤ) * τ.val i j / (b i : ℤ)
-  set diag_b := Matrix.diagonal (fun i => (b i : ℤ))
+  set N : Matrix (Fin n) (Fin n) ℤ := Matrix.of fun i j ↦ (b j : ℤ) * τ.val i j / (b i : ℤ)
+  set diag_b := Matrix.diagonal fun i ↦ (b i : ℤ)
   have h_int_eq : τ.val * diag_b = diag_b * N := by
     ext i j
     simp only [diag_b, N, Matrix.mul_diagonal, Matrix.diagonal_mul, Matrix.of_apply]
@@ -537,8 +532,8 @@ lemma inv_conjugate_congruent_mem_SLnZ (b : Fin n → ℕ) (hb : ∀ i, 0 < b i)
           (Int.ediv_mul_cancel (hdvd i j)).symm
       _ = (b i : ℤ) * ((b j : ℤ) * τ.val i j / (b i : ℤ)) := mul_comm _ _
   have h_det_ne : diag_b.det ≠ 0 := by
-    simp only [diag_b, Matrix.det_diagonal]
-    exact ne_of_gt (Finset.prod_pos (fun i _ => Nat.cast_pos.mpr (hb i)))
+    simpa only [diag_b, Matrix.det_diagonal] using
+      ne_of_gt (Finset.prod_pos fun i _ => Nat.cast_pos.mpr (hb i))
   have hN_det : N.det = 1 := by
     have h := congr_arg Matrix.det h_int_eq
     rw [Matrix.det_mul, Matrix.det_mul, τ.prop, one_mul] at h
@@ -553,8 +548,8 @@ lemma inv_conjugate_congruent_mem_SLnZ (b : Fin n → ℕ) (hb : ∀ i, 0 < b i)
         N.map (Int.cast) := by
       simp [mapGL_coe_matrix, algebraMap_int_eq, RingHom.mapMatrix_apply]
     simp only [Units.val_mul, hτ_val, hN_val, diagMat_val _ _ hb]
-    have h_diag_map : (Matrix.diagonal (fun i => (b i : ℤ))).map (Int.cast : ℤ → ℚ) =
-        Matrix.diagonal (fun i => (b i : ℚ)) := Matrix.diagonal_map (by simp)
+    have h_diag_map : (Matrix.diagonal fun i ↦ (b i : ℤ)).map (Int.cast : ℤ → ℚ) =
+        Matrix.diagonal fun i ↦ (b i : ℚ) := Matrix.diagonal_map (by simp)
     rw [← h_diag_map, ← map_intCast_mul_aux, ← map_intCast_mul_aux, h_int_eq]
   calc mapGL ℚ ⟨N, hN_det⟩
       = (diagMat n b)⁻¹ * (diagMat n b * mapGL ℚ ⟨N, hN_det⟩) := by rw [inv_mul_cancel_left]
@@ -572,7 +567,7 @@ lemma doubleCoset_mul_coprime_mem (a b : Fin n → ℕ)
         (SLnZ_subgroup n) (SLnZ_subgroup n) := by
   obtain ⟨τ₁, τ₂, hτ, hτ₁, hτ₂⟩ :=
     SLnZ_CRT_decomposition n (∏ i, a i) (∏ i, b i)
-      (Finset.prod_pos (fun i _ => ha_pos i)) (Finset.prod_pos (fun i _ => hb_pos i)) hcop τ
+      (Finset.prod_pos fun i _ ↦ ha_pos i) (Finset.prod_pos fun i _ ↦ hb_pos i) hcop τ
   have hτ₁_cong : ∀ i j, (∏ k, (a k : ℤ)) ∣
       ((τ₁ : Matrix (Fin n) (Fin n) ℤ) i j - if i = j then 1 else 0) := by
     intro i j
@@ -644,7 +639,7 @@ lemma mulMap_coprime_eq (a b : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i) (hb_pos 
   apply HeckeCoset_ext_toSet (P := GL_pair n)
   rw [mulMap, HeckeCoset.toSet_mk]
   simp only [T_diag, HeckeCoset.toSet_mk,
-    diagMat_delta_val n (a * b) (fun i => Nat.mul_pos (ha_pos i) (hb_pos i))]
+    diagMat_delta_val n (a * b) (fun i ↦ Nat.mul_pos (ha_pos i) (hb_pos i))]
   exact doubleCoset_eq_of_mem' n _ _ h_product_mem
 
 omit [NeZero n] in
@@ -669,22 +664,20 @@ private lemma GLnQ_mem_SLnZ_of_coprime_scaling (C : GL (Fin n) ℚ)
     rw [h1, hza, hzb]
     push_cast
     ring
-  set N : Matrix (Fin n) (Fin n) ℤ := Matrix.of fun i j => (h_int i j).choose
+  set N : Matrix (Fin n) (Fin n) ℤ := Matrix.of fun i j ↦ (h_int i j).choose
   have hN_eq : ∀ i j, (↑C : Matrix (Fin n) (Fin n) ℚ) i j = ((N i j : ℤ) : ℚ) :=
-    fun i j => (h_int i j).choose_spec
+    fun i j ↦ (h_int i j).choose_spec
   have hN_det : N.det = 1 := by
     have hN_cast : (↑C : Matrix (Fin n) (Fin n) ℚ) = N.map (Int.cast : ℤ → ℚ) := by
       ext i j
-      simp only [N, Matrix.of_apply, Matrix.map_apply]
-      exact hN_eq i j
+      simpa only [N, Matrix.of_apply, Matrix.map_apply] using hN_eq i j
     exact_mod_cast show (N.det : ℚ) = 1 by rw [Int.cast_det N, ← hN_cast, h_det]
   rw [MonoidHom.mem_range]
   refine ⟨⟨N, hN_det⟩, ?_⟩
   apply Units.ext
   simp only [mapGL_coe_matrix, map_apply_coe, RingHom.mapMatrix_apply]
   ext i j
-  simp only [Matrix.map_apply]
-  exact (hN_eq i j).symm
+  simpa only [Matrix.map_apply] using (hN_eq i j).symm
 
 omit [NeZero n] in
 private lemma diagConj_scaling (a : Fin n → ℕ) (ha : ∀ i, 0 < a i)
@@ -696,20 +689,18 @@ private lemma diagConj_scaling (a : Fin n → ℕ) (ha : ∀ i, 0 < a i)
   have h_mul : diagMat n a * C = (σ : GL (Fin n) ℚ) * diagMat n a := by
     simp only [C, mul_assoc]
     rw [mul_inv_cancel_left]
-  have h_entry := congr_arg (fun (g : GL (Fin n) ℚ) => (↑g : Matrix _ _ ℚ) i j) h_mul
+  have h_entry := congr_arg (fun g : GL (Fin n) ℚ ↦ (↑g : Matrix _ _ ℚ) i j) h_mul
   simp only [Units.val_mul, diagMat_val _ _ ha, mapGL_coe_matrix, map_apply_coe,
     RingHom.mapMatrix_apply, Int.coe_castRingHom, algebraMap_int_eq,
     Matrix.diagonal_mul, Matrix.mul_diagonal, Matrix.map_apply] at h_entry
+  have hai_ne : (a i : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr (ha i).ne'
   have h_dvd : (a i : ℤ) ∣ ∏ k, (a k : ℤ) := Finset.dvd_prod_of_mem _ (Finset.mem_univ i)
   refine ⟨(∏ k, (a k : ℤ)) / (a i : ℤ) * σ.val i j * (a j : ℤ), ?_⟩
-  have hai_ne : (a i : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr (ha i).ne'
   have : (∏ k, (a k : ℚ)) * (↑C : Matrix _ _ ℚ) i j =
       (∏ k, (a k : ℚ)) / (a i : ℚ) * ((a i : ℚ) * (↑C : Matrix _ _ ℚ) i j) := by field_simp
-  rw [this, h_entry]
-  have hai_ne_int : (a i : ℤ) ≠ 0 := ne_of_gt (Int.natCast_pos.mpr (ha i))
-  rw [show ((∏ k, (a k : ℤ)) / (a i : ℤ) * σ.val i j * (a j : ℤ) : ℤ) =
+  rw [this, h_entry, show ((∏ k, (a k : ℤ)) / (a i : ℤ) * σ.val i j * (a j : ℤ) : ℤ) =
       (∏ k, (a k : ℤ)) / (a i : ℤ) * ((σ.val i j : ℤ) * (a j : ℤ)) by ring]
-  push_cast [Int.cast_div h_dvd (show ((a i : ℤ) : ℚ) ≠ 0 from Int.cast_ne_zero.mpr hai_ne_int)]
+  push_cast [Int.cast_div h_dvd (Int.cast_ne_zero.mpr (ne_of_gt (Int.natCast_pos.mpr (ha i))))]
   ring
 
 omit [NeZero n] in
@@ -728,7 +719,7 @@ private lemma diagSandwich_scaling (b : Fin n → ℕ) (hb : ∀ i, 0 < b i)
       (↑F_GL : Matrix (Fin n) (Fin n) ℚ) i p *
       (↑D : Matrix (Fin n) (Fin n) ℚ) p q *
       (↑E_GL : Matrix (Fin n) (Fin n) ℚ) q j := by
-    have := congr_arg (fun (g : GL (Fin n) ℚ) => (↑g : Matrix (Fin n) (Fin n) ℚ) i j)
+    have := congr_arg (fun g : GL (Fin n) ℚ ↦ (↑g : Matrix (Fin n) (Fin n) ℚ) i j)
       (show C = (F : GL (Fin n) ℚ) * D * (E : GL (Fin n) ℚ) by simp only [C, D, mul_assoc])
     simp only [Units.val_mul, Matrix.mul_apply] at this
     rw [this]
@@ -741,7 +732,7 @@ private lemma diagSandwich_scaling (b : Fin n → ℕ) (hb : ∀ i, 0 < b i)
       have h_Db : D * diagMat n b = diagMat n b * (G : GL (Fin n) ℚ) := by
         simp only [D, mul_assoc, inv_mul_cancel, mul_one]
       have h_entry := congr_arg
-        (fun (g : GL (Fin n) ℚ) => (↑g : Matrix (Fin n) (Fin n) ℚ) p q) h_Db
+        (fun g : GL (Fin n) ℚ ↦ (↑g : Matrix (Fin n) (Fin n) ℚ) p q) h_Db
       simp only [Units.val_mul, diagMat_val _ _ hb, mapGL_coe_matrix, map_apply_coe,
         RingHom.mapMatrix_apply, Int.coe_castRingHom, algebraMap_int_eq,
         Matrix.mul_diagonal, Matrix.diagonal_mul, Matrix.map_apply] at h_entry
@@ -750,15 +741,13 @@ private lemma diagSandwich_scaling (b : Fin n → ℕ) (hb : ∀ i, 0 < b i)
       linarith
     rw [h_D_entry]
     have h_dvd : (b q : ℤ) ∣ ∏ k, (b k : ℤ) := Finset.dvd_prod_of_mem _ (Finset.mem_univ q)
-    have hbq_ne : (b q : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr (hb q).ne'
-    have hbq_ne_int : (b q : ℤ) ≠ 0 := Int.natCast_ne_zero.mpr (hb q).ne'
     refine ⟨(∏ k, (b k : ℤ)) / (b q : ℤ) * (b p : ℤ) * G.val p q, ?_⟩
     have h_div_eq : (∏ k, (b k : ℚ)) * ((b p : ℚ) * ↑(G.val p q) * ((b q : ℚ)⁻¹)) =
         (∏ k, (b k : ℚ)) / (b q : ℚ) * ((b p : ℚ) * ↑(G.val p q)) := by
       rw [div_eq_mul_inv]
       ring
     rw [h_div_eq]
-    push_cast [Int.cast_div h_dvd (show ((b q : ℤ) : ℚ) ≠ 0 from Int.cast_ne_zero.mpr hbq_ne_int)]
+    push_cast [Int.cast_div h_dvd (Int.cast_ne_zero.mpr (Int.natCast_ne_zero.mpr (hb q).ne'))]
     ring
   rw [h_C_entry, Finset.mul_sum]
   simp_rw [Finset.mul_sum, mul_assoc]
@@ -829,22 +818,21 @@ private lemma out_conj_diagA_mem_H (a b : Fin n → ℕ) (ha_pos : ∀ i, 0 < a 
     rw [hσ']
     conv_lhs => rw [hδa]
     group
-  obtain ⟨F_pre, hF_pre⟩ := show q₂ * h₁b ∈ SLnZ_subgroup n from
-    show _ ∈ H from H.mul_mem hq₂ hh₁b
-  obtain ⟨G_pre, hG_pre⟩ := show h₂b * κ * h₂b⁻¹ ∈ SLnZ_subgroup n from
-    show _ ∈ H from H.mul_mem (H.mul_mem hh₂b hκ) (H.inv_mem hh₂b)
-  obtain ⟨E_pre, hE_pre⟩ := show h₁b⁻¹ * q₁⁻¹ ∈ SLnZ_subgroup n from
-    show _ ∈ H from H.mul_mem (H.inv_mem hh₁b) (H.inv_mem hq₁)
+  obtain ⟨F_pre, hF_pre⟩ : q₂ * h₁b ∈ SLnZ_subgroup n := H.mul_mem hq₂ hh₁b
+  obtain ⟨G_pre, hG_pre⟩ : h₂b * κ * h₂b⁻¹ ∈ SLnZ_subgroup n :=
+    H.mul_mem (H.mul_mem hh₂b hκ) (H.inv_mem hh₂b)
+  obtain ⟨E_pre, hE_pre⟩ : h₁b⁻¹ * q₁⁻¹ ∈ SLnZ_subgroup n :=
+    H.mul_mem (H.inv_mem hh₁b) (H.inv_mem hq₁)
   have h_rhs_eq : q₂ * δb * κ * δb⁻¹ * q₁⁻¹ =
       (F_pre : GL (Fin n) ℚ) * diagMat n b * (G_pre : GL (Fin n) ℚ) *
         (diagMat n b)⁻¹ * (E_pre : GL (Fin n) ℚ) := by
     rw [hF_pre, hG_pre, hE_pre]
     conv_lhs => rw [hδb]
     group
-  obtain ⟨FF, hFF⟩ := show h₂a * (F_pre : GL (Fin n) ℚ) ∈ SLnZ_subgroup n from
-    show _ ∈ H from H.mul_mem hh₂a (coe_mem_SLnZ n F_pre)
-  obtain ⟨EE, hEE⟩ := show (E_pre : GL (Fin n) ℚ) * h₂a⁻¹ ∈ SLnZ_subgroup n from
-    show _ ∈ H from H.mul_mem (coe_mem_SLnZ n E_pre) (H.inv_mem hh₂a)
+  obtain ⟨FF, hFF⟩ : h₂a * (F_pre : GL (Fin n) ℚ) ∈ SLnZ_subgroup n :=
+    H.mul_mem hh₂a (coe_mem_SLnZ n F_pre)
+  obtain ⟨EE, hEE⟩ : (E_pre : GL (Fin n) ℚ) * h₂a⁻¹ ∈ SLnZ_subgroup n :=
+    H.mul_mem (coe_mem_SLnZ n E_pre) (H.inv_mem hh₂a)
   have h_C_eq : (diagMat n a)⁻¹ * (σ' : GL (Fin n) ℚ) * diagMat n a =
       (FF : GL (Fin n) ℚ) * diagMat n b * (G_pre : GL (Fin n) ℚ) *
         (diagMat n b)⁻¹ * (EE : GL (Fin n) ℚ) := by
@@ -883,9 +871,9 @@ private lemma heckeMultiplicity_coprime_le_one (a b : Fin n → ℕ) (ha_pos : �
     apply HeckeRing.decompQuot_coset_diff (GL_pair n) (HeckeCoset.rep D_a) i₁ i₂ hne
     obtain ⟨h₁a, hh₁a, h₂a, hh₂a, hδa_eq⟩ := T_diag_rep_decompose a ha_pos
     obtain ⟨h₁b, hh₁b, h₂b, hh₂b, hδb_eq⟩ := T_diag_rep_decompose b hb_pos
-    obtain ⟨σ', hσ'⟩ := show h₁a⁻¹ * ((i₂.out : GL (Fin n) ℚ)⁻¹ *
-        (i₁.out : GL (Fin n) ℚ)) * h₁a ∈ SLnZ_subgroup n from
-      show _ ∈ H from H.mul_mem (H.mul_mem (H.inv_mem hh₁a)
+    obtain ⟨σ', hσ'⟩ : h₁a⁻¹ * ((i₂.out : GL (Fin n) ℚ)⁻¹ *
+        (i₁.out : GL (Fin n) ℚ)) * h₁a ∈ SLnZ_subgroup n :=
+      H.mul_mem (H.mul_mem (H.inv_mem hh₁a)
         (H.mul_mem (H.inv_mem (SetLike.coe_mem i₂.out)) (SetLike.coe_mem i₁.out))) hh₁a
     have h12 := h₁.trans h₂.symm
     have hmem12 : (i₁.out : GL (Fin n) ℚ) * δ_a' *
@@ -905,17 +893,14 @@ private lemma heckeMultiplicity_coprime_le_one (a b : Fin n → ℕ) (ha_pos : �
     subst h_sing
     have hκ_eq' : (i₂.out : GL (Fin n) ℚ) * δ_a' * ((j₂.out : GL (Fin n) ℚ) * δ_b') * κ =
         (i₁.out : GL (Fin n) ℚ) * δ_a' * ((j₁.out : GL (Fin n) ℚ) * δ_b') := hκ_eq
-    have h_beta_in_H : δ_a'⁻¹ * (i₂.out : GL (Fin n) ℚ)⁻¹ *
-        (i₁.out : GL (Fin n) ℚ) * δ_a' ∈ H :=
-      out_conj_diagA_mem_H n a b ha_pos hb_pos ha hb hcop δ_a' δ_b' i₁.out i₂.out
-        j₁.out j₂.out h₁a h₂a h₁b h₂b κ hh₂a hh₁b hh₂b
-        (SetLike.coe_mem j₁.out) (SetLike.coe_mem j₂.out) hκ
-        (hδ_a_def.trans hδa_eq) (hδ_b_def.trans hδb_eq) σ' hσ' hκ_eq'
     exact HeckeRing.leftCoset_eq_of_not_disjoint (H := (GL_pair n).H) _ _ (by
       rw [Set.not_disjoint_iff]
       exact ⟨(i₁.out : GL (Fin n) ℚ) * δ_a', ⟨1, H.one_mem, mul_one _⟩,
         ⟨δ_a'⁻¹ * (i₂.out : GL (Fin n) ℚ)⁻¹ * (i₁.out : GL (Fin n) ℚ) * δ_a',
-          h_beta_in_H, by
+          out_conj_diagA_mem_H n a b ha_pos hb_pos ha hb hcop δ_a' δ_b' i₁.out i₂.out
+            j₁.out j₂.out h₁a h₂a h₁b h₂b κ hh₂a hh₁b hh₂b
+            (SetLike.coe_mem j₁.out) (SetLike.coe_mem j₂.out) hκ
+            (hδ_a_def.trans hδa_eq) (hδ_b_def.trans hδb_eq) σ' hσ' hκ_eq', by
             simp only [smul_eq_mul, ← hδ_a_def]
             group⟩⟩)
   subst hi
@@ -937,16 +922,8 @@ private lemma heckeMultiplicity_coprime_pos (a b : Fin n → ℕ) (ha_pos : ∀ 
       (HeckeCoset.rep D_b) := by
     simp only [HeckeRing.mulSupport, Finset.top_eq_univ, Finset.mem_image, Finset.mem_univ,
       true_and, Prod.exists]
-    have ⟨i₀⟩ : Nonempty (decompQuot (GL_pair n) (HeckeCoset.rep D_a)) :=
-      Fintype.card_pos_iff.mp (by
-        have := HeckeRing.HeckeCoset_deg_pos (GL_pair n) D_a
-        simp only [HeckeRing.HeckeCoset_deg] at this
-        omega)
-    have ⟨j₀⟩ : Nonempty (decompQuot (GL_pair n) (HeckeCoset.rep D_b)) :=
-      Fintype.card_pos_iff.mp (by
-        have := HeckeRing.HeckeCoset_deg_pos (GL_pair n) D_b
-        simp only [HeckeRing.HeckeCoset_deg] at this
-        omega)
+    have ⟨i₀⟩ := nonempty_decompQuot n D_a
+    have ⟨j₀⟩ := nonempty_decompQuot n D_b
     exact ⟨i₀, j₀, mulMap_coprime_eq n a b ha_pos hb_pos ha hb hab hcop (i₀, j₀)⟩
   exact HeckeRing.heckeMultiplicity_pos_of_mem (GL_pair n) _ _ _ h_mem
 
@@ -959,7 +936,7 @@ theorem T_diag_mul_coprime (a b : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i) (hb_p
     (T_diag (a * b)) (by
       have h_le := heckeMultiplicity_coprime_le_one n a b ha_pos hb_pos ha hb hcop
       have h_pos := heckeMultiplicity_coprime_pos n a b ha_pos hb_pos ha hb hab hcop
-      omega) ?_
+      lia) ?_
   · intro A hA
     apply HeckeRing.heckeMultiplicity_eq_zero_of_nmem_mulSupport
     intro h_mem

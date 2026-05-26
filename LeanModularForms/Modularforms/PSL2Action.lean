@@ -47,7 +47,7 @@ theorem center_SL2Z_smul_eq (c : SL(2, ℤ))
   obtain ⟨ζ, hζ, hζ_eq⟩ := hc
   simp only [Fintype.card_fin] at hζ
   have hζ_cases : ζ = 1 ∨ ζ = -1 := by
-    rcases mul_eq_zero.mp (by nlinarith [hζ] : (ζ - 1) * (ζ + 1) = 0) with h | h <;> omega
+    rcases mul_eq_zero.mp (by nlinarith [hζ] : (ζ - 1) * (ζ + 1) = 0) with h | h <;> lia
   rcases hζ_cases with rfl | rfl
   · have : c = 1 := by
       ext i j
@@ -60,12 +60,12 @@ theorem center_SL2Z_smul_eq (c : SL(2, ℤ))
     simp
 
 private def pslSmul : PSL(2, ℤ) → ℍ → ℍ :=
-  Quotient.lift (fun (a : SL(2, ℤ)) (τ : ℍ) => a • τ) (by
+  Quotient.lift (fun (a : SL(2, ℤ)) (τ : ℍ) ↦ a • τ) (by
     intro a b hab
     funext τ
     show a • τ = b • τ
-    have h := QuotientGroup.leftRel_apply.mp hab
-    rw [show b = a * (a⁻¹ * b) by group, mul_smul, center_SL2Z_smul_eq _ h])
+    rw [show b = a * (a⁻¹ * b) by group, mul_smul,
+      center_SL2Z_smul_eq _ (QuotientGroup.leftRel_apply.mp hab)])
 
 @[simp] private theorem pslSmul_coe (a : SL(2, ℤ)) (τ : ℍ) :
     pslSmul (↑a) τ = a • τ := rfl
@@ -97,7 +97,7 @@ instance : BorelSpace UpperHalfPlane := ⟨rfl⟩
 instance : MeasurableConstSMul PSL(2, ℤ) ℍ where
   measurable_const_smul g := by
     induction g using Quotient.inductionOn with | h a => ?_
-    show Measurable (fun τ => (↑a : PSL(2, ℤ)) • τ)
+    show Measurable (fun τ ↦ (↑a : PSL(2, ℤ)) • τ)
     simpa only [PSL_smul_coe] using (continuous_const_smul (mapGL ℝ a)).measurable
 
 private lemma mapGL_det_abs_eq_one (g : SL(2, ℤ)) :
@@ -119,11 +119,10 @@ theorem density_jacobian_identity (g : SL(2, ℤ)) (τ : ℍ) :
     τ.im ^ (-2 : ℤ) = (g • τ).im ^ (-2 : ℤ) *
       Complex.normSq (UpperHalfPlane.denom (mapGL ℝ g) τ) ^ (-2 : ℤ) := by
   set g' := mapGL ℝ g
-  have hns : (0 : ℝ) < Complex.normSq (UpperHalfPlane.denom g' τ) :=
-    Complex.normSq_pos.mpr (UpperHalfPlane.denom_ne_zero g' τ)
   suffices him : (g • τ).im = τ.im / Complex.normSq (UpperHalfPlane.denom g' τ) by
     rw [him, div_zpow]
-    exact (div_mul_cancel₀ _ (zpow_ne_zero _ (ne_of_gt hns))).symm
+    exact (div_mul_cancel₀ _ (zpow_ne_zero _ <| ne_of_gt <|
+      Complex.normSq_pos.mpr (UpperHalfPlane.denom_ne_zero g' τ))).symm
   have h := UpperHalfPlane.im_smul_eq_div_normSq g' τ
   rwa [(rfl : g' • τ = g • τ), mapGL_det_abs_eq_one, one_mul] at h
 
@@ -141,16 +140,16 @@ private lemma moeb_hasDerivAt (g : SL(2, ℤ)) (z : ℂ) (hz : 0 < z.im) :
   set c := ((g.1 1 0 : ℤ) : ℂ)
   set d := ((g.1 1 1 : ℤ) : ℂ)
   have hd := moeb_denom_ne_zero g z hz
-  change HasDerivAt (fun w => (a * w + b) / (c * w + d)) (1 / (c * z + d) ^ 2) z
-  have hn : DifferentiableAt ℂ (fun w => a * w + b) z :=
+  change HasDerivAt (fun w ↦ (a * w + b) / (c * w + d)) (1 / (c * z + d) ^ 2) z
+  have hn : DifferentiableAt ℂ (fun w ↦ a * w + b) z :=
     (differentiableAt_id.const_mul a).add (differentiableAt_const b)
-  have hdn : DifferentiableAt ℂ (fun w => c * w + d) z :=
+  have hdn : DifferentiableAt ℂ (fun w ↦ c * w + d) z :=
     (differentiableAt_id.const_mul c).add (differentiableAt_const d)
-  suffices h : deriv (fun w => (a * w + b) / (c * w + d)) z = 1 / (c * z + d) ^ 2 by
+  suffices h : deriv (fun w ↦ (a * w + b) / (c * w + d)) z = 1 / (c * z + d) ^ 2 by
     rw [← h]
     exact (hn.div hdn hd).hasDerivAt
-  rw [show (fun w => (a * w + b) / (c * w + d)) =
-      ((fun w => a * w + b) / (fun w => c * w + d)) from funext fun _ => rfl,
+  rw [show (fun w ↦ (a * w + b) / (c * w + d)) =
+      ((fun w ↦ a * w + b) / (fun w ↦ c * w + d)) from funext fun _ ↦ rfl,
     deriv_div hn hdn hd, deriv_add_const, deriv_const_mul_field,
     deriv_add_const, deriv_const_mul_field]
   simp only [deriv_id'', mul_one]
@@ -205,25 +204,25 @@ instance instSMulInvMeasure_SL : SMulInvariantMeasure SL(2, ℤ) ℍ μ_hyp wher
     have hs' : MeasurableSet ((g • ·) ⁻¹' s) := (measurable_const_smul g) hs
     simp_rw [hyperbolicMeasure, show ∀ (τ : ℍ), τ.im = (↑τ : ℂ).im from coe_im]
     rw [withDensity_apply _ hs', withDensity_apply _ hs,
-      setLIntegral_comap_coe _ hs' (fun z => ENNReal.ofReal (z.im ^ (-2 : ℤ))),
-      setLIntegral_comap_coe _ hs (fun z => ENNReal.ofReal (z.im ^ (-2 : ℤ)))]
+      setLIntegral_comap_coe _ hs' (fun z ↦ ENNReal.ofReal (z.im ^ (-2 : ℤ))),
+      setLIntegral_comap_coe _ hs (fun z ↦ ENNReal.ofReal (z.im ^ (-2 : ℤ)))]
     set A := UpperHalfPlane.coe '' ((g • ·) ⁻¹' s)
     set B := UpperHalfPlane.coe '' s
-    set ρ : ℂ → ENNReal := fun z => ENNReal.ofReal (z.im ^ (-2 : ℤ))
+    set ρ : ℂ → ENNReal := fun z ↦ ENNReal.ofReal (z.im ^ (-2 : ℤ))
     change ∫⁻ z in A, ρ z = ∫⁻ z in B, ρ z
     rw [show B = moeb g '' A from (moeb_image_eq g s).symm,
       lintegral_image_eq_lintegral_abs_det_fderiv_mul volume
         (isOpenEmbedding_coe.measurableEmbedding.measurableSet_image.mpr hs')
-        (fun z hz => (moeb_hasDerivAt g z (by
+        (fun z hz ↦ (moeb_hasDerivAt g z (by
           obtain ⟨τ, _, rfl⟩ := hz
           exact τ.coe_im_pos)).complexToReal_fderiv.hasFDerivWithinAt)
-        (fun z₁ hz₁ z₂ hz₂ h => by
+        (fun z₁ hz₁ z₂ hz₂ h ↦ by
           obtain ⟨τ₁, _, rfl⟩ := hz₁
           obtain ⟨τ₂, _, rfl⟩ := hz₂
           rw [moeb_coe, moeb_coe] at h
           exact congrArg _ (MulAction.injective g (UpperHalfPlane.ext h)))]
     refine setLIntegral_congr_fun
-      (isOpenEmbedding_coe.measurableEmbedding.measurableSet_image.mpr hs') fun z hz => ?_
+      (isOpenEmbedding_coe.measurableEmbedding.measurableSet_image.mpr hs') fun z hz ↦ ?_
     obtain ⟨τ, _, rfl⟩ := hz
     simp only [ρ, det_complexSmul]
     rw [abs_of_nonneg (Complex.normSq_nonneg _),
@@ -244,7 +243,7 @@ instance instSMulInvMeasure_SL : SMulInvariantMeasure SL(2, ℤ) ℍ μ_hyp wher
 instance instSMulInvMeasure_PSL : SMulInvariantMeasure PSL(2, ℤ) ℍ μ_hyp where
   measure_preimage_smul g s hs := by
     induction g using Quotient.inductionOn with | h a => ?_
-    change μ_hyp ((fun τ => (↑a : PSL(2, ℤ)) • τ) ⁻¹' s) = μ_hyp s
+    change μ_hyp ((fun τ ↦ (↑a : PSL(2, ℤ)) • τ) ⁻¹' s) = μ_hyp s
     simpa only [PSL_smul_coe] using
       (measurePreserving_smul a μ_hyp).measure_preimage hs.nullMeasurableSet
 
@@ -280,15 +279,15 @@ private theorem center_SL2Z_smul_eq_of_forall (g : SL(2, ℤ))
         exact htriv z₀
       rw [hng] at h2
       have := eq_zero_of_mem_fdo_of_T_zpow_mem_fdo z₀_fdo (h2 ▸ z₀_fdo)
-      omega
+      lia
     have : g = -1 := neg_eq_iff_eq_neg.mp (by rw [hng, hb, neg_zero, zpow_zero])
     rw [this]
-    refine Subgroup.mem_center_iff.mpr fun x => ?_
+    refine Subgroup.mem_center_iff.mpr fun x ↦ ?_
     ext i j
     simp [coe_neg, neg_mul, mul_neg]
 
 private theorem fdo_PSL_pairwise_disjoint :
-    Pairwise fun (g₁ g₂ : PSL(2, ℤ)) => Disjoint (g₁ • (fdo : Set ℍ)) (g₂ • fdo) := by
+    Pairwise fun (g₁ g₂ : PSL(2, ℤ)) ↦ Disjoint (g₁ • (fdo : Set ℍ)) (g₂ • fdo) := by
   intro g₁ g₂ hne
   rw [Set.disjoint_left]
   intro τ h1 h2
@@ -298,18 +297,15 @@ private theorem fdo_PSL_pairwise_disjoint :
   induction g₂ using Quotient.inductionOn with | h b => ?_
   simp only [PSL_smul_coe] at h_eq
   have hba : (b⁻¹ * a) • σ₁ = σ₂ := by rw [mul_smul, ← h_eq, inv_smul_smul]
-  have h_fix := eq_smul_self_of_mem_fdo_mem_fdo hσ₁ (hba ▸ hσ₂)
   exfalso
   apply hne
   have hc := c_eq_zero hσ₁ (hba ▸ hσ₂)
   obtain ⟨n, hn⟩ := exists_eq_T_zpow_of_c_eq_zero hc
   have hn0 := eq_zero_of_mem_fdo_of_T_zpow_mem_fdo hσ₁ (hn σ₁ ▸ (hba ▸ hσ₂))
-  have htriv : ∀ z : ℍ, (b⁻¹ * a) • z = z := fun z => by
+  have htriv : ∀ z : ℍ, (b⁻¹ * a) • z = z := fun z ↦ by
     rw [hn z, hn0, zpow_zero, one_smul]
-  have hmem : b⁻¹ * a ∈ Subgroup.center SL(2, ℤ) :=
-    center_SL2Z_smul_eq_of_forall _ htriv hc
   rw [Quotient.eq, QuotientGroup.leftRel_apply, show a⁻¹ * b = (b⁻¹ * a)⁻¹ by group]
-  exact (Subgroup.center _).inv_mem hmem
+  exact (Subgroup.center _).inv_mem (center_SL2Z_smul_eq_of_forall _ htriv hc)
 
 private lemma measurableSet_fd_diff_fdo : MeasurableSet (fd \ fdo : Set ℍ) :=
   MeasurableSet.diff
@@ -330,10 +326,10 @@ theorem isFundamentalDomain_fdo_PSL :
       push Not at hτ
       obtain ⟨g, hg⟩ := exists_smul_mem_fd τ
       exact Set.mem_iUnion.mpr ⟨g, Set.mem_preimage.mpr ⟨hg, hτ ↑g⟩⟩)
-    exact measure_iUnion_null fun g =>
+    exact measure_iUnion_null fun g ↦
       (measurePreserving_smul g μ_hyp).measure_preimage
         (measurableSet_fd_diff_fdo.nullMeasurableSet) ▸ hyperbolicMeasure_fd_boundary
-  aedisjoint := fun _ _ hne =>
+  aedisjoint := fun _ _ hne ↦
     (fdo_PSL_pairwise_disjoint hne).aedisjoint
 
 end
@@ -364,17 +360,17 @@ private lemma moebGL_hasDerivAt (g : GL₂⁺) (z : ℂ) (hz : 0 < z.im) :
   set c : ℂ := ↑(M 1 0 : ℝ)
   set d : ℂ := ↑(M 1 1 : ℝ)
   have hd := moebGL_denom_ne_zero g z hz
-  change HasDerivAt (fun w => (a * w + b) / (c * w + d)) (↑(M.det : ℝ) / (c * z + d) ^ 2) z
-  have hn : DifferentiableAt ℂ (fun w => a * w + b) z :=
+  change HasDerivAt (fun w ↦ (a * w + b) / (c * w + d)) (↑(M.det : ℝ) / (c * z + d) ^ 2) z
+  have hn : DifferentiableAt ℂ (fun w ↦ a * w + b) z :=
     (differentiableAt_id.const_mul a).add (differentiableAt_const b)
-  have hdn : DifferentiableAt ℂ (fun w => c * w + d) z :=
+  have hdn : DifferentiableAt ℂ (fun w ↦ c * w + d) z :=
     (differentiableAt_id.const_mul c).add (differentiableAt_const d)
-  suffices h : deriv (fun w => (a * w + b) / (c * w + d)) z =
+  suffices h : deriv (fun w ↦ (a * w + b) / (c * w + d)) z =
       ↑(M.det : ℝ) / (c * z + d) ^ 2 by
     rw [← h]
     exact (hn.div hdn hd).hasDerivAt
-  rw [show (fun w => (a * w + b) / (c * w + d)) =
-      ((fun w => a * w + b) / (fun w => c * w + d)) from funext fun _ => rfl,
+  rw [show (fun w ↦ (a * w + b) / (c * w + d)) =
+      ((fun w ↦ a * w + b) / (fun w ↦ c * w + d)) from funext fun _ ↦ rfl,
     deriv_div hn hdn hd, deriv_add_const, deriv_const_mul_field,
     deriv_add_const, deriv_const_mul_field]
   simp only [deriv_id'', mul_one]
@@ -386,8 +382,7 @@ private lemma moebGL_hasDerivAt (g : GL₂⁺) (z : ℂ) (hz : 0 < z.im) :
   linear_combination hdet
 
 private lemma moebGL_coe (g : GL₂⁺) (τ : ℍ) : moebGL g (↑τ) = ↑((g : GL (Fin 2) ℝ) • τ) := by
-  have hdet : 0 < ((g : GL (Fin 2) ℝ)).det.val := g.2
-  rw [coe_smul_of_det_pos hdet]
+  rw [coe_smul_of_det_pos g.2]
   rfl
 
 private lemma moebGL_image_eq (g : GL₂⁺) (s : Set ℍ) :
@@ -412,10 +407,8 @@ theorem density_jacobian_identity_GLpos (g : GL₂⁺) (τ : ℍ) :
       ((↑g : GL (Fin 2) ℝ) • τ).im ^ (-2 : ℤ) := by
   set g' := (g : GL (Fin 2) ℝ)
   set D := denom g' (↑τ : ℂ)
-  have hD : D ≠ 0 := denom_ne_zero g' τ
-  have hnsD : (0 : ℝ) < Complex.normSq D := Complex.normSq_pos.mpr hD
+  have hnsD : (0 : ℝ) < Complex.normSq D := Complex.normSq_pos.mpr (denom_ne_zero g' τ)
   have hdet_pos : (0 : ℝ) < g'.det.val := g.2
-  have hdet_ne : g'.det.val ≠ (0 : ℝ) := ne_of_gt hdet_pos
   have him := im_smul_eq_div_normSq g' τ
   rw [abs_of_pos hdet_pos] at him
   have hns_frac : Complex.normSq ((↑(g'.det.val : ℝ) : ℂ) / D ^ 2) =
@@ -423,8 +416,6 @@ theorem density_jacobian_identity_GLpos (g : GL₂⁺) (τ : ℍ) :
     rw [Complex.normSq_div, map_pow, Complex.normSq_ofReal]
     ring
   rw [hns_frac, him, div_zpow, mul_comm, mul_zpow]
-  have hnsD_ne : Complex.normSq D ≠ 0 := ne_of_gt hnsD
-  have him_ne : τ.im ≠ 0 := ne_of_gt τ.im_pos
   field_simp
   ring
 
@@ -439,27 +430,27 @@ instance instSMulInvMeasure_GLpos : SMulInvariantMeasure GL(2, ℝ)⁺ ℍ μ_hy
     set g' := (g : GL (Fin 2) ℝ)
     have hs' : MeasurableSet ((g' • ·) ⁻¹' s) := (measurable_const_smul g') hs
     simp_rw [hyperbolicMeasure, show ∀ (τ : ℍ), τ.im = (↑τ : ℂ).im from coe_im]
-    have hpre : (fun τ => (g : GL₂⁺) • τ) ⁻¹' s = (g' • ·) ⁻¹' s := rfl
-    rw [hpre, withDensity_apply _ hs', withDensity_apply _ hs,
-      setLIntegral_comap_coe _ hs' (fun z => ENNReal.ofReal (z.im ^ (-2 : ℤ))),
-      setLIntegral_comap_coe _ hs (fun z => ENNReal.ofReal (z.im ^ (-2 : ℤ)))]
+    rw [show (fun τ ↦ (g : GL₂⁺) • τ) ⁻¹' s = (g' • ·) ⁻¹' s from rfl,
+      withDensity_apply _ hs', withDensity_apply _ hs,
+      setLIntegral_comap_coe _ hs' (fun z ↦ ENNReal.ofReal (z.im ^ (-2 : ℤ))),
+      setLIntegral_comap_coe _ hs (fun z ↦ ENNReal.ofReal (z.im ^ (-2 : ℤ)))]
     set A := UpperHalfPlane.coe '' ((g' • ·) ⁻¹' s)
     set B := UpperHalfPlane.coe '' s
-    set ρ : ℂ → ENNReal := fun z => ENNReal.ofReal (z.im ^ (-2 : ℤ))
+    set ρ : ℂ → ENNReal := fun z ↦ ENNReal.ofReal (z.im ^ (-2 : ℤ))
     change ∫⁻ z in A, ρ z = ∫⁻ z in B, ρ z
     rw [show B = moebGL g '' A from (moebGL_image_eq g s).symm,
       lintegral_image_eq_lintegral_abs_det_fderiv_mul volume
         (isOpenEmbedding_coe.measurableEmbedding.measurableSet_image.mpr hs')
-        (fun z hz => (moebGL_hasDerivAt g z (by
+        (fun z hz ↦ (moebGL_hasDerivAt g z (by
           obtain ⟨τ, _, rfl⟩ := hz
           exact τ.coe_im_pos)).complexToReal_fderiv.hasFDerivWithinAt)
-        (fun z₁ hz₁ z₂ hz₂ h => by
+        (fun z₁ hz₁ z₂ hz₂ h ↦ by
           obtain ⟨τ₁, _, rfl⟩ := hz₁
           obtain ⟨τ₂, _, rfl⟩ := hz₂
           rw [moebGL_coe, moebGL_coe] at h
           exact congrArg _ (MulAction.injective g' (UpperHalfPlane.ext h)))]
     refine setLIntegral_congr_fun
-      (isOpenEmbedding_coe.measurableEmbedding.measurableSet_image.mpr hs') fun z hz => ?_
+      (isOpenEmbedding_coe.measurableEmbedding.measurableSet_image.mpr hs') fun z hz ↦ ?_
     obtain ⟨τ, _, rfl⟩ := hz
     simp only [ρ, det_complexSmul]
     rw [abs_of_nonneg (Complex.normSq_nonneg _),
@@ -505,12 +496,12 @@ theorem center_SL2R_smul_eq (c : SL(2, ℝ))
   field_simp
 
 private def pslSmul_R : PSL(2, ℝ) → ℍ → ℍ :=
-  Quotient.lift (fun (a : SL(2, ℝ)) (τ : ℍ) => a • τ) (by
+  Quotient.lift (fun (a : SL(2, ℝ)) (τ : ℍ) ↦ a • τ) (by
     intro a b hab
     funext τ
     show a • τ = b • τ
-    have h := QuotientGroup.leftRel_apply.mp hab
-    rw [show b = a * (a⁻¹ * b) by group, mul_smul, center_SL2R_smul_eq _ h])
+    rw [show b = a * (a⁻¹ * b) by group, mul_smul,
+      center_SL2R_smul_eq _ (QuotientGroup.leftRel_apply.mp hab)])
 
 @[simp] private theorem pslSmul_R_coe (a : SL(2, ℝ)) (τ : ℍ) :
     pslSmul_R (↑a) τ = a • τ := rfl
@@ -538,25 +529,18 @@ theorem PSL_R_smul_coe (g : SL(2, ℝ)) (τ : ℍ) :
 instance : MeasurableConstSMul PSL(2, ℝ) ℍ where
   measurable_const_smul g := by
     induction g using Quotient.inductionOn with | h a => ?_
-    show Measurable (fun τ => (↑a : PSL(2, ℝ)) • τ)
+    show Measurable (fun τ ↦ (↑a : PSL(2, ℝ)) • τ)
     simpa only [PSL_R_smul_coe] using (continuous_const_smul (mapGL ℝ a)).measurable
 
 instance instSMulInvMeasure_PSL_R : SMulInvariantMeasure PSL(2, ℝ) ℍ μ_hyp where
   measure_preimage_smul g s hs := by
     induction g using Quotient.inductionOn with | h a => ?_
-    change μ_hyp ((fun τ => (↑a : PSL(2, ℝ)) • τ) ⁻¹' s) = μ_hyp s
+    change μ_hyp ((fun τ ↦ (↑a : PSL(2, ℝ)) • τ) ⁻¹' s) = μ_hyp s
     simp only [PSL_R_smul_coe]
     set g_GL : GL (Fin 2) ℝ := mapGL ℝ a
-    have h_det : (Matrix.GeneralLinearGroup.det g_GL).val = (1 : ℝ) := by
-      have h_unit : Matrix.GeneralLinearGroup.det (mapGL ℝ a) = 1 :=
-        Matrix.SpecialLinearGroup.coeToGL_det _
-      rw [h_unit]
-      rfl
-    have hg_pos : 0 < (Matrix.GeneralLinearGroup.det g_GL).val := h_det ▸ one_pos
-    set g_GLPos : GL(2, ℝ)⁺ := ⟨g_GL, hg_pos⟩
-    have h_action : ∀ τ : ℍ, (↑a : SL(2, ℝ)) • τ = (g_GLPos : GL(2, ℝ)⁺) • τ :=
-      fun τ => rfl
-    simp_rw [h_action]
+    have h_det : (Matrix.GeneralLinearGroup.det g_GL).val = (1 : ℝ) := by simp [g_GL]
+    set g_GLPos : GL(2, ℝ)⁺ :=
+      ⟨g_GL, (h_det ▸ one_pos : 0 < (Matrix.GeneralLinearGroup.det g_GL).val)⟩
     exact (measurePreserving_smul g_GLPos μ_hyp).measure_preimage hs.nullMeasurableSet
 
 /-- The lift `SL(2, ℤ) →* PSL(2, ℝ)`: cast `SL(2, ℤ)` entries to `ℝ` via
@@ -589,7 +573,7 @@ private lemma g_mem_center_of_map_intCast_mem_center (g : SL(2, ℤ))
   rw [Matrix.SpecialLinearGroup.mem_center_iff] at hmem ⊢
   obtain ⟨r, hr_pow, hr_scalar⟩ := hmem
   have h_entry_R : ∀ i j, ((g : Matrix (Fin 2) (Fin 2) ℤ) i j : ℝ) =
-      (Matrix.scalar (Fin 2) r) i j := fun i j => by
+      (Matrix.scalar (Fin 2) r) i j := fun i j ↦ by
     have h_ij := congr_fun (congr_fun hr_scalar i) j
     rw [map_intCast_entry] at h_ij
     exact h_ij.symm
@@ -597,13 +581,13 @@ private lemma g_mem_center_of_map_intCast_mem_center (g : SL(2, ℤ))
   have hr_z : (z : ℝ) = r := by
     have := h_entry_R 0 0
     rwa [show (Matrix.scalar (Fin 2) r) 0 0 = r by simp [Matrix.scalar_apply]] at this
-  have h_diag : ∀ i, (g : Matrix (Fin 2) (Fin 2) ℤ) i i = z := fun i => by
+  have h_diag : ∀ i, (g : Matrix (Fin 2) (Fin 2) ℤ) i i = z := fun i ↦ by
     have h_iR : (((g : Matrix _ _ ℤ) i i : ℤ) : ℝ) = (z : ℝ) := by
       have := h_entry_R i i
       rw [show (Matrix.scalar (Fin 2) r) i i = r by simp [Matrix.scalar_apply]] at this
       rw [this, ← hr_z]
     exact_mod_cast h_iR
-  have h_off : ∀ i j, i ≠ j → (g : Matrix (Fin 2) (Fin 2) ℤ) i j = 0 := fun i j hij => by
+  have h_off : ∀ i j, i ≠ j → (g : Matrix (Fin 2) (Fin 2) ℤ) i j = 0 := fun i j hij ↦ by
     have h_R : (((g : Matrix _ _ ℤ) i j : ℤ) : ℝ) = 0 := by
       have := h_entry_R i j
       rw [show (Matrix.scalar (Fin 2) r) i j = 0 by simp [Matrix.scalar_apply, hij]] at this
@@ -651,7 +635,7 @@ theorem ker_SL2Z_to_PSL2R : SL2Z_to_PSL2R.ker = Subgroup.center SL(2, ℤ) := by
 `PSL(2, ℤ) = SL(2, ℤ) ⧸ center SL(2, ℤ)` since integer scalar matrices map into
 `center SL(2, ℝ)`. -/
 def PSL2Z_to_PSL2R : PSL(2, ℤ) →* PSL(2, ℝ) :=
-  QuotientGroup.lift (Subgroup.center SL(2, ℤ)) SL2Z_to_PSL2R fun x hx => by
+  QuotientGroup.lift (Subgroup.center SL(2, ℤ)) SL2Z_to_PSL2R fun x hx ↦ by
     rwa [ker_SL2Z_to_PSL2R]
 
 @[simp] theorem PSL2Z_to_PSL2R_mk (g : SL(2, ℤ)) :
@@ -705,7 +689,7 @@ lemma GL_smul_pos_eq
   rw [coe_smul_of_det_pos hh_det, coe_smul_of_det_pos hg_det]
   have h_entry : ∀ i j,
       ((h : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) i j =
-        c * ((g : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) i j := fun i j => by
+        c * ((g : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) i j := fun i j ↦ by
     rw [h_eq]
     simp [Matrix.smul_apply, smul_eq_mul]
   have h_num : num h τ = (c : ℂ) * num g τ := by
@@ -727,16 +711,9 @@ noncomputable def GLPos_to_SLR (g : GL(2, ℝ)⁺) : SL(2, ℝ) :=
       ((g : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ),
     by
       have hg_pos : 0 < ((g : GL (Fin 2) ℝ).det.val : ℝ) := g.property
-      have h_sq : Real.sqrt ((g : GL (Fin 2) ℝ).det.val) ^ 2 =
-          (g : GL (Fin 2) ℝ).det.val :=
-        Real.sq_sqrt (le_of_lt hg_pos)
-      have h_det_g : ((g : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ).det =
-          (g : GL (Fin 2) ℝ).det.val := rfl
       show ((Real.sqrt ((g : GL (Fin 2) ℝ).det.val))⁻¹ •
           ((g : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ)).det = 1
-      rw [Matrix.det_smul, h_det_g]
-      simp only [Fintype.card_fin]
-      rw [inv_pow, h_sq]
+      rw [Matrix.det_smul, Fintype.card_fin, inv_pow, Real.sq_sqrt hg_pos.le]
       exact inv_mul_cancel₀ (ne_of_gt hg_pos)⟩
 
 /-- The projective representative of a `GL(2, ℝ)⁺` element: the `PSL(2, ℝ)`-image of

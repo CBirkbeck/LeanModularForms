@@ -73,9 +73,8 @@ lemma T_p_lower_det (p : ℕ) (hp : 0 < p) :
 
 lemma glMap_det_pos_of_rat_det_pos (g : GL (Fin 2) ℚ) (h : 0 < g.det.val) :
     0 < (glMap g).det.val := by
-  have : (glMap g).det.val = algebraMap ℚ ℝ g.det.val :=
-    congr_arg Units.val (GeneralLinearGroup.map_det (algebraMap ℚ ℝ) g)
-  rw [this]
+  rw [show (glMap g).det.val = algebraMap ℚ ℝ g.det.val from
+    congr_arg Units.val (GeneralLinearGroup.map_det (algebraMap ℚ ℝ) g)]
   exact Rat.cast_pos.mpr h
 
 lemma smul_slash_pos_det (k : ℤ) (c : ℂ) (φ : UpperHalfPlane → ℂ)
@@ -125,15 +124,12 @@ private lemma heckeT_p_holomorphic [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.Prim
 
 private lemma zmod_mul_inv {p : ℕ} [hp : Fact p.Prime] [NeZero p]
     {a : ZMod p} (ha : a ≠ 0) : a * a⁻¹ = 1 := by
-  have hne : a.val ≠ 0 := fun h ↦ ha (by
-    rw [show a = (a.val : ZMod p) by rw [ZMod.natCast_val, ZMod.cast_id]]
-    simp [h])
-  have hcop : a.val.Coprime p :=
-    (hp.out.coprime_iff_not_dvd.2 (fun h ↦ hne (Nat.eq_zero_of_dvd_of_lt h (ZMod.val_lt a)))).symm
   have vcz : ∀ x : ZMod p, (x.val : ZMod p) = x := fun x ↦ by rw [ZMod.natCast_val, ZMod.cast_id]
   conv_lhs => rw [show a = (a.val : ZMod p) from (vcz a).symm,
     show ((a.val : ZMod p))⁻¹ = (((a.val : ZMod p)⁻¹).val : ZMod p) from (vcz _).symm]
-  exact ZMod.mul_val_inv hcop
+  exact ZMod.mul_val_inv (hp.out.coprime_iff_not_dvd.2 fun h ↦ ha (by
+    rw [show a = (a.val : ZMod p) by rw [ZMod.natCast_val, ZMod.cast_id]]
+    simp [Nat.eq_zero_of_dvd_of_lt h (ZMod.val_lt a)])).symm
 
 private noncomputable def moebiusFin (p : ℕ) (hp : Nat.Prime p)
     (M : Matrix (Fin 2) (Fin 2) ℤ) (b : Fin p) : Fin p :=
@@ -157,8 +153,8 @@ private lemma intCast_zmod_eq_zero_of_mul (p : ℕ) (hp : Nat.Prime p) {a b : �
     (hab : ((a * b : ℤ) : ZMod p) = 0) (hb : ((b : ℤ) : ZMod p) ≠ 0) :
     ((a : ℤ) : ZMod p) = 0 := by
   rw [ZMod.intCast_zmod_eq_zero_iff_dvd] at hab ⊢
-  have hb' : ¬((p : ℤ) ∣ b) := fun h ↦ hb ((ZMod.intCast_zmod_eq_zero_iff_dvd b p).mpr h)
-  exact (Int.Prime.dvd_mul' hp hab).resolve_right hb'
+  exact (Int.Prime.dvd_mul' hp hab).resolve_right fun h ↦
+    hb ((ZMod.intCast_zmod_eq_zero_iff_dvd b p).mpr h)
 
 private lemma fin_val_eq_of_intCast_sub_dvd {p : ℕ} (hp : Nat.Prime p) (x y : Fin p)
     (h : (p : ℤ) ∣ ((x.val : ℤ) - y.val)) : x.val = y.val := by
@@ -210,14 +206,14 @@ private lemma false_of_topLeft_zero_and_nonzero {p : ℕ} [Fact p.Prime] [NeZero
       ((M 0 1 + d * M 1 1 : ℤ) : ZMod p) * ((M 0 0 + d * M 1 0 : ℤ) : ZMod p)⁻¹) :
     False := by
   have hdet_p : ((M 0 0 * M 1 1 - M 0 1 * M 1 0 : ℤ) : ZMod p) = 1 := by simp [hdet]
-  have h10_ne := botLeft_ne_zero_of_topLeft_add_eq_zero M hdet c hAc
-  have hcross := zmod_mul_eq_of_mul_inv_eq h10_ne hAd heq
   have hdet_d : ((M 1 1 : ℤ) : ZMod p) * ((M 0 0 + d * M 1 0 : ℤ) : ZMod p) -
       ((M 1 0 : ℤ) : ZMod p) * ((M 0 1 + d * M 1 1 : ℤ) : ZMod p) = 1 := by
     rw [show ((M 1 1 : ℤ) : ZMod p) * ((M 0 0 + d * M 1 0 : ℤ) : ZMod p) -
       ((M 1 0 : ℤ) : ZMod p) * ((M 0 1 + d * M 1 1 : ℤ) : ZMod p) =
       ((M 0 0 * M 1 1 - M 0 1 * M 1 0 : ℤ) : ZMod p) by push_cast; ring, hdet_p]
-  exact one_ne_zero (hdet_d.symm.trans (by rw [hcross]; ring))
+  exact one_ne_zero (hdet_d.symm.trans (by
+    rw [zmod_mul_eq_of_mul_inv_eq (botLeft_ne_zero_of_topLeft_add_eq_zero M hdet c hAc) hAd heq]
+    ring))
 
 private lemma moebiusFin_injective (p : ℕ) (hp : Nat.Prime p)
     (M : Matrix (Fin 2) (Fin 2) ℤ) (hdet : M.det = 1) :
@@ -244,11 +240,11 @@ private lemma moebiusFin_injective (p : ℕ) (hp : Nat.Prime p)
       push_cast
       ring
     rw [hA₁, hA₂, sub_self] at h_ring
-    have h10_ne := botLeft_ne_zero_of_topLeft_add_eq_zero M hdet_eq _ hA₁
     have hb_zero : ((↑b₁.val - ↑b₂.val : ℤ) : ZMod p) = 0 := by
       have h := h_ring.symm
       rw [← Int.cast_mul] at h
-      exact intCast_zmod_eq_zero_of_mul p hp h h10_ne
+      exact intCast_zmod_eq_zero_of_mul p hp h
+        (botLeft_ne_zero_of_topLeft_add_eq_zero M hdet_eq _ hA₁)
     exact fin_val_eq_of_intCast_sub_dvd hp b₁ b₂
       ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp hb_zero)
   · rw [if_pos hA₁, if_neg hA₂] at hv
@@ -258,7 +254,6 @@ private lemma moebiusFin_injective (p : ℕ) (hp : Nat.Prime p)
     exact (false_of_topLeft_zero_and_nonzero M hdet_eq _ _ hA₂ hA₁
       (ZMod.val_injective p hv).symm).elim
   · rw [if_neg hA₁, if_neg hA₂] at hv
-    have hcross := zmod_mul_eq_of_mul_inv_eq hA₁ hA₂ (ZMod.val_injective p hv)
     have h_cross_det : B₁ * A₂ - B₂ * A₁ =
         ((↑b₁.val - ↑b₂.val : ℤ) : ZMod p) *
         ((M 0 0 * M 1 1 - M 0 1 * M 1 0 : ℤ) : ZMod p) := by
@@ -266,7 +261,7 @@ private lemma moebiusFin_injective (p : ℕ) (hp : Nat.Prime p)
       push_cast
       ring
     have h0 : B₁ * A₂ - B₂ * A₁ = 0 := by
-      rw [hcross]
+      rw [zmod_mul_eq_of_mul_inv_eq hA₁ hA₂ (ZMod.val_injective p hv)]
       ring
     rw [h0, hdet_p, mul_one] at h_cross_det
     exact fin_val_eq_of_intCast_sub_dvd hp b₁ b₂
@@ -436,7 +431,6 @@ private theorem orbit_upper_gamma0 [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.Prim
   haveI : Fact p.Prime := ⟨hp⟩
   rw [← glMap_mapGL_eq, ← map_mul]
   set M := (σ : Matrix (Fin 2) (Fin 2) ℤ)
-  have hdet : M 0 0 * M 1 1 - M 0 1 * M 1 0 = 1 := sl2z_fin_two_det_eq_one σ
   rw [Gamma0_mem] at hσ
   have hA_ne : ((M 0 0 + ↑b.val * M 1 0 : ℤ) : ZMod p) ≠ 0 :=
     fun h ↦ hA ((ZMod.intCast_zmod_eq_zero_iff_dvd _ p).mp h)
@@ -450,8 +444,8 @@ private theorem orbit_upper_gamma0 [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.Prim
   rw [← hj'_def] at hq_eq
   set τ_mat : Matrix (Fin 2) (Fin 2) ℤ :=
     !![M 0 0 + ↑b.val * M 1 0, q; ↑p * M 1 0, M 1 1 - M 1 0 * ↑j'] with hτ_mat_def
-  have hτ_det : τ_mat.det = 1 := upper_tau_det_eq_one hdet p b.val j' q hq_eq
-  set τ : SL(2, ℤ) := ⟨τ_mat, hτ_det⟩ with hτ_def
+  set τ : SL(2, ℤ) :=
+    ⟨τ_mat, upper_tau_det_eq_one (sl2z_fin_two_det_eq_one σ) p b.val j' q hq_eq⟩ with hτ_def
   have hτ_g0 : τ ∈ Gamma0 N := by
     rw [Gamma0_mem]
     show ((↑p * M 1 0 : ℤ) : ZMod N) = 0
@@ -496,13 +490,11 @@ private theorem orbit_upper_div_gamma0 [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.
   set M := (σ : Matrix (Fin 2) (Fin 2) ℤ)
   set A : ℤ := M 0 0 + ↑b.val * M 1 0 with hA_def
   set B : ℤ := M 0 1 + ↑b.val * M 1 1 with hB_def
-  have hdet : M 0 0 * M 1 1 - M 0 1 * M 1 0 = 1 := sl2z_fin_two_det_eq_one σ
   rw [Gamma0_mem] at hσ
   obtain ⟨a, ha⟩ := hA
   set τ_mat : Matrix (Fin 2) (Fin 2) ℤ := !![a, B; M 1 0, ↑p * M 1 1] with hτ_mat_def
-  have hτ_det : τ_mat.det = 1 :=
-    upper_div_tau_det_eq_one hdet p a b.val (by rw [← hA_def, ha]; ring)
-  set τ : SL(2, ℤ) := ⟨τ_mat, hτ_det⟩ with hτ_def
+  set τ : SL(2, ℤ) := ⟨τ_mat, upper_div_tau_det_eq_one (sl2z_fin_two_det_eq_one σ) p a b.val
+    (by rw [← hA_def, ha]; ring)⟩ with hτ_def
   have hτ_g0 : τ ∈ Gamma0 N := by
     rw [Gamma0_mem]
     show ((M 1 0 : ℤ) : ZMod N) = 0
@@ -548,24 +540,23 @@ private theorem orbit_lower_gamma0 [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.Prim
         (glMap (T_p_lower p hp.pos) * mapGL ℝ σ) =
     ⇑(diamondOpAux k ⟨σ, hσ⟩ f) ∣[k] glMap (T_p_upper p hp.pos
         (moebiusFin p hp (σ : Matrix (Fin 2) (Fin 2) ℤ) b₀).val) := by
-  haveI : Fact p.Prime := ⟨hp⟩; haveI : NeZero p := ⟨hp.ne_zero⟩
+  haveI : Fact p.Prime := ⟨hp⟩
+  haveI : NeZero p := ⟨hp.ne_zero⟩
   rw [← glMap_mapGL_eq, ← map_mul]
   set M := (σ : Matrix (Fin 2) (Fin 2) ℤ)
-  have hdet : M 0 0 * M 1 1 - M 0 1 * M 1 0 = 1 := sl2z_fin_two_det_eq_one σ
   rw [Gamma0_mem] at hσ
-  have hσ10_ne : ((M 1 0 : ℤ) : ZMod p) ≠ 0 :=
-    fun h ↦ hσ10 ((ZMod.intCast_zmod_eq_zero_iff_dvd (M 1 0) p).mp h)
   set j' := (((M 1 1 : ℤ) : ZMod p) * ((M 1 0 : ℤ) : ZMod p)⁻¹).val with hj'_def
   have hj'_eq : (moebiusFin p hp M b₀).val = j' := by
     dsimp only [moebiusFin]
     rw [if_pos ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hb₀)]
   rw [hj'_eq]
-  obtain ⟨q, hq_eq⟩ := dvd_sub_mul_inv_val (M 1 1) (M 1 0) hσ10_ne
+  obtain ⟨q, hq_eq⟩ := dvd_sub_mul_inv_val (M 1 1) (M 1 0)
+    fun h ↦ hσ10 ((ZMod.intCast_zmod_eq_zero_iff_dvd (M 1 0) p).mp h)
   rw [← hj'_def] at hq_eq
   set τ_mat : Matrix (Fin 2) (Fin 2) ℤ :=
     !![↑p * M 0 0, M 0 1 - M 0 0 * ↑j'; M 1 0, q] with hτ_mat_def
-  have hτ_det : τ_mat.det = 1 := lower_tau_det_eq_one hdet p j' q hq_eq
-  set τ : SL(2, ℤ) := ⟨τ_mat, hτ_det⟩ with hτ_def
+  set τ : SL(2, ℤ) :=
+    ⟨τ_mat, lower_tau_det_eq_one (sl2z_fin_two_det_eq_one σ) p j' q hq_eq⟩ with hτ_def
   have hτ_g0 : τ ∈ Gamma0 N := by
     rw [Gamma0_mem]
     show ((M 1 0 : ℤ) : ZMod N) = 0
@@ -611,12 +602,11 @@ private theorem orbit_lower_div_gamma0 [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.
       glMap (T_p_lower p hp.pos) := by
   rw [← glMap_mapGL_eq, ← map_mul]
   set M := (σ : Matrix (Fin 2) (Fin 2) ℤ)
-  have hdet : M 0 0 * M 1 1 - M 0 1 * M 1 0 = 1 := sl2z_fin_two_det_eq_one σ
   have hσ10_N : ((M 1 0 : ℤ) : ZMod N) = 0 := Gamma0_mem.mp hσ
   obtain ⟨c, hc⟩ := hσ10
   set τ_mat : Matrix (Fin 2) (Fin 2) ℤ := !![M 0 0, ↑p * M 0 1; c, M 1 1] with hτ_mat_def
-  have hτ_det : τ_mat.det = 1 := lower_div_tau_det_eq_one hdet p c hc
-  set τ : SL(2, ℤ) := ⟨τ_mat, hτ_det⟩ with hτ_def
+  set τ : SL(2, ℤ) :=
+    ⟨τ_mat, lower_div_tau_det_eq_one (sl2z_fin_two_det_eq_one σ) p c hc⟩ with hτ_def
   have hτ_g0 : τ ∈ Gamma0 N := by
     rw [Gamma0_mem]
     show ((c : ℤ) : ZMod N) = 0
@@ -749,14 +739,8 @@ private theorem heckeT_p_slash_invariant_case1 [NeZero N] (k : ℤ) (p : ℕ)
         (T_p_lower p hp.pos : GL (Fin 2) ℚ) := by
   haveI : Fact p.Prime := ⟨hp⟩
   haveI : NeZero p := ⟨hp.ne_zero⟩
-  set M := (σ : Matrix (Fin 2) (Fin 2) ℤ) with hM
+  set M := (σ : Matrix (Fin 2) (Fin 2) ℤ)
   have hdet_M : M.det = 1 := by exact_mod_cast σ.prop
-  have hA_all : ∀ b : Fin p, ¬(p : ℤ) ∣ (M 0 0 + ↑b.val * M 1 0) := fun b ↦
-    not_dvd_topLeft_add_of_dvd_botLeft p hp M (sl2z_fin_two_det_eq_one σ) hσ10p _
-  have h_upper : ∀ b : Fin p,
-      (⇑f ∣[k] (T_p_upper p hp.pos b.val : GL (Fin 2) ℚ)) ∣[k] mapGL ℝ σ =
-      ⇑f ∣[k] (T_p_upper p hp.pos (moebiusFin p hp M b).val : GL (Fin 2) ℚ) := fun b ↦
-    slash_upper_eq_under_gamma1 k p hp hpN f σ hσ b (hA_all b)
   have h_lower : (⇑(diamondOp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
       (T_p_lower p hp.pos : GL (Fin 2) ℚ)) ∣[k] mapGL ℝ σ =
     ⇑(diamondOp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
@@ -765,15 +749,16 @@ private theorem heckeT_p_slash_invariant_case1 [NeZero N] (k : ℤ) (p : ℕ)
       glMap (T_p_lower p hp.pos)) ∣[k] mapGL ℝ σ = _
     rw [← SlashAction.slash_mul,
         orbit_lower_div_gamma0 k p hp hpN f σ (Gamma1_in_Gamma0 N hσ) hσ10p,
-        diamondOpAux_gamma1 k σ hσ f]; rfl
-  have h_bij : Function.Bijective (moebiusFin p hp M) :=
-    Finite.injective_iff_bijective.mp (moebiusFin_injective p hp M hdet_M)
+        diamondOpAux_gamma1 k σ hσ f]
+    rfl
   rw [h_lower]
   congr 1
   rw [← Fin.sum_univ_eq_sum_range, ← Fin.sum_univ_eq_sum_range]
-  exact Finset.sum_equiv (Equiv.ofBijective _ h_bij)
+  exact Finset.sum_equiv (Equiv.ofBijective _
+    (Finite.injective_iff_bijective.mp (moebiusFin_injective p hp M hdet_M)))
     (fun _ ↦ ⟨fun _ ↦ Finset.mem_univ _, fun _ ↦ Finset.mem_univ _⟩)
-    (fun b _ ↦ h_upper b)
+    (fun b _ ↦ slash_upper_eq_under_gamma1 k p hp hpN f σ hσ b
+      (not_dvd_topLeft_add_of_dvd_botLeft p hp M (sl2z_fin_two_det_eq_one σ) hσ10p _))
 
 private theorem heckeT_p_slash_invariant_case2 [NeZero N] (k : ℤ) (p : ℕ)
     (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
@@ -791,17 +776,10 @@ private theorem heckeT_p_slash_invariant_case2 [NeZero N] (k : ℤ) (p : ℕ)
   haveI : NeZero p := ⟨hp.ne_zero⟩
   set M := (σ : Matrix (Fin 2) (Fin 2) ℤ)
   have hdet_M : M.det = 1 := by exact_mod_cast σ.prop
-  have h10_ne : ((M 1 0 : ℤ) : ZMod p) ≠ 0 :=
-    fun h ↦ hσ10p ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp h)
   set b₀ : Fin p := ⟨(-(M 0 0 : ZMod p) * (M 1 0 : ZMod p)⁻¹).val, ZMod.val_lt _⟩
   have hb₀_dvd : (p : ℤ) ∣ (M 0 0 + ↑b₀.val * M 1 0) :=
-    dvd_topLeft_add_canonicalIndex p hp M h10_ne
-  have h_lower : (⇑(diamondOp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
-      (T_p_lower p hp.pos : GL (Fin 2) ℚ)) ∣[k] mapGL ℝ σ =
-    ⇑f ∣[k] (T_p_upper p hp.pos (moebiusFin p hp M b₀).val : GL (Fin 2) ℚ) :=
-    slash_lower_eq_under_gamma1 k p hp hpN f σ hσ hσ10p b₀ hb₀_dvd
-  have h_bij : Function.Bijective (moebiusFin p hp M) :=
-    Finite.injective_iff_bijective.mp (moebiusFin_injective p hp M hdet_M)
+    dvd_topLeft_add_canonicalIndex p hp M
+      fun h ↦ hσ10p ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp h)
   rw [← Fin.sum_univ_eq_sum_range, ← Fin.sum_univ_eq_sum_range]
   have h_all : ∀ b : Fin p,
       (⇑f ∣[k] (T_p_upper p hp.pos b.val : GL (Fin 2) ℚ)) ∣[k] mapGL ℝ σ =
@@ -814,7 +792,7 @@ private theorem heckeT_p_slash_invariant_case2 [NeZero N] (k : ℤ) (p : ℕ)
     · exact slash_upper_div_eq_under_gamma1 k p hp hpN f σ hσ b h
     · exact slash_upper_eq_under_gamma1 k p hp hpN f σ hσ b h
   simp_rw [h_all]
-  rw [h_lower]
+  rw [slash_lower_eq_under_gamma1 k p hp hpN f σ hσ hσ10p b₀ hb₀_dvd]
   set g : Fin p → UpperHalfPlane → ℂ :=
     fun i ↦ ⇑f ∣[k] (T_p_upper p hp.pos i.val : GL (Fin 2) ℚ)
   set lower' := ⇑(diamondOp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
@@ -822,7 +800,8 @@ private theorem heckeT_p_slash_invariant_case2 [NeZero N] (k : ℤ) (p : ℕ)
   show (∑ x, if (p : ℤ) ∣ (M 0 0 + ↑x.val * M 1 0) then lower'
         else g (moebiusFin p hp M x)) + g (moebiusFin p hp M b₀) =
       Finset.univ.sum g + lower'
-  exact sum_ite_swap_eq g lower' (moebiusFin p hp M) h_bij b₀ _
+  exact sum_ite_swap_eq g lower' (moebiusFin p hp M)
+    (Finite.injective_iff_bijective.mp (moebiusFin_injective p hp M hdet_M)) b₀ _
     (dvd_topLeft_add_iff_eq_canonicalIndex p hp M hdet_M b₀ hb₀_dvd)
 
 private theorem heckeT_p_slash_invariant [NeZero N] (k : ℤ) (p : ℕ)
@@ -854,11 +833,9 @@ private theorem orbit_sum_comm_case1 [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.Pr
   have hσ : σ ∈ Gamma0 N := g.property
   haveI : Fact p.Prime := ⟨hp⟩
   haveI : NeZero p := ⟨hp.ne_zero⟩
-  set M := (σ : Matrix (Fin 2) (Fin 2) ℤ) with hM
+  set M := (σ : Matrix (Fin 2) (Fin 2) ℤ)
   have hdet_M : M.det = 1 := by exact_mod_cast σ.prop
   have h_coe : (⇑(diamondOpAux k g f) : UpperHalfPlane → ℂ) = ⇑f ∣[k] mapGL ℝ σ := rfl
-  have hA_all : ∀ b : Fin p, ¬(p : ℤ) ∣ (M 0 0 + ↑b.val * M 1 0) := fun b ↦
-    not_dvd_topLeft_add_of_dvd_botLeft p hp M (sl2z_fin_two_det_eq_one σ) hσ10p _
   have h_upper : ∀ b : Fin p,
       (⇑f ∣[k] (T_p_upper p hp.pos b.val : GL (Fin 2) ℚ)) ∣[k] mapGL ℝ σ =
       (⇑f ∣[k] mapGL ℝ σ) ∣[k]
@@ -868,7 +845,8 @@ private theorem orbit_sum_comm_case1 [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.Pr
     change (⇑f ∣[k] glMap (T_p_upper p hp.pos b.val)) ∣[k] mapGL ℝ σ =
       (⇑f ∣[k] mapGL ℝ σ) ∣[k] glMap (T_p_upper p hp.pos (moebiusFin p hp M b).val)
     rw [← SlashAction.slash_mul]
-    have := orbit_upper_gamma0 k p hp hpN f σ hσ b (hA_all b)
+    have := orbit_upper_gamma0 k p hp hpN f σ hσ b
+      (not_dvd_topLeft_add_of_dvd_botLeft p hp M (sl2z_fin_two_det_eq_one σ) hσ10p _)
     rw [h_coe] at this
     exact this
   have h_lower : (⇑(diamondOp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
@@ -879,13 +857,12 @@ private theorem orbit_sum_comm_case1 [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.Pr
       glMap (T_p_lower p hp.pos)) ∣[k] mapGL ℝ σ = _
     rw [← SlashAction.slash_mul]
     exact orbit_lower_div_gamma0 k p hp hpN f σ hσ hσ10p
-  have h_bij : Function.Bijective (moebiusFin p hp M) :=
-    Finite.injective_iff_bijective.mp (moebiusFin_injective p hp M hdet_M)
   rw [h_lower]
   congr 1
   rw [← Fin.sum_univ_eq_sum_range, ← Fin.sum_univ_eq_sum_range]
   rw [h_coe]
-  exact Finset.sum_equiv (Equiv.ofBijective _ h_bij)
+  exact Finset.sum_equiv (Equiv.ofBijective _
+    (Finite.injective_iff_bijective.mp (moebiusFin_injective p hp M hdet_M)))
     (fun _ ↦ ⟨fun _ ↦ Finset.mem_univ _, fun _ ↦ Finset.mem_univ _⟩)
     (fun b _ ↦ h_upper b)
 
@@ -906,16 +883,12 @@ private theorem orbit_sum_comm_case2 [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.Pr
   have hσ : σ ∈ Gamma0 N := g.property
   haveI : Fact p.Prime := ⟨hp⟩
   haveI : NeZero p := ⟨hp.ne_zero⟩
-  set M := (σ : Matrix (Fin 2) (Fin 2) ℤ) with hM
+  set M := (σ : Matrix (Fin 2) (Fin 2) ℤ)
   have hdet_M : M.det = 1 := by exact_mod_cast σ.prop
-  have h10_ne : ((M 1 0 : ℤ) : ZMod p) ≠ 0 :=
-    fun h ↦ hσ10p ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp h)
   set b₀ : Fin p := ⟨(-(M 0 0 : ZMod p) * (M 1 0 : ZMod p)⁻¹).val, ZMod.val_lt _⟩
   have hb₀_dvd : (p : ℤ) ∣ (M 0 0 + ↑b₀.val * M 1 0) :=
-    dvd_topLeft_add_canonicalIndex p hp M h10_ne
-  have h_lower := slash_lower_eq_under_gamma0 k p hp hpN f σ hσ hσ10p b₀ hb₀_dvd
-  have h_bij : Function.Bijective (moebiusFin p hp M) :=
-    Finite.injective_iff_bijective.mp (moebiusFin_injective p hp M hdet_M)
+    dvd_topLeft_add_canonicalIndex p hp M
+      fun h ↦ hσ10p ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp h)
   rw [← Fin.sum_univ_eq_sum_range, ← Fin.sum_univ_eq_sum_range]
   have h_all : ∀ b : Fin p,
       (⇑f ∣[k] (T_p_upper p hp.pos b.val : GL (Fin 2) ℚ)) ∣[k] mapGL ℝ σ =
@@ -929,7 +902,7 @@ private theorem orbit_sum_comm_case2 [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.Pr
     · exact slash_upper_div_eq_under_gamma0 k p hp hpN f σ hσ b h
     · exact slash_upper_eq_under_gamma0 k p hp hpN f σ hσ b h
   simp_rw [h_all]
-  rw [h_lower]
+  rw [slash_lower_eq_under_gamma0 k p hp hpN f σ hσ hσ10p b₀ hb₀_dvd]
   set g' : Fin p → UpperHalfPlane → ℂ :=
     fun i ↦ ⇑(diamondOpAux k ⟨σ, hσ⟩ f) ∣[k] (T_p_upper p hp.pos i.val : GL (Fin 2) ℚ)
   set lower' := ⇑(diamondOp k (ZMod.unitOfCoprime p hpN) (diamondOpAux k ⟨σ, hσ⟩ f)) ∣[k]
@@ -937,7 +910,8 @@ private theorem orbit_sum_comm_case2 [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.Pr
   show (∑ x, if (p : ℤ) ∣ (M 0 0 + ↑x.val * M 1 0) then lower'
         else g' (moebiusFin p hp M x)) + g' (moebiusFin p hp M b₀) =
       Finset.univ.sum g' + lower'
-  exact sum_ite_swap_eq g' lower' (moebiusFin p hp M) h_bij b₀ _
+  exact sum_ite_swap_eq g' lower' (moebiusFin p hp M)
+    (Finite.injective_iff_bijective.mp (moebiusFin_injective p hp M hdet_M)) b₀ _
     (dvd_topLeft_add_iff_eq_canonicalIndex p hp M hdet_M b₀ hb₀_dvd)
 
 private theorem orbit_sum_comm [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.Prime p)
@@ -1061,12 +1035,11 @@ theorem heckeT_p_preserves_modFormCharSpace [NeZero N] (k : ℤ) (p : ℕ)
     heckeT_p k p hp hpN f ∈ modFormCharSpace k χ := by
   rw [mem_modFormCharSpace_iff] at hf ⊢
   intro d
-  have h_comm := heckeT_p_comm_diamondOp k p hp hpN d
   have h1 : diamondOpHom k d (heckeT_p k p hp hpN f) =
       heckeT_p k p hp hpN (diamondOpHom k d f) := by
     show (diamondOp k d).comp (heckeT_p k p hp hpN) f =
       (heckeT_p k p hp hpN).comp (diamondOp k d) f
-    rw [h_comm]
+    rw [heckeT_p_comm_diamondOp k p hp hpN d]
   rw [h1, hf d, map_smul]
 
 /-- `T_p` preserves the cusp form character space `S_k(Γ₁(N), χ)`.
@@ -1081,12 +1054,11 @@ theorem heckeT_p_preserves_cuspFormCharSpace [NeZero N] (k : ℤ) (p : ℕ)
 /-- `diag(1,p)` lies in `Δ₁(N)` for any `N` and `p > 0`. -/
 lemma diag_1p_mem_Delta1 (N p : ℕ) [NeZero N] (hp : 0 < p) :
     diagMat 2 ![1, p] ∈ Delta1_submonoid N := by
-  have ha : ∀ i : Fin 2, 0 < (![1, p] : Fin 2 → ℕ) i := fun i ↦ by fin_cases i <;> simp [hp]
   set A : Matrix (Fin 2) (Fin 2) ℤ := Matrix.diagonal (fun i ↦ ((![1, p] i : ℕ) : ℤ))
   have hcoe : (↑(diagMat 2 ![1, p]) : Matrix _ _ ℚ) =
       Matrix.diagonal (fun i ↦ ((![1, p] i : ℕ) : ℚ)) := by
     unfold diagMat
-    rw [dif_pos ha]
+    rw [dif_pos fun i ↦ by fin_cases i <;> simp [hp]]
     rfl
   have hA_eq : (↑(diagMat 2 ![1, p]) : Matrix _ _ ℚ) = A.map (Int.cast : ℤ → ℚ) := by
     rw [hcoe]
