@@ -341,6 +341,70 @@ private lemma log_neg_eq_add_pi_I {z : ℂ} (hz_im : z.im < 0) :
   rw [norm_neg, Complex.arg_neg_eq_arg_add_pi_of_im_neg hz_im]
   push_cast; ring
 
+/-- **Imaginary part of `fdBoundary_H H 3 - I` is negative**.
+At the corner `t = 3`, the path takes the value `ρ`, so `g 3 = ρ - i` has
+imaginary part `sqrt 3 / 2 - 1 < 0`. -/
+private lemma g_i_at_three_im_neg (H : ℝ) : (fdBoundary_H H 3 - I).im < 0 := by
+  rw [fdBoundary_H_at_three_eq_rho]
+  simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk,
+    Complex.sub_im, Complex.add_im, Complex.neg_im, Complex.div_ofNat_im,
+    Complex.one_im, Complex.mul_im, Complex.ofReal_re, Complex.ofReal_im,
+    Complex.I_re, Complex.I_im, mul_zero, add_zero, mul_one,
+    Complex.div_ofNat_re]
+  nlinarith [Real.sq_sqrt (show (3:ℝ) ≥ 0 by norm_num),
+    sq_nonneg (2 - Real.sqrt 3)]
+
+/-- **Triple property of `g = fdBoundary_H H t - I` on `[3, t₀]`** for the
+seg3 piece: imaginary part `≤ 0`, function nonzero, and interior strict
+imaginary negative. Used by `ftc_log_piece_lower`. -/
+private lemma g_i_seg3_left_triple (H : ℝ) (hH : 1 < H) :
+    (∀ t ∈ Icc (3:ℝ) (t₀_i H), (fdBoundary_H H t - I).im ≤ 0) ∧
+    (∀ t ∈ Icc (3:ℝ) (t₀_i H), fdBoundary_H H t - I ≠ 0) ∧
+    (∀ t ∈ Ioo (3:ℝ) (t₀_i H), (fdBoundary_H H t - I).im < 0) := by
+  refine ⟨?_, ?_, ?_⟩
+  · intro t ⟨ht3, ht_t0⟩
+    rcases eq_or_lt_of_le ht3 with rfl | ht3'
+    · exact (g_i_at_three_im_neg H).le
+    rcases eq_or_lt_of_le ht_t0 with rfl | ht_t0'
+    · rw [g_i_at_t₀ hH]; norm_num
+    · exact (g_i_seg3_im_neg ht3' ht_t0' hH).le
+  · intro t ⟨ht3, ht_t0⟩
+    exact g_i_ne_zero_seg3 ht3 (by linarith [t₀_i_lt_four hH])
+  · intro t ⟨ht3, ht_t0⟩
+    exact g_i_seg3_im_neg ht3 ht_t0 hH
+
+/-- **Triple property of `g = fdBoundary_H H t - I` on `[t₀, 4]`** for the
+seg3 piece: imaginary part `≥ 0`, function nonzero, and interior in
+`slitPlane`. Used by `ftc_log_piece_upper`. -/
+private lemma g_i_seg3_right_triple (H : ℝ) (hH : 1 < H) :
+    (∀ t ∈ Icc (t₀_i H) (4:ℝ), 0 ≤ (fdBoundary_H H t - I).im) ∧
+    (∀ t ∈ Icc (t₀_i H) (4:ℝ), fdBoundary_H H t - I ≠ 0) ∧
+    (∀ t ∈ Ioo (t₀_i H) (4:ℝ), fdBoundary_H H t - I ∈ slitPlane) := by
+  refine ⟨?_, ?_, ?_⟩
+  · intro t ⟨ht_t0, ht4⟩
+    rcases eq_or_lt_of_le ht_t0 with rfl | ht_t0'
+    · rw [g_i_at_t₀ hH]; norm_num
+    · exact (g_i_seg3_im_pos ht_t0' ht4 hH).le
+  · intro t ⟨ht_t0, ht4⟩
+    exact g_i_ne_zero_seg3 (by linarith [t₀_i_gt_three hH]) ht4
+  · intro t ⟨ht_t0, ht4⟩
+    rw [Complex.mem_slitPlane_iff]
+    exact .inr (ne_of_gt (g_i_seg3_im_pos ht_t0 ht4.le hH))
+
+/-- **Branch jump for `Complex.log` at `-1/2`**: `log(-(-1/2)) = log(-1/2) - πI`. -/
+private lemma log_neg_neg_half_eq_log_neg_half_sub_pi_I :
+    Complex.log (-((-1 : ℂ) / 2)) = Complex.log ((-1 : ℂ) / 2) - ↑Real.pi * I := by
+  have key : Complex.log (-((-1 : ℂ) / 2)) - Complex.log ((-1 : ℂ) / 2) =
+      -(↑Real.pi * I) := by
+    rw [show -((-1 : ℂ) / 2) = (1 / 2 : ℂ) by ring,
+        show ((-1 : ℂ) / 2) = ↑((1 : ℝ) / 2) * (-1 : ℂ) by push_cast; ring,
+        Complex.log_ofReal_mul (by norm_num : (0 : ℝ) < 1 / 2) (by norm_num : (-1 : ℂ) ≠ 0),
+        Complex.log_neg_one,
+        show (1 : ℂ) / 2 = ↑((1 : ℝ) / 2) by push_cast; ring,
+        ← Complex.ofReal_log (show (0 : ℝ) ≤ 1 / 2 by norm_num)]
+    ring
+  linear_combination key
+
 private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 0 < δ) (hδ1 : δ < 1) :
     let g := fun t => fdBoundary_H H t - I
     IntervalIntegrable (fun t => deriv g t / g t) volume 0 (2 - δ) ∧
@@ -495,47 +559,35 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 
       exact g_i_slitPlane_arc_right (by linarith) ht3'.le
   have piece₂ := ftc_log_pieceFM (by linarith : (2 + δ) ≤ 3) hh₁_cont_23 hh₁_diff_23
     (hh₁_deriv_cont (2+δ) 3) hh₁_slit_23 heq_2pδ_3 hg2pδ hg3_1
-  have hh₂_im_np_3t₀ : ∀ t ∈ Icc (3:ℝ) t₀, (h₂ t).im ≤ 0 := by
-    intro t ⟨ht3, ht_t0⟩
+  have hg_eq_h₂_left : ∀ t ∈ Icc (3:ℝ) t₀, g t = h₂ t := fun t ⟨ht3, ht_t0⟩ => by
     rcases eq_or_lt_of_le ht3 with rfl | ht3'
-    · simp only [h₂, Complex.add_im, Complex.neg_im, Complex.div_ofNat_im,
-        Complex.one_im, Complex.mul_im, Complex.ofReal_re, Complex.ofReal_im,
-        Complex.I_re, Complex.I_im, mul_zero, add_zero, mul_one]
-      nlinarith [Real.sq_sqrt (show (3:ℝ) ≥ 0 by norm_num),
-                sq_nonneg (2 - Real.sqrt 3)]
+    · exact hg3_2
     rcases eq_or_lt_of_le ht_t0 with rfl | ht_t0'
-    · rw [← hg_eq_h₂ t₀ (by linarith [t₀_i_gt_three hH]) (by linarith [t₀_i_lt_four hH]),
-        hgt₀_val]
-      norm_num
-    · rw [← hg_eq_h₂ t ht3' (by linarith)]
-      exact (g_i_seg3_im_neg ht3' ht_t0' hH).le
-  have hh₂_ne_3t₀ : ∀ t ∈ Icc (3:ℝ) t₀, h₂ t ≠ 0 := by
-    intro t ⟨ht3, ht_t0⟩
-    rcases eq_or_lt_of_le ht3 with rfl | ht3'
-    · rw [← hg3_2]; exact g_i_ne_zero_seg3 le_rfl (by linarith)
-    · rw [← hg_eq_h₂ t ht3' (by linarith)]
-      exact g_i_ne_zero_seg3 (by linarith) (by linarith)
+    · exact hgt₀_2
+    · exact hg_eq_h₂ t ht3' (by linarith)
+  have hg_eq_h₂_right : ∀ t ∈ Icc t₀ (4:ℝ), g t = h₂ t := fun t ⟨ht_t0, ht4⟩ => by
+    rcases eq_or_lt_of_le ht_t0 with rfl | ht_t0'
+    · exact hgt₀_2
+    · exact hg_eq_h₂ t (by linarith) ht4
+  obtain ⟨hg_im_np_3t₀, hg_ne_3t₀, hg_im_neg_int_3t₀⟩ := g_i_seg3_left_triple H hH
+  have hh₂_im_np_3t₀ : ∀ t ∈ Icc (3:ℝ) t₀, (h₂ t).im ≤ 0 := fun t ht => by
+    rw [← hg_eq_h₂_left t ht]; exact hg_im_np_3t₀ t ht
+  have hh₂_ne_3t₀ : ∀ t ∈ Icc (3:ℝ) t₀, h₂ t ≠ 0 := fun t ht => by
+    rw [← hg_eq_h₂_left t ht]; exact hg_ne_3t₀ t ht
   have hh₂_im_neg_int_3t₀ : ∀ t ∈ Ioo (3:ℝ) t₀, (h₂ t).im < 0 := fun t ⟨ht3, ht_t0⟩ => by
     rw [← hg_eq_h₂ t ht3 (by linarith)]
-    exact g_i_seg3_im_neg ht3 ht_t0 hH
+    exact hg_im_neg_int_3t₀ t ⟨ht3, ht_t0⟩
   have piece₃ := ftc_log_piece_lower (by linarith : (3:ℝ) ≤ t₀)
     hh₂_cont_3t₀ hh₂_diff_3t₀ (hh₂_deriv_cont 3 t₀) hh₂_im_np_3t₀ hh₂_ne_3t₀
     hh₂_im_neg_int_3t₀ heq_3_t₀ hg3_2 hgt₀_2
-  have hh₂_im_nn_t₀4 : ∀ t ∈ Icc t₀ (4:ℝ), 0 ≤ (h₂ t).im := by
-    intro t ⟨ht_t0, ht4⟩
-    rcases eq_or_lt_of_le ht_t0 with rfl | ht_t0'
-    · rw [← hgt₀_2, hgt₀_val]; norm_num
-    · rw [← hg_eq_h₂ t (by linarith) ht4]
-      exact (g_i_seg3_im_pos ht_t0' ht4 hH).le
-  have hh₂_ne_t₀4 : ∀ t ∈ Icc t₀ (4:ℝ), h₂ t ≠ 0 := by
-    intro t ⟨ht_t0, ht4⟩
-    rcases eq_or_lt_of_le ht_t0 with rfl | ht_t0'
-    · rw [← hgt₀_2]; exact g_i_ne_zero_seg3 (by linarith) (by linarith)
-    · rw [← hg_eq_h₂ t (by linarith) ht4]
-      exact g_i_ne_zero_seg3 (by linarith) ht4
+  obtain ⟨hg_im_nn_t₀4, hg_ne_t₀4, hg_slit_int_t₀4⟩ := g_i_seg3_right_triple H hH
+  have hh₂_im_nn_t₀4 : ∀ t ∈ Icc t₀ (4:ℝ), 0 ≤ (h₂ t).im := fun t ht => by
+    rw [← hg_eq_h₂_right t ht]; exact hg_im_nn_t₀4 t ht
+  have hh₂_ne_t₀4 : ∀ t ∈ Icc t₀ (4:ℝ), h₂ t ≠ 0 := fun t ht => by
+    rw [← hg_eq_h₂_right t ht]; exact hg_ne_t₀4 t ht
   have hh₂_slit_int_t₀4 : ∀ t ∈ Ioo t₀ (4:ℝ), h₂ t ∈ slitPlane := fun t ⟨ht_t0, ht4⟩ => by
-    rw [← hg_eq_h₂ t (by linarith) ht4.le, Complex.mem_slitPlane_iff]
-    exact .inr (ne_of_gt (g_i_seg3_im_pos ht_t0 ht4.le hH))
+    rw [← hg_eq_h₂ t (by linarith) ht4.le]
+    exact hg_slit_int_t₀4 t ⟨ht_t0, ht4⟩
   have piece₄ := ftc_log_piece_upper (by linarith : t₀ ≤ 4)
     hh₂_cont_t₀4 hh₂_diff_t₀4 (hh₂_deriv_cont t₀ 4)
     hh₂_im_nn_t₀4 hh₂_ne_t₀4 hh₂_slit_int_t₀4 heq_t₀_4 hgt₀_2 hg4_2
@@ -559,25 +611,11 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 
       (piece₄.1.trans piece₅.1)).symm,
     (intervalIntegral.integral_add_adjacent_intervals piece₄.1 piece₅.1).symm,
     piece₀.2, piece₁.2, piece₂.2, piece₃.2, piece₄.2, piece₅.2]
-  have hg3_im_neg : (g 3).im < 0 := by
-    rw [hg3_2]; simp only [h₂, Complex.add_im, Complex.neg_im, Complex.div_ofNat_im,
-      Complex.one_im, Complex.mul_im, Complex.ofReal_re, Complex.ofReal_im,
-      Complex.I_re, Complex.I_im, mul_zero, add_zero, mul_one]
-    nlinarith [Real.sq_sqrt (show (3:ℝ) ≥ 0 by norm_num),
-              sq_nonneg (2 - Real.sqrt 3)]
   have h_branch_3 : Complex.log (-(g 3)) = Complex.log (g 3) + ↑Real.pi * I :=
-    log_neg_eq_add_pi_I hg3_im_neg
-  have h_branch_t₀ : Complex.log (-(g t₀)) - Complex.log (g t₀) = -(↑Real.pi * I) := by
-    rw [hgt₀_val, show -(-1 / 2 : ℂ) = (1 / 2 : ℂ) by ring,
-        show ((-1:ℂ) / 2) = ↑((1:ℝ)/2) * (-1:ℂ) by push_cast; ring,
-        Complex.log_ofReal_mul (by norm_num : (0:ℝ) < 1/2) (by norm_num : (-1:ℂ) ≠ 0),
-        Complex.log_neg_one,
-        show (1:ℂ)/2 = ↑((1:ℝ)/2) by push_cast; ring,
-        ← Complex.ofReal_log (show (0:ℝ) ≤ 1/2 by norm_num)]
-    ring
+    log_neg_eq_add_pi_I (g_i_at_three_im_neg H)
   have hg_closed : g 0 = g 5 := fdBoundary_H_sub_closed H I
   have h_branch_t₀' : Complex.log (-(g t₀)) = Complex.log (g t₀) - ↑Real.pi * I := by
-    linear_combination h_branch_t₀
+    rw [hgt₀_val]; exact log_neg_neg_half_eq_log_neg_half_sub_pi_I
   rw [hg_closed, h_branch_3, h_branch_t₀']
   ring
 
