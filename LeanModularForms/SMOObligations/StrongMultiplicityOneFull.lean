@@ -313,6 +313,40 @@ theorem petN_eq_zero_of_ne_eigenvalues
 Close to the existing same-level uniqueness; reuses `strongMultiplicityOne_axiom_clean`
 shape (Main Lemma + new∩old=0) but for an un-normalised new eigenform `g_new`. -/
 
+/-- The renormalised eigenform `c • g_new` carries the same Hecke ring eigenvalues as
+`g_new` (scalar multiplication commutes with the linear ring action).  Packaged as a
+`Newform` whenever `c • g_new` lies in the new subspace and is normalised at period 1;
+its classical eigenvalues coincide with `g_new`'s. -/
+private def newformOfSmulEigenform
+    (g_new : Eigenform N k) (c : ℂ)
+    (hnew : c • g_new.toCuspForm ∈ cuspFormsNew N k)
+    (hnorm : (ModularFormClass.qExpansion (1 : ℝ) (c • g_new.toCuspForm)).coeff 1 = 1) :
+    Newform N k where
+  toCuspForm := c • g_new.toCuspForm
+  χ := g_new.χ
+  mem_charSpace := (modFormCharSpace k g_new.χ).smul_mem c g_new.mem_charSpace
+  ringEigenvalue := g_new.ringEigenvalue
+  isRingEigen n hn := by
+    haveI : NeZero n.val := ⟨n.pos.ne'⟩
+    have hsmul :
+        (⟨(c • g_new.toCuspForm).toModularForm',
+            (modFormCharSpace k g_new.χ).smul_mem c g_new.mem_charSpace⟩ :
+          modFormCharSpace k g_new.χ) =
+          c • (⟨g_new.toCuspForm.toModularForm', g_new.mem_charSpace⟩ :
+            modFormCharSpace k g_new.χ) := by
+      apply Subtype.ext
+      rfl
+    rw [hsmul, map_smul, g_new.isRingEigen n hn, smul_comm]
+  isNew := hnew
+  isNorm := hnorm
+
+private theorem newformOfSmulEigenform_eigenvalue
+    (g_new : Eigenform N k) (c : ℂ)
+    (hnew : c • g_new.toCuspForm ∈ cuspFormsNew N k)
+    (hnorm : (ModularFormClass.qExpansion (1 : ℝ) (c • g_new.toCuspForm)).coeff 1 = 1)
+    (n : ℕ+) :
+    (newformOfSmulEigenform g_new c hnew hnorm).eigenvalue n = g_new.eigenvalue n := rfl
+
 /-- **New-part identity** (Miyake 4.6.12, new part, p. 163).  If `f` is a normalised
 newform and `g_new` is a common eigenfunction in the new subspace sharing `f`'s
 eigenvalues off `S`, then `g_new = b₁ • f` where `b₁ = a₁(g_new)`. -/
@@ -335,7 +369,38 @@ theorem newPart_eq_smul_of_shared_eigenvalues
           (Nat.div_dvd_of_dvd (Nat.dvd_of_mem_primeFactors hp_in)))) :
     g_new.toCuspForm =
       (ModularFormClass.qExpansion (1 : ℝ) g_new.toCuspForm).coeff 1 • f.toCuspForm := by
-  sorry
+  set b₁ := (ModularFormClass.qExpansion (1 : ℝ) g_new.toCuspForm).coeff 1 with hb₁_def
+  by_cases hg0 : g_new.toCuspForm = 0
+  · have hb₁0 : b₁ = 0 := by
+      have hsmul0 :
+          (ModularFormClass.qExpansion (1 : ℝ) ((0 : ℂ) • g_new.toCuspForm)).coeff 1 = 0 := by
+        rw [qExpansion_one_coeff_one_smul_local, zero_mul]
+      have hbridge : (⇑g_new.toCuspForm : UpperHalfPlane → ℂ) =
+          (0 : ℂ) • (⇑g_new.toCuspForm : UpperHalfPlane → ℂ) := by
+        rw [zero_smul, hg0]; rfl
+      rw [hb₁_def, hbridge]
+      exact hsmul0
+    rw [hg0, hb₁0, zero_smul]
+  · -- `b₁ ≠ 0` by Lemma 4.6.11; renormalise `g_new` to a `Newform` and apply same-level SMO.
+    have hb₁_ne : b₁ ≠ 0 :=
+      coeff_one_ne_zero_of_mem_cuspFormsNew_of_eigen g_new χ hgχ hg_new hg0 N dvd_rfl h_chi_factor
+    have hnew : b₁⁻¹ • g_new.toCuspForm ∈ cuspFormsNew N k :=
+      (cuspFormsNew N k).smul_mem b₁⁻¹ hg_new
+    have hnorm :
+        (ModularFormClass.qExpansion (1 : ℝ) (b₁⁻¹ • g_new.toCuspForm)).coeff 1 = 1 := by
+      rw [qExpansion_one_coeff_one_smul_local g_new.toCuspForm b₁⁻¹, ← hb₁_def,
+        inv_mul_cancel₀ hb₁_ne]
+    set f_g : Newform N k := newformOfSmulEigenform g_new b₁⁻¹ hnew hnorm with hf_g_def
+    have hf_g_χ : f_g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ :=
+      (modFormCharSpace k χ).smul_mem b₁⁻¹ hgχ
+    have h_eig' : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S →
+        f.eigenvalue n = f_g.eigenvalue n := fun n hn hnS ↦ by
+      rw [newformOfSmulEigenform_eigenvalue]
+      exact h_eig n hn hnS
+    have hfg : f.toCuspForm = f_g.toCuspForm :=
+      strongMultiplicityOne_axiom_clean f f_g χ hfχ hf_g_χ S h_eig' h_chi_factor
+    have hkey : b₁⁻¹ • g_new.toCuspForm = f.toCuspForm := hfg.symm
+    rw [← hkey, smul_smul, mul_inv_cancel₀ hb₁_ne, one_smul]
 
 /-! ## Step: the old part is zero (the descent argument, steps (i)+(ii))
 
