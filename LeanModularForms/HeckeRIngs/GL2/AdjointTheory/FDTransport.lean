@@ -1871,6 +1871,68 @@ theorem Gamma0_sup_Gamma1_eq_top (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime
     rw [Gamma0_mem]
     simp [ModularGroup.coe_T]
 
+/-- The lower-unipotent `[[1,0],[m,1]] ∈ SL₂(ℤ)`. -/
+private def lowerUni (m : ℤ) : SL(2, ℤ) :=
+  ⟨!![1, 0; m, 1], by rw [Matrix.det_fin_two_of]; ring⟩
+
+private lemma lowerUni_mem_Gamma1 {m : ℤ} (hm : (m : ZMod N) = 0) :
+    lowerUni m ∈ Gamma1 N := by
+  rw [Gamma1_mem]
+  refine ⟨by change ((1 : ℤ) : ZMod N) = 1; push_cast; rfl,
+    by change ((1 : ℤ) : ZMod N) = 1; push_cast; rfl, ?_⟩
+  change ((m : ℤ) : ZMod N) = 0; exact hm
+
+/-- **Set-product surjectivity (the genuine W5a content).** For `gcd(p, N) = 1`, every
+`g ∈ SL₂(ℤ)` factors as `g = (g·k⁻¹)·k` with `k ∈ Γ₁(N)` and `g·k⁻¹ ∈ Γ₀(p)`.  Two cases on
+the bottom-right entry `d = g₁₁` mod `p`: if `d` is a unit pick a lower-unipotent `k`
+killing the lower-left mod `p`; if `d ≡ 0` reuse `Gamma1_S_corrector`. -/
+theorem exists_Gamma1_mul_inv_mem_Gamma0 (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (g : SL(2, ℤ)) : ∃ k ∈ Gamma1 N, g * k⁻¹ ∈ Gamma0 p := by
+  haveI : NeZero p := ⟨hp.ne_zero⟩
+  haveI : Fact (Nat.Prime p) := ⟨hp⟩
+  by_cases hd : ((g.1 1 1 : ℤ) : ZMod p) = 0
+  · -- `d ≡ 0 mod p`: `k = Gamma1_S_corrector`, lower-left of `g·k⁻¹` is `c·(a⁻¹p) - d·N ≡ 0`.
+    refine ⟨Gamma1_S_corrector N p hpN, Gamma1_S_corrector_mem N p hpN, ?_⟩
+    rw [Gamma0_mem]
+    have h10 : ((g * (Gamma1_S_corrector N p hpN)⁻¹).1 1 0 : ℤ) =
+        g.1 1 0 * ((aInvOfCoprime N p hpN : ℤ) * p) - g.1 1 1 * (N : ℤ) := by
+      rw [show ((g * (Gamma1_S_corrector N p hpN)⁻¹).1 1 0 : ℤ) =
+          (g.1 1 0) * (((Gamma1_S_corrector N p hpN)⁻¹).1 0 0) +
+          (g.1 1 1) * (((Gamma1_S_corrector N p hpN)⁻¹).1 1 0)
+        from by rw [Matrix.SpecialLinearGroup.coe_mul, Matrix.mul_apply, Fin.sum_univ_two]]
+      simp only [Gamma1_S_corrector, Matrix.SpecialLinearGroup.coe_inv,
+        Matrix.adjugate_fin_two_of,
+        Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
+        Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply]
+      ring
+    rw [h10]; push_cast
+    rw [show ((g.1 1 1 : ℤ) : ZMod p) * (N : ZMod p) = 0 by rw [hd]; ring, sub_zero,
+      ZMod.natCast_self, mul_zero, mul_zero]
+  · -- `d` a unit mod p: `k = lowerUni m`, `m ≡ 0 mod N`, `m ≡ c·d⁻¹ mod p`.
+    obtain ⟨m, hmN, hmp⟩ := Nat.chineseRemainder (n := N) (m := p) (Nat.Coprime.symm hpN) 0
+      (((g.1 1 0 : ZMod p) * ((g.1 1 1 : ZMod p))⁻¹).val)
+    refine ⟨lowerUni (m : ℤ), lowerUni_mem_Gamma1 ?_, ?_⟩
+    · have hdvd : (N : ℤ) ∣ (m : ℤ) := by
+        exact_mod_cast Nat.modEq_zero_iff_dvd.mp hmN
+      rwa [← ZMod.intCast_zmod_eq_zero_iff_dvd] at hdvd
+    · rw [Gamma0_mem]
+      have h10 : ((g * (lowerUni (m : ℤ))⁻¹).1 1 0 : ℤ) =
+          g.1 1 0 - g.1 1 1 * (m : ℤ) := by
+        rw [show ((g * (lowerUni (m : ℤ))⁻¹).1 1 0 : ℤ) =
+            (g.1 1 0) * (((lowerUni (m : ℤ))⁻¹).1 0 0) +
+            (g.1 1 1) * (((lowerUni (m : ℤ))⁻¹).1 1 0)
+          from by rw [Matrix.SpecialLinearGroup.coe_mul, Matrix.mul_apply, Fin.sum_univ_two]]
+        simp only [lowerUni, Matrix.SpecialLinearGroup.coe_inv, Matrix.adjugate_fin_two_of,
+          Matrix.cons_val', Matrix.cons_val_zero,
+          Matrix.cons_val_one, Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply]
+        ring
+      rw [h10]; push_cast
+      have hmp' : (m : ZMod p) = (g.1 1 0 : ZMod p) * ((g.1 1 1 : ZMod p))⁻¹ := by
+        have hmod : (m : ZMod p) = (((g.1 1 0 : ZMod p) * ((g.1 1 1 : ZMod p))⁻¹).val : ZMod p) :=
+          (ZMod.natCast_eq_natCast_iff _ _ _).mpr hmp
+        rwa [ZMod.natCast_val, ZMod.cast_id] at hmod
+      rw [hmp', mul_assoc, ZMod.mul_inv_cancel_left₀ (by exact_mod_cast hd), sub_self]
+
 /-- **Coprimality surjectivity (the genuine W5a unknown).** Since `gcd(p, N) = 1`, the
 product `Γ₀(p) · Γ₁(N)` is all of `SL₂(ℤ)`, so `[Γ₀(p) : Γ₀(p) ∩ Γ₁(N)] = [SL₂(ℤ) : Γ₁(N)]`. -/
 theorem Gamma1_relIndex_Gamma0_eq_index (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
