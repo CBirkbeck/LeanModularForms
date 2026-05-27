@@ -42,28 +42,14 @@ lemma fdBox_isOpen (M : ℝ) : IsOpen (fdBox M) :=
       (isOpen_lt continuous_const Complex.continuous_im).inter
         (isOpen_lt Complex.continuous_im continuous_const)
 
-/-- The box `fdBox M` is convex. -/
+/-- The box `fdBox M` is convex, being an intersection of open half-planes. -/
 lemma fdBox_convex (M : ℝ) : Convex ℝ (fdBox M) := by
-  have hlb : ∀ {a b x y L : ℝ}, 0 ≤ a → 0 ≤ b → a + b = 1 → L < x → L < y →
-      L < a * x + b * y := by
-    intro a b x y L ha hb hab hx hy
-    rcases eq_or_lt_of_le ha with rfl | ha'
-    · simp only [zero_add] at hab; subst hab; linarith
-    · nlinarith [mul_lt_mul_of_pos_left hx ha', mul_le_mul_of_nonneg_left hy.le hb,
-        (by rw [← add_mul, hab, one_mul] : a * L + b * L = L)]
-  have hub : ∀ {a b x y U : ℝ}, 0 ≤ a → 0 ≤ b → a + b = 1 → x < U → y < U →
-      a * x + b * y < U := by
-    intro a b x y U ha hb hab hx hy
-    rcases eq_or_lt_of_le ha with rfl | ha'
-    · simp only [zero_add] at hab; subst hab; linarith
-    · nlinarith [mul_lt_mul_of_pos_left hx ha', mul_le_mul_of_nonneg_left hy.le hb,
-        (by rw [← add_mul, hab, one_mul] : a * U + b * U = U)]
-  intro x hx y hy a b ha hb hab
-  simp only [fdBox, Set.mem_setOf_eq] at hx hy ⊢
-  have hre : (a • x + b • y).re = a * x.re + b * y.re := by simp [add_re]
-  have him : (a • x + b • y).im = a * x.im + b * y.im := by simp [add_im]
-  exact ⟨hre ▸ hlb ha hb hab hx.1 hy.1, hre ▸ hub ha hb hab hx.2.1 hy.2.1,
-         him ▸ hlb ha hb hab hx.2.2.1 hy.2.2.1, him ▸ hub ha hb hab hx.2.2.2 hy.2.2.2⟩
+  have h_inter : fdBox M = {c | -1 < c.re} ∩ {c | c.re < 1} ∩
+      {c : ℂ | (1:ℝ)/2 < c.im} ∩ {c | c.im < M} := by
+    ext z; simp only [fdBox, Set.mem_setOf_eq, Set.mem_inter_iff]; tauto
+  rw [h_inter]
+  exact (((convex_halfSpace_re_gt _).inter (convex_halfSpace_re_lt _)).inter
+    (convex_halfSpace_im_gt _)).inter (convex_halfSpace_im_lt _)
 
 /-- The finite set of zeros of `f` lying in `fdBox M`. -/
 noncomputable def allZerosInFdBox {M : ℝ} (hM : (1:ℝ)/2 < M) : Finset ℂ :=
@@ -391,6 +377,12 @@ private lemma fdBoundary_H_eq_fdBoundary_on_13 (H : ℝ) {t : ℝ}
   simp only [ht1, ↓reduceIte, ht3]
 
 omit f hf in
+private lemma norm_ge_one_of_normSq_ge_one {w : ℂ} (h : normSq w ≥ 1) : ‖w‖ ≥ 1 :=
+  calc ‖w‖ = Real.sqrt (normSq w) := rfl
+    _ ≥ Real.sqrt 1 := Real.sqrt_le_sqrt h
+    _ = 1 := Real.sqrt_one
+
+omit f hf in
 /-- `‖fdBoundary_H H t‖ ≥ 1` for `t ∈ [0, 5]` when `H ≥ 1`. -/
 lemma fdBoundary_H_norm_ge_one {H : ℝ} (hH : 1 ≤ H) (t : ℝ) (ht : t ∈ Icc (0:ℝ) 5) :
     ‖fdBoundary_H H t‖ ≥ 1 := by
@@ -401,13 +393,10 @@ lemma fdBoundary_H_norm_ge_one {H : ℝ} (hH : 1 ≤ H) (t : ℝ) (ht : t ∈ Ic
     have h_re_sq : w.re ^ 2 = 1/4 := by
       have : |w.re| ^ 2 = (1/2 : ℝ) ^ 2 := by rw [hre]
       nlinarith [sq_abs w.re]
-    have h_nsq : normSq w ≥ 1 := by
-      rw [normSq_apply, show w.re * w.re = w.re ^ 2 from by ring, h_re_sq]
-      nlinarith [mul_self_le_mul_self (by positivity : (0:ℝ) ≤ Real.sqrt 3 / 2) him,
-                 Real.mul_self_sqrt (show (0:ℝ) ≤ 3 from by norm_num)]
-    calc ‖w‖ = Real.sqrt (normSq w) := rfl
-      _ ≥ Real.sqrt 1 := Real.sqrt_le_sqrt h_nsq
-      _ = 1 := Real.sqrt_one
+    refine norm_ge_one_of_normSq_ge_one ?_
+    rw [normSq_apply, show w.re * w.re = w.re ^ 2 from by ring, h_re_sq]
+    nlinarith [mul_self_le_mul_self (by positivity : (0:ℝ) ≤ Real.sqrt 3 / 2) him,
+               Real.mul_self_sqrt (show (0:ℝ) ≤ 3 from by norm_num)]
   by_cases h1 : t ≤ 1
   · rw [fdBoundary_H_eq_seg1_H h1]
     apply side _ (by simp [fdBoundary_seg1_H, mul_re, I_re, I_im, ofReal_re, ofReal_im, div_ofNat])
@@ -443,13 +432,10 @@ lemma fdBoundary_H_norm_ge_one {H : ℝ} (hH : 1 ≤ H) (t : ℝ) (ht : t ∈ Ic
           simp [fdBoundary_seg5_H, add_im, sub_im, mul_im, I_re, I_im, ofReal_re, ofReal_im,
             div_ofNat]
         have him_ge : (fdBoundary_seg5_H H t).im ≥ 1 := by rw [him]; linarith
-        have h_nsq : normSq (fdBoundary_seg5_H H t) ≥ 1 := by
-          rw [normSq_apply]
-          nlinarith [mul_self_nonneg (fdBoundary_seg5_H H t).re,
-            mul_self_le_mul_self (by linarith : (0:ℝ) ≤ 1) him_ge]
-        calc ‖fdBoundary_seg5_H H t‖ = Real.sqrt (normSq (fdBoundary_seg5_H H t)) := rfl
-          _ ≥ Real.sqrt 1 := Real.sqrt_le_sqrt h_nsq
-          _ = 1 := Real.sqrt_one
+        refine norm_ge_one_of_normSq_ge_one ?_
+        rw [normSq_apply]
+        nlinarith [mul_self_nonneg (fdBoundary_seg5_H H t).re,
+          mul_self_le_mul_self (by linarith : (0:ℝ) ≤ 1) him_ge]
 
 omit f hf in
 /-- The boundary `fdBoundary_H H` avoids every point NOT in the closed FD. -/
