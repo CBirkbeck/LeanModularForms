@@ -1815,6 +1815,46 @@ lemma mem_Gamma_p_α_T_p_lower (p : ℕ) (hp : 0 < p) (hpN : Nat.Coprime p N)
         Matrix.map_apply, hk] <;>
       field_simp
 
+open CongruenceSubgroup Pointwise ConjAct in
+/-- `Γ_p(T_p_lower) = Γ₁(N) ⊓ Γ₀(p)`. -/
+lemma Gamma_p_α_T_p_lower_eq_inf (p : ℕ) (hp : 0 < p) (hpN : Nat.Coprime p N) :
+    Gamma_p_α (N := N) (T_p_lower p hp) = Gamma1 N ⊓ Gamma0 p := by
+  ext γ
+  rw [mem_Gamma_p_α_T_p_lower p hp hpN, Subgroup.mem_inf, Gamma0_mem,
+    ZMod.intCast_zmod_eq_zero_iff_dvd]
+
+/-- **Coprimality surjectivity (the genuine W5a unknown).** Since `gcd(p, N) = 1`, the
+product `Γ₀(p) · Γ₁(N)` is all of `SL₂(ℤ)` (the bottom-row reduction mod `p` of `Γ₁(N)`
+covers `ℙ¹(𝔽_p)`), so `[Γ₀(p) : Γ₀(p) ∩ Γ₁(N)] = [SL₂(ℤ) : Γ₁(N)]`. -/
+theorem Gamma1_relIndex_Gamma0_eq_index (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
+    (Gamma1 N).relIndex (Gamma0 p) = (Gamma1 N).index := by
+  sorry
+
+/-- **W5a index — the crux.** `[Γ₁(N) : Γ_p(T_p_lower)] = p + 1`.  Combinatorially this is
+the `(p+1)`-coset count of `(Γ₁ ∩ A Γ₁ A⁻¹)\Γ₁` for the `T_p` double coset (Miyake 4.5.6(1)).
+Reduces to `[SL₂(ℤ) : Γ₀(p)] = p + 1` (`Gamma0_prime_index`) via the coprimality
+`gcd(p, N) = 1`. -/
+theorem relIndex_Gamma_p_α_T_p_lower (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
+    (Gamma_p_α (N := N) (T_p_lower p hp.pos)).relIndex (Gamma1 N) = p + 1 := by
+  haveI : NeZero p := ⟨hp.ne_zero⟩
+  rw [Gamma_p_α_T_p_lower_eq_inf p hp.pos hpN, inf_comm, Subgroup.inf_relIndex_right]
+  -- Tower law on `Γ₀p ⊓ Γ₁ ≤ Γ₁ ≤ ⊤` and `Γ₀p ⊓ Γ₁ ≤ Γ₀p ≤ ⊤`.
+  have hle₁ : Gamma0 p ⊓ Gamma1 N ≤ Gamma1 N := inf_le_right
+  have hle₀ : Gamma0 p ⊓ Gamma1 N ≤ Gamma0 p := inf_le_left
+  have hN_pos : 0 < (Gamma1 N).index := Nat.pos_of_ne_zero
+    (CongruenceSubgroup.instFiniteIndexGamma1 N).index_ne_zero
+  -- `r := relIndex (Γ₀p ⊓ Γ₁) Γ₁ = (Γ₀p).relIndex Γ₁`.
+  have hrA := Subgroup.relIndex_mul_index hle₁
+  have hrB := Subgroup.relIndex_mul_index hle₀
+  rw [Subgroup.inf_relIndex_right] at hrA
+  rw [Subgroup.inf_relIndex_left, Gamma1_relIndex_Gamma0_eq_index p hp hpN,
+    Gamma0_prime_index p hp] at hrB
+  -- Now: `(Γ₀p).relIndex Γ₁ · Γ₁.index = (Γ₀p ⊓ Γ₁).index = Γ₁.index · (p+1)`.
+  have hkey : (Gamma0 p).relIndex (Gamma1 N) * (Gamma1 N).index =
+      (Gamma1 N).index * (p + 1) := by
+    rw [hrA, hrB]
+  exact Nat.eq_of_mul_eq_mul_right hN_pos (by rw [hkey]; ring)
+
 end W5a
 
 end HeckeRing.GL2
