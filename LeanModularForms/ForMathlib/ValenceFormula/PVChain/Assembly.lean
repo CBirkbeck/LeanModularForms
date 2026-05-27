@@ -41,8 +41,7 @@ private lemma norm_sub_one_le {z s : ℂ} (hz : z.re = 1/2) (hs : s.re = -1/2) :
     rw [Complex.sq_norm, Complex.normSq_apply]
     simp only [Complex.sub_re, Complex.sub_im]
     nlinarith
-  have h_le := Real.sqrt_le_sqrt (show ‖(z - 1) - s‖ ^ 2 ≤ ‖z - s‖ ^ 2 by linarith)
-  rwa [Real.sqrt_sq (norm_nonneg _), Real.sqrt_sq (norm_nonneg _)] at h_le
+  exact le_of_sq_le_sq (by linarith) (norm_nonneg _)
 
 omit f hf in
 private lemma norm_sub_le_sub_one {z s : ℂ} (hz : z.re = 1/2) (hs : s.re = 1/2) :
@@ -55,8 +54,7 @@ private lemma norm_sub_le_sub_one {z s : ℂ} (hz : z.re = 1/2) (hs : s.re = 1/2
     rw [Complex.sq_norm, Complex.normSq_apply]
     simp only [Complex.sub_re, Complex.sub_im, Complex.one_re, Complex.one_im]
     nlinarith
-  have h_le := Real.sqrt_le_sqrt (show ‖z - s‖ ^ 2 ≤ ‖(z - 1) - s‖ ^ 2 by linarith)
-  rwa [Real.sqrt_sq (norm_nonneg _), Real.sqrt_sq (norm_nonneg _)] at h_le
+  exact le_of_sq_le_sq (by linarith) (norm_nonneg _)
 
 omit f hf in
 private lemma truncation_iff_shift
@@ -93,8 +91,7 @@ private lemma norm_shift_neg_inv_eq {z s : ℂ} (hz_re : z.re = 1/2) (hs_unit : 
     simp only [Complex.sub_re, Complex.sub_im, Complex.one_re, Complex.one_im,
       h_neg_inv_re, h_neg_inv_im, hz_re]
     ring
-  nlinarith [sq_nonneg (‖(z - 1) - (-(1 : ℂ) / s)‖ - ‖z - s‖),
-    norm_nonneg ((z - 1) - (-(1 : ℂ) / s)), norm_nonneg (z - s)]
+  exact (sq_eq_sq₀ (norm_nonneg _) (norm_nonneg _)).mp h_eq
 
 omit f hf in
 private lemma neg_inv_involution {s : ℂ} (hs_unit : ‖s‖ = 1) :
