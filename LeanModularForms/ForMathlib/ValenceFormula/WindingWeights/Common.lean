@@ -285,6 +285,15 @@ lemma sin_delta_pi_div_twelve_pos {δ : ℝ} (hδ_pos : 0 < δ) (hδ_lt : δ < 2
     0 < Real.sin (δ * Real.pi / 12) :=
   ArcCalculus.sin_pos_of_mem_Ioo_zero_pi (by constructor <;> nlinarith [Real.pi_pos])
 
+/-- The norm of a factored arc displacement `↑(2·sin(δπ/12))·exp(↑θ·I)` equals
+`2·sin(δπ/12)` for `0 < δ < 2`. Shared tail of the arc-norm lemmas at ρ and ρ+1. -/
+lemma norm_two_sin_mul_exp {δ θ : ℝ} (hδ : 0 < δ) (hδ2 : δ < 2) :
+    ‖(↑(2 * Real.sin (δ * Real.pi / 12)) : ℂ) * Complex.exp (↑θ * I)‖ =
+      2 * Real.sin (δ * Real.pi / 12) := by
+  rw [norm_mul, Complex.norm_real,
+    Real.norm_of_nonneg (mul_nonneg (by norm_num) (sin_delta_pi_div_twelve_pos hδ hδ2).le),
+    Complex.norm_exp_ofReal_mul_I, mul_one]
+
 /-- `0 < 2 · sin(π/12)`. -/
 lemma two_sin_pi_div_twelve_pos : 0 < 2 * Real.sin (Real.pi / 12) := by
   linarith [sin_pi_div_twelve_pos]
