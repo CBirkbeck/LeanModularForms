@@ -1931,13 +1931,56 @@ theorem exists_Gamma1_mul_inv_mem_Gamma0 (p : ℕ) (hp : Nat.Prime p) (hpN : Nat
         have hmod : (m : ZMod p) = (((g.1 1 0 : ZMod p) * ((g.1 1 1 : ZMod p))⁻¹).val : ZMod p) :=
           (ZMod.natCast_eq_natCast_iff _ _ _).mpr hmp
         rwa [ZMod.natCast_val, ZMod.cast_id] at hmod
-      rw [hmp', mul_assoc, ZMod.mul_inv_cancel_left₀ (by exact_mod_cast hd), sub_self]
+      rw [hmp']
+      have hone : (g.1 1 1 : ZMod p) * ((g.1 1 1 : ZMod p))⁻¹ = 1 := by
+        rw [ZMod.mul_inv_eq_gcd]
+        have hndvd : ¬ p ∣ (g.1 1 1 : ZMod p).val := by
+          rw [← ZMod.natCast_eq_zero_iff _ p, ZMod.natCast_val, ZMod.cast_id]
+          exact hd
+        have hcop : (g.1 1 1 : ZMod p).val.gcd p = 1 :=
+          (Nat.coprime_comm.mp ((Nat.Prime.coprime_iff_not_dvd hp).mpr hndvd))
+        rw [hcop, Nat.cast_one]
+      rw [show (g.1 1 1 : ZMod p) * ((g.1 1 0 : ZMod p) * ((g.1 1 1 : ZMod p))⁻¹) =
+          (g.1 1 0 : ZMod p) * ((g.1 1 1 : ZMod p) * ((g.1 1 1 : ZMod p))⁻¹) by ring,
+        hone, mul_one, sub_self]
 
-/-- **Coprimality surjectivity (the genuine W5a unknown).** Since `gcd(p, N) = 1`, the
-product `Γ₀(p) · Γ₁(N)` is all of `SL₂(ℤ)`, so `[Γ₀(p) : Γ₀(p) ∩ Γ₁(N)] = [SL₂(ℤ) : Γ₁(N)]`. -/
+/-- **Coprimality index equality.** Since `Γ₀(p) · Γ₁(N) = SL₂(ℤ)`, the natural map
+`Γ₀(p) ⧸ (Γ₁(N) ∩ Γ₀(p)) → SL₂(ℤ) ⧸ Γ₁(N)` is a bijection, so
+`[Γ₀(p) : Γ₀(p) ∩ Γ₁(N)] = [SL₂(ℤ) : Γ₁(N)]`. -/
 theorem Gamma1_relIndex_Gamma0_eq_index (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
     (Gamma1 N).relIndex (Gamma0 p) = (Gamma1 N).index := by
-  sorry
+  rw [Subgroup.relIndex, Subgroup.index_eq_card, Subgroup.index_eq_card]
+  -- The natural map `Γ₀p ⧸ (Γ₁N ∩ Γ₀p) → SL₂ ⧸ Γ₁N`, `⟦h⟧ ↦ ⟦h⟧`.
+  set f : (Gamma0 p) ⧸ ((Gamma1 N).subgroupOf (Gamma0 p)) → SL(2, ℤ) ⧸ Gamma1 N :=
+    Quotient.lift (fun h : Gamma0 p ↦ (QuotientGroup.mk (h : SL(2, ℤ)) : SL(2, ℤ) ⧸ Gamma1 N))
+      (by
+        intro a b hab
+        change (QuotientGroup.leftRel _).r _ _ at hab
+        rw [QuotientGroup.leftRel_apply] at hab
+        rw [Subgroup.mem_subgroupOf] at hab
+        exact QuotientGroup.eq.mpr hab) with hf_def
+  have hf_bij : Function.Bijective f := by
+    constructor
+    · -- injective
+      intro x y hxy
+      induction x using QuotientGroup.induction_on with | _ a => ?_
+      induction y using QuotientGroup.induction_on with | _ b => ?_
+      have : (QuotientGroup.mk (a : SL(2, ℤ)) : SL(2, ℤ) ⧸ Gamma1 N) =
+          QuotientGroup.mk (b : SL(2, ℤ)) := hxy
+      rw [QuotientGroup.eq] at this ⊢
+      rw [Subgroup.mem_subgroupOf]
+      exact this
+    · -- surjective: every `⟦g⟧` has a `Γ₀p`-rep by the set-product surjectivity
+      intro y
+      induction y using QuotientGroup.induction_on with | _ g => ?_
+      obtain ⟨k, hk_mem, hgk⟩ := exists_Gamma1_mul_inv_mem_Gamma0 p hp hpN g
+      refine ⟨QuotientGroup.mk ⟨g * k⁻¹, hgk⟩, ?_⟩
+      show (QuotientGroup.mk ((⟨g * k⁻¹, hgk⟩ : Gamma0 p) : SL(2, ℤ)) :
+        SL(2, ℤ) ⧸ Gamma1 N) = QuotientGroup.mk g
+      rw [QuotientGroup.eq]
+      have : (g * k⁻¹)⁻¹ * g = k := by group
+      rw [this]; exact hk_mem
+  rw [Nat.card_congr (Equiv.ofBijective f hf_bij)]
 
 /-- **W5a index — the crux.** `[Γ₁(N) : Γ_p(T_p_lower)] = p + 1`.  Combinatorially this is
 the `(p+1)`-coset count of `(Γ₁ ∩ A Γ₁ A⁻¹)\Γ₁` for the `T_p` double coset (Miyake 4.5.6(1)).
