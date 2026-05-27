@@ -198,6 +198,11 @@ private lemma deriv_arc_h_arc (z₀ : ℂ) (t : ℝ) :
     deriv (arc_h_arc z₀) t = ↑(5 * Real.pi / 6) * I * exp (↑(fdArcAngle t) * I) :=
   (hasDerivAt_arc_h_arc z₀ t).deriv
 
+/-- Real part of the arc segment offset: `cos(angle) - cos θ₀`. -/
+private lemma arc_h_arc_re (θ₀ t : ℝ) :
+    (arc_h_arc (exp (↑θ₀ * I)) t).re = Real.cos (fdArcAngle t) - Real.cos θ₀ := by
+  simp [arc_h_arc, exp_mul_I, Complex.cos_ofReal_re]
+
 private lemma arc_h_arc_left_slitPlane {θ₀ : ℝ}
     (h_lo : Real.pi / 3 < θ₀) (h_hi : θ₀ < 2 * Real.pi / 3)
     {t : ℝ} (ht1 : 1/5 ≤ t) (ht_lt : t < arcT₀ θ₀) :
@@ -381,6 +386,16 @@ private lemma arc_branch_correction_45 {H : ℝ} (hH : 1 < H) (θ₀ : ℝ) :
       Complex.arg_neg_eq_arg_sub_pi_of_im_pos h_im_pos, norm_neg]; push_cast; ring]
   ring
 
+/-- Common tail of the `arc_ae_eq_*` lemmas: from a pointwise and a local
+`fdBoundaryFun H · - z₀ = g ·` equality, rewrite the boundary integrand as
+`deriv g / g`. -/
+private lemma arc_ae_eq_tail {H : ℝ} {z₀ : ℂ} {g : ℝ → ℂ} {t : ℝ}
+    (h_pt : fdBoundaryFun H t - z₀ = g t)
+    (h_evEq : (fun s => fdBoundaryFun H s - z₀) =ᶠ[𝓝 t] g) :
+    (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t = deriv g t / g t := by
+  rw [h_pt, ← deriv_sub_const (f := fdBoundaryFun H) z₀, h_evEq.deriv_eq, div_eq_mul_inv,
+    mul_comm]
+
 private lemma arc_ae_eq_h₀ (H : ℝ) (z₀ : ℂ) :
     ∀ᵐ t ∂volume, t ∈ Set.uIoc (0 : ℝ) (1/5) →
       (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t =
@@ -389,11 +404,9 @@ private lemma arc_ae_eq_h₀ (H : ℝ) (z₀ : ℂ) :
   rw [uIoc_of_le (by norm_num : (0 : ℝ) ≤ 1/5)] at ht_mem
   have ht_lt : t < 1/5 :=
     lt_of_le_of_ne ht_mem.2 (fun h => ht_ne (Set.mem_singleton_iff.mpr h))
-  have h_evEq : (fun s => fdBoundaryFun H s - z₀) =ᶠ[𝓝 t] arc_h₀ H z₀ :=
-    Filter.eventually_of_mem (Iio_mem_nhds ht_lt)
-      (fun s hs => fdBoundary_sub_eq_arc_h₀ H z₀ s hs.le)
-  rw [fdBoundary_sub_eq_arc_h₀ H z₀ t ht_lt.le, ← deriv_sub_const (f := fdBoundaryFun H) z₀,
-    h_evEq.deriv_eq, div_eq_mul_inv, mul_comm]
+  exact arc_ae_eq_tail (fdBoundary_sub_eq_arc_h₀ H z₀ t ht_lt.le)
+    (Filter.eventually_of_mem (Iio_mem_nhds ht_lt)
+      (fun s hs => fdBoundary_sub_eq_arc_h₀ H z₀ s hs.le))
 
 private lemma arc_ae_eq_h_arc (H : ℝ) (z₀ : ℂ) {a b : ℝ} (hab : a ≤ b)
     (ha_ge : 1/5 ≤ a) (hb_le : b ≤ 3/5) :
@@ -408,11 +421,9 @@ private lemma arc_ae_eq_h_arc (H : ℝ) (z₀ : ℂ) {a b : ℝ} (hab : a ≤ b)
     lt_of_le_of_ne ht_mem.2 (fun h => ht_ne (Set.mem_insert_iff.mpr (Or.inr h)))
   have ht1 : 1/5 < t := ha_ge.trans_lt ht_mem.1
   have ht3_lt : t < 3/5 := ht_lt_b.trans_le hb_le
-  have h_evEq : (fun s => fdBoundaryFun H s - z₀) =ᶠ[𝓝 t] arc_h_arc z₀ :=
-    Filter.eventually_of_mem (Filter.inter_mem (Ioi_mem_nhds ht1) (Iio_mem_nhds ht3_lt))
-      fun _ ⟨hs1, hs3⟩ => fdBoundary_sub_eq_arc_h_arc z₀ hs1 hs3.le
-  rw [fdBoundary_sub_eq_arc_h_arc z₀ ht1 ht3_lt.le,
-    ← deriv_sub_const (f := fdBoundaryFun H) z₀, h_evEq.deriv_eq, div_eq_mul_inv, mul_comm]
+  exact arc_ae_eq_tail (fdBoundary_sub_eq_arc_h_arc z₀ ht1 ht3_lt.le)
+    (Filter.eventually_of_mem (Filter.inter_mem (Ioi_mem_nhds ht1) (Iio_mem_nhds ht3_lt))
+      fun _ ⟨hs1, hs3⟩ => fdBoundary_sub_eq_arc_h_arc z₀ hs1 hs3.le)
 
 private lemma arc_ae_eq_h₃ (H : ℝ) (z₀ : ℂ) :
     ∀ᵐ t ∂volume, t ∈ Set.uIoc (3/5 : ℝ) (4/5) →
@@ -423,11 +434,9 @@ private lemma arc_ae_eq_h₃ (H : ℝ) (z₀ : ℂ) :
   have ht3 : 3/5 < t := ht_mem.1
   have ht4_lt : t < 4/5 :=
     lt_of_le_of_ne ht_mem.2 (fun h => ht_ne (Set.mem_singleton_iff.mpr h))
-  have h_evEq : (fun s => fdBoundaryFun H s - z₀) =ᶠ[𝓝 t] arc_h₃ H z₀ :=
-    Filter.eventually_of_mem (Filter.inter_mem (Ioi_mem_nhds ht3) (Iio_mem_nhds ht4_lt))
-      fun _ ⟨hs3, hs4⟩ => fdBoundary_sub_eq_arc_h₃ H z₀ hs3 hs4.le
-  rw [fdBoundary_sub_eq_arc_h₃ H z₀ ht3 ht4_lt.le,
-    ← deriv_sub_const (f := fdBoundaryFun H) z₀, h_evEq.deriv_eq, div_eq_mul_inv, mul_comm]
+  exact arc_ae_eq_tail (fdBoundary_sub_eq_arc_h₃ H z₀ ht3 ht4_lt.le)
+    (Filter.eventually_of_mem (Filter.inter_mem (Ioi_mem_nhds ht3) (Iio_mem_nhds ht4_lt))
+      fun _ ⟨hs3, hs4⟩ => fdBoundary_sub_eq_arc_h₃ H z₀ hs3 hs4.le)
 
 private lemma arc_ae_eq_h₅ (H : ℝ) (z₀ : ℂ) :
     ∀ᵐ t ∂volume, t ∈ Set.uIoc (4/5 : ℝ) 1 →
@@ -436,10 +445,8 @@ private lemma arc_ae_eq_h₅ (H : ℝ) (z₀ : ℂ) :
   refine ae_of_all _ (fun t ht_mem => ?_)
   rw [uIoc_of_le (by norm_num : (4/5 : ℝ) ≤ 1)] at ht_mem
   have ht4 : 4/5 < t := ht_mem.1
-  have h_evEq : (fun s => fdBoundaryFun H s - z₀) =ᶠ[𝓝 t] arc_h₅ H z₀ :=
-    Filter.eventually_of_mem (Ioi_mem_nhds ht4) fun _ hs => fdBoundary_sub_eq_arc_h₅ H z₀ hs
-  rw [fdBoundary_sub_eq_arc_h₅ H z₀ ht4,
-    ← deriv_sub_const (f := fdBoundaryFun H) z₀, h_evEq.deriv_eq, div_eq_mul_inv, mul_comm]
+  exact arc_ae_eq_tail (fdBoundary_sub_eq_arc_h₅ H z₀ ht4)
+    (Filter.eventually_of_mem (Ioi_mem_nhds ht4) fun _ hs => fdBoundary_sub_eq_arc_h₅ H z₀ hs)
 
 /-- Lift the seg/arc FTC integrability to integrability of the `fdBoundary` integrand
 by congruence on the interior. -/
@@ -451,6 +458,21 @@ private lemma arc_hint_of_ftc {H : ℝ} {z₀ : ℂ} {a b : ℝ} {f : ℝ → �
       (fun t => (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t) volume a b :=
   h_ftc.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
     (h_ae.mono (fun _ ht hm => (ht hm).symm)))
+
+/-- **Transfer a segment FTC result to the `fdBoundaryFun` integrand.** Given a
+segment's FTC pair (integrability + integral value `V` for `deriv f / f`) and the
+a.e. equality with `(fdBoundaryFun H · - z₀)⁻¹ · deriv (fdBoundaryFun H)`, package
+both the integrability and the integral value for the boundary integrand. Used
+five times in `fdBoundary_ftc_telescope_arc_aux`. -/
+private lemma arc_seg_transfer {H : ℝ} {z₀ : ℂ} {a b : ℝ} {f : ℝ → ℂ} {V : ℂ}
+    (h_ftc : IntervalIntegrable (fun t => deriv f t / f t) volume a b ∧
+      ∫ t in a..b, deriv f t / f t = V)
+    (h_ae : ∀ᵐ t ∂volume, t ∈ Set.uIoc a b →
+      (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t = deriv f t / f t) :
+    IntervalIntegrable
+      (fun t => (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t) volume a b ∧
+    ∫ t in a..b, (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t = V :=
+  ⟨arc_hint_of_ftc h_ftc.1 h_ae, (intervalIntegral.integral_congr_ae h_ae).trans h_ftc.2⟩
 
 private lemma arc_hint_seg1 (H : ℝ) {θ₀ : ℝ}
     (h_lo : Real.pi / 3 < θ₀) (h_hi : θ₀ < 2 * Real.pi / 3) :
@@ -506,55 +528,20 @@ private theorem fdBoundary_ftc_telescope_arc_aux {H : ℝ} (hH : 1 < H) {θ₀ :
   set z₀ := exp (↑θ₀ * I) with hz₀_def
   have ht₀_lo : 1/5 < arcT₀ θ₀ := arcT₀_gt_one_fifth h_lo
   have ht₀_hi : arcT₀ θ₀ < 3/5 := arcT₀_lt_three_fifths h_hi
-  have h_seg1 := arc_seg1_ftc H h_lo h_hi
-  have h_arc_left := arc_arc_left_ftc h_lo h_hi hδ_pos hδ_lt_lo
-  have h_arc_right := arc_arc_right_ftc h_lo h_hi hδ_pos hδ_lt_hi
-  have h_seg4 := arc_seg4_ftc H h_lo h_hi
-  have h_seg5 := arc_seg5_ftc hH (θ₀ := θ₀)
-  have h_int_seg1 :
-      ∫ t in (0:ℝ)..(1/5), (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t =
-      Complex.log (arc_h₀ H z₀ (1/5)) - Complex.log (arc_h₀ H z₀ 0) := by
-    rw [intervalIntegral.integral_congr_ae (arc_ae_eq_h₀ H z₀)]
-    exact h_seg1.2
-  have h_int_arc_left :
-      ∫ t in (1/5:ℝ)..(arcT₀ θ₀ - δ),
-          (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t =
-      Complex.log (arc_h_arc z₀ (arcT₀ θ₀ - δ)) - Complex.log (arc_h_arc z₀ (1/5)) := by
-    rw [intervalIntegral.integral_congr_ae
-      (arc_ae_eq_h_arc H z₀ (by linarith) le_rfl (by linarith))]
-    exact h_arc_left.2
-  have h_int_arc_right :
-      ∫ t in (arcT₀ θ₀ + δ)..(3/5:ℝ),
-          (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t =
-      Complex.log (-(arc_h_arc z₀ (3/5))) - Complex.log (-(arc_h_arc z₀ (arcT₀ θ₀ + δ))) := by
-    rw [intervalIntegral.integral_congr_ae
-      (arc_ae_eq_h_arc H z₀ (by linarith) (by linarith) le_rfl)]
-    exact h_arc_right.2
-  have h_int_seg4 :
-      ∫ t in (3/5 : ℝ)..(4/5), (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t =
-      Complex.log (-(arc_h₃ H z₀ (4/5))) - Complex.log (-(arc_h₃ H z₀ (3/5))) := by
-    rw [intervalIntegral.integral_congr_ae (arc_ae_eq_h₃ H z₀)]
-    exact h_seg4.2
-  have h_int_seg5 :
-      ∫ t in (4/5 : ℝ)..(1 : ℝ),
-          (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t =
-      Complex.log (arc_h₅ H z₀ 1) - Complex.log (arc_h₅ H z₀ (4/5)) := by
-    rw [intervalIntegral.integral_congr_ae (arc_ae_eq_h₅ H z₀)]
-    exact h_seg5.2
-  have hint_seg1 := arc_hint_of_ftc h_seg1.1 (arc_ae_eq_h₀ H z₀)
-  have hint_arc_left :=
-    arc_hint_of_ftc h_arc_left.1 (arc_ae_eq_h_arc H z₀ (by linarith) le_rfl (by linarith))
-  have hint_arc_right :=
-    arc_hint_of_ftc h_arc_right.1 (arc_ae_eq_h_arc H z₀ (by linarith) (by linarith) le_rfl)
-  have hint_seg4 := arc_hint_of_ftc h_seg4.1 (arc_ae_eq_h₃ H z₀)
-  have hint_seg5 := arc_hint_of_ftc h_seg5.1 (arc_ae_eq_h₅ H z₀)
+  have hseg1 := arc_seg_transfer (arc_seg1_ftc H h_lo h_hi) (arc_ae_eq_h₀ H z₀)
+  have harcL := arc_seg_transfer (arc_arc_left_ftc h_lo h_hi hδ_pos hδ_lt_lo)
+    (arc_ae_eq_h_arc H z₀ (by linarith) le_rfl (by linarith))
+  have harcR := arc_seg_transfer (arc_arc_right_ftc h_lo h_hi hδ_pos hδ_lt_hi)
+    (arc_ae_eq_h_arc H z₀ (by linarith) (by linarith) le_rfl)
+  have hseg4 := arc_seg_transfer (arc_seg4_ftc H h_lo h_hi) (arc_ae_eq_h₃ H z₀)
+  have hseg5 := arc_seg_transfer (arc_seg5_ftc hH (θ₀ := θ₀)) (arc_ae_eq_h₅ H z₀)
   have h_split_left :
       ∫ t in (0 : ℝ)..(arcT₀ θ₀ - δ),
         (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t =
       (∫ t in (0:ℝ)..(1/5), (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t) +
       (∫ t in (1/5:ℝ)..(arcT₀ θ₀ - δ),
           (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t) := by
-    have h := intervalIntegral.integral_add_adjacent_intervals hint_seg1 hint_arc_left
+    have h := intervalIntegral.integral_add_adjacent_intervals hseg1.1 harcL.1
     linear_combination -h
   have h_split_right :
       ∫ t in (arcT₀ θ₀ + δ)..(1 : ℝ),
@@ -565,12 +552,12 @@ private theorem fdBoundary_ftc_telescope_arc_aux {H : ℝ} (hH : 1 < H) {θ₀ :
           (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t) +
       (∫ t in (4/5:ℝ)..(1:ℝ),
           (fdBoundaryFun H t - z₀)⁻¹ * deriv (fdBoundaryFun H) t) := by
-    have h1 := intervalIntegral.integral_add_adjacent_intervals hint_arc_right hint_seg4
+    have h1 := intervalIntegral.integral_add_adjacent_intervals harcR.1 hseg4.1
     have h2 := intervalIntegral.integral_add_adjacent_intervals
-      (hint_arc_right.trans hint_seg4) hint_seg5
+      (harcR.1.trans hseg4.1) hseg5.1
     linear_combination -h1 - h2
-  rw [h_split_left, h_split_right, h_int_seg1, h_int_arc_left, h_int_arc_right,
-      h_int_seg4, h_int_seg5,
+  rw [h_split_left, h_split_right, hseg1.2, harcL.2, harcR.2,
+      hseg4.2, hseg5.2,
       arc_junction_15 H z₀, arc_junction_35 H z₀, arc_junction_45 H z₀,
       arc_closed H z₀]
   have h_branch_45 := arc_branch_correction_45 hH θ₀
@@ -681,11 +668,7 @@ private lemma arc_log_diff_tendsto {θ₀ : ℝ}
     have h_δ_lt_gap_l : δ < arcT₀ θ₀ - 1/5 := hδ_lt.trans_le (min_le_left _ _)
     have h_δ_lt_gap_r : δ < 3/5 - arcT₀ θ₀ := hδ_lt.trans_le (min_le_right _ _)
     have h_a_re : 0 < (arc_h_arc (exp (↑θ₀ * I)) (arcT₀ θ₀ - δ)).re := by
-      unfold arc_h_arc
-      rw [exp_mul_I, exp_mul_I, ← ofReal_cos, ← ofReal_sin, ← ofReal_cos, ← ofReal_sin]
-      simp only [Complex.sub_re, Complex.add_re, Complex.mul_re,
-        Complex.ofReal_re, Complex.ofReal_im, Complex.I_re, Complex.I_im,
-        mul_zero, sub_zero, mul_one]
+      rw [arc_h_arc_re]
       have h_t_ge : Real.pi / 3 ≤ fdArcAngle (arcT₀ θ₀ - δ) := by
         unfold fdArcAngle; nlinarith
       have h_t_arc : fdArcAngle (arcT₀ θ₀ - δ) < θ₀ := by
@@ -693,11 +676,7 @@ private lemma arc_log_diff_tendsto {θ₀ : ℝ}
       linarith [Real.strictAntiOn_cos (a := fdArcAngle (arcT₀ θ₀ - δ)) (b := θ₀)
         ⟨by linarith, by linarith⟩ ⟨by linarith, by linarith⟩ h_t_arc]
     have h_b_re : 0 < (-(arc_h_arc (exp (↑θ₀ * I)) (arcT₀ θ₀ + δ))).re := by
-      unfold arc_h_arc
-      rw [exp_mul_I, exp_mul_I, ← ofReal_cos, ← ofReal_sin, ← ofReal_cos, ← ofReal_sin]
-      simp only [Complex.neg_re, Complex.sub_re, Complex.add_re, Complex.mul_re,
-        Complex.ofReal_re, Complex.ofReal_im, Complex.I_re, Complex.I_im,
-        mul_zero, sub_zero, mul_one]
+      rw [Complex.neg_re, arc_h_arc_re]
       have h_t_le : fdArcAngle (arcT₀ θ₀ + δ) ≤ 2 * Real.pi / 3 := by
         unfold fdArcAngle; nlinarith
       have h_t_arc : θ₀ < fdArcAngle (arcT₀ θ₀ + δ) := by
