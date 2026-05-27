@@ -1823,9 +1823,56 @@ lemma Gamma_p_α_T_p_lower_eq_inf (p : ℕ) (hp : 0 < p) (hpN : Nat.Coprime p N)
   rw [mem_Gamma_p_α_T_p_lower p hp hpN, Subgroup.mem_inf, Gamma0_mem,
     ZMod.intCast_zmod_eq_zero_iff_dvd]
 
+/-- The explicit `Γ₁(N)` element `k = [[1, m], [N, a⁻¹p]]` where `a⁻¹p - Nm = 1`
+(`a⁻¹ = aInvOfCoprime`, `m = mIdxOfCoprime`).  Its lower-right entry `a⁻¹p ≡ 0 (mod p)`,
+which lets `S·k⁻¹` land in `Γ₀(p)`. -/
+private noncomputable def Gamma1_S_corrector (N p : ℕ) [NeZero N] (hpN : Nat.Coprime p N) :
+    SL(2, ℤ) :=
+  ⟨!![1, mIdxOfCoprime N p hpN; (N : ℤ), (aInvOfCoprime N p hpN : ℤ) * p],
+    by rw [Matrix.det_fin_two_of]; linarith [N_mul_mIdx_eq N p hpN]⟩
+
+private lemma Gamma1_S_corrector_mem (N p : ℕ) [NeZero N] (hpN : Nat.Coprime p N) :
+    Gamma1_S_corrector N p hpN ∈ Gamma1 N := by
+  rw [Gamma1_mem]
+  refine ⟨?_, ?_, ?_⟩
+  · change ((1 : ℤ) : ZMod N) = 1; push_cast; rfl
+  · change (((aInvOfCoprime N p hpN : ℤ) * p : ℤ) : ZMod N) = 1
+    push_cast; exact aInvOfCoprime_mul_eq_one N p hpN
+  · change ((N : ℤ) : ZMod N) = 0; push_cast; rw [ZMod.natCast_self]
+
+/-- `Γ₀(p) ⊔ Γ₁(N) = ⊤` when `gcd(p, N) = 1`.  Both generators `S, T` of `SL₂(ℤ)` lie in
+the join: `T ∈ Γ₀(p)`, and `S = (S·k⁻¹)·k` with `k ∈ Γ₁(N)` (`Gamma1_S_corrector`) and
+`S·k⁻¹ ∈ Γ₀(p)` (its lower-left is `k₁₁ = a⁻¹p ≡ 0 mod p`). -/
+theorem Gamma0_sup_Gamma1_eq_top (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
+    Gamma0 p ⊔ Gamma1 N = ⊤ := by
+  haveI : NeZero p := ⟨hp.ne_zero⟩
+  rw [eq_top_iff, ← SpecialLinearGroup.SL2Z_generators, Subgroup.closure_le]
+  rintro x (rfl | rfl)
+  · -- `S = (S · k⁻¹) · k`, with `k ∈ Γ₁(N)` and `S·k⁻¹ ∈ Γ₀(p)`.
+    set k := Gamma1_S_corrector N p hpN with hk_def
+    have hk_mem : k ∈ Gamma1 N := Gamma1_S_corrector_mem N p hpN
+    have hSk_mem : ModularGroup.S * k⁻¹ ∈ Gamma0 p := by
+      rw [Gamma0_mem]
+      have h10 : ((ModularGroup.S * k⁻¹).1 1 0 : ℤ) = (aInvOfCoprime N p hpN : ℤ) * p := by
+        rw [show ((ModularGroup.S * k⁻¹).1 1 0 : ℤ) =
+            ((ModularGroup.S).1 1 0) * ((k⁻¹).1 0 0) + ((ModularGroup.S).1 1 1) * ((k⁻¹).1 1 0)
+          from by rw [Matrix.SpecialLinearGroup.coe_mul, Matrix.mul_apply, Fin.sum_univ_two]]
+        simp only [ModularGroup.coe_S, Matrix.SpecialLinearGroup.coe_inv,
+          Matrix.adjugate_fin_two_of, hk_def, Gamma1_S_corrector,
+          Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
+          Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply]
+        ring
+      rw [h10]; push_cast; rw [ZMod.natCast_self, mul_zero]
+    have : ModularGroup.S = (ModularGroup.S * k⁻¹) * k := by group
+    rw [this]
+    exact Subgroup.mul_mem _ (Subgroup.mem_sup_left hSk_mem) (Subgroup.mem_sup_right hk_mem)
+  · -- `T ∈ Γ₀(p)`.
+    refine Subgroup.mem_sup_left ?_
+    rw [Gamma0_mem]
+    simp [ModularGroup.coe_T]
+
 /-- **Coprimality surjectivity (the genuine W5a unknown).** Since `gcd(p, N) = 1`, the
-product `Γ₀(p) · Γ₁(N)` is all of `SL₂(ℤ)` (the bottom-row reduction mod `p` of `Γ₁(N)`
-covers `ℙ¹(𝔽_p)`), so `[Γ₀(p) : Γ₀(p) ∩ Γ₁(N)] = [SL₂(ℤ) : Γ₁(N)]`. -/
+product `Γ₀(p) · Γ₁(N)` is all of `SL₂(ℤ)`, so `[Γ₀(p) : Γ₀(p) ∩ Γ₁(N)] = [SL₂(ℤ) : Γ₁(N)]`. -/
 theorem Gamma1_relIndex_Gamma0_eq_index (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
     (Gamma1 N).relIndex (Gamma0 p) = (Gamma1 N).index := by
   sorry
