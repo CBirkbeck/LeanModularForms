@@ -98,6 +98,16 @@ private lemma h2_integrand_norm_bound {f : ℂ → ℂ} {γ : PiecewiseC1Path x 
       (by positivity) hM_nn)
     (hD t ht_Icc) (by positivity) (mul_nonneg hM_nn (by positivity))
 
+/-- A product `g · γ'` is a.e. strongly measurable on `Ι 0 1` whenever `g` is
+continuous on `[0,1]`; the derivative factor is strongly measurable. -/
+private lemma aestronglyMeasurable_mul_deriv {γ : PiecewiseC1Path x x} {g : ℝ → ℂ}
+    (hg : ContinuousOn g (Icc (0 : ℝ) 1)) :
+    AEStronglyMeasurable (fun t => g t * deriv γ.toPath.extend t)
+      (volume.restrict (Set.uIoc (0 : ℝ) 1)) := by
+  rw [Set.uIoc_of_le (zero_le_one' ℝ)]
+  exact ((hg.mono Ioc_subset_Icc_self).aestronglyMeasurable measurableSet_Ioc).mul
+    (stronglyMeasurable_deriv _).aestronglyMeasurable
+
 /-- **h2 is holomorphic at every point off the curve.**
 
 Uses the parametric Leibniz rule (differentiation under the integral sign).
@@ -152,18 +162,11 @@ private lemma dixonH2_integrand_stronglyMeasurable
     (hoff : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ w') :
     AEStronglyMeasurable
       (fun t => f (γ t) * (γ t - w')⁻¹ * deriv γ.toPath.extend t)
-      (volume.restrict (Set.uIoc (0 : ℝ) 1)) := by
-  rw [Set.uIoc_of_le (zero_le_one' ℝ)]
-  have h_cont_fγ : ContinuousOn (fun t => f (γ t)) (Icc (0 : ℝ) 1) :=
-    hf_cont.comp γ.toPath.continuous_extend.continuousOn (fun t ht => ⟨t, ht, rfl⟩)
-  have h_cont_inv : ContinuousOn (fun t => (γ t - w')⁻¹) (Icc (0 : ℝ) 1) :=
-    ContinuousOn.inv₀
-      (γ.toPath.continuous_extend.continuousOn.sub continuousOn_const)
-      fun t ht => sub_ne_zero.mpr (hoff t ht)
-  have h_meas_prod : AEStronglyMeasurable
-      (fun t => f (γ t) * (γ t - w')⁻¹) (volume.restrict (Ioc (0 : ℝ) 1)) :=
-    ((h_cont_fγ.mul h_cont_inv).mono Ioc_subset_Icc_self).aestronglyMeasurable measurableSet_Ioc
-  exact h_meas_prod.mul ((stronglyMeasurable_deriv _).aestronglyMeasurable)
+      (volume.restrict (Set.uIoc (0 : ℝ) 1)) :=
+  aestronglyMeasurable_mul_deriv <|
+    (hf_cont.comp γ.toPath.continuous_extend.continuousOn fun t ht => ⟨t, ht, rfl⟩).mul
+      (ContinuousOn.inv₀ (γ.toPath.continuous_extend.continuousOn.sub continuousOn_const)
+        fun t ht => sub_ne_zero.mpr (hoff t ht))
 
 private lemma dixonH2_deriv_integrand_stronglyMeasurable
     {f : ℂ → ℂ} {γ : PiecewiseC1Path x x} {w : ℂ}
@@ -171,18 +174,11 @@ private lemma dixonH2_deriv_integrand_stronglyMeasurable
     (hoff : ∀ t ∈ Icc (0 : ℝ) 1, γ t ≠ w) :
     AEStronglyMeasurable
       (fun t => f (γ t) * (γ t - w)⁻¹ ^ 2 * deriv γ.toPath.extend t)
-      (volume.restrict (Set.uIoc (0 : ℝ) 1)) := by
-  rw [Set.uIoc_of_le (zero_le_one' ℝ)]
-  have h_cont_fγ : ContinuousOn (fun t => f (γ t)) (Icc (0 : ℝ) 1) :=
-    hf_cont.comp γ.toPath.continuous_extend.continuousOn (fun t ht => ⟨t, ht, rfl⟩)
-  have h_cont_inv2 : ContinuousOn (fun t => (γ t - w)⁻¹ ^ 2) (Icc (0 : ℝ) 1) :=
-    (ContinuousOn.inv₀
-      (γ.toPath.continuous_extend.continuousOn.sub continuousOn_const)
-      fun t ht => sub_ne_zero.mpr (hoff t ht)).pow 2
-  have h_meas_prod : AEStronglyMeasurable
-      (fun t => f (γ t) * (γ t - w)⁻¹ ^ 2) (volume.restrict (Ioc (0 : ℝ) 1)) :=
-    ((h_cont_fγ.mul h_cont_inv2).mono Ioc_subset_Icc_self).aestronglyMeasurable measurableSet_Ioc
-  exact h_meas_prod.mul ((stronglyMeasurable_deriv _).aestronglyMeasurable)
+      (volume.restrict (Set.uIoc (0 : ℝ) 1)) :=
+  aestronglyMeasurable_mul_deriv <|
+    (hf_cont.comp γ.toPath.continuous_extend.continuousOn fun t ht => ⟨t, ht, rfl⟩).mul
+      ((ContinuousOn.inv₀ (γ.toPath.continuous_extend.continuousOn.sub continuousOn_const)
+        fun t ht => sub_ne_zero.mpr (hoff t ht)).pow 2)
 
 /-- **B-3 bundle**: `dixonH2` is holomorphic at points off the curve, from simple
 continuity + Lipschitz regularity hypotheses.
@@ -345,13 +341,8 @@ private lemma dixonH1_integrand_stronglyMeasurable
     {w : ℂ} (hw : w ∈ U) :
     AEStronglyMeasurable
       (fun t => dslope f w (γ t) * deriv γ.toPath.extend t)
-      (volume.restrict (Set.uIoc (0 : ℝ) 1)) := by
-  rw [Set.uIoc_of_le (zero_le_one' ℝ)]
-  have h_meas_prod : AEStronglyMeasurable
-      (fun t => dslope f w (γ t)) (volume.restrict (Ioc (0 : ℝ) 1)) :=
-    ((dslope_fixed_continuousOn hU hf hγ hw).mono
-      Ioc_subset_Icc_self).aestronglyMeasurable measurableSet_Ioc
-  exact h_meas_prod.mul (stronglyMeasurable_deriv _).aestronglyMeasurable
+      (volume.restrict (Set.uIoc (0 : ℝ) 1)) :=
+  aestronglyMeasurable_mul_deriv (dslope_fixed_continuousOn hU hf hγ hw)
 
 /-- **B-2 partial bundle**: `dixonH1 f γ` is differentiable on `U` when
 f is differentiable on open U, γ is a PwC1Immersion with image in U, and
