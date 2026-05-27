@@ -36,6 +36,14 @@ theorem fdBoundary_H_sub_rho_seg0_slitPlane (H : ℝ) {t : ℝ} (ht : t ≤ 1) :
   Complex.mem_slitPlane_iff.mpr <| Or.inl <| by
     rw [fdBoundary_H_sub_rho_seg0_re H ht]; norm_num
 
+/-- Real part of the arc displacement `↑(cos θ) + ↑(sin θ)·I - ρ` is `cos θ + 1/2`. -/
+private lemma re_arc_sub_rho (θ : ℝ) :
+    (↑(Real.cos θ) + ↑(Real.sin θ) * I - (-1 / 2 + ↑(Real.sqrt 3) / 2 * I) : ℂ).re =
+      Real.cos θ + 1 / 2 := by
+  simp only [Complex.add_re, Complex.sub_re, Complex.ofReal_re, Complex.mul_re,
+    Complex.I_re, Complex.I_im, Complex.ofReal_im, Complex.neg_re, Complex.one_re,
+    Complex.div_ofNat_re, Complex.div_ofNat_im, zero_div]; ring
+
 /-- On seg 1: `γ(t) - ρ` has `re = cos(θ(t)) + 1/2` where `θ ∈ [π/3, π/2]`,
     so `cos(θ) ∈ [0, 1/2]` and `re ∈ [1/2, 1] > 0`. -/
 theorem fdBoundary_H_sub_rho_seg1_re (H : ℝ) {t : ℝ} (ht1 : 1 < t) (ht2 : t ≤ 2) :
@@ -44,10 +52,7 @@ theorem fdBoundary_H_sub_rho_seg1_re (H : ℝ) {t : ℝ} (ht1 : 1 < t) (ht2 : t 
   simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
   set θ : ℝ := Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3) with hθ_def
   rw [show (↑Real.pi / 3 + (↑t - 1) * (↑Real.pi / 2 - ↑Real.pi / 3)) * I =
-    (↑θ : ℂ) * I by simp only [hθ_def]; push_cast; ring, exp_real_angle_I]
-  simp only [Complex.add_re, Complex.sub_re, Complex.ofReal_re, Complex.mul_re,
-    Complex.I_re, Complex.I_im, Complex.ofReal_im, Complex.neg_re, Complex.one_re,
-    Complex.div_ofNat_re, Complex.div_ofNat_im, zero_div]
+    (↑θ : ℂ) * I by simp only [hθ_def]; push_cast; ring, exp_real_angle_I, re_arc_sub_rho]
   have hcos : 0 ≤ Real.cos θ :=
     Real.cos_nonneg_of_mem_Icc ⟨by simp only [hθ_def]; nlinarith [Real.pi_pos],
       by simp only [hθ_def]; nlinarith [Real.pi_pos]⟩
@@ -61,13 +66,7 @@ theorem fdBoundary_H_sub_rho_seg2_re (H : ℝ) {t : ℝ} (ht2 : 2 < t) (ht3 : t 
   simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
   set θ : ℝ := Real.pi / 2 + (t - 2) * (2 * Real.pi / 3 - Real.pi / 2) with hθ_def
   rw [show (↑Real.pi / 2 + (↑t - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I =
-    (↑θ : ℂ) * I by simp only [hθ_def]; push_cast; ring, exp_real_angle_I]
-  have hre : (↑(Real.cos θ) + ↑(Real.sin θ) * I -
-      (-1 / 2 + ↑(Real.sqrt 3) / 2 * I)).re = Real.cos θ + 1 / 2 := by
-    simp only [Complex.add_re, Complex.sub_re, Complex.ofReal_re, Complex.mul_re,
-      Complex.I_re, Complex.I_im, Complex.ofReal_im, Complex.neg_re, Complex.one_re,
-      Complex.div_ofNat_re, Complex.div_ofNat_im, zero_div]; ring
-  rw [hre]
+    (↑θ : ℂ) * I by simp only [hθ_def]; push_cast; ring, exp_real_angle_I, re_arc_sub_rho]
   have hcos_gt : Real.cos θ > -1 / 2 := by
     have := cos_two_pi_div_three
     rw [show (-1 : ℝ) / 2 = Real.cos (2 * Real.pi / 3) by linarith]
@@ -207,10 +206,7 @@ private lemma g_norm_seg2 {δ : ℝ} (hδ : 0 < δ) (hδ1 : δ < 1) :
   rw [show (↑Real.pi / 2 + (↑(3 - δ : ℝ) - 2) * (2 * ↑Real.pi / 3 - ↑Real.pi / 2)) * I =
       (↑(2 * Real.pi / 3 - δ * Real.pi / 6) : ℂ) * I by push_cast; ring,
     exp_real_angle_I, rho_arc_factor δ, ← exp_real_angle_I]
-  have h_sin_nn : 0 ≤ Real.sin (δ * Real.pi / 12) :=
-    (sin_delta_pi_div_twelve_pos hδ (by linarith)).le
-  rw [norm_mul, Complex.norm_real, Real.norm_of_nonneg (mul_nonneg (by norm_num) h_sin_nn),
-    Complex.norm_exp_ofReal_mul_I, mul_one]
+  exact norm_two_sin_mul_exp hδ (by linarith)
 
 private lemma g_norm_arc {t : ℝ} (ht1 : 1 < t) (ht3 : t < 3) :
     ‖fdBoundary_H H t - ellipticPointRho‖ = 2 * Real.sin ((3 - t) * Real.pi / 12) := by
@@ -220,10 +216,7 @@ private lemma g_norm_arc {t : ℝ} (ht1 : 1 < t) (ht3 : t < 3) :
   have hδ : 0 < δ := by linarith
   rw [show Real.pi * (1 + t) / 6 = 2 * Real.pi / 3 - δ * Real.pi / 6 by
       simp only [hδ_def]; ring, exp_real_angle_I, rho_arc_factor δ, ← exp_real_angle_I]
-  have h_sin_nn : 0 ≤ Real.sin (δ * Real.pi / 12) :=
-    (sin_delta_pi_div_twelve_pos hδ (by linarith)).le
-  rw [norm_mul, Complex.norm_real, Real.norm_of_nonneg (mul_nonneg (by norm_num) h_sin_nn),
-    Complex.norm_exp_ofReal_mul_I, mul_one]
+  exact norm_two_sin_mul_exp hδ (by linarith)
 
 private lemma g_norm_ge_one_seg0 {t : ℝ} (_ht0 : 0 ≤ t) (ht1 : t ≤ 1) :
     1 ≤ ‖fdBoundary_H H t - ellipticPointRho‖ := by
@@ -458,7 +451,7 @@ private lemma pv_norm_bounds_rho (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
     rw [g_norm_seg3 H hH h3 (le_of_lt h4)]; exact div_mul_cancel₀ ε (ne_of_gt hH_gap)
   refine ⟨?_, ?_, ?_⟩
   · intro ε hε_pos hε_lt t ⟨ht0, ht3⟩
-    simp only [sub_zero]
+    simp only [g, sub_zero]
     obtain ⟨hδL_p, hδL_lt, _, _, _, _, _, _⟩ := δ_rho_props H hε_pos hε_lt
     have hε_lt_2sin : ε < 2 * Real.sin (Real.pi / 12) := lt_of_lt_of_le hε_lt (min_le_right _ _)
     have hε_lt_one : ε < 1 := by
@@ -469,26 +462,22 @@ private lemma pv_norm_bounds_rho (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
       linarith
     rcases le_or_gt t 1 with ht1 | ht1
     · exact hε_lt_one.trans_le (g_norm_ge_one_seg0 ht0 ht1)
-    · rw [show g = fun t => fdBoundary_H H t - ellipticPointRho from rfl,
-          g_norm_arc ht1 (by linarith), ← h_norm_L ε hε_pos hε_lt, g_norm_seg2 hδL_p hδL_lt]
+    · rw [g_norm_arc ht1 (by linarith), ← h_norm_L ε hε_pos hε_lt, g_norm_seg2 hδL_p hδL_lt]
       exact mul_lt_mul_of_pos_left
         (Real.sin_lt_sin_of_lt_of_le_pi_div_two (by nlinarith [Real.pi_pos])
           (by nlinarith [Real.pi_pos])
           (by nlinarith : δ_L_rho ε * Real.pi / 12 < (3 - t) * Real.pi / 12))
         (by norm_num : (0:ℝ) < 2)
   · intro ε hε_pos hε_lt t ⟨ht3, ht5⟩
-    simp only [sub_zero]
+    simp only [g, sub_zero]
     obtain ⟨_, _, hδR_p, hδR_lt, _, _, _, _⟩ := δ_rho_props H hε_pos hε_lt
     have hε_lt_gap : ε < H - Real.sqrt 3 / 2 := lt_of_lt_of_le hε_lt (min_le_left _ _)
     rcases le_or_gt t 4 with ht4 | ht4
-    · rw [show g = fun t => fdBoundary_H H t - ellipticPointRho from rfl,
-          show t = 3 + (t - 3) by ring,
+    · rw [show t = 3 + (t - 3) by ring,
           g_norm_seg3 H hH (by linarith : 0 < t - 3) (by linarith : t - 3 ≤ 1),
           ← h_norm_R ε hε_pos hε_lt, g_norm_seg3 H hH hδR_p (le_of_lt hδR_lt)]
       exact mul_lt_mul_of_pos_right (by linarith : δ_R_rho H ε < t - 3) hH_gap
-    · exact hε_lt_gap.trans_le <| by
-        rw [show g = fun t => fdBoundary_H H t - ellipticPointRho from rfl]
-        exact g_norm_ge_seg4 H hH (le_of_lt ht4) ht5
+    · exact hε_lt_gap.trans_le (g_norm_ge_seg4 H hH (le_of_lt ht4) ht5)
   · intro ε hε_pos hε_lt t ⟨ht_lo, ht_hi⟩
     simp only [sub_zero]
     obtain ⟨hδL_p, hδL_lt, hδR_p, hδR_lt, _, _, _, _⟩ := δ_rho_props H hε_pos hε_lt
@@ -557,10 +546,7 @@ private lemma pv_log_limit_at_rho (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
   set zR := g (3 + δ_R ε)
   rw [Complex.dist_eq,
     ← Complex.re_add_im (Complex.log zL), ← Complex.re_add_im (Complex.log zR),
-    Complex.log_re, Complex.log_re, Complex.log_im, Complex.log_im]
-  change ‖zL‖ = ε at h_norm_L
-  change ‖zR‖ = ε at h_norm_R
-  rw [h_norm_L, h_norm_R]
+    Complex.log_re, Complex.log_re, Complex.log_im, Complex.log_im, h_norm_L, h_norm_R]
   rw [arg_approach_rho_left_helper hδL_p hδL_lt_one,
       arg_approach_rho_right H hH hδR_p (le_of_lt hδR_lt_one)]
   have h_simp : ↑(Real.log ε) + ↑(Real.pi / 6 - δ_L ε * Real.pi / 12) * I -

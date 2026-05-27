@@ -229,10 +229,7 @@ private lemma g_rho'_norm_arc {δ : ℝ} (hδ : 0 < δ) (hδ2 : δ < 2) :
     ‖fdBoundary_H H (1 + δ) - ellipticPointRhoPlusOne‖ = 2 * Real.sin (δ * Real.pi / 12) := by
   rw [g_rho'_arc_value (by linarith : 1 < 1 + δ) (by linarith : 1 + δ < 3),
     exp_real_angle_I, rho'_arc_factor δ, ← exp_real_angle_I]
-  have h_sin_nn : 0 ≤ Real.sin (δ * Real.pi / 12) :=
-    (sin_delta_pi_div_twelve_pos hδ hδ2).le
-  rw [norm_mul, Complex.norm_real, Real.norm_of_nonneg (mul_nonneg (by norm_num) h_sin_nn),
-    Complex.norm_exp_ofReal_mul_I, mul_one]
+  exact norm_two_sin_mul_exp hδ hδ2
 
 private lemma g_rho'_norm_arc_full {t : ℝ} (ht1 : 1 < t) (ht3 : t < 3) :
     ‖fdBoundary_H H t - ellipticPointRhoPlusOne‖ = 2 * Real.sin ((t - 1) * Real.pi / 12) := by
