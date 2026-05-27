@@ -163,6 +163,40 @@ private lemma integrand_form_eq' (f : ℝ → ℂ) (z : ℂ) (t : ℝ) :
   rw [show (fun s => f s - z) = (fun s => f s + (-z)) by ext; ring,
     deriv_add_const, div_eq_mul_inv, mul_comm]
 
+private lemma ne_zero_of_norm_eq_pos {z : ℂ} {ε : ℝ} (hε : 0 < ε) (h : ‖z‖ = ε) : z ≠ 0 :=
+  fun hz => by rw [hz, norm_zero] at h; linarith
+
+/-- Simplification of the `vertDelta` formula: `5 * (ε / (5 * c)) * c = ε` when `0 < c`. -/
+private lemma vertDelta_norm_simp {ε H : ℝ} (hH : fdHeightValid H) :
+    5 * (ε / (5 * (H - Real.sqrt 3 / 2))) * (H - Real.sqrt 3 / 2) = ε := by
+  rw [show 5 * (ε / (5 * (H - Real.sqrt 3 / 2))) * (H - Real.sqrt 3 / 2) =
+    ε / (5 * (H - Real.sqrt 3 / 2)) * (5 * (H - Real.sqrt 3 / 2)) by ring]
+  exact div_mul_cancel₀ ε (ne_of_gt (by have := hH.sub_pos; positivity))
+
+/-- Compute the argument of `2 sin α * (↑(cos β) + ↑(sin β) · I)` for suitable α, β.
+Helper for `arc_arg_at_rho` and `arc_arg_at_rp1`. -/
+private lemma arg_two_sin_mul {α β : ℝ} (hα_pos : 0 < α) (hα_lt_pi : α < Real.pi)
+    (hβ_lt : -Real.pi < β) (hβ_le : β ≤ Real.pi) :
+    (↑(2 * Real.sin α) * (↑(Real.cos β) + ↑(Real.sin β) * I) : ℂ).arg = β := by
+  rw [Complex.ofReal_cos, Complex.ofReal_sin]
+  exact Complex.arg_mul_cos_add_sin_mul_I
+    (show (0 : ℝ) < 2 * Real.sin α by
+      have := Real.sin_pos_of_pos_of_lt_pi hα_pos hα_lt_pi; positivity)
+    ⟨hβ_lt, hβ_le⟩
+
+/-- Wrap the standard "piece for reference + a.e. match + endpoint rewrites" pattern. -/
+private lemma neg_ftc_piece_wrap {a b : ℝ} {F G : ℝ → ℂ} {LR LL : ℂ}
+    (h_piece : IntervalIntegrable (fun t => deriv G t / G t) volume a b ∧
+      ∫ t in a..b, deriv G t / G t = Complex.log (-(G b)) - Complex.log (-(G a)))
+    (h_ae : ∀ᵐ t ∂volume, t ∈ Ι a b → deriv F t / F t = deriv G t / G t)
+    (hFa : F a = G a) (hFb : F b = G b)
+    (hLR : LR = Complex.log (-(F b))) (hLL : LL = Complex.log (-(F a))) :
+    IntervalIntegrable (fun t => deriv F t / F t) volume a b ∧
+    ∫ t in a..b, deriv F t / F t = LR - LL := by
+  refine ⟨h_piece.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
+    (h_ae.mono fun _ ht hm => (ht hm).symm)), ?_⟩
+  rw [intervalIntegral.integral_congr_ae h_ae, h_piece.2, hLR, hLL, hFa, hFb]
+
 private theorem seg1_ftc_rho (H : ℝ) :
     IntervalIntegrable (fun t => deriv (fun s => fdBoundaryFun H s - ellipticPointRho) t /
       (fdBoundaryFun H t - ellipticPointRho)) volume 0 (1/5) ∧
@@ -313,11 +347,8 @@ private theorem vert_norm_at_rho (H : ℝ) (hH : fdHeightValid H) {ε : ℝ} (h�
     ‖fdBoundaryFun H (3/5 + vertDelta H ε) - ellipticPointRho‖ = ε := by
   rw [fdBoundaryFun_seg4_dist_rho H hH _ (by linarith [vertDelta_pos hH hε])
     (by linarith [vertDelta_lt_one_fifth hH hε_lt]),
-    show 3/5 + vertDelta H ε - 3/5 = vertDelta H ε by ring]
-  unfold vertDelta
-  rw [show 5 * (ε / (5 * (H - Real.sqrt 3 / 2))) * (H - Real.sqrt 3 / 2) =
-    ε / (5 * (H - Real.sqrt 3 / 2)) * (5 * (H - Real.sqrt 3 / 2)) by ring]
-  exact div_mul_cancel₀ ε (ne_of_gt (by have := hH.sub_pos; positivity))
+    show 3/5 + vertDelta H ε - 3/5 = vertDelta H ε by ring, vertDelta,
+    vertDelta_norm_simp hH]
 
 private lemma cos_theta_rho_identity {α : ℝ} :
     Real.cos (2 * Real.pi / 3 - 2 * α) + 1/2 =
@@ -400,18 +431,9 @@ private theorem E_atRho_eq (H : ℝ) (hH : fdHeightValid H) {ε : ℝ} (hε : 0 
   have hε_13 : ε < 1/3 := hε_lt.trans_le (min_le_left _ _)
   have hε_H : ε < H - Real.sqrt 3 / 2 := hε_lt.trans_le (min_le_right _ _)
   unfold E_atRho
-  have h_ne_left : fdBoundaryFun H (3/5 - arcsinDelta ε) - ellipticPointRho ≠ 0 := by
-    intro h
-    have := arc_norm_at_rho H hε hε_13
-    rw [h, norm_zero] at this
-    linarith
-  have h_ne_right : fdBoundaryFun H (3/5 + vertDelta H ε) - ellipticPointRho ≠ 0 := by
-    intro h
-    have := vert_norm_at_rho H hH hε hε_H
-    rw [h, norm_zero] at this
-    linarith
-  rw [log_sub_eq_of_equal_norm h_ne_left h_ne_right
-    (by rw [arc_norm_at_rho H hε hε_13, vert_norm_at_rho H hH hε hε_H]),
+  rw [log_sub_eq_of_equal_norm (ne_zero_of_norm_eq_pos hε (arc_norm_at_rho H hε hε_13))
+      (ne_zero_of_norm_eq_pos hε (vert_norm_at_rho H hH hε hε_H))
+      (by rw [arc_norm_at_rho H hε hε_13, vert_norm_at_rho H hH hε hε_H]),
     arc_arg_at_rho H hε hε_13, vert_arg_at_rho H hH hε hε_H]
 
 private theorem E_atRho_tendsto (H : ℝ) (hH : fdHeightValid H) :
@@ -572,20 +594,13 @@ private theorem arc_ftc_neg_rp1 (H : ℝ) {δ : ℝ} (hδ : 0 < δ) (hδ' : δ <
     (fun t _ => arcRef_rp1_contDiff.differentiable (by norm_num) |>.differentiableAt)
     (arcRef_rp1_contDiff.continuous_deriv le_top).continuousOn
     (fun t ht => arcRef_rp1_neg_slitPlane (by linarith [ht.1]) ht.2)
-  have h_ae : ∀ᵐ t ∂volume, t ∈ Ι (1/5 + δ) (3/5 : ℝ) →
-      deriv (fun s => fdBoundaryFun H s - ellipticPointRhoPlusOne) t /
-        (fdBoundaryFun H t - ellipticPointRhoPlusOne) =
-      deriv arcRef_rp1 t / arcRef_rp1 t := by
-    filter_upwards [compl_mem_ae_iff.mpr (measure_singleton (3/5 : ℝ))] with t ht_ne ht_mem
-    rw [uIoc_of_le hab] at ht_mem
-    have ht_lt : t < 3/5 := ht_mem.2.lt_of_ne (fun h => ht_ne (mem_singleton_iff.mpr h))
-    have ht_gt : 1/5 < t := by linarith [ht_mem.1]
-    rw [arcRef_rp1_eq H ht_gt ht_lt.le, (arcRef_rp1_eventuallyEq H ht_gt ht_lt).deriv_eq]
-  exact ⟨h_piece.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
-      (h_ae.mono fun t ht hm => (ht hm).symm)),
-    by rw [intervalIntegral.integral_congr_ae h_ae, h_piece.2,
-      arcRef_rp1_eq H (by linarith) le_rfl,
-      arcRef_rp1_eq H (by linarith) (by linarith)]⟩
+  refine neg_ftc_piece_wrap h_piece ?_ (arcRef_rp1_eq H (by linarith) (by linarith))
+    (arcRef_rp1_eq H (by linarith) le_rfl) rfl rfl
+  filter_upwards [compl_mem_ae_iff.mpr (measure_singleton (3/5 : ℝ))] with t ht_ne ht_mem
+  rw [uIoc_of_le hab] at ht_mem
+  have ht_lt : t < 3/5 := ht_mem.2.lt_of_ne (fun h => ht_ne (mem_singleton_iff.mpr h))
+  have ht_gt : 1/5 < t := by linarith [ht_mem.1]
+  rw [arcRef_rp1_eq H ht_gt ht_lt.le, (arcRef_rp1_eventuallyEq H ht_gt ht_lt).deriv_eq]
 
 private theorem vert_norm_at_rp1 (H : ℝ) (hH : fdHeightValid H) {ε : ℝ} (hε : 0 < ε)
     (hε_lt : ε < H - Real.sqrt 3 / 2) :
@@ -593,11 +608,8 @@ private theorem vert_norm_at_rp1 (H : ℝ) (hH : fdHeightValid H) {ε : ℝ} (h�
   have hδ := vertDelta_pos hH hε
   have hδ' := vertDelta_lt_one_fifth hH hε_lt
   rw [fdBoundaryFun_seg1_dist_rhoPlusOne H hH _ (by linarith) (by linarith),
-    show 1/5 - (1/5 - vertDelta H ε) = vertDelta H ε by ring]
-  unfold vertDelta
-  rw [show 5 * (ε / (5 * (H - Real.sqrt 3 / 2))) * (H - Real.sqrt 3 / 2) =
-    ε / (5 * (H - Real.sqrt 3 / 2)) * (5 * (H - Real.sqrt 3 / 2)) by ring]
-  exact div_mul_cancel₀ ε (ne_of_gt (by have := hH.sub_pos; positivity))
+    show 1/5 - (1/5 - vertDelta H ε) = vertDelta H ε by ring, vertDelta,
+    vertDelta_norm_simp hH]
 
 private theorem arc_norm_at_rp1 (H : ℝ) {ε : ℝ} (hε : 0 < ε) (hε_lt : ε < 1/3) :
     ‖fdBoundaryFun H (1/5 + arcsinDelta ε) - ellipticPointRhoPlusOne‖ = ε := by
@@ -700,18 +712,9 @@ private theorem E_atRhoPlusOne_eq (H : ℝ) (hH : fdHeightValid H) {ε : ℝ} (h
   have hε_13 : ε < 1/3 := hε_lt.trans_le (min_le_left _ _)
   have hε_H : ε < H - Real.sqrt 3 / 2 := hε_lt.trans_le (min_le_right _ _)
   unfold E_atRhoPlusOne
-  have h_ne_left : fdBoundaryFun H (1/5 - vertDelta H ε) - ellipticPointRhoPlusOne ≠ 0 := by
-    intro h
-    have := vert_norm_at_rp1 H hH hε hε_H
-    rw [h, norm_zero] at this
-    linarith
-  have h_ne_right : fdBoundaryFun H (1/5 + arcsinDelta ε) - ellipticPointRhoPlusOne ≠ 0 := by
-    intro h
-    have := arc_norm_at_rp1 H hε hε_13
-    rw [h, norm_zero] at this
-    linarith
-  rw [log_sub_eq_of_equal_norm h_ne_left h_ne_right
-    (by rw [vert_norm_at_rp1 H hH hε hε_H, arc_norm_at_rp1 H hε hε_13]),
+  rw [log_sub_eq_of_equal_norm (ne_zero_of_norm_eq_pos hε (vert_norm_at_rp1 H hH hε hε_H))
+      (ne_zero_of_norm_eq_pos hε (arc_norm_at_rp1 H hε hε_13))
+      (by rw [vert_norm_at_rp1 H hH hε hε_H, arc_norm_at_rp1 H hε hε_13]),
     vert_arg_at_rp1 H hH hε hε_H, arc_arg_at_rp1 H hε hε_13]
 
 private theorem E_atRhoPlusOne_tendsto (H : ℝ) (hH : fdHeightValid H) :
@@ -831,19 +834,12 @@ private theorem seg4_ftc_neg_rp1 (H : ℝ) :
     (fun t _ => (seg4Ref_rp1_contDiff H).differentiable (by norm_num) |>.differentiableAt)
     ((seg4Ref_rp1_contDiff H).continuous_deriv le_top).continuousOn
     (fun t _ => seg4Ref_rp1_neg_slitPlane H t)
-  have h_ae : ∀ᵐ t ∂volume, t ∈ Ι (3/5 : ℝ) (4/5) →
-      deriv (fun s => fdBoundaryFun H s - ellipticPointRhoPlusOne) t /
-        (fdBoundaryFun H t - ellipticPointRhoPlusOne) =
-      deriv (seg4Ref_rp1 H) t / seg4Ref_rp1 H t := by
-    filter_upwards [compl_mem_ae_iff.mpr (measure_singleton (4/5 : ℝ))] with t ht_ne ht_mem
-    rw [uIoc_of_le (by norm_num : (3/5 : ℝ) ≤ 4/5)] at ht_mem
-    have ht_lt : t < 4/5 := ht_mem.2.lt_of_ne (fun h => ht_ne (mem_singleton_iff.mpr h))
-    rw [seg4Ref_rp1_eq H (by linarith [ht_mem.1]) ht_lt.le,
-      (seg4Ref_rp1_eventuallyEq H (by linarith [ht_mem.1]) ht_lt).deriv_eq]
-  exact ⟨h_piece.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
-      (h_ae.mono fun t ht hm => (ht hm).symm)),
-    by rw [intervalIntegral.integral_congr_ae h_ae, h_piece.2,
-      seg4Ref_rp1_eq_35 H, seg4Ref_rp1_eq_45 H]⟩
+  refine neg_ftc_piece_wrap h_piece ?_ (seg4Ref_rp1_eq_35 H) (seg4Ref_rp1_eq_45 H) rfl rfl
+  filter_upwards [compl_mem_ae_iff.mpr (measure_singleton (4/5 : ℝ))] with t ht_ne ht_mem
+  rw [uIoc_of_le (by norm_num : (3/5 : ℝ) ≤ 4/5)] at ht_mem
+  have ht_lt : t < 4/5 := ht_mem.2.lt_of_ne (fun h => ht_ne (mem_singleton_iff.mpr h))
+  rw [seg4Ref_rp1_eq H (by linarith [ht_mem.1]) ht_lt.le,
+    (seg4Ref_rp1_eventuallyEq H (by linarith [ht_mem.1]) ht_lt).deriv_eq]
 
 private def seg5Ref_rp1 (H : ℝ) (t : ℝ) : ℂ :=
   (5 * ↑t - 5) + (↑H - ↑(Real.sqrt 3) / 2) * I
@@ -897,18 +893,11 @@ private theorem seg5_ftc_neg_rp1 (H : ℝ) (hH : fdHeightValid H) :
     (fun t _ => (seg5Ref_rp1_contDiff H).differentiable (by norm_num) |>.differentiableAt)
     ((seg5Ref_rp1_contDiff H).continuous_deriv le_top).continuousOn
     (fun t _ => seg5Ref_rp1_neg_slitPlane H hH t)
-  have h_ae : ∀ᵐ t ∂volume, t ∈ Ι (4/5 : ℝ) 1 →
-      deriv (fun s => fdBoundaryFun H s - ellipticPointRhoPlusOne) t /
-        (fdBoundaryFun H t - ellipticPointRhoPlusOne) =
-      deriv (seg5Ref_rp1 H) t / seg5Ref_rp1 H t := by
-    filter_upwards with t ht_mem
-    rw [uIoc_of_le (by norm_num : (4/5 : ℝ) ≤ 1)] at ht_mem
-    rw [seg5Ref_rp1_eq H (by linarith [ht_mem.1]),
-      (seg5Ref_rp1_eventuallyEq H (by linarith [ht_mem.1])).deriv_eq]
-  exact ⟨h_piece.1.congr_ae ((ae_restrict_iff' measurableSet_uIoc).mpr
-      (h_ae.mono fun t ht hm => (ht hm).symm)),
-    by rw [intervalIntegral.integral_congr_ae h_ae, h_piece.2,
-      seg5Ref_rp1_eq_45 H, seg5Ref_rp1_eq_1 H]⟩
+  refine neg_ftc_piece_wrap h_piece ?_ (seg5Ref_rp1_eq_45 H) (seg5Ref_rp1_eq_1 H) rfl rfl
+  filter_upwards with t ht_mem
+  rw [uIoc_of_le (by norm_num : (4/5 : ℝ) ≤ 1)] at ht_mem
+  rw [seg5Ref_rp1_eq H (by linarith [ht_mem.1]),
+    (seg5Ref_rp1_eventuallyEq H (by linarith [ht_mem.1])).deriv_eq]
 
 private lemma log_neg_eq_sub_pi_I_rp1 {z : ℂ} (hz_im : 0 < z.im) :
     Complex.log (-z) = Complex.log z - ↑Real.pi * I := by
