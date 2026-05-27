@@ -121,7 +121,7 @@ variable {x : ℂ}
 
 /-- The derivative of a Lipschitz extended piecewise-`C¹` path is interval-integrable
 on `[0, 1]`: derivatives of Lipschitz functions are bounded by the Lipschitz constant. -/
-private theorem deriv_intervalIntegrable_of_lipschitz (γP : PiecewiseC1Path x x) {K : NNReal}
+theorem deriv_intervalIntegrable_of_lipschitz (γP : PiecewiseC1Path x x) {K : NNReal}
     (hLip : LipschitzWith K γP.toPath.extend) :
     IntervalIntegrable (deriv γP.toPath.extend) MeasureTheory.volume 0 1 := by
   rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (zero_le_one' ℝ)]

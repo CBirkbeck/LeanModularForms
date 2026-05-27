@@ -261,13 +261,8 @@ theorem cpv_polarPart_at_uncrossed_pole
   obtain ⟨K, hLip⟩ := ClosedPwC1Immersion.lipschitzWith_extend γ
   set γP : PiecewiseC1Path x x := γ.toPwC1Immersion.toPiecewiseC1Path
   obtain ⟨δ, hδ_pos, hδ_bound⟩ := avoids_delta_bound γP s h_avoid
-  have h_deriv_int : IntervalIntegrable (deriv γP.toPath.extend)
-      MeasureTheory.volume 0 1 := by
-    rw [intervalIntegrable_iff_integrableOn_Ioc_of_le (zero_le_one' ℝ)]
-    refine MeasureTheory.Measure.integrableOn_of_bounded measure_Ioc_lt_top.ne
-      (stronglyMeasurable_deriv _).aestronglyMeasurable
-      (ae_restrict_of_ae (Filter.Eventually.of_forall
-        (fun _ => norm_deriv_le_of_lipschitz hLip)))
+  have h_deriv_int : IntervalIntegrable (deriv γP.toPath.extend) MeasureTheory.volume 0 1 :=
+    HungerbuhlerWasem.deriv_intervalIntegrable_of_lipschitz γP hLip
   have h_cont_inv_each : ∀ k : Fin (decomp.order s), ContinuousOn
       (fun t => decomp.coeff s k / (γP.toPath.extend t - s) ^ (k.val + 1))
       (Icc (0 : ℝ) 1) := fun k => ContinuousOn.div continuousOn_const
