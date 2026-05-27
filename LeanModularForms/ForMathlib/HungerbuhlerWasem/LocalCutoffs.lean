@@ -620,6 +620,36 @@ private theorem left_annular_log_diff_local
   have : t = t₀ := h_local_unique t ⟨by linarith [ht.1], by linarith [ht.2]⟩ h_eq
   linarith [ht.2]
 
+/-- **Abstract `δ → 0⁺` from a near-bound profile.** Directionless core shared by
+`δ_right_tendsto_zero` and `δ_left_tendsto_zero`: if the exit cutoff `δ` is
+positive below the threshold and the distance profile `dist d = ‖γ(t₀ ± d) - s‖`
+is positive on `(0, r)` while staying `≤ ε` for `d ≤ δ ε`, then `δ ε → 0⁺`. -/
+private lemma tendsto_nhdsGT_zero_of_near
+    {δ : ℝ → ℝ} {threshold r : ℝ} (hr_pos : 0 < r) (hthresh : 0 < threshold)
+    (dist : ℝ → ℝ)
+    (hδ_pos : ∀ ε, 0 < ε → ε < threshold → 0 < δ ε)
+    (h_dist_pos : ∀ d, 0 < d → d < r → 0 < dist d)
+    (h_near : ∀ ε, 0 < ε → ε < threshold → ∀ d, 0 ≤ d → d ≤ δ ε → dist d ≤ ε) :
+    Tendsto δ (𝓝[>] (0 : ℝ)) (𝓝[>] (0 : ℝ)) := by
+  rw [tendsto_nhdsWithin_iff]
+  refine ⟨?_, ?_⟩
+  · rw [Metric.tendsto_nhds]
+    intro δ₀ hδ₀_pos
+    set δ₀' : ℝ := min δ₀ (r / 2)
+    have hδ₀'_pos : 0 < δ₀' := lt_min hδ₀_pos (by linarith)
+    have hδ₀'_lt_r : δ₀' < r := (min_le_right _ _).trans_lt (by linarith)
+    have hm_pos : 0 < dist δ₀' := h_dist_pos δ₀' hδ₀'_pos hδ₀'_lt_r
+    filter_upwards [Ioo_mem_nhdsGT (lt_min hm_pos hthresh)] with ε hε
+    have hδ_pos' := hδ_pos ε hε.1 (hε.2.trans_le (min_le_right _ _))
+    by_contra h_ge
+    push Not at h_ge
+    rw [Real.dist_eq, sub_zero, abs_of_pos hδ_pos'] at h_ge
+    linarith [h_near ε hε.1 (hε.2.trans_le (min_le_right _ _)) δ₀'
+      (by linarith) ((min_le_left _ _).trans h_ge),
+      hε.2.trans_le (min_le_left _ _)]
+  · filter_upwards [Ioo_mem_nhdsGT hthresh] with ε hε
+    exact hδ_pos ε hε.1 hε.2
+
 /-- **`δ_right` of a `LocalDerivedCutoffs` tends to `0⁺` as `ε → 0⁺`**. -/
 theorem LocalDerivedCutoffs.δ_right_tendsto_zero
     {γ : ClosedPwC1Immersion x} {s : ℂ} {t₀ r : ℝ} (_hr_pos : 0 < r)
@@ -628,35 +658,14 @@ theorem LocalDerivedCutoffs.δ_right_tendsto_zero
       γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t = s → t = t₀)
     (D : LocalDerivedCutoffs γ s t₀ r) :
     Tendsto D.δ_right (𝓝[>] (0 : ℝ)) (𝓝[>] (0 : ℝ)) := by
-  classical
   set γf : ℝ → ℂ :=
     (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend : ℝ → ℂ)
-  rw [tendsto_nhdsWithin_iff]
-  refine ⟨?_, ?_⟩
-  · rw [Metric.tendsto_nhds]
-    intro δ₀ hδ₀_pos
-    set δ₀' : ℝ := min δ₀ (r / 2)
-    have hδ₀'_pos : 0 < δ₀' := lt_min hδ₀_pos (by linarith)
-    have hδ₀'_le : δ₀' ≤ δ₀ := min_le_left _ _
-    have hδ₀'_lt_r : δ₀' < r := (min_le_right _ _).trans_lt (by linarith)
-    have h_in_window : t₀ + δ₀' ∈ Set.Icc (t₀ - r) (t₀ + r) :=
-      ⟨by linarith, by linarith⟩
-    set m : ℝ := ‖γf (t₀ + δ₀') - s‖
-    have hm_pos : 0 < m :=
-      norm_pos_iff.mpr (sub_ne_zero.mpr fun h_eq => by
-        linarith [h_local_unique _ h_in_window h_eq])
-    filter_upwards [Ioo_mem_nhdsGT (lt_min hm_pos D.hthresh)] with ε hε
-    have hε_pos : 0 < ε := hε.1
-    have hε_lt_thresh : ε < D.threshold := hε.2.trans_le (min_le_right _ _)
-    have hε_lt_m : ε < m := hε.2.trans_le (min_le_left _ _)
-    have hδR_pos := D.hδ_right_pos ε hε_pos hε_lt_thresh
-    by_contra h_ge
-    push Not at h_ge
-    rw [Real.dist_eq, sub_zero, abs_of_pos hδR_pos] at h_ge
-    linarith [D.h_near_right ε hε_pos hε_lt_thresh (t₀ + δ₀')
-      (by linarith) (by linarith [hδ₀'_le.trans h_ge])]
-  · filter_upwards [Ioo_mem_nhdsGT D.hthresh] with ε hε
-    exact D.hδ_right_pos ε hε.1 hε.2
+  refine tendsto_nhdsGT_zero_of_near _hr_pos D.hthresh (fun d => ‖γf (t₀ + d) - s‖)
+    (fun ε => D.hδ_right_pos ε) (fun d hd_pos hd_lt => norm_pos_iff.mpr
+      (sub_ne_zero.mpr fun h_eq => by
+        linarith [h_local_unique _ ⟨by linarith, by linarith⟩ h_eq]))
+    (fun ε hε_pos hε_lt d hd0 hdδ =>
+      D.h_near_right ε hε_pos hε_lt (t₀ + d) (by linarith) (by linarith))
 
 /-- **`δ_left` of a `LocalDerivedCutoffs` tends to `0⁺` as `ε → 0⁺`**. -/
 theorem LocalDerivedCutoffs.δ_left_tendsto_zero
@@ -666,35 +675,14 @@ theorem LocalDerivedCutoffs.δ_left_tendsto_zero
       γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t = s → t = t₀)
     (D : LocalDerivedCutoffs γ s t₀ r) :
     Tendsto D.δ_left (𝓝[>] (0 : ℝ)) (𝓝[>] (0 : ℝ)) := by
-  classical
   set γf : ℝ → ℂ :=
     (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend : ℝ → ℂ)
-  rw [tendsto_nhdsWithin_iff]
-  refine ⟨?_, ?_⟩
-  · rw [Metric.tendsto_nhds]
-    intro δ₀ hδ₀_pos
-    set δ₀' : ℝ := min δ₀ (r / 2)
-    have hδ₀'_pos : 0 < δ₀' := lt_min hδ₀_pos (by linarith)
-    have hδ₀'_le : δ₀' ≤ δ₀ := min_le_left _ _
-    have hδ₀'_lt_r : δ₀' < r := (min_le_right _ _).trans_lt (by linarith)
-    have h_in_window : t₀ - δ₀' ∈ Set.Icc (t₀ - r) (t₀ + r) :=
-      ⟨by linarith, by linarith⟩
-    set m : ℝ := ‖γf (t₀ - δ₀') - s‖
-    have hm_pos : 0 < m :=
-      norm_pos_iff.mpr (sub_ne_zero.mpr fun h_eq => by
-        linarith [h_local_unique _ h_in_window h_eq])
-    filter_upwards [Ioo_mem_nhdsGT (lt_min hm_pos D.hthresh)] with ε hε
-    have hε_pos : 0 < ε := hε.1
-    have hε_lt_thresh : ε < D.threshold := hε.2.trans_le (min_le_right _ _)
-    have hε_lt_m : ε < m := hε.2.trans_le (min_le_left _ _)
-    have hδL_pos := D.hδ_left_pos ε hε_pos hε_lt_thresh
-    by_contra h_ge
-    push Not at h_ge
-    rw [Real.dist_eq, sub_zero, abs_of_pos hδL_pos] at h_ge
-    linarith [D.h_near_left ε hε_pos hε_lt_thresh (t₀ - δ₀')
-      (by linarith [hδ₀'_le.trans h_ge]) (by linarith)]
-  · filter_upwards [Ioo_mem_nhdsGT D.hthresh] with ε hε
-    exact D.hδ_left_pos ε hε.1 hε.2
+  refine tendsto_nhdsGT_zero_of_near _hr_pos D.hthresh (fun d => ‖γf (t₀ - d) - s‖)
+    (fun ε => D.hδ_left_pos ε) (fun d hd_pos hd_lt => norm_pos_iff.mpr
+      (sub_ne_zero.mpr fun h_eq => by
+        linarith [h_local_unique _ ⟨by linarith, by linarith⟩ h_eq]))
+    (fun ε hε_pos hε_lt d hd0 hdδ =>
+      D.h_near_left ε hε_pos hε_lt (t₀ - d) (by linarith) (by linarith))
 
 /-- **`D.δ_right ε < r` for `ε` near `0⁺`** (within the threshold window). -/
 private lemma LocalDerivedCutoffs.δ_right_lt_r_eventually
