@@ -868,6 +868,35 @@ theorem isFundamentalDomain_Gamma_p_α_fundDomain_PSL_at_PSL_R
   simp only [Equiv.coe_refl, Set.image_id] at h_image
   exact h_image
 
+open CongruenceSubgroup Pointwise ConjAct UpperHalfPlane MeasureTheory in
+/-- **DS Lemma 5.5.1(a) FD-image identification.** Transporting the fundamental
+domain `Gamma_p_α_fundDomain_PSL α` of the conjugate-intersection group
+`Γ_p(α) = α⁻¹Γ₁α ∩ Γ₁` by the `GL₂⁺(ℝ)` element `α` (a measure-preserving
+action on `ℍ`) yields a fundamental domain for the conjugate group
+`toConjAct (proj α) • (Γ_p(α)).map SL2Z_to_PSL2R`, which is the projective
+image of `α(α⁻¹Γ₁α ∩ Γ₁)α⁻¹ = Γ₁ ∩ αΓ₁α⁻¹`. Here `proj α = GLPos_to_PSL_R_term`
+of the positive-determinant lift of `α.map (Rat.castHom ℝ)`. -/
+theorem smul_Gamma_p_α_fundDomain_PSL_ae_isFundamentalDomain
+    (α : GL (Fin 2) ℚ)
+    (hα : 0 < ((α.map (Rat.castHom ℝ)) : GL (Fin 2) ℝ).det.val) :
+    IsFundamentalDomain
+      ((ConjAct.toConjAct
+          (GLPos_to_PSL_R_term ⟨(α.map (Rat.castHom ℝ) : GL (Fin 2) ℝ), hα⟩) •
+        ((Gamma_p_α (N := N) α).map SL2Z_to_PSL2R)) : Subgroup PSL(2, ℝ))
+      (((α.map (Rat.castHom ℝ)) : GL (Fin 2) ℝ) • Gamma_p_α_fundDomain_PSL (N := N) α)
+      μ_hyp := by
+  set α' : GL(2, ℝ)⁺ := ⟨(α.map (Rat.castHom ℝ) : GL (Fin 2) ℝ), hα⟩ with hα'_def
+  have h_transport :=
+    Gamma_p_α_PSL_R_lift_FD_smul_conjAct (N := N) α α'
+      (isFundamentalDomain_Gamma_p_α_fundDomain_PSL_at_PSL_R (N := N) α)
+  have h_set_eq :
+      GLPos_to_PSL_R_term α' • Gamma_p_α_fundDomain_PSL (N := N) α =
+        ((α.map (Rat.castHom ℝ)) : GL (Fin 2) ℝ) • Gamma_p_α_fundDomain_PSL (N := N) α := by
+    rw [GLPos_to_PSL_R_term_smul_set]
+    rfl
+  rw [h_set_eq] at h_transport
+  exact h_transport
+
 open CongruenceSubgroup Pointwise UpperHalfPlane MeasureTheory in
 /-- `Γ_p(α)`-invariance lifts to `(Γ_p(α)).map SL2Z_to_PSL2R`-invariance. -/
 theorem inv_under_Gamma_p_α_PSL_R_of_inv_under_Gamma_p_α
@@ -1182,5 +1211,610 @@ theorem sum_SL_Gamma_p_α_petN_summand_eq_relIndex_mul_petN
           petersson k ⇑f ⇑g τ ∂μ_hyp from
     Finset.sum_congr rfl fun q _ ↦ peterssonInner_fd_slash_SL_eq_setIntegral_shifted_fd ⇑f ⇑g q.out]
   exact sum_SL_Gamma_p_α_setIntegral_fd_petersson_eq_relIndex_mul_petN α f g
+
+open CongruenceSubgroup Pointwise ConjAct UpperHalfPlane MeasureTheory in
+/-- **DS Proposition 5.5.2(a), instantiated over the conjugate-intersection group
+`Γ_p(α) = α⁻¹Γ₁α ∩ Γ₁`.** For `α : GL₂(ℚ)` with `det(α.map (ℚ ↪ ℝ)) > 0`, the
+weight-`k` slash by `α` can be moved to the other factor at the cost of replacing
+`α` by its Petersson adjoint `α' = peterssonAdj α = det(α)·α⁻¹ = adjugate(α)` (DS's
+`α′ = det(α)α⁻¹`, recorded by `peterssonAdj` — see `AdjointTheory.peterssonAdj` and
+`peterssonAdj_det` for `det α′ = det α`), simultaneously transporting the domain by
+`α`:
+```
+peterssonInner k (Γ_p(α)-FD)            (f ∣[k] α)  g
+  = peterssonInner k (α • Γ_p(α)-FD)     f          (g ∣[k] α′).
+```
+This is the per-representative change-of-variables exchange. The LHS domain
+`Gamma_p_α_fundDomain_PSL α` is a fundamental domain for `Γ_p(α)`; the RHS domain
+`α • Gamma_p_α_fundDomain_PSL α` is — by
+`smul_Gamma_p_α_fundDomain_PSL_ae_isFundamentalDomain` (DS Lemma 5.5.1(a),(b)) — a
+fundamental domain for the conjugate group `Γ₁ ∩ αΓ₁α⁻¹`. Proven by direct
+application of the domain-agnostic substrate `peterssonInner_slash_adjoint`
+(which supplies its own measure-preservation via `measurePreserving_smul`, so no
+measurability/integrability side-conditions are required here). -/
+theorem peterssonInner_slash_adjoint_over_Gamma_p_α
+    (α : GL (Fin 2) ℚ)
+    (hα : 0 < ((α.map (Rat.castHom ℝ)) : GL (Fin 2) ℝ).det.val)
+    (f g : ℍ → ℂ) :
+    peterssonInner k (Gamma_p_α_fundDomain_PSL (N := N) α)
+        (f ∣[k] ((α.map (Rat.castHom ℝ)) : GL (Fin 2) ℝ)) g =
+      peterssonInner k
+        (((α.map (Rat.castHom ℝ)) : GL (Fin 2) ℝ) • Gamma_p_α_fundDomain_PSL (N := N) α)
+        f (g ∣[k] peterssonAdj ((α.map (Rat.castHom ℝ)) : GL (Fin 2) ℝ)) :=
+  peterssonInner_slash_adjoint (k := k) (Gamma_p_α_fundDomain_PSL (N := N) α)
+    ((α.map (Rat.castHom ℝ)) : GL (Fin 2) ℝ) hα f g
+
+open CongruenceSubgroup Pointwise ConjAct UpperHalfPlane MeasureTheory in
+/-- **Cusp-form wrapper for the `Γ_p(α)` adjoint exchange** (companion to
+`peterssonInner_slash_adjoint_over_Gamma_p_α`, the form consumed downstream by the
+family-summation step). The RHS domain `α • Gamma_p_α_fundDomain_PSL α` is a
+fundamental domain for the conjugate group `Γ₁ ∩ αΓ₁α⁻¹`, recorded separately by
+`smul_Gamma_p_α_fundDomain_PSL_ae_isFundamentalDomain`. -/
+theorem peterssonInner_slash_adjoint_over_Gamma_p_α_for_heckeRep
+    (α : GL (Fin 2) ℚ)
+    (hα : 0 < ((α.map (Rat.castHom ℝ)) : GL (Fin 2) ℝ).det.val)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    peterssonInner k (Gamma_p_α_fundDomain_PSL (N := N) α)
+        ((⇑f : ℍ → ℂ) ∣[k] ((α.map (Rat.castHom ℝ)) : GL (Fin 2) ℝ)) ⇑g =
+      peterssonInner k
+        (((α.map (Rat.castHom ℝ)) : GL (Fin 2) ℝ) • Gamma_p_α_fundDomain_PSL (N := N) α)
+        ⇑f ((⇑g : ℍ → ℂ) ∣[k] peterssonAdj ((α.map (Rat.castHom ℝ)) : GL (Fin 2) ℝ)) :=
+  peterssonInner_slash_adjoint_over_Gamma_p_α (N := N) α hα ⇑f ⇑g
+
+/-! ### DS Exercise 5.4.4: the trace/transfer reassembly mechanism
+
+[DS] Exercise 5.4.4 (Diamond–Shurman p.183): *Let `Γ' ⊂ Γ ⊂ SL₂(ℤ)` be congruence
+subgroups with `−I ∈ Γ'`. Suppose `f ∈ S_k(Γ) ⊂ S_k(Γ')` and `g ∈ S_k(Γ')`.
+Letting `Γ = ⊔ᵢ Γ' αᵢ`, recall the trace `tr g = Σᵢ g[αᵢ]_k ∈ S_k(Γ)`. Then
+`V_{Γ'} ⟨f, g⟩_{Γ'} = V_Γ ⟨f, tr g⟩_Γ`.*
+
+In this project's UN-normalized convention (`peterssonInner`/`petN` carry no `1/V`),
+with `Γ = Γ₁(N)` and `Γ' = Γ_p(α) = α⁻¹Γ₁α ∩ Γ₁`, the identity reads:
+`∫_{Γ_p(α)-FD} petersson k F G = ∫_{Γ₁-FD} petersson k F (tr G)`, where `tr G`
+collects `G` over the `Γ₁/Γ_p(α)` cosets. Because the project's
+`petersson k F G τ = conj(F τ) · G τ · (Im τ)^k` is conjugate-linear in `F` and
+*linear in `G`*, the trace lands cleanly on the second (linear) argument `G` — the
+DS `g ∈ S_k(Γ')` form. Everything is realized over the *outer-`SL`-coset* substrate
+(`fd`-tiles), so `petersson_slash_SL` applies directly and no `PSL`-rep slashing is
+incurred. -/
+
+open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory in
+/-- **Per-tile slash-reindex (DS 5.4.4 leaf).** A single `SL/Γ_p(α)`-coset tile
+integral `∫_{q.out⁻¹•fd} petersson k F G` is reindexed onto its image
+`SL/Γ₁(N)`-coset tile `∫_{q'.out⁻¹•fd}` (`q' = slGamma_p_αToGamma1 α q`), at the cost
+of slashing the *linear* argument `G` by the connecting element
+`δ = q.out⁻¹ · q'.out ∈ Γ₁(N)`. The `Γ₁(N)`-invariance hypothesis `hF` on the
+conjugate argument `F` (`F ∣[k] γ = F` for `γ ∈ Γ₁(N)`) absorbs the slash on `F`.
+This is the geometric heart of the trace mechanism: distinct fiber members of a fixed
+`Γ₁`-coset contribute distinct `G`-slashes over the *same* `Γ₁`-tile, so summing the
+fiber reassembles the trace `tr G` on that tile. -/
+theorem setIntegral_SL_tile_petersson_Gamma_p_α_slash_reindex_Gamma1
+    (α : GL (Fin 2) ℚ) (F G : ℍ → ℂ)
+    (hF : ∀ γ ∈ Gamma1 N, F ∣[k] γ = F)
+    (q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α) :
+    ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ), petersson k F G τ ∂μ_hyp =
+      ∫ τ in ((slGamma_p_αToGamma1 (N := N) α q).out : SL(2, ℤ))⁻¹ • (fd : Set ℍ),
+        petersson k F (G ∣[k] ((q.out : SL(2, ℤ))⁻¹ *
+          (slGamma_p_αToGamma1 (N := N) α q).out)) τ ∂μ_hyp := by
+  set q' := slGamma_p_αToGamma1 (N := N) α q with hq'_def
+  have h_quot_eq : (QuotientGroup.mk q.out : SL(2, ℤ) ⧸ Gamma1 N) =
+      QuotientGroup.mk (q'.out : SL(2, ℤ)) := by
+    have h1 : q' = QuotientGroup.mk q.out := by
+      rw [hq'_def]
+      conv_lhs => rw [← q.out_eq]
+      rfl
+    exact h1.symm.trans q'.out_eq.symm
+  rw [QuotientGroup.eq] at h_quot_eq
+  set γ := (q.out : SL(2, ℤ))⁻¹ * (q'.out : SL(2, ℤ)) with hγ
+  have h_smul_eq : (q.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ) =
+      (γ : SL(2, ℤ)) • ((q'.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ)) := by
+    rw [hγ, ← mul_smul, mul_assoc, mul_inv_cancel, mul_one]
+  rw [h_smul_eq, show ((γ : SL(2, ℤ)) • ((q'.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ)) : Set ℍ) =
+      (fun τ ↦ (γ : SL(2, ℤ)) • τ) '' ((q'.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ)) from rfl,
+    (measurePreserving_smul (γ : SL(2, ℤ)) μ_hyp).setIntegral_image_emb
+      (measurableEmbedding_const_smul _)]
+  refine setIntegral_congr_fun ?_ fun τ _ ↦ ?_
+  · refine MeasurableSet.const_smul ?_ _
+    exact ((isClosed_le continuous_const
+        (Complex.continuous_normSq.comp UpperHalfPlane.continuous_coe)).inter
+      (isClosed_le (continuous_abs.comp UpperHalfPlane.continuous_re)
+        continuous_const)).measurableSet
+  rw [show petersson k F G ((γ : SL(2, ℤ)) • τ) =
+      petersson k (F ∣[k] γ) (G ∣[k] γ) τ from (petersson_slash_SL k F G γ τ).symm,
+    hF γ h_quot_eq]
+
+open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory Classical in
+/-- **The local trace operator `tr_{q'} G` (DS 5.4.4).** For a fixed `Γ₁(N)`-coset
+`q'`, the partial trace of `G` along the fiber of `slGamma_p_αToGamma1 α` over `q'`:
+`tr_{q'} G = ∑_{q : slGamma_p_αToGamma1 α q = q'} G ∣[k] (q.out⁻¹ · q'.out)`. Summing
+`G` over the `Γ₁(N)/Γ_p(α)` cosets lying above `q'` is the DS trace `tr g = Σᵢ g[αᵢ]`
+restricted to the `q'`-tile. -/
+noncomputable def traceSlash_Gamma_p_α (α : GL (Fin 2) ℚ) (G : ℍ → ℂ)
+    (q' : SL(2, ℤ) ⧸ Gamma1 N) : ℍ → ℂ :=
+  ∑ q ∈ Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α =>
+      slGamma_p_αToGamma1 (N := N) α q = q'),
+    G ∣[k] ((q.out : SL(2, ℤ))⁻¹ * q'.out)
+
+open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory Classical in
+/-- **DS Exercise 5.4.4 (outer-`SL`-coset trace/transfer).** The full `SL/Γ_p(α)`-tile
+sum of `petersson k F G` (`F` `Γ₁(N)`-invariant in the slash sense, `G` arbitrary)
+reassembles, fiber by fiber over `slGamma_p_αToGamma1 α`, into the `SL/Γ₁(N)`-tile sum
+of `petersson k F (tr_{q'} G)`, where `tr_{q'} G` is the partial trace
+`traceSlash_Gamma_p_α α G q'`. This is the level-`Γ_p(α)` ↔ level-`Γ₁(N)` reassembly
+that DS uses to glue the per-representative exchange into the global adjoint. -/
+theorem sum_SL_tile_petersson_Gamma_p_α_eq_sum_SL_tile_traceSlash_Gamma1
+    (α : GL (Fin 2) ℚ) (F G : ℍ → ℂ)
+    (hF : ∀ γ ∈ Gamma1 N, F ∣[k] γ = F)
+    (h_int : ∀ q' : SL(2, ℤ) ⧸ Gamma1 N,
+      ∀ q ∈ Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α =>
+        slGamma_p_αToGamma1 (N := N) α q = q'),
+      IntegrableOn (fun τ ↦ petersson k F
+        (G ∣[k] ((q.out : SL(2, ℤ))⁻¹ * q'.out)) τ)
+        ((q'.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ)) μ_hyp) :
+    ∑ q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α,
+      ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ), petersson k F G τ ∂μ_hyp =
+    ∑ q' : SL(2, ℤ) ⧸ Gamma1 N,
+      ∫ τ in (q'.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ),
+        petersson k F (traceSlash_Gamma_p_α (N := N) (k := k) α G q') τ ∂μ_hyp := by
+  calc ∑ q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α,
+        ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ), petersson k F G τ ∂μ_hyp
+      = ∑ q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α,
+          ∫ τ in ((slGamma_p_αToGamma1 (N := N) α q).out : SL(2, ℤ))⁻¹ • (fd : Set ℍ),
+            petersson k F (G ∣[k] ((q.out : SL(2, ℤ))⁻¹ *
+              (slGamma_p_αToGamma1 (N := N) α q).out)) τ ∂μ_hyp :=
+        Finset.sum_congr rfl fun q _ ↦
+          setIntegral_SL_tile_petersson_Gamma_p_α_slash_reindex_Gamma1
+            (N := N) α F G hF q
+    _ = ∑ q' : SL(2, ℤ) ⧸ Gamma1 N,
+          ∑ q ∈ Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α =>
+            slGamma_p_αToGamma1 (N := N) α q = q'),
+            ∫ τ in (q'.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ),
+              petersson k F (G ∣[k] ((q.out : SL(2, ℤ))⁻¹ * q'.out)) τ ∂μ_hyp := by
+        rw [← Finset.sum_fiberwise Finset.univ (slGamma_p_αToGamma1 (N := N) α)
+          (fun q ↦ ∫ τ in ((slGamma_p_αToGamma1 (N := N) α q).out : SL(2, ℤ))⁻¹ •
+            (fd : Set ℍ),
+            petersson k F (G ∣[k] ((q.out : SL(2, ℤ))⁻¹ *
+              (slGamma_p_αToGamma1 (N := N) α q).out)) τ ∂μ_hyp)]
+        refine Finset.sum_congr rfl fun q' _ ↦ Finset.sum_congr rfl fun q hq ↦ ?_
+        rw [(Finset.mem_filter.mp hq).2]
+    _ = ∑ q' : SL(2, ℤ) ⧸ Gamma1 N,
+          ∫ τ in (q'.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ),
+            petersson k F (traceSlash_Gamma_p_α (N := N) (k := k) α G q') τ ∂μ_hyp := by
+        refine Finset.sum_congr rfl fun q' _ ↦ ?_
+        rw [traceSlash_Gamma_p_α]
+        rw [show (fun τ ↦ petersson k F
+              (∑ q ∈ Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α =>
+                slGamma_p_αToGamma1 (N := N) α q = q'),
+                G ∣[k] ((q.out : SL(2, ℤ))⁻¹ * q'.out)) τ) =
+            fun τ ↦ ∑ q ∈ Finset.univ.filter
+              (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α =>
+                slGamma_p_αToGamma1 (N := N) α q = q'),
+                petersson k F (G ∣[k] ((q.out : SL(2, ℤ))⁻¹ * q'.out)) τ from by
+          funext τ
+          simp only [petersson, Finset.sum_apply, Finset.mul_sum, Finset.sum_mul]]
+        rw [integral_finset_sum _ (h_int q')]
+
+open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory Classical in
+/-- **DS Exercise 5.4.4 (fundamental-domain transfer form).** The `Γ_p(α)`-fundamental
+domain Petersson integral of `petersson k F G` (`F` `Γ₁(N)`-invariant in the slash
+sense, `G` `Γ_p(α)`-invariant under the `SL(2,ℤ)`-action and integrable on the
+canonical FD) transfers — up to the uniform `SL → PSL` fiber count
+`c_p = slToPslQuot_fiberCard_Gamma_p_α α` — into the `SL/Γ₁(N)`-tile sum of the
+*traced* integrand `petersson k F (tr_{q'} G)`:
+```
+c_p • ∫_{Γ_p(α)-FD} petersson k F G
+  = ∑_{q' : SL/Γ₁} ∫_{q'.out⁻¹•fd} petersson k F (traceSlash_Gamma_p_α α G q').
+```
+This is the reusable level-`Γ_p(α)` → level-`Γ₁(N)` reassembly: the LHS is the
+substrate outer-`SL` bridge (`setIntegral_Gamma_p_α_fundDomain_PSL_eq_SL_outer_q_sum`),
+the RHS the fiberwise trace identity
+(`sum_SL_tile_petersson_Gamma_p_α_eq_sum_SL_tile_traceSlash_Gamma1`). The `c_p` factor
+is exactly the multiplicity that converts the `Γ_p(α)`-FD integral into the full
+`SL/Γ_p(α)`-coset tile sum; on the `Γ₁`-side it is reabsorbed by the analogous Γ₁
+substrate when the trace target is a genuine `Γ₁`-form (see the composition note). -/
+theorem setIntegral_Gamma_p_α_fundDomain_PSL_petersson_eq_traceSlash_SL_outer_q_sum
+    (α : GL (Fin 2) ℚ) (F G : ℍ → ℂ)
+    (hF_slash : ∀ γ ∈ Gamma1 N, F ∣[k] γ = F)
+    (hG_slash : ∀ γ ∈ Gamma_p_α (N := N) α, G ∣[k] γ = G)
+    (h_int : IntegrableOn (fun τ ↦ petersson k F G τ)
+      (Gamma_p_α_fundDomain_PSL_canonical (N := N) α) μ_hyp)
+    (h_int_trace : ∀ q' : SL(2, ℤ) ⧸ Gamma1 N,
+      ∀ q ∈ Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α =>
+        slGamma_p_αToGamma1 (N := N) α q = q'),
+      IntegrableOn (fun τ ↦ petersson k F
+        (G ∣[k] ((q.out : SL(2, ℤ))⁻¹ * q'.out)) τ)
+        ((q'.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ)) μ_hyp) :
+    (slToPslQuot_fiberCard_Gamma_p_α (N := N) α) •
+        ∫ τ in Gamma_p_α_fundDomain_PSL (N := N) α, petersson k F G τ ∂μ_hyp =
+      ∑ q' : SL(2, ℤ) ⧸ Gamma1 N,
+        ∫ τ in (q'.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ),
+          petersson k F (traceSlash_Gamma_p_α (N := N) (k := k) α G q') τ ∂μ_hyp := by
+  rw [← setIntegral_Gamma_p_α_fundDomain_PSL_eq_SL_outer_q_sum (N := N) α
+      (petersson k F G)
+      (fun γ hγ τ ↦ by
+        rw [← petersson_slash_SL,
+          show F ∣[k] (γ : SL(2, ℤ)) = F from hF_slash γ ((Gamma_p_α_le_Gamma1 α) hγ),
+          show G ∣[k] (γ : SL(2, ℤ)) = G from hG_slash γ hγ])
+      h_int]
+  exact sum_SL_tile_petersson_Gamma_p_α_eq_sum_SL_tile_traceSlash_Gamma1
+    (N := N) α F G hF_slash h_int_trace
+
+open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory Classical in
+/-- **Well-definedness of the DS trace (DS 5.4.4: `tr g ∈ S_k(Γ)`).** When `G` is
+`Γ_p(α)`-slash-invariant, the partial trace `traceSlash_Gamma_p_α α G q'` is
+*independent of the base coset `q'`*: it is the genuine global trace `tr G`. The proof
+re-bases the fiber of `q₂'` onto the fiber of `q₁'` via the uniform left-multiplication
+bijection `slLeftMul_Gamma_p_α`, under which each connecting element changes only by a
+right `Γ_p(α)`-factor, which `G` absorbs. -/
+theorem traceSlash_Gamma_p_α_indep
+    (α : GL (Fin 2) ℚ) (G : ℍ → ℂ)
+    (hG_slash : ∀ γ ∈ Gamma_p_α (N := N) α, G ∣[k] γ = G)
+    (q₁' q₂' : SL(2, ℤ) ⧸ Gamma1 N) :
+    traceSlash_Gamma_p_α (N := N) (k := k) α G q₁' =
+      traceSlash_Gamma_p_α (N := N) (k := k) α G q₂' := by
+  rw [traceSlash_Gamma_p_α, traceSlash_Gamma_p_α]
+  set h := (q₂'.out : SL(2, ℤ)) * (q₁'.out : SL(2, ℤ))⁻¹ with hh_def
+  refine Finset.sum_bij'
+    (fun q _ ↦ slLeftMul_Gamma_p_α (N := N) α h q)
+    (fun q _ ↦ slLeftMul_Gamma_p_α (N := N) α h⁻¹ q)
+    (fun q hq ↦ ?_) (fun q hq ↦ ?_)
+    (fun q _ ↦ by
+      show slLeftMul_Gamma_p_α (N := N) α h⁻¹
+        (slLeftMul_Gamma_p_α (N := N) α h q) = q
+      rw [slLeftMul_Gamma_p_α_comp, inv_mul_cancel, slLeftMul_Gamma_p_α_one])
+    (fun q _ ↦ by
+      show slLeftMul_Gamma_p_α (N := N) α h
+        (slLeftMul_Gamma_p_α (N := N) α h⁻¹ q) = q
+      rw [slLeftMul_Gamma_p_α_comp, mul_inv_cancel, slLeftMul_Gamma_p_α_one])
+    (fun q hq ↦ ?_)
+  · -- membership: slLeftMul h q (source fiber q₁') lands in fiber(q₂')
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hq ⊢
+    induction q using QuotientGroup.induction_on with | _ g => ?_
+    show slGamma_p_αToGamma1 (N := N) α (QuotientGroup.mk (h * g)) = q₂'
+    rw [slGamma_p_αToGamma1_mk]
+    have h_g : (QuotientGroup.mk g : SL(2, ℤ) ⧸ Gamma1 N) = q₁' := by
+      rw [← slGamma_p_αToGamma1_mk (N := N) α g]; exact hq
+    have h_gm : g⁻¹ * q₁'.out ∈ Gamma1 N :=
+      QuotientGroup.eq.mp (h_g.trans q₁'.out_eq.symm)
+    rw [← q₂'.out_eq, hh_def, QuotientGroup.eq]
+    have : (q₂'.out * q₁'.out⁻¹ * g)⁻¹ * q₂'.out = g⁻¹ * q₁'.out := by group
+    rwa [this]
+  · -- membership: slLeftMul h⁻¹ q (source fiber q₂') lands in fiber(q₁')
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hq ⊢
+    induction q using QuotientGroup.induction_on with | _ g => ?_
+    show slGamma_p_αToGamma1 (N := N) α (QuotientGroup.mk (h⁻¹ * g)) = q₁'
+    rw [slGamma_p_αToGamma1_mk]
+    have h_g : (QuotientGroup.mk g : SL(2, ℤ) ⧸ Gamma1 N) = q₂' := by
+      rw [← slGamma_p_αToGamma1_mk (N := N) α g]; exact hq
+    have h_gm : g⁻¹ * q₂'.out ∈ Gamma1 N :=
+      QuotientGroup.eq.mp (h_g.trans q₂'.out_eq.symm)
+    rw [← q₁'.out_eq, hh_def, mul_inv_rev, inv_inv, QuotientGroup.eq]
+    have : (q₁'.out * q₂'.out⁻¹ * g)⁻¹ * q₁'.out = g⁻¹ * q₂'.out := by group
+    rwa [this]
+  · -- summand equality: the two connecting elements differ by a left `Γ_p(α)`-factor
+    -- absorbed by `G`.
+    show G ∣[k] ((q.out : SL(2, ℤ))⁻¹ * q₁'.out) =
+      G ∣[k] ((slLeftMul_Gamma_p_α (N := N) α h q).out⁻¹ * q₂'.out)
+    set qt := slLeftMul_Gamma_p_α (N := N) α h q with hqt_def
+    have hqt_mk : qt = QuotientGroup.mk (h * q.out) := by
+      rw [hqt_def]
+      conv_lhs => rw [← q.out_eq]
+      rfl
+    have hγp : qt.out⁻¹ * (h * q.out) ∈ Gamma_p_α (N := N) α :=
+      QuotientGroup.eq.mp (qt.out_eq.trans hqt_mk)
+    set γp := qt.out⁻¹ * (h * q.out) with hγp_def
+    have h_rewrite : (qt.out : SL(2, ℤ))⁻¹ * q₂'.out =
+        γp * ((q.out : SL(2, ℤ))⁻¹ * q₁'.out) := by
+      rw [hγp_def, hh_def]; group
+    rw [h_rewrite]
+    conv_rhs => rw [SlashAction.slash_mul, hG_slash γp hγp]
+
+open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory Classical in
+/-- **The DS trace is a `Γ₁(N)`-form (DS 5.4.4: `tr g ∈ S_k(Γ)`, slash-invariance).**
+When `G` is `Γ_p(α)`-slash-invariant, the partial trace `traceSlash_Gamma_p_α α G q'`
+is invariant under the weight-`k` slash by any `γ ∈ Γ₁(N)`. The proof reindexes the
+fiber over `q'` by the uniform left-multiplication bijection
+`slLeftMul_Gamma_p_α (q'.out·γ⁻¹·q'.out⁻¹)` (which permutes the fiber because right
+multiplication by `γ ∈ Γ₁(N)` permutes the `Γ_p(α)\SL` cosets above `q'`), under which
+each connecting element changes only by a left `Γ_p(α)`-factor that `G` absorbs. This
+upgrades `traceSlash_Gamma_p_α_indep` (independence of base coset) to genuine
+membership `tr G ∈ S_k(Γ₁(N))`. -/
+theorem traceSlash_Gamma_p_α_slash_Gamma1
+    (α : GL (Fin 2) ℚ) (G : ℍ → ℂ)
+    (hG_slash : ∀ γ ∈ Gamma_p_α (N := N) α, G ∣[k] γ = G)
+    (q' : SL(2, ℤ) ⧸ Gamma1 N) {γ : SL(2, ℤ)} (hγ : γ ∈ Gamma1 N) :
+    (traceSlash_Gamma_p_α (N := N) (k := k) α G q') ∣[k] (γ : SL(2, ℤ)) =
+      traceSlash_Gamma_p_α (N := N) (k := k) α G q' := by
+  conv_lhs => rw [traceSlash_Gamma_p_α, SlashAction.sum_slash]
+  rw [traceSlash_Gamma_p_α]
+  rw [show (∑ q ∈ Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α =>
+        slGamma_p_αToGamma1 (N := N) α q = q'),
+        (G ∣[k] ((q.out : SL(2, ℤ))⁻¹ * q'.out)) ∣[k] (γ : SL(2, ℤ))) =
+      ∑ q ∈ Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α =>
+        slGamma_p_αToGamma1 (N := N) α q = q'),
+        G ∣[k] ((q.out : SL(2, ℤ))⁻¹ * q'.out * γ) from
+    Finset.sum_congr rfl fun q _ ↦ by rw [← SlashAction.slash_mul]]
+  -- reindex the fiber by left-multiplication by `hr = q'.out·γ⁻¹·q'.out⁻¹`.
+  set hr := (q'.out : SL(2, ℤ)) * (γ : SL(2, ℤ))⁻¹ * (q'.out : SL(2, ℤ))⁻¹ with hr_def
+  refine (Finset.sum_bij'
+    (fun q _ ↦ slLeftMul_Gamma_p_α (N := N) α hr⁻¹ q)
+    (fun q _ ↦ slLeftMul_Gamma_p_α (N := N) α hr q)
+    (fun q hq ↦ ?_) (fun q hq ↦ ?_)
+    (fun q _ ↦ by
+      show slLeftMul_Gamma_p_α (N := N) α hr
+        (slLeftMul_Gamma_p_α (N := N) α hr⁻¹ q) = q
+      rw [slLeftMul_Gamma_p_α_comp, mul_inv_cancel, slLeftMul_Gamma_p_α_one])
+    (fun q _ ↦ by
+      show slLeftMul_Gamma_p_α (N := N) α hr⁻¹
+        (slLeftMul_Gamma_p_α (N := N) α hr q) = q
+      rw [slLeftMul_Gamma_p_α_comp, inv_mul_cancel, slLeftMul_Gamma_p_α_one])
+    (fun q hq ↦ ?_)).symm
+  · -- membership: slLeftMul hr⁻¹ q (plain fiber q') lands in fiber(q')
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hq ⊢
+    induction q using QuotientGroup.induction_on with | _ g => ?_
+    rw [slLeftMul_Gamma_p_α_mk, slGamma_p_αToGamma1_mk]
+    have h_g : (QuotientGroup.mk g : SL(2, ℤ) ⧸ Gamma1 N) = q' := by
+      rw [← slGamma_p_αToGamma1_mk (N := N) α g]; exact hq
+    have h_gm : g⁻¹ * q'.out ∈ Gamma1 N :=
+      QuotientGroup.eq.mp (h_g.trans q'.out_eq.symm)
+    rw [← q'.out_eq, hr_def, QuotientGroup.eq]
+    -- (hr⁻¹·g)⁻¹·q'.out = g⁻¹·q'.out·γ⁻¹  ∈ Γ₁
+    have hrw : (((q'.out : SL(2, ℤ)) * (γ : SL(2, ℤ))⁻¹ * (q'.out : SL(2, ℤ))⁻¹)⁻¹ * g)⁻¹
+        * q'.out = (g⁻¹ * q'.out) * (γ : SL(2, ℤ))⁻¹ := by group
+    rw [hrw]
+    exact mul_mem h_gm (inv_mem hγ)
+  · -- membership: slLeftMul hr q (γ-fiber q') lands in fiber(q')
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hq ⊢
+    induction q using QuotientGroup.induction_on with | _ g => ?_
+    rw [slLeftMul_Gamma_p_α_mk, slGamma_p_αToGamma1_mk]
+    have h_g : (QuotientGroup.mk g : SL(2, ℤ) ⧸ Gamma1 N) = q' := by
+      rw [← slGamma_p_αToGamma1_mk (N := N) α g]; exact hq
+    have h_gm : g⁻¹ * q'.out ∈ Gamma1 N :=
+      QuotientGroup.eq.mp (h_g.trans q'.out_eq.symm)
+    rw [← q'.out_eq, hr_def, QuotientGroup.eq]
+    -- (hr·g)⁻¹·q'.out = g⁻¹·q'.out·γ  ∈ Γ₁
+    have hrw : ((q'.out : SL(2, ℤ)) * (γ : SL(2, ℤ))⁻¹ * (q'.out : SL(2, ℤ))⁻¹ * g)⁻¹
+        * q'.out = (g⁻¹ * q'.out) * γ := by group
+    rw [hrw]
+    exact mul_mem h_gm hγ
+  · -- summand equality: connecting elements differ by a left `Γ_p(α)`-factor
+    -- target (after `.symm`): G|(q.out⁻¹·q'.out) = G|((slLeftMul hr⁻¹ q).out⁻¹·q'.out·γ)
+    set qt := slLeftMul_Gamma_p_α (N := N) α hr⁻¹ q with hqt_def
+    have hqt_mk : qt = QuotientGroup.mk (hr⁻¹ * q.out) := by
+      rw [hqt_def]
+      conv_lhs => rw [← q.out_eq]
+      rfl
+    have hγp : qt.out⁻¹ * (hr⁻¹ * q.out) ∈ Gamma_p_α (N := N) α :=
+      QuotientGroup.eq.mp (qt.out_eq.trans hqt_mk)
+    set γp := qt.out⁻¹ * (hr⁻¹ * q.out) with hγp_def
+    -- (qt.out⁻¹·q'.out·γ) = γp·(q.out⁻¹·q'.out): hr·q'.out·γ = q'.out
+    have h_rewrite : (qt.out : SL(2, ℤ))⁻¹ * q'.out * γ =
+        γp * ((q.out : SL(2, ℤ))⁻¹ * q'.out) := by
+      rw [hγp_def, hr_def]; group
+    rw [h_rewrite]
+    conv_rhs => rw [SlashAction.slash_mul, hG_slash γp hγp]
+
+open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory Classical in
+/-- **DS 5.4.4 — clean `Γ_p(α)`-FD ↔ `Γ₁(N)`-FD transfer corollary (the step-(a)
+upgrade).** Combining the fundamental-domain transfer form
+(`setIntegral_Gamma_p_α_fundDomain_PSL_petersson_eq_traceSlash_SL_outer_q_sum`), the
+base-coset independence of the trace (`traceSlash_Gamma_p_α_indep`), and the fact that
+the trace `tr G` is itself a `Γ₁(N)`-form (`traceSlash_Gamma_p_α_slash_Gamma1`), the
+`Γ_p(α)`-FD Petersson integral of `pet F G` (carrying its fiber count
+`c_p = slToPslQuot_fiberCard_Gamma_p_α α`) reassembles into the `Γ₁(N)`-FD integral of
+`pet F (tr G)` (carrying the `Γ₁(N)` fiber count `c_N = slToPslQuot_fiberCard N`):
+```
+c_p • ∫_{Γ_p(α)-FD} pet F G = c_N • ∫_{Γ₁-FD} pet F (tr_{q₀} G).
+```
+This is the exact `[Γ₁ : Γ_p(α)]`-vs-`c_N` reconciliation the global adjoint route
+needs: both sides are honest level-`Γ` integrals once the trace lands on the linear
+slot. `q₀` is any chosen base coset (the value is independent of it by `_indep`). -/
+theorem setIntegral_Gamma_p_α_fundDomain_PSL_petersson_eq_traceSlash_Gamma1_fundDomain
+    (α : GL (Fin 2) ℚ) (F G : ℍ → ℂ) (q₀ : SL(2, ℤ) ⧸ Gamma1 N)
+    (hF_slash : ∀ γ ∈ Gamma1 N, F ∣[k] γ = F)
+    (hG_slash : ∀ γ ∈ Gamma_p_α (N := N) α, G ∣[k] γ = G)
+    (h_int : IntegrableOn (fun τ ↦ petersson k F G τ)
+      (Gamma_p_α_fundDomain_PSL_canonical (N := N) α) μ_hyp)
+    (h_int_trace : ∀ q' : SL(2, ℤ) ⧸ Gamma1 N,
+      ∀ q ∈ Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α =>
+        slGamma_p_αToGamma1 (N := N) α q = q'),
+      IntegrableOn (fun τ ↦ petersson k F
+        (G ∣[k] ((q.out : SL(2, ℤ))⁻¹ * q'.out)) τ)
+        ((q'.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ)) μ_hyp)
+    (h_int_tr : IntegrableOn
+      (fun τ ↦ petersson k F (traceSlash_Gamma_p_α (N := N) (k := k) α G q₀) τ)
+      (Gamma1_fundDomain_PSL N) μ_hyp) :
+    (slToPslQuot_fiberCard_Gamma_p_α (N := N) α) •
+        ∫ τ in Gamma_p_α_fundDomain_PSL (N := N) α, petersson k F G τ ∂μ_hyp =
+      (slToPslQuot_fiberCard N) •
+        ∫ τ in Gamma1_fundDomain_PSL N,
+          petersson k F (traceSlash_Gamma_p_α (N := N) (k := k) α G q₀) τ ∂μ_hyp := by
+  rw [setIntegral_Gamma_p_α_fundDomain_PSL_petersson_eq_traceSlash_SL_outer_q_sum
+    (N := N) α F G hF_slash hG_slash h_int h_int_trace]
+  -- collapse the per-`q'` trace to the single base trace `tr_{q₀} G`, then re-fold
+  -- the uniform `SL/Γ₁`-tile sum via the `Γ₁` substrate.
+  rw [show (∑ q' : SL(2, ℤ) ⧸ Gamma1 N,
+        ∫ τ in (q'.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ),
+          petersson k F (traceSlash_Gamma_p_α (N := N) (k := k) α G q') τ ∂μ_hyp) =
+      ∑ q' : SL(2, ℤ) ⧸ Gamma1 N,
+        ∫ τ in (q'.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ),
+          petersson k F (traceSlash_Gamma_p_α (N := N) (k := k) α G q₀) τ ∂μ_hyp from
+    Finset.sum_congr rfl fun q' _ ↦ by
+      rw [traceSlash_Gamma_p_α_indep (N := N) α G hG_slash q' q₀]]
+  exact setIntegral_Gamma1_fundDomain_PSL_eq_SL_outer_q_sum
+    (petersson k F (traceSlash_Gamma_p_α (N := N) (k := k) α G q₀))
+    (fun γ hγ τ ↦ by
+      rw [← petersson_slash_SL,
+        show F ∣[k] (γ : SL(2, ℤ)) = F from hF_slash γ hγ,
+        show traceSlash_Gamma_p_α (N := N) (k := k) α G q₀ ∣[k] (γ : SL(2, ℤ)) =
+          traceSlash_Gamma_p_α (N := N) (k := k) α G q₀ from
+          traceSlash_Gamma_p_α_slash_Gamma1 (N := N) α G hG_slash q₀ hγ])
+    h_int_tr
+
+/-! ### Composition map: how DS 5.4.4 assembles the global adjoint (DS 5.5.2(b))
+
+The trace/transfer machinery above is the reusable level-`Γ_p(α)` → level-`Γ₁(N)`
+reassembly mechanism. Here is the precise roadmap by which it discharges the single
+remaining gap of the *corrected global double-coset route*
+(`ConcreteFamily.petN_heckeT_p_RHS_aggregate_eq`, "Leaf 2"), the irreducible analytic
+heart of DS Prop 5.5.2(b) / Miyake Thm 4.5.4.
+
+**The corrected global route** (`ConcreteFamily.petN_heckeT_p_symmetric_form_global`)
+chains three steps, of which only Leaf 2 is open:
+* **Leaf 1** (proven): `petN(T_p f, g) = c_N • ⟨Γ₁-FD⟩ (Σᵢ f∣βᵢ) g`,
+  `c_N = slToPslQuot_fiberCard N`, `βᵢ ∈ {M_∞} ⊔ {T_p_upper b}`.
+* **Aggregate** (proven, `peterssonInner_T_p_reps_sum_slashes_eq_aggregate_HeckeFD`):
+  `⟨Γ₁-FD⟩ (Σᵢ f∣βᵢ) g = ⟨⋃ᵢ βᵢ•Γ₁-FD⟩ f (g∣T_p_lower)`.
+* **Leaf 2** (open): `c_N • ⟨⋃ᵢ βᵢ•Γ₁-FD⟩ f (g∣T_p_lower) = petN(⟨p⟩f, T_p g)`.
+
+**How the trace/transfer closes Leaf 2.** Write `T_p g = Σⱼ g∣βⱼ′` (the adjoint
+family; DS `g[Γα′Γ]_k = ⟨p⟩⁻¹T_p g`). Since `petN` is conjugate-linear in slot 1 and
+linear in slot 2, `petN(⟨p⟩f, T_p g) = Σⱼ petN(⟨p⟩f, g∣βⱼ′)`. The per-`j` exchange
+`peterssonInner_slash_adjoint_over_Gamma_p_α` (step 2, proven) moves each `βⱼ` across,
+turning `⟨βⱼ•Γ_p(αⱼ)-FD⟩` data into `⟨Γ_p(αⱼ)-FD⟩`-level data. The documented gap was:
+the aggregate supplies the *single tile* `βⱼ•Γ₁-FD`, whereas the `Γ_p(αⱼ)` engine works
+over `βⱼ•Γ_p(αⱼ)-FD = [Γ₁ : Γ_p(αⱼ)]` copies of it, and the coset indices differ by
+the fiber count `c_N`. The trace/transfer here resolves exactly that multiplicity:
+
+1. `setIntegral_Gamma_p_α_fundDomain_PSL_petersson_eq_traceSlash_SL_outer_q_sum` relates
+   the `Γ_p(αⱼ)-FD` integral (carrying its `c_p = slToPslQuot_fiberCard_Gamma_p_α αⱼ`)
+   to `∑_{q' : SL/Γ₁} ∫_{q'.out⁻¹•fd} petersson k F (tr_{q'} G)`.
+2. `traceSlash_Gamma_p_α_indep` collapses the per-`q'` trace `tr_{q'} G` to a single
+   `q'`-independent global trace `tr G` (DS's `tr g ∈ S_k(Γ)` well-definedness), so the
+   `∑_{q'}` becomes the *uniform* `SL/Γ₁`-tile sum of one integrand. The remaining
+   ingredient — that `tr G` is itself `Γ₁`-slash-invariant — then lets the analogous
+   `Γ₁` substrate (`setIntegral_Gamma1_fundDomain_PSL_eq_SL_outer_q_sum`) re-fold that
+   tile sum into `c_N • ∫_{Γ₁-FD} petersson k F (tr G)`. The two fiber counts then
+   reconcile: `c_p • ∫_{Γ_p-FD} = c_N • ∫_{Γ₁-FD} (with trace)`, which is precisely the
+   `[Γ₁:Γ_p(αⱼ)]`-vs-`c_N` bridge the route was missing.
+
+**Remaining lemmas for the full Leaf-2 wire-through** (each now source-grounded and
+bounded — no false per-tile balance is invoked):
+* `tr G` is a `Γ₁(N)`-form: `∀ γ ∈ Gamma1 N, (traceSlash_Gamma_p_α α G q') ∣[k] γ =
+  traceSlash_Gamma_p_α α G q'` (right-`Γ₁`-translation permutes the `Γ₁/Γ_p(α)` cosets;
+  combine with `traceSlash_Gamma_p_α_indep`). This upgrades step 2 above to the clean
+  `Γ_p-FD ↔ Γ₁-FD` corollary.
+* Identify, per `βⱼ`, the global trace `tr (g∣adjustment)` with the `petN`-summand
+  `g∣βⱼ′` of `T_p g` (the DS family-trace bookkeeping `Σⱼ g[αⱼ′] = T_p g`).
+* Assemble: `Σⱼ`-sum the per-`j` `Γ_p(αⱼ)-FD ↔ Γ₁-FD` corollary, matching the aggregate
+  `⋃ⱼ βⱼ•Γ₁-FD` decomposition (the `βⱼ•Γ₁-FD` tiles are the `q'`-tiles of step 1 after
+  the per-`j` change of variables), then re-collect into `petN(⟨p⟩f, T_p g)` via
+  `petN_eq_setIntegral_Gamma1_fundDomain_PSL`. -/
+
+section W5a
+
+/-- The real matrix `map (Rat.castHom ℝ) (T_p_lower p hp) = diag(p,1)`. -/
+private lemma map_T_p_lower_real_val (p : ℕ) (hp : 0 < p) :
+    ((Matrix.GeneralLinearGroup.map (Rat.castHom ℝ) (T_p_lower p hp)) :
+      Matrix (Fin 2) (Fin 2) ℝ) = !![(p : ℝ), 0; 0, 1] := by
+  ext i j
+  fin_cases i <;> fin_cases j <;>
+    simp [T_p_lower, Matrix.GeneralLinearGroup.map, Matrix.map_apply]
+
+/-- The conjugate `A·(mapGL ℝ γ)·A⁻¹` for `A = diag(p,1)` has entries
+`!![a, p·b; c/p, d]` (over ℝ), where `γ = !![a,b;c,d]`. -/
+private lemma conj_T_p_lower_real_val (p : ℕ) (hp : 0 < p) (γ : SL(2, ℤ)) :
+    (((Matrix.GeneralLinearGroup.map (Rat.castHom ℝ) (T_p_lower p hp)) *
+        (toGL ((Matrix.SpecialLinearGroup.map (Int.castRingHom ℝ)) γ)) *
+        ((Matrix.GeneralLinearGroup.map (Rat.castHom ℝ) (T_p_lower p hp)))⁻¹) :
+      Matrix (Fin 2) (Fin 2) ℝ) =
+    !![((γ.val 0 0 : ℤ) : ℝ), (p : ℝ) * ((γ.val 0 1 : ℤ) : ℝ);
+       ((γ.val 1 0 : ℤ) : ℝ) / (p : ℝ), ((γ.val 1 1 : ℤ) : ℝ)] := by
+  have hp_ne : (p : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr hp.ne'
+  have hinv : ((((Matrix.GeneralLinearGroup.map (Rat.castHom ℝ) (T_p_lower p hp)))⁻¹ :
+      GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) = !![1 / (p : ℝ), 0; 0, 1] := by
+    rw [Matrix.coe_units_inv, map_T_p_lower_real_val p hp, Matrix.inv_def,
+      Matrix.adjugate_fin_two_of, Ring.inverse_eq_inv']
+    ext i j
+    fin_cases i <;> fin_cases j <;> simp [Matrix.det_fin_two_of] <;> field_simp
+  have hγr : ((toGL ((Matrix.SpecialLinearGroup.map (Int.castRingHom ℝ)) γ)) :
+      Matrix (Fin 2) (Fin 2) ℝ) =
+      !![((γ.val 0 0 : ℤ) : ℝ), ((γ.val 0 1 : ℤ) : ℝ);
+         ((γ.val 1 0 : ℤ) : ℝ), ((γ.val 1 1 : ℤ) : ℝ)] := by
+    ext i j
+    fin_cases i <;> fin_cases j <;>
+      simp [Matrix.SpecialLinearGroup.map_apply_coe, RingHom.mapMatrix_apply, Matrix.map_apply]
+  rw [map_T_p_lower_real_val p hp, hinv, hγr, Matrix.mul_fin_two, Matrix.mul_fin_two]
+  ext i j
+  fin_cases i <;> fin_cases j <;> simp <;> field_simp
+
+open CongruenceSubgroup Pointwise ConjAct in
+/-- **Membership characterization of `Γ_p(T_p_lower)`.** For `A = diag(p,1)`, conjugation
+`A·γ·A⁻¹ = [[a, p·b], [c/p, d]]` is integral (and lands in `Γ₁(N)`) iff `p ∣ c`. Hence
+`Γ_p(A) = {γ ∈ Γ₁(N) : p ∣ γ₁₀}` (the `Γ₀(p)`-type lower-left condition). -/
+lemma mem_Gamma_p_α_T_p_lower (p : ℕ) (hp : 0 < p) (hpN : Nat.Coprime p N)
+    {γ : SL(2, ℤ)} :
+    γ ∈ Gamma_p_α (N := N) (T_p_lower p hp) ↔
+      γ ∈ Gamma1 N ∧ (p : ℤ) ∣ γ.val 1 0 := by
+  have hp_ne : (p : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr hp.ne'
+  rw [Gamma_p_α, Subgroup.mem_inf, mem_conjGL]
+  constructor
+  · rintro ⟨⟨y, hy_mem, hy_eq⟩, hγ₁⟩
+    refine ⟨hγ₁, ?_⟩
+    -- The `(1,0)` entry of `mapGL y = A·γ·A⁻¹` is the integer `y₁₀ = c/p`, so `p ∣ c`.
+    have hentry : ((y.val 1 0 : ℤ) : ℝ) = ((γ.val 1 0 : ℤ) : ℝ) / (p : ℝ) := by
+      have h1 : ((toGL ((Matrix.SpecialLinearGroup.map (Int.castRingHom ℝ)) y)) :
+          Matrix (Fin 2) (Fin 2) ℝ) =
+          !![((γ.val 0 0 : ℤ) : ℝ), (p : ℝ) * ((γ.val 0 1 : ℤ) : ℝ);
+             ((γ.val 1 0 : ℤ) : ℝ) / (p : ℝ), ((γ.val 1 1 : ℤ) : ℝ)] := by
+        rw [hy_eq, Matrix.GeneralLinearGroup.coe_mul, Matrix.GeneralLinearGroup.coe_mul,
+          conj_T_p_lower_real_val p hp γ]
+      have h10 := congrFun (congrFun h1 1) 0
+      simpa [Matrix.SpecialLinearGroup.map_apply_coe, RingHom.mapMatrix_apply,
+        Matrix.map_apply] using h10
+    have : ((γ.val 1 0 : ℤ) : ℝ) = ((y.val 1 0 : ℤ) : ℝ) * (p : ℝ) := by
+      rw [hentry]; field_simp
+    have hcast : (γ.val 1 0 : ℤ) = (y.val 1 0 : ℤ) * (p : ℤ) := by exact_mod_cast this
+    exact ⟨y.val 1 0, by rw [hcast]; ring⟩
+  · rintro ⟨hγ₁, k, hk⟩
+    refine ⟨?_, hγ₁⟩
+    -- Build `y = [[a, p·b], [k, d]]`; `mapGL y = A·γ·A⁻¹`, det 1, and `y ∈ Γ₁`.
+    obtain ⟨ha, hd, hc⟩ := (Gamma1_mem N γ).mp hγ₁
+    have hdet : (!![γ.val 0 0, (p : ℤ) * γ.val 0 1; k, γ.val 1 1] :
+        Matrix (Fin 2) (Fin 2) ℤ).det = 1 := by
+      rw [Matrix.det_fin_two_of]
+      have hγdet : γ.val 0 0 * γ.val 1 1 - γ.val 0 1 * γ.val 1 0 = 1 := by
+        have := γ.property
+        rw [Matrix.det_fin_two] at this
+        linarith [this]
+      have : (p : ℤ) * γ.val 0 1 * k = γ.val 0 1 * γ.val 1 0 := by
+        rw [hk]; ring
+      linarith [hγdet, this]
+    set y : SL(2, ℤ) := ⟨!![γ.val 0 0, (p : ℤ) * γ.val 0 1; k, γ.val 1 1], hdet⟩ with hy_def
+    have hk_N : (k : ZMod N) = 0 := by
+      have hN_dvd : (N : ℤ) ∣ γ.val 1 0 := by
+        rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]; exact_mod_cast hc
+      have hN_dvd_pk : (N : ℤ) ∣ (p : ℤ) * k := hk ▸ hN_dvd
+      have hco : IsCoprime (N : ℤ) (p : ℤ) :=
+        Int.isCoprime_iff_gcd_eq_one.mpr (by exact_mod_cast hpN.symm)
+      have hN_dvd_k : (N : ℤ) ∣ k := hco.dvd_of_dvd_mul_left hN_dvd_pk
+      rw [← ZMod.intCast_zmod_eq_zero_iff_dvd] at hN_dvd_k; exact_mod_cast hN_dvd_k
+    have hy_mem : y ∈ Gamma1 N := by
+      rw [Gamma1_mem]
+      refine ⟨?_, ?_, ?_⟩
+      · show ((y.val 0 0 : ℤ) : ZMod N) = 1
+        simp only [hy_def, Matrix.SpecialLinearGroup.coe_mk, Matrix.cons_val', Matrix.of_apply,
+          Matrix.cons_val_zero, Matrix.empty_val', Matrix.cons_val_fin_one]
+        exact ha
+      · show ((y.val 1 1 : ℤ) : ZMod N) = 1
+        simp only [hy_def, Matrix.SpecialLinearGroup.coe_mk, Matrix.cons_val', Matrix.of_apply,
+          Matrix.cons_val_one, Matrix.empty_val', Matrix.cons_val_fin_one]
+        exact hd
+      · show ((y.val 1 0 : ℤ) : ZMod N) = 0
+        simp only [hy_def, Matrix.SpecialLinearGroup.coe_mk, Matrix.cons_val', Matrix.of_apply,
+          Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.empty_val',
+          Matrix.cons_val_fin_one]
+        exact hk_N
+    refine ⟨y, hy_mem, ?_⟩
+    apply Units.ext
+    rw [Matrix.GeneralLinearGroup.coe_mul, Matrix.GeneralLinearGroup.coe_mul,
+      conj_T_p_lower_real_val p hp γ]
+    ext i j
+    fin_cases i <;> fin_cases j <;>
+      simp [hy_def, Matrix.SpecialLinearGroup.map_apply_coe, RingHom.mapMatrix_apply,
+        Matrix.map_apply, hk] <;>
+      field_simp
+
+end W5a
 
 end HeckeRing.GL2
