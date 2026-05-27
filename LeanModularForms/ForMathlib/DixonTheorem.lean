@@ -62,6 +62,14 @@ private lemma norm_gt_mem_cocompact (R : ℝ) :
   Filter.mem_cocompact.mpr ⟨Metric.closedBall 0 R, isCompact_closedBall 0 R,
     fun _ hw => by simpa using hw⟩
 
+/-- A function differentiable on an open set `U` is continuous on the image of a
+null-homologous curve in `U`. -/
+private lemma continuousOn_curveImage_of_nullHomologous
+    {f : ℂ → ℂ} {U : Set ℂ} (hf : DifferentiableOn ℂ f U)
+    {γ : PwC1Immersion x x} (h_null : IsNullHomologous γ U) :
+    ContinuousOn f (γ.toPiecewiseC1Path.toPath.extend '' Icc (0 : ℝ) 1) :=
+  hf.continuousOn.mono (fun _ ⟨t, ht, heq⟩ => heq ▸ h_null.image_subset t ht)
+
 /-- **Norm bound for `dixonH2`.**
 
 When `‖w‖ > R ≥ sup_t ‖γ(t)‖`, the Cauchy-type integral satisfies
@@ -405,10 +413,7 @@ private theorem dixonFunction_eq_zero_of_nullHomologous_autoH2_unbounded
     (hM_d : ∀ t ∈ Icc (0 : ℝ) 1,
       ‖deriv γ.toPiecewiseC1Path.toPath.extend t‖ ≤ M_d) :
     ∀ w, dixonFunction f U γ.toPiecewiseC1Path w = 0 := by
-  have hf_cont : ContinuousOn f
-      (γ.toPiecewiseC1Path.toPath.extend '' Icc (0 : ℝ) 1) :=
-    hf.continuousOn.mono
-      (fun _ ⟨t, ht, heq⟩ => heq ▸ h_null.image_subset t ht)
+  have hf_cont := continuousOn_curveImage_of_nullHomologous hf h_null
   have h2_diff : ∀ w, (∀ t ∈ Icc (0 : ℝ) 1, γ.toPiecewiseC1Path t ≠ w) →
       DifferentiableAt ℂ (dixonH2 f γ.toPiecewiseC1Path) w :=
     fun _ hoff => dixonH2_differentiableAt_of_regular hoff hf_cont hLip
@@ -428,10 +433,7 @@ private theorem dixonFunction_eq_zero_of_nullHomologous_autoBounds_unbounded
       ∃ ε > 0, ∀ w' ∈ Metric.ball w ε,
         generalizedWindingNumber γ.toPiecewiseC1Path w' = 0) :
     ∀ w, dixonFunction f U γ.toPiecewiseC1Path w = 0 := by
-  have hf_cont : ContinuousOn f
-      (γ.toPiecewiseC1Path.toPath.extend '' Icc (0 : ℝ) 1) :=
-    hf.continuousOn.mono
-      (fun _ ⟨t, ht, heq⟩ => heq ▸ h_null.image_subset t ht)
+  have hf_cont := continuousOn_curveImage_of_nullHomologous hf h_null
   have h_fγ_cont : ContinuousOn
       (fun t => f (γ.toPiecewiseC1Path t)) (Icc (0 : ℝ) 1) :=
     hf_cont.comp γ.toPiecewiseC1Path.toPath.continuous_extend.continuousOn

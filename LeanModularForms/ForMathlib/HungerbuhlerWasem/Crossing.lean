@@ -294,12 +294,12 @@ theorem cpv_polarPart_at_uncrossed_pole
   have h_contourInt :
       γP.contourIntegral (decomp.polarPart s) =
         2 * ↑Real.pi * I * generalizedWindingNumber γP s * residue f s := by
-    have h_higherOrder_int_each : ∀ k : Fin (decomp.order s), k.val ≥ 1 →
+    have h_int_each : ∀ k : Fin (decomp.order s),
         IntervalIntegrable
           (fun t => decomp.coeff s k /
             (γP.toPath.extend t - s) ^ (k.val + 1) *
             deriv γP.toPath.extend t) volume 0 1 :=
-      fun k _ => h_deriv_int.continuousOn_mul ((h_cont_inv_each k).mono
+      fun k => h_deriv_int.continuousOn_mul ((h_cont_inv_each k).mono
         (by rw [uIcc_of_le (zero_le_one' ℝ)]))
     have h_polarPart_curve : ∀ t ∈ Icc (0 : ℝ) 1,
         decomp.polarPart s (γP.toPath.extend t) =
@@ -318,9 +318,8 @@ theorem cpv_polarPart_at_uncrossed_pole
             deriv γP.toPath.extend t
       rw [h_polarPart_curve t ht]
     rw [h_int_eq]
-    rw [PiecewiseC1Path.contourIntegral_finset_sum Finset.univ _ γP
-      (fun k _ => h_deriv_int.continuousOn_mul ((h_cont_inv_each k).mono
-        (by rw [uIcc_of_le (zero_le_one' ℝ)])))]
+    rw [PiecewiseC1Path.contourIntegral_finset_sum Finset.univ
+      (fun k z => decomp.coeff s k / (z - s) ^ (k.val + 1)) γP (fun k _ => h_int_each k)]
     by_cases h_order_pos : 0 < decomp.order s
     · have h_split := Finset.sum_eq_single_of_mem
         (s := (Finset.univ : Finset (Fin (decomp.order s))))
@@ -333,7 +332,7 @@ theorem cpv_polarPart_at_uncrossed_pole
             have : k.val ≠ 0 := fun h => hk_ne (Fin.ext h)
             lia
           exact contourIntegral_higherOrder_eq_zero_of_avoids γP h_avoid (by lia)
-            _ (h_higherOrder_int_each k hk_ge_1))
+            _ (h_int_each k))
       rw [h_split]
       simp only [zero_add, pow_one]
       rw [show decomp.coeff s ⟨0, h_order_pos⟩ = residue f s from
@@ -344,13 +343,8 @@ theorem cpv_polarPart_at_uncrossed_pole
         unfold generalizedWindingNumber at hw_def
         rw [(hasCauchyPV_of_avoids (f := fun z => (z - s)⁻¹) (γ := γP) (z₀ := s)
           ⟨δ, hδ_pos, fun t ht => hδ_bound t ht⟩).cauchyPV_eq] at hw_def
-        rw [hw_def, mul_inv_cancel_left₀ <| mul_ne_zero (mul_ne_zero two_ne_zero
-          (by exact_mod_cast Real.pi_ne_zero)) Complex.I_ne_zero]
-      rw [show γP.contourIntegral (fun z => residue f s / (z - s)) =
-          residue f s * γP.contourIntegral (fun z => (z - s)⁻¹) by
-        rw [show (fun z => residue f s / (z - s)) =
-            (fun z => residue f s * (z - s)⁻¹) from funext fun z => div_eq_mul_inv _ _]
-        exact PiecewiseC1Path.contourIntegral_smul (residue f s) _ γP, h_winding_int_eq]
+        rw [hw_def, mul_inv_cancel_left₀ (by norm_num [Real.pi_ne_zero, Complex.I_ne_zero])]
+      simp only [div_eq_mul_inv, PiecewiseC1Path.contourIntegral_smul, h_winding_int_eq]
       ring
     · rw [show residue f s = 0 by rw [decomp.residue_eq s hs, dif_neg h_order_pos],
         mul_zero]
