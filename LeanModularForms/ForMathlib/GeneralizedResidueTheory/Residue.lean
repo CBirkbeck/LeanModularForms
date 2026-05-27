@@ -444,11 +444,8 @@ lemma cauchyPrincipalValueIntegrandOn_eq_of_far
 
 lemma cauchyPrincipalValueIntegrandOn_empty
     (f : ℂ → ℂ) (γ : ℝ → ℂ) (ε : ℝ) (t : ℝ) :
-    cauchyPrincipalValueIntegrandOn ∅ f γ ε t = f (γ t) * deriv γ t := by
-  unfold cauchyPrincipalValueIntegrandOn
-  rw [if_neg]
-  push Not
-  exact fun s hs => absurd hs (Finset.notMem_empty s)
+    cauchyPrincipalValueIntegrandOn ∅ f γ ε t = f (γ t) * deriv γ t :=
+  cauchyPrincipalValueIntegrandOn_eq_of_far ∅ f γ ε t (by simp)
 
 lemma cauchyPrincipalValueOn_empty
     (f : ℂ → ℂ) (γ : ℝ → ℂ) (a b : ℝ) :
@@ -534,9 +531,7 @@ theorem pv_integral_inverse
     cauchyPrincipalValue' (·⁻¹) (fun t => γ.toFun t - z₀) γ.a γ.b 0 =
       2 * Real.pi * I * generalizedWindingNumber' γ.toFun γ.a γ.b z₀ := by
   unfold generalizedWindingNumber'
-  have h_ne : (2 * Real.pi * I : ℂ) ≠ 0 := by
-    simp only [ne_eq, mul_eq_zero, not_or]
-    exact ⟨⟨two_ne_zero, by exact_mod_cast Real.pi_ne_zero⟩, Complex.I_ne_zero⟩
+  have h_ne : (2 * Real.pi * I : ℂ) ≠ 0 := by norm_num [Real.pi_ne_zero, Complex.I_ne_zero]
   field_simp [h_ne]
 
 /-- Single-point PV formula for simple pole. -/
