@@ -22,7 +22,7 @@ lemma MDifferentiable.pi_ofNat (n : ℕ) [n.AtLeastTwo] :
 @[fun_prop]
 lemma MDifferentiable.pi_inv_ofNat (n : ℕ) [n.AtLeastTwo] :
     MDiff (@OfNat.ofNat (ℍ → ℂ) n _)⁻¹ := by
-  change MDiff (fun (_ : ℍ) => (OfNat.ofNat n : ℂ)⁻¹)
+  change MDiff (fun (_ : ℍ) ↦ (OfNat.ofNat n : ℂ)⁻¹)
   exact mdifferentiable_const
 
 /-!
@@ -30,7 +30,7 @@ Definition of (Serre) derivative of modular forms.
 Prove Ramanujan's formulas on derivatives of Eisenstein series.
 -/
 noncomputable def D (F : ℍ → ℂ) : ℍ → ℂ :=
-  fun (z : ℍ) => (2 * π * I)⁻¹ * ((deriv (F ∘ ofComplex)) z)
+  fun (z : ℍ) ↦ (2 * π * I)⁻¹ * ((deriv (F ∘ ofComplex)) z)
 
 /--
 TODO: Remove this or move this to somewhere more appropriate.
@@ -62,9 +62,9 @@ If `F : ℍ → ℂ` is MDifferentiable, then `D F` is also MDifferentiable.
 -/
 @[fun_prop]
 theorem D_differentiable {F : ℍ → ℂ} (hF : MDiff F) :
-    MDiff (D F) := fun z =>
+    MDiff (D F) := fun z ↦
   let hDiffOn : DifferentiableOn ℂ (F ∘ ofComplex) {z : ℂ | 0 < z.im} :=
-    fun w hw => (MDifferentiableAt_DifferentiableAt (hF ⟨w, hw⟩)).differentiableWithinAt
+    fun w hw ↦ (MDifferentiableAt_DifferentiableAt (hF ⟨w, hw⟩)).differentiableWithinAt
   MDifferentiableAt.mul mdifferentiableAt_const <| DifferentiableAt_MDifferentiableAt <|
     (hDiffOn.deriv isOpen_upperHalfPlaneSet).differentiableAt
       (isOpen_upperHalfPlaneSet.mem_nhds z.im_pos)
@@ -81,9 +81,9 @@ theorem E₂_holo' : MDiff E₂ := by
       simpa [η] using (ModularForm.differentiableAt_eta_of_mem_upperHalfPlaneSet (z := z) hz)
     exact hz'.differentiableWithinAt
   have hlog : DifferentiableOn ℂ (logDeriv η) {z | 0 < z.im} :=
-    (hη.deriv isOpen_upperHalfPlaneSet).div hη fun z hz => by
+    (hη.deriv isOpen_upperHalfPlaneSet).div hη fun z hz ↦ by
       simpa [η] using (ModularForm.eta_ne_zero (z := z) hz)
-  exact (hlog.const_mul ((↑π * I / 12)⁻¹)).congr fun z hz => by
+  exact (hlog.const_mul ((↑π * I / 12)⁻¹)).congr fun z hz ↦ by
     simp only [Function.comp_apply, ofComplex_apply_of_im_pos hz,
       show logDeriv η z = (↑π * I / 12) * E₂ ⟨z, hz⟩ by
         simpa [η, E₂] using (ModularForm.logDeriv_eta_eq_E2 ⟨z, hz⟩)]
@@ -188,13 +188,13 @@ is everywhere nonzero. -/
 lemma MDifferentiable_div {F G : ℍ → ℂ}
     (hF : MDiff F) (hG : MDiff G)
     (hG_ne : ∀ z : ℍ, G z ≠ 0) :
-    MDiff (fun z => F z / G z) := by
+    MDiff (fun z ↦ F z / G z) := by
   intro τ
-  suffices h : DifferentiableAt ℂ ((fun z => F z / G z) ∘ ofComplex) ↑τ by
-    have h_eq : ((fun z => F z / G z) ∘ ofComplex) ∘ UpperHalfPlane.coe = fun z => F z / G z := by
+  suffices h : DifferentiableAt ℂ ((fun z ↦ F z / G z) ∘ ofComplex) ↑τ by
+    have h_eq : ((fun z ↦ F z / G z) ∘ ofComplex) ∘ UpperHalfPlane.coe = fun z ↦ F z / G z := by
       ext x; simp [Function.comp, ofComplex_apply]
     rw [← h_eq]; exact DifferentiableAt_MDifferentiableAt h
-  have h_eq : (fun z => F z / G z) ∘ ofComplex =ᶠ[nhds ↑τ]
+  have h_eq : (fun z ↦ F z / G z) ∘ ofComplex =ᶠ[nhds ↑τ]
       (F ∘ ofComplex) / (G ∘ ofComplex) := by
     filter_upwards [isOpen_upperHalfPlaneSet.mem_nhds τ.2] with w hw
     simp [Function.comp, Pi.div_apply, ofComplex_apply_of_im_pos hw]
@@ -229,7 +229,7 @@ lemma pi_inv_const_eq_const (c : ℂ) :
 
 /-- Helper: HasDerivAt for a·exp(2πicw) with chain rule. -/
 private lemma hasDerivAt_qexp (a c w : ℂ) :
-    HasDerivAt (fun z => a * cexp (2 * π * I * c * z))
+    HasDerivAt (fun z ↦ a * cexp (2 * π * I * c * z))
       (a * (2 * π * I * c) * cexp (2 * π * I * c * w)) w := by
   have h := (hasDerivAt_id w).const_mul (2 * π * I * c)
   simp only [mul_one, id] at h
@@ -240,7 +240,7 @@ private lemma hasDerivAt_qexp (a c w : ℂ) :
 
 /-- Helper: derivWithin for qexp term on upper half-plane. -/
 private lemma derivWithin_qexp (a c : ℂ) (w : ℂ) (hw : 0 < w.im) :
-    derivWithin (fun z => a * cexp (2 * π * I * c * z))
+    derivWithin (fun z ↦ a * cexp (2 * π * I * c * z))
       {z : ℂ | 0 < z.im} w = a * (2 * π * I * c) * cexp (2 * π * I * c * w) :=
   ((hasDerivAt_qexp a c w).hasDerivWithinAt).derivWithin
     (isOpen_upperHalfPlaneSet.uniqueDiffWithinAt hw)
@@ -254,11 +254,11 @@ The key calculation:
 - D(exp(2πinz)) = (2πi)⁻¹·(2πin·exp(2πinz)) = n·exp(2πinz)
 -/
 theorem D_qexp_term (n : ℤ) (a : ℂ) (z : ℍ) :
-    D (fun w => a * cexp (2 * π * I * n * w)) z =
+    D (fun w ↦ a * cexp (2 * π * I * n * w)) z =
       n * a * cexp (2 * π * I * n * z) := by
   simp only [D]
-  have h_agree : ((fun w : ℍ => a * cexp (2 * π * I * n * w)) ∘ ofComplex) =ᶠ[nhds (z : ℂ)]
-      (fun w : ℂ => a * cexp (2 * π * I * n * w)) := by
+  have h_agree : ((fun w : ℍ ↦ a * cexp (2 * π * I * n * w)) ∘ ofComplex) =ᶠ[nhds (z : ℂ)]
+      (fun w : ℂ ↦ a * cexp (2 * π * I * n * w)) := by
     filter_upwards [isOpen_upperHalfPlaneSet.mem_nhds z.2] with w hw
     simp only [Function.comp_apply, ofComplex_apply_of_im_pos hw, UpperHalfPlane.coe_mk]
   rw [h_agree.deriv_eq, (hasDerivAt_qexp a n z).deriv]
@@ -272,26 +272,26 @@ More precisely, this lemma shows that for a ℕ-indexed q-series with summable c
 satisfying appropriate derivative bounds, D acts termwise by multiplying coefficients by n.
 -/
 theorem D_qexp_tsum (a : ℕ → ℂ) (z : ℍ)
-    (_hsum : Summable (fun n => a n * cexp (2 * π * I * n * z)))
+    (_hsum : Summable (fun n ↦ a n * cexp (2 * π * I * n * z)))
     (hsum_deriv : ∀ K : Set ℂ, K ⊆ {w : ℂ | 0 < w.im} → IsCompact K →
         ∃ u : ℕ → ℝ, Summable u ∧ ∀ n (k : K), ‖a n * (2 * π * I * n) *
           cexp (2 * π * I * n * k.1)‖ ≤ u n) :
-    D (fun w => ∑' n, a n * cexp (2 * π * I * n * w)) z =
+    D (fun w ↦ ∑' n, a n * cexp (2 * π * I * n * w)) z =
       ∑' n : ℕ, (n : ℂ) * a n * cexp (2 * π * I * n * z) := by
   simp only [D]
   -- Each term is differentiable
   have hf_diff : ∀ n (r : {w : ℂ | 0 < w.im}), DifferentiableAt ℂ
-      (fun w => a n * cexp (2 * π * I * n * w)) r := fun n r =>
+      (fun w ↦ a n * cexp (2 * π * I * n * w)) r := fun n r ↦
     ((differentiableAt_id.const_mul (2 * π * I * n)).cexp).const_mul (a n)
   -- Summability at each point (bound holds for n ≥ 1, exception set ⊆ {0})
   have hf_sum : ∀ y : ℂ, y ∈ {w : ℂ | 0 < w.im} →
-      Summable (fun n => a n * cexp (2 * π * I * n * y)) := by
+      Summable (fun n ↦ a n * cexp (2 * π * I * n * y)) := by
     intro y hy
     obtain ⟨u, hu_sum, hu_bound⟩ :=
       hsum_deriv {y} (Set.singleton_subset_iff.mpr hy) isCompact_singleton
-    apply Summable.of_norm_bounded_eventually (g := fun n => u n / (2 * π)) (hu_sum.div_const _)
+    apply Summable.of_norm_bounded_eventually (g := fun n ↦ u n / (2 * π)) (hu_sum.div_const _)
     rw [Filter.eventually_cofinite]
-    refine Set.Finite.subset (Set.finite_singleton 0) fun n hn => ?_
+    refine Set.Finite.subset (Set.finite_singleton 0) fun n hn ↦ ?_
     simp only [Set.mem_setOf_eq, not_le] at hn
     by_contra h_ne
     have h_deriv_bound := hu_bound n ⟨y, Set.mem_singleton y⟩
@@ -315,23 +315,23 @@ theorem D_qexp_tsum (a : ℕ → ℂ) (z : ℍ)
   -- Derivative bound for uniform convergence
   have hu : ∀ K ⊆ {w : ℂ | 0 < w.im}, IsCompact K →
       ∃ u : ℕ → ℝ, Summable u ∧ ∀ n (k : K),
-        ‖derivWithin (fun w => a n * cexp (2 * π * I * n * w)) {w : ℂ | 0 < w.im} k‖ ≤ u n := by
+        ‖derivWithin (fun w ↦ a n * cexp (2 * π * I * n * w)) {w : ℂ | 0 < w.im} k‖ ≤ u n := by
     intro K hK1 hK2
     obtain ⟨u, hu_sum, hu_bound⟩ := hsum_deriv K hK1 hK2
-    exact ⟨u, hu_sum, fun n k => by rw [derivWithin_qexp _ _ _ (hK1 k.2)]; exact hu_bound n k⟩
+    exact ⟨u, hu_sum, fun n k ↦ by rw [derivWithin_qexp _ _ _ (hK1 k.2)]; exact hu_bound n k⟩
   -- Apply termwise differentiation
-  have h_tsum_deriv := hasDerivAt_tsum_fun (fun n w => a n * cexp (2 * π * I * n * w))
+  have h_tsum_deriv := hasDerivAt_tsum_fun (fun n w ↦ a n * cexp (2 * π * I * n * w))
     isOpen_upperHalfPlaneSet (z : ℂ) z.2 hf_sum hu hf_diff
   -- The composed function agrees with ℂ → ℂ in a neighborhood
-  have h_agree : ((fun w : ℍ => ∑' n, a n * cexp (2 * π * I * n * w)) ∘ ofComplex) =ᶠ[nhds (z : ℂ)]
-      (fun w => ∑' n, a n * cexp (2 * π * I * n * w)) := by
+  have h_agree : ((fun w : ℍ ↦ ∑' n, a n * cexp (2 * π * I * n * w)) ∘ ofComplex) =ᶠ[nhds (z : ℂ)]
+      (fun w ↦ ∑' n, a n * cexp (2 * π * I * n * w)) := by
     filter_upwards [isOpen_upperHalfPlaneSet.mem_nhds z.2] with w hw
     simp only [Function.comp_apply, ofComplex_apply_of_im_pos hw, UpperHalfPlane.coe_mk]
   rw [h_agree.deriv_eq, h_tsum_deriv.deriv]
   -- Simplify derivWithin using helper
-  have h_deriv_simp : ∀ n, derivWithin (fun w => a n * cexp (2 * π * I * n * w))
+  have h_deriv_simp : ∀ n, derivWithin (fun w ↦ a n * cexp (2 * π * I * n * w))
       {w : ℂ | 0 < w.im} z = a n * (2 * π * I * n) * cexp (2 * π * I * n * z) :=
-    fun n => derivWithin_qexp _ _ _ z.2
+    fun n ↦ derivWithin_qexp _ _ _ z.2
   simp_rw [h_deriv_simp, ← tsum_mul_left]
   congr 1; funext n; field_simp [two_pi_I_ne_zero]
 
@@ -344,50 +344,50 @@ uses `tsum_pNat` and `nat_pos_tsum2` to convert between sums,
 then applies `D_qexp_tsum`.
 -/
 theorem D_qexp_tsum_pnat (a : ℕ+ → ℂ) (z : ℍ)
-    (hsum : Summable (fun n : ℕ+ => a n * cexp (2 * π * I * n * z)))
+    (hsum : Summable (fun n : ℕ+ ↦ a n * cexp (2 * π * I * n * z)))
     (hsum_deriv : ∀ K : Set ℂ, K ⊆ {w : ℂ | 0 < w.im} → IsCompact K →
         ∃ u : ℕ+ → ℝ, Summable u ∧ ∀ n (k : K), ‖a n * (2 * π * I * n) *
           cexp (2 * π * I * n * k.1)‖ ≤ u n) :
-    D (fun w => ∑' n : ℕ+, a n * cexp (2 * π * I * n * w)) z =
+    D (fun w ↦ ∑' n : ℕ+, a n * cexp (2 * π * I * n * w)) z =
       ∑' n : ℕ+, (n : ℂ) * a n * cexp (2 * π * I * n * z) := by
   -- Extend a to ℕ with a' 0 = 0
-  let a' : ℕ → ℂ := fun n => if h : 0 < n then a ⟨n, h⟩ else 0
-  have ha' : ∀ n : ℕ+, a' n = a n := fun n => dif_pos n.pos
+  let a' : ℕ → ℂ := fun n ↦ if h : 0 < n then a ⟨n, h⟩ else 0
+  have ha' : ∀ n : ℕ+, a' n = a n := fun n ↦ dif_pos n.pos
   -- Derivative bounds: extend u using nat_pos_tsum2
   have hsum_deriv' : ∀ K : Set ℂ, K ⊆ {w : ℂ | 0 < w.im} → IsCompact K →
       ∃ u : ℕ → ℝ, Summable u ∧ ∀ n (k : K), ‖a' n * (2 * π * I * n) *
-        cexp (2 * π * I * n * k.1)‖ ≤ u n := fun K hK hKc => by
+        cexp (2 * π * I * n * k.1)‖ ≤ u n := fun K hK hKc ↦ by
     obtain ⟨u, hu_sum, hu_bound⟩ := hsum_deriv K hK hKc
-    let u' : ℕ → ℝ := fun n => if h : 0 < n then u ⟨n, h⟩ else 0
-    have hu' : ∀ n : ℕ+, u' n = u n := fun n => dif_pos n.pos
-    refine ⟨u', (nat_pos_tsum2 u' (by simp [u'])).mp (hu_sum.congr fun n => by rw [hu']),
-      fun n k => ?_⟩
+    let u' : ℕ → ℝ := fun n ↦ if h : 0 < n then u ⟨n, h⟩ else 0
+    have hu' : ∀ n : ℕ+, u' n = u n := fun n ↦ dif_pos n.pos
+    refine ⟨u', (nat_pos_tsum2 u' (by simp [u'])).mp (hu_sum.congr fun n ↦ by rw [hu']),
+      fun n k ↦ ?_⟩
     by_cases hn : 0 < n
     · simp only [a', u', dif_pos hn]; exact hu_bound _ k
     · simp only [Nat.not_lt, Nat.le_zero] at hn; simp [a', u', hn]
   -- Apply D_qexp_tsum and convert sums via tsum_pNat
   have hD := D_qexp_tsum a' z ((nat_pos_tsum2 _ (by simp [a'])).mp
-    (hsum.congr fun n => by rw [ha'])) hsum_deriv'
-  calc D (fun w => ∑' n : ℕ+, a n * cexp (2 * π * I * n * w)) z
-      = D (fun w : ℍ => ∑' n : ℕ, a' n * cexp (2 * π * I * n * (w : ℂ))) z := by
-          congr 1; ext w; rw [← tsum_pNat _ (by simp [a'])]; exact tsum_congr fun n => by rw [ha']
+    (hsum.congr fun n ↦ by rw [ha'])) hsum_deriv'
+  calc D (fun w ↦ ∑' n : ℕ+, a n * cexp (2 * π * I * n * w)) z
+      = D (fun w : ℍ ↦ ∑' n : ℕ, a' n * cexp (2 * π * I * n * (w : ℂ))) z := by
+          congr 1; ext w; rw [← tsum_pNat _ (by simp [a'])]; exact tsum_congr fun n ↦ by rw [ha']
     _ = ∑' n : ℕ, (n : ℂ) * a' n * cexp (2 * π * I * n * (z : ℂ)) := hD
     _ = ∑' n : ℕ+, (n : ℂ) * a n * cexp (2 * π * I * n * z) := by
-          rw [← tsum_pNat _ (by simp [a'])]; exact tsum_congr fun n => by rw [ha']
+          rw [← tsum_pNat _ (by simp [a'])]; exact tsum_congr fun n ↦ by rw [ha']
 
 /--
 Serre derivative of weight $k$.
 Note that the definition makes sense for any analytic function $F : \mathbb{H} \to \mathbb{C}$.
 -/
 noncomputable def serre_D (k : ℂ) : (ℍ → ℂ) → (ℍ → ℂ) :=
-  fun (F : ℍ → ℂ) => (fun z => D F z - k * 12⁻¹ * E₂ z * F z)
+  fun (F : ℍ → ℂ) ↦ (fun z ↦ D F z - k * 12⁻¹ * E₂ z * F z)
 
 @[simp]
 lemma serre_D_apply (k : ℂ) (F : ℍ → ℂ) (z : ℍ) :
     serre_D k F z = D F z - k * 12⁻¹ * E₂ z * F z := rfl
 
 lemma serre_D_eq (k : ℂ) (F : ℍ → ℂ) :
-    serre_D k F = fun z => D F z - k * 12⁻¹ * E₂ z * F z := rfl
+    serre_D k F = fun z ↦ D F z - k * 12⁻¹ * E₂ z * F z := rfl
 
 /--
 Basic properties of Serre derivative: linearity, Leibniz rule, etc.
@@ -433,8 +433,8 @@ If `F : ℍ → ℂ` is MDifferentiable, then `serre_D k F` is also MDifferentia
 theorem serre_D_differentiable {F : ℍ → ℂ} {k : ℂ}
     (hF : MDiff F) :
     MDiff (serre_D k F) := by
-  have h_term : MDiff (fun z => k * 12⁻¹ * E₂ z * F z) := by
-    have h1 : MDiff (fun z => (k * 12⁻¹) * (E₂ z * F z)) :=
+  have h_term : MDiff (fun z ↦ k * 12⁻¹ * E₂ z * F z) := by
+    have h1 : MDiff (fun z ↦ (k * 12⁻¹) * (E₂ z * F z)) :=
       MDifferentiable.mul mdifferentiable_const (E₂_holo'.mul hF)
     convert h1 using 1; ext z; simp only [mul_assoc]
   exact (D_differentiable hF).sub h_term
@@ -452,32 +452,32 @@ variable (γ : SL(2, ℤ))
 
 /-- Derivative of the denominator function: d/dz[cz + d] = c. -/
 lemma deriv_denom (z : ℂ) :
-    deriv (fun w => denom γ w) z = ((γ : Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ℂ) := by
+    deriv (fun w ↦ denom γ w) z = ((γ : Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ℂ) := by
   simp only [denom]
   rw [deriv_add_const, deriv_const_mul _ differentiableAt_id, deriv_id'', mul_one]; simp
 
 /-- Derivative of the numerator function: d/dz[az + b] = a. -/
 lemma deriv_num (z : ℂ) :
-    deriv (fun w => num γ w) z = ((γ : Matrix (Fin 2) (Fin 2) ℤ) 0 0 : ℂ) := by
+    deriv (fun w ↦ num γ w) z = ((γ : Matrix (Fin 2) (Fin 2) ℤ) 0 0 : ℂ) := by
   simp only [num]
   rw [deriv_add_const, deriv_const_mul _ differentiableAt_id, deriv_id'', mul_one]; simp
 
 /-- Differentiability of denom. -/
 lemma differentiableAt_denom (z : ℂ) :
-    DifferentiableAt ℂ (fun w => denom γ w) z := by
+    DifferentiableAt ℂ (fun w ↦ denom γ w) z := by
   simp only [denom]
   fun_prop
 
 /-- Differentiability of num. -/
 lemma differentiableAt_num (z : ℂ) :
-    DifferentiableAt ℂ (fun w => num γ w) z := by
+    DifferentiableAt ℂ (fun w ↦ num γ w) z := by
   simp only [num]
   fun_prop
 
 /-- Derivative of the Möbius transformation: d/dz[(az+b)/(cz+d)] = 1/(cz+d)².
 Uses det(γ) = 1: a(cz+d) - c(az+b) = ad - bc = 1. -/
 lemma deriv_moebius (z : ℍ) :
-    deriv (fun w => num γ w / denom γ w) z = 1 / (denom γ z) ^ 2 := by
+    deriv (fun w ↦ num γ w / denom γ w) z = 1 / (denom γ z) ^ 2 := by
   have hz : denom γ z ≠ 0 := UpperHalfPlane.denom_ne_zero γ z
   have hdet : ((γ : Matrix (Fin 2) (Fin 2) ℤ) 0 0 : ℂ) * (γ 1 1) -
       ((γ : Matrix (Fin 2) (Fin 2) ℤ) 0 1 : ℂ) * (γ 1 0) = 1 := by
@@ -495,16 +495,16 @@ lemma deriv_moebius (z : ℍ) :
 
 /-- Derivative of denom^(-k): d/dz[(cz+d)^(-k)] = -k * c * (cz+d)^(-k-1). -/
 lemma deriv_denom_zpow (k : ℤ) (z : ℍ) :
-    deriv (fun w => (denom γ w) ^ (-k)) z =
+    deriv (fun w ↦ (denom γ w) ^ (-k)) z =
         (-k : ℂ) * ((γ : Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ℂ) * (denom γ z) ^ (-k - 1) := by
   have hz : denom γ z ≠ 0 := UpperHalfPlane.denom_ne_zero γ z
   have hdiff := differentiableAt_denom γ (z : ℂ)
   have hderiv_zpow := hasDerivAt_zpow (-k) (denom γ z) (Or.inl hz)
-  have hderiv_denom : HasDerivAt (fun w => denom γ w)
+  have hderiv_denom : HasDerivAt (fun w ↦ denom γ w)
       ((γ : Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ℂ) (z : ℂ) := by
     rw [← deriv_denom]; exact hdiff.hasDerivAt
   have hcomp := hderiv_zpow.comp (z : ℂ) hderiv_denom
-  have heq : (fun w => w ^ (-k)) ∘ (fun w => denom γ w) = (fun w => (denom γ w) ^ (-k)) := rfl
+  have heq : (fun w ↦ w ^ (-k)) ∘ (fun w ↦ denom γ w) = (fun w ↦ (denom γ w) ^ (-k)) := rfl
   rw [← heq, hcomp.deriv]; simp only [Int.cast_neg]; ring
 
 end DSlashHelpers
@@ -515,7 +515,7 @@ This is the key computation for proving Serre derivative equivariance.
 -/
 lemma D_slash (k : ℤ) (F : ℍ → ℂ) (hF : MDiff F) (γ : SL(2, ℤ)) :
     D (F ∣[k] γ) = (D F ∣[k + 2] γ) -
-        (fun z : ℍ => (k : ℂ) * (2 * π * I)⁻¹ * (γ 1 0 / denom γ z) * (F ∣[k] γ) z) := by
+        (fun z : ℍ ↦ (k : ℂ) * (2 * π * I)⁻¹ * (γ 1 0 / denom γ z) * (F ∣[k] γ) z) := by
   -- Strategy (all micro-lemmas proven above):
   -- 1. SL_slash_apply: (F ∣[k] γ) z = F(γ•z) * denom(γ,z)^(-k)
   -- 2. coe_smul_of_det_pos: (γ•z : ℂ) = num γ z / denom γ z (since det(SL₂) = 1 > 0)
@@ -537,7 +537,7 @@ lemma D_slash (k : ℤ) (F : ℍ → ℂ) (hF : MDiff F) (γ : SL(2, ℤ)) :
   -- The derivative computation on ℂ using Filter.EventuallyEq.deriv_eq
   -- (F ∣[k] γ) ∘ ofComplex agrees with F(num/denom) * denom^(-k) on ℍ
   have hcomp : deriv (((F ∣[k] γ)) ∘ ofComplex) z =
-      deriv (fun w => (F ∘ ofComplex) (num γ w / denom γ w) * (denom γ w) ^ (-k)) z := by
+      deriv (fun w ↦ (F ∘ ofComplex) (num γ w / denom γ w) * (denom γ w) ^ (-k)) z := by
     apply Filter.EventuallyEq.deriv_eq
     filter_upwards [isOpen_upperHalfPlaneSet.mem_nhds z.im_pos] with w hw
     simp only [Function.comp_apply, ofComplex_apply_of_im_pos hw]
@@ -568,12 +568,12 @@ lemma D_slash (k : ℤ) (F : ℍ → ℂ) (hF : MDiff F) (γ : SL(2, ℤ)) :
   -- where f(w) = (F ∘ ofComplex)(num w / denom w) and g(w) = denom(w)^(-k)
   --
   -- Setup differentiability for product rule
-  have hdenom_ne : ∀ w : ℂ, w.im > 0 → denom γ w ≠ 0 := fun w hw =>
+  have hdenom_ne : ∀ w : ℂ, w.im > 0 → denom γ w ≠ 0 := fun w hw ↦
     UpperHalfPlane.denom_ne_zero γ ⟨w, hw⟩
-  have hdiff_denom_zpow : DifferentiableAt ℂ (fun w => (denom γ w) ^ (-k)) z :=
+  have hdiff_denom_zpow : DifferentiableAt ℂ (fun w ↦ (denom γ w) ^ (-k)) z :=
     DifferentiableAt.zpow (differentiableAt_denom γ z) (Or.inl (hdenom_ne z z.im_pos))
   -- For the F ∘ (num/denom) term, we need differentiability of the Möbius and F
-  have hdiff_mobius : DifferentiableAt ℂ (fun w => num γ w / denom γ w) z :=
+  have hdiff_mobius : DifferentiableAt ℂ (fun w ↦ num γ w / denom γ w) z :=
     (differentiableAt_num γ z).div (differentiableAt_denom γ z) (hdenom_ne z z.im_pos)
   -- The composition (F ∘ ofComplex) ∘ mobius is differentiable at z
   -- because mobius(z) is in ℍ and F is MDifferentiable
@@ -582,21 +582,21 @@ lemma D_slash (k : ℤ) (F : ℍ → ℂ) (hF : MDiff F) (γ : SL(2, ℤ)) :
     exact (γ • z).im_pos
   have hdiff_F_comp : DifferentiableAt ℂ (F ∘ ofComplex) (num γ z / denom γ z) :=
     MDifferentiableAt_DifferentiableAt (hF ⟨num γ z / denom γ z, hmobius_in_H⟩)
-  have hcomp_eq : (fun w => (F ∘ ofComplex) (num γ w / denom γ w)) =
-      (F ∘ ofComplex) ∘ (fun w => num γ w / denom γ w) := rfl
-  have hdiff_F_mobius : DifferentiableAt ℂ (fun w => (F ∘ ofComplex) (num γ w / denom γ w)) z := by
+  have hcomp_eq : (fun w ↦ (F ∘ ofComplex) (num γ w / denom γ w)) =
+      (F ∘ ofComplex) ∘ (fun w ↦ num γ w / denom γ w) := rfl
+  have hdiff_F_mobius : DifferentiableAt ℂ (fun w ↦ (F ∘ ofComplex) (num γ w / denom γ w)) z := by
     rw [hcomp_eq]
     exact DifferentiableAt.comp (z : ℂ) hdiff_F_comp hdiff_mobius
   -- Apply product rule
   -- Note: need to show the functions are equal to use deriv_mul
-  have hfun_eq : (fun w => (F ∘ ofComplex) (num γ w / denom γ w) * (denom γ w) ^ (-k)) =
-      ((fun w => (F ∘ ofComplex) (num γ w / denom γ w)) * (fun w => (denom γ w) ^ (-k))) := rfl
+  have hfun_eq : (fun w ↦ (F ∘ ofComplex) (num γ w / denom γ w) * (denom γ w) ^ (-k)) =
+      ((fun w ↦ (F ∘ ofComplex) (num γ w / denom γ w)) * (fun w ↦ (denom γ w) ^ (-k))) := rfl
   rw [hfun_eq]
   have hprod := deriv_mul hdiff_F_mobius hdiff_denom_zpow
   rw [hprod]
   -- Apply chain rule to (F ∘ ofComplex) ∘ mobius
-  have hchain : deriv (fun w => (F ∘ ofComplex) (num γ w / denom γ w)) z =
-      deriv (F ∘ ofComplex) (num γ z / denom γ z) * deriv (fun w => num γ w / denom γ w) z := by
+  have hchain : deriv (fun w ↦ (F ∘ ofComplex) (num γ w / denom γ w)) z =
+      deriv (F ∘ ofComplex) (num γ z / denom γ z) * deriv (fun w ↦ num γ w / denom γ w) z := by
     rw [hcomp_eq, (hdiff_F_comp.hasDerivAt.comp (z : ℂ) hdiff_mobius.hasDerivAt).deriv]
   -- Substitute the micro-lemmas
   have hderiv_mob := deriv_moebius γ z
@@ -738,8 +738,8 @@ lemma im_deriv_eq_zero_of_im_eq_zero {f : ℝ → ℂ} {t : ℝ}
 /-- If F is real on the imaginary axis and MDifferentiable, then D F is also real
 on the imaginary axis. -/
 theorem D_real_of_real {F : ℍ → ℂ} (hF_real : ResToImagAxis.Real F)
-    (hF_diff : MDiff F) : ResToImagAxis.Real (D F) := fun t ht => by
-  have him : ∀ s, (F.resToImagAxis s).im = 0 := fun s => by
+    (hF_diff : MDiff F) : ResToImagAxis.Real (D F) := fun t ht ↦ by
+  have him : ∀ s, (F.resToImagAxis s).im = 0 := fun s ↦ by
     by_cases hs : 0 < s
     · exact hF_real s hs
     · simp [ResToImagAxis, hs]
@@ -753,7 +753,7 @@ theorem D_real_of_real {F : ℍ → ℂ} (hF_real : ResToImagAxis.Real F)
 /-- The real part of F.resToImagAxis has derivative -2π * ((D F).resToImagAxis t).re at t. -/
 lemma hasDerivAt_resToImagAxis_re {F : ℍ → ℂ} (hdiff : MDiff F)
     {t : ℝ} (ht : 0 < t) :
-    HasDerivAt (fun s => (F.resToImagAxis s).re) (-2 * π * ((D F).resToImagAxis t).re) t := by
+    HasDerivAt (fun s ↦ (F.resToImagAxis s).re) (-2 * π * ((D F).resToImagAxis t).re) t := by
   have hdiffAt := ResToImagAxis.Differentiable F hdiff t ht
   have hderivC := hdiffAt.hasDerivAt.congr_deriv (deriv_resToImagAxis_eq F hdiff ht)
   simpa using (hasDerivAt_const t (Complex.reCLM : ℂ →L[ℝ] ℝ)).clm_apply hderivC
@@ -762,10 +762,10 @@ lemma hasDerivAt_resToImagAxis_re {F : ℍ → ℂ} (hdiff : MDiff F)
 then D F has non-negative real part on the imaginary axis. -/
 theorem D_nonneg_from_antitone {F : ℍ → ℂ}
     (hdiff : MDiff F)
-    (hanti : AntitoneOn (fun t => (F.resToImagAxis t).re) (Set.Ioi 0)) :
+    (hanti : AntitoneOn (fun t ↦ (F.resToImagAxis t).re) (Set.Ioi 0)) :
     ∀ t, 0 < t → 0 ≤ ((D F).resToImagAxis t).re := by
   intro t ht
-  have hderiv_nonpos : deriv (fun s => (F.resToImagAxis s).re) t ≤ 0 :=
+  have hderiv_nonpos : deriv (fun s ↦ (F.resToImagAxis s).re) t ≤ 0 :=
     (derivWithin_of_isOpen isOpen_Ioi ht).symm.trans_le hanti.derivWithin_nonpos
   rw [(hasDerivAt_resToImagAxis_re hdiff ht).deriv] at hderiv_nonpos
   nlinarith [Real.pi_pos]
@@ -779,9 +779,9 @@ is strictly negative, typically from q-expansion analysis. -/
 theorem D_pos_from_deriv_neg {F : ℍ → ℂ}
     (hreal : ResToImagAxis.Real F)
     (hdiff : MDiff F)
-    (hderiv_neg : ∀ t, 0 < t → deriv (fun s => (F.resToImagAxis s).re) t < 0) :
+    (hderiv_neg : ∀ t, 0 < t → deriv (fun s ↦ (F.resToImagAxis s).re) t < 0) :
     ResToImagAxis.Pos (D F) := by
-  refine ⟨D_real_of_real hreal hdiff, fun t ht => ?_⟩
+  refine ⟨D_real_of_real hreal hdiff, fun t ht ↦ ?_⟩
   have hderiv := hderiv_neg t ht
   rw [(hasDerivAt_resToImagAxis_re hdiff ht).deriv] at hderiv
   nlinarith [Real.pi_pos]
@@ -795,16 +795,16 @@ theorem antiDerPos {F : ℍ → ℂ} (hFderiv : MDiff F)
     ResToImagAxis.Pos F := by
   obtain ⟨hF_real, t₀, ht₀_pos, hF_pos⟩ := hFepos
   obtain ⟨-, hDF_pos⟩ := hDF
-  let g := fun t => (F.resToImagAxis t).re
+  let g := fun t ↦ (F.resToImagAxis t).re
   have hg : ∀ t, 0 < t → HasDerivAt g (-2 * π * (ResToImagAxis (D F) t).re) t :=
-    fun t ht => hasDerivAt_resToImagAxis_re hFderiv ht
-  have hn : ∀ t ∈ Set.Ioi (0 : ℝ), deriv g t < 0 := fun t (ht : 0 < t) => by
+    fun t ht ↦ hasDerivAt_resToImagAxis_re hFderiv ht
+  have hn : ∀ t ∈ Set.Ioi (0 : ℝ), deriv g t < 0 := fun t (ht : 0 < t) ↦ by
     rw [(hg t ht).deriv]
     have ht' : 0 < (ResToImagAxis (D F) t).re := hDF_pos t ht
     nlinarith [Real.pi_pos]
-  have gpos := fun t ht =>
+  have gpos := fun t ht ↦
     StrictAntiOn.eventuallyPos_Ioi (strictAntiOn_of_deriv_neg (convex_Ioi 0)
-    (fun x hx => (hg x hx).continuousAt.continuousWithinAt)
+    (fun x hx ↦ (hg x hx).continuousAt.continuousWithinAt)
       (by simpa [interior_Ioi] using hn)) ht₀_pos hF_pos t ht
   exact ⟨hF_real, gpos⟩
 
@@ -828,9 +828,9 @@ lemma diffContOnCl_comp_ofComplex_of_mdifferentiable {f : ℍ → ℂ}
     (hf : MDiff f) {c : ℂ} {R : ℝ}
     (hclosed : Metric.closedBall c R ⊆ {z : ℂ | 0 < z.im}) :
     DiffContOnCl ℂ (f ∘ ofComplex) (Metric.ball c R) :=
-  ⟨fun z hz => (MDifferentiableAt_DifferentiableAt
+  ⟨fun z hz ↦ (MDifferentiableAt_DifferentiableAt
       (hf ⟨z, hclosed (Metric.ball_subset_closedBall hz)⟩)).differentiableWithinAt,
-   fun z hz => (MDifferentiableAt_DifferentiableAt
+   fun z hz ↦ (MDifferentiableAt_DifferentiableAt
       (hf ⟨z, hclosed (Metric.closure_ball_subset_closedBall hz)⟩)).continuousAt.continuousWithinAt⟩
 
 /-- Closed ball centered at z with radius z.im/2 is contained in the upper half plane. -/
@@ -908,7 +908,7 @@ theorem D_tendsto_zero_of_isBoundedAtImInfty {f : ℍ → ℂ}
     apply squeeze_zero_norm' h
     have := Filter.tendsto_im_atImInfty.inv_tendsto_atTop.const_mul (M / π)
     simp only [Pi.inv_apply, mul_zero] at this
-    exact this.congr fun z => by field_simp
+    exact this.congr fun z ↦ by field_simp
   have h_sphere_bdd : ∀ z : ℍ, 2 * max A 0 + 1 ≤ z.im →
       ∀ w ∈ Metric.sphere (z : ℂ) (z.im / 2), ‖(f ∘ ofComplex) w‖ ≤ M := by
     intro z hz_ge w hw
@@ -924,7 +924,7 @@ theorem D_tendsto_zero_of_isBoundedAtImInfty {f : ℍ → ℂ}
     simpa [ofComplex_apply_of_im_pos hw_im_pos] using hMA ⟨w, hw_im_pos⟩ hw_im_ge_A
   rw [Filter.eventually_iff_exists_mem]
   refine ⟨{z : ℍ | 2 * max A 0 + 1 ≤ z.im},
-    (atImInfty_mem _).mpr ⟨_, fun _ h => h⟩, fun z hz => ?_⟩
+    (atImInfty_mem _).mpr ⟨_, fun _ h ↦ h⟩, fun z hz ↦ ?_⟩
   calc ‖D f z‖
       ≤ M / (2 * π * (z.im / 2)) := norm_D_le_of_sphere_bound (by linarith [z.im_pos])
           (diffContOnCl_comp_ofComplex_of_mdifferentiable hf
@@ -941,8 +941,8 @@ theorem serre_D_isBoundedAtImInfty_of_bounded {f : ℍ → ℂ} (k : ℂ)
     (hbdd : IsBoundedAtImInfty f) : IsBoundedAtImInfty (serre_D k f) := by
   simp only [serre_D_eq]
   have hD : IsBoundedAtImInfty (D f) := D_isBoundedAtImInfty_of_bounded hf hbdd
-  have hE₂f : IsBoundedAtImInfty (fun z => k * 12⁻¹ * E₂ z * f z) := by
-    have hconst : IsBoundedAtImInfty (fun _ : ℍ => k * 12⁻¹) :=
+  have hE₂f : IsBoundedAtImInfty (fun z ↦ k * 12⁻¹ * E₂ z * f z) := by
+    have hconst : IsBoundedAtImInfty (fun _ : ℍ ↦ k * 12⁻¹) :=
       Filter.const_boundedAtFilter _ _
     convert hconst.mul (E₂_isBoundedAtImInfty.mul hbdd) using 1
     ext z
@@ -961,12 +961,12 @@ noncomputable def serre_D_ModularForm (k : ℤ) (f : ModularForm (Gamma 1) k) :
     ModularForm (Gamma 1) (k + 2) where
   toSlashInvariantForm := {
     toFun := serre_D k f
-    slash_action_eq' := fun _ hγ => by
+    slash_action_eq' := fun _ hγ ↦ by
       obtain ⟨γ', -, rfl⟩ := Subgroup.mem_map.mp hγ
       simpa using serre_D_slash_invariant k f f.holo' γ' (f.slash_eq_self γ')
   }
   holo' := serre_D_differentiable f.holo'
-  bdd_at_cusps' := fun hc => bounded_at_cusps_of_bounded_at_infty hc fun _ hA => by
+  bdd_at_cusps' := fun hc ↦ bounded_at_cusps_of_bounded_at_infty hc fun _ hA ↦ by
     obtain ⟨A', rfl⟩ := MonoidHom.mem_range.mp hA
     exact (serre_D_slash_invariant k f f.holo' A' (f.slash_eq_self A')).symm ▸
       serre_D_isBoundedAtImInfty_of_bounded k f.holo' (ModularFormClass.bdd_at_infty f)

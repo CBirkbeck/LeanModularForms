@@ -54,19 +54,19 @@ private lemma card_quotient_inf_of_set_mul {G : Type*} [Group G]
     (h_prod : ∀ g : G, ∃ k₁ ∈ K₁, ∃ k₂ ∈ K₂, g = k₁ * k₂) :
     Nat.card (G ⧸ (K₁ ⊓ K₂)) = Nat.card (G ⧸ K₁) * Nat.card (G ⧸ K₂) := by
   set f : G ⧸ (K₁ ⊓ K₂) → (G ⧸ K₁) × (G ⧸ K₂) :=
-    Quotient.lift (fun g => (QuotientGroup.mk g, QuotientGroup.mk g))
-      (fun a b hab => by
+    Quotient.lift (fun g ↦ (QuotientGroup.mk g, QuotientGroup.mk g))
+      (fun a b hab ↦ by
         have hmem := QuotientGroup.leftRel_apply.mp hab
         exact Prod.ext (QuotientGroup.eq.mpr (Subgroup.mem_inf.mp hmem).1)
           (QuotientGroup.eq.mpr (Subgroup.mem_inf.mp hmem).2))
   have hf_inj : Function.Injective f := by
-    intro a b; refine Quotient.inductionOn₂ a b (fun x y h => ?_)
+    intro a b; refine Quotient.inductionOn₂ a b (fun x y h ↦ ?_)
     simp only [f, Quotient.lift_mk] at h
     have h1 := QuotientGroup.eq.mp (Prod.ext_iff.mp h).1
     have h2 := QuotientGroup.eq.mp (Prod.ext_iff.mp h).2
     exact QuotientGroup.eq.mpr (Subgroup.mem_inf.mpr ⟨h1, h2⟩)
   have hf_surj : Function.Surjective f := by
-    rintro ⟨a, b⟩; refine Quotient.inductionOn₂ a b (fun α β => ?_)
+    rintro ⟨a, b⟩; refine Quotient.inductionOn₂ a b (fun α β ↦ ?_)
     obtain ⟨k₁, hk₁, k₂, hk₂, h_eq⟩ := h_prod (α⁻¹ * β)
     refine ⟨QuotientGroup.mk (α * k₁), Prod.ext ?_ ?_⟩
     · apply QuotientGroup.eq.mpr
@@ -151,9 +151,9 @@ private lemma exists_coprime_shift (N s d : ℤ) (m : ℕ) (hm_pos : 0 < m)
     obtain ⟨b₁, h⟩ := this; exact ⟨b₁, Int.isCoprime_iff_gcd_eq_one.mp h⟩
   revert hm_pos; refine Nat.recOnPosPrimePosCoprime ?_ ?_ ?_ ?_ m
   · intro p n hp hn _
-    exact (exists_coprime_shift_prime f d p hp hdNs).imp fun b₁ h => h.pow_right
+    exact (exists_coprime_shift_prime f d p hp hdNs).imp fun b₁ h ↦ h.pow_right
   · intro h; omega
-  · exact fun _ => ⟨0, by simp [isCoprime_one_right]⟩
+  · exact fun _ ↦ ⟨0, by simp [isCoprime_one_right]⟩
   · intro a b ha hb hab iha ihb _
     have hab_int : IsCoprime (↑a : ℤ) (↑b : ℤ) := by exact_mod_cast hab
     rw [show (↑(a * b) : ℤ) = ↑a * ↑b from by push_cast; ring]
@@ -166,7 +166,7 @@ private lemma Gamma0_mN_mul_GammaN_eq_Gamma0 (N m : ℕ) [NeZero N] [NeZero (m *
     ∃ σ : SL(2, ℤ), σ ∈ Gamma0 (m * N) ∧ σ⁻¹ * γ ∈ Gamma N := by
   intro γ hγ
   refine SpecialLinearGroup.fin_two_induction
-    (P := fun g => g ∈ Gamma0 N →
+    (P := fun g ↦ g ∈ Gamma0 N →
       ∃ σ : SL(2, ℤ), σ ∈ Gamma0 (m * N) ∧ σ⁻¹ * g ∈ Gamma N) ?_ γ hγ
   clear hγ γ
   intro a b c d hdet hγ
@@ -425,7 +425,7 @@ private lemma finiteIndex_Gamma0_map_subgroupOf (N k : ℕ) [NeZero N] (hk : 0 <
       (Gamma0_pair N).H).FiniteIndex := by
   rw [← stab_diag_eq_Gamma0 N k hk]
   exact ⟨((Gamma0_pair N).h₁ (⟨diagMat 2 (![1, k] : Fin 2 → ℕ), diagMat_mem_Delta0_of_gcd N _
-    (fun i => by fin_cases i <;> simp [hk]) (by simp)⟩ : (Gamma0_pair N).Δ).2).1⟩
+    (fun i ↦ by fin_cases i <;> simp [hk]) (by simp)⟩ : (Gamma0_pair N).Δ).2).1⟩
 
 /-- **Gamma0 degree multiplicativity**: for coprime `m, n`,
 `deg(diag(1,m)) * deg(diag(1,n)) = deg(diag(1,mn))` at the `Γ₀(N)` level, i.e.
@@ -433,21 +433,21 @@ private lemma finiteIndex_Gamma0_map_subgroupOf (N k : ℕ) [NeZero N] (hk : 0 <
 lemma Gamma0_deg_coprime_mul (N : ℕ) [NeZero N]
     (m n : ℕ) (hm_pos : 0 < m) (hn_pos : 0 < n) (hcop : Nat.Coprime m n) :
     HeckeRing.HeckeCoset_deg (Gamma0_pair N)
-      (T_diag_Gamma0 N (![1, m]) (fun i => by fin_cases i <;> simp [hm_pos])
+      (T_diag_Gamma0 N (![1, m]) (fun i ↦ by fin_cases i <;> simp [hm_pos])
         (by simp [Int.gcd_one_left])) *
     HeckeRing.HeckeCoset_deg (Gamma0_pair N)
-      (T_diag_Gamma0 N (![1, n]) (fun i => by fin_cases i <;> simp [hn_pos])
+      (T_diag_Gamma0 N (![1, n]) (fun i ↦ by fin_cases i <;> simp [hn_pos])
         (by simp [Int.gcd_one_left])) =
     HeckeRing.HeckeCoset_deg (Gamma0_pair N)
       (T_diag_Gamma0 N (![1, m * n])
-        (fun i => by fin_cases i <;> simp [Nat.mul_pos hm_pos hn_pos])
+        (fun i ↦ by fin_cases i <;> simp [Nat.mul_pos hm_pos hn_pos])
         (by simp [Int.gcd_one_left])) := by
   set g_m : (Gamma0_pair N).Δ := ⟨diagMat 2 (![1, m]),
-    diagMat_mem_Delta0_of_gcd N _ (fun i => by fin_cases i <;> simp [hm_pos]) (by simp)⟩
+    diagMat_mem_Delta0_of_gcd N _ (fun i ↦ by fin_cases i <;> simp [hm_pos]) (by simp)⟩
   set g_n : (Gamma0_pair N).Δ := ⟨diagMat 2 (![1, n]),
-    diagMat_mem_Delta0_of_gcd N _ (fun i => by fin_cases i <;> simp [hn_pos]) (by simp)⟩
+    diagMat_mem_Delta0_of_gcd N _ (fun i ↦ by fin_cases i <;> simp [hn_pos]) (by simp)⟩
   set g_mn : (Gamma0_pair N).Δ := ⟨diagMat 2 (![1, m * n]),
-    diagMat_mem_Delta0_of_gcd N _ (fun i => by fin_cases i <;> simp [Nat.mul_pos hm_pos hn_pos])
+    diagMat_mem_Delta0_of_gcd N _ (fun i ↦ by fin_cases i <;> simp [Nat.mul_pos hm_pos hn_pos])
       (by simp)⟩
   change HeckeRing.HeckeCoset_deg _ ⟦g_m⟧ * HeckeRing.HeckeCoset_deg _ ⟦g_n⟧ =
     HeckeRing.HeckeCoset_deg _ ⟦g_mn⟧
@@ -509,7 +509,7 @@ private lemma relIndex_conjAct_eq_of_mem_doubleCoset (α : GL (Fin 2) ℚ)
 
 private lemma conjAct_scalar_diagMat_smul_eq (p : ℕ) (hp : 0 < p)
     (X : Subgroup (GL (Fin 2) ℚ)) :
-    ConjAct.toConjAct (diagMat 2 (fun _ : Fin 2 => p) : GL (Fin 2) ℚ) • X = X := by
+    ConjAct.toConjAct (diagMat 2 (fun _ : Fin 2 ↦ p) : GL (Fin 2) ℚ) • X = X := by
   ext x; constructor
   · intro hx
     rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem] at hx
@@ -536,10 +536,10 @@ private lemma HeckeCoset_deg_eq_relIndex_of_rep_mem_doubleCoset (N : ℕ) [NeZer
 private lemma HeckeCoset_deg_Gamma0_one_k_eq_relIndex (N : ℕ) [NeZero N]
     (k : ℕ) (hk : 0 < k) :
     HeckeRing.HeckeCoset_deg (Gamma0_pair N)
-      (T_diag_Gamma0 N (![1, k]) (fun i => by fin_cases i <;> simp [hk])
+      (T_diag_Gamma0 N (![1, k]) (fun i ↦ by fin_cases i <;> simp [hk])
         (by simp [Int.gcd_one_left])) =
     ((CongruenceSubgroup.Gamma0 (k * N)).relIndex (CongruenceSubgroup.Gamma0 N) : ℤ) := by
-  set D := T_diag_Gamma0 N (![1, k]) (fun i => by fin_cases i <;> simp [hk])
+  set D := T_diag_Gamma0 N (![1, k]) (fun i ↦ by fin_cases i <;> simp [hk])
     (by simp [Int.gcd_one_left]) with hD_def
   set δ := HeckeCoset.rep D
   set α := (diagMat 2 (![1, k] : Fin 2 → ℕ) : GL (Fin 2) ℚ)
@@ -604,7 +604,7 @@ lemma HeckeCoset_deg_Gamma0_one_ppow (N : ℕ) [NeZero N]
     (p : ℕ) (hp : p.Prime) (hpN : Nat.Coprime p N) (k : ℕ) (hk : 0 < k) :
     HeckeRing.HeckeCoset_deg (Gamma0_pair N)
       (T_diag_Gamma0 N (![1, p^k])
-        (fun i => by fin_cases i <;> simp [pow_pos hp.pos])
+        (fun i ↦ by fin_cases i <;> simp [pow_pos hp.pos])
         (by simp [Int.gcd_one_left])) =
     ((p ^ (k - 1) * (p + 1) : ℕ) : ℤ) := by
   have h_bridge := HeckeCoset_deg_Gamma0_one_k_eq_relIndex N (p^k) (pow_pos hp.pos k)
@@ -619,20 +619,20 @@ private lemma diagMat_two_one_one_eq_one :
     (diagMat 2 (![1, 1] : Fin 2 → ℕ) : GL (Fin 2) ℚ) = 1 := by
   apply Units.ext
   ext i j
-  rw [diagMat_val 2 (![1, 1] : Fin 2 → ℕ) (fun i => by fin_cases i <;> simp), Units.val_one]
+  rw [diagMat_val 2 (![1, 1] : Fin 2 → ℕ) (fun i ↦ by fin_cases i <;> simp), Units.val_one]
   fin_cases i <;> fin_cases j <;>
     simp [Matrix.diagonal_apply, Matrix.one_apply, Matrix.cons_val_zero,
           Matrix.cons_val_one, Matrix.head_cons]
 
 private lemma diagMat_p_ppow_eq_scalar_mul_diag (p k : ℕ) (hp : 0 < p) (hk : 1 ≤ k) :
     (diagMat 2 (![p, p^k] : Fin 2 → ℕ) : GL (Fin 2) ℚ) =
-    (diagMat 2 (fun _ : Fin 2 => p) : GL (Fin 2) ℚ) *
+    (diagMat 2 (fun _ : Fin 2 ↦ p) : GL (Fin 2) ℚ) *
       (diagMat 2 (![1, p^(k-1)] : Fin 2 → ℕ) : GL (Fin 2) ℚ) := by
   apply Units.ext
   simp only [Units.val_mul]
-  rw [diagMat_val 2 (![p, p^k] : Fin 2 → ℕ) (fun i => by fin_cases i <;> simp [hp, pow_pos hp]),
-      diagMat_val 2 (fun _ : Fin 2 => p) (fun _ => hp),
-      diagMat_val 2 (![1, p^(k-1)] : Fin 2 → ℕ) (fun i => by fin_cases i <;> simp [pow_pos hp])]
+  rw [diagMat_val 2 (![p, p^k] : Fin 2 → ℕ) (fun i ↦ by fin_cases i <;> simp [hp, pow_pos hp]),
+      diagMat_val 2 (fun _ : Fin 2 ↦ p) (fun _ ↦ hp),
+      diagMat_val 2 (![1, p^(k-1)] : Fin 2 → ℕ) (fun i ↦ by fin_cases i <;> simp [pow_pos hp])]
   ext i j
   simp only [Matrix.mul_apply, Fin.sum_univ_two, Matrix.diagonal_apply]
   have hpk : (p : ℚ) ^ k = (p : ℚ) * (p : ℚ) ^ (k - 1) := by rw [← pow_succ']; congr 1; omega
@@ -646,16 +646,16 @@ lemma HeckeCoset_deg_Gamma0_p_ppow (N : ℕ) [NeZero N]
     (p : ℕ) (hp : p.Prime) (hpN : Nat.Coprime p N) (k : ℕ) (hk : 1 ≤ k) :
     HeckeRing.HeckeCoset_deg (Gamma0_pair N)
       (T_diag_Gamma0 N (![p, p^k])
-        (fun i => by fin_cases i <;> simp [hp.pos, pow_pos hp.pos])
+        (fun i ↦ by fin_cases i <;> simp [hp.pos, pow_pos hp.pos])
         (by show Int.gcd (↑p) ↑N = 1
             rw [Int.gcd_natCast_natCast]; exact hpN)) =
     (if k = 1 then (1 : ℤ) else ((p^(k-2) * (p + 1) : ℕ) : ℤ)) := by
   set D := T_diag_Gamma0 N (![p, p^k])
-    (fun i => by fin_cases i <;> simp [hp.pos, pow_pos hp.pos])
+    (fun i ↦ by fin_cases i <;> simp [hp.pos, pow_pos hp.pos])
     (by show Int.gcd (↑p) ↑N = 1; rw [Int.gcd_natCast_natCast]; exact hpN)
   set δ := (HeckeCoset.rep D : GL (Fin 2) ℚ) with hδ_def
   set α : GL (Fin 2) ℚ := diagMat 2 (![p, p^k] : Fin 2 → ℕ)
-  set α_sc : GL (Fin 2) ℚ := diagMat 2 (fun _ : Fin 2 => p)
+  set α_sc : GL (Fin 2) ℚ := diagMat 2 (fun _ : Fin 2 ↦ p)
   set α_diag : GL (Fin 2) ℚ := diagMat 2 (![1, p^(k-1)] : Fin 2 → ℕ)
   set H := (Gamma0_pair N).H
   have hδ_mem : δ ∈ DoubleCoset.doubleCoset α (↑H : Set _) (↑H : Set _) := by
@@ -679,7 +679,7 @@ lemma HeckeCoset_deg_Gamma0_p_ppow (N : ℕ) [NeZero N]
     have hk1_pos : 0 < k - 1 := by omega
     have h_T1B1 := HeckeCoset_deg_Gamma0_one_ppow N p hp hpN (k - 1) hk1_pos
     set D' := T_diag_Gamma0 N (![1, p ^ (k-1)])
-      (fun i => by fin_cases i <;> simp [pow_pos hp.pos])
+      (fun i ↦ by fin_cases i <;> simp [pow_pos hp.pos])
       (by simp [Int.gcd_one_left])
     have hδ'_mem : (HeckeCoset.rep D' : GL (Fin 2) ℚ) ∈
         DoubleCoset.doubleCoset α_diag (↑H : Set _) (↑H : Set _) := by

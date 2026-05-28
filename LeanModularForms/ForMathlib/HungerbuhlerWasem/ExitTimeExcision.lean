@@ -65,7 +65,7 @@ theorem cpvIntegrandOn_singleton_eq_contour_of_far
     {t : ℝ} (h_far : ε < ‖γ.toPath.extend t - s‖) :
     cpvIntegrandOn {s} f γ.toPath.extend ε t =
       f (γ.toPath.extend t) * deriv γ.toPath.extend t :=
-  cpvIntegrandOn_of_forall_gt fun s' hs' => by
+  cpvIntegrandOn_of_forall_gt fun s' hs' ↦ by
     rw [Finset.mem_singleton.mp hs']
     exact h_far
 
@@ -83,7 +83,7 @@ theorem cpvIntegrandOn_singleton_eq_indicator
     (γ : PiecewiseC1Path x x) (s : ℂ) (f : ℂ → ℂ) (ε : ℝ) (t : ℝ) :
     cpvIntegrandOn {s} f γ.toPath.extend ε t =
       ({t | ε < ‖γ.toPath.extend t - s‖}.indicator
-        (fun t => f (γ.toPath.extend t) * deriv γ.toPath.extend t)) t := by
+        (fun t ↦ f (γ.toPath.extend t) * deriv γ.toPath.extend t)) t := by
   by_cases h : ε < ‖γ.toPath.extend t - s‖
   · rw [Set.indicator_of_mem (h : t ∈ _)]
     exact cpvIntegrandOn_singleton_eq_contour_of_far γ h
@@ -104,7 +104,7 @@ theorem integral_cpvIntegrandOn_singleton_eq_contour_left
       ∫ t in (0 : ℝ)..α, f (γ.toPath.extend t) * deriv γ.toPath.extend t := by
   rw [intervalIntegral.integral_of_le hα, intervalIntegral.integral_of_le hα,
     MeasureTheory.integral_Ioc_eq_integral_Ioo, MeasureTheory.integral_Ioc_eq_integral_Ioo]
-  exact MeasureTheory.setIntegral_congr_fun measurableSet_Ioo fun t ht =>
+  exact MeasureTheory.setIntegral_congr_fun measurableSet_Ioo fun t ht ↦
     cpvIntegrandOn_singleton_eq_contour_of_far γ (h_outside t ht)
 
 /-- The CPV integrand integral on `[β, 1]` equals the contour integrand integral when
@@ -116,7 +116,7 @@ theorem integral_cpvIntegrandOn_singleton_eq_contour_right
       ∫ t in β..(1 : ℝ), f (γ.toPath.extend t) * deriv γ.toPath.extend t := by
   rw [intervalIntegral.integral_of_le hβ, intervalIntegral.integral_of_le hβ,
     MeasureTheory.integral_Ioc_eq_integral_Ioo, MeasureTheory.integral_Ioc_eq_integral_Ioo]
-  exact MeasureTheory.setIntegral_congr_fun measurableSet_Ioo fun t ht =>
+  exact MeasureTheory.setIntegral_congr_fun measurableSet_Ioo fun t ht ↦
     cpvIntegrandOn_singleton_eq_contour_of_far γ (h_outside t ht)
 
 /-- The CPV integrand integral on `[α, β]` is zero when `‖γ(t) - s‖ ≤ ε` on
@@ -127,8 +127,8 @@ theorem integral_cpvIntegrandOn_singleton_eq_zero_middle
     (h_inside : ∀ t ∈ Ioo α β, ‖γ.toPath.extend t - s‖ ≤ ε) :
     ∫ t in α..β, cpvIntegrandOn {s} f γ.toPath.extend ε t = 0 := by
   rw [intervalIntegral.integral_of_le h_le, MeasureTheory.integral_Ioc_eq_integral_Ioo,
-    MeasureTheory.setIntegral_congr_fun (g := fun _ => (0 : ℂ)) measurableSet_Ioo
-      (fun t ht => cpvIntegrandOn_singleton_eq_zero_of_close γ (h_inside t ht))]
+    MeasureTheory.setIntegral_congr_fun (g := fun _ ↦ (0 : ℂ)) measurableSet_Ioo
+      (fun t ht ↦ cpvIntegrandOn_singleton_eq_zero_of_close γ (h_inside t ht))]
   simp
 
 /-- Under the shape hypothesis on `(0, α) ∪ (α, β) ∪ (β, 1)`, the cpvIntegrandOn
@@ -140,7 +140,7 @@ theorem cpvIntegrandOn_singleton_integral_eq_excision
     (h_outside_right : ∀ t ∈ Ioo β (1 : ℝ), ε < ‖γ.toPath.extend t - s‖)
     (h_inside : ∀ t ∈ Ioo α β, ‖γ.toPath.extend t - s‖ ≤ ε)
     (h_int_full : IntervalIntegrable
-      (fun t => cpvIntegrandOn {s} f γ.toPath.extend ε t) volume 0 1) :
+      (fun t ↦ cpvIntegrandOn {s} f γ.toPath.extend ε t) volume 0 1) :
     ∫ t in (0 : ℝ)..1, cpvIntegrandOn {s} f γ.toPath.extend ε t =
       (∫ t in (0 : ℝ)..α, f (γ.toPath.extend t) * deriv γ.toPath.extend t) +
       ∫ t in β..(1 : ℝ), f (γ.toPath.extend t) * deriv γ.toPath.extend t := by
@@ -153,17 +153,17 @@ theorem cpvIntegrandOn_singleton_integral_eq_excision
     have h0β : (0 : ℝ) ≤ β := hα.trans h_le
     have h01 : Set.uIcc (0 : ℝ) 1 = Set.Icc 0 1 := Set.uIcc_of_le (zero_le_one' ℝ)
     have h_int_α : IntervalIntegrable
-        (fun t => cpvIntegrandOn {s} f γ.toPath.extend ε t) volume 0 α :=
+        (fun t ↦ cpvIntegrandOn {s} f γ.toPath.extend ε t) volume 0 α :=
       h_int_full.mono_set <| by
         rw [Set.uIcc_of_le hα, h01]
         exact Set.Icc_subset_Icc le_rfl hα1
     have h_int_β : IntervalIntegrable
-        (fun t => cpvIntegrandOn {s} f γ.toPath.extend ε t) volume α β :=
+        (fun t ↦ cpvIntegrandOn {s} f γ.toPath.extend ε t) volume α β :=
       h_int_full.mono_set <| by
         rw [Set.uIcc_of_le h_le, h01]
         exact Set.Icc_subset_Icc hα hβ
     have h_int_1 : IntervalIntegrable
-        (fun t => cpvIntegrandOn {s} f γ.toPath.extend ε t) volume β 1 :=
+        (fun t ↦ cpvIntegrandOn {s} f γ.toPath.extend ε t) volume β 1 :=
       h_int_full.mono_set <| by
         rw [Set.uIcc_of_le hβ, h01]
         exact Set.Icc_subset_Icc h0β le_rfl
@@ -197,8 +197,8 @@ theorem hasCauchyPVOn_singleton_of_excision_tendsto
       (∀ t ∈ Ioo (β ε) (1 : ℝ), ε < ‖γ.toPath.extend t - s‖) ∧
       (∀ t ∈ Ioo (α ε) (β ε), ‖γ.toPath.extend t - s‖ ≤ ε))
     (h_int_full : ∀ᶠ ε in 𝓝[>] (0 : ℝ), IntervalIntegrable
-      (fun t => cpvIntegrandOn {s} f γ.toPath.extend ε t) volume 0 1)
-    (h_excision : Tendsto (fun ε =>
+      (fun t ↦ cpvIntegrandOn {s} f γ.toPath.extend ε t) volume 0 1)
+    (h_excision : Tendsto (fun ε ↦
       (∫ t in (0 : ℝ)..(α ε), f (γ.toPath.extend t) * deriv γ.toPath.extend t) +
       ∫ t in (β ε)..(1 : ℝ), f (γ.toPath.extend t) * deriv γ.toPath.extend t)
       (𝓝[>] (0 : ℝ)) (𝓝 0)) :
@@ -232,8 +232,8 @@ theorem hasCauchyPVOn_singleton_of_exitTime_excision
           (LeanModularForms.firstExitTimeRight γ.toPath.extend t₀ δPlus s ε),
         ‖γ.toPath.extend t - s‖ ≤ ε))
     (h_int_full : ∀ᶠ ε in 𝓝[>] (0 : ℝ), IntervalIntegrable
-      (fun t => cpvIntegrandOn {s} f γ.toPath.extend ε t) volume 0 1)
-    (h_excision : Tendsto (fun ε =>
+      (fun t ↦ cpvIntegrandOn {s} f γ.toPath.extend ε t) volume 0 1)
+    (h_excision : Tendsto (fun ε ↦
       (∫ t in (0 : ℝ)..
           (LeanModularForms.firstExitTimeLeft γ.toPath.extend t₀ δMinus s ε),
         f (γ.toPath.extend t) * deriv γ.toPath.extend t) +
@@ -260,7 +260,7 @@ theorem shape_left_of_strictAntiOn
     (h_t₀_minus_pos : 0 ≤ t₀ - δMinus)
     (hδMinus : 0 < δMinus)
     (hγ_cont : ContinuousOn γ (Icc (t₀ - δMinus) t₀))
-    (hγ_anti : StrictAntiOn (fun t => ‖γ t - s‖) (Icc (t₀ - δMinus) t₀))
+    (hγ_anti : StrictAntiOn (fun t ↦ ‖γ t - s‖) (Icc (t₀ - δMinus) t₀))
     {δ_avoid : ℝ} (h_avoid : ∀ t ∈ Icc (0 : ℝ) (t₀ - δMinus), δ_avoid ≤ ‖γ t - s‖)
     {ε : ℝ} (hε_lt_avoid : ε < δ_avoid)
     (hε_le_max : ε ≤ ‖γ (t₀ - δMinus) - s‖) :
@@ -285,7 +285,7 @@ theorem shape_right_of_strictMonoOn
     (h_t₀_plus_le : t₀ + δPlus ≤ 1)
     (hδPlus : 0 < δPlus)
     (hγ_cont : ContinuousOn γ (Icc t₀ (t₀ + δPlus)))
-    (hγ_mono : StrictMonoOn (fun t => ‖γ t - s‖) (Icc t₀ (t₀ + δPlus)))
+    (hγ_mono : StrictMonoOn (fun t ↦ ‖γ t - s‖) (Icc t₀ (t₀ + δPlus)))
     {δ_avoid : ℝ} (h_avoid : ∀ t ∈ Icc (t₀ + δPlus) (1 : ℝ), δ_avoid ≤ ‖γ t - s‖)
     {ε : ℝ} (hε_lt_avoid : ε < δ_avoid)
     (hε_le_max : ε ≤ ‖γ (t₀ + δPlus) - s‖) :
@@ -309,7 +309,7 @@ theorem shape_right_eventually
     {γ : ℝ → ℂ} {s : ℂ} {t₀ δPlus : ℝ}
     (h_t₀_plus_le : t₀ + δPlus ≤ 1) (hδPlus : 0 < δPlus)
     (hγ_cont : ContinuousOn γ (Icc t₀ (t₀ + δPlus)))
-    (hγ_mono : StrictMonoOn (fun t => ‖γ t - s‖) (Icc t₀ (t₀ + δPlus)))
+    (hγ_mono : StrictMonoOn (fun t ↦ ‖γ t - s‖) (Icc t₀ (t₀ + δPlus)))
     (_ : γ t₀ = s)
     {δ_avoid : ℝ} (h_avoid_pos : 0 < δ_avoid)
     (h_avoid : ∀ t ∈ Icc (t₀ + δPlus) (1 : ℝ), δ_avoid ≤ ‖γ t - s‖) :
@@ -329,7 +329,7 @@ theorem shape_left_eventually
     {γ : ℝ → ℂ} {s : ℂ} {t₀ δMinus : ℝ}
     (h_t₀_minus_pos : 0 ≤ t₀ - δMinus) (hδMinus : 0 < δMinus)
     (hγ_cont : ContinuousOn γ (Icc (t₀ - δMinus) t₀))
-    (hγ_anti : StrictAntiOn (fun t => ‖γ t - s‖) (Icc (t₀ - δMinus) t₀))
+    (hγ_anti : StrictAntiOn (fun t ↦ ‖γ t - s‖) (Icc (t₀ - δMinus) t₀))
     (_ : γ t₀ = s)
     {δ_avoid : ℝ} (h_avoid_pos : 0 < δ_avoid)
     (h_avoid : ∀ t ∈ Icc (0 : ℝ) (t₀ - δMinus), δ_avoid ≤ ‖γ t - s‖) :
@@ -354,8 +354,8 @@ theorem shape_eventually_of_strict_mono
     (hδMinus : 0 < δMinus) (hδPlus : 0 < δPlus)
     (hγ_cont_left : ContinuousOn γ (Icc (t₀ - δMinus) t₀))
     (hγ_cont_right : ContinuousOn γ (Icc t₀ (t₀ + δPlus)))
-    (hγ_anti : StrictAntiOn (fun t => ‖γ t - s‖) (Icc (t₀ - δMinus) t₀))
-    (hγ_mono : StrictMonoOn (fun t => ‖γ t - s‖) (Icc t₀ (t₀ + δPlus)))
+    (hγ_anti : StrictAntiOn (fun t ↦ ‖γ t - s‖) (Icc (t₀ - δMinus) t₀))
+    (hγ_mono : StrictMonoOn (fun t ↦ ‖γ t - s‖) (Icc t₀ (t₀ + δPlus)))
     (h_s : γ t₀ = s)
     {δ_avoid_left δ_avoid_right : ℝ}
     (h_avoid_left_pos : 0 < δ_avoid_left)

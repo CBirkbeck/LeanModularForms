@@ -47,16 +47,16 @@ theorem one_def : (1 : 𝕋 P Z) = T_single P Z (HeckeCoset.one P) 1 := rfl
 /-- The Hecke ring is a non-associative semiring (one is a two-sided identity). -/
 noncomputable instance instNonAssocSemiring : NonAssocSemiring (𝕋 P ℤ) :=
   { instNonUnitalNonAssocSemiring P with
-    natCast := fun n => T_single P ℤ (HeckeCoset.one P) n
+    natCast := fun n ↦ T_single P ℤ (HeckeCoset.one P) n
     natCast_zero := by simp only [Nat.cast_zero, single_zero]
-    natCast_succ := fun _ => by
+    natCast_succ := fun _ ↦ by
       simp only [Nat.cast_add, Nat.cast_one, single_add, add_right_inj]; rfl
-    one_mul := fun f => by
+    one_mul := fun f ↦ by
       simp only [one_def, mul_def]; rw [T_single]; simp
       have := Finsupp.sum_single f; nth_rw 2 [← this]; congr; ext D z v
       have := one_mul_singleton_𝕋 P D z; simp_rw [T_single] at *
       rw [← this, mul_singleton_𝕋]; simp only [one_smul]
-    mul_one := fun f => by
+    mul_one := fun f ↦ by
       simp only [one_def, mul_def, zero_smul, smul_zero, sum_single_index, one_smul]
       have := Finsupp.sum_single f; nth_rw 2 [← this]; congr; ext D z v
       have := singleton_one_mul_𝕋 P D z; simp_rw [T_single] at this
@@ -71,9 +71,9 @@ noncomputable instance instSemiring : Semiring (𝕋 P ℤ) :=
 noncomputable instance instNonAssocRing : NonAssocRing (𝕋 P ℤ) :=
   { HeckeRing.instAddCommGroup𝕋 P ℤ,
     HeckeRing.instNonAssocSemiring P with
-    intCast := fun n => T_single P ℤ (HeckeCoset.one P) n
-    intCast_ofNat := fun _ => rfl
-    intCast_negSucc := fun _ => by
+    intCast := fun n ↦ T_single P ℤ (HeckeCoset.one P) n
+    intCast_ofNat := fun _ ↦ rfl
+    intCast_negSucc := fun _ ↦ by
       simp only [T_single, Int.negSucc_eq, Finsupp.single_neg]; congr 1 }
 
 /-- The Hecke ring `𝕋 P ℤ` is a ring. -/

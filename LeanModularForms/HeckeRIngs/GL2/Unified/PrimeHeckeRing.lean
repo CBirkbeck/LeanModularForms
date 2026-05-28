@@ -177,7 +177,7 @@ theorem gamma0TrivialFamily_prime_commute_from_ring
       (gamma0TrivialFamily (N := N) k).op ⟨p, hp.pos, hpN⟩
   ext f z
   simp only [Module.End.mul_apply]
-  exact congrArg (fun g : ModularForm ((Gamma0 N).map (mapGL ℝ)) k => g z)
+  exact congrArg (fun g : ModularForm ((Gamma0 N).map (mapGL ℝ)) k ↦ g z)
     (gamma0TrivialFamily_prime_commute_apply_from_ring (N := N) k hp hq hpN hqN f)
 
 /-- The level-1 specialization of the ring-based prime commutativity theorem. -/

@@ -882,13 +882,13 @@ theorem miyake_V_p_descend_identity_with_char
   have hg_χM : g ∈ cuspFormCharSpace k χ_M.toUnitHom := by
     rw [show χ_M.toUnitHom = χ_M_homU from MulChar.equivToUnitHom.apply_symm_apply _]
     exact hg_char
-  have h_cop_iff : ∀ m : ℕ, Nat.Coprime (p * m) l' ↔ Nat.Coprime m l' := fun m =>
-    ⟨fun h => (Nat.coprime_mul_iff_left.mp h).2,
-      fun h => Nat.coprime_mul_iff_left.mpr ⟨hpl', h⟩⟩
+  have h_cop_iff : ∀ m : ℕ, Nat.Coprime (p * m) l' ↔ Nat.Coprime m l' := fun m ↦
+    ⟨fun h ↦ (Nat.coprime_mul_iff_left.mp h).2,
+      fun h ↦ Nat.coprime_mul_iff_left.mpr ⟨hpl', h⟩⟩
   rcases miyake_4_6_4_dichotomy_strong χ_M p hp hpM g hg_χM hg_supp with
     hg_zero | ⟨h_fac, g_p, hg_p_char, hg_p_eq⟩
   · have h_g_zero : (⇑g : UpperHalfPlane → ℂ) = 0 := by rw [hg_zero]; rfl
-    refine miyake_V_p_descend_with_char_of_vanishing f p l' hpl' (fun n hn_cop_l' => ?_)
+    refine miyake_V_p_descend_with_char_of_vanishing f p l' hpl' (fun n hn_cop_l' ↦ ?_)
     have := hg_qexp n
     rwa [if_pos hn_cop_l', qExpansion_one_coe_zero_coeff _ h_g_zero n, eq_comm] at this
   · have h_qExp_Vp_eq_g :
@@ -975,15 +975,15 @@ private lemma mdifferentiable_descendCosetList_slash_sum {M : ℕ} [NeZero M]
     {Γ : Subgroup (GL (Fin 2) ℝ)} {k : ℤ}
     (p : ℕ) [NeZero p] (hp : p.Prime) (G : ModularForm Γ k) :
     MDifferentiable (modelWithCornersSelf ℂ ℂ) (modelWithCornersSelf ℂ ℂ)
-      (fun z : UpperHalfPlane =>
+      (fun z : UpperHalfPlane ↦
         ∑ v : Fin (descendCosetCount p M), ((⇑G : UpperHalfPlane → ℂ) ∣[k]
           descendCosetList p M hp v) z) := by
-  rw [show (fun z : UpperHalfPlane =>
+  rw [show (fun z : UpperHalfPlane ↦
         ∑ v : Fin (descendCosetCount p M), ((⇑G : UpperHalfPlane → ℂ) ∣[k]
           descendCosetList p M hp v) z) =
       ∑ v : Fin (descendCosetCount p M), ((⇑G : UpperHalfPlane → ℂ) ∣[k]
-        descendCosetList p M hp v) from funext fun z => (Finset.sum_apply _ _ _).symm]
-  exact MDifferentiable.sum (fun v _ => (ModularFormClass.holo G).slash k _)
+        descendCosetList p M hp v) from funext fun z ↦ (Finset.sum_apply _ _ _).symm]
+  exact MDifferentiable.sum (fun v _ ↦ (ModularFormClass.holo G).slash k _)
 
 noncomputable def slash_sum_V_q_cuspForm_descend
     {M_q : ℕ} [NeZero M_q] {k : ℤ}
@@ -1029,7 +1029,7 @@ noncomputable def slash_sum_V_q_cuspForm_descend
   { toFun := fun z ↦ ∑ v : Fin (descendCosetCount p (q * M_q)),
       ((⇑V_q_F_q.toModularForm' : UpperHalfPlane → ℂ) ∣[k]
         descendCosetList p (q * M_q) hp v) z
-    slash_action_eq' := fun γ hγ => by
+    slash_action_eq' := fun γ hγ ↦ by
       obtain ⟨γ', h_γ'_Gamma1, rfl⟩ := Subgroup.mem_map.mp hγ
       exact miyake_hecke_descend_Gamma1_inv p hp h_qMp_dvd
         (χ_F.comp (ZMod.unitsMap (Nat.dvd_mul_left M_q q)))
@@ -1041,7 +1041,7 @@ noncomputable def slash_sum_V_q_cuspForm_descend
           ((⇑V_q_F_q.toModularForm' : UpperHalfPlane → ℂ) ∣[k]
             descendCosetList p (q * M_q) hp v) z)
       exact mdifferentiable_descendCosetList_slash_sum p hp V_q_F_q.toModularForm'
-    zero_at_cusps' := fun {cusp} hc => miyake_hecke_descend_cusp p hp h_qMp_dvd V_q_F_q hc }
+    zero_at_cusps' := fun {cusp} hc ↦ miyake_hecke_descend_cusp p hp h_qMp_dvd V_q_F_q hc }
 
 lemma per_q_slash_sum_at_deep_qexp_zero
     {M_q : ℕ} [NeZero M_q] {k : ℤ}
@@ -1067,10 +1067,10 @@ lemma per_q_slash_sum_at_deep_qexp_zero
     p hp hpM_q hpq hq_dvd_Mq_div_p χ_F χ_F_low h_χ_F_factor
     F_q.toModularForm' hF_q_mod
   let G_q : CuspForm ((Gamma1 (M_q / p)).map (mapGL ℝ)) k :=
-    { toFun := fun z => ∑ v : Fin (descendCosetCount p M_q),
+    { toFun := fun z ↦ ∑ v : Fin (descendCosetCount p M_q),
         ((⇑F_q.toModularForm' : UpperHalfPlane → ℂ) ∣[k]
           descendCosetList p M_q hp v) z
-      slash_action_eq' := fun γ hγ => by
+      slash_action_eq' := fun γ hγ ↦ by
         obtain ⟨γ', h_γ'_Gamma1, rfl⟩ := Subgroup.mem_map.mp hγ
         exact miyake_hecke_descend_Gamma1_inv p hp hpM_q χ_F χ_F_low h_χ_F_factor
           hF_q_mod γ' h_γ'_Gamma1
@@ -1080,7 +1080,7 @@ lemma per_q_slash_sum_at_deep_qexp_zero
             ((⇑F_q.toModularForm' : UpperHalfPlane → ℂ) ∣[k]
               descendCosetList p M_q hp v) z)
         exact mdifferentiable_descendCosetList_slash_sum p hp F_q.toModularForm'
-      zero_at_cusps' := fun {cusp} hc => miyake_hecke_descend_cusp p hp hpM_q F_q hc }
+      zero_at_cusps' := fun {cusp} hc ↦ miyake_hecke_descend_cusp p hp hpM_q F_q hc }
   have h_fun_eq_V_q_G : (fun z : UpperHalfPlane ↦
       ∑ v : Fin (descendCosetCount p M_q),
         ((⇑F_q.toModularForm' : UpperHalfPlane → ℂ) ∣[k]
@@ -1119,13 +1119,13 @@ lemma slash_sum_linear_over_Finset_sum
     (p M : ℕ) [NeZero p] [NeZero M] (hp : p.Prime) (k : ℤ)
     (s : Finset α) (h : α → UpperHalfPlane → ℂ) :
     (fun z : UpperHalfPlane ↦ ∑ v : Fin (descendCosetCount p M),
-      ((fun w : UpperHalfPlane => ∑ a ∈ s, h a w) ∣[k]
+      ((fun w : UpperHalfPlane ↦ ∑ a ∈ s, h a w) ∣[k]
         descendCosetList p M hp v) z) =
     (fun z : UpperHalfPlane ↦ ∑ a ∈ s,
       ∑ v : Fin (descendCosetCount p M),
         (h a ∣[k] descendCosetList p M hp v) z) := by
   funext z
-  have h_pi_sum : (fun w : UpperHalfPlane => ∑ a ∈ s, h a w) =
+  have h_pi_sum : (fun w : UpperHalfPlane ↦ ∑ a ∈ s, h a w) =
       (∑ a ∈ s, h a : UpperHalfPlane → ℂ) := by
     funext w; rw [Finset.sum_apply]
   rw [h_pi_sum]
@@ -1159,7 +1159,7 @@ private lemma coe_finset_sum_modularForm_apply {ι : Type*} [DecidableEq ι]
     (s : Finset ι) (F : ι → ModularForm ((Gamma1 M).map (mapGL ℝ)) k) (z : UpperHalfPlane) :
     ((∑ q ∈ s, F q : ModularForm ((Gamma1 M).map (mapGL ℝ)) k) : UpperHalfPlane → ℂ) z =
       ∑ q ∈ s, (⇑(F q) : UpperHalfPlane → ℂ) z := by
-  refine Finset.induction_on s ?_ fun q s hqs ih => ?_
+  refine Finset.induction_on s ?_ fun q s hqs ih ↦ ?_
   · simp
   · rw [Finset.sum_insert hqs, Finset.sum_insert hqs, ModularForm.coe_add, Pi.add_apply, ih]
 
@@ -1174,7 +1174,7 @@ private lemma modularForm_eq_sum_of_qExpansion_coeff_eq {M : ℕ} [NeZero M] {k 
     (h_coeff : ∀ n : ℕ, (ModularFormClass.qExpansion (1 : ℝ) G).coeff n =
       ∑ q ∈ s, (ModularFormClass.qExpansion (1 : ℝ) (φ q)).coeff n) :
     (⇑G : UpperHalfPlane → ℂ) =
-      fun z => ∑ q ∈ s, (⇑(φ q) : UpperHalfPlane → ℂ) z := by
+      fun z ↦ ∑ q ∈ s, (⇑(φ q) : UpperHalfPlane → ℂ) z := by
   set RHS_sum : ModularForm ((Gamma1 M).map (mapGL ℝ)) k := ∑ q ∈ s, φ q with hRHS
   have h_eq : (⇑G : UpperHalfPlane → ℂ) = ⇑RHS_sum := by
     apply modularForm_fun_eq_of_qExp_eq_at_period_one h_period
@@ -1228,7 +1228,7 @@ lemma function_identity_Δ_eq_sum_V_q_F
       ⟨Nat.mul_ne_zero (NeZero.ne L) (pow_ne_zero 2 (NeZero.ne l))⟩
     (⇑(CuspForm.restrictSubgroup (Gamma1_map_le_Gamma1_map_of_dvd hL_dvd) Δ) :
       UpperHalfPlane → ℂ) =
-    fun z => ∑ q ∈ l.primeFactors.attach,
+    fun z ↦ ∑ q ∈ l.primeFactors.attach,
       (haveI : NeZero ((L * l ^ 2) / q.val) := h_q_NeZero q.val q.property
        haveI : NeZero q.val := ⟨(Nat.prime_of_mem_primeFactors q.property).ne_zero⟩
        (⇑(HeckeRing.GL2.modularFormLevelRaise ((L * l ^ 2) / q.val) q.val k
@@ -1238,7 +1238,7 @@ lemma function_identity_Δ_eq_sum_V_q_F
     ⟨Nat.mul_ne_zero (NeZero.ne L) (pow_ne_zero 2 (NeZero.ne l))⟩
   have h1_period_Ll2 := m7_one_mem_strictPeriods_Gamma1_map (L * l ^ 2)
   let φ : (q : l.primeFactors) → ModularForm ((Gamma1 (L * l ^ 2)).map (mapGL ℝ)) k :=
-    fun q =>
+    fun q ↦
       haveI : NeZero ((L * l ^ 2) / q.val) := h_q_NeZero q.val q.property
       haveI : NeZero q.val := ⟨(Nat.prime_of_mem_primeFactors q.property).ne_zero⟩
       have h_eq : q.val * ((L * l ^ 2) / q.val) = L * l ^ 2 :=
@@ -1265,13 +1265,13 @@ lemma function_identity_Δ_eq_sum_V_q_F
     intro n
     change (PowerSeries.coeff (R := ℂ) n) (ModularFormClass.qExpansion 1 ⇑Δ) = _
     rw [h_qexp_eq n, ← Finset.sum_attach l.primeFactors
-      (fun q => if q ∣ n then
+      (fun q ↦ if q ∣ n then
         (ModularFormClass.qExpansion (1 : ℝ) (g_q_fam q)).coeff (n / q) else 0)]
-    exact Finset.sum_congr rfl fun q _ => (h_φ_qexp q n).symm
+    exact Finset.sum_congr rfl fun q _ ↦ (h_φ_qexp q n).symm
   change (⇑Δ_lifted : UpperHalfPlane → ℂ) = _
   rw [modularForm_eq_sum_of_qExpansion_coeff_eq h1_period_Ll2 Δ_lifted
     l.primeFactors.attach φ h_coeff]
-  refine funext fun z => Finset.sum_congr rfl fun q _ => ?_
+  refine funext fun z ↦ Finset.sum_congr rfl fun q _ ↦ ?_
   haveI : NeZero ((L * l ^ 2) / q.val) := h_q_NeZero q.val q.property
   haveI : NeZero q.val := ⟨(Nat.prime_of_mem_primeFactors q.property).ne_zero⟩
   exact modularForm_cast_level_apply

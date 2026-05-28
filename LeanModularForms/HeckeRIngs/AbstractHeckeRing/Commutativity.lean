@@ -82,9 +82,9 @@ lemma bar_doubleCoset_eq (g₁ g₂ : G)
 
 /-- The induced action of the anti-involution on double cosets, defined via `Quotient.lift`. -/
 noncomputable def onHeckeCoset (D : HeckeCoset P) : HeckeCoset P :=
-  Quotient.lift (fun (g : P.Δ) =>
+  Quotient.lift (fun (g : P.Δ) ↦
     (⟦⟨ι.bar (g : G), ι.bar_mem_Δ g.2⟩⟧ : HeckeCoset P))
-    (fun a b (h : @Setoid.r _ (dcSetoid P) a b) => by
+    (fun a b (h : @Setoid.r _ (dcSetoid P) a b) ↦ by
       rw [HeckeCoset.eq_iff]
       exact ι.bar_doubleCoset_eq _ _ h) D
 

@@ -23,18 +23,18 @@ open Filter Complex UpperHalfPlane ModularForm
 
 /-- As `t → ∞`, the point `i * t` tends to `atImInfty` in `ℍ`. -/
 public lemma tendsto_ofComplex_I_mul_atTop_atImInfty :
-    Tendsto (fun t : ℝ =>
+    Tendsto (fun t : ℝ ↦
       (UpperHalfPlane.ofComplex (Complex.I * t))) atTop UpperHalfPlane.atImInfty := by
   refine UpperHalfPlane.tendsto_comap_im_ofComplex.comp ?_
   refine (tendsto_comap_iff.2 ?_)
-  have hEq : (Complex.im ∘ fun t : ℝ => (Complex.I : ℂ) * t) = (fun t : ℝ => t) := by
+  have hEq : (Complex.im ∘ fun t : ℝ ↦ (Complex.I : ℂ) * t) = (fun t : ℝ ↦ t) := by
     funext t
     simp [Function.comp]
-  simpa [hEq] using (tendsto_id : Tendsto (fun t : ℝ => t) atTop atTop)
+  simpa [hEq] using (tendsto_id : Tendsto (fun t : ℝ ↦ t) atTop atTop)
 
 /-- The map `z ↦ cexp (c * z)` is holomorphic on the upper half-plane. -/
 public lemma mdifferentiable_cexp_mul (c : ℂ) :
-    MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (fun z : UpperHalfPlane => cexp (c * (z : ℂ))) := by
+    MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (fun z : UpperHalfPlane ↦ cexp (c * (z : ℂ))) := by
   intro z
   refine (UpperHalfPlane.mdifferentiableAt_iff).2 ?_
   refine ((differentiableAt_id.const_mul c).cexp.congr_of_eventuallyEq ?_)
@@ -43,17 +43,17 @@ public lemma mdifferentiable_cexp_mul (c : ℂ) :
 
 /-- The operator `D` applied to `z ↦ cexp (c * z)` gives a scalar multiple of the same function. -/
 public lemma D_cexp_mul (c : ℂ) (z : UpperHalfPlane) :
-    D (fun w : UpperHalfPlane => cexp (c * (w : ℂ))) z =
+    D (fun w : UpperHalfPlane ↦ cexp (c * (w : ℂ))) z =
       (c / (2 * π * Complex.I)) * cexp (c * (z : ℂ)) := by
   simp only [D]
   have h_agree :
-      ((fun w : UpperHalfPlane => cexp (c * (w : ℂ))) ∘ UpperHalfPlane.ofComplex) =ᶠ[nhds (z : ℂ)]
-        fun w : ℂ => cexp (c * w) := by
+      ((fun w : UpperHalfPlane ↦ cexp (c * (w : ℂ))) ∘ UpperHalfPlane.ofComplex) =ᶠ[nhds (z : ℂ)]
+        fun w : ℂ ↦ cexp (c * w) := by
     filter_upwards [(UpperHalfPlane.isOpen_upperHalfPlaneSet).mem_nhds z.im_pos] with w hw
     simp [Function.comp, UpperHalfPlane.ofComplex_apply_of_im_pos hw]
   have hderiv :
-      deriv (fun w : ℂ => cexp (c * w)) (z : ℂ) = c * cexp (c * (z : ℂ)) := by
-    have hmul : HasDerivAt (fun w : ℂ => c * w) c (z : ℂ) := by
+      deriv (fun w : ℂ ↦ cexp (c * w)) (z : ℂ) = c * cexp (c * (z : ℂ)) := by
+    have hmul : HasDerivAt (fun w : ℂ ↦ c * w) c (z : ℂ) := by
       simpa [mul_assoc] using (hasDerivAt_id (z : ℂ)).const_mul c
     simpa [mul_assoc] using ((Complex.hasDerivAt_exp (c * (z : ℂ))).scomp (z : ℂ) hmul).deriv
   simp [h_agree.deriv_eq, hderiv, div_eq_mul_inv, mul_assoc, mul_left_comm, mul_comm]
@@ -67,16 +67,16 @@ public lemma ResToImagAxis.Real.D_of_real {F : UpperHalfPlane → ℂ}
     ResToImagAxis.Differentiable F hFholo t ht
   have hderivC : HasDerivAt F.resToImagAxis (deriv F.resToImagAxis t) t :=
     hdiff.hasDerivAt
-  have h_im0 : (fun u : ℝ => (F.resToImagAxis u).im) =ᶠ[nhds t] fun _ => 0 := by
+  have h_im0 : (fun u : ℝ ↦ (F.resToImagAxis u).im) =ᶠ[nhds t] fun _ ↦ 0 := by
     filter_upwards [lt_mem_nhds ht] with u hu
     have : (F.resToImagAxis u).im = 0 := by
       simpa [Function.resToImagAxis, ResToImagAxis, hu] using hF u hu
     simpa [this]
   have hderiv_im :
-      HasDerivAt (fun u : ℝ => (F.resToImagAxis u).im) (deriv F.resToImagAxis t).im t := by
+      HasDerivAt (fun u : ℝ ↦ (F.resToImagAxis u).im) (deriv F.resToImagAxis t).im t := by
     simpa using
       (hasDerivAt_const (x := t) (c := (Complex.imCLM : ℂ →L[ℝ] ℝ))).clm_apply hderivC
-  have hderiv_im0 : HasDerivAt (fun u : ℝ => (F.resToImagAxis u).im) 0 t :=
+  have hderiv_im0 : HasDerivAt (fun u : ℝ ↦ (F.resToImagAxis u).im) 0 t :=
     (hasDerivAt_const t (0 : ℝ)).congr_of_eventuallyEq h_im0
   have him_deriv : (deriv F.resToImagAxis t).im = 0 := hderiv_im.unique hderiv_im0
   have hD : deriv F.resToImagAxis t = -2 * π * (D F).resToImagAxis t :=

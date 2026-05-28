@@ -45,12 +45,12 @@ theorem ambientHeckeOfGoodIndex_commute_from_mulFormula
   rw [heckeT_n_mul (N := N) k (m : ℕ) (n : ℕ),
     heckeT_n_mul (N := N) k (n : ℕ) (m : ℕ)]
   refine Finset.sum_bij
-    (fun d _ => ⟨d.1, by simpa [Nat.gcd_comm] using d.2⟩)
-    (fun _ _ => Finset.mem_attach _ _)
-    (fun a _ b _ h => by
-      exact Subtype.ext (congrArg (fun z => z.1) h))
-    (fun d _ => ⟨⟨d.1, by simpa [Nat.gcd_comm] using d.2⟩, Finset.mem_attach _ _, by rfl⟩)
-    (fun d _ => by simp [Nat.mul_comm])
+    (fun d _ ↦ ⟨d.1, by simpa [Nat.gcd_comm] using d.2⟩)
+    (fun _ _ ↦ Finset.mem_attach _ _)
+    (fun a _ b _ h ↦ by
+      exact Subtype.ext (congrArg (fun z ↦ z.1) h))
+    (fun d _ ↦ ⟨⟨d.1, by simpa [Nat.gcd_comm] using d.2⟩, Finset.mem_attach _ _, by rfl⟩)
+    (fun d _ ↦ by simp [Nat.mul_comm])
 
 /-- Pointwise form of `ambientHeckeOfGoodIndex_commute_from_mulFormula`. -/
 theorem ambientHeckeOfGoodIndex_commute_apply_from_mulFormula

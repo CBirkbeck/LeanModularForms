@@ -105,7 +105,7 @@ theorem gamma0TwistedSlashModFixedSubmodule_eq_modFormCharSpace
     have hgfix := hf g
     change (↑(gamma0NebentypusChar (N := N) χ g) : ℂ)⁻¹ •
         diamondOpHom (N := N) k (Gamma0MapUnits g) f = f at hgfix
-    have hgfix' := congrArg (fun x => (↑(gamma0NebentypusChar (N := N) χ g) : ℂ) • x) hgfix
+    have hgfix' := congrArg (fun x ↦ (↑(gamma0NebentypusChar (N := N) χ g) : ℂ) • x) hgfix
     simp [gamma0NebentypusChar] at hgfix'
     rw [hg] at hgfix'
     simpa [gamma0NebentypusChar, hg] using hgfix'
@@ -149,7 +149,7 @@ theorem gamma0TwistedSlashCuspFixedSubmodule_eq_cuspFormCharSpace
     have hgfix := hf g
     change (↑(gamma0NebentypusChar (N := N) χ g) : ℂ)⁻¹ •
         diamondOpCuspHom (N := N) k (Gamma0MapUnits g) f = f at hgfix
-    have hgfix' := congrArg (fun x => (↑(gamma0NebentypusChar (N := N) χ g) : ℂ) • x) hgfix
+    have hgfix' := congrArg (fun x ↦ (↑(gamma0NebentypusChar (N := N) χ g) : ℂ) • x) hgfix
     simp [gamma0NebentypusChar] at hgfix'
     rw [hg] at hgfix'
     simpa [gamma0NebentypusChar, hg] using hgfix'

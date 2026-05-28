@@ -53,7 +53,7 @@ lemma qKerBelow_iInf_eq_bot
   constructor
   · intro hf
     have hf' : ∀ N : ℕ, f ∈ qKerBelow (Γ := Γ) (k := k) (h := h) hh hΓ N :=
-      (Submodule.mem_iInf (p := fun N => qKerBelow (Γ := Γ) (k := k) (h := h) hh hΓ N)).1 hf
+      (Submodule.mem_iInf (p := fun N ↦ qKerBelow (Γ := Γ) (k := k) (h := h) hh hΓ N)).1 hf
     refine (Submodule.mem_bot (R := ℂ) (x := f)).2 ?_
     apply (qExpansion_eq_zero_iff (Γ := Γ) (h := h) hh hΓ f).1
     ext n
@@ -68,7 +68,7 @@ lemma exists_qKerBelow_eq_bot
     ∃ N : ℕ, qKerBelow (Γ := Γ) (k := k) (h := h) hh hΓ N = ⊥ := by
   haveI : IsArtinian ℂ (ModularForm Γ k) := by infer_instance
   let f : ℕ →o (Submodule ℂ (ModularForm Γ k))ᵒᵈ :=
-    { toFun := fun N => OrderDual.toDual (qKerBelow (Γ := Γ) (k := k) (h := h) hh hΓ N)
+    { toFun := fun N ↦ OrderDual.toDual (qKerBelow (Γ := Γ) (k := k) (h := h) hh hΓ N)
       monotone' := by
         intro A B hAB
         exact qKerBelow_antitone (Γ := Γ) (k := k) (h := h) hh hΓ hAB }
@@ -94,16 +94,16 @@ public lemma exists_qCoeff_injective
     [DiscreteTopology Γ] [Γ.HasDetOne]
     (hh : 0 < h) (hΓ : h ∈ Γ.strictPeriods) [FiniteDimensional ℂ (ModularForm Γ k)] :
     ∃ N : ℕ, Function.Injective
-      (fun f : ModularForm Γ k => fun n : Fin N => (qExpansion h f).coeff n) := by
+      (fun f : ModularForm Γ k ↦ fun n : Fin N ↦ (qExpansion h f).coeff n) := by
   obtain ⟨N, hN⟩ := exists_qKerBelow_eq_bot (Γ := Γ) (k := k) (h := h) hh hΓ
   refine ⟨N, ?_⟩
   intro f g hfg
   have hsub : f - g ∈ qKerBelow (Γ := Γ) (k := k) (h := h) hh hΓ N := by
     intro n hn
     have hcoeff : (qExpansion h f).coeff n = (qExpansion h g).coeff n := by
-      simpa using congrArg (fun t => t ⟨n, hn⟩) hfg
+      simpa using congrArg (fun t ↦ t ⟨n, hn⟩) hfg
     simpa [hcoeff] using
-      congrArg (fun ps : PowerSeries ℂ => ps.coeff n) (qExpansion_sub (Γ := Γ) (h := h) hh hΓ f g)
+      congrArg (fun ps : PowerSeries ℂ ↦ ps.coeff n) (qExpansion_sub (Γ := Γ) (h := h) hh hΓ f g)
   have : f - g = 0 := by simpa [hN] using hsub
   exact sub_eq_zero.mp this
 

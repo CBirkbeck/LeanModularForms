@@ -92,22 +92,22 @@ theorem logDeriv_tprod_eq_tsum {s : Set ℂ} (hs : IsOpen s) (x : s) (f : ℕ �
     · exact hnez
 -/
 
-lemma logDeriv_one_sub_exp (r : ℂ) : logDeriv (fun z => 1 - r * cexp (z)) =
-    fun z => -r * cexp z / (1 - r * cexp ( z)) := by
+lemma logDeriv_one_sub_exp (r : ℂ) : logDeriv (fun z ↦ 1 - r * cexp (z)) =
+    fun z ↦ -r * cexp z / (1 - r * cexp ( z)) := by
   ext z
   simp [logDeriv]
 
 /-- A chain rule computation for `logDeriv` of `(fun z => 1 - r * cexp z) ∘ g`. -/
 public lemma logDeriv_one_sub_exp_comp (r : ℂ) (g : ℂ → ℂ) (hg : Differentiable ℂ g) :
-    logDeriv ((fun z => 1 - r * cexp (z)) ∘ g) =
-    fun z => -r * ((deriv g) z) * cexp (g z) / (1 - r * cexp (g (z))) := by
+    logDeriv ((fun z ↦ 1 - r * cexp (z)) ∘ g) =
+    fun z ↦ -r * ((deriv g) z) * cexp (g z) / (1 - r * cexp (g (z))) := by
   ext y
   rw [logDeriv_comp _ (hg y), logDeriv_one_sub_exp]
   · ring
   · fun_prop
 
 /-- If `‖r‖ < 1`, then the series `∑ n, n * r^n / (1 - r^n)` is summable. -/
-public lemma logDeriv_q_expo_summable (r : ℂ) (hr : ‖r‖ < 1) : Summable fun n : ℕ =>
+public lemma logDeriv_q_expo_summable (r : ℂ) (hr : ‖r‖ < 1) : Summable fun n : ℕ ↦
     (n * r^n / (1 - r^n)) := by
   simpa [pow_one] using (summable_norm_pow_mul_geometric_div_one_sub (𝕜 := ℂ) 1 (r := r) hr)
 
@@ -154,7 +154,7 @@ lemma logDeriv_eqOn_iff' (f g : ℂ → ℂ) (s : Set ℂ) (hf : DifferentiableO
     · have hderiv : EqOn (deriv (f * g⁻¹))  (deriv f * g⁻¹ - f * deriv g / g ^ 2) s := by
         intro z hz
         rw [deriv_mul]
-        · have hgi : g⁻¹ = (fun x => x⁻¹) ∘ g := by
+        · have hgi : g⁻¹ = (fun x ↦ x⁻¹) ∘ g := by
             ext y
             simp only [Pi.inv_apply, comp_apply]
           rw [hgi, deriv_comp, deriv_inv]

@@ -46,11 +46,11 @@ section PPow
 
 /-- p-power diagonal: entries are `p^(e i)`. -/
 def ppowDiag (p : ℕ) (e : Fin n → ℕ) : Fin n → ℕ :=
-  fun i => p ^ e i
+  fun i ↦ p ^ e i
 
 lemma ppowDiag_pos (p : ℕ) (hp : p.Prime) (e : Fin n → ℕ) :
     ∀ i, 0 < ppowDiag n p e i :=
-  fun _ => pow_pos hp.pos _
+  fun _ ↦ pow_pos hp.pos _
 
 /-- DivChain for p-power diagonals when exponents are monotone. -/
 lemma divChain_ppow (p : ℕ) (e : Fin n → ℕ) (hmono : Monotone e) :
@@ -62,7 +62,7 @@ lemma divChain_ppow (p : ℕ) (e : Fin n → ℕ) (hmono : Monotone e) :
 
 /-- Extract the p-component of each entry in a positive diagonal. -/
 def pComponent (p : ℕ) (a : Fin n → ℕ) : Fin n → ℕ :=
-  fun i => (a i).factorization p
+  fun i ↦ (a i).factorization p
 
 /-- The p-component of a divisibility chain is monotone. -/
 lemma pComponent_monotone (a : Fin n → ℕ)
@@ -82,11 +82,11 @@ section RemovePrime
 /-- Remove the p-component from each entry: `a_i ↦ a_i / p^{v_p(a_i)}`.
     This is the p-free part (ordCompl) of each diagonal entry. -/
 noncomputable def removePrime (p : ℕ) (a : Fin n → ℕ) : Fin n → ℕ :=
-  fun i => (a i) / p ^ ((a i).factorization p)
+  fun i ↦ (a i) / p ^ ((a i).factorization p)
 
 lemma removePrime_pos (p : ℕ) (a : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i) :
     ∀ i, 0 < removePrime n p a i :=
-  fun i => Nat.ordCompl_pos p (ha_pos i).ne'
+  fun i ↦ Nat.ordCompl_pos p (ha_pos i).ne'
 
 /-- The p-free part preserves divisibility chains. -/
 lemma removePrime_divChain (p : ℕ) (a : Fin n → ℕ) (ha : DivChain n a) :
@@ -123,7 +123,7 @@ lemma prod_ppow_remove_coprime (p : ℕ) (hp : p.Prime)
                (∏ i, (removePrime n p a) i) := by
   rw [prod_ppow]
   apply Nat.Coprime.pow_left
-  exact Nat.Coprime.prod_right fun i _ => (Nat.coprime_ordCompl hp (ha_pos i).ne')
+  exact Nat.Coprime.prod_right fun i _ ↦ (Nat.coprime_ordCompl hp (ha_pos i).ne')
 
 end Coprimality
 
@@ -175,12 +175,12 @@ lemma T_elem_ppow_mem_R_p (p : ℕ) (hp : p.Prime) (e : Fin n → ℕ) (hmono : 
 
 /-- The identity `T(1,...,1)` is in every R_p (as the zero-exponent element). -/
 lemma one_mem_R_p (p : ℕ) (hp : p.Prime) :
-    T_elem (fun _ : Fin n => 1) ∈ R_p n p hp := by
-  have h : T_elem (fun _ : Fin n => 1) =
-      T_elem (ppowDiag n p (fun _ => 0)) := by
+    T_elem (fun _ : Fin n ↦ 1) ∈ R_p n p hp := by
+  have h : T_elem (fun _ : Fin n ↦ 1) =
+      T_elem (ppowDiag n p (fun _ ↦ 0)) := by
     congr
   rw [h]
-  exact T_elem_ppow_mem_R_p n p hp (fun _ => 0) monotone_const
+  exact T_elem_ppow_mem_R_p n p hp (fun _ ↦ 0) monotone_const
 
 end RpSubring
 
@@ -194,12 +194,12 @@ private def ppowClosureSet (n : ℕ) [NeZero n] : Set (HeckeAlgebra n) :=
 
 private lemma prod_pos_of_pos (a : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i) :
     0 < ∏ i, a i :=
-  Finset.prod_pos (fun i _ => ha_pos i)
+  Finset.prod_pos (fun i _ ↦ ha_pos i)
 
 /-- Empty factorization support of the determinant forces every diagonal entry to be `1`. -/
 private lemma eq_one_of_prod_factorization_support_card_zero (a : Fin n → ℕ)
     (ha_pos : ∀ i, 0 < a i) (hcard : (∏ i, a i).factorization.support.card ≤ 0) :
-    a = fun _ => 1 := by
+    a = fun _ ↦ 1 := by
   have h_det : ∏ i, a i = 1 := by
     have h_supp : (∏ i, a i).factorization.support = ∅ :=
       Finset.card_eq_zero.mp (Nat.le_zero.mp hcard)
@@ -222,7 +222,7 @@ private lemma removePrime_prod_factorization_support_ssubset (a : Fin n → ℕ)
     intro h_zero
     apply hq
     have h_dvd : ∏ i, (removePrime n p a) i ∣ ∏ i, a i :=
-      Finset.prod_dvd_prod_of_dvd _ _ fun i _ => Nat.ordCompl_dvd (a i) p
+      Finset.prod_dvd_prod_of_dvd _ _ fun i _ ↦ Nat.ordCompl_dvd (a i) p
     have h_le := (Nat.factorization_le_iff_dvd
       (prod_pos_of_pos n _ (removePrime_pos n p a ha_pos)).ne'
       (prod_pos_of_pos n a ha_pos).ne').mpr h_dvd q
@@ -231,7 +231,7 @@ private lemma removePrime_prod_factorization_support_ssubset (a : Fin n → ℕ)
     have hp_in : p ∈ (∏ i, (removePrime n p a) i).factorization.support := h_sup hp_mem
     rw [Finsupp.mem_support_iff] at hp_in
     apply hp_in
-    rw [Nat.factorization_prod (fun i _ => (removePrime_pos n p a ha_pos i).ne'),
+    rw [Nat.factorization_prod (fun i _ ↦ (removePrime_pos n p a ha_pos i).ne'),
       Finset.sum_apply']
     apply Finset.sum_eq_zero
     intro i _
@@ -251,7 +251,7 @@ theorem T_elem_mem_closure_ppow (a : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i) (h
   | zero =>
     intro a ha_pos ha hcard
     obtain rfl := eq_one_of_prod_factorization_support_card_zero n a ha_pos hcard
-    rw [show T_elem (fun _ : Fin n => 1) = T_elem (ppowDiag n 2 (fun _ => 0)) by congr]
+    rw [show T_elem (fun _ : Fin n ↦ 1) = T_elem (ppowDiag n 2 (fun _ ↦ 0)) by congr]
     exact Subring.subset_closure ⟨2, Nat.prime_two, _, monotone_const, rfl⟩
   | succ m ih =>
     intro a ha_pos ha hcard

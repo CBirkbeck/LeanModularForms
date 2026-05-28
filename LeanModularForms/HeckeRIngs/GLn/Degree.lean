@@ -51,7 +51,7 @@ namespace HeckeRing.GLn
 /-- Gaussian binomial coefficient `[n choose k]_q`. -/
 def gaussianBinom (q : ℕ) (m k : ℕ) : ℕ :=
   if k ≤ m then
-    (Finset.range k).prod fun i => (q ^ (m - i) - 1) / (q ^ (k - i) - 1)
+    (Finset.range k).prod fun i ↦ (q ^ (m - i) - 1) / (q ^ (k - i) - 1)
   else 0
 
 lemma gaussianBinom_zero_right (q m : ℕ) : gaussianBinom q m 0 = 1 := by
@@ -135,7 +135,7 @@ private lemma relIndex_eq_comap_index (K : Subgroup (GL (Fin n) ℚ)) :
   set H := SLnZ_subgroup n
   have h_inj : Function.Injective f := by
     intro x y hxy; ext i j
-    have h := congr_arg (fun g => (Units.val g) i j) hxy
+    have h := congr_arg (fun g ↦ (Units.val g) i j) hxy
     simp only [f, mapGL_coe_matrix, map_apply_coe, RingHom.mapMatrix_apply,
       Matrix.map_apply] at h; exact_mod_cast h
   have h_H_eq : H = Subgroup.map f ⊤ := by
@@ -251,7 +251,7 @@ private lemma upperTriRep_injective_to_quotient (a : Fin n → ℕ) (ha : ∀ i,
     (hf : f = (mapGL ℚ : SL(n, ℤ) →* GL (Fin n) ℚ))
     [Fintype (H ⧸ (ConjAct.toConjAct α⁻¹ • H).subgroupOf H)] :
     Function.Injective
-      (fun B : UpperTriRep n a hdiv =>
+      (fun B : UpperTriRep n a hdiv ↦
         (⟦⟨(f (unipSL n a hdiv B))⁻¹,
           H.inv_mem (show f (unipSL n a hdiv B) ∈ H from
             hH ▸ hf ▸ ⟨unipSL n a hdiv B, rfl⟩)⟩⟧ :
@@ -299,7 +299,7 @@ private lemma upperTriRep_card_le_relIndex (a : Fin n → ℕ) (ha : ∀ i, 0 < 
   haveI : Fintype (H ⧸ (ConjAct.toConjAct α⁻¹ • H).subgroupOf H) :=
     Subgroup.fintypeOfIndexNeZero h_rel_ne
   set injMap : UpperTriRep n a hdiv → H ⧸ (ConjAct.toConjAct α⁻¹ • H).subgroupOf H :=
-    fun B => ⟦⟨(f (unipSL n a hdiv B))⁻¹,
+    fun B ↦ ⟦⟨(f (unipSL n a hdiv B))⁻¹,
       H.inv_mem (show f (unipSL n a hdiv B) ∈ H from ⟨unipSL n a hdiv B, rfl⟩)⟩⟧
   have h_inj : Function.Injective injMap :=
     upperTriRep_injective_to_quotient n a ha hdiv α rfl H rfl f rfl
@@ -503,7 +503,7 @@ private lemma diagMat_comm_of_const (a : Fin n → ℕ) (ha : ∀ i, 0 < a i)
     diagMat n a * g = g * diagMat n a := by
   apply Units.ext
   simp only [Units.val_mul, diagMat_val n a ha]
-  have h_diag : Matrix.diagonal (fun i => (a i : ℚ)) =
+  have h_diag : Matrix.diagonal (fun i ↦ (a i : ℚ)) =
       (a 0 : ℚ) • (1 : Matrix (Fin n) (Fin n) ℚ) := by
     ext i j
     simp only [Matrix.diagonal_apply, Matrix.smul_apply, Matrix.one_apply, smul_eq_mul]
@@ -516,7 +516,7 @@ private lemma diagMat_comm_of_const (a : Fin n → ℕ) (ha : ∀ i, 0 < a i)
 theorem HeckeCoset_deg_T_diag_two_scalar (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i)
     (_hdiv : DivChain 2 a) (h_eq : a 0 = a 1) :
     HeckeCoset_deg (GL_pair 2) (T_diag a) = 1 := by
-  have h_const : ∀ i, a i = a 0 := fun i => by fin_cases i <;> simp [h_eq]
+  have h_const : ∀ i, a i = a 0 := fun i ↦ by fin_cases i <;> simp [h_eq]
   set D := T_diag a
   set δ := HeckeCoset.rep D
   set H := (GL_pair 2).H

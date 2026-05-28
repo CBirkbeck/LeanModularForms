@@ -23,7 +23,7 @@ noncomputable section
 variable {Γ : Subgroup SL(2, ℤ)} {k : ℤ}
 
 @[reducible] noncomputable def τfun (h : ℝ) : ℂ → ℍ :=
-  fun q : ℂ => UpperHalfPlane.ofComplex (Function.Periodic.invQParam h q)
+  fun q : ℂ ↦ UpperHalfPlane.ofComplex (Function.Periodic.invQParam h q)
 
 lemma tendsto_τfun_atImInfty {h : ℝ} (hh : 0 < h) :
     Tendsto (τfun h) (𝓝[≠] (0 : ℂ)) UpperHalfPlane.atImInfty := by
@@ -56,7 +56,7 @@ lemma norm_apply_eq_mul_restProd
             (SlashInvariantForm.quotientFunc (ℋ := 𝒮ℒ) (𝒢 := G Γ) (k := k) f q) τ := by
     simpa using
       (Finset.mul_prod_erase (s := (Finset.univ : Finset (Q Γ)))
-        (f := fun q =>
+        (f := fun q ↦
           (SlashInvariantForm.quotientFunc (ℋ := 𝒮ℒ) (𝒢 := G Γ) (k := k) f q) τ) hmem).symm
   have hone :
       (SlashInvariantForm.quotientFunc (ℋ := 𝒮ℒ) (𝒢 := G Γ) (k := k) f q₁) τ = f τ := by
@@ -113,29 +113,29 @@ lemma valueAtInfty_norm_eq_zero_of_valueAtInfty_eq_zero
   haveI : (G Γ).IsFiniteRelIndex 𝒮ℒ := by
     exact Subgroup.IsArithmetic.isFiniteRelIndexSL (𝒢 := (G Γ))
   have ht_f :
-      Tendsto (fun τ : ℍ => f τ) UpperHalfPlane.atImInfty (𝓝 (0 : ℂ)) := by
+      Tendsto (fun τ : ℍ ↦ f τ) UpperHalfPlane.atImInfty (𝓝 (0 : ℂ)) := by
     simpa [hval0] using
       (modularForm_tendsto_valueAtInfty (f := f) (h := cuspWidth (Γ := Γ)) hh hperΓ)
   have hbd_rest_im :
       IsBoundedUnder (· ≤ ·) UpperHalfPlane.atImInfty
-        (fun τ : ℍ => ‖restProd (Γ := Γ) (k := k) f τ‖) := by
+        (fun τ : ℍ ↦ ‖restProd (Γ := Γ) (k := k) f τ‖) := by
     have hbd :
-        (fun τ : ℍ => restProd (Γ := Γ) (k := k) f τ) =O[UpperHalfPlane.atImInfty] (1 : ℍ → ℝ) := by
+        (fun τ : ℍ ↦ restProd (Γ := Γ) (k := k) f τ) =O[UpperHalfPlane.atImInfty] (1 : ℍ → ℝ) := by
       simpa [UpperHalfPlane.IsBoundedAtImInfty, Filter.BoundedAtFilter] using
         (restProd_isBoundedAtImInfty (Γ := Γ) (k := k) hΓ f)
     simpa [Function.comp] using hbd.isBoundedUnder_le
   have ht_mul :
-      Tendsto (fun τ : ℍ => f τ * restProd (Γ := Γ) (k := k) f τ) UpperHalfPlane.atImInfty
+      Tendsto (fun τ : ℍ ↦ f τ * restProd (Γ := Γ) (k := k) f τ) UpperHalfPlane.atImInfty
         (𝓝 (0 : ℂ)) := by
     simpa [smul_eq_mul] using
       (NormedField.tendsto_zero_smul_of_tendsto_zero_of_bounded (l := UpperHalfPlane.atImInfty)
-        (ε := fun τ : ℍ => f τ) (f := fun τ : ℍ => restProd (Γ := Γ) (k := k) f τ) ht_f
+        (ε := fun τ : ℍ ↦ f τ) (f := fun τ : ℍ ↦ restProd (Γ := Γ) (k := k) f τ) ht_f
         hbd_rest_im)
   have ht_norm :
-      Tendsto (fun τ : ℍ => (ModularForm.norm 𝒮ℒ f) τ) UpperHalfPlane.atImInfty (𝓝 (0 : ℂ)) := by
+      Tendsto (fun τ : ℍ ↦ (ModularForm.norm 𝒮ℒ f) τ) UpperHalfPlane.atImInfty (𝓝 (0 : ℂ)) := by
     simpa [norm_apply_eq_mul_restProd (Γ := Γ) (k := k) f] using ht_mul
   have ht_val :
-      Tendsto (fun τ : ℍ => (ModularForm.norm 𝒮ℒ f) τ) UpperHalfPlane.atImInfty
+      Tendsto (fun τ : ℍ ↦ (ModularForm.norm 𝒮ℒ f) τ) UpperHalfPlane.atImInfty
         (𝓝 (valueAtInfty (ModularForm.norm 𝒮ℒ f))) :=
     modularForm_tendsto_valueAtInfty (f := ModularForm.norm 𝒮ℒ f)
       (h := cuspWidth (Γ := Γ)) hh hperSL
@@ -159,21 +159,21 @@ public lemma qExpansion_coeff_eq_zero_norm_of_qExpansion_coeff_eq_zero
   letI : DecidableEq (Q Γ) := Classical.decEq _
   -- Step 1: the vanishing of coefficients for `f` gives a `O(‖q‖^N)` bound for `cuspFunction`.
   have hO_f :
-      cuspFunction (cuspWidth (Γ := Γ)) f =O[𝓝 (0 : ℂ)] fun q : ℂ =>
+      cuspFunction (cuspWidth (Γ := Γ)) f =O[𝓝 (0 : ℂ)] fun q : ℂ ↦
         ‖q‖ ^ N :=
     cuspFunction_isBigO_pow_of_qExpansion_coeff_eq_zero (f := f) hh hperΓ N hcoeff
   -- Step 2: `restProd` is bounded at `∞`, hence bounded after composing with `invQParam`.
   have hbd_rest :
       Filter.BoundedAtFilter (𝓝[≠] (0 : ℂ))
-        (fun q : ℂ => restProd (Γ := Γ) (k := k) f (τfun (cuspWidth (Γ := Γ)) q)) := by
+        (fun q : ℂ ↦ restProd (Γ := Γ) (k := k) f (τfun (cuspWidth (Γ := Γ)) q)) := by
     simpa [UpperHalfPlane.IsBoundedAtImInfty, τfun] using
       (restProd_isBoundedAtImInfty (Γ := Γ) (k := k) hΓ f).comp_tendsto
         (tendsto_τfun_atImInfty (h := cuspWidth (Γ := Γ)) hh)
   -- Step 3: on `𝓝[≠] 0`, use the product formula and boundedness of the remaining factor.
   have hEq :
-      (fun q : ℂ =>
+      (fun q : ℂ ↦
           cuspFunction (cuspWidth (Γ := Γ)) (ModularForm.norm 𝒮ℒ f) q) =ᶠ[𝓝[≠] (0 : ℂ)]
-        fun q : ℂ =>
+        fun q : ℂ ↦
           cuspFunction (cuspWidth (Γ := Γ)) f q *
             restProd (Γ := Γ) (k := k) f (τfun (cuspWidth (Γ := Γ)) q) := by
     have hne : ∀ᶠ q : ℂ in 𝓝[≠] (0 : ℂ), q ∈ ({0}ᶜ : Set ℂ) := self_mem_nhdsWithin
@@ -184,14 +184,14 @@ public lemma qExpansion_coeff_eq_zero_norm_of_qExpansion_coeff_eq_zero
       cuspFunction_norm_eq_mul_restProd_of_ne_zero (Γ := Γ) (k := k) f (h := cuspWidth (Γ := Γ))
         (q := q) hq0
   have hO_prod_punct :
-      (fun q : ℂ =>
+      (fun q : ℂ ↦
           cuspFunction (cuspWidth (Γ := Γ)) f q *
             restProd (Γ := Γ) (k := k) f (τfun (cuspWidth (Γ := Γ)) q)) =O[𝓝[≠] (0 : ℂ)]
-        fun q : ℂ => ‖q‖ ^ N :=
+        fun q : ℂ ↦ ‖q‖ ^ N :=
     by
       simpa [Filter.BoundedAtFilter, mul_one] using (hO_f.mono nhdsWithin_le_nhds).mul hbd_rest
   have hO_norm_punct :
-      cuspFunction (cuspWidth (Γ := Γ)) (ModularForm.norm 𝒮ℒ f) =O[𝓝[≠] (0 : ℂ)] fun q : ℂ =>
+      cuspFunction (cuspWidth (Γ := Γ)) (ModularForm.norm 𝒮ℒ f) =O[𝓝[≠] (0 : ℂ)] fun q : ℂ ↦
         ‖q‖ ^ N :=
     (hO_prod_punct.congr' hEq.symm Filter.EventuallyEq.rfl)
   -- Step 4: show the value at `q = 0` is `0`, so we can upgrade to a bound on `𝓝 0`.
@@ -210,7 +210,7 @@ public lemma qExpansion_coeff_eq_zero_norm_of_qExpansion_coeff_eq_zero
           ‖valueAtInfty (ModularForm.norm 𝒮ℒ f)‖ := by simpa using congrArg norm h0
       _ = 0 := by simpa using congrArg norm hnorm0
   have hO_norm :
-      cuspFunction (cuspWidth (Γ := Γ)) (ModularForm.norm 𝒮ℒ f) =O[𝓝 (0 : ℂ)] fun q : ℂ =>
+      cuspFunction (cuspWidth (Γ := Γ)) (ModularForm.norm 𝒮ℒ f) =O[𝓝 (0 : ℂ)] fun q : ℂ ↦
         ‖q‖ ^ N :=
     isBigO_nhds_of_isBigO_punctured hO_norm_punct hcf0
   -- Step 5: apply the analytic lemma that `O(‖q‖^N)` forces vanishing of coefficients below `N`.

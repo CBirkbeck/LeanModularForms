@@ -42,7 +42,7 @@ public lemma F_pos : ResToImagAxis.Pos F := by
     have hA_im : A.im = 0 := by
       simpa [A, A_E, τ, Function.resToImagAxis, ResToImagAxis, ht] using hbase t ht
     let term : ℕ+ → ℂ :=
-      fun n => (n : ℂ) * (σ 3 n : ℂ) * cexp (2 * π * Complex.I * (n : ℂ) * (τ : ℂ))
+      fun n ↦ (n : ℂ) * (σ 3 n : ℂ) * cexp (2 * π * Complex.I * (n : ℂ) * (τ : ℂ))
     have hseries : A = (720 : ℂ) * ∑' n : ℕ+, term n := by
       simpa [A, A_E, term, mul_assoc, mul_left_comm, mul_comm] using (E₂_mul_E₄_sub_E₆ τ)
     set r : ℝ := Real.exp (-2 * Real.pi * t) with hr
@@ -64,13 +64,13 @@ public lemma F_pos : ResToImagAxis.Pos F := by
       simpa [hr] using (Real.exp_lt_one_iff.2 this)
     have hr_norm : ‖r‖ < 1 := by
       simpa [Real.norm_of_nonneg hr_pos.le] using hr_lt_one
-    have hsum_g : Summable (fun n : ℕ => ((n : ℝ) ^ 5 : ℝ) * r ^ n) :=
+    have hsum_g : Summable (fun n : ℕ ↦ ((n : ℝ) ^ 5 : ℝ) * r ^ n) :=
       summable_pow_mul_geometric_of_norm_lt_one (R := ℝ) 5 hr_norm
-    have hsum_g' : Summable (fun n : ℕ+ => ((n : ℝ) ^ 5 : ℝ) * r ^ (n : ℕ)) := by
+    have hsum_g' : Summable (fun n : ℕ+ ↦ ((n : ℝ) ^ 5 : ℝ) * r ^ (n : ℕ)) := by
       have hf0 : ((0 : ℕ) : ℝ) ^ 5 * r ^ (0 : ℕ) = (0 : ℝ) := by simp
-      exact (nat_pos_tsum2 (f := fun n : ℕ => ((n : ℝ) ^ 5 : ℝ) * r ^ n) hf0).2 hsum_g
+      exact (nat_pos_tsum2 (f := fun n : ℕ ↦ ((n : ℝ) ^ 5 : ℝ) * r ^ n) hf0).2 hsum_g
     have hsum_term : Summable term := by
-      refine Summable.of_norm_bounded (g := fun n : ℕ+ => ((n : ℝ) ^ 5 : ℝ) * r ^ (n : ℕ))
+      refine Summable.of_norm_bounded (g := fun n : ℕ+ ↦ ((n : ℝ) ^ 5 : ℝ) * r ^ (n : ℕ))
         hsum_g' ?_
       intro n
       have harg :
@@ -120,7 +120,7 @@ public lemma F_pos : ResToImagAxis.Pos F := by
         _ ≤ ((n : ℝ) ^ 5 : ℝ) * r ^ (n : ℕ) := by
               gcongr
         _ = ((n : ℝ) ^ 5 : ℝ) * r ^ (n : ℕ) := by rfl
-    have hsum_re : Summable (fun n : ℕ+ => (term n).re) := hsum_term.mapL Complex.reCLM
+    have hsum_re : Summable (fun n : ℕ+ ↦ (term n).re) := hsum_term.mapL Complex.reCLM
     have hterm_re (n : ℕ+) :
         (term n).re = (n : ℝ) * (σ 3 n : ℝ) * r ^ (n : ℕ) := by
       have harg :
@@ -201,7 +201,7 @@ public lemma F_pos : ResToImagAxis.Pos F := by
 public lemma G_pos : ResToImagAxis.Pos G := by
   have hH2 : ResToImagAxis.Pos H₂ := H₂_imag_axis_pos
   have hH4 : ResToImagAxis.Pos H₄ := H₄_imag_axis_pos
-  have hconst {c : ℝ} (hc : 0 < c) : ResToImagAxis.Pos (fun _ : ℍ => (c : ℂ)) := by
+  have hconst {c : ℝ} (hc : 0 < c) : ResToImagAxis.Pos (fun _ : ℍ ↦ (c : ℂ)) := by
     refine ⟨?_, ?_⟩ <;> intro t ht <;> simp [Function.resToImagAxis, ResToImagAxis, ht, hc]
   have hH2sq : ResToImagAxis.Pos (H₂ ^ 2) := by
     simpa [pow_two] using ResToImagAxis.Pos.mul hH2 hH2
@@ -238,11 +238,11 @@ public lemma E₂_eq_sigma_qexp (z : UpperHalfPlane) :
           ∑' n : ℕ, (σ 1 (n + 1) : ℂ) * cexp (2 * π * Complex.I * ((n + 1 : ℕ) : ℂ) * (z : ℂ)) := by
       simpa using (tsum_eq_tsum_sigma z)
     simpa using
-      (tsum_pnat_eq_tsum_succ3 (f := fun n : ℕ =>
+      (tsum_pnat_eq_tsum_succ3 (f := fun n : ℕ ↦
         (n : ℂ) * cexp (2 * π * Complex.I * (n : ℂ) * (z : ℂ)) /
           (1 - cexp (2 * π * Complex.I * (n : ℂ) * (z : ℂ))))).trans
         (hNat.trans
-          (tsum_pnat_eq_tsum_succ3 (f := fun n : ℕ =>
+          (tsum_pnat_eq_tsum_succ3 (f := fun n : ℕ ↦
             (σ 1 n : ℂ) * cexp (2 * π * Complex.I * (n : ℂ) * (z : ℂ)))).symm)
   simpa [hLambert] using hE
 
@@ -255,16 +255,16 @@ public lemma E₂_eq_qexp (z : UpperHalfPlane) :
   -- First rewrite `E₂` as `1 - 24 * ∑_{n≥1} σ₁(n) q^n`.
   have hEσ := E₂_eq_sigma_qexp z
   -- Now express the RHS as a single `ℕ`-indexed tsum by splitting off the `n = 0` term.
-  let a : ℕ → ℂ := fun n => (if n = 0 then (1 : ℂ) else (-24 : ℂ) * (σ 1 n : ℂ))
+  let a : ℕ → ℂ := fun n ↦ (if n = 0 then (1 : ℂ) else (-24 : ℂ) * (σ 1 n : ℂ))
   have hsum :
-      Summable (fun n : ℕ => a n * cexp (2 * π * Complex.I * (n : ℂ) * (z : ℂ))) := by
+      Summable (fun n : ℕ ↦ a n * cexp (2 * π * Complex.I * (n : ℂ) * (z : ℂ))) := by
     -- Bound the coefficients by a polynomial times a geometric sequence.
     set r : ℝ := ‖cexp (2 * π * Complex.I * (z : ℂ))‖ with hr
     have hr_nonneg : 0 ≤ r := by simp [hr]
     have hr_norm : ‖r‖ < 1 := by
       have hr_lt_one : r < 1 := by simpa [hr] using exp_upperHalfPlane_lt_one z
       simpa [Real.norm_eq_abs, abs_of_nonneg hr_nonneg] using hr_lt_one
-    have hs : Summable (fun n : ℕ => ((n : ℝ) ^ 2 : ℝ) * r ^ n) :=
+    have hs : Summable (fun n : ℕ ↦ ((n : ℝ) ^ 2 : ℝ) * r ^ n) :=
       summable_pow_mul_geometric_of_norm_lt_one (R := ℝ) 2 hr_norm
     -- Use the bound `σ₁(n) ≤ n^2`.
     have hσ (n : ℕ) : (σ 1 n : ℝ) ≤ (n : ℝ) ^ 2 := by
@@ -312,13 +312,13 @@ public lemma E₂_eq_qexp (z : UpperHalfPlane) :
           _ ≤ 1 * r ^ n + (24 : ℝ) * ((n : ℝ) ^ 2 * r ^ n) := by
                   nlinarith [hr_nonneg, pow_nonneg hr_nonneg n]
     -- Summability follows from the bound by a sum of two summable series.
-    have hs1 : Summable (fun n : ℕ => (1 : ℝ) * r ^ n) :=
+    have hs1 : Summable (fun n : ℕ ↦ (1 : ℝ) * r ^ n) :=
       (summable_geometric_of_norm_lt_one hr_norm).mul_left 1
-    have hs2 : Summable (fun n : ℕ => (24 : ℝ) * ((n : ℝ) ^ 2 * r ^ n)) :=
+    have hs2 : Summable (fun n : ℕ ↦ (24 : ℝ) * ((n : ℝ) ^ 2 * r ^ n)) :=
       hs.mul_left 24
-    refine Summable.of_norm_bounded (g := fun n : ℕ =>
+    refine Summable.of_norm_bounded (g := fun n : ℕ ↦
       (1 : ℝ) * r ^ n + (24 : ℝ) * ((n : ℝ) ^ 2 * r ^ n))
-      (hs1.add hs2) (fun n => hbound n)
+      (hs1.add hs2) (fun n ↦ hbound n)
   have htsum_split :
       (∑' n : ℕ, a n * cexp (2 * π * Complex.I * (n : ℂ) * (z : ℂ))) =
         (a 0 * cexp (2 * π * Complex.I * (0 : ℂ) * (z : ℂ))) +
@@ -336,20 +336,20 @@ public lemma E₂_eq_qexp (z : UpperHalfPlane) :
               (a (n : ℕ) * cexp (2 * π * Complex.I * ((n : ℕ) : ℂ) * (z : ℂ))) := by
       -- Use `tsum_pNat` with a function that vanishes at `0`.
       have :
-          (fun n : ℕ => ite (n = 0) 0 (a n * cexp (2 * π * Complex.I * (n : ℂ) * (z : ℂ)))) 0 =
+          (fun n : ℕ ↦ ite (n = 0) 0 (a n * cexp (2 * π * Complex.I * (n : ℂ) * (z : ℂ)))) 0 =
             0 := by
         simp
       simpa using (tsum_pNat
-        (f := fun n : ℕ => ite (n = 0) 0 (a n * cexp (2 * π * Complex.I * (n : ℂ) * (z : ℂ))))
+        (f := fun n : ℕ ↦ ite (n = 0) 0 (a n * cexp (2 * π * Complex.I * (n : ℂ) * (z : ℂ))))
         (hf := this)).symm
     -- Simplify the `ite` on `ℕ+` and factor out `-24`.
     rw [hpnat]
     -- The `ite` is always false on `ℕ+`.
     have hite :
-        (fun n : ℕ+ =>
+        (fun n : ℕ+ ↦
             ite ((n : ℕ) = 0) 0
               (a (n : ℕ) * cexp (2 * π * Complex.I * ((n : ℕ) : ℂ) * (z : ℂ)))) =
-          fun n : ℕ+ => (-24 : ℂ) * (σ 1 n : ℂ) * cexp (2 * π * Complex.I * (n : ℂ) * (z : ℂ)) := by
+          fun n : ℕ+ ↦ (-24 : ℂ) * (σ 1 n : ℂ) * cexp (2 * π * Complex.I * (n : ℂ) * (z : ℂ)) := by
       funext n
       have hn0 : (n : ℕ) ≠ 0 := Nat.ne_of_gt n.pos
       simp [a, hn0, mul_assoc]
@@ -359,12 +359,12 @@ public lemma E₂_eq_qexp (z : UpperHalfPlane) :
             ite ((n : ℕ) = 0) 0
               (a (n : ℕ) * cexp (2 * π * Complex.I * ((n : ℕ) : ℂ) * (z : ℂ)))) =
           ∑' n : ℕ+, (-24 : ℂ) * (σ 1 n : ℂ) * cexp (2 * π * Complex.I * (n : ℂ) * (z : ℂ)) := by
-      simpa using congrArg (fun f : ℕ+ → ℂ => ∑' n : ℕ+, f n) hite
+      simpa using congrArg (fun f : ℕ+ → ℂ ↦ ∑' n : ℕ+, f n) hite
     rw [hsum']
     -- Rewrite the summand as `(-24) * (...)` and apply `tsum_mul_left`.
     simpa [mul_assoc] using
       (tsum_mul_left (a := (-24 : ℂ))
-        (f := fun n : ℕ+ => (σ 1 n : ℂ) * cexp (2 * π * Complex.I * (n : ℂ) * (z : ℂ))))
+        (f := fun n : ℕ+ ↦ (σ 1 n : ℂ) * cexp (2 * π * Complex.I * (n : ℂ) * (z : ℂ))))
   -- Assemble everything.
   -- `a 0 * exp(0) = 1`.
   have ha0 : a 0 * cexp (2 * π * Complex.I * (0 : ℂ) * (z : ℂ)) = (1 : ℂ) := by
@@ -385,10 +385,10 @@ lemma cexp_two_pi_I_nat_mul_I_mul (t : ℝ) (n : ℕ) :
 
 lemma negDE₂_pos : ResToImagAxis.Pos negDE₂ := by
   -- We use the q-expansion of `E₂` together with termwise differentiation of q-series.
-  let a : ℕ → ℂ := fun n => if n = 0 then (1 : ℂ) else (-24 : ℂ) * (σ 1 n : ℂ)
+  let a : ℕ → ℂ := fun n ↦ if n = 0 then (1 : ℂ) else (-24 : ℂ) * (σ 1 n : ℂ)
   have hE2fun :
       (E₂ : UpperHalfPlane → ℂ) =
-        fun z : UpperHalfPlane =>
+        fun z : UpperHalfPlane ↦
           ∑' n : ℕ, a n * cexp (2 * π * Complex.I * (n : ℂ) * (z : ℂ)) := by
     funext z
     simpa [a, mul_assoc] using (E₂_eq_qexp z)
@@ -398,8 +398,8 @@ lemma negDE₂_pos : ResToImagAxis.Pos negDE₂ := by
         ∃ u : ℕ → ℝ, Summable u ∧ ∀ n (k : K),
           ‖a n * (2 * π * Complex.I * n) * cexp (2 * π * Complex.I * n * k.1)‖ ≤ u n := by
     intro K hK hKc
-    have him_cont : ContinuousOn (fun w : ℂ => w.im) K := Complex.continuous_im.continuousOn
-    have him_pos : ∀ z ∈ K, (0 : ℝ) < z.im := fun z hz => hK hz
+    have him_cont : ContinuousOn (fun w : ℂ ↦ w.im) K := Complex.continuous_im.continuousOn
+    have him_pos : ∀ z ∈ K, (0 : ℝ) < z.im := fun z hz ↦ hK hz
     obtain ⟨δ, hδ_pos, hδ_le⟩ :=
       IsCompact.exists_forall_le' (s := K) hKc him_cont (a := (0 : ℝ)) him_pos
     let r : ℝ := Real.exp (-2 * Real.pi * δ)
@@ -407,9 +407,9 @@ lemma negDE₂_pos : ResToImagAxis.Pos negDE₂ := by
       have hr_nonneg : 0 ≤ r := by simpa [r] using (Real.exp_pos (-2 * Real.pi * δ)).le
       have hr_lt_one : r < 1 := Real.exp_lt_one_iff.mpr (by nlinarith [Real.pi_pos, hδ_pos])
       simpa [Real.norm_of_nonneg hr_nonneg] using hr_lt_one
-    let u : ℕ → ℝ := fun n => (48 * Real.pi) * (((n : ℝ) ^ 3 : ℝ) * r ^ n)
+    let u : ℕ → ℝ := fun n ↦ (48 * Real.pi) * (((n : ℝ) ^ 3 : ℝ) * r ^ n)
     have hu : Summable u := by
-      have hs : Summable (fun n : ℕ => ((n : ℝ) ^ 3 : ℝ) * r ^ n) :=
+      have hs : Summable (fun n : ℕ ↦ ((n : ℝ) ^ 3 : ℝ) * r ^ n) :=
         summable_pow_mul_geometric_of_norm_lt_one (R := ℝ) 3 hr_norm
       exact hs.mul_left (48 * Real.pi)
     refine ⟨u, hu, ?_⟩
@@ -454,7 +454,7 @@ lemma negDE₂_pos : ResToImagAxis.Pos negDE₂ := by
             have hA :
                 ((24 : ℝ) * (n : ℝ) ^ 2) * (2 * Real.pi * (n : ℝ)) =
                   (48 * Real.pi) * ((n : ℝ) ^ 3) := by ring_nf
-            have hA' := congrArg (fun x : ℝ => x * (r ^ n)) hA
+            have hA' := congrArg (fun x : ℝ ↦ x * (r ^ n)) hA
             -- `u n = (48π) * (n^3 * r^n)`.
             have hu' : (48 * Real.pi) * ((n : ℝ) ^ 3) * (r ^ n) = u n := by
               simp [u, mul_assoc, mul_left_comm, mul_comm]
@@ -481,13 +481,13 @@ lemma negDE₂_pos : ResToImagAxis.Pos negDE₂ := by
       _ = -(∑' n : ℕ, (n : ℂ) * a n * cexp (2 * π * Complex.I * n * τ)) := by rw [hD]
       _ = ∑' n : ℕ, -((n : ℂ) * a n * cexp (2 * π * Complex.I * n * τ)) := by
             simpa using
-              (tsum_neg (f := fun n : ℕ => (n : ℂ) * a n * cexp (2 * π * Complex.I * n * τ))).symm
+              (tsum_neg (f := fun n : ℕ ↦ (n : ℂ) * a n * cexp (2 * π * Complex.I * n * τ))).symm
       _ = ∑' n : ℕ, (24 : ℂ) * (n : ℂ) * (σ 1 n : ℂ) * cexp (2 * π * Complex.I * n * τ) := by
             refine tsum_congr ?_
             intro n
             exact hterm n
   have hsum_term (τ : UpperHalfPlane) :
-      Summable (fun n : ℕ =>
+      Summable (fun n : ℕ ↦
         (24 : ℂ) * (n : ℂ) * (σ 1 n : ℂ) * cexp (2 * π * Complex.I * n * τ)) := by
     set r : ℝ := ‖cexp (2 * π * Complex.I * τ)‖ with hr
     have hr_nonneg : 0 ≤ r := norm_nonneg _
@@ -495,7 +495,7 @@ lemma negDE₂_pos : ResToImagAxis.Pos negDE₂ := by
       simpa [r, hr] using (exp_upperHalfPlane_lt_one τ)
     have hr_norm : ‖(r : ℝ)‖ < 1 := by
       simpa [Real.norm_of_nonneg hr_nonneg] using hr_lt_one
-    have hs : Summable (fun n : ℕ => ((n : ℝ) ^ 3 : ℝ) * r ^ n) :=
+    have hs : Summable (fun n : ℕ ↦ ((n : ℝ) ^ 3 : ℝ) * r ^ n) :=
       summable_pow_mul_geometric_of_norm_lt_one (R := ℝ) 3 hr_norm
     have hσ (n : ℕ) : (σ 1 n : ℝ) ≤ (n : ℝ) ^ 2 := by
       exact_mod_cast (sigma_bound 1 n)
@@ -547,8 +547,8 @@ lemma negDE₂_pos : ResToImagAxis.Pos negDE₂ := by
                 have hn3 : (n : ℝ) * (n : ℝ) ^ 2 = (n : ℝ) ^ 3 := by
                   simp [pow_succ, mul_comm]
                 simpa [mul_assoc, hn3, pow_succ] using hσmul''
-    refine Summable.of_norm_bounded (g := fun n : ℕ => (24 : ℝ) * ((n : ℝ) ^ 3 * r ^ n))
-      (hs.mul_left 24) (fun n => hbound n)
+    refine Summable.of_norm_bounded (g := fun n : ℕ ↦ (24 : ℝ) * ((n : ℝ) ^ 3 * r ^ n))
+      (hs.mul_left 24) (fun n ↦ hbound n)
   refine ⟨?_, ?_⟩
   · intro t ht
     simp only [Function.resToImagAxis, ResToImagAxis, ht, ↓reduceDIte]
@@ -604,7 +604,7 @@ lemma negDE₂_pos : ResToImagAxis.Pos negDE₂ := by
         simp [Complex.mul_re, hx, hy, hxre, hyre, mul_assoc, mul_comm, mul_left_comm]
       simpa [x, y, mul_assoc, harg] using this
     have hsumRe :
-        Summable (fun n : ℕ =>
+        Summable (fun n : ℕ ↦
           (24 : ℝ) * (n : ℝ) * (σ 1 n : ℝ) * Real.exp (-2 * Real.pi * (n : ℝ) * t)) := by
       -- Bound by `n^3 * r^n` with `r = exp(-2πt)`.
       set r : ℝ := Real.exp (-2 * Real.pi * t)
@@ -612,7 +612,7 @@ lemma negDE₂_pos : ResToImagAxis.Pos negDE₂ := by
       have hr_lt_one : r < 1 := Real.exp_lt_one_iff.mpr (by nlinarith [Real.pi_pos, ht])
       have hr_norm : ‖(r : ℝ)‖ < 1 := by
         simpa [Real.norm_of_nonneg hr_nonneg] using hr_lt_one
-      have hs : Summable (fun n : ℕ => ((n : ℝ) ^ 3 : ℝ) * r ^ n) :=
+      have hs : Summable (fun n : ℕ ↦ ((n : ℝ) ^ 3 : ℝ) * r ^ n) :=
         summable_pow_mul_geometric_of_norm_lt_one (R := ℝ) 3 hr_norm
       have hσ (n : ℕ) : (σ 1 n : ℝ) ≤ (n : ℝ) ^ 2 := by
         exact_mod_cast (sigma_bound 1 n)
@@ -677,8 +677,8 @@ lemma negDE₂_pos : ResToImagAxis.Pos negDE₂ := by
               _ = (24 : ℝ) * ((n : ℝ) ^ 3 * (r ^ n)) := by
                     simp [hn3]
           simpa [mul_assoc] using hineq
-      refine Summable.of_norm_bounded (g := fun n : ℕ => (24 : ℝ) * ((n : ℝ) ^ 3 * r ^ n))
-        (hs.mul_left 24) (fun n => hbound n)
+      refine Summable.of_norm_bounded (g := fun n : ℕ ↦ (24 : ℝ) * ((n : ℝ) ^ 3 * r ^ n))
+        (hs.mul_left 24) (fun n ↦ hbound n)
     have hpos :
         0 < ∑' n : ℕ,
           (24 : ℝ) * (n : ℝ) * (σ 1 n : ℝ) * Real.exp (-2 * Real.pi * (n : ℝ) * t) := by
@@ -718,7 +718,7 @@ lemma negDE₂_pos : ResToImagAxis.Pos negDE₂ := by
     simpa [hre_tsum] using hpos
 
 lemma Δ_fun_pos : ResToImagAxis.Pos Δ_fun := by
-  have hΔfun : Δ_fun = fun z : ℍ => (Delta z : ℂ) := by
+  have hΔfun : Δ_fun = fun z : ℍ ↦ (Delta z : ℂ) := by
     funext z
     simpa [Δ_fun, one_div] using (Delta_apply_eq_one_div_1728_mul_E4_pow_three_sub_E6_sq z).symm
   simpa [hΔfun, Delta_apply] using (Delta_imag_axis_pos : ResToImagAxis.Pos Δ)

@@ -99,8 +99,8 @@ theorem isRingEigenvector_of_isEigenform
         a n • (⟨f.toModularForm', cuspFormCharSpace_toModularForm'_mem hf⟩ :
           modFormCharSpace k χ) := by
   obtain ⟨a, ha⟩ := hev
-  refine ⟨fun n => if h : Nat.Coprime n.val N then
-    (↑(χ (ZMod.unitOfCoprime n.val h)) : ℂ)⁻¹ * a n else 0, fun n hn => ?_⟩
+  refine ⟨fun n ↦ if h : Nat.Coprime n.val N then
+    (↑(χ (ZMod.unitOfCoprime n.val h)) : ℂ)⁻¹ * a n else 0, fun n hn ↦ ?_⟩
   haveI : NeZero n.val := ⟨n.pos.ne'⟩
   apply Subtype.ext
   rw [heckeRingHomCharSpace_heckeRingD_n (k := k) (χ := χ) n.val hn]

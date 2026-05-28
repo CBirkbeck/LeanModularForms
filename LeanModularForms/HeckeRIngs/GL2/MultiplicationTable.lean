@@ -77,13 +77,13 @@ private lemma T_pp_mul_T_ad_ppow (j d : ℕ) (hjd : j ≤ d) :
     T_ad_of_pos _ _ (pow_pos hp.pos (j + 1)) (pow_pos hp.pos (d + 1))
       (Nat.pow_dvd_pow p (by omega)),
     T_pp_comm_T_elem p hp (![p ^ j, p ^ d])
-      (fun i => by fin_cases i <;> first | exact pow_pos hp.pos j | exact pow_pos hp.pos d)
-      (fun i hi => by
+      (fun i ↦ by fin_cases i <;> first | exact pow_pos hp.pos j | exact pow_pos hp.pos d)
+      (fun i hi ↦ by
         (have : i = 0 := by omega); subst this; simpa using Nat.pow_dvd_pow p hjd),
     T_pp_of_pos p hp,
     T_elem_mul_scalar (![p ^ j, p ^ d])
-      (fun i => by fin_cases i <;> first | exact pow_pos hp.pos j | exact pow_pos hp.pos d)
-      (fun i hi => by
+      (fun i ↦ by fin_cases i <;> first | exact pow_pos hp.pos j | exact pow_pos hp.pos d)
+      (fun i hi ↦ by
         (have : i = 0 := by omega); subst this; simpa using Nat.pow_dvd_pow p hjd) p hp.pos]
   apply T_elem_congr_diag
   ext i; fin_cases i <;> simp [Pi.mul_apply, pow_succ, mul_comm]
@@ -101,7 +101,7 @@ theorem T_ad_one_ppow_eq (k : ℕ) (hk : 2 ≤ k) :
   rw [T_sum_ppow_expansion p hp k, T_sum_ppow_expansion p hp (k - 2), Finset.mul_sum]
   have shift : ∀ j ∈ Finset.range ((k - 2) / 2 + 1),
       T_pp p * T_ad (p ^ j) (p ^ (k - 2 - j)) =
-      T_ad (p ^ (j + 1)) (p ^ (k - (j + 1))) := fun j hj => by
+      T_ad (p ^ (j + 1)) (p ^ (k - (j + 1))) := fun j hj ↦ by
     rw [Finset.mem_range] at hj
     rw [T_pp_mul_T_ad_ppow p hp j (k - 2 - j) (by omega),
       show k - 2 - j + 1 = k - (j + 1) from by omega]
@@ -133,16 +133,16 @@ private lemma first_invariant_dvd_p_of_product (S : Matrix.SpecialLinearGroup (F
     (L R : Matrix.SpecialLinearGroup (Fin 2) ℤ) (k : ℕ) (_hk : 0 < k)
     (heq : (L : Matrix (Fin 2) (Fin 2) ℤ) * Matrix.diagonal (![1, p] : Fin 2 → ℤ) *
       (S : Matrix (Fin 2) (Fin 2) ℤ) * Matrix.diagonal (![1, p ^ k] : Fin 2 → ℤ) *
-      (R : Matrix (Fin 2) (Fin 2) ℤ) = Matrix.diagonal (fun i => (a i : ℤ))) : a 0 ∣ p := by
+      (R : Matrix (Fin 2) (Fin 2) ℤ) = Matrix.diagonal (fun i ↦ (a i : ℤ))) : a 0 ∣ p := by
   set dp := Matrix.diagonal (![1, p] : Fin 2 → ℤ)
-  set dpk := Matrix.diagonal (fun m => ((![1, p ^ k] : Fin 2 → ℕ) m : ℤ))
+  set dpk := Matrix.diagonal (fun m ↦ ((![1, p ^ k] : Fin 2 → ℕ) m : ℤ))
   set S_ℤ := (↑S : Matrix (Fin 2) (Fin 2) ℤ)
   set M := dp * S_ℤ * dpk
   set L_ℤ := (↑L : Matrix (Fin 2) (Fin 2) ℤ)
   set R_ℤ := (↑R : Matrix (Fin 2) (Fin 2) ℤ)
   have hLadj : L_ℤ.adjugate * L_ℤ = 1 := by rw [Matrix.adjugate_mul, L.prop, one_smul]
   have hRadj : R_ℤ * R_ℤ.adjugate = 1 := by rw [Matrix.mul_adjugate, R.prop, one_smul]
-  have hM_eq : M = L_ℤ.adjugate * Matrix.diagonal (fun i => (a i : ℤ)) * R_ℤ.adjugate :=
+  have hM_eq : M = L_ℤ.adjugate * Matrix.diagonal (fun i ↦ (a i : ℤ)) * R_ℤ.adjugate :=
     matrix_isolate_middle L_ℤ M R_ℤ _ hLadj hRadj (by
       have : L_ℤ * M * R_ℤ = L_ℤ * dp * S_ℤ * dpk * R_ℤ := by
         ext i j; simp only [M, S_ℤ, Matrix.mul_apply, Fin.sum_univ_two]; ring
@@ -196,10 +196,10 @@ private lemma mulSupport_pp_dvd_p_aux
       diagMat 2 (![1, p ^ k]) * (R' : GL (Fin 2) ℚ) = diagMat 2 a) : a 0 ∣ p := by
   have h_int_5 : (↑L' : Matrix (Fin 2) (Fin 2) ℤ) * Matrix.diagonal (![1, p] : Fin 2 → ℤ) *
       (↑S_mid : Matrix (Fin 2) (Fin 2) ℤ) * Matrix.diagonal (![1, p ^ k] : Fin 2 → ℤ) *
-      (↑R' : Matrix (Fin 2) (Fin 2) ℤ) = Matrix.diagonal (fun i => (a i : ℤ)) := by
+      (↑R' : Matrix (Fin 2) (Fin 2) ℤ) = Matrix.diagonal (fun i ↦ (a i : ℤ)) := by
     ext i j
     have h := congr_arg
-      (fun (g : GL (Fin 2) ℚ) => (↑g : Matrix _ _ ℚ) i j) h_gl
+      (fun (g : GL (Fin 2) ℚ) ↦ (↑g : Matrix _ _ ℚ) i j) h_gl
     have h1p : ∀ i : Fin 2, 0 < (![1, p] : Fin 2 → ℕ) i := by
       intro i; fin_cases i <;> simp [hp.pos]
     have h1pk : ∀ i : Fin 2, 0 < (![1, p ^ k] : Fin 2 → ℕ) i := by
@@ -272,9 +272,9 @@ lemma mulSupport_pp_subset (k : ℕ) (_hk : 0 < k) (A : HeckeCoset (GL_pair 2))
   simp only [Finset.top_eq_univ, Finset.mem_image, Finset.mem_univ, true_and, Prod.exists] at hA
   obtain ⟨i₀, j₀, hmap⟩ := hA
   obtain ⟨L₁, ⟨SL_L₁, rfl⟩, R₁, ⟨SL_R₁, rfl⟩, hD1_eq⟩ := T_diag_rep_decompose (![1, p])
-    (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact hp.pos)
+    (fun i ↦ by fin_cases i <;> first | exact Nat.one_pos | exact hp.pos)
   obtain ⟨L₂, ⟨SL_L₂, rfl⟩, R₂, ⟨SL_R₂, rfl⟩, hD2_eq⟩ := T_diag_rep_decompose (![1, p ^ k])
-    (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos k)
+    (fun i ↦ by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos k)
   have h_prod_in_A : (↑i₀.out : GL (Fin 2) ℚ) * (HeckeCoset.rep D1 : GL (Fin 2) ℚ) *
       ((↑j₀.out : GL (Fin 2) ℚ) * (HeckeCoset.rep D2 : GL (Fin 2) ℚ)) ∈
       DoubleCoset.doubleCoset (diagMat 2 a : GL (Fin 2) ℚ) (GL_pair 2).H (GL_pair 2).H := by
@@ -319,9 +319,9 @@ lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
       (HeckeCoset.rep (T_diag (![1, p]))) (HeckeCoset.rep (T_diag (![1, p ^ k]))) := by
   -- Use h₁ = L₁⁻¹, h₂ = R₁⁻¹ * L₂⁻¹ to cancel the SL factors
   obtain ⟨L₁, hL₁, R₁, hR₁, hα_eq⟩ := T_diag_rep_decompose (![1, p])
-    (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact hp.pos)
+    (fun i ↦ by fin_cases i <;> first | exact Nat.one_pos | exact hp.pos)
   obtain ⟨L₂, hL₂, R₂, hR₂, hβ_eq⟩ := T_diag_rep_decompose (![1, p ^ k])
-    (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos k)
+    (fun i ↦ by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos k)
   apply HeckeRing.mem_mulSupport_of_product_mem _ _ _ (diagMat_delta 2 (![1, p ^ (k + 1)]))
     ⟨L₁⁻¹, (GL_pair 2).H.inv_mem hL₁⟩
     ⟨R₁⁻¹ * L₂⁻¹,
@@ -335,7 +335,7 @@ lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
   -- After simp cancellation: D₁ * (D₂ * R₂) = diagMat_delta(![1,p^{k+1}]) * R₂
   simp only [one_mul, mul_assoc, inv_mul_cancel_left, mul_inv_cancel_left]
   rw [diagMat_delta_val 2 (![1, p ^ (k + 1)])
-    (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos (k + 1))]
+    (fun i ↦ by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos (k + 1))]
   rw [← mul_assoc, diagMat_mul 2 (![1, p]) (![1, p ^ k])
     (by intro i; fin_cases i <;> simp [hp.pos])
     (by intro i; fin_cases i <;> simp [pow_pos hp.pos k])]
@@ -369,8 +369,8 @@ lemma heckeMultiplicity_deg_sum_eq (D1 D2 D_out1 D_out2 : HeckeCoset (GL_pair 2)
         (HeckeCoset.rep D2)).support ⊆ ({D_out1, D_out2} : Finset _) := by
       intro A hA; simp only [Finset.mem_insert, Finset.mem_singleton]
       rw [Finsupp.mem_support_iff] at hA
-      exact (or_iff_not_imp_left.mpr fun h1 =>
-        (Classical.em (A = D_out2)).elim id fun h2 => absurd (h_zero A h1 h2) hA)
+      exact (or_iff_not_imp_left.mpr fun h1 ↦
+        (Classical.em (A = D_out2)).elim id fun h2 ↦ absurd (h_zero A h1 h2) hA)
     exact Finset.sum_subset hsub (by
       intro A _ hA; rw [Finsupp.notMem_support_iff.mp hA]; simp) |>.trans
       (Finset.sum_pair h_ne)
@@ -381,8 +381,8 @@ include hp in
 private lemma HeckeCoset_deg_T_diag_one_ppow (j : ℕ) (hj : 0 < j) :
     HeckeCoset_deg (GL_pair 2) (T_diag (![1, p ^ j])) = ↑(p ^ (j - 1) * (p + 1)) :=
   HeckeCoset_deg_T_diag_two_prime p hp _
-    (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos j)
-    (fun i hi => by (have : i = 0 := by omega); subst this; simp) j hj (by simp)
+    (fun i ↦ by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos j)
+    (fun i hi ↦ by (have : i = 0 := by omega); subst this; simp) j hj (by simp)
 
 include hp in
 /-- The degree of the diagonal coset `T(p, pᵏ)` is `p^{k-2}(p+1)` for `k ≥ 2`. -/
@@ -390,7 +390,7 @@ private lemma HeckeCoset_deg_T_diag_p_ppow (k : ℕ) (hk2 : 2 ≤ k) :
     HeckeCoset_deg (GL_pair 2) (T_diag (![p, p ^ k])) = ↑(p ^ (k - 2) * (p + 1)) := by
   have := HeckeCoset_deg_T_diag_two_prime p hp (![p, p ^ k])
     (by intro i; fin_cases i <;> first | exact hp.pos | exact pow_pos hp.pos k)
-    (fun i hi => by
+    (fun i hi ↦ by
       have hi0 : i = 0 := by omega
       subst hi0; simpa using dvd_pow_self p (show k ≠ 0 by omega))
     (k - 1) (by omega)
@@ -404,8 +404,8 @@ include hp in
 private lemma HeckeCoset_deg_T_diag_p_p_eq_one :
     HeckeCoset_deg (GL_pair 2) (T_diag (![p, p ^ 1])) = 1 :=
   HeckeCoset_deg_T_diag_two_scalar _
-    (fun i => by fin_cases i <;> first | exact hp.pos | exact pow_pos hp.pos 1)
-    (fun i hi => by (have : i = 0 := by omega); subst this; simp [pow_one])
+    (fun i ↦ by fin_cases i <;> first | exact hp.pos | exact pow_pos hp.pos 1)
+    (fun i hi ↦ by (have : i = 0 := by omega); subst this; simp [pow_one])
     (by show (![p, p ^ 1] : Fin 2 → ℕ) 0 = (![p, p ^ 1] : Fin 2 → ℕ) 1; simp [pow_one])
 
 include hp in
@@ -418,10 +418,10 @@ private lemma T_diag_one_ppow_succ_ne_T_diag_p_ppow (k : ℕ) (hk : 0 < k) :
     intro i; fin_cases i <;> simp [pow_pos hp.pos]
   have h2_pos : ∀ i : Fin 2, 0 < (![p, p ^ k]) i := by
     intro i; fin_cases i <;> simp [hp.pos, pow_pos hp.pos]
-  have h1_div : DivChain 2 (![1, p ^ (k + 1)]) := fun i hi => by
+  have h1_div : DivChain 2 (![1, p ^ (k + 1)]) := fun i hi ↦ by
     have hi0 : i = 0 := by omega
     subst hi0; simp
-  have h2_div : DivChain 2 (![p, p ^ k]) := fun i hi => by
+  have h2_div : DivChain 2 (![p, p ^ k]) := fun i hi ↦ by
     have hi0 : i = 0 := by omega
     subst hi0; simpa using dvd_pow_self p (show k ≠ 0 by omega)
   exact absurd (congr_fun (diagonal_representative_unique 2 _ _
@@ -569,8 +569,8 @@ include hp in
 private lemma T_pp_comm_T_ad_one_p : T_pp p * T_ad 1 p = T_ad 1 p * T_pp p := by
   rw [T_ad_of_pos 1 p Nat.one_pos hp.pos (one_dvd _)]
   exact T_pp_comm_T_elem p hp _
-    (fun i => by fin_cases i <;> first | exact Nat.one_pos | exact hp.pos)
-    (fun i hi => by (have : i = 0 := by omega); subst this; simp)
+    (fun i ↦ by fin_cases i <;> first | exact Nat.one_pos | exact hp.pos)
+    (fun i hi ↦ by (have : i = 0 := by omega); subst this; simp)
 
 /-- `T_sum(p^0) = 1`. -/
 private lemma T_sum_ppow_zero : T_sum ⟨p ^ 0, pow_pos hp.pos 0⟩ = 1 :=
@@ -684,8 +684,8 @@ private lemma T_pp_comm_T_sum_ppow (k : ℕ) : T_pp p * T_sum ⟨p ^ k, pow_pos 
   · obtain ⟨_, _, hdvd⟩ := h
     rw [T_ad_of_pos (p ^ i) (p ^ (k - i)) (pow_pos hp.pos i) (pow_pos hp.pos (k - i)) hdvd]
     exact T_pp_comm_T_elem p hp _
-      (fun i' => by fin_cases i' <;> first | exact pow_pos hp.pos i | exact pow_pos hp.pos (k - i))
-      (fun i' hi' => by (have : i' = 0 := by omega); subst this; simpa using hdvd)
+      (fun i' ↦ by fin_cases i' <;> first | exact pow_pos hp.pos i | exact pow_pos hp.pos (k - i))
+      (fun i' hi' ↦ by (have : i' = 0 := by omega); subst this; simpa using hdvd)
   · simp [T_ad_eq_zero h, mul_zero, zero_mul]
 
 private lemma T_pp_pow_comm_T_sum_ppow (i k : ℕ) : T_pp p ^ i *
@@ -826,7 +826,7 @@ private lemma T_sum_ppow_mul_step (r s : ℕ) (hrs : r + 2 ≤ s)
     (∑ i ∈ Finset.range (r + 1), (p : ℤ) ^ (i + 1) • (Tpp ^ (i + 1) *
         T_sum ⟨p ^ (r + s - 2 * i), pow_pos hp.pos _⟩)) := by
     rw [← Finset.sum_add_distrib]
-    exact Finset.sum_congr rfl fun i hi => by
+    exact Finset.sum_congr rfl fun i hi ↦ by
       rw [Finset.mem_range] at hi
       exact T_sum_ppow_mul_summand_split p hp r s i (by omega) (by omega)
   rw [h_lhs1, h_peel1, h_sum_split, h_lhs2]
@@ -888,11 +888,11 @@ lemma T_ad_mul_of_coprime (a b da db : ℕ)
   rw [T_ad_of_pos a da ha hda hdva, T_ad_of_pos b db hb hdb hdvb,
       T_ad_of_pos (a * b) (da * db) (Nat.mul_pos ha hb)
         (Nat.mul_pos hda hdb) (Nat.mul_dvd_mul hdva hdvb)]
-  have ha_pos : ∀ i, 0 < ![a, da] i := fun i => by fin_cases i <;> first | exact ha | exact hda
-  have hb_pos : ∀ i, 0 < ![b, db] i := fun i => by fin_cases i <;> first | exact hb | exact hdb
-  have ha_div : DivChain 2 (![a, da]) := fun i hi => by
+  have ha_pos : ∀ i, 0 < ![a, da] i := fun i ↦ by fin_cases i <;> first | exact ha | exact hda
+  have hb_pos : ∀ i, 0 < ![b, db] i := fun i ↦ by fin_cases i <;> first | exact hb | exact hdb
+  have ha_div : DivChain 2 (![a, da]) := fun i hi ↦ by
     (have : i = 0 := by omega); subst this; simpa using hdva
-  have hb_div : DivChain 2 (![b, db]) := fun i hi => by
+  have hb_div : DivChain 2 (![b, db]) := fun i hi ↦ by
     (have : i = 0 := by omega); subst this; simpa using hdvb
   have mul_eq : (![a, da]) * (![b, db]) = ![a * b, da * db] := by
     ext i; fin_cases i <;> simp [Pi.mul_apply]
@@ -910,7 +910,7 @@ private lemma T_ad_mul_zero_of_not_dvd' (b db : ℕ) (h : ¬(0 < b ∧ 0 < db �
 /-- The multiplication map on `m.divisors ×ˢ n.divisors` is injective when `m` and `n`
     are coprime. -/
 lemma mul_injOn_coprime_divisors (m n : ℕ) (hcop : Nat.Coprime m n) :
-    Set.InjOn (fun p : ℕ × ℕ => p.1 * p.2) (↑(m.divisors ×ˢ n.divisors)) := by
+    Set.InjOn (fun p : ℕ × ℕ ↦ p.1 * p.2) (↑(m.divisors ×ˢ n.divisors)) := by
   intro ⟨a₁, b₁⟩ h₁ ⟨a₂, b₂⟩ h₂ heq
   simp only [Finset.mem_coe, Finset.mem_product, Nat.mem_divisors] at h₁ h₂
   simp only at heq
@@ -921,7 +921,7 @@ lemma mul_injOn_coprime_divisors (m n : ℕ) (hcop : Nat.Coprime m n) :
   have haeq : a₁ = a₂ := Nat.dvd_antisymm
     (hcop₁₂.dvd_of_dvd_mul_right (heq ▸ dvd_mul_right a₁ b₁))
     (hcop₂₁.dvd_of_dvd_mul_right (heq ▸ dvd_mul_right a₂ b₂))
-  have ha_pos : 0 < a₁ := Nat.pos_of_ne_zero fun h => by simp [h] at h₁
+  have ha_pos : 0 < a₁ := Nat.pos_of_ne_zero fun h ↦ by simp [h] at h₁
   exact Prod.ext haeq (Nat.eq_of_mul_eq_mul_left ha_pos (haeq ▸ heq))
 
 /-- Theorem 3.24(3a): coprime multiplicativity `T(m) T(n) = T(mn)` when `gcd(m,n) = 1`. -/
@@ -934,13 +934,13 @@ theorem T_sum_mul_coprime (m n : ℕ+) (hcop : Nat.Coprime m n) :
   open scoped Pointwise in
   rw [Finset.sum_mul_sum, Nat.divisors_mul,
     show (Nat.divisors M * Nat.divisors N) =
-    (Nat.divisors M ×ˢ Nat.divisors N).image (fun p => p.1 * p.2) from rfl,
+    (Nat.divisors M ×ˢ Nat.divisors N).image (fun p ↦ p.1 * p.2) from rfl,
     Finset.sum_image (mul_injOn_coprime_divisors M N hcop), ← Finset.sum_product']
   apply Finset.sum_congr rfl
   intro ⟨a, b⟩ hab
   simp only [Finset.mem_product, Nat.mem_divisors] at hab
-  have ha_pos : 0 < a := Nat.pos_of_ne_zero (fun h => by simp [h] at hab)
-  have hb_pos : 0 < b := Nat.pos_of_ne_zero (fun h => by simp [h] at hab)
+  have ha_pos : 0 < a := Nat.pos_of_ne_zero (fun h ↦ by simp [h] at hab)
+  have hb_pos : 0 < b := Nat.pos_of_ne_zero (fun h ↦ by simp [h] at hab)
   rw [(Nat.div_mul_div_comm hab.1.1 hab.2.1).symm]
   by_cases hca : a ∣ (M / a)
   · by_cases hcb : b ∣ (N / b)
@@ -973,9 +973,9 @@ noncomputable def T_sum_nat (k : ℕ) : HeckeAlgebra 2 :=
 /-- `T_sum_nat` agrees with `T_sum` on positive naturals. -/
 lemma T_sum_nat_eq (k : ℕ+) : T_sum_nat (k : ℕ) = T_sum k := rfl
 
-private lemma T_ad_self_eq_T_elem (c : ℕ) (hc : 0 < c) : T_ad c c = T_elem (fun _ => c) := by
+private lemma T_ad_self_eq_T_elem (c : ℕ) (hc : 0 < c) : T_ad c c = T_elem (fun _ ↦ c) := by
   rw [T_ad_of_pos c c hc hc (dvd_refl c)]
-  exact T_elem_congr_diag 2 (funext fun j => by fin_cases j <;> rfl)
+  exact T_elem_congr_diag 2 (funext fun j ↦ by fin_cases j <;> rfl)
 
 /-- `T_pp q ^ i = T_ad (q^i) (q^i)` : the `i`-th power of `T(p,p)` equals `T_ad(p^i, p^i)`. -/
 private lemma T_pp_pow_eq_T_ad (q : ℕ) (hq : q.Prime) (i : ℕ) : T_pp q ^ i =
@@ -1015,7 +1015,7 @@ lemma gcd_factor_prime_pow (q : ℕ) (hq : q.Prime) (a b : ℕ) (m' n' : ℕ+)
   have hcop_qm : Nat.Coprime (q ^ a) m' := (Nat.Prime.coprime_pow_of_not_dvd hq hqm).symm
   have hcop_qn : Nat.Coprime (q ^ b) n' := (Nat.Prime.coprime_pow_of_not_dvd hq hqn).symm
   have hcop_rg : Nat.Coprime (q ^ min a b) (Nat.gcd m' n') :=
-    (Nat.Prime.coprime_pow_of_not_dvd hq (fun h => hqm (dvd_trans h (Nat.gcd_dvd_left _ _)))).symm
+    (Nat.Prime.coprime_pow_of_not_dvd hq (fun h ↦ hqm (dvd_trans h (Nat.gcd_dvd_left _ _)))).symm
   apply Nat.eq_of_factorization_eq (Nat.gcd_pos_of_pos_left _
       (Nat.mul_pos (pow_pos hq.pos a) m'.pos)).ne'
     (Nat.mul_pos (pow_pos hq.pos (min a b)) (Nat.gcd_pos_of_pos_left _ m'.pos)).ne'
@@ -1044,9 +1044,9 @@ private lemma T_sum_mul_peel_prime_summand_rhs (q : ℕ) (hq : q.Prime) (a b : �
     T_sum ⟨q ^ (r + s - 2 * i), pow_pos hq.pos _⟩ *
       T_sum_nat (↑m' * ↑n' / (d' * d')) =
     T_sum_nat (q ^ a * ↑m' * (q ^ b * ↑n') / (q ^ i * d' * (q ^ i * d'))) := by
-  have hq_ndvd_mn : ¬ q ∣ ↑m' * ↑n' := fun h =>
-    hqm ((hq.dvd_mul.mp h).elim id (fun h' => absurd h' hqn))
-  have hq_ndvd_quot : ¬ q ∣ ↑m' * ↑n' / (d' * d') := fun h => hq_ndvd_mn (dvd_trans h
+  have hq_ndvd_mn : ¬ q ∣ ↑m' * ↑n' := fun h ↦
+    hqm ((hq.dvd_mul.mp h).elim id (fun h' ↦ absurd h' hqn))
+  have hq_ndvd_quot : ¬ q ∣ ↑m' * ↑n' / (d' * d') := fun h ↦ hq_ndvd_mn (dvd_trans h
     (Nat.div_dvd_of_dvd (Nat.mul_dvd_mul (dvd_trans hd'_dvd (Nat.gcd_dvd_left _ _))
       (dvd_trans hd'_dvd (Nat.gcd_dvd_right _ _)))))
   have h_quot_pos : 0 < ↑m' * ↑n' / (d' * d') := Nat.div_pos
@@ -1085,9 +1085,9 @@ private lemma T_sum_mul_peel_prime_summand (q : ℕ) (hq : q.Prime) (a b : ℕ) 
     (↑(q ^ i * d') : ℤ) • (T_ad (q ^ i * d') (q ^ i * d') *
       T_sum_nat (q ^ a * ↑m' * (q ^ b * ↑n') / (q ^ i * d' * (q ^ i * d')))) := by
   have hd'_dvd : d' ∣ Nat.gcd (m' : ℕ) n' := (Nat.mem_divisors.mp hd').1
-  have hqd' : ¬ q ∣ d' := fun h => hqm (dvd_trans h (dvd_trans hd'_dvd (Nat.gcd_dvd_left _ _)))
+  have hqd' : ¬ q ∣ d' := fun h ↦ hqm (dvd_trans h (dvd_trans hd'_dvd (Nat.gcd_dvd_left _ _)))
   have hcop_qi_d' : Nat.Coprime (q ^ i) d' := (Nat.Prime.coprime_pow_of_not_dvd hq hqd').symm
-  have hd'_pos : 0 < d' := Nat.pos_of_ne_zero fun h => by simp [h] at hd'_dvd
+  have hd'_pos : 0 < d' := Nat.pos_of_ne_zero fun h ↦ by simp [h] at hd'_dvd
   rw [mul_smul_comm, smul_smul,
     show (↑(q ^ i) : ℤ) * ↑d' = ↑(q ^ i * d') from by push_cast; ring]
   congr 1
@@ -1121,12 +1121,12 @@ private lemma T_sum_mul_peel_prime_aux (q : ℕ) (hq : q.Prime) (a b : ℕ) (_ha
       (T_sum qa * T_sum qb) * (T_sum m' * T_sum n') from by ring]
   set r := min a b with hr_def; set g := Nat.gcd (m' : ℕ) n'
   have hcop_rg : Nat.Coprime (q ^ r) g :=
-    (Nat.Prime.coprime_pow_of_not_dvd hq (fun h => hqm (dvd_trans h (Nat.gcd_dvd_left _ _)))).symm
+    (Nat.Prime.coprime_pow_of_not_dvd hq (fun h ↦ hqm (dvd_trans h (Nat.gcd_dvd_left _ _)))).symm
   rw [gcd_factor_prime_pow q hq a b m' n' hqm hqn]
   open scoped Pointwise in
   rw [Nat.divisors_mul,
     show (Nat.divisors (q ^ r) * Nat.divisors g) =
-    (Nat.divisors (q ^ r) ×ˢ Nat.divisors g).image (fun p => p.1 * p.2) from rfl]
+    (Nat.divisors (q ^ r) ×ˢ Nat.divisors g).image (fun p ↦ p.1 * p.2) from rfl]
   rw [ih]; set s := max a b with hs_def; have hrs : r ≤ s := min_le_max
   rw [show T_sum qa * T_sum qb =
     T_sum ⟨q ^ r, pow_pos hq.pos r⟩ * T_sum ⟨q ^ s, pow_pos hq.pos s⟩
@@ -1177,7 +1177,7 @@ theorem T_sum_mul (m n : ℕ+) : T_sum m * T_sum n =
         ((Nat.gcd_dvd_left _ _).trans (Nat.ordCompl_dvd m q))
         ((Nat.gcd_dvd_right _ _).trans (Nat.ordCompl_dvd n q))
       have h2 : ¬ q ∣ Nat.gcd (m' : ℕ) (n' : ℕ) :=
-        fun h => hqm' (h.trans (Nat.gcd_dvd_left _ _))
+        fun h ↦ hqm' (h.trans (Nat.gcd_dvd_left _ _))
       exact lt_of_le_of_lt
         (Nat.le_of_dvd (Nat.div_pos (Nat.le_of_dvd hg_pos hq_dvd_g) hq.pos)
           (((Nat.Prime.coprime_iff_not_dvd hq).mpr h2).symm.dvd_of_dvd_mul_right

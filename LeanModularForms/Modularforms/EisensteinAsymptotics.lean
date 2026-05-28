@@ -38,14 +38,14 @@ noncomputable section
 
 /-- exp(-c * y) → 0 as y → +∞ (for c > 0). -/
 lemma tendsto_exp_neg_mul_atTop {c : ℝ} (hc : 0 < c) :
-    Filter.Tendsto (fun y : ℝ => Real.exp (-c * y)) Filter.atTop (nhds 0) := by
-  have : Filter.Tendsto (fun y => -c * y) Filter.atTop Filter.atBot := by
+    Filter.Tendsto (fun y : ℝ ↦ Real.exp (-c * y)) Filter.atTop (nhds 0) := by
+  have : Filter.Tendsto (fun y ↦ -c * y) Filter.atTop Filter.atBot := by
     simpa using Filter.tendsto_id.const_mul_atTop_of_neg (neg_neg_of_pos hc)
   exact Real.tendsto_exp_atBot.comp this
 
 /-- If f = O(exp(-c * Im z)) as z → i∞ for c > 0, then f → 0 at i∞. -/
 lemma tendsto_zero_of_exp_decay {f : ℍ → ℂ} {c : ℝ} (hc : 0 < c)
-    (hO : f =O[atImInfty] fun τ => Real.exp (-c * τ.im)) :
+    (hO : f =O[atImInfty] fun τ ↦ Real.exp (-c * τ.im)) :
     Filter.Tendsto f atImInfty (nhds 0) :=
   hO.trans_tendsto ((tendsto_exp_neg_mul_atTop hc).comp tendsto_im_atImInfty)
 
@@ -57,10 +57,10 @@ lemma modular_form_tendsto_atImInfty {k : ℤ} (f : ModularForm (Gamma 1) k) :
   simpa using (tendsto_zero_of_exp_decay hc hO).add_const (valueAtInfty f.toFun)
 
 /-- E₂ - 1 = O(exp(-2π·Im z)) at infinity. -/
-lemma E₂_sub_one_isBigO_exp : (fun z : ℍ => E₂ z - 1) =O[atImInfty]
-    fun z => Real.exp (-(2 * π) * z.im) := by
+lemma E₂_sub_one_isBigO_exp : (fun z : ℍ ↦ E₂ z - 1) =O[atImInfty]
+    fun z ↦ Real.exp (-(2 * π) * z.im) := by
   rw [Asymptotics.isBigO_iff]
-  refine ⟨192, Filter.eventually_atImInfty.mpr ⟨1, fun z hz => ?_⟩⟩
+  refine ⟨192, Filter.eventually_atImInfty.mpr ⟨1, fun z hz ↦ ?_⟩⟩
   -- E₂ z - 1 = -24 * ∑' n, n·qⁿ/(1-qⁿ)
   have hsub : E₂ z - 1 = -24 * ∑' (n : ℕ+), ↑n * cexp (2 * π * Complex.I * ↑n * ↑z) /
       (1 - cexp (2 * π * Complex.I * ↑n * ↑z)) := by rw [E₂_eq z]; ring
@@ -99,7 +99,7 @@ lemma E₂_sub_one_isBigO_exp : (fun z : ℍ => E₂ z - 1) =O[atImInfty]
 
 /-- E₂ → 1 at i∞. -/
 lemma E₂_tendsto_one_atImInfty : Filter.Tendsto E₂ atImInfty (nhds 1) := by
-  suffices h : Filter.Tendsto (fun z : ℍ => E₂ z - 1) atImInfty (nhds 0) by
+  suffices h : Filter.Tendsto (fun z : ℍ ↦ E₂ z - 1) atImInfty (nhds 0) by
     simpa using h.add_const 1
   exact tendsto_zero_of_exp_decay (by positivity : 0 < 2 * π) E₂_sub_one_isBigO_exp
 
@@ -156,13 +156,13 @@ lemma serre_D_tendsto_of_tendsto (k : ℤ) (f : ℍ → ℂ) (c : ℂ)
     (hf_holo : MDiff f) (hf_bdd : IsBoundedAtImInfty f)
     (hf_lim : Filter.Tendsto f atImInfty (nhds c)) :
     Filter.Tendsto (serre_D k f) atImInfty (nhds (-(k : ℂ) * c / 12)) := by
-  rw [show serre_D k f = fun z => D f z - (k : ℂ) * 12⁻¹ * E₂ z * f z from serre_D_eq k f]
+  rw [show serre_D k f = fun z ↦ D f z - (k : ℂ) * 12⁻¹ * E₂ z * f z from serre_D_eq k f]
   have hD := D_tendsto_zero_of_isBoundedAtImInfty hf_holo hf_bdd
   have hprod := E₂_tendsto_one_atImInfty.mul hf_lim
   have hlim : (0 : ℂ) - (k : ℂ) * 12⁻¹ * 1 * c = -(k : ℂ) * c / 12 := by ring
   rw [← hlim]
   refine hD.sub ?_
-  have hconst : Filter.Tendsto (fun _ : ℍ => (k : ℂ) * 12⁻¹)
+  have hconst : Filter.Tendsto (fun _ : ℍ ↦ (k : ℂ) * 12⁻¹)
       atImInfty (nhds ((k : ℂ) * 12⁻¹)) := tendsto_const_nhds
   convert hconst.mul hprod using 1 <;> ring_nf
 
@@ -199,14 +199,14 @@ Note: E₂ itself is NOT a modular form, but serre_D 1 E₂ IS. -/
 def serre_DE₂_ModularForm : ModularForm (CongruenceSubgroup.Gamma 1) 4 where
   toSlashInvariantForm := {
     toFun := serre_D 1 E₂
-    slash_action_eq' := fun γ hγ => by
+    slash_action_eq' := fun γ hγ ↦ by
       rw [Subgroup.mem_map] at hγ
       obtain ⟨γ', _, rfl⟩ := hγ
       exact serre_DE₂_slash_invariant γ'
   }
   holo' := serre_D_differentiable E₂_holo'
-  bdd_at_cusps' := fun hc =>
-    bounded_at_cusps_of_bounded_at_infty hc fun _ hA => by
+  bdd_at_cusps' := fun hc ↦
+    bounded_at_cusps_of_bounded_at_infty hc fun _ hA ↦ by
       obtain ⟨A', rfl⟩ := MonoidHom.mem_range.mp hA
       exact (serre_DE₂_slash_invariant A').symm ▸ serre_DE₂_isBoundedAtImInfty
 
@@ -222,10 +222,10 @@ lemma serre_DE₂_tendsto_atImInfty :
 
 /-- Summability of (m+1)^k * exp(-2πm) via comparison with shifted sum. -/
 lemma summable_pow_shift (k : ℕ) :
-    Summable fun m : ℕ => (m + 1 : ℝ) ^ k * rexp (-2 * π * m) := by
+    Summable fun m : ℕ ↦ (m + 1 : ℝ) ^ k * rexp (-2 * π * m) := by
   have h := Real.summable_pow_mul_exp_neg_nat_mul k (by positivity : 0 < 2 * π)
   have h_eq : ∀ m : ℕ, (m + 1 : ℝ) ^ k * rexp (-2 * π * m) =
-      rexp (2 * π) * ((m + 1) ^ k * rexp (-2 * π * (m + 1))) := fun m => by
+      rexp (2 * π) * ((m + 1) ^ k * rexp (-2 * π * (m + 1))) := fun m ↦ by
     have : rexp (-2 * π * m) = rexp (2 * π) * rexp (-2 * π * (m + 1)) := by
       rw [← Real.exp_add]
       ring_nf
@@ -253,13 +253,13 @@ lemma qexp_deriv_bound_of_coeff_bound {a : ℕ+ → ℂ} {k : ℕ}
     have hy_min_pos : 0 < k_min.im := hK_sub hk_min_mem
     have hpos : 0 < 2 * π * k_min.im := by nlinarith [pi_pos]
     have h := Real.summable_pow_mul_exp_neg_nat_mul (k + 1) hpos
-    have hconv : Summable (fun n : ℕ+ =>
+    have hconv : Summable (fun n : ℕ+ ↦
         2 * π * ((n : ℕ) : ℝ)^(k + 1) * rexp (-(2 * π * k_min.im) * (n : ℕ))) := by
-      have : Summable (fun n : ℕ+ =>
+      have : Summable (fun n : ℕ+ ↦
           ((n : ℕ) : ℝ)^(k + 1) * rexp (-(2 * π * k_min.im) * (n : ℕ))) := h.subtype _
       convert this.mul_left (2 * π) using 1
       ext n; ring
-    use fun n => 2 * π * (n : ℝ)^(k + 1) * rexp (-2 * π * ↑n * k_min.im)
+    use fun n ↦ 2 * π * (n : ℝ)^(k + 1) * rexp (-2 * π * ↑n * k_min.im)
     constructor
     · apply hconv.of_nonneg_of_le
       · intro n; positivity
@@ -291,7 +291,7 @@ lemma qexp_deriv_bound_of_coeff_bound {a : ℕ+ → ℂ} {k : ℕ}
             apply mul_le_mul_of_nonpos_left hz_im
             nlinarith [pi_pos, hn_pos]
         _ = 2 * π * (n : ℝ)^(k + 1) * rexp (-2 * π * n * k_min.im) := by ring
-  · use fun _ => 0
+  · use fun _ ↦ 0
     constructor
     · exact summable_zero
     · intro n ⟨z, hz_mem⟩

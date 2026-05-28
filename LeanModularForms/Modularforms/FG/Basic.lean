@@ -78,7 +78,7 @@ public theorem F_eq_FReal {t : ℝ} (ht : 0 < t) : F.resToImagAxis t = FReal t :
 
 /-- On the imaginary axis, `G` takes real values (so it agrees with `GReal`). -/
 public theorem G_eq_GReal {t : ℝ} (ht : 0 < t) : G.resToImagAxis t = GReal t := by
-  have hconst (c : ℝ) : ResToImagAxis.Real (fun _ : ℍ => (c : ℂ)) := by
+  have hconst (c : ℝ) : ResToImagAxis.Real (fun _ : ℍ ↦ (c : ℂ)) := by
     intro u hu
     simp [Function.resToImagAxis, ResToImagAxis, hu]
   have hH2_sq : ResToImagAxis.Real (H₂ ^ 2) := by
@@ -165,12 +165,12 @@ lemma serre_D_E₂_mul_E₄_sub_E₆ :
   have hDsub :
       D (E₂ * (E₄ : ℍ → ℂ) - (E₆ : ℍ → ℂ)) z =
         D (E₂ * (E₄ : ℍ → ℂ)) z - D (E₆ : ℍ → ℂ) z := by
-    simpa [Pi.sub_apply] using congrArg (fun f : ℍ → ℂ => f z)
+    simpa [Pi.sub_apply] using congrArg (fun f : ℍ → ℂ ↦ f z)
       (D_sub (E₂ * (E₄ : ℍ → ℂ)) (E₆ : ℍ → ℂ) (MDifferentiable.mul E₂_holo' E₄.holo') E₆.holo')
   have hDmul :
       D (E₂ * (E₄ : ℍ → ℂ)) z =
         (D E₂ * (E₄ : ℍ → ℂ) + E₂ * D (E₄ : ℍ → ℂ)) z := by
-    simpa using congrArg (fun f : ℍ → ℂ => f z) (D_mul E₂ (E₄ : ℍ → ℂ) E₂_holo' E₄.holo')
+    simpa using congrArg (fun f : ℍ → ℂ ↦ f z) (D_mul E₂ (E₄ : ℍ → ℂ) E₂_holo' E₄.holo')
   simp [serre_D, hDsub, hDmul, hDE₄, hDE₆, ramanujan_E₂, smul_eq_mul, mul_assoc, mul_left_comm,
     mul_comm]
   ring_nf
@@ -186,17 +186,17 @@ lemma serre_D_E₂_mul_E₆_sub_E₄_sq :
   have hDsub :
       D (E₂ * (E₆ : ℍ → ℂ) - (E₄ : ℍ → ℂ) * (E₄ : ℍ → ℂ)) z =
         D (E₂ * (E₆ : ℍ → ℂ)) z - D ((E₄ : ℍ → ℂ) * (E₄ : ℍ → ℂ)) z := by
-    simpa [Pi.sub_apply] using congrArg (fun f : ℍ → ℂ => f z)
+    simpa [Pi.sub_apply] using congrArg (fun f : ℍ → ℂ ↦ f z)
       (D_sub (E₂ * (E₆ : ℍ → ℂ)) ((E₄ : ℍ → ℂ) * (E₄ : ℍ → ℂ))
         (MDifferentiable.mul E₂_holo' E₆.holo') (MDifferentiable.mul E₄.holo' E₄.holo'))
   have hDmul₁ :
       D (E₂ * (E₆ : ℍ → ℂ)) z =
         (D E₂ * (E₆ : ℍ → ℂ) + E₂ * D (E₆ : ℍ → ℂ)) z := by
-    simpa using congrArg (fun f : ℍ → ℂ => f z) (D_mul E₂ (E₆ : ℍ → ℂ) E₂_holo' E₆.holo')
+    simpa using congrArg (fun f : ℍ → ℂ ↦ f z) (D_mul E₂ (E₆ : ℍ → ℂ) E₂_holo' E₆.holo')
   have hDmul₂ :
       D ((E₄ : ℍ → ℂ) * (E₄ : ℍ → ℂ)) z =
         (D (E₄ : ℍ → ℂ) * (E₄ : ℍ → ℂ) + (E₄ : ℍ → ℂ) * D (E₄ : ℍ → ℂ)) z := by
-    simpa using congrArg (fun f : ℍ → ℂ => f z)
+    simpa using congrArg (fun f : ℍ → ℂ ↦ f z)
       (D_mul (E₄ : ℍ → ℂ) (E₄ : ℍ → ℂ) E₄.holo' E₄.holo')
   simp [serre_D, hDsub, hDmul₁, hDmul₂, hDE₄, hDE₆, ramanujan_E₂, smul_eq_mul, mul_assoc,
     mul_left_comm, mul_comm]
@@ -462,8 +462,8 @@ public theorem MLDE_G :
   rw [hS12_S10_G, hS12_H2_pow6, hS12_H2pow5_mul_H4, hS12_H2pow4_mul_H4sq, hS12_H2cube_mul_H4cube]
   -- Now everything is a polynomial identity in `H₂` and `H₄`, plus the standard level-1 objects.
   ext z
-  have hE4 := congrArg (fun f => f z) SpherePacking.ModularForms.E₄_eq_thetaE4
-  have hE6 := congrArg (fun f => f z) SpherePacking.ModularForms.E₆_eq_thetaE6
+  have hE4 := congrArg (fun f ↦ f z) SpherePacking.ModularForms.E₄_eq_thetaE4
+  have hE6 := congrArg (fun f ↦ f z) SpherePacking.ModularForms.E₆_eq_thetaE6
   simp [SpherePacking.ModularForms.thetaE4, SpherePacking.ModularForms.thetaE6,
     smul_eq_mul] at hE4 hE6
   simp [G, Δ_fun, U1, U2, U3, U4, hE4, hE6, smul_eq_mul,

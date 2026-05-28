@@ -64,25 +64,25 @@ theorem cuspFormsOld_iSup_inf_charSpace (k : ℤ) :
     (⨆ χ : (ZMod N)ˣ →* ℂˣ, cuspFormsOld N k ⊓ cuspFormCharSpace k χ) =
       cuspFormsOld N k :=
   cuspFormCharSpace_iSup_inf_of_diamondOpCuspHom_invariant k (cuspFormsOld N k)
-    (fun d f hf => diamondOpCuspHom_preserves_cuspFormsOld d f hf)
+    (fun d f hf ↦ diamondOpCuspHom_preserves_cuspFormsOld d f hf)
 
 /-- **Character decomposition of `cuspFormsNew N k`**. -/
 theorem cuspFormsNew_iSup_inf_charSpace (k : ℤ) :
     (⨆ χ : (ZMod N)ˣ →* ℂˣ, cuspFormsNew N k ⊓ cuspFormCharSpace k χ) =
       cuspFormsNew N k :=
   cuspFormCharSpace_iSup_inf_of_diamondOpCuspHom_invariant k (cuspFormsNew N k)
-    (fun d f hf => diamondOpCuspHom_preserves_cuspFormsNew d f hf)
+    (fun d f hf ↦ diamondOpCuspHom_preserves_cuspFormsNew d f hf)
 
 /-- **Independence of the character-wise pieces of `cuspFormsOld N k`.** -/
 theorem cuspFormsOld_iSupIndep_inf_charSpace (k : ℤ) :
     iSupIndep
-      (fun χ : (ZMod N)ˣ →* ℂˣ => cuspFormsOld N k ⊓ cuspFormCharSpace k χ) :=
+      (fun χ : (ZMod N)ˣ →* ℂˣ ↦ cuspFormsOld N k ⊓ cuspFormCharSpace k χ) :=
   cuspFormCharSpace_iSupIndep_inf k (cuspFormsOld N k)
 
 /-- **Independence of the character-wise pieces of `cuspFormsNew N k`.** -/
 theorem cuspFormsNew_iSupIndep_inf_charSpace (k : ℤ) :
     iSupIndep
-      (fun χ : (ZMod N)ˣ →* ℂˣ => cuspFormsNew N k ⊓ cuspFormCharSpace k χ) :=
+      (fun χ : (ZMod N)ˣ →* ℂˣ ↦ cuspFormsNew N k ⊓ cuspFormCharSpace k χ) :=
   cuspFormCharSpace_iSupIndep_inf k (cuspFormsNew N k)
 
 /-- **Finsupp-indexed character decomposition of an oldform.**  Every
@@ -93,9 +93,9 @@ theorem exists_finsupp_charSpace_of_cuspFormsOld (k : ℤ)
     {f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k} (hf : f ∈ cuspFormsOld N k) :
     ∃ g : ((ZMod N)ˣ →* ℂˣ) →₀ CuspForm ((Gamma1 N).map (mapGL ℝ)) k,
       (∀ χ : (ZMod N)ˣ →* ℂˣ, g χ ∈ cuspFormsOld N k ⊓ cuspFormCharSpace k χ) ∧
-      (g.sum fun _ y => y) = f :=
+      (g.sum fun _ y ↦ y) = f :=
   exists_finsupp_charSpace_of_diamondOpCuspHom_invariant k (cuspFormsOld N k)
-    (fun d f hf => diamondOpCuspHom_preserves_cuspFormsOld d f hf) hf
+    (fun d f hf ↦ diamondOpCuspHom_preserves_cuspFormsOld d f hf) hf
 
 /-- **Finsupp-indexed character decomposition of a newform subspace element.**
 Every `f ∈ cuspFormsNew N k` is a finitely-supported sum of Nebentypus
@@ -105,9 +105,9 @@ theorem exists_finsupp_charSpace_of_cuspFormsNew (k : ℤ)
     {f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k} (hf : f ∈ cuspFormsNew N k) :
     ∃ g : ((ZMod N)ˣ →* ℂˣ) →₀ CuspForm ((Gamma1 N).map (mapGL ℝ)) k,
       (∀ χ : (ZMod N)ˣ →* ℂˣ, g χ ∈ cuspFormsNew N k ⊓ cuspFormCharSpace k χ) ∧
-      (g.sum fun _ y => y) = f :=
+      (g.sum fun _ y ↦ y) = f :=
   exists_finsupp_charSpace_of_diamondOpCuspHom_invariant k (cuspFormsNew N k)
-    (fun d f hf => diamondOpCuspHom_preserves_cuspFormsNew d f hf) hf
+    (fun d f hf ↦ diamondOpCuspHom_preserves_cuspFormsNew d f hf) hf
 
 /-- **Range of the χ-component direct-sum map onto `cuspFormsOld N k`.**  The
 natural linear map
@@ -117,7 +117,7 @@ theorem range_cuspFormsOld_charSpace_coeLinearMap
     [DecidableEq ((ZMod N)ˣ →* ℂˣ)] (k : ℤ) :
     LinearMap.range
       (DirectSum.coeLinearMap
-        (fun χ : (ZMod N)ˣ →* ℂˣ => cuspFormsOld N k ⊓ cuspFormCharSpace k χ)) =
+        (fun χ : (ZMod N)ˣ →* ℂˣ ↦ cuspFormsOld N k ⊓ cuspFormCharSpace k χ)) =
       cuspFormsOld N k :=
   DirectSum.range_coeLinearMap.trans (cuspFormsOld_iSup_inf_charSpace k)
 
@@ -126,7 +126,7 @@ theorem range_cuspFormsNew_charSpace_coeLinearMap
     [DecidableEq ((ZMod N)ˣ →* ℂˣ)] (k : ℤ) :
     LinearMap.range
       (DirectSum.coeLinearMap
-        (fun χ : (ZMod N)ˣ →* ℂˣ => cuspFormsNew N k ⊓ cuspFormCharSpace k χ)) =
+        (fun χ : (ZMod N)ˣ →* ℂˣ ↦ cuspFormsNew N k ⊓ cuspFormCharSpace k χ)) =
       cuspFormsNew N k :=
   DirectSum.range_coeLinearMap.trans (cuspFormsNew_iSup_inf_charSpace k)
 
@@ -138,7 +138,7 @@ theorem injective_cuspFormsOld_charSpace_coeLinearMap
     [DecidableEq ((ZMod N)ˣ →* ℂˣ)] (k : ℤ) :
     Function.Injective
       (DirectSum.coeLinearMap
-        (fun χ : (ZMod N)ˣ →* ℂˣ => cuspFormsOld N k ⊓ cuspFormCharSpace k χ)) :=
+        (fun χ : (ZMod N)ˣ →* ℂˣ ↦ cuspFormsOld N k ⊓ cuspFormCharSpace k χ)) :=
   (cuspFormsOld_iSupIndep_inf_charSpace k).dfinsupp_lsum_injective
 
 /-- **Injectivity of the χ-component direct-sum map at `cuspFormsNew N k`.** -/
@@ -146,7 +146,7 @@ theorem injective_cuspFormsNew_charSpace_coeLinearMap
     [DecidableEq ((ZMod N)ˣ →* ℂˣ)] (k : ℤ) :
     Function.Injective
       (DirectSum.coeLinearMap
-        (fun χ : (ZMod N)ˣ →* ℂˣ => cuspFormsNew N k ⊓ cuspFormCharSpace k χ)) :=
+        (fun χ : (ZMod N)ˣ →* ℂˣ ↦ cuspFormsNew N k ⊓ cuspFormCharSpace k χ)) :=
   (cuspFormsNew_iSupIndep_inf_charSpace k).dfinsupp_lsum_injective
 
 end CharSpaceDecomposition
@@ -300,7 +300,7 @@ private lemma qExpansion_one_levelRaise_coeff_eq_zero_of_not_dvd
   let g_mf : ModularForm ((Gamma1 M).map (mapGL ℝ)) k :=
     { toSlashInvariantForm := g.toSlashInvariantForm
       holo' := g.holo'
-      bdd_at_cusps' := fun {c} hc γ hγ =>
+      bdd_at_cusps' := fun {c} hc γ hγ ↦
         (g.zero_at_cusps' hc γ hγ).isBoundedAtImInfty }
   have h_fun_eq :
       (⇑(levelRaise M d k g) : UpperHalfPlane → ℂ) =
@@ -325,7 +325,7 @@ theorem cuspFormsOld_coeff_eq_zero_of_coprime
     (n : ℕ) (hn : Nat.Coprime n N) :
     (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0 := by
   refine Submodule.span_induction
-    (p := fun (x : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) _ =>
+    (p := fun (x : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) _ ↦
       (ModularFormClass.qExpansion (1 : ℝ) x).coeff n = 0)
     ?_ ?_ ?_ ?_ hf
   · rintro f₀ ⟨M, d, _, _, hd_lt, heq, g, rfl⟩
@@ -398,7 +398,7 @@ theorem newPart_coeff_eq_zero_of_coprime_of_vanish
   have h_coeff : (ModularFormClass.qExpansion (1 : ℝ) f).coeff n =
       (ModularFormClass.qExpansion (1 : ℝ) (oldPart f)).coeff n +
       (ModularFormClass.qExpansion (1 : ℝ) (newPart f)).coeff n := by
-    have h := congrArg (fun ps : PowerSeries ℂ => ps.coeff n) h_eq
+    have h := congrArg (fun ps : PowerSeries ℂ ↦ ps.coeff n) h_eq
     simpa using h
   rw [h_vanish n hn, oldPart_coeff_eq_zero_of_coprime f n hn, zero_add] at h_coeff
   exact h_coeff.symm

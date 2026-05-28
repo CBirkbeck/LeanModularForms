@@ -69,14 +69,14 @@ lemma Icc_sum_even (f : ℤ → ℂ) (hf : ∀ n, f n = f (-n)) (N : ℕ) :
       Left.nonneg_neg_iff, Int.reduceLE, add_neg_le_iff_le_add, false_and, not_false_eq_true,
       Finset.disjoint_singleton_right, add_le_iff_nonpos_right, and_false, and_self]
 
-lemma verga2 : Tendsto (fun N : ℕ => Finset.Icc (-N : ℤ) N) atTop atTop :=
+lemma verga2 : Tendsto (fun N : ℕ ↦ Finset.Icc (-N : ℤ) N) atTop atTop :=
   tendsto_atTop_finset_of_monotone (fun _ _ _ ↦ Finset.Icc_subset_Icc (by gcongr) (by gcongr))
   (fun x ↦ ⟨x.natAbs, by simp [le_abs, neg_le]⟩)
 
 lemma int_add_abs_self_nonneg (n : ℤ) : 0 ≤ n + |n| := by
   linarith [neg_abs_le n]
 
-lemma verga : Tendsto (fun N : ℕ => Finset.Ico (-N : ℤ) N) atTop atTop := by
+lemma verga : Tendsto (fun N : ℕ ↦ Finset.Ico (-N : ℤ) N) atTop atTop := by
   apply tendsto_atTop_finset_of_monotone (fun _ _ _ ↦ Finset.Ico_subset_Ico (by omega) (by gcongr))
   intro x
   refine ⟨x.natAbs + 1, ?_⟩

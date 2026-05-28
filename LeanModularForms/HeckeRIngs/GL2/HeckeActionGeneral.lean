@@ -237,7 +237,7 @@ noncomputable def heckeSlash_gen [HeckePairAction P] (k : ℤ)
 double cosets to formal sums `𝕋 P ℤ`. -/
 noncomputable def heckeSlashExt_gen [HeckePairAction P] (k : ℤ)
     (T : 𝕋 P ℤ) (f : ℍ → ℂ) : ℍ → ℂ :=
-  T.sum (fun D c => c • heckeSlash_gen P k D f)
+  T.sum (fun D c ↦ c • heckeSlash_gen P k D f)
 
 end Definitions
 
@@ -290,7 +290,7 @@ private lemma slash_H_eq_gen (k : ℤ) (f : ℍ → ℂ)
 private noncomputable def leftMulQuot_gen (D : HeckeCoset P) (σ : P.H) :
     decompQuot P (HeckeCoset.rep D) →
     decompQuot P (HeckeCoset.rep D) :=
-  fun i => ⟦⟨σ * i.out, P.H.mul_mem σ.prop (SetLike.coe_mem _)⟩⟧
+  fun i ↦ ⟦⟨σ * i.out, P.H.mul_mem σ.prop (SetLike.coe_mem _)⟩⟧
 
 omit [HeckePairAction P] in
 private lemma leftMulQuot_gen_injective (D : HeckeCoset P) (σ : P.H) :
@@ -460,8 +460,8 @@ lemma heckeSlash_gen_slash_invariant (k : ℤ) (D : HeckeCoset P) (f : ℍ → �
       (P.H.mul_mem σ_QA.prop (SetLike.coe_mem _))
       P.H.one_mem f hf
   rw [heckeSlash_gen_slash,
-    Finset.sum_congr rfl (fun i _ => h_perm i),
-    Fintype.sum_equiv π _ (fun i => f ∣[k] tRep_gen P D i) (fun _ => rfl)]
+    Finset.sum_congr rfl (fun i _ ↦ h_perm i),
+    Fintype.sum_equiv π _ (fun i ↦ f ∣[k] tRep_gen P D i) (fun _ ↦ rfl)]
   rfl
 
 end SlashInvariance
@@ -581,7 +581,7 @@ private lemma fiber_card_eq_gen (D₁ D₂ D : HeckeCoset P)
       {(q.out : GL _ ℚ) * (HeckeCoset.rep D : GL _ ℚ)} *
         (P.H : Set (GL (Fin 2) ℚ))) → q_of p = q)
     (q : decompQuot P (HeckeCoset.rep D)) :
-    (S.filter (fun p => q_of p = q)).card = Nat.card
+    (S.filter (fun p ↦ q_of p = q)).card = Nat.card
       {p : decompQuot P (HeckeCoset.rep D₁) ×
            decompQuot P (HeckeCoset.rep D₂) |
         ({(p.1.out : GL _ ℚ) * (HeckeCoset.rep D₁ : GL _ ℚ)} : Set _) *
@@ -592,15 +592,15 @@ private lemma fiber_card_eq_gen (D₁ D₂ D : HeckeCoset P)
   rw [← Nat.card_eq_finsetCard]
   apply Nat.card_congr
   exact {
-    toFun := fun ⟨p, hp⟩ => ⟨p, by
+    toFun := fun ⟨p, hp⟩ ↦ ⟨p, by
       simp only [Finset.mem_filter] at hp
       rw [← hp.2]; exact h_coset_eq p ((hS p).mp hp.1)⟩
-    invFun := fun ⟨p, hp_rc⟩ => ⟨p, by
+    invFun := fun ⟨p, hp_rc⟩ ↦ ⟨p, by
       have hmap := mulMap_eq_of_rightCoset_gen D₁ D₂ D p q hp_rc
       rw [Finset.mem_filter, hS]
       exact ⟨hmap, h_unique p q hmap hp_rc⟩⟩
-    left_inv := fun ⟨_, _⟩ => rfl
-    right_inv := fun ⟨_, _⟩ => rfl }
+    left_inv := fun ⟨_, _⟩ ↦ rfl
+    right_inv := fun ⟨_, _⟩ ↦ rfl }
 
 private lemma heckeSlash_gen_fiber_sum [DecidableEq (HeckeCoset P)] (k : ℤ)
     (D₁ D₂ D : HeckeCoset P)
@@ -608,7 +608,7 @@ private lemma heckeSlash_gen_fiber_sum [DecidableEq (HeckeCoset P)] (k : ℤ)
     (f : ℍ → ℂ) (hf : ∀ h, h ∈ P.H → f ∣[k] (glMap h) = f) :
     (∑ p ∈ Finset.univ.filter
         (fun p : decompQuot P (HeckeCoset.rep D₁) ×
-                 decompQuot P (HeckeCoset.rep D₂) =>
+                 decompQuot P (HeckeCoset.rep D₂) ↦
           mulMap P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) (p.1, p.2) = D),
       f ∣[k] (tRep_gen P D₂ p.2 * tRep_gen P D₁ p.1)) =
     (m P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂)) D •
@@ -618,7 +618,7 @@ private lemma heckeSlash_gen_fiber_sum [DecidableEq (HeckeCoset P)] (k : ℤ)
   have h_main := slash_and_coset_of_mulMap_eq_gen k D₁ D₂ D f hf
   set q_of : decompQuot P (HeckeCoset.rep D₁) ×
       decompQuot P (HeckeCoset.rep D₂) →
-      decompQuot P (HeckeCoset.rep D) := fun p =>
+      decompQuot P (HeckeCoset.rep D) := fun p ↦
     if h : mulMap P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) (p.1, p.2) = D
     then (h_main p h).choose else ⟦1⟧
   have h_slash_eq : ∀ p,
@@ -627,21 +627,21 @@ private lemma heckeSlash_gen_fiber_sum [DecidableEq (HeckeCoset P)] (k : ℤ)
         f ∣[k] tRep_gen P D (q_of p) := by
     intro p hp; simp only [q_of, hp, dif_pos]; exact (h_main p hp).choose_spec.1
   set S := Finset.univ.filter (fun p : decompQuot P (HeckeCoset.rep D₁) ×
-      decompQuot P (HeckeCoset.rep D₂) =>
+      decompQuot P (HeckeCoset.rep D₂) ↦
       mulMap P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) (p.1, p.2) = D)
-  rw [Finset.sum_congr rfl (fun p hp => by
+  rw [Finset.sum_congr rfl (fun p hp ↦ by
     simp only [S, Finset.mem_filter, Finset.mem_univ, true_and] at hp
     exact h_slash_eq p hp)]
   rw [← Finset.sum_fiberwise (s := S) (g := q_of)]
   conv_lhs =>
     arg 2; ext q
-    rw [Finset.sum_congr rfl (fun p hp => by
+    rw [Finset.sum_congr rfl (fun p hp ↦ by
       simp only [Finset.mem_filter] at hp; rw [hp.2])]
     rw [Finset.sum_const]
   have h_fiber_eq := fiber_card_eq_gen D₁ D₂ D q_of S
-    (fun p => by simp only [S, Finset.mem_filter, Finset.mem_univ, true_and])
-    (fun p hp => by simp only [q_of, hp, dif_pos]; exact (h_main p hp).choose_spec.2)
-    (fun p q hmap hp_rc => by
+    (fun p ↦ by simp only [S, Finset.mem_filter, Finset.mem_univ, true_and])
+    (fun p hp ↦ by simp only [q_of, hp, dif_pos]; exact (h_main p hp).choose_spec.2)
+    (fun p q hmap hp_rc ↦ by
       simp only [q_of, hmap, dif_pos]
       set q' := (h_main p hmap).choose; by_contra hne
       exact decompQuot_coset_diff P (HeckeCoset.rep D) q' q hne
@@ -677,7 +677,7 @@ theorem heckeSlash_gen_comp (k : ℤ) (D₁ D₂ : HeckeCoset P) (f : ℍ → �
   rw [show heckeSlashExt_gen P k (T_single P ℤ D₂ 1 *
       T_single P ℤ D₁ 1) f =
       (m P (HeckeCoset.rep D₂) (HeckeCoset.rep D₁)).sum
-        (fun D c => c • heckeSlash_gen P k D f) from by
+        (fun D c ↦ c • heckeSlash_gen P k D f) from by
     unfold heckeSlashExt_gen; rw [mul_singleton_𝕋]; simp]
   have h_comm : m P (HeckeCoset.rep D₂) (HeckeCoset.rep D₁) =
       m P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) := by
@@ -707,15 +707,15 @@ theorem heckeSlash_gen_comp (k : ℤ) (D₁ D₂ : HeckeCoset P) (f : ℍ → �
       f ∣[k] (tRep_gen P D₂ p.2 * tRep_gen P D₁ p.1)) = _
   letI : DecidableEq (HeckeCoset P) := Classical.decEq _
   rw [← Finset.sum_fiberwise_of_maps_to
-    (g := fun p => mulMap P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) (p.1, p.2))
-    (fun p _ => Finset.mem_image_of_mem _ (Finset.mem_univ _)),
+    (g := fun p ↦ mulMap P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) (p.1, p.2))
+    (fun p _ ↦ Finset.mem_image_of_mem _ (Finset.mem_univ _)),
     show Finset.image (mulMap P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂))
       Finset.univ =
       mulSupport P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) from rfl,
     Finsupp.sum,
     show (m P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂)).support =
       mulSupport P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) from rfl]
-  exact Finset.sum_congr rfl fun D hD => heckeSlash_gen_fiber_sum k D₁ D₂ D hD f hf
+  exact Finset.sum_congr rfl fun D hD ↦ heckeSlash_gen_fiber_sum k D₁ D₂ D hD f hf
 
 end HeckeAlgebraAction
 

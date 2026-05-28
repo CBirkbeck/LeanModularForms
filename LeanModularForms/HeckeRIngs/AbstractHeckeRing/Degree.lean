@@ -64,7 +64,7 @@ lemma HeckeCoset_deg_pos (D : HeckeCoset P) : 0 < HeckeCoset_deg P D := by
 section SmulOrbitCard
 
 private lemma smulOrbit_map_inj (g : P.Δ) (β : P.Δ) :
-    Function.Injective (fun i : decompQuot P g =>
+    Function.Injective (fun i : decompQuot P g ↦
       (⟦⟨(β : G) * (i.out : G) * (g : G),
         delta_mul_mem P.H P.Δ i.out β g P.h₀⟩⟧ : HeckeLeftCoset P)) := by
   intro i₁ i₂ heq
@@ -110,7 +110,7 @@ section CoeffSum
 /-- The coefficient sum homomorphism: sums all coefficients of a formal linear combination
 of left cosets. -/
 noncomputable def coeffSum : HeckeModule P ℤ →+ ℤ :=
-  Finsupp.liftAddHom (fun _ : HeckeLeftCoset P => AddMonoidHom.id ℤ)
+  Finsupp.liftAddHom (fun _ : HeckeLeftCoset P ↦ AddMonoidHom.id ℤ)
 
 /-- The coefficient sum of a single basis element is its coefficient. -/
 @[simp] lemma coeffSum_single (m₀ : HeckeLeftCoset P) (b : ℤ) :
@@ -140,7 +140,7 @@ end CoeffSum
 section DegreeMap
 
 /-- The underlying function of the degree map: `Σ_D a_D * deg(D)`. -/
-noncomputable def deg_fun (f : 𝕋 P ℤ) : ℤ := f.sum fun D a => a * HeckeCoset_deg P D
+noncomputable def deg_fun (f : 𝕋 P ℤ) : ℤ := f.sum fun D a ↦ a * HeckeCoset_deg P D
 
 /-- The degree function of zero is zero. -/
 @[simp] lemma deg_fun_zero : deg_fun P (0 : 𝕋 P ℤ) = 0 := Finsupp.sum_zero_index
@@ -153,7 +153,7 @@ noncomputable def deg_fun (f : 𝕋 P ℤ) : ℤ := f.sum fun D a => a * HeckeCo
 /-- The degree function is additive. -/
 lemma deg_fun_add (f g : 𝕋 P ℤ) :
     deg_fun P (f + g) = deg_fun P f + deg_fun P g :=
-  Finsupp.sum_add_index' (fun _ => by simp) (fun _ _ _ => by ring)
+  Finsupp.sum_add_index' (fun _ ↦ by simp) (fun _ _ _ ↦ by ring)
 
 /-- The degree function of the identity is 1. -/
 @[simp] lemma deg_fun_one : deg_fun P (1 : 𝕋 P ℤ) = 1 := by
@@ -250,8 +250,8 @@ lemma heckeMultiplicity_deg_sum_eq (D1 D2 D_out1 D_out2 : HeckeCoset P)
         ({D_out1, D_out2} : Finset _) := by
       intro A hA; simp only [Finset.mem_insert, Finset.mem_singleton]
       rw [Finsupp.mem_support_iff] at hA
-      exact (or_iff_not_imp_left.mpr fun h1 =>
-        (Classical.em (A = D_out2)).elim id fun h2 => absurd (h_zero A h1 h2) hA)
+      exact (or_iff_not_imp_left.mpr fun h1 ↦
+        (Classical.em (A = D_out2)).elim id fun h2 ↦ absurd (h_zero A h1 h2) hA)
     exact Finset.sum_subset hsub (by
       intro A _ hA; rw [Finsupp.notMem_support_iff.mp hA]; simp) |>.trans
       (Finset.sum_pair h_ne)

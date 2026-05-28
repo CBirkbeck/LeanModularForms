@@ -62,7 +62,7 @@ private lemma modFormCharSpace_one_slash_Gamma0
     rw [← diamondOp_eq_diamondOpAux k (Gamma0MapUnits g₀) g₀ rfl]; exact hd
   -- Pointwise extraction of the slash equation from `diamondOpAux _ _ f = f`.
   ext z
-  have := congrArg (fun h : ModularForm _ _ => h z) heq
+  have := congrArg (fun h : ModularForm _ _ ↦ h z) heq
   exact this
 
 /-- The forward map sending an element of the trivial-character eigenspace inside

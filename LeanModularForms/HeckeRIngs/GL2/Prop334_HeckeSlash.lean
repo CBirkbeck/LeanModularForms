@@ -89,7 +89,7 @@ lemma heckeSlash_gen_Gamma1_holomorphic (k : ℤ)
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
     MDifferentiable 𝓘(ℂ) 𝓘(ℂ)
       (heckeSlash_gen (Gamma0_pair N) k D (⇑f : ℍ → ℂ)) :=
-  MDifferentiable.sum fun _ _ => (ModularFormClass.holo f).slash k _
+  MDifferentiable.sum fun _ _ ↦ (ModularFormClass.holo f).slash k _
 
 /-- `GL₂(ℚ)` maps cusps of `(Gamma1 N).map (mapGL ℝ)` to cusps. -/
 lemma glMap_smul_isCusp_Gamma1 (A : GL (Fin 2) ℚ) {c : OnePoint ℝ}
@@ -110,8 +110,8 @@ lemma heckeSlash_gen_Gamma1_bdd_at_cusps (k : ℤ)
     {c : OnePoint ℝ} (hc : IsCusp c ((Gamma1 N).map (mapGL ℝ))) :
     c.IsBoundedAt (heckeSlash_gen (Gamma0_pair N) k D (⇑f : ℍ → ℂ)) k := by
   simp only [heckeSlash_gen]
-  apply Finset.sum_induction _ (fun g => c.IsBoundedAt g k)
-    (fun _ _ ha hb => ha.add hb)
+  apply Finset.sum_induction _ (fun g ↦ c.IsBoundedAt g k)
+    (fun _ _ ha hb ↦ ha.add hb)
     ((0 : ModularForm ((Gamma1 N).map (mapGL ℝ)) k).bdd_at_cusps' hc)
   intro i _
   exact OnePoint.IsBoundedAt.smul_iff.mp

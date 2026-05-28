@@ -91,16 +91,16 @@ theorem strongMultiplicityOne_of_analyticContradiction
       Newform.exists_nonzero_prime_eigenvalue_of_analyticContradiction
         h_ana f χ hfχ bad
     have hq_pos : 0 < q := hq_prime.pos
-    have hq_notin_S : q ∉ S := fun hqS => hq_notin (by
+    have hq_notin_S : q ∉ S := fun hqS ↦ hq_notin (by
       simp only [bad, Finset.mem_union]; exact Or.inl (Or.inl hqS))
-    have hq_notin_img : q ∉ S.image (· / n.val) := fun h' => hq_notin (by
+    have hq_notin_img : q ∉ S.image (· / n.val) := fun h' ↦ hq_notin (by
       simp only [bad, Finset.mem_union]; exact Or.inl (Or.inr h'))
-    have hq_nd_n : ¬ q ∣ n.val := fun hqn => hq_notin (by
+    have hq_nd_n : ¬ q ∣ n.val := fun hqn ↦ hq_notin (by
       simp only [bad, Finset.mem_union, Nat.mem_primeFactors]
       exact Or.inr ⟨hq_prime, hqn, hn_pos.ne'⟩)
     have hn_coprime_q : Nat.Coprime n.val q :=
       ((hq_prime.coprime_iff_not_dvd).mpr hq_nd_n).symm
-    have hnq_notin_S : n.val * q ∉ S := fun hnqS => hq_notin_img <| by
+    have hnq_notin_S : n.val * q ∉ S := fun hnqS ↦ hq_notin_img <| by
       refine Finset.mem_image.mpr ⟨n.val * q, hnqS, ?_⟩
       exact Nat.mul_div_cancel_left _ hn_pos
     let q_pnat : ℕ+ := ⟨q, hq_pos⟩
@@ -158,9 +158,9 @@ noncomputable def Newform.HeckeFEData.ofMellinPairData
     (h_feq : ∀ x ∈ Set.Ioi (0 : ℝ),
       F (1 / x) = (ε * ((x ^ kReal : ℝ) : ℂ)) • G x)
     (hF_top : ∀ r : ℝ, Asymptotics.IsBigO Filter.atTop
-      (fun x : ℝ => F x - 0) (fun x : ℝ => x ^ r))
+      (fun x : ℝ ↦ F x - 0) (fun x : ℝ ↦ x ^ r))
     (hG_top : ∀ r : ℝ, Asymptotics.IsBigO Filter.atTop
-      (fun x : ℝ => G x - 0) (fun x : ℝ => x ^ r))
+      (fun x : ℝ ↦ G x - 0) (fun x : ℝ ↦ x ^ r))
     (h_bridge : ∀ {s : ℂ},
       LSeries.abscissaOfAbsConv f.lCoeff_stripped < s.re →
       mellin F s = LSeries f.lCoeff_stripped s) :
@@ -201,10 +201,10 @@ structure Newform.MellinPairData
     F (1 / x) = (ε * ((x ^ (k : ℝ) : ℝ) : ℂ)) • G x
   /-- `F` has rapid polynomial decay at `∞`. -/
   hF_top : ∀ r : ℝ, Asymptotics.IsBigO Filter.atTop
-    (fun x : ℝ => F x - 0) (fun x : ℝ => x ^ r)
+    (fun x : ℝ ↦ F x - 0) (fun x : ℝ ↦ x ^ r)
   /-- `G` has rapid polynomial decay at `∞`. -/
   hG_top : ∀ r : ℝ, Asymptotics.IsBigO Filter.atTop
-    (fun x : ℝ => G x - 0) (fun x : ℝ => x ^ r)
+    (fun x : ℝ ↦ G x - 0) (fun x : ℝ ↦ x ^ r)
   /-- Mellin–Dirichlet bridge: `mellin F s = LSeries f.lCoeff_stripped s`
   on the absolute-convergence half-plane. -/
   h_bridge : ∀ {s : ℂ},
@@ -249,9 +249,9 @@ noncomputable def Newform.MellinPairData.ofImAxis
     (h_feq : ∀ x ∈ Set.Ioi (0 : ℝ),
       Newform.imAxis f (1 / x) = (ε * ((x ^ (k : ℝ) : ℝ) : ℂ)) • G x)
     (hF_top : ∀ r : ℝ, Asymptotics.IsBigO Filter.atTop
-      (fun x : ℝ => Newform.imAxis f x - 0) (fun x : ℝ => x ^ r))
+      (fun x : ℝ ↦ Newform.imAxis f x - 0) (fun x : ℝ ↦ x ^ r))
     (hG_top : ∀ r : ℝ, Asymptotics.IsBigO Filter.atTop
-      (fun x : ℝ => G x - 0) (fun x : ℝ => x ^ r))
+      (fun x : ℝ ↦ G x - 0) (fun x : ℝ ↦ x ^ r))
     (h_bridge : ∀ {s : ℂ},
       LSeries.abscissaOfAbsConv f.lCoeff_stripped < s.re →
       mellin (Newform.imAxis f) s = LSeries f.lCoeff_stripped s) :
@@ -289,10 +289,10 @@ structure Newform.ImAxisMellinData
     (Newform.imAxis f) (1 / x) = (ε * ((x ^ (k : ℝ) : ℝ) : ℂ)) • G x
   /-- `Newform.imAxis f` has rapid polynomial decay at `∞`. -/
   hF_top : ∀ r : ℝ, Asymptotics.IsBigO Filter.atTop
-    (fun x : ℝ => Newform.imAxis f x - 0) (fun x : ℝ => x ^ r)
+    (fun x : ℝ ↦ Newform.imAxis f x - 0) (fun x : ℝ ↦ x ^ r)
   /-- `G` has rapid polynomial decay at `∞`. -/
   hG_top : ∀ r : ℝ, Asymptotics.IsBigO Filter.atTop
-    (fun x : ℝ => G x - 0) (fun x : ℝ => x ^ r)
+    (fun x : ℝ ↦ G x - 0) (fun x : ℝ ↦ x ^ r)
   /-- Mellin–Dirichlet bridge. -/
   h_bridge : ∀ {s : ℂ},
     LSeries.abscissaOfAbsConv f.lCoeff_stripped < s.re →
@@ -318,7 +318,7 @@ theorem Newform.HeckeEntireExtension_of_ImAxisMellinData
       Newform.ImAxisMellinData f) :
     Newform.HeckeEntireExtension :=
   Newform.HeckeEntireExtension_of_HeckeFEData
-    (fun _N _ _k f => Newform.HeckeFEData.ofImAxisData (h f))
+    (fun _N _ _k f ↦ Newform.HeckeFEData.ofImAxisData (h f))
 
 /-- Exponential decay of `Newform.imAxis f` at `∞`: the cusp-form-decay
 statement specialised to a newform (Diamond–Shurman §5.9 / Miyake §4.3.5). -/
@@ -332,7 +332,7 @@ theorem Newform.imAxis_rapidDecay_of_exponentialDecay
     {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k)
     (h : Newform.HasImAxisExponentialDecay f) :
     ∀ r : ℝ, Asymptotics.IsBigO Filter.atTop
-      (fun x : ℝ => Newform.imAxis f x - 0) (fun x : ℝ => x ^ r) :=
+      (fun x : ℝ ↦ Newform.imAxis f x - 0) (fun x : ℝ ↦ x ^ r) :=
   _root_.ModularForms.HasImAxisRapidDecay_of_HasImAxisExponentialDecay
     f.toCuspForm h
 
@@ -353,7 +353,7 @@ theorem Newform.hasImAxisExponentialDecay {N : ℕ} [NeZero N] {k : ℤ}
 theorem Newform.imAxis_rapidDecay {N : ℕ} [NeZero N] {k : ℤ}
     (f : Newform N k) :
     ∀ r : ℝ, Asymptotics.IsBigO Filter.atTop
-      (fun x : ℝ => Newform.imAxis f x - 0) (fun x : ℝ => x ^ r) :=
+      (fun x : ℝ ↦ Newform.imAxis f x - 0) (fun x : ℝ ↦ x ^ r) :=
   Newform.imAxis_rapidDecay_of_exponentialDecay f
     (Newform.hasImAxisExponentialDecay f)
 
@@ -369,7 +369,7 @@ noncomputable def Newform.ImAxisMellinData.ofExponentialDecay
       (Newform.imAxis f) (1 / x) = (ε * ((x ^ (k : ℝ) : ℝ) : ℂ)) • G x)
     (hF_exp : Newform.HasImAxisExponentialDecay f)
     (hG_top : ∀ r : ℝ, Asymptotics.IsBigO Filter.atTop
-      (fun x : ℝ => G x - 0) (fun x : ℝ => x ^ r))
+      (fun x : ℝ ↦ G x - 0) (fun x : ℝ ↦ x ^ r))
     (h_bridge : ∀ {s : ℂ},
       LSeries.abscissaOfAbsConv f.lCoeff_stripped < s.re →
       mellin (Newform.imAxis f) s = LSeries f.lCoeff_stripped s) :
@@ -395,7 +395,7 @@ noncomputable def Newform.ImAxisMellinData.ofData_auto
     (h_feq : ∀ x ∈ Set.Ioi (0 : ℝ),
       (Newform.imAxis f) (1 / x) = (ε * ((x ^ (k : ℝ) : ℝ) : ℂ)) • G x)
     (hG_top : ∀ r : ℝ, Asymptotics.IsBigO Filter.atTop
-      (fun x : ℝ => G x - 0) (fun x : ℝ => x ^ r))
+      (fun x : ℝ ↦ G x - 0) (fun x : ℝ ↦ x ^ r))
     (h_bridge : ∀ {s : ℂ},
       LSeries.abscissaOfAbsConv f.lCoeff_stripped < s.re →
       mellin (Newform.imAxis f) s = LSeries f.lCoeff_stripped s) :
@@ -645,7 +645,7 @@ theorem Newform.frickeMatrix_mul_mapGL_eq_mapGL_frickeConj_mul_frickeMatrix
   have h_real :
       (!![0, -1; (N : ℤ), 0] * γ.val).map (algebraMap ℤ ℝ) =
         (Newform.frickeConjMat N γ * !![0, -1; (N : ℤ), 0]).map (algebraMap ℤ ℝ) :=
-    congrArg (fun M : Matrix (Fin 2) (Fin 2) ℤ => M.map (algebraMap ℤ ℝ))
+    congrArg (fun M : Matrix (Fin 2) (Fin 2) ℤ ↦ M.map (algebraMap ℤ ℝ))
       (Newform.frickeMat_int_mul_eq_frickeConjMat_mul_frickeMat_int N γ hγN)
   rw [Matrix.map_mul, Matrix.map_mul, Newform.frickeMatInt_map_algebraMap] at h_real
   exact h_real
@@ -751,7 +751,7 @@ noncomputable def Newform.frickeSlashModularForm
     { toSlashInvariantForm :=
         Newform.frickeSlashSIF f.toSlashInvariantForm
       holo' := f.holo'.slash k (Newform.frickeMatrix N)
-      bdd_at_cusps' := fun {c} hc =>
+      bdd_at_cusps' := fun {c} hc ↦
         OnePoint.IsBoundedAt.smul_iff.mp
           (f.bdd_at_cusps' (Newform.frickeMatrix_smul_isCusp_Gamma1 hc)) }
   map_add' f g := by
@@ -786,7 +786,7 @@ noncomputable def Newform.frickeSlashCuspForm
     { toSlashInvariantForm :=
         Newform.frickeSlashSIF f.toSlashInvariantForm
       holo' := f.holo'.slash k (Newform.frickeMatrix N)
-      zero_at_cusps' := fun {c} hc =>
+      zero_at_cusps' := fun {c} hc ↦
         OnePoint.IsZeroAt.smul_iff.mp
           (f.zero_at_cusps' (Newform.frickeMatrix_smul_isCusp_Gamma1 hc)) }
   map_add' f g := by
@@ -914,7 +914,7 @@ lemma Newform.frickeSlashCuspForm_comp_self {N : ℕ} [NeZero N] {k : ℤ} :
     (Newform.frickeSlashCuspForm (N := N) (k := k)).comp
         Newform.frickeSlashCuspForm =
       Newform.frickeSquareScalar N k • LinearMap.id :=
-  LinearMap.ext fun f => by
+  LinearMap.ext fun f ↦ by
     rw [LinearMap.comp_apply, LinearMap.smul_apply, LinearMap.id_apply]
     exact Newform.frickeSlashCuspForm_apply_apply f
 
@@ -923,7 +923,7 @@ lemma Newform.frickeSlashModularForm_comp_self {N : ℕ} [NeZero N] {k : ℤ} :
     (Newform.frickeSlashModularForm (N := N) (k := k)).comp
         Newform.frickeSlashModularForm =
       Newform.frickeSquareScalar N k • LinearMap.id :=
-  LinearMap.ext fun f => by
+  LinearMap.ext fun f ↦ by
     rw [LinearMap.comp_apply, LinearMap.smul_apply, LinearMap.id_apply]
     exact Newform.frickeSlashModularForm_apply_apply f
 
@@ -1038,7 +1038,7 @@ theorem Newform.frickeSlashCuspForm_petN_adjoint
       (petersson k (⇑f) (⇑((-1 : ℂ) ^ k • Newform.frickeSlashCuspForm g)))
       (Gamma1_fundDomain_PSL N) μ_hyp)
     (h_α_int : MeasureTheory.IntegrableOn
-      (fun τ => petersson k (⇑f) (⇑((-1 : ℂ) ^ k • Newform.frickeSlashCuspForm g))
+      (fun τ ↦ petersson k (⇑f) (⇑((-1 : ℂ) ^ k • Newform.frickeSlashCuspForm g))
         ((Newform.frickeMatrix N : GL (Fin 2) ℝ) • τ))
       (Gamma1_fundDomain_PSL N) μ_hyp) :
     petN (Newform.frickeSlashCuspForm f) g =
@@ -1085,7 +1085,7 @@ lemma Newform.integrableOn_petersson_smul_frickeMatrix_fundDomain_PSL
     {N : ℕ} [NeZero N] {k : ℤ}
     (f g₂ : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     MeasureTheory.IntegrableOn
-      (fun τ => petersson k (⇑f) (⇑g₂) (Newform.frickeMatrix N • τ))
+      (fun τ ↦ petersson k (⇑f) (⇑g₂) (Newform.frickeMatrix N • τ))
       (Gamma1_fundDomain_PSL N) μ_hyp := by
   obtain ⟨C, hC⟩ := CuspFormClass.petersson_bounded_left k
     ((Gamma1 N).map (mapGL ℝ)) f g₂
@@ -1095,7 +1095,7 @@ lemma Newform.integrableOn_petersson_smul_frickeMatrix_fundDomain_PSL
       (ModularFormClass.continuous g₂)).comp
       (continuous_const_smul (Newform.frickeMatrix N : GL (Fin 2) ℝ)))
         |>.aestronglyMeasurable.restrict) C
-    (Filter.Eventually.of_forall fun τ => hC _)
+    (Filter.Eventually.of_forall fun τ ↦ hC _)
 
 /-- The Fricke `W_N`-shifted `Γ₁(N)` fundamental-domain claim:
 `W_N • Gamma1_fundDomain_PSL N` is a fundamental domain for `imageGamma1_PSL N`.
@@ -1116,7 +1116,7 @@ theorem Newform.frickeSlashCuspForm_petN_adjoint_of_isFundDomain
     petN (Newform.frickeSlashCuspForm f) g =
       (-1 : ℂ) ^ k * petN f (Newform.frickeSlashCuspForm g) := by
   refine Newform.frickeSlashCuspForm_petN_adjoint f g
-    (fun γ hγ τ => Newform.frickeMatrix_smul_petersson_invariant f
+    (fun γ hγ τ ↦ Newform.frickeMatrix_smul_petersson_invariant f
       ((-1 : ℂ) ^ k • Newform.frickeSlashCuspForm g) γ hγ τ)
     h_FD
     (integrableOn_petersson_Gamma1_fundDomain_PSL f
@@ -1393,15 +1393,15 @@ theorem Newform.sum_peterssonInner_frickeMatrix_smul_q_out_inv_fd_eq_petN
   have h_petN_eq : (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
       ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane),
         petersson k ⇑f ⇑g τ ∂μ_hyp) = petN f g := by
-    refine Finset.sum_congr rfl (fun q _ => ?_)
+    refine Finset.sum_congr rfl (fun q _ ↦ ?_)
     show ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane),
         petersson k ⇑f ⇑g τ ∂μ_hyp =
       peterssonInner k fd (⇑f ∣[k] (q.out)⁻¹) (⇑g ∣[k] (q.out)⁻¹)
     rw [peterssonInner_fd_slash_SL_eq_setIntegral_shifted_fd ⇑f ⇑g (q.out)]
   exact (sum_setIntegral_GL2_shift (N := N)
     (α := Newform.frickeMatrix_GLPos N) (h := petersson k ⇑f ⇑g)
-    (h_inv := fun γ hγ τ => petersson_Gamma1_invariant f g γ hγ τ)
-    (hα_h_inv := fun γ hγ τ =>
+    (h_inv := fun γ hγ τ ↦ petersson_Gamma1_invariant f g γ hγ τ)
+    (hα_h_inv := fun γ hγ τ ↦
       Newform.frickeMatrix_smul_petersson_invariant f g γ hγ τ)
     (hα_fd := Newform.frickeMatrix_smul_isFundDomain_imageGamma1_PSL N)
     (h_int := integrableOn_petersson_Gamma1_fundDomain_PSL f g)

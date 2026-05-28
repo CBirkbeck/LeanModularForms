@@ -134,7 +134,7 @@ every cusp form in `S_12(Γ₁(1))` is a scalar multiple of `Delta`. In particul
 theorem Delta_lvl1_isEigenform : IsEigenform (N := 1) (k := 12) Delta_lvl1 := by
   -- For every n, define the eigenvalue as the scalar from the 1-dim space
   classical
-  refine ⟨fun n => ?_, fun n _ => ?_⟩
+  refine ⟨fun n ↦ ?_, fun n _ ↦ ?_⟩
   · -- Define eigenvalue: the scalar c with heckeT_n_cusp 12 n.val Delta_lvl1 = c • Delta_lvl1
     haveI : NeZero n.val := ⟨n.pos.ne'⟩
     exact (finrank_eq_one_iff_of_nonzero' Delta_lvl1 Delta_lvl1_ne_zero).mp

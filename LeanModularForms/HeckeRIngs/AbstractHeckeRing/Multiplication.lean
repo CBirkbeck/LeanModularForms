@@ -27,8 +27,8 @@ variable (P : HeckePair G) (Z : Type*) [CommRing Z]
 lemma HeckeCoset_ext_toSet {D₁ D₂ : HeckeCoset P}
     (h : HeckeCoset.toSet D₁ = HeckeCoset.toSet D₂) : D₁ = D₂ := by
   revert h
-  exact Quotient.ind₂ (motive := fun D₁ D₂ =>
-    HeckeCoset.toSet D₁ = HeckeCoset.toSet D₂ → D₁ = D₂) (fun g₁ g₂ h => by
+  exact Quotient.ind₂ (motive := fun D₁ D₂ ↦
+    HeckeCoset.toSet D₁ = HeckeCoset.toSet D₂ → D₁ = D₂) (fun g₁ g₂ h ↦ by
     simp only [HeckeCoset.toSet_mk] at h
     exact Quotient.sound h) D₁ D₂
 
@@ -229,8 +229,8 @@ lemma heckeMultiplicity_le_heckeMultiplicityMulMap (g₁ g₂ d : P.Δ) :
         {(d : G)} * (P.H : Set G)} ≤
       Nat.card {p : decompQuot P g₁ × decompQuot P g₂ |
         mulMap P g₁ g₂ p = (⟦d⟧ : HeckeCoset P)} :=
-    Nat.card_le_card_of_injective (fun ⟨p, hp⟩ => ⟨p, h_sub hp⟩)
-      (fun ⟨_, _⟩ ⟨_, _⟩ heq => Subtype.ext (Subtype.mk.inj heq))
+    Nat.card_le_card_of_injective (fun ⟨p, hp⟩ ↦ ⟨p, h_sub hp⟩)
+      (fun ⟨_, _⟩ ⟨_, _⟩ heq ↦ Subtype.ext (Subtype.mk.inj heq))
   exact_mod_cast h_card
 
 private lemma mulMap_T_one_eq (g₁ : P.Δ)
@@ -338,7 +338,7 @@ lemma heckeMultiplicity_mul_one (g₁ d : P.Δ) :
           (HeckeCoset.one_rep_mem_H P)) h₁ h₂)
       rfl)
   · intro hm; by_contra hne
-    have hg₁d_ne : ¬ dcRel P g₁ d := fun h => hne (Quotient.sound h)
+    have hg₁d_ne : ¬ dcRel P g₁ d := fun h ↦ hne (Quotient.sound h)
     have : heckeMultiplicity P g₁ (HeckeCoset.one P).rep d = 0 := by
       simp only [heckeMultiplicity, Nat.cast_eq_zero, Nat.card_eq_zero,
         isEmpty_subtype]; left
@@ -588,22 +588,22 @@ noncomputable instance instSMulZeroClass : SMulZeroClass Z (α →₀ Z) where
 encoding the product of two double cosets. -/
 noncomputable def m (g₁ g₂ : P.Δ) : (HeckeCoset P) →₀ ℤ :=
   ⟨mulSupport P g₁ g₂,
-    fun d => heckeMultiplicity P g₁ g₂ (HeckeCoset.rep d),
-    fun a =>
+    fun d ↦ heckeMultiplicity P g₁ g₂ (HeckeCoset.rep d),
+    fun a ↦
       ⟨heckeMultiplicity_pos_of_mem_mulSupport P g₁ g₂ a,
-        fun hm => by
+        fun hm ↦ by
           by_contra hemp
           exact hm (heckeMultiplicity_eq_zero_of_nmem_mulSupport P g₁ g₂ a hemp)⟩⟩
 
 /-- The multiplication on the Hecke ring, defined via the multiplicity function `m`. -/
 noncomputable instance (P : HeckePair G) : Mul (𝕋 P ℤ) where
-  mul f g := Finsupp.sum f fun D1 b₁ =>
-    g.sum fun D2 b₂ =>
+  mul f g := Finsupp.sum f fun D1 b₁ ↦
+    g.sum fun D2 b₂ ↦
       b₁ • b₂ • m P (HeckeCoset.rep D1) (HeckeCoset.rep D2)
 
 /-- Multiplication in the Hecke ring unfolds as a double Finsupp sum over multiplicities. -/
 lemma mul_def (f g : 𝕋 P ℤ) : f * g = Finsupp.sum f
-    (fun D1 b₁ => g.sum fun D2 b₂ =>
+    (fun D1 b₁ ↦ g.sum fun D2 b₂ ↦
       b₁ • b₂ • m P (HeckeCoset.rep D1) (HeckeCoset.rep D2)) := rfl
 
 /-- A basis element of the Hecke ring: `T_single D b` is the formal sum `b · [D]`. -/
@@ -680,13 +680,13 @@ lemma m_mul_one_eq_single (g₁ : P.Δ) :
     ((heckeMultiplicity_mul_one P g₁ (HeckeCoset.rep (⟦g₁⟧ : HeckeCoset P))).mp
       (show (⟦g₁⟧ : HeckeCoset P) = ⟦HeckeCoset.rep ⟦g₁⟧⟧
         from (Quotient.out_eq (⟦g₁⟧ : HeckeCoset P)).symm))
-    (fun A hA => heckeMultiplicity_mul_one_eq_zero P g₁ A hA)
+    (fun A hA ↦ heckeMultiplicity_mul_one_eq_zero P g₁ A hA)
 
 /-- `T_single D b * T_single (HeckeCoset.one P) 1 = T_single D b`. -/
 lemma singleton_one_mul_𝕋 (D2 : HeckeCoset P) (b : ℤ) :
     T_single P ℤ D2 b * T_single P ℤ (HeckeCoset.one P) 1 =
       T_single P ℤ D2 b := by
-  revert D2; exact HeckeCoset.ind fun g => by
+  revert D2; exact HeckeCoset.ind fun g ↦ by
     rw [mul_singleton_𝕋, m_mul_one_eq_single]
     simp only [T_single]
     rw [show (⟦HeckeCoset.rep ⟦g⟧⟧ : HeckeCoset P) = ⟦g⟧ from Quotient.out_eq _]
@@ -715,13 +715,13 @@ lemma m_one_mul_eq_single (g₁ : P.Δ) :
     ((heckeMultiplicity_one_mul P g₁ (HeckeCoset.rep (⟦g₁⟧ : HeckeCoset P))).mp
       (show (⟦g₁⟧ : HeckeCoset P) = ⟦HeckeCoset.rep ⟦g₁⟧⟧
         from (Quotient.out_eq (⟦g₁⟧ : HeckeCoset P)).symm))
-    (fun A hA => heckeMultiplicity_one_mul_eq_zero P g₁ A hA)
+    (fun A hA ↦ heckeMultiplicity_one_mul_eq_zero P g₁ A hA)
 
 /-- `T_single (HeckeCoset.one P) 1 * T_single D b = T_single D b`. -/
 lemma one_mul_singleton_𝕋 (D2 : HeckeCoset P) (b : ℤ) :
     T_single P ℤ (HeckeCoset.one P) 1 * T_single P ℤ D2 b =
       T_single P ℤ D2 b := by
-  revert D2; exact HeckeCoset.ind fun g => by
+  revert D2; exact HeckeCoset.ind fun g ↦ by
     rw [mul_singleton_𝕋, m_one_mul_eq_single]
     simp only [T_single]
     rw [show (⟦HeckeCoset.rep ⟦g⟧⟧ : HeckeCoset P) = ⟦g⟧ from Quotient.out_eq _]
@@ -731,10 +731,10 @@ lemma one_mul_singleton_𝕋 (D2 : HeckeCoset P) (b : ℤ) :
 noncomputable instance instNonUnitalNonAssocSemiring :
     NonUnitalNonAssocSemiring (𝕋 P ℤ) :=
   { (instAddCommGroup𝕋 P ℤ) with
-    left_distrib := fun f g h => by
+    left_distrib := fun f g h ↦ by
       simp only [mul_def]
       refine Eq.trans (congr_arg (Finsupp.sum f)
-        (funext₂ fun a₁ b₁ => Finsupp.sum_add_index ?_ ?_))
+        (funext₂ fun a₁ b₁ ↦ Finsupp.sum_add_index ?_ ?_))
         ?_ <;>
         simp
       intro D1 _ a b
@@ -742,7 +742,7 @@ noncomputable instance instNonUnitalNonAssocSemiring :
       ring_nf
       rw [@add_smul]
 
-    right_distrib := fun f g h => by
+    right_distrib := fun f g h ↦ by
       simp only [mul_def]
       refine Eq.trans (Finsupp.sum_add_index ?_ ?_) ?_ <;>
         simp only [Finset.mem_union, mem_support_iff, ne_eq, zero_smul,
@@ -755,10 +755,10 @@ noncomputable instance instNonUnitalNonAssocSemiring :
       rw [add_apply]
       simp only [sum_apply, coe_smul, Pi.smul_apply, smul_eq_mul]
 
-    zero_mul := fun f => by
+    zero_mul := fun f ↦ by
       simp only [mul_def]
       exact Finsupp.sum_zero_index
-    mul_zero := fun f => by
+    mul_zero := fun f ↦ by
       simp only [mul_def]
       exact Eq.trans (congr_arg (sum f)
-        (funext₂ fun a₁ b₁ => sum_zero_index)) (sum_fun_zero f) }
+        (funext₂ fun a₁ b₁ ↦ sum_zero_index)) (sum_fun_zero f) }

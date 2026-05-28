@@ -54,7 +54,7 @@ theorem mainLemma_gamma0Nebentypus_of_prime_decomposition
     f ∈ cuspFormsOld N k := by
   exact HeckeRing.GL2.AtkinLehner.mainLemma_charSpace_of_prime_decomposition χ f S hS f_p
     h_decomp
-    (fun p hp =>
+    (fun p hp ↦
       (mem_cuspFormCharSpace_iff_mem_cuspGamma0NebentypusSubmodule
         (N := N) k χ.toUnitHom (f_p p)).mpr (h_char p hp))
     h_supp
@@ -74,7 +74,7 @@ theorem mainLemma_gamma0Nebentypus_of_primeFactors_decomposition
     f ∈ cuspFormsOld N k := by
   exact HeckeRing.GL2.AtkinLehner.mainLemma_charSpace_of_primeFactors_decomposition χ f f_p
     h_decomp
-    (fun p hp =>
+    (fun p hp ↦
       (mem_cuspFormCharSpace_iff_mem_cuspGamma0NebentypusSubmodule
         (N := N) k χ.toUnitHom (f_p p)).mpr (h_char p hp))
     h_supp

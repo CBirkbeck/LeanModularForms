@@ -103,7 +103,7 @@ Uses the dimension argument:
 theorem ramanujan_E₆' : serre_D 6 E₆.toFun = - 2⁻¹ * E₄.toFun * E₄.toFun := by
   let E₄_sq : ModularForm (CongruenceSubgroup.Gamma 1) 8 :=
     (by norm_num : (4 : ℤ) + 4 = 8) ▸ E₄.mul E₄
-  have hE₄_sq_ne : E₄_sq ≠ 0 := fun h => E4_ne_zero <| by
+  have hE₄_sq_ne : E₄_sq ≠ 0 := fun h ↦ E4_ne_zero <| by
     ext z
     have := congrFun (congrArg (↑· : ModularForm _ _ → ℍ → ℂ) h) z
     simp at this
@@ -111,7 +111,7 @@ theorem ramanujan_E₆' : serre_D 6 E₆.toFun = - 2⁻¹ * E₄.toFun * E₄.to
   obtain ⟨c, hc⟩ := exists_smul_eq_of_rank_one
     (weight_eight_one_dimensional 8 (by norm_num) ⟨4, rfl⟩ (by norm_num)) hE₄_sq_ne
     serre_DE₆_ModularForm
-  have hfun : ∀ z, serre_D 6 E₆.toFun z = c * (E₄.toFun z * E₄.toFun z) := fun z => by
+  have hfun : ∀ z, serre_D 6 E₆.toFun z = c * (E₄.toFun z * E₄.toFun z) := fun z ↦ by
     have := smul_modularForm_eq_pointwise hc z
     simp at this
     convert this using 2

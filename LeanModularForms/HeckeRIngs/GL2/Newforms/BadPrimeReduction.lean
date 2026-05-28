@@ -69,10 +69,10 @@ theorem Newform.aggregate_q_b_shifted_eq_inv_c_petN_T_p_f_g
       peterssonInner k (fd : Set UpperHalfPlane)
         (⇑(heckeT_n_cusp k p f) ∣[k] (q.out : SL(2, ℤ))⁻¹)
         (⇑g ∣[k] (q.out : SL(2, ℤ))⁻¹)
-  rw [Finset.sum_congr rfl fun q _ =>
+  rw [Finset.sum_congr rfl fun q _ ↦
     Newform.peterssonInner_heckeT_n_cusp_at_divN_slash_qOut_inv_eq_bsum
       hp hpN f g q]
-  rw [Finset.sum_congr rfl fun q _ =>
+  rw [Finset.sum_congr rfl fun q _ ↦
     Newform.hasBadPrimeFrickePerCosetSumTransport hp hpN f g q]
   rw [← Finset.mul_sum]
 
@@ -112,8 +112,8 @@ theorem Newform.aggregate_q_b_W_N_β_b_shifted_eq_inv_c_petN_T_p_f_g
     petN (heckeT_n_cusp k p f) g := by
   rw [← Newform.aggregate_q_b_shifted_eq_inv_c_petN_T_p_f_g hp hpN f g]
   congr 1
-  refine Finset.sum_congr rfl fun q _ => ?_
-  refine Finset.sum_congr rfl fun b _ => ?_
+  refine Finset.sum_congr rfl fun q _ ↦ ?_
+  refine Finset.sum_congr rfl fun b _ ↦ ?_
   congr 1
   exact Newform.frickeMatrix_smul_T_p_upper_smul_set_eq_T_p_lower_with_offset_smul_frickeMatrix_smul_set
     N hp.pos b _
@@ -123,7 +123,7 @@ open UpperHalfPlane MeasureTheory ModularGroup in
 upper-coset tile family `{β_b · q.out⁻¹·fd}_{b ∈ Fin p}`. -/
 theorem Newform.aedisjoint_pairwise_T_p_upper_smul_qOut_inv_fd
     {N : ℕ} [NeZero N] {p : ℕ} (hp : 0 < p) (q : SL(2, ℤ) ⧸ Gamma1 N) :
-    Pairwise (fun b₁ b₂ : Fin p =>
+    Pairwise (fun b₁ b₂ : Fin p ↦
       AEDisjoint μ_hyp
         ((glMap (T_p_upper p hp b₁.val) : GL (Fin 2) ℝ) •
           ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
@@ -210,7 +210,7 @@ theorem Newform.peterssonInner_iUnion_T_p_upper_smul_qOut_inv_fd_eq_sum
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} (hp : 0 < p)
     (q : SL(2, ℤ) ⧸ Gamma1 N)
     (f g : UpperHalfPlane → ℂ)
-    (hint : IntegrableOn (fun τ => petersson k f g τ)
+    (hint : IntegrableOn (fun τ ↦ petersson k f g τ)
       (⋃ b : Fin p,
         (glMap (T_p_upper p hp b.val) : GL (Fin 2) ℝ) •
           ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
@@ -226,7 +226,7 @@ theorem Newform.peterssonInner_iUnion_T_p_upper_smul_qOut_inv_fd_eq_sum
             (fd : Set UpperHalfPlane))) f g :=
   peterssonInner_iUnion_finite_aedisjoint
     (k := k)
-    (fun b : Fin p =>
+    (fun b : Fin p ↦
       (glMap (T_p_upper p hp b.val) : GL (Fin 2) ℝ) •
         ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
           (fd : Set UpperHalfPlane)))
@@ -239,7 +239,7 @@ open UpperHalfPlane MeasureTheory ModularGroup in
 bad-prime upper-coset tile family `{W_N · β_b · q.out⁻¹·fd}_{b ∈ Fin p}`. -/
 theorem Newform.aedisjoint_pairwise_fricke_T_p_upper_smul_qOut_inv_fd
     {N : ℕ} [NeZero N] {p : ℕ} (hp : 0 < p) (q : SL(2, ℤ) ⧸ Gamma1 N) :
-    Pairwise (fun b₁ b₂ : Fin p =>
+    Pairwise (fun b₁ b₂ : Fin p ↦
       AEDisjoint μ_hyp
         ((Newform.frickeMatrix N : GL (Fin 2) ℝ) •
           ((glMap (T_p_upper p hp b₁.val) : GL (Fin 2) ℝ) •
@@ -308,7 +308,7 @@ theorem Newform.peterssonInner_iUnion_fricke_T_p_upper_smul_qOut_inv_fd_eq_sum
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} (hp : 0 < p)
     (q : SL(2, ℤ) ⧸ Gamma1 N)
     (f g : UpperHalfPlane → ℂ)
-    (hint : IntegrableOn (fun τ => petersson k f g τ)
+    (hint : IntegrableOn (fun τ ↦ petersson k f g τ)
       (⋃ b : Fin p,
         (Newform.frickeMatrix N : GL (Fin 2) ℝ) •
           ((glMap (T_p_upper p hp b.val) : GL (Fin 2) ℝ) •
@@ -327,7 +327,7 @@ theorem Newform.peterssonInner_iUnion_fricke_T_p_upper_smul_qOut_inv_fd_eq_sum
               (fd : Set UpperHalfPlane)))) f g :=
   peterssonInner_iUnion_finite_aedisjoint
     (k := k)
-    (fun b : Fin p =>
+    (fun b : Fin p ↦
       (Newform.frickeMatrix N : GL (Fin 2) ℝ) •
         ((glMap (T_p_upper p hp b.val) : GL (Fin 2) ℝ) •
           ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
@@ -392,8 +392,8 @@ theorem Newform.aggregate_q_b_common_W_N_qOut_inv_fd_eq_inv_c_petN_T_p_f_g
     petN (heckeT_n_cusp k p f) g := by
   rw [← Newform.aggregate_q_b_W_N_β_b_shifted_eq_inv_c_petN_T_p_f_g hp hpN f g]
   congr 1
-  refine Finset.sum_congr rfl fun q _ => ?_
-  refine Finset.sum_congr rfl fun b _ => ?_
+  refine Finset.sum_congr rfl fun q _ ↦ ?_
+  refine Finset.sum_congr rfl fun b _ ↦ ?_
   rw [peterssonInner_smul_right,
     Newform.peterssonInner_W_N_β_b_qOut_inv_fd_adj_eq_peterssonInner_W_N_qOut_inv_fd_M_b_slash
       N hp.pos q b]
@@ -409,7 +409,7 @@ theorem Newform.aggregate_q_b_collapsed_W_N_qOut_inv_fd_eq_inv_c_petN_T_p_f_g
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (h_int : ∀ q : SL(2, ℤ) ⧸ Gamma1 N, ∀ b ∈ Finset.range p,
       IntegrableOn
-        (fun τ => petersson k
+        (fun τ ↦ petersson k
           (⇑g ∣[k] (Newform.frickeMatrix N : GL (Fin 2) ℝ))
           ((⇑f ∣[k] (Newform.frickeMatrix N : GL (Fin 2) ℝ)) ∣[k]
             (Newform.T_p_lower_with_offset N hp.pos b : GL (Fin 2) ℝ)) τ)
@@ -431,7 +431,7 @@ theorem Newform.aggregate_q_b_collapsed_W_N_qOut_inv_fd_eq_inv_c_petN_T_p_f_g
     petN (heckeT_n_cusp k p f) g := by
   rw [← Newform.aggregate_q_b_common_W_N_qOut_inv_fd_eq_inv_c_petN_T_p_f_g hp hpN f g]
   congr 1
-  refine Finset.sum_congr rfl fun q _ => ?_
+  refine Finset.sum_congr rfl fun q _ ↦ ?_
   rw [peterssonInner_sum_left _ _ _ _ (h_int q), Finset.mul_sum]
 
 /-- The rational lift of `Newform.T_p_lower_with_offset` in `GL (Fin 2) ℚ`, with
@@ -487,7 +487,7 @@ private theorem integrableOn_petersson_slash_smul_fd_of_map_eq
     (hM_g : ((M_g : GL (Fin 2) ℚ).map (Rat.castHom ℝ) : GL (Fin 2) ℝ) = A_g)
     (hM_f : ((M_f : GL (Fin 2) ℚ).map (Rat.castHom ℝ) : GL (Fin 2) ℝ) = A_f)
     (hα : 0 < α.det.val) :
-    IntegrableOn (fun τ => petersson k (⇑g ∣[k] A_g) (⇑f ∣[k] A_f) τ)
+    IntegrableOn (fun τ ↦ petersson k (⇑g ∣[k] A_g) (⇑f ∣[k] A_f) τ)
       (α • (ModularGroup.fd : Set UpperHalfPlane)) μ_hyp := by
   haveI hArith_g :
       (toConjAct (A_g : GL (Fin 2) ℝ)⁻¹ •
@@ -520,7 +520,7 @@ private theorem integrableOn_petersson_slash_smul_fd_of_map_eq
   · refine (petersson_continuous k ?_ ?_).aestronglyMeasurable.restrict
     · rw [← h_gtr_coe]; exact ModularFormClass.continuous g_tr
     · rw [← h_ftr_coe]; exact ModularFormClass.continuous f_tr
-  · exact ae_of_all _ fun τ => h_AM_GM τ
+  · exact ae_of_all _ fun τ ↦ h_AM_GM τ
 
 open UpperHalfPlane MeasureTheory ModularGroup ConjAct Pointwise in
 /-- Integrability of the bad-prime W_N-shifted q-tile lower-offset Petersson
@@ -531,7 +531,7 @@ theorem Newform.integrableOn_petersson_fricke_qOut_fd_lowerOffset
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (q : SL(2, ℤ) ⧸ Gamma1 N) (b : ℕ) :
     IntegrableOn
-      (fun τ => petersson k
+      (fun τ ↦ petersson k
         (⇑g ∣[k] (Newform.frickeMatrix N : GL (Fin 2) ℝ))
         ((⇑f ∣[k] (Newform.frickeMatrix N : GL (Fin 2) ℝ)) ∣[k]
           (Newform.T_p_lower_with_offset N hp b : GL (Fin 2) ℝ)) τ)
@@ -539,11 +539,11 @@ theorem Newform.integrableOn_petersson_fricke_qOut_fd_lowerOffset
         ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
           (fd : Set UpperHalfPlane))) μ_hyp := by
   have h_integrand_eq :
-      (fun τ => petersson k
+      (fun τ ↦ petersson k
         (⇑g ∣[k] (Newform.frickeMatrix N : GL (Fin 2) ℝ))
         ((⇑f ∣[k] (Newform.frickeMatrix N : GL (Fin 2) ℝ)) ∣[k]
           (Newform.T_p_lower_with_offset N hp b : GL (Fin 2) ℝ)) τ) =
-      (fun τ => petersson k
+      (fun τ ↦ petersson k
         (⇑g ∣[k] (Newform.frickeMatrix N : GL (Fin 2) ℝ))
         (⇑f ∣[k] ((Newform.frickeMatrix N : GL (Fin 2) ℝ) *
           (Newform.T_p_lower_with_offset N hp b : GL (Fin 2) ℝ))) τ) := by
@@ -590,7 +590,7 @@ theorem Newform.aggregate_q_b_collapsed_W_N_qOut_inv_fd_eq_inv_c_petN_T_p_f_g_un
     petN (heckeT_n_cusp k p f) g :=
   Newform.aggregate_q_b_collapsed_W_N_qOut_inv_fd_eq_inv_c_petN_T_p_f_g
     hp hpN f g
-    (fun q b _ =>
+    (fun q b _ ↦
       Newform.integrableOn_petersson_fricke_qOut_fd_lowerOffset hp.pos f g q b)
 
 private theorem Newform.conj_frickeSquareScalar (N : ℕ) (k : ℤ) :
@@ -662,7 +662,7 @@ theorem Newform.hasBadPrimeFrickePerCosetT152ShiftedFD_of_aggregateRes
       Newform.HasBadPrimeFrickePerCosetAggregateRes N k p) :
     Newform.HasBadPrimeFrickePerCosetT152ShiftedFD N k p hp hpN := by
   intro f g q
-  rw [Finset.sum_congr rfl fun b _ =>
+  rw [Finset.sum_congr rfl fun b _ ↦
     Newform.peterssonInner_lowerOffset_smul_fricke_eq_frickeSquareScalar_shifted
       hp f g q b]
   rw [← Finset.mul_sum]
@@ -684,7 +684,7 @@ theorem Newform.hasBadPrimeFrickePerCosetT152ShiftedFD_of_aggregateRes
     rfl
   rw [Finset.sum_congr rfl h_sl_transfer]
   have h_int : ∀ b ∈ Finset.range p,
-      IntegrableOn (fun τ => UpperHalfPlane.petersson k
+      IntegrableOn (fun τ ↦ UpperHalfPlane.petersson k
         (⇑g ∣[k] ((q.out : SL(2, ℤ))⁻¹))
         ((⇑f ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ)) ∣[k]
           ((q.out : SL(2, ℤ))⁻¹)) τ) (fd : Set UpperHalfPlane) μ_hyp := by
@@ -745,7 +745,7 @@ theorem Newform.hasBadPrimeFrickePetNAdjoint_of_qBDoubleSumIdentity
     rw [Newform.peterssonInner_heckeT_n_cusp_at_divN_slash_qOut_inv_eq_bsum hp hpN f g q,
       SlashAction.sum_slash]
     have h_int : ∀ b ∈ Finset.range p,
-        IntegrableOn (fun τ => UpperHalfPlane.petersson k
+        IntegrableOn (fun τ ↦ UpperHalfPlane.petersson k
           (⇑g ∣[k] ((q.out : SL(2, ℤ))⁻¹))
           ((⇑f ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ)) ∣[k]
             ((q.out : SL(2, ℤ))⁻¹)) τ) (fd : Set UpperHalfPlane) μ_hyp := by
@@ -753,7 +753,7 @@ theorem Newform.hasBadPrimeFrickePetNAdjoint_of_qBDoubleSumIdentity
       exact integrableOn_petersson_cuspform_mixed_slash_on_fd g f
         (T_p_upper p hp.pos b) ((q.out : SL(2, ℤ))⁻¹)
     rw [peterssonInner_sum_left _ _ _ _ h_int]
-  rw [Finset.sum_congr rfl fun q _ => h_lhs_q q]
+  rw [Finset.sum_congr rfl fun q _ ↦ h_lhs_q q]
   exact h_double_sum f g
 
 open UpperHalfPlane MeasureTheory ModularGroup in
@@ -857,7 +857,7 @@ theorem Newform.hasBadPrimePetN_T_p_FrickeAdjoint_BSum_of_intertwine
     rw [Newform.peterssonInner_heckeT_n_cusp_at_divN_slash_qOut_inv_eq_bsum hp hpN f g q,
       SlashAction.sum_slash]
     have h_int : ∀ b ∈ Finset.range p,
-        IntegrableOn (fun τ => UpperHalfPlane.petersson k
+        IntegrableOn (fun τ ↦ UpperHalfPlane.petersson k
           (⇑g ∣[k] ((q.out : SL(2, ℤ))⁻¹))
           ((⇑f ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ)) ∣[k]
             ((q.out : SL(2, ℤ))⁻¹)) τ) (fd : Set UpperHalfPlane) μ_hyp := by
@@ -865,7 +865,7 @@ theorem Newform.hasBadPrimePetN_T_p_FrickeAdjoint_BSum_of_intertwine
       exact integrableOn_petersson_cuspform_mixed_slash_on_fd g f
         (T_p_upper p hp.pos b) ((q.out : SL(2, ℤ))⁻¹)
     rw [peterssonInner_sum_left _ _ _ _ h_int]
-  rw [Finset.sum_congr rfl fun q _ => h_lhs_q q]
+  rw [Finset.sum_congr rfl fun q _ ↦ h_lhs_q q]
   exact Newform.hasBadPrimeFrickePetNAdjoint_of_intertwine hp hpN h_intertwine f g
 
 open UpperHalfPlane MeasureTheory ModularGroup in
@@ -923,7 +923,7 @@ theorem Newform.hasBadPrimePetN_T_p_FrickeAdjoint_Intertwine_of_doubleCosetTileB
     rw [Newform.peterssonInner_heckeT_n_cusp_at_divN_slash_qOut_inv_eq_bsum hp hpN f g q,
       SlashAction.sum_slash]
     have h_int : ∀ b ∈ Finset.range p,
-        IntegrableOn (fun τ => UpperHalfPlane.petersson k
+        IntegrableOn (fun τ ↦ UpperHalfPlane.petersson k
           (⇑g ∣[k] ((q.out : SL(2, ℤ))⁻¹))
           ((⇑f ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ)) ∣[k]
             ((q.out : SL(2, ℤ))⁻¹)) τ) (fd : Set UpperHalfPlane) μ_hyp := by
@@ -931,7 +931,7 @@ theorem Newform.hasBadPrimePetN_T_p_FrickeAdjoint_Intertwine_of_doubleCosetTileB
       exact integrableOn_petersson_cuspform_mixed_slash_on_fd g f
         (T_p_upper p hp.pos b) ((q.out : SL(2, ℤ))⁻¹)
     rw [peterssonInner_sum_left _ _ _ _ h_int]
-  rw [Finset.sum_congr rfl fun q _ => h_lhs_q q]
+  rw [Finset.sum_congr rfl fun q _ ↦ h_lhs_q q]
   exact h_bridge f g
 
 open UpperHalfPlane MeasureTheory ModularGroup in
@@ -964,15 +964,15 @@ private theorem sum_sum_const_mul_eq_const_mul_sum_sum
     ∑ q : SL(2, ℤ) ⧸ Gamma1 N, ∑ b ∈ Finset.range p, (c * F q b) =
       c * ∑ q : SL(2, ℤ) ⧸ Gamma1 N, ∑ b ∈ Finset.range p, F q b := by
   rw [Finset.mul_sum]
-  exact Finset.sum_congr rfl fun q _ => (Finset.mul_sum _ _ _).symm
+  exact Finset.sum_congr rfl fun q _ ↦ (Finset.mul_sum _ _ _).symm
 
 private theorem sum_sum_range_eq_sum_prod {Q : Type*} [Fintype Q] {p : ℕ}
     (G : Q → ℕ → ℂ) :
     ∑ q : Q, ∑ b ∈ Finset.range p, G q b =
       ∑ qb : Q × Fin p, G qb.1 qb.2.val := by
-  rw [Fintype.sum_prod_type (fun qb : Q × Fin p => G qb.1 qb.2.val)]
-  exact Finset.sum_congr rfl fun q _ =>
-    (Fin.sum_univ_eq_sum_range (fun b => G q b) p).symm
+  rw [Fintype.sum_prod_type (fun qb : Q × Fin p ↦ G qb.1 qb.2.val)]
+  exact Finset.sum_congr rfl fun q _ ↦
+    (Fin.sum_univ_eq_sum_range (fun b ↦ G q b) p).symm
 
 open UpperHalfPlane MeasureTheory ModularGroup in
 private theorem Newform.peterssonInner_fricke_T_p_upper_slash_qOut_inv_eq_neg_pow_smul_lowerOffset
@@ -1040,13 +1040,13 @@ private theorem Newform.peterssonInner_frickeSlash_heckeT_n_cusp_slash_qOut_inv_
     ← Newform.sum_slash_T_p_upper_eq_heckeT_n_cusp hp hpN (Newform.frickeSlashCuspForm g),
     Newform.frickeSlashCuspForm_coe g, SlashAction.sum_slash]
   have h_int : ∀ b ∈ Finset.range p,
-      IntegrableOn (fun τ => UpperHalfPlane.petersson k
+      IntegrableOn (fun τ ↦ UpperHalfPlane.petersson k
         ((⇑f ∣[k] (Newform.frickeMatrix N : GL (Fin 2) ℝ)) ∣[k]
           ((q.out : SL(2, ℤ))⁻¹))
         (((⇑g ∣[k] (Newform.frickeMatrix N : GL (Fin 2) ℝ)) ∣[k]
           (T_p_upper p hp.pos b : GL (Fin 2) ℚ)) ∣[k]
           ((q.out : SL(2, ℤ))⁻¹)) τ)
-        (fd : Set UpperHalfPlane) μ_hyp := fun b _ => by
+        (fd : Set UpperHalfPlane) μ_hyp := fun b _ ↦ by
     have h := integrableOn_petersson_cuspform_mixed_slash_on_fd
       (Newform.frickeSlashCuspForm f) (Newform.frickeSlashCuspForm g)
       (T_p_upper p hp.pos b) ((q.out : SL(2, ℤ))⁻¹)
@@ -1069,23 +1069,23 @@ private theorem Newform.sum_sum_peterssonInner_shifted_T_p_upper_eq_petN_heckeT_
       peterssonInner k (fd : Set UpperHalfPlane)
         ((⇑f ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ)) ∣[k]
           ((q.out : SL(2, ℤ))⁻¹))
-        (⇑g ∣[k] ((q.out : SL(2, ℤ))⁻¹)) := fun q b => by
+        (⇑g ∣[k] ((q.out : SL(2, ℤ))⁻¹)) := fun q b ↦ by
     rw [peterssonInner_fd_slash_SL_eq_setIntegral_shifted_fd
       (⇑f ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ)) ⇑g (q.out)]
     rfl
-  rw [Finset.sum_congr rfl fun q _ =>
-    Finset.sum_congr rfl fun b _ => h_lhs_qb q b]
+  rw [Finset.sum_congr rfl fun q _ ↦
+    Finset.sum_congr rfl fun b _ ↦ h_lhs_qb q b]
   show _ = ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
       peterssonInner k fd
         (⇑(heckeT_n_cusp k p f) ∣[k] (q.out : SL(2, ℤ))⁻¹)
         (⇑g ∣[k] (q.out : SL(2, ℤ))⁻¹)
-  refine Finset.sum_congr rfl fun q _ => ?_
+  refine Finset.sum_congr rfl fun q _ ↦ ?_
   have h_int : ∀ b ∈ Finset.range p,
-      IntegrableOn (fun τ => UpperHalfPlane.petersson k
+      IntegrableOn (fun τ ↦ UpperHalfPlane.petersson k
         (⇑g ∣[k] ((q.out : SL(2, ℤ))⁻¹))
         ((⇑f ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ)) ∣[k]
           ((q.out : SL(2, ℤ))⁻¹)) τ) (fd : Set UpperHalfPlane) μ_hyp :=
-    fun b _ =>
+    fun b _ ↦
       integrableOn_petersson_cuspform_mixed_slash_on_fd g f
         (T_p_upper p hp.pos b) ((q.out : SL(2, ℤ))⁻¹)
   rw [← peterssonInner_sum_left _ _ _ _ h_int]
@@ -1171,7 +1171,7 @@ theorem Newform.hasBadPrimeAtkinLehnerDoubleCosetTileBridge_of_qBExpanded
           (⇑(Newform.frickeSlashCuspForm f) ∣[k] (q.out : SL(2, ℤ))⁻¹)
           (⇑(heckeT_n_cusp k p (Newform.frickeSlashCuspForm g)) ∣[k]
             (q.out : SL(2, ℤ))⁻¹) from rfl]
-  rw [Finset.sum_congr rfl fun q _ =>
+  rw [Finset.sum_congr rfl fun q _ ↦
     Newform.peterssonInner_frickeSlash_heckeT_n_cusp_slash_qOut_inv_eq_bsum
       hp hpN f g q]
   exact h_qBExpanded f g
@@ -1228,9 +1228,9 @@ theorem Newform.hasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBExpanded_of_qBSimp
     rw [peterssonInner_fd_slash_SL_eq_setIntegral_shifted_fd
       (⇑f ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ)) ⇑g (q.out)]
     rfl
-  rw [Finset.sum_congr rfl fun q _ =>
-    Finset.sum_congr rfl fun b _ => h_lhs_qb q b]
-  rw [Finset.sum_congr rfl fun q _ => Finset.sum_congr rfl fun b _ =>
+  rw [Finset.sum_congr rfl fun q _ ↦
+    Finset.sum_congr rfl fun b _ ↦ h_lhs_qb q b]
+  rw [Finset.sum_congr rfl fun q _ ↦ Finset.sum_congr rfl fun b _ ↦
     Newform.peterssonInner_fricke_T_p_upper_slash_qOut_inv_eq_neg_pow_smul_lowerOffset
       hp f g q b]
   rw [sum_sum_const_mul_eq_const_mul_sum_sum]
@@ -1258,11 +1258,11 @@ theorem Newform.hasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBSimplified_of_petN
     Newform.HasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBSimplified N k p hp hpN := by
   intro f g
   rw [Newform.sum_sum_peterssonInner_shifted_T_p_upper_eq_petN_heckeT_n_cusp hp hpN f g]
-  rw [Finset.sum_congr rfl fun q _ => Finset.sum_congr rfl fun b _ =>
+  rw [Finset.sum_congr rfl fun q _ ↦ Finset.sum_congr rfl fun b _ ↦
     Newform.peterssonInner_lowerOffset_smul_eq_neg_pow_fricke_T_p_upper_slash_qOut_inv
       hp f g q b]
   rw [sum_sum_const_mul_eq_const_mul_sum_sum,
-    Finset.sum_congr rfl fun q _ =>
+    Finset.sum_congr rfl fun q _ ↦
       (Newform.peterssonInner_frickeSlash_heckeT_n_cusp_slash_qOut_inv_eq_bsum
         hp hpN f g q).symm]
   show petN (heckeT_n_cusp k p f) g =
@@ -1472,9 +1472,9 @@ theorem Newform.hasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBSimplified_of_qBDo
       Newform.HasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBDomainSwap N k p hp hpN) :
     Newform.HasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBSimplified N k p hp hpN := by
   intro f g
-  rw [Finset.sum_congr rfl fun q _ => Finset.sum_congr rfl fun b _ =>
+  rw [Finset.sum_congr rfl fun q _ ↦ Finset.sum_congr rfl fun b _ ↦
     Newform.peterssonInner_shifted_T_p_upper_eq_peterssonAdj_domainSwap hp f g q b]
-  rw [Finset.sum_congr rfl fun q _ => Finset.sum_congr rfl fun b _ =>
+  rw [Finset.sum_congr rfl fun q _ ↦ Finset.sum_congr rfl fun b _ ↦
     Newform.peterssonInner_lowerOffset_smul_eq_frickeSquareScalar_domainSwap hp f g q b]
   rw [sum_sum_const_mul_eq_const_mul_sum_sum]
   rw [show (Newform.frickeSquareScalar N k)⁻¹ *
@@ -1529,7 +1529,7 @@ theorem Newform.hasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBDomainSwap_of_qBBi
   obtain ⟨σ, h_σ⟩ := h_bij
   intro f g
   rw [sum_sum_range_eq_sum_prod
-    (fun (q : SL(2, ℤ) ⧸ Gamma1 N) (b : ℕ) =>
+    (fun (q : SL(2, ℤ) ⧸ Gamma1 N) (b : ℕ) ↦
       peterssonInner k
         ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) •
           ((q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane)))
@@ -1537,7 +1537,7 @@ theorem Newform.hasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBDomainSwap_of_qBBi
         (⇑g ∣[k] peterssonAdj
           (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ)))]
   rw [sum_sum_range_eq_sum_prod
-    (fun (q : SL(2, ℤ) ⧸ Gamma1 N) (b : ℕ) =>
+    (fun (q : SL(2, ℤ) ⧸ Gamma1 N) (b : ℕ) ↦
       peterssonInner k
         ((Newform.frickeMatrix N : GL (Fin 2) ℝ) •
           ((q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane)))
@@ -1545,7 +1545,7 @@ theorem Newform.hasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBDomainSwap_of_qBBi
         (⇑g ∣[k]
           (Newform.T_p_lower_with_offset N hp.pos b : GL (Fin 2) ℝ)))]
   rw [← Equiv.sum_comp σ
-    (fun qb : (SL(2, ℤ) ⧸ Gamma1 N) × Fin p =>
+    (fun qb : (SL(2, ℤ) ⧸ Gamma1 N) × Fin p ↦
       peterssonInner k
         ((Newform.frickeMatrix N : GL (Fin 2) ℝ) •
           ((qb.1.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane)))
@@ -1553,7 +1553,7 @@ theorem Newform.hasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBDomainSwap_of_qBBi
         (⇑g ∣[k]
           (Newform.T_p_lower_with_offset N hp.pos qb.2.val :
             GL (Fin 2) ℝ)))]
-  refine Finset.sum_congr rfl fun qb _ => ?_
+  refine Finset.sum_congr rfl fun qb _ ↦ ?_
   exact h_σ f g qb.1 qb.2
 
 

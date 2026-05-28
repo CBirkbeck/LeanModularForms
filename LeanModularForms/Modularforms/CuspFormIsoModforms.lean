@@ -32,7 +32,7 @@ lemma mul_Delta_IsCuspForm (k : ℤ) (f : ModularForm (CongruenceSubgroup.Gamma 
       (ModularFormClass.qExpansion (1 : ℝ) f).coeff 0 *
         (ModularFormClass.qExpansion (1 : ℝ) (ModForm_mk Γ(1) 12 Delta)).coeff 0 by
     simpa [PowerSeries.coeff_mul] using
-      congrArg (fun p : PowerSeries ℂ => p.coeff 0)
+      congrArg (fun p : PowerSeries ℂ ↦ p.coeff 0)
         (qExpansion_mul_coeff (n := 1) (a := k - 12) (b := 12) f (ModForm_mk Γ(1) 12 Delta))]
   have hDelta0 :
       (ModularFormClass.qExpansion (1 : ℝ) (ModForm_mk Γ(1) 12 Delta)).coeff 0 = 0 :=

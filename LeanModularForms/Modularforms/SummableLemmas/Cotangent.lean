@@ -25,8 +25,8 @@ open ModularForm EisensteinSeries UpperHalfPlane TopologicalSpace Set
 open ArithmeticFunction
 
 lemma pnat_inv_sub_squares (z : ℍ) :
-    (fun n : ℕ+ => 1 / ((z : ℂ) - n) + 1 / (z + n)) =
-      fun n : ℕ+ => 2 * z.1 * (1 / (z ^ 2 - n ^ 2)) := by
+    (fun n : ℕ+ ↦ 1 / ((z : ℂ) - n) + 1 / (z + n)) =
+      fun n : ℕ+ ↦ 2 * z.1 * (1 / (z ^ 2 - n ^ 2)) := by
   funext n
   have hsub : (z : ℂ) - n ≠ 0 := by simpa [sub_eq_zero] using upp_half_not_ints z (n : ℤ)
   have hplus : (z : ℂ) + n ≠ 0 := upper_half_plane_ne_int_add z n
@@ -65,12 +65,12 @@ theorem upbnd (z : ℍ) (d : ℤ) : (d ^ 2 : ℝ) * r z ^ 2 ≤ ‖((z : ℂ) ^ 
       sub_zero, norm_pow, norm_nonneg, pow_nonneg]
 
 /-- Summability of the cotangent-style series `∑_{n>0} (1/(z-n) + 1/(z+n))` for `z ∈ ℍ`. -/
-public theorem lhs_summable (z : ℍ) : Summable fun n : ℕ+ => 1 / ((z : ℂ) - n) + 1 / (z + n) := by
+public theorem lhs_summable (z : ℍ) : Summable fun n : ℕ+ ↦ 1 / ((z : ℂ) - n) + 1 / (z + n) := by
   rw [pnat_inv_sub_squares]
   apply Summable.mul_left
   apply summable_norm_iff.1
   simp only [one_div, norm_inv]
-  have hs : Summable fun n : ℕ+ => (r z ^ 2 * n ^ 2)⁻¹ := by
+  have hs : Summable fun n : ℕ+ ↦ (r z ^ 2 * n ^ 2)⁻¹ := by
     simp only [mul_inv_rev]
     apply Summable.mul_right
     have hrr : Summable fun (i : ℕ) ↦ ((i : ℝ) ^ 2)⁻¹ := by
@@ -90,7 +90,7 @@ public theorem lhs_summable (z : ℍ) : Summable fun n : ℕ+ => 1 / ((z : ℂ) 
 public theorem sum_int_even {α : Type*} [UniformSpace α] [CommRing α] [IsUniformAddGroup α]
     [CompleteSpace α] [T2Space α] (f : ℤ → α) (hf : ∀ n : ℤ, f n = f (-n)) (hf2 : Summable f) :
     ∑' n, f n = f 0 + 2 * ∑' n : ℕ+, f n := by
-  simpa using tsum_int_eq_zero_add_two_mul_tsum_pnat (f := f) (fun n => by simpa using hf (-n)) hf2
+  simpa using tsum_int_eq_zero_add_two_mul_tsum_pnat (f := f) (fun n ↦ by simpa using hf (-n)) hf2
 
 /-- Summability of a symmetric translated series of simple poles. -/
 public theorem summable_diff (z : ℍ) (d : ℤ) :
@@ -156,8 +156,8 @@ converges.
 -/
 public lemma summable_hammerTime_nat {α : Type} [NormedField α] [CompleteSpace α]
     (f : ℕ → α) (a : ℝ) (hab : 1 < a)
-    (hf : (fun n => (f n)⁻¹) =O[cofinite] fun n => (|(n : ℝ)| ^ (a : ℝ))⁻¹) :
-    Summable fun n => (f n)⁻¹ := by
+    (hf : (fun n ↦ (f n)⁻¹) =O[cofinite] fun n ↦ (|(n : ℝ)| ^ (a : ℝ))⁻¹) :
+    Summable fun n ↦ (f n)⁻¹ := by
   apply summable_of_isBigO _ hf
   have hs := Real.summable_nat_rpow_inv.mpr hab
   refine hs.congr ?_
@@ -215,9 +215,9 @@ theorem vector_norm_bound (b : Fin 2 → ℤ) (hb : b ≠ 0) (HB1 : b ≠ ![0, -
   have hvpos : 0 < ‖![b 0, b 1 + 1]‖ := by
     refine norm_pos_iff.2 ?_
     intro h
-    have hb0 : b 0 = 0 := by simpa using congrArg (fun v => v 0) h
+    have hb0 : b 0 = 0 := by simpa using congrArg (fun v ↦ v 0) h
     have hb1 : b 1 = -1 := by
-      have : b 1 + 1 = 0 := by simpa using congrArg (fun v => v 1) h
+      have : b 1 + 1 = 0 := by simpa using congrArg (fun v ↦ v 1) h
       linarith
     have : b = ![0, -1] := by
       ext i
@@ -264,7 +264,7 @@ theorem vector_norm_bound (b : Fin 2 → ℤ) (hb : b ≠ 0) (HB1 : b ≠ ![0, -
 
 
 /-- Summability of the alternative `G_2` defining series (excluding the correction term `δ`). -/
-public lemma G_2_alt_summable (z : ℍ) : Summable fun (m : Fin 2 → ℤ) =>
+public lemma G_2_alt_summable (z : ℍ) : Summable fun (m : Fin 2 → ℤ) ↦
     1 / (((m 0 : ℂ) * z + m 1)^2 * (m 0 * z + m 1 + 1)) := by
   have hk' : (2 : ℝ) < 3 := by norm_num
   apply ((summable_one_div_norm_rpow hk').mul_left <| r z ^ (-3 : ℝ) * 2).of_norm_bounded_eventually

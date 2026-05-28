@@ -23,15 +23,15 @@ open TopologicalSpace Set Metric Filter Function Complex
 open scoped Interval Real NNReal ENNReal Topology BigOperators Nat
 
 private lemma int_tendsto_nat {f : ℤ → ℂ} {x : ℂ} (hf : Tendsto f atTop (𝓝 x)) :
-    Tendsto (fun n : ℕ => f n) atTop (𝓝 x) :=
+    Tendsto (fun n : ℕ ↦ f n) atTop (𝓝 x) :=
   hf.comp tendsto_natCast_atTop_atTop
 
 private lemma pnat_tendsto_nat (f : ℕ → ℂ) (x : ℂ)
-    (hf : Tendsto (fun n : ℕ+ => f n) atTop (𝓝 x)) : Tendsto f atTop (𝓝 x) :=
+    (hf : Tendsto (fun n : ℕ+ ↦ f n) atTop (𝓝 x)) : Tendsto f atTop (𝓝 x) :=
   tendsto_comp_val_Ioi_atTop.mp hf
 
 private lemma nat_tendsto_pnat (f : ℕ → ℂ) (x : ℂ) (hf : Tendsto f atTop (𝓝 x)) :
-    Tendsto (fun n : ℕ+ => f n) atTop (𝓝 x) :=
+    Tendsto (fun n : ℕ+ ↦ f n) atTop (𝓝 x) :=
   tendsto_comp_val_Ioi_atTop.mpr hf
 
 private lemma tendsto_of_sub_tendsto_zero (f g : ℕ → ℂ) (x : ℂ)
@@ -40,5 +40,5 @@ private lemma tendsto_of_sub_tendsto_zero (f g : ℕ → ℂ) (x : ℂ)
   simpa using hf.add hfg
 
 private lemma tendsto_one_sub_pow (r : ℂ) (hr : ‖r‖ < 1) :
-    Tendsto (fun n : ℕ => 1 - r ^ n) atTop (𝓝 1) := by
+    Tendsto (fun n : ℕ ↦ 1 - r ^ n) atTop (𝓝 1) := by
   simpa using tendsto_const_nhds.sub <| tendsto_pow_atTop_nhds_zero_of_norm_lt_one hr

@@ -21,15 +21,15 @@ discriminant.
 open UpperHalfPlane Complex
 
 /-- A complex square root on the slit plane, given by `cexp ((1 / 2) * log a)`. -/
-noncomputable def csqrt : ℂ → ℂ := fun a : ℂ => cexp ((1 / (2 : ℂ)) * log a)
+noncomputable def csqrt : ℂ → ℂ := fun a : ℂ ↦ cexp ((1 / (2 : ℂ)) * log a)
 
 /-- A point of the upper half-plane lies in the slit plane. -/
 private lemma upperHalfPlane_mem_slitPlane (z : ℍ) : (z : ℂ) ∈ slitPlane :=
   mem_slitPlane_iff.mpr <| .inr (ne_of_lt z.2).symm
 
 /-- The derivative of `csqrt` at `z` in the upper half-plane is `(2 z)⁻¹ • csqrt z⁻¹`. -/
-lemma csqrt_deriv (z : ℍ) : deriv (fun a : ℂ => cexp ((1 / (2 : ℂ)) * log a)) z =
-    (2 : ℂ)⁻¹ • (fun a : ℂ => cexp (-(1 / (2 : ℂ)) * log a)) z := by
+lemma csqrt_deriv (z : ℍ) : deriv (fun a : ℂ ↦ cexp ((1 / (2 : ℂ)) * log a)) z =
+    (2 : ℂ)⁻¹ • (fun a : ℂ ↦ cexp (-(1 / (2 : ℂ)) * log a)) z := by
   have hzz : (z : ℂ) ∈ slitPlane := upperHalfPlane_mem_slitPlane z
   have hcomp : (fun a ↦ cexp (1 / 2 * Complex.log a)) =
       cexp ∘ (fun a ↦ 1 / 2 * Complex.log a) := by ext; simp

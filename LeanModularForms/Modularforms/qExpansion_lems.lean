@@ -56,7 +56,7 @@ theorem modform_tendto_ndhs_zero {k : ℤ} (n : ℕ) [ModularFormClass F Γ(n) k
 
 theorem derivWithin_mul2 (f g : ℂ → ℂ) (s : Set ℂ) (hf : DifferentiableOn ℂ f s)
     (hd : DifferentiableOn ℂ g s) :
-    s.restrict (derivWithin (fun y => f y * g y) s) =
+    s.restrict (derivWithin (fun y ↦ f y * g y) s) =
       s.restrict (derivWithin f s * g + f * derivWithin g s) := by
   ext y
   simp only [restrict_apply, Pi.add_apply, Pi.mul_apply]
@@ -75,7 +75,7 @@ lemma iteratedDerivWithin_mul' (f g : ℂ → ℂ) (s : Set ℂ) (hs : IsOpen s)
   | succ m hm =>
     have h1 :=
       derivWithin_mul2 f g s (hf.differentiableOn (by simp)) (hg.differentiableOn (by simp))
-    have h2 : (fun y => f y * g y) = f * g := by ext y; simp
+    have h2 : (fun y ↦ f y * g y) = f * g := by ext y; simp
     rw [iteratedDerivWithin_succ']
     have hset : s.EqOn (derivWithin (f * g) s) (derivWithin f s * g + f * derivWithin g s) := by
       intro z hz
@@ -83,7 +83,7 @@ lemma iteratedDerivWithin_mul' (f g : ℂ → ℂ) (s : Set ℂ) (hs : IsOpen s)
     rw [iteratedDerivWithin_congr hset hx, iteratedDerivWithin_add hx hs.uniqueDiffOn, hm _ _ hf,
       hm _ _ _ hg]
     · simp_rw [←iteratedDerivWithin_succ']
-      have := Finset.sum_choose_succ_mul (fun i => fun j =>
+      have := Finset.sum_choose_succ_mul (fun i ↦ fun j ↦
         ((iteratedDerivWithin i f s x) * (iteratedDerivWithin j g s x)) ) m
       simp only [Nat.succ_eq_add_one, restrict_eq_restrict_iff] at *
       rw [show m + 1 + 1 = m + 2 by ring]
@@ -162,15 +162,15 @@ lemma qExpansion_ext2 {α β : Type*} [FunLike α ℍ ℂ] [FunLike β ℍ ℂ] 
   simp [qExpansion_coeff, hcf]
 
 @[simp] --generalize this away from ℂ
-lemma IteratedDeriv_zero_fun (n : ℕ) (z : ℂ) : iteratedDeriv n (fun _ : ℂ => (0 : ℂ)) z = 0 := by
+lemma IteratedDeriv_zero_fun (n : ℕ) (z : ℂ) : iteratedDeriv n (fun _ : ℂ ↦ (0 : ℂ)) z = 0 := by
   induction n with
   | zero => simp
   | succ n hn => simp
 
 lemma iteratedDeriv_const_eq_zero (m : ℕ) (hm : 0 < m) (c : ℂ) :
-    iteratedDeriv m (fun _ : ℂ => c) = fun _ : ℂ => 0 := by
+    iteratedDeriv m (fun _ : ℂ ↦ c) = fun _ : ℂ ↦ 0 := by
   ext z
-  have := iteratedDeriv_const_add hm (f := fun (x : ℂ) => (0 : ℂ)) c (x := z)
+  have := iteratedDeriv_const_add hm (f := fun (x : ℂ) ↦ (0 : ℂ)) c (x := z)
   simpa only [add_zero, IteratedDeriv_zero_fun] using this
 
 lemma qExpansion_pow (f : ModularForm Γ(1) k) (n : ℕ) :

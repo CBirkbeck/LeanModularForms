@@ -71,7 +71,7 @@ lemma quotientFunc_isBoundedAtImInfty
     (Γ : Subgroup SL(2, ℤ)) (hΓ : Subgroup.index Γ ≠ 0) (f : ModularForm (G Γ) k) (q : Q Γ) :
     IsBoundedAtImInfty (SlashInvariantForm.quotientFunc (ℋ := 𝒮ℒ) (𝒢 := G Γ) (k := k) f q) := by
   have : (G Γ).IsArithmetic := instIsArithmetic Γ hΓ
-  refine Quotient.inductionOn q fun ⟨_, ⟨γ, rfl⟩⟩ => ?_
+  refine Quotient.inductionOn q fun ⟨_, ⟨γ, rfl⟩⟩ ↦ ?_
   simpa [SlashInvariantForm.quotientFunc_mk, ModularForm.SL_slash, G] using
     ModularFormClass.bdd_at_infty_slash (f := f) (Γ := G Γ) (k := k) (g := γ⁻¹)
 
@@ -85,7 +85,7 @@ This is the product of `SlashInvariantForm.quotientFunc` over `Q Γ`, excluding 
     ℍ → ℂ := by
   let _ : Fintype (Q Γ) := Fintype.ofFinite (Q Γ)
   let _ : DecidableEq (Q Γ) := Classical.decEq _
-  exact (Finset.univ.erase (⟦(1 : 𝒮ℒ)⟧ : Q Γ)).prod fun q =>
+  exact (Finset.univ.erase (⟦(1 : 𝒮ℒ)⟧ : Q Γ)).prod fun q ↦
     SlashInvariantForm.quotientFunc (ℋ := 𝒮ℒ) (𝒢 := G Γ) (k := k) f q
 
 /-- The product `restProd` is bounded at `Im z → ∞`. -/
@@ -99,7 +99,7 @@ public lemma restProd_isBoundedAtImInfty
   let _ : DecidableEq (Q Γ) := Classical.decEq _
   simpa [IsBoundedAtImInfty, restProd] using
     Filter.BoundedAtFilter.prod (l := atImInfty)
-      (s := Finset.univ.erase (⟦(1 : 𝒮ℒ)⟧ : Q Γ)) fun q _ => by
+      (s := Finset.univ.erase (⟦(1 : 𝒮ℒ)⟧ : Q Γ)) fun q _ ↦ by
       simpa [IsBoundedAtImInfty] using quotientFunc_isBoundedAtImInfty (k := k) Γ hΓ f q
 
 end BoundedFactors

@@ -37,7 +37,7 @@ public lemma finiteDimensional_modularForm_neg_weight (Γ : Subgroup SL(2, ℤ))
   haveI : (Γ : Subgroup (GL (Fin 2) ℝ)).IsArithmetic := isArithmetic_of_finiteIndex (Γ := Γ)
   have hz : ∀ f : ModularForm Γ k, f = 0 :=
     ModularForm.isZero_of_neg_weight (𝒢 := (Γ : Subgroup (GL (Fin 2) ℝ))) (k := k) hk
-  haveI : Subsingleton (ModularForm Γ k) := ⟨fun f g => by simp [hz f, hz g]⟩
+  haveI : Subsingleton (ModularForm Γ k) := ⟨fun f g ↦ by simp [hz f, hz g]⟩
   refine Module.finite_def.2 ?_
   have htop : (⊤ : Submodule ℂ (ModularForm Γ k)) = ⊥ := by ext f; simp [Subsingleton.elim f 0]
   simpa [htop] using (Submodule.fg_bot : (⊥ : Submodule ℂ (ModularForm Γ k)).FG)
@@ -49,13 +49,13 @@ public lemma finiteDimensional_modularForm_weight_zero (Γ : Subgroup SL(2, ℤ)
   haveI : Γ.FiniteIndex := ⟨hΓ⟩
   haveI : (Γ : Subgroup (GL (Fin 2) ℝ)).IsArithmetic := isArithmetic_of_finiteIndex (Γ := Γ)
   let e : ModularForm Γ (0 : ℤ) ≃ₗ[ℂ] ℂ :=
-    { toFun := fun f => f I
-      invFun := fun c => ModularForm.const (Γ := (Γ : Subgroup (GL (Fin 2) ℝ))) c
-      left_inv := fun f => by
+    { toFun := fun f ↦ f I
+      invFun := fun c ↦ ModularForm.const (Γ := (Γ : Subgroup (GL (Fin 2) ℝ))) c
+      left_inv := fun f ↦ by
         obtain ⟨c, hc⟩ :=
           ModularForm.eq_const_of_weight_zero (𝒢 := (Γ : Subgroup (GL (Fin 2) ℝ))) f
         ext z; simp [hc]
-      right_inv := fun _ => by simp
+      right_inv := fun _ ↦ by simp
       map_add' := by simp
       map_smul' := by simp }
   exact LinearEquiv.finiteDimensional e.symm

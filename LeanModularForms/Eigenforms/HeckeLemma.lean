@@ -387,22 +387,22 @@ Immediate from `Function.Injective.hasSum_iff` applied to `j ↦ m · j`
 (injective for `m > 0`), using that the sparse function vanishes outside
 its range. -/
 lemma hasSum_pow_mul_reindex {m : ℕ} (hm : 0 < m) {a : ℕ → ℂ} {q : ℂ}
-    {S : ℂ} (h : HasSum (fun j : ℕ => a j • (q ^ m) ^ j) S) :
-    HasSum (fun n : ℕ => if m ∣ n then a (n / m) • q ^ n else 0) S := by
+    {S : ℂ} (h : HasSum (fun j : ℕ ↦ a j • (q ^ m) ^ j) S) :
+    HasSum (fun n : ℕ ↦ if m ∣ n then a (n / m) • q ^ n else 0) S := by
   have hm_ne : m ≠ 0 := hm.ne'
-  have hinj : Function.Injective (fun j : ℕ => m * j) := by
+  have hinj : Function.Injective (fun j : ℕ ↦ m * j) := by
     intro x y hxy
     exact Nat.mul_left_cancel hm hxy
-  have h_zero : ∀ n : ℕ, n ∉ Set.range (fun j : ℕ => m * j) →
-      (fun n : ℕ => if m ∣ n then a (n / m) • q ^ n else 0) n = 0 := by
+  have h_zero : ∀ n : ℕ, n ∉ Set.range (fun j : ℕ ↦ m * j) →
+      (fun n : ℕ ↦ if m ∣ n then a (n / m) • q ^ n else 0) n = 0 := by
     intro n hn
     simp only
     rw [if_neg]
     intro hdvd
     obtain ⟨j, rfl⟩ := hdvd
     exact hn ⟨j, rfl⟩
-  have h_eq : ((fun n : ℕ => if m ∣ n then a (n / m) • q ^ n else 0) ∘
-      (fun j : ℕ => m * j)) = fun j : ℕ => a j • (q ^ m) ^ j := by
+  have h_eq : ((fun n : ℕ ↦ if m ∣ n then a (n / m) • q ^ n else 0) ∘
+      (fun j : ℕ ↦ m * j)) = fun j : ℕ ↦ a j • (q ^ m) ^ j := by
     funext j
     simp only [Function.comp_apply]
     rw [if_pos ⟨j, rfl⟩]
@@ -483,7 +483,7 @@ theorem qExpansion_support_of_diagGL_Q_slash {N : ℕ} [NeZero N] {k : ℤ}
     exact AddSubgroup.nsmul_mem _ hN_period m
   set γ : GL (Fin 2) ℚ := diagGL_Q (m : ℤ) hm_int with hγ_def
   have h_dense : ∀ τ : UpperHalfPlane,
-      HasSum (fun n : ℕ =>
+      HasSum (fun n : ℕ ↦
         ((m : ℂ)⁻¹ * (qExpansion (N : ℝ) f).coeff n) •
           Function.Periodic.qParam ((N : ℝ) * (m : ℝ)) (τ : ℂ) ^ n) (g τ) := by
     intro τ
@@ -505,7 +505,7 @@ theorem qExpansion_support_of_diagGL_Q_slash {N : ℕ} [NeZero N] {k : ℤ}
     simp only [smul_eq_mul]
     ring
   have h_sparse : ∀ τ : UpperHalfPlane,
-      HasSum (fun n : ℕ =>
+      HasSum (fun n : ℕ ↦
         (if m ∣ n then (qExpansion (N : ℝ) g).coeff (n / m) else 0) •
           Function.Periodic.qParam ((N : ℝ) * (m : ℝ)) (τ : ℂ) ^ n) (g τ) := by
     intro τ
@@ -841,7 +841,7 @@ theorem qExpansion_of_diagGL_Q_lower_slash
   have hm_int : (0 : ℤ) < (m : ℤ) := by exact_mod_cast hm
   have hN_pos_R : (0 : ℝ) < (N : ℝ) := Nat.cast_pos.mpr (Nat.pos_of_neZero N)
   have h_sum_g : ∀ τ : UpperHalfPlane,
-      HasSum (fun j : ℕ =>
+      HasSum (fun j : ℕ ↦
         (if m ∣ j then (m : ℂ) ^ (k - 1) * (qExpansion (N : ℝ) f).coeff (j / m)
           else 0) •
           Function.Periodic.qParam (N : ℝ) (τ : ℂ) ^ j) (g τ) := by
@@ -859,7 +859,7 @@ theorem qExpansion_of_diagGL_Q_lower_slash
       rw [h_eq, hγ_def]
       exact slash_diagGL_Q_lower_apply k (m : ℤ) hm_int (⇑f) τ
     rw [hslash]
-    have hscaled : HasSum (fun n : ℕ =>
+    have hscaled : HasSum (fun n : ℕ ↦
           ((m : ℂ) ^ (k - 1) * (qExpansion (N : ℝ) f).coeff n) •
             ((Function.Periodic.qParam (N : ℝ) (τ : ℂ)) ^ m) ^ n)
           ((m : ℂ) ^ (k - 1) * f (glMap γ • τ)) := by
@@ -1219,7 +1219,7 @@ theorem miyake_4_6_3_prime_charspace_case
     ∀ n : ℕ, 0 < n → (qExpansion (N : ℝ) f).coeff n = 0 := by
   intro n hn
   have hN_pos_R : (0 : ℝ) < (N : ℝ) := Nat.cast_pos.mpr (Nat.pos_of_neZero N)
-  have h_per : ∀ i ∈ s, (qExpansion (N : ℝ) (f_i i)).coeff n = 0 := fun i hi =>
+  have h_per : ∀ i ∈ s, (qExpansion (N : ℝ) (f_i i)).coeff n = 0 := fun i hi ↦
     miyake_4_6_3_prime_T_p_eigenform_case hp hpN hp_gt hN_period
       (f_i i) (h_char_i i hi) (g_i i) (h_eq_i i hi) (lam_i i) (h_eigen_i i hi) n hn
   have h_coeff_sum : (qExpansion (N : ℝ) f).coeff n =

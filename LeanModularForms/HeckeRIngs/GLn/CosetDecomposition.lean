@@ -46,9 +46,9 @@ private lemma det_upper_tri {k : ℕ} {M : Matrix (Fin k) (Fin k) ℤ}
   · intro σ _ hσ
     have hne : ∃ i, σ i ≠ i := by
       by_contra hc; push_neg at hc
-      exact hσ (Equiv.Perm.ext (fun i => by simp [hc i]))
+      exact hσ (Equiv.Perm.ext (fun i ↦ by simp [hc i]))
     suffices hprod : ∏ i, M (σ i) i = 0 by simp [hprod]
-    set S := Finset.univ.filter (fun i : Fin k => σ i ≠ i)
+    set S := Finset.univ.filter (fun i : Fin k ↦ σ i ≠ i)
     have hS : S.Nonempty := by
       obtain ⟨i, hi⟩ := hne
       exact ⟨i, Finset.mem_filter.mpr ⟨Finset.mem_univ i, hi⟩⟩
@@ -75,7 +75,7 @@ abbrev UpperTriRep (a : Fin n → ℕ) (_hdiv : DivChain n a) :=
 /-- Upper-triangular matrix with diagonal `a` and off-diagonal `M_{ij} = a_i * B_{ij}`. -/
 def upperTriMat (a : Fin n → ℕ) (hdiv : DivChain n a) (B : UpperTriRep n a hdiv) :
     Matrix (Fin n) (Fin n) ℤ :=
-  fun i j =>
+  fun i j ↦
     if h : i < j then (a i : ℤ) * (B ⟨(i, j), h⟩ : ℕ)
     else if i = j then (a i : ℤ)
     else 0
@@ -99,14 +99,14 @@ lemma upperTriMat_apply_gt (a : Fin n → ℕ) (hdiv : DivChain n a) (B : UpperT
 
 lemma upperTriMat_det (a : Fin n → ℕ) (hdiv : DivChain n a) (B : UpperTriRep n a hdiv) :
     (upperTriMat n a hdiv B).det = ∏ i, (a i : ℤ) := by
-  rw [det_upper_tri (fun i j h => upperTriMat_apply_gt n a hdiv B h)]
+  rw [det_upper_tri (fun i j h ↦ upperTriMat_apply_gt n a hdiv B h)]
   congr 1; ext i; simp
 
 lemma upperTriMat_det_pos (a : Fin n → ℕ) (hpos : ∀ i, 0 < a i)
     (hdiv : DivChain n a) (B : UpperTriRep n a hdiv) :
     0 < (upperTriMat n a hdiv B).det := by
   rw [upperTriMat_det]
-  exact Finset.prod_pos fun i _ => by exact_mod_cast hpos i
+  exact Finset.prod_pos fun i _ ↦ by exact_mod_cast hpos i
 
 lemma upperTriMat_injective (a : Fin n → ℕ) (hpos : ∀ i, 0 < a i) (hdiv : DivChain n a) :
     Function.Injective (upperTriMat n a hdiv) := by
@@ -153,14 +153,14 @@ lemma upperTriGL_mem_posDetInt (a : Fin n → ℕ) (hpos : ∀ i, 0 < a i)
 /-- The unipotent upper-triangular matrix with `1` on the diagonal and `B_{ij}` above. -/
 def unipMat (a : Fin n → ℕ) (hdiv : DivChain n a) (B : UpperTriRep n a hdiv) :
     Matrix (Fin n) (Fin n) ℤ :=
-  fun i j =>
+  fun i j ↦
     if h : i < j then (B ⟨(i, j), h⟩ : ℕ)
     else if i = j then 1
     else 0
 
 lemma unipMat_det (a : Fin n → ℕ) (hdiv : DivChain n a) (B : UpperTriRep n a hdiv) :
     (unipMat n a hdiv B).det = 1 := by
-  rw [det_upper_tri (fun i j h => by simp [unipMat, not_lt.mpr (le_of_lt h), ne_of_gt h])]
+  rw [det_upper_tri (fun i j h ↦ by simp [unipMat, not_lt.mpr (le_of_lt h), ne_of_gt h])]
   simp [unipMat]
 
 /-- Each upper-triangular representative lies in `Γ · diag(a) · Γ`. -/
@@ -209,12 +209,12 @@ private lemma coset_sum_eq {a : Fin n → ℕ} {hdiv : DivChain n a}
     · rw [ih k (by exact_mod_cast hkj') i]
       rcases eq_or_ne i k with rfl | hik
       · simp [hkj']
-      · simp [hik, show k ≠ i from fun h => hik h.symm]
+      · simp [hik, show k ≠ i from fun h ↦ hik h.symm]
     · have hjk : j < k := lt_of_le_of_ne hkj' (Ne.symm hkj)
       have hM₂ : M₂ k j = 0 := upperTriMat_apply_gt n a hdiv B₂ hjk
       simp [hM₂, show ¬(k = i ∧ i < j) from
-        fun ⟨hki, hilj⟩ => not_lt.mpr (le_of_lt (hki ▸ hjk)) hilj]
-  rw [← Finset.sum_erase_add (f := fun k => σ.val i k * M₂ k j)
+        fun ⟨hki, hilj⟩ ↦ not_lt.mpr (le_of_lt (hki ▸ hjk)) hilj]
+  rw [← Finset.sum_erase_add (f := fun k ↦ σ.val i k * M₂ k j)
     Finset.univ (Finset.mem_univ j),
     show M₂ j j = (a j : ℤ) from upperTriMat_apply_diag n a hdiv B₂ j]
   suffices h_rest : ∑ x ∈ Finset.univ.erase j, σ.val i x * M₂ x j =
@@ -226,11 +226,11 @@ private lemma coset_sum_eq {a : Fin n → ℕ} {hdiv : DivChain n a}
     · rw [h_sum_rest i (Fin.ne_of_lt hij)]; simp [hij]
     · intro k hk hki
       rw [Finset.mem_erase] at hk; rw [h_sum_rest k hk.1]
-      simp [show ¬(k = i ∧ i < j) from fun ⟨h, _⟩ => hki h]
+      simp [show ¬(k = i ∧ i < j) from fun ⟨h, _⟩ ↦ hki h]
   · simp only [hij, ite_false]
     apply Finset.sum_eq_zero; intro k hk
     rw [Finset.mem_erase] at hk; rw [h_sum_rest k hk.1]
-    simp [show ¬(k = i ∧ i < j) from fun ⟨_, h⟩ => hij h]
+    simp [show ¬(k = i ∧ i < j) from fun ⟨_, h⟩ ↦ hij h]
 
 /-- When `i < j`, the entry `σ i j` must be zero: the bounded difference of `B₁` and `B₂`
     cannot absorb a nonzero integer multiple of `a_j / a_i`. -/
@@ -329,7 +329,7 @@ theorem upperTriMat_distinct_cosets (a : Fin n → ℕ)
     rcases Nat.lt_succ_iff_lt_or_eq.mp hj with hlt | hjeq
     · exact ih j hlt i
     · exact @coset_col_entry_eq n a hpos hdiv B₁ B₂ σ hmat j
-        (fun k hk => ih k (hjeq ▸ hk)) i
+        (fun k hk ↦ ih k (hjeq ▸ hk)) i
 
 /-- The number of upper-triangular representatives equals `∏_{i<j} (a_j / a_i)`. -/
 lemma upperTriRep_card (a : Fin n → ℕ) (hdiv : DivChain n a) :

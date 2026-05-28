@@ -97,7 +97,7 @@ pulled back to `ℍ` via the canonical embedding.
 This measure is invariant under the action of `SL₂(ℝ)` on `ℍ`. -/
 def hyperbolicMeasure : Measure ℍ :=
   (comap UpperHalfPlane.coe volume).withDensity
-    (fun τ => ENNReal.ofReal (τ.im ^ (-2 : ℤ)))
+    (fun τ ↦ ENNReal.ofReal (τ.im ^ (-2 : ℤ)))
 
 scoped notation "μ_hyp" => UpperHalfPlane.hyperbolicMeasure
 
@@ -110,8 +110,8 @@ instance instFMOC_comap :
 
 /-- The hyperbolic density `τ ↦ (Im τ)⁻²` is continuous on `ℍ`. -/
 theorem continuous_im_zpow_neg_two :
-    Continuous (fun τ : ℍ => τ.im ^ (-2 : ℤ)) :=
-  continuous_im.zpow₀ (-2) (fun τ => Or.inl (ne_of_gt τ.im_pos))
+    Continuous (fun τ : ℍ ↦ τ.im ^ (-2 : ℤ)) :=
+  continuous_im.zpow₀ (-2) (fun τ ↦ Or.inl (ne_of_gt τ.im_pos))
 
 /-- The hyperbolic measure is locally finite, hence finite on compact sets.
 This follows from the fact that `(Im τ)⁻²` is a continuous (hence locally bounded)
@@ -133,7 +133,7 @@ instance instOPM_hyperbolicMeasure : IsOpenPosMeasure μ_hyp := by
   have : (comap UpperHalfPlane.coe (volume : Measure ℂ)) ≪ μ_hyp :=
     withDensity_absolutelyContinuous'
       (continuous_im_zpow_neg_two.measurable.ennreal_ofReal.aemeasurable)
-      (ae_of_all _ fun τ => by
+      (ae_of_all _ fun τ ↦ by
         simp only [ne_eq, ENNReal.ofReal_eq_zero, not_le]
         exact zpow_pos τ.im_pos _)
   exact this.isOpenPosMeasure
@@ -141,7 +141,7 @@ instance instOPM_hyperbolicMeasure : IsOpenPosMeasure μ_hyp := by
 private theorem integrableOn_zpow_neg_two_Ioi {c : ℝ} (hc : 0 < c) :
     IntegrableOn (· ^ (-2 : ℤ)) (Ioi c) (volume : Measure ℝ) := by
   have h := integrableOn_Ioi_rpow_of_lt (show (-2 : ℝ) < -1 by norm_num) hc
-  rwa [show (· ^ (-2 : ℝ) : ℝ → ℝ) = (· ^ (-2 : ℤ)) from funext fun _ => by
+  rwa [show (· ^ (-2 : ℝ) : ℝ → ℝ) = (· ^ (-2 : ℤ)) from funext fun _ ↦ by
     rw [show (-2 : ℝ) = ((-2 : ℤ) : ℝ) by norm_cast, Real.rpow_intCast]] at h
 
 private theorem strip_lintegral_lt_top {c : ℝ} (hc : 0 < c) :
@@ -155,7 +155,7 @@ private theorem strip_lintegral_lt_top {c : ℝ} (hc : 0 < c) :
         gcongr with y; rw [Real.volume_Icc]; norm_num
     _ = _ := by simp
     _ < ⊤ := lt_of_le_of_lt (setLIntegral_mono' measurableSet_Ioi
-        fun y _ => Real.ofReal_le_enorm _)
+        fun y _ ↦ Real.ofReal_le_enorm _)
         (integrableOn_zpow_neg_two_Ioi hc).hasFiniteIntegral
 
 /-- The hyperbolic measure of the standard fundamental domain is finite. -/
@@ -164,7 +164,7 @@ theorem hyperbolicMeasure_fd_lt_top : μ_hyp fd < ⊤ := by
     ((isClosed_le continuous_const (continuous_normSq.comp continuous_coe)).inter
       (isClosed_le (continuous_abs.comp continuous_re) continuous_const)).measurableSet
   simp only [hyperbolicMeasure, withDensity_apply _ hfd]
-  set f : ℂ → ENNReal := fun z => ENNReal.ofReal (z.im ^ (-2 : ℤ))
+  set f : ℂ → ENNReal := fun z ↦ ENNReal.ofReal (z.im ^ (-2 : ℤ))
   change ∫⁻ τ in fd, f ↑τ ∂comap UpperHalfPlane.coe volume < ⊤
   rw [(⟨UpperHalfPlane.isOpenEmbedding_coe.measurableEmbedding.measurable,
        UpperHalfPlane.isOpenEmbedding_coe.measurableEmbedding.map_comap volume⟩ :
@@ -175,14 +175,14 @@ theorem hyperbolicMeasure_fd_lt_top : μ_hyp fd < ⊤ := by
       ∫⁻ p in T, ENNReal.ofReal (p.2 ^ (-2 : ℤ)) ∂(volume : Measure (ℝ × ℝ)) := by
     have := volume_preserving_equiv_real_prod.setLIntegral_comp_emb
       measurableEquivRealProd.measurableEmbedding
-      (fun p : ℝ × ℝ => ENNReal.ofReal (p.2 ^ (-2 : ℤ)))
+      (fun p : ℝ × ℝ ↦ ENNReal.ofReal (p.2 ^ (-2 : ℤ)))
       (measurableEquivRealProd ⁻¹' T)
     simp only [MeasurableEquiv.image_preimage] at this; exact this
   calc ∫⁻ z in UpperHalfPlane.coe '' fd, f z ∂volume.restrict (range UpperHalfPlane.coe)
       ≤ ∫⁻ z in UpperHalfPlane.coe '' fd, f z ∂volume :=
         lintegral_mono' (restrict_mono Subset.rfl restrict_le_self) le_rfl
     _ ≤ ∫⁻ z in equivRealProd ⁻¹' T, f z ∂volume :=
-        lintegral_mono_set fun z => by
+        lintegral_mono_set fun z ↦ by
           rintro ⟨τ, hτ, rfl⟩
           simp only [mem_preimage, equivRealProd_apply, coe_re, coe_im]
           refine ⟨⟨by linarith [(abs_le.mp hτ.2).1], (abs_le.mp hτ.2).2⟩,
@@ -224,7 +224,7 @@ theorem peterssonInner_zero_left (k : ℤ) (D : Set ℍ) (g : ℍ → ℂ) :
 theorem peterssonInner_neg_right (k : ℤ) (D : Set ℍ) (f g : ℍ → ℂ) :
     peterssonInner k D f (-g) = -peterssonInner k D f g := by
   simp only [peterssonInner]
-  rw [show (fun τ => petersson k f (-g) τ) = fun τ => -(petersson k f g τ) from by
+  rw [show (fun τ ↦ petersson k f (-g) τ) = fun τ ↦ -(petersson k f g τ) from by
     ext τ; simp [petersson, Pi.neg_apply, mul_neg]]
   exact integral_neg _
 
@@ -232,7 +232,7 @@ theorem peterssonInner_neg_right (k : ℤ) (D : Set ℍ) (f g : ℍ → ℂ) :
 theorem peterssonInner_neg_left (k : ℤ) (D : Set ℍ) (f g : ℍ → ℂ) :
     peterssonInner k D (-f) g = -peterssonInner k D f g := by
   simp only [peterssonInner]
-  rw [show (fun τ => petersson k (-f) g τ) = fun τ => -(petersson k f g τ) from by
+  rw [show (fun τ ↦ petersson k (-f) g τ) = fun τ ↦ -(petersson k f g τ) from by
     ext τ; simp [petersson, Pi.neg_apply, map_neg, neg_mul]]
   exact integral_neg _
 
@@ -255,13 +255,13 @@ theorem norm_petersson_SL_invariant {F F' : Type*} [FunLike F ℍ ℂ] [FunLike 
 /-- The Petersson integrand is integrable on any compact subset of `ℍ`. -/
 theorem integrableOn_compact_petersson (k : ℤ) {f g : ℍ → ℂ}
     (hf : Continuous f) (hg : Continuous g) {K : Set ℍ} (hK : IsCompact K) :
-    IntegrableOn (fun τ => petersson k f g τ) K μ_hyp :=
+    IntegrableOn (fun τ ↦ petersson k f g τ) K μ_hyp :=
   (petersson_continuous k hf hg).continuousOn.integrableOn_compact hK
 
 /-- The Petersson integrand is integrable on any truncated fundamental domain. -/
 theorem integrableOn_truncatedFundamentalDomain (k : ℤ) {f g : ℍ → ℂ}
     (hf : Continuous f) (hg : Continuous g) (y : ℝ) :
-    IntegrableOn (fun τ => petersson k f g τ) (truncatedFundamentalDomain y) μ_hyp :=
+    IntegrableOn (fun τ ↦ petersson k f g τ) (truncatedFundamentalDomain y) μ_hyp :=
   integrableOn_compact_petersson k hf hg (isCompact_truncatedFundamentalDomain y)
 
 /-- The Petersson integrand of cusp forms is integrable over the standard fundamental
@@ -270,21 +270,21 @@ theorem peterssonInner_integrableOn {F F' : Type*} [FunLike F ℍ ℂ] [FunLike 
     (k : ℤ) (Γ : Subgroup (GL (Fin 2) ℝ)) [Γ.IsArithmetic]
     [CuspFormClass F Γ k] [ModularFormClass F' Γ k]
     (f : F) (f' : F') :
-    IntegrableOn (fun τ => petersson k f f' τ) fd μ_hyp := by
+    IntegrableOn (fun τ ↦ petersson k f f' τ) fd μ_hyp := by
   obtain ⟨C, hC⟩ := CuspFormClass.petersson_bounded_left k Γ f f'
   exact IntegrableOn.of_bound hyperbolicMeasure_fd_lt_top
     ((petersson_continuous k (ModularFormClass.continuous f)
       (ModularFormClass.continuous f')).aestronglyMeasurable.restrict) C
-    (ae_of_all _ fun τ => hC τ)
+    (ae_of_all _ fun τ ↦ hC τ)
 
 /-- Additivity in the second argument. -/
 theorem peterssonInner_add_right (k : ℤ) (D : Set ℍ) (f g₁ g₂ : ℍ → ℂ)
-    (hg₁ : IntegrableOn (fun τ => petersson k f g₁ τ) D μ_hyp)
-    (hg₂ : IntegrableOn (fun τ => petersson k f g₂ τ) D μ_hyp) :
+    (hg₁ : IntegrableOn (fun τ ↦ petersson k f g₁ τ) D μ_hyp)
+    (hg₂ : IntegrableOn (fun τ ↦ petersson k f g₂ τ) D μ_hyp) :
     peterssonInner k D f (g₁ + g₂) = peterssonInner k D f g₁ + peterssonInner k D f g₂ := by
   simp only [peterssonInner]
-  rw [show (fun τ => petersson k f (g₁ + g₂) τ) =
-      fun τ => petersson k f g₁ τ + petersson k f g₂ τ from by
+  rw [show (fun τ ↦ petersson k f (g₁ + g₂) τ) =
+      fun τ ↦ petersson k f g₁ τ + petersson k f g₂ τ from by
     ext τ; simp only [petersson, Pi.add_apply]; ring]
   exact integral_add hg₁ hg₂
 
@@ -292,8 +292,8 @@ theorem peterssonInner_add_right (k : ℤ) (D : Set ℍ) (f g₁ g₂ : ℍ → 
 theorem peterssonInner_smul_right (k : ℤ) (D : Set ℍ) (c : ℂ) (f g : ℍ → ℂ) :
     peterssonInner k D f (c • g) = c * peterssonInner k D f g := by
   simp only [peterssonInner]
-  rw [show (fun τ => petersson k f (c • g) τ) =
-      fun τ => c * petersson k f g τ from by
+  rw [show (fun τ ↦ petersson k f (c • g) τ) =
+      fun τ ↦ c * petersson k f g τ from by
     ext τ; simp [petersson, Pi.smul_apply, smul_eq_mul, mul_comm c, mul_assoc]]
   exact integral_const_mul c _
 
@@ -301,8 +301,8 @@ theorem peterssonInner_smul_right (k : ℤ) (D : Set ℍ) (c : ℂ) (f g : ℍ �
 theorem peterssonInner_conj_smul_left (k : ℤ) (D : Set ℍ) (c : ℂ) (f g : ℍ → ℂ) :
     peterssonInner k D (c • f) g = conj c * peterssonInner k D f g := by
   simp only [peterssonInner]
-  rw [show (fun τ => petersson k (c • f) g τ) =
-      fun τ => conj c * petersson k f g τ from by
+  rw [show (fun τ ↦ petersson k (c • f) g τ) =
+      fun τ ↦ conj c * petersson k f g τ from by
     ext τ; simp [petersson, Pi.smul_apply, smul_eq_mul, map_mul, mul_assoc]]
   exact integral_const_mul (conj c) _
 
@@ -324,7 +324,7 @@ theorem isOpen_fdo : IsOpen (fdo : Set ℍ) :=
 
 /-- `𝒟ᵒ ⊆ 𝒟`. -/
 theorem fdo_subset_fd : (fdo : Set ℍ) ⊆ fd :=
-  fun _ ⟨h1, h2⟩ => ⟨le_of_lt h1, le_of_lt h2⟩
+  fun _ ⟨h1, h2⟩ ↦ ⟨le_of_lt h1, le_of_lt h2⟩
 
 /-- `𝒟 ⊆ closure 𝒟ᵒ`: every point of the closed fundamental domain is a limit of
 points in the open fundamental domain. -/
@@ -372,10 +372,10 @@ private theorem finite_sq_eq (d : ℝ) : Set.Finite {y : ℝ | y ^ 2 = d} := by
   by_cases hd : d < 0
   · convert Set.finite_empty; ext y; simp; intro h; linarith [sq_nonneg y]
   · push_neg at hd
-    exact (({Real.sqrt d, -Real.sqrt d} : Set ℝ).toFinite).subset (fun y hy => by
+    exact (({Real.sqrt d, -Real.sqrt d} : Set ℝ).toFinite).subset (fun y hy ↦ by
       simp only [mem_setOf_eq] at hy
       exact (sq_eq_sq_iff_eq_or_eq_neg.mp (by rw [hy, Real.sq_sqrt hd])).elim
-        (fun h => Or.inl h) (fun h => Or.inr (mem_singleton_iff.mpr h)))
+        (fun h ↦ Or.inl h) (fun h ↦ Or.inr (mem_singleton_iff.mpr h)))
 
 /-- A level set `{z : ℂ | normSq z = c}` has zero Lebesgue measure in `ℂ`. -/
 theorem volume_complex_normSq_eq (c : ℝ) :
@@ -391,7 +391,7 @@ theorem volume_complex_normSq_eq (c : ℝ) :
         rw [volume_eq_prod,
           measure_prod_null (measurableSet_eq_fun (by fun_prop) measurable_const)]
         filter_upwards with x; simp only [Pi.zero_apply]
-        apply measure_mono_null (fun y (hy : x ^ 2 + y ^ 2 = c) =>
+        apply measure_mono_null (fun y (hy : x ^ 2 + y ^ 2 = c) ↦
           show y ^ 2 = c - x ^ 2 by linarith)
         exact (finite_sq_eq _).measure_zero _
 
@@ -444,9 +444,9 @@ private lemma petersson_self_re_eq (z : ℂ) (y : ℝ) (k : ℤ) :
 theorem eq_zero_on_fd_of_peterssonInner_self_eq_zero {F : Type*} [FunLike F ℍ ℂ]
     {k : ℤ} {Γ : Subgroup (GL (Fin 2) ℝ)} [Γ.IsArithmetic]
     [CuspFormClass F Γ k]
-    (f : F) (hpet : peterssonInner k fd (fun τ => f τ) (fun τ => f τ) = 0)
+    (f : F) (hpet : peterssonInner k fd (fun τ ↦ f τ) (fun τ ↦ f τ) = 0)
     {τ : ℍ} (hτ : τ ∈ fd) : f τ = 0 := by
-  set g : ℍ → ℝ := fun z => (petersson k (⇑f) (⇑f) z).re
+  set g : ℍ → ℝ := fun z ↦ (petersson k (⇑f) (⇑f) z).re
   have hint := peterssonInner_integrableOn k Γ f f
   have hg_zero : ∫ z in fd, g z ∂hyperbolicMeasure = 0 := by
     trans RCLike.re (∫ z in fd, petersson k (⇑f) (⇑f) z ∂hyperbolicMeasure)
@@ -454,7 +454,7 @@ theorem eq_zero_on_fd_of_peterssonInner_self_eq_zero {F : Type*} [FunLike F ℍ 
     · simp only [peterssonInner] at hpet; rw [hpet]; simp
   have hg_ae : g =ᶠ[ae (hyperbolicMeasure.restrict fd)] 0 := by
     rwa [← integral_eq_zero_iff_of_nonneg_ae
-      (ae_of_all _ fun z => show 0 ≤ g z from by
+      (ae_of_all _ fun z ↦ show 0 ≤ g z from by
         simp only [g, petersson]
         exact (petersson_self_re_eq (f z) z.im k).symm ▸
           mul_nonneg (Complex.normSq_nonneg _) (zpow_nonneg z.im_pos.le _)) hint.re]
@@ -471,7 +471,7 @@ theorem eq_zero_on_fd_of_peterssonInner_self_eq_zero {F : Type*} [FunLike F ℍ 
   simp only [g, petersson] at hgτ
   rw [petersson_self_re_eq] at hgτ
   exact Complex.normSq_eq_zero.mp ((mul_eq_zero.mp hgτ).elim id
-    (fun h => absurd h (ne_of_gt (zpow_pos τ.im_pos k))))
+    (fun h ↦ absurd h (ne_of_gt (zpow_pos τ.im_pos k))))
 
 /-- **Positive-definiteness (level one)**: for a cusp form `f` of weight `k` for
 `SL₂(ℤ)` (embedded via `mapGL`), if `⟨f, f⟩ = 0` then `f = 0`. -/
@@ -479,7 +479,7 @@ theorem peterssonInner_definite_levelOne
     (k : ℤ)
     {F : Type*} [FunLike F ℍ ℂ]
     [CuspFormClass F (Matrix.SpecialLinearGroup.mapGL ℝ (n := Fin 2) (R := ℤ)).range k]
-    (f : F) (hpet : peterssonInner k fd (fun τ => f τ) (fun τ => f τ) = 0) :
+    (f : F) (hpet : peterssonInner k fd (fun τ ↦ f τ) (fun τ ↦ f τ) = 0) :
     ∀ τ, f τ = 0 := by
   intro τ
   obtain ⟨g, hg⟩ := exists_smul_mem_fd τ
@@ -509,7 +509,7 @@ theorem integral_one_div_sqrt_one_sub_sq :
       HasDerivAt Real.arcsin (1 / Real.sqrt (1 - x ^ 2)) x := by
     intro x ⟨hx1, hx2⟩
     exact Real.hasDerivAt_arcsin (by linarith) (by linarith)
-  have hint : IntervalIntegrable (fun x => 1 / Real.sqrt (1 - x ^ 2))
+  have hint : IntervalIntegrable (fun x ↦ 1 / Real.sqrt (1 - x ^ 2))
       MeasureTheory.volume (-1/2) (1/2) := by
     apply ContinuousOn.intervalIntegrable
     apply ContinuousOn.div continuousOn_const
@@ -518,7 +518,7 @@ theorem integral_one_div_sqrt_one_sub_sq :
       rw [Set.uIcc_of_le hab] at hx
       exact Real.sqrt_ne_zero'.mpr (by nlinarith [hx.1, hx.2])
   rw [intervalIntegral.integral_eq_sub_of_hasDerivAt_of_le hab hcont
-    (fun x hx => hderiv x hx) hint]
+    (fun x hx ↦ hderiv x hx) hint]
   have : Real.arcsin (-1 / 2) = -(Real.pi / 6) := by
     rw [show (-1 : ℝ) / 2 = -(1 / 2) from by ring, Real.arcsin_neg, arcsin_one_half]
   rw [arcsin_one_half, this]; ring
@@ -559,9 +559,9 @@ private theorem measurableSet_fd_realProd_image :
 
 private theorem fd_region_indicator_section_eq {x : ℝ} (hx : |x| ≤ 1 / 2) (y : ℝ) :
     (measurableEquivRealProd '' (UpperHalfPlane.coe '' (fd : Set ℍ))).indicator
-        (fun p : ℝ × ℝ => ENNReal.ofReal (p.2 ^ (-2 : ℤ))) (x, y) =
+        (fun p : ℝ × ℝ ↦ ENNReal.ofReal (p.2 ^ (-2 : ℤ))) (x, y) =
     (Ici (Real.sqrt (1 - x ^ 2))).indicator
-      (fun y => ENNReal.ofReal (y ^ (-2 : ℤ))) y := by
+      (fun y ↦ ENNReal.ofReal (y ^ (-2 : ℤ))) y := by
   have h1x : 0 ≤ 1 - x ^ 2 := by nlinarith [abs_le.mp hx]
   have hsc : 0 < Real.sqrt (1 - x ^ 2) := Real.sqrt_pos_of_pos (by nlinarith [abs_le.mp hx])
   by_cases hmem : (x, y) ∈ measurableEquivRealProd '' (UpperHalfPlane.coe '' (fd : Set ℍ))
@@ -577,9 +577,9 @@ private theorem fd_region_indicator_section_eq {x : ℝ} (hx : |x| ≤ 1 / 2) (y
 
 private theorem fd_region_lintegral_section_eq (x : ℝ) :
     ∫⁻ y, (measurableEquivRealProd '' (UpperHalfPlane.coe '' (fd : Set ℍ))).indicator
-        (fun p : ℝ × ℝ => ENNReal.ofReal (p.2 ^ (-2 : ℤ))) (x, y) ∂volume =
+        (fun p : ℝ × ℝ ↦ ENNReal.ofReal (p.2 ^ (-2 : ℤ))) (x, y) ∂volume =
     (Icc (-1/2 : ℝ) (1/2)).indicator
-      (fun x => ENNReal.ofReal (1 / Real.sqrt (1 - x ^ 2))) x := by
+      (fun x ↦ ENNReal.ofReal (1 / Real.sqrt (1 - x ^ 2))) x := by
   by_cases hx : |x| ≤ 1 / 2
   · have hx_mem : x ∈ Icc (-1/2 : ℝ) (1/2) := by
       simp only [abs_le, mem_Icc] at hx ⊢; constructor <;> linarith
@@ -588,22 +588,22 @@ private theorem fd_region_lintegral_section_eq (x : ℝ) :
     simp_rw [fd_region_indicator_section_eq hx]
     rw [lintegral_indicator measurableSet_Ici, setLIntegral_congr Ioi_ae_eq_Ici.symm,
       ← ofReal_integral_eq_lintegral_ofReal (integrableOn_zpow_neg_two_Ioi hsc)
-        (ae_of_all _ fun y => by positivity), integral_zpow_neg_two_Ioi hsc]
+        (ae_of_all _ fun y ↦ by positivity), integral_zpow_neg_two_Ioi hsc]
   · push_neg at hx
-    have hx_nmem : x ∉ Icc (-1/2 : ℝ) (1/2) := fun ⟨h1, h2⟩ =>
+    have hx_nmem : x ∉ Icc (-1/2 : ℝ) (1/2) := fun ⟨h1, h2⟩ ↦
       absurd (abs_le.mpr ⟨by linarith, h2⟩) (not_le.mpr hx)
     rw [Set.indicator_of_notMem hx_nmem]
-    refine MeasureTheory.lintegral_eq_zero_of_ae_eq_zero (.of_forall fun y => ?_)
+    refine MeasureTheory.lintegral_eq_zero_of_ae_eq_zero (.of_forall fun y ↦ ?_)
     show (measurableEquivRealProd '' (UpperHalfPlane.coe '' (fd : Set ℍ))).indicator
-      (fun p : ℝ × ℝ => ENNReal.ofReal (p.2 ^ (-2 : ℤ))) (x, y) = 0
+      (fun p : ℝ × ℝ ↦ ENNReal.ofReal (p.2 ^ (-2 : ℤ))) (x, y) = 0
     rw [Set.indicator_apply_eq_zero]
-    exact fun h => absurd ((mem_fd_image_iff x y).mp h).1 (not_le.mpr hx)
+    exact fun h ↦ absurd ((mem_fd_image_iff x y).mp h).1 (not_le.mpr hx)
 
 private theorem integrableOn_one_div_sqrt_one_sub_sq_Icc :
-    IntegrableOn (fun x => 1 / Real.sqrt (1 - x ^ 2)) (Icc (-1/2 : ℝ) (1/2)) volume := by
+    IntegrableOn (fun x ↦ 1 / Real.sqrt (1 - x ^ 2)) (Icc (-1/2 : ℝ) (1/2)) volume := by
   rw [← intervalIntegrable_iff_integrableOn_Icc_of_le (by norm_num : (-1/2 : ℝ) ≤ 1/2)]
   refine ContinuousOn.intervalIntegrable (ContinuousOn.div continuousOn_const
-    (ContinuousOn.sqrt (continuousOn_const.sub (continuousOn_pow 2))) (fun x hx => ?_))
+    (ContinuousOn.sqrt (continuousOn_const.sub (continuousOn_pow 2))) (fun x hx ↦ ?_))
   rw [Set.uIcc_of_le (by norm_num : (-1/2 : ℝ) ≤ 1/2)] at hx
   exact Real.sqrt_ne_zero'.mpr (by nlinarith [hx.1, hx.2])
 
@@ -615,7 +615,7 @@ private theorem lintegral_fd_region_eq :
     lintegral_prod _ (AEMeasurable.indicator (by fun_prop) measurableSet_fd_realProd_image)]
   simp_rw [fd_region_lintegral_section_eq, lintegral_indicator measurableSet_Icc]
   rw [← ofReal_integral_eq_lintegral_ofReal integrableOn_one_div_sqrt_one_sub_sq_Icc
-    (ae_of_all _ fun x => by positivity)]
+    (ae_of_all _ fun x ↦ by positivity)]
   congr 1
   rw [intervalIntegral.intervalIntegral_eq_integral_uIoc,
     if_pos (by norm_num : (-1/2 : ℝ) ≤ 1/2), one_smul,
@@ -627,7 +627,7 @@ private theorem fd_lintegral_density_eq :
   have hfd : MeasurableSet (fd : Set ℍ) :=
     ((isClosed_le continuous_const (continuous_normSq.comp continuous_coe)).inter
       (isClosed_le (continuous_abs.comp continuous_re) continuous_const)).measurableSet
-  set F : ℂ → ENNReal := fun z => ENNReal.ofReal (z.im ^ (-2 : ℤ))
+  set F : ℂ → ENNReal := fun z ↦ ENNReal.ofReal (z.im ^ (-2 : ℤ))
   change ∫⁻ τ in fd, F ↑τ ∂comap UpperHalfPlane.coe volume = _
   rw [(⟨isOpenEmbedding_coe.measurableEmbedding.measurable,
        isOpenEmbedding_coe.measurableEmbedding.map_comap volume⟩ :
@@ -636,8 +636,8 @@ private theorem fd_lintegral_density_eq :
   rw [show ∫⁻ z in UpperHalfPlane.coe '' fd, F z ∂volume.restrict (range UpperHalfPlane.coe) =
       ∫⁻ z in UpperHalfPlane.coe '' fd, F z ∂volume from by
     congr 1; exact Measure.restrict_restrict_of_subset (image_subset_range _ _)]
-  set G : ℝ × ℝ → ENNReal := fun p => ENNReal.ofReal (p.2 ^ (-2 : ℤ))
-  have hFG : ∀ z : ℂ, F z = G (measurableEquivRealProd z) := fun z => by
+  set G : ℝ × ℝ → ENNReal := fun p ↦ ENNReal.ofReal (p.2 ^ (-2 : ℤ))
+  have hFG : ∀ z : ℂ, F z = G (measurableEquivRealProd z) := fun z ↦ by
     simp [F, G, measurableEquivRealProd]
   simp_rw [hFG]
   rw [volume_preserving_equiv_real_prod.setLIntegral_comp_emb
@@ -694,16 +694,16 @@ theorem norm_pet_symm (f g : CuspForm Γ k) : ‖pet f g‖ = ‖pet g f‖ :=
 theorem pet_smul_right (c : ℝ) (f g : CuspForm Γ k) :
     pet f (c • g) = c * pet f g := by
   simp only [pet, peterssonInner]
-  have : (fun τ => petersson k (↑f) (↑(c • g)) τ) =
-      fun τ => (c : ℂ) * petersson k f g τ := by
+  have : (fun τ ↦ petersson k (↑f) (↑(c • g)) τ) =
+      fun τ ↦ (c : ℂ) * petersson k f g τ := by
     ext τ; simp [petersson, mul_comm (c : ℂ), mul_assoc]
   rw [this]; exact integral_const_mul (c : ℂ) _
 
 theorem pet_smul_left (c : ℝ) (f g : CuspForm Γ k) :
     pet (c • f) g = c * pet f g := by
   simp only [pet, peterssonInner]
-  have : (fun τ => petersson k (↑(c • f)) (↑g) τ) =
-      fun τ => (c : ℂ) * petersson k f g τ := by
+  have : (fun τ ↦ petersson k (↑(c • f)) (↑g) τ) =
+      fun τ ↦ (c : ℂ) * petersson k f g τ := by
     ext τ; simp [petersson, map_mul, Complex.conj_ofReal, mul_assoc]
   rw [this]; exact integral_const_mul (c : ℂ) _
 

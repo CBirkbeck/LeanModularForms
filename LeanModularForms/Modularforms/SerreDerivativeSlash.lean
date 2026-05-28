@@ -42,7 +42,7 @@ lemma D_D₂ (γ : SL(2, ℤ)) (z : ℍ) :
     D (D₂ γ) z = - (γ 1 0 : ℂ)^2 / (denom γ z)^2 := by
   have hz_ne : denom γ z ≠ 0 := UpperHalfPlane.denom_ne_zero γ z
   have hderiv : deriv ((D₂ γ) ∘ ofComplex) z =
-      deriv (fun w => (2 * π * I * (γ 1 0 : ℂ)) / denom γ w) z := by
+      deriv (fun w ↦ (2 * π * I * (γ 1 0 : ℂ)) / denom γ w) z := by
     apply Filter.EventuallyEq.deriv_eq
     filter_upwards [isOpen_upperHalfPlaneSet.mem_nhds z.im_pos] with w hw
     simp only [comp_apply, ofComplex_apply_of_im_pos hw, D₂, EisensteinSeries.D2]
@@ -54,8 +54,8 @@ lemma D_D₂ (γ : SL(2, ℤ)) (z : ℍ) :
 /-! ## MDifferentiable infrastructure for D₂ -/
 
 /-- D₂ γ is MDifferentiable: it's a constant divided by a linear polynomial. -/
-lemma MDifferentiable_D₂ (γ : SL(2, ℤ)) : MDiff (D₂ γ) := fun z => by
-  have heq : D₂ γ = (fun w => (2 * π * I * (γ 1 0 : ℂ)) / denom γ w) ∘ (↑) := by ext; rfl
+lemma MDifferentiable_D₂ (γ : SL(2, ℤ)) : MDiff (D₂ γ) := fun z ↦ by
+  have heq : D₂ γ = (fun w ↦ (2 * π * I * (γ 1 0 : ℂ)) / denom γ w) ∘ (↑) := by ext; rfl
   rw [heq]; exact DifferentiableAt_MDifferentiableAt <|
     .div (differentiableAt_const _) (differentiableAt_denom γ z) (denom_ne_zero γ z)
 

@@ -327,7 +327,7 @@ private lemma weight_two_c4_eq_coeff_sq (f : ModularForm (CongruenceSubgroup.Gam
   have := qExpansion_mul_coeff 1 2 2 f f
   rw [← hc4] at this
   rw [qExpansion_coe_smul (a := c4) (f := E₄), ← qExpansion_smul2 1 c4] at this
-  have hh := congr_arg (fun x => x.coeff 0) this
+  have hh := congr_arg (fun x ↦ x.coeff 0) this
   simp only [_root_.map_smul, smul_eq_mul] at hh
   rw [Nat.cast_one, E4_q_exp_zero] at hh
   rw [pow_two]
@@ -341,7 +341,7 @@ private lemma weight_two_c6_eq_coeff_cube (f : ModularForm (CongruenceSubgroup.G
   have h2 := qExpansion_mul_coeff 1 2 2 f f
   rw [← hc6] at this
   rw [qExpansion_coe_smul (a := c6) (f := E₆), ← qExpansion_smul2 1 c6, h2] at this
-  have hh := congr_arg (fun x => x.coeff 0) this
+  have hh := congr_arg (fun x ↦ x.coeff 0) this
   simp only [_root_.map_smul, smul_eq_mul] at hh
   rw [Nat.cast_one, E6_q_exp_zero] at hh
   rw [pow_three]
@@ -410,7 +410,7 @@ lemma weight_two_zero (f : ModularForm (CongruenceSubgroup.Gamma 1) 2) : f = 0 :
 f^3 = a^3 E₆, but now this would mean that Δ = 0 or a = 0, which is a contradiction. -/
   by_cases hf : IsCuspForm (CongruenceSubgroup.Gamma 1) 2 f
   · exact IsCuspForm_weight_lt_eq_zero 2 (by norm_num) f hf
-  · have hc1 : (qExpansion 1 f).coeff 0 ≠ 0 := fun h =>
+  · have hc1 : (qExpansion 1 f).coeff 0 ≠ 0 := fun h ↦
       hf ((IsCuspForm_iff_coeffZero_eq_zero (k := 2) f).mpr h)
     obtain ⟨c6, hc6⟩ := exists_smul_eq_of_rank_one' weight_six_one_dimensional E6_ne_zero
       ((f.mul f).mul f)
@@ -640,7 +640,7 @@ lemma finiteDimensional_modularForm_level_one (k : ℤ) :
               (V := ModularForm (CongruenceSubgroup.Gamma 1) (kN : ℤ)) hr'
           haveI : FiniteDimensional ℂ (ModularForm Γ(1) (kN : ℤ)) := by infer_instance
           exact hkNat ▸ (show FiniteDimensional ℂ (ModularForm Γ(1) (kN : ℤ)) by infer_instance)
-      · have hz : ∀ f : ModularForm Γ(1) k, f = 0 := fun f =>
+      · have hz : ∀ f : ModularForm Γ(1) k, f = 0 := fun f ↦
           ModularForm.levelOne_eq_zero_of_odd_weight (k := k) hk2 f
         haveI : Subsingleton (ModularForm Γ(1) k) := subsingleton_of_forall_eq 0 hz
         exact finiteDimensional_of_subsingleton_aux (V := ModularForm Γ(1) k)
@@ -672,7 +672,7 @@ open SpherePacking.ModularForms.NormReduction in
 private lemma dim_gen_cong_levels_eq_of_coeff_eq_zero {k : ℤ} {Γ : Subgroup SL(2, ℤ)}
     [Γ.FiniteIndex] {N : ℕ}
     (hNinj : Function.Injective fun (f : ModularForm 𝒮ℒ (k * Nat.card (Q Γ)))
-      (n : Fin N) => (qExpansion (cuspWidth (Γ := Γ)) f).coeff n) (f g : ModularForm (G Γ) k)
+      (n : Fin N) ↦ (qExpansion (cuspWidth (Γ := Γ)) f).coeff n) (f g : ModularForm (G Γ) k)
     (hcoeff : ∀ m < N, (qExpansion (cuspWidth (Γ := Γ)) (⇑(f - g))).coeff m = 0) : f = g := by
   have hcoeff_norm : ∀ m < N,
       (qExpansion (cuspWidth (Γ := Γ)) (ModularForm.norm 𝒮ℒ (f - g))).coeff m = 0 := by
@@ -682,8 +682,8 @@ private lemma dim_gen_cong_levels_eq_of_coeff_eq_zero {k : ℤ} {Γ : Subgroup S
     intro m hm
     exact qCoeffNorm (f := (f - g)) (N := N) (n := m) hm hcoeff
   have hfun :
-      (fun n : Fin N => (qExpansion (cuspWidth (Γ := Γ)) (ModularForm.norm 𝒮ℒ (f - g))).coeff n) =
-    fun n : Fin N =>
+      (fun n : Fin N ↦ (qExpansion (cuspWidth (Γ := Γ)) (ModularForm.norm 𝒮ℒ (f - g))).coeff n) =
+    fun n : Fin N ↦
       (qExpansion (cuspWidth (Γ := Γ)) (0 : ModularForm 𝒮ℒ (k * Nat.card (Q Γ)))).coeff n := by
     ext n
     simpa [qExpansion_zero (cuspWidth (Γ := Γ))] using hcoeff_norm (n : ℕ) n.isLt
@@ -728,7 +728,7 @@ lemma dim_gen_cong_levels (k : ℤ) (Γ : Subgroup SL(2, ℤ)) (hΓ : Subgroup.i
         SpherePacking.ModularForms.exists_qCoeff_injective
           (Γ := (𝒮ℒ : Subgroup (GL (Fin 2) ℝ))) (k := w) (h := h) hh hperSL
       let trunc : ModularForm GΓ k →ₗ[ℂ] (Fin N → ℂ) :=
-      { toFun := fun f => fun n => (qExpansion h f).coeff n
+      { toFun := fun f ↦ fun n ↦ (qExpansion h f).coeff n
         map_add' := by
           intro f g
           ext n
@@ -745,7 +745,7 @@ lemma dim_gen_cong_levels (k : ℤ) (Γ : Subgroup SL(2, ℤ)) (hΓ : Subgroup.i
           have hmap : trunc (f - g) = trunc f - trunc g := trunc.map_sub f g
           have hdiff : trunc f - trunc g = 0 := by simp [hfg]
           simp [hmap, hdiff]
-        have := congrArg (fun t : Fin N → ℂ => t ⟨m, hm⟩) hsub
+        have := congrArg (fun t : Fin N → ℂ ↦ t ⟨m, hm⟩) hsub
         simpa [trunc] using this
       haveI : FiniteDimensional ℂ (Fin N → ℂ) := by infer_instance
       simpa using (FiniteDimensional.of_injective trunc htrunc_inj)

@@ -324,7 +324,7 @@ private lemma gl_eq_of_intMat_eq (g h : GL (Fin 2) ℚ)
   simp only [Units.val_mul, Matrix.mul_apply, Matrix.map_apply, Fin.sum_univ_two, hA,
     mapGL_coe_matrix, algebraMap_int_eq]
   have hcast := congr_fun₂
-    (congr_arg (fun M : Matrix _ _ ℤ => M.map (Int.cast : ℤ → ℚ)) hPQ) i j
+    (congr_arg (fun M : Matrix _ _ ℤ ↦ M.map (Int.cast : ℤ → ℚ)) hPQ) i j
   simp only [Matrix.mul_apply, Matrix.map_apply, Fin.sum_univ_two, Int.cast_add,
     Int.cast_mul] at hcast
   simp only [SpecialLinearGroup.map, MonoidHom.coe_mk,
@@ -364,7 +364,7 @@ private lemma bar_eq_SL2_conj (N : ℕ) [NeZero N] (g : GL (Fin 2) ℚ) (hg : g 
       Matrix (Fin 2) (Fin 2) ℤ) = A := by
     ext i j; fin_cases i <;> fin_cases j <;>
       simp [B, hc₀, Matrix.of_apply, Matrix.cons_val_zero, Matrix.cons_val_one]
-  have hdB_A : ∀ i j, dB 0 ∣ A i j := fun i j => by
+  have hdB_A : ∀ i j, dB 0 ∣ A i j := fun i j ↦ by
     have h := dvd_swap_entries B ↑N (dB 0) (A 0 1) hcB hdB_B
       (hAco_isCop.of_isCoprime_of_dvd_left (hB00 ▸ hdB_B 0 0)) i j
     rwa [hswap] at h
@@ -415,20 +415,20 @@ private lemma entry_clear_prime (A : Matrix (Fin 2) (Fin 2) ℤ) (N : ℤ)
   by_cases ha : (p : ℤ) ∣ A 0 0
   · by_cases hc : (p : ℤ) ∣ A 1 0
     · by_cases hb : (p : ℤ) ∣ A 0 1
-      · have hd : ¬((p : ℤ) ∣ A 1 1) := fun hd => hprim ⟨ha, hb, hc, hd⟩
-        refine ⟨1, 1, fun h => hd ?_⟩
+      · have hd : ¬((p : ℤ) ∣ A 1 1) := fun hd ↦ hprim ⟨ha, hb, hc, hd⟩
+        refine ⟨1, 1, fun h ↦ hd ?_⟩
         have h1 : (p : ℤ) ∣ A 0 0 + A 1 0 + N * A 0 1 :=
           dvd_add (dvd_add ha hc) (dvd_mul_of_dvd_right hb _)
         have h2 := dvd_sub h h1
         rw [show A 0 0 + 1 * A 1 0 + N * 1 * (A 0 1 + 1 * A 1 1) -
           (A 0 0 + A 1 0 + N * A 0 1) = N * A 1 1 from by ring] at h2
         exact (hp'.dvd_mul.mp h2).resolve_left hpN
-      · refine ⟨0, 1, fun h => hb ?_⟩
+      · refine ⟨0, 1, fun h ↦ hb ?_⟩
         have h1 := dvd_sub h ha
         rw [show A 0 0 + 0 * A 1 0 + N * 1 * (A 0 1 + 0 * A 1 1) - A 0 0 =
           N * A 0 1 from by ring] at h1
         exact (hp'.dvd_mul.mp h1).resolve_left hpN
-    · refine ⟨1, 0, fun h => hc ?_⟩
+    · refine ⟨1, 0, fun h ↦ hc ?_⟩
       have h1 := dvd_sub h ha
       rwa [show A 0 0 + 1 * A 1 0 + N * 0 * (A 0 1 + 1 * A 1 1) - A 0 0 =
         A 1 0 from by ring] at h1
@@ -466,8 +466,8 @@ lemma Gamma0_content_quotient (N : ℕ) [NeZero N]
       Int.gcd (A₀ 0 0) N = 1 ∧
       (∀ (p : ℕ), p.Prime → ¬((p : ℤ) ∣ A₀ 0 0 ∧ (p : ℤ) ∣ A₀ 0 1 ∧
         (p : ℤ) ∣ A₀ 1 0 ∧ (p : ℤ) ∣ A₀ 1 1)) := by
-  set A₀ : Matrix (Fin 2) (Fin 2) ℤ := fun i j => A i j / d
-  have hA_eq : ∀ i j, A i j = ↑d * A₀ i j := fun i j => by
+  set A₀ : Matrix (Fin 2) (Fin 2) ℤ := fun i j ↦ A i j / d
+  have hA_eq : ∀ i j, A i j = ↑d * A₀ i j := fun i j ↦ by
     simp only [A₀]; rw [mul_comm]; exact (Int.ediv_mul_cancel (hd_dvd i j)).symm
   have hdet_eq : A.det = ↑d ^ 2 * A₀.det := by
     simp only [Matrix.det_fin_two]; rw [hA_eq 0 0, hA_eq 0 1, hA_eq 1 0, hA_eq 1 1]; ring
@@ -477,15 +477,15 @@ lemma Gamma0_content_quotient (N : ℕ) [NeZero N]
       (Int.natAbs_dvd_natAbs.mpr ((Int.gcd_dvd_left (d : ℤ) N).trans (hd_dvd 0 0)))
       (Int.natAbs_dvd_natAbs.mpr (Int.gcd_dvd_right (d : ℤ) N))
   refine ⟨A₀, hA_eq, ?_, ?_, ?_, ?_⟩
-  · exact (mul_pos_iff.mp (hdet_eq ▸ hA_det_pos)).elim (fun ⟨_, r⟩ => r)
-      (fun ⟨l, _⟩ => absurd l (not_lt.mpr (sq_nonneg (d : ℤ))))
+  · exact (mul_pos_iff.mp (hdet_eq ▸ hA_det_pos)).elim (fun ⟨_, r⟩ ↦ r)
+      (fun ⟨l, _⟩ ↦ absurd l (not_lt.mpr (sq_nonneg (d : ℤ))))
   · exact (Int.isCoprime_iff_gcd_eq_one.mpr hd_Nco).symm.dvd_of_dvd_mul_left
       (hA_eq 1 0 ▸ hAN)
   · exact Int.isCoprime_iff_gcd_eq_one.mp
       ((Int.isCoprime_iff_gcd_eq_one.mpr (hA_eq 0 0 ▸ hAco)).of_isCoprime_of_dvd_left
         (dvd_mul_left (A₀ 0 0) (↑d)))
   · intro q hq ⟨hq00, hq01, hq10, hq11⟩
-    have hqd_nat : ∀ i j : Fin 2, q * d ∣ (A i j).natAbs := fun i j => by
+    have hqd_nat : ∀ i j : Fin 2, q * d ∣ (A i j).natAbs := fun i j ↦ by
       have h : (↑q : ℤ) ∣ A₀ i j := by fin_cases i <;> fin_cases j <;> assumption
       rw [show (A i j).natAbs = ((↑d : ℤ) * A₀ i j).natAbs from by rw [← hA_eq],
         Int.natAbs_mul, Int.natAbs_natCast]
@@ -515,22 +515,22 @@ private lemma exists_coprime_entry (A : Matrix (Fin 2) (Fin 2) ℤ) (N : ℤ)
     ∃ l t : ℤ, Int.gcd (A 0 0 + l * A 1 0 + N * t * (A 0 1 + l * A 1 1)) ↑c = 1 := by
   have havoid : ∀ p : ℕ, p.Prime → (p : ℤ) ∣ ↑c →
       ∃ l t : ℤ, ¬((p : ℤ) ∣ (A 0 0 + l * A 1 0 + N * t * (A 0 1 + l * A 1 1))) :=
-    fun p hp hpc => entry_clear_prime A N p hp (hcN p hp hpc)
-      (fun ⟨h1, h2, h3, h4⟩ => hprim p hp ⟨h1, h2, h3, h4⟩)
+    fun p hp hpc ↦ entry_clear_prime A N p hp (hcN p hp hpc)
+      (fun ⟨h1, h2, h3, h4⟩ ↦ hprim p hp ⟨h1, h2, h3, h4⟩)
   classical
-  set wit : ℕ → ℤ × ℤ := fun p =>
+  set wit : ℕ → ℤ × ℤ := fun p ↦
     if h : p.Prime ∧ (p : ℤ) ∣ ↑c
     then ⟨(havoid p h.1 h.2).choose, (havoid p h.1 h.2).choose_spec.choose⟩
     else ⟨0, 0⟩
-  set aL : ℕ → ℕ := fun p => ((wit p).1 % (p : ℤ)).toNat
-  set aT : ℕ → ℕ := fun p => ((wit p).2 % (p : ℤ)).toNat
+  set aL : ℕ → ℕ := fun p ↦ ((wit p).1 % (p : ℤ)).toNat
+  set aT : ℕ → ℕ := fun p ↦ ((wit p).2 % (p : ℤ)).toNat
   have hpw : (c.primeFactors : Set ℕ).Pairwise (Function.onFun Nat.Coprime id) := by
     intro p hp q hq hpq
     exact ((Nat.mem_primeFactors.mp hp).1).coprime_iff_not_dvd.mpr
-      (fun h => hpq (((Nat.mem_primeFactors.mp hq).1).eq_one_or_self_of_dvd p h |>.resolve_left
+      (fun h ↦ hpq (((Nat.mem_primeFactors.mp hq).1).eq_one_or_self_of_dvd p h |>.resolve_left
         ((Nat.mem_primeFactors.mp hp).1).one_lt.ne'))
   have hpnz : ∀ p ∈ c.primeFactors, (id p : ℕ) ≠ 0 :=
-    fun p hp => ((Nat.mem_primeFactors.mp hp).1).ne_zero
+    fun p hp ↦ ((Nat.mem_primeFactors.mp hp).1).ne_zero
   obtain ⟨l₀, hl₀⟩ := Nat.chineseRemainderOfFinset aL id c.primeFactors hpnz hpw
   obtain ⟨t₀, ht₀⟩ := Nat.chineseRemainderOfFinset aT id c.primeFactors hpnz hpw
   refine ⟨↑l₀, ↑t₀, ?_⟩
@@ -591,7 +591,7 @@ lemma Gamma0_two_sided_coprime_rep_prim (N : ℕ) [NeZero N]
         (g' : Matrix (Fin 2) (Fin 2) ℚ) = A'.map (Int.cast : ℤ → ℚ) ∧
         (N : ℤ) ∣ A' 1 0 ∧ Int.gcd (A' 0 0) N = 1 ∧ Int.gcd (A' 0 0) c = 1 := by
   obtain ⟨l₀, t₀, hlt⟩ := exists_coprime_entry A ↑N c hc_pos hprim
-    (fun p hp hpc => not_intCast_dvd_of_coprime c N p hp hc_cop hpc)
+    (fun p hp hpc ↦ not_intCast_dvd_of_coprime c N p hp hc_cop hpc)
   set L : Matrix (Fin 2) (Fin 2) ℤ := Matrix.of ![![1, l₀], ![0, 1]]
   have hL_det : L.det = 1 := by
     simp [L, Matrix.det_fin_two, Matrix.of_apply, Matrix.cons_val_zero, Matrix.cons_val_one]
@@ -856,7 +856,7 @@ private lemma Gamma0_AL_in_doubleCoset (N : ℕ) [NeZero N]
           | exact Nat.dvd_trans (Nat.gcd_dvd_left _ _) (Nat.gcd_dvd_right _ _)
           | exact Nat.dvd_trans (Nat.gcd_dvd_right _ _) (Nat.gcd_dvd_right _ _))
           (dvd_refl _)))
-  have hd_pos : 0 < d := Nat.pos_of_ne_zero (fun h => by
+  have hd_pos : 0 < d := Nat.pos_of_ne_zero (fun h ↦ by
     have h00 := hd_dvd 0 0; have h01 := hd_dvd 0 1
     have h10 := hd_dvd 1 0; have h11 := hd_dvd 1 1
     simp [h] at h00 h01 h10 h11

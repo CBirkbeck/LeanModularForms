@@ -160,7 +160,7 @@ private lemma mem_SL_exists_H {γ : GL (Fin 2) ℝ} (hγ : γ ∈ 𝒮ℒ) :
 private noncomputable def leftMulQuot (D : HeckeCoset (GL_pair 2)) (σ : (GL_pair 2).H) :
     decompQuot (GL_pair 2) (HeckeCoset.rep D) →
     decompQuot (GL_pair 2) (HeckeCoset.rep D) :=
-  fun i => ⟦⟨σ * i.out, (GL_pair 2).H.mul_mem σ.prop (SetLike.coe_mem _)⟩⟧
+  fun i ↦ ⟦⟨σ * i.out, (GL_pair 2).H.mul_mem σ.prop (SetLike.coe_mem _)⟩⟧
 
 private lemma leftMulQuot_injective (D : HeckeCoset (GL_pair 2)) (σ : (GL_pair 2).H) :
     Function.Injective (leftMulQuot D σ) := by
@@ -303,8 +303,8 @@ lemma heckeSlash_slash_invariant (k : ℤ) (D : HeckeCoset (GL_pair 2)) (f : ℍ
   have hγ_σ : (heckeSlash k D f) ∣[k] γ = (heckeSlash k D f) ∣[k] σ_Q := by
     show _ = (heckeSlash k D f) ∣[k] glMap σ_Q; rw [hγ_eq]
   rw [hγ_σ, heckeSlash_slash,
-    Finset.sum_congr rfl (fun i _ => h_perm i),
-    Fintype.sum_equiv π _ (fun i => f ∣[k] tRep D i) (fun _ => rfl)]
+    Finset.sum_congr rfl (fun i _ ↦ h_perm i),
+    Fintype.sum_equiv π _ (fun i ↦ f ∣[k] tRep D i) (fun _ ↦ rfl)]
   rfl
 
 /-- The `SlashInvariantForm` obtained by applying a Hecke operator. -/
@@ -312,7 +312,7 @@ noncomputable def heckeSlashInvariant (k : ℤ) (D : HeckeCoset (GL_pair 2))
     (f : SlashInvariantForm 𝒮ℒ k) : SlashInvariantForm 𝒮ℒ k where
   toFun := heckeSlash k D f
   slash_action_eq' γ hγ := heckeSlash_slash_invariant k D f
-    (fun γ' hγ' => f.slash_action_eq' γ' hγ') γ hγ
+    (fun γ' hγ' ↦ f.slash_action_eq' γ' hγ') γ hγ
 
 /-- The transpose anti-homomorphism applied to the product of two coset reps:
     `tRep D₂ j * tRep D₁ i = (σᵢδ₁ · σⱼδ₂)ᵀ`. -/

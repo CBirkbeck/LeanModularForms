@@ -108,7 +108,7 @@ private lemma sum_reindex_mul_mod {α : Type*} [AddCommMonoid α] (d p : ℕ)
     ∑ b ∈ Finset.range p, f (d * b % p) = ∑ b ∈ Finset.range p, f b := by
   haveI : Fact p.Prime := ⟨hp⟩
   haveI : NeZero p := ⟨hp.ne_zero⟩
-  have h_inj : Set.InjOn (fun b => d * b % p) (↑(Finset.range p)) := by
+  have h_inj : Set.InjOn (fun b ↦ d * b % p) (↑(Finset.range p)) := by
     intro b₁ hb₁ b₂ hb₂ heq
     simp only [Finset.coe_range, Set.mem_Iio] at hb₁ hb₂
     have h₂ : b₁ % p = b₂ % p := by
@@ -120,15 +120,15 @@ private lemma sum_reindex_mul_mod {α : Type*} [AddCommMonoid α] (d p : ℕ)
       simp only [Nat.cast_mul] at h₃
       exact (ZMod.natCast_eq_natCast_iff' _ _ _).mp (mul_left_cancel₀ this h₃)
     rwa [Nat.mod_eq_of_lt hb₁, Nat.mod_eq_of_lt hb₂] at h₂
-  refine Finset.sum_nbij (fun b => d * b % p)
-    (fun b _ => Finset.mem_range.mpr (Nat.mod_lt _ hp.pos))
-    h_inj ?_ (fun b _ => rfl)
+  refine Finset.sum_nbij (fun b ↦ d * b % p)
+    (fun b _ ↦ Finset.mem_range.mpr (Nat.mod_lt _ hp.pos))
+    h_inj ?_ (fun b _ ↦ rfl)
   intro b hb
-  have h_img : Finset.image (fun b => d * b % p) (Finset.range p) = Finset.range p := by
+  have h_img : Finset.image (fun b ↦ d * b % p) (Finset.range p) = Finset.range p := by
     apply Finset.eq_of_subset_of_card_le
-    · exact Finset.image_subset_iff.mpr (fun b _ => Finset.mem_range.mpr (Nat.mod_lt _ hp.pos))
+    · exact Finset.image_subset_iff.mpr (fun b _ ↦ Finset.mem_range.mpr (Nat.mod_lt _ hp.pos))
     · rw [Finset.card_image_of_injOn h_inj]
-  have : b ∈ Finset.image (fun b => d * b % p) (Finset.range p) := by
+  have : b ∈ Finset.image (fun b ↦ d * b % p) (Finset.range p) := by
     rw [h_img]; exact hb
   exact Finset.mem_image.mp this
 
@@ -212,17 +212,17 @@ private lemma heckeT_p_ut_levelRaise
     smul_slash_pos_det k _ _ _ (T_p_upper_det_pos p hp.pos _)]
   simp_rw [show ∀ b, (⇑g ∣[k] levelRaiseMatrix d) ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ) =
     ⇑g ∣[k] (levelRaiseMatrix d * glMap (T_p_upper p hp.pos b)) from
-    fun b => show (⇑g ∣[k] levelRaiseMatrix d) ∣[k] glMap (T_p_upper p hp.pos b) = _ from
+    fun b ↦ show (⇑g ∣[k] levelRaiseMatrix d) ∣[k] glMap (T_p_upper p hp.pos b) = _ from
       (SlashAction.slash_mul k _ _ _).symm]
   simp_rw [levelRaise_mul_T_p_upper d p hp.pos]
   simp_rw [show ∀ b, ⇑g ∣[k] (glMap (T_p_upper p hp.pos (d * b)) * levelRaiseMatrix d) =
     (⇑g ∣[k] (T_p_upper p hp.pos (d * b) : GL (Fin 2) ℚ)) ∣[k] levelRaiseMatrix d from
-    fun b => show ⇑g ∣[k] (glMap (T_p_upper p hp.pos (d * b)) * levelRaiseMatrix d) =
+    fun b ↦ show ⇑g ∣[k] (glMap (T_p_upper p hp.pos (d * b)) * levelRaiseMatrix d) =
       (⇑g ∣[k] glMap (T_p_upper p hp.pos (d * b))) ∣[k] levelRaiseMatrix d from
       SlashAction.slash_mul k _ _ _]
   simp_rw [show ∀ b, ⇑g ∣[k] (T_p_upper p hp.pos (d * b) : GL (Fin 2) ℚ) =
     ⇑g.toModularForm' ∣[k] (T_p_upper p hp.pos (d * b % p) : GL (Fin 2) ℚ) from
-    fun b => slash_T_p_upper_mod M k p hp.pos (d * b) g.toModularForm']
+    fun b ↦ slash_T_p_upper_mod M k p hp.pos (d * b) g.toModularForm']
 
 private lemma heckeT_p_ut_levelRaise_reindex
     (p : ℕ) (hp : Nat.Prime p) (M d : ℕ) [NeZero M] [NeZero d]
@@ -233,7 +233,7 @@ private lemma heckeT_p_ut_levelRaise_reindex
       ((d : ℂ) ^ (1 - k)) •
         (heckeT_p_ut k p hp.pos (⇑g.toModularForm') ∣[k] levelRaiseMatrix d) := by
   rw [sum_reindex_mul_mod d p hp hdp
-    (fun b => ((d : ℂ) ^ (1 - k)) • (⇑g.toModularForm' ∣[k]
+    (fun b ↦ ((d : ℂ) ^ (1 - k)) • (⇑g.toModularForm' ∣[k]
       (T_p_upper p hp.pos b : GL (Fin 2) ℚ)) ∣[k] levelRaiseMatrix d),
     heckeT_p_ut, sum_slash_R, ← Finset.smul_sum]
 
@@ -251,7 +251,7 @@ private lemma diamondOp_T_p_lower_levelRaise
     ((d : ℂ) ^ (1 - k)) • (⇑(diamondOpCusp k
       (ZMod.unitsMap (Nat.dvd_mul_left M d) (ZMod.unitOfCoprime p hpdM)) g) ∣[k]
       levelRaiseMatrix d) :=
-    congr_arg (fun f : CuspForm _ k => (⇑f : UpperHalfPlane → ℂ))
+    congr_arg (fun f : CuspForm _ k ↦ (⇑f : UpperHalfPlane → ℂ))
       (diamondOp_levelRaise_eq (ZMod.unitOfCoprime p hpdM) M d rfl g)
   rw [hdia_fun, smul_slash_pos_det k _ _ _ (T_p_lower_det_pos p hp.pos)]
   have h_units_eq : ZMod.unitsMap (Nat.dvd_mul_left M d) (ZMod.unitOfCoprime p hpdM) =
@@ -344,7 +344,7 @@ lemma heckeT_p_all_levelRaise_comm_divN
       heckeT_p_all_not_coprime_apply k hp hpN _,
     show ⇑((heckeT_p_all k p hp) g.toModularForm') =
         heckeT_p_ut k p hp.pos (⇑g.toModularForm') from
-      heckeT_p_all_not_coprime_apply k hp (fun h => hpN (hpd.mul_right h)) _]
+      heckeT_p_all_not_coprime_apply k hp (fun h ↦ hpN (hpd.mul_right h)) _]
   show heckeT_p_ut k p hp.pos (⇑((levelRaise M d k) g).toModularForm') z =
     (((d : ℂ) ^ (1 - k)) • (heckeT_p_ut k p hp.pos (⇑g.toModularForm') ∣[k]
       levelRaiseMatrix d)) z
@@ -358,7 +358,7 @@ lemma Gamma1_le_Gamma1_of_dvd {M N : ℕ} (hMN : M ∣ N) :
   rw [Gamma1_mem] at hA ⊢
   obtain ⟨h00, h11, h10⟩ := hA
   have h_cast : ∀ (k : ℤ), ((k : ℤ) : ZMod M) =
-      (ZMod.castHom hMN (ZMod M)) ((k : ℤ) : ZMod N) := fun k => by
+      (ZMod.castHom hMN (ZMod M)) ((k : ℤ) : ZMod N) := fun k ↦ by
     rw [ZMod.castHom_apply]; exact (ZMod.cast_intCast hMN _).symm
   refine ⟨?_, ?_, ?_⟩
   · rw [h_cast, h00, map_one]
@@ -410,7 +410,7 @@ def cuspFormsOldExtended (N : ℕ) [NeZero N] (k : ℤ) :
 /-- **`cuspFormsOld ≤ cuspFormsOldExtended`.** -/
 lemma cuspFormsOld_le_cuspFormsOldExtended :
     cuspFormsOld N k ≤ cuspFormsOldExtended N k :=
-  Submodule.span_mono (fun _ hf => Or.inl hf)
+  Submodule.span_mono (fun _ hf ↦ Or.inl hf)
 
 /-- **`levelInclude_cusp g ∈ cuspFormsOldExtended`** (membership of a trivial
 inclusion generator). -/
@@ -438,7 +438,7 @@ def cuspFormsNewExtended (N : ℕ) [NeZero N] (k : ℤ) :
 /-- `cuspFormsNewExtended ⊆ cuspFormsNew`. -/
 lemma cuspFormsNewExtended_le_cuspFormsNew {N : ℕ} [NeZero N] {k : ℤ} :
     cuspFormsNewExtended N k ≤ cuspFormsNew N k :=
-  fun _ hf g hg => hf g (cuspFormsOld_le_cuspFormsOldExtended hg)
+  fun _ hf g hg ↦ hf g (cuspFormsOld_le_cuspFormsOldExtended hg)
 
 /-- The hypothesis that the Lean `cuspFormsOld N k` equals the classical
 `cuspFormsOldExtended N k`; equivalently, every trivial-inclusion oldform
@@ -675,7 +675,7 @@ private theorem Newform.HasHeckeT_p_divN_LR_d_collapse_identity_proof
   rw [show ⇑((heckeT_p_all k p hp) ((levelRaise M d k) g).toModularForm') =
         heckeT_p_ut k p hp.pos (⇑((levelRaise M d k) g).toModularForm') from
       heckeT_p_all_not_coprime_apply k hp
-        (fun h => hp.coprime_iff_not_dvd.mp h (dvd_mul_of_dvd_left hpd M)) _]
+        (fun h ↦ hp.coprime_iff_not_dvd.mp h (dvd_mul_of_dvd_left hpd M)) _]
   show heckeT_p_ut k p hp.pos (⇑((levelRaise M d k) g).toModularForm') z = _
   rw [heckeT_p_ut_levelRaise p hp M d g]
   simp only [Finset.sum_apply]
@@ -846,9 +846,9 @@ private lemma heckeT_n_levelRaise_comm_ppow_case
   have hpr_lt : p ^ r < p ^ (r + 2) := Nat.pow_lt_pow_right hp.one_lt (by omega)
   exact heckeT_ppow_levelRaise_comm_step M d hp
     (hpcop.coprime_dvd_right (dvd_mul_left M d)) hpcop r g'
-    (fun f => ih p hp_lt hp.pos hpcop f)
-    (fun f => ih (p ^ (r + 1)) hpv1_lt (pow_pos hp.pos _) (hpcop.pow_left _) f)
-    (fun f => ih (p ^ r) hpr_lt (pow_pos hp.pos _) (hpcop.pow_left _) f)
+    (fun f ↦ ih p hp_lt hp.pos hpcop f)
+    (fun f ↦ ih (p ^ (r + 1)) hpv1_lt (pow_pos hp.pos _) (hpcop.pow_left _) f)
+    (fun f ↦ ih (p ^ r) hpr_lt (pow_pos hp.pos _) (hpcop.pow_left _) f)
 
 private lemma heckeT_n_levelRaise_comm_step
     (M d : ℕ) [NeZero M] [NeZero d] (m : ℕ) (hle : 1 < m)
@@ -876,7 +876,7 @@ private lemma heckeT_n_levelRaise_comm_step
   by_cases hpv_lt : p ^ v < m
   · have hDecomp : ∀ {L : ℕ} [NeZero L] (f : CuspForm ((Gamma1 L).map (mapGL ℝ)) k),
         heckeT_n_cusp k m f = heckeT_n_cusp k (p ^ v) (heckeT_n_cusp k (m / p ^ v) f) :=
-      fun {L} _ f => heckeT_n_cusp_decomp_of_mul k (p ^ v) (m / p ^ v) m
+      fun {L} _ f ↦ heckeT_n_cusp_decomp_of_mul k (p ^ v) (m / p ^ v) m
         (heckeT_n_mul_ppow_quot (N := L) (k := k) m hle p hpp rfl v rfl hv_pos hdiv_pos) f
     rw [hDecomp, ih (m / p ^ v) (heckeT_n_unfold_lt m hle) hdiv_pos
         (Nat.Coprime.coprime_dvd_left (Nat.div_dvd_of_dvd (Nat.ordProj_dvd m p)) hcop) g',
@@ -943,7 +943,7 @@ theorem heckeT_n_preserves_cuspFormsOld
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (hf : f ∈ cuspFormsOld N k) :
     heckeT_n_cusp k n f ∈ cuspFormsOld N k := by
   refine Submodule.span_induction
-    (p := fun x _ => heckeT_n_cusp k n x ∈ cuspFormsOld N k)
+    (p := fun x _ ↦ heckeT_n_cusp k n x ∈ cuspFormsOld N k)
     ?_ ?_ ?_ ?_ hf
   · rintro f₀ ⟨M, d, _, _, hd, heq, g, rfl⟩
     exact heckeT_n_levelRaise_mem n hn M d hd heq g
@@ -965,7 +965,7 @@ theorem diamondOp_preserves_cuspFormsOld
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (hf : f ∈ cuspFormsOld N k) :
     diamondOp_cusp k d f ∈ cuspFormsOld N k := by
   refine Submodule.span_induction
-    (p := fun x _ => diamondOp_cusp k d x ∈ cuspFormsOld N k)
+    (p := fun x _ ↦ diamondOp_cusp k d x ∈ cuspFormsOld N k)
     ?_ ?_ ?_ ?_ hf
   · rintro f₀ ⟨M, d', _, _, hd', heq, g, rfl⟩
     exact diamondOp_levelRaise_mem d M d' hd' heq g

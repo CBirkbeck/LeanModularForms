@@ -325,7 +325,7 @@ lemma exists_k_coprime_of_primitive
   have hM_ne : M ≠ 0 := Int.natAbs_ne_zero.mpr hdet
   -- For each prime `p ∈ M.primeFactors`, produce a good residue `r_p : ℕ`.
   -- A prime `p ∈ P` cannot divide all four of `a, b, c, d` by primitivity.
-  have hP_prime : ∀ p ∈ M.primeFactors, p.Prime := fun p hp =>
+  have hP_prime : ∀ p ∈ M.primeFactors, p.Prime := fun p hp ↦
     Nat.prime_of_mem_primeFactors hp
   -- Per-prime non-divides-all hypothesis from primitivity.
   have hP_not_all_dvd : ∀ p ∈ M.primeFactors,
@@ -349,7 +349,7 @@ lemma exists_k_coprime_of_primitive
     haveI : Fact p.Prime := ⟨hP_prime p hp⟩
     exact exists_good_residue_mod_prime (a := a) (b := b) (c := c) (d := d) (p := p)
       (hP_not_all_dvd p hp)
-  let r_nat : ℕ → ℕ := fun p =>
+  let r_nat : ℕ → ℕ := fun p ↦
     if h : p ∈ M.primeFactors then (hP_exists p h).choose else 0
   have hr_good : ∀ p (hp : p ∈ M.primeFactors),
       ¬ ((p : ℤ) ∣ a + (r_nat p : ℤ) * c ∧ (p : ℤ) ∣ b + (r_nat p : ℤ) * d) := by
@@ -358,10 +358,10 @@ lemma exists_k_coprime_of_primitive
     exact (hP_exists p hp).choose_spec.2
   -- Apply `Nat.chineseRemainderOfFinset` to find `k_nat : ℕ` with
   -- `k_nat ≡ r_nat p [MOD p]` for each `p ∈ M.primeFactors`.
-  have hP_ne_zero : ∀ p ∈ M.primeFactors, p ≠ 0 := fun p hp =>
+  have hP_ne_zero : ∀ p ∈ M.primeFactors, p ≠ 0 := fun p hp ↦
     (hP_prime p hp).pos.ne'
   have hP_coprime : Set.Pairwise (↑M.primeFactors : Set ℕ)
-      (fun p q : ℕ => Nat.Coprime (id p) (id q)) := by
+      (fun p q : ℕ ↦ Nat.Coprime (id p) (id q)) := by
     intro p hp q hq hpq
     simp only [id]
     exact (Nat.coprime_primes (hP_prime p hp) (hP_prime q hq)).mpr hpq

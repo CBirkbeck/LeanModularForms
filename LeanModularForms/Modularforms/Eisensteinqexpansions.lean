@@ -173,8 +173,8 @@ theorem q_exp_iden_2 (k : ℕ) (hk : 3 ≤ k) (hk2 : Even k) (z : ℍ) :
     rw [←this]
     ring
   · have hkz : 3 ≤ (k : ℤ) := by linarith
-    refine Summable.prod (f := fun x : ℤ × ℤ => 1 / ((x.1 : ℂ) * z + x.2) ^ k) ?_
-    rw [← (piFinTwoEquiv fun _ => ℤ).summable_iff]
+    refine Summable.prod (f := fun x : ℤ × ℤ ↦ 1 / ((x.1 : ℂ) * z + x.2) ^ k) ?_
+    rw [← (piFinTwoEquiv fun _ ↦ ℤ).summable_iff]
     apply Summable.of_norm
     apply (EisensteinSeries.summable_norm_eisSummand hkz z).congr
     intro v
@@ -182,7 +182,7 @@ theorem q_exp_iden_2 (k : ℕ) (hk : 3 ≤ k) (hk2 : Even k) (z : ℍ) :
     simp only [Fin.isValue, zpow_neg, zpow_natCast, norm_inv, norm_pow, one_div,
       piFinTwoEquiv_apply, comp_apply]
   · have hkz : 3 ≤ (k : ℤ) := by linarith
-    rw [← (piFinTwoEquiv fun _ => ℤ).summable_iff]
+    rw [← (piFinTwoEquiv fun _ ↦ ℤ).summable_iff]
     apply Summable.of_norm
     apply (EisensteinSeries.summable_norm_eisSummand hkz z).congr
     intro v
@@ -192,7 +192,7 @@ theorem q_exp_iden_2 (k : ℕ) (hk : 3 ≤ k) (hk2 : Even k) (z : ℍ) :
 
 lemma EQ0 (k : ℕ) (z : ℍ) : ∑' (x : Fin 2 → ℤ),
     1 / (x 0 * (z : ℂ) + x 1) ^ ↑k = ∑' x : ℤ × ℤ, 1 / ((x.1 : ℂ) * z + x.2) ^ k := by
-  rw [← (piFinTwoEquiv fun _ => ℤ).tsum_eq]
+  rw [← (piFinTwoEquiv fun _ ↦ ℤ).tsum_eq]
   apply tsum_congr
   intro x
   simp
@@ -214,7 +214,7 @@ lemma EQ1 (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Even k) (z : ℍ) : ∑' (x : 
   congr 1
   rw [Summable.tsum_comm]
   · rw [← tsum_sigma_eqn2]
-    rw [← (piFinTwoEquiv fun _ => ℕ+).symm.tsum_eq]
+    rw [← (piFinTwoEquiv fun _ ↦ ℕ+).symm.tsum_eq]
     rw [Summable.tsum_prod']
     · simp
       congr
@@ -271,14 +271,14 @@ lemma EQ22 (k : ℕ) (hk : 3 ≤ (k : ℤ)) (z : ℍ) :
         enter [1,1]
         ext c
         rw [gammaSetN_eisSummand k z]
-      have := (gammaSetN_Equiv b hb).tsum_eq (fun v => eisSummand k v z)
+      have := (gammaSetN_Equiv b hb).tsum_eq (fun v ↦ eisSummand k v z)
       simp_rw [tsum_mul_left]
       simp only [zpow_natCast, mul_eq_mul_left_iff, inv_eq_zero, pow_eq_zero_iff', Nat.cast_eq_zero,
         ne_eq]
       left
       exact this
-    · apply summable_mul_of_summable_norm (f := fun (n : ℕ) => ((n : ℂ)^k)⁻¹)
-        (g := fun (v : (gammaSet 1 1 0) ) => eisSummand k v z)
+    · apply summable_mul_of_summable_norm (f := fun (n : ℕ) ↦ ((n : ℂ)^k)⁻¹)
+        (g := fun (v : (gammaSet 1 1 0) ) ↦ eisSummand k v z)
       · simp only [norm_inv, norm_pow, norm_natCast, Real.summable_nat_pow_inv, hk1]
       apply (EisensteinSeries.summable_norm_eisSummand hk z).subtype
     intro b
@@ -286,7 +286,7 @@ lemma EQ22 (k : ℕ) (hk : 3 ≤ (k : ℤ)) (z : ℍ) :
     apply Summable.mul_left
     apply Summable.of_norm
     apply (EisensteinSeries.summable_norm_eisSummand hk z).subtype
-  have := (GammaSet_one_Equiv.symm.summable_iff ( f := fun v => eisSummand k v z)).mpr ?_
+  have := (GammaSet_one_Equiv.symm.summable_iff ( f := fun v ↦ eisSummand k v z)).mpr ?_
   · apply this.congr
     intro b
     simp

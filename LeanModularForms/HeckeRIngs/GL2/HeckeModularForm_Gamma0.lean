@@ -63,7 +63,7 @@ lemma Gamma0_pair_H_invariant_of_invariant {k : ℤ} {f : ℍ → ℂ}
 lemma heckeSlash_gen_Gamma0_holomorphic (k : ℤ) (D : HeckeCoset (Gamma0_pair N))
     (f : ℍ → ℂ) (hf : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) f) :
     MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (heckeSlash_gen (Gamma0_pair N) k D f) :=
-  MDifferentiable.sum fun _ _ => hf.slash k _
+  MDifferentiable.sum fun _ _ ↦ hf.slash k _
 
 /-- `GL₂(ℚ)` maps cusps of `(Gamma0 N).map (mapGL ℝ)` to cusps: the Möbius action
 preserves `ℙ¹(ℚ)`, and all arithmetic subgroups share the same cusps. -/
@@ -84,7 +84,7 @@ lemma heckeSlash_gen_Gamma0_bdd_at_cusps (k : ℤ) (D : HeckeCoset (Gamma0_pair 
     {c : OnePoint ℝ} (hc : IsCusp c ((Gamma0 N).map (mapGL ℝ))) :
     c.IsBoundedAt (heckeSlash_gen (Gamma0_pair N) k D f) k := by
   simp only [heckeSlash_gen]
-  apply Finset.sum_induction _ (fun g => c.IsBoundedAt g k) (fun _ _ ha hb => ha.add hb)
+  apply Finset.sum_induction _ (fun g ↦ c.IsBoundedAt g k) (fun _ _ ha hb ↦ ha.add hb)
     ((0 : ModularForm ((Gamma0 N).map (mapGL ℝ)) k).bdd_at_cusps' hc)
   intro i _
   exact OnePoint.IsBoundedAt.smul_iff.mp (f.bdd_at_cusps' (glMap_smul_isCusp_Gamma0 N _ hc))
@@ -103,7 +103,7 @@ noncomputable def heckeSlashInvariant_Gamma0 (k : ℤ) (D : HeckeCoset (Gamma0_p
     have h_inv : ∀ h, h ∈ (Gamma0_pair N).H → (f : ℍ → ℂ) ∣[k] glMap h = f := by
       intro h hh
       exact Gamma0_pair_H_invariant_of_invariant N
-        (fun γ' hγ' => f.slash_action_eq' γ' hγ') h hh
+        (fun γ' hγ' ↦ f.slash_action_eq' γ' hγ') h hh
     have hmem : (mapGL ℚ σ : GL (Fin 2) ℚ) ∈ (Gamma0_pair N).H :=
       Subgroup.mem_map.mpr ⟨σ, hσ, rfl⟩
     have hgl : glMap (mapGL ℚ σ) = (mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) σ := by
@@ -161,8 +161,8 @@ theorem heckeOperator_Gamma0_comp (k : ℤ) (D₁ D₂ : HeckeCoset (Gamma0_pair
     heckeSlashExt_gen (Gamma0_pair N) k
       (T_single (Gamma0_pair N) ℤ D₂ 1 * T_single (Gamma0_pair N) ℤ D₁ 1) f := by
   apply heckeSlash_gen_comp (P := Gamma0_pair N) k D₁ D₂ (f : ℍ → ℂ)
-    (fun h hh => Gamma0_pair_H_invariant_of_invariant N
-      (fun γ hγ => SlashInvariantFormClass.slash_action_eq f γ hγ) h hh)
+    (fun h hh ↦ Gamma0_pair_H_invariant_of_invariant N
+      (fun γ hγ ↦ SlashInvariantFormClass.slash_action_eq f γ hγ) h hh)
   exact Gamma0_pair_HeckeAlgebra_mul_comm N _ _
 
 /-! ### `heckeSum_Gamma0` -/
@@ -172,7 +172,7 @@ attached to a Hecke algebra element `T : 𝕋 (Gamma0_pair N) ℤ`, obtained by
 extending `heckeOperatorLinear_Gamma0` by `ℤ`-linearity. -/
 noncomputable def heckeSum_Gamma0 (k : ℤ) (T : 𝕋 (Gamma0_pair N) ℤ) :
     Module.End ℂ (ModularForm ((Gamma0 N).map (mapGL ℝ)) k) :=
-  T.sum (fun D c => c • heckeOperatorLinear_Gamma0 N k D)
+  T.sum (fun D c ↦ c • heckeOperatorLinear_Gamma0 N k D)
 
 @[simp] lemma heckeSum_Gamma0_zero (k : ℤ) :
     heckeSum_Gamma0 N k (0 : 𝕋 (Gamma0_pair N) ℤ) = 0 :=
@@ -186,8 +186,8 @@ noncomputable def heckeSum_Gamma0 (k : ℤ) (T : 𝕋 (Gamma0_pair N) ℤ) :
 lemma heckeSum_Gamma0_add (k : ℤ) (T₁ T₂ : 𝕋 (Gamma0_pair N) ℤ) :
     heckeSum_Gamma0 N k (T₁ + T₂) =
       heckeSum_Gamma0 N k T₁ + heckeSum_Gamma0 N k T₂ :=
-  Finsupp.sum_add_index' (h_zero := fun _ => by simp)
-    (h_add := fun _ c₁ c₂ => by rw [add_zsmul])
+  Finsupp.sum_add_index' (h_zero := fun _ ↦ by simp)
+    (h_add := fun _ c₁ c₂ ↦ by rw [add_zsmul])
 
 /-- Pointwise agreement of `heckeSum_Gamma0 N k T f` and the underlying
 generalized slash sum `heckeSlashExt_gen (Gamma0_pair N) k T f`. -/
@@ -205,11 +205,11 @@ lemma heckeSum_Gamma0_apply_apply (k : ℤ) (T : 𝕋 (Gamma0_pair N) ℤ)
     rw [heckeSum_Gamma0_add]
     simp only [LinearMap.add_apply, ModularForm.add_apply, h₁, h₂]
     unfold heckeSlashExt_gen
-    rw [show (T₁ + T₂).sum (fun D c => c • heckeSlash_gen (Gamma0_pair N) k D (f : ℍ → ℂ)) =
-        T₁.sum (fun D c => c • heckeSlash_gen (Gamma0_pair N) k D (f : ℍ → ℂ)) +
-        T₂.sum (fun D c => c • heckeSlash_gen (Gamma0_pair N) k D (f : ℍ → ℂ)) from
-      Finsupp.sum_add_index' (h_zero := fun _ => by simp)
-        (h_add := fun _ c₁ c₂ => by rw [add_zsmul])]
+    rw [show (T₁ + T₂).sum (fun D c ↦ c • heckeSlash_gen (Gamma0_pair N) k D (f : ℍ → ℂ)) =
+        T₁.sum (fun D c ↦ c • heckeSlash_gen (Gamma0_pair N) k D (f : ℍ → ℂ)) +
+        T₂.sum (fun D c ↦ c • heckeSlash_gen (Gamma0_pair N) k D (f : ℍ → ℂ)) from
+      Finsupp.sum_add_index' (h_zero := fun _ ↦ by simp)
+        (h_add := fun _ c₁ c₂ ↦ by rw [add_zsmul])]
     rfl
   | single D c =>
     show (heckeSum_Gamma0 N k (T_single (Gamma0_pair N) ℤ D c) f) z = _
@@ -230,7 +230,7 @@ private lemma heckeSlashExt_gen_Gamma0_zsmul (k : ℤ) (n : ℤ) (T : 𝕋 (Gamm
       n • heckeSlashExt_gen (Gamma0_pair N) k T f := by
   unfold heckeSlashExt_gen
   rw [Finsupp.sum_smul_index (g := T) (b := n)
-    (h := fun D c => c • heckeSlash_gen (Gamma0_pair N) k D f) (by simp),
+    (h := fun D c ↦ c • heckeSlash_gen (Gamma0_pair N) k D f) (by simp),
     Finsupp.smul_sum]
   refine Finsupp.sum_congr ?_
   intro D _
@@ -319,7 +319,7 @@ private lemma heckeSlash_gen_Gamma0_one (k : ℤ) (f : ℍ → ℂ)
   rw [show (Finset.univ : Finset (decompQuot (Gamma0_pair N)
         (HeckeCoset.rep (HeckeCoset.one (Gamma0_pair N))))) = {default} from by
     apply Finset.eq_singleton_iff_unique_mem.mpr
-    refine ⟨Finset.mem_univ _, fun i _ => Subsingleton.elim _ _⟩,
+    refine ⟨Finset.mem_univ _, fun i _ ↦ Subsingleton.elim _ _⟩,
     Finset.sum_singleton]
   set q : decompQuot (Gamma0_pair N) (HeckeCoset.rep (HeckeCoset.one (Gamma0_pair N))) :=
     default
@@ -350,8 +350,8 @@ private lemma heckeSlash_gen_Gamma0_one (k : ℤ) (f : ℍ → ℂ)
   change heckeSlash_gen (Gamma0_pair N) k (HeckeCoset.one (Gamma0_pair N))
       (f : ℍ → ℂ) z = f z
   rw [heckeSlash_gen_Gamma0_one N k (f : ℍ → ℂ)
-    (fun h hh => Gamma0_pair_H_invariant_of_invariant N
-      (fun γ hγ => SlashInvariantFormClass.slash_action_eq f γ hγ) h hh)]
+    (fun h hh ↦ Gamma0_pair_H_invariant_of_invariant N
+      (fun γ hγ ↦ SlashInvariantFormClass.slash_action_eq f γ hγ) h hh)]
 
 @[simp] lemma heckeOperatorLinear_Gamma0_one (k : ℤ) :
     heckeOperatorLinear_Gamma0 N k (HeckeCoset.one (Gamma0_pair N)) = 1 := by

@@ -18,7 +18,7 @@ open ModularForm EisensteinSeries UpperHalfPlane TopologicalSpace Set
 
 open ArithmeticFunction
 
-lemma summable_pnats (f : ℕ → ℂ) : Summable (fun n : ℕ+ => f n) ↔ Summable f := by
+lemma summable_pnats (f : ℕ → ℂ) : Summable (fun n : ℕ+ ↦ f n) ↔ Summable f := by
   simpa using (nat_pos_tsum2' (f := f)).trans (summable_nat_add_iff (f := f) 1)
 
 private lemma diff_right_congr (z : ℍ) (d : ℕ+) (b : ℕ+) :

@@ -213,6 +213,6 @@ theorem Gamma0MapUnits_surjOn_stab_of_diagReduction
   · show (diagMat 2 (![1, k] : Fin 2 → ℕ) : GL (Fin 2) ℚ) =
       (γ_L : GL (Fin 2) ℚ)⁻¹ * g * (γ_R : GL (Fin 2) ℚ)⁻¹
     rw [h_eq]; group
-  · exact fun d' => Gamma0MapUnits_surjOn_stab_diag N k hk d'
+  · exact fun d' ↦ Gamma0MapUnits_surjOn_stab_diag N k hk d'
 
 end HeckeRing.GL2.Prop334

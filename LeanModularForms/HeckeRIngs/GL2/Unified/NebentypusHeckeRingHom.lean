@@ -141,7 +141,7 @@ private lemma twistedHeckeSlash_gen_holomorphic
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
     MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (twistedHeckeSlash_gen (N := N) k χ D (⇑f)) := by
   rw [twistedHeckeSlash_gen_eq_sum]
-  exact MDifferentiable.sum fun i _ =>
+  exact MDifferentiable.sum fun i _ ↦
     MDifferentiable.const_smul _ ((ModularFormClass.holo f).slash k _)
 
 private lemma smul_slash_tRep_gen_modForm
@@ -164,8 +164,8 @@ private lemma twistedHeckeSlash_gen_bdd_at_cusps
     {c : OnePoint ℝ} (hc : IsCusp c ((Gamma1 N).map (mapGL ℝ))) :
     c.IsBoundedAt (twistedHeckeSlash_gen (N := N) k χ D (⇑f)) k := by
   rw [twistedHeckeSlash_gen_eq_sum]
-  apply Finset.sum_induction _ (fun g => c.IsBoundedAt g k)
-    (fun _ _ ha hb => ha.add hb)
+  apply Finset.sum_induction _ (fun g ↦ c.IsBoundedAt g k)
+    (fun _ _ ha hb ↦ ha.add hb)
     ((0 : ModularForm ((Gamma1 N).map (mapGL ℝ)) k).bdd_at_cusps' hc)
   intro i _
   rw [smul_slash_tRep_gen_modForm (N := N) D i _ f,
@@ -381,7 +381,7 @@ noncomputable def heckeRingHomCharSpace :
   map_zero' := nebentypusHeckeSum_zero
   map_add' := nebentypusHeckeSum_add
   map_one' := by
-    refine LinearMap.ext fun f => ?_
+    refine LinearMap.ext fun f ↦ ?_
     apply Subtype.ext
     apply DFunLike.coe_injective
     dsimp only
@@ -393,7 +393,7 @@ noncomputable def heckeRingHomCharSpace :
     rw [twistedHeckeSumFunction_one]
     rfl
   map_mul' T₁ T₂ := by
-    refine LinearMap.ext fun f => ?_
+    refine LinearMap.ext fun f ↦ ?_
     apply Subtype.ext
     apply DFunLike.coe_injective
     dsimp only
@@ -430,7 +430,7 @@ private lemma adj_rep_mem (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
       (T_p_lower p hp.pos : GL (Fin 2) ℚ) := by
     apply Units.ext
     ext i j
-    have hpos : ∀ m : Fin 2, 0 < (![1, p] : Fin 2 → Nat) m := fun m => by
+    have hpos : ∀ m : Fin 2, 0 < (![1, p] : Fin 2 → Nat) m := fun m ↦ by
       fin_cases m <;> simp [hp.pos]
     simp only [GL_adjugate_val, diagMat_val _ _ hpos]
     have huniv : (Finset.univ : Finset (Fin 2)) = {0, 1} := by
@@ -593,7 +593,7 @@ private lemma adj_T_p_lower_factorisation (p : ℕ) (hp : Nat.Prime p)
 private noncomputable def twistedTpPsi (p : ℕ) (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) :
     Fin (p + 1) → decompQuot (Gamma0_pair N) (HeckeCoset.rep (D_p_Gamma0 N p hp.pos)) :=
-  fun j =>
+  fun j ↦
     if _h : j.val < p then
       ⟦⟨(adj_T_p_upper_factorisation (N := N) p hp hpN j.val).choose,
         (adj_T_p_upper_factorisation (N := N) p hp hpN j.val).choose_spec.choose⟩⟧
@@ -649,7 +649,7 @@ private lemma twistedTpPsi_injective (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Cop
   by_cases h₁ : j₁.val < p <;> by_cases h₂ : j₂.val < p
   · simp only [h₁, h₂, dite_true] at heq
     exact HeckeRing.GL2.adj_upper_inv_mul_not_mem_H p hp j₁.val j₂.val h₁ h₂
-      (fun h => hne (Fin.ext h))
+      (fun h ↦ hne (Fin.ext h))
       (Gamma0_pair_H_le_GL_pair_H N (adj_inv_mul_mem_H_of_factorisations
         (HeckeCoset.rep (D_p_Gamma0 N p hp.pos)) _ _
         (adj_T_p_upper_factorisation (N := N) p hp hpN j₁.val)
@@ -738,9 +738,9 @@ theorem twisted_matches_T_p (p : ℕ) (hp : Nat.Prime p)
       simp [j.isLt]
     · simp]
   rw [Finset.sum_congr rfl
-    (fun j _ => twistedTpPsi_val_eq (N := N) (k := k) (χ := χ) p hp hpN hf j)]
+    (fun j _ ↦ twistedTpPsi_val_eq (N := N) (k := k) (χ := χ) p hp hpN hf j)]
   exact (twistedTpPsi_bijective (N := N) p hp hpN).sum_comp
-    (fun i => (↑(delta0NebentypusWeight (N := N) χ (D_p_Gamma0 N p hp.pos) i) : ℂ)⁻¹ •
+    (fun i ↦ (↑(delta0NebentypusWeight (N := N) χ (D_p_Gamma0 N p hp.pos) i) : ℂ)⁻¹ •
       (f ∣[k] tRep_gen (Gamma0_pair N) (D_p_Gamma0 N p hp.pos) i))
 
 private lemma heckeT_p_all_coe_eq (p : ℕ) (hp : Nat.Prime p)
@@ -792,38 +792,38 @@ theorem heckeRingHomCharSpace_D_p_eq_heckeT_p_all (p : ℕ) (hp : Nat.Prime p)
   rw [smul_add, smul_smul, inv_mul_cancel₀ (Units.ne_zero _), one_smul]
 
 private lemma slash_diag_scalar (k : ℤ) (c : ℕ) (hc : 0 < c) (f : ℍ → ℂ) :
-    f ∣[k] (diagMat 2 (fun _ : Fin 2 => c) : GL (Fin 2) ℚ) = (c : ℂ) ^ (k - 2) • f := by
-  have hcpos : ∀ i : Fin 2, 0 < (fun _ : Fin 2 => c) i := fun _ => hc
-  have hdetpos : 0 < (diagMat 2 (fun _ : Fin 2 => c) : GL (Fin 2) ℚ).det.val := by
+    f ∣[k] (diagMat 2 (fun _ : Fin 2 ↦ c) : GL (Fin 2) ℚ) = (c : ℂ) ^ (k - 2) • f := by
+  have hcpos : ∀ i : Fin 2, 0 < (fun _ : Fin 2 ↦ c) i := fun _ ↦ hc
+  have hdetpos : 0 < (diagMat 2 (fun _ : Fin 2 ↦ c) : GL (Fin 2) ℚ).det.val := by
     rw [GeneralLinearGroup.val_det_apply, diagMat_val _ _ hcpos, Matrix.det_diagonal,
       Fin.prod_univ_two]
     positivity
-  have hσ : UpperHalfPlane.σ (glMap (diagMat 2 (fun _ : Fin 2 => c) : GL (Fin 2) ℚ)) =
+  have hσ : UpperHalfPlane.σ (glMap (diagMat 2 (fun _ : Fin 2 ↦ c) : GL (Fin 2) ℚ)) =
       RingHom.id ℂ := by
     unfold UpperHalfPlane.σ
     simp only [glMap_det_pos_of_rat_det_pos _ hdetpos, ↓reduceIte]
   have hcne : (c : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr hc.ne'
   ext z
-  show (f ∣[k] glMap (diagMat 2 (fun _ : Fin 2 => c) : GL (Fin 2) ℚ)) z = ((c : ℂ) ^ (k - 2) • f) z
+  show (f ∣[k] glMap (diagMat 2 (fun _ : Fin 2 ↦ c) : GL (Fin 2) ℚ)) z = ((c : ℂ) ^ (k - 2) • f) z
   rw [ModularForm.slash_apply, hσ]
-  have hsmul : (glMap (diagMat 2 (fun _ : Fin 2 => c) : GL (Fin 2) ℚ)) • z = z := by
+  have hsmul : (glMap (diagMat 2 (fun _ : Fin 2 ↦ c) : GL (Fin 2) ℚ)) • z = z := by
     apply UpperHalfPlane.ext
     rw [UpperHalfPlane.coe_smul_of_det_pos (glMap_det_pos_of_rat_det_pos _ hdetpos)]
-    show ((glMap (diagMat 2 (fun _ : Fin 2 => c) : GL (Fin 2) ℚ)) 0 0 * (z : ℂ) +
-        (glMap (diagMat 2 (fun _ : Fin 2 => c) : GL (Fin 2) ℚ)) 0 1) /
-        ((glMap (diagMat 2 (fun _ : Fin 2 => c) : GL (Fin 2) ℚ)) 1 0 * (z : ℂ) +
-          (glMap (diagMat 2 (fun _ : Fin 2 => c) : GL (Fin 2) ℚ)) 1 1) = (z : ℂ)
+    show ((glMap (diagMat 2 (fun _ : Fin 2 ↦ c) : GL (Fin 2) ℚ)) 0 0 * (z : ℂ) +
+        (glMap (diagMat 2 (fun _ : Fin 2 ↦ c) : GL (Fin 2) ℚ)) 0 1) /
+        ((glMap (diagMat 2 (fun _ : Fin 2 ↦ c) : GL (Fin 2) ℚ)) 1 0 * (z : ℂ) +
+          (glMap (diagMat 2 (fun _ : Fin 2 ↦ c) : GL (Fin 2) ℚ)) 1 1) = (z : ℂ)
     simp [glMap, GeneralLinearGroup.map, diagMat_val _ _ hcpos, Matrix.map_apply]
     field_simp
-  have hdenom : UpperHalfPlane.denom (glMap (diagMat 2 (fun _ : Fin 2 => c) : GL (Fin 2) ℚ)) z =
+  have hdenom : UpperHalfPlane.denom (glMap (diagMat 2 (fun _ : Fin 2 ↦ c) : GL (Fin 2) ℚ)) z =
       (c : ℂ) := by
-    show (glMap (diagMat 2 (fun _ : Fin 2 => c) : GL (Fin 2) ℚ)) 1 0 * (z : ℂ) +
-        (glMap (diagMat 2 (fun _ : Fin 2 => c) : GL (Fin 2) ℚ)) 1 1 = (c : ℂ)
+    show (glMap (diagMat 2 (fun _ : Fin 2 ↦ c) : GL (Fin 2) ℚ)) 1 0 * (z : ℂ) +
+        (glMap (diagMat 2 (fun _ : Fin 2 ↦ c) : GL (Fin 2) ℚ)) 1 1 = (c : ℂ)
     simp [glMap, GeneralLinearGroup.map, diagMat_val _ _ hcpos, Matrix.map_apply]
-  have habsdet : (↑|(glMap (diagMat 2 (fun _ : Fin 2 => c) : GL (Fin 2) ℚ)).det.val| : ℂ) =
+  have habsdet : (↑|(glMap (diagMat 2 (fun _ : Fin 2 ↦ c) : GL (Fin 2) ℚ)).det.val| : ℂ) =
       (c : ℂ) ^ 2 := by
-    have hdet : (glMap (diagMat 2 (fun _ : Fin 2 => c) : GL (Fin 2) ℚ)).det.val =
-        algebraMap ℚ ℝ (diagMat 2 (fun _ : Fin 2 => c) : GL (Fin 2) ℚ).det.val :=
+    have hdet : (glMap (diagMat 2 (fun _ : Fin 2 ↦ c) : GL (Fin 2) ℚ)).det.val =
+        algebraMap ℚ ℝ (diagMat 2 (fun _ : Fin 2 ↦ c) : GL (Fin 2) ℚ).det.val :=
       congr_arg Units.val (GeneralLinearGroup.map_det (algebraMap ℚ ℝ) _)
     rw [hdet, GeneralLinearGroup.val_det_apply, diagMat_val _ _ hcpos, Matrix.det_diagonal,
       Fin.prod_univ_two]
@@ -841,8 +841,8 @@ private lemma slash_diag_scalar (k : ℤ) (c : ℕ) (hc : 0 < c) (f : ℍ → �
 private lemma subsingleton_decompQuot_scalar (c : ℕ) (hc : 0 < c)
     (hgcd : Int.gcd (c : ℤ) (N : ℤ) = 1) :
     Subsingleton (decompQuot (Gamma0_pair N)
-      (HeckeCoset.rep (T_diag_Gamma0 N (fun _ : Fin 2 => c) (fun _ => hc) hgcd))) := by
-  set D := T_diag_Gamma0 N (fun _ : Fin 2 => c) (fun _ => hc) hgcd with hD
+      (HeckeCoset.rep (T_diag_Gamma0 N (fun _ : Fin 2 ↦ c) (fun _ ↦ hc) hgcd))) := by
+  set D := T_diag_Gamma0 N (fun _ : Fin 2 ↦ c) (fun _ ↦ hc) hgcd with hD
   set δ := HeckeCoset.rep D with hδ
   set H := (Gamma0_pair N).H with hH
   suffices hcard : Fintype.card (decompQuot (Gamma0_pair N) δ) = 1 from
@@ -857,19 +857,19 @@ private lemma subsingleton_decompQuot_scalar (c : ℕ) (hc : 0 < c)
       simp
     exact_mod_cast this
   have hδ_mem : (δ : GL (Fin 2) ℚ) ∈
-      DoubleCoset.doubleCoset (diagMat 2 (fun _ : Fin 2 => c) : GL (Fin 2) ℚ) H H := by
+      DoubleCoset.doubleCoset (diagMat 2 (fun _ : Fin 2 ↦ c) : GL (Fin 2) ℚ) H H := by
     have h1 : HeckeCoset.toSet D =
-        DoubleCoset.doubleCoset (diagMat 2 (fun _ : Fin 2 => c) : GL (Fin 2) ℚ) H H := by
+        DoubleCoset.doubleCoset (diagMat 2 (fun _ : Fin 2 ↦ c) : GL (Fin 2) ℚ) H H := by
       simp only [hD, T_diag_Gamma0, HeckeCoset.toSet_mk]
       rfl
     rw [← h1]
     exact HeckeCoset.rep_mem D
   rw [DoubleCoset.mem_doubleCoset] at hδ_mem
   obtain ⟨h₁, hh₁, h₂, hh₂, hδ_eq⟩ := hδ_mem
-  have hδ_simp : (δ : GL (Fin 2) ℚ) = (h₁ * h₂) * diagMat 2 (fun _ : Fin 2 => c) := by
+  have hδ_simp : (δ : GL (Fin 2) ℚ) = (h₁ * h₂) * diagMat 2 (fun _ : Fin 2 ↦ c) := by
     rw [hδ_eq, mul_assoc, diagMat_scalar_comm 2 c hc h₂, ← mul_assoc]
   rw [hδ_simp, map_mul, ← smul_smul]
-  have hscalar_smul : ConjAct.toConjAct (diagMat 2 (fun _ : Fin 2 => c)) • H = H := by
+  have hscalar_smul : ConjAct.toConjAct (diagMat 2 (fun _ : Fin 2 ↦ c)) • H = H := by
     ext x
     simp only [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def,
       map_inv, ConjAct.ofConjAct_toConjAct, inv_inv]
@@ -887,21 +887,21 @@ private lemma subsingleton_decompQuot_scalar (c : ℕ) (hc : 0 < c)
     exact H.mul_mem (H.mul_mem (H.inv_mem (H.mul_mem hh₁ hh₂)) hx) (H.mul_mem hh₁ hh₂)
 
 private lemma adj_diag_scalar (c : ℕ) (hc : 0 < c) :
-    GL_adjugate (diagMat 2 (fun _ : Fin 2 => c) : GL (Fin 2) ℚ) =
-      (diagMat 2 (fun _ : Fin 2 => c) : GL (Fin 2) ℚ) := by
+    GL_adjugate (diagMat 2 (fun _ : Fin 2 ↦ c) : GL (Fin 2) ℚ) =
+      (diagMat 2 (fun _ : Fin 2 ↦ c) : GL (Fin 2) ℚ) := by
   apply Units.ext
   ext i j
-  rw [GL_adjugate_val, diagMat_val _ _ (fun _ => hc), Matrix.adjugate_fin_two]
+  rw [GL_adjugate_val, diagMat_val _ _ (fun _ ↦ hc), Matrix.adjugate_fin_two]
   fin_cases i <;> fin_cases j <;>
     simp [Matrix.diagonal, Matrix.of_apply]
 
 omit [NeZero N] in
 private lemma diag_scalar_mem_Delta0 (c : ℕ) (hc : 0 < c)
     (hgcd : Int.gcd (c : ℤ) (N : ℤ) = 1) :
-    (diagMat 2 (fun _ : Fin 2 => c) : GL (Fin 2) ℚ) ∈ Delta0_submonoid N := by
-  have hcpos : ∀ i : Fin 2, 0 < (fun _ : Fin 2 => c) i := fun _ => hc
-  set A : Matrix (Fin 2) (Fin 2) ℤ := Matrix.diagonal (fun _ : Fin 2 => (c : ℤ)) with hA
-  have hA_eq : (↑(diagMat 2 (fun _ : Fin 2 => c)) : Matrix _ _ ℚ) = A.map (Int.cast : ℤ → ℚ) := by
+    (diagMat 2 (fun _ : Fin 2 ↦ c) : GL (Fin 2) ℚ) ∈ Delta0_submonoid N := by
+  have hcpos : ∀ i : Fin 2, 0 < (fun _ : Fin 2 ↦ c) i := fun _ ↦ hc
+  set A : Matrix (Fin 2) (Fin 2) ℤ := Matrix.diagonal (fun _ : Fin 2 ↦ (c : ℤ)) with hA
+  have hA_eq : (↑(diagMat 2 (fun _ : Fin 2 ↦ c)) : Matrix _ _ ℚ) = A.map (Int.cast : ℤ → ℚ) := by
     rw [diagMat_val _ _ hcpos]
     ext i j; fin_cases i <;> fin_cases j <;>
       simp [A, Matrix.diagonal, Matrix.map_apply]
@@ -913,12 +913,12 @@ private lemma diag_scalar_mem_Delta0 (c : ℕ) (hc : 0 < c)
 
 private noncomputable def diagScalarΔ (c : ℕ) (hc : 0 < c)
     (hgcd : Int.gcd (c : ℤ) (N : ℤ) = 1) : (Gamma0_pair N).Δ :=
-  ⟨diagMat 2 (fun _ : Fin 2 => c), diag_scalar_mem_Delta0 (N := N) c hc hgcd⟩
+  ⟨diagMat 2 (fun _ : Fin 2 ↦ c), diag_scalar_mem_Delta0 (N := N) c hc hgcd⟩
 
 @[simp] private lemma diagScalarΔ_coe (c : ℕ) (hc : 0 < c)
     (hgcd : Int.gcd (c : ℤ) (N : ℤ) = 1) :
     (diagScalarΔ (N := N) c hc hgcd : GL (Fin 2) ℚ) =
-      diagMat 2 (fun _ : Fin 2 => c) := rfl
+      diagMat 2 (fun _ : Fin 2 ↦ c) := rfl
 
 private lemma diagScalarΔ_weight (χ : (ZMod N)ˣ →* ℂˣ) (c : ℕ) (hc : 0 < c)
     (hgcd : Int.gcd (c : ℤ) (N : ℤ) = 1) (hcop : Nat.Coprime c N) :
@@ -930,9 +930,9 @@ private lemma diagScalarΔ_weight (χ : (ZMod N)ˣ →* ℂˣ) (c : ℕ) (hc : 0
   apply Units.ext
   rw [Delta0UpperUnit_val, ZMod.coe_unitOfCoprime]
   have hwit : delta0IntegralMatrix (N := N) (diagScalarΔ (N := N) c hc hgcd) =
-      Matrix.diagonal (fun _ : Fin 2 => (c : ℤ)) := by
+      Matrix.diagonal (fun _ : Fin 2 ↦ (c : ℤ)) := by
     apply delta0IntegralMatrix_witness_unique
-    rw [diagScalarΔ_coe, diagMat_val _ _ (fun _ => hc)]
+    rw [diagScalarΔ_coe, diagMat_val _ _ (fun _ ↦ hc)]
     ext i j; fin_cases i <;> fin_cases j <;> simp [Matrix.diagonal, Matrix.map_apply]
   rw [hwit]
   simp [Matrix.diagonal]
@@ -941,34 +941,34 @@ private lemma adj_diagScalar_factorisation (p : ℕ) (hp : Nat.Prime p)
     (hgcd : Int.gcd (p : ℤ) (N : ℤ) = 1) :
     ∃ (h₁ : GL (Fin 2) ℚ) (_ : h₁ ∈ (Gamma0_pair N).H)
       (h₂ : GL (Fin 2) ℚ) (_ : h₂ ∈ (Gamma0_pair N).H),
-      GL_adjugate (diagMat 2 (fun _ : Fin 2 => p) : GL (Fin 2) ℚ) =
-        h₁ * (HeckeCoset.rep (T_diag_Gamma0 N (fun _ : Fin 2 => p) (fun _ => hp.pos) hgcd)
+      GL_adjugate (diagMat 2 (fun _ : Fin 2 ↦ p) : GL (Fin 2) ℚ) =
+        h₁ * (HeckeCoset.rep (T_diag_Gamma0 N (fun _ : Fin 2 ↦ p) (fun _ ↦ hp.pos) hgcd)
           : GL _ ℚ) * h₂ := by
-  set D := T_diag_Gamma0 N (fun _ : Fin 2 => p) (fun _ => hp.pos) hgcd with hD
+  set D := T_diag_Gamma0 N (fun _ : Fin 2 ↦ p) (fun _ ↦ hp.pos) hgcd with hD
   have hrep := HeckeCoset.rep_mem D
   rw [hD, T_diag_Gamma0, HeckeCoset.toSet_mk, DoubleCoset.mem_doubleCoset] at hrep
   obtain ⟨a, ha, c, hc, hrep_eq⟩ := hrep
   refine ⟨a⁻¹, (Gamma0_pair N).H.inv_mem ha, c⁻¹, (Gamma0_pair N).H.inv_mem hc, ?_⟩
   rw [adj_diag_scalar p hp.pos]
   rw [show (HeckeCoset.rep D : GL _ ℚ) =
-    a * (diagMat 2 (fun _ : Fin 2 => p) : GL _ ℚ) * c from hrep_eq]
+    a * (diagMat 2 (fun _ : Fin 2 ↦ p) : GL _ ℚ) * c from hrep_eq]
   group
 
 private lemma diagScalar_triple_weight (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (hgcd : Int.gcd (p : ℤ) (N : ℤ) = 1)
     (h₁ : GL (Fin 2) ℚ) (hh₁ : h₁ ∈ (Gamma0_pair N).H)
     (h₂ : GL (Fin 2) ℚ) (hh₂ : h₂ ∈ (Gamma0_pair N).H)
-    (hfact : GL_adjugate (diagMat 2 (fun _ : Fin 2 => p) : GL (Fin 2) ℚ) =
-      h₁ * (HeckeCoset.rep (T_diag_Gamma0 N (fun _ : Fin 2 => p) (fun _ => hp.pos) hgcd)
+    (hfact : GL_adjugate (diagMat 2 (fun _ : Fin 2 ↦ p) : GL (Fin 2) ℚ) =
+      h₁ * (HeckeCoset.rep (T_diag_Gamma0 N (fun _ : Fin 2 ↦ p) (fun _ ↦ hp.pos) hgcd)
         : GL _ ℚ) * h₂) :
     delta0NebentypusDeltaChar (N := N) χ
       (gamma0TripleDelta (N := N)
-        (T_diag_Gamma0 N (fun _ : Fin 2 => p) (fun _ => hp.pos) hgcd) h₁ hh₁ h₂ hh₂) =
+        (T_diag_Gamma0 N (fun _ : Fin 2 ↦ p) (fun _ ↦ hp.pos) hgcd) h₁ hh₁ h₂ hh₂) =
       χ (ZMod.unitOfCoprime p hpN) := by
   rw [← diagScalarΔ_weight (N := N) χ p hp.pos hgcd hpN]
   apply delta0Char_congr
-  change h₁ * (HeckeCoset.rep (T_diag_Gamma0 N (fun _ : Fin 2 => p) (fun _ => hp.pos) hgcd)
-      : GL _ ℚ) * h₂ = diagMat 2 (fun _ : Fin 2 => p)
+  change h₁ * (HeckeCoset.rep (T_diag_Gamma0 N (fun _ : Fin 2 ↦ p) (fun _ ↦ hp.pos) hgcd)
+      : GL _ ℚ) * h₂ = diagMat 2 (fun _ : Fin 2 ↦ p)
   rw [← hfact, adj_diag_scalar p hp.pos]
 
 /-- For `p ∤ N` and `f ∈ modFormCharSpace k χ`, the operator at the scalar double coset
@@ -977,14 +977,14 @@ theorem heckeRingHomCharSpace_T_pp_eq_scalar (p : ℕ) (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N)
     (f : modFormCharSpace k χ) :
     (⇑((heckeRingHomCharSpace (k := k) (χ := χ) (T_single (Gamma0_pair N) ℤ
-        (T_diag_Gamma0 N (fun _ : Fin 2 => p) (fun _ => hp.pos)
+        (T_diag_Gamma0 N (fun _ : Fin 2 ↦ p) (fun _ ↦ hp.pos)
           (by rw [Int.gcd_natCast_natCast]; exact hpN)) 1) f : modFormCharSpace k χ) :
         ModularForm ((Gamma1 N).map (mapGL ℝ)) k) : ℍ → ℂ) =
       ((↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ)⁻¹ * (p : ℂ) ^ (k - 2)) •
         (⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) : ℍ → ℂ) := by
   classical
   have hgcd : Int.gcd (p : ℤ) (N : ℤ) = 1 := by rw [Int.gcd_natCast_natCast]; exact hpN
-  set D := T_diag_Gamma0 N (fun _ : Fin 2 => p) (fun _ => hp.pos) hgcd with hD
+  set D := T_diag_Gamma0 N (fun _ : Fin 2 ↦ p) (fun _ ↦ hp.pos) hgcd with hD
   set f0 : ModularForm ((Gamma1 N).map (mapGL ℝ)) k :=
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) with hf0
   have hf0inv : IsGamma0TwistedInvariant (N := N) k χ (⇑f0) :=
@@ -1054,7 +1054,7 @@ theorem heckeRingHomCharSpace_table_transport_schematic
       (∀ a b : 𝕋 (GL_pair 2) ℤ, Φ (a * b) = Φ a * Φ b) ∧
       (∀ a b : 𝕋 (GL_pair 2) ℤ, Φ (a + b) = Φ a + Φ b) := by
   intro Φ
-  exact ⟨fun a b h => congrArg Φ h, fun a b => map_mul Φ a b, fun a b => map_add Φ a b⟩
+  exact ⟨fun a b h ↦ congrArg Φ h, fun a b ↦ map_mul Φ a b, fun a b ↦ map_add Φ a b⟩
 
 /-- For coprime `m, n`, the level-1 identity `T(m) · T(n) = T(mn)` becomes the operator
 identity `Φ(T(m)) ∘ Φ(T(n)) = Φ(T(mn))` on `modFormCharSpace k χ`, where
@@ -1124,7 +1124,7 @@ theorem heckeRingHomCharSpace_D_p_eq_scalar_charRestrict (p : ℕ) (hp : Nat.Pri
     (hpN : Nat.Coprime p N) :
     heckeRingHomCharSpace (k := k) (χ := χ) (T_single (Gamma0_pair N) ℤ (D_p_Gamma0 N p hp.pos) 1) =
       ((↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ)⁻¹) • heckeT_p_all_charRestrict k p hp χ := by
-  refine LinearMap.ext fun f => ?_
+  refine LinearMap.ext fun f ↦ ?_
   apply Subtype.ext
   apply DFunLike.coe_injective
   show (⇑((heckeRingHomCharSpace (k := k) (χ := χ) (T_single (Gamma0_pair N) ℤ
@@ -1165,7 +1165,7 @@ theorem heckeT_p_all_comm_on_charSpace_via_ring
       heckeT_p_all k q hq (heckeT_p_all k p hp
         (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) := by
   exact congrArg Subtype.val
-    (congrArg (fun (T : Module.End ℂ (modFormCharSpace k χ)) => T f)
+    (congrArg (fun (T : Module.End ℂ (modFormCharSpace k χ)) ↦ T f)
       (heckeT_p_all_charRestrict_commute_via_ring (k := k) (χ := χ) hp hq hpN hqN))
 
 end OperatorCommutativityFromRing
@@ -1181,7 +1181,7 @@ noncomputable def heckeRingDp (p : ℕ) (hp : 0 < p) : 𝕋 (Gamma0_pair N) ℤ 
 /-- The ring-side scalar generator: the single scalar double coset `T(p,p)`. -/
 noncomputable def heckeRingTpp (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
     𝕋 (Gamma0_pair N) ℤ :=
-  T_single (Gamma0_pair N) ℤ (T_diag_Gamma0 N (fun _ : Fin 2 => p) (fun _ => hp.pos)
+  T_single (Gamma0_pair N) ℤ (T_diag_Gamma0 N (fun _ : Fin 2 ↦ p) (fun _ ↦ hp.pos)
     (by rw [Int.gcd_natCast_natCast]; exact hpN)) 1
 
 /-- The ring-side prime-power element, built by the same recurrence as `heckeT_ppow`:
@@ -1267,7 +1267,7 @@ noncomputable def heckeT_ppow_charRestrict (p : ℕ) (hp : Nat.Prime p)
 @[simp] theorem heckeT_ppow_charRestrict_zero (p : ℕ) (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) :
     heckeT_ppow_charRestrict (k := k) (χ := χ) p hp hpN 0 = 1 := by
-  refine LinearMap.ext fun f => Subtype.ext ?_
+  refine LinearMap.ext fun f ↦ Subtype.ext ?_
   rw [heckeT_ppow_charRestrict_coe]
   simp
 
@@ -1275,7 +1275,7 @@ noncomputable def heckeT_ppow_charRestrict (p : ℕ) (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) :
     heckeT_ppow_charRestrict (k := k) (χ := χ) p hp hpN 1 =
       heckeT_p_all_charRestrict k p hp χ := by
-  refine LinearMap.ext fun f => Subtype.ext ?_
+  refine LinearMap.ext fun f ↦ Subtype.ext ?_
   rw [heckeT_ppow_charRestrict_coe, heckeT_p_all_charRestrict_coe, heckeT_ppow_one]
 
 /-- The endomorphism recurrence for `heckeT_ppow_charRestrict`, with the diamond term
@@ -1286,7 +1286,7 @@ theorem heckeT_ppow_charRestrict_succ_succ (p : ℕ) (hp : Nat.Prime p)
       heckeT_p_all_charRestrict k p hp χ * heckeT_ppow_charRestrict p hp hpN (r + 1) -
         ((↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ) * (p : ℂ) ^ (k - 1)) •
           heckeT_ppow_charRestrict p hp hpN r := by
-  refine LinearMap.ext fun f => Subtype.ext ?_
+  refine LinearMap.ext fun f ↦ Subtype.ext ?_
   rw [heckeT_ppow_charRestrict_coe, heckeT_ppow_succ_succ]
   simp only [LinearMap.sub_apply, LinearMap.smul_apply, Module.End.mul_apply,
     Submodule.coe_sub, Submodule.coe_smul_of_tower, heckeT_p_all_charRestrict_coe,
@@ -1316,11 +1316,11 @@ theorem heckeRingHomCharSpace_heckeRingTpp (p : ℕ) (hp : Nat.Prime p)
     heckeRingHomCharSpace (k := k) (χ := χ) (heckeRingTpp p hp hpN) =
       ((↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ)⁻¹ * (p : ℂ) ^ (k - 2)) •
         (1 : Module.End ℂ (modFormCharSpace k χ)) := by
-  refine LinearMap.ext fun f => ?_
+  refine LinearMap.ext fun f ↦ ?_
   apply Subtype.ext
   apply DFunLike.coe_injective
   show (⇑((heckeRingHomCharSpace (k := k) (χ := χ) (T_single (Gamma0_pair N) ℤ
-      (T_diag_Gamma0 N (fun _ : Fin 2 => p) (fun _ => hp.pos)
+      (T_diag_Gamma0 N (fun _ : Fin 2 ↦ p) (fun _ ↦ hp.pos)
         (by rw [Int.gcd_natCast_natCast]; exact hpN)) 1) f : modFormCharSpace k χ) :
       ModularForm ((Gamma1 N).map (mapGL ℝ)) k) : ℍ → ℂ) = _
   rw [heckeRingHomCharSpace_T_pp_eq_scalar p hp hpN f]
@@ -1371,7 +1371,7 @@ theorem heckeT_n_charRestrict_ppow (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Copri
     heckeT_n_charRestrict k (p ^ v) (hpN.pow_left v) χ =
       heckeT_ppow_charRestrict (k := k) (χ := χ) p hp hpN v := by
   haveI : NeZero (p ^ v) := ⟨(pow_pos hp.pos v).ne'⟩
-  refine LinearMap.ext fun f => Subtype.ext ?_
+  refine LinearMap.ext fun f ↦ Subtype.ext ?_
   rw [heckeT_n_charRestrict_coe, heckeT_ppow_charRestrict_coe, heckeT_n_prime_pow k hp v hv]
 
 /-- `heckeT_n_charRestrict` is multiplicative over coprime factors. -/
@@ -1381,7 +1381,7 @@ theorem heckeT_n_charRestrict_mul_coprime (m n : ℕ) [NeZero m] [NeZero n]
     heckeT_n_charRestrict k (m * n) (Nat.Coprime.mul_left hm hn) χ =
       heckeT_n_charRestrict k m hm χ * heckeT_n_charRestrict k n hn χ := by
   haveI : NeZero (m * n) := ⟨Nat.mul_ne_zero (NeZero.ne m) (NeZero.ne n)⟩
-  refine LinearMap.ext fun f => Subtype.ext ?_
+  refine LinearMap.ext fun f ↦ Subtype.ext ?_
   rw [heckeT_n_charRestrict_coe]
   simp only [Module.End.mul_apply, heckeT_n_charRestrict_coe]
   rw [heckeT_n_mul_coprime k m n hmn]
@@ -1510,7 +1510,7 @@ theorem heckeRingHomCharSpace_heckeRingD_n (n : ℕ) [NeZero n] (hn : Nat.Coprim
     by_cases hn1 : n = 1
     · subst hn1
       rw [heckeRingD_n_one, map_one]
-      refine LinearMap.ext fun f => Subtype.ext ?_
+      refine LinearMap.ext fun f ↦ Subtype.ext ?_
       simp only [LinearMap.smul_apply, Module.End.one_apply, SetLike.val_smul,
         heckeT_n_charRestrict_coe, heckeT_n_one]
       rw [show (ZMod.unitOfCoprime 1 hn) = 1 by ext; simp [ZMod.coe_unitOfCoprime]]
@@ -1553,7 +1553,7 @@ theorem heckeT_n_cusp_eq_heckeRingHom (n : ℕ) [NeZero n] (hn : Nat.Coprime n N
           ⟨f.toModularForm', cuspFormCharSpace_toModularForm'_mem hf⟩ :
           modFormCharSpace k χ).val := by
   rw [heckeT_n_cusp_toModularForm' n f]
-  have happ := congrArg (fun (T : Module.End ℂ (modFormCharSpace k χ)) =>
+  have happ := congrArg (fun (T : Module.End ℂ (modFormCharSpace k χ)) ↦
     (T ⟨f.toModularForm', cuspFormCharSpace_toModularForm'_mem hf⟩ : modFormCharSpace k χ).val)
     (heckeRingHomCharSpace_heckeRingD_n (k := k) (χ := χ) n hn)
   simp only [LinearMap.smul_apply, SetLike.val_smul, heckeT_n_charRestrict_coe] at happ

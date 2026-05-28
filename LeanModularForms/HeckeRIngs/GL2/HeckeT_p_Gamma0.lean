@@ -44,10 +44,10 @@ namespace HeckeRing.GL2
 /-- `diag(1,p)` lies in `Δ₀(N)` for any `N` and `p > 0`. -/
 lemma diag_1p_mem_Delta0 (N p : ℕ) [NeZero N] (hp : 0 < p) :
     diagMat 2 ![1, p] ∈ Delta0_submonoid N := by
-  have ha : ∀ i : Fin 2, 0 < (![1, p] : Fin 2 → ℕ) i := fun i => by fin_cases i <;> simp [hp]
-  set A : Matrix (Fin 2) (Fin 2) ℤ := Matrix.diagonal (fun i => ((![1, p] i : ℕ) : ℤ))
+  have ha : ∀ i : Fin 2, 0 < (![1, p] : Fin 2 → ℕ) i := fun i ↦ by fin_cases i <;> simp [hp]
+  set A : Matrix (Fin 2) (Fin 2) ℤ := Matrix.diagonal (fun i ↦ ((![1, p] i : ℕ) : ℤ))
   have hcoe : (↑(diagMat 2 ![1, p]) : Matrix _ _ ℚ) =
-      Matrix.diagonal (fun i => ((![1, p] i : ℕ) : ℚ)) := by
+      Matrix.diagonal (fun i ↦ ((![1, p] i : ℕ) : ℚ)) := by
     unfold diagMat; rw [dif_pos ha]; rfl
   have hA_eq : (↑(diagMat 2 ![1, p]) : Matrix _ _ ℚ) = A.map (Int.cast : ℤ → ℚ) := by
     rw [hcoe]; ext i j; fin_cases i <;> fin_cases j <;>
@@ -112,7 +112,7 @@ represented by the same underlying matrix `diag(1, p)`. -/
 lemma D_p_Gamma0_eq_T_diag (N : ℕ) [NeZero N] (p : ℕ) (hp : 0 < p)
     (_hpN : Nat.Coprime p N) :
     D_p_Gamma0 N p hp =
-      T_diag_Gamma0 N (![1, p]) (fun i => by fin_cases i <;> simp [hp])
+      T_diag_Gamma0 N (![1, p]) (fun i ↦ by fin_cases i <;> simp [hp])
         (by show Int.gcd ((![1, p] : Fin 2 → ℕ) 0 : ℤ) N = 1; simp) := by
   simp only [D_p_Gamma0, diag_1p_delta_Gamma0, T_diag_Gamma0]
 
@@ -127,7 +127,7 @@ lemma HeckeCoset_deg_D_p_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.Prime p
     ext i; fin_cases i <;> simp
   have h_eq : (D_p_Gamma0 N p hp.pos : HeckeRing.HeckeCoset (Gamma0_pair N)) =
       T_diag_Gamma0 N (![1, p^1])
-        (fun i => by
+        (fun i ↦ by
           fin_cases i <;> first | exact Nat.one_pos | simp; exact hp.pos)
         (by simp) := by
     apply (HeckeRing.HeckeCoset.eq_iff _ _).mpr
@@ -139,7 +139,7 @@ lemma HeckeCoset_deg_D_p_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.Prime p
   rw [Nat.card_eq_fintype_card]
   have h_nat : Fintype.card (HeckeRing.decompQuot (Gamma0_pair N)
       (HeckeRing.HeckeCoset.rep (T_diag_Gamma0 N (![1, p^1])
-        (fun i => by
+        (fun i ↦ by
           fin_cases i <;> first | exact Nat.one_pos | simp; exact hp.pos)
         (by simp)))) = p^(1-1) * (p + 1) := by
     exact_mod_cast h_deg
@@ -188,7 +188,7 @@ private lemma T_p_lower_factor_through_diag_1p (N : ℕ) [NeZero N] (p : ℕ)
   refine ⟨mapGL ℚ σ, hσ_mem, mapGL ℚ τ, hτ_mem, ?_⟩
   have h_bezout_Q : (u : ℚ) * (p : ℚ) - (v : ℚ) * (N : ℚ) = 1 := by exact_mod_cast h_bezout
   apply Units.ext; ext i j
-  have hpos : ∀ k : Fin 2, 0 < (![1, p] : Fin 2 → Nat) k := fun k => by
+  have hpos : ∀ k : Fin 2, 0 < (![1, p] : Fin 2 → Nat) k := fun k ↦ by
     fin_cases k <;> simp [hp.pos]
   show (T_p_lower p hp.pos : GL (Fin 2) ℚ).val i j =
     (mapGL ℚ σ * (diagMat 2 ![1, p] : GL (Fin 2) ℚ) * mapGL ℚ τ).val i j
@@ -217,7 +217,7 @@ lemma T_p_upper_mem_D_p_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.Prime p)
   refine mem_D_p_Gamma0_of_factor_through_diag N p hp.pos _ 1 (mapGL ℚ σ_b)
     (one_mem _) (Subgroup.mem_map_of_mem _ hσ_Gamma0) ?_
   apply Units.ext; ext i j
-  have hpos : ∀ k : Fin 2, 0 < (![1, p] : Fin 2 → Nat) k := fun k => by
+  have hpos : ∀ k : Fin 2, 0 < (![1, p] : Fin 2 → Nat) k := fun k ↦ by
     fin_cases k <;> simp [hp.pos]
   show (T_p_upper p hp.pos b : GL (Fin 2) ℚ).val i j =
     (1 * (diagMat 2 ![1, p] : GL (Fin 2) ℚ) * (mapGL ℚ σ_b)).val i j
@@ -324,7 +324,7 @@ lemma Gamma0_pair_H_le_GL_pair_H (N : ℕ) [NeZero N] :
 private lemma adj_diag_1p_eq_T_p_lower (p : ℕ) (hp : Nat.Prime p) :
     GL_adjugate (diagMat 2 ![1, p] : GL (Fin 2) ℚ) = (T_p_lower p hp.pos : GL (Fin 2) ℚ) := by
   apply Units.ext; ext i j
-  have hpos : ∀ k : Fin 2, 0 < (![1, p] : Fin 2 → Nat) k := fun k => by
+  have hpos : ∀ k : Fin 2, 0 < (![1, p] : Fin 2 → Nat) k := fun k ↦ by
     fin_cases k <;> simp [hp.pos]
   simp only [GL_adjugate_val, diagMat_val _ _ hpos]
   have huniv : (Finset.univ : Finset (Fin 2)) = {0, 1} := by
@@ -503,7 +503,7 @@ private lemma T_p_coset_reps_map_injective (N : ℕ) [NeZero N] (p : ℕ) (hp : 
   by_cases h₁ : j₁.val < p <;> by_cases h₂ : j₂.val < p
   · simp only [h₁, h₂, dite_true] at heq
     exact adj_upper_inv_mul_upper_not_mem_Gamma0 N p hp j₁.val j₂.val h₁ h₂
-      (fun h => hne (Fin.ext h))
+      (fun h ↦ hne (Fin.ext h))
       (adj_inv_mul_mem_of_quot_eq N p hp _ _ _ _ heq)
   · simp only [h₁, dite_true, h₂, dite_false] at heq
     exact adj_upper_inv_mul_lower_not_mem_Gamma0 N p hp j₁.val

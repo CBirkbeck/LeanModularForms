@@ -37,7 +37,7 @@ def succEquiv : ℤ ≃ ℤ where
   right_inv := Int.succ_pred
 
 /-- Swap the two components of a function `Fin 2 → α`. -/
-def swap {α : Type*} : (Fin 2 → α) → (Fin 2 → α) := fun x => ![x 1, x 0]
+def swap {α : Type*} : (Fin 2 → α) → (Fin 2 → α) := fun x ↦ ![x 1, x 0]
 
 @[simp]
 lemma swap_apply {α : Type*} (b : Fin 2 → α) : swap b = ![b 1, b 0] := rfl

@@ -48,31 +48,31 @@ variable (n : ℕ)
 /-- The diagonal `GL_n(ℚ)` matrix with natural number entries.
     Positivity is needed to ensure the determinant is nonzero. -/
 private def natDiagDetNeZero (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
-    (Matrix.diagonal (fun i => (a i : ℚ))).det ≠ 0 := by
+    (Matrix.diagonal (fun i ↦ (a i : ℚ))).det ≠ 0 := by
   rw [Matrix.det_diagonal]
-  exact ne_of_gt (Finset.prod_pos fun i _ => Nat.cast_pos.mpr (ha i))
+  exact ne_of_gt (Finset.prod_pos fun i _ ↦ Nat.cast_pos.mpr (ha i))
 
 /-- The diagonal `GL_n(ℚ)` element `diag(a₁,...,aₙ)` with positive natural number entries.
 Returns `1` (the identity matrix) when the positivity condition `∀ i, 0 < a i` fails;
 this is a junk value that simplifies the API by avoiding an explicit positivity argument. -/
 noncomputable def diagMat (a : Fin n → ℕ) : GL (Fin n) ℚ :=
   if h : ∀ i, 0 < a i then
-    GeneralLinearGroup.mkOfDetNeZero (Matrix.diagonal (fun i => (a i : ℚ)))
+    GeneralLinearGroup.mkOfDetNeZero (Matrix.diagonal (fun i ↦ (a i : ℚ)))
       (natDiagDetNeZero n a h)
   else 1
 
 @[simp] lemma diagMat_val (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
     (↑(diagMat n a) : Matrix (Fin n) (Fin n) ℚ) =
-    Matrix.diagonal (fun i => (a i : ℚ)) := by unfold diagMat; rw [dif_pos ha]; rfl
+    Matrix.diagonal (fun i ↦ (a i : ℚ)) := by unfold diagMat; rw [dif_pos ha]; rfl
 
 lemma diagMat_hasIntEntries (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) : HasIntEntries n (diagMat n a) :=
-  ⟨Matrix.diagonal (fun i => (a i : ℤ)),
+  ⟨Matrix.diagonal (fun i ↦ (a i : ℤ)),
     by ext i j; simp [ha, Matrix.diagonal_apply, Matrix.map_apply]⟩
 
 lemma diagMat_det_pos (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
     0 < (↑(diagMat n a) : Matrix (Fin n) (Fin n) ℚ).det := by
   simp only [ha, implies_true, diagMat_val, det_diagonal]
-  exact Finset.prod_pos (fun i _ => by positivity [ha i])
+  exact Finset.prod_pos (fun i _ ↦ by positivity [ha i])
 
 lemma diagMat_mem_posDetInt (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
     diagMat n a ∈ posDetInt_submonoid n :=
@@ -82,8 +82,8 @@ lemma diagMat_mem_posDetInt (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
     (↑(diagMat n a) : Matrix (Fin n) (Fin n) ℚ).det = ∏ i, (a i : ℚ) := by
   simp [ha, Matrix.det_diagonal]
 
-lemma diagMat_one : diagMat n (fun _ => 1) = 1 := by
-  simp only [diagMat, dif_pos (fun _ => Nat.one_pos)]
+lemma diagMat_one : diagMat n (fun _ ↦ 1) = 1 := by
+  simp only [diagMat, dif_pos (fun _ ↦ Nat.one_pos)]
   apply Units.ext
   ext i j; simp [Matrix.one_apply]
 
@@ -111,8 +111,8 @@ end HeckeDiagonal
 def DivChain (a : Fin n → ℕ) : Prop :=
   ∀ (i : ℕ) (hi : i + 1 < n), a ⟨i, by omega⟩ ∣ a ⟨i + 1, hi⟩
 
-lemma divChain_const (c : ℕ) : DivChain n (fun _ => c) :=
-  fun _ _ => dvd_refl _
+lemma divChain_const (c : ℕ) : DivChain n (fun _ ↦ c) :=
+  fun _ _ ↦ dvd_refl _
 
 /-- Transitivity of the divisibility chain: `a i ∣ a j` whenever `i ≤ j`. -/
 lemma divChain_dvd {a : Fin n → ℕ} (ha : DivChain n a) {i j : Fin n} (hij : i ≤ j) :
@@ -169,10 +169,10 @@ lemma T_diag_rep_decompose (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
       (HeckeCoset.rep (T_diag a) : GL (Fin n) ℚ) = L * diagMat n a * R :=
   DoubleCoset.mem_doubleCoset.mp (T_diag_rep_mem_doubleCoset a ha)
 
-lemma T_diag_ones : T_diag (fun _ : Fin n => 1) = HeckeCoset.one (GL_pair n) := by
+lemma T_diag_ones : T_diag (fun _ : Fin n ↦ 1) = HeckeCoset.one (GL_pair n) := by
   simp only [T_diag, HeckeCoset.one]
   rw [HeckeCoset.eq_iff]
-  simp only [diagMat_delta, dif_pos (fun _ => Nat.one_pos)]
+  simp only [diagMat_delta, dif_pos (fun _ ↦ Nat.one_pos)]
   congr 1; exact diagMat_one n
 
 /-- Two diagonal double cosets are equal iff the underlying double cosets in `GL_n(ℚ)` coincide. -/
@@ -262,7 +262,7 @@ private lemma mulVecLin_preimage_linearIndependent_and_span (A : Matrix (Fin n) 
       rw [← show (w : Fin n → ℤ) = A.mulVecLin v from rfl, hw_sum, map_sum]
       congr 1; ext i; rw [LinearMap.map_smul, hr i]
     rw [hinj hAeq]
-    exact Submodule.sum_mem _ fun i _ =>
+    exact Submodule.sum_mem _ fun i _ ↦
       Submodule.smul_mem _ _ (Submodule.subset_span ⟨i, rfl⟩)
 
 /-- Given `L * A * Q = diag(d)` with `d` positive and `det(L) * det(Q) = 1`, produce
@@ -314,9 +314,9 @@ private lemma exists_SL_diagonal_of_unit_diagonalization (A P Q : Matrix (Fin n)
     ∃ (d : Fin n → ℤ) (_ : ∀ i, 0 < d i), ∃ (L R : SpecialLinearGroup (Fin n) ℤ),
       (L : Matrix (Fin n) (Fin n) ℤ) * A * (R : Matrix (Fin n) (Fin n) ℤ) =
       Matrix.diagonal d := by
-  set d := fun i => |a i| with hd_def
-  have hd_pos : ∀ i, 0 < d i := fun i => abs_pos.mpr (ha_ne i)
-  set sv := fun i => if (0 : ℤ) < a i then (1 : ℤ) else -1 with hsv_def
+  set d := fun i ↦ |a i| with hd_def
+  have hd_pos : ∀ i, 0 < d i := fun i ↦ abs_pos.mpr (ha_ne i)
+  set sv := fun i ↦ if (0 : ℤ) < a i then (1 : ℤ) else -1 with hsv_def
   have hsv_sq : ∀ i, sv i * sv i = 1 := by intro i; simp only [hsv_def]; split_ifs <;> ring
   have hsv_mul_d : ∀ i, sv i * d i = a i := by
     intro i; simp only [hsv_def, hd_def]; rcases lt_trichotomy (a i) 0 with h | h | h
@@ -332,7 +332,7 @@ private lemma exists_SL_diagonal_of_unit_diagonalization (A P Q : Matrix (Fin n)
     · simp [h]
   have hs_det_unit : IsUnit (Matrix.diagonal sv).det := by
     rw [Matrix.det_diagonal]; exact IsUnit.of_mul_eq_one _
-      (by rw [← Finset.prod_mul_distrib]; exact Finset.prod_eq_one (fun i _ => hsv_sq i))
+      (by rw [← Finset.prod_mul_distrib]; exact Finset.prod_eq_one (fun i _ ↦ hsv_sq i))
   set L_mat := Matrix.diagonal sv * P⁻¹ with hL_def
   have hL_eq : L_mat * A * Q = Matrix.diagonal d := by
     calc L_mat * A * Q
@@ -352,7 +352,7 @@ private lemma exists_SL_diagonal_of_unit_diagonalization (A P Q : Matrix (Fin n)
       have hmul_eq : L_mat.det * Q.det * A.det = ∏ i, d i := by
         rw [mul_right_comm]; exact h_prod
       rw [hneg] at hmul_eq
-      have hprod_pos : (0 : ℤ) < ∏ i, d i := Finset.prod_pos fun i _ => hd_pos i
+      have hprod_pos : (0 : ℤ) < ∏ i, d i := Finset.prod_pos fun i _ ↦ hd_pos i
       nlinarith
   exact ⟨d, hd_pos,
     sign_correct_unit_transform (n := n) A d L_mat Q hd_pos hL_eq hLQ_one hL_unit hQ_unit⟩
@@ -371,13 +371,13 @@ theorem exists_diagonal_of_posdet (A : Matrix (Fin n) (Fin n) ℤ) (hdet : 0 < A
     intro i hi
     have : (ab' i : Fin n → ℤ) = 0 := by rw [hsnf i, hi, zero_smul]
     exact ab'.ne_zero i (Subtype.ext this)
-  choose r hr using fun i => LinearMap.mem_range.mp (ab' i).2
+  choose r hr using fun i ↦ LinearMap.mem_range.mp (ab' i).2
   have hkey : ∀ j, A *ᵥ r j = a j • b' j := by
     intro j
     show A *ᵥ r j = a j • b' j; rw [← hsnf j, ← hr j]; rfl
   set e := Pi.basisFun ℤ (Fin n)
-  set P_mat : Matrix (Fin n) (Fin n) ℤ := Matrix.of (fun k j => b' j k) with hP_def
-  set Q_mat : Matrix (Fin n) (Fin n) ℤ := Matrix.of (fun k j => r j k) with hQ_def
+  set P_mat : Matrix (Fin n) (Fin n) ℤ := Matrix.of (fun k j ↦ b' j k) with hP_def
+  set Q_mat : Matrix (Fin n) (Fin n) ℤ := Matrix.of (fun k j ↦ r j k) with hQ_def
   have hmat_eq : A * Q_mat = P_mat * Matrix.diagonal a := by
     ext k j; simp only [Matrix.mul_apply, hQ_def, hP_def, Matrix.of_apply, Matrix.diagonal_apply]
     conv_lhs => rw [show ∑ l, A k l * r j l = (A *ᵥ r j) k from by simp [mulVec, dotProduct]]
@@ -494,7 +494,7 @@ private lemma gcd_natAbs_le_left (a b : ℤ) (ha : 0 < a) :
 
 private lemma gcd_natAbs_lt_left_of_not_dvd (a b : ℤ) (ha : 0 < a) (hndvd : ¬ a ∣ b) :
     (↑(a.gcd b) : ℤ).natAbs < a.natAbs :=
-  lt_of_le_of_ne (gcd_natAbs_le_left a b ha) (fun heq => hndvd (by
+  lt_of_le_of_ne (gcd_natAbs_le_left a b ha) (fun heq ↦ hndvd (by
     have h1 : (↑(a.gcd b) : ℤ).natAbs = a.gcd b := by simp
     have h2 : a.gcd b = a.natAbs := by omega
     exact Int.natAbs_dvd_natAbs.mp (h2 ▸ Nat.gcd_dvd_right a.natAbs b.natAbs)))
@@ -504,8 +504,8 @@ the block matrices `(fromBlocks L22 0 0 1).submatrix e e` act on `diagonal d` ex
 `R22` act on the `2 × 2` head block (selected by `e.symm ∘ inl`), leaving the tail untouched. -/
 private lemma blockEmbed_mul_diagonal_eq (k : ℕ) (e : Fin (k + 2) ≃ Fin 2 ⊕ Fin k)
     (d d' : Fin (k + 2) → ℤ) (L22 R22 H H' : Matrix (Fin 2) (Fin 2) ℤ)
-    (hH : Matrix.diagonal (fun i : Fin 2 => (d ∘ e.symm) (Sum.inl i)) = H)
-    (hH' : Matrix.diagonal (fun i : Fin 2 => (d' ∘ e.symm) (Sum.inl i)) = H')
+    (hH : Matrix.diagonal (fun i : Fin 2 ↦ (d ∘ e.symm) (Sum.inl i)) = H)
+    (hH' : Matrix.diagonal (fun i : Fin 2 ↦ (d' ∘ e.symm) (Sum.inl i)) = H')
     (hmul : L22 * H * R22 = H')
     (htail : ∀ i : Fin k, (d' ∘ e.symm) (Sum.inr i) = (d ∘ e.symm) (Sum.inr i))
     (hsub : ∀ f : Fin (k + 2) → ℤ,
@@ -518,8 +518,8 @@ private lemma blockEmbed_mul_diagonal_eq (k : ℕ) (e : Fin (k + 2) ≃ Fin 2 �
   rw [show Matrix.diagonal d' = (Matrix.diagonal (d' ∘ e.symm)).submatrix e e from (hsub d').symm]
   congr 1
   have hdecomp : ∀ f : Fin (k + 2) → ℤ, Matrix.diagonal (f ∘ e.symm) =
-      fromBlocks (Matrix.diagonal (fun i : Fin 2 => (f ∘ e.symm) (Sum.inl i)))
-        0 0 (Matrix.diagonal (fun i : Fin k => (f ∘ e.symm) (Sum.inr i))) := by
+      fromBlocks (Matrix.diagonal (fun i : Fin 2 ↦ (f ∘ e.symm) (Sum.inl i)))
+        0 0 (Matrix.diagonal (fun i : Fin k ↦ (f ∘ e.symm) (Sum.inr i))) := by
     intro f; ext (i | i) (j | j) <;> simp [fromBlocks, diagonal_apply, Sum.elim, Function.comp]
   rw [hdecomp d, fromBlocks_multiply]
   simp only [Matrix.mul_zero, Matrix.zero_mul, add_zero, zero_add, Matrix.one_mul]
@@ -548,13 +548,13 @@ private lemma gcd_step_matrix_eq (k : ℕ) (e : Fin (k + 2) ≃ Fin 2 ⊕ Fin k)
       ((fromBlocks !![(1 : ℤ), -(a.gcdB b * (b / ↑(a.gcd b)));
         1, 1 - a.gcdB b * (b / ↑(a.gcd b))] 0 0 (1 : Matrix (Fin k) (Fin k) ℤ)).submatrix e e) =
     Matrix.diagonal d' := by
-  have hH : Matrix.diagonal (fun i : Fin 2 => (d ∘ e.symm) (Sum.inl i)) = !![a, (0 : ℤ); 0, b] := by
+  have hH : Matrix.diagonal (fun i : Fin 2 ↦ (d ∘ e.symm) (Sum.inl i)) = !![a, (0 : ℤ); 0, b] := by
     ext i m; fin_cases i <;> fin_cases m <;> simp [Function.comp, he0, he1, hda, hdb]
-  have hH' : Matrix.diagonal (fun i : Fin 2 => (d' ∘ e.symm) (Sum.inl i)) =
+  have hH' : Matrix.diagonal (fun i : Fin 2 ↦ (d' ∘ e.symm) (Sum.inl i)) =
       !![↑(a.gcd b), (0 : ℤ); 0, (a / ↑(a.gcd b)) * (b / ↑(a.gcd b)) * ↑(a.gcd b)] := by
     ext i m; fin_cases i <;> fin_cases m <;> simp [Function.comp, he0, he1, hd'0, hd'j]
   exact blockEmbed_mul_diagonal_eq k e d d' _ _ _ _ hH hH' (gcd_2x2_mul a b)
-    (fun i => by simp only [Function.comp]; exact hrest _ (hinr0 i) (hinrj i)) hsub
+    (fun i ↦ by simp only [Function.comp]; exact hrest _ (hinr0 i) (hinrj i)) hsub
 
 private lemma gcd_step_divchain (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : ∀ i, 0 < d i) :
     let a := d ⟨0, by omega⟩; let b := d ⟨1, by omega⟩
@@ -566,7 +566,7 @@ private lemma gcd_step_divchain (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : ∀ i,
       (L : Matrix _ _ ℤ) * Matrix.diagonal d * (R : Matrix _ _ ℤ) = Matrix.diagonal d' := by
   intro a b g p q
   set e := finEquivSum k
-  set d' : Fin (k + 2) → ℤ := fun i =>
+  set d' : Fin (k + 2) → ℤ := fun i ↦
     if i.val = 0 then g else if i.val = 1 then p * q * g else d i
   have ha : 0 < a := hd ⟨0, by omega⟩; have hb : 0 < b := hd ⟨1, by omega⟩
   have hg_pos : (0 : ℤ) < g :=
@@ -601,8 +601,8 @@ private lemma gcd_step_divchain (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : ∀ i,
         then p * q * g else d 1) = _
       rw [h1]; rfl
     · intro i hi0 hij; simp only [d']
-      rw [if_neg (show (i : ℕ) ≠ 0 from fun h => hi0 (Fin.ext h)),
-        if_neg (show (i : ℕ) ≠ 1 from fun h => hij (Fin.ext (h.trans h1.symm)))]
+      rw [if_neg (show (i : ℕ) ≠ 0 from fun h ↦ hi0 (Fin.ext h)),
+        if_neg (show (i : ℕ) ≠ 1 from fun h ↦ hij (Fin.ext (h.trans h1.symm)))]
 
 private noncomputable def genEquiv (k : ℕ) (j : Fin (k + 2)) (_hj : j.val ≠ 0) :
     Fin (k + 2) ≃ Fin 2 ⊕ Fin k :=
@@ -616,7 +616,7 @@ private lemma diagonal_submatrix_genEquiv (k : ℕ) (j : Fin (k + 2)) (hj : j.va
 private lemma genEquiv_zero (k : ℕ) (j : Fin (k + 2)) (hj : j.val ≠ 0) :
     genEquiv k j hj ⟨0, by omega⟩ = Sum.inl ⟨0, by omega⟩ := by
   simp only [genEquiv, Equiv.trans_apply]
-  rw [Equiv.swap_apply_of_ne_of_ne (by intro h; simp at h) (fun h => hj (by rw [← h]))]
+  rw [Equiv.swap_apply_of_ne_of_ne (by intro h; simp at h) (fun h ↦ hj (by rw [← h]))]
   show finEquivSum k ⟨0, by omega⟩ = _
   unfold finEquivSum; simp [Equiv.trans_apply, Fin.castOrderIso]; rfl
 
@@ -657,7 +657,7 @@ private lemma gcd_step_general (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : ∀ i, 
   intro a b g
   set e := genEquiv k j hj
   set p := a / g; set q := b / g
-  set d' : Fin (k + 2) → ℤ := fun i =>
+  set d' : Fin (k + 2) → ℤ := fun i ↦
     if i = (0 : Fin (k + 2)) then g else if i = j then p * q * g else d i
   have ha : 0 < a := hd ⟨0, by omega⟩; have hb : 0 < b := hd j
   have hg_pos : (0 : ℤ) < g :=
@@ -688,11 +688,11 @@ private lemma gcd_step_general (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : ∀ i, 
     refine gcd_step_matrix_eq k e j d d' a b rfl rfl rfl ?_ ?_
       (by simp only [e]; exact genEquiv_symm_inl0 k j hj)
       (by simp only [e]; exact genEquiv_symm_inl1 k j hj)
-      (fun i => by simp only [e]; exact genEquiv_symm_inr_ne_zero k j hj i)
-      (fun i => by simp only [e]; exact genEquiv_symm_inr_ne_j k j hj i)
+      (fun i ↦ by simp only [e]; exact genEquiv_symm_inr_ne_zero k j hj i)
+      (fun i ↦ by simp only [e]; exact genEquiv_symm_inr_ne_j k j hj i)
       (diagonal_submatrix_genEquiv k j hj)
     · show (if j = (0 : Fin (k + 2)) then g else if j = j then p * q * g else d j) = _
-      rw [if_neg (fun h => hj (by rw [h]; rfl)), if_pos rfl]
+      rw [if_neg (fun h ↦ hj (by rw [h]; rfl)), if_pos rfl]
     · intro i hi0 hij; simp only [d', if_neg hi0, if_neg hij]
 
 private lemma dvd_diag_of_SL_transform (m : ℕ) (d d' : Fin m → ℤ) (c : ℤ) (hc : ∀ i, c ∣ d i)
@@ -766,9 +766,9 @@ private noncomputable def slSuccEmbed {k : ℕ} (M : SpecialLinearGroup (Fin (k 
 
 private lemma slSuccEmbed_mul_diagonal (k : ℕ) (d : Fin (k + 2) → ℤ)
     (L R : SpecialLinearGroup (Fin (k + 1)) ℤ) (d'_tail : Fin (k + 1) → ℤ) (hmul :
-    (L : Matrix _ _ ℤ) * Matrix.diagonal (fun i : Fin (k + 1) => d ⟨i.val + 1, by omega⟩) *
+    (L : Matrix _ _ ℤ) * Matrix.diagonal (fun i : Fin (k + 1) ↦ d ⟨i.val + 1, by omega⟩) *
     (R : Matrix _ _ ℤ) = Matrix.diagonal d'_tail) :
-    let d_out : Fin (k + 2) → ℤ := fun i =>
+    let d_out : Fin (k + 2) → ℤ := fun i ↦
       if i = (0 : Fin (k + 2)) then d 0 else d'_tail ⟨i.val - 1, by omega⟩
     (slSuccEmbed L : Matrix _ _ ℤ) * Matrix.diagonal d *
       (slSuccEmbed R : Matrix _ _ ℤ) = Matrix.diagonal d_out := by
@@ -785,8 +785,8 @@ private lemma slSuccEmbed_mul_diagonal (k : ℕ) (d : Fin (k + 2) → ℤ)
     (fromBlocks 1 0 0 (R : Matrix _ _ ℤ)).submatrix e e = _
   simp only [Matrix.submatrix_mul_equiv]
   have h_decomp : Matrix.diagonal (d ∘ e.symm) =
-      fromBlocks (Matrix.diagonal (fun _ : Fin 1 => d 0))
-        0 0 (Matrix.diagonal (fun i : Fin (k + 1) => d ⟨i.val + 1, by omega⟩)) := by
+      fromBlocks (Matrix.diagonal (fun _ : Fin 1 ↦ d 0))
+        0 0 (Matrix.diagonal (fun i : Fin (k + 1) ↦ d ⟨i.val + 1, by omega⟩)) := by
     ext (i | i) (j | j)
     · fin_cases i; fin_cases j; simp [fromBlocks, Function.comp, he_inl]
     · simp [fromBlocks]
@@ -801,7 +801,7 @@ private lemma slSuccEmbed_mul_diagonal (k : ℕ) (d : Fin (k + 2) → ℤ)
   rw [show Matrix.diagonal d_out = (Matrix.diagonal (d_out ∘ e.symm)).submatrix e e
       from (diagonal_submatrix_fin1Sum (k + 1) d_out).symm]; congr 1
   have h_out_decomp : Matrix.diagonal (d_out ∘ e.symm) =
-      fromBlocks (Matrix.diagonal (fun _ : Fin 1 => d 0)) 0 0 (Matrix.diagonal d'_tail) := by
+      fromBlocks (Matrix.diagonal (fun _ : Fin 1 ↦ d 0)) 0 0 (Matrix.diagonal d'_tail) := by
     ext (i | i) (j | j)
     · fin_cases i; fin_cases j; simp [fromBlocks, Function.comp, d_out, he_inl]
     · simp [fromBlocks]
@@ -823,13 +823,13 @@ private lemma divChain_prepend (k : ℕ) (c : ℤ) (d_tail' : Fin (k + 1) → �
   | zero =>
     rw [if_pos (show (⟨0, by omega⟩ : Fin (k + 2)) = 0 from rfl),
       if_neg (show (⟨1, hi⟩ : Fin (k + 2)) ≠ 0 from
-        fun h => absurd (Fin.ext_iff.mp h) (by simp))]
+        fun h ↦ absurd (Fin.ext_iff.mp h) (by simp))]
     exact hc ⟨0, by omega⟩
   | succ i =>
     rw [if_neg (show (⟨i + 1, by omega⟩ : Fin (k + 2)) ≠ 0 from
-        fun h => absurd (Fin.ext_iff.mp h) (by simp)),
+        fun h ↦ absurd (Fin.ext_iff.mp h) (by simp)),
       if_neg (show (⟨i + 2, hi⟩ : Fin (k + 2)) ≠ 0 from
-        fun h => absurd (Fin.ext_iff.mp h) (by simp))]
+        fun h ↦ absurd (Fin.ext_iff.mp h) (by simp))]
     show d_tail' ⟨i, by omega⟩ ∣ d_tail' ⟨i + 1, by omega⟩
     exact htail i (by omega)
 
@@ -849,27 +849,27 @@ private lemma exists_divchain_of_posdiag (d : Fin n → ℤ) (hd : ∀ i, 0 < d 
   induction m with
   | zero =>
     intro d hd
-    exact ⟨d, hd, fun i hi => by omega, 1, 1, by simp⟩
+    exact ⟨d, hd, fun i hi ↦ by omega, 1, 1, by simp⟩
   | succ m ih =>
     cases m with
     | zero =>
       intro d hd
-      exact ⟨d, hd, fun i hi => by omega, 1, 1, by simp⟩
+      exact ⟨d, hd, fun i hi ↦ by omega, 1, 1, by simp⟩
     | succ k =>
       intro d hd
       obtain ⟨d₁, hd₁_pos, hd₁_div, L₁, R₁, hmul₁⟩ := make_first_divide_all k d hd
       obtain ⟨d_tail', hd_tail'_pos, hd_tail'_chain, L_tail, R_tail, hmul_tail⟩ :=
-        ih (fun i : Fin (k + 1) => d₁ ⟨i.val + 1, by omega⟩)
-          (fun i => hd₁_pos ⟨i.val + 1, by omega⟩)
-      set d₂ : Fin (k + 2) → ℤ := fun i =>
+        ih (fun i : Fin (k + 1) ↦ d₁ ⟨i.val + 1, by omega⟩)
+          (fun i ↦ hd₁_pos ⟨i.val + 1, by omega⟩)
+      set d₂ : Fin (k + 2) → ℤ := fun i ↦
         if i = (0 : Fin (k + 2)) then d₁ 0
         else d_tail' ⟨i.val - 1, by omega⟩
       have hd₂_pos : ∀ i, 0 < d₂ i := by
         intro i; simp only [d₂]; split_ifs <;> [exact hd₁_pos 0; exact hd_tail'_pos _]
       have hd₂_chain : ∀ (i : ℕ) (hi : i + 1 < k + 2), d₂ ⟨i, by omega⟩ ∣ d₂ ⟨i + 1, hi⟩ :=
         divChain_prepend k (d₁ 0) d_tail'
-          (dvd_diag_of_SL_transform (k + 1) (fun i : Fin (k + 1) => d₁ ⟨i.val + 1, by omega⟩)
-            d_tail' (d₁ 0) (fun i => hd₁_div ⟨i.val + 1, by omega⟩)
+          (dvd_diag_of_SL_transform (k + 1) (fun i : Fin (k + 1) ↦ d₁ ⟨i.val + 1, by omega⟩)
+            d_tail' (d₁ 0) (fun i ↦ hd₁_div ⟨i.val + 1, by omega⟩)
             (L_tail : Matrix _ _ ℤ) (R_tail : Matrix _ _ ℤ) hmul_tail) hd_tail'_chain
       refine ⟨d₂, hd₂_pos, hd₂_chain, slSuccEmbed L_tail * L₁, R₁ * slSuccEmbed R_tail, ?_⟩
       simp only [SpecialLinearGroup.coe_mul]
@@ -911,12 +911,12 @@ private lemma double_coset_eq_of_SLnZ_equiv (α : (GL_pair n).Δ) (A : Matrix (F
       (GeneralLinearGroup.mkOfDetNeZero
         ((Matrix.diagonal d).map (Int.cast : ℤ → ℚ))
         (by rw [det_intMat_cast, Matrix.det_diagonal]
-            exact_mod_cast (ne_of_gt (Finset.prod_pos (fun i _ => hd_pos i)))))
+            exact_mod_cast (ne_of_gt (Finset.prod_pos (fun i _ ↦ hd_pos i)))))
       (SLnZ_subgroup n) (SLnZ_subgroup n) := by
   set diag_GL := GeneralLinearGroup.mkOfDetNeZero
     ((Matrix.diagonal d).map (Int.cast : ℤ → ℚ))
     (by rw [det_intMat_cast, Matrix.det_diagonal]
-        exact_mod_cast (ne_of_gt (Finset.prod_pos (fun i _ => hd_pos i))))
+        exact_mod_cast (ne_of_gt (Finset.prod_pos (fun i _ ↦ hd_pos i))))
   symm; apply DoubleCoset.doubleCoset_eq_of_mem; rw [DoubleCoset.mem_doubleCoset]
   refine ⟨(L : GL (Fin n) ℚ), coe_mem_SLnZ n L, (R : GL (Fin n) ℚ), coe_mem_SLnZ n R, ?_⟩
   have h_map_mul : ∀ (X Y : Matrix (Fin n) (Fin n) ℤ),
@@ -947,7 +947,7 @@ theorem exists_diagonal_representative (α : (GL_pair n).Δ) :
   obtain ⟨d, hd_pos, hd_div, L, R, hLR⟩ := exists_divchain_diagonal_of_posdet n A hdet_pos
   have hd_pos_nat : ∀ i, 0 < (d i).toNat := by
     intro i; linarith [hd_pos i, (Int.toNat_of_nonneg (le_of_lt (hd_pos i))).symm]
-  set a : Fin n → ℕ := fun i => (d i).toNat
+  set a : Fin n → ℕ := fun i ↦ (d i).toNat
   have hd_eq : ∀ i, (d i) = (a i : ℤ) := by
     intro i; simp [a, Int.toNat_of_nonneg (le_of_lt (hd_pos i))]
   have hdiv : DivChain n a := by
@@ -975,14 +975,14 @@ private lemma divChain_prod_dvd_of_injective {a : Fin n → ℕ} (hda : DivChain
   | zero => simp
   | succ k ih =>
     obtain ⟨j₀, _, hmax⟩ :=
-      Finset.exists_max_image Finset.univ (fun j => (f j).val) Finset.univ_nonempty
+      Finset.exists_max_image Finset.univ (fun j ↦ (f j).val) Finset.univ_nonempty
     have hge : k ≤ (f j₀).val := by
       by_contra hlt; push_neg at hlt
       have : Fintype.card (Fin (k + 1)) ≤ Fintype.card (Fin k) :=
         Fintype.card_le_of_injective
-          (fun j : Fin (k + 1) => (⟨(f j).val, by
+          (fun j : Fin (k + 1) ↦ (⟨(f j).val, by
             exact Nat.lt_of_le_of_lt (hmax j (Finset.mem_univ _)) hlt⟩ : Fin k))
-          (fun j₁ j₂ heq => by simp only [Fin.mk.injEq] at heq; exact hf (Fin.ext heq))
+          (fun j₁ j₂ heq ↦ by simp only [Fin.mk.injEq] at heq; exact hf (Fin.ext heq))
       simp at this
     rw [Fin.prod_univ_castSucc, Fin.prod_univ_succAbove _ j₀, mul_comm (a (f j₀)) _]
     exact mul_dvd_mul (ih (by omega) (f ∘ j₀.succAbove)
@@ -999,29 +999,29 @@ private lemma partialProd_dvd_of_SLnZ_equiv {c d : Fin n → ℕ} (hc_pos : ∀ 
     (∏ j : Fin k, c ⟨j.val, by omega⟩) ∣ (∏ j : Fin k, d ⟨j.val, by omega⟩) := by
   suffices hint : (∏ j : Fin k, (c ⟨j.val, by omega⟩ : ℤ)) ∣
       (∏ j : Fin k, (d ⟨j.val, by omega⟩ : ℤ)) by exact_mod_cast hint
-  set e : Fin k → Fin n := fun j => ⟨j.val, by omega⟩ with he_def
+  set e : Fin k → Fin n := fun j ↦ ⟨j.val, by omega⟩ with he_def
   set P_ℤ := (↑P : Matrix (Fin n) (Fin n) ℤ)
   set Q_ℤ := (↑Q : Matrix (Fin n) (Fin n) ℤ)
-  have hmat_int : Matrix.diagonal (fun m : Fin n => (d m : ℤ)) =
-      P_ℤ * Matrix.diagonal (fun m => (c m : ℤ)) * Q_ℤ := by
-    ext i j; have h := congr_arg (fun (g : GL (Fin n) ℚ) => (↑g : Matrix _ _ ℚ) i j) hcd
+  have hmat_int : Matrix.diagonal (fun m : Fin n ↦ (d m : ℤ)) =
+      P_ℤ * Matrix.diagonal (fun m ↦ (c m : ℤ)) * Q_ℤ := by
+    ext i j; have h := congr_arg (fun (g : GL (Fin n) ℚ) ↦ (↑g : Matrix _ _ ℚ) i j) hcd
     simp only [diagMat_val n d hd_pos, diagMat_val n c hc_pos, Matrix.diagonal_apply,
       Units.val_mul, Matrix.mul_apply,
-      show ∀ i j, (↑(mapGL ℚ P) : Matrix _ _ ℚ) i j = ↑(P.val i j) from fun i j => by
+      show ∀ i j, (↑(mapGL ℚ P) : Matrix _ _ ℚ) i j = ↑(P.val i j) from fun i j ↦ by
         simp [mapGL_coe_matrix, algebraMap_int_eq, Matrix.map_apply],
-      show ∀ i j, (↑(mapGL ℚ Q) : Matrix _ _ ℚ) i j = ↑(Q.val i j) from fun i j => by
+      show ∀ i j, (↑(mapGL ℚ Q) : Matrix _ _ ℚ) i j = ↑(Q.val i j) from fun i j ↦ by
         simp [mapGL_coe_matrix, algebraMap_int_eq, Matrix.map_apply]] at h
     simp only [Matrix.diagonal_apply, Matrix.mul_apply]; exact_mod_cast h
   have he_inj : Function.Injective e := by intro i j h; exact Fin.ext (Fin.mk.inj h)
   have hprod_d : ∏ j : Fin k, (d (e j) : ℤ) =
-      det ((P_ℤ * Matrix.diagonal (fun m => (c m : ℤ)) * Q_ℤ).submatrix e e) := by
+      det ((P_ℤ * Matrix.diagonal (fun m ↦ (c m : ℤ)) * Q_ℤ).submatrix e e) := by
     rw [← hmat_int]
-    rw [show (Matrix.diagonal (fun m : Fin n => (d m : ℤ))).submatrix e e =
-        Matrix.diagonal (fun j : Fin k => (d (e j) : ℤ)) from by
+    rw [show (Matrix.diagonal (fun m : Fin n ↦ (d m : ℤ))).submatrix e e =
+        Matrix.diagonal (fun j : Fin k ↦ (d (e j) : ℤ)) from by
       ext i j; simp only [Matrix.submatrix_apply, Matrix.diagonal_apply, he_inj.eq_iff]]
     exact Matrix.det_diagonal.symm
   rw [hprod_d]
-  have hcb : det ((P_ℤ * Matrix.diagonal (fun m => (c m : ℤ)) * Q_ℤ).submatrix e e) =
+  have hcb : det ((P_ℤ * Matrix.diagonal (fun m ↦ (c m : ℤ)) * Q_ℤ).submatrix e e) =
       ∑ g : Fin k → Fin n, (∏ i : Fin k, (c (g i) : ℤ)) *
         ((∏ i : Fin k, Q_ℤ (g i) (e i)) * det (P_ℤ.submatrix e g)) := by
     simp only [Matrix.det_apply', Matrix.submatrix_apply, Matrix.mul_apply,
@@ -1035,7 +1035,7 @@ private lemma partialProd_dvd_of_SLnZ_equiv {c d : Fin n → ℕ} (hc_pos : ∀ 
   · apply dvd_mul_of_dvd_left
     exact_mod_cast divChain_prod_dvd_of_injective (n := n) hc k hk g hg
   · simp only [Function.not_injective_iff] at hg; obtain ⟨j₁, j₂, hgeq, hjne⟩ := hg
-    have : det (P_ℤ.submatrix e g) = 0 := Matrix.det_zero_of_column_eq hjne (fun i => by
+    have : det (P_ℤ.submatrix e g) = 0 := Matrix.det_zero_of_column_eq hjne (fun i ↦ by
       simp only [Matrix.submatrix_apply, hgeq])
     simp [this]
 
@@ -1069,7 +1069,7 @@ theorem diagonal_representative_unique (a b : Fin n → ℕ) (ha : ∀ i, 0 < a 
   rw [split_eq a, split_eq b,
     partialProd_eq_of_SLnZ_equiv (n := n) ha hb hda hdb L R hmat i.val (by omega)] at hprod₁
   exact Nat.eq_of_mul_eq_mul_left
-    (Finset.prod_pos (fun j _ => hb ⟨j.val, by omega⟩)) hprod₁
+    (Finset.prod_pos (fun j _ ↦ hb ⟨j.val, by omega⟩)) hprod₁
 
 /-- The Hecke algebra is spanned by diagonal double coset elements `T(a₁,...,aₙ)`. -/
 theorem T_diag_span (f : HeckeAlgebra n) :
@@ -1082,9 +1082,9 @@ theorem T_diag_span (f : HeckeAlgebra n) :
     exact ⟨a, ha, hdiv, Quotient.out_eq t ▸ hT⟩
   choose a_fn ha_fn hdiv_fn hrep_fn using h_rep
   let toSub : HeckeCoset (GL_pair n) → { p : Fin n → ℕ // (∀ i, 0 < p i) ∧ DivChain n p } :=
-    fun t => ⟨a_fn t, ha_fn t, hdiv_fn t⟩
+    fun t ↦ ⟨a_fn t, ha_fn t, hdiv_fn t⟩
   set S : Finset { p : Fin n → ℕ // (∀ i, 0 < p i) ∧ DivChain n p } := f.support.image toSub
-  refine ⟨S, fun s => f.toFun (T_diag s.1.1), ?_⟩
+  refine ⟨S, fun s ↦ f.toFun (T_diag s.1.1), ?_⟩
   have h_smul : ∀ (a : Fin n → ℕ) (c : ℤ), c • T_elem a = Finsupp.single (T_diag a) c := by
     intro a c; unfold T_elem; rw [Finsupp.smul_single, smul_eq_mul, mul_one]
   simp_rw [h_smul]
@@ -1106,7 +1106,7 @@ theorem T_diag_span (f : HeckeAlgebra n) :
   · have hfx : Finsupp.toFun f x = 0 := Finsupp.notMem_support_iff.mp hx
     show Finsupp.toFun f x = _; rw [hfx]
     symm; apply Finset.sum_eq_zero; intro s _
-    exact Finsupp.single_eq_of_ne (fun heq => by
+    exact Finsupp.single_eq_of_ne (fun heq ↦ by
       obtain ⟨t, ht, hts⟩ := Finset.mem_image.mp s.2
       have h_tx : t = x := (h_Tdiag s.1 t hts).symm.trans heq.symm
       subst h_tx; exact absurd ht hx)

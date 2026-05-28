@@ -137,7 +137,7 @@ private lemma ker_entry_dvd (d : ℕ) [NeZero d] (γ : SpecialLinearGroup (Fin n
 /-- When `d | (gamma - I)` entry-wise, decompose `gamma = I + d * M`. -/
 private lemma gamma_decompose (d : ℤ) (gamma : Matrix (Fin n) (Fin n) ℤ)
     (hgamma : ∀ i j : Fin n, d ∣ (gamma i j - (1 : Matrix (Fin n) (Fin n) ℤ) i j)) :
-    gamma = 1 + d • Matrix.of fun i j => (gamma i j - (1 : Matrix _ _ ℤ) i j) / d := by
+    gamma = 1 + d • Matrix.of fun i j ↦ (gamma i j - (1 : Matrix _ _ ℤ) i j) / d := by
   ext i j; simp only [Matrix.add_apply, Matrix.one_apply, Matrix.smul_apply, smul_eq_mul,
     Matrix.of_apply]; simp only [Matrix.one_apply] at hgamma
   nlinarith [mul_comm ((gamma i j - if i = j then 1 else 0) / d) d,
@@ -149,7 +149,7 @@ private lemma adjugate_conj_dvd (A gamma : Matrix (Fin n) (Fin n) ℤ)
     (hgamma : ∀ i j : Fin n, A.det ∣ (gamma i j - (1 : Matrix (Fin n) (Fin n) ℤ) i j))
     (i j : Fin n) :
     A.det ∣ (A.adjugate * gamma * A) i j := by
-  set M := Matrix.of fun i j => (gamma i j - (1 : Matrix _ _ ℤ) i j) / A.det
+  set M := Matrix.of fun i j ↦ (gamma i j - (1 : Matrix _ _ ℤ) i j) / A.det
   have : A.adjugate * gamma * A = A.adjugate * A + A.det • (A.adjugate * M * A) := by
     rw [gamma_decompose n A.det gamma hgamma]
     conv_lhs => rw [mul_add, Matrix.mul_one, mul_smul_comm]
@@ -162,9 +162,9 @@ private lemma adjugate_conj_dvd (A gamma : Matrix (Fin n) (Fin n) ℤ)
     `det(P / d) = 1`, where the division is entry-wise integer division. -/
 private lemma det_entrywise_div_eq_one (d : ℤ) (P : Matrix (Fin n) (Fin n) ℤ)
     (hdvd : ∀ i j : Fin n, d ∣ P i j) (hd : d ≠ 0) (hdet : (P.det : ℚ) = (d : ℚ) ^ n) :
-    (Matrix.of fun i j => P i j / d).det = 1 := by
-  suffices h : ((Matrix.of fun i j => P i j / d).det : ℚ) = 1 by exact_mod_cast h
-  have h_mat_eq : (Matrix.of fun i j => P i j / d).map (Int.cast : ℤ → ℚ) =
+    (Matrix.of fun i j ↦ P i j / d).det = 1 := by
+  suffices h : ((Matrix.of fun i j ↦ P i j / d).det : ℚ) = 1 by exact_mod_cast h
+  have h_mat_eq : (Matrix.of fun i j ↦ P i j / d).map (Int.cast : ℤ → ℚ) =
       (d : ℚ)⁻¹ • (P.map (Int.cast : ℤ → ℚ)) := by
     ext i j; simp only [Matrix.map_apply, Matrix.smul_apply, smul_eq_mul, Matrix.of_apply]
     rw [Int.cast_div (hdvd i j) (Int.cast_ne_zero.mpr hd)]; ring
@@ -178,7 +178,7 @@ variable [NeZero n]
     when `det(γ) = 1`. -/
 private lemma conj_mat_det_one (A gamma : Matrix (Fin n) (Fin n) ℤ) (hgamma_det : gamma.det = 1)
     (hdvd : ∀ i j : Fin n, A.det ∣ (A.adjugate * gamma * A) i j) (hAdet : A.det ≠ 0) :
-    (Matrix.of fun i j => (A.adjugate * gamma * A) i j / A.det).det = 1 := by
+    (Matrix.of fun i j ↦ (A.adjugate * gamma * A) i j / A.det).det = 1 := by
   apply det_entrywise_div_eq_one n A.det _ hdvd hAdet
   simp only [Matrix.det_mul, det_adjugate, hgamma_det]
   push_cast; rw [mul_one, Fintype.card_fin, ← pow_succ,
@@ -188,8 +188,8 @@ private lemma conj_mat_det_one (A gamma : Matrix (Fin n) (Fin n) ℤ) (hgamma_de
     so `δ_GL = g⁻¹ * γ_GL * g`. -/
 private lemma int_mul_eq (A gamma : Matrix (Fin n) (Fin n) ℤ) (hAdet : A.det ≠ 0)
     (hdvd : ∀ i j : Fin n, A.det ∣ (A.adjugate * gamma * A) i j) :
-    A * (Matrix.of fun i j => (A.adjugate * gamma * A) i j / A.det) = gamma * A := by
-  set delta := Matrix.of fun i j => (A.adjugate * gamma * A) i j / A.det
+    A * (Matrix.of fun i j ↦ (A.adjugate * gamma * A) i j / A.det) = gamma * A := by
+  set delta := Matrix.of fun i j ↦ (A.adjugate * gamma * A) i j / A.det
   have ha : A.det • delta = A.adjugate * gamma * A := by
     ext i j; simp only [Matrix.smul_apply, smul_eq_mul, Matrix.of_apply, delta]
     exact Int.mul_ediv_cancel' (hdvd i j)
@@ -211,7 +211,7 @@ lemma conj_ker_mem_SLnZ (g : GL (Fin n) ℚ) (A : Matrix (Fin n) (Fin n) ℤ)
   have h_entry : ∀ i j, A.det ∣ (γ.val i j - (1 : Matrix _ _ ℤ) i j) := by
     intro i j; exact Int.natAbs_dvd.mp (ker_entry_dvd n A.det.natAbs γ hγ i j)
   have hdvd := adjugate_conj_dvd n A γ.val h_entry
-  set delta_mat := Matrix.of fun i j => (A.adjugate * γ.val * A) i j / A.det with hdelta_def
+  set delta_mat := Matrix.of fun i j ↦ (A.adjugate * γ.val * A) i j / A.det with hdelta_def
   have hdelta_det : delta_mat.det = 1 := conj_mat_det_one n A γ.val γ.prop hdvd hAdet
   set delta : SpecialLinearGroup (Fin n) ℤ := ⟨delta_mat, hdelta_det⟩
   rw [SLnZ_subgroup, MonoidHom.mem_range]
@@ -236,7 +236,7 @@ private lemma conj_dvd_reverse (A gamma : Matrix (Fin n) (Fin n) ℤ)
     (hgamma : ∀ i j : Fin n, A.det ∣ (gamma i j - (1 : Matrix (Fin n) (Fin n) ℤ) i j))
     (i j : Fin n) :
     A.det ∣ (A * gamma * A.adjugate) i j := by
-  set M := Matrix.of fun i j =>
+  set M := Matrix.of fun i j ↦
     (gamma i j - (1 : Matrix _ _ ℤ) i j) / A.det
   have : A * gamma * A.adjugate =
       A * A.adjugate + A.det • (A * M * A.adjugate) := by
@@ -252,7 +252,7 @@ private lemma conj_dvd_reverse (A gamma : Matrix (Fin n) (Fin n) ℤ)
 private lemma conj_mat_det_one_reverse
     (A gamma : Matrix (Fin n) (Fin n) ℤ) (hgamma_det : gamma.det = 1)
     (hdvd : ∀ i j : Fin n, A.det ∣ (A * gamma * A.adjugate) i j) (hAdet : A.det ≠ 0) :
-    (Matrix.of fun i j => (A * gamma * A.adjugate) i j / A.det).det = 1 := by
+    (Matrix.of fun i j ↦ (A * gamma * A.adjugate) i j / A.det).det = 1 := by
   apply det_entrywise_div_eq_one n A.det _ hdvd hAdet
   simp only [Matrix.det_mul, det_adjugate, hgamma_det, Fintype.card_fin]
   push_cast; simp only [det_intMat_cast]; rw [mul_one,
@@ -263,8 +263,8 @@ private lemma conj_mat_det_one_reverse
     `δ = (A * γ * adj(A)) / det(A)`. -/
 private lemma int_mul_eq_reverse (A gamma : Matrix (Fin n) (Fin n) ℤ) (hAdet : A.det ≠ 0)
     (hdvd : ∀ i j : Fin n, A.det ∣ (A * gamma * A.adjugate) i j) :
-    (Matrix.of fun i j => (A * gamma * A.adjugate) i j / A.det) * A = A * gamma := by
-  set delta := Matrix.of fun i j => (A * gamma * A.adjugate) i j / A.det
+    (Matrix.of fun i j ↦ (A * gamma * A.adjugate) i j / A.det) * A = A * gamma := by
+  set delta := Matrix.of fun i j ↦ (A * gamma * A.adjugate) i j / A.det
   have ha : A.det • delta = A * gamma * A.adjugate := by
     ext i j; simp only [Matrix.smul_apply, smul_eq_mul, Matrix.of_apply, delta]
     exact Int.mul_ediv_cancel' (hdvd i j)
@@ -284,7 +284,7 @@ private lemma conj_ker_mem_SLnZ_inv (g : GL (Fin n) ℚ) (A : Matrix (Fin n) (Fi
   have h_entry : ∀ i j, A.det ∣ (γ.val i j - (1 : Matrix _ _ ℤ) i j) := by
     intro i j; exact Int.natAbs_dvd.mp (ker_entry_dvd n A.det.natAbs γ hγ i j)
   have hdvd := conj_dvd_reverse n A γ.val h_entry
-  set delta_mat := Matrix.of fun i j => (A * γ.val * A.adjugate) i j / A.det
+  set delta_mat := Matrix.of fun i j ↦ (A * γ.val * A.adjugate) i j / A.det
   have hdelta_det : delta_mat.det = 1 :=
     conj_mat_det_one_reverse n A γ.val γ.prop hdvd hAdet
   set delta : SpecialLinearGroup (Fin n) ℤ := ⟨delta_mat, hdelta_det⟩

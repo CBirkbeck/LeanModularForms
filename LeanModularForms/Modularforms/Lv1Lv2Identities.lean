@@ -75,17 +75,17 @@ lemma thetaE4_tendsto_atImInfty : Tendsto thetaE4 atImInfty (𝓝 (1 : ℂ)) := 
   simpa [thetaE4, Pi.add_apply, add_assoc, zero_add] using hsum.add (by simpa using hH4.pow 2)
 
 lemma isBoundedAtImInfty_thetaE4 : IsBoundedAtImInfty thetaE4 := by
-  have hzero : IsZeroAtImInfty (fun z : ℍ => thetaE4 z - 1) := by
+  have hzero : IsZeroAtImInfty (fun z : ℍ ↦ thetaE4 z - 1) := by
     simpa [UpperHalfPlane.IsZeroAtImInfty, ZeroAtFilter] using
       (thetaE4_tendsto_atImInfty.sub
-        (tendsto_const_nhds : Tendsto (fun _ : ℍ => (1 : ℂ)) atImInfty (𝓝 (1 : ℂ))))
-  have hdiff : IsBoundedAtImInfty (fun z : ℍ => thetaE4 z - 1) :=
+        (tendsto_const_nhds : Tendsto (fun _ : ℍ ↦ (1 : ℂ)) atImInfty (𝓝 (1 : ℂ))))
+  have hdiff : IsBoundedAtImInfty (fun z : ℍ ↦ thetaE4 z - 1) :=
     UpperHalfPlane.IsZeroAtImInfty.isBoundedAtImInfty hzero
   dsimp [UpperHalfPlane.IsBoundedAtImInfty] at hdiff ⊢
   -- `thetaE4 = (thetaE4 - 1) + 1`
-  have hsum : BoundedAtFilter atImInfty ((fun z : ℍ => thetaE4 z - 1) + 1) :=
+  have hsum : BoundedAtFilter atImInfty ((fun z : ℍ ↦ thetaE4 z - 1) + 1) :=
     BoundedAtFilter.add hdiff (const_boundedAtFilter atImInfty (1 : ℂ))
-  have hEq : ((fun z : ℍ => thetaE4 z - 1) + 1) = thetaE4 := by
+  have hEq : ((fun z : ℍ ↦ thetaE4 z - 1) + 1) = thetaE4 := by
     funext z
     simp [Pi.add_apply, sub_eq_add_neg, add_comm]
   simpa [hEq] using hsum
@@ -98,13 +98,13 @@ lemma thetaE4_slash_eq (A' : SL(2, ℤ)) :
 noncomputable def thetaE4_MF : ModularForm (Γ 1) 4 := {
   thetaE4_SIF with
   holo' := thetaE4_SIF_MDifferentiable
-  bdd_at_cusps' := fun hc =>
+  bdd_at_cusps' := fun hc ↦
     bounded_at_cusps_of_bounded_at_infty hc
       (isBoundedAtImInfty_slash_of_slash_eq thetaE4_slash_eq isBoundedAtImInfty_thetaE4)
 }
 
 /-- The Eisenstein series `E₄` tends to `1` at the cusp `∞`. -/
-public lemma tendsto_E₄_atImInfty : Tendsto (fun z : ℍ => E₄ z) atImInfty (𝓝 (1 : ℂ)) := by
+public lemma tendsto_E₄_atImInfty : Tendsto (fun z : ℍ ↦ E₄ z) atImInfty (𝓝 (1 : ℂ)) := by
   have hcoeff :
       (qExpansion (1 : ℝ) E₄).coeff 0 = UpperHalfPlane.valueAtInfty (E₄ : ℍ → ℂ) :=
     qExpansion_coeff_zero (f := E₄) (h := (1 : ℝ)) (by positivity) one_mem_strictPeriods_Gamma1
@@ -115,7 +115,7 @@ public lemma tendsto_E₄_atImInfty : Tendsto (fun z : ℍ => E₄ z) atImInfty 
 /-- The theta-polynomial `thetaE4` agrees with the Eisenstein series `E₄`. -/
 public theorem E₄_eq_thetaE4 : (E₄ : ℍ → ℂ) = thetaE4 := by
   let diff : ModularForm (Γ 1) 4 := E₄ - thetaE4_MF
-  have hdiff0 : Tendsto (fun z : ℍ => diff z) atImInfty (𝓝 (0 : ℂ)) := by
+  have hdiff0 : Tendsto (fun z : ℍ ↦ diff z) atImInfty (𝓝 (0 : ℂ)) := by
     simpa [diff, thetaE4_MF, ModularForm.sub_apply, sub_eq_add_neg] using
       tendsto_E₄_atImInfty.sub thetaE4_tendsto_atImInfty
   have hdiff_cusp : IsCuspForm (Γ 1) 4 diff := by
@@ -125,7 +125,7 @@ public theorem E₄_eq_thetaE4 : (E₄ : ℍ → ℂ) = thetaE4 := by
   have hdiff_eq : diff = 0 := IsCuspForm_weight_lt_eq_zero 4 (by norm_num) diff hdiff_cusp
   have hEq : E₄ = thetaE4_MF := sub_eq_zero.mp (by simpa [diff] using hdiff_eq)
   funext z
-  simpa [thetaE4_MF, thetaE4_SIF] using congrArg (fun f : ModularForm (Γ 1) 4 => f z) hEq
+  simpa [thetaE4_MF, thetaE4_SIF] using congrArg (fun f : ModularForm (Γ 1) 4 ↦ f z) hEq
 
 /-! ## The `E₆` identity -/
 
@@ -163,7 +163,7 @@ lemma thetaE6_SIF_MDifferentiable : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) thetaE6_
 lemma thetaE6_tendsto_atImInfty : Tendsto thetaE6 atImInfty (𝓝 (1 : ℂ)) := by
   have hH2 : Tendsto H₂ atImInfty (𝓝 (0 : ℂ)) := H₂_tendsto_atImInfty
   have hH4 : Tendsto H₄ atImInfty (𝓝 (1 : ℂ)) := H₄_tendsto_atImInfty
-  have h2 : Tendsto (fun _ : ℍ => (2 : ℂ)) atImInfty (𝓝 (2 : ℂ)) := tendsto_const_nhds
+  have h2 : Tendsto (fun _ : ℍ ↦ (2 : ℂ)) atImInfty (𝓝 (2 : ℂ)) := tendsto_const_nhds
   have h2H2 : Tendsto ((2 : ℂ) • H₂) atImInfty (𝓝 (0 : ℂ)) := by
     simpa using h2.smul hH2
   have h2H4 : Tendsto ((2 : ℂ) • H₄) atImInfty (𝓝 (2 : ℂ)) := by
@@ -179,21 +179,21 @@ lemma thetaE6_tendsto_atImInfty : Tendsto thetaE6 atImInfty (𝓝 (1 : ℂ)) := 
   have hmul :
       Tendsto ((H₂ + (2 : ℂ) • H₄) * (((2 : ℂ) • H₂ + H₄) * (H₄ - H₂))) atImInfty (𝓝 (2 : ℂ)) := by
     simpa [mul_assoc] using hA.mul hBC
-  simpa [thetaE6, smul_eq_mul, mul_assoc] using (tendsto_const_nhds : Tendsto (fun _ : ℍ =>
+  simpa [thetaE6, smul_eq_mul, mul_assoc] using (tendsto_const_nhds : Tendsto (fun _ : ℍ ↦
     (1 / 2 : ℂ)) atImInfty (𝓝 (1 / 2 : ℂ))).smul hmul
 
 lemma isBoundedAtImInfty_thetaE6 : IsBoundedAtImInfty thetaE6 := by
-  have hzero : IsZeroAtImInfty (fun z : ℍ => thetaE6 z - 1) := by
+  have hzero : IsZeroAtImInfty (fun z : ℍ ↦ thetaE6 z - 1) := by
     simpa [UpperHalfPlane.IsZeroAtImInfty, ZeroAtFilter] using
       (thetaE6_tendsto_atImInfty.sub
         (tendsto_const_nhds :
-          Tendsto (fun _ : ℍ => (1 : ℂ)) atImInfty (𝓝 (1 : ℂ))))
-  have hdiff : IsBoundedAtImInfty (fun z : ℍ => thetaE6 z - 1) :=
+          Tendsto (fun _ : ℍ ↦ (1 : ℂ)) atImInfty (𝓝 (1 : ℂ))))
+  have hdiff : IsBoundedAtImInfty (fun z : ℍ ↦ thetaE6 z - 1) :=
     UpperHalfPlane.IsZeroAtImInfty.isBoundedAtImInfty hzero
   dsimp [UpperHalfPlane.IsBoundedAtImInfty] at hdiff ⊢
-  have hsum : BoundedAtFilter atImInfty ((fun z : ℍ => thetaE6 z - 1) + 1) :=
+  have hsum : BoundedAtFilter atImInfty ((fun z : ℍ ↦ thetaE6 z - 1) + 1) :=
     BoundedAtFilter.add hdiff (const_boundedAtFilter atImInfty (1 : ℂ))
-  have hEq : ((fun z : ℍ => thetaE6 z - 1) + 1) = thetaE6 := by
+  have hEq : ((fun z : ℍ ↦ thetaE6 z - 1) + 1) = thetaE6 := by
     funext z
     simp [Pi.add_apply, sub_eq_add_neg, add_comm]
   simpa [hEq] using hsum
@@ -206,13 +206,13 @@ lemma thetaE6_slash_eq (A' : SL(2, ℤ)) :
 noncomputable def thetaE6_MF : ModularForm (Γ 1) 6 := {
   thetaE6_SIF with
   holo' := thetaE6_SIF_MDifferentiable
-  bdd_at_cusps' := fun hc =>
+  bdd_at_cusps' := fun hc ↦
     bounded_at_cusps_of_bounded_at_infty hc
       (isBoundedAtImInfty_slash_of_slash_eq thetaE6_slash_eq isBoundedAtImInfty_thetaE6)
 }
 
 /-- The Eisenstein series `E₆` tends to `1` at the cusp `∞`. -/
-public lemma tendsto_E₆_atImInfty : Tendsto (fun z : ℍ => E₆ z) atImInfty (𝓝 (1 : ℂ)) := by
+public lemma tendsto_E₆_atImInfty : Tendsto (fun z : ℍ ↦ E₆ z) atImInfty (𝓝 (1 : ℂ)) := by
   have hcoeff :
       (qExpansion (1 : ℝ) E₆).coeff 0 = UpperHalfPlane.valueAtInfty (E₆ : ℍ → ℂ) :=
     qExpansion_coeff_zero (f := E₆) (h := (1 : ℝ)) (by positivity) one_mem_strictPeriods_Gamma1
@@ -223,7 +223,7 @@ public lemma tendsto_E₆_atImInfty : Tendsto (fun z : ℍ => E₆ z) atImInfty 
 /-- The theta-polynomial `thetaE6` agrees with the Eisenstein series `E₆`. -/
 public theorem E₆_eq_thetaE6 : (E₆ : ℍ → ℂ) = thetaE6 := by
   let diff : ModularForm (Γ 1) 6 := E₆ - thetaE6_MF
-  have hdiff0 : Tendsto (fun z : ℍ => diff z) atImInfty (𝓝 (0 : ℂ)) := by
+  have hdiff0 : Tendsto (fun z : ℍ ↦ diff z) atImInfty (𝓝 (0 : ℂ)) := by
     simpa [diff, thetaE6_MF, ModularForm.sub_apply, sub_eq_add_neg] using
       tendsto_E₆_atImInfty.sub thetaE6_tendsto_atImInfty
   have hdiff_cusp : IsCuspForm (Γ 1) 6 diff := by
@@ -233,6 +233,6 @@ public theorem E₆_eq_thetaE6 : (E₆ : ℍ → ℂ) = thetaE6 := by
   have hdiff_eq : diff = 0 := IsCuspForm_weight_lt_eq_zero 6 (by norm_num) diff hdiff_cusp
   have hEq : E₆ = thetaE6_MF := sub_eq_zero.mp (by simpa [diff] using hdiff_eq)
   funext z
-  simpa [thetaE6_MF, thetaE6_SIF] using congrArg (fun f : ModularForm (Γ 1) 6 => f z) hEq
+  simpa [thetaE6_MF, thetaE6_SIF] using congrArg (fun f : ModularForm (Γ 1) 6 ↦ f z) hEq
 
 end SpherePacking.ModularForms

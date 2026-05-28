@@ -86,7 +86,7 @@ end GoodHeckeFamilyScalarAdjoint
 noncomputable def cuspFormCharSpacePetPairing
     (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
     cuspFormCharSpace k χ → cuspFormCharSpace k χ → ℂ :=
-  fun f g => petN (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+  fun f g ↦ petN (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
 
 /-- The Petersson pairing on the experimental `Γ₀(N), χ` cusp submodule. -/
@@ -94,7 +94,7 @@ noncomputable def cuspGamma0NebentypusPetPairing
     (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
     cuspGamma0NebentypusSubmodule (N := N) k χ →
       cuspGamma0NebentypusSubmodule (N := N) k χ → ℂ :=
-  fun f g => petN (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+  fun f g ↦ petN (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
 
 /-- Shared computational core of the Petersson scalar-adjoint relation: on the

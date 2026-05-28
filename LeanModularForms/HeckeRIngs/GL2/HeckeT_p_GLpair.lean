@@ -38,11 +38,11 @@ namespace HeckeRing.GL2
 representing the Hecke operator `T_p` at level 1.
 This is the HeckeCoset of the diagonal matrix `diag(1,p)`. -/
 noncomputable def D_p (p : ℕ) (hp : 0 < p) : HeckeRing.HeckeCoset (GL_pair 2) :=
-  ⟦⟨diagMat 2 ![1, p], diagMat_mem_posDetInt 2 _ (fun i => by fin_cases i <;> simp [hp])⟩⟧
+  ⟦⟨diagMat 2 ![1, p], diagMat_mem_posDetInt 2 _ (fun i ↦ by fin_cases i <;> simp [hp])⟩⟧
 
 /-- `diag(1,p)` as a `Δ`-element of `GL_pair 2`. -/
 noncomputable def diag_1p_delta (p : ℕ) (hp : 0 < p) : (GL_pair 2).Δ :=
-  ⟨diagMat 2 ![1, p], diagMat_mem_posDetInt 2 _ (fun i => by fin_cases i <;> simp [hp])⟩
+  ⟨diagMat 2 ![1, p], diagMat_mem_posDetInt 2 _ (fun i ↦ by fin_cases i <;> simp [hp])⟩
 
 /-- `T_p_upper(b)` has det p > 0 and integer entries, hence lies in Δ. -/
 lemma T_p_upper_mem_Delta (p : ℕ) (hp : 0 < p) (b : ℕ) :
@@ -76,7 +76,7 @@ lemma T_p_upper_mem_D_p (p : ℕ) (hp : Nat.Prime p) (b : ℕ) (_hb : b < p) :
   have hfact : (T_p_upper p hp.pos b : GL (Fin 2) ℚ) =
       diagMat 2 ![1, p] * (mapGL ℚ σ_b) := by
     apply Units.ext; ext i j
-    have hpos : ∀ k : Fin 2, 0 < (![1, p] : Fin 2 → Nat) k := fun k => by
+    have hpos : ∀ k : Fin 2, 0 < (![1, p] : Fin 2 → Nat) k := fun k ↦ by
       fin_cases k <;> simp [hp.pos]
     simp only [diagMat_val _ _ hpos, Units.val_mul, Matrix.mul_apply, Fin.sum_univ_two,
       Matrix.diagonal_apply]
@@ -109,7 +109,7 @@ lemma T_p_lower_mem_D_p (p : ℕ) (hp : Nat.Prime p) :
   have hfact : (T_p_lower p hp.pos : GL (Fin 2) ℚ) =
       mapGL ℚ w * diagMat 2 ![1, p] * mapGL ℚ winv := by
     apply Units.ext; ext i j
-    have hpos : ∀ k : Fin 2, 0 < (![1, p] : Fin 2 → Nat) k := fun k => by
+    have hpos : ∀ k : Fin 2, 0 < (![1, p] : Fin 2 → Nat) k := fun k ↦ by
       fin_cases k <;> simp [hp.pos]
     simp only [diagMat_val _ _ hpos, Units.val_mul, Matrix.mul_apply, Fin.sum_univ_two,
       Matrix.diagonal_apply]
@@ -130,7 +130,7 @@ lemma T_p_upper_eq_diagMat_mul (p : ℕ) (hp : Nat.Prime p) (b : ℕ) :
     diagMat 2 ![1, p] * mapGL ℚ (⟨!![1, (b : ℤ); 0, 1],
       by simp [det_fin_two]⟩ : SL(2, ℤ)) := by
   apply Units.ext; ext i j
-  have hpos : ∀ k : Fin 2, 0 < (![1, p] : Fin 2 → Nat) k := fun k => by
+  have hpos : ∀ k : Fin 2, 0 < (![1, p] : Fin 2 → Nat) k := fun k ↦ by
     fin_cases k <;> simp [hp.pos]
   simp only [diagMat_val _ _ hpos, Units.val_mul, Matrix.mul_apply, Fin.sum_univ_two,
     Matrix.diagonal_apply]
@@ -155,7 +155,7 @@ lemma slash_T_p_lower_factor (k : ℤ) (p : ℕ) (hp : Nat.Prime p)
   have hfact : (T_p_lower p hp.pos : GL (Fin 2) ℚ) =
       mapGL ℚ w * diagMat 2 ![1, p] * mapGL ℚ winv := by
     apply Units.ext; ext i j
-    have hpos : ∀ k : Fin 2, 0 < (![1, p] : Fin 2 → Nat) k := fun k => by
+    have hpos : ∀ k : Fin 2, 0 < (![1, p] : Fin 2 → Nat) k := fun k ↦ by
       fin_cases k <;> simp [hp.pos]
     simp only [diagMat_val _ _ hpos, Units.val_mul, Matrix.mul_apply, Fin.sum_univ_two,
       Matrix.diagonal_apply]
@@ -245,7 +245,7 @@ private lemma adj_rep_mem_D_p (p : ℕ) (hp : Nat.Prime p) :
   have hadj_diag : GL_adjugate (diagMat 2 ![1, p] : GL _ ℚ) =
       (T_p_lower p hp.pos : GL _ ℚ) := by
     apply Units.ext; ext i j
-    have hpos : ∀ k : Fin 2, 0 < (![1, p] : Fin 2 → Nat) k := fun k => by
+    have hpos : ∀ k : Fin 2, 0 < (![1, p] : Fin 2 → Nat) k := fun k ↦ by
       fin_cases k <;> simp [hp.pos]
     simp only [GL_adjugate_val, diagMat_val _ _ hpos]
     have huniv : (Finset.univ : Finset (Fin 2)) = {0, 1} := by
@@ -410,7 +410,7 @@ private lemma adj_Tp_rep_inv_mul_not_mem_H (p : ℕ) (hp : Nat.Prime p)
         else T_p_lower p hp.pos : GL (Fin 2) ℚ) ∉ (GL_pair 2).H := by
   split_ifs
   · exact adj_upper_inv_mul_not_mem_H p hp (j₁ : ℕ) (j₂ : ℕ) ‹(j₁ : ℕ) < p› ‹(j₂ : ℕ) < p›
-      (fun h => hne (Fin.ext h))
+      (fun h ↦ hne (Fin.ext h))
   · exact adj_upper_inv_mul_lower_not_mem_H p hp (j₁ : ℕ)
   · exact adj_lower_inv_mul_upper_not_mem_H p hp (j₂ : ℕ)
   · exact absurd (Fin.ext (show (j₁ : ℕ) = (j₂ : ℕ) by
@@ -427,9 +427,9 @@ private lemma sum_tRep_gen_eq_sum_of_adj_factored {ι : Type*} [Fintype ι] (k :
     ∑ σ : decompQuot (GL_pair 2) (HeckeCoset.rep D), f ∣[k] tRep_gen (GL_pair 2) D σ =
     ∑ j, f ∣[k] g j := by
   classical
-  let φ : ι → decompQuot (GL_pair 2) (HeckeCoset.rep D) := fun j =>
+  let φ : ι → decompQuot (GL_pair 2) (HeckeCoset.rep D) := fun j ↦
     ⟦⟨(hfac j).choose, (hfac j).choose_spec.choose⟩⟧
-  have h_val : ∀ j, f ∣[k] g j = f ∣[k] tRep_gen (GL_pair 2) D (φ j) := fun j =>
+  have h_val : ∀ j, f ∣[k] g j = f ∣[k] tRep_gen (GL_pair 2) D (φ j) := fun j ↦
     slash_eq_tRep_gen_of_adj_mem k f hf D _ _ _ (hfac j).choose_spec.choose
       (hfac j).choose_spec.choose_spec.choose_spec.choose
       (hfac j).choose_spec.choose_spec.choose_spec.choose_spec
@@ -457,22 +457,22 @@ theorem tRep_gen_D_p_matches_T_p_reps (k : ℤ) (p : ℕ) (hp : Nat.Prime p) (f 
       f ∣[k] (T_p_lower p hp.pos : GL (Fin 2) ℚ) := by
   set D := D_p p hp.pos
   have hadj_rep := adj_rep_mem_D_p p hp
-  set g : Fin (p + 1) → GL (Fin 2) ℚ := fun j =>
+  set g : Fin (p + 1) → GL (Fin 2) ℚ := fun j ↦
     if (j : ℕ) < p then T_p_upper p hp.pos (j : ℕ) else T_p_lower p hp.pos with hg
   have hmem : ∀ j, g j ∈ HeckeCoset.toSet D := by
     intro j; simp only [hg]; split_ifs with h
     · exact T_p_upper_mem_D_p p hp (j : ℕ) h
     · exact T_p_lower_mem_D_p p hp
-  have hfac := fun j => adj_mem_dc D (g j) (hmem j) hadj_rep
+  have hfac := fun j ↦ adj_mem_dc D (g j) (hmem j) hadj_rep
   have hdist : ∀ j₁ j₂ : Fin (p + 1), j₁ ≠ j₂ →
       (GL_adjugate (g j₁))⁻¹ * GL_adjugate (g j₂) ∉ (GL_pair 2).H := by
     intro j₁ j₂ hne; simp only [hg]; exact adj_Tp_rep_inv_mul_not_mem_H p hp j₁ j₂ hne
   rw [sum_tRep_gen_eq_sum_of_adj_factored k f hf D g
       (by rw [Fintype.card_fin]; exact (card_decompQuot_D_p p hp).symm) hfac hdist,
     sum_range_add_eq_sum_fin_succ_dite p
-      (fun n => f ∣[k] (T_p_upper p hp.pos n : GL (Fin 2) ℚ))
+      (fun n ↦ f ∣[k] (T_p_upper p hp.pos n : GL (Fin 2) ℚ))
       (f ∣[k] (T_p_lower p hp.pos : GL (Fin 2) ℚ))]
-  refine Finset.sum_congr rfl fun j _ => ?_
+  refine Finset.sum_congr rfl fun j _ ↦ ?_
   simp only [hg]; split_ifs <;> rfl
 
 /-- For an SL₂(ℤ)-invariant modular form, the diamond operator acts trivially:
@@ -508,7 +508,7 @@ theorem heckeSlash_gen_GL_pair_comm (k : ℤ) (D₁ D₂ : HeckeCoset (GL_pair 2
     (hf : ∀ h, h ∈ (GL_pair 2).H → f ∣[k] (glMap h) = f) :
     heckeSlash_gen (GL_pair 2) k D₁ (heckeSlash_gen (GL_pair 2) k D₂ f) =
     heckeSlash_gen (GL_pair 2) k D₂ (heckeSlash_gen (GL_pair 2) k D₁ f) :=
-  heckeSlash_gen_comm k D₁ D₂ f hf (fun _ _ => mul_comm _ _)
+  heckeSlash_gen_comm k D₁ D₂ f hf (fun _ _ ↦ mul_comm _ _)
 
 private lemma SL_invariant_to_H_invariant {k : ℤ} {f : ℍ → ℂ}
     (hf_SL : ∀ γ ∈ 𝒮ℒ, f ∣[k] γ = f) :

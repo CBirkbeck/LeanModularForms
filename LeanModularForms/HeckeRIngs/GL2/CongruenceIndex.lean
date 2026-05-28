@@ -73,7 +73,7 @@ private noncomputable def Gamma0Rep (j : Fin (p + 1)) : SL(2, ℤ) :=
   if j.val < p then T ^ (j.val : ℤ) * S else 1
 
 private lemma Gamma0_prime_index_inj :
-    Function.Injective (fun j : Fin (p + 1) => QuotientGroup.mk (Gamma0Rep p j) :
+    Function.Injective (fun j : Fin (p + 1) ↦ QuotientGroup.mk (Gamma0Rep p j) :
       Fin (p + 1) → SL(2, ℤ) ⧸ (Gamma0 p)) := by
   haveI : Fact (Nat.Prime p) := ⟨hp⟩
   intro ⟨j₁, hj₁⟩ ⟨j₂, hj₂⟩ hf
@@ -101,7 +101,7 @@ private lemma Gamma0_prime_index_inj :
   · simp only [Fin.mk.injEq]; omega
 
 private lemma Gamma0_prime_index_surj :
-    Function.Surjective (fun j : Fin (p + 1) => QuotientGroup.mk (Gamma0Rep p j) :
+    Function.Surjective (fun j : Fin (p + 1) ↦ QuotientGroup.mk (Gamma0Rep p j) :
       Fin (p + 1) → SL(2, ℤ) ⧸ (Gamma0 p)) := by
   haveI : Fact (Nat.Prime p) := ⟨hp⟩
   intro x
@@ -168,7 +168,7 @@ private noncomputable def relindexRep (k : ℕ) (hk : 0 < k) (c : Fin p) :
   ⟨lowerTriRep p k c, lowerTriRep_mem_Gamma0 p k hk c⟩
 
 private lemma Gamma0_relindex_step_inj (k : ℕ) (hk : 0 < k) :
-    Function.Injective (fun c : Fin p =>
+    Function.Injective (fun c : Fin p ↦
       (QuotientGroup.mk (relindexRep p k hk c) :
         ↥(Gamma0 (p ^ k)) ⧸ (Gamma0 (p ^ (k + 1))).subgroupOf (Gamma0 (p ^ k)))) := by
   haveI : Fact (Nat.Prime p) := ⟨hp⟩
@@ -197,7 +197,7 @@ private lemma Gamma0_relindex_step_inj (k : ℕ) (hk : 0 < k) :
   simp only [Fin.mk.injEq]; exact_mod_cast hm.symm
 
 private lemma Gamma0_relindex_step_surj (k : ℕ) (hk : 0 < k) :
-    Function.Surjective (fun c : Fin p =>
+    Function.Surjective (fun c : Fin p ↦
       (QuotientGroup.mk (relindexRep p k hk c) :
         ↥(Gamma0 (p ^ k)) ⧸ (Gamma0 (p ^ (k + 1))).subgroupOf (Gamma0 (p ^ k)))) := by
   haveI : Fact (Nat.Prime p) := ⟨hp⟩

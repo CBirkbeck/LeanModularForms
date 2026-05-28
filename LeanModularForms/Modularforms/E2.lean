@@ -107,8 +107,8 @@ lemma tsum_eq_tsum_sigma (z : ℍ) : ∑' n : ℕ, (n + 1) *
     cexp (2 * π * Complex.I * (n + 1) * z) / (1 - cexp (2 * π * Complex.I * (n + 1) * z)) =
     ∑' n : ℕ, sigma 1 (n + 1) * cexp (2 * π * Complex.I * (n + 1) * z) := by
   let q : ℂ := cexp (2 * π * Complex.I * z)
-  let f : ℕ → ℂ := fun n => (n : ℂ) ^ 1 * q ^ n / (1 - q ^ n)
-  let g : ℕ → ℂ := fun n => sigma 1 n * q ^ n
+  let f : ℕ → ℂ := fun n ↦ (n : ℂ) ^ 1 * q ^ n / (1 - q ^ n)
+  let g : ℕ → ℂ := fun n ↦ sigma 1 n * q ^ n
   have h :
       ∑' n : ℕ+, f n = ∑' n : ℕ+, g n := by
     simpa [f, g, q] using

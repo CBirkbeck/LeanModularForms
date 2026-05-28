@@ -148,7 +148,7 @@ lemma qExpansion_levelRaise_isSupportedOnDvd
   let g_mf : ModularForm ((Gamma1 M).map (mapGL ℝ)) k :=
     { toSlashInvariantForm := g.toSlashInvariantForm
       holo' := g.holo'
-      bdd_at_cusps' := fun {c} hc γ hγ => (g.zero_at_cusps' hc γ hγ).isBoundedAtImInfty }
+      bdd_at_cusps' := fun {c} hc γ hγ ↦ (g.zero_at_cusps' hc γ hγ).isBoundedAtImInfty }
   have h_fun_eq :
       (⇑(levelRaise M d k g) : UpperHalfPlane → ℂ) =
         ⇑(modularFormLevelRaise M d k g_mf) := by
@@ -203,7 +203,7 @@ theorem qSupportedOnDvd_mem_cuspFormsOld_of_char
     f ∈ cuspFormsOld N k := by
   obtain ⟨φ, h_eq, h_period⟩ :=
     HeckeRing.GL2.exists_levelRaise_preimage_of_coeff_support_multiples
-      hd hdN f (fun n hn => hfsupp n hn)
+      hd hdN f (fun n hn ↦ hfsupp n hn)
   rcases HeckeRing.GL2.conductor_theorem_dichotomy_cuspForm_strong
       d N hdN k χ φ f hfχ h_eq h_period with
     ⟨_h_fac, F, _hF_char, hF_eq⟩ | h_zero
@@ -236,7 +236,7 @@ theorem qSupportedOnDvd_eq_zero_or_exists_levelRaise_preimage_of_char
       (⇑(levelRaise (N / d) d k g) : UpperHalfPlane → ℂ) = ⇑f := by
   obtain ⟨φ, h_eq, h_period⟩ :=
     HeckeRing.GL2.exists_levelRaise_preimage_of_coeff_support_multiples
-      hd hdN f (fun n hn => hfsupp n hn)
+      hd hdN f (fun n hn ↦ hfsupp n hn)
   rcases HeckeRing.GL2.conductor_theorem_dichotomy_cuspForm_strong
       d N hdN k χ φ f hfχ h_eq h_period with
     ⟨_h_fac, F, _hF_char, hF_eq⟩ | h_zero
@@ -263,7 +263,7 @@ theorem qSupportedOnDvdSubmodule_mem_iff_eq_zero_or_exists_levelRaise_preimage_o
     f ∈ qSupportedOnDvdSubmodule N k d ↔
       f = 0 ∨ ∃ (g : CuspForm ((Gamma1 (N / d)).map (mapGL ℝ)) k),
         (⇑(levelRaise (N / d) d k g) : UpperHalfPlane → ℂ) = ⇑f := by
-  refine ⟨fun hfsupp =>
+  refine ⟨fun hfsupp ↦
     qSupportedOnDvd_eq_zero_or_exists_levelRaise_preimage_of_char
       hd hdN χ f hfχ hfsupp, ?_⟩
   rintro (rfl | ⟨g, hg⟩)
@@ -292,7 +292,7 @@ theorem qSupportedOnDvdSubmodule_mem_iff_exists_levelRaise_preimage_of_char
         (⇑(levelRaise (N / d) d k g) : UpperHalfPlane → ℂ) = ⇑f := by
   rw [qSupportedOnDvdSubmodule_mem_iff_eq_zero_or_exists_levelRaise_preimage_of_char
       hd hdN χ f hfχ]
-  refine ⟨?_, fun ⟨g, hg⟩ => Or.inr ⟨g, hg⟩⟩
+  refine ⟨?_, fun ⟨g, hg⟩ ↦ Or.inr ⟨g, hg⟩⟩
   rintro (rfl | ⟨g, hg⟩)
   · exact ⟨0, by simp⟩
   · exact ⟨g, hg⟩
@@ -416,8 +416,8 @@ theorem range_castLevelRaise_inf_cuspFormCharSpace_eq_qSupportedOnDvdSubmodule_i
       qSupportedOnDvdSubmodule N k d ⊓ cuspFormCharSpace k χ.toUnitHom := by
   ext f
   rw [Submodule.mem_inf, Submodule.mem_inf]
-  refine ⟨fun ⟨hrange, hchar⟩ => ⟨?_, hchar⟩,
-          fun ⟨hsup, hchar⟩ => ⟨?_, hchar⟩⟩
+  refine ⟨fun ⟨hrange, hchar⟩ ↦ ⟨?_, hchar⟩,
+          fun ⟨hsup, hchar⟩ ↦ ⟨?_, hchar⟩⟩
   · exact range_castLevelRaise_le_qSupportedOnDvdSubmodule hdN k hrange
   · obtain ⟨g, hg⟩ :=
       (mem_qSupportedOnDvdSubmodule_inf_cuspFormCharSpace_iff_exists_cuspForm_levelRaise_preimage_of_char
@@ -450,8 +450,8 @@ theorem exists_cuspForm_levelRaise_preimage_of_qSupported_of_char_decomposition
     exact ⟨g, by rw [castLevelRaise_apply]; exact hg⟩
   choose g_χ hg_χ using h_per_χ
   refine ⟨∑ χ ∈ S.attach, g_χ χ.val χ.property, ?_⟩
-  rw [map_sum, h_decomp, ← Finset.sum_attach S (fun χ => f_χ χ)]
-  exact Finset.sum_congr rfl (fun χ _ => hg_χ χ.val χ.property)
+  rw [map_sum, h_decomp, ← Finset.sum_attach S (fun χ ↦ f_χ χ)]
+  exact Finset.sum_congr rfl (fun χ _ ↦ hg_χ χ.val χ.property)
 
 /-- Character-space mainLemma at prime-power level: for `N = p^r` with `p` prime and
 `r ≥ 1`, a cusp form `f ∈ S_k(Γ₁(p^r), χ)` whose Fourier coefficients vanish at every
@@ -495,7 +495,7 @@ theorem mainLemma_charSpace_of_prime_decomposition
     (h_supp : ∀ p ∈ S, f_p p ∈ qSupportedOnDvdSubmodule N k p) :
     f ∈ cuspFormsOld N k := by
   rw [h_decomp]
-  refine Submodule.sum_mem _ (fun p hp => ?_)
+  refine Submodule.sum_mem _ (fun p hp ↦ ?_)
   have hp_pf := hS hp
   have hp_prime : p.Prime := Nat.prime_of_mem_primeFactors hp_pf
   have hpN : p ∣ N := Nat.dvd_of_mem_primeFactors hp_pf
@@ -580,7 +580,7 @@ theorem iSup_qSupportedOnDvdSubmodule_inf_cuspFormCharSpace_le_cuspFormsOld
     ⨆ p ∈ N.primeFactors,
         qSupportedOnDvdSubmodule N k p ⊓ cuspFormCharSpace k χ.toUnitHom ≤
       cuspFormsOld N k := by
-  refine iSup₂_le (fun p hp => ?_)
+  refine iSup₂_le (fun p hp ↦ ?_)
   exact qSupportedOnDvdSubmodule_inf_cuspFormCharSpace_le_cuspFormsOld χ
     (Nat.prime_of_mem_primeFactors hp) (Nat.dvd_of_mem_primeFactors hp)
 
@@ -619,7 +619,7 @@ theorem iSup_qSupportedOnDvdSubmodule_inf_cuspFormCharSpace_le_cuspFormsOld_divi
     ⨆ d ∈ N.divisors.filter (1 < ·),
         qSupportedOnDvdSubmodule N k d ⊓ cuspFormCharSpace k χ.toUnitHom ≤
       cuspFormsOld N k := by
-  refine iSup₂_le (fun d hd => ?_)
+  refine iSup₂_le (fun d hd ↦ ?_)
   rw [Finset.mem_filter, Nat.mem_divisors] at hd
   obtain ⟨⟨hdN, _⟩, hd_gt⟩ := hd
   exact qSupportedOnDvdSubmodule_inf_cuspFormCharSpace_le_cuspFormsOld_of_dvd
@@ -695,7 +695,7 @@ theorem mem_iSup_divisor_qSupportedOnDvdSubmodule_inf_charSpace_of_sum_decomp
     f ∈ ⨆ d ∈ N.divisors.filter (1 < ·),
         qSupportedOnDvdSubmodule N k d ⊓ cuspFormCharSpace k χ.toUnitHom := by
   rw [h_decomp]
-  refine Submodule.sum_mem _ (fun d hd => ?_)
+  refine Submodule.sum_mem _ (fun d hd ↦ ?_)
   exact Submodule.mem_iSup_of_mem d (Submodule.mem_iSup_of_mem (hS hd) (h_mem d hd))
 
 /-- Prime-power `mainLemma` routed through the divisor-iSup bridge: for `N = p^r`, a cusp
@@ -762,10 +762,10 @@ noncomputable def TraceDescent.ofSingleDivisor
     TraceDescent χ f where
   divisors := {d}
   divisors_subset := by simpa using hd
-  piece := fun _ => f
+  piece := fun _ ↦ f
   reconstructs := by simp
-  piece_supp := fun _ he => by obtain rfl := Finset.mem_singleton.mp he; exact hf_supp
-  piece_char := fun _ _ => hfχ
+  piece_supp := fun _ he ↦ by obtain rfl := Finset.mem_singleton.mp he; exact hf_supp
+  piece_char := fun _ _ ↦ hfχ
 
 /-- Prime-power constructor: for `N = p^r` with `p` prime and `r ≥ 1`, any
 `f ∈ cuspFormCharSpace k χ.toUnitHom` satisfying the coprime-to-`p^r` Fourier vanishing
@@ -860,10 +860,10 @@ noncomputable def TraceDescent.ofSameLevelDivisorProjections
     TraceDescent χ f where
   divisors := N.divisors.filter (1 < ·)
   divisors_subset := subset_rfl
-  piece := fun d => Op.P d f
+  piece := fun d ↦ Op.P d f
   reconstructs := Op.mobius_reconstruction f h_vanish
-  piece_supp := fun d hd => Op.P_supp d hd f
-  piece_char := fun d hd => Op.P_char d hd χ.toUnitHom f hfχ
+  piece_supp := fun d hd ↦ Op.P_supp d hd f
+  piece_char := fun d hd ↦ Op.P_char d hd χ.toUnitHom f hfχ
 
 /-- End-to-end consumer: a `SameLevelDivisorProjections N k` datum plus the
 coprime-to-`N` vanishing hypothesis produces the composite-`N` character-space
@@ -899,8 +899,8 @@ theorem mainLemma_charSpace_of_sameLevelDivisorDecomposition
       divisors_subset := subset_rfl
       piece := samePiece
       reconstructs := h_sum
-      piece_supp := fun d hd => (h_pieces d hd).1
-      piece_char := fun d hd => (h_pieces d hd).2 }
+      piece_supp := fun d hd ↦ (h_pieces d hd).1
+      piece_char := fun d hd ↦ (h_pieces d hd).2 }
 
 private def cuspFormOfModularForm
     {Γ : Subgroup (GL (Fin 2) ℝ)} {k : ℤ}
@@ -942,7 +942,7 @@ private lemma mem_cuspFormCharSpace_of_funeq_modForm
         (⇑g_mf ∣[k] (mapGL ℝ (γ : Matrix.SpecialLinearGroup (Fin 2) ℤ) :
           GL (Fin 2) ℝ)) z by
       rw [diamondOp_eq_diamondOpAux k u γ hγ]; rfl]
-    simpa using congrFun (congrArg (fun F : ModularForm ((Gamma1 N).map (mapGL ℝ)) k =>
+    simpa using congrFun (congrArg (fun F : ModularForm ((Gamma1 N).map (mapGL ℝ)) k ↦
       (⇑F : UpperHalfPlane → ℂ)) ((mem_modFormCharSpace_iff k χ g_mf).mp h_mf u)) z
   rw [h_cf_slash, h_mf_slash]
   simp [h_coe]
@@ -973,7 +973,7 @@ private lemma cuspForm_eq_sum_of_toModularForm_eq_sum
     | cons a s ha ih => simp only [Finset.sum_cons, CuspForm.coe_add, Pi.add_apply, ih]
   rw [h_cf_sum, show (f z : ℂ) = (⇑f.toModularForm' : UpperHalfPlane → ℂ) z from rfl,
     h_sum, h_mf_sum]
-  exact Finset.sum_congr rfl (fun d hd => by rw [h_coe d hd])
+  exact Finset.sum_congr rfl (fun d hd ↦ by rw [h_coe d hd])
 
 /-- SMO bridge consumer (ModularForm-input): a `CuspForm` `f` with a `ModularForm`-typed
 same-level divisor decomposition `f.toModularForm' = ∑ d, samePiece d`, per-piece
@@ -996,7 +996,7 @@ theorem mainLemma_charSpace_of_modularFormSameLevelDivisorDecomposition
         c.IsZeroAt (samePiece d).toFun k) :
     f ∈ cuspFormsOld N k := by
   classical
-  let lifted : ℕ → CuspForm ((Gamma1 N).map (mapGL ℝ)) k := fun d =>
+  let lifted : ℕ → CuspForm ((Gamma1 N).map (mapGL ℝ)) k := fun d ↦
     if hd : d ∈ N.divisors.filter (1 < ·) then
       cuspFormOfModularForm (samePiece d) (h_cusp d hd)
     else 0
@@ -1016,7 +1016,7 @@ theorem mainLemma_charSpace_of_modularFormSameLevelDivisorDecomposition
         (samePiece d) h_coe (h_pieces_char d hd)
   exact mainLemma_charSpace_of_sameLevelDivisorDecomposition χ f lifted
     (cuspForm_eq_sum_of_toModularForm_eq_sum f samePiece lifted _ h_sum
-      (fun d hd => by simp only [lifted, dif_pos hd, cuspFormOfModularForm_coe]))
+      (fun d hd ↦ by simp only [lifted, dif_pos hd, cuspFormOfModularForm_coe]))
     h_pieces_lifted
 
 /-- SMO bridge composer (Projections-input): a `ModularFormSameLevelDivisorProjections`
@@ -1069,9 +1069,9 @@ noncomputable def SameLevelDivisorProjectionsLocalField.zero
     (N : ℕ) [NeZero N] (k : ℤ) (d : ℕ) :
     SameLevelDivisorProjectionsLocalField N k d where
   P := 0
-  P_supp := fun _ => by
+  P_supp := fun _ ↦ by
     simpa only [LinearMap.zero_apply] using (qSupportedOnDvdSubmodule N k d).zero_mem
-  P_char := fun χ _ _ => by
+  P_char := fun χ _ _ ↦ by
     simpa only [LinearMap.zero_apply] using (cuspFormCharSpace k χ).zero_mem
 
 /-- Assemble a family of per-divisor local fields plus a single global Möbius
@@ -1088,10 +1088,10 @@ noncomputable def SameLevelDivisorProjections.ofLocalFields
       f = ∑ d ∈ N.divisors.filter (1 < ·),
         (if hd : d ∈ N.divisors.filter (1 < ·) then (loc d hd).P else 0) f) :
     SameLevelDivisorProjections N k where
-  P := fun d =>
+  P := fun d ↦
     if hd : d ∈ N.divisors.filter (1 < ·) then (loc d hd).P else 0
-  P_supp := fun d hd f => by simpa only [dif_pos hd] using (loc d hd).P_supp f
-  P_char := fun d hd χ f hfχ => by simpa only [dif_pos hd] using (loc d hd).P_char χ f hfχ
+  P_supp := fun d hd f ↦ by simpa only [dif_pos hd] using (loc d hd).P_supp f
+  P_char := fun d hd χ f hfχ ↦ by simpa only [dif_pos hd] using (loc d hd).P_char χ f hfχ
   mobius_reconstruction := mobius
 
 /-- Construction of a `SameLevelDivisorProjections N k` from the zero local-field family,
@@ -1105,10 +1105,10 @@ noncomputable def SameLevelDivisorProjections.ofZeroLocalFields
         (0 : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)) :
     SameLevelDivisorProjections N k :=
   SameLevelDivisorProjections.ofLocalFields
-    (fun d _ => SameLevelDivisorProjectionsLocalField.zero N k d)
-    (fun f hf => by
+    (fun d _ ↦ SameLevelDivisorProjectionsLocalField.zero N k d)
+    (fun f hf ↦ by
       convert mobius f hf using 1
-      refine Finset.sum_congr rfl (fun d hd => ?_)
+      refine Finset.sum_congr rfl (fun d hd ↦ ?_)
       simp only [dif_pos hd, SameLevelDivisorProjectionsLocalField.zero,
         LinearMap.zero_apply])
 
@@ -1154,9 +1154,9 @@ noncomputable def TraceCorrectionPrime.zero
     TraceCorrectionPrime N k p where
   core := 0
   correction := 0
-  core_minus_correction_supp := fun _ => by
+  core_minus_correction_supp := fun _ ↦ by
     simpa only [sub_self, LinearMap.zero_apply] using (qSupportedOnDvdSubmodule N k p).zero_mem
-  core_minus_correction_char := fun χ _ _ => by
+  core_minus_correction_char := fun χ _ _ ↦ by
     simpa only [sub_self, LinearMap.zero_apply] using (cuspFormCharSpace k χ).zero_mem
 
 /-- The `P` field of the local-field produced by `TraceCorrectionPrime.zero` is the zero
@@ -1182,9 +1182,9 @@ noncomputable def TraceCorrectionPrime.ofCore
     TraceCorrectionPrime N k p where
   core := Q
   correction := 0
-  core_minus_correction_supp := fun f => by
+  core_minus_correction_supp := fun f ↦ by
     simpa [sub_zero] using h_supp f
-  core_minus_correction_char := fun χ f hf => by
+  core_minus_correction_char := fun χ f hf ↦ by
     simpa [sub_zero] using h_char χ f hf
 
 /-- The `core - correction` of `ofCore Q h_supp h_char` is exactly `Q`. -/
@@ -1208,11 +1208,11 @@ noncomputable def TraceCorrectionPrime.add
     TraceCorrectionPrime N k p where
   core := T₁.core + T₂.core
   correction := T₁.correction + T₂.correction
-  core_minus_correction_supp := fun f => by
+  core_minus_correction_supp := fun f ↦ by
     simp only [LinearMap.sub_apply, LinearMap.add_apply, add_sub_add_comm]
     exact (qSupportedOnDvdSubmodule N k p).add_mem (T₁.core_minus_correction_supp f)
       (T₂.core_minus_correction_supp f)
-  core_minus_correction_char := fun χ f hf => by
+  core_minus_correction_char := fun χ f hf ↦ by
     simp only [LinearMap.sub_apply, LinearMap.add_apply, add_sub_add_comm]
     exact (cuspFormCharSpace k χ).add_mem (T₁.core_minus_correction_char χ f hf)
       (T₂.core_minus_correction_char χ f hf)
@@ -1224,12 +1224,12 @@ noncomputable def TraceCorrectionPrime.neg
     TraceCorrectionPrime N k p where
   core := -T.core
   correction := -T.correction
-  core_minus_correction_supp := fun f => by
+  core_minus_correction_supp := fun f ↦ by
     have heq : ((-T.core) - (-T.correction)) f = -((T.core - T.correction) f) := by
       simp only [LinearMap.sub_apply, LinearMap.neg_apply]; abel
     rw [heq]
     exact (qSupportedOnDvdSubmodule N k p).neg_mem (T.core_minus_correction_supp f)
-  core_minus_correction_char := fun χ f hf => by
+  core_minus_correction_char := fun χ f hf ↦ by
     have heq : ((-T.core) - (-T.correction)) f = -((T.core - T.correction) f) := by
       simp only [LinearMap.sub_apply, LinearMap.neg_apply]; abel
     rw [heq]
@@ -1242,12 +1242,12 @@ noncomputable def TraceCorrectionPrime.smul
     TraceCorrectionPrime N k p where
   core := c • T.core
   correction := c • T.correction
-  core_minus_correction_supp := fun f => by
+  core_minus_correction_supp := fun f ↦ by
     have heq : ((c • T.core) - (c • T.correction)) f = c • ((T.core - T.correction) f) := by
       simp only [LinearMap.sub_apply, LinearMap.smul_apply]; rw [smul_sub]
     rw [heq]
     exact (qSupportedOnDvdSubmodule N k p).smul_mem c (T.core_minus_correction_supp f)
-  core_minus_correction_char := fun χ f hf => by
+  core_minus_correction_char := fun χ f hf ↦ by
     have heq : ((c • T.core) - (c • T.correction)) f = c • ((T.core - T.correction) f) := by
       simp only [LinearMap.sub_apply, LinearMap.smul_apply]; rw [smul_sub]
     rw [heq]
@@ -1302,7 +1302,7 @@ noncomputable def SameLevelDivisorProjections.ofTraceCorrections
           (T d hd).toLocalField.P else 0) f) :
     SameLevelDivisorProjections N k :=
   SameLevelDivisorProjections.ofLocalFields
-    (fun d hd => (T d hd).toLocalField) mobius
+    (fun d hd ↦ (T d hd).toLocalField) mobius
 
 /-- End-to-end consumer: a per-divisor family of trace-correction witnesses, a global
 Möbius reconstruction hypothesis, and a cusp form `f ∈ cuspFormCharSpace k χ.toUnitHom`

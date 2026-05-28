@@ -37,8 +37,8 @@ theorem deg_T_diag_ppow (i k : ℕ) (hk : 0 < k) :
     HeckeCoset_deg (GL_pair 2) (T_diag (![p ^ i, p ^ (i + k)])) =
     ↑(p ^ (k - 1) * (p + 1)) :=
   HeckeCoset_deg_T_diag_two_prime p hp (![p ^ i, p ^ (i + k)])
-    (fun j => by fin_cases j <;> exact pow_pos hp.pos _)
-    (fun j hj => by
+    (fun j ↦ by fin_cases j <;> exact pow_pos hp.pos _)
+    (fun j hj ↦ by
       have hi0 : j = 0 := by omega
       subst hi0; simpa using Nat.pow_dvd_pow p (by omega : i ≤ i + k))
     k hk (by
@@ -47,8 +47,8 @@ theorem deg_T_diag_ppow (i k : ℕ) (hk : 0 < k) :
 
 /-- Scalar case: `deg(T(c, c)) = 1`. -/
 theorem deg_T_diag_scalar (c : ℕ) (hc : 0 < c) :
-    HeckeCoset_deg (GL_pair 2) (T_diag (fun _ => c)) = 1 :=
-  HeckeCoset_deg_T_diag_two_scalar (fun _ => c) (fun _ => hc) (divChain_const 2 c) rfl
+    HeckeCoset_deg (GL_pair 2) (T_diag (fun _ ↦ c)) = 1 :=
+  HeckeCoset_deg_T_diag_two_scalar (fun _ ↦ c) (fun _ ↦ hc) (divChain_const 2 c) rfl
 
 /-! ### Identity 7: Degree of T(m) -/
 
@@ -97,8 +97,8 @@ private lemma deg_ppow_term_eq' (i k : ℕ) (h2i : 2 * i = k) :
   set c := p ^ i with hc_def
   have hc : 0 < c := pow_pos hp.pos i
   rw [show T_diag (![c, c]) =
-      T_diag (fun _ => c) from by
-    congr 1; exact funext fun j => by fin_cases j <;> rfl]
+      T_diag (fun _ ↦ c) from by
+    congr 1; exact funext fun j ↦ by fin_cases j <;> rfl]
   exact deg_T_diag_scalar c hc
 
 include hp in
@@ -140,7 +140,7 @@ theorem deg_T_sum_prime_pow (k : ℕ) :
     have h_tail : ∑ i ∈ Finset.range (k / 2 + 1),
         (deg (GL_pair 2)) (T_ad (p ^ (i + 1)) (p ^ (k + 2 - (i + 1)))) =
         ∑ i ∈ Finset.range (k / 2 + 1), (deg (GL_pair 2)) (T_ad (p ^ i) (p ^ (k - i))) :=
-      Finset.sum_congr rfl fun i hi => by
+      Finset.sum_congr rfl fun i hi ↦ by
         rw [Finset.mem_range] at hi; exact deg_ppow_shift' p hp i k hi
     rw [h_tail, show deg (GL_pair 2) (T_ad (p ^ 0) (p ^ (k + 2 - 0))) =
         ↑(p ^ (k + 1) * (p + 1)) from by
@@ -162,8 +162,8 @@ private lemma deg_T_sum_one : deg (GL_pair 2) (T_sum 1) = 1 := by
   set c : ℕ := 1 with hc_def
   have hc : 0 < c := Nat.one_pos
   rw [show T_diag (![c, c]) =
-      T_diag (fun _ => c) from by
-    congr 1; exact funext fun j => by fin_cases j <;> rfl]
+      T_diag (fun _ ↦ c) from by
+    congr 1; exact funext fun j ↦ by fin_cases j <;> rfl]
   exact deg_T_diag_scalar c hc
 
 /-- Theorem 3.24(7): `deg(T(m)) = σ₁(m)`.

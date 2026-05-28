@@ -115,7 +115,7 @@ theorem Newform.lSeries_full_hasProd_of_full_coprime_mul
       f.lCoeff (m * n) = f.lCoeff m * f.lCoeff n)
     {s : ℂ} (hs : (k : ℝ) / 2 + 1 < s.re) :
     HasProd
-      (fun p : Nat.Primes => ∑' e : ℕ, LSeries.term f.lCoeff s ((p : ℕ) ^ e))
+      (fun p : Nat.Primes ↦ ∑' e : ℕ, LSeries.term f.lCoeff s ((p : ℕ) ^ e))
       (LSeries f.lCoeff s) := by
   set g : ℕ → ℂ := LSeries.term f.lCoeff s with hg_def
   have h_g_zero : g 0 = 0 := by
@@ -132,7 +132,7 @@ theorem Newform.lSeries_full_hasProd_of_full_coprime_mul
       LSeries.term_def₀ f.lCoeff_zero, h_full_mul hmn]
     push_cast
     rw [Complex.natCast_mul_natCast_cpow]; ring
-  have h_g_summ : Summable fun n => ‖g n‖ := (f.lSeriesSummable hs).norm
+  have h_g_summ : Summable fun n ↦ ‖g n‖ := (f.lSeriesSummable hs).norm
   exact EulerProduct.eulerProduct_hasProd h_g_one h_g_mul h_g_summ h_g_zero
 
 private lemma Newform.term_lCoeff_pow_of_bad_prime_pow
@@ -163,20 +163,20 @@ private lemma Newform.tsum_term_lCoeff_pow_at_bad_prime_eq_geom
       (1 - f.lCoeff p * (p : ℂ) ^ (-s))⁻¹ := by
   have h_term : ∀ e : ℕ, LSeries.term f.lCoeff s ((p : ℕ) ^ e) =
       (f.lCoeff p * ((p : ℕ) : ℂ) ^ (-s)) ^ e :=
-    fun e => f.term_lCoeff_pow_of_bad_prime_pow hp h_bad_pow s e
-  have h_p_pow_inj : Function.Injective fun e : ℕ => (p : ℕ) ^ e := by
+    fun e ↦ f.term_lCoeff_pow_of_bad_prime_pow hp h_bad_pow s e
+  have h_p_pow_inj : Function.Injective fun e : ℕ ↦ (p : ℕ) ^ e := by
     intro a b hab
     exact Nat.pow_right_injective hp.two_le hab
-  have h_sum_full : Summable fun n : ℕ => ‖LSeries.term f.lCoeff s n‖ :=
+  have h_sum_full : Summable fun n : ℕ ↦ ‖LSeries.term f.lCoeff s n‖ :=
     (f.lSeriesSummable hs).norm
-  have h_sum_pow : Summable fun e : ℕ =>
+  have h_sum_pow : Summable fun e : ℕ ↦
       ‖LSeries.term f.lCoeff s ((p : ℕ) ^ e)‖ :=
     h_sum_full.comp_injective h_p_pow_inj
-  have h_sum_geom : Summable fun e : ℕ =>
+  have h_sum_geom : Summable fun e : ℕ ↦
       ‖(f.lCoeff p * ((p : ℕ) : ℂ) ^ (-s)) ^ e‖ := by
-    refine h_sum_pow.congr (fun e => ?_)
+    refine h_sum_pow.congr (fun e ↦ ?_)
     rw [h_term e]
-  have h_sum_pow_geom : Summable fun e : ℕ =>
+  have h_sum_pow_geom : Summable fun e : ℕ ↦
       (f.lCoeff p * ((p : ℕ) : ℂ) ^ (-s)) ^ e :=
     Summable.of_norm h_sum_geom
   have h_norm_lt : ‖f.lCoeff p * ((p : ℕ) : ℂ) ^ (-s)‖ < 1 :=
@@ -194,7 +194,7 @@ noncomputable def Newform.eulerStrippingArithmeticInput_of_heckeStruct
     Newform.EulerStrippingArithmeticInput f χ where
   hfχ := h.hfχ
   S := (Nat.primeFactors N).attach.image
-    (fun ⟨p, hp⟩ => ⟨p, (Nat.mem_primeFactors.mp hp).1⟩)
+    (fun ⟨p, hp⟩ ↦ ⟨p, (Nat.mem_primeFactors.mp hp).1⟩)
   hS := by
     intro p
     constructor
@@ -203,14 +203,14 @@ noncomputable def Newform.eulerStrippingArithmeticInput_of_heckeStruct
         Nat.mem_primeFactors] at hp_S
       obtain ⟨q, ⟨hq_prime, hq_N, _hN_ne⟩, hq_eq⟩ := hp_S
       have h_eq : (p : ℕ) = q := by
-        have := congr_arg (fun (x : Nat.Primes) => (x : ℕ)) hq_eq.symm
+        have := congr_arg (fun (x : Nat.Primes) ↦ (x : ℕ)) hq_eq.symm
         simpa using this
       rw [h_eq]; exact hq_N
     · intro hp_dvd
       simp only [Finset.mem_image, Finset.mem_attach, true_and, Subtype.exists,
         Nat.mem_primeFactors]
       exact ⟨(p : ℕ), ⟨p.prop, hp_dvd, NeZero.ne N⟩, rfl⟩
-  hf_full_euler := fun {s} hs =>
+  hf_full_euler := fun {s} hs ↦
     f.lSeries_full_hasProd_of_full_coprime_mul h.full_coprime_mul hs
   h_bad_local_inv := by
     intro s hs p hp_S
@@ -219,7 +219,7 @@ noncomputable def Newform.eulerStrippingArithmeticInput_of_heckeStruct
         Nat.mem_primeFactors] at hp_S
       obtain ⟨q, ⟨_, hq_N, _⟩, hq_eq⟩ := hp_S
       have h_eq : (p : ℕ) = q := by
-        have := congr_arg (fun (x : Nat.Primes) => (x : ℕ)) hq_eq.symm
+        have := congr_arg (fun (x : Nat.Primes) ↦ (x : ℕ)) hq_eq.symm
         simpa using this
       rw [h_eq]; exact hq_N
     exact (f.tsum_term_lCoeff_pow_at_bad_prime_eq_geom p.prop
@@ -231,7 +231,7 @@ noncomputable def Newform.eulerStrippingArithmeticInput_of_heckeStruct
         Nat.mem_primeFactors] at hp_S
       obtain ⟨q, ⟨_, hq_N, _⟩, hq_eq⟩ := hp_S
       have h_eq : (p : ℕ) = q := by
-        have := congr_arg (fun (x : Nat.Primes) => (x : ℕ)) hq_eq.symm
+        have := congr_arg (fun (x : Nat.Primes) ↦ (x : ℕ)) hq_eq.symm
         simpa using this
       rw [h_eq]; exact hq_N
     have h_norm := (f.tsum_term_lCoeff_pow_at_bad_prime_eq_geom p.prop
@@ -285,7 +285,7 @@ theorem Newform.HeckeEntireExtension_of_CompletedFrickeData
       Newform.CompletedFrickeData f) :
     Newform.HeckeEntireExtension :=
   Newform.HeckeEntireExtension_of_CompletedMellinData
-    (fun _N _ _k f => Newform.CompletedMellinData.ofCompletedFrickeData (h f))
+    (fun _N _ _k f ↦ Newform.CompletedMellinData.ofCompletedFrickeData (h f))
 
 /-- The global `Newform.HeckeEntireExtension` from the classical inputs
 `HasFrickeTwistAsCuspForm` and `HasEulerStrippingMultiplier`. -/
@@ -297,7 +297,7 @@ theorem Newform.HeckeEntireExtension_of_classicalInputs
       Newform.HasEulerStrippingMultiplier f) :
     Newform.HeckeEntireExtension :=
   Newform.HeckeEntireExtension_of_CompletedFrickeData
-    (fun _N _ _k f =>
+    (fun _N _ _k f ↦
       (Newform.completedFrickeData_of_classicalInputs f
         (h_fricke f) (h_pos f) (h_stripping f)).some)
 
@@ -315,7 +315,7 @@ theorem Newform.analyticContradiction_of_CompletedFrickeData_of_PerNewformFullDi
     Newform.AnalyticContradiction := by
   have h_no_ext : Newform.NoEntireExtensionUnderBadPrime :=
     Newform.noEntireExtensionUnderBadPrime_of_full_dirichletZeroCertificate
-      (fun N _ k f χ hfχ S h_bad =>
+      (fun N _ k f χ hfχ S h_bad ↦
         Newform.full_pole_witness_data_of_PerNewformFullDirichletData f χ S
           (h_data f χ hfχ S h_bad))
   exact Newform.analyticContradiction_of_HeckeEntireExtension_of_NoEntireExtensionUnderBadPrime
@@ -386,7 +386,7 @@ theorem Newform.analyticContradiction_of_classicalInputs_of_full_dirichletZeroCe
           q ∉ S → f.lCoeff q = 0) →
         ∃ (T : Finset Nat.Primes) (s₀ : ℂ),
           AnalyticAt ℂ
-            (fun s =>
+            (fun s ↦
               DirichletCharacter.LFunction
                 (Newform.dirichletLift χ * Newform.dirichletLift χ
                   : DirichletCharacter ℂ N) (2 * (2 * s - k + 1)) *
@@ -395,7 +395,7 @@ theorem Newform.analyticContradiction_of_classicalInputs_of_full_dirichletZeroCe
                     ((p : ℕ) : ZMod N) *
                   ((p : ℕ) : ℂ) ^ (-(2 * s - k + 1)))⁻¹) s₀ ∧
           AnalyticAt ℂ
-            (fun s =>
+            (fun s ↦
               DirichletCharacter.LFunction
                 (Newform.dirichletLift χ : DirichletCharacter ℂ N)
                 (2 * s - k + 1) *
@@ -416,7 +416,7 @@ theorem Newform.analyticContradiction_of_classicalInputs_of_full_dirichletZeroCe
               : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
               ((p : ℕ) : ℂ) ^ (-(2 * (2 * s₀ - k + 1))))⁻¹)) = 0 ∧
           meromorphicOrderAt
-            (fun s =>
+            (fun s ↦
               DirichletCharacter.LFunction
                 (Newform.dirichletLift χ : DirichletCharacter ℂ N)
                 (2 * s - k + 1) *
@@ -444,7 +444,7 @@ theorem Newform.exists_nonzero_prime_eigenvalue_of_classicalInputs_of_full_diric
           q ∉ S → f.lCoeff q = 0) →
         ∃ (T : Finset Nat.Primes) (s₀ : ℂ),
           AnalyticAt ℂ
-            (fun s =>
+            (fun s ↦
               DirichletCharacter.LFunction
                 (Newform.dirichletLift χ * Newform.dirichletLift χ
                   : DirichletCharacter ℂ N) (2 * (2 * s - k + 1)) *
@@ -453,7 +453,7 @@ theorem Newform.exists_nonzero_prime_eigenvalue_of_classicalInputs_of_full_diric
                     ((p : ℕ) : ZMod N) *
                   ((p : ℕ) : ℂ) ^ (-(2 * s - k + 1)))⁻¹) s₀ ∧
           AnalyticAt ℂ
-            (fun s =>
+            (fun s ↦
               DirichletCharacter.LFunction
                 (Newform.dirichletLift χ : DirichletCharacter ℂ N)
                 (2 * s - k + 1) *
@@ -474,7 +474,7 @@ theorem Newform.exists_nonzero_prime_eigenvalue_of_classicalInputs_of_full_diric
               : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
               ((p : ℕ) : ℂ) ^ (-(2 * (2 * s₀ - k + 1))))⁻¹)) = 0 ∧
           meromorphicOrderAt
-            (fun s =>
+            (fun s ↦
               DirichletCharacter.LFunction
                 (Newform.dirichletLift χ : DirichletCharacter ℂ N)
                 (2 * s - k + 1) *
@@ -512,7 +512,7 @@ theorem strongMultiplicityOne_of_classicalInputs_of_full_dirichletZeroCertificat
           q ∉ S → f.lCoeff q = 0) →
         ∃ (T : Finset Nat.Primes) (s₀ : ℂ),
           AnalyticAt ℂ
-            (fun s =>
+            (fun s ↦
               DirichletCharacter.LFunction
                 (Newform.dirichletLift χ * Newform.dirichletLift χ
                   : DirichletCharacter ℂ N) (2 * (2 * s - k + 1)) *
@@ -521,7 +521,7 @@ theorem strongMultiplicityOne_of_classicalInputs_of_full_dirichletZeroCertificat
                     ((p : ℕ) : ZMod N) *
                   ((p : ℕ) : ℂ) ^ (-(2 * s - k + 1)))⁻¹) s₀ ∧
           AnalyticAt ℂ
-            (fun s =>
+            (fun s ↦
               DirichletCharacter.LFunction
                 (Newform.dirichletLift χ : DirichletCharacter ℂ N)
                 (2 * s - k + 1) *
@@ -542,7 +542,7 @@ theorem strongMultiplicityOne_of_classicalInputs_of_full_dirichletZeroCertificat
               : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
               ((p : ℕ) : ℂ) ^ (-(2 * (2 * s₀ - k + 1))))⁻¹)) = 0 ∧
           meromorphicOrderAt
-            (fun s =>
+            (fun s ↦
               DirichletCharacter.LFunction
                 (Newform.dirichletLift χ : DirichletCharacter ℂ N)
                 (2 * s - k + 1) *
@@ -618,7 +618,7 @@ theorem exists_levelRaise_preimage_of_coeff_support_multiples
     ∃ f : UpperHalfPlane → ℂ,
       (⇑g : UpperHalfPlane → ℂ) = levelRaiseFun l k f ∧
       f ∣[k] (mapGL ℝ ModularGroup.T : GL (Fin 2) ℝ) = f := by
-  refine ⟨fun τ => (⇑g : _ → ℂ) ((levelRaiseMatrix l)⁻¹ • τ), ?_, ?_⟩
+  refine ⟨fun τ ↦ (⇑g : _ → ℂ) ((levelRaiseMatrix l)⁻¹ • τ), ?_, ?_⟩
   · funext τ
     show (⇑g : _ → ℂ) τ = levelRaiseFun l k _ τ
     rw [levelRaiseFun_apply]
@@ -632,22 +632,22 @@ theorem exists_levelRaise_preimage_of_coeff_support_multiples
         CongruenceSubgroup.strictPeriods_Gamma1]
       exact ⟨1, by simp⟩
     funext τ
-    show ((fun τ' => (⇑g : _ → ℂ) ((levelRaiseMatrix l)⁻¹ • τ')) ∣[k]
+    show ((fun τ' ↦ (⇑g : _ → ℂ) ((levelRaiseMatrix l)⁻¹ • τ')) ∣[k]
         (mapGL ℝ ModularGroup.T : GL (Fin 2) ℝ)) τ =
         (⇑g : _ → ℂ) ((levelRaiseMatrix l)⁻¹ • τ)
-    rw [show ((fun τ' => (⇑g : _ → ℂ) ((levelRaiseMatrix l)⁻¹ • τ')) ∣[k]
+    rw [show ((fun τ' ↦ (⇑g : _ → ℂ) ((levelRaiseMatrix l)⁻¹ • τ')) ∣[k]
           (mapGL ℝ ModularGroup.T : GL (Fin 2) ℝ)) =
-        ((fun τ' => (⇑g : _ → ℂ) ((levelRaiseMatrix l)⁻¹ • τ')) ∣[k]
+        ((fun τ' ↦ (⇑g : _ → ℂ) ((levelRaiseMatrix l)⁻¹ • τ')) ∣[k]
           (ModularGroup.T : SL(2, ℤ))) from rfl,
       modular_slash_T_apply]
     set σ : UpperHalfPlane := (levelRaiseMatrix l)⁻¹ • τ
     rw [levelRaiseMatrix_inv_smul_vadd_one_eq τ]
     set σ' : UpperHalfPlane := ((1 : ℝ) / (l : ℝ)) +ᵥ σ
-    have Hσ : HasSum (fun n : ℕ =>
+    have Hσ : HasSum (fun n : ℕ ↦
         (ModularFormClass.qExpansion (1 : ℝ) g).coeff n •
           Function.Periodic.qParam (1 : ℝ) (σ : ℂ) ^ n) ((⇑g : _ → ℂ) σ) :=
       ModularFormClass.hasSum_qExpansion (f := g) h1_pos h1_period σ
-    have Hσ' : HasSum (fun n : ℕ =>
+    have Hσ' : HasSum (fun n : ℕ ↦
         (ModularFormClass.qExpansion (1 : ℝ) g).coeff n •
           Function.Periodic.qParam (1 : ℝ) (σ' : ℂ) ^ n) ((⇑g : _ → ℂ) σ') :=
       ModularFormClass.hasSum_qExpansion (f := g) h1_pos h1_period σ'
@@ -683,16 +683,16 @@ theorem strongMultiplicityOne_of_analyticContradiction_of_newSubspaceZeroCriteri
       Newform.exists_nonzero_prime_eigenvalue_of_analyticContradiction
         h_ana f χ hfχ bad
     have hq_pos : 0 < q := hq_prime.pos
-    have hq_notin_S : q ∉ S := fun hqS => hq_notin (by
+    have hq_notin_S : q ∉ S := fun hqS ↦ hq_notin (by
       simp only [bad, Finset.mem_union]; exact Or.inl (Or.inl hqS))
-    have hq_notin_img : q ∉ S.image (· / n.val) := fun h' => hq_notin (by
+    have hq_notin_img : q ∉ S.image (· / n.val) := fun h' ↦ hq_notin (by
       simp only [bad, Finset.mem_union]; exact Or.inl (Or.inr h'))
-    have hq_nd_n : ¬ q ∣ n.val := fun hqn => hq_notin (by
+    have hq_nd_n : ¬ q ∣ n.val := fun hqn ↦ hq_notin (by
       simp only [bad, Finset.mem_union, Nat.mem_primeFactors]
       exact Or.inr ⟨hq_prime, hqn, hn_pos.ne'⟩)
     have hn_coprime_q : Nat.Coprime n.val q :=
       ((hq_prime.coprime_iff_not_dvd).mpr hq_nd_n).symm
-    have hnq_notin_S : n.val * q ∉ S := fun hnqS => hq_notin_img <| by
+    have hnq_notin_S : n.val * q ∉ S := fun hnqS ↦ hq_notin_img <| by
       refine Finset.mem_image.mpr ⟨n.val * q, hnqS, ?_⟩
       exact Nat.mul_div_cancel_left _ hn_pos
     let q_pnat : ℕ+ := ⟨q, hq_pos⟩

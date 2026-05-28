@@ -446,7 +446,7 @@ theorem exists_levelRaise_eigen_decomposition_of_mem_cuspFormsOldChar
     -- `χ`-decompose `g` into homogeneous pieces, then split each via the new eigenbasis.
     obtain ⟨cfs, hcfs_mem, hcfs_sum⟩ := exists_finsupp_charSpace_of_cuspFormsNew (N := M) k hg_new
     rw [← hcfs_sum]
-    have hpush : (heq ▸ levelRaise M l k (cfs.sum fun _ y => y) :
+    have hpush : (heq ▸ levelRaise M l k (cfs.sum fun _ y ↦ y) :
         CuspForm ((Gamma1 N).map (mapGL ℝ)) k) =
         ∑ ψ ∈ cfs.support, (heq ▸ levelRaise M l k (cfs ψ)) := by
       rw [Finsupp.sum, map_sum]
@@ -629,13 +629,13 @@ private theorem oldNewGenSpan_le_oldNewGenCharSpan (N : ℕ) [NeZero N] (k : ℤ
   haveI : NeZero l := hl
   obtain ⟨c, hc_mem, hc_sum⟩ := exists_finsupp_charSpace_of_cuspFormsNew (N := M) k hg_new
   rw [← hc_sum]
-  have hpush : (heq ▸ levelRaise M l k (c.sum fun _ y => y) :
+  have hpush : (heq ▸ levelRaise M l k (c.sum fun _ y ↦ y) :
       CuspForm ((Gamma1 N).map (mapGL ℝ)) k) =
       ∑ ψ ∈ c.support, (heq ▸ levelRaise M l k (c ψ)) := by
     rw [Finsupp.sum, map_sum]
     subst heq; rfl
   rw [hpush]
-  refine Submodule.sum_mem _ (fun ψ _ => ?_)
+  refine Submodule.sum_mem _ (fun ψ _ ↦ ?_)
   exact Submodule.subset_span
     ⟨M, l, hM, hl, hl1, heq, ψ, c ψ, ⟨(hc_mem ψ).1, (hc_mem ψ).2⟩, rfl⟩
 
@@ -648,19 +648,19 @@ private theorem charSpace_finset_sum_filter_eq {ι : Type} (s : Finset ι)
     (χ : (ZMod N)ˣ →* ℂˣ) (hx : ∀ i ∈ s, x i ∈ cuspFormCharSpace k (ψ i))
     {f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k} (hf_sum : f = ∑ i ∈ s, x i)
     (hf_char : f ∈ cuspFormCharSpace k χ) :
-    f = ∑ i ∈ s.filter (fun i => ψ i = χ), x i := by
+    f = ∑ i ∈ s.filter (fun i ↦ ψ i = χ), x i := by
   have hdisj := (CuspForm_Gamma1_iSupIndep_charSpace (N := N) k).disjoint_biSup
     (x := χ) (y := {ψ' | ψ' ≠ χ}) (by simp)
-  have hsplit : f = (∑ i ∈ s.filter (fun i => ψ i = χ), x i) +
-      ∑ i ∈ s.filter (fun i => ψ i ≠ χ), x i := by
-    rw [hf_sum, Finset.sum_filter_add_sum_filter_not s (fun i => ψ i = χ)]
-  set a := ∑ i ∈ s.filter (fun i => ψ i = χ), x i with ha
-  set b := ∑ i ∈ s.filter (fun i => ψ i ≠ χ), x i with hb
+  have hsplit : f = (∑ i ∈ s.filter (fun i ↦ ψ i = χ), x i) +
+      ∑ i ∈ s.filter (fun i ↦ ψ i ≠ χ), x i := by
+    rw [hf_sum, Finset.sum_filter_add_sum_filter_not s (fun i ↦ ψ i = χ)]
+  set a := ∑ i ∈ s.filter (fun i ↦ ψ i = χ), x i with ha
+  set b := ∑ i ∈ s.filter (fun i ↦ ψ i ≠ χ), x i with hb
   have ha_char : a ∈ cuspFormCharSpace k χ :=
-    Submodule.sum_mem _ (fun i hi => by
+    Submodule.sum_mem _ (fun i hi ↦ by
       obtain ⟨his, hiχ⟩ := Finset.mem_filter.mp hi; rw [← hiχ]; exact hx i his)
   have hb_sup : b ∈ ⨆ ψ' ∈ {ψ' | ψ' ≠ χ}, cuspFormCharSpace k ψ' :=
-    Submodule.sum_mem _ (fun i hi => by
+    Submodule.sum_mem _ (fun i hi ↦ by
       obtain ⟨his, hiχ⟩ := Finset.mem_filter.mp hi
       exact Submodule.mem_iSup_of_mem (ψ i) (Submodule.mem_iSup_of_mem hiχ (hx i his)))
   have hb_char : b ∈ cuspFormCharSpace k χ := by
@@ -690,7 +690,7 @@ private theorem oldNewGenCharSpan_inf_charSpace_le_cuspFormsOldChar
     haveI : NeZero l := hl
     have hMdvd : M ∣ N := ⟨l, by rw [← heq, Nat.mul_comm]⟩
     refine ⟨ψ.comp (ZMod.unitsMap (heq ▸ Nat.dvd_mul_left M l)),
-      levelRaise_mem_cuspFormCharSpace_comp heq ψ hg_char, fun hΨ => ?_⟩
+      levelRaise_mem_cuspFormCharSpace_comp heq ψ hg_char, fun hΨ ↦ ?_⟩
     have hcomp : χ.toUnitHom = ψ.comp (ZMod.unitsMap hMdvd) := hΨ.symm
     have hcond : χ.conductor ∣ M := by
       have hfac : χ.FactorsThrough M := by
@@ -706,7 +706,7 @@ private theorem oldNewGenCharSpan_inf_charSpace_le_cuspFormsOldChar
       exact absurd (mul_right_cancel₀ (NeZero.ne M) this) (Nat.ne_of_gt hl1)
     exact Submodule.subset_span ⟨M, l, hM, hl, hcond, hMne, heq, g, hg_new, rfl⟩
   set Ψ : CuspForm ((Gamma1 N).map (mapGL ℝ)) k → ((ZMod N)ˣ →* ℂˣ) :=
-    fun mi => if h : mi ∈ c.support then (key mi h).choose else 1 with hΨ_def
+    fun mi ↦ if h : mi ∈ c.support then (key mi h).choose else 1 with hΨ_def
   have hΨ_char : ∀ mi ∈ c.support, c mi • mi ∈ cuspFormCharSpace k (Ψ mi) := by
     intro mi hmi
     simp only [hΨ_def, dif_pos hmi]
@@ -717,10 +717,10 @@ private theorem oldNewGenCharSpan_inf_charSpace_le_cuspFormsOldChar
     simp only [hΨ_def, dif_pos hmi] at hmiχ ⊢
     exact Submodule.smul_mem _ _ ((key mi hmi).choose_spec.2 hmiχ)
   have hf_sum : f = ∑ mi ∈ c.support, c mi • mi := by rw [← hc_sum, Finsupp.sum]
-  have hcollapse := charSpace_finset_sum_filter_eq c.support (fun mi => c mi • mi) Ψ
+  have hcollapse := charSpace_finset_sum_filter_eq c.support (fun mi ↦ c mi • mi) Ψ
     χ.toUnitHom hΨ_char hf_sum hf_char
   rw [hcollapse]
-  exact Submodule.sum_mem _ (fun mi hmi =>
+  exact Submodule.sum_mem _ (fun mi hmi ↦
     hΨ_old mi (Finset.mem_filter.mp hmi).1 (Finset.mem_filter.mp hmi).2)
 
 /-- **Gap #4, reverse inclusion (Miyake 4.6.12, T012).**  Every project-oldform in the
@@ -1170,7 +1170,7 @@ This is where gap #4 (4.6.9) and gap #3 (4.6.2) are consumed. -/
 `cuspFormsOldExtended N k`. -/
 theorem newform_notMem_cuspFormsOldExtended
     (f : Newform N k) (hf0 : f.toCuspForm ≠ 0) :
-    f.toCuspForm ∉ cuspFormsOldExtended N k := fun hf_old =>
+    f.toCuspForm ∉ cuspFormsOldExtended N k := fun hf_old ↦
   hf0 (Submodule.disjoint_def.mp cuspFormsOldExtended_disjoint_cuspFormsNewExtended
     f.toCuspForm hf_old f.isNew)
 

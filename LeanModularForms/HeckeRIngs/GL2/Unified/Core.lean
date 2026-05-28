@@ -58,7 +58,7 @@ lemma commute (F : GoodHeckeFamily N V) (m n : GoodIndex N) :
   F.commute' m n
 
 lemma pairwise_commute (F : GoodHeckeFamily N V) :
-    Pairwise fun m n : GoodIndex N => Commute (F.op m) (F.op n) := by
+    Pairwise fun m n : GoodIndex N ↦ Commute (F.op m) (F.op n) := by
   intro m n _
   exact F.commute m n
 

@@ -23,21 +23,21 @@ lemma upper_half_plane_isOpen :
   apply isOpen_lt (by fun_prop) (by fun_prop)
 
 theorem derivWithin_tsum_fun' {α : Type _} (f : α → ℂ → ℂ) {s : Set ℂ}
-    (hs : IsOpen s) (x : ℂ) (hx : x ∈ s) (hf : ∀ y ∈ s, Summable fun n : α => f n y)
+    (hs : IsOpen s) (x : ℂ) (hx : x ∈ s) (hf : ∀ y ∈ s, Summable fun n : α ↦ f n y)
     (hu :∀ K ⊆ s, IsCompact K →
           ∃ u : α → ℝ, Summable u ∧ ∀ n (k : K), ‖derivWithin (f n) s k‖ ≤ u n)
     (hf2 : ∀ n (r : s), DifferentiableAt ℂ (f n) r) :
-    derivWithin (fun z => ∑' n : α, f n z) s x = ∑' n : α, derivWithin (fun z => f n z) s x := by
+    derivWithin (fun z ↦ ∑' n : α, f n z) s x = ∑' n : α, derivWithin (fun z ↦ f n z) s x := by
   apply HasDerivWithinAt.derivWithin
   · apply HasDerivAt.hasDerivWithinAt
     have A :
       ∀ x : ℂ,
         x ∈ s →
-          Tendsto (fun t : Finset α => ∑ n ∈ t, (fun z => f n z) x) atTop
-            (𝓝 (∑' n : α, (fun z => f n z) x)) :=
+          Tendsto (fun t : Finset α ↦ ∑ n ∈ t, (fun z ↦ f n z) x) atTop
+            (𝓝 (∑' n : α, (fun z ↦ f n z) x)) :=
           fun y hy ↦ Summable.hasSum <| hf y hy
     apply hasDerivAt_of_tendstoLocallyUniformlyOn hs _ _ A hx
-    · use fun n : Finset α => fun a => ∑ i ∈ n, derivWithin (fun z => f i z) s a
+    · use fun n : Finset α ↦ fun a ↦ ∑ i ∈ n, derivWithin (fun z ↦ f i z) s a
     · rw [tendstoLocallyUniformlyOn_iff_forall_isCompact hs]
       intro K hK1 hK2
       have HU := hu K hK1 hK2
@@ -58,11 +58,11 @@ theorem derivWithin_tsum_fun' {α : Type _} (f : α → ℂ → ℂ) {s : Set �
 
 theorem der_iter_eq_der_aux2 (k n : ℕ) (r : ℍ') :
   DifferentiableAt ℂ
-    (fun z : ℂ =>
-      iteratedDerivWithin k (fun s : ℂ => Complex.exp (2 * ↑π * Complex.I * n * s)) ℍ' z) ↑r :=
+    (fun z : ℂ ↦
+      iteratedDerivWithin k (fun s : ℂ ↦ Complex.exp (2 * ↑π * Complex.I * n * s)) ℍ' z) ↑r :=
   by
   have hh :
-      DifferentiableOn ℂ (fun t => (2 * ↑π * Complex.I * n) ^ k *
+      DifferentiableOn ℂ (fun t ↦ (2 * ↑π * Complex.I * n) ^ k *
       Complex.exp (2 * ↑π * Complex.I * n * t)) ℍ' := by
     apply Differentiable.differentiableOn;
     apply Differentiable.const_mul
@@ -78,8 +78,8 @@ theorem der_iter_eq_der_aux2 (k n : ℕ) (r : ℍ') :
   exact r.2
 
 theorem der_iter_eq_der2 (k n : ℕ) (r : ℍ') :
-    deriv (iteratedDerivWithin k (fun s : ℂ => Complex.exp (2 * ↑π * Complex.I * n * s)) ℍ') ↑r =
-      derivWithin (iteratedDerivWithin k (fun s : ℂ => Complex.exp (2 * ↑π * Complex.I * n * s)) ℍ')
+    deriv (iteratedDerivWithin k (fun s : ℂ ↦ Complex.exp (2 * ↑π * Complex.I * n * s)) ℍ') ↑r =
+      derivWithin (iteratedDerivWithin k (fun s : ℂ ↦ Complex.exp (2 * ↑π * Complex.I * n * s)) ℍ')
         ℍ'
         ↑r :=
   by
@@ -91,15 +91,15 @@ theorem der_iter_eq_der2 (k n : ℕ) (r : ℍ') :
   apply r.2
 
 theorem der_iter_eq_der2' (k n : ℕ) (r : ℍ') :
-    derivWithin (iteratedDerivWithin k (fun s : ℂ => Complex.exp (2 * ↑π * Complex.I * n * s)) ℍ')
+    derivWithin (iteratedDerivWithin k (fun s : ℂ ↦ Complex.exp (2 * ↑π * Complex.I * n * s)) ℍ')
       ℍ' ↑r =
-      iteratedDerivWithin (k + 1) (fun s : ℂ => Complex.exp (2 * ↑π * Complex.I * n * s)) ℍ' ↑r :=
+      iteratedDerivWithin (k + 1) (fun s : ℂ ↦ Complex.exp (2 * ↑π * Complex.I * n * s)) ℍ' ↑r :=
   by
   rw [iteratedDerivWithin_succ]
 
 
 noncomputable def cts_exp_two_pi_n (K : Set ℂ) : ContinuousMap K ℂ where
-  toFun := fun r : K => Complex.exp (2 * ↑π * Complex.I * r)
+  toFun := fun r : K ↦ Complex.exp (2 * ↑π * Complex.I * r)
 
 
 theorem iter_deriv_comp_bound2 (K : Set ℂ) (hK1 : K ⊆ ℍ') (hK2 : IsCompact K) (k : ℕ) :
@@ -107,7 +107,7 @@ theorem iter_deriv_comp_bound2 (K : Set ℂ) (hK1 : K ⊆ ℍ') (hK2 : IsCompact
       Summable u ∧
         ∀ (n : ℕ) (r : K),
         ‖(derivWithin (iteratedDerivWithin k
-          (fun s : ℂ => Complex.exp (2 * ↑π * Complex.I * n * s)) ℍ') ℍ' r)‖ ≤ u n := by
+          (fun s : ℂ ↦ Complex.exp (2 * ↑π * Complex.I * n * s)) ℍ') ℍ' r)‖ ≤ u n := by
   have : CompactSpace K := by
     rw [← isCompact_univ_iff]
     rw [isCompact_iff_isCompact_univ] at hK2
@@ -121,7 +121,7 @@ theorem iter_deriv_comp_bound2 (K : Set ℂ) (hK1 : K ⊆ ℍ') (hK2 : IsCompact
       apply exp_upperHalfPlane_lt_one ⟨x.1, hK1 x.2⟩
     linarith
   have hr2 : 0 ≤ r := by apply norm_nonneg _
-  have hu : Summable fun n : ℕ => ‖((2 * ↑π * Complex.I * n) ^ (k + 1) * r ^ n)‖ :=
+  have hu : Summable fun n : ℕ ↦ ‖((2 * ↑π * Complex.I * n) ^ (k + 1) * r ^ n)‖ :=
     by
     have : ∀ (n : ℕ), ((2 * ↑π)^(k+1))* ‖((n) ^ (k + 1) * (r ^ n))‖ =
       ‖((2 * ↑π * Complex.I * n) ^ (k + 1) * r ^ n)‖ := by
@@ -145,7 +145,7 @@ theorem iter_deriv_comp_bound2 (K : Set ℂ) (hK1 : K ⊆ ℍ') (hK2 : IsCompact
     apply mul_ne_zero
     · linarith
     apply Real.pi_ne_zero
-  · use fun n : ℕ => ‖((2 * ↑π * Complex.I * n) ^ (k + 1) * r ^ n)‖, hu
+  · use fun n : ℕ ↦ ‖((2 * ↑π * Complex.I * n) ^ (k + 1) * r ^ n)‖, hu
     intro n t
     have go := der_iter_eq_der2' k n ⟨t.1, hK1 t.2⟩
     simp at *
@@ -183,24 +183,24 @@ theorem iter_deriv_comp_bound2 (K : Set ℂ) (hK1 : K ⊆ ℍ') (hK2 : IsCompact
 
 theorem hasDerivAt_tsum_fun {α : Type _} (f : α → ℂ → ℂ)
     {s : Set ℂ} (hs : IsOpen s) (x : ℂ) (hx : x ∈ s)
-    (hf : ∀ y : ℂ, y ∈ s → Summable fun n : α => f n y)
+    (hf : ∀ y : ℂ, y ∈ s → Summable fun n : α ↦ f n y)
     (hu :∀ K ⊆ s, IsCompact K →
           ∃ u : α → ℝ, Summable u ∧ ∀ (n : α) (k : K), ‖(derivWithin (f n) s k)‖ ≤ u n)
     (hf2 : ∀ (n : α) (r : s), DifferentiableAt ℂ (f n) r) :
-    HasDerivAt (fun z => ∑' n : α, f n z) (∑' n : α, derivWithin (fun z => f n z) s x) x :=
+    HasDerivAt (fun z ↦ ∑' n : α, f n z) (∑' n : α, derivWithin (fun z ↦ f n z) s x) x :=
   by
   have A :
     ∀ x : ℂ,
       x ∈ s →
-        Tendsto (fun t : Finset α => ∑ n ∈ t, (fun z => f n z) x) atTop
-          (𝓝 (∑' n : α, (fun z => f n z) x)) :=
+        Tendsto (fun t : Finset α ↦ ∑ n ∈ t, (fun z ↦ f n z) x) atTop
+          (𝓝 (∑' n : α, (fun z ↦ f n z) x)) :=
     by
     intro y hy
     apply Summable.hasSum
     simp
     apply hf y hy
   apply hasDerivAt_of_tendstoLocallyUniformlyOn hs _ _ A hx
-  · use fun n : Finset α => fun a => ∑ i ∈ n, derivWithin (fun z => f i z) s a
+  · use fun n : Finset α ↦ fun a ↦ ∑ i ∈ n, derivWithin (fun z ↦ f i z) s a
   · rw [tendstoLocallyUniformlyOn_iff_forall_isCompact hs]
     intro K hK1 hK2
     have HU := hu K hK1 hK2
@@ -220,12 +220,12 @@ theorem hasDerivAt_tsum_fun {α : Type _} (f : α → ℂ → ℂ)
 
 theorem hasDerivWithinAt_tsum_fun {α : Type _} (f : α → ℂ → ℂ)
     {s : Set ℂ} (hs : IsOpen s) (x : ℂ) (hx : x ∈ s)
-    (hf : ∀ y : ℂ, y ∈ s → Summable fun n : α => f n y)
+    (hf : ∀ y : ℂ, y ∈ s → Summable fun n : α ↦ f n y)
     (hu :
       ∀ K ⊆ s, IsCompact K →
           ∃ u : α → ℝ, Summable u ∧ ∀ (n : α) (k : K), ‖(derivWithin (f n) s k)‖ ≤ u n)
     (hf2 : ∀ (n : α) (r : s), DifferentiableAt ℂ (f n) r) :
-    HasDerivWithinAt (fun z => ∑' n : α, f n z) (∑' n : α, derivWithin (fun z => f n z) s x) s x :=
+    HasDerivWithinAt (fun z ↦ ∑' n : α, f n z) (∑' n : α, derivWithin (fun z ↦ f n z) s x) s x :=
       by
   apply (hasDerivAt_tsum_fun f hs x hx hf hu hf2).hasDerivWithinAt
 
@@ -251,7 +251,7 @@ theorem iter_deriv_comp_bound3 (K : Set ℂ) (hK1 : K ⊆ ℍ') (hK2 : IsCompact
       apply exp_upperHalfPlane_lt_one ⟨x.1, hK1 x.2⟩
     linarith
   have hr2 : 0 ≤ r := by apply norm_nonneg _
-  have hu : Summable fun n : ℕ => ‖((2 * ↑π * Complex.I * n) ^ (k) * r ^ n)‖ :=
+  have hu : Summable fun n : ℕ ↦ ‖((2 * ↑π * Complex.I * n) ^ (k) * r ^ n)‖ :=
     by
     have : ∀ (n : ℕ), ((2 * ↑π)^(k))* ‖((n) ^ (k) * (r ^ n))‖ =
       ‖((2 * ↑π * Complex.I * n) ^ (k) * r ^ n)‖ := by
@@ -275,7 +275,7 @@ theorem iter_deriv_comp_bound3 (K : Set ℂ) (hK1 : K ⊆ ℍ') (hK2 : IsCompact
     apply mul_ne_zero
     · linarith
     apply Real.pi_ne_zero
-  use fun n : ℕ => ‖((2 * ↑π * Complex.I * n) ^ (k) * r ^ n)‖, hu
+  use fun n : ℕ ↦ ‖((2 * ↑π * Complex.I * n) ^ (k) * r ^ n)‖, hu
   intro n t
   simp
   have ineqe : ‖(Complex.exp (2 * π * Complex.I * n * t))‖ ≤ ‖r‖ ^ n :=

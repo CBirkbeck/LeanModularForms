@@ -62,7 +62,7 @@ theorem Gamma0_le_of_dvd {M N : ℕ} (h : M ∣ N) :
 
 /-- `Gamma1(N) ≤ Gamma0(N)` (standard inclusion, for convenience). -/
 theorem Gamma1_le_Gamma0 (N : ℕ) : Gamma1 N ≤ Gamma0 N :=
-  fun _ hA => Gamma1_in_Gamma0 N hA
+  fun _ hA ↦ Gamma1_in_Gamma0 N hA
 
 /-! ### Cusp forms from lower levels
 

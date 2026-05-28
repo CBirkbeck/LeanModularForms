@@ -20,7 +20,7 @@ open ModularForm EisensteinSeries UpperHalfPlane TopologicalSpace Set
 open ArithmeticFunction
 
 /-- Summability of the alternative `G_2` series with the correction term `δ`. -/
-public lemma G_2_alt_summable_δ (z : ℍ) : Summable fun (m : Fin 2 → ℤ) =>
+public lemma G_2_alt_summable_δ (z : ℍ) : Summable fun (m : Fin 2 → ℤ) ↦
     (1 / (((m 0 : ℂ) * z + m 1)^2 * (m 0 * z + m 1 + 1)) + δ (m 0) (m 1)):= by
   refine (G_2_alt_summable z).add ?_
   refine summable_of_finite_support ?_
@@ -82,12 +82,12 @@ public lemma G2_alt_indexing2_δ (z : ℍ) : ∑' (m : Fin 2 → ℤ),
 
 /-- If `g n` grows linearly at infinity, then `∑ 1/(g n)^(k+1)` is summable for `k ≥ 1`. -/
 public theorem summable_pow_inv_of_linear_bigO (k : ℕ) (hk : 1 ≤ k) {g : ℕ → ℂ}
-    (hlin : (fun n : ℕ => (g n)⁻¹) =O[cofinite] fun n => (|(n : ℝ)|⁻¹)) :
-    Summable fun n : ℕ => ((g n) ^ (k + 1))⁻¹ := by
+    (hlin : (fun n : ℕ ↦ (g n)⁻¹) =O[cofinite] fun n ↦ (|(n : ℝ)|⁻¹)) :
+    Summable fun n : ℕ ↦ ((g n) ^ (k + 1))⁻¹ := by
   have hab : (1 : ℝ) < (k + 1 : ℝ) := by
     exact_mod_cast lt_of_lt_of_le (by decide : (1 : ℕ) < 2) (Nat.succ_le_succ hk)
   refine
-    summable_hammerTime_nat (f := fun n : ℕ => (g n) ^ (k + 1)) (a := (k + 1)) hab ?_
+    summable_hammerTime_nat (f := fun n : ℕ ↦ (g n) ^ (k + 1)) (a := (k + 1)) hab ?_
   norm_cast
   simp_rw [← inv_pow]
   have :

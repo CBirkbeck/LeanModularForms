@@ -94,7 +94,7 @@ theorem heckeSlash_gen_functional_equivariance_D_p_Gamma0_trivial
     have hfg : (⇑f : ℍ → ℂ) = ⇑f_g0 := by rfl
     rw [hfg]
     exact Gamma0_pair_H_invariant_of_invariant N
-      (fun γ hγ => SlashInvariantFormClass.slash_action_eq f_g0 γ hγ) h hh
+      (fun γ hγ ↦ SlashInvariantFormClass.slash_action_eq f_g0 γ hγ) h hh
   exact heckeSlash_gen_slash_comm_one k (D_p_Gamma0 N p hp.pos) (⇑f) hf_H g
 
 /-- **Conditional form**: if the bridge `heckeSlash_gen D_p_Gamma0 ⇑f =

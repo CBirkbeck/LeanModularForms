@@ -190,7 +190,7 @@ theorem descendExtraGamma_exists
       ((γ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod p)
         = !![(0 : ZMod p), -1; 1, 0]) ∧
       ((γ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod (N / p)) = 1) := by
-  have hcop : Nat.Coprime p (N / p) := hp.coprime_iff_not_dvd.mpr fun h => hp_sq <| by
+  have hcop : Nat.Coprime p (N / p) := hp.coprime_iff_not_dvd.mpr fun h ↦ hp_sq <| by
     simpa [sq] using (Nat.mul_div_cancel' hpN) ▸ Nat.mul_dvd_mul_left p h
   obtain ⟨u, v, h_bez⟩ := hcop.isCoprime
   let a : ℤ := (p : ℤ)
@@ -244,14 +244,14 @@ theorem int_exists_coprime_adjust
     (h_gcd : Nat.Coprime (Int.gcd c d) N.toNat) :
     ∃ t : ℤ, Int.gcd (c + t * N) d = 1 := by
   classical
-  let a_fn : ℕ → ℕ := fun q => if (q : ℤ) ∣ c then 1 else 0
+  let a_fn : ℕ → ℕ := fun q ↦ if (q : ℤ) ∣ c then 1 else 0
   have h_pairwise : (d.natAbs.primeFactors : Set ℕ).Pairwise
       (Function.onFun Nat.Coprime id) := by
     intro p hp q hq hpq
     grind [Nat.coprime_primes, Nat.prime_of_mem_primeFactors]
   obtain ⟨t_nat, h_t_modeq⟩ := Nat.chineseRemainderOfFinset
     a_fn id d.natAbs.primeFactors
-    (fun q hq => (Nat.prime_of_mem_primeFactors hq).ne_zero) h_pairwise
+    (fun q hq ↦ (Nat.prime_of_mem_primeFactors hq).ne_zero) h_pairwise
   refine ⟨(t_nat : ℤ), ?_⟩
   change Nat.gcd (c + (t_nat : ℤ) * N).natAbs d.natAbs = 1
   apply Nat.Coprime.symm
@@ -789,7 +789,7 @@ theorem descendCosetList_moebius_inj
     {N : ℕ} [NeZero N]
     (p : ℕ) [NeZero p] (hp : p.Prime) (hpN : p ∣ N) (hp_sq : p ^ 2 ∣ N)
     (γ' : Matrix.SpecialLinearGroup (Fin 2) ℤ) (h_γ' : γ' ∈ Gamma0 (N / p)) :
-    Function.Injective (fun m : Fin p =>
+    Function.Injective (fun m : Fin p ↦
       ((m.val : ZMod p) * ((γ' : Matrix (Fin 2) (Fin 2) ℤ) 1 1 : ZMod p))) := by
   have : Fact p.Prime := ⟨hp⟩
   have hdet : (γ' : Matrix (Fin 2) (Fin 2) ℤ).det = 1 := γ'.property

@@ -184,7 +184,7 @@ private lemma descendCosetList_slash_sum_eq_T_p_upper_range_slash_sum
   rw [show ∑ v : Fin (descendCosetCount p L),
           (g ∣[k] descendCosetList p L hp v) z =
         ∑ v : Fin p, (g ∣[k] descendCosetList p L hp (Fin.cast h_cnt.symm v)) z from
-    (Fintype.sum_equiv (finCongr h_cnt.symm) _ _ (fun _ => rfl)).symm]
+    (Fintype.sum_equiv (finCongr h_cnt.symm) _ _ (fun _ ↦ rfl)).symm]
   rw [show ∑ v : Fin p, (g ∣[k] descendCosetList p L hp (Fin.cast h_cnt.symm v)) z =
         ∑ v : Fin p, (g ∣[k] (T_p_upper p hp.pos v.val : GL (Fin 2) ℚ)) z from
     Finset.sum_congr rfl (fun v _ ↦ h_each_eq v)]
@@ -197,7 +197,7 @@ private lemma delta_slash_sum_coeff_zero_sq_case
     (Δ_form : CuspForm ((Gamma1 L).map (mapGL ℝ)) k) (m : ℕ)
     (h_apm_zero : (ModularFormClass.qExpansion (1 : ℝ) ⇑Δ_form).coeff (p * m) = 0) :
     (ModularFormClass.qExpansion (1 : ℝ)
-      (fun z => ∑ v : Fin (descendCosetCount p L),
+      (fun z ↦ ∑ v : Fin (descendCosetCount p L),
         ((⇑Δ_form : UpperHalfPlane → ℂ) ∣[k]
           descendCosetList p L hp v) z)).coeff m = 0 := by
   have h_cnt : descendCosetCount p L = p := by simp [descendCosetCount, hp_sq]
@@ -278,7 +278,7 @@ private lemma delta_slash_sum_per_q_inner_fun_coeff_zero
       (h_q_dvd_Ll2_aux q.val q.property) hp_dvd_Mq h_lN_div_p_dvd_Mq_div_p
       χ_M_unit χ_M_unit_low hχ_M_unit_eq (χ_F_fam q.val q.property)
       (hχ_F_fam_rel q.val q.property)
-  have hq_not_m : ¬ q.val ∣ m := fun hqm =>
+  have hq_not_m : ¬ q.val ∣ m := fun hqm ↦
     hq_prime.one_lt.ne' (Nat.dvd_one.mp (hm_cop ▸ Nat.dvd_gcd hqm hq_dvd_l'))
   have h_q_M_q_eq : q.val * (((l' * N) * l' ^ 2) / q.val) = (l' * N) * l' ^ 2 :=
     Nat.mul_div_cancel' (h_q_dvd_Ll2_aux q.val q.property)
@@ -321,7 +321,7 @@ private lemma miyake_4_6_14_delta_slash_sum_coeff_zero
       (ModularFormClass.qExpansion (1 : ℝ) ⇑Δ_form).coeff n = 0)
     (m : ℕ) (hm_cop : Nat.Coprime m l') :
     (ModularFormClass.qExpansion (1 : ℝ)
-      (fun z => ∑ v : Fin (descendCosetCount p (l' * N)),
+      (fun z ↦ ∑ v : Fin (descendCosetCount p (l' * N)),
         ((⇑Δ_form : UpperHalfPlane → ℂ) ∣[k]
           descendCosetList p (l' * N) hp v) z)).coeff m = 0 := by
   have hp_dvd_lN : p ∣ l' * N := dvd_mul_of_dvd_right hpN l'
@@ -334,10 +334,10 @@ private lemma miyake_4_6_14_delta_slash_sum_coeff_zero
   haveI hLl2_NeZero : NeZero ((l' * N) * l' ^ 2) :=
     ⟨Nat.mul_ne_zero (NeZero.ne (l' * N)) (pow_ne_zero 2 (NeZero.ne l'))⟩
   have hL_dvd : (l' * N) ∣ (l' * N) * l' ^ 2 := Nat.dvd_mul_right _ _
-  have h_q_dvd_Ll2_aux : ∀ q ∈ l'.primeFactors, q ∣ (l' * N) * l' ^ 2 := fun q hq =>
+  have h_q_dvd_Ll2_aux : ∀ q ∈ l'.primeFactors, q ∣ (l' * N) * l' ^ 2 := fun q hq ↦
     dvd_mul_of_dvd_right ((Nat.dvd_of_mem_primeFactors hq).trans
       (dvd_pow_self l' two_ne_zero)) _
-  have h_q_NeZero_aux : ∀ q ∈ l'.primeFactors, NeZero ((l' * N * l' ^ 2) / q) := fun q hq =>
+  have h_q_NeZero_aux : ∀ q ∈ l'.primeFactors, NeZero ((l' * N * l' ^ 2) / q) := fun q hq ↦
     ⟨(Nat.div_pos (Nat.le_of_dvd (Nat.pos_of_ne_zero hLl2_NeZero.out) (h_q_dvd_Ll2_aux q hq))
       (Nat.prime_of_mem_primeFactors hq).pos).ne'⟩
   have h_qexp_eq : ∀ n : ℕ,
@@ -396,7 +396,7 @@ private lemma miyake_4_6_14_delta_slash_sum_coeff_zero
     show (ModularFormClass.qExpansion (1 : ℝ)
         (fun z : UpperHalfPlane ↦ ∑ q ∈ l'.primeFactors.attach, inner_fun q z)).coeff m = 0
     have h_per_q_zero : ∀ q : l'.primeFactors,
-        (ModularFormClass.qExpansion (1 : ℝ) (inner_fun q)).coeff m = 0 := fun q =>
+        (ModularFormClass.qExpansion (1 : ℝ) (inner_fun q)).coeff m = 0 := fun q ↦
       delta_slash_sum_per_q_inner_fun_coeff_zero p hp hpN hp_not_in
         h_q_NeZero_aux h_q_dvd_Ll2_aux χ_M_unit χ_M_unit_low hχ_M_unit_eq
         F_q_fam χ_F_fam hF_q_char hχ_F_fam_rel q m hm_cop
@@ -473,27 +473,27 @@ private lemma miyake_4_6_14_delta_slash_sum_coeff_zero
       rw [show (⇑Φ_total : UpperHalfPlane → ℂ) z =
         (⇑(∑ q ∈ l'.primeFactors.attach, Φ_q q) : UpperHalfPlane → ℂ) z from rfl,
         cuspForm_finsetSum_coe_apply l'.primeFactors.attach Φ_q z]
-      exact Finset.sum_congr rfl (fun q _ => hΦ_q_fun q z)
+      exact Finset.sum_congr rfl (fun q _ ↦ hΦ_q_fun q z)
     have h1_period_full_div_p :
         (1 : ℝ) ∈ ((Gamma1 (((l' * N) * l' ^ 2) / p)).map (mapGL ℝ)).strictPeriods := by
       simp [strictPeriods_Gamma1]
     have h_qexp_sum : ModularFormClass.qExpansion (1 : ℝ)
-        (fun z : UpperHalfPlane => ∑ q ∈ l'.primeFactors.attach, inner_fun q z) =
+        (fun z : UpperHalfPlane ↦ ∑ q ∈ l'.primeFactors.attach, inner_fun q z) =
         ∑ q ∈ l'.primeFactors.attach,
           ModularFormClass.qExpansion (1 : ℝ) (Φ_q q).toModularForm' := by
-      rw [show (fun z : UpperHalfPlane => ∑ q ∈ l'.primeFactors.attach, inner_fun q z) =
+      rw [show (fun z : UpperHalfPlane ↦ ∑ q ∈ l'.primeFactors.attach, inner_fun q z) =
           (⇑Φ_total.toModularForm' : UpperHalfPlane → ℂ) from hΦ_total_fun.symm,
         show Φ_total.toModularForm' =
           ∑ q ∈ l'.primeFactors.attach, (Φ_q q).toModularForm' from
             cuspForm_finsetSum_toModularForm' l'.primeFactors.attach Φ_q]
       exact map_sum (qExpansionAddHom (Γ := (Gamma1 (((l' * N) * l' ^ 2) / p)).map (mapGL ℝ))
-        (h := (1 : ℝ)) one_pos h1_period_full_div_p k) (fun q => (Φ_q q).toModularForm')
+        (h := (1 : ℝ)) one_pos h1_period_full_div_p k) (fun q ↦ (Φ_q q).toModularForm')
         l'.primeFactors.attach
     rw [h_qexp_sum, map_sum]
-    refine Finset.sum_eq_zero fun q _ => ?_
+    refine Finset.sum_eq_zero fun q _ ↦ ?_
     rw [show (ModularFormClass.qExpansion (1 : ℝ) (Φ_q q).toModularForm').coeff m =
         (ModularFormClass.qExpansion (1 : ℝ) (inner_fun q)).coeff m from
-      congrArg (fun ps : PowerSeries ℂ => ps.coeff m)
+      congrArg (fun ps : PowerSeries ℂ ↦ ps.coeff m)
         (qExpansion_ext2 (⇑(Φ_q q) : UpperHalfPlane → ℂ) (inner_fun q)
           (funext (hΦ_q_fun q)))]
     exact h_per_q_zero q

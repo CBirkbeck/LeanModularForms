@@ -47,7 +47,7 @@ private lemma charSpaceOne_Gamma0_pair_H_invariant (k : ℤ)
   have hfg : ⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) = ⇑g := by rfl
   rw [hfg]
   exact Gamma0_pair_H_invariant_of_invariant N
-    (fun γ hγ => SlashInvariantFormClass.slash_action_eq g γ hγ) h hh
+    (fun γ hγ ↦ SlashInvariantFormClass.slash_action_eq g γ hγ) h hh
 
 private lemma diamondOp_trivial_of_charSpaceOne (k : ℤ)
     (f : modFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ))
@@ -62,7 +62,7 @@ private lemma adj_diag_1p_eq_T_p_lower_bridge (p : ℕ) (hp : Nat.Prime p) :
     GL_adjugate (diagMat 2 ![1, p] : GL (Fin 2) ℚ) =
       (T_p_lower p hp.pos : GL (Fin 2) ℚ) := by
   apply Units.ext; ext i j
-  have hpos : ∀ k : Fin 2, 0 < (![1, p] : Fin 2 → Nat) k := fun k => by
+  have hpos : ∀ k : Fin 2, 0 < (![1, p] : Fin 2 → Nat) k := fun k ↦ by
     fin_cases k <;> simp [hp.pos]
   simp only [GL_adjugate_val, diagMat_val _ _ hpos]
   have huniv : (Finset.univ : Finset (Fin 2)) = {0, 1} := by
@@ -181,7 +181,7 @@ private noncomputable def phiOfFactorisations_Gamma0_bridge (p : ℕ)
       (_ : h₂ ∈ (Gamma0_pair N).H),
       GL_adjugate (T_p_lower p hp.pos : GL _ ℚ) =
         h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂) :
-    Fin (p + 1) → decompQuot (Gamma0_pair N) (HeckeCoset.rep D) := fun j =>
+    Fin (p + 1) → decompQuot (Gamma0_pair N) (HeckeCoset.rep D) := fun j ↦
   if h : j.val < p then
     ⟦⟨(h_upper_dc ⟨j.val, h⟩).choose, (h_upper_dc ⟨j.val, h⟩).choose_spec.choose⟩⟧
   else
@@ -232,7 +232,7 @@ private lemma phiOfFactorisations_injective_Gamma0_bridge (p : ℕ) (hp : Nat.Pr
   simp only [phiOfFactorisations_Gamma0_bridge] at heq
   by_cases h₁ : j₁.val < p <;> by_cases h₂ : j₂.val < p
   · simp only [h₁, h₂, dite_true] at heq
-    have hne_val : j₁.val ≠ j₂.val := fun h => hne (Fin.ext h)
+    have hne_val : j₁.val ≠ j₂.val := fun h ↦ hne (Fin.ext h)
     have hmem := adj_inv_mul_mem_H_of_factorisations_Gamma0_bridge D _ _
       (h_upper_dc ⟨j₁.val, h₁⟩) (h_upper_dc ⟨j₂.val, h₂⟩) heq
     exact HeckeRing.GL2.adj_upper_inv_mul_not_mem_H p hp j₁.val j₂.val h₁ h₂ hne_val
@@ -264,7 +264,7 @@ theorem tRep_gen_D_p_Gamma0_matches_T_p_reps (k : ℤ) (p : ℕ) (hp : Nat.Prime
       ∃ (h₁ : GL _ ℚ) (_ : h₁ ∈ (Gamma0_pair N).H)
         (h₂ : GL _ ℚ) (_ : h₂ ∈ (Gamma0_pair N).H),
         GL_adjugate (T_p_upper p hp.pos b.val : GL _ ℚ) =
-          h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂ := fun b =>
+          h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂ := fun b ↦
     adj_mem_dc_factorisation_Gamma0_bridge p hp hpN _
       (T_p_upper_mem_D_p_Gamma0 N p hp b.val)
   have h_lower_dc :

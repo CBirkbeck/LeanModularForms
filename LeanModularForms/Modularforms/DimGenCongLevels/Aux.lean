@@ -57,7 +57,7 @@ public lemma cuspFunction_isBigO_pow_of_qExpansion_coeff_eq_zero
     [ModularFormClass F Γ k] [Γ.HasDetPlusMinusOne] [DiscreteTopology Γ]
     (f : F) (hh : 0 < h) (hΓ : h ∈ Γ.strictPeriods) (N : ℕ)
     (hcoeff : ∀ n < N, (qExpansion h f).coeff n = 0) :
-  cuspFunction h f =O[𝓝 (0 : ℂ)] (fun q : ℂ => ‖q‖ ^ N) := by
+  cuspFunction h f =O[𝓝 (0 : ℂ)] (fun q : ℂ ↦ ‖q‖ ^ N) := by
   -- Use Taylor's theorem for the analytic cusp function at `0`.
   have hfps :
       HasFPowerSeriesAt (cuspFunction h f) (qExpansionFormalMultilinearSeries h f) 0 :=
@@ -66,7 +66,7 @@ public lemma cuspFunction_isBigO_pow_of_qExpansion_coeff_eq_zero
   -- The partial sum is zero because all coefficients below `N` are zero.
   have hps : (qExpansionFormalMultilinearSeries h f).partialSum N = 0 := by
     ext q
-    refine Finset.sum_eq_zero fun n hn => by
+    refine Finset.sum_eq_zero fun n hn ↦ by
       simp [hcoeff n (by simpa [Finset.mem_range] using hn)]
   simpa [zero_add, hps] using hrem
 
@@ -113,7 +113,7 @@ lemma norm_circleIntegral_cuspFunction_div_pow_le
     (hδ : Metric.ball (0 : ℂ) δ ⊆ {z | ‖cuspFunction h f z‖ ≤ C' * ‖z‖ ^ N})
     {R : ℝ} (hR0 : 0 < R) (hRltδ : R < δ) (hRlt1 : R < 1) :
     ‖∮ (z : ℂ) in C(0, R), cuspFunction h f z / z ^ (n + 1)‖ ≤ 2 * π * R * C' := by
-  refine circleIntegral.norm_integral_le_of_norm_le_const hR0.le (fun z hz => ?_)
+  refine circleIntegral.norm_integral_le_of_norm_le_const hR0.le (fun z hz ↦ ?_)
   exact norm_cuspFunction_div_pow_le_of_ball_bound (f := f) (hn := hn)
     (hC' := hC') hδ hR0 hRltδ hRlt1 hz
 
@@ -121,7 +121,7 @@ lemma norm_circleIntegral_cuspFunction_div_pow_le
 public lemma qExpansion_coeff_eq_zero_of_cuspFunction_isBigO_pow
     [ModularFormClass F Γ k] [Γ.HasDetPlusMinusOne] [DiscreteTopology Γ]
     (f : F) (hh : 0 < h) (hΓ : h ∈ Γ.strictPeriods) {N n : ℕ} (hn : n < N)
-    (hO : cuspFunction h f =O[𝓝 (0 : ℂ)] (fun q : ℂ => ‖q‖ ^ N)) :
+    (hO : cuspFunction h f =O[𝓝 (0 : ℂ)] (fun q : ℂ ↦ ‖q‖ ^ N)) :
     (qExpansion h f).coeff n = 0 := by
   -- Unpack the `O(‖q‖^N)` bound.
   rcases (Asymptotics.isBigO_iff.1 hO) with ⟨C, hC⟩

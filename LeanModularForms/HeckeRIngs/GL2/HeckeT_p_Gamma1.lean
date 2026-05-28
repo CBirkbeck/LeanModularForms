@@ -42,7 +42,7 @@ private lemma diag_1p_mul_mapGL_val (p : ℕ) (hp : 0 < p) (s : SL(2, ℤ)) :
     ((diagMat 2 ![1, p] : GL (Fin 2) ℚ) * (mapGL ℚ s)).val =
     !![((s.val 0 0 : ℤ) : ℚ), ((s.val 0 1 : ℤ) : ℚ);
        (p : ℚ) * (s.val 1 0 : ℤ), (p : ℚ) * (s.val 1 1 : ℤ)] := by
-  have hpos : ∀ k : Fin 2, 0 < (![1, p] : Fin 2 → ℕ) k := fun k => by
+  have hpos : ∀ k : Fin 2, 0 < (![1, p] : Fin 2 → ℕ) k := fun k ↦ by
     fin_cases k <;> simp [hp]
   rw [Units.val_mul, diagMat_val _ _ hpos]
   ext i j
@@ -418,7 +418,7 @@ lemma adj_M_infty_inv_mul_upper_not_mem_Gamma1 (N : ℕ) [NeZero N] (p : ℕ)
 private lemma diagMat_1p_val (p : ℕ) (hp : 0 < p) :
     (diagMat 2 ![1, p] : GL (Fin 2) ℚ).val =
     !![(1 : ℚ), 0; 0, (p : ℚ)] := by
-  have hpos : ∀ k : Fin 2, 0 < (![1, p] : Fin 2 → ℕ) k := fun k => by
+  have hpos : ∀ k : Fin 2, 0 < (![1, p] : Fin 2 → ℕ) k := fun k ↦ by
     fin_cases k <;> simp [hp]
   rw [diagMat_val _ _ hpos]
   ext k l

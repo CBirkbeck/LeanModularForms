@@ -108,7 +108,7 @@ theorem isEigenform_iff (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     haveI : NeZero n.val := ⟨n.pos.ne'⟩
     exact ⟨a n, ha n hn⟩
   · intro h
-    refine ⟨fun n => if hn : Nat.Coprime n.val N then
+    refine ⟨fun n ↦ if hn : Nat.Coprime n.val N then
       (haveI : NeZero n.val := ⟨n.pos.ne'⟩; h n hn).choose else 0, ?_⟩
     intro n hn
     haveI : NeZero n.val := ⟨n.pos.ne'⟩
@@ -213,7 +213,7 @@ lemma cuspFormToModularFormLin_injective :
     Function.Injective (cuspFormToModularFormLin (N := N) (k := k)) := by
   intro f g hfg
   ext z
-  exact congr_arg (fun h : ModularForm _ _ => h.toFun z) hfg
+  exact congr_arg (fun h : ModularForm _ _ ↦ h.toFun z) hfg
 
 /-- Finite-dimensionality of `CuspForm Γ₁(N) k`, derived from finite-dimensionality of
 `ModularForm Γ₁(N) k` (`dim_gen_cong_levels`) via the linear injection
@@ -234,11 +234,11 @@ theorem cuspForm_finiteDimensional :
 noncomputable def petN_realBilin :
     LinearMap.BilinForm ℝ (CuspForm ((Gamma1 N).map (mapGL ℝ)) k) where
   toFun f :=
-    { toFun := fun g => (petN f g).re
-      map_add' := fun g₁ g₂ => by
+    { toFun := fun g ↦ (petN f g).re
+      map_add' := fun g₁ g₂ ↦ by
         show (petN f (g₁ + g₂)).re = (petN f g₁).re + (petN f g₂).re
         rw [petN_add_right, Complex.add_re]
-      map_smul' := fun (c : ℝ) g => by
+      map_smul' := fun (c : ℝ) g ↦ by
         show (petN f (c • g)).re = c * (petN f g).re
         rw [show (c • g : CuspForm _ _) = (c : ℂ) • g from rfl, petN_smul_right,
           Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im, zero_mul, sub_zero] }
@@ -288,11 +288,11 @@ lemma petN_realBilin_orthogonal_cuspFormsOld_eq :
         ((cuspFormsOld N k).restrictScalars ℝ) =
       (cuspFormsNew N k).restrictScalars ℝ := by
   ext f
-  refine ⟨fun hf => ?_, fun hf g hg => ?_⟩
+  refine ⟨fun hf ↦ ?_, fun hf g hg ↦ ?_⟩
   · show f ∈ cuspFormsNew N k
     intro g hg
     have re_eq_zero : ∀ h ∈ Submodule.restrictScalars ℝ (cuspFormsOld N k),
-        (petN h f).re = 0 := fun h hh => by
+        (petN h f).re = 0 := fun h hh ↦ by
       have := hf h hh
       simpa only [LinearMap.BilinForm.IsOrtho, petN_realBilin_apply] using this
     have hgf : petN g f = 0 :=
@@ -451,14 +451,14 @@ theorem mem_cuspFormsOld_iff_newPart_eq_zero
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     f ∈ cuspFormsOld N k ↔ newPart f = 0 :=
   ⟨newPart_of_mem_cuspFormsOld,
-    fun h => by rw [← oldPart_add_newPart f, h, add_zero]; exact oldPart_mem_cuspFormsOld f⟩
+    fun h ↦ by rw [← oldPart_add_newPart f, h, add_zero]; exact oldPart_mem_cuspFormsOld f⟩
 
 /-- **Characterisation of `cuspFormsNew` by vanishing oldform part.** -/
 theorem mem_cuspFormsNew_iff_oldPart_eq_zero
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     f ∈ cuspFormsNew N k ↔ oldPart f = 0 :=
   ⟨oldPart_of_mem_cuspFormsNew,
-    fun h => by
+    fun h ↦ by
       rw [show f = oldPart f + newPart f from (oldPart_add_newPart f).symm, h, zero_add]
       exact newPart_mem_cuspFormsNew f⟩
 

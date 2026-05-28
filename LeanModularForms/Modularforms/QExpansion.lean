@@ -43,7 +43,7 @@ lemma tendsto_nat (a : ℕ → ℂ) (ha : Summable fun n : ℕ ↦ ‖a n‖ * r
       rw [tendsto_mul_const_atTop_of_pos, tendsto_const_mul_atTop_of_pos] <;> try positivity
       exact tendsto_im_atImInfty
   · rw [eventually_atImInfty]
-    refine ⟨1, fun z hz k => ?_⟩
+    refine ⟨1, fun z hz k ↦ ?_⟩
     simp_rw [norm_mul, mul_right_comm _ I, norm_exp_mul_I, mul_right_comm]
     simp only [mul_im, mul_re, re_ofNat, ofReal_re, im_ofNat, ofReal_im, mul_zero,
       sub_zero, coe_re, zero_mul, add_zero, coe_im, natCast_im, natCast_re, neg_mul]

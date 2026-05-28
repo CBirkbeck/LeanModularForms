@@ -19,7 +19,7 @@ Restrict a function `F : ℍ → ℂ` to the positive imaginary axis, i.e. `t �
 If $t \le 0$, then `F (I * t)` is not defined, and we return `0` in that case.
 -/
 noncomputable def ResToImagAxis (F : ℍ → ℂ) : ℝ → ℂ :=
-  fun t => if ht : 0 < t then F ⟨(I * t), by simp [ht]⟩ else 0
+  fun t ↦ if ht : 0 < t then F ⟨(I * t), by simp [ht]⟩ else 0
 
 namespace Function
 
@@ -64,7 +64,7 @@ theorem ResToImagAxis.Differentiable (F : ℍ → ℂ) (hF : MDiff F) (t : ℝ)
   have := hF ⟨Complex.I * t, by norm_num [Complex.I_re, ht]⟩
   rw [mdifferentiableAt_iff] at this
   have h_diff :
-      DifferentiableAt ℝ (fun t : ℝ => F (ofComplex (Complex.I * t))) t := by
+      DifferentiableAt ℝ (fun t : ℝ ↦ F (ofComplex (Complex.I * t))) t := by
     convert this.restrictScalars ℝ |> DifferentiableAt.comp t <|
       DifferentiableAt.const_mul ofRealCLM.differentiableAt _ using 1
   apply h_diff.congr_of_eventuallyEq
@@ -89,15 +89,15 @@ theorem ResToImagAxis.SlashActionS (F : ℍ → ℂ) (k : ℤ) {t : ℝ} (ht : 0
 Realness, positivity and essential positivity are closed under the addition and multiplication.
 -/
 @[fun_prop]
-theorem ResToImagAxis.Real.const (c : ℝ) : ResToImagAxis.Real (fun _ => c) := by
+theorem ResToImagAxis.Real.const (c : ℝ) : ResToImagAxis.Real (fun _ ↦ c) := by
   intro t ht
   simp only [Function.resToImagAxis_apply, ResToImagAxis, ht, ↓reduceDIte, ofReal_im]
 
 @[fun_prop]
-theorem ResToImagAxis.Real.zero : ResToImagAxis.Real (fun _ => 0) := ResToImagAxis.Real.const 0
+theorem ResToImagAxis.Real.zero : ResToImagAxis.Real (fun _ ↦ 0) := ResToImagAxis.Real.const 0
 
 @[fun_prop]
-theorem ResToImagAxis.Real.one : ResToImagAxis.Real (fun _ => 1) := ResToImagAxis.Real.const 1
+theorem ResToImagAxis.Real.one : ResToImagAxis.Real (fun _ ↦ 1) := ResToImagAxis.Real.const 1
 
 @[fun_prop]
 theorem ResToImagAxis.Real.neg {F : ℍ → ℂ} (hF : ResToImagAxis.Real F) : ResToImagAxis.Real (-F)
@@ -145,11 +145,11 @@ theorem ResToImagAxis.Real.pow {F : ℍ → ℂ} (hF : ResToImagAxis.Real F) (n 
   | zero => exact ResToImagAxis.Real.one
   | succ n hn => exact hn.mul hF
 
-theorem ResToImagAxis.Pos.const (c : ℝ) (hc : 0 < c) : ResToImagAxis.Pos (fun _ => c) :=
+theorem ResToImagAxis.Pos.const (c : ℝ) (hc : 0 < c) : ResToImagAxis.Pos (fun _ ↦ c) :=
   ⟨ResToImagAxis.Real.const c, fun t ht ↦ by simp [ResToImagAxis, ht, hc]⟩
 
 @[fun_prop]
-theorem ResToImagAxis.Pos.one : ResToImagAxis.Pos (fun _ => 1) :=
+theorem ResToImagAxis.Pos.one : ResToImagAxis.Pos (fun _ ↦ 1) :=
   ResToImagAxis.Pos.const 1 one_pos
 
 @[fun_prop]
@@ -202,12 +202,12 @@ theorem ResToImagAxis.EventuallyPos.from_pos {F : ℍ → ℂ} (hF : ResToImagAx
 
 @[fun_prop]
 theorem ResToImagAxis.EventuallyPos.one :
-    ResToImagAxis.EventuallyPos (fun _ => 1) :=
+    ResToImagAxis.EventuallyPos (fun _ ↦ 1) :=
   ResToImagAxis.EventuallyPos.from_pos ResToImagAxis.Pos.one
 
 @[fun_prop]
 theorem ResToImagAxis.EventuallyPos.const (c : ℝ) (hc : 0 < c) :
-    ResToImagAxis.EventuallyPos (fun _ => c) :=
+    ResToImagAxis.EventuallyPos (fun _ ↦ c) :=
   ResToImagAxis.EventuallyPos.from_pos (ResToImagAxis.Pos.const c hc)
 
 @[fun_prop]
@@ -303,8 +303,8 @@ If `F : ℍ → ℂ` is `O(exp(-c * im τ))` at `atImInfty` for some `c > 0`, th
 the restriction to the imaginary axis `t ↦ F(it)` is `O(exp(-c * t))` at `atTop`.
 -/
 lemma isBigO_resToImagAxis_of_isBigO_atImInfty {F : ℍ → ℂ} {c : ℝ} (_hc : 0 < c)
-    (hF : F =O[atImInfty] fun τ => Real.exp (-c * τ.im)) :
-    F.resToImagAxis =O[atTop] fun t => Real.exp (-c * t) := by
+    (hF : F =O[atImInfty] fun τ ↦ Real.exp (-c * τ.im)) :
+    F.resToImagAxis =O[atTop] fun t ↦ Real.exp (-c * t) := by
   rw [Asymptotics.isBigO_iff] at hF ⊢
   obtain ⟨C, hC⟩ := hF; use C
   rw [Filter.eventually_atImInfty] at hC; obtain ⟨A, hA⟩ := hC
@@ -323,8 +323,8 @@ This follows from the fact that `t^s * exp(-b * t) → 0` (mathlib's
 `tendsto_rpow_mul_exp_neg_mul_atTop_nhds_zero`) combined with the big-O transfer lemma.
 -/
 lemma tendsto_rpow_mul_of_isBigO_exp {g : ℝ → ℂ} {s b : ℝ} (hb : 0 < b)
-    (hg : g =O[atTop] fun t => rexp (-b * t)) :
-    Tendsto (fun t : ℝ => (t : ℂ) ^ (s : ℂ) * g t) atTop (𝓝 0) := by
+    (hg : g =O[atTop] fun t ↦ rexp (-b * t)) :
+    Tendsto (fun t : ℝ ↦ (t : ℂ) ^ (s : ℂ) * g t) atTop (𝓝 0) := by
   refine ((isBigO_refl _ _).mul (Complex.isBigO_ofReal_right.mpr hg)).trans_tendsto ?_
   refine (tendsto_ofReal_iff.mpr (tendsto_rpow_mul_exp_neg_mul_atTop_nhds_zero s b hb)).congr' ?_
   filter_upwards [eventually_gt_atTop 0] with t ht
@@ -335,8 +335,8 @@ If `F : ℍ → ℂ` is `O(exp(-c * im τ))` at `atImInfty` for some `c > 0`, th
 `t^s * F(it) → 0` as `t → ∞` for any real power `s`.
 -/
 theorem tendsto_rpow_mul_resToImagAxis_of_isBigO_exp {F : ℍ → ℂ} {c : ℝ} (hc : 0 < c)
-    (hF : F =O[atImInfty] fun τ => rexp (-c * τ.im)) (s : ℝ) :
-    Tendsto (fun t : ℝ => (t : ℂ) ^ (s : ℂ) * F.resToImagAxis t) atTop (𝓝 0) :=
+    (hF : F =O[atImInfty] fun τ ↦ rexp (-c * τ.im)) (s : ℝ) :
+    Tendsto (fun t : ℝ ↦ (t : ℂ) ^ (s : ℂ) * F.resToImagAxis t) atTop (𝓝 0) :=
   tendsto_rpow_mul_of_isBigO_exp hc (isBigO_resToImagAxis_of_isBigO_atImInfty hc hF)
 
 /--
@@ -346,12 +346,12 @@ This follows from the exponential decay of cusp forms at infinity: `f = O(exp(-2
 -/
 theorem cuspForm_rpow_mul_resToImagAxis_tendsto_zero {n : ℕ} {k : ℤ} {F : Type*}
     [NeZero n] [FunLike F ℍ ℂ] [CuspFormClass F Γ(n) k] (f : F) (s : ℝ) :
-    Tendsto (fun t : ℝ => (t : ℂ) ^ (s : ℂ) * (f : ℍ → ℂ).resToImagAxis t) atTop (𝓝 0) := by
+    Tendsto (fun t : ℝ ↦ (t : ℂ) ^ (s : ℂ) * (f : ℍ → ℂ).resToImagAxis t) atTop (𝓝 0) := by
   have hn_pos : (0 : ℝ) < n := Nat.cast_pos.mpr (NeZero.pos n)
   have hmem : (n : ℝ) ∈ (Γ(n) : Subgroup (GL (Fin 2) ℝ)).strictPeriods := by
     simp only [strictPeriods_Gamma]
     exact AddSubgroup.mem_zmultiples (n : ℝ)
-  have hdecay' : (f : ℍ → ℂ) =O[atImInfty] fun τ => rexp (-(2 * π / n) * τ.im) := by
+  have hdecay' : (f : ℍ → ℂ) =O[atImInfty] fun τ ↦ rexp (-(2 * π / n) * τ.im) := by
     convert CuspFormClass.exp_decay_atImInfty hn_pos hmem (f := f) using 2 with τ; field_simp
   exact tendsto_rpow_mul_resToImagAxis_of_isBigO_exp (div_pos (by positivity) hn_pos) hdecay' s
 
@@ -398,9 +398,9 @@ The Fourier terms `m ↦ a_m · exp(2πi(m+n₀)w)` are absolutely summable at a
 `w.im ≥ c`, provided the coefficient bound `m ↦ ‖a_m‖ · exp(-2πc·m)` is summable.
 -/
 private lemma summable_norm_fourier_shift_term {a : ℕ → ℂ} (n₀ : ℕ) {c : ℝ} (w : ℂ)
-    (hw : c ≤ w.im) (ha : Summable (fun m : ℕ => ‖a m‖ * rexp (-(2 * π * c) * (m : ℝ)))) :
-    Summable fun m : ℕ => ‖a m * cexp (2 * π * I * ((m + n₀ : ℕ) : ℂ) * w)‖ := by
-  refine .of_nonneg_of_le (fun _ => norm_nonneg _) (fun m => ?_)
+    (hw : c ≤ w.im) (ha : Summable (fun m : ℕ ↦ ‖a m‖ * rexp (-(2 * π * c) * (m : ℝ)))) :
+    Summable fun m : ℕ ↦ ‖a m * cexp (2 * π * I * ((m + n₀ : ℕ) : ℂ) * w)‖ := by
+  refine .of_nonneg_of_le (fun _ ↦ norm_nonneg _) (fun m ↦ ?_)
     (ha.mul_right (rexp (-(2 * π * c) * n₀)))
   rw [norm_mul, norm_exp, mul_re_two_pi_I_natCast]
   calc ‖a m‖ * rexp (-(2 * π) * (↑m + ↑n₀) * w.im)
@@ -420,18 +420,18 @@ lemma isBigO_atImInfty_of_fourier_shift
     {F : ℍ → ℂ} {a : ℕ → ℂ} {n₀ : ℕ} {c : ℝ} (_hn₀ : 0 < n₀) (_hc : 0 < c)
     (hF : ∀ z : ℍ, F z =
       ∑' m : ℕ, a m * cexp (2 * π * I * ((m + n₀ : ℕ) : ℂ) * (z : ℂ)))
-    (ha : Summable (fun m : ℕ => ‖a m‖ * rexp (-(2 * π * c) * (m : ℝ)))) :
-    F =O[atImInfty] fun z : ℍ => rexp (-(2 * π * (n₀ : ℝ)) * z.im) := by
+    (ha : Summable (fun m : ℕ ↦ ‖a m‖ * rexp (-(2 * π * c) * (m : ℝ)))) :
+    F =O[atImInfty] fun z : ℍ ↦ rexp (-(2 * π * (n₀ : ℝ)) * z.im) := by
   rw [Asymptotics.isBigO_iff]
   refine ⟨∑' m, ‖a m‖ * rexp (-(2 * π * c) * m), ?_⟩
   rw [Filter.eventually_atImInfty]
-  refine ⟨c, fun z hz => ?_⟩
+  refine ⟨c, fun z hz ↦ ?_⟩
   rw [hF z, Real.norm_of_nonneg (le_of_lt (Real.exp_pos _))]
   have hexp_re (m : ℕ) :
       (2 * π * I * ((m + n₀ : ℕ) : ℂ) * z).re = -(2 * π) * (m + n₀) * z.im :=
     mul_re_two_pi_I_natCast m n₀ z
   have hsum_norms := summable_norm_fourier_shift_term n₀ (z : ℂ) hz ha
-  have hsum_norms' : Summable fun m => ‖a m‖ * rexp (-(2 * π) * (m + n₀) * z.im) := by
+  have hsum_norms' : Summable fun m ↦ ‖a m‖ * rexp (-(2 * π) * (m + n₀) * z.im) := by
     convert hsum_norms with m; rw [norm_mul, norm_exp, hexp_re]
   calc ‖∑' m, a m * cexp (2 * π * I * ((m + n₀ : ℕ) : ℂ) * z)‖
       ≤ ∑' m, ‖a m * cexp (2 * π * I * ((m + n₀ : ℕ) : ℂ) * z)‖ :=
@@ -439,7 +439,7 @@ lemma isBigO_atImInfty_of_fourier_shift
     _ = ∑' m, ‖a m‖ * rexp (-(2 * π) * (m + n₀) * z.im) := by
         simp only [norm_mul, norm_exp, hexp_re]
     _ ≤ ∑' m, ‖a m‖ * rexp (-(2 * π * c) * m) * rexp (-(2 * π) * n₀ * z.im) := by
-        refine Summable.tsum_le_tsum (fun m => ?_) hsum_norms'
+        refine Summable.tsum_le_tsum (fun m ↦ ?_) hsum_norms'
           (ha.mul_right (rexp (-(2 * π) * n₀ * z.im)))
         calc ‖a m‖ * rexp (-(2 * π) * (↑m + ↑n₀) * z.im)
             ≤ ‖a m‖ * (rexp (-(2 * π * c) * m) * rexp (-(2 * π) * n₀ * z.im)) :=
@@ -460,8 +460,8 @@ theorem tendsto_rpow_mul_resToImagAxis_of_fourier_shift
     {F : ℍ → ℂ} {a : ℕ → ℂ} {n₀ : ℕ} {c : ℝ} (hn₀ : 0 < n₀) (hc : 0 < c)
     (hF : ∀ z : ℍ, F z =
       ∑' m : ℕ, a m * Complex.exp (2 * π * Complex.I * ((m + n₀ : ℕ) : ℂ) * (z : ℂ)))
-    (ha : Summable (fun m : ℕ => ‖a m‖ * rexp (-(2 * π * c) * (m : ℝ)))) (s : ℝ) :
-    Tendsto (fun t : ℝ => t ^ (s : ℂ) * F.resToImagAxis t) atTop (𝓝 0) :=
+    (ha : Summable (fun m : ℕ ↦ ‖a m‖ * rexp (-(2 * π * c) * (m : ℝ)))) (s : ℝ) :
+    Tendsto (fun t : ℝ ↦ t ^ (s : ℂ) * F.resToImagAxis t) atTop (𝓝 0) :=
   tendsto_rpow_mul_resToImagAxis_of_isBigO_exp (by positivity)
     (isBigO_atImInfty_of_fourier_shift hn₀ hc hF ha) s
 

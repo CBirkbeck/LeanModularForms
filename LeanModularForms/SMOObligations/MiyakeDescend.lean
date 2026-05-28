@@ -573,7 +573,7 @@ theorem miyake_hecke_descend_qexp
     ∃ c : ℂ, c ≠ 0 ∧
       ∀ (g_low : ModularForm ((Gamma1 (N / p)).map (mapGL ℝ)) k) (n : ℕ),
         (ModularFormClass.qExpansion (1 : ℝ)
-          (fun z => c * ∑ v : Fin (descendCosetCount p N),
+          (fun z ↦ c * ∑ v : Fin (descendCosetCount p N),
             (⇑(HeckeRing.GL2.modularFormLevelRaise (N / p) p k g_low)
               ∣[k] (descendCosetList p N hp v)) z)).coeff n =
         (ModularFormClass.qExpansion (1 : ℝ) g_low).coeff n := by
@@ -610,7 +610,7 @@ lemma miyake_descent_upper_tri_qExpansion
     {k : ℤ}
     (g : ModularForm ((Gamma1 M).map (mapGL ℝ)) k) (m : ℕ) :
     (ModularFormClass.qExpansion (1 : ℝ)
-        (fun z => ∑ v ∈ Finset.range p,
+        (fun z ↦ ∑ v ∈ Finset.range p,
           (⇑g ∣[k] (T_p_upper p hp.pos v : GL (Fin 2) ℚ)) z)).coeff m =
       (ModularFormClass.qExpansion (1 : ℝ) g).coeff (p * m) := by
   have hpM_not_coprime : ¬ Nat.Coprime p M := fun h ↦ hp.coprime_iff_not_dvd.mp h hpM
@@ -634,7 +634,7 @@ theorem miyake_hecke_descend_cusp
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     ∀ {c : OnePoint ℝ}, IsCusp c ((Gamma1 (N / p)).map (mapGL ℝ)) →
       c.IsZeroAt
-        (fun z => ∑ v : Fin (descendCosetCount p N),
+        (fun z ↦ ∑ v : Fin (descendCosetCount p N),
           (⇑f ∣[k] (descendCosetList p N hp v)) z) k := by
   intro c hc
   have hc_N : IsCusp c ((Gamma1 N).map (mapGL ℝ)) :=

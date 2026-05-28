@@ -195,7 +195,7 @@ lemma Newform.badPrime_lowerOffset_bsum_slash_Gamma1_right
           (Newform.T_p_lower_with_offset N hp.pos b : GL (Fin 2) ℝ)) ∣[k]
       (mapGL ℝ γ : GL (Fin 2) ℝ) from by
     rw [SlashAction.sum_slash]
-    refine Finset.sum_congr rfl fun b _ => ?_
+    refine Finset.sum_congr rfl fun b _ ↦ ?_
     rw [SlashAction.slash_mul],
     ← Newform.frickeBadAdjointCandidateNormalized_coe_eq_bsum_lower hp hpN g]
   exact (Newform.frickeBadAdjointCandidateNormalized k p g).slash_action_eq'
@@ -268,7 +268,7 @@ open scoped Pointwise in
 theorem Newform.T_p_upper_left_cosets_pairwiseDisjoint_Gamma1
     (N : ℕ) [NeZero N] {p : ℕ} (hp : 0 < p) :
     (Set.univ : Set (Fin p)).PairwiseDisjoint
-      (fun b => (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) :
+      (fun b ↦ (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) :
           Set (GL (Fin 2) ℝ)) *
         ({(glMap (T_p_upper p hp b.val) : GL (Fin 2) ℝ)} :
           Set (GL (Fin 2) ℝ))) := by
@@ -475,7 +475,7 @@ theorem Newform.alpha_p_Gamma1_doubleCoset_partition_T_p_upper_left_cosets
         ({(glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)} :
           Set (GL (Fin 2) ℝ))) ∧
     (Set.univ : Set (Fin p)).PairwiseDisjoint
-      (fun b => (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) :
+      (fun b ↦ (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) :
           Set (GL (Fin 2) ℝ)) *
         ({(glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)} :
           Set (GL (Fin 2) ℝ))) :=
@@ -503,7 +503,7 @@ theorem Newform.existsUnique_T_p_upper_left_coset_index_of_mem_alpha_p_doubleCos
   intro c hc
   by_contra hne
   exact Set.disjoint_left.mp
-    (hpart.2 (Set.mem_univ b) (Set.mem_univ c) (fun h => hne h.symm)) hb hc
+    (hpart.2 (Set.mem_univ b) (Set.mem_univ c) (fun h ↦ hne h.symm)) hb hc
 
 open scoped Pointwise in
 /-- Each element `x` of the bad-prime double coset factors as `x = γ · β_b` with
@@ -594,10 +594,10 @@ theorem Newform.alpha_p_Gamma1_doubleCoset_smul_set_eq_iUnion_T_p_upper_left_fac
     ((((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ)) *
         ({(glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)} : Set (GL (Fin 2) ℝ)) *
       (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ))) • D =
-      Set.iUnion (fun b : Fin p =>
+      Set.iUnion (fun b : Fin p ↦
         Set.iUnion (fun γ : {γ : GL (Fin 2) ℝ //
             γ ∈ (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) :
-              Set (GL (Fin 2) ℝ))} =>
+              Set (GL (Fin 2) ℝ))} ↦
           (((γ : GL (Fin 2) ℝ) *
             (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)) • D))) := by
   ext z
@@ -619,10 +619,10 @@ theorem Newform.alpha_p_Gamma1_doubleCoset_smul_qOut_inv_fd_eq_iUnion_T_p_upper_
         ({(glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)} : Set (GL (Fin 2) ℝ)) *
       (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ))) •
         ((q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane)) =
-      Set.iUnion (fun b : Fin p =>
+      Set.iUnion (fun b : Fin p ↦
         Set.iUnion (fun γ : {γ : GL (Fin 2) ℝ //
             γ ∈ (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) :
-              Set (GL (Fin 2) ℝ))} =>
+              Set (GL (Fin 2) ℝ))} ↦
           (((γ : GL (Fin 2) ℝ) *
             (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)) •
               ((q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane))))) := by
@@ -634,20 +634,20 @@ open scoped Pointwise in
 /-- `q`-aggregate tile-set equality for the bad-prime double coset. -/
 theorem Newform.alpha_p_Gamma1_doubleCoset_smul_iUnion_qOut_inv_fd_eq_iUnion_q_T_p_upper_left_factor_smul
     (N : ℕ) [NeZero N] {p : ℕ} (hp : p.Prime) (hpN : ¬ Nat.Coprime p N) :
-    Set.iUnion (fun q : SL(2, ℤ) ⧸ Gamma1 N =>
+    Set.iUnion (fun q : SL(2, ℤ) ⧸ Gamma1 N ↦
       ((((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ)) *
           ({(glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)} : Set (GL (Fin 2) ℝ)) *
         (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ))) •
           ((q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane))) =
-      Set.iUnion (fun q : SL(2, ℤ) ⧸ Gamma1 N =>
-        Set.iUnion (fun b : Fin p =>
+      Set.iUnion (fun q : SL(2, ℤ) ⧸ Gamma1 N ↦
+        Set.iUnion (fun b : Fin p ↦
           Set.iUnion (fun γ : {γ : GL (Fin 2) ℝ //
               γ ∈ (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) :
-                Set (GL (Fin 2) ℝ))} =>
+                Set (GL (Fin 2) ℝ))} ↦
             (((γ : GL (Fin 2) ℝ) *
               (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)) •
                 ((q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane)))))) := by
-  refine Set.iUnion_congr fun q => ?_
+  refine Set.iUnion_congr fun q ↦ ?_
   exact Newform.alpha_p_Gamma1_doubleCoset_smul_qOut_inv_fd_eq_iUnion_T_p_upper_left_factor_smul
     N (p := p) hp hpN q
 
@@ -658,13 +658,13 @@ theorem Newform.alpha_p_Gamma1_doubleCoset_smul_whole_qOut_inv_fd_eq_iUnion_q_T_
     ((((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ)) *
         ({(glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)} : Set (GL (Fin 2) ℝ)) *
       (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ))) •
-        (Set.iUnion (fun q : SL(2, ℤ) ⧸ Gamma1 N =>
+        (Set.iUnion (fun q : SL(2, ℤ) ⧸ Gamma1 N ↦
           ((q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane)))) =
-      Set.iUnion (fun q : SL(2, ℤ) ⧸ Gamma1 N =>
-        Set.iUnion (fun b : Fin p =>
+      Set.iUnion (fun q : SL(2, ℤ) ⧸ Gamma1 N ↦
+        Set.iUnion (fun b : Fin p ↦
           Set.iUnion (fun γ : {γ : GL (Fin 2) ℝ //
               γ ∈ (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) :
-                Set (GL (Fin 2) ℝ))} =>
+                Set (GL (Fin 2) ℝ))} ↦
             (((γ : GL (Fin 2) ℝ) *
               (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)) •
                 ((q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane)))))) := by
@@ -679,7 +679,7 @@ theorem Newform.iUnion_Gamma1_T_p_upper_left_factor_smul_eq_Gamma1_smul_T_p_uppe
     (D : Set UpperHalfPlane) :
     Set.iUnion (fun γ : {γ : GL (Fin 2) ℝ //
         γ ∈ (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) :
-          Set (GL (Fin 2) ℝ))} =>
+          Set (GL (Fin 2) ℝ))} ↦
       (((γ : GL (Fin 2) ℝ) *
         (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)) • D)) =
       (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) :
@@ -709,13 +709,13 @@ theorem Newform.alpha_p_Gamma1_doubleCoset_smul_set_eq_iUnion_Gamma1_smul_T_p_up
     ((((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ)) *
         ({(glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)} : Set (GL (Fin 2) ℝ)) *
       (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ))) • D =
-      Set.iUnion (fun b : Fin p =>
+      Set.iUnion (fun b : Fin p ↦
         (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) :
           Set (GL (Fin 2) ℝ)) •
           ((glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ) • D)) := by
   rw [Newform.alpha_p_Gamma1_doubleCoset_smul_set_eq_iUnion_T_p_upper_left_factor_smul
     N (p := p) hp hpN D]
-  refine Set.iUnion_congr fun b => ?_
+  refine Set.iUnion_congr fun b ↦ ?_
   exact Newform.iUnion_Gamma1_T_p_upper_left_factor_smul_eq_Gamma1_smul_T_p_upper_left_smul
     N (p := p) hp b D
 
@@ -726,16 +726,16 @@ theorem Newform.alpha_p_Gamma1_doubleCoset_smul_whole_qOut_inv_fd_eq_iUnion_q_Ga
     ((((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ)) *
         ({(glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)} : Set (GL (Fin 2) ℝ)) *
       (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ))) •
-        (Set.iUnion (fun q : SL(2, ℤ) ⧸ Gamma1 N =>
+        (Set.iUnion (fun q : SL(2, ℤ) ⧸ Gamma1 N ↦
           ((q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane)))) =
-      Set.iUnion (fun q : SL(2, ℤ) ⧸ Gamma1 N =>
-        Set.iUnion (fun b : Fin p =>
+      Set.iUnion (fun q : SL(2, ℤ) ⧸ Gamma1 N ↦
+        Set.iUnion (fun b : Fin p ↦
           (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) :
             Set (GL (Fin 2) ℝ)) •
             ((glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ) •
               ((q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane))))) := by
   rw [Set.smul_iUnion]
-  refine Set.iUnion_congr fun q => ?_
+  refine Set.iUnion_congr fun q ↦ ?_
   exact Newform.alpha_p_Gamma1_doubleCoset_smul_set_eq_iUnion_Gamma1_smul_T_p_upper_left_smul
     N (p := p) hp hpN ((q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane))
 
@@ -749,7 +749,7 @@ theorem Newform.alpha_p_Gamma1_doubleCoset_smul_set_eq_Gamma1_smul_iUnion_T_p_up
         ({(glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)} : Set (GL (Fin 2) ℝ)) *
       (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ))) • D =
       (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ)) •
-        Set.iUnion (fun b : Fin p =>
+        Set.iUnion (fun b : Fin p ↦
           (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ) • D) := by
   rw [Newform.alpha_p_Gamma1_doubleCoset_smul_set_eq_iUnion_Gamma1_smul_T_p_upper_left_smul
     N (p := p) hp hpN D, Set.smul_iUnion]
@@ -763,16 +763,16 @@ theorem Newform.alpha_p_Gamma1_doubleCoset_smul_whole_qOut_inv_fd_eq_Gamma1_smul
     ((((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ)) *
         ({(glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)} : Set (GL (Fin 2) ℝ)) *
       (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ))) •
-        (Set.iUnion (fun q : SL(2, ℤ) ⧸ Gamma1 N =>
+        (Set.iUnion (fun q : SL(2, ℤ) ⧸ Gamma1 N ↦
           ((q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane)))) =
       (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ)) •
-        Set.iUnion (fun q : SL(2, ℤ) ⧸ Gamma1 N =>
-          Set.iUnion (fun b : Fin p =>
+        Set.iUnion (fun q : SL(2, ℤ) ⧸ Gamma1 N ↦
+          Set.iUnion (fun b : Fin p ↦
             (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ) •
               ((q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane)))) := by
   rw [Newform.alpha_p_Gamma1_doubleCoset_smul_whole_qOut_inv_fd_eq_iUnion_q_Gamma1_smul_T_p_upper_left_smul
     N (p := p) hp hpN, Set.smul_iUnion]
-  refine Set.iUnion_congr fun q => ?_
+  refine Set.iUnion_congr fun q ↦ ?_
   rw [Set.smul_iUnion]
 
 open UpperHalfPlane MeasureTheory in
@@ -789,7 +789,7 @@ theorem Newform.setIntegral_alpha_p_doubleCoset_smul_set_eq_setIntegral_Gamma1_s
         h τ ∂μ_hyp =
       ∫ τ in
         ((((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ)) •
-          Set.iUnion (fun b : Fin p =>
+          Set.iUnion (fun b : Fin p ↦
             (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ) • D)),
         h τ ∂μ_hyp := by
   rw [Newform.alpha_p_Gamma1_doubleCoset_smul_set_eq_Gamma1_smul_iUnion_T_p_upper_smul
@@ -806,13 +806,13 @@ theorem Newform.setIntegral_alpha_p_doubleCoset_smul_whole_qOut_inv_fd_eq_setInt
       (((((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ)) *
             ({(glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)} : Set (GL (Fin 2) ℝ)) *
           (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ))) •
-            (Set.iUnion (fun q : SL(2, ℤ) ⧸ Gamma1 N =>
+            (Set.iUnion (fun q : SL(2, ℤ) ⧸ Gamma1 N ↦
               ((q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane))))),
         h τ ∂μ_hyp =
       ∫ τ in
         ((((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ)) •
-          Set.iUnion (fun q : SL(2, ℤ) ⧸ Gamma1 N =>
-            Set.iUnion (fun b : Fin p =>
+          Set.iUnion (fun q : SL(2, ℤ) ⧸ Gamma1 N ↦
+            Set.iUnion (fun b : Fin p ↦
               (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ) •
                 ((q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane))))),
         h τ ∂μ_hyp := by
@@ -828,12 +828,12 @@ theorem Newform.peterssonInner_alpha_p_doubleCoset_smul_whole_qOut_inv_fd_eq_pet
       (((((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ)) *
           ({(glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)} : Set (GL (Fin 2) ℝ)) *
         (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ))) •
-          (Set.iUnion (fun q : SL(2, ℤ) ⧸ Gamma1 N =>
+          (Set.iUnion (fun q : SL(2, ℤ) ⧸ Gamma1 N ↦
             ((q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane))))) f g =
       peterssonInner k
         ((((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ)) •
-          Set.iUnion (fun q : SL(2, ℤ) ⧸ Gamma1 N =>
-            Set.iUnion (fun b : Fin p =>
+          Set.iUnion (fun q : SL(2, ℤ) ⧸ Gamma1 N ↦
+            Set.iUnion (fun b : Fin p ↦
               (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ) •
                 ((q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane))))) f g := by
   unfold peterssonInner
@@ -1001,7 +1001,7 @@ theorem Newform.hasBadPrimeFrickePetNAdjoint_of_perCosetAggregate
   show petN (heckeT_n_cusp k p f) g =
     petN f (Newform.frickeBadAdjointCandidateNormalized k p g)
   unfold petN
-  exact Finset.sum_congr rfl (fun q _ => h_perCoset f g q)
+  exact Finset.sum_congr rfl (fun q _ ↦ h_perCoset f g q)
 
 /-- `HasBadPrimeFrickePetNAdjoint` from the `frickeSquareScalar`-scaled
 aggregate identity, via `hasBadPrimeFrickePetNAdjoint_iff`. -/
@@ -1187,14 +1187,14 @@ theorem Newform.hasBadPrimeFrickePerCosetSumTransport
     Newform.HasBadPrimeFrickePerCosetSumTransport N k p hp hpN := by
   intro f g q
   have h_int : ∀ b ∈ Finset.range p,
-      IntegrableOn (fun τ => UpperHalfPlane.petersson k
+      IntegrableOn (fun τ ↦ UpperHalfPlane.petersson k
         (⇑g ∣[k] ((q.out : SL(2, ℤ))⁻¹))
         ((⇑f ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ)) ∣[k]
           ((q.out : SL(2, ℤ))⁻¹)) τ) (fd : Set UpperHalfPlane) μ_hyp :=
-    fun b _ => integrableOn_petersson_cuspform_mixed_slash_on_fd g f
+    fun b _ ↦ integrableOn_petersson_cuspform_mixed_slash_on_fd g f
       (T_p_upper p hp.pos b) ((q.out : SL(2, ℤ))⁻¹)
   rw [SlashAction.sum_slash, peterssonInner_sum_left _ _ _ _ h_int, Finset.mul_sum]
-  refine Finset.sum_congr rfl (fun b _ => ?_)
+  refine Finset.sum_congr rfl (fun b _ ↦ ?_)
   rw [show ((⇑f ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ)) ∣[k]
         ((q.out : SL(2, ℤ))⁻¹) : UpperHalfPlane → ℂ) =
       ((⇑f ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ)) ∣[k]

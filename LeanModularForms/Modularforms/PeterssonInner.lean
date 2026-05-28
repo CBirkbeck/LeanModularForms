@@ -103,7 +103,7 @@ reduction instead). -/
 theorem pet_definite [Γ.IsArithmetic] (f : CuspForm Γ k) (hpet : pet f f = 0) :
     f = 0 := by
   -- f = 0 on the open fundamental domain fdo
-  have hfdo : ∀ τ ∈ fdo, (⇑f) τ = 0 := fun τ hτ =>
+  have hfdo : ∀ τ ∈ fdo, (⇑f) τ = 0 := fun τ hτ ↦
     eq_zero_on_fd_of_peterssonInner_self_eq_zero f hpet (fdo_subset_fd hτ)
   -- f is holomorphic (MDifferentiable) on ℍ
   have hmdiff : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (⇑f) := CuspFormClass.holo f

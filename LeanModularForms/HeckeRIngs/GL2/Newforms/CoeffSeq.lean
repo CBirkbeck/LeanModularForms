@@ -89,7 +89,7 @@ theorem Newform.eigenvalue_coprime_mul (f : Newform N k) (m n : ℕ+)
 period-1 q-expansion (the standard Fourier coefficients of `f` as a
 `Γ₁(N)`-cusp form). -/
 noncomputable def Newform.lCoeff (f : Newform N k) : ℕ → ℂ :=
-  fun n => (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm).coeff n
+  fun n ↦ (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm).coeff n
 
 @[simp]
 lemma Newform.lCoeff_apply (f : Newform N k) (n : ℕ) :
@@ -301,7 +301,7 @@ theorem Newform.lCoeff_isHeckeCoefficientSequence (f : Newform N k)
         change f.lCoeff (1 * 0) = f.lCoeff 1 * f.lCoeff 0
         rw [Nat.mul_zero, f.lCoeff_zero, mul_zero]
       · exact f.lCoeff_mul_of_coprime m n hm hn hmN hnN hmn χ hfχ
-  recur := fun hp hpN r => f.lCoeff_recur χ hfχ hp hpN r
+  recur := fun hp hpN r ↦ f.lCoeff_recur χ hfχ hp hpN r
 
 /-- **Bridge to `ModularForms.lCoeff`.**  The `Newform.lCoeff` sequence is
 the same as the generic `ModularForms.lCoeff f.toCuspForm` sequence built
@@ -415,7 +415,7 @@ full `Newform.lCoeff` L-series, by pointwise domination. -/
 lemma Newform.lSeriesSummable_stripped (f : Newform N k) {s : ℂ}
     (hs : (k : ℝ) / 2 + 1 < s.re) :
     LSeriesSummable f.lCoeff_stripped s := by
-  refine Summable.of_norm_bounded (g := fun n => ‖LSeries.term f.lCoeff s n‖)
+  refine Summable.of_norm_bounded (g := fun n ↦ ‖LSeries.term f.lCoeff s n‖)
     (f.lSeriesSummable hs).norm ?_
   intro n
   exact LSeries.norm_term_le s (f.norm_lCoeff_stripped_le n)
@@ -460,7 +460,7 @@ theorem Newform.tsum_lCoeff_pow_mul_eq_eulerFactor (f : Newform N k)
     · rw [if_pos hr, if_pos (Nat.even_iff.mp hr)]
       ring
     · have h_not : ¬ Even r := Nat.not_even_iff_odd.mpr hr
-      have h_mod : r % 2 ≠ 0 := fun heq => h_not (Nat.even_iff.mpr heq)
+      have h_mod : r % 2 ≠ 0 := fun heq ↦ h_not (Nat.even_iff.mpr heq)
       rw [if_neg h_not, if_neg h_mod, zero_mul]
   rw [tsum_congr h_pointwise]
   exact ModularForms.tsum_alternating_pow_eq
@@ -474,7 +474,7 @@ theorem Newform.lSeries_stripped_hasProd (f : Newform N k)
     (χ : (ZMod N)ˣ →* ℂˣ)
     (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
     {s : ℂ} (hs : (k : ℝ) / 2 + 1 < s.re) :
-    HasProd (fun p : Nat.Primes =>
+    HasProd (fun p : Nat.Primes ↦
         ∑' (e : ℕ), LSeries.term f.lCoeff_stripped s ((p : ℕ) ^ e))
       (LSeries f.lCoeff_stripped s) := by
   set g : ℕ → ℂ := LSeries.term f.lCoeff_stripped s with hg_def
@@ -496,7 +496,7 @@ theorem Newform.lSeries_stripped_hasProd (f : Newform N k)
     push_cast
     rw [Complex.natCast_mul_natCast_cpow]
     ring
-  have h_g_summ : Summable fun n => ‖g n‖ := (f.lSeriesSummable_stripped hs).norm
+  have h_g_summ : Summable fun n ↦ ‖g n‖ := (f.lSeriesSummable_stripped hs).norm
   exact EulerProduct.eulerProduct_hasProd h_g_one h_g_mul h_g_summ h_g_zero
 
 /-- **Trivial local Euler factor at a prime dividing the level.**  For a
@@ -524,7 +524,7 @@ theorem Newform.tsum_term_lCoeff_stripped_pow_of_dvd (f : Newform N k)
       unfold Newform.lCoeff_stripped
       exact if_neg h_not_cop
     rw [h_strip_zero, zero_div]
-  rw [tsum_eq_single 0 (fun e he_ne_zero =>
+  rw [tsum_eq_single 0 (fun e he_ne_zero ↦
     h_term_zero e (Nat.one_le_iff_ne_zero.mpr he_ne_zero))]
   show LSeries.term f.lCoeff_stripped s (p ^ 0) = 1
   rw [pow_zero, LSeries.term_def, if_neg one_ne_zero, f.lCoeff_stripped_one,
@@ -544,7 +544,7 @@ theorem Newform.tsum_term_lCoeff_stripped_pow_of_good_prime (f : Newform N k)
     ∑' (e : ℕ), LSeries.term f.lCoeff_stripped s (q ^ e) =
       (1 + (χ (ZMod.unitOfCoprime q hqN) : ℂ) * (q : ℂ) ^ (k - 1) *
         ((q : ℂ) ^ (-s)) ^ 2)⁻¹ := by
-  have hqe_cop : ∀ e, Nat.Coprime (q ^ e) N := fun e => hqN.pow_left e
+  have hqe_cop : ∀ e, Nat.Coprime (q ^ e) N := fun e ↦ hqN.pow_left e
   have h_strip_eq : ∀ e, f.lCoeff_stripped (q ^ e) = f.lCoeff (q ^ e) := by
     intro e
     unfold Newform.lCoeff_stripped
@@ -770,12 +770,12 @@ theorem Newform.lSeries_stripped_mul_dirichlet_hasProd
       ‖((χ (ZMod.unitOfCoprime q hqN) : ℂ) * (q : ℂ) ^ (k - 1)) *
         ((q : ℂ) ^ (-s)) ^ 2‖ < 1) :
     HasProd
-      (fun p : Nat.Primes =>
+      (fun p : Nat.Primes ↦
         Newform.eulerFactor_stripped f χ S s p *
           (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N) ((p : ℕ) : ZMod N) *
             ((p : ℕ) : ℂ) ^ (-(2 * s - k + 1)))⁻¹)
       (LSeries f.lCoeff_stripped s *
-        LSeries (fun n => (Newform.dirichletLift χ : DirichletCharacter ℂ N) n)
+        LSeries (fun n ↦ (Newform.dirichletLift χ : DirichletCharacter ℂ N) n)
           (2 * s - k + 1)) :=
   (f.lSeries_stripped_hasProd_eulerFactor χ hfχ S h_bad hs h_geom).mul
     (DirichletCharacter.LSeries_eulerProduct_hasProd
@@ -866,21 +866,21 @@ private lemma hasProd_mul_finset_prod_comm {ι : Type*} {g₁ g₂ : ι → ℂ}
     (h_eq : ∀ p ∉ T, g₁ p = g₂ p) :
     a * ∏ p ∈ T, g₂ p = b * ∏ p ∈ T, g₁ p := by
   classical
-  let corr₁ : ι → ℂ := fun p => if p ∈ T then g₂ p else 1
-  let corr₂ : ι → ℂ := fun p => if p ∈ T then g₁ p else 1
+  let corr₁ : ι → ℂ := fun p ↦ if p ∈ T then g₂ p else 1
+  let corr₂ : ι → ℂ := fun p ↦ if p ∈ T then g₁ p else 1
   have h_corr₁_prod : HasProd corr₁ (∏ p ∈ T, corr₁ p) :=
-    hasProd_prod_of_ne_finset_one fun p hp => if_neg hp
+    hasProd_prod_of_ne_finset_one fun p hp ↦ if_neg hp
   have h_corr₂_prod : HasProd corr₂ (∏ p ∈ T, corr₂ p) :=
-    hasProd_prod_of_ne_finset_one fun p hp => if_neg hp
+    hasProd_prod_of_ne_finset_one fun p hp ↦ if_neg hp
   have h_corr₁_eq : (∏ p ∈ T, corr₁ p) = ∏ p ∈ T, g₂ p :=
-    Finset.prod_congr rfl fun p hp => if_pos hp
+    Finset.prod_congr rfl fun p hp ↦ if_pos hp
   have h_corr₂_eq : (∏ p ∈ T, corr₂ p) = ∏ p ∈ T, g₁ p :=
-    Finset.prod_congr rfl fun p hp => if_pos hp
-  have h_left : HasProd (fun p => g₁ p * corr₁ p) (a * ∏ p ∈ T, corr₁ p) :=
+    Finset.prod_congr rfl fun p hp ↦ if_pos hp
+  have h_left : HasProd (fun p ↦ g₁ p * corr₁ p) (a * ∏ p ∈ T, corr₁ p) :=
     h₁.mul h_corr₁_prod
-  have h_right : HasProd (fun p => g₂ p * corr₂ p) (b * ∏ p ∈ T, corr₂ p) :=
+  have h_right : HasProd (fun p ↦ g₂ p * corr₂ p) (b * ∏ p ∈ T, corr₂ p) :=
     h₂.mul h_corr₂_prod
-  have h_pointwise : (fun p => g₁ p * corr₁ p) = (fun p => g₂ p * corr₂ p) := by
+  have h_pointwise : (fun p ↦ g₁ p * corr₁ p) = (fun p ↦ g₂ p * corr₂ p) := by
     funext p
     by_cases hp : p ∈ T
     · show g₁ p * (if p ∈ T then g₂ p else 1) = g₂ p * (if p ∈ T then g₁ p else 1)
@@ -922,7 +922,7 @@ private lemma Newform.eulerFactor_stripped_mul_dirichlet_eq_chiSq_factor_of_not_
       Newform.dirichletLift_sq_euler_factor_at_dvd χ p.prop h_dvd s]
   · have hpN : Nat.Coprime (p : ℕ) N :=
       (Nat.Prime.coprime_iff_not_dvd p.prop).mpr h_dvd
-    have hp_notS : (p : ℕ) ∉ S := fun hpS => hp_notT ((hT_iff p).mpr ⟨hpS, hpN⟩)
+    have hp_notS : (p : ℕ) ∉ S := fun hpS ↦ hp_notT ((hT_iff p).mpr ⟨hpS, hpN⟩)
     have ⟨h_pos, h_neg⟩ := h_pos_neg (p : ℕ) p.prop hpN hp_notS
     have h_good := f.eulerFactor_stripped_mul_dirichlet_at_good_prime χ hfχ S h_bad
       p.prop hpN hp_notS s h_pos h_neg
@@ -965,12 +965,12 @@ theorem Newform.lSeries_stripped_value_identity
       (1 : ℂ) - (χ (ZMod.unitOfCoprime q hqN) : ℂ) *
         (q : ℂ) ^ (-(2 * s - k + 1)) ≠ 0) :
     (LSeries f.lCoeff_stripped s) *
-        (LSeries (fun n =>
+        (LSeries (fun n ↦
           (Newform.dirichletLift χ : DirichletCharacter ℂ N) n) (2 * s - k + 1)) *
         (∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ :
           DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
           ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) =
-      (LSeries (fun n => ((Newform.dirichletLift χ * Newform.dirichletLift χ :
+      (LSeries (fun n ↦ ((Newform.dirichletLift χ * Newform.dirichletLift χ :
           DirichletCharacter ℂ N)) n) (2 * (2 * s - k + 1))) *
         (∏ p ∈ T,
           Newform.eulerFactor_stripped f χ S s p *
@@ -982,7 +982,7 @@ theorem Newform.lSeries_stripped_value_identity
   have h_chi_sq := DirichletCharacter.LSeries_eulerProduct_hasProd
     ((Newform.dirichletLift χ * Newform.dirichletLift χ :
         DirichletCharacter ℂ N)) hs''
-  exact hasProd_mul_finset_prod_comm h_compound h_chi_sq T fun p hp_notT =>
+  exact hasProd_mul_finset_prod_comm h_compound h_chi_sq T fun p hp_notT ↦
     f.eulerFactor_stripped_mul_dirichlet_eq_chiSq_factor_of_not_mem χ hfχ S h_bad T
       hT_iff h_pos_neg hp_notT
 
@@ -1061,21 +1061,21 @@ theorem Newform.lSeries_stripped_eq_dirichlet_quotient_value
       (1 : ℂ) - (χ (ZMod.unitOfCoprime q hqN) : ℂ) *
         (q : ℂ) ^ (-(2 * s - k + 1)) ≠ 0) :
     LSeries f.lCoeff_stripped s =
-      (LSeries (fun n => ((Newform.dirichletLift χ * Newform.dirichletLift χ :
+      (LSeries (fun n ↦ ((Newform.dirichletLift χ * Newform.dirichletLift χ :
           DirichletCharacter ℂ N)) n) (2 * (2 * s - k + 1)) *
        (∏ p ∈ T,
           Newform.eulerFactor_stripped f χ S s p *
             (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
                 ((p : ℕ) : ZMod N) *
               ((p : ℕ) : ℂ) ^ (-(2 * s - k + 1)))⁻¹)) /
-      (LSeries (fun n => (Newform.dirichletLift χ : DirichletCharacter ℂ N) n)
+      (LSeries (fun n ↦ (Newform.dirichletLift χ : DirichletCharacter ℂ N) n)
           (2 * s - k + 1) *
        (∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ :
           DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
           ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹)) := by
   have h_id := f.lSeries_stripped_value_identity χ hfχ S h_bad hs hs' hs''
     h_geom T hT_iff h_pos_neg
-  have h_LB_ne : LSeries (fun n => (Newform.dirichletLift χ : DirichletCharacter ℂ N) n)
+  have h_LB_ne : LSeries (fun n ↦ (Newform.dirichletLift χ : DirichletCharacter ℂ N) n)
       (2 * s - k + 1) ≠ 0 :=
     DirichletCharacter.LSeries_ne_zero_of_one_lt_re _ hs'
   have h_C_ne :
@@ -1084,7 +1084,7 @@ theorem Newform.lSeries_stripped_eq_dirichlet_quotient_value
         ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) ≠ 0 :=
     Newform.prod_dirichletLift_sq_eulerFactor_ne_zero χ T hs''
   have h_BC_ne :
-    LSeries (fun n => (Newform.dirichletLift χ : DirichletCharacter ℂ N) n)
+    LSeries (fun n ↦ (Newform.dirichletLift χ : DirichletCharacter ℂ N) n)
         (2 * s - k + 1) *
       (∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ :
           DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
@@ -1178,7 +1178,7 @@ theorem Newform.lSeries_stripped_eq_dirichlet_quotient_value_at_special_point
     (hT_iff : ∀ p : Nat.Primes, p ∈ T ↔
       (p : ℕ) ∈ S ∧ Nat.Coprime (p : ℕ) N) :
     LSeries f.lCoeff_stripped (Newform.specialPoint k) =
-      (LSeries (fun n => ((Newform.dirichletLift χ * Newform.dirichletLift χ :
+      (LSeries (fun n ↦ ((Newform.dirichletLift χ * Newform.dirichletLift χ :
           DirichletCharacter ℂ N)) n)
           (2 * (2 * Newform.specialPoint k - (k : ℂ) + 1)) *
        (∏ p ∈ T,
@@ -1186,7 +1186,7 @@ theorem Newform.lSeries_stripped_eq_dirichlet_quotient_value_at_special_point
             (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
                 ((p : ℕ) : ZMod N) *
               ((p : ℕ) : ℂ) ^ (-(2 * Newform.specialPoint k - (k : ℂ) + 1)))⁻¹)) /
-      (LSeries (fun n => (Newform.dirichletLift χ : DirichletCharacter ℂ N) n)
+      (LSeries (fun n ↦ (Newform.dirichletLift χ : DirichletCharacter ℂ N) n)
           (2 * Newform.specialPoint k - (k : ℂ) + 1) *
        (∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ :
           DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
@@ -1272,16 +1272,16 @@ theorem strongMultiplicityOne
     obtain ⟨q, hq_prime, hq_N, hq_notin, hq_ne⟩ :=
       Newform.exists_nonzero_prime_eigenvalue f χ hfχ bad
     have hq_pos : 0 < q := hq_prime.pos
-    have hq_notin_S : q ∉ S := fun hqS => hq_notin (by
+    have hq_notin_S : q ∉ S := fun hqS ↦ hq_notin (by
       simp only [bad, Finset.mem_union]; exact Or.inl (Or.inl hqS))
-    have hq_notin_img : q ∉ S.image (· / n.val) := fun h' => hq_notin (by
+    have hq_notin_img : q ∉ S.image (· / n.val) := fun h' ↦ hq_notin (by
       simp only [bad, Finset.mem_union]; exact Or.inl (Or.inr h'))
-    have hq_nd_n : ¬ q ∣ n.val := fun hqn => hq_notin (by
+    have hq_nd_n : ¬ q ∣ n.val := fun hqn ↦ hq_notin (by
       simp only [bad, Finset.mem_union, Nat.mem_primeFactors]
       exact Or.inr ⟨hq_prime, hqn, hn_pos.ne'⟩)
     have hn_coprime_q : Nat.Coprime n.val q :=
       ((hq_prime.coprime_iff_not_dvd).mpr hq_nd_n).symm
-    have hnq_notin_S : n.val * q ∉ S := fun hnqS => hq_notin_img <| by
+    have hnq_notin_S : n.val * q ∉ S := fun hnqS ↦ hq_notin_img <| by
       refine Finset.mem_image.mpr ⟨n.val * q, hnqS, ?_⟩
       exact Nat.mul_div_cancel_left _ hn_pos
     let q_pnat : ℕ+ := ⟨q, hq_pos⟩

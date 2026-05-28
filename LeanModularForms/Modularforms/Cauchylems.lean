@@ -15,7 +15,7 @@ open scoped Interval Real NNReal ENNReal Topology BigOperators Nat
 open scoped ArithmeticFunction.sigma
 
 
-lemma cc (f : ℤ → ℂ) (hc : CauchySeq fun N : ℕ => ∑ m ∈ Finset.Icc (-N : ℤ) N, f m)
+lemma cc (f : ℤ → ℂ) (hc : CauchySeq fun N : ℕ ↦ ∑ m ∈ Finset.Icc (-N : ℤ) N, f m)
   (hs : ∀ n , f n = f (-n)) :
   Tendsto f atTop (𝓝 0) := by
   have h := cauchySeq_iff_tendsto_dist_atTop_0.mp hc
@@ -64,10 +64,10 @@ lemma sum_Icc_eq_sum_Ico_succ {α : Type*} [AddCommMonoid α] (f : ℤ → α)
   rw [add_comm]
 
 lemma CauchySeq_Icc_iff_CauchySeq_Ico (f : ℤ → ℂ) (hs : ∀ n, f n = f (-n))
-  (hc : CauchySeq (fun N : ℕ => ∑ m ∈ Finset.Icc (-N : ℤ) N, f m) ) :
-  CauchySeq (fun N : ℕ => ∑ m ∈ Finset.Ico (-N : ℤ) N, f m) := by
+  (hc : CauchySeq (fun N : ℕ ↦ ∑ m ∈ Finset.Icc (-N : ℤ) N, f m) ) :
+  CauchySeq (fun N : ℕ ↦ ∑ m ∈ Finset.Ico (-N : ℤ) N, f m) := by
   have h0 := cc f hc hs
-  have : CauchySeq fun n: ℕ => f n := by
+  have : CauchySeq fun n: ℕ ↦ f n := by
     apply Filter.Tendsto.cauchySeq (x := 0)
     rw [Metric.tendsto_atTop] at *
     intro ε hε
@@ -80,7 +80,7 @@ lemma CauchySeq_Icc_iff_CauchySeq_Ico (f : ℤ → ℂ) (hs : ∀ n, f n = f (-n
     apply hy
     omega
   have h1 := Filter.Tendsto.mul_const 2 h0
-  have hff : Tendsto (fun n : ℕ => 2 * ‖f n‖) atTop (𝓝 0) := by
+  have hff : Tendsto (fun n : ℕ ↦ 2 * ‖f n‖) atTop (𝓝 0) := by
     rw [Metric.tendsto_atTop] at *
     simp [dist_eq_norm] at *
     intro ε hε
@@ -233,7 +233,7 @@ lemma cauchy_seq_mul_const (f : ℕ → ℂ) (c : ℂ) (hc : c ≠ 0) :
 lemma auxer (a c : ℂ) : a + 2*2*c - 2*c = a + 2*c := by ring
 
 noncomputable def summable_term (z : ℍ) : ℤ → ℂ :=
-  (fun m : ℤ => (∑' (n : ℤ), (1 / ((m : ℂ) * z + n) ^ 2)))
+  (fun m : ℤ ↦ (∑' (n : ℤ), (1 / ((m : ℂ) * z + n) ^ 2)))
 
 lemma term_evem (z : ℍ) (m : ℤ) : summable_term z m = summable_term z (-m) := by
   simp [summable_term]
@@ -244,9 +244,9 @@ lemma term_evem (z : ℍ) (m : ℤ) : summable_term z m = summable_term z (-m) :
   ring
 
 lemma t8 (z : ℍ) :
-  (fun N : ℕ => ∑ m ∈ Finset.Icc (-N : ℤ) N, (∑' (n : ℤ), (1 / ((m : ℂ) * z + n) ^ 2))) =
-  (fun _ : ℕ => 2*((riemannZeta 2))) +
-  (fun N : ℕ => ∑ m ∈ Finset.range (N), 2 * (-2 * ↑π * Complex.I) ^ 2 / (2 - 1)! *
+  (fun N : ℕ ↦ ∑ m ∈ Finset.Icc (-N : ℤ) N, (∑' (n : ℤ), (1 / ((m : ℂ) * z + n) ^ 2))) =
+  (fun _ : ℕ ↦ 2*((riemannZeta 2))) +
+  (fun N : ℕ ↦ ∑ m ∈ Finset.range (N), 2 * (-2 * ↑π * Complex.I) ^ 2 / (2 - 1)! *
       ∑' n : ℕ+, n ^ ((2 - 1) ) * Complex.exp (2 * ↑π * Complex.I * (m + 1) * z * n)) := by
   funext m
   simp only [one_div, neg_mul, even_two, Even.neg_pow, Nat.add_one_sub_one, Nat.factorial_one,
@@ -255,7 +255,7 @@ lemma t8 (z : ℍ) :
   · simp only [Int.cast_natCast, Int.cast_zero, zero_mul, zero_add]
     rw [ zeta_two_eqn]
     nth_rw 2 [add_comm]
-    have := sum_range_zero (fun m => (∑' (n : ℤ), (1 / ((m : ℂ) * z + n) ^ 2))) m
+    have := sum_range_zero (fun m ↦ (∑' (n : ℤ), (1 / ((m : ℂ) * z + n) ^ 2))) m
     simp only [Int.cast_natCast, one_div, Int.cast_zero, zero_mul, zero_add, Int.cast_add,
       Int.cast_one] at this
     rw [this, zeta_two_eqn, add_comm, mul_add, ← mul_assoc, auxer]
@@ -286,13 +286,13 @@ theorem G2_c_tendsto (z : ℍ) :
           ↑↑n))
     atTop (𝓝 (-8 * ↑π ^ 2 * ∑' (n : ℕ+), ↑((σ 1) ↑n) * cexp (2 * ↑π * Complex.I * ↑↑n * ↑z))) := by
     rw [← t9]
-    have hf : Summable fun m : ℕ => ( 2 * (-2 * ↑π * Complex.I) ^ 2 / (2 - 1)! *
+    have hf : Summable fun m : ℕ ↦ ( 2 * (-2 * ↑π * Complex.I) ^ 2 / (2 - 1)! *
         ∑' n : ℕ+, n ^ ((2 - 1)) * Complex.exp (2 * ↑π * Complex.I * (m + 1) * z * n)) := by
         conv =>
           enter [1]
           ext m
           rw [show (m : ℂ) + 1 = (((m + 1) : ℕ) : ℂ) by simp]
-        have := nat_pos_tsum2' (f := fun m : ℕ => ( 2 * (-2 * ↑π * Complex.I) ^ 2 / (2 - 1)! *
+        have := nat_pos_tsum2' (f := fun m : ℕ ↦ ( 2 * (-2 * ↑π * Complex.I) ^ 2 / (2 - 1)! *
         ∑' n : ℕ+, n ^ ((2 - 1) ) * Complex.exp (2 * ↑π * Complex.I * (m) * z * n)) )
         rw [← this]
         have := (a4 2 z).prod_symm.prod
@@ -306,7 +306,7 @@ theorem G2_c_tendsto (z : ℍ) :
     apply V
 
 lemma G2_cauchy (z : ℍ) :
-    CauchySeq (fun N : ℕ => ∑ m ∈ Finset.Icc (-N : ℤ) N, (∑' (n : ℤ), (1 / ((m : ℂ) * z + n) ^ 2)))
+    CauchySeq (fun N : ℕ ↦ ∑ m ∈ Finset.Icc (-N : ℤ) N, (∑' (n : ℤ), (1 / ((m : ℂ) * z + n) ^ 2)))
     := by
   rw [t8]
   simp

@@ -42,7 +42,7 @@ theorem descendCosetList_level_agree
     descendCosetCount p N = descendCosetCount p (l * N) := by
   unfold descendCosetCount
   congr 1
-  refine propext ⟨fun h => ?_, fun h => ?_⟩
+  refine propext ⟨fun h ↦ ?_, fun h ↦ ?_⟩
   · exact h.mul_left l
   · exact (hpl.pow_left 2).dvd_of_dvd_mul_left h
 
@@ -56,14 +56,14 @@ private lemma SL2_diff_map_eq_one_aux {R : Type*} [CommRing R]
       Matrix.SpecialLinearGroup (Fin 2) R :=
     Matrix.SpecialLinearGroup.map (Int.castRingHom R)
   have h_φ_def : ∀ γ : Matrix.SpecialLinearGroup (Fin 2) ℤ,
-      (γ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → R) = (φ γ).val := fun γ => by
+      (γ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → R) = (φ γ).val := fun γ ↦ by
     ext i j
     rw [map_apply_coe]
     simp [RingHom.mapMatrix_apply]
   rw [h_φ_def,
     show φ (γ₁ * γ₂⁻¹) = φ γ₁ * (φ γ₂)⁻¹ from map_mul_inv φ γ₁ γ₂]
   have hEq : φ γ₁ = φ γ₂ :=
-    Matrix.SpecialLinearGroup.ext _ _ fun i j => by
+    Matrix.SpecialLinearGroup.ext _ _ fun i j ↦ by
       simpa [← h_φ_def] using congr_fun (congr_fun h i) j
   rw [hEq, mul_inv_cancel]
   rfl
@@ -79,7 +79,7 @@ private lemma SL2_map_eq_one_of_mod_aux
     exact_mod_cast Nat.mul_div_cancel' hpN
   have hN_of_dvd : ∀ x : ℤ,
       ((p : ℕ) : ℤ) ∣ x → ((N / p : ℕ) : ℤ) ∣ x → (N : ℤ) ∣ x :=
-    fun _ h₁ h₂ => hpNp_eq ▸ hcop_int.mul_dvd h₁ h₂
+    fun _ h₁ h₂ ↦ hpNp_eq ▸ hcop_int.mul_dvd h₁ h₂
   ext i j
   simp only [Matrix.map_apply, Matrix.one_apply]
   have h_ij_p : ((δ : Matrix (Fin 2) (Fin 2) ℤ) i j : ZMod p) = if i = j then 1 else 0 := by

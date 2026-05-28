@@ -76,7 +76,7 @@ def dcRel (P : HeckePair G) (g h : P.Δ) : Prop :=
 /-- The setoid on `Δ` identifying elements with the same double coset. -/
 instance dcSetoid (P : HeckePair G) : Setoid P.Δ where
   r := dcRel P
-  iseqv := ⟨fun _ => rfl, Eq.symm, Eq.trans⟩
+  iseqv := ⟨fun _ ↦ rfl, Eq.symm, Eq.trans⟩
 
 /-- A Hecke double coset: an equivalence class of `Δ`-elements under `HgH = HhH`.
     This is the basis type for the Hecke ring. -/
@@ -91,7 +91,7 @@ def lcRel (P : HeckePair G) (g h : P.Δ) : Prop :=
 /-- The setoid on `Δ` identifying elements with the same left coset. -/
 instance lcSetoid (P : HeckePair G) : Setoid P.Δ where
   r := lcRel P
-  iseqv := ⟨fun _ => rfl, Eq.symm, Eq.trans⟩
+  iseqv := ⟨fun _ ↦ rfl, Eq.symm, Eq.trans⟩
 
 /-- A Hecke left coset: an equivalence class of `Δ`-elements under `gH = hH`. -/
 def HeckeLeftCoset (P : HeckePair G) := Quotient (lcSetoid P)
@@ -104,8 +104,8 @@ variable {P : HeckePair G}
 
 /-- The underlying set `HgH`, well-defined on the quotient. -/
 noncomputable def toSet (D : HeckeCoset P) : Set G :=
-  Quotient.lift (fun (g : P.Δ) => DoubleCoset.doubleCoset (g : G) P.H P.H)
-    (fun a b (h : @Setoid.r _ (dcSetoid P) a b) => h) D
+  Quotient.lift (fun (g : P.Δ) ↦ DoubleCoset.doubleCoset (g : G) P.H P.H)
+    (fun a b (h : @Setoid.r _ (dcSetoid P) a b) ↦ h) D
 
 /-- A representative `g : Δ` (via `Quotient.out`). -/
 noncomputable def rep (D : HeckeCoset P) : P.Δ := Quotient.out D
@@ -131,12 +131,12 @@ lemma mem_toSet_mk (g : P.Δ) (x : G) :
 /-- If two `HeckeCoset`s have the same `toSet`, they are equal. -/
 lemma ext_toSet {D₁ D₂ : HeckeCoset P} (h : HeckeCoset.toSet D₁ = HeckeCoset.toSet D₂) :
     D₁ = D₂ := by
-  exact Quotient.ind₂ (fun g₁ g₂ => by intro h; exact Quotient.sound h) D₁ D₂ h
+  exact Quotient.ind₂ (fun g₁ g₂ ↦ by intro h; exact Quotient.sound h) D₁ D₂ h
 
 /-- The carrier set equals the double coset of the representative. -/
 lemma toSet_eq_rep (D : HeckeCoset P) :
     HeckeCoset.toSet D = DoubleCoset.doubleCoset (HeckeCoset.rep D : G) P.H P.H := by
-  refine Quotient.inductionOn D fun g => ?_
+  refine Quotient.inductionOn D fun g ↦ ?_
   simp only [toSet_mk]
   have h := Quotient.out_eq (⟦g⟧ : HeckeCoset P)
   exact (Quotient.exact h).symm
@@ -197,8 +197,8 @@ variable {P : HeckePair G}
 
 /-- The underlying set `gH`, well-defined on the quotient. -/
 noncomputable def toSet (D : HeckeLeftCoset P) : Set G :=
-  Quotient.lift (fun (g : P.Δ) => ({(g : G)} : Set G) * (P.H : Set G))
-    (fun _ _ (h : lcRel P _ _) => h) D
+  Quotient.lift (fun (g : P.Δ) ↦ ({(g : G)} : Set G) * (P.H : Set G))
+    (fun _ _ (h : lcRel P _ _) ↦ h) D
 
 /-- A representative `g : Δ`. -/
 noncomputable def rep (D : HeckeLeftCoset P) : P.Δ := Quotient.out D
@@ -345,7 +345,7 @@ lemma doubleCoset_mul_eq_iUnion_doubleCoset (g h : G) :
   rw [doubleCoset_mul_doubleCoset_right, DoubleCoset.doubleCoset_eq_iUnion_leftCosets,
     Set.mul_iUnion]
   simp_rw [DoubleCoset.doubleCoset]
-  apply Set.iUnion_congr fun i => by
+  apply Set.iUnion_congr fun i ↦ by
     rw [smul_eq_singleton_mul,
       show (H : Set G) * {g} * ({↑(Quotient.out i) * h} * ↑H) =
         H * {g} * {↑(Quotient.out i) * h} * ↑H by simp_rw [← mul_assoc],

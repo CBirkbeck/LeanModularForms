@@ -131,7 +131,7 @@ theorem Newform.hasFrickeSlashCuspFormPreservesCuspFormsOld_iff_on_generators
     exact h_pres f (Submodule.subset_span h_gen)
   · intro h_gen f hf
     refine Submodule.span_induction
-      (p := fun (x : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) _ =>
+      (p := fun (x : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) _ ↦
         Newform.frickeSlashCuspForm x ∈ cuspFormsOld N k)
       ?_ ?_ ?_ ?_ hf
     · intro f₀ h_f₀_gen
@@ -166,7 +166,7 @@ theorem Newform.frickeSlashCuspForm_preserves_cuspFormsOldExtended_iff_on_genera
     exact h_pres f (Submodule.subset_span h_gen)
   · intro h_gen g hg
     refine Submodule.span_induction
-      (p := fun (x : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) _ =>
+      (p := fun (x : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) _ ↦
         Newform.frickeSlashCuspForm x ∈ cuspFormsOldExtended N k)
       ?_ ?_ ?_ ?_ hg
     · intro f₀ h_f₀_gen
@@ -347,15 +347,15 @@ theorem Newform.frickeSlashCuspForm_preserves_cuspFormsOldExtended
     (hg : g ∈ cuspFormsOldExtended N k) :
     Newform.frickeSlashCuspForm g ∈ cuspFormsOldExtended N k :=
   Newform.frickeSlashCuspForm_preserves_cuspFormsOldExtended_iff_on_generators.mpr
-    (fun f h_or => h_or.elim
-      (fun h_lr_gen => by
+    (fun f h_or ↦ h_or.elim
+      (fun h_lr_gen ↦ by
         obtain ⟨M, d, hM_NeZero, hd_NeZero, hd_lt, heq, g₀, h_eq⟩ := h_lr_gen
         haveI := hM_NeZero
         haveI := hd_NeZero
         rw [← h_eq]
         exact Newform.frickeSlashCuspForm_levelRaise_mem_cuspFormsOldExtended
           hd_lt heq g₀)
-      (fun h_inc_gen => by
+      (fun h_inc_gen ↦ by
         obtain ⟨M, hM_NeZero, hMN, hMltN, g₀, h_eq⟩ := h_inc_gen
         haveI := hM_NeZero
         rw [← h_eq]
@@ -373,7 +373,7 @@ def Newform.HasFrickeSlashCuspFormPreservesCuspFormsOldExtended
 theorem Newform.hasFrickeSlashCuspFormPreservesCuspFormsOldExtended
     (N : ℕ) [NeZero N] (k : ℤ) :
     Newform.HasFrickeSlashCuspFormPreservesCuspFormsOldExtended N k :=
-  fun g hg => Newform.frickeSlashCuspForm_preserves_cuspFormsOldExtended g hg
+  fun g hg ↦ Newform.frickeSlashCuspForm_preserves_cuspFormsOldExtended g hg
 
 /-- For the bad-prime case `p ∣ N`, the Hecke operator `heckeT_n_cusp k p`
 preserves `cuspFormsOld N k`. Stated as a named Prop for downstream discharge. -/
@@ -436,7 +436,7 @@ lemma Newform.hasBadPrimeFrickePetNAdjoint_iff
         Newform.frickeSquareScalar N k * petN (heckeT_n_cusp k p f) g =
           petN f (Newform.frickeBadAdjointCandidate k p g) := by
   unfold Newform.HasBadPrimeFrickePetNAdjoint
-  refine ⟨fun h f g => ?_, fun h f g => ?_⟩
+  refine ⟨fun h f g ↦ ?_, fun h f g ↦ ?_⟩
   · rw [h f g, Newform.frickeBadAdjointCandidateNormalized_apply,
       petN_smul_right]
     field_simp
@@ -493,9 +493,9 @@ theorem Newform.heckeT_n_cusp_preserves_cuspFormsNew_at_divN_of_classicalInputs
     heckeT_n_cusp k p f ∈ cuspFormsNew N k :=
   Newform.heckeT_n_cusp_preserves_cuspFormsNew_at_divN_of_normalized_fricke_adjoint
     hp hpN h_adj
-    (fun g hg =>
+    (fun g hg ↦
       Newform.frickeBadAdjointCandidateNormalized_preserves_cuspFormsOld
-        (fun g' hg' =>
+        (fun g' hg' ↦
           Newform.frickeBadAdjointCandidate_preserves_cuspFormsOld
             (hp := hp) (hpN := hpN) h_fricke_old h_T_p_old g' hg')
         g hg)
@@ -551,7 +551,7 @@ theorem Newform.HasHeckeT_n_cusp_at_divN_PreservesCuspFormsOldExtended_proof
     Newform.HasHeckeT_n_cusp_at_divN_PreservesCuspFormsOldExtended N k p hp hpN := by
   intro f hf
   refine Submodule.span_induction
-    (p := fun x _ => heckeT_n_cusp k p x ∈ cuspFormsOldExtended N k)
+    (p := fun x _ ↦ heckeT_n_cusp k p x ∈ cuspFormsOldExtended N k)
     ?_ ?_ ?_ ?_ hf
   · rintro f₀ (⟨M, d, _, _, hd, heq, g, rfl⟩ | ⟨M, _, hMN, hMltN, g, rfl⟩)
     · by_cases hpd : p ∣ d
@@ -606,7 +606,7 @@ theorem Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended
     Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended N k p hp hpN := by
   intro M _ hMN hMltN g
   by_cases hpM : p ∣ M
-  · have hpcop_M : ¬ Nat.Coprime p M := fun h => hp.coprime_iff_not_dvd.mp h hpM
+  · have hpcop_M : ¬ Nat.Coprime p M := fun h ↦ hp.coprime_iff_not_dvd.mp h hpM
     have h_eq : heckeT_n_cusp k p (levelInclude_cusp hMN k g) =
         levelInclude_cusp hMN k (heckeT_n_cusp k p g) := by
       apply CuspForm.ext; intro z
@@ -620,7 +620,7 @@ theorem Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended
     have hpM_dvd : p * M ∣ N := hpcop_M.mul_dvd_of_dvd_of_dvd hp_dvd_N hMN
     by_cases hpM_lt : p * M < N
     · haveI : NeZero (p * M) := ⟨Nat.mul_ne_zero hp.ne_zero (NeZero.ne M)⟩
-      have hpcop_pM : ¬ Nat.Coprime p (p * M) := fun h =>
+      have hpcop_pM : ¬ Nat.Coprime p (p * M) := fun h ↦
         hp.coprime_iff_not_dvd.mp h ⟨M, rfl⟩
       have h_eq : heckeT_n_cusp k p (levelInclude_cusp hMN k g) =
           levelInclude_cusp hpM_dvd k
@@ -686,7 +686,7 @@ private lemma heckeT_n_cusp_levelInclude_cusp_eq_sub_smul_levelRaise_diamond
         (p : ℂ) ^ (k - 1) •
           levelRaise M p k (diamondOp_cusp k (ZMod.unitOfCoprime p hpcop_M) g) := by
   haveI : NeZero (p * M) := ⟨Nat.mul_ne_zero hp.ne_zero (NeZero.ne M)⟩
-  have hpN : ¬ Nat.Coprime p (p * M) := fun h => hp.coprime_iff_not_dvd.mp h ⟨M, rfl⟩
+  have hpN : ¬ Nat.Coprime p (p * M) := fun h ↦ hp.coprime_iff_not_dvd.mp h ⟨M, rfl⟩
   set a : (ZMod M)ˣ := ZMod.unitOfCoprime p hpcop_M with ha_def
   set LR_p_D : CuspForm ((Gamma1 (p * M)).map (mapGL ℝ)) k :=
     levelRaise M p k (diamondOp_cusp k a g) with hLR_def
@@ -801,9 +801,9 @@ theorem Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_classica
     heckeT_n_cusp k p f ∈ cuspFormsNewExtended N k :=
   Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_normalized_fricke_adjoint
     hp hpN h_adj
-    (fun g hg =>
+    (fun g hg ↦
       Newform.frickeBadAdjointCandidateNormalized_preserves_cuspFormsOldExtended
-        (fun g' hg' =>
+        (fun g' hg' ↦
           Newform.frickeBadAdjointCandidate_preserves_cuspFormsOldExtended
             (hp := hp) (hpN := hpN) h_fricke_old h_T_p_old g' hg')
         g hg)
@@ -843,7 +843,7 @@ oldspace implies orthogonality to the (smaller) classical oldspace. -/
 lemma IsInNewSubspaceExtended.isInNewSubspace
     {f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k} (h : IsInNewSubspaceExtended f) :
     IsInNewSubspace f :=
-  fun g hg => h g (cuspFormsOld_le_cuspFormsOldExtended hg)
+  fun g hg ↦ h g (cuspFormsOld_le_cuspFormsOldExtended hg)
 
 /-- The intersection of `cuspFormsOldExtended` and `cuspFormsNewExtended` is
 trivial. Mirrors `cuspFormsOld_disjoint_cuspFormsNew`. -/
@@ -984,7 +984,7 @@ lemma Newform.frickeBadAdjointCandidateNormalized_preserves_cuspFormsOldExtended
     Newform.frickeBadAdjointCandidateNormalized k p g ∈
         cuspFormsOldExtended N k :=
   Newform.frickeBadAdjointCandidateNormalized_preserves_cuspFormsOldExtended
-    (fun g' hg' =>
+    (fun g' hg' ↦
       Newform.frickeBadAdjointCandidate_preserves_cuspFormsOldExtended_unconditional
         hp hpN g' hg')
     g hg
@@ -1132,14 +1132,14 @@ private lemma heckeT_n_cusp_mem_cuspFormsNewExtended_bad_only_step
   haveI : NeZero p := ⟨hpp.ne_zero⟩
   have h_mid : heckeT_n_cusp k (m / p ^ v) g ∈ cuspFormsNewExtended N k :=
     ih (m / p ^ v) (heckeT_n_unfold_lt m hm_gt) hdiv_pos
-      (fun q hq hqdiv =>
+      (fun q hq hqdiv ↦
         h_bad q hq (hqdiv.trans (Nat.div_dvd_of_dvd (Nat.ordProj_dvd m p))))
-      (fun q _ hq_prime hqdiv =>
+      (fun q _ hq_prime hqdiv ↦
         h_adj q hq_prime (hqdiv.trans (Nat.div_dvd_of_dvd (Nat.ordProj_dvd m p))))
       g hg
   rw [show heckeT_n_cusp k m g =
       heckeT_n_cusp k (p ^ v) (heckeT_n_cusp k (m / p ^ v) g) from
-    CuspForm.ext fun z => heckeT_n_cusp_unfold m hm_gt g z]
+    CuspForm.ext fun z ↦ heckeT_n_cusp_unfold m hm_gt g z]
   exact NewformExtended.heckeT_pp_cusp_mem_cuspFormsNewExtended_at_bad_of_T170
     hpp (h_bad p hpp (Nat.minFac_dvd m)) (h_adj p hpp (Nat.minFac_dvd m)) v _ h_mid
 
@@ -1171,7 +1171,7 @@ theorem NewformExtended.heckeT_n_cusp_mem_cuspFormsNewExtended_of_bad_only_T170
     by_cases hm1 : m = 1
     · subst hm1
       have h_eq : heckeT_n_cusp k 1 g = g :=
-        CuspForm.ext fun z => by rw [show (heckeT_n_cusp k 1 g) z =
+        CuspForm.ext fun z ↦ by rw [show (heckeT_n_cusp k 1 g) z =
           (heckeT_n k 1 g.toModularForm').toFun z from rfl, heckeT_n_one]; rfl
       rw [h_eq]; exact hg
     · exact heckeT_n_cusp_mem_cuspFormsNewExtended_bad_only_step m (by omega)

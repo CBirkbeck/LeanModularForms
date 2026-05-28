@@ -77,8 +77,8 @@ variable [NeZero n]
 noncomputable def GL_pair_antiInvolution : AntiInvolution (GL_pair n) where
   toFun := (GL_transposeEquiv n).toMonoidHom
   involutive := GL_transposeEquiv_involutive n
-  map_H := fun _g hg => GL_transpose_mem_SLnZ n hg
-  map_Δ := fun _g hg => GL_transpose_mem_posDetInt n hg
+  map_H := fun _g hg ↦ GL_transpose_mem_SLnZ n hg
+  map_Δ := fun _g hg ↦ GL_transpose_mem_posDetInt n hg
 
 /-- Transpose fixes every double coset of `GL_pair n`. -/
 lemma GL_pair_onHeckeCoset_eq (D : HeckeCoset (GL_pair n)) :

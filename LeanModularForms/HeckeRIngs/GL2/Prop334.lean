@@ -165,7 +165,7 @@ private lemma conj_matrix_entry_11_eq_intCast
   have h_mat_eq : ((mapGL ℚ h'S) : Matrix (Fin 2) (Fin 2) ℚ) =
       ((gG⁻¹ : Matrix _ _ ℚ) *
         (mapGL ℚ hS : Matrix _ _ ℚ) * (gG : Matrix _ _ ℚ)) := by
-    have h := congr_arg (fun X : GL (Fin 2) ℚ => (X : Matrix (Fin 2) (Fin 2) ℚ)) h'_conj
+    have h := congr_arg (fun X : GL (Fin 2) ℚ ↦ (X : Matrix (Fin 2) (Fin 2) ℚ)) h'_conj
     simpa [Matrix.GeneralLinearGroup.coe_mul] using h
   have h_entry := congr_fun (congr_fun h_mat_eq 1) 1
   rw [hA_rat, hAh_rat] at h_entry

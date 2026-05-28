@@ -61,7 +61,7 @@ def CuspForm_iso_CuspFormSubmodule (Γ : Subgroup SL(2, ℤ)) (k : ℤ) :
   rw [CuspForm_to_ModularForm] at hf
   simp only [ModForm_mk, LinearMap.coe_mk, AddHom.coe_mk] at hf
   ext z
-  have := congr_fun (congr_arg (fun x => x.toFun) hf) z
+  have := congr_fun (congr_arg (fun x ↦ x.toFun) hf) z
   simpa using this
 
 lemma mem_CuspFormSubmodule (Γ : Subgroup SL(2, ℤ)) (k : ℤ) (f : ModularForm Γ k)
@@ -138,7 +138,7 @@ private lemma isZeroAtImInfty_of_coeffZero {k : ℤ}
   rw [IsZeroAtImInfty, ZeroAtFilter]
   apply this.congr'
   rw [Filter.eventuallyEq_iff_exists_mem]
-  refine ⟨⊤, univ_mem, fun y _ => ?_⟩
+  refine ⟨⊤, univ_mem, fun y _ ↦ ?_⟩
   simp only [comp_apply]
   obtain ⟨m, hm⟩ := Function.Periodic.qParam_left_inv_mod_period (h := 1)
     (Ne.symm (zero_ne_one' ℝ)) y

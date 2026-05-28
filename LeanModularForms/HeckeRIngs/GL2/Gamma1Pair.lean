@@ -219,7 +219,7 @@ noncomputable def diamondOpAux (k : ℤ) (g : ↥(Gamma0 N)) :
       { toFun := ⇑f ∣[k] (mapGL ℝ (g : SL(2, ℤ)))
         slash_action_eq' _ hγ :=
           slash_mapGL_invariant_of_Gamma1_invariant g
-            (fun _ hδ => SlashInvariantFormClass.slash_action_eq f _ hδ) hγ }
+            (fun _ hδ ↦ SlashInvariantFormClass.slash_action_eq f _ hδ) hγ }
       holo' := (ModularFormClass.holo f).slash k _
       bdd_at_cusps' {c} hc _ hγ := by
         rw [← SlashAction.slash_mul, ← OnePoint.isBoundedAt_infty_iff,
@@ -287,7 +287,7 @@ theorem diamondOpAux_eq_of_Gamma0Map_eq (k : ℤ) (g₁ g₂ : ↥(Gamma0 N))
   ext f z
   show (⇑f ∣[k] mapGL ℝ (g₁ : SL(2, ℤ))) z = (⇑f ∣[k] mapGL ℝ (g₂ : SL(2, ℤ))) z
   rw [slash_eq_of_Gamma0Map_eq
-    (fun _ hγ => SlashInvariantFormClass.slash_action_eq f _ hγ) g₁ g₂ heq]
+    (fun _ hγ ↦ SlashInvariantFormClass.slash_action_eq f _ hγ) g₁ g₂ heq]
 
 /-! ### Public diamond operator indexed by `(ZMod N)ˣ` -/
 
@@ -360,7 +360,7 @@ private noncomputable def diamondOpCuspAux (k : ℤ) (g : ↥(Gamma0 N)) :
       { toFun := ⇑f ∣[k] (mapGL ℝ (g : SL(2, ℤ)))
         slash_action_eq' _ hγ :=
           slash_mapGL_invariant_of_Gamma1_invariant g
-            (fun _ hδ => SlashInvariantFormClass.slash_action_eq f _ hδ) hγ }
+            (fun _ hδ ↦ SlashInvariantFormClass.slash_action_eq f _ hδ) hγ }
       holo' := (CuspFormClass.holo f).slash k _
       zero_at_cusps' {c} hc _ hγ := by
         rw [← SlashAction.slash_mul, ← OnePoint.isZeroAt_infty_iff,
@@ -380,7 +380,7 @@ theorem diamondOpCuspAux_eq_of_Gamma0Map_eq (k : ℤ) (g₁ g₂ : ↥(Gamma0 N)
   ext f z
   show (⇑f ∣[k] mapGL ℝ (g₁ : SL(2, ℤ))) z = (⇑f ∣[k] mapGL ℝ (g₂ : SL(2, ℤ))) z
   rw [slash_eq_of_Gamma0Map_eq
-    (fun _ hγ => SlashInvariantFormClass.slash_action_eq f _ hγ) g₁ g₂ heq]
+    (fun _ hγ ↦ SlashInvariantFormClass.slash_action_eq f _ hγ) g₁ g₂ heq]
 
 /-- The cusp-form diamond operator indexed by `d : (ZMod N)ˣ`. -/
 noncomputable def diamondOpCusp [NeZero N] (k : ℤ) (d : (ZMod N)ˣ) :

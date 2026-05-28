@@ -19,9 +19,9 @@ open scoped ArithmeticFunction.sigma
 /- The eta function. We use mathlib's upstream definition. -/
 noncomputable abbrev η : ℂ → ℂ := ModularForm.eta
 
-lemma eta_logDeriv_eql (z : ℍ) : (logDeriv (η ∘ (fun z : ℂ => -1/z))) z =
+lemma eta_logDeriv_eql (z : ℍ) : (logDeriv (η ∘ (fun z : ℂ ↦ -1/z))) z =
   (logDeriv ((csqrt) * η)) z := by
-  have h0 : (logDeriv (η ∘ (fun z : ℂ => -1/z))) z =
+  have h0 : (logDeriv (η ∘ (fun z : ℂ ↦ -1/z))) z =
             ((z :ℂ)^(2 : ℤ))⁻¹ *
               (logDeriv η) (⟨-1 / z, by simpa using pnat_div_upper 1 z⟩ : ℍ) := by
     rw [logDeriv_comp, mul_comm]
@@ -45,7 +45,7 @@ lemma eta_logDeriv_eql (z : ℍ) : (logDeriv (η ∘ (fun z : ℂ => -1/z))) z =
     apply DifferentiableAt.inv
     · simp only [differentiableAt_fun_id]
     · exact ne_zero z
-  rw [h0, show ((csqrt) * η) = (fun x => (csqrt) x * η x) by rfl, logDeriv_mul]
+  rw [h0, show ((csqrt) * η) = (fun x ↦ (csqrt) x * η x) by rfl, logDeriv_mul]
   · nth_rw 2 [logDeriv_apply]
     unfold csqrt
     have := csqrt_deriv z
@@ -91,13 +91,13 @@ lemma eta_logDeriv_eql (z : ℍ) : (logDeriv (η ∘ (fun z : ℂ => -1/z))) z =
   · simpa [η] using
       (ModularForm.differentiableAt_eta_of_mem_upperHalfPlaneSet (z := (z : ℂ)) z.2)
 
-lemma eta_logderivs : {z : ℂ | 0 < z.im}.EqOn (logDeriv (η ∘ (fun z : ℂ => -1/z)))
+lemma eta_logderivs : {z : ℂ | 0 < z.im}.EqOn (logDeriv (η ∘ (fun z : ℂ ↦ -1/z)))
   (logDeriv ((csqrt) * η)) := by
   intro z hz
   have := eta_logDeriv_eql ⟨z, hz⟩
   exact this
 
-lemma eta_logderivs_const : ∃ z : ℂ, z ≠ 0 ∧ {z : ℂ | 0 < z.im}.EqOn ((η ∘ (fun z : ℂ => -1/z)))
+lemma eta_logderivs_const : ∃ z : ℂ, z ≠ 0 ∧ {z : ℂ | 0 < z.im}.EqOn ((η ∘ (fun z : ℂ ↦ -1/z)))
   (z • ((csqrt) * η)) := by
   have h := eta_logderivs
   rw [logDeriv_eqOn_iff] at h
@@ -149,7 +149,7 @@ lemma eta_logderivs_const : ∃ z : ℂ, z ≠ 0 ∧ {z : ℂ | 0 < z.im}.EqOn (
       (by simpa using pnat_div_upper 1 ⟨x, hx⟩)
     simpa only [ne_eq] using this
 
-lemma eta_equality : {z : ℂ | 0 < z.im}.EqOn ((η ∘ (fun z : ℂ => -1/z)))
+lemma eta_equality : {z : ℂ | 0 < z.im}.EqOn ((η ∘ (fun z : ℂ ↦ -1/z)))
    ((csqrt (Complex.I))⁻¹ • ((csqrt) * η)) := by
   have h := eta_logderivs_const
   obtain ⟨z, hz, h⟩ := h

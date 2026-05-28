@@ -32,16 +32,16 @@ lemma DiscriminantProductFormula (z : ℍ) : Δ z = cexp (2 * π * Complex.I * z
       enter [1,1]
       ext n
       rw [show (n : ℂ) + 1 = ((n + 1) : ℕ) by simp]
-    have := tprod_pnat_eq_tprod_succ (f := (fun n => (1 - cexp (2 * π * Complex.I * (n) * z)) ^ 24))
+    have := tprod_pnat_eq_tprod_succ (f := (fun n ↦ (1 - cexp (2 * π * Complex.I * (n) * z)) ^ 24))
     rw [this]
 
 
 lemma Delta_eq_eta_pow (z : ℍ) : Δ z = (η z) ^ 24 := by
-  have hm : Multipliable (fun n : ℕ => 1 - ModularForm.eta_q n z) := by
+  have hm : Multipliable (fun n : ℕ ↦ 1 - ModularForm.eta_q n z) := by
     refine (MultipliableEtaProductExpansion z).congr ?_
     intro n
     simp [ModularForm.eta_q_eq_cexp]
-  rw [η, ModularForm.eta, Δ, mul_pow, tprod_pow (f := fun n : ℕ => 1 - ModularForm.eta_q n z)
+  rw [η, ModularForm.eta, Δ, mul_pow, tprod_pow (f := fun n : ℕ ↦ 1 - ModularForm.eta_q n z)
     hm 24]
   congr
   · rw [Periodic.qParam]
@@ -181,7 +181,7 @@ theorem log_one_neg_cexp_tendto_zero (k : ℕ) :
   Tendsto (fun x : ℍ ↦ Complex.log ((1 - cexp (2 * ↑π * Complex.I * (↑k + 1) * ↑x)) ^ 24))
     atImInfty (𝓝 0) := by
   have : (fun x : ℍ ↦ Complex.log ((1 - cexp (2 * ↑π * Complex.I * (↑k + 1) * ↑x)) ^ 24)) =
-      (Complex.log) ∘ ((fun x => x ^ 24) ∘ (fun x : ℍ ↦ ((1 - cexp (2 * π * Complex.I *
+      (Complex.log) ∘ ((fun x ↦ x ^ 24) ∘ (fun x : ℍ ↦ ((1 - cexp (2 * π * Complex.I *
       (k + 1) * x))))) := by
     ext x
     simp
@@ -203,8 +203,8 @@ theorem log_one_neg_cexp_tendto_zero (k : ℕ) :
 variable {α ι : Type*}
 
 lemma Complex.cexp_tsum_eq_tprod_func (f : ι → α → ℂ) (hfn : ∀ x n, f n x ≠ 0)
-    (hf : ∀ x : α, Summable fun n => log (f n x)) :
-    (cexp ∘ (fun a : α => (∑' n : ι, log (f n a)))) = fun a : α => ∏' n : ι, f n a := by
+    (hf : ∀ x : α, Summable fun n ↦ log (f n x)) :
+    (cexp ∘ (fun a : α ↦ (∑' n : ι, log (f n a)))) = fun a : α ↦ ∏' n : ι, f n a := by
   ext a
   apply (HasProd.tprod_eq ?_).symm
   apply ((hf a).hasSum.cexp).congr
@@ -215,24 +215,24 @@ lemma Complex.cexp_tsum_eq_tprod_func (f : ι → α → ℂ) (hfn : ∀ x n, f 
 theorem Delta_boundedfactor :
   Tendsto (fun x : ℍ ↦ ∏' (n : ℕ), (1 - cexp (2 * ↑π * Complex.I * (↑n + 1) * ↑x)) ^ 24) atImInfty
     (𝓝 1) := by
-  have := Complex.cexp_tsum_eq_tprod_func (fun n : ℕ => fun x : ℍ => (1 - (cexp (2 * ↑π * Complex.I
+  have := Complex.cexp_tsum_eq_tprod_func (fun n : ℕ ↦ fun x : ℍ ↦ (1 - (cexp (2 * ↑π * Complex.I
     * (↑n + 1) * ↑x))) ^ 24 ) ?_ ?_
   conv =>
     enter [1]
     rw [← this]
   · apply Tendsto.comp (y := (𝓝 0))
     · exact Complex.continuous_exp.tendsto' 0 1 Complex.exp_zero
-    have := tendsto_tsum_of_dominated_convergence (𝓕 := atImInfty) (g := fun (x : ℕ) => (0 : ℂ))
-        (f := (fun x : ℍ ↦ fun (n : ℕ) => Complex.log ((1 - cexp (2 * ↑π * Complex.I * (↑n + 1) *
+    have := tendsto_tsum_of_dominated_convergence (𝓕 := atImInfty) (g := fun (x : ℕ) ↦ (0 : ℂ))
+        (f := (fun x : ℍ ↦ fun (n : ℕ) ↦ Complex.log ((1 - cexp (2 * ↑π * Complex.I * (↑n + 1) *
           (x : ℂ))) ^ 24)))
-        (bound := fun k => ‖(24 *((3/2)* cexp (2 * ↑π * Complex.I * (↑k + 1) * Complex.I)))‖)
+        (bound := fun k ↦ ‖(24 *((3/2)* cexp (2 * ↑π * Complex.I * (↑k + 1) * Complex.I)))‖)
     simp at this
     apply this
     · apply Summable.mul_left
       apply Summable.mul_left
       simpa using (summable_exp_pow UpperHalfPlane.I)
     · apply log_one_neg_cexp_tendto_zero
-    · have := fun k => (tendsto_neg_cexp_atImInfty k)
+    · have := fun k ↦ (tendsto_neg_cexp_atImInfty k)
       have h0 := this 0
       have h1 := clog_pow2 24 _ h0
       simp only [CharP.cast_eq_zero, zero_add, mul_one, Nat.cast_ofNat] at h1
@@ -275,7 +275,7 @@ theorem Delta_boundedfactor :
     apply term_ne_zero
   · intro x
     simp only
-    have := log_summable_pow (fun n => -cexp (2 * ↑π * Complex.I * (↑n + 1) * x)) ?_ 24
+    have := log_summable_pow (fun n ↦ -cexp (2 * ↑π * Complex.I * (↑n + 1) * x)) ?_ 24
     · apply this.congr
       intro b
       rw [sub_eq_add_neg]
@@ -312,7 +312,7 @@ def Delta : CuspForm (CongruenceSubgroup.Gamma 1) 12 where
   holo' := by
     rw [mdifferentiable_iff]
     simp only [SlashInvariantForm.coe_mk]
-    have he2 : DifferentiableOn ℂ (fun z => (η z) ^ 24) {z | 0 < z.im} := by
+    have he2 : DifferentiableOn ℂ (fun z ↦ (η z) ^ 24) {z | 0 < z.im} := by
       apply DifferentiableOn.pow
       intro x hx
       apply DifferentiableAt.differentiableWithinAt
@@ -329,7 +329,7 @@ def Delta : CuspForm (CongruenceSubgroup.Gamma 1) 12 where
 
 lemma Delta_apply (z : ℍ) : Delta z = Δ z := by rfl
 
-lemma Delta_isTheta_rexp : Delta =Θ[atImInfty] (fun τ => Real.exp (-2 * π * τ.im)) := by
+lemma Delta_isTheta_rexp : Delta =Θ[atImInfty] (fun τ ↦ Real.exp (-2 * π * τ.im)) := by
   rw [Asymptotics.IsTheta]
   refine ⟨by simpa using CuspFormClass.exp_decay_atImInfty (h := 1) Delta, ?_⟩
   rw [Asymptotics.isBigO_iff']
@@ -494,9 +494,9 @@ lemma Complex.im_finset_prod_eq_zero_of_im_eq_zero {ι : Type*} (s : Finset ι)
     (f : ι → ℂ) (h : ∀ i ∈ s, (f i).im = 0) :
     (∏ i ∈ s, f i).im = 0 := by
   classical
-  revert h; refine Finset.induction_on s (fun _ => by simp) ?_; intro a s ha ih h
+  revert h; refine Finset.induction_on s (fun _ ↦ by simp) ?_; intro a s ha ih h
   simp [Finset.prod_insert, ha, Complex.mul_im, h a (by simp),
-    ih (fun i hi => h i (by simp [hi]))]
+    ih (fun i hi ↦ h i (by simp [hi]))]
 
 lemma Complex.im_pow_eq_zero_of_im_eq_zero {z : ℂ} (hz : z.im = 0) (m : ℕ) :
     (z ^ m).im = 0 := by
@@ -508,25 +508,25 @@ lemma Complex.im_tprod_eq_zero_of_im_eq_zero (f : ℕ → ℂ)
     (hf : Multipliable f) (him : ∀ n, (f n).im = 0) :
     (∏' n : ℕ, f n).im = 0 := by
   classical
-  have hz : ∀ n, (∏ i ∈ Finset.range n, f i).im = 0 := fun n =>
+  have hz : ∀ n, (∏ i ∈ Finset.range n, f i).im = 0 := fun n ↦
     Complex.im_finset_prod_eq_zero_of_im_eq_zero (s := Finset.range n) (f := f)
       (by intro i _; simpa using him i)
   have h1 := ((Complex.continuous_im.tendsto _).comp hf.hasProd.tendsto_prod_nat)
-  have h2 : Tendsto (fun n => (∏ i ∈ Finset.range n, f i).im) atTop (𝓝 (0 : ℝ)) := by simp [hz]
+  have h2 : Tendsto (fun n ↦ (∏ i ∈ Finset.range n, f i).im) atTop (𝓝 (0 : ℝ)) := by simp [hz]
   exact tendsto_nhds_unique h1 h2
 
 /- Δ(it) is real on the (positive) imaginary axis. -/
 lemma Delta_imag_axis_real : ResToImagAxis.Real Δ := by
   intro t ht
   simp [ResToImagAxis, ht, Δ]
-  set g : ℕ → ℂ := fun n => (1 - cexp (2 * π * Complex.I * (n + 1) * (Complex.I * t))) ^ 24
+  set g : ℕ → ℂ := fun n ↦ (1 - cexp (2 * π * Complex.I * (n + 1) * (Complex.I * t))) ^ 24
   have hArg (n : ℕ) :
       2 * (π : ℂ) * Complex.I * (n + 1) * (Complex.I * t) = -(2 * (π : ℂ) * (n + 1) * t) := by
     calc
       2 * (π : ℂ) * Complex.I * (n + 1) * (Complex.I * t)
         = 2 * (π : ℂ) * (Complex.I * Complex.I) * (n + 1) * t := by ring
       _ = -(2 * (π : ℂ) * (n + 1) * t) := by simp
-  have him_g : ∀ n, (g n).im = 0 := fun n => by
+  have him_g : ∀ n, (g n).im = 0 := fun n ↦ by
     have : (cexp (-(2 * (π : ℂ) * ((n + 1) : ℂ) * t))).im = 0 := by
       simpa [mul_comm, mul_left_comm, mul_assoc] using (cexp_aux4 t n)
     have : ((1 - cexp (2 * (π : ℂ) * Complex.I * (n + 1) * (Complex.I * t))) : ℂ).im = 0 := by
@@ -548,7 +548,7 @@ lemma re_ResToImagAxis_Delta_eq_real_prod (t : ℝ) (ht : 0 < t) :
   (Δ.resToImagAxis t).re =
     Real.exp (-2 * π * t) *
       ∏' (n : ℕ), (1 - Real.exp (-(2 * π * ((n + 1) : ℝ) * t))) ^ 24 := by
-  set fR : ℕ → ℝ := fun n => (1 - Real.exp (-(2 * π * ((n + 1) : ℝ) * t))) ^ 24
+  set fR : ℕ → ℝ := fun n ↦ (1 - Real.exp (-(2 * π * ((n + 1) : ℝ) * t))) ^ 24
   have hMap' :
       Complex.ofReal (∏' n : ℕ, fR n) = ∏' n : ℕ, ((fR n : ℝ) : ℂ) := by
     simpa using
@@ -563,23 +563,23 @@ lemma re_ResToImagAxis_Delta_eq_real_prod (t : ℝ) (ht : 0 < t) :
 lemma tprod_pos_nat_im (z : ℍ) :
   0 < ∏' (n : ℕ), (1 - Real.exp (-(2 * π * ((n + 1) : ℝ) * z.im))) ^ 24 := by
   have hpos_pow : ∀ n : ℕ, 0 < (1 - Real.exp (-(2 * π * ((n + 1) : ℝ) * z.im))) ^ 24 :=
-    fun n =>
+    fun n ↦
       pow_pos (by simpa [mul_comm, mul_left_comm, mul_assoc] using cexp_aux3 (t := z.im) n z.2) _
   have hsum_log :
-      Summable (fun n : ℕ =>
+      Summable (fun n : ℕ ↦
         Real.log ((1 - Real.exp (-(2 * π * ((n + 1) : ℝ) * z.im))) ^ 24)) := by
     simp only [Real.log_pow, Nat.cast_ofNat, ← smul_eq_mul]
     apply Summable.const_smul
     simp [sub_eq_add_neg]
     apply Real.summable_log_one_add_of_summable
     apply Summable.neg
-    have h0 : Summable (fun n : ℕ => Real.exp (n * (-(2 * π * z.im)))) :=
+    have h0 : Summable (fun n : ℕ ↦ Real.exp (n * (-(2 * π * z.im)))) :=
       (Real.summable_exp_nat_mul_iff.mpr
         (by simpa using (neg_lt_zero.mpr (by positivity : 0 < 2 * π * z.im))))
     simpa [Nat.cast_add, Nat.cast_one, mul_comm, mul_left_comm, mul_assoc] using
       ((summable_nat_add_iff 1).2 h0)
   rw [← Real.rexp_tsum_eq_tprod
-        (f := fun n : ℕ =>
+        (f := fun n : ℕ ↦
           (1 - Real.exp (-(2 * π * ((n + 1) : ℝ) * z.im))) ^ 24)
         hpos_pow hsum_log]
   exact Real.exp_pos _

@@ -299,7 +299,7 @@ A bridge from the standard cusp-form decay statement
 theorem hasImAxisExponentialDecay_of_atImInfty_decay [ModularFormClass F Γ k]
     (f : F) {c : ℝ} (hc : 0 < c)
     (hf : (⇑f : ℍ → ℂ) =O[UpperHalfPlane.atImInfty]
-      fun τ : ℍ => Real.exp (-c * τ.im)) :
+      fun τ : ℍ ↦ Real.exp (-c * τ.im)) :
     HasImAxisExponentialDecay f := by
   refine ⟨c, hc, ?_⟩
   refine (Asymptotics.IsBigO.congr'
@@ -474,11 +474,11 @@ on `Re s > 0`. -/
 theorem tsum_mellin_qParam_pow_imAxis_eq_LSeries
     {h : ℝ} (hh : 0 < h) (a : ℕ → ℂ) (h_a0 : a 0 = 0)
     {s : ℂ} (hs : 0 < s.re) :
-    ∑' m : ℕ, a m * mellin (fun t : ℝ =>
+    ∑' m : ℕ, a m * mellin (fun t : ℝ ↦
         Function.Periodic.qParam h (Complex.I * (t : ℂ)) ^ m) s =
       ((2 * Real.pi / h : ℝ) : ℂ) ^ (-s) * Complex.Gamma s * LSeries a s := by
   have h_each : ∀ m : ℕ,
-      a m * mellin (fun t : ℝ =>
+      a m * mellin (fun t : ℝ ↦
           Function.Periodic.qParam h (Complex.I * (t : ℂ)) ^ m) s =
         (((2 * Real.pi / h : ℝ) : ℂ) ^ (-s) * Complex.Gamma s) * LSeries.term a s m := by
     intro m
@@ -531,15 +531,15 @@ Specialisation of `mellin_eq_completedLSeries_of_qExpansion_swap_hypotheses` to
 theorem mellin_eq_completedLSeries_of_qExpansion_swap_hypotheses_one
     {g : ℝ → ℂ} {a : ℕ → ℂ} (h_a0 : a 0 = 0) {s : ℂ} (hs : 0 < s.re)
     (h_decomp : ∀ᵐ (t : ℝ) ∂(MeasureTheory.volume.restrict (Set.Ioi (0 : ℝ))),
-      HasSum (fun m : ℕ =>
+      HasSum (fun m : ℕ ↦
         a m * Function.Periodic.qParam 1 (Complex.I * (t : ℂ)) ^ m) (g t))
     (h_meas : ∀ m, MeasureTheory.AEStronglyMeasurable
-      (fun t : ℝ => (t : ℂ) ^ (s - 1) •
+      (fun t : ℝ ↦ (t : ℂ) ^ (s - 1) •
         (a m * Function.Periodic.qParam 1 (Complex.I * (t : ℂ)) ^ m))
       (MeasureTheory.volume.restrict (Set.Ioi (0 : ℝ))))
     (h_summ : (∑' m : ℕ, MeasureTheory.lintegral
       (MeasureTheory.volume.restrict (Set.Ioi (0 : ℝ)))
-      (fun t : ℝ => ‖(t : ℂ) ^ (s - 1) •
+      (fun t : ℝ ↦ ‖(t : ℂ) ^ (s - 1) •
         (a m * Function.Periodic.qParam 1 (Complex.I * (t : ℂ)) ^ m)‖ₑ)) ≠
         (⊤ : ENNReal)) :
     mellin g s =
@@ -637,7 +637,7 @@ theorem hasSum_qExpansion_imAxis_Gamma1_mapGL_of_pos
     {N : ℕ} {k : ℤ} {F : Type*} [FunLike F ℍ ℂ]
     [ModularFormClass F ((Gamma1 N).map (mapGL ℝ)) k] (f : F)
     {t : ℝ} (ht : 0 < t) :
-    HasSum (fun m : ℕ =>
+    HasSum (fun m : ℕ ↦
       lCoeff f m * Function.Periodic.qParam 1 (Complex.I * (t : ℂ)) ^ m)
       (imAxis f t) := by
   have h_im : 0 < (Complex.I * ((t : ℝ) : ℂ)).im := by
@@ -887,7 +887,7 @@ theorem hasCompletedMellinIdentity_of_tail_summable_Gamma1_mapGL
           ENNReal.ofReal (‖lCoeff f (n + 1)‖ * ((n : ℝ) + 1) ^ (-s.re))) ≠ ⊤) :
     HasCompletedMellinIdentity f :=
   hasCompletedMellinIdentity_of_qExpansion_summ_Gamma1_mapGL f hk_pos
-    (fun hs => h_summ_of_tail_summable_Gamma1_mapGL f hk_pos hs (h_tail hs))
+    (fun hs ↦ h_summ_of_tail_summable_Gamma1_mapGL f hk_pos hs (h_tail hs))
 
 open CongruenceSubgroup Matrix.SpecialLinearGroup in
 /-- **Coefficient-tail summability for `Γ₁(N)` cusp forms**: absolute summability
@@ -974,7 +974,7 @@ theorem hasCompletedMellinIdentity_Gamma1_mapGL
     (hk_pos : 0 < (k : ℝ)) :
     HasCompletedMellinIdentity f :=
   hasCompletedMellinIdentity_of_tail_summable_Gamma1_mapGL f hk_pos
-    (fun {_s} hs => ennreal_tsum_lCoeff_mul_rpow_ne_top_of_cuspForm_Gamma1_mapGL f hs)
+    (fun {_s} hs ↦ ennreal_tsum_lCoeff_mul_rpow_ne_top_of_cuspForm_Gamma1_mapGL f hs)
 
 end ModularForms
 
@@ -1159,9 +1159,9 @@ lemma coprimeStrip_mul_of_coprime (S : Finset Nat.Primes) (f : ℕ → ℂ)
     push Not at hmn_strip
     obtain ⟨p, hp, hp_dvd⟩ := hmn_strip
     rcases p.prop.dvd_mul.mp hp_dvd with h_dvd_m | h_dvd_n
-    · have hm_neg : ¬ ∀ p ∈ S, ¬ (p : ℕ) ∣ m := fun h => h p hp h_dvd_m
+    · have hm_neg : ¬ ∀ p ∈ S, ¬ (p : ℕ) ∣ m := fun h ↦ h p hp h_dvd_m
       rw [if_neg hm_neg, zero_mul]
-    · have hn_neg : ¬ ∀ p ∈ S, ¬ (p : ℕ) ∣ n := fun h => h p hp h_dvd_n
+    · have hn_neg : ¬ ∀ p ∈ S, ¬ (p : ℕ) ∣ n := fun h ↦ h p hp h_dvd_n
       rw [if_neg hn_neg, mul_zero]
 
 /-- **`coprimeStrip` value on a positive prime power at a prime in `S`**:
@@ -1198,7 +1198,7 @@ lemma coprimeStrip_eulerFactor_at_S
     intro e he
     rw [LSeries.term_def, if_neg (pow_pos p.prop.pos e).ne',
       coprimeStrip_prime_pow_at_S S f hp he, zero_div]
-  rw [tsum_eq_single 0 (fun e he_ne_zero =>
+  rw [tsum_eq_single 0 (fun e he_ne_zero ↦
     h_term_zero e (Nat.one_le_iff_ne_zero.mpr he_ne_zero))]
   show LSeries.term (coprimeStrip S f) s ((p : ℕ) ^ 0) = 1
   rw [pow_zero, LSeries.term_def, if_neg one_ne_zero]
@@ -1232,10 +1232,10 @@ theorem eulerStripping_bridge_via_eulerProduct
     {f : ℕ → ℂ} {s : ℂ} (S : Finset Nat.Primes)
     (hf₁ : f 1 = 1)
     (hf_euler : HasProd
-      (fun p : Nat.Primes => ∑' e : ℕ, LSeries.term f s ((p : ℕ) ^ e))
+      (fun p : Nat.Primes ↦ ∑' e : ℕ, LSeries.term f s ((p : ℕ) ^ e))
       (LSeries f s))
     (hg_euler : HasProd
-      (fun p : Nat.Primes => ∑' e : ℕ, LSeries.term (coprimeStrip S f) s
+      (fun p : Nat.Primes ↦ ∑' e : ℕ, LSeries.term (coprimeStrip S f) s
         ((p : ℕ) ^ e))
       (LSeries (coprimeStrip S f) s)) :
     LSeries f s = (∏ p ∈ S, ∑' e : ℕ, LSeries.term f s ((p : ℕ) ^ e)) *
@@ -1281,10 +1281,10 @@ theorem coprimeStrip_LSeries_eq_polynomial_mul_LSeries
     {f : ℕ → ℂ} {s : ℂ} (S : Finset Nat.Primes)
     (hf₁ : f 1 = 1)
     (hf_euler : HasProd
-      (fun p : Nat.Primes => ∑' e : ℕ, LSeries.term f s ((p : ℕ) ^ e))
+      (fun p : Nat.Primes ↦ ∑' e : ℕ, LSeries.term f s ((p : ℕ) ^ e))
       (LSeries f s))
     (hg_euler : HasProd
-      (fun p : Nat.Primes => ∑' e : ℕ, LSeries.term (coprimeStrip S f) s
+      (fun p : Nat.Primes ↦ ∑' e : ℕ, LSeries.term (coprimeStrip S f) s
         ((p : ℕ) ^ e))
       (LSeries (coprimeStrip S f) s))
     (poly : Nat.Primes → ℂ)

@@ -102,22 +102,22 @@ noncomputable def traceGamma1 {M N : ℕ} [NeZero M] (h : N ∣ M) (k : ℤ) :
     ModularForm ((Gamma1 N).map (mapGL ℝ)) k :=
   haveI : ((Gamma1 M).map (mapGL ℝ)).IsFiniteRelIndex ((Gamma1 N).map (mapGL ℝ)) :=
     Gamma1_mapGL_isFiniteRelIndex_of_dvd h
-  { toFun := fun f => ModularForm.trace ((Gamma1 N).map (mapGL ℝ)) f
-    map_add' := fun f g => by
-      refine DFunLike.ext _ _ fun τ => ?_
+  { toFun := fun f ↦ ModularForm.trace ((Gamma1 N).map (mapGL ℝ)) f
+    map_add' := fun f g ↦ by
+      refine DFunLike.ext _ _ fun τ ↦ ?_
       simp only [ModularForm.coe_add, ModularForm.coe_trace, Pi.add_apply,
         Finset.sum_apply, ← Finset.sum_add_distrib]
-      refine Finset.sum_congr rfl fun q _ => ?_
+      refine Finset.sum_congr rfl fun q _ ↦ ?_
       induction q using Quotient.inductionOn with
       | h r =>
         simp only [SlashInvariantForm.quotientFunc_mk, ModularForm.coe_add,
           SlashAction.add_slash, Pi.add_apply]
-    map_smul' := fun c f => by
-      refine DFunLike.ext _ _ fun τ => ?_
+    map_smul' := fun c f ↦ by
+      refine DFunLike.ext _ _ fun τ ↦ ?_
       simp only [RingHom.id_apply, ModularForm.coe_trace, ModularForm.IsGLPos.smul_apply,
         Finset.sum_apply]
       rw [Finset.smul_sum]
-      refine Finset.sum_congr rfl fun q _ => ?_
+      refine Finset.sum_congr rfl fun q _ ↦ ?_
       induction q using Quotient.inductionOn with
       | h r =>
         simp only [SlashInvariantForm.quotientFunc_mk, ModularForm.IsGLPos.coe_smul,
@@ -148,22 +148,22 @@ noncomputable def traceGamma1_cuspForm {M N : ℕ} [NeZero M] (h : N ∣ M) (k :
     CuspForm ((Gamma1 N).map (mapGL ℝ)) k :=
   haveI : ((Gamma1 M).map (mapGL ℝ)).IsFiniteRelIndex ((Gamma1 N).map (mapGL ℝ)) :=
     Gamma1_mapGL_isFiniteRelIndex_of_dvd h
-  { toFun := fun f => CuspForm.trace ((Gamma1 N).map (mapGL ℝ)) f
-    map_add' := fun f g => by
-      refine DFunLike.ext _ _ fun τ => ?_
+  { toFun := fun f ↦ CuspForm.trace ((Gamma1 N).map (mapGL ℝ)) f
+    map_add' := fun f g ↦ by
+      refine DFunLike.ext _ _ fun τ ↦ ?_
       simp only [CuspForm.coe_add, CuspForm.coe_trace, Pi.add_apply,
         Finset.sum_apply, ← Finset.sum_add_distrib]
-      refine Finset.sum_congr rfl fun q _ => ?_
+      refine Finset.sum_congr rfl fun q _ ↦ ?_
       induction q using Quotient.inductionOn with
       | h r =>
         simp only [SlashInvariantForm.quotientFunc_mk, CuspForm.coe_add,
           SlashAction.add_slash, Pi.add_apply]
-    map_smul' := fun c f => by
-      refine DFunLike.ext _ _ fun τ => ?_
+    map_smul' := fun c f ↦ by
+      refine DFunLike.ext _ _ fun τ ↦ ?_
       simp only [RingHom.id_apply, CuspForm.coe_trace, CuspForm.IsGLPos.smul_apply,
         Finset.sum_apply]
       rw [Finset.smul_sum]
-      refine Finset.sum_congr rfl fun q _ => ?_
+      refine Finset.sum_congr rfl fun q _ ↦ ?_
       induction q using Quotient.inductionOn with
       | h r =>
         simp only [SlashInvariantForm.quotientFunc_mk, CuspForm.IsGLPos.coe_smul,
@@ -207,8 +207,8 @@ lemma isInftyFixingCoset_iff_smul_eq
     IsInftyFixingCoset q ↔
       ∃ h : ℋ, (⟦h⟧ : ℋ ⧸ (𝒢.subgroupOf ℋ)) = q ∧
         (h.val : GL (Fin 2) ℝ) • (∞ : OnePoint ℝ) = ∞ :=
-  ⟨fun ⟨h, hq, h10⟩ => ⟨h, hq, OnePoint.smul_infty_eq_self_iff.mpr h10⟩,
-   fun ⟨h, hq, hsmul⟩ => ⟨h, hq, OnePoint.smul_infty_eq_self_iff.mp hsmul⟩⟩
+  ⟨fun ⟨h, hq, h10⟩ ↦ ⟨h, hq, OnePoint.smul_infty_eq_self_iff.mpr h10⟩,
+   fun ⟨h, hq, hsmul⟩ ↦ ⟨h, hq, OnePoint.smul_infty_eq_self_iff.mp hsmul⟩⟩
 
 /-- The identity coset is infinity-fixing: the identity matrix has
 `(1 : GL(2,ℝ)) 1 0 = 0`, so `1 ∈ ℋ` witnesses the existential. -/
@@ -266,7 +266,7 @@ theorem traceGamma1_apply_split_inftyFixing
             (ℋ := (Gamma1 N).map (mapGL ℝ))),
           SlashInvariantForm.quotientFunc f q τ) +
       (∑ q ∈ (@Finset.univ _ hFin).filter
-          (fun q => ¬ IsInftyFixingCoset
+          (fun q ↦ ¬ IsInftyFixingCoset
             (𝒢 := (Gamma1 M).map (mapGL ℝ))
             (ℋ := (Gamma1 N).map (mapGL ℝ)) q),
           SlashInvariantForm.quotientFunc f q τ) := by
@@ -296,7 +296,7 @@ theorem traceGamma1_cuspForm_apply_split_inftyFixing
             (ℋ := (Gamma1 N).map (mapGL ℝ))),
           SlashInvariantForm.quotientFunc f q τ) +
       (∑ q ∈ (@Finset.univ _ hFin).filter
-          (fun q => ¬ IsInftyFixingCoset
+          (fun q ↦ ¬ IsInftyFixingCoset
             (𝒢 := (Gamma1 M).map (mapGL ℝ))
             (ℋ := (Gamma1 N).map (mapGL ℝ)) q),
           SlashInvariantForm.quotientFunc f q τ) := by
@@ -366,7 +366,7 @@ theorem traceGamma1_apply_three_way_split
             (⟦(1 : ↥((Gamma1 N).map (mapGL ℝ)))⟧),
           SlashInvariantForm.quotientFunc f q τ) +
       (∑ q ∈ (@Finset.univ _ hFin).filter
-          (fun q => ¬ IsInftyFixingCoset
+          (fun q ↦ ¬ IsInftyFixingCoset
             (𝒢 := (Gamma1 M).map (mapGL ℝ))
             (ℋ := (Gamma1 N).map (mapGL ℝ)) q),
           SlashInvariantForm.quotientFunc f q τ) := by
@@ -391,7 +391,7 @@ theorem traceGamma1_apply_three_way_split
           (Fintype.ofFinite ((Gamma1 N).map (mapGL ℝ) ⧸
             ((Gamma1 M).map (mapGL ℝ)).subgroupOf ((Gamma1 N).map (mapGL ℝ)))) _,
         isInftyFixingCoset_one⟩
-  exact (Finset.add_sum_erase _ (fun q => SlashInvariantForm.quotientFunc f q τ) hmem).symm
+  exact (Finset.add_sum_erase _ (fun q ↦ SlashInvariantForm.quotientFunc f q τ) hmem).symm
 
 open scoped Classical in
 /-- `CuspForm` analogue of `traceGamma1_apply_three_way_split`. -/
@@ -412,7 +412,7 @@ theorem traceGamma1_cuspForm_apply_three_way_split
             (⟦(1 : ↥((Gamma1 N).map (mapGL ℝ)))⟧),
           SlashInvariantForm.quotientFunc f q τ) +
       (∑ q ∈ (@Finset.univ _ hFin).filter
-          (fun q => ¬ IsInftyFixingCoset
+          (fun q ↦ ¬ IsInftyFixingCoset
             (𝒢 := (Gamma1 M).map (mapGL ℝ))
             (ℋ := (Gamma1 N).map (mapGL ℝ)) q),
           SlashInvariantForm.quotientFunc f q τ) := by
@@ -437,7 +437,7 @@ theorem traceGamma1_cuspForm_apply_three_way_split
           (Fintype.ofFinite ((Gamma1 N).map (mapGL ℝ) ⧸
             ((Gamma1 M).map (mapGL ℝ)).subgroupOf ((Gamma1 N).map (mapGL ℝ)))) _,
         isInftyFixingCoset_one⟩
-  exact (Finset.add_sum_erase _ (fun q => SlashInvariantForm.quotientFunc f q τ) hmem).symm
+  exact (Finset.add_sum_erase _ (fun q ↦ SlashInvariantForm.quotientFunc f q τ) hmem).symm
 
 /-! ### Next-theorem signature
 

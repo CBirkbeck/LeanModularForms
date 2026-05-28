@@ -34,7 +34,7 @@ lemma cuspForm_restrictSubgroup_mem_cuspFormCharSpace
     show cuspFormToModularForm
           (CuspForm.restrictSubgroup (Gamma1_map_le_Gamma1_map_of_dvd h) f) =
         ModularForm.restrictSubgroup (HeckeRing.GL2.MainLemma.Gamma1_mapGL_le_of_dvd h)
-          (cuspFormToModularForm f) from ModularForm.ext fun _ => rfl]
+          (cuspFormToModularForm f) from ModularForm.ext fun _ ↦ rfl]
   exact HeckeRing.GL2.MainLemma.restrictSubgroup_mem_modFormCharSpace χ h _
     ((cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace
       (k := k) χ f).mpr hf)
@@ -49,7 +49,7 @@ lemma cuspForm_levelRaise_mem_cuspFormCharSpace
   rw [← cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace,
     show cuspFormToModularForm (HeckeRing.GL2.levelRaise M d k f) =
         HeckeRing.GL2.modularFormLevelRaise M d k (cuspFormToModularForm f)
-      from ModularForm.ext fun _ => rfl]
+      from ModularForm.ext fun _ ↦ rfl]
   exact HeckeRing.GL2.MainLemma.modularFormLevelRaise_mem_modFormCharSpace M d k χ
     ((cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace
       (k := k) χ f).mpr hf)
@@ -64,17 +64,17 @@ private lemma heckeT_n_cusp_preserves_cuspFormCharSpace_divN
   have hfχ_mod : f.toModularForm' ∈ modFormCharSpace k χ := by
     rw [mem_modFormCharSpace_iff]
     intro d'
-    refine ModularForm.ext fun τ => ?_
+    refine ModularForm.ext fun τ ↦ ?_
     show ((diamondOp k d') f.toModularForm').toFun τ = ↑(χ d') • f.toModularForm'.toFun τ
-    exact congr_arg (fun (g : CuspForm _ k) => g.toFun τ) (hf d')
+    exact congr_arg (fun (g : CuspForm _ k) ↦ g.toFun τ) (hf d')
   have h_diamond := ((mem_modFormCharSpace_iff k χ _).mp
     (HeckeRing.GL2.MainLemma.heckeT_p_divN_preserves_modFormCharSpace hp hpN χ hfχ_mod)) d
-  refine CuspForm.ext fun τ => ?_
+  refine CuspForm.ext fun τ ↦ ?_
   show ((diamondOp k d) (heckeT_n k p f.toModularForm')).toFun τ =
     ↑(χ d) • (heckeT_n k p f.toModularForm').toFun τ
   rw [show heckeT_n k p = HeckeRing.GL2.heckeT_p_divN k p hp hpN by
     rw [heckeT_n_prime k hp]; exact dif_neg hpN]
-  exact congr_arg (fun (m : ModularForm _ k) => m.toFun τ) h_diamond
+  exact congr_arg (fun (m : ModularForm _ k) ↦ m.toFun τ) h_diamond
 
 private lemma qExpansion_restrict_sub_levelRaise_heckeT_coeff
     {N₀ : ℕ} [NeZero N₀] {k : ℤ} {p : ℕ} [NeZero p]

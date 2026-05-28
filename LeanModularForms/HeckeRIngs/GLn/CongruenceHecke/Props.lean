@@ -103,7 +103,7 @@ private instance instCountableM2 : Countable (Matrix (Fin 2) (Fin 2) ℚ) :=
 
 private noncomputable instance instCountableGL2 : Countable (GL (Fin 2) ℚ) := by
   apply Function.Injective.countable
-    (f := fun g : GL (Fin 2) ℚ =>
+    (f := fun g : GL (Fin 2) ℚ ↦
       ((g : Matrix (Fin 2) (Fin 2) ℚ), (g⁻¹ : Matrix (Fin 2) (Fin 2) ℚ)))
   intro g₁ g₂ h; exact Units.ext (Prod.mk.inj h).1
 
@@ -114,7 +114,7 @@ private lemma divChain_one_succ (k : ℕ) : DivChain 2 (![1, k + 1]) := by
   simp
 
 private noncomputable instance instInfiniteGLCoset : Infinite (HeckeCoset (GL_pair 2)) :=
-  Infinite.of_injective (fun n : ℕ => T_diag (![1, n + 1]))
+  Infinite.of_injective (fun n : ℕ ↦ T_diag (![1, n + 1]))
     (fun m n h ↦ by
       have hpos : ∀ k : ℕ, ∀ i, 0 < (![1, k + 1]) i :=
         fun k i ↦ by fin_cases i <;> simp <;> omega
@@ -565,11 +565,11 @@ private lemma lunip_inject_injective (N : ℕ) [NeZero N]
         rw [show ((mapGL ℚ σ₁)⁻¹ : GL (Fin 2) ℚ) = mapGL ℚ σ₁⁻¹ from
           (map_inv (mapGL ℚ) σ₁).symm, hu_gl, hu, ← map_mul, ← map_mul]
       have h_mid10 := congr_fun₂
-        (congr_arg (fun x : GL (Fin 2) ℚ => (x : Matrix (Fin 2) (Fin 2) ℚ)) h_mid_gl) 1 0
+        (congr_arg (fun x : GL (Fin 2) ℚ ↦ (x : Matrix (Fin 2) (Fin 2) ℚ)) h_mid_gl) 1 0
       simp only [mapGL_coe_matrix, RingHom.mapMatrix_apply, algebraMap_int_eq,
         Int.coe_castRingHom, Matrix.map_apply, SpecialLinearGroup.coe_mul] at h_mid10
       have h_e := congr_arg
-        (fun x : GL (Fin 2) ℚ => (x : Matrix (Fin 2) (Fin 2) ℚ) 1 0) h_mul
+        (fun x : GL (Fin 2) ℚ ↦ (x : Matrix (Fin 2) (Fin 2) ℚ) 1 0) h_mul
       simp only [Units.val_mul, Matrix.mul_apply, Fin.sum_univ_two, D,
         diagMat_val 2 _ ha, Matrix.diagonal_apply,
         show (1 : Fin 2) ≠ 0 from by decide, if_false, if_true,
@@ -577,7 +577,7 @@ private lemma lunip_inject_injective (N : ℕ) [NeZero N]
         mul_one, one_mul] at h_e
       rw [h_mid_gl] at h_mul
       have h_e2 := congr_arg
-        (fun x : GL (Fin 2) ℚ => (x : Matrix (Fin 2) (Fin 2) ℚ) 1 0) h_mul
+        (fun x : GL (Fin 2) ℚ ↦ (x : Matrix (Fin 2) (Fin 2) ℚ) 1 0) h_mul
       simp only [Units.val_mul, Matrix.mul_apply, Fin.sum_univ_two, D,
         diagMat_val 2 _ ha, Matrix.diagonal_apply,
         show (1 : Fin 2) ≠ 0 from by decide, if_false, if_true,
