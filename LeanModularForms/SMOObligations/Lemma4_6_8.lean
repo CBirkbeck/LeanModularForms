@@ -353,8 +353,6 @@ case split on Miyake's dichotomy `miyake_4_6_4_dichotomy_strong`: applied to the
 on the `(·, l')`-coprime indices, so the `p`-piece drops out) or it *produces* the
 factorisation through `(l'·N)/p`, which we transport down to `N/p` via the conductor. -/
 
-/-- Conductor bridge (raising): if `χ.conductor ∣ d` and `d ∣ n`, then `χ` factors
-through `d`.  Built from `changeLevel_primitiveCharacter` and `changeLevel_trans`. -/
 private lemma factorsThrough_of_conductor_dvd {n : ℕ} (χ : DirichletCharacter ℂ n)
     {d : ℕ} (hcd : χ.conductor ∣ d) (hdn : d ∣ n) :
     χ.FactorsThrough d :=
@@ -362,48 +360,29 @@ private lemma factorsThrough_of_conductor_dvd {n : ℕ} (χ : DirichletCharacter
     rw [← DirichletCharacter.changeLevel_trans χ.primitiveCharacter hcd hdn,
       DirichletCharacter.changeLevel_primitiveCharacter]⟩
 
-/-- Conductor bridge (lowering): if `χ` factors through `d` (with `n ≠ 0`), then
-`χ.conductor ∣ d`.  This is `conductor_dvd_of_mem_conductorSet`. -/
 private lemma conductor_dvd_of_factorsThrough {n : ℕ} (χ : DirichletCharacter ℂ n)
     (hn : n ≠ 0) {d : ℕ} (hfac : χ.FactorsThrough d) :
     χ.conductor ∣ d :=
   χ.conductor_dvd_of_mem_conductorSet hn ((DirichletCharacter.mem_conductorSet_iff χ).mpr hfac)
 
-/-- The conductor is invariant under `changeLevel` (for `n ∣ m`, `m ≠ 0`):
-`(changeLevel hnm χ).conductor = χ.conductor`.  Both divisibilities follow from the
-two conductor bridges plus `changeLevel`-transitivity. -/
 private lemma conductor_changeLevel {n m : ℕ} (hnm : n ∣ m) [NeZero n] [NeZero m]
     (χ : DirichletCharacter ℂ n) :
     (DirichletCharacter.changeLevel hnm χ).conductor = χ.conductor := by
-  -- `c := conductor (changeLevel hnm χ)` divides `n` (it factors through `n`).
   set c := (DirichletCharacter.changeLevel hnm χ).conductor with hc
   have hcn : c ∣ n :=
     conductor_dvd_of_factorsThrough (DirichletCharacter.changeLevel hnm χ) (NeZero.ne m)
       (DirichletCharacter.changeLevel_factorsThrough χ hnm)
-  -- `χ` factors through `c`: descend the conductor witness through `changeLevel_injective`.
   have hχ_fac_c : χ.FactorsThrough c := by
     obtain ⟨_hcm, χ_c, hχc⟩ := DirichletCharacter.factorsThrough_conductor
       (DirichletCharacter.changeLevel hnm χ)
     refine ⟨hcn, χ_c, DirichletCharacter.changeLevel_injective hnm ?_⟩
     rw [← DirichletCharacter.changeLevel_trans χ_c hcn hnm, ← hχc]
   refine Nat.dvd_antisymm ?_ (conductor_dvd_of_factorsThrough χ (NeZero.ne n) hχ_fac_c)
-  -- `c ∣ χ.conductor`: `changeLevel hnm χ` factors through `χ.conductor`.
   refine conductor_dvd_of_factorsThrough (DirichletCharacter.changeLevel hnm χ) (NeZero.ne m)
     ⟨χ.conductor_dvd_level.trans hnm, χ.primitiveCharacter, ?_⟩
   conv_rhs => rw [DirichletCharacter.changeLevel_trans χ.primitiveCharacter
     χ.conductor_dvd_level hnm, DirichletCharacter.changeLevel_primitiveCharacter]
 
-/-- **Per-prime dichotomy for the factorisation.**  For `f ∈ S_k(Γ_1(N), χ)` with
-coprime-vanishing on `p · l'` (`p ∈ N.primeFactors`, `l'` squarefree dividing `N`,
-`Coprime p l'`, `p ∉ l'.primeFactors`), one of the following holds: either every
-`q`-coefficient of `f` at an index coprime to `l'` vanishes (so the `p`-supported piece
-is `0` and drops out), or `χ` factors as `χ = χ'.comp (unitsMap (N/p ∣ N))` for some
-`χ' : (ZMod (N/p))ˣ →* ℂˣ` (the factorisation that `h_chi_factor` would have supplied).
-
-This replaces the `h_chi_factor` hypothesis: the factorisation comes out of Miyake's
-dichotomy `miyake_4_6_4_dichotomy_strong` applied to the `p`-supported piece `g` at the
-auxiliary level `l'·N`; the conductor of `χ` then divides both `N` and `l'·(N/p)`, hence
-`gcd(p·(N/p), l'·(N/p)) = (N/p)·gcd(p, l') = N/p`. -/
 private theorem miyake_4_6_8_factor_dichotomy
     {N : ℕ} [NeZero N] {k : ℤ}
     (χ : (ZMod N)ˣ →* ℂˣ)
@@ -423,14 +402,12 @@ private theorem miyake_4_6_8_factor_dichotomy
   haveI : NeZero l' := ⟨hl'_pos.ne'⟩
   haveI : NeZero (l' * N) :=
     ⟨Nat.mul_ne_zero (Nat.pos_iff_ne_zero.mp hl'_pos) (NeZero.ne N)⟩
-  -- The `p`-supported piece `g` of `f`, built unconditionally at level `l'·N`.
   obtain ⟨g, hg_char, hg_supp, hg_qexp⟩ :=
     miyake_g_p_supported χ f hfχ p hp l' hl'_pos hl'_sqfree hl'_dvd h_vanish
   have hNlN : N ∣ l' * N := Nat.dvd_mul_left N l'
   have hpM : p ∣ l' * N := dvd_mul_of_dvd_right hpN l'
   have h_Mp_eq : (l' * N) / p = l' * (N / p) := Nat.mul_div_assoc l' hpN
   haveI : NeZero ((l' * N) / p) := h_Mp_eq ▸ inferInstance
-  -- Lift `χ` to a Dirichlet character at level `l'·N` via `changeLevel`.
   set χ_dir : DirichletCharacter ℂ N := Newform.dirichletLift χ with hχ_dir
   set χ_M : DirichletCharacter ℂ (l' * N) := DirichletCharacter.changeLevel hNlN χ_dir with hχM
   have hχ_dir_unit : χ_dir.toUnitHom = χ :=
@@ -440,8 +417,7 @@ private theorem miyake_4_6_8_factor_dichotomy
   have hg_χM : g ∈ cuspFormCharSpace k χ_M.toUnitHom := by rw [hχM_unit]; exact hg_char
   rcases miyake_4_6_4_dichotomy_strong χ_M p hp hpM g hg_χM hg_supp with
     hg_zero | ⟨h_fac, _g_p, _hg_p_char, _hg_p_eq⟩
-  · -- Zero branch: `g = 0`, so `aₙ(f) = 0` for every `n` coprime to `l'`.
-    left
+  · left
     intro n hn_cop
     have hgn := hg_qexp n
     rw [if_pos hn_cop] at hgn
@@ -450,44 +426,30 @@ private theorem miyake_4_6_8_factor_dichotomy
       (⇑(0 : CuspForm ((Gamma1 (l' * N)).map (mapGL ℝ)) k) : UpperHalfPlane → ℂ)).coeff n = 0
     rw [show (⇑(0 : CuspForm ((Gamma1 (l' * N)).map (mapGL ℝ)) k) : UpperHalfPlane → ℂ) =
         (0 : UpperHalfPlane → ℂ) from rfl, qExpansion_zero, map_zero]
-  · -- Nonzero branch: `χ_M` factors through `(l'·N)/p = l'·(N/p)`; transport to `N/p`.
-    right
-    -- `χ.conductor ∣ l'·(N/p)` (via the factorisation and conductor invariance).
+  · right
     have h_cond_dvd_lNp : χ_dir.conductor ∣ l' * (N / p) := by
       have : χ_M.conductor ∣ (l' * N) / p :=
         conductor_dvd_of_factorsThrough χ_M (NeZero.ne (l' * N)) h_fac
       rwa [hχM, conductor_changeLevel hNlN χ_dir, h_Mp_eq] at this
-    -- `χ.conductor ∣ N` always.
-    have h_cond_dvd_N : χ_dir.conductor ∣ N := χ_dir.conductor_dvd_level
-    -- Combine: `χ.conductor ∣ gcd(p·(N/p), l'·(N/p)) = (N/p)·gcd(p, l') = N/p`.
     have h_cond_dvd_Np : χ_dir.conductor ∣ N / p := by
       have hN_eq : N = p * (N / p) := (Nat.mul_div_cancel' hpN).symm
       have h_gcd : Nat.gcd (p * (N / p)) (l' * (N / p)) = (N / p) * Nat.gcd p l' := by
         rw [Nat.mul_comm p (N / p), Nat.mul_comm l' (N / p), Nat.gcd_mul_left]
       have hcd_gcd : χ_dir.conductor ∣ Nat.gcd (p * (N / p)) (l' * (N / p)) :=
-        Nat.dvd_gcd (hN_eq ▸ h_cond_dvd_N) h_cond_dvd_lNp
+        Nat.dvd_gcd (hN_eq ▸ χ_dir.conductor_dvd_level) h_cond_dvd_lNp
       rwa [h_gcd, hpl', Nat.mul_one] at hcd_gcd
-    -- `χ.conductor ∣ N/p ∣ N` gives the factorisation through `N/p`.
-    have hfacNp : χ_dir.FactorsThrough (N / p) :=
-      factorsThrough_of_conductor_dvd χ_dir h_cond_dvd_Np (Nat.div_dvd_of_dvd hpN)
-    refine ⟨(loweredCharacter (l := p) hfacNp).toUnitHom, ?_⟩
-    -- Re-derive `χ = χ'.comp (unitsMap)` from `toUnitHom_loweredCharacter`.
-    have h := toUnitHom_loweredCharacter (χ := χ_dir) (l := p) hfacNp
+    refine ⟨(loweredCharacter (l := p)
+      (factorsThrough_of_conductor_dvd χ_dir h_cond_dvd_Np (Nat.div_dvd_of_dvd hpN))).toUnitHom, ?_⟩
+    have h := toUnitHom_loweredCharacter (χ := χ_dir) (l := p)
+      (factorsThrough_of_conductor_dvd χ_dir h_cond_dvd_Np (Nat.div_dvd_of_dvd hpN))
     rw [hχ_dir_unit] at h
     exact h
 
-/-- **Unconditional subset-indexed helper for Miyake 4.6.8.**
-
-Same conclusion as `miyake_4_6_8_subset_helper` — a decomposition
-`f = ∑_{p ∈ S} f_p` with each `f_p` `p`-supported and in the character space — but
-with the `h_chi_factor` hypothesis **removed**.  The per-prime factorisation is no
-longer assumed: at each inductive step it is *produced* by
-`miyake_4_6_8_factor_dichotomy` in the non-zero branch, while in the zero branch the
-`p`-piece is taken to be `0` (the coprime-to-`l'` vanishing already passes to the next
-level).
-
-Proven by induction on `S.card`, exactly as the conditional helper, but the descent
-witness `miyake_4_6_8_inductive_step` is fed the dichotomy-derived `χ'`. -/
+/-- **Unconditional subset-indexed helper for Miyake 4.6.8.**  For `f ∈ S_k(Γ_1(N), χ)`
+vanishing on indices coprime to `S.prod id` (`S ⊆ N.primeFactors`), there is a
+decomposition `f = ∑_{p ∈ S} f_p` with each `f_p` `p`-supported and in the character
+space.  No `h_chi_factor` is needed: the per-prime factorisation is produced by
+`miyake_4_6_8_factor_dichotomy`. -/
 theorem miyake_4_6_8_subset_helper_unconditional
     {N : ℕ} [NeZero N] {k : ℤ}
     (χ : (ZMod N)ˣ →* ℂˣ)
@@ -512,34 +474,25 @@ theorem miyake_4_6_8_subset_helper_unconditional
     · exact fun p hp ↦ absurd hp (Finset.notMem_empty p)
     · exact fun p hp ↦ absurd hp (Finset.notMem_empty p)
   | succ n ih =>
-    have hS_nonempty : S.Nonempty := Finset.card_pos.mp (hSc ▸ Nat.succ_pos n)
-    obtain ⟨p, hp_in⟩ := hS_nonempty
+    obtain ⟨p, hp_in⟩ : S.Nonempty := Finset.card_pos.mp (hSc ▸ Nat.succ_pos n)
     have hp_prime : p.Prime := Nat.prime_of_mem_primeFactors (hS hp_in)
     have hpN : p ∣ N := Nat.dvd_of_mem_primeFactors (hS hp_in)
-    haveI hNp_NeZero : NeZero (N / p) := ⟨by
-      have hN_pos : 0 < N := Nat.pos_of_ne_zero (NeZero.ne N)
-      exact (Nat.div_pos (Nat.le_of_dvd hN_pos hpN) hp_prime.pos).ne'⟩
+    haveI : NeZero (N / p) := ⟨by
+      exact (Nat.div_pos (Nat.le_of_dvd (Nat.pos_of_ne_zero (NeZero.ne N)) hpN)
+        hp_prime.pos).ne'⟩
     have h_erase_sub : S.erase p ⊆ N.primeFactors := fun q hq ↦
       hS (Finset.mem_of_mem_erase hq)
     have h_erase_card : (S.erase p).card = n := by
       rw [Finset.card_erase_of_mem hp_in, hSc]; lia
-    -- arithmetic data of `l' = (S.erase p).prod id`.
     set l' := (S.erase p).prod id with hl'_def
     have h_prod_eq : S.prod id = p * l' := by
       rw [hl'_def, ← Finset.mul_prod_erase S id hp_in]; simp
-    have h_vanish' : ∀ m : ℕ, Nat.Coprime m (p * l') →
-        (ModularFormClass.qExpansion (1 : ℝ) f).coeff m = 0 :=
-      fun m hm ↦ h_vanish m (h_prod_eq ▸ hm)
     obtain ⟨hl'_pos, hpl', hl'_sqfree, hl'_dvd, _hp_not_in_l'⟩ :=
       erase_prod_descent_properties S hS hp_prime
     rcases miyake_4_6_8_factor_dichotomy χ f hfχ hp_prime hpN l' hl'_pos hl'_sqfree hpl'
-      hl'_dvd h_vanish' with h_f_vanish | ⟨χ', hχ_eq⟩
-    · -- Zero branch: take `f_p := 0`; `f` already vanishes on `(S.erase p).prod = l'`.
-      have h_erase_vanish : ∀ m : ℕ, Nat.Coprime m ((S.erase p).prod id) →
-          (ModularFormClass.qExpansion (1 : ℝ) f).coeff m = 0 :=
-        fun m hm ↦ h_f_vanish m hm
-      obtain ⟨f_q, h_sum, h_supp_q, h_char_q⟩ :=
-        ih (S.erase p) h_erase_sub f hfχ h_erase_vanish h_erase_card
+      hl'_dvd (fun m hm ↦ h_vanish m (h_prod_eq ▸ hm)) with h_f_vanish | ⟨χ', hχ_eq⟩
+    · obtain ⟨f_q, h_sum, h_supp_q, h_char_q⟩ :=
+        ih (S.erase p) h_erase_sub f hfχ (fun m hm ↦ h_f_vanish m hm) h_erase_card
       refine ⟨fun q ↦ if q = p then 0 else f_q q, ?_, ?_, ?_⟩
       · rw [sum_ite_eq_add_sum_erase hp_in 0 f_q, zero_add, ← h_sum]
       · intro q hq
@@ -552,13 +505,11 @@ theorem miyake_4_6_8_subset_helper_unconditional
         · subst hqp; simpa only [if_true] using Submodule.zero_mem _
         · simp only [hqp, if_false]
           exact h_char_q q (Finset.mem_erase.mpr ⟨hqp, hq⟩)
-    · -- Non-zero branch: the dichotomy supplies `χ'`; run the descent witness.
-      obtain ⟨f_p, h_supp, h_char, h_diff_vanish⟩ :=
+    · obtain ⟨f_p, h_supp, h_char, h_diff_vanish⟩ :=
         miyake_4_6_8_inductive_step χ S hS f hfχ h_vanish hp_in χ' hχ_eq
-      have h_diff_char : f - f_p ∈ cuspFormCharSpace k χ :=
-        Submodule.sub_mem _ hfχ h_char
       obtain ⟨f_q, h_sum, h_supp_q, h_char_q⟩ :=
-        ih (S.erase p) h_erase_sub (f - f_p) h_diff_char h_diff_vanish h_erase_card
+        ih (S.erase p) h_erase_sub (f - f_p) (Submodule.sub_mem _ hfχ h_char) h_diff_vanish
+          h_erase_card
       refine ⟨fun q ↦ if q = p then f_p else f_q q, ?_, ?_, ?_⟩
       · rw [sum_ite_eq_add_sum_erase hp_in f_p f_q, ← h_sum]; abel
       · intro q hq

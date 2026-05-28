@@ -286,19 +286,9 @@ theorem Eigenform.eigenvalue_eq_coeff_of_norm (f : Eigenform N k) (n : ℕ+)
     f.eigenvalue n =
       (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm).coeff n.val := by
   haveI : NeZero n.val := ⟨n.pos.ne'⟩
-  have h_norm :
-      (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm.toModularForm').coeff 1 = 1 := by
-    change (ModularFormClass.qExpansion (1 : ℝ)
-        (⇑f.toCuspForm.toModularForm')).coeff 1 = 1
-    rw [show (⇑f.toCuspForm.toModularForm' : UpperHalfPlane → ℂ) = ⇑f.toCuspForm from rfl]
-    exact h_norm₁
-  have h_lhs :
-      (ModularFormClass.qExpansion (1 : ℝ)
-        (heckeT_n_cusp k n.val f.toCuspForm)).coeff 1 = f.eigenvalue n := by
-    rw [f.isEigen n hn]
-    exact qExpansion_one_coeff_one_smul_of_norm f.toCuspForm h_norm _
   rw [← qExpansion_one_coeff_one_heckeT_n_cusp_eq_coeff n.val hn χ f.toCuspForm hf_char,
-    h_lhs]
+    f.isEigen n hn]
+  exact (qExpansion_one_coeff_one_smul_of_norm f.toCuspForm h_norm₁ (f.eigenvalue n)).symm
 
 /-! ### Reverse/consumer direction of the Main Lemma -/
 

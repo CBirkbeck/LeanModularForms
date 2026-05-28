@@ -197,14 +197,12 @@ theorem coprimeSieve_admits_squarefree_decomposition_in_charSpace_unconditional
   obtain ⟨f_p, h_sum, h_supp, h_char⟩ :=
     miyake_4_6_8_main_lemma_cuspForm_unconditional χ f hfχ h_vanish
   refine ⟨fun d ↦ if d ∈ N.primeFactors then f_p d else 0, ?_, ?_, ?_⟩
-  · have h_primes_sub : N.primeFactors ⊆ N.divisors.filter (1 < ·) := by
-      intro p hp
+  · rw [h_sum]
+    symm
+    refine (Finset.sum_subset (fun p hp ↦ by
       rw [Finset.mem_filter, Nat.mem_divisors]
       exact ⟨⟨Nat.dvd_of_mem_primeFactors hp, NeZero.ne N⟩,
-        (Nat.prime_of_mem_primeFactors hp).one_lt⟩
-    rw [h_sum]
-    symm
-    refine (Finset.sum_subset h_primes_sub ?_).symm.trans ?_
+        (Nat.prime_of_mem_primeFactors hp).one_lt⟩) ?_).symm.trans ?_
     · intro d _hd_div hd_nprime
       simp [hd_nprime]
     · exact Finset.sum_congr rfl fun p hp ↦ by simp [hp]

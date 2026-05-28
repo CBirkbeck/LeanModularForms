@@ -431,11 +431,9 @@ def cuspFormsNewExtended (N : ℕ) [NeZero N] (k : ℤ) :
   carrier := {f | ∀ g, g ∈ cuspFormsOldExtended N k → petN f g = 0}
   zero_mem' g _ := petN_zero_left g
   add_mem' h₁ h₂ g hg := by
-    show petN (_ + _) g = 0
-    rw [petN_add_left, h₁ g hg, h₂ g hg, add_zero]
+    simp [petN_add_left, h₁ g hg, h₂ g hg]
   smul_mem' c f hf g hg := by
-    show petN (c • f) g = 0
-    rw [petN_conj_smul_left, hf g hg, mul_zero]
+    simp [petN_conj_smul_left, hf g hg]
 
 /-- `cuspFormsNewExtended ⊆ cuspFormsNew`. -/
 lemma cuspFormsNewExtended_le_cuspFormsNew {N : ℕ} [NeZero N] {k : ℤ} :

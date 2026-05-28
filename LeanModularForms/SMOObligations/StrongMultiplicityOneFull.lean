@@ -330,51 +330,37 @@ private theorem levelRaise_mem_cuspFormCharSpace_comp {M : ℕ} [NeZero M] {d : 
     diamondOpCusp_apply_charSpace k ψ _ hg, map_smul]
   subst heq; rfl
 
-/-- Diamond/level-inclusion commutation: `⟨a⟩_N (ι_{M∣N} g) = ι_{M∣N} (⟨a'⟩_M g)`,
-where `a' = unitsMap a` is the cast of `a` from `(ZMod N)ˣ` to `(ZMod M)ˣ`.  This is the
-trivial-inclusion analogue of `diamondOp_levelRaise_eq`: since `ι_{M∣N}` does not change
-the underlying function, both diamond operators slash by the **same** `Γ₀(N) ⊆ Γ₀(M)`
-representative of `a`. -/
 private theorem diamondOpCusp_levelInclude_cusp_eq {M : ℕ} [NeZero M] {N : ℕ} [NeZero N]
     {k : ℤ} (hMN : M ∣ N) (a : (ZMod N)ˣ)
     (g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) :
     diamondOpCusp k a (levelInclude_cusp hMN k g) =
       levelInclude_cusp hMN k (diamondOpCusp k (ZMod.unitsMap hMN a) g) := by
-  -- A common representative `g_N ∈ Γ₀(N)` of `a`, also lying in `Γ₀(M)` (since `M ∣ N`).
   obtain ⟨g_N, hg_N⟩ := Gamma0MapUnits_surjective (N := N) a
   have hg_N_M : (g_N : SL(2, ℤ)) ∈ Gamma0 M := by
     rw [Gamma0_mem]
-    have hN0 : ((g_N : SL(2, ℤ)).val 1 0 : ZMod N) = 0 := Gamma0_mem.mp g_N.property
     have hNdvd : (N : ℤ) ∣ (g_N : SL(2, ℤ)).val 1 0 :=
-      (ZMod.intCast_zmod_eq_zero_iff_dvd _ N).mp (by exact_mod_cast hN0)
+      (ZMod.intCast_zmod_eq_zero_iff_dvd _ N).mp (by exact_mod_cast Gamma0_mem.mp g_N.property)
     exact (ZMod.intCast_zmod_eq_zero_iff_dvd _ M).mpr
-      (dvd_trans (Int.natCast_dvd_natCast.mpr hMN) hNdvd)
-  -- At level `M`, the same representative carries `unitsMap a`.
+      ((Int.natCast_dvd_natCast.mpr hMN).trans hNdvd)
   have h_units : Gamma0MapUnits (⟨(g_N : SL(2, ℤ)), hg_N_M⟩ : ↥(Gamma0 M)) =
       ZMod.unitsMap hMN a := by
     apply Units.ext
     rw [Gamma0MapUnits_val, ZMod.unitsMap_val, ← hg_N, Gamma0MapUnits_val]
     exact (ZMod.cast_intCast hMN ((g_N : SL(2, ℤ)).val 1 1)).symm
-  -- Both sides equal `⇑g ∣[k] mapGL ℝ g_N` as functions.
-  have hL : ⇑(diamondOpCusp k a (levelInclude_cusp hMN k g)) =
-      ⇑(levelInclude_cusp hMN k g) ∣[k] mapGL ℝ (g_N : SL(2, ℤ)) := by
+  apply CuspForm.ext
+  intro z
+  have hL : (diamondOpCusp k a (levelInclude_cusp hMN k g)) z =
+      (⇑g ∣[k] mapGL ℝ (g_N : SL(2, ℤ))) z := by
     rw [diamondOpCusp_eq k a g_N hg_N]; rfl
-  have hR : ⇑(diamondOpCusp k (ZMod.unitsMap hMN a) g) =
-      ⇑g ∣[k] mapGL ℝ (g_N : SL(2, ℤ)) := by
-    rw [diamondOpCusp_eq k (ZMod.unitsMap hMN a) ⟨(g_N : SL(2, ℤ)), hg_N_M⟩ h_units]; rfl
-  apply CuspForm.ext; intro z
-  have hgoalL : (diamondOpCusp k a (levelInclude_cusp hMN k g)) z =
-      (⇑g ∣[k] mapGL ℝ (g_N : SL(2, ℤ))) z := DFunLike.congr_fun hL z
-  have hgoalR : (levelInclude_cusp hMN k (diamondOpCusp k (ZMod.unitsMap hMN a) g)) z =
+  have hR : (levelInclude_cusp hMN k (diamondOpCusp k (ZMod.unitsMap hMN a) g)) z =
       (⇑g ∣[k] mapGL ℝ (g_N : SL(2, ℤ))) z := by
     rw [show (levelInclude_cusp hMN k (diamondOpCusp k (ZMod.unitsMap hMN a) g) :
         UpperHalfPlane → ℂ) z = (diamondOpCusp k (ZMod.unitsMap hMN a) g) z from
-      congr_fun (levelInclude_cusp_coe hMN k _) z]
-    exact DFunLike.congr_fun hR z
-  rw [hgoalL, hgoalR]
+      congr_fun (levelInclude_cusp_coe hMN k _) z,
+      diamondOpCusp_eq k (ZMod.unitsMap hMN a) ⟨(g_N : SL(2, ℤ)), hg_N_M⟩ h_units]
+    rfl
+  rw [hL, hR]
 
-/-- The trivial level inclusion of a single-character cusp form lands in the lifted character
-space (Miyake Lemma 4.6.9(2): the trivial inclusion preserves Nebentypus). -/
 private theorem levelInclude_cusp_mem_cuspFormCharSpace_comp {M : ℕ} [NeZero M] {N : ℕ}
     [NeZero N] {k : ℤ} (hMN : M ∣ N) (ψ : (ZMod M)ˣ →* ℂˣ)
     {g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k} (hg : g ∈ cuspFormCharSpace k ψ) :
@@ -815,38 +801,25 @@ an eigenform an eigenform with the same eigenvalues — the structural input tha
 Theorem 4.6.12 feed `oldPart g`/`newPart g` into the new-part (T004) and old-part (T010)
 arguments. -/
 
-/-- The old projection commutes with `T(n)` for `(n,N)=1` (Miyake 4.6.10): both `cuspFormsOld`
-and `cuspFormsNew` are `T(n)`-stable, so `oldPart` commutes with `heckeT_n_cusp`. -/
+/-- The old projection commutes with `T(n)` for `(n,N)=1` (Miyake 4.6.10). -/
 theorem oldPart_heckeT_n_cusp_comm
     (n : ℕ) [NeZero n] (hn : Nat.Coprime n N)
     (x : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     oldPart (heckeT_n_cusp k n x) = heckeT_n_cusp k n (oldPart x) := by
   conv_lhs => rw [← oldPart_add_newPart x, heckeT_n_cusp_add]
-  have hlin : oldPart (heckeT_n_cusp k n (oldPart x) + heckeT_n_cusp k n (newPart x)) =
-      oldPart (heckeT_n_cusp k n (oldPart x)) + oldPart (heckeT_n_cusp k n (newPart x)) :=
-    map_add _ _ _
-  rw [hlin,
+  rw [map_add,
     oldPart_of_mem_cuspFormsOld
       (heckeT_n_preserves_cuspFormsOld n hn _ (oldPart_mem_cuspFormsOld x)),
     oldPart_of_mem_cuspFormsNew
       (heckeT_n_preserves_cuspFormsNew n hn _ (newPart_mem_cuspFormsNew x)),
     add_zero]
 
-/-- The old projection commutes with the diamond operators (Miyake 4.6.10): both subspaces are
-diamond-stable, so `oldPart` commutes with `diamondOpCuspHom`. -/
+/-- The old projection commutes with the diamond operators (Miyake 4.6.10). -/
 theorem oldPart_diamondOpCuspHom_comm
     (a : (ZMod N)ˣ) (x : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     oldPart (diamondOpCuspHom k a x) = diamondOpCuspHom k a (oldPart x) := by
-  have hsplit : diamondOpCuspHom k a x =
-      diamondOpCuspHom k a (oldPart x) + diamondOpCuspHom k a (newPart x) := by
-    conv_lhs => rw [← oldPart_add_newPart x]
-    exact map_add _ _ _
-  rw [hsplit]
-  have hlin : oldPart (diamondOpCuspHom k a (oldPart x) + diamondOpCuspHom k a (newPart x)) =
-      oldPart (diamondOpCuspHom k a (oldPart x)) +
-        oldPart (diamondOpCuspHom k a (newPart x)) :=
-    map_add _ _ _
-  rw [hlin,
+  conv_lhs => rw [← oldPart_add_newPart x, map_add]
+  rw [map_add,
     oldPart_of_mem_cuspFormsOld
       (diamondOpCuspHom_preserves_cuspFormsOld a _ (oldPart_mem_cuspFormsOld x)),
     oldPart_of_mem_cuspFormsNew
@@ -863,9 +836,8 @@ theorem oldPart_mem_cuspFormCharSpace
   rw [← oldPart_diamondOpCuspHom_comm a x, diamondOpCusp_apply_charSpace k χ a hx]
   exact map_smul _ _ _
 
-/-- Packaging input for T004/T010: the old projection of an `Eigenform` `g` is a `T(n)`-eigenform
-with **the same eigenvalues** as `g` for `(n,N)=1` (Miyake 4.6.10), since `oldPart` commutes with
-`T(n)`.  Symmetrically for `newPart`. -/
+/-- The old projection of an `Eigenform` `g` is a `T(n)`-eigenform with `g`'s eigenvalues for
+`(n,N)=1` (Miyake 4.6.10). -/
 theorem oldPart_isEigen_of_eigenform
     (g : Eigenform N k) (n : ℕ+) (hn : Nat.Coprime n.val N) :
     haveI : NeZero n.val := ⟨n.pos.ne'⟩
@@ -884,12 +856,7 @@ theorem newPart_isEigen_of_eigenform
   have hcomm : newPart (heckeT_n_cusp k n.val g.toCuspForm) =
       heckeT_n_cusp k n.val (newPart g.toCuspForm) := by
     conv_lhs => rw [← oldPart_add_newPart g.toCuspForm, heckeT_n_cusp_add]
-    have hlin : newPart (heckeT_n_cusp k n.val (oldPart g.toCuspForm) +
-          heckeT_n_cusp k n.val (newPart g.toCuspForm)) =
-        newPart (heckeT_n_cusp k n.val (oldPart g.toCuspForm)) +
-          newPart (heckeT_n_cusp k n.val (newPart g.toCuspForm)) :=
-      map_add _ _ _
-    rw [hlin,
+    rw [map_add,
       newPart_of_mem_cuspFormsOld
         (heckeT_n_preserves_cuspFormsOld n.val hn _ (oldPart_mem_cuspFormsOld g.toCuspForm)),
       newPart_of_mem_cuspFormsNew
@@ -908,9 +875,6 @@ mirroring `newform_unique_routeB`.  The eigenvalue agreement off the finite set 
 upgraded to *all* coprime indices via Hecke multiplicativity (Miyake 4.6.13), with
 `g_new`'s eigenvalue facts derived from the renormalised form `b₁⁻¹ • g_new`. -/
 
-/-- The period-1 `q`-coefficients of the renormalised form `b₁⁻¹ • g_new` recover the
-classical eigenvalues of `g_new`: `aₙ(b₁⁻¹ • g_new) = λₙ(g_new)` for `(n, N) = 1`,
-`b₁ = a₁(g_new) ≠ 0`.  (Lemma 4.5.15(1) after normalising `a₁` to `1`.) -/
 private theorem coeff_smul_inv_eq_eigenvalue
     (g_new : Eigenform N k) (χ : (ZMod N)ˣ →* ℂˣ)
     (hgχ : g_new.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
@@ -930,7 +894,6 @@ private theorem coeff_smul_inv_eq_eigenvalue
   rw [h_smul_coeff, Eigenform.coeff_eq_coeff_one_mul_eigenvalue g_new χ hgχ n hn, ← hb₁_def,
     ← mul_assoc, inv_mul_cancel₀ hb₁_ne, one_mul]
 
-/-- The renormalised form `b₁⁻¹ • g_new` is a period-1 normalised eigenform. -/
 private theorem isNormalisedEigenform_one_smul_inv
     (g_new : Eigenform N k)
     {b₁ : ℂ} (hb₁_def : b₁ = (ModularFormClass.qExpansion (1 : ℝ) g_new.toCuspForm).coeff 1)
@@ -951,9 +914,6 @@ private theorem isNormalisedEigenform_one_smul_inv
     rw [qExpansion_one_coeff_one_smul_local g_new.toCuspForm b₁⁻¹, ← hb₁_def,
       inv_mul_cancel₀ hb₁_ne]
 
-/-- **Coprime multiplicativity of the classical eigenvalues** of an `Eigenform`
-`g_new ∈ cuspFormsNew` with `a₁(g_new) ≠ 0`: `λ_{mn}(g_new) = λ_m(g_new) · λ_n(g_new)` for
-`gcd(m, n) = 1`.  Derived from coefficient multiplicativity of the normalised form. -/
 private theorem eigenvalue_coprime_mul_of_coeff_one_ne_zero
     (g_new : Eigenform N k) (χ : (ZMod N)ˣ →* ℂˣ)
     (hgχ : g_new.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
@@ -970,7 +930,6 @@ private theorem eigenvalue_coprime_mul_of_coeff_one_ne_zero
   have hF₁_eigen : IsNormalisedEigenform_one k F₁ :=
     isNormalisedEigenform_one_smul_inv g_new hb₁_def hb₁_ne
   have hmn_N : Nat.Coprime (m.val * n.val) N := hm.mul_left hn
-  -- coefficient multiplicativity at coprime `m, n` (the `gcd = 1` divisor sum collapses).
   have h := eigenform_coeff_multiplicative_one (N := N) k m n hm hn χ hF₁_char hF₁_eigen
   have hgcd : Nat.gcd m.val n.val = 1 := hmn
   rw [hgcd, Nat.divisors_one, Finset.sum_singleton, dif_pos (Nat.coprime_one_left N)] at h
@@ -978,9 +937,7 @@ private theorem eigenvalue_coprime_mul_of_coeff_one_ne_zero
     ext; simp [ZMod.coe_unitOfCoprime]
   rw [h_unit_one] at h
   simp only [Nat.cast_one, one_zpow, map_one, Units.val_one, one_mul, mul_one, Nat.div_one] at h
-  -- align the `F₁` coefficients (functions) with the renormalised cusp-form coefficients.
   rw [show (⇑F₁ : UpperHalfPlane → ℂ) = b₁⁻¹ • ⇑g_new.toCuspForm from rfl] at h
-  -- convert the three coefficients to eigenvalues of `g_new`.
   have hcm := coeff_smul_inv_eq_eigenvalue g_new χ hgχ hb₁_def hb₁_ne m hm
   have hcn := coeff_smul_inv_eq_eigenvalue g_new χ hgχ hb₁_def hb₁_ne n hn
   have hcmn := coeff_smul_inv_eq_eigenvalue g_new χ hgχ hb₁_def hb₁_ne
@@ -989,9 +946,6 @@ private theorem eigenvalue_coprime_mul_of_coeff_one_ne_zero
   rw [hcm, hcn, hcmn] at h
   exact h.symm
 
-/-- **Prime-square eigenvalue relation** for an `Eigenform` `g_new ∈ cuspFormsNew` with
-`a₁(g_new) ≠ 0`: `λ_{q²}(g_new) = λ_q(g_new)² - χ(q) · q^{k-1}` for a prime `q ∤ N`.
-Diamond–Shurman 5.3 / Miyake 4.5.13, via coefficient multiplicativity at `m = n = q`. -/
 private theorem eigenvalue_at_prime_sq_of_coeff_one_ne_zero
     (g_new : Eigenform N k) (χ : (ZMod N)ˣ →* ℂˣ)
     (hgχ : g_new.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
@@ -1009,7 +963,6 @@ private theorem eigenvalue_at_prime_sq_of_coeff_one_ne_zero
     isNormalisedEigenform_one_smul_inv g_new hb₁_def hb₁_ne
   have hq_pos : 0 < q := hq.pos
   let q_pnat : ℕ+ := ⟨q, hq_pos⟩
-  -- coefficient multiplicativity at `m = n = q` (`gcd = q`, divisors `{1, q}`).
   have h := eigenform_coeff_multiplicative_one (N := N) k q_pnat q_pnat hqN hqN χ
     hF₁_char hF₁_eigen
   simp only [q_pnat, PNat.mk_coe] at h
@@ -1023,9 +976,7 @@ private theorem eigenvalue_at_prime_sq_of_coeff_one_ne_zero
   rw [dif_pos (Nat.coprime_one_left N), dif_pos hqN, h_div_one, h_div_qsq] at h
   simp only [h_unit_one, map_one, Units.val_one, one_mul,
     Nat.cast_one, one_zpow] at h
-  -- align the `F₁` coefficients (functions) with the renormalised cusp-form coefficients.
   rw [show (⇑F₁ : UpperHalfPlane → ℂ) = b₁⁻¹ • ⇑g_new.toCuspForm from rfl] at h
-  -- convert coefficients to eigenvalues of `g_new`.
   have hcq := coeff_smul_inv_eq_eigenvalue g_new χ hgχ hb₁_def hb₁_ne q_pnat hqN
   have hcqsq := coeff_smul_inv_eq_eigenvalue g_new χ hgχ hb₁_def hb₁_ne
     ⟨q ^ 2, pow_pos hq_pos 2⟩ (Nat.Coprime.pow_left 2 hqN)
@@ -1035,11 +986,8 @@ private theorem eigenvalue_at_prime_sq_of_coeff_one_ne_zero
       = b₁⁻¹ • ⇑g_new.toCuspForm from rfl] at this
   simp only [q_pnat, PNat.mk_coe] at hcq hcqsq
   rw [hcq, hcqsq, hc1, mul_one] at h
-  -- `λ_q² = λ_q² - χ(q) q^{k-1}`; rearrange `h : λ_q · λ_q = λ_q² + χ(q) q^{k-1}`.
   linear_combination -h
 
-/-- Existence of a prime `q ∤ N` with `q`, `q²`, `n·q`, `n·q²` all avoiding a finite set
-`S` and coprime to `n` (the index used in the multiplicativity bootstrap). -/
 private theorem exists_prime_coprime_avoiding_finset_local
     (n : ℕ+) (S : Finset ℕ) :
     ∃ q, Nat.Prime q ∧ Nat.Coprime q N ∧ Nat.Coprime n.val q ∧
@@ -1047,34 +995,30 @@ private theorem exists_prime_coprime_avoiding_finset_local
   obtain ⟨q, hq_le, hq_prime⟩ := Nat.exists_infinite_primes (S.sup id + N + n.val + 2)
   have hq_gt_S : ∀ s, s ∈ S → s < q := fun s hs ↦ by
     have : s ≤ S.sup id := Finset.le_sup (f := id) hs
-    omega
+    lia
   have hq_ndvd_N : ¬ q ∣ N := fun hqN ↦ by
     have : q ≤ N := Nat.le_of_dvd (Nat.pos_of_ne_zero (NeZero.ne N)) hqN
-    omega
+    lia
   have hq_ndvd_n : ¬ q ∣ n.val := fun hqn ↦ by
     have : q ≤ n.val := Nat.le_of_dvd n.pos hqn
-    omega
+    lia
   have hq_N : Nat.Coprime q N := hq_prime.coprime_iff_not_dvd.mpr hq_ndvd_N
-  have hn_q : Nat.Coprime n.val q :=
-    (hq_prime.coprime_iff_not_dvd.mpr hq_ndvd_n).symm
-  refine ⟨q, hq_prime, hq_N, hn_q, ?_, ?_, ?_, ?_⟩
-  · exact fun hqS ↦ by have := hq_gt_S q hqS; omega
+  refine ⟨q, hq_prime, hq_N, (hq_prime.coprime_iff_not_dvd.mpr hq_ndvd_n).symm, ?_, ?_, ?_, ?_⟩
+  · exact fun hqS ↦ by have := hq_gt_S q hqS; lia
   · exact fun hqsqS ↦ by
       have := hq_gt_S _ hqsqS
       have hle : q ≤ q ^ 2 := by nlinarith [hq_prime.pos]
-      omega
+      lia
   · exact fun hnqS ↦ by
       have := hq_gt_S _ hnqS
       have hle : q ≤ n.val * q := Nat.le_mul_of_pos_left q n.pos
-      omega
+      lia
   · exact fun hnqsqS ↦ by
       have := hq_gt_S _ hnqsqS
       have h1 : q ≤ q ^ 2 := by nlinarith [hq_prime.pos]
       have h2 : q ^ 2 ≤ n.val * q ^ 2 := Nat.le_mul_of_pos_left _ n.pos
-      omega
+      lia
 
-/-- Helper: from the prime-`q` cofactor relation, agreement at `n·q` (or `n·q²`) plus a
-nonzero cofactor eigenvalue propagates eigenvalue agreement to `n`. -/
 private theorem eigenvalue_agree_of_cofactor_ne_zero
     (f : Newform N k) (g_new : Eigenform N k) (χ : (ZMod N)ˣ →* ℂˣ)
     (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
@@ -1090,9 +1034,6 @@ private theorem eigenvalue_agree_of_cofactor_ne_zero
   rw [← HeckeRing.GL2.Newform.eigenvalue_coprime_mul f n m hn hmN hnm χ hfχ, hnm_eq,
     eigenvalue_coprime_mul_of_coeff_one_ne_zero g_new χ hgχ hb₁_ne n m hn hmN hnm, hm_eq]
 
-/-- **Eigenvalue agreement off a finite set ⟹ agreement at all coprime indices** for a
-`Newform` `f` and an `Eigenform` `g_new ∈ cuspFormsNew` with `a₁(g_new) ≠ 0` (Miyake
-4.6.13).  The `Eigenform`-side analogue of `eigenvalues_eq_all_coprime_of_eq_off_finite`. -/
 private theorem eigenvalues_eq_all_coprime_of_eq_off_finite_eigenform
     (f : Newform N k) (g_new : Eigenform N k) (χ : (ZMod N)ˣ →* ℂˣ)
     (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
@@ -1144,8 +1085,6 @@ the multiplicativity bootstrap with the second form at its own level `M`, using 
 character compatibility `χ(q) = ψ(q)` at indices `q` coprime to `N`. -/
 
 omit [NeZero N] in
-/-- Character compatibility at a coprime index: if `ψ ∘ unitsMap (M ∣ N) = χ` and
-`q` is coprime to `N` (hence to `M`), then `χ⟨q⟩ = ψ⟨q⟩` as unit values. -/
 private theorem char_comp_unitsMap_unitOfCoprime
     {M : ℕ} [NeZero M] {q : ℕ} (hMN : M ∣ N) (χ : (ZMod N)ˣ →* ℂˣ)
     (ψ : (ZMod M)ˣ →* ℂˣ) (hψχ : ψ.comp (ZMod.unitsMap hMN) = χ)
@@ -1158,9 +1097,6 @@ private theorem char_comp_unitsMap_unitOfCoprime
   show ZMod.castHom hMN (ZMod M) (ZMod.unitOfCoprime q hqN : ZMod N) = (q : ZMod M)
   rw [ZMod.coe_unitOfCoprime, map_natCast]
 
-/-- Cross-level cofactor propagation: the level-`M` analogue of
-`eigenvalue_agree_of_cofactor_ne_zero`, comparing `f.eigenvalue` (level `N`) and
-`g.eigenvalue` (level `M`, character `ψ`) via the level-`M` multiplicativity. -/
 private theorem eigenvalue_cross_agree_of_cofactor_ne_zero
     {M : ℕ} [NeZero M] (f : Newform N k) (g : Eigenform M k) (χ : (ZMod N)ˣ →* ℂˣ)
     (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
@@ -1179,10 +1115,6 @@ private theorem eigenvalue_cross_agree_of_cofactor_ne_zero
     eigenvalue_coprime_mul_of_coeff_one_ne_zero g ψ hgψ hb₁_ne n m
       (hn.coprime_dvd_right hMN) (hmN.coprime_dvd_right hMN) hnm, hm_eq]
 
-/-- **Cross-level eigenvalue agreement off a finite set ⟹ agreement at all coprime
-indices** (Miyake 4.6.13, descended form).  As
-`eigenvalues_eq_all_coprime_of_eq_off_finite_eigenform`, but the eigenform `g` lives at
-a divisor level `M ∣ N` with character `ψ` satisfying `ψ ∘ unitsMap = χ`. -/
 private theorem eigenvalues_eq_all_coprime_cross_level
     {M : ℕ} [NeZero M] (f : Newform N k) (g : Eigenform M k) (χ : (ZMod N)ˣ →* ℂˣ)
     (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
@@ -1202,7 +1134,6 @@ private theorem eigenvalues_eq_all_coprime_cross_level
     have hq_M : Nat.Coprime q M := hq_N.coprime_dvd_right hMN
     let q_pnat : ℕ+ := ⟨q, hq_prime.pos⟩
     let qsq_pnat : ℕ+ := ⟨q ^ 2, pow_pos hq_prime.pos 2⟩
-    -- prime-square relations for `f` (level `N`, `χ`) and `g` (level `M`, `ψ`) agree at `q ∤ N`.
     have h_chi_psi : (χ (ZMod.unitOfCoprime q hq_N) : ℂ) = (ψ (ZMod.unitOfCoprime q hq_M) : ℂ) :=
       char_comp_unitsMap_unitOfCoprime hMN χ ψ hψχ hq_N hq_M
     by_cases hLamq : f.eigenvalue q_pnat = 0
@@ -1230,18 +1161,8 @@ private theorem eigenvalues_eq_all_coprime_cross_level
   · exact hyp n hn hn_S
 
 /-- **New-part identity** (Miyake 4.6.12, new part, p. 163).  If `f` is a normalised
-newform and `g_new` is a common eigenfunction in the new subspace sharing `f`'s
-eigenvalues off `S`, then `g_new = b₁ • f` where `b₁ = a₁(g_new)`.
-
-Proved by direct disjointness (route B): the normalised difference
-`b₁⁻¹ • g_new - f` has vanishing `q`-coefficients at every index coprime to `N` (both
-forms are normalised eigenforms with the same eigenvalues there, the off-`S` agreement
-having been upgraded to all coprime indices), so it lies in `cuspFormsOld N k`; it also
-lies in `cuspFormsNew N k`, so it is `0`.
-
-This is the **unconditional** form: the per-prime character factorisation is supplied
-internally by the dichotomy-based `mainLemma_charSpace_routeB_unconditional` (Deliverable 1)
-and `coeff_one_ne_zero_of_mem_cuspFormsNew_of_eigen_unconditional` (Deliverable 2). -/
+`Newform` and `g_new` is a common eigenfunction in the new subspace sharing `f`'s
+eigenvalues off a finite set `S`, then `g_new = a₁(g_new) • f`. -/
 theorem newPart_eq_smul_of_shared_eigenvalues
     (f : Newform N k) (g_new : Eigenform N k) (χ : (ZMod N)ˣ →* ℂˣ)
     (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
@@ -1264,15 +1185,12 @@ theorem newPart_eq_smul_of_shared_eigenvalues
       rw [hb₁_def, hbridge]
       exact hsmul0
     rw [hg0, hb₁0, zero_smul]
-  · -- `b₁ ≠ 0` by Lemma 4.6.11 (unconditional).  Reduce to `b₁⁻¹ • g_new = f`, then disjointness.
-    have hb₁_ne : b₁ ≠ 0 :=
+  · have hb₁_ne : b₁ ≠ 0 :=
       coeff_one_ne_zero_of_mem_cuspFormsNew_of_eigen_unconditional g_new χ hgχ hg_new hg0
     set g₁ : CuspForm ((Gamma1 N).map (mapGL ℝ)) k := b₁⁻¹ • g_new.toCuspForm with hg₁_def
-    -- eigenvalue agreement at *all* coprime indices (off-`S` upgraded via 4.6.13).
     have h_eig_all : ∀ n : ℕ+, Nat.Coprime n.val N →
         f.eigenvalue n = g_new.eigenvalue n :=
       eigenvalues_eq_all_coprime_of_eq_off_finite_eigenform f g_new χ hfχ hgχ hb₁_ne S h_eig
-    -- the difference `g₁ - f` lies in the χ-cuspform space.
     have hg₁_char : g₁.toModularForm' ∈ modFormCharSpace k χ :=
       (modFormCharSpace k χ).smul_mem b₁⁻¹ hgχ
     have h_diff_char : g₁ - f.toCuspForm ∈ cuspFormCharSpace k χ :=
@@ -1281,7 +1199,6 @@ theorem newPart_eq_smul_of_shared_eigenvalues
           g₁).mp (by convert hg₁_char using 1))
         ((cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace (k := k) χ
           f.toCuspForm).mp (by convert hfχ using 1))
-    -- coefficient vanishing at every coprime index.
     have h_vanish : ∀ n : ℕ, Nat.Coprime n N →
         (ModularFormClass.qExpansion (1 : ℝ) (g₁ - f.toCuspForm)).coeff n = 0 := by
       intro n hn
@@ -1304,7 +1221,6 @@ theorem newPart_eq_smul_of_shared_eigenvalues
             (⇑f.toCuspForm.toModularForm')).coeff n = f.eigenvalue ⟨n, hn_pos⟩ :=
           (Newform.eigenvalue_eq_coeff f ⟨n, hn_pos⟩ hn χ hfχ).symm
         rw [hL, hR, h_eig_all ⟨n, hn_pos⟩ hn]
-    -- route B (unconditional): the difference is old; it is also new; hence zero.
     have h_old : g₁ - f.toCuspForm ∈ cuspFormsOld N k :=
       mainLemma_charSpace_routeB_unconditional χ (g₁ - f.toCuspForm) h_diff_char h_vanish
     have h_new : g₁ - f.toCuspForm ∈ cuspFormsNew N k :=
@@ -1318,21 +1234,14 @@ theorem newPart_eq_smul_of_shared_eigenvalues
 
 This is where gap #4 (4.6.9) and gap #3 (4.6.2) are consumed. -/
 
-/-- A nonzero `Newform` at level `N` does not lie in the **extended** old space
-`cuspFormsOldExtended N k` (the faithful old space of Miyake p.162 / Diamond–Shurman
-Def 5.6.1: level-raises **together with** the trivial inclusions `levelInclude_cusp`).
-
-Since `Newform.isNew` places the form in `cuspFormsNewExtended N k = (cuspFormsOldExtended)⊥`,
-this is immediate from `cuspFormsOldExtended_disjoint_cuspFormsNewExtended` and `f ≠ 0`. -/
+/-- A nonzero `Newform` at level `N` does not lie in the extended old space
+`cuspFormsOldExtended N k`. -/
 theorem newform_notMem_cuspFormsOldExtended
     (f : Newform N k) (hf0 : f.toCuspForm ≠ 0) :
     f.toCuspForm ∉ cuspFormsOldExtended N k := fun hf_old =>
   hf0 (Submodule.disjoint_def.mp cuspFormsOldExtended_disjoint_cuspFormsNewExtended
     f.toCuspForm hf_old f.isNew)
 
-/-- Package a classical `T(n)`-eigenform in a Nebentypus space `S_k(Γ₁(M), ψ)` as a bundled
-`Eigenform M k` (with character `ψ`).  Bridges the predicate `IsEigenform` to the ring
-eigen-condition via `isRingEigenvector_of_isEigenform`. -/
 private noncomputable def eigenformOfIsEigenform {M : ℕ} [NeZero M] {k : ℤ}
     (ψ : (ZMod M)ˣ →* ℂˣ) (h : CuspForm ((Gamma1 M).map (mapGL ℝ)) k)
     (hψ : h ∈ cuspFormCharSpace k ψ) (hev : IsEigenform h) : Eigenform M k where
@@ -1342,8 +1251,6 @@ private noncomputable def eigenformOfIsEigenform {M : ℕ} [NeZero M] {k : ℤ}
   ringEigenvalue := (Unified.isRingEigenvector_of_isEigenform (χ := ψ) hψ hev).choose
   isRingEigen := (Unified.isRingEigenvector_of_isEigenform (χ := ψ) hψ hev).choose_spec
 
-/-- The classical eigenvalue of `eigenformOfIsEigenform ψ h _ ⟨λ, hλ⟩` agrees with the
-chosen `IsEigenform` witness `λ` at coprime indices (both give `T_n h = c • h` with `h ≠ 0`). -/
 private theorem eigenformOfIsEigenform_eigenvalue {M : ℕ} [NeZero M] {k : ℤ}
     (ψ : (ZMod M)ˣ →* ℂˣ) (h : CuspForm ((Gamma1 M).map (mapGL ℝ)) k)
     (hψ : h ∈ cuspFormCharSpace k ψ) (lam : ℕ+ → ℂ)
@@ -1360,7 +1267,6 @@ private theorem eigenformOfIsEigenform_eigenvalue {M : ℕ} [NeZero M] {k : ℤ}
   have h4 : (ev - lam n) • h = 0 := by rw [sub_smul, h3, sub_self]
   exact sub_eq_zero.mp ((smul_eq_zero.mp h4).resolve_right hh_ne)
 
-/-- `petN` distributes over a finite sum in its second argument. -/
 private theorem petN_sum_right {ι : Type*} (s : Finset ι)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (x : ι → CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
@@ -1369,18 +1275,6 @@ private theorem petN_sum_right {ι : Type*} (s : Finset ι)
   | empty => simp [petN_zero_right]
   | cons a s has ih => rw [Finset.sum_cons, petN_add_right, ih, Finset.sum_cons]
 
-/-- **Step (i) of Miyake 4.6.12** (the eigenvalue-matching extraction).  A nonzero `g_old`
-in the χ-refined old space `S_k^♭(N,χ) ∩ S_k(Γ₁(N),χ)` that is a `T(n)`-eigenform with `f`'s
-eigenvalues off `S` (for `(n,N)=1`) descends to a **nonzero new eigenform** `h` at a proper
-divisor level `M` (`m_χ ∣ M`, `M ≠ N`), carrying a Nebentypus `ψ` with `ψ∘unitsMap = χ`, whose
-classical eigenvalues `λ` satisfy `λ n = f.eigenvalue n` for every `(n,N)=1` off `S`.
-
-Proof (Miyake p.164(i)): T008 writes `g_old = ∑ᵢ Vₗᵢ(hᵢ)` with each `hᵢ` a new eigenform at
-level `Mᵢ`; the `χ`-isotypic collapse (`charSpace_finset_sum_filter_eq`) drops the summands
-with `Ψ i ≠ χ`.  By Lemma 4.6.2 each `Vₗᵢ(hᵢ)` is a `T(n)`-eigenform with `hᵢ`'s eigenvalue.
-If **no** surviving summand were nonzero and eigenvalue-matching, then pairing `g_old` against
-each summand via `petN_eq_zero_of_ne_eigenvalues` would give `petN g_old g_old = 0`, forcing
-`g_old = 0` by `petN_definite` — contradiction.  So a matching nonzero summand `h := hᵢ` exists. -/
 private theorem exists_matching_summand
     (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ) (m_χ : ℕ)
     (g_old : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
@@ -1402,24 +1296,18 @@ private theorem exists_matching_summand
   classical
   obtain ⟨ι, hι, M, l, hM, hl, hcond, hMne, heq, h, χM, hh_new, hh_eig, hh_char, hsum⟩ :=
     exists_levelRaise_eigen_decomposition_of_mem_cuspFormsOldChar χ m_χ g_old hg_old
-  -- `M i ∣ N` and the level-`N` pullback character of each summand.
   have hMdvd : ∀ i, M i ∣ N := fun i ↦ ⟨l i, by rw [← heq i, Nat.mul_comm]⟩
   set Ψ : ι → ((ZMod N)ˣ →* ℂˣ) :=
     fun i ↦ (χM i).comp (ZMod.unitsMap (heq i ▸ Nat.dvd_mul_left (M i) (l i))) with hΨ_def
-  -- The summand functions and the χ-isotypic filter.
   set V : ι → CuspForm ((Gamma1 N).map (mapGL ℝ)) k :=
     fun i ↦ heq i ▸ levelRaise (M i) (l i) k (h i) with hV_def
-  -- Each summand lies in its level-`N` pullback character space (Atkin–Lehner, T010-A's `V_l`).
   have hVΨ : ∀ i, V i ∈ cuspFormCharSpace k (Ψ i) := fun i ↦
     levelRaise_mem_cuspFormCharSpace_comp (heq i) (χM i) (hh_char i)
   set s' : Finset ι := Finset.univ.filter (fun i ↦ Ψ i = χ) with hs'_def
-  -- Isotypic collapse: only the `Ψ i = χ` summands survive.
   have hcollapse : g_old = ∑ i ∈ s', V i :=
     charSpace_finset_sum_filter_eq Finset.univ V Ψ χ (fun i _ ↦ hVΨ i)
       (by rw [hsum]) hg_old_char
-  -- The eigenvalue witness of each `h i` (and hence of `V i`, by Lemma 4.6.2).
   choose lam hlam_spec using hh_eig
-  -- `V i` is a `T(n)`-eigenform with eigenvalue `lam i n` for all `(n,N)=1` (Lemma 4.6.2).
   have hV_eig : ∀ (i : ι) (n : ℕ+) (hn : Nat.Coprime n.val N),
       haveI : NeZero n.val := ⟨n.pos.ne'⟩
       heckeT_n_cusp k n.val (V i) = lam i n • V i := fun i n hn ↦ by
@@ -1427,29 +1315,22 @@ private theorem exists_matching_summand
     have hnMi : Nat.Coprime n.val (M i) :=
       Nat.Coprime.coprime_dvd_right (hMdvd i) hn
     exact heckeT_n_levelRaise_eigen (heq i) n.val hn (h i) (lam i n) (hlam_spec i n hnMi)
-  -- Extract a surviving summand that is nonzero AND matches `f`'s eigenvalues off `S`.
-  by_contra hcon
-  push_neg at hcon
-  -- Under the negation, every surviving summand is `petN`-orthogonal to `g_old`.
+  by_contra! hcon
   have horth : ∀ i ∈ s', petN g_old (V i) = 0 := by
     intro i hi
     by_cases hVi0 : V i = 0
     · rw [hVi0, petN_zero_right]
-    · -- `V i ≠ 0`: it must differ from `f`'s eigenvalues at some `(n,N)=1`, `n ∉ S`.
-      have hΨχ : Ψ i = χ := (Finset.mem_filter.mp hi).2
-      -- `h i ≠ 0` (else `V i = 0`).
+    · have hΨχ : Ψ i = χ := (Finset.mem_filter.mp hi).2
       have hhi0 : h i ≠ 0 := fun he ↦ hVi0 (by
         show (heq i ▸ levelRaise (M i) (l i) k (h i)) = 0
         rw [he, map_zero]
         generalize heq i = e; subst e; rfl)
       obtain ⟨n, hn, hnS, hne⟩ := hcon (M i) (hM i) (hcond i) (hMne i) (hMdvd i)
         (χM i) (h i) (lam i) (hh_new i) (hh_char i) hΨχ hhi0 (hlam_spec i)
-      -- `g_old` has eigenvalue `f.eigenvalue n`; `V i` has eigenvalue `lam i n ≠ f.eigenvalue n`.
       haveI : NeZero n.val := ⟨n.pos.ne'⟩
       exact petN_eq_zero_of_ne_eigenvalues χ hg_old_char
         ((hΨχ ▸ hVΨ i : V i ∈ cuspFormCharSpace k χ)) hg_old_ne hVi0 hn
         (h_eig n hn hnS) (hV_eig i n hn) (fun he ↦ hne he.symm)
-  -- Then `petN g_old g_old = ∑ petN g_old (V i) = 0`, contradicting `petN_definite`.
   have hpet0 : petN g_old g_old = 0 := by
     calc petN g_old g_old
         = petN g_old (∑ i ∈ s', V i) := by rw [← hcollapse]
@@ -1458,36 +1339,8 @@ private theorem exists_matching_summand
   exact hg_old_ne (petN_definite g_old hpet0)
 
 /-- **Old-part vanishing** (Miyake 4.6.12, steps (i)+(ii), p. 164).  If `f` is a
-nonzero newform at level `N` and `g_old` is a common `T(n)`-**eigenform** in the χ-refined
-old space sharing `f`'s eigenvalues off `S`, then `g_old = 0`.
-
-The `h_eig` hypothesis is the faithful Miyake-4.6.10 form: `g_old` is *asserted* to be a
-`T(n)`-eigenform with `f`'s eigenvalues for every `(n,N)=1`, `n ∉ S` (Theorem 4.6.12 supplies
-this for `oldPart g` via the Hecke-stability of the old subspace, `oldPart_isEigen_of_eigenform`).
-
-Proof (reduces to `newform_notMem_cuspFormsOldExtended`): if `g_old ≠ 0`, descend it
-(`4.6.9(3)`/T008 = `exists_levelRaise_eigen_decomposition_of_mem_cuspFormsOldChar`, `4.6.2`,
-linear independence of distinct-eigenvalue eigenforms) to a nonzero **new** eigenform `h` at a
-proper divisor `M` sharing `f`'s eigenvalues; normalise (`4.6.11`, `c₁' = a₁(h) ≠ 0`); then
-`ι(h) - c₁'•f` has vanishing coprime `q`-coefficients (`4.5.15(1)`), so
-`ι(h) - c₁'•f ∈ cuspFormsOld ⊆ cuspFormsOldExtended` (`4.6.8` + `cuspFormsOld_le_cuspFormsOldExtended`),
-while `ι(h) ∈ cuspFormsOldExtended` (`levelInclude_cusp_mem_cuspFormsOldExtended`, the trivial
-inclusion `4.6.9(2)`); hence `f = c₁'⁻¹•ι(h) - c₁'⁻¹•(ι(h) - c₁'•f) ∈ cuspFormsOldExtended`,
-contradicting `newform_notMem_cuspFormsOldExtended`.
-
-**Status (2026-05-28).**  COMPLETE — **unconditional**.  Step (i) is `exists_matching_summand`
-(above): a nonzero new eigenform `h` at a proper divisor level `M` (char `ψ`, `ψ∘unitsMap = χ`)
-sharing `f`'s eigenvalues off `S`, via the `petN`-orthogonality engine + the `χ`-isotypic
-collapse.  Step (ii) is discharged here: `c₁' = a₁(h) ≠ 0` by the **per-character
-unconditional** Lemma 4.6.11 (`coeff_one_ne_zero_of_mem_cuspFormsNew_of_eigen_unconditional`,
-Deliverable 2, which relies on the unconditional Main Lemma
-`mainLemma_charSpace_routeB_unconditional`, Deliverable 1 — the dichotomy-based 4.6.8 with no
-`h_chi_factor`).  The eigenvalue agreement off `S` is upgraded to all coprime indices across
-the level gap by `eigenvalues_eq_all_coprime_cross_level`, so `ι(h) - c₁'•f` has vanishing
-coprime `q`-coeffs, hence lies in `cuspFormsOld N k` (route-B Main Lemma at level `N`,
-**unconditional** form) ⊆ `cuspFormsOldExtended`; with `ι(h) ∈ cuspFormsOldExtended`
-(`levelInclude_cusp_mem_cuspFormsOldExtended`), this forces `f ∈ cuspFormsOldExtended`,
-contradicting `newform_notMem_cuspFormsOldExtended`. -/
+nonzero newform at level `N` and `g_old` is a common `T(n)`-eigenform in the χ-refined
+old space sharing `f`'s eigenvalues off a finite set `S`, then `g_old = 0`. -/
 theorem oldPart_eq_zero_of_shared_eigenvalues
     (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ) (m_χ : ℕ)
     (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
@@ -1499,12 +1352,10 @@ theorem oldPart_eq_zero_of_shared_eigenvalues
       haveI : NeZero n.val := ⟨n.pos.ne'⟩
       heckeT_n_cusp k n.val g_old = f.eigenvalue n • g_old) :
     g_old = 0 := by
-  -- Suppose `g_old ≠ 0`.  Step (i): extract the matching summand.
   by_contra hg0
   obtain ⟨M, hM_NeZero, _hcond, hMne, hMN, ψ, h, lam, hh_new, hh_char, hψχ, hh_ne,
     hh_eig, hh_lam⟩ :=
     exists_matching_summand f χ m_χ g_old hg_old hg_old_char hg0 S h_eig
-  -- Bundle `h` as an `Eigenform M k` with classical eigenvalues `lam` (at coprime indices).
   have hh_char_cusp : h ∈ cuspFormCharSpace k ψ := hh_char
   have hψ_mod : h.toModularForm' ∈ modFormCharSpace k ψ :=
     (cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace (k := k) ψ h).mpr
@@ -1514,20 +1365,16 @@ theorem oldPart_eq_zero_of_shared_eigenvalues
   have hh_eig_b_cusp : h_eig_b.toCuspForm = h := rfl
   have hψ_mod' : h_eig_b.toCuspForm.toModularForm' ∈ modFormCharSpace k ψ := by
     rw [hh_eig_b_cusp]; exact hψ_mod
-  -- `c₁' = a₁(h) ≠ 0` by the unconditional Lemma 4.6.11 (Deliverable 2).
   set c₁' := (ModularFormClass.qExpansion (1 : ℝ) h).coeff 1 with hc₁'_def
   have hc₁'_ne : c₁' ≠ 0 :=
     coeff_one_ne_zero_of_mem_cuspFormsNew_of_eigen_unconditional h_eig_b ψ hψ_mod' hh_new hh_ne
   have hc₁'_ne' : (ModularFormClass.qExpansion (1 : ℝ) h_eig_b.toCuspForm).coeff 1 ≠ 0 := by
     rw [hh_eig_b_cusp]; exact hc₁'_ne
-  -- `M < N`.
   have hMltN : M < N := lt_of_le_of_ne (Nat.le_of_dvd (Nat.pos_of_ne_zero (NeZero.ne N)) hMN) hMne
-  -- The trivial inclusion `ι(h)` at level `N`, lying in `cuspFormCharSpace k χ`.
   set ιh : CuspForm ((Gamma1 N).map (mapGL ℝ)) k := levelInclude_cusp hMN k h with hιh_def
   have hιh_char : ιh ∈ cuspFormCharSpace k χ := by
     have := levelInclude_cusp_mem_cuspFormCharSpace_comp hMN ψ hh_char_cusp
     rwa [hψχ] at this
-  -- Eigenvalue agreement at ALL coprime indices (cross-level upgrade of the off-`S` data).
   have h_lam_eq : ∀ n : ℕ+, Nat.Coprime n.val N → lam n = f.eigenvalue n := by
     have h_off : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S →
         f.eigenvalue n = h_eig_b.eigenvalue n := fun n hn hnS ↦ by
@@ -1563,13 +1410,11 @@ theorem oldPart_eq_zero_of_shared_eigenvalues
       set np : ℕ+ := ⟨n, hn_pos⟩ with hnp
       have hnp_val : (np : ℕ) = n := rfl
       have hnM : Nat.Coprime np.val M := hn.coprime_dvd_right hMN
-      -- the two underlying functions of `ιh.toModularForm'` and `h.toModularForm'` agree.
       have hfun : (⇑ιh.toModularForm' : UpperHalfPlane → ℂ) =
           ⇑h_eig_b.toCuspForm.toModularForm' := by
         rw [show (⇑ιh.toModularForm' : UpperHalfPlane → ℂ) = ⇑ιh from rfl,
           show (⇑h_eig_b.toCuspForm.toModularForm' : UpperHalfPlane → ℂ) = ⇑h_eig_b.toCuspForm
             from rfl, hh_eig_b_cusp, hιh_def, levelInclude_cusp_coe]
-      -- LHS coefficient: `a_n(ι h) = a_n(h) = c₁' · λ_n(h_eig_b) = c₁' · f.eigenvalue n`.
       have hL : (ModularFormClass.qExpansion (1 : ℝ) (⇑ιh.toModularForm')).coeff n =
           c₁' * f.eigenvalue np := by
         rw [qExpansion_ext2 ιh.toModularForm' h_eig_b.toCuspForm.toModularForm' hfun, ← hnp_val,
@@ -1578,7 +1423,6 @@ theorem oldPart_eq_zero_of_shared_eigenvalues
           Eigenform.coeff_eq_coeff_one_mul_eigenvalue h_eig_b ψ hψ_mod' np hnM,
           eigenformOfIsEigenform_eigenvalue ψ h hh_char_cusp lam hh_eig hh_ne np hnM,
           h_lam_eq np hn, hh_eig_b_cusp]
-      -- RHS coefficient: `a_n(c₁' • f) = c₁' · a_n(f) = c₁' · f.eigenvalue n`.
       have hR : (ModularFormClass.qExpansion (1 : ℝ)
           (⇑(c₁' • f.toCuspForm).toModularForm')).coeff n = c₁' * f.eigenvalue np := by
         rw [show (⇑(c₁' • f.toCuspForm).toModularForm' : UpperHalfPlane → ℂ) =
@@ -1587,22 +1431,18 @@ theorem oldPart_eq_zero_of_shared_eigenvalues
           smul_eq_mul, ← hnp_val, Newform.eigenvalue_eq_coeff f np hn χ hfχ]
         congr 1
       rw [hL, hR]
-  -- Route B at level `N` (unconditional form): the difference is old.
   have h_diff_old : ιh - c₁' • f.toCuspForm ∈ cuspFormsOld N k :=
     mainLemma_charSpace_routeB_unconditional χ (ιh - c₁' • f.toCuspForm) h_diff_char h_vanish
-  -- Upcast: difference ∈ cuspFormsOldExtended; `ι(h)` ∈ cuspFormsOldExtended.
   have h_diff_ext : ιh - c₁' • f.toCuspForm ∈ cuspFormsOldExtended N k :=
     cuspFormsOld_le_cuspFormsOldExtended h_diff_old
   have hιh_ext : ιh ∈ cuspFormsOldExtended N k :=
     levelInclude_cusp_mem_cuspFormsOldExtended hMN hMltN h
-  -- Hence `c₁' • f = ι(h) - (ι(h) - c₁'•f) ∈ cuspFormsOldExtended`, so `f ∈ cuspFormsOldExtended`.
   have hcf_ext : c₁' • f.toCuspForm ∈ cuspFormsOldExtended N k := by
     have := (cuspFormsOldExtended N k).sub_mem hιh_ext h_diff_ext
     simpa using this
   have hf_ext : f.toCuspForm ∈ cuspFormsOldExtended N k := by
     have := (cuspFormsOldExtended N k).smul_mem c₁'⁻¹ hcf_ext
     rwa [smul_smul, inv_mul_cancel₀ hc₁'_ne, one_smul] at this
-  -- Contradiction: a nonzero newform (`a₁(f) = 1`) is not in the extended old space.
   have hf_ne : f.toCuspForm ≠ 0 := by
     intro hf0
     have h1 : (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm).coeff 1 = 1 := f.isNorm
@@ -1614,19 +1454,9 @@ theorem oldPart_eq_zero_of_shared_eigenvalues
 /-! ## Theorem 4.6.12: assembly -/
 
 /-- **Miyake Theorem 4.6.12 (Strong Multiplicity One, full constant-multiple form).**
-
-Let `f` be a (normalised) `Newform` at level `N` with Nebentypus `χ`, and let `g` be a
-common `T(n)`-eigenfunction in the full χ-space `S_k(Γ₁(N), χ)` (encoded as an
-`Eigenform`), sharing `f`'s eigenvalues at all `n` coprime to `N` outside a finite set
-`S`.  Then `g = c • f` for some `c ∈ ℂ` (in fact `c = a₁(g)`).
-
-**Unconditional.**  The previous `h_chi_factor` hypothesis (the per-prime character
-factorisation through `ZMod (N/p)`) is supplied internally via the dichotomy-based
-`mainLemma_charSpace_routeB_unconditional` (Deliverable 1) and
-`coeff_one_ne_zero_of_mem_cuspFormsNew_of_eigen_unconditional` (Deliverable 2), threaded
-through the new-part (T004) and old-part (T010) sub-results.  This does not modify the
-frozen `strongMultiplicityOne_axiom_clean` — the present proof takes the direct-disjointness
-route through T004/T010 rather than through the axiom-clean variant. -/
+If `f` is a normalised `Newform` at level `N` with Nebentypus `χ` and `g` is a common
+`T(n)`-eigenfunction in `S_k(Γ₁(N), χ)` sharing `f`'s eigenvalues off a finite set `S`,
+then `g = c • f` for some `c ∈ ℂ`. -/
 theorem strongMultiplicityOne_constMul
     (f : Newform N k) (g : Eigenform N k) (χ : (ZMod N)ˣ →* ℂˣ)
     (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
@@ -1635,23 +1465,17 @@ theorem strongMultiplicityOne_constMul
     (h_eig : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S →
       f.eigenvalue n = g.eigenvalue n) :
     ∃ c : ℂ, g.toCuspForm = c • f.toCuspForm := by
-  -- Decompose `g = oldPart g + newPart g`.  The old part is a `T(n)`-eigenform with `f`'s
-  -- eigenvalues lying in `χ`-refined old space, so it vanishes (corrected T010); hence `g` is
-  -- new and the new-part identity (T004) gives `g = a₁(g) • f`.
   have hgχ_cusp : g.toCuspForm ∈ cuspFormCharSpace k χ :=
     (cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace (k := k) χ
       g.toCuspForm).mp (by convert hgχ using 1)
-  -- Lift `χ` to a Dirichlet character to access the reverse old-space inclusion (T012).
   set χ_dir : DirichletCharacter ℂ N := Newform.dirichletLift χ with hχ_dir_def
   have h_round : χ_dir.toUnitHom = χ := MulChar.equivToUnitHom.apply_symm_apply χ
-  -- `oldPart g` is a `T(n)`-eigenform sharing `f`'s eigenvalues (Hecke-stability, 4.6.10).
   have h_old_eig : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S →
       haveI : NeZero n.val := ⟨n.pos.ne'⟩
       heckeT_n_cusp k n.val (oldPart g.toCuspForm) =
         f.eigenvalue n • oldPart g.toCuspForm := fun n hn hnS ↦ by
     haveI : NeZero n.val := ⟨n.pos.ne'⟩
     rw [oldPart_isEigen_of_eigenform g n hn, h_eig n hn hnS]
-  -- `oldPart g ∈ cuspFormsOld ⊓ S_k(Γ₁(N),χ) ≤ cuspFormsOldChar` (T012).
   have h_old_char : oldPart g.toCuspForm ∈ cuspFormsOldChar N k χ χ_dir.conductor := by
     have h_inf : oldPart g.toCuspForm ∈
         cuspFormsOld N k ⊓ cuspFormCharSpace k χ_dir.toUnitHom := by
@@ -1660,17 +1484,11 @@ theorem strongMultiplicityOne_constMul
         oldPart_mem_cuspFormCharSpace χ hgχ_cusp⟩
     have := cuspFormsOld_inf_charSpace_le_cuspFormsOldChar (k := k) χ_dir h_inf
     rwa [h_round] at this
-  have h_old_charSpace : oldPart g.toCuspForm ∈ cuspFormCharSpace k χ :=
-    oldPart_mem_cuspFormCharSpace χ hgχ_cusp
-  -- Corrected T010 (unconditional): the old part vanishes.
   have h_old_zero : oldPart g.toCuspForm = 0 :=
     oldPart_eq_zero_of_shared_eigenvalues f χ χ_dir.conductor hfχ
-      (oldPart g.toCuspForm) h_old_char h_old_charSpace S h_old_eig
-  -- Hence `g` is new.
-  have hg_new : g.toCuspForm ∈ cuspFormsNew N k :=
-    (mem_cuspFormsNew_iff_oldPart_eq_zero g.toCuspForm).mpr h_old_zero
-  -- New-part identity (T004, unconditional), applied to `g` itself.
+      (oldPart g.toCuspForm) h_old_char (oldPart_mem_cuspFormCharSpace χ hgχ_cusp) S h_old_eig
   refine ⟨(ModularFormClass.qExpansion (1 : ℝ) g.toCuspForm).coeff 1, ?_⟩
-  exact newPart_eq_smul_of_shared_eigenvalues f g χ hfχ hgχ hg_new S h_eig
+  exact newPart_eq_smul_of_shared_eigenvalues f g χ hfχ hgχ
+    ((mem_cuspFormsNew_iff_oldPart_eq_zero g.toCuspForm).mpr h_old_zero) S h_eig
 
 end HeckeRing.GL2
