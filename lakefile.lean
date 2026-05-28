@@ -14,3 +14,5 @@ require mathlib from git
 @[default_target]
 lean_lib «LeanModularForms» where
   -- add any library configuration options here
+
+require checkdecls from git "https://github.com/PatrickMassot/checkdecls.git"
