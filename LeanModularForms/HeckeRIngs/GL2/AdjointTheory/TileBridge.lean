@@ -325,6 +325,25 @@ def TpUpperBranchBalanced
                 SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- The T_p_upper(b)-shifted-tile *SL-tile balance* equation. -/
+def TpUpperBSLTileBalance
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (b : ℕ)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
+  peterssonInner k
+      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ))
+      ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)) ∣[k]
+        (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ))
+      (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) =
+    peterssonInner k
+      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ))
+      (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f))
+      (⇑g ∣[k] (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ))
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- The M_∞-shifted-tile *SL-tile balance* equation: peterssonInner on the
 `M_∞ · (q.out)⁻¹`-tile union, with `(⟨d⟩⁻¹f) ∣[M_∞]` slot 2 swapped to
 `⟨d⟩f ∣[M_∞]` on the right and the diamond moved from `f` to `g`. -/
@@ -3683,19 +3702,7 @@ private theorem h_T_p_upper_SL_tile_balance_of_T_p_lower_diamond_form
             ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
               ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
                 (gamma0_T_p_upper_Gamma1_factor N p hpN b))))) :
-    peterssonInner k
-        (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ))
-        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)) ∣[k]
-          (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ))
-        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) =
-      peterssonInner k
-        (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ))
-        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f))
-        (⇑g ∣[k] (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ)) :=
+    TpUpperBSLTileBalance p hp hpN b f g :=
   (h_T_p_upper_SL_tile_balance_iff_T_p_lower_diamond_form p hp hpN b f g).mpr
     h_diamond
 
@@ -3792,43 +3799,6 @@ private theorem h_M_infty_SL_tile_balance_iff_T_p_upper_zero_shifted_form
     (h_T_p_lower_diamond_form_iff_T_p_upper_zero_shifted_form p hp hpN f g)
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-private theorem h_M_infty_SL_tile_balance_of_T_p_upper_zero_shifted_form
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
-    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (h_shifted :
-      peterssonInner k
-          ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) •
-            ⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-              ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (q.out : SL(2, ℤ))⁻¹ :
-                GL (Fin 2) ℝ) • (fd : Set ℍ))
-          ⇑f
-          ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) ∣[k]
-            (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) =
-        peterssonInner k
-          ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) •
-            ⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-              ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (q.out : SL(2, ℤ))⁻¹ :
-                GL (Fin 2) ℝ) • (fd : Set ℍ))
-          ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)) ∣[k]
-            (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ))
-          (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) g))) :
-    peterssonInner k
-        (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ))
-        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)) ∣[k]
-          (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ))
-        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) =
-      peterssonInner k
-        (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ))
-        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f))
-        (⇑g ∣[k] (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)) :=
-  (h_M_infty_SL_tile_balance_iff_T_p_upper_zero_shifted_form p hp hpN f g).mpr
-    h_shifted
-
-open UpperHalfPlane ModularGroup MeasureTheory in
 def TpUpperZeroShiftedFormBlocker
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
@@ -3848,6 +3818,15 @@ def TpUpperZeroShiftedFormBlocker
       ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)) ∣[k]
         (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ))
       (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) g))
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+private theorem h_M_infty_SL_tile_balance_of_T_p_upper_zero_shifted_form
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (h_shifted : TpUpperZeroShiftedFormBlocker p hp hpN f g) :
+    MInftySLTileBalance p hp hpN f g :=
+  (h_M_infty_SL_tile_balance_iff_T_p_upper_zero_shifted_form p hp hpN f g).mpr
+    h_shifted
 
 open UpperHalfPlane ModularGroup MeasureTheory in
 def TpUpperBranchDiamondFormBlocker
@@ -3877,19 +3856,7 @@ theorem h_T_p_upper_SL_tile_balance_from_blocker
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (b : ℕ)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (h : TpUpperBranchDiamondFormBlocker p hp hpN b f g) :
-    peterssonInner k
-        (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ))
-        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)) ∣[k]
-          (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ))
-        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) =
-      peterssonInner k
-        (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ))
-        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f))
-        (⇑g ∣[k] (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ)) :=
+    TpUpperBSLTileBalance p hp hpN b f g :=
   h_T_p_upper_SL_tile_balance_of_T_p_lower_diamond_form p hp hpN b f g h
 
 open UpperHalfPlane ModularGroup MeasureTheory in
@@ -3897,19 +3864,7 @@ private theorem h_M_infty_SL_tile_balance_from_blocker
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (h : TpUpperZeroShiftedFormBlocker p hp hpN f g) :
-    peterssonInner k
-        (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ))
-        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)) ∣[k]
-          (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ))
-        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) =
-      peterssonInner k
-        (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ))
-        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f))
-        (⇑g ∣[k] (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)) :=
+    MInftySLTileBalance p hp hpN f g :=
   h_M_infty_SL_tile_balance_of_T_p_upper_zero_shifted_form p hp hpN f g h
 
 open UpperHalfPlane ModularGroup MeasureTheory in
