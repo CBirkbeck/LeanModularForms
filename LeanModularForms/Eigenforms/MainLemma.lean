@@ -56,11 +56,72 @@ private theorem neZero_mul_list_prod_of_prime_dvd
   ⟨Nat.mul_ne_zero (NeZero.ne M)
     (List.prod_pos (fun p hp ↦ (hL p hp).1.pos)).ne'⟩
 
+/-- Tail-of-cons restriction of the prime/dvd predicate: from
+`hL : ∀ p ∈ p₀ :: L', p.Prime ∧ p ∣ M`, produce the analogous predicate
+for `L'`. -/
+private theorem consTail_prime_dvd
+    {M p₀ : ℕ} {L' : List ℕ}
+    (hL : ∀ p ∈ p₀ :: L', p.Prime ∧ p ∣ M) :
+    ∀ p ∈ L', p.Prime ∧ p ∣ M :=
+  fun p hp ↦ hL p (List.mem_cons_of_mem _ hp)
+
+/-- Head-of-cons specialisation: the prime/dvd predicate evaluated at
+`p₀` itself. -/
+private theorem consHead_prime_dvd
+    {M p₀ : ℕ} {L' : List ℕ}
+    (hL : ∀ p ∈ p₀ :: L', p.Prime ∧ p ∣ M) :
+    p₀.Prime ∧ p₀ ∣ M :=
+  hL p₀ List.mem_cons_self
+
 /-- For `N ∣ M`, the image `(Γ₁(M)).map (mapGL ℝ)` is contained in
 `(Γ₁(N)).map (mapGL ℝ)` inside `GL(2, ℝ)`. -/
 theorem Gamma1_mapGL_le_of_dvd {M N : ℕ} (h : N ∣ M) :
     (Gamma1 M).map (mapGL ℝ) ≤ (Gamma1 N).map (mapGL ℝ) :=
   Subgroup.map_mono (HeckeRing.GL2.Gamma1_le_of_dvd h)
+
+/-- `p₀` is not coprime to `M * L'.prod` when `p₀.Prime ∧ p₀ ∣ M`. -/
+private theorem consPrime_not_coprime
+    {M p₀ : ℕ} {L' : List ℕ}
+    (hp₀_prime_M : p₀.Prime ∧ p₀ ∣ M) :
+    ¬ Nat.Coprime p₀ (M * L'.prod) :=
+  Nat.Prime.not_coprime_iff_dvd.mpr
+    ⟨p₀, hp₀_prime_M.1, dvd_refl _, hp₀_prime_M.2.mul_right _⟩
+
+/-- The Γ₁-inclusion `(p₀ * (M * L'.prod)) ⊆ (M * L'.prod)`, packaged
+for use in cons-step recursions. -/
+private theorem consGamma1_le
+    (p₀ M : ℕ) (L' : List ℕ) :
+    (Gamma1 (p₀ * (M * L'.prod))).map (mapGL ℝ) ≤
+      (Gamma1 (M * L'.prod)).map (mapGL ℝ) :=
+  Gamma1_mapGL_le_of_dvd (⟨p₀, by ring⟩)
+
+/-- Level equality `p₀ * (M * L'.prod) = M * (p₀ :: L').prod`. -/
+private theorem consLevel_eq (p₀ M : ℕ) (L' : List ℕ) :
+    p₀ * (M * L'.prod) = M * (p₀ :: L').prod := by
+  rw [List.prod_cons]; ring
+
+/-- The `Finset.induction_on insert` step's level equation:
+`p₀ * M_prev = M * (insert p₀ S').prod id` when `M_prev = M * S'.prod id` and
+`p₀ ∉ S'`. -/
+private theorem insertLevel_eq
+    (p₀ M M_prev : ℕ) (S' : Finset ℕ) (hp₀_notin : p₀ ∉ S')
+    (hM_prev_eq : M_prev = M * S'.prod id) :
+    p₀ * M_prev = M * (insert p₀ S').prod id := by
+  rw [hM_prev_eq, Finset.prod_insert hp₀_notin]
+  simp; ring
+
+/-- For a Finset induction step, `p₀` is not coprime to `M_prev = M * S'.prod id`
+when `p₀.Prime` and `p₀ ∣ M`. -/
+private theorem insertPrime_not_coprime
+    {p₀ M M_prev : ℕ} {S' : Finset ℕ}
+    (hp₀_prime : p₀.Prime) (hp₀_M : p₀ ∣ M) (hM_prev_eq : M_prev = M * S'.prod id) :
+    ¬ Nat.Coprime p₀ M_prev := by
+  have hp₀_M_prev : p₀ ∣ M_prev := hM_prev_eq ▸ hp₀_M.mul_right _
+  exact Nat.Prime.not_coprime_iff_dvd.mpr ⟨p₀, hp₀_prime, dvd_refl _, hp₀_M_prev⟩
+
+/-- Cons-step inner divisibility `M * L'.prod ∣ p₀ * (M * L'.prod)`. -/
+private theorem consDvd_mpL_pmpL (M p₀ : ℕ) (L' : List ℕ) :
+    (M * L'.prod) ∣ p₀ * (M * L'.prod) := ⟨p₀, by ring⟩
 
 /-- Specialisation of `Gamma1_mapGL_le_of_dvd` to `N ∣ p · N`. -/
 theorem Gamma1_mapGL_le_mul_left (N p : ℕ) :
@@ -421,16 +482,12 @@ theorem miyake_4_6_5_finset_sieve_heckeT_p_divN_one
     have hp₀_prime : p₀.Prime := (hS p₀ (Finset.mem_insert_self p₀ S')).1
     have hp₀_M : p₀ ∣ M := (hS p₀ (Finset.mem_insert_self p₀ S')).2
     obtain ⟨M_prev, hM_prev_ne, hM_prev_eq, g_prev, hg_prev⟩ := IH hS'
-    have hp₀_M_prev : p₀ ∣ M_prev := hM_prev_eq ▸ hp₀_M.mul_right _
     have hp₀_not_coprime : ¬ Nat.Coprime p₀ M_prev :=
-      Nat.Prime.not_coprime_iff_dvd.mpr
-        ⟨p₀, hp₀_prime, dvd_refl _, hp₀_M_prev⟩
+      insertPrime_not_coprime hp₀_prime hp₀_M hM_prev_eq
     haveI : NeZero p₀ := ⟨hp₀_prime.ne_zero⟩
     haveI hM_new_ne : NeZero (p₀ * M_prev) :=
       ⟨Nat.mul_ne_zero hp₀_prime.ne_zero hM_prev_ne.out⟩
-    have hM_new_eq : p₀ * M_prev = M * (insert p₀ S').prod id := by
-      rw [hM_prev_eq, Finset.prod_insert hp₀_notin]
-      simp; ring
+    have hM_new_eq := insertLevel_eq p₀ M M_prev S' hp₀_notin hM_prev_eq
     have h_le : (Gamma1 (p₀ * M_prev)).map (mapGL ℝ) ≤ (Gamma1 M_prev).map (mapGL ℝ) :=
       Gamma1_mapGL_le_of_dvd (⟨p₀, by ring⟩)
     refine ⟨p₀ * M_prev, hM_new_ne, hM_new_eq,
@@ -509,6 +566,28 @@ theorem heckeT_p_divN_preserves_modFormCharSpace
   exact DFunLike.congr_fun
     ((HeckeRing.GL2.heckeT_p_divN k p hp hpN).map_smul c f) z
 
+/-- Character coherence under level-raising conjugation: `χ` applied to
+the `Gamma0`-coerced conjugate equals `χ.comp (ZMod.unitsMap _)` applied to
+the original. -/
+private theorem levelRaise_conj_char_eq
+    (M : ℕ) [NeZero M] (d : ℕ) [NeZero d] (χ : (ZMod M)ˣ →* ℂˣ)
+    (γ' : ↥(Gamma0 (d * M)))
+    (hdvd : (d : ℤ) ∣ ((γ' : SL(2, ℤ)) : Matrix (Fin 2) (Fin 2) ℤ) 1 0)
+    (h_conj_G0 :
+      (HeckeRing.GL2.levelRaiseConjOfDvd d (γ' : SL(2, ℤ)) hdvd : SL(2, ℤ)) ∈
+        Gamma0 M) :
+    χ (Gamma0MapUnits (⟨_, h_conj_G0⟩ : ↥(Gamma0 M))) =
+      (χ.comp (ZMod.unitsMap (Nat.dvd_mul_left M d))) (Gamma0MapUnits γ') := by
+  rw [MonoidHom.comp_apply]
+  congr 1
+  apply Units.ext
+  rw [ZMod.unitsMap_val, Gamma0MapUnits_val, Gamma0MapUnits_val]
+  show (((HeckeRing.GL2.levelRaiseConjOfDvd d (γ' : SL(2, ℤ)) hdvd
+    : SL(2, ℤ)) : Matrix (Fin 2) (Fin 2) ℤ) 1 1 : ZMod M) = _
+  rw [HeckeRing.GL2.levelRaiseConjOfDvd_lower_right]
+  exact (ZMod.cast_intCast (Nat.dvd_mul_left M d)
+    (((γ' : SL(2, ℤ)) : Matrix (Fin 2) (Fin 2) ℤ) 1 1)).symm
+
 /-- Level-raising pulls back the Nebentypus: for `f ∈ modFormCharSpace k χ`
 at level `Γ₁(M)` and `d ≥ 1`, the level-raised form
 `modularFormLevelRaise M d k f` at level `Γ₁(d·M)` lies in
@@ -530,19 +609,7 @@ theorem modularFormLevelRaise_mem_modFormCharSpace
         Gamma0 M :=
     HeckeRing.GL2.levelRaiseConjOfDvd_mem_Gamma0 d M _ γ'.property
   rw [hf ⟨_, h_conj_G0⟩]
-  have h_char_eq :
-      χ (Gamma0MapUnits (⟨_, h_conj_G0⟩ : ↥(Gamma0 M))) =
-      (χ.comp (ZMod.unitsMap (Nat.dvd_mul_left M d))) (Gamma0MapUnits γ') := by
-    rw [MonoidHom.comp_apply]
-    congr 1
-    apply Units.ext
-    rw [ZMod.unitsMap_val, Gamma0MapUnits_val, Gamma0MapUnits_val]
-    show (((HeckeRing.GL2.levelRaiseConjOfDvd d (γ' : SL(2, ℤ)) hdvd
-      : SL(2, ℤ)) : Matrix (Fin 2) (Fin 2) ℤ) 1 1 : ZMod M) = _
-    rw [HeckeRing.GL2.levelRaiseConjOfDvd_lower_right]
-    exact (ZMod.cast_intCast (Nat.dvd_mul_left M d)
-      (((γ' : SL(2, ℤ)) : Matrix (Fin 2) (Fin 2) ℤ) 1 1)).symm
-  rw [h_char_eq]
+  rw [levelRaise_conj_char_eq M d χ γ' hdvd h_conj_G0]
   set c : ℂ :=
     ↑((χ.comp (ZMod.unitsMap (Nat.dvd_mul_left M d))) (Gamma0MapUnits γ'))
   change HeckeRing.GL2.levelRaiseFun d k (c • ⇑f) =
@@ -610,16 +677,12 @@ theorem miyake_main_lemma_4_6_8_finset
     have hp₀_M : p₀ ∣ M := (hS p₀ (Finset.mem_insert_self p₀ S')).2
     obtain ⟨M_prev, hM_prev_ne, hM_prev_eq, hdvd_prev, g_prev, hg_prev_char, hg_prev⟩ :=
       IH hS'
-    have hp₀_M_prev : p₀ ∣ M_prev := hM_prev_eq ▸ hp₀_M.mul_right _
     have hp₀_not_coprime : ¬ Nat.Coprime p₀ M_prev :=
-      Nat.Prime.not_coprime_iff_dvd.mpr
-        ⟨p₀, hp₀_prime, dvd_refl _, hp₀_M_prev⟩
+      insertPrime_not_coprime hp₀_prime hp₀_M hM_prev_eq
     haveI : NeZero p₀ := ⟨hp₀_prime.ne_zero⟩
     haveI hM_new_ne : NeZero (p₀ * M_prev) :=
       ⟨Nat.mul_ne_zero hp₀_prime.ne_zero hM_prev_ne.out⟩
-    have hM_new_eq : p₀ * M_prev = M * (insert p₀ S').prod id := by
-      rw [hM_prev_eq, Finset.prod_insert hp₀_notin]
-      simp; ring
+    have hM_new_eq := insertLevel_eq p₀ M M_prev S' hp₀_notin hM_prev_eq
     have h_mp_dvd : M_prev ∣ p₀ * M_prev := ⟨p₀, by ring⟩
     have hdvd_new : M ∣ p₀ * M_prev := hdvd_prev.trans h_mp_dvd
     have h_le : (Gamma1 (p₀ * M_prev)).map (mapGL ℝ) ≤ (Gamma1 M_prev).map (mapGL ℝ) :=
@@ -910,26 +973,17 @@ private theorem iteratedSieveWitnessOnList_qExpansion_coeff
     simp
   | p₀ :: L', hL', n => by
     rw [iteratedSieveWitnessOnList_cons]
-    set hL'_props : ∀ p ∈ L', p.Prime ∧ p ∣ M :=
-      fun p hp ↦ hL' p (List.mem_cons_of_mem _ hp) with hL'_props_def
-    set hp₀_prime_M : p₀.Prime ∧ p₀ ∣ M := hL' p₀ List.mem_cons_self with hp₀_def
+    set hL'_props : ∀ p ∈ L', p.Prime ∧ p ∣ M := consTail_prime_dvd hL'
+    set hp₀_prime_M : p₀.Prime ∧ p₀ ∣ M := consHead_prime_dvd hL'
     set g_prev : ModularForm ((Gamma1 (M * L'.prod)).map (mapGL ℝ)) k :=
       iteratedSieveWitnessOnList f L' hL'_props with hg_prev_def
-    haveI hM_prev_ne : NeZero (M * L'.prod) := by
-      have hL'_pos : 0 < L'.prod := by
-        apply List.prod_pos
-        intro p hp
-        exact (hL'_props p hp).1.pos
-      exact ⟨Nat.mul_ne_zero (NeZero.ne M) hL'_pos.ne'⟩
+    haveI hM_prev_ne : NeZero (M * L'.prod) :=
+      neZero_mul_list_prod_of_prime_dvd hL'_props
     haveI : NeZero p₀ := ⟨hp₀_prime_M.1.ne_zero⟩
     have hp₀_not_coprime : ¬ Nat.Coprime p₀ (M * L'.prod) :=
-      Nat.Prime.not_coprime_iff_dvd.mpr
-        ⟨p₀, hp₀_prime_M.1, dvd_refl _, hp₀_prime_M.2.mul_right _⟩
-    have h_le : (Gamma1 (p₀ * (M * L'.prod))).map (mapGL ℝ) ≤
-        (Gamma1 (M * L'.prod)).map (mapGL ℝ) :=
-      Gamma1_mapGL_le_of_dvd (⟨p₀, by ring⟩)
-    have hM_eq : p₀ * (M * L'.prod) = M * (p₀ :: L').prod := by
-      rw [List.prod_cons]; ring
+      consPrime_not_coprime hp₀_prime_M
+    have h_le := consGamma1_le p₀ M L'
+    have hM_eq := consLevel_eq p₀ M L'
     haveI hM_new_ne : NeZero (p₀ * (M * L'.prod)) :=
       ⟨Nat.mul_ne_zero (NeZero.ne p₀) (NeZero.ne (M * L'.prod))⟩
     rw [qExpansion_coeff_cast_Gamma1 hM_eq _ n, ModularForm.coe_sub,
@@ -1145,29 +1199,19 @@ private theorem iteratedSieveWitnessOnList_add_corrections_eq_restrictDeep
     exact restrictSubgroup_cast_nil_eq h_le_full f
   | p₀ :: L', hL, h_le_full => by
     rw [iteratedSieveWitnessOnList_cons, iteratedSieveCorrectionsOnList_cons]
-    set hL'_props : ∀ p ∈ L', p.Prime ∧ p ∣ M :=
-      fun p hp ↦ hL p (List.mem_cons_of_mem _ hp) with hL'_props_def
-    set hp₀_prime_M : p₀.Prime ∧ p₀ ∣ M := hL p₀ List.mem_cons_self
-      with hp₀_def
+    set hL'_props : ∀ p ∈ L', p.Prime ∧ p ∣ M := consTail_prime_dvd hL
+    set hp₀_prime_M : p₀.Prime ∧ p₀ ∣ M := consHead_prime_dvd hL
     set g_prev : ModularForm ((Gamma1 (M * L'.prod)).map (mapGL ℝ)) k :=
       iteratedSieveWitnessOnList f L' hL'_props with hg_prev_def
     set c_prev : ModularForm ((Gamma1 (M * L'.prod)).map (mapGL ℝ)) k :=
       iteratedSieveCorrectionsOnList f L' hL'_props with hc_prev_def
-    haveI hM_prev_ne : NeZero (M * L'.prod) := by
-      have hL'_pos : 0 < L'.prod := by
-        apply List.prod_pos
-        intro p hp
-        exact (hL'_props p hp).1.pos
-      exact ⟨Nat.mul_ne_zero (NeZero.ne M) hL'_pos.ne'⟩
+    haveI hM_prev_ne : NeZero (M * L'.prod) :=
+      neZero_mul_list_prod_of_prime_dvd hL'_props
     haveI : NeZero p₀ := ⟨hp₀_prime_M.1.ne_zero⟩
     have hp₀_not_coprime : ¬ Nat.Coprime p₀ (M * L'.prod) :=
-      Nat.Prime.not_coprime_iff_dvd.mpr
-        ⟨p₀, hp₀_prime_M.1, dvd_refl _, hp₀_prime_M.2.mul_right _⟩
-    have h_le : (Gamma1 (p₀ * (M * L'.prod))).map (mapGL ℝ) ≤
-        (Gamma1 (M * L'.prod)).map (mapGL ℝ) :=
-      Gamma1_mapGL_le_of_dvd (⟨p₀, by ring⟩)
-    have hM_eq : p₀ * (M * L'.prod) = M * (p₀ :: L').prod := by
-      rw [List.prod_cons]; ring
+      consPrime_not_coprime hp₀_prime_M
+    have h_le := consGamma1_le p₀ M L'
+    have hM_eq := consLevel_eq p₀ M L'
     set lr : ModularForm ((Gamma1 (p₀ * (M * L'.prod))).map (mapGL ℝ)) k :=
       HeckeRing.GL2.modularFormLevelRaise (M * L'.prod) p₀ k
         (HeckeRing.GL2.heckeT_p_divN k p₀ hp₀_prime_M.1 hp₀_not_coprime g_prev)
@@ -1311,29 +1355,19 @@ private theorem iteratedSieveCorrectionsOnList_eq_pieces_sum
       List.sum_nil]
   | p₀ :: L', hL => by
     rw [iteratedSieveCorrectionsOnList_cons f p₀ L' hL]
-    set hL'_props : ∀ p ∈ L', p.Prime ∧ p ∣ M :=
-      fun p hp ↦ hL p (List.mem_cons_of_mem _ hp) with hL'_props_def
-    set hp₀_prime_M : p₀.Prime ∧ p₀ ∣ M := hL p₀ List.mem_cons_self
-      with hp₀_def
+    set hL'_props : ∀ p ∈ L', p.Prime ∧ p ∣ M := consTail_prime_dvd hL
+    set hp₀_prime_M : p₀.Prime ∧ p₀ ∣ M := consHead_prime_dvd hL
     set g_prev : ModularForm ((Gamma1 (M * L'.prod)).map (mapGL ℝ)) k :=
       iteratedSieveWitnessOnList f L' hL'_props
     set c_prev : ModularForm ((Gamma1 (M * L'.prod)).map (mapGL ℝ)) k :=
       iteratedSieveCorrectionsOnList f L' hL'_props with hc_prev_def
-    haveI hM_prev_ne : NeZero (M * L'.prod) := by
-      have hL'_pos : 0 < L'.prod := by
-        apply List.prod_pos
-        intro p hp
-        exact (hL'_props p hp).1.pos
-      exact ⟨Nat.mul_ne_zero (NeZero.ne M) hL'_pos.ne'⟩
+    haveI hM_prev_ne : NeZero (M * L'.prod) :=
+      neZero_mul_list_prod_of_prime_dvd hL'_props
     haveI : NeZero p₀ := ⟨hp₀_prime_M.1.ne_zero⟩
     have hp₀_not_coprime : ¬ Nat.Coprime p₀ (M * L'.prod) :=
-      Nat.Prime.not_coprime_iff_dvd.mpr
-        ⟨p₀, hp₀_prime_M.1, dvd_refl _, hp₀_prime_M.2.mul_right _⟩
-    have h_le : (Gamma1 (p₀ * (M * L'.prod))).map (mapGL ℝ) ≤
-        (Gamma1 (M * L'.prod)).map (mapGL ℝ) :=
-      Gamma1_mapGL_le_of_dvd (⟨p₀, by ring⟩)
-    have hM_eq : p₀ * (M * L'.prod) = M * (p₀ :: L').prod := by
-      rw [List.prod_cons]; ring
+      consPrime_not_coprime hp₀_prime_M
+    have h_le := consGamma1_le p₀ M L'
+    have hM_eq := consLevel_eq p₀ M L'
     set prev_pieces :
         List (ModularForm ((Gamma1 (M * L'.prod)).map (mapGL ℝ)) k) :=
       iteratedSieveCorrectionPiecesOnList f L' hL'_props with hpp_def
@@ -1514,22 +1548,17 @@ private theorem iteratedSieveCorrectionPiecesOnList_forall_mem_isOldformImage
       simp at hg
   | p₀ :: L', hL => by
       intro g hg
-      set hL'_props : ∀ p ∈ L', p.Prime ∧ p ∣ M :=
-        fun p hp ↦ hL p (List.mem_cons_of_mem _ hp) with hL'_props_def
-      set hp₀_prime_M : p₀.Prime ∧ p₀ ∣ M := hL p₀ List.mem_cons_self with hp₀_def
+      set hL'_props : ∀ p ∈ L', p.Prime ∧ p ∣ M := consTail_prime_dvd hL
+      set hp₀_prime_M : p₀.Prime ∧ p₀ ∣ M := consHead_prime_dvd hL
       haveI hM_prev_ne : NeZero (M * L'.prod) :=
         neZero_mul_list_prod_of_prime_dvd hL'_props
       haveI hp₀_ne : NeZero p₀ := ⟨hp₀_prime_M.1.ne_zero⟩
       haveI hM_full_ne : NeZero (M * (p₀ :: L').prod) :=
         neZero_mul_list_prod_of_prime_dvd hL
       have hp₀_not_coprime : ¬ Nat.Coprime p₀ (M * L'.prod) :=
-        Nat.Prime.not_coprime_iff_dvd.mpr
-          ⟨p₀, hp₀_prime_M.1, dvd_refl _, hp₀_prime_M.2.mul_right _⟩
-      have h_le : (Gamma1 (p₀ * (M * L'.prod))).map (mapGL ℝ) ≤
-          (Gamma1 (M * L'.prod)).map (mapGL ℝ) :=
-        Gamma1_mapGL_le_of_dvd (⟨p₀, by ring⟩)
-      have hM_eq : p₀ * (M * L'.prod) = M * (p₀ :: L').prod := by
-        rw [List.prod_cons]; ring
+        consPrime_not_coprime hp₀_prime_M
+      have h_le := consGamma1_le p₀ M L'
+      have hM_eq := consLevel_eq p₀ M L'
       rw [iteratedSieveCorrectionPiecesOnList_cons f p₀ L' hL,
           List.mem_append] at hg
       rcases hg with hg_mapped | hg_last
@@ -1592,28 +1621,19 @@ private theorem iteratedSieveWitnessOnList_mem_modFormCharSpace
         (Nat.dvd_mul_right M ([] : List ℕ).prod)
         (by rw [ZMod.unitsMap_self, MonoidHom.comp_id]; exact hf_χ)
   | p₀ :: L', hL' => by
-      set hL'_props : ∀ p ∈ L', p.Prime ∧ p ∣ M :=
-        fun p hp ↦ hL' p (List.mem_cons_of_mem _ hp) with hL'_props_def
-      set hp₀_prime_M : p₀.Prime ∧ p₀ ∣ M := hL' p₀ List.mem_cons_self
-      haveI hM_prev_ne : NeZero (M * L'.prod) := ⟨by
-        have hL'_pos : 0 < L'.prod :=
-          List.prod_pos (fun p hp ↦ (hL'_props p hp).1.pos)
-        exact Nat.mul_ne_zero (NeZero.ne M) hL'_pos.ne'⟩
+      set hL'_props : ∀ p ∈ L', p.Prime ∧ p ∣ M := consTail_prime_dvd hL'
+      set hp₀_prime_M : p₀.Prime ∧ p₀ ∣ M := consHead_prime_dvd hL'
+      haveI hM_prev_ne : NeZero (M * L'.prod) :=
+        neZero_mul_list_prod_of_prime_dvd hL'_props
       haveI : NeZero p₀ := ⟨hp₀_prime_M.1.ne_zero⟩
-      haveI hM_full_ne : NeZero (M * (p₀ :: L').prod) := ⟨by
-        have hL_pos : 0 < (p₀ :: L').prod :=
-          List.prod_pos (fun p hp ↦ (hL' p hp).1.pos)
-        exact Nat.mul_ne_zero (NeZero.ne M) hL_pos.ne'⟩
+      haveI hM_full_ne : NeZero (M * (p₀ :: L').prod) :=
+        neZero_mul_list_prod_of_prime_dvd hL'
       haveI hp₀M'_ne : NeZero (p₀ * (M * L'.prod)) :=
         ⟨Nat.mul_ne_zero (NeZero.ne p₀) (NeZero.ne (M * L'.prod))⟩
       have hp₀_not_coprime : ¬ Nat.Coprime p₀ (M * L'.prod) :=
-        Nat.Prime.not_coprime_iff_dvd.mpr
-          ⟨p₀, hp₀_prime_M.1, dvd_refl _, hp₀_prime_M.2.mul_right _⟩
-      have h_le : (Gamma1 (p₀ * (M * L'.prod))).map (mapGL ℝ) ≤
-          (Gamma1 (M * L'.prod)).map (mapGL ℝ) :=
-        Gamma1_mapGL_le_of_dvd (⟨p₀, by ring⟩)
-      have hM_eq : p₀ * (M * L'.prod) = M * (p₀ :: L').prod := by
-        rw [List.prod_cons]; ring
+        consPrime_not_coprime hp₀_prime_M
+      have h_le := consGamma1_le p₀ M L'
+      have hM_eq := consLevel_eq p₀ M L'
       have hdvd_prev : M ∣ M * L'.prod := Nat.dvd_mul_right M L'.prod
       have h_mp_dvd : (M * L'.prod) ∣ p₀ * (M * L'.prod) := ⟨p₀, by ring⟩
       have hdvd_inner : M ∣ p₀ * (M * L'.prod) := hdvd_prev.trans h_mp_dvd
@@ -1649,28 +1669,19 @@ private theorem iteratedSieveCorrectionsOnList_mem_modFormCharSpace
       rw [iteratedSieveCorrectionsOnList_nil]
       exact Submodule.zero_mem _
   | p₀ :: L', hL' => by
-      set hL'_props : ∀ p ∈ L', p.Prime ∧ p ∣ M :=
-        fun p hp ↦ hL' p (List.mem_cons_of_mem _ hp) with hL'_props_def
-      set hp₀_prime_M : p₀.Prime ∧ p₀ ∣ M := hL' p₀ List.mem_cons_self
-      haveI hM_prev_ne : NeZero (M * L'.prod) := ⟨by
-        have hL'_pos : 0 < L'.prod :=
-          List.prod_pos (fun p hp ↦ (hL'_props p hp).1.pos)
-        exact Nat.mul_ne_zero (NeZero.ne M) hL'_pos.ne'⟩
+      set hL'_props : ∀ p ∈ L', p.Prime ∧ p ∣ M := consTail_prime_dvd hL'
+      set hp₀_prime_M : p₀.Prime ∧ p₀ ∣ M := consHead_prime_dvd hL'
+      haveI hM_prev_ne : NeZero (M * L'.prod) :=
+        neZero_mul_list_prod_of_prime_dvd hL'_props
       haveI : NeZero p₀ := ⟨hp₀_prime_M.1.ne_zero⟩
-      haveI hM_full_ne : NeZero (M * (p₀ :: L').prod) := ⟨by
-        have hL_pos : 0 < (p₀ :: L').prod :=
-          List.prod_pos (fun p hp ↦ (hL' p hp).1.pos)
-        exact Nat.mul_ne_zero (NeZero.ne M) hL_pos.ne'⟩
+      haveI hM_full_ne : NeZero (M * (p₀ :: L').prod) :=
+        neZero_mul_list_prod_of_prime_dvd hL'
       haveI hp₀M'_ne : NeZero (p₀ * (M * L'.prod)) :=
         ⟨Nat.mul_ne_zero (NeZero.ne p₀) (NeZero.ne (M * L'.prod))⟩
       have hp₀_not_coprime : ¬ Nat.Coprime p₀ (M * L'.prod) :=
-        Nat.Prime.not_coprime_iff_dvd.mpr
-          ⟨p₀, hp₀_prime_M.1, dvd_refl _, hp₀_prime_M.2.mul_right _⟩
-      have h_le : (Gamma1 (p₀ * (M * L'.prod))).map (mapGL ℝ) ≤
-          (Gamma1 (M * L'.prod)).map (mapGL ℝ) :=
-        Gamma1_mapGL_le_of_dvd (⟨p₀, by ring⟩)
-      have hM_eq : p₀ * (M * L'.prod) = M * (p₀ :: L').prod := by
-        rw [List.prod_cons]; ring
+        consPrime_not_coprime hp₀_prime_M
+      have h_le := consGamma1_le p₀ M L'
+      have hM_eq := consLevel_eq p₀ M L'
       have hdvd_prev : M ∣ M * L'.prod := Nat.dvd_mul_right M L'.prod
       have h_mp_dvd : (M * L'.prod) ∣ p₀ * (M * L'.prod) := ⟨p₀, by ring⟩
       have hdvd_inner : M ∣ p₀ * (M * L'.prod) := hdvd_prev.trans h_mp_dvd
@@ -1712,9 +1723,8 @@ private theorem iteratedSieveCorrectionPiecesOnList_forall_mem_modFormCharSpace
       simp at hg
   | p₀ :: L', hL' => by
       intro g hg
-      set hL'_props : ∀ p ∈ L', p.Prime ∧ p ∣ M :=
-        fun p hp ↦ hL' p (List.mem_cons_of_mem _ hp) with hL'_props_def
-      set hp₀_prime_M : p₀.Prime ∧ p₀ ∣ M := hL' p₀ List.mem_cons_self
+      set hL'_props : ∀ p ∈ L', p.Prime ∧ p ∣ M := consTail_prime_dvd hL'
+      set hp₀_prime_M : p₀.Prime ∧ p₀ ∣ M := consHead_prime_dvd hL'
       haveI hM_prev_ne : NeZero (M * L'.prod) :=
         neZero_mul_list_prod_of_prime_dvd hL'_props
       haveI : NeZero p₀ := ⟨hp₀_prime_M.1.ne_zero⟩
@@ -1723,13 +1733,9 @@ private theorem iteratedSieveCorrectionPiecesOnList_forall_mem_modFormCharSpace
       haveI hp₀M'_ne : NeZero (p₀ * (M * L'.prod)) :=
         ⟨Nat.mul_ne_zero (NeZero.ne p₀) (NeZero.ne (M * L'.prod))⟩
       have hp₀_not_coprime : ¬ Nat.Coprime p₀ (M * L'.prod) :=
-        Nat.Prime.not_coprime_iff_dvd.mpr
-          ⟨p₀, hp₀_prime_M.1, dvd_refl _, hp₀_prime_M.2.mul_right _⟩
-      have h_le : (Gamma1 (p₀ * (M * L'.prod))).map (mapGL ℝ) ≤
-          (Gamma1 (M * L'.prod)).map (mapGL ℝ) :=
-        Gamma1_mapGL_le_of_dvd (⟨p₀, by ring⟩)
-      have hM_eq : p₀ * (M * L'.prod) = M * (p₀ :: L').prod := by
-        rw [List.prod_cons]; ring
+        consPrime_not_coprime hp₀_prime_M
+      have h_le := consGamma1_le p₀ M L'
+      have hM_eq := consLevel_eq p₀ M L'
       have hdvd_prev : M ∣ M * L'.prod := Nat.dvd_mul_right M L'.prod
       have h_mp_dvd : (M * L'.prod) ∣ p₀ * (M * L'.prod) := ⟨p₀, by ring⟩
       have hdvd_inner : M ∣ p₀ * (M * L'.prod) := hdvd_prev.trans h_mp_dvd
