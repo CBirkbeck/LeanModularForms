@@ -462,7 +462,7 @@ lemma Newform.glMap_T_p_lower_with_offsetRat
 
 open ConjAct Pointwise in
 private theorem isArithmetic_toConjAct_inv_smul_gamma1_of_map_eq
-    {N : ℕ} {A : GL (Fin 2) ℝ} {M : GL (Fin 2) ℚ}
+    {N : ℕ} [NeZero N] {A : GL (Fin 2) ℝ} {M : GL (Fin 2) ℚ}
     (hM : ((M : GL (Fin 2) ℚ).map (Rat.castHom ℝ) : GL (Fin 2) ℝ) = A) :
     (toConjAct A⁻¹ • ((Gamma1 N).map (mapGL ℝ))).IsArithmetic := by
   have h := Subgroup.IsArithmetic.conj ((Gamma1 N).map (mapGL ℝ)) M⁻¹
@@ -959,7 +959,7 @@ def Newform.HasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBExpanded
               ((q.out : SL(2, ℤ))⁻¹))
 
 private theorem sum_sum_const_mul_eq_const_mul_sum_sum
-    {N : ℕ} {p : ℕ} (c : ℂ)
+    {N : ℕ} [NeZero N] {p : ℕ} (c : ℂ)
     (F : (SL(2, ℤ) ⧸ Gamma1 N) → ℕ → ℂ) :
     ∑ q : SL(2, ℤ) ⧸ Gamma1 N, ∑ b ∈ Finset.range p, (c * F q b) =
       c * ∑ q : SL(2, ℤ) ⧸ Gamma1 N, ∑ b ∈ Finset.range p, F q b := by

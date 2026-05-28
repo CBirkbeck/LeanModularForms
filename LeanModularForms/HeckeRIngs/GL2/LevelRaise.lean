@@ -371,6 +371,58 @@ lemma levelRaiseFun_injective (l : ℕ) [NeZero l] (k : ℤ) :
   obtain ⟨τ, hτ⟩ := exists_levelRaiseMatrix_smul_eq l τ'
   simpa only [levelRaiseFun_apply, hτ] using congr_fun heq τ
 
+/-- **Coercion of the bundled `levelRaise` to its underlying function.**
+`⇑(levelRaise M d k g) = levelRaiseFun d k ⇑g` (definitional). -/
+lemma coe_levelRaise (M : ℕ) [NeZero M] (d : ℕ) [NeZero d] (k : ℤ)
+    (g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) :
+    (⇑(levelRaise M d k g) : UpperHalfPlane → ℂ) = levelRaiseFun d k ⇑g :=
+  rfl
+
+/-- **Associativity of the diagonal scaling action.** Acting by `α_{d'}` after
+`α_d` equals acting by `α_{d·d'}`: both send `τ` to the upper-half-plane point with
+complex value `(d·d')·τ`. -/
+lemma levelRaiseMatrix_smul_levelRaiseMatrix_smul (d d' : ℕ) [NeZero d] [NeZero d']
+    (τ : UpperHalfPlane) :
+    levelRaiseMatrix d' • (levelRaiseMatrix d • τ) = levelRaiseMatrix (d * d') • τ := by
+  apply UpperHalfPlane.ext
+  rw [coe_levelRaiseMatrix_smul, coe_levelRaiseMatrix_smul, coe_levelRaiseMatrix_smul]
+  push_cast
+  ring
+
+/-- **Associativity of `levelRaiseFun` (function level).** Raising by `d'` after `d`
+equals raising by `d·d'` directly: `(ι_{d'} ∘ ι_d) f = ι_{d·d'} f`. The order of the
+diagonal matrices does not matter (they commute), so `d·d'` appears. -/
+lemma levelRaiseFun_levelRaiseFun (d d' : ℕ) [NeZero d] [NeZero d'] (k : ℤ)
+    (f : UpperHalfPlane → ℂ) :
+    levelRaiseFun d k (levelRaiseFun d' k f) = levelRaiseFun (d * d') k f := by
+  funext τ
+  rw [levelRaiseFun_apply, levelRaiseFun_apply, levelRaiseFun_apply,
+    levelRaiseMatrix_smul_levelRaiseMatrix_smul]
+
+/-- **The level-transport `▸` is invisible to the underlying function.** Transporting
+a cusp form across a level equality `A = B` does not change its values. -/
+lemma eqRec_cuspForm_apply {A B : ℕ} [NeZero A] [NeZero B] {k : ℤ} (heq : A = B)
+    (x : CuspForm ((Gamma1 A).map (mapGL ℝ)) k) (τ : UpperHalfPlane) :
+    (heq ▸ x : CuspForm ((Gamma1 B).map (mapGL ℝ)) k) τ = x τ := by
+  subst heq; rfl
+
+/-- **Associativity of the bundled `levelRaise` operator.** Raising a cusp form `h` from
+level `M'` to `M = e·M'` and then to `d·M`, equals raising it directly from `M'` to
+`(d·e)·M'`.  Both produce a cusp form at level `d·M = (d·e)·M'`, identified via the level
+equality `heq3`.  This is the algebraic core that folds two iterated level-raises into a
+single one (Diamond–Shurman §5.6 Exercise 5.6.2; Miyake §4.6). -/
+lemma levelRaise_levelRaise {M' : ℕ} [NeZero M'] {e : ℕ} [NeZero e] {M : ℕ} [NeZero M]
+    {d : ℕ} [NeZero d] {k : ℤ}
+    (h : CuspForm ((Gamma1 M').map (mapGL ℝ)) k) (heq1 : e * M' = M)
+    (heq3 : (d * e) * M' = d * M) :
+    levelRaise M d k (heq1 ▸ levelRaise M' e k h) = heq3 ▸ levelRaise M' (d * e) k h := by
+  subst heq1
+  apply CuspForm.ext
+  intro τ
+  rw [eqRec_cuspForm_apply]
+  show levelRaiseFun d k ⇑(levelRaise M' e k h) τ = levelRaiseFun (d * e) k ⇑h τ
+  rw [coe_levelRaise, levelRaiseFun_levelRaiseFun]
+
 private noncomputable def primeProductCoprime (a : ℤ) (l : ℕ) : ℤ :=
   ((l.primeFactors.filter (fun (p : ℕ) ↦ ¬ ((p : ℤ) ∣ a))).prod id : ℕ)
 

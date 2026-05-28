@@ -344,11 +344,19 @@ private theorem miyake_4_6_5_single_prime_coprime_to_N
   rw [show (χ.comp (ZMod.unitsMap hN_dvd_pN)).comp
         (ZMod.unitsMap (Nat.dvd_mul_left (p * N) p)) = χ.comp (ZMod.unitsMap hN_dvd_ppN) by
       rw [MonoidHom.comp_assoc, ZMod.unitsMap_comp]] at h_g_ppN_χ
-  revert g_ppN h_g_ppN_χ h_g_ppN_qexp hN_dvd_ppN hppN_NeZero
-  generalize p * (p * N) = M_alt at hM_eq'
-  intro hppN_NeZero hN_dvd_ppN g_ppN h_g_ppN_χ h_g_ppN_qexp
-  subst hM_eq'
-  exact ⟨g_ppN, by convert h_g_ppN_χ using 2, h_g_ppN_qexp⟩
+  have key : ∀ (inst : NeZero (p * (p * N))) (h : N ∣ p * (p * N)),
+      ∃ g : CuspForm (Subgroup.map (mapGL ℝ) (Gamma1 (p * (p * N)))) k,
+      g ∈ @cuspFormCharSpace (p * (p * N)) inst k (χ.comp (ZMod.unitsMap h)) ∧
+      ∀ n : ℕ, (ModularFormClass.qExpansion (1 : ℝ) g).coeff n =
+        if ¬ p ∣ n then (ModularFormClass.qExpansion (1 : ℝ) f).coeff n else 0 :=
+    fun _ h ↦ ⟨g_ppN, by convert h_g_ppN_χ using 2, h_g_ppN_qexp⟩
+  exact @Eq.ndrec ℕ (p * (p * N))
+    (fun M ↦ ∀ (inst : NeZero M) (h : N ∣ M),
+      ∃ g : CuspForm (Subgroup.map (mapGL ℝ) (Gamma1 M)) k,
+      g ∈ @cuspFormCharSpace M inst k (χ.comp (ZMod.unitsMap h)) ∧
+      ∀ n : ℕ, (ModularFormClass.qExpansion (1 : ℝ) g).coeff n =
+        if ¬ p ∣ n then (ModularFormClass.qExpansion (1 : ℝ) f).coeff n else 0)
+    key (N * p ^ 2) hM_eq' hM_NeZero (Nat.dvd_mul_right N (p ^ 2))
 
 private theorem finish_peel_step
     {N N' M : ℕ} [NeZero N] [NeZero N'] [NeZero M] {k : ℤ} {q : ℕ} {n_pred : ℕ}

@@ -154,7 +154,8 @@ private lemma cuspForm_finsetSum_toModularForm' {α : Type*} [DecidableEq α]
 count is `p`) collapses to the slash-sum over the upper-triangular representatives
 `T_p_upper`. -/
 private lemma descendCosetList_slash_sum_eq_T_p_upper_range_slash_sum
-    {L : ℕ} {k : ℤ} (p : ℕ) (hp : p.Prime) (h_cnt : descendCosetCount p L = p)
+    {L : ℕ} [NeZero L] {k : ℤ} (p : ℕ) [NeZero p] (hp : p.Prime)
+    (h_cnt : descendCosetCount p L = p)
     (g : UpperHalfPlane → ℂ) :
     (fun z : UpperHalfPlane ↦
         ∑ v : Fin (descendCosetCount p L), (g ∣[k] descendCosetList p L hp v) z) =
@@ -660,7 +661,7 @@ private lemma slash_sum_qExp_split_via_cuspForm
 /-- If `F = Vp + g` pointwise, the `descendCosetList` slash-sum of `F` splits as the sum
 of the slash-sums of `Vp` and `g`. -/
 private lemma descendCosetList_slash_sum_eq_add_of_sub
-    {M : ℕ} {k : ℤ} (p : ℕ) (hp : p.Prime)
+    {M : ℕ} [NeZero M] {k : ℤ} (p : ℕ) [NeZero p] (hp : p.Prime)
     (F Vp g : UpperHalfPlane → ℂ) (h_g_eq : ∀ w, g w = F w - Vp w) :
     (fun z : UpperHalfPlane ↦
         ∑ v : Fin (descendCosetCount p M), (F ∣[k] descendCosetList p M hp v) z) =
@@ -674,7 +675,6 @@ private lemma descendCosetList_slash_sum_eq_add_of_sub
   simp_rw [h_F_eq]
   funext z
   simp only [SlashAction.add_slash, Finset.sum_add_distrib, Pi.add_apply]
-  rfl
 
 private lemma miyake_descent_l_prime_gt_one_helper
     {N : ℕ} [NeZero N] {k : ℤ} (χ : (ZMod N)ˣ →* ℂˣ)
