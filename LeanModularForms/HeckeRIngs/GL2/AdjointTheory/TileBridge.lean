@@ -344,6 +344,31 @@ def TpUpperBSLTileBalance
       (⇑g ∣[k] (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ))
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- The M_∞ *post-adjoint-swap* balance equation: the integration domain is
+M_∞-translated, with `peterssonAdj M_∞` slashing the g-slot then swapped via
+double-adjoint to the diamond. Used as hypothesis of
+`h_M_infty_SL_tile_balance_via_double_adjoint_swap`. -/
+def MInftyPostAdjSwapBalance
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
+  peterssonInner k
+    ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
+      ⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ))
+    (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f))
+    ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) ∣[k]
+      peterssonAdj (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)) =
+  peterssonInner k
+    ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
+      ⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ))
+    ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)) ∣[k]
+      peterssonAdj (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ))
+    ⇑g
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- The M_∞-shifted-tile *SL-tile balance* equation: peterssonInner on the
 `M_∞ · (q.out)⁻¹`-tile union, with `(⟨d⟩⁻¹f) ∣[M_∞]` slot 2 swapped to
 `⟨d⟩f ∣[M_∞]` on the right and the diamond moved from `f` to `g`. -/
@@ -3871,36 +3896,9 @@ open UpperHalfPlane ModularGroup MeasureTheory in
 private theorem h_M_infty_SL_tile_balance_via_double_adjoint_swap
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (h_post_adj_swap_balance :
-      peterssonInner k
-        ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
-          ⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-              (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ))
-        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f))
-        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) ∣[k]
-          peterssonAdj (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)) =
-      peterssonInner k
-        ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
-          ⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-              (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ))
-        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)) ∣[k]
-          peterssonAdj (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ))
-        ⇑g) :
-    peterssonInner k
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-          (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ))
-      ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)) ∣[k]
-        (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ))
-      (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) =
-    peterssonInner k
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-          (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ))
-      (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f))
-      (⇑g ∣[k] (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)) := by
+    (h_post_adj_swap_balance : MInftyPostAdjSwapBalance p hp hpN f g) :
+    MInftySLTileBalance p hp hpN f g := by
+  show _ = _
   rw [peterssonInner_slash_adjoint _ _
         (glMap_M_infty_det_pos N p hp.pos hpN)
         ⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)
