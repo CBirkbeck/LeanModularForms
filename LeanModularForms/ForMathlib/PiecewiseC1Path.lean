@@ -49,6 +49,7 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E] {x y : E}
 This bundles a free-interval `PiecewiseC1PathOn 0 1 zero_lt_one x y` together with a
 mathlib `Path x y` whose `extend` agrees with the underlying function on `[0, 1]`.
 Differentiability and continuous-derivative conditions are inherited from the parent. -/
+@[ext]
 structure PiecewiseC1Path (x y : E) extends PiecewiseC1PathOn 0 1 zero_lt_one x y where
   /-- The bundled mathlib `Path x y`. Kept as a field so that `Path.extend`-based
   call sites can continue to use the `Path` API. -/
@@ -90,6 +91,7 @@ theorem apply_one (γ : PiecewiseC1Path x y) : γ 1 = y :=
   γ.toPath.extend_one
 
 /-- The underlying extended path is continuous. -/
+@[fun_prop]
 theorem continuous (γ : PiecewiseC1Path x y) : Continuous (γ : ℝ → E) :=
   γ.toPath.continuous_extend
 
@@ -100,6 +102,7 @@ end PiecewiseC1Path
 This extends `PiecewiseC1Path x y` with the condition that the derivative is nonzero away from
 partition points, and has nonzero one-sided limits at partition points. This ensures the path
 has a well-defined tangent direction everywhere. -/
+@[ext]
 structure PwC1Immersion (x y : E) extends PiecewiseC1Path x y where
   /-- The derivative is nonzero at every point of `(0, 1)` outside the partition. -/
   deriv_ne_zero : ∀ t ∈ Ioo 0 1, t ∉ partition →
@@ -117,6 +120,7 @@ instance : CoeFun (PwC1Immersion x y) fun _ => ℝ → E where
   coe γ := γ.toPiecewiseC1Path.extendedPath
 
 /-- The underlying extended path is continuous. -/
+@[fun_prop]
 theorem continuous (γ : PwC1Immersion x y) : Continuous (γ : ℝ → E) :=
   γ.toPiecewiseC1Path.continuous
 

@@ -49,6 +49,7 @@ noncomputable section
 /-- A piecewise continuously differentiable curve `γ : [a, b] → ℂ`, `C¹` on each
 subinterval between partition points. Layers an Icc-style `partition` (endpoints included)
 on top of an inherited `PiecewiseC1PathOn a b hab x y` whose partition is Ioo-style. -/
+@[ext]
 structure PiecewiseC1Curve where
   /-- Left endpoint of the parameter interval. -/
   a : ℝ
@@ -160,6 +161,7 @@ def PiecewiseC1Curve.IsClosed (γ : PiecewiseC1Curve) : Prop :=
 
 /-- A piecewise `C¹` immersion: a piecewise `C¹` curve whose derivative is nonzero and
 admits nonzero one-sided limits at every partition point. -/
+@[ext]
 structure PiecewiseC1Immersion extends PiecewiseC1Curve where
   /-- The derivative is nonzero off the partition. -/
   deriv_ne_zero : ∀ t ∈ Icc a b, t ∉ partition → deriv toPiecewiseC1PathOn.toFun t ≠ 0

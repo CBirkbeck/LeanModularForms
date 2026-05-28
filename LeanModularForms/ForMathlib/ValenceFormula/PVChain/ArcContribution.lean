@@ -141,8 +141,7 @@ private lemma cpv_integrand_intervalIntegrable_arc (S : Finset UpperHalfPlane)
     refine IsCompact.of_isClosed_subset isCompact_Icc ?_ (fun _t ⟨ht, _⟩ => ht)
     refine IsClosed.inter isClosed_Icc ?_
     convert (isClosed_iInter fun s => isClosed_iInter fun _ =>
-      isClosed_le (f := fun _ => ε) (g := fun t => ‖γ t - s‖) continuous_const
-        (continuous_norm.comp ((fdBoundary_H_continuous H).sub continuous_const))
+      isClosed_le (f := fun _ => ε) (g := fun t => ‖γ t - s‖) continuous_const (by fun_prop)
       : IsClosed (⋂ (s : ℂ) (_ : s ∈ S_arc), {t : ℝ | ε ≤ ‖γ t - s‖})) using 1
     ext t; simp only [Set.mem_iInter, Set.mem_setOf]; exact Iff.rfl
   set K := {t ∈ Set.uIoc (1:ℝ) 3 | ¬∃ s ∈ (↑S_arc : Set ℂ), ‖γ t - s‖ ≤ ε}
@@ -193,8 +192,7 @@ private lemma cpv_integrand_intervalIntegrable_arc (S : Finset UpperHalfPlane)
       simp only [Set.mem_iUnion, Set.mem_setOf, Finset.mem_coe, exists_prop]
       exact Iff.rfl
     exact S_arc.finite_toSet.isClosed_biUnion fun s _ =>
-      isClosed_le (continuous_norm.comp ((fdBoundary_H_continuous H).sub continuous_const))
-        continuous_const
+      isClosed_le (by fun_prop) continuous_const
   have hF_K : EqOn F (fun t => logDeriv g (γ t) * deriv γ t) K := by
     intro t ⟨_, h_not_near⟩
     change cauchyPrincipalValueIntegrandOn (↑S_arc) (logDeriv g) γ ε t = _
@@ -377,9 +375,8 @@ lemma arc_non_excluded_measure_tendsto (S : Finset UpperHalfPlane) (H : ℝ) :
         ⋃ s ∈ (sArcOfS S : Finset ℂ), {a | ‖fdBoundary_H H a - s‖ ≤ ε} := by
       ext; simp [Set.mem_iUnion]
     rw [h]
-    exact Finset.measurableSet_biUnion _ fun s _ => (isClosed_le
-      (continuous_norm.comp ((fdBoundary_H_continuous H).sub continuous_const))
-      continuous_const).measurableSet
+    exact Finset.measurableSet_biUnion _ fun s _ =>
+      (isClosed_le (by fun_prop) continuous_const).measurableSet
   · refine Eventually.of_forall fun ε => Eventually.of_forall fun t _ => ?_
     split_ifs <;> norm_num
   · exact intervalIntegrable_const
@@ -477,7 +474,7 @@ private lemma arc_min_dist_pos_of_svert (H : ℝ) (S : Finset UpperHalfPlane)
     ∃ δ > 0, ∀ t ∈ Set.Icc (1:ℝ) 3, δ ≤ ‖fdBoundary_H H t - s‖ := by
   obtain ⟨t₀, ht₀, ht₀_min⟩ := isCompact_Icc.exists_isMinOn
     (⟨1, le_refl _, by norm_num⟩ : (Set.Icc (1:ℝ) 3).Nonempty)
-    (continuous_norm.comp ((fdBoundary_H_continuous H).sub continuous_const)).continuousOn
+    (by fun_prop : Continuous (fun t => ‖fdBoundary_H H t - s‖)).continuousOn
   exact ⟨‖fdBoundary_H H t₀ - s‖,
     norm_pos_iff.mpr (sub_ne_zero.mpr (arc_ne_svert H S s hs_re hs_not t₀ ht₀)),
     fun t ht => ht₀_min ht⟩

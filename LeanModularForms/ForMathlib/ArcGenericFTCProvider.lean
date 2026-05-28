@@ -177,9 +177,7 @@ private lemma fdBoundary_sub_eq_arc_h_arc {H : ℝ} (z₀ : ℂ) {t : ℝ}
   unfold arc_h_arc; rw [fdBoundaryFun_arc_eq_exp H t ht1 ht2]
 
 private lemma arc_h_arc_continuous (z₀ : ℂ) : Continuous (arc_h_arc z₀) := by
-  unfold arc_h_arc
-  exact ((Complex.continuous_ofReal.comp fdArcAngle_continuous).mul
-    continuous_const).cexp.sub continuous_const
+  unfold arc_h_arc; fun_prop
 
 private lemma hasDerivAt_arc_h_arc (z₀ : ℂ) (t : ℝ) :
     HasDerivAt (arc_h_arc z₀)
@@ -260,8 +258,7 @@ private lemma arc_h_arc_deriv_continuousOn {θ₀ : ℝ} {s : Set ℝ} :
   rw [show deriv (arc_h_arc (exp (↑θ₀ * I))) =
     fun t => ↑(5 * Real.pi / 6) * I * exp (↑(fdArcAngle t) * I) from
       funext (deriv_arc_h_arc _)]
-  exact (continuous_const.mul (Complex.continuous_exp.comp
-    ((Complex.continuous_ofReal.comp fdArcAngle_continuous).mul continuous_const))).continuousOn
+  fun_prop
 
 private lemma arc_arc_left_ftc {θ₀ : ℝ}
     (h_lo : Real.pi / 3 < θ₀) (h_hi : θ₀ < 2 * Real.pi / 3)

@@ -48,6 +48,7 @@ variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
 The smoothness conditions (differentiability and continuous derivative) hold at every
 point of `(a, b)` outside a finite set of breakpoints. The partition lives in the open
 interval `Ioo a b` — the endpoints `a` and `b` are not partition points. -/
+@[ext]
 structure PiecewiseC1PathOn (a b : ℝ) (hab : a < b) (x y : E) where
   /-- The underlying function `ℝ → E`. -/
   toFun : ℝ → E

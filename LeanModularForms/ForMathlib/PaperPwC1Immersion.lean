@@ -74,6 +74,7 @@ This extends `PiecewiseC1Path x x`. The inherited `partition` field is the
 *Ioo-style* (open-interior) partition, while `closedPartition` is the Icc-style
 partition with endpoints included. The two are related by
 `closedPartition_eq : closedPartition = insert 0 (insert 1 partition)`. -/
+@[ext]
 structure ClosedPwC1Curve (x : E) extends PiecewiseC1Path x x where
   /-- Closed partition WITH endpoints. Required because the inherited `partition`
   is Ioo-style (interior only). -/
@@ -95,6 +96,7 @@ structure ClosedPwC1Curve (x : E) extends PiecewiseC1Path x x where
 (arXiv:1808.00997v2, page 3): a closed piecewise `C¹` curve whose derivative
 is non-vanishing on every closed sub-interval between consecutive partition
 points. -/
+@[ext]
 structure ClosedPwC1Immersion (x : E) extends ClosedPwC1Curve x where
   /-- On every closed sub-interval between consecutive closed-partition members, the
   *within*-derivative of the extended path is non-zero — i.e. `Λ̇|_{[aₖ,aₖ₊₁]} ≠ 0`
@@ -110,6 +112,7 @@ namespace ClosedPwC1Curve
 variable {x : E}
 
 /-- The underlying extended path is continuous. -/
+@[fun_prop]
 theorem continuous (γ : ClosedPwC1Curve x) : Continuous γ.toPath.extend :=
   γ.toPath.continuous_extend
 

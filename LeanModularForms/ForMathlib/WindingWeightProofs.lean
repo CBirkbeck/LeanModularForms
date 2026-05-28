@@ -64,6 +64,7 @@ theorem fdArcAngle_at_one_fifth : fdArcAngle (1/5) = Real.pi / 3 := by
 theorem fdArcAngle_at_three_fifths : fdArcAngle (3/5) = 2 * Real.pi / 3 := by
   unfold fdArcAngle; ring
 
+@[fun_prop]
 theorem fdArcAngle_continuous : Continuous fdArcAngle := by
   unfold fdArcAngle; fun_prop
 

@@ -204,12 +204,11 @@ lemma fdBoundary_H_sub_closed (H : ℝ) (c : ℂ) :
     fdBoundary_H H 0 - c = fdBoundary_H H 5 - c := by rw [fdBoundary_H_closed H]
 
 /-- Continuity of the arc-derivative expression `(π/6)·i·exp(i·π(1+t)/6)`. -/
+@[fun_prop]
 lemma continuous_arc_deriv :
     Continuous fun t : ℝ => (↑(Real.pi / 6) : ℂ) * I *
-      Complex.exp (↑(Real.pi * (1 + t) / 6) * I) :=
-  Continuous.mul continuous_const (Continuous.cexp (Continuous.mul
-    (continuous_ofReal.comp (by fun_prop : Continuous fun s => Real.pi * (1 + s) / 6))
-    continuous_const))
+      Complex.exp (↑(Real.pi * (1 + t) / 6) * I) := by
+  fun_prop
 
 /-- Continuity of `deriv h` for any `h` with the canonical arc-derivative form. -/
 lemma continuousOn_deriv_of_arc_form {h : ℝ → ℂ}

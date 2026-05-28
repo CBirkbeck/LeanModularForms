@@ -47,6 +47,7 @@ private lemma fdBoundary_H_eq_arc_near {H : ℝ} {s : ℝ} (hs1 : 1 < s) (hs3 : 
       show s' ≤ 3 from le_of_lt hs3', ite_true, ite_false]
     congr 1; ring
 
+@[fun_prop]
 private lemma arc_deriv_continuous :
     Continuous (fun s : ℝ => exp ((↑Real.pi * (↑s + 1) / 6) * I) * (↑Real.pi / 6 * I)) := by
   fun_prop

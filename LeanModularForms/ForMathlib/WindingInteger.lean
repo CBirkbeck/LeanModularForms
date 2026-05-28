@@ -98,6 +98,7 @@ Helper definitions and theorems for this construction are below. -/
 /-- Helper: clamp `t` to `[s_j, s_{j+1}]`. For partition segment `j`. -/
 def segClamp (s_j s_jp1 t : ℝ) : ℝ := max s_j (min t s_jp1)
 
+@[fun_prop]
 theorem segClamp_continuous (s_j s_jp1 : ℝ) :
     Continuous (segClamp s_j s_jp1) :=
   continuous_const.max (continuous_id.min continuous_const)

@@ -377,8 +377,7 @@ private lemma integrableOn_logDeriv_mul_deriv_farSet
     apply IsClosed.inter isClosed_Icc
     have : IsClosed (⋂ (s : ℂ) (_ : s ∈ S₀), {t : ℝ | ε ≤ ‖γ t - s‖}) :=
       isClosed_iInter fun s => isClosed_iInter fun _ =>
-        isClosed_le continuous_const
-          (continuous_norm.comp ((fdBoundary_H_continuous H).sub continuous_const))
+        isClosed_le continuous_const (by fun_prop)
     convert this using 1
     ext t
     simp only [mem_iInter, mem_setOf_eq]
@@ -465,8 +464,7 @@ private lemma pvIntegrand_intervalIntegrable
       simp only [mem_iUnion, mem_setOf_eq, Finset.mem_coe, exists_prop]
       exact Iff.rfl
     exact S₀.finite_toSet.isClosed_biUnion fun s _ =>
-      isClosed_le (continuous_norm.comp ((fdBoundary_H_continuous H).sub continuous_const))
-        continuous_const
+      isClosed_le (by fun_prop) continuous_const
   rw [intervalIntegrable_iff]
   have := ((h_int_K'.mono_set hK_subset_K').congr_fun hF_K.symm hK_meas).union
     (integrableOn_zero.congr_fun h_compl_zero.symm (measurableSet_uIoc.diff hK_meas))

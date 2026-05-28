@@ -92,6 +92,7 @@ lemma fdBoundary_sub_eq_vertSeg_h₀ (H : ℝ) (z₀ : ℂ) (t : ℝ) (ht : t �
   simp only [fdBoundaryFun, ht, ite_true, vertSeg_h₀]
   refine Complex.ext ?_ ?_ <;> simp
 
+@[fun_prop]
 lemma vertSeg_h₀_continuous (H : ℝ) (z₀ : ℂ) : Continuous (vertSeg_h₀ H z₀) := by
   unfold vertSeg_h₀; fun_prop
 
@@ -143,11 +144,9 @@ lemma fdBoundary_sub_eq_vertSeg_h_arc {H : ℝ} (z₀ : ℂ) {t : ℝ}
   unfold vertSeg_h_arc
   rw [fdBoundaryFun_arc_eq_exp H t ht1 ht2]
 
+@[fun_prop]
 lemma vertSeg_h_arc_continuous (z₀ : ℂ) : Continuous (vertSeg_h_arc z₀) := by
-  unfold vertSeg_h_arc
-  exact (Complex.continuous_exp.comp
-    ((Complex.continuous_ofReal.comp fdArcAngle_continuous).mul continuous_const)).sub
-    continuous_const
+  unfold vertSeg_h_arc; fun_prop
 
 lemma hasDerivAt_vertSeg_h_arc (z₀ : ℂ) (t : ℝ) :
     HasDerivAt (vertSeg_h_arc z₀)
@@ -168,10 +167,9 @@ lemma deriv_vertSeg_h_arc (z₀ : ℂ) (t : ℝ) :
 
 /-- The derivative of `vertSeg_h_arc` is continuous on any set. -/
 lemma vertSeg_h_arc_deriv_continuousOn (z₀ : ℂ) (s : Set ℝ) :
-    ContinuousOn (fun t => deriv (vertSeg_h_arc z₀) t) s :=
-  (continuous_const.mul (Complex.continuous_exp.comp
-    ((Complex.continuous_ofReal.comp fdArcAngle_continuous).mul
-      continuous_const))).continuousOn.congr (fun t _ => deriv_vertSeg_h_arc z₀ t)
+    ContinuousOn (fun t => deriv (vertSeg_h_arc z₀) t) s := by
+  refine Continuous.continuousOn ?_ |>.congr (fun t _ => deriv_vertSeg_h_arc z₀ t)
+  fun_prop
 
 /-! ### Seg3 reference function (shared definition) -/
 
@@ -188,6 +186,7 @@ lemma fdBoundary_sub_eq_vertSeg_h₃ (H : ℝ) (z₀ : ℂ) {t : ℝ}
     ht4, ite_true, ite_false, vertSeg_h₃]
   refine Complex.ext ?_ ?_ <;> simp
 
+@[fun_prop]
 lemma vertSeg_h₃_continuous (H : ℝ) (z₀ : ℂ) : Continuous (vertSeg_h₃ H z₀) := by
   unfold vertSeg_h₃; fun_prop
 
@@ -220,6 +219,7 @@ lemma fdBoundary_sub_eq_vertSeg_h₅ (H : ℝ) (z₀ : ℂ) {t : ℝ} (ht : 4/5 
     show ¬t ≤ 4/5 from by linarith, ite_false, vertSeg_h₅]
   refine Complex.ext ?_ ?_ <;> simp
 
+@[fun_prop]
 lemma vertSeg_h₅_continuous (H : ℝ) (z₀ : ℂ) : Continuous (vertSeg_h₅ H z₀) := by
   unfold vertSeg_h₅; fun_prop
 
