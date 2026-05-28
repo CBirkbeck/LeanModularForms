@@ -5224,6 +5224,44 @@ private theorem petN_heckeT_p_LHS_eq_aggregate
   rw [petN_eq_setIntegral_Gamma1_fundDomain_PSL, peterssonInner, h_fun]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- The `β • Γ₁`-PSL-FD set is null-measurable whenever `β` has positive `GL(2,ℝ)`
+determinant, via the `β⁻¹`-pullback of the `Γ₁(N)` FD (a measure-preserving map). -/
+private lemma nullMeasurableSet_glPos_smul_Gamma1_fundDomain_PSL
+    {β : GL (Fin 2) ℝ} (hβ : 0 < β.det.val) :
+    NullMeasurableSet (β • (Gamma1_fundDomain_PSL N : Set ℍ)) μ_hyp := by
+  have hinv : 0 < (β⁻¹).det.val := by
+    rw [map_inv, Units.val_inv_eq_inv_val]; exact inv_pos.mpr hβ
+  have h_eq : (β • (Gamma1_fundDomain_PSL N : Set ℍ)) =
+      ((β⁻¹ • ·) : ℍ → ℍ) ⁻¹' (Gamma1_fundDomain_PSL N : Set ℍ) := by
+    ext τ; simp [Set.mem_preimage, Set.mem_smul_set_iff_inv_smul_mem]
+  rw [h_eq]
+  exact isFundamentalDomain_Gamma1_PSL.nullMeasurableSet.preimage
+    (measurePreserving_glPos_smul _ hinv).quasiMeasurePreserving
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- The `α_T_p` family aggregate has finite hyperbolic measure: each tile
+`β_i • Γ₁-FD` has finite measure (via `measure_glPos_smul_Gamma1_fundDomain_lt_top`)
+and the family is finite. -/
+private lemma measure_α_T_p_family_aggregate_lt_top
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
+    μ_hyp (⋃ i ∈ (Finset.univ : Finset (Option (Fin p))),
+      (match i with
+        | none => (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)
+        | some b => (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)) •
+        (Gamma1_fundDomain_PSL N : Set ℍ)) < ⊤ := by
+  simp only [Finset.mem_univ, Set.iUnion_true]
+  refine (measure_iUnion_le _).trans_lt ?_
+  rw [tsum_fintype]
+  refine ENNReal.sum_lt_top.mpr fun i _ ↦ ?_
+  cases i with
+  | none =>
+    exact measure_glPos_smul_Gamma1_fundDomain_lt_top _
+      (glMap_M_infty_det_pos N p hp.pos hpN)
+  | some b =>
+    exact measure_glPos_smul_Gamma1_fundDomain_lt_top _
+      (glMap_T_p_upper_det_pos p hp.pos b.val)
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **CORRECTED leaf 3** — the family-aggregate measure hypotheses for invoking the proven
 `peterssonInner_T_p_reps_sum_slashes_eq_aggregate_HeckeFD_PSL_R` (line 202): per-`i`
 `NullMeasurableSet` of each `β_i•Γ₁-FD`, per-`i` `IntegrableOn` of the swapped kernel on
@@ -5251,22 +5289,15 @@ private theorem aggregate_HeckeFD_measure_hyps
           | none => (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)
           | some b => (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)) •
           (Gamma1_fundDomain_PSL N : Set ℍ)) μ_hyp := by
-  have hinv : ∀ β : GL (Fin 2) ℝ, 0 < β.det.val → 0 < (β⁻¹).det.val := by
-    intro β hβ; rw [map_inv, Units.val_inv_eq_inv_val]; exact inv_pos.mpr hβ
-  have hnull : ∀ β : GL (Fin 2) ℝ, 0 < β.det.val →
-      NullMeasurableSet (β • (Gamma1_fundDomain_PSL N : Set ℍ)) μ_hyp := by
-    intro β hβ
-    have h_eq : (β • (Gamma1_fundDomain_PSL N : Set ℍ)) =
-        ((β⁻¹ • ·) : ℍ → ℍ) ⁻¹' (Gamma1_fundDomain_PSL N : Set ℍ) := by
-      ext τ; simp [Set.mem_preimage, Set.mem_smul_set_iff_inv_smul_mem]
-    rw [h_eq]
-    exact isFundamentalDomain_Gamma1_PSL.nullMeasurableSet.preimage
-      (measurePreserving_glPos_smul _ (hinv β hβ)).quasiMeasurePreserving
   refine ⟨?_, ?_, ?_⟩
   · intro i _
     cases i with
-    | none => exact hnull _ (glMap_M_infty_det_pos N p hp.pos hpN)
-    | some b => exact hnull _ (glMap_T_p_upper_det_pos p hp.pos b.val)
+    | none =>
+      exact nullMeasurableSet_glPos_smul_Gamma1_fundDomain_PSL
+        (glMap_M_infty_det_pos N p hp.pos hpN)
+    | some b =>
+      exact nullMeasurableSet_glPos_smul_Gamma1_fundDomain_PSL
+        (glMap_T_p_upper_det_pos p hp.pos b.val)
   · intro i _
     cases i with
     | none =>
@@ -5277,19 +5308,8 @@ private theorem aggregate_HeckeFD_measure_hyps
       exact integrableOn_petersson_cuspform_slash_glMap_of_finiteMeasure g f
         (T_p_upper p hp.pos b.val)
         (hyperbolicMeasure_Gamma1_fundDomain_PSL_lt_top (N := N))
-  · refine integrableOn_petersson_cuspform_slash_glMap_of_finiteMeasure f g
-      (T_p_lower p hp.pos) ?_
-    simp only [Finset.mem_univ, Set.iUnion_true]
-    refine (measure_iUnion_le _).trans_lt ?_
-    rw [tsum_fintype]
-    refine ENNReal.sum_lt_top.mpr fun i _ ↦ ?_
-    cases i with
-    | none =>
-      exact measure_glPos_smul_Gamma1_fundDomain_lt_top _
-        (glMap_M_infty_det_pos N p hp.pos hpN)
-    | some b =>
-      exact measure_glPos_smul_Gamma1_fundDomain_lt_top _
-        (glMap_T_p_upper_det_pos p hp.pos b.val)
+  · exact integrableOn_petersson_cuspform_slash_glMap_of_finiteMeasure f g
+      (T_p_lower p hp.pos) (measure_α_T_p_family_aggregate_lt_top p hp hpN)
 
 open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **RHS aggregate expansion (Hermitian mirror of leaf 1).** Expands the *right*-hand
@@ -5449,6 +5469,157 @@ assuming the symmetric form `petN_heckeT_p_symmetric_form_doubleCoset` (the resi
   DS 5.5.3 content), and
 * `petN_eq_setIntegral_Gamma1_fundDomain_PSL`. -/
 
+/-- Center elements of `SL(2,ℤ)` have lower-left entry `0`, so `Γ_p(A)`- and `Γ₁`-membership
+agree on the center (used for the fiber-count reconciliation). -/
+private theorem center_mem_Gamma_p_α_T_p_lower_iff_mem_Gamma1
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    {z : SL(2, ℤ)} (hz : z ∈ Subgroup.center SL(2, ℤ)) :
+    z ∈ Gamma_p_α (N := N) (T_p_lower p hp.pos) ↔ z ∈ Gamma1 N := by
+  rw [mem_Gamma_p_α_T_p_lower p hp.pos hpN]
+  refine ⟨fun h ↦ h.1, fun h ↦ ⟨h, ?_⟩⟩
+  rw [Matrix.SpecialLinearGroup.mem_center_iff] at hz
+  obtain ⟨c, _, hc⟩ := hz
+  have : (z : Matrix (Fin 2) (Fin 2) ℤ) 1 0 = 0 := by
+    rw [← hc, Matrix.scalar_apply, Matrix.diagonal_apply_ne _ (by decide)]
+  rw [this]; exact dvd_zero _
+
+/-- Fiber-membership characterization at `[1]` (uniform across any congruence subgroup
+`H ≤ SL(2,ℤ)`): the double PSL-quotient lands at the identity iff there is a central
+representative `z` with `g * z ∈ H`. -/
+private theorem pslQuot_eq_one_iff_exists_center_mem
+    (H : Subgroup SL(2, ℤ)) (g : SL(2, ℤ)) :
+    (QuotientGroup.mk (QuotientGroup.mk g : PSL(2, ℤ)) :
+        PSL(2, ℤ) ⧸ (H.map (QuotientGroup.mk' (Subgroup.center SL(2, ℤ))))) =
+      QuotientGroup.mk 1 ↔
+    ∃ z ∈ Subgroup.center SL(2, ℤ), g * z ∈ H := by
+  rw [QuotientGroup.eq, mul_one, Subgroup.inv_mem_iff, Subgroup.mem_map]
+  constructor
+  · rintro ⟨h, hh, hhe⟩
+    rw [QuotientGroup.mk'_apply, QuotientGroup.eq] at hhe
+    refine ⟨g⁻¹ * h, ?_, by group; exact hh⟩
+    have := (Subgroup.center SL(2, ℤ)).inv_mem hhe
+    rwa [mul_inv_rev, inv_inv] at this
+  · rintro ⟨z, hz, hgz⟩
+    exact ⟨g * z, hgz, by
+      rw [QuotientGroup.mk'_apply, QuotientGroup.mk_mul,
+        (QuotientGroup.eq_one_iff _).mpr hz, mul_one]⟩
+
+/-- Center crux: for `g₁, g₂` whose `Γ_p(A)`-fiber membership holds
+(`gᵢ·zᵢ ∈ Γ_p(A)`, `zᵢ ∈ center`), the `Γ₁`- and `Γ_p(A)`-cosets of `g₁⁻¹g₂` coincide
+(the discrepancy lies in the center, where the two memberships agree by
+`center_mem_Gamma_p_α_T_p_lower_iff_mem_Gamma1`). -/
+private theorem Gamma1_coset_iff_Gamma_p_α_coset_of_center_fiber
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (g₁ g₂ z₁ z₂ : SL(2, ℤ))
+    (hz₁ : z₁ ∈ Subgroup.center SL(2, ℤ))
+    (hz₂ : z₂ ∈ Subgroup.center SL(2, ℤ))
+    (hg₁ : g₁ * z₁ ∈ Gamma_p_α (N := N) (T_p_lower p hp.pos))
+    (hg₂ : g₂ * z₂ ∈ Gamma_p_α (N := N) (T_p_lower p hp.pos)) :
+    g₁⁻¹ * g₂ ∈ Gamma1 N ↔ g₁⁻¹ * g₂ ∈ Gamma_p_α (N := N) (T_p_lower p hp.pos) := by
+  have hzc : z₁ * z₂⁻¹ ∈ Subgroup.center SL(2, ℤ) :=
+    (Subgroup.center SL(2, ℤ)).mul_mem hz₁ ((Subgroup.center SL(2, ℤ)).inv_mem hz₂)
+  have hz₁i : z₁⁻¹ ∈ Subgroup.center SL(2, ℤ) := (Subgroup.center SL(2, ℤ)).inv_mem hz₁
+  have hz₂i : z₂⁻¹ ∈ Subgroup.center SL(2, ℤ) := (Subgroup.center SL(2, ℤ)).inv_mem hz₂
+  have hcz₁ : ∀ x : SL(2, ℤ), z₁⁻¹ * x = x * z₁⁻¹ :=
+    fun x ↦ (Subgroup.mem_center_iff.mp hz₁i x).symm
+  have hcz₂ : ∀ x : SL(2, ℤ), z₂⁻¹ * x = x * z₂⁻¹ :=
+    fun x ↦ (Subgroup.mem_center_iff.mp hz₂i x).symm
+  have hsplit : g₁⁻¹ * g₂ = (g₁ * z₁)⁻¹ * ((z₁ * z₂⁻¹) * (g₂ * z₂)) := by
+    rw [mul_inv_rev]
+    symm
+    calc (z₁⁻¹ * g₁⁻¹) * ((z₁ * z₂⁻¹) * (g₂ * z₂))
+        = g₁⁻¹ * z₁⁻¹ * (z₁ * (z₂⁻¹ * (g₂ * z₂))) := by rw [hcz₁ g₁⁻¹]; group
+      _ = g₁⁻¹ * (z₂⁻¹ * (g₂ * z₂)) := by rw [← mul_assoc, mul_assoc _ z₁⁻¹ z₁,
+          inv_mul_cancel, mul_one]
+      _ = g₁⁻¹ * (g₂ * (z₂⁻¹ * z₂)) := by rw [hcz₂ (g₂ * z₂)]; group
+      _ = g₁⁻¹ * g₂ := by rw [inv_mul_cancel, mul_one]
+  rw [hsplit]
+  have hL₁ : (g₁ * z₁)⁻¹ ∈ Gamma_p_α (N := N) (T_p_lower p hp.pos) :=
+    (Gamma_p_α (N := N) (T_p_lower p hp.pos)).inv_mem hg₁
+  refine ⟨fun h ↦ ?_, fun h ↦ (Gamma_p_α_le_Gamma1 _) h⟩
+  have hmid : (z₁ * z₂⁻¹) * (g₂ * z₂) ∈ Gamma1 N := by
+    have h2 := (Gamma1 N).mul_mem ((Gamma_p_α_le_Gamma1 _) hg₁) h
+    rwa [← mul_assoc, mul_inv_cancel, one_mul] at h2
+  have hz_mem : z₁ * z₂⁻¹ ∈ Gamma1 N := by
+    have h2 := (Gamma1 N).mul_mem hmid ((Gamma1 N).inv_mem ((Gamma_p_α_le_Gamma1 _) hg₂))
+    rwa [mul_assoc, mul_inv_cancel, mul_one] at h2
+  have hz_memP : z₁ * z₂⁻¹ ∈ Gamma_p_α (N := N) (T_p_lower p hp.pos) :=
+    (center_mem_Gamma_p_α_T_p_lower_iff_mem_Gamma1 p hp hpN hzc).mpr hz_mem
+  exact (Gamma_p_α (N := N) (T_p_lower p hp.pos)).mul_mem hL₁
+    ((Gamma_p_α (N := N) (T_p_lower p hp.pos)).mul_mem hz_memP hg₂)
+
+open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory in
+/-- The map `slGamma_p_αToGamma1 (T_p_lower)` sends the `Γ_p(A)`-fiber of `[1]` into the
+`Γ₁`-fiber of `[1]`: a `Γ_p(A)`-fiber witness `z ∈ center, g·z ∈ Γ_p(A)` maps to the same
+`z` with `g·z ∈ Γ₁(N)` via `Gamma_p_α_le_Gamma1`. -/
+private theorem slGamma_p_αToGamma1_maps_into_Gamma1_fiber
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) (T_p_lower p hp.pos))
+    (hq : slToPslQuot_Gamma_p_α (N := N) (T_p_lower p hp.pos) q =
+      (QuotientGroup.mk (1 : PSL(2, ℤ)) :
+        PSL(2, ℤ) ⧸ image_Gamma_p_α_PSL (N := N) (T_p_lower p hp.pos))) :
+    slToPslQuot (N := N) (slGamma_p_αToGamma1 (N := N) (T_p_lower p hp.pos) q) =
+      (QuotientGroup.mk (1 : PSL(2, ℤ)) :
+        PSL(2, ℤ) ⧸ imageGamma1_PSL N) := by
+  induction q using QuotientGroup.induction_on with | _ g => ?_
+  rw [slToPslQuot_Gamma_p_α_mk] at hq
+  rw [slGamma_p_αToGamma1_mk, slToPslQuot_mk]
+  obtain ⟨z, hz, hgz⟩ := (pslQuot_eq_one_iff_exists_center_mem _ g).mp hq
+  exact (pslQuot_eq_one_iff_exists_center_mem _ g).mpr
+    ⟨z, hz, (Gamma_p_α_le_Gamma1 _) hgz⟩
+
+open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory in
+/-- The map `slGamma_p_αToGamma1 (T_p_lower)` is injective on the `Γ_p(A)`-fiber of `[1]`,
+via `Gamma1_coset_iff_Gamma_p_α_coset_of_center_fiber`. -/
+private theorem slGamma_p_αToGamma1_injective_on_Gamma_p_α_fiber
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (q₁ q₂ : SL(2, ℤ) ⧸ Gamma_p_α (N := N) (T_p_lower p hp.pos))
+    (hq₁ : slToPslQuot_Gamma_p_α (N := N) (T_p_lower p hp.pos) q₁ =
+      (QuotientGroup.mk (1 : PSL(2, ℤ)) :
+        PSL(2, ℤ) ⧸ image_Gamma_p_α_PSL (N := N) (T_p_lower p hp.pos)))
+    (hq₂ : slToPslQuot_Gamma_p_α (N := N) (T_p_lower p hp.pos) q₂ =
+      (QuotientGroup.mk (1 : PSL(2, ℤ)) :
+        PSL(2, ℤ) ⧸ image_Gamma_p_α_PSL (N := N) (T_p_lower p hp.pos)))
+    (heq : slGamma_p_αToGamma1 (N := N) (T_p_lower p hp.pos) q₁ =
+      slGamma_p_αToGamma1 (N := N) (T_p_lower p hp.pos) q₂) :
+    q₁ = q₂ := by
+  induction q₁ using QuotientGroup.induction_on with | _ g₁ => ?_
+  induction q₂ using QuotientGroup.induction_on with | _ g₂ => ?_
+  rw [slToPslQuot_Gamma_p_α_mk] at hq₁ hq₂
+  rw [slGamma_p_αToGamma1_mk, slGamma_p_αToGamma1_mk, QuotientGroup.eq] at heq
+  obtain ⟨z₁, hz₁, hgz₁⟩ := (pslQuot_eq_one_iff_exists_center_mem _ g₁).mp hq₁
+  obtain ⟨z₂, hz₂, hgz₂⟩ := (pslQuot_eq_one_iff_exists_center_mem _ g₂).mp hq₂
+  rw [QuotientGroup.eq]
+  exact (Gamma1_coset_iff_Gamma_p_α_coset_of_center_fiber p hp hpN g₁ g₂ z₁ z₂
+    hz₁ hz₂ hgz₁ hgz₂).mp heq
+
+open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory in
+/-- The map `slGamma_p_αToGamma1 (T_p_lower)` is surjective onto the `Γ₁`-fiber of `[1]`:
+the center part `z⁻¹` of any `Γ₁`-fiber rep `g` gives the corresponding `Γ_p(A)`-fiber rep
+(since `z * g = g * z` by centrality, and `(z⁻¹)⁻¹·g = g·z ∈ Γ₁(N)`). -/
+private theorem slGamma_p_αToGamma1_surjective_onto_Gamma1_fiber
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (q : SL(2, ℤ) ⧸ Gamma1 N)
+    (hq : slToPslQuot (N := N) q =
+      (QuotientGroup.mk (1 : PSL(2, ℤ)) :
+        PSL(2, ℤ) ⧸ imageGamma1_PSL N)) :
+    ∃ a : SL(2, ℤ) ⧸ Gamma_p_α (N := N) (T_p_lower p hp.pos),
+      slToPslQuot_Gamma_p_α (N := N) (T_p_lower p hp.pos) a =
+        (QuotientGroup.mk (1 : PSL(2, ℤ)) :
+          PSL(2, ℤ) ⧸ image_Gamma_p_α_PSL (N := N) (T_p_lower p hp.pos)) ∧
+      slGamma_p_αToGamma1 (N := N) (T_p_lower p hp.pos) a = q := by
+  induction q using QuotientGroup.induction_on with | _ g => ?_
+  rw [slToPslQuot_mk] at hq
+  obtain ⟨z, hz, hgz⟩ := (pslQuot_eq_one_iff_exists_center_mem _ g).mp hq
+  refine ⟨QuotientGroup.mk z⁻¹, ?_, ?_⟩
+  · rw [slToPslQuot_Gamma_p_α_mk]
+    refine (pslQuot_eq_one_iff_exists_center_mem _ z⁻¹).mpr ⟨z, hz, ?_⟩
+    rw [inv_mul_cancel]
+    exact (Gamma_p_α (N := N) (T_p_lower p hp.pos)).one_mem
+  · rw [slGamma_p_αToGamma1_mk, QuotientGroup.eq]
+    have hcomm : z * g = g * z := (Subgroup.mem_center_iff.mp hz g).symm
+    rw [inv_inv, hcomm]; exact hgz
+
 open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory in
 /-- **Fiber-count reconciliation.** The `SL → PSL` fiber count at `Γ_p(diag(p,1))` equals the
 one at `Γ₁(N)`. Both count `[H·{±I} : H]` over the respective `H`, which is `1` or `2`
@@ -5460,125 +5631,19 @@ theorem slToPslQuot_fiberCard_Gamma_p_α_T_p_lower_eq_fiberCard
     slToPslQuot_fiberCard_Gamma_p_α (N := N) (T_p_lower p hp.pos) =
       slToPslQuot_fiberCard N := by
   classical
-  -- Center elements of `SL(2,ℤ)` have lower-left entry `0`, so `Γ_p(A)`- and `Γ₁`-membership
-  -- agree on the center.
-  have hctr : ∀ z : SL(2, ℤ), z ∈ Subgroup.center SL(2, ℤ) →
-      (z ∈ Gamma_p_α (N := N) (T_p_lower p hp.pos) ↔ z ∈ Gamma1 N) := by
-    intro z hz
-    rw [mem_Gamma_p_α_T_p_lower p hp.pos hpN]
-    refine ⟨fun h ↦ h.1, fun h ↦ ⟨h, ?_⟩⟩
-    rw [Matrix.SpecialLinearGroup.mem_center_iff] at hz
-    obtain ⟨c, _, hc⟩ := hz
-    have : (z : Matrix (Fin 2) (Fin 2) ℤ) 1 0 = 0 := by
-      rw [← hc, Matrix.scalar_apply, Matrix.diagonal_apply_ne _ (by decide)]
-    rw [this]; exact dvd_zero _
   rw [slToPslQuot_fiberCard_Gamma_p_α, slToPslQuot_fiberCard]
-  -- Fiber-membership characterization at `[1]` (uniform across `H = Γ_p(A)` and `H = Γ₁`).
-  have key : ∀ (H : Subgroup SL(2, ℤ)) (g : SL(2, ℤ)),
-      (QuotientGroup.mk (QuotientGroup.mk g : PSL(2, ℤ)) :
-          PSL(2, ℤ) ⧸ (H.map (QuotientGroup.mk' (Subgroup.center SL(2, ℤ))))) =
-        QuotientGroup.mk 1 ↔
-      ∃ z ∈ Subgroup.center SL(2, ℤ), g * z ∈ H := by
-    intro H g
-    rw [QuotientGroup.eq, mul_one, Subgroup.inv_mem_iff, Subgroup.mem_map]
-    constructor
-    · rintro ⟨h, hh, hhe⟩
-      rw [QuotientGroup.mk'_apply, QuotientGroup.eq] at hhe
-      refine ⟨g⁻¹ * h, ?_, by group; exact hh⟩
-      have := (Subgroup.center SL(2, ℤ)).inv_mem hhe
-      rwa [mul_inv_rev, inv_inv] at this
-    · rintro ⟨z, hz, hgz⟩
-      exact ⟨g * z, hgz, by
-        rw [QuotientGroup.mk'_apply, QuotientGroup.mk_mul,
-          (QuotientGroup.eq_one_iff _).mpr hz, mul_one]⟩
-  -- Center crux: for `g₁, g₂` whose `Γ_p(A)`-fiber membership holds (`gᵢ·zᵢ ∈ Γ_p(A)`,
-  -- `zᵢ ∈ center`), the `Γ₁`- and `Γ_p(A)`-cosets of `g₁⁻¹g₂` coincide (the discrepancy lies in
-  -- `center`, where the two memberships agree by `hctr`).
-  have hcrux : ∀ g₁ g₂ z₁ z₂ : SL(2, ℤ), z₁ ∈ Subgroup.center SL(2, ℤ) →
-      z₂ ∈ Subgroup.center SL(2, ℤ) →
-      g₁ * z₁ ∈ Gamma_p_α (N := N) (T_p_lower p hp.pos) →
-      g₂ * z₂ ∈ Gamma_p_α (N := N) (T_p_lower p hp.pos) →
-      (g₁⁻¹ * g₂ ∈ Gamma1 N ↔ g₁⁻¹ * g₂ ∈ Gamma_p_α (N := N) (T_p_lower p hp.pos)) := by
-    intro g₁ g₂ z₁ z₂ hz₁ hz₂ hg₁ hg₂
-    have hzc : z₁ * z₂⁻¹ ∈ Subgroup.center SL(2, ℤ) :=
-      (Subgroup.center SL(2, ℤ)).mul_mem hz₁ ((Subgroup.center SL(2, ℤ)).inv_mem hz₂)
-    -- `z₁⁻¹`, `z₂⁻¹` are also central.
-    have hz₁i : z₁⁻¹ ∈ Subgroup.center SL(2, ℤ) := (Subgroup.center SL(2, ℤ)).inv_mem hz₁
-    have hz₂i : z₂⁻¹ ∈ Subgroup.center SL(2, ℤ) := (Subgroup.center SL(2, ℤ)).inv_mem hz₂
-    -- central commutations (in the form `central * x = x * central`)
-    have hcz₁ : ∀ x : SL(2, ℤ), z₁⁻¹ * x = x * z₁⁻¹ :=
-      fun x ↦ (Subgroup.mem_center_iff.mp hz₁i x).symm
-    have hcz₂ : ∀ x : SL(2, ℤ), z₂⁻¹ * x = x * z₂⁻¹ :=
-      fun x ↦ (Subgroup.mem_center_iff.mp hz₂i x).symm
-    have hcz₁' : ∀ x : SL(2, ℤ), z₁ * x = x * z₁ :=
-      fun x ↦ (Subgroup.mem_center_iff.mp hz₁ x).symm
-    -- `g₁⁻¹g₂ = (g₁z₁)⁻¹ · (z₁z₂⁻¹) · (g₂z₂)`, with the outer factors in `Γ_p(A) ⊆ Γ₁`.
-    have hsplit : g₁⁻¹ * g₂ = (g₁ * z₁)⁻¹ * ((z₁ * z₂⁻¹) * (g₂ * z₂)) := by
-      rw [mul_inv_rev]
-      symm
-      calc (z₁⁻¹ * g₁⁻¹) * ((z₁ * z₂⁻¹) * (g₂ * z₂))
-          = g₁⁻¹ * z₁⁻¹ * (z₁ * (z₂⁻¹ * (g₂ * z₂))) := by rw [hcz₁ g₁⁻¹]; group
-        _ = g₁⁻¹ * (z₂⁻¹ * (g₂ * z₂)) := by rw [← mul_assoc, mul_assoc _ z₁⁻¹ z₁,
-            inv_mul_cancel, mul_one]
-        _ = g₁⁻¹ * (g₂ * (z₂⁻¹ * z₂)) := by rw [hcz₂ (g₂ * z₂)]; group
-        _ = g₁⁻¹ * g₂ := by rw [inv_mul_cancel, mul_one]
-    rw [hsplit]
-    have hL₁ : (g₁ * z₁)⁻¹ ∈ Gamma_p_α (N := N) (T_p_lower p hp.pos) :=
-      (Gamma_p_α (N := N) (T_p_lower p hp.pos)).inv_mem hg₁
-    constructor
-    · intro h
-      -- strip the `Γ_p(A)` factors; the residue `z₁z₂⁻¹ ∈ center ∩ Γ₁ = center ∩ Γ_p(A)`
-      have hmid : (z₁ * z₂⁻¹) * (g₂ * z₂) ∈ Gamma1 N := by
-        have h2 := (Gamma1 N).mul_mem ((Gamma_p_α_le_Gamma1 _) hg₁) h
-        rwa [← mul_assoc, mul_inv_cancel, one_mul] at h2
-      have hz_mem : z₁ * z₂⁻¹ ∈ Gamma1 N := by
-        have h2 := (Gamma1 N).mul_mem hmid ((Gamma1 N).inv_mem ((Gamma_p_α_le_Gamma1 _) hg₂))
-        rwa [mul_assoc, mul_inv_cancel, mul_one] at h2
-      have hz_memP : z₁ * z₂⁻¹ ∈ Gamma_p_α (N := N) (T_p_lower p hp.pos) :=
-        (hctr _ hzc).mpr hz_mem
-      exact (Gamma_p_α (N := N) (T_p_lower p hp.pos)).mul_mem hL₁
-        ((Gamma_p_α (N := N) (T_p_lower p hp.pos)).mul_mem hz_memP hg₂)
-    · intro h; exact (Gamma_p_α_le_Gamma1 _) h
   refine Finset.card_bij
     (fun q _ ↦ slGamma_p_αToGamma1 (N := N) (T_p_lower p hp.pos) q) ?_ ?_ ?_
-  · -- maps into the `Γ₁`-fiber: apply the projection `PSL/imΓ_p → PSL/imΓ₁`
-    intro q hq
+  · intro q hq
     simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hq ⊢
-    induction q using QuotientGroup.induction_on with | _ g => ?_
-    rw [slToPslQuot_Gamma_p_α_mk] at hq
-    rw [slGamma_p_αToGamma1_mk, slToPslQuot_mk]
-    obtain ⟨z, hz, hgz⟩ := (key _ g).mp hq
-    exact (key _ g).mpr ⟨z, hz, (Gamma_p_α_le_Gamma1 _) hgz⟩
-  · -- injective on the `Γ_p(A)`-fiber via `hcrux`
-    intro q₁ hq₁ q₂ hq₂ heq
+    exact slGamma_p_αToGamma1_maps_into_Gamma1_fiber p hp hpN q hq
+  · intro q₁ hq₁ q₂ hq₂ heq
     simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hq₁ hq₂
-    induction q₁ using QuotientGroup.induction_on with | _ g₁ => ?_
-    induction q₂ using QuotientGroup.induction_on with | _ g₂ => ?_
-    simp only at heq
-    rw [slToPslQuot_Gamma_p_α_mk] at hq₁ hq₂
-    rw [slGamma_p_αToGamma1_mk, slGamma_p_αToGamma1_mk, QuotientGroup.eq] at heq
-    obtain ⟨z₁, hz₁, hgz₁⟩ := (key _ g₁).mp hq₁
-    obtain ⟨z₂, hz₂, hgz₂⟩ := (key _ g₂).mp hq₂
-    rw [QuotientGroup.eq]
-    exact (hcrux g₁ g₂ z₁ z₂ hz₁ hz₂ hgz₁ hgz₂).mp heq
-  · -- surjective onto the `Γ₁`-fiber: the center part `z⁻¹` of `g` gives the `Γ_p(A)`-fiber rep
-    intro q hq
+    exact slGamma_p_αToGamma1_injective_on_Gamma_p_α_fiber p hp hpN q₁ q₂ hq₁ hq₂ heq
+  · intro q hq
     simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hq
-    induction q using QuotientGroup.induction_on with | _ g => ?_
-    rw [slToPslQuot_mk] at hq
-    obtain ⟨z, hz, hgz⟩ := (key _ g).mp hq
-    have hzinv : z⁻¹ ∈ Subgroup.center SL(2, ℤ) := (Subgroup.center SL(2, ℤ)).inv_mem hz
-    refine ⟨QuotientGroup.mk z⁻¹, ?_, ?_⟩
-    · simp only [Finset.mem_filter, Finset.mem_univ, true_and, slToPslQuot_Gamma_p_α_mk]
-      refine (key _ z⁻¹).mpr ⟨z, hz, ?_⟩
-      rw [inv_mul_cancel]
-      exact (Gamma_p_α (N := N) (T_p_lower p hp.pos)).one_mem
-    · show slGamma_p_αToGamma1 (N := N) (T_p_lower p hp.pos) (QuotientGroup.mk z⁻¹) =
-        QuotientGroup.mk g
-      rw [slGamma_p_αToGamma1_mk, QuotientGroup.eq]
-      -- `(z⁻¹)⁻¹ * g = z * g = g * z ∈ Γ₁` (center commutes)
-      have hcomm : z * g = g * z := (Subgroup.mem_center_iff.mp hz g).symm
-      rw [inv_inv, hcomm]; exact hgz
+    obtain ⟨a, ha₁, ha₂⟩ := slGamma_p_αToGamma1_surjective_onto_Gamma1_fiber p hp hpN q hq
+    exact ⟨a, by simp [ha₁], ha₂⟩
 
 open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory in
 /-- **TRACE LEAF (DS 5.5.3, form-level) — the single genuine remaining gap.** Summing `g ∣ A`
