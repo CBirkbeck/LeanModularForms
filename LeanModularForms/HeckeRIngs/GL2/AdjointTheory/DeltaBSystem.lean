@@ -1424,6 +1424,36 @@ def TpUpperPerQIntegrableBUnion (p : ℕ) (hp : Nat.Prime p) (h : ℍ → ℂ) :
           GL (Fin 2) ℝ)) • (ModularGroup.fd : Set ℍ)) μ_hyp
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+/-- Per-`q` pairwise-AE-disjoint hypothesis for an α-family `α : ℕ → GL` of tiles,
+indexed by `b ∈ Finset.range p`, on a fixed `q`. -/
+def AlphaFamilyPerQTilePairwiseAEDisjoint (p : ℕ) (α : ℕ → GL (Fin 2) ℝ) : Prop :=
+  ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
+    ((Finset.range p : Finset ℕ) : Set ℕ).Pairwise (fun b₁ b₂ ↦ AEDisjoint μ_hyp
+        ((α b₁ * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (q.out : SL(2, ℤ))⁻¹ :
+          GL (Fin 2) ℝ)) • (ModularGroup.fd : Set ℍ))
+        ((α b₂ * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (q.out : SL(2, ℤ))⁻¹ :
+          GL (Fin 2) ℝ)) • (ModularGroup.fd : Set ℍ)))
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- Per-`q` null-measurability hypothesis for each tile in an α-family
+`α : ℕ → GL`, `b ∈ Finset.range p`, on a fixed `q`. -/
+def AlphaFamilyPerQTileNullMeasurable (p : ℕ) (α : ℕ → GL (Fin 2) ℝ) : Prop :=
+  ∀ q : SL(2, ℤ) ⧸ Gamma1 N, ∀ b ∈ Finset.range p,
+    NullMeasurableSet
+      ((α b * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (q.out : SL(2, ℤ))⁻¹ :
+        GL (Fin 2) ℝ)) • (ModularGroup.fd : Set ℍ)) μ_hyp
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- Per-`q` integrability of `h` on an α-family tile biUnion over `b ∈ range p`. -/
+def AlphaFamilyPerQIntegrableBUnion (p : ℕ) (α : ℕ → GL (Fin 2) ℝ)
+    (h : ℍ → ℂ) : Prop :=
+  ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
+    IntegrableOn h
+    (⋃ b ∈ Finset.range p,
+      (α b * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (q.out : SL(2, ℤ))⁻¹ :
+        GL (Fin 2) ℝ)) • (ModularGroup.fd : Set ℍ)) μ_hyp
+
+open UpperHalfPlane ModularGroup MeasureTheory in
 /-- The `T_p`-upper part of the per-`q` Petersson coset sum: summing the per-`q`
 `b`-biUnion tiles equals summing, over `b`, the `q`-biUnion tiles.  Expand each
 per-`q` biUnion into a `b`-sum, swap the order of summation, then collapse each
