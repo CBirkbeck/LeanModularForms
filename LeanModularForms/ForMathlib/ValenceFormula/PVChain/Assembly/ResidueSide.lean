@@ -143,8 +143,7 @@ private lemma cpv_residue_side_off_curve_min_dist (S : Finset UpperHalfPlane)
       exact ((mem_allZerosInFdBox_iff f hf hM_half).mp h_box).2)))
   obtain ⟨t₀, ht₀, ht₀_min⟩ := isCompact_Icc.exists_isMinOn
     ⟨0, left_mem_Icc.mpr (by norm_num)⟩
-    (((fdBoundary_H_continuous H).continuousOn.sub continuousOn_const).norm :
-      ContinuousOn (fun t => ‖γ t - s‖) (Icc 0 5))
+    (by fun_prop : ContinuousOn (fun t => ‖γ t - s‖) (Icc 0 5))
   exact ⟨‖γ t₀ - s‖, norm_pos_iff.mpr (sub_ne_zero.mpr (h_off t₀ ht₀)),
     fun t ht => ht₀_min ht⟩
 

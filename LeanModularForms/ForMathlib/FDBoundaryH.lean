@@ -240,6 +240,7 @@ private lemma fdBoundary_H_eq_layered (H : ℝ) (t : ℝ) :
   unfold fdBoundary_H fdBoundary_H_inner1234 fdBoundary_H_inner234 fdBoundary_H_inner34
   split_ifs <;> rfl
 
+@[fun_prop]
 theorem fdBoundary_H_continuous (H : ℝ) :
     Continuous (fdBoundary_H H) := by
   rw [show fdBoundary_H H = (fun t => if t ≤ 1 then

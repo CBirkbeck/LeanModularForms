@@ -198,9 +198,7 @@ theorem multi_pole_local_far_bound
       (∀ t ∈ Set.Icc (t_i + r') (t_i + r),
         m ≤ ‖γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t - s‖) := by
   set γf : ℝ → ℂ := (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend : ℝ → ℂ)
-  have h_norm_cont : Continuous (fun t ↦ ‖γf t - s‖) :=
-    (γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend.sub
-      continuous_const).norm
+  have h_norm_cont : Continuous (fun t ↦ ‖γf t - s‖) := by fun_prop
   obtain ⟨t_l, ht_l_mem, ht_l_min⟩ := isCompact_Icc.exists_isMinOn
     (s := Set.Icc (t_i - r) (t_i - r')) ⟨t_i - r, le_rfl, by linarith⟩
     h_norm_cont.continuousOn

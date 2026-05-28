@@ -113,9 +113,7 @@ private lemma endpoint_min_dist (H : ℝ) (hH : Real.sqrt 3 / 2 < H) :
     ∃ δ > 0, ∀ t ∈ Set.Icc (1:ℝ) 4, δ ≤ ‖fdBoundary_H H t - s‖ := by
   intro s
   have h_cont_norm : ContinuousOn (fun t => ‖fdBoundary_H H t - s‖)
-      (Set.Icc (1:ℝ) 4) :=
-    ((fdBoundary_H_continuous H).continuousOn.sub continuousOn_const).norm.mono
-      (Set.Icc_subset_Icc (by norm_num : (0:ℝ) ≤ 1) (by norm_num : (4:ℝ) ≤ 5))
+      (Set.Icc (1:ℝ) 4) := by fun_prop
   have h_pos_norm : ∀ t ∈ Set.Icc (1:ℝ) 4, 0 < ‖fdBoundary_H H t - s‖ :=
     fun t ht => norm_pos_iff.mpr (sub_ne_zero.mpr (endpoint_avoid_14 H hH t ht))
   exact isCompact_Icc.exists_forall_le' h_cont_norm h_pos_norm

@@ -48,8 +48,7 @@ private lemma integral_t_mul_deriv_eq {f : ℂ → ℂ} {S : Set ℂ}
   let u' : ℝ → ℂ := fun _ => 1
   let v' : ℝ → ℂ := fun t => deriv f (c + t • (z - c)) * (z - c)
   let γ : ℝ → ℂ := fun t => c + t • (z - c)
-  have hγ_cont : Continuous γ :=
-    continuous_const.add (continuous_ofReal.smul continuous_const)
+  have hγ_cont : Continuous γ := by fun_prop
   have hu_cont : ContinuousOn u (Set.uIcc 0 1) :=
     continuous_ofReal.continuousOn
   have hv_cont : ContinuousOn v (Set.uIcc 0 1) :=
@@ -240,8 +239,7 @@ private lemma hasDerivAt_segmentIntegral_aux {f : ℂ → ℂ}
     let segmentMap : ℂ × ℝ → ℂ := fun ⟨w, t⟩ => c + t • (w - c)
     let K := segmentMap '' (Metric.closedBall z ε' ×ˢ Icc (0 : ℝ) 1)
     have hK_compact : IsCompact K :=
-      ((isCompact_closedBall z ε').prod isCompact_Icc).image
-        (continuous_const.add (continuous_snd.smul (continuous_fst.sub continuous_const)))
+      ((isCompact_closedBall z ε').prod isCompact_Icc).image (by fun_prop)
     have hK_in_S : K ⊆ S := fun p hp => by
       obtain ⟨⟨w, t⟩, ⟨hw, ht⟩, rfl⟩ := hp
       exact segment_subset_convex hS_convex hc

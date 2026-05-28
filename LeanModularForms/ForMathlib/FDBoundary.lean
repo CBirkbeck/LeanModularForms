@@ -186,6 +186,7 @@ private lemma fdBoundaryFun_eq_layered (H : ℝ) (t : ℝ) :
   split_ifs <;> rfl
 
 /-- The FD boundary is continuous as a function `ℝ → ℂ`. -/
+@[fun_prop]
 theorem fdBoundaryFun_continuous (H : ℝ) :
     Continuous (fdBoundaryFun H) := by
   rw [show (fdBoundaryFun H) = (fun t => if t ≤ 1/5 then
