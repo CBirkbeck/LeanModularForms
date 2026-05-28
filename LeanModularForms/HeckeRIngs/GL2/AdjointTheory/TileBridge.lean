@@ -397,6 +397,198 @@ def MInftyIntegrableRHS
         ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
           (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp
 
+/-! #### α-parameterized variants (used in the inner `h_α_…` family) -/
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- The pairwise-AE-disjoint hypothesis for the `α`-shifted-tile union. -/
+def AlphaTilePairwiseAEDisjoint (α : GL (Fin 2) ℝ) : Prop :=
+  Pairwise (fun (q₁ q₂ : SL(2, ℤ) ⧸ Gamma1 N) ↦ AEDisjoint μ_hyp
+      ((α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (q₁.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ))
+      ((α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (q₂.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • fd))
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- The null-measurability hypothesis for each `α`-shifted-tile piece. -/
+def AlphaTileNullMeasurable (α : GL (Fin 2) ℝ) : Prop :=
+  ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
+    NullMeasurableSet
+      ((α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- The LHS-side integrability hypothesis for the `α`-shifted-tile union. -/
+def AlphaIntegrableLHS
+    (p : ℕ) (hpN : Nat.Coprime p N) (α : GL (Fin 2) ℝ)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
+  IntegrableOn
+    (fun τ ↦ petersson k
+      (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f))
+      ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) ∣[k]
+        peterssonAdj α) τ)
+    (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+      (α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- The RHS-side integrability hypothesis for the `α`-shifted-tile union. -/
+def AlphaIntegrableRHS
+    (p : ℕ) (hpN : Nat.Coprime p N) (α : GL (Fin 2) ℝ)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
+  IntegrableOn
+    (fun τ ↦ petersson k
+      ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)) ∣[k]
+        peterssonAdj α) ⇑g τ)
+    (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+      (α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- The `α-FD balance` equation: aggregate-tile peterssonInner on the
+`α · (q.out)⁻¹`-tile union, with the diamond moved from the f-slot to the
+α-adjoint-slashed g-slot. -/
+def AlphaFDBalance
+    (p : ℕ) (hpN : Nat.Coprime p N) (α : GL (Fin 2) ℝ)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
+  peterssonInner k
+    (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+      (α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ))
+    (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f))
+    ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) ∣[k]
+      peterssonAdj α) =
+  peterssonInner k
+    (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+      (α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ))
+    ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)) ∣[k]
+      peterssonAdj α) ⇑g
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- The `α-post-swap balance` equation: same as `AlphaFDBalance` but with
+the integration domain transformed by `peterssonAdj α`. -/
+def AlphaPostSwapBalance
+    (p : ℕ) (hpN : Nat.Coprime p N) (α : GL (Fin 2) ℝ)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
+  peterssonInner k
+    (peterssonAdj α • ⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+      (α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ))
+    ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)) ∣[k] α)
+    (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) =
+  peterssonInner k
+    (peterssonAdj α • ⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+      (α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+        (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ))
+    (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f))
+    (⇑g ∣[k] α)
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- The α-SL-tile balance equation: aggregate `peterssonInner` over the
+plain SL-tile union (no α factor), with the diamond shifted from f's slot to
+the α-slashed g-slot. -/
+def AlphaSLTileBalance
+    (p : ℕ) (hpN : Nat.Coprime p N) (α : GL (Fin 2) ℝ)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
+  peterssonInner k
+      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ))
+      ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)) ∣[k] α)
+      (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) =
+    peterssonInner k
+      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ))
+      (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f))
+      (⇑g ∣[k] α)
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- The α-balanced form: per-q `peterssonInner` summed where the diamond is
+on the LHS f-slot via `α · (q.out)⁻¹`, equals the symmetric form with the
+diamond on the f-slot only. -/
+def AlphaBalanced
+    (p : ℕ) (hpN : Nat.Coprime p N) (α : GL (Fin 2) ℝ)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
+  (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+    peterssonInner k ModularGroup.fd
+        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f) ∣[k]
+          (α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
+        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
+          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ))) =
+  ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+    peterssonInner k ModularGroup.fd
+        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
+          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ))
+        (⇑g ∣[k]
+          (α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- The α-canonical form: balanced equation after reindexing via the σ-quotient
+equivalence; i.e., g is slashed by `σ⟨ε⟩(q).out⁻¹`. -/
+def AlphaCanonical
+    (p : ℕ) (hpN : Nat.Coprime p N) (α : GL (Fin 2) ℝ)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
+  (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+    peterssonInner k ModularGroup.fd
+        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f) ∣[k]
+          (α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
+        (⇑g ∣[k]
+          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            ((Gamma1QuotEquivOfGamma0
+              ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
+              (adjointGamma0Rep p N hpN).property q).out :
+              SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ))) =
+  ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+    peterssonInner k ModularGroup.fd
+        (⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (q.out : SL(2, ℤ))⁻¹))
+        (⇑g ∣[k]
+          (α *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              ((Gamma1QuotEquivOfGamma0
+                ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
+                (adjointGamma0Rep p N hpN).property q).out :
+                SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- The α-`T_p_lower`-form FD-slash-exchange equation, abstract over α and a
+factorisation matrix γ_α. Specialises to `MInftyFDSlashExchange` when α is M_∞
+and γ_α is the M_∞-specific gamma factor. -/
+def AlphaTpLowerFDSlashExchange
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (α : GL (Fin 2) ℝ) (γ_α : SL(2, ℤ))
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
+  (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+    peterssonInner k ModularGroup.fd
+        (⇑f ∣[k]
+          ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ_α) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
+        (⇑g ∣[k]
+          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            ((Gamma1QuotEquivOfGamma0
+              ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
+              (adjointGamma0Rep p N hpN).property q).out :
+              SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ))) =
+  ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+    peterssonInner k ModularGroup.fd
+        (⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (q.out : SL(2, ℤ))⁻¹))
+        (⇑g ∣[k]
+          (α *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              ((Gamma1QuotEquivOfGamma0
+                ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
+                (adjointGamma0Rep p N hpN).property q).out :
+                SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
+
 open UpperHalfPlane ModularGroup MeasureTheory in
 lemma petN_diamond_heckeT_p_symm_RHS_sum_distributed_reindex
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
@@ -2979,53 +3171,9 @@ theorem h_α_FD_slash_exchange_T_p_lower_form_of_canonical
         (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
           ((mapGL ℝ : SL(2, ℤ) →* _) γ_α : GL (Fin 2) ℝ))
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (h_canonical_α :
-      (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-        peterssonInner k ModularGroup.fd
-            (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f) ∣[k]
-              (α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
-            (⇑g ∣[k]
-              ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                ((Gamma1QuotEquivOfGamma0
-                  ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
-                  (adjointGamma0Rep p N hpN).property q).out :
-                  SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ))) =
-      ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-        peterssonInner k ModularGroup.fd
-            (⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-              (q.out : SL(2, ℤ))⁻¹))
-            (⇑g ∣[k]
-              (α *
-                ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                  ((Gamma1QuotEquivOfGamma0
-                    ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
-                    (adjointGamma0Rep p N hpN).property q).out :
-                    SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))) :
-    (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-      peterssonInner k ModularGroup.fd
-          (⇑f ∣[k]
-            ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
-              ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ_α) *
-              ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
-          (⇑g ∣[k]
-            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-              ((Gamma1QuotEquivOfGamma0
-                ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
-                (adjointGamma0Rep p N hpN).property q).out :
-                SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ))) =
-    ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-      peterssonInner k ModularGroup.fd
-          (⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹))
-          (⇑g ∣[k]
-            (α *
-              ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                ((Gamma1QuotEquivOfGamma0
-                  ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
-                  (adjointGamma0Rep p N hpN).property q).out :
-                  SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ))) := by
+    (h_canonical_α : AlphaCanonical p hpN α f g) :
+    AlphaTpLowerFDSlashExchange p hp hpN α γ_α f g := by
+  show _ = _
   rw [show (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
       peterssonInner k ModularGroup.fd
         (⇑f ∣[k]
@@ -3140,44 +3288,9 @@ theorem h_α_canonical_form_of_balanced
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (α : GL (Fin 2) ℝ)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (h_balanced :
-      (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-        peterssonInner k ModularGroup.fd
-            (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f) ∣[k]
-              (α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
-            (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
-              ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ))) =
-      ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-        peterssonInner k ModularGroup.fd
-            (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
-              ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ))
-            (⇑g ∣[k]
-              (α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))) :
-    (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-      peterssonInner k ModularGroup.fd
-          (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f) ∣[k]
-            (α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-              (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
-          (⇑g ∣[k]
-            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-              ((Gamma1QuotEquivOfGamma0
-                ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
-                (adjointGamma0Rep p N hpN).property q).out :
-                SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ))) =
-    ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-      peterssonInner k ModularGroup.fd
-          (⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹))
-          (⇑g ∣[k]
-            (α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-              ((Gamma1QuotEquivOfGamma0
-                ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
-                (adjointGamma0Rep p N hpN).property q).out :
-                SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ))) := by
+    (h_balanced : AlphaBalanced p hpN α f g) :
+    AlphaCanonical p hpN α f g := by
+  show _ = _
   rw [sum_peterssonInner_diamond_inv_g_slot_eq_g_slash_sigma p hpN α f g, h_balanced,
     sum_peterssonInner_diamond_f_slot_sigma_reindex_to_g_α_form p hpN α f g]
 
@@ -3186,60 +3299,13 @@ theorem balanced_α_of_aggregate_FD_balance
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (α : GL (Fin 2) ℝ) (hα : 0 < α.det.val)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hd : Pairwise (fun (q₁ q₂ : SL(2, ℤ) ⧸ Gamma1 N) ↦ AEDisjoint μ_hyp
-        ((α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-          (q₁.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ))
-        ((α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-          (q₂.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • fd)))
-    (hm : ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
-      NullMeasurableSet
-        ((α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-          (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp)
-    (hint_LHS : IntegrableOn
-      (fun τ ↦ petersson k
-        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f))
-        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) ∣[k]
-          peterssonAdj α) τ)
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        (α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-          (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp)
-    (hint_RHS : IntegrableOn
-      (fun τ ↦ petersson k
-        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)) ∣[k]
-          peterssonAdj α) ⇑g τ)
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        (α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-          (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp)
-    (h_FD_balance :
-      peterssonInner k
-        (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-          (α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ))
-        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f))
-        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) ∣[k]
-          peterssonAdj α) =
-      peterssonInner k
-        (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-          (α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ))
-        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)) ∣[k]
-          peterssonAdj α) ⇑g) :
-    (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-      peterssonInner k ModularGroup.fd
-        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f) ∣[k]
-          (α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
-        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ))) =
-    ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-      peterssonInner k ModularGroup.fd
-        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ))
-        (⇑g ∣[k]
-          (α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ))) := by
+    (hd : AlphaTilePairwiseAEDisjoint (N := N) α)
+    (hm : AlphaTileNullMeasurable (N := N) α)
+    (hint_LHS : AlphaIntegrableLHS p hpN α f g)
+    (hint_RHS : AlphaIntegrableRHS p hpN α f g)
+    (h_FD_balance : AlphaFDBalance p hpN α f g) :
+    AlphaBalanced p hpN α f g := by
+  show _ = _
   have h_LHS_agg := peterssonInner_sum_slash_adjoint_coset_aggregate
     (k := k) α hα
     (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f))
@@ -3291,32 +3357,9 @@ theorem h_FD_balance_of_post_swap_balance
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (α : GL (Fin 2) ℝ) (hα : 0 < α.det.val)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (h_post_swap_balance :
-      peterssonInner k
-        (peterssonAdj α • ⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-          (α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ))
-        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)) ∣[k] α)
-        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) =
-      peterssonInner k
-        (peterssonAdj α • ⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-          (α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ))
-        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f))
-        (⇑g ∣[k] α)) :
-    peterssonInner k
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        (α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-          (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ))
-      (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f))
-      ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) ∣[k]
-        peterssonAdj α) =
-    peterssonInner k
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        (α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-          (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ))
-      ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)) ∣[k]
-        peterssonAdj α) ⇑g := by
+    (h_post_swap_balance : AlphaPostSwapBalance p hpN α f g) :
+    AlphaFDBalance p hpN α f g := by
+  show _ = _
   have hα_adj : 0 < (peterssonAdj α).det.val := by
     show 0 < ((peterssonAdj α).det : ℝˣ).val
     rw [peterssonAdj_det]
@@ -3384,31 +3427,9 @@ theorem h_post_swap_balance_of_SL_tile_balance
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (α : GL (Fin 2) ℝ) (hα : 0 < α.det.val)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (h_SL_tile_balance :
-      peterssonInner k
-        (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ))
-        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)) ∣[k] α)
-        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) =
-      peterssonInner k
-        (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ))
-        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f))
-        (⇑g ∣[k] α)) :
-    peterssonInner k
-      (peterssonAdj α • ⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        (α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-          (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ))
-      ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)) ∣[k] α)
-      (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) =
-    peterssonInner k
-      (peterssonAdj α • ⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        (α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-          (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ))
-      (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f))
-      (⇑g ∣[k] α) := by
+    (h_SL_tile_balance : AlphaSLTileBalance p hpN α f g) :
+    AlphaPostSwapBalance p hpN α f g := by
+  show _ = _
   rw [peterssonAdj_smul_aggregate_tile_union_eq]
   exact h_SL_tile_balance
 
