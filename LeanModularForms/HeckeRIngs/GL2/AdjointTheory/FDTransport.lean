@@ -1336,6 +1336,20 @@ noncomputable def traceSlash_Gamma_p_α (α : GL (Fin 2) ℚ) (G : ℍ → ℂ)
     G ∣[k] ((q.out : SL(2, ℤ))⁻¹ * q'.out)
 
 open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory Classical in
+/-- **Fiberwise integrability of the trace-shifted Petersson pairing.** For each
+`Γ₁`-coset `q'` and each `Γ_p(α)`-coset `q` lying above it (via `slGamma_p_αToGamma1 α`),
+the function `petersson k F (G ∣[k] (q.out⁻¹·q'.out))` is integrable on the `q'`-tile
+`(q'.out)⁻¹ • fd`. This is the "fiberwise traced integrability" hypothesis used by the
+trace-transfer engines. -/
+def TraceFiberIntegrable (α : GL (Fin 2) ℚ) (F G : ℍ → ℂ) : Prop :=
+  ∀ q' : SL(2, ℤ) ⧸ Gamma1 N,
+    ∀ q ∈ Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α =>
+      slGamma_p_αToGamma1 (N := N) α q = q'),
+    IntegrableOn (fun τ ↦ petersson k F
+      (G ∣[k] ((q.out : SL(2, ℤ))⁻¹ * q'.out)) τ)
+      ((q'.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ)) μ_hyp
+
+open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory Classical in
 /-- **DS Exercise 5.4.4 (outer-`SL`-coset trace/transfer).** The full `SL/Γ_p(α)`-tile
 sum of `petersson k F G` (`F` `Γ₁(N)`-invariant in the slash sense, `G` arbitrary)
 reassembles, fiber by fiber over `slGamma_p_αToGamma1 α`, into the `SL/Γ₁(N)`-tile sum
@@ -1345,12 +1359,7 @@ that DS uses to glue the per-representative exchange into the global adjoint. -/
 theorem sum_SL_tile_petersson_Gamma_p_α_eq_sum_SL_tile_traceSlash_Gamma1
     (α : GL (Fin 2) ℚ) (F G : ℍ → ℂ)
     (hF : ∀ γ ∈ Gamma1 N, F ∣[k] γ = F)
-    (h_int : ∀ q' : SL(2, ℤ) ⧸ Gamma1 N,
-      ∀ q ∈ Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α =>
-        slGamma_p_αToGamma1 (N := N) α q = q'),
-      IntegrableOn (fun τ ↦ petersson k F
-        (G ∣[k] ((q.out : SL(2, ℤ))⁻¹ * q'.out)) τ)
-        ((q'.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ)) μ_hyp) :
+    (h_int : TraceFiberIntegrable (N := N) (k := k) α F G) :
     ∑ q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α,
       ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ), petersson k F G τ ∂μ_hyp =
     ∑ q' : SL(2, ℤ) ⧸ Gamma1 N,
@@ -1418,12 +1427,7 @@ theorem setIntegral_Gamma_p_α_fundDomain_PSL_petersson_eq_traceSlash_SL_outer_q
     (hG_slash : ∀ γ ∈ Gamma_p_α (N := N) α, G ∣[k] γ = G)
     (h_int : IntegrableOn (fun τ ↦ petersson k F G τ)
       (Gamma_p_α_fundDomain_PSL_canonical (N := N) α) μ_hyp)
-    (h_int_trace : ∀ q' : SL(2, ℤ) ⧸ Gamma1 N,
-      ∀ q ∈ Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α =>
-        slGamma_p_αToGamma1 (N := N) α q = q'),
-      IntegrableOn (fun τ ↦ petersson k F
-        (G ∣[k] ((q.out : SL(2, ℤ))⁻¹ * q'.out)) τ)
-        ((q'.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ)) μ_hyp) :
+    (h_int_trace : TraceFiberIntegrable (N := N) (k := k) α F G) :
     (slToPslQuot_fiberCard_Gamma_p_α (N := N) α) •
         ∫ τ in Gamma_p_α_fundDomain_PSL (N := N) α, petersson k F G τ ∂μ_hyp =
       ∑ q' : SL(2, ℤ) ⧸ Gamma1 N,
@@ -1615,12 +1619,7 @@ theorem setIntegral_Gamma_p_α_fundDomain_PSL_petersson_eq_traceSlash_Gamma1_fun
     (hG_slash : ∀ γ ∈ Gamma_p_α (N := N) α, G ∣[k] γ = G)
     (h_int : IntegrableOn (fun τ ↦ petersson k F G τ)
       (Gamma_p_α_fundDomain_PSL_canonical (N := N) α) μ_hyp)
-    (h_int_trace : ∀ q' : SL(2, ℤ) ⧸ Gamma1 N,
-      ∀ q ∈ Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α =>
-        slGamma_p_αToGamma1 (N := N) α q = q'),
-      IntegrableOn (fun τ ↦ petersson k F
-        (G ∣[k] ((q.out : SL(2, ℤ))⁻¹ * q'.out)) τ)
-        ((q'.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ)) μ_hyp)
+    (h_int_trace : TraceFiberIntegrable (N := N) (k := k) α F G)
     (h_int_tr : IntegrableOn
       (fun τ ↦ petersson k F (traceSlash_Gamma_p_α (N := N) (k := k) α G q₀) τ)
       (Gamma1_fundDomain_PSL N) μ_hyp) :

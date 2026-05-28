@@ -5294,13 +5294,8 @@ open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory Clas
 /-- Per-fiber integrability of the slashed trace summand (engine hyp `h_int_trace`). -/
 private theorem h_int_trace_FD (p : ℕ) (hp : Nat.Prime p) (_hpN : Nat.Coprime p N)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (_q₀ : SL(2, ℤ) ⧸ Gamma1 N) :
-    ∀ q' : SL(2, ℤ) ⧸ Gamma1 N,
-      ∀ q ∈ Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) (T_p_lower p hp.pos) =>
-        slGamma_p_αToGamma1 (N := N) (T_p_lower p hp.pos) q = q'),
-      IntegrableOn (fun τ ↦ petersson k ⇑f
-        ((⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) ∣[k]
-          ((q.out : SL(2, ℤ))⁻¹ * q'.out)) τ)
-        ((q'.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ)) μ_hyp := by
+    TraceFiberIntegrable (N := N) (k := k) (T_p_lower p hp.pos) ⇑f
+      (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) := by
   intro q' q _
   refine integrableOn_petersson_slash_T_p_lower_slash_SL p hp f g
     ((q.out : SL(2, ℤ))⁻¹ * q'.out) ?_
