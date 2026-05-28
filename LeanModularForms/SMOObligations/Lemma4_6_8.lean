@@ -408,17 +408,16 @@ private theorem miyake_4_6_8_factor_dichotomy
   have hpM : p ∣ l' * N := dvd_mul_of_dvd_right hpN l'
   have h_Mp_eq : (l' * N) / p = l' * (N / p) := Nat.mul_div_assoc l' hpN
   haveI : NeZero ((l' * N) / p) := h_Mp_eq ▸ inferInstance
-  set χ_dir : DirichletCharacter ℂ N := Newform.dirichletLift χ with hχ_dir
+  set χ_dir : DirichletCharacter ℂ N := Newform.dirichletLift χ
   set χ_M : DirichletCharacter ℂ (l' * N) := DirichletCharacter.changeLevel hNlN χ_dir with hχM
   have hχ_dir_unit : χ_dir.toUnitHom = χ :=
     MulChar.equivToUnitHom.apply_symm_apply χ
   have hχM_unit : χ_M.toUnitHom = χ.comp (ZMod.unitsMap hNlN) := by
     rw [hχM, DirichletCharacter.changeLevel_toUnitHom, hχ_dir_unit]
-  have hg_χM : g ∈ cuspFormCharSpace k χ_M.toUnitHom := by rw [hχM_unit]; exact hg_char
-  rcases miyake_4_6_4_dichotomy_strong χ_M p hp hpM g hg_χM hg_supp with
+  rcases miyake_4_6_4_dichotomy_strong χ_M p hp hpM g
+    (by rw [hχM_unit]; exact hg_char) hg_supp with
     hg_zero | ⟨h_fac, _g_p, _hg_p_char, _hg_p_eq⟩
-  · left
-    intro n hn_cop
+  · refine Or.inl fun n hn_cop ↦ ?_
     have hgn := hg_qexp n
     rw [if_pos hn_cop] at hgn
     rw [← hgn, hg_zero]
@@ -426,24 +425,22 @@ private theorem miyake_4_6_8_factor_dichotomy
       (⇑(0 : CuspForm ((Gamma1 (l' * N)).map (mapGL ℝ)) k) : UpperHalfPlane → ℂ)).coeff n = 0
     rw [show (⇑(0 : CuspForm ((Gamma1 (l' * N)).map (mapGL ℝ)) k) : UpperHalfPlane → ℂ) =
         (0 : UpperHalfPlane → ℂ) from rfl, qExpansion_zero, map_zero]
-  · right
+  · refine Or.inr ?_
     have h_cond_dvd_lNp : χ_dir.conductor ∣ l' * (N / p) := by
       have : χ_M.conductor ∣ (l' * N) / p :=
         conductor_dvd_of_factorsThrough χ_M (NeZero.ne (l' * N)) h_fac
       rwa [hχM, conductor_changeLevel hNlN χ_dir, h_Mp_eq] at this
     have h_cond_dvd_Np : χ_dir.conductor ∣ N / p := by
-      have hN_eq : N = p * (N / p) := (Nat.mul_div_cancel' hpN).symm
-      have h_gcd : Nat.gcd (p * (N / p)) (l' * (N / p)) = (N / p) * Nat.gcd p l' := by
-        rw [Nat.mul_comm p (N / p), Nat.mul_comm l' (N / p), Nat.gcd_mul_left]
       have hcd_gcd : χ_dir.conductor ∣ Nat.gcd (p * (N / p)) (l' * (N / p)) :=
-        Nat.dvd_gcd (hN_eq ▸ χ_dir.conductor_dvd_level) h_cond_dvd_lNp
-      rwa [h_gcd, hpl', Nat.mul_one] at hcd_gcd
+        Nat.dvd_gcd ((Nat.mul_div_cancel' hpN).symm ▸ χ_dir.conductor_dvd_level) h_cond_dvd_lNp
+      rwa [show Nat.gcd (p * (N / p)) (l' * (N / p)) = (N / p) * Nat.gcd p l' by
+        rw [Nat.mul_comm p (N / p), Nat.mul_comm l' (N / p), Nat.gcd_mul_left],
+        hpl', Nat.mul_one] at hcd_gcd
     refine ⟨(loweredCharacter (l := p)
       (factorsThrough_of_conductor_dvd χ_dir h_cond_dvd_Np (Nat.div_dvd_of_dvd hpN))).toUnitHom, ?_⟩
     have h := toUnitHom_loweredCharacter (χ := χ_dir) (l := p)
       (factorsThrough_of_conductor_dvd χ_dir h_cond_dvd_Np (Nat.div_dvd_of_dvd hpN))
-    rw [hχ_dir_unit] at h
-    exact h
+    rwa [hχ_dir_unit] at h
 
 /-- **Unconditional subset-indexed helper for Miyake 4.6.8.**  For `f ∈ S_k(Γ_1(N), χ)`
 vanishing on indices coprime to `S.prod id` (`S ⊆ N.primeFactors`), there is a
@@ -464,22 +461,18 @@ theorem miyake_4_6_8_subset_helper_unconditional
       (∀ p ∈ S, f_p p ∈ cuspFormCharSpace k χ) := by
   induction hSc : S.card generalizing f S with
   | zero =>
-    have hS_empty : S = ∅ := Finset.card_eq_zero.mp hSc
-    subst hS_empty
+    obtain rfl : S = ∅ := Finset.card_eq_zero.mp hSc
     refine ⟨fun _ ↦ 0, ?_, ?_, ?_⟩
-    · have hf_zero : f = 0 :=
-        cuspForm_eq_zero_of_qExpansion_coeff_eq_zero f fun n ↦
-          h_vanish n (by simp [Nat.Coprime, Finset.prod_empty])
-      rw [hf_zero, Finset.sum_empty]
+    · rw [cuspForm_eq_zero_of_qExpansion_coeff_eq_zero f fun n ↦
+        h_vanish n (by simp [Nat.Coprime, Finset.prod_empty]), Finset.sum_empty]
     · exact fun p hp ↦ absurd hp (Finset.notMem_empty p)
     · exact fun p hp ↦ absurd hp (Finset.notMem_empty p)
   | succ n ih =>
     obtain ⟨p, hp_in⟩ : S.Nonempty := Finset.card_pos.mp (hSc ▸ Nat.succ_pos n)
     have hp_prime : p.Prime := Nat.prime_of_mem_primeFactors (hS hp_in)
     have hpN : p ∣ N := Nat.dvd_of_mem_primeFactors (hS hp_in)
-    haveI : NeZero (N / p) := ⟨by
-      exact (Nat.div_pos (Nat.le_of_dvd (Nat.pos_of_ne_zero (NeZero.ne N)) hpN)
-        hp_prime.pos).ne'⟩
+    haveI : NeZero (N / p) := ⟨(Nat.div_pos
+      (Nat.le_of_dvd (Nat.pos_of_ne_zero (NeZero.ne N)) hpN) hp_prime.pos).ne'⟩
     have h_erase_sub : S.erase p ⊆ N.primeFactors := fun q hq ↦
       hS (Finset.mem_of_mem_erase hq)
     have h_erase_card : (S.erase p).card = n := by

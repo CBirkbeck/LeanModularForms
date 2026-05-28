@@ -200,9 +200,6 @@ theorem coeff_one_ne_zero_of_mem_cuspFormsNew_of_eigen_unconditional
     (hg_ne : g.toCuspForm ≠ 0) :
     (ModularFormClass.qExpansion (1 : ℝ) g.toCuspForm).coeff 1 ≠ 0 := by
   intro h1
-  have hgχ_cusp : g.toCuspForm ∈ cuspFormCharSpace k χ :=
-    (cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace (k := k) χ
-      g.toCuspForm).mp (by convert hgχ using 1)
   have h_vanish : ∀ n : ℕ, Nat.Coprime n N →
       (ModularFormClass.qExpansion (1 : ℝ) g.toCuspForm).coeff n = 0 := by
     intro n hn
@@ -211,13 +208,13 @@ theorem coeff_one_ne_zero_of_mem_cuspFormsNew_of_eigen_unconditional
       rw [ModularFormClass.qExpansion_coeff_zero _ one_pos
             one_mem_strictPeriods_Gamma1_map_local,
         (CuspFormClass.zero_at_infty g.toCuspForm).valueAtInfty_eq_zero]
-    · have hn_pos : 0 < n := Nat.pos_of_ne_zero hn0
-      have hcoeff := Eigenform.coeff_eq_coeff_one_mul_eigenvalue g χ hgχ ⟨n, hn_pos⟩ hn
-      rw [h1, zero_mul] at hcoeff
-      exact hcoeff
-  have h_old : g.toCuspForm ∈ cuspFormsOld N k :=
-    mainLemma_charSpace_routeB_unconditional χ g.toCuspForm hgχ_cusp h_vanish
-  exact hg_ne (Submodule.disjoint_def.mp cuspFormsOld_disjoint_cuspFormsNew _ h_old hg_new)
+    · have hcoeff :=
+        Eigenform.coeff_eq_coeff_one_mul_eigenvalue g χ hgχ ⟨n, Nat.pos_of_ne_zero hn0⟩ hn
+      rwa [h1, zero_mul] at hcoeff
+  exact hg_ne (Submodule.disjoint_def.mp cuspFormsOld_disjoint_cuspFormsNew _
+    (mainLemma_charSpace_routeB_unconditional χ g.toCuspForm
+      ((cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace (k := k) χ
+        g.toCuspForm).mp (by convert hgχ using 1)) h_vanish) hg_new)
 
 /-! ## Lemma 4.6.2: `V_l` preserves common eigenfunctions and their eigenvalues
 
@@ -338,10 +335,8 @@ private theorem diamondOpCusp_levelInclude_cusp_eq {M : ℕ} [NeZero M] {N : ℕ
   obtain ⟨g_N, hg_N⟩ := Gamma0MapUnits_surjective (N := N) a
   have hg_N_M : (g_N : SL(2, ℤ)) ∈ Gamma0 M := by
     rw [Gamma0_mem]
-    have hNdvd : (N : ℤ) ∣ (g_N : SL(2, ℤ)).val 1 0 :=
-      (ZMod.intCast_zmod_eq_zero_iff_dvd _ N).mp (by exact_mod_cast Gamma0_mem.mp g_N.property)
-    exact (ZMod.intCast_zmod_eq_zero_iff_dvd _ M).mpr
-      ((Int.natCast_dvd_natCast.mpr hMN).trans hNdvd)
+    exact (ZMod.intCast_zmod_eq_zero_iff_dvd _ M).mpr ((Int.natCast_dvd_natCast.mpr hMN).trans
+      ((ZMod.intCast_zmod_eq_zero_iff_dvd _ N).mp (by exact_mod_cast Gamma0_mem.mp g_N.property)))
   have h_units : Gamma0MapUnits (⟨(g_N : SL(2, ℤ)), hg_N_M⟩ : ↥(Gamma0 M)) =
       ZMod.unitsMap hMN a := by
     apply Units.ext
@@ -482,12 +477,10 @@ theorem exists_levelRaise_eigen_decomposition_of_mem_cuspFormsOldChar
       (fun _ _ ↦ LevelRaiseEigenDecomp.add m_χ)
       (LevelRaiseEigenDecomp.zero m_χ) (fun ψ _ ↦ ?_)
     -- single homogeneous piece `g_ψ`: split into new eigenforms via T008a, then `V_l`-raise.
-    have hgψ_new : cfs ψ ∈ cuspFormsNew M k := (hcfs_mem ψ).1
-    have hgψ_char : (cfs ψ).toModularForm' ∈ modFormCharSpace k ψ :=
-      (cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace (k := k) ψ
-        (cfs ψ)).mpr (hcfs_mem ψ).2
     obtain ⟨ι, hι, hh, hh_new, hh_char, hh_eig, hh_sum⟩ :=
-      exists_eigenform_decomposition_mem_cuspFormsNew ψ (cfs ψ) hgψ_new hgψ_char
+      exists_eigenform_decomposition_mem_cuspFormsNew ψ (cfs ψ) (hcfs_mem ψ).1
+        ((cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace (k := k) ψ
+          (cfs ψ)).mpr (hcfs_mem ψ).2)
     refine ⟨ι, hι, fun _ ↦ M, fun _ ↦ l, fun _ ↦ hM, fun _ ↦ hl, fun _ ↦ hcond,
       fun _ ↦ hMne, fun _ ↦ heq, hh, fun _ ↦ ψ, hh_new, hh_eig, hh_char, ?_⟩
     rw [hh_sum, map_sum]
@@ -910,17 +903,13 @@ private theorem isNormalisedEigenform_one_smul_inv
     {b₁ : ℂ} (hb₁_def : b₁ = (ModularFormClass.qExpansion (1 : ℝ) g_new.toCuspForm).coeff 1)
     (hb₁_ne : b₁ ≠ 0) :
     IsNormalisedEigenform_one k (b₁⁻¹ • g_new.toCuspForm).toModularForm' := by
-  refine ⟨?_, ?_⟩
-  · intro n hn
-    haveI : NeZero n.val := ⟨n.pos.ne'⟩
+  refine ⟨fun n hn ↦ ?_, ?_⟩
+  · haveI : NeZero n.val := ⟨n.pos.ne'⟩
     refine ⟨g_new.eigenvalue n, ?_⟩
-    have h_cusp : heckeT_n_cusp k n.val (b₁⁻¹ • g_new.toCuspForm) =
-        g_new.eigenvalue n • (b₁⁻¹ • g_new.toCuspForm) := by
-      rw [heckeT_n_cusp_smul, g_new.isEigen n hn, smul_comm]
     have h_lift : (heckeT_n_cusp k n.val (b₁⁻¹ • g_new.toCuspForm)).toModularForm' =
-        (g_new.eigenvalue n • (b₁⁻¹ • g_new.toCuspForm)).toModularForm' := by rw [h_cusp]
-    rw [heckeT_n_cusp_toModularForm'] at h_lift
-    exact h_lift
+        (g_new.eigenvalue n • (b₁⁻¹ • g_new.toCuspForm)).toModularForm' := by
+      rw [heckeT_n_cusp_smul, g_new.isEigen n hn, smul_comm]
+    rwa [heckeT_n_cusp_toModularForm'] at h_lift
   · show (ModularFormClass.qExpansion (1 : ℝ) (b₁⁻¹ • g_new.toCuspForm)).coeff 1 = 1
     rw [qExpansion_one_coeff_one_smul_local g_new.toCuspForm b₁⁻¹, ← hb₁_def,
       inv_mul_cancel₀ hb₁_ne]
@@ -935,26 +924,22 @@ private theorem eigenvalue_coprime_mul_of_coeff_one_ne_zero
       g_new.eigenvalue m * g_new.eigenvalue n := by
   set b₁ := (ModularFormClass.qExpansion (1 : ℝ) g_new.toCuspForm).coeff 1 with hb₁_def
   set F₁ : ModularForm ((Gamma1 N).map (mapGL ℝ)) k :=
-    (b₁⁻¹ • g_new.toCuspForm).toModularForm' with hF₁_def
+    (b₁⁻¹ • g_new.toCuspForm).toModularForm'
   have hF₁_char : F₁ ∈ modFormCharSpace k χ :=
     (modFormCharSpace k χ).smul_mem b₁⁻¹ hgχ
   have hF₁_eigen : IsNormalisedEigenform_one k F₁ :=
     isNormalisedEigenform_one_smul_inv g_new hb₁_def hb₁_ne
-  have hmn_N : Nat.Coprime (m.val * n.val) N := hm.mul_left hn
   have h := eigenform_coeff_multiplicative_one (N := N) k m n hm hn χ hF₁_char hF₁_eigen
-  have hgcd : Nat.gcd m.val n.val = 1 := hmn
-  rw [hgcd, Nat.divisors_one, Finset.sum_singleton, dif_pos (Nat.coprime_one_left N)] at h
-  have h_unit_one : ZMod.unitOfCoprime 1 (Nat.coprime_one_left N) = 1 := by
-    ext; simp [ZMod.coe_unitOfCoprime]
-  rw [h_unit_one] at h
+  rw [(hmn : Nat.gcd m.val n.val = 1), Nat.divisors_one, Finset.sum_singleton,
+    dif_pos (Nat.coprime_one_left N),
+    show ZMod.unitOfCoprime 1 (Nat.coprime_one_left N) = 1 by ext; simp [ZMod.coe_unitOfCoprime]] at h
   simp only [Nat.cast_one, one_zpow, map_one, Units.val_one, one_mul, mul_one, Nat.div_one] at h
   rw [show (⇑F₁ : UpperHalfPlane → ℂ) = b₁⁻¹ • ⇑g_new.toCuspForm from rfl] at h
-  have hcm := coeff_smul_inv_eq_eigenvalue g_new χ hgχ hb₁_def hb₁_ne m hm
-  have hcn := coeff_smul_inv_eq_eigenvalue g_new χ hgχ hb₁_def hb₁_ne n hn
   have hcmn := coeff_smul_inv_eq_eigenvalue g_new χ hgχ hb₁_def hb₁_ne
-    ⟨m.val * n.val, Nat.mul_pos m.pos n.pos⟩ hmn_N
+    ⟨m.val * n.val, Nat.mul_pos m.pos n.pos⟩ (hm.mul_left hn)
   simp only [PNat.mk_coe] at hcmn
-  rw [hcm, hcn, hcmn] at h
+  rw [coeff_smul_inv_eq_eigenvalue g_new χ hgχ hb₁_def hb₁_ne m hm,
+    coeff_smul_inv_eq_eigenvalue g_new χ hgχ hb₁_def hb₁_ne n hn, hcmn] at h
   exact h.symm
 
 private theorem eigenvalue_at_prime_sq_of_coeff_one_ne_zero
@@ -978,15 +963,13 @@ private theorem eigenvalue_at_prime_sq_of_coeff_one_ne_zero
     hF₁_char hF₁_eigen
   simp only [q_pnat, PNat.mk_coe] at h
   rw [Nat.gcd_self, hq.divisors,
-      Finset.sum_insert (by simp only [Finset.mem_singleton]; exact hq.ne_one.symm),
-      Finset.sum_singleton] at h
-  have h_unit_one : ZMod.unitOfCoprime 1 (Nat.coprime_one_left N) = 1 := by
-    ext; simp [ZMod.coe_unitOfCoprime]
-  have h_div_one : q * q / (1 * 1) = q ^ 2 := by rw [mul_one, Nat.div_one, sq]
-  have h_div_qsq : q * q / (q * q) = 1 := Nat.div_self (by positivity)
-  rw [dif_pos (Nat.coprime_one_left N), dif_pos hqN, h_div_one, h_div_qsq] at h
-  simp only [h_unit_one, map_one, Units.val_one, one_mul,
-    Nat.cast_one, one_zpow] at h
+    Finset.sum_insert (by simp only [Finset.mem_singleton]; exact hq.ne_one.symm),
+    Finset.sum_singleton, dif_pos (Nat.coprime_one_left N), dif_pos hqN,
+    show q * q / (1 * 1) = q ^ 2 by rw [mul_one, Nat.div_one, sq],
+    show q * q / (q * q) = 1 from Nat.div_self (by positivity),
+    show ZMod.unitOfCoprime 1 (Nat.coprime_one_left N) = 1 by
+      ext; simp [ZMod.coe_unitOfCoprime]] at h
+  simp only [map_one, Units.val_one, one_mul, Nat.cast_one, one_zpow] at h
   rw [show (⇑F₁ : UpperHalfPlane → ℂ) = b₁⁻¹ • ⇑g_new.toCuspForm from rfl] at h
   have hcq := coeff_smul_inv_eq_eigenvalue g_new χ hgχ hb₁_def hb₁_ne q_pnat hqN
   have hcqsq := coeff_smul_inv_eq_eigenvalue g_new χ hgχ hb₁_def hb₁_ne
@@ -1007,28 +990,23 @@ private theorem exists_prime_coprime_avoiding_finset_local
   have hq_gt_S : ∀ s, s ∈ S → s < q := fun s hs ↦ by
     have : s ≤ S.sup id := Finset.le_sup (f := id) hs
     lia
-  have hq_ndvd_N : ¬ q ∣ N := fun hqN ↦ by
+  have hq_N : Nat.Coprime q N := hq_prime.coprime_iff_not_dvd.mpr fun hqN ↦ by
     have : q ≤ N := Nat.le_of_dvd (Nat.pos_of_ne_zero (NeZero.ne N)) hqN
     lia
-  have hq_ndvd_n : ¬ q ∣ n.val := fun hqn ↦ by
+  refine ⟨q, hq_prime, hq_N, (hq_prime.coprime_iff_not_dvd.mpr fun hqn ↦ by
     have : q ≤ n.val := Nat.le_of_dvd n.pos hqn
+    lia).symm, fun hqS ↦ ?_, fun hqsqS ↦ ?_, fun hnqS ↦ ?_, fun hnqsqS ↦ ?_⟩
+  · have := hq_gt_S q hqS; lia
+  · have := hq_gt_S _ hqsqS
+    have hle : q ≤ q ^ 2 := by nlinarith [hq_prime.pos]
     lia
-  have hq_N : Nat.Coprime q N := hq_prime.coprime_iff_not_dvd.mpr hq_ndvd_N
-  refine ⟨q, hq_prime, hq_N, (hq_prime.coprime_iff_not_dvd.mpr hq_ndvd_n).symm, ?_, ?_, ?_, ?_⟩
-  · exact fun hqS ↦ by have := hq_gt_S q hqS; lia
-  · exact fun hqsqS ↦ by
-      have := hq_gt_S _ hqsqS
-      have hle : q ≤ q ^ 2 := by nlinarith [hq_prime.pos]
-      lia
-  · exact fun hnqS ↦ by
-      have := hq_gt_S _ hnqS
-      have hle : q ≤ n.val * q := Nat.le_mul_of_pos_left q n.pos
-      lia
-  · exact fun hnqsqS ↦ by
-      have := hq_gt_S _ hnqsqS
-      have h1 : q ≤ q ^ 2 := by nlinarith [hq_prime.pos]
-      have h2 : q ^ 2 ≤ n.val * q ^ 2 := Nat.le_mul_of_pos_left _ n.pos
-      lia
+  · have := hq_gt_S _ hnqS
+    have hle : q ≤ n.val * q := Nat.le_mul_of_pos_left q n.pos
+    lia
+  · have := hq_gt_S _ hnqsqS
+    have h1 : q ≤ q ^ 2 := by nlinarith [hq_prime.pos]
+    have h2 : q ^ 2 ≤ n.val * q ^ 2 := Nat.le_mul_of_pos_left _ n.pos
+    lia
 
 private theorem eigenvalue_agree_of_cofactor_ne_zero
     (f : Newform N k) (g_new : Eigenform N k) (χ : (ZMod N)ˣ →* ℂˣ)
@@ -1063,23 +1041,21 @@ private theorem eigenvalues_eq_all_coprime_of_eq_off_finite_eigenform
     let qsq_pnat : ℕ+ := ⟨q ^ 2, pow_pos hq_prime.pos 2⟩
     by_cases hLamq : f.eigenvalue q_pnat = 0
     · -- `λ_q(f) = 0 ⟹ λ_{q²}(f) ≠ 0`; use the `q²` cofactor.
-      have hf_qsq := newform_eigenvalue_at_prime_sq f χ hfχ q hq_prime hq_N
       have hf_qsq0 : f.eigenvalue qsq_pnat =
           -((χ (ZMod.unitOfCoprime q hq_N) : ℂ)) * (q : ℂ) ^ (k - 1) := by
-        rw [show f.eigenvalue qsq_pnat = _ from hf_qsq, hLamq]; ring
-      have hLamqsq_ne : f.eigenvalue qsq_pnat ≠ 0 := by
-        rw [hf_qsq0]
-        exact mul_ne_zero (neg_ne_zero.mpr (Units.ne_zero _))
-          (zpow_ne_zero _ (Nat.cast_ne_zero.mpr hq_prime.pos.ne'))
-      have hg_q0 : g_new.eigenvalue q_pnat = 0 :=
-        (hyp q_pnat hq_N hq_notin_S).symm.trans hLamq
-      have hg_qsq := eigenvalue_at_prime_sq_of_coeff_one_ne_zero g_new χ hgχ hb₁_ne hq_prime hq_N
-      have hqsq_eq : f.eigenvalue qsq_pnat = g_new.eigenvalue qsq_pnat := by
-        rw [hf_qsq0, show g_new.eigenvalue qsq_pnat = _ from hg_qsq, hg_q0]; ring
-      exact eigenvalue_agree_of_cofactor_ne_zero f g_new χ hfχ hgχ hb₁_ne n qsq_pnat
-        hn hqsq_N (Nat.Coprime.pow_right 2 hn_coprime_q) hLamqsq_ne hqsq_eq
+        rw [show f.eigenvalue qsq_pnat = _ from
+          newform_eigenvalue_at_prime_sq f χ hfχ q hq_prime hq_N, hLamq]; ring
+      refine eigenvalue_agree_of_cofactor_ne_zero f g_new χ hfχ hgχ hb₁_ne n qsq_pnat
+        hn hqsq_N (Nat.Coprime.pow_right 2 hn_coprime_q) ?_ ?_
         (hyp ⟨n.val * q ^ 2, Nat.mul_pos n.pos (pow_pos hq_prime.pos 2)⟩
           (Nat.Coprime.mul_left hn hqsq_N) hnqsq_notin_S)
+      · rw [hf_qsq0]
+        exact mul_ne_zero (neg_ne_zero.mpr (Units.ne_zero _))
+          (zpow_ne_zero _ (Nat.cast_ne_zero.mpr hq_prime.pos.ne'))
+      · rw [hf_qsq0, show g_new.eigenvalue qsq_pnat = _ from
+          eigenvalue_at_prime_sq_of_coeff_one_ne_zero g_new χ hgχ hb₁_ne hq_prime hq_N,
+          (hyp q_pnat hq_N hq_notin_S).symm.trans hLamq]
+        ring
     · exact eigenvalue_agree_of_cofactor_ne_zero f g_new χ hfχ hgχ hb₁_ne n q_pnat
         hn hq_N hn_coprime_q hLamq (hyp q_pnat hq_N hq_notin_S)
         (hyp ⟨n.val * q, Nat.mul_pos n.pos hq_prime.pos⟩
@@ -1145,26 +1121,23 @@ private theorem eigenvalues_eq_all_coprime_cross_level
     have hq_M : Nat.Coprime q M := hq_N.coprime_dvd_right hMN
     let q_pnat : ℕ+ := ⟨q, hq_prime.pos⟩
     let qsq_pnat : ℕ+ := ⟨q ^ 2, pow_pos hq_prime.pos 2⟩
-    have h_chi_psi : (χ (ZMod.unitOfCoprime q hq_N) : ℂ) = (ψ (ZMod.unitOfCoprime q hq_M) : ℂ) :=
-      char_comp_unitsMap_unitOfCoprime hMN χ ψ hψχ hq_N hq_M
     by_cases hLamq : f.eigenvalue q_pnat = 0
-    · have hf_qsq := newform_eigenvalue_at_prime_sq f χ hfχ q hq_prime hq_N
-      have hf_qsq0 : f.eigenvalue qsq_pnat =
+    · have hf_qsq0 : f.eigenvalue qsq_pnat =
           -((χ (ZMod.unitOfCoprime q hq_N) : ℂ)) * (q : ℂ) ^ (k - 1) := by
-        rw [show f.eigenvalue qsq_pnat = _ from hf_qsq, hLamq]; ring
-      have hLamqsq_ne : f.eigenvalue qsq_pnat ≠ 0 := by
-        rw [hf_qsq0]
-        exact mul_ne_zero (neg_ne_zero.mpr (Units.ne_zero _))
-          (zpow_ne_zero _ (Nat.cast_ne_zero.mpr hq_prime.pos.ne'))
-      have hg_q0 : g.eigenvalue q_pnat = 0 :=
-        (hyp q_pnat hq_N hq_notin_S).symm.trans hLamq
-      have hg_qsq := eigenvalue_at_prime_sq_of_coeff_one_ne_zero g ψ hgψ hb₁_ne hq_prime hq_M
-      have hqsq_eq : f.eigenvalue qsq_pnat = g.eigenvalue qsq_pnat := by
-        rw [hf_qsq0, show g.eigenvalue qsq_pnat = _ from hg_qsq, hg_q0, h_chi_psi]; ring
-      exact eigenvalue_cross_agree_of_cofactor_ne_zero f g χ hfχ ψ hgψ hb₁_ne hMN n qsq_pnat
-        hn hqsq_N (Nat.Coprime.pow_right 2 hn_coprime_q) hLamqsq_ne hqsq_eq
+        rw [show f.eigenvalue qsq_pnat = _ from
+          newform_eigenvalue_at_prime_sq f χ hfχ q hq_prime hq_N, hLamq]; ring
+      refine eigenvalue_cross_agree_of_cofactor_ne_zero f g χ hfχ ψ hgψ hb₁_ne hMN n qsq_pnat
+        hn hqsq_N (Nat.Coprime.pow_right 2 hn_coprime_q) ?_ ?_
         (hyp ⟨n.val * q ^ 2, Nat.mul_pos n.pos (pow_pos hq_prime.pos 2)⟩
           (Nat.Coprime.mul_left hn hqsq_N) hnqsq_notin_S)
+      · rw [hf_qsq0]
+        exact mul_ne_zero (neg_ne_zero.mpr (Units.ne_zero _))
+          (zpow_ne_zero _ (Nat.cast_ne_zero.mpr hq_prime.pos.ne'))
+      · rw [hf_qsq0, show g.eigenvalue qsq_pnat = _ from
+          eigenvalue_at_prime_sq_of_coeff_one_ne_zero g ψ hgψ hb₁_ne hq_prime hq_M,
+          (hyp q_pnat hq_N hq_notin_S).symm.trans hLamq,
+          char_comp_unitsMap_unitOfCoprime hMN χ ψ hψχ hq_N hq_M]
+        ring
     · exact eigenvalue_cross_agree_of_cofactor_ne_zero f g χ hfχ ψ hgψ hb₁_ne hMN n q_pnat
         hn hq_N hn_coprime_q hLamq (hyp q_pnat hq_N hq_notin_S)
         (hyp ⟨n.val * q, Nat.mul_pos n.pos hq_prime.pos⟩
@@ -1187,14 +1160,9 @@ theorem newPart_eq_smul_of_shared_eigenvalues
   set b₁ := (ModularFormClass.qExpansion (1 : ℝ) g_new.toCuspForm).coeff 1 with hb₁_def
   by_cases hg0 : g_new.toCuspForm = 0
   · have hb₁0 : b₁ = 0 := by
-      have hsmul0 :
-          (ModularFormClass.qExpansion (1 : ℝ) ((0 : ℂ) • g_new.toCuspForm)).coeff 1 = 0 := by
-        rw [qExpansion_one_coeff_one_smul_local, zero_mul]
-      have hbridge : (⇑g_new.toCuspForm : UpperHalfPlane → ℂ) =
-          (0 : ℂ) • (⇑g_new.toCuspForm : UpperHalfPlane → ℂ) := by
-        rw [zero_smul, hg0]; rfl
-      rw [hb₁_def, hbridge]
-      exact hsmul0
+      rw [hb₁_def, show (⇑g_new.toCuspForm : UpperHalfPlane → ℂ) =
+          (0 : ℂ) • (⇑g_new.toCuspForm : UpperHalfPlane → ℂ) by rw [zero_smul, hg0]; rfl,
+        qExpansion_one_coeff_one_smul_local, zero_mul]
     rw [hg0, hb₁0, zero_smul]
   · have hb₁_ne : b₁ ≠ 0 :=
       coeff_one_ne_zero_of_mem_cuspFormsNew_of_eigen_unconditional g_new χ hgχ hg_new hg0
@@ -1271,11 +1239,10 @@ private theorem eigenformOfIsEigenform_eigenvalue {M : ℕ} [NeZero M] {k : ℤ}
     (hh_ne : h ≠ 0) (n : ℕ+) (hn : Nat.Coprime n.val M) :
     (eigenformOfIsEigenform ψ h hψ ⟨lam, hlam⟩).eigenvalue n = lam n := by
   haveI : NeZero n.val := ⟨n.pos.ne'⟩
-  set ev := (eigenformOfIsEigenform ψ h hψ ⟨lam, hlam⟩).eigenvalue n with hev_def
+  set ev := (eigenformOfIsEigenform ψ h hψ ⟨lam, hlam⟩).eigenvalue n
   have hEig : heckeT_n_cusp k n.val h = ev • h :=
     (eigenformOfIsEigenform ψ h hψ ⟨lam, hlam⟩).isEigen n hn
-  have h3 : ev • h = lam n • h := by rw [← hEig, hlam n hn]
-  have h4 : (ev - lam n) • h = 0 := by rw [sub_smul, h3, sub_self]
+  have h4 : (ev - lam n) • h = 0 := by rw [sub_smul, ← hEig, hlam n hn, sub_self]
   exact sub_eq_zero.mp ((smul_eq_zero.mp h4).resolve_right hh_ne)
 
 private theorem petN_sum_right {ι : Type*} (s : Finset ι)
@@ -1309,12 +1276,12 @@ private theorem exists_matching_summand
     exists_levelRaise_eigen_decomposition_of_mem_cuspFormsOldChar χ m_χ g_old hg_old
   have hMdvd : ∀ i, M i ∣ N := fun i ↦ ⟨l i, by rw [← heq i, Nat.mul_comm]⟩
   set Ψ : ι → ((ZMod N)ˣ →* ℂˣ) :=
-    fun i ↦ (χM i).comp (ZMod.unitsMap (heq i ▸ Nat.dvd_mul_left (M i) (l i))) with hΨ_def
+    fun i ↦ (χM i).comp (ZMod.unitsMap (heq i ▸ Nat.dvd_mul_left (M i) (l i)))
   set V : ι → CuspForm ((Gamma1 N).map (mapGL ℝ)) k :=
-    fun i ↦ heq i ▸ levelRaise (M i) (l i) k (h i) with hV_def
+    fun i ↦ heq i ▸ levelRaise (M i) (l i) k (h i)
   have hVΨ : ∀ i, V i ∈ cuspFormCharSpace k (Ψ i) := fun i ↦
     levelRaise_mem_cuspFormCharSpace_comp (heq i) (χM i) (hh_char i)
-  set s' : Finset ι := Finset.univ.filter (fun i ↦ Ψ i = χ) with hs'_def
+  set s' : Finset ι := Finset.univ.filter (fun i ↦ Ψ i = χ)
   have hcollapse : g_old = ∑ i ∈ s', V i :=
     charSpace_finset_sum_filter_eq Finset.univ V Ψ χ (fun i _ ↦ hVΨ i)
       (by rw [hsum]) hg_old_char
@@ -1323,9 +1290,8 @@ private theorem exists_matching_summand
       haveI : NeZero n.val := ⟨n.pos.ne'⟩
       heckeT_n_cusp k n.val (V i) = lam i n • V i := fun i n hn ↦ by
     haveI : NeZero n.val := ⟨n.pos.ne'⟩
-    have hnMi : Nat.Coprime n.val (M i) :=
-      Nat.Coprime.coprime_dvd_right (hMdvd i) hn
-    exact heckeT_n_levelRaise_eigen (heq i) n.val hn (h i) (lam i n) (hlam_spec i n hnMi)
+    exact heckeT_n_levelRaise_eigen (heq i) n.val hn (h i) (lam i n)
+      (hlam_spec i n (Nat.Coprime.coprime_dvd_right (hMdvd i) hn))
   by_contra! hcon
   have horth : ∀ i ∈ s', petN g_old (V i) = 0 := by
     intro i hi
@@ -1368,20 +1334,14 @@ theorem oldPart_eq_zero_of_shared_eigenvalues
     hh_eig, hh_lam⟩ :=
     exists_matching_summand f χ m_χ g_old hg_old hg_old_char hg0 S h_eig
   have hh_char_cusp : h ∈ cuspFormCharSpace k ψ := hh_char
-  have hψ_mod : h.toModularForm' ∈ modFormCharSpace k ψ :=
-    (cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace (k := k) ψ h).mpr
-      hh_char
   set h_eig_b : Eigenform M k := eigenformOfIsEigenform ψ h hh_char_cusp ⟨lam, hh_eig⟩
     with hh_eig_b
   have hh_eig_b_cusp : h_eig_b.toCuspForm = h := rfl
-  have hψ_mod' : h_eig_b.toCuspForm.toModularForm' ∈ modFormCharSpace k ψ := by
-    rw [hh_eig_b_cusp]; exact hψ_mod
+  have hψ_mod' : h_eig_b.toCuspForm.toModularForm' ∈ modFormCharSpace k ψ :=
+    (cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace (k := k) ψ h).mpr hh_char
   set c₁' := (ModularFormClass.qExpansion (1 : ℝ) h).coeff 1 with hc₁'_def
   have hc₁'_ne : c₁' ≠ 0 :=
     coeff_one_ne_zero_of_mem_cuspFormsNew_of_eigen_unconditional h_eig_b ψ hψ_mod' hh_new hh_ne
-  have hc₁'_ne' : (ModularFormClass.qExpansion (1 : ℝ) h_eig_b.toCuspForm).coeff 1 ≠ 0 := by
-    rw [hh_eig_b_cusp]; exact hc₁'_ne
-  have hMltN : M < N := lt_of_le_of_ne (Nat.le_of_dvd (Nat.pos_of_ne_zero (NeZero.ne N)) hMN) hMne
   set ιh : CuspForm ((Gamma1 N).map (mapGL ℝ)) k := levelInclude_cusp hMN k h with hιh_def
   have hιh_char : ιh ∈ cuspFormCharSpace k χ := by
     have := levelInclude_cusp_mem_cuspFormCharSpace_comp hMN ψ hh_char_cusp
@@ -1394,7 +1354,7 @@ theorem oldPart_eq_zero_of_shared_eigenvalues
       exact (hh_lam n hn hnS).symm
     intro n hn
     have := (eigenvalues_eq_all_coprime_cross_level f h_eig_b χ hfχ ψ hψ_mod'
-      hc₁'_ne' hMN hψχ S h_off n hn).symm
+      hc₁'_ne hMN hψχ S h_off n hn).symm
     rwa [eigenformOfIsEigenform_eigenvalue ψ h hh_char_cusp lam hh_eig hh_ne n
       (hn.coprime_dvd_right hMN)] at this
   -- `ι(h) - c₁'•f` vanishes at every index coprime to `N`.
@@ -1447,20 +1407,18 @@ theorem oldPart_eq_zero_of_shared_eigenvalues
   have h_diff_ext : ιh - c₁' • f.toCuspForm ∈ cuspFormsOldExtended N k :=
     cuspFormsOld_le_cuspFormsOldExtended h_diff_old
   have hιh_ext : ιh ∈ cuspFormsOldExtended N k :=
-    levelInclude_cusp_mem_cuspFormsOldExtended hMN hMltN h
+    levelInclude_cusp_mem_cuspFormsOldExtended hMN
+      (lt_of_le_of_ne (Nat.le_of_dvd (Nat.pos_of_ne_zero (NeZero.ne N)) hMN) hMne) h
   have hcf_ext : c₁' • f.toCuspForm ∈ cuspFormsOldExtended N k := by
-    have := (cuspFormsOldExtended N k).sub_mem hιh_ext h_diff_ext
-    simpa using this
+    simpa using (cuspFormsOldExtended N k).sub_mem hιh_ext h_diff_ext
   have hf_ext : f.toCuspForm ∈ cuspFormsOldExtended N k := by
     have := (cuspFormsOldExtended N k).smul_mem c₁'⁻¹ hcf_ext
     rwa [smul_smul, inv_mul_cancel₀ hc₁'_ne, one_smul] at this
-  have hf_ne : f.toCuspForm ≠ 0 := by
-    intro hf0
-    have h1 : (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm).coeff 1 = 1 := f.isNorm
-    rw [hf0, show (⇑(0 : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : UpperHalfPlane → ℂ) =
-        (0 : UpperHalfPlane → ℂ) from rfl, qExpansion_zero] at h1
-    simp at h1
-  exact newform_notMem_cuspFormsOldExtended f hf_ne hf_ext
+  refine newform_notMem_cuspFormsOldExtended f (fun hf0 ↦ ?_) hf_ext
+  have h1 : (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm).coeff 1 = 1 := f.isNorm
+  rw [hf0, show (⇑(0 : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : UpperHalfPlane → ℂ) =
+      (0 : UpperHalfPlane → ℂ) from rfl, qExpansion_zero] at h1
+  simp at h1
 
 /-! ## Theorem 4.6.12: assembly -/
 
@@ -1479,28 +1437,24 @@ theorem strongMultiplicityOne_constMul
   have hgχ_cusp : g.toCuspForm ∈ cuspFormCharSpace k χ :=
     (cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace (k := k) χ
       g.toCuspForm).mp (by convert hgχ using 1)
-  set χ_dir : DirichletCharacter ℂ N := Newform.dirichletLift χ with hχ_dir_def
+  set χ_dir : DirichletCharacter ℂ N := Newform.dirichletLift χ
   have h_round : χ_dir.toUnitHom = χ := MulChar.equivToUnitHom.apply_symm_apply χ
-  have h_old_eig : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S →
-      haveI : NeZero n.val := ⟨n.pos.ne'⟩
-      heckeT_n_cusp k n.val (oldPart g.toCuspForm) =
-        f.eigenvalue n • oldPart g.toCuspForm := fun n hn hnS ↦ by
-    haveI : NeZero n.val := ⟨n.pos.ne'⟩
-    rw [oldPart_isEigen_of_eigenform g n hn, h_eig n hn hnS]
   have h_old_char : oldPart g.toCuspForm ∈ cuspFormsOldChar N k χ χ_dir.conductor := by
     have h_inf : oldPart g.toCuspForm ∈
         cuspFormsOld N k ⊓ cuspFormCharSpace k χ_dir.toUnitHom := by
       rw [h_round]
-      exact ⟨oldPart_mem_cuspFormsOld g.toCuspForm,
-        oldPart_mem_cuspFormCharSpace χ hgχ_cusp⟩
+      exact ⟨oldPart_mem_cuspFormsOld g.toCuspForm, oldPart_mem_cuspFormCharSpace χ hgχ_cusp⟩
     have := cuspFormsOld_inf_charSpace_le_cuspFormsOldChar (k := k) χ_dir h_inf
     rwa [h_round] at this
   have h_old_zero : oldPart g.toCuspForm = 0 :=
     oldPart_eq_zero_of_shared_eigenvalues f χ χ_dir.conductor hfχ
-      (oldPart g.toCuspForm) h_old_char (oldPart_mem_cuspFormCharSpace χ hgχ_cusp) S h_old_eig
-  refine ⟨(ModularFormClass.qExpansion (1 : ℝ) g.toCuspForm).coeff 1, ?_⟩
-  exact newPart_eq_smul_of_shared_eigenvalues f g χ hfχ hgχ
-    ((mem_cuspFormsNew_iff_oldPart_eq_zero g.toCuspForm).mpr h_old_zero) S h_eig
+      (oldPart g.toCuspForm) h_old_char (oldPart_mem_cuspFormCharSpace χ hgχ_cusp) S
+      fun n hn hnS ↦ by
+        haveI : NeZero n.val := ⟨n.pos.ne'⟩
+        rw [oldPart_isEigen_of_eigenform g n hn, h_eig n hn hnS]
+  exact ⟨(ModularFormClass.qExpansion (1 : ℝ) g.toCuspForm).coeff 1,
+    newPart_eq_smul_of_shared_eigenvalues f g χ hfχ hgχ
+      ((mem_cuspFormsNew_iff_oldPart_eq_zero g.toCuspForm).mpr h_old_zero) S h_eig⟩
 
 /-- **Strong Multiplicity One for both newforms (DS 5.8.2.1) — unconditional version.**
 Two `Newform`s at level `N` in the same Nebentypus eigenspace with equal eigenvalues outside a
@@ -1520,11 +1474,8 @@ theorem strongMultiplicityOne_axiom_clean_unconditional
   obtain ⟨c, hc⟩ :=
     strongMultiplicityOne_constMul f g.toEigenform χ hfχ hgχ S h_eig
   have hc1 : c = 1 := by
-    -- Bridge `hc` to function-level so it matches the smul shape of the lemma below.
-    have hcoe : (⇑g.toCuspForm : UpperHalfPlane → ℂ) = c • ⇑f.toCuspForm := by
-      rw [hc]; rfl
     have h := g.isNorm
-    rw [show (⇑g.toCuspForm : UpperHalfPlane → ℂ) = c • ⇑f.toCuspForm from hcoe,
+    rw [show (⇑g.toCuspForm : UpperHalfPlane → ℂ) = c • ⇑f.toCuspForm by rw [hc]; rfl,
       qExpansion_one_coeff_one_smul_local f.toCuspForm c, f.isNorm, mul_one] at h
     exact h
   rw [hc1, one_smul] at hc
