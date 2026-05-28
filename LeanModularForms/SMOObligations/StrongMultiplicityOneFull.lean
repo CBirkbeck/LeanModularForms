@@ -807,7 +807,10 @@ theorem oldPart_heckeT_n_cusp_comm
     (x : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     oldPart (heckeT_n_cusp k n x) = heckeT_n_cusp k n (oldPart x) := by
   conv_lhs => rw [← oldPart_add_newPart x, heckeT_n_cusp_add]
-  rw [map_add,
+  have hlin : oldPart (heckeT_n_cusp k n (oldPart x) + heckeT_n_cusp k n (newPart x)) =
+      oldPart (heckeT_n_cusp k n (oldPart x)) + oldPart (heckeT_n_cusp k n (newPart x)) :=
+    map_add _ _ _
+  rw [hlin,
     oldPart_of_mem_cuspFormsOld
       (heckeT_n_preserves_cuspFormsOld n hn _ (oldPart_mem_cuspFormsOld x)),
     oldPart_of_mem_cuspFormsNew
@@ -819,7 +822,10 @@ theorem oldPart_diamondOpCuspHom_comm
     (a : (ZMod N)ˣ) (x : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     oldPart (diamondOpCuspHom k a x) = diamondOpCuspHom k a (oldPart x) := by
   conv_lhs => rw [← oldPart_add_newPart x, map_add]
-  rw [map_add,
+  have hlin : oldPart (diamondOpCuspHom k a (oldPart x) + diamondOpCuspHom k a (newPart x)) =
+      oldPart (diamondOpCuspHom k a (oldPart x)) + oldPart (diamondOpCuspHom k a (newPart x)) :=
+    map_add _ _ _
+  rw [hlin,
     oldPart_of_mem_cuspFormsOld
       (diamondOpCuspHom_preserves_cuspFormsOld a _ (oldPart_mem_cuspFormsOld x)),
     oldPart_of_mem_cuspFormsNew
@@ -856,7 +862,12 @@ theorem newPart_isEigen_of_eigenform
   have hcomm : newPart (heckeT_n_cusp k n.val g.toCuspForm) =
       heckeT_n_cusp k n.val (newPart g.toCuspForm) := by
     conv_lhs => rw [← oldPart_add_newPart g.toCuspForm, heckeT_n_cusp_add]
-    rw [map_add,
+    have hlin : newPart (heckeT_n_cusp k n.val (oldPart g.toCuspForm) +
+        heckeT_n_cusp k n.val (newPart g.toCuspForm)) =
+        newPart (heckeT_n_cusp k n.val (oldPart g.toCuspForm)) +
+        newPart (heckeT_n_cusp k n.val (newPart g.toCuspForm)) :=
+      map_add _ _ _
+    rw [hlin,
       newPart_of_mem_cuspFormsOld
         (heckeT_n_preserves_cuspFormsOld n.val hn _ (oldPart_mem_cuspFormsOld g.toCuspForm)),
       newPart_of_mem_cuspFormsNew
