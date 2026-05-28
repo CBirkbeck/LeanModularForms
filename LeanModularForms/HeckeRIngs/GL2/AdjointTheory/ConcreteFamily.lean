@@ -5182,23 +5182,341 @@ private theorem SigmaQPermResidual_upper_of_TileFormIntegralResidual
       h_meas h_disj h_RHS_int]
   exact Finset.sum_congr rfl (fun b hb ↦ h_tile b hb)
 
-private theorem petN_heckeT_p_symmetric_form
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **CORRECTED leaf 1** — LHS to the proven global aggregate's LHS.
+`petN(T_p f, g) = c_N • ⟨Γ₁-FD⟩ (Σᵢ f∣β_i) g`, where `β_i` ranges over the full Hecke
+family `{M_∞} ⊔ {T_p_upper b}` (DS: `Σᵢ f∣β_i = f[ΓαΓ]_k = T_p f`), and
+`c_N = slToPslQuot_fiberCard N`. The fiber-count factor is forced because `petN` is the
+integral over the *SL*-coset fundamental domain (`[SL:Γ₁(N)]` tiles), while
+`peterssonInner k (Gamma1_fundDomain_PSL N)` is the integral over the *PSL*-coset
+fundamental domain (`[PSL:imageΓ₁(N)]` tiles), the two differing by the uniform fiber
+count `c_N = [SL/Γ₁ : PSL/imageΓ₁]` (`= 1` iff `-I ∈ Γ₁(N)`). The aggregate identity at
+line 202 is at the PSL level (fiber-count-free) on both sides, so the `c_N •` carried here
+cancels the matching `c_N •` of leaf 2.
+Route (BUILD, bounded): `petN_eq_setIntegral_Gamma1_fundDomain_PSL` (the `c_N • ∫_{D₁}`
+form of `petN`) + `heckeT_p_fun_eq_coset_sum` (the family-sum form of `T_p`). -/
+private theorem petN_heckeT_p_LHS_eq_aggregate
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    petN (heckeT_p_cusp k p hp hpN f) g =
+    slToPslQuot_fiberCard N • peterssonInner k (Gamma1_fundDomain_PSL N)
+      (∑ i ∈ (Finset.univ : Finset (Option (Fin p))),
+        ⇑f ∣[k] (match i with
+          | none => (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)
+          | some b => (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ))) ⇑g := by
+  have h_fun : (⇑(heckeT_p_cusp k p hp hpN f) : ℍ → ℂ) =
+      ∑ i ∈ (Finset.univ : Finset (Option (Fin p))),
+        ⇑f ∣[k] (match i with
+          | none => (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)
+          | some b => (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)) := by
+    have h_Tpf : (⇑(heckeT_p_cusp k p hp hpN f) : ℍ → ℂ) =
+        heckeT_p_ut k p hp.pos ⇑f.toModularForm' +
+          ⇑f.toModularForm' ∣[k] (M_infty N p hp.pos hpN : GL (Fin 2) ℚ) :=
+      heckeT_p_fun_eq_coset_sum k hp hpN f.toModularForm'
+    rw [Fintype.sum_option, h_Tpf, add_comm]
+    refine congr_arg₂ (· + ·) rfl ?_
+    rw [show heckeT_p_ut k p hp.pos ⇑f.toModularForm' =
+        ∑ b ∈ Finset.range p,
+          ⇑f.toModularForm' ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ) from rfl,
+      ← Fin.sum_univ_eq_sum_range
+        (fun b ↦ ⇑f.toModularForm' ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ))]
+    rfl
+  rw [petN_eq_setIntegral_Gamma1_fundDomain_PSL, peterssonInner, h_fun]
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **CORRECTED leaf 3** — the family-aggregate measure hypotheses for invoking the proven
+`peterssonInner_T_p_reps_sum_slashes_eq_aggregate_HeckeFD_PSL_R` (line 202): per-`i`
+`NullMeasurableSet` of each `β_i•Γ₁-FD`, per-`i` `IntegrableOn` of the swapped kernel on
+`Γ₁-FD`, and `IntegrableOn` of the forward kernel on the family `iUnion`.
+Route (BUILD, bounded): `nullMeasurableSet`/`integrableOn` engines already used at
+DeltaBSystem:1666–1736 and the `Γ_p(α)`/PSL fundamental-domain measurability of FDTransport. -/
+private theorem aggregate_HeckeFD_measure_hyps
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    (∀ i ∈ (Finset.univ : Finset (Option (Fin p))),
+      NullMeasurableSet ((match i with
+        | none => (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)
+        | some b => (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)) •
+        (Gamma1_fundDomain_PSL N : Set ℍ)) μ_hyp) ∧
+    (∀ i ∈ (Finset.univ : Finset (Option (Fin p))),
+      IntegrableOn (fun τ ↦ petersson k ⇑g
+        (⇑f ∣[k] (match i with
+          | none => (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)
+          | some b => (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ))) τ)
+        (Gamma1_fundDomain_PSL N) μ_hyp) ∧
+    IntegrableOn (fun τ ↦ petersson k ⇑f
+        (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) τ)
+      (⋃ i ∈ (Finset.univ : Finset (Option (Fin p))),
+        (match i with
+          | none => (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)
+          | some b => (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)) •
+          (Gamma1_fundDomain_PSL N : Set ℍ)) μ_hyp := by
+  have hinv : ∀ β : GL (Fin 2) ℝ, 0 < β.det.val → 0 < (β⁻¹).det.val := by
+    intro β hβ; rw [map_inv, Units.val_inv_eq_inv_val]; exact inv_pos.mpr hβ
+  have hnull : ∀ β : GL (Fin 2) ℝ, 0 < β.det.val →
+      NullMeasurableSet (β • (Gamma1_fundDomain_PSL N : Set ℍ)) μ_hyp := by
+    intro β hβ
+    have h_eq : (β • (Gamma1_fundDomain_PSL N : Set ℍ)) =
+        ((β⁻¹ • ·) : ℍ → ℍ) ⁻¹' (Gamma1_fundDomain_PSL N : Set ℍ) := by
+      ext τ; simp [Set.mem_preimage, Set.mem_smul_set_iff_inv_smul_mem]
+    rw [h_eq]
+    exact isFundamentalDomain_Gamma1_PSL.nullMeasurableSet.preimage
+      (measurePreserving_glPos_smul _ (hinv β hβ)).quasiMeasurePreserving
+  refine ⟨?_, ?_, ?_⟩
+  · intro i _
+    cases i with
+    | none => exact hnull _ (glMap_M_infty_det_pos N p hp.pos hpN)
+    | some b => exact hnull _ (glMap_T_p_upper_det_pos p hp.pos b.val)
+  · intro i _
+    cases i with
+    | none =>
+      exact integrableOn_petersson_cuspform_slash_glMap_of_finiteMeasure g f
+        (M_infty N p hp.pos hpN)
+        (hyperbolicMeasure_Gamma1_fundDomain_PSL_lt_top (N := N))
+    | some b =>
+      exact integrableOn_petersson_cuspform_slash_glMap_of_finiteMeasure g f
+        (T_p_upper p hp.pos b.val)
+        (hyperbolicMeasure_Gamma1_fundDomain_PSL_lt_top (N := N))
+  · refine integrableOn_petersson_cuspform_slash_glMap_of_finiteMeasure f g
+      (T_p_lower p hp.pos) ?_
+    simp only [Finset.mem_univ, Set.iUnion_true]
+    refine (measure_iUnion_le _).trans_lt ?_
+    rw [tsum_fintype]
+    refine ENNReal.sum_lt_top.mpr fun i _ ↦ ?_
+    cases i with
+    | none =>
+      exact measure_glPos_smul_Gamma1_fundDomain_lt_top _
+        (glMap_M_infty_det_pos N p hp.pos hpN)
+    | some b =>
+      exact measure_glPos_smul_Gamma1_fundDomain_lt_top _
+        (glMap_T_p_upper_det_pos p hp.pos b.val)
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **RHS aggregate expansion (Hermitian mirror of leaf 1).** Expands the *right*-hand
+side `petN(⟨p⟩f, T_p g)` of the symmetric form onto the SAME single-tile aggregate domain
+`⋃_i β_i • Γ₁-FD` as the proven LHS aggregate, with the slots arranged as
+`((⟨p⟩f)∣T_p_lower)` against `g`.
+
+Route (PROVEN wiring, NO double-coset content): conjugate-Hermitian symmetry
+`petN_conj_symm` turns `petN(⟨p⟩f, T_p g)` into `conj(petN(T_p g, ⟨p⟩f))`; the proven
+leaf 1 (`petN_heckeT_p_LHS_eq_aggregate`) + the proven aggregate
+(`peterssonInner_T_p_reps_sum_slashes_eq_aggregate_HeckeFD`, fed
+`aggregate_HeckeFD_measure_hyps`), applied with `f := g`, `g := ⟨p⟩f`, rewrites this to
+`conj(c_N • ⟨⋃_i β_i•Γ₁-FD⟩ g ((⟨p⟩f)∣T_p_lower))`; finally `conj` distributes over the
+ℕ-scalar (`map_nsmul`) and swaps the two `peterssonInner` slots (`peterssonInner_conj_symm`).
+This is purely the Hermitian-symmetric mirror of leaf 1. -/
+private theorem petN_heckeT_p_RHS_eq_aggregate
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    petN (diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) (heckeT_p_cusp k p hp hpN g) =
+    slToPslQuot_fiberCard N • peterssonInner k
+      (⋃ i ∈ (Finset.univ : Finset (Option (Fin p))),
+        (match i with
+          | none => (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)
+          | some b => (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)) •
+          (Gamma1_fundDomain_PSL N : Set ℍ))
+      ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)) ∣[k]
+        (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ))
+      ⇑g := by
+  set Df := diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f with hDf
+  obtain ⟨hm, h_int_per, hfi⟩ := aggregate_HeckeFD_measure_hyps p hp hpN g Df
+  have h_LHS_swapped :
+      petN (heckeT_p_cusp k p hp hpN g) Df =
+      slToPslQuot_fiberCard N • peterssonInner k
+        (⋃ i ∈ (Finset.univ : Finset (Option (Fin p))),
+          (match i with
+            | none => (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)
+            | some b => (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)) •
+            (Gamma1_fundDomain_PSL N : Set ℍ))
+        ⇑g (⇑Df ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) := by
+    rw [petN_heckeT_p_LHS_eq_aggregate p hp hpN g Df,
+      peterssonInner_T_p_reps_sum_slashes_eq_aggregate_HeckeFD p hp hpN g Df hm h_int_per hfi]
+  rw [← petN_conj_symm Df (heckeT_p_cusp k p hp hpN g), h_LHS_swapped, map_nsmul,
+    peterssonInner_conj_symm]
+
+/-- `glMap (T_p_lower p hp) = (T_p_lower p hp).map (Rat.castHom ℝ)` (the `glMap`/`.map`
+identification connecting the residual's slash matrix `A = diag(p,1)` to the `Γ_p(α)` API,
+which is phrased over `α.map (Rat.castHom ℝ)`). -/
+private lemma glMap_T_p_lower_eq_map_castHom (p : ℕ) (hp : 0 < p) :
+    (glMap (T_p_lower p hp) : GL (Fin 2) ℝ) =
+      ((T_p_lower p hp).map (Rat.castHom ℝ) : GL (Fin 2) ℝ) := rfl
+
+open CongruenceSubgroup Pointwise ConjAct UpperHalfPlane ModularGroup MeasureTheory in
+/-- **Γ_p(A)-invariance of the W5b integrand.** For `A = diag(p,1)`, the kernel
+`pet f (g∣A)` is invariant under the (SL-level) action of `Γ_p(A) = A⁻¹Γ₁A ∩ Γ₁`: `f` is
+`Γ₁`-invariant hence `Γ_p(A)`-invariant, and `g∣A` is `Γ_p(A)`-invariant
+(`slash_α_Gamma_p_α_invariant_cuspForm`, FDT:152). -/
+private lemma petersson_f_slash_T_p_lower_Gamma_p_invariant
+    (p : ℕ) (hp : Nat.Prime p) (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    {γ : SL(2, ℤ)} (hγ : γ ∈ Gamma_p_α (N := N) (T_p_lower p hp.pos)) (τ : ℍ) :
+    petersson k ⇑f (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) (γ • τ) =
+      petersson k ⇑f (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) τ := by
+  rw [← petersson_slash_SL]
+  congr 1
+  · exact slash_Gamma1_eq f γ ((Gamma_p_α_le_Gamma1 _) hγ)
+  · rw [ModularForm.SL_slash, glMap_T_p_lower_eq_map_castHom]
+    exact slash_α_Gamma_p_α_invariant_cuspForm (T_p_lower p hp.pos) g hγ
+
+open CongruenceSubgroup Pointwise ConjAct UpperHalfPlane ModularGroup MeasureTheory in
+/-- **W5b — the FD transfer (the consumable for W5c).** GIVEN the fundamental-domain
+property of the Hecke aggregate domain `D = ⋃_i β_i • Γ₁-FD` for `Γ_p(A) = A⁻¹Γ₁A ∩ Γ₁`
+(`A = diag(p,1)`), the Petersson integral over `D` transfers to the integral over the
+canonical `Γ_p(A)` fundamental domain `Gamma_p_α_fundDomain_PSL A`:
+```
+⟨D⟩ f (g∣A) = ∫_{Γ_p(A)-FD} pet f (g∣A).
+```
+Both are FDs for the **same** group `(Γ_p(A)).map SL2Z_to_PSL2R` (the latter via FDT:860),
+and the integrand `pet f (g∣A)` is `Γ_p(A)`-invariant
+(`petersson_f_slash_T_p_lower_Gamma_p_invariant`), so the two integrals coincide by
+`IsFundamentalDomain.setIntegral_eq`. This is the exact form the trace engine FDT:1612
+consumes: it puts `⟨D⟩ f (g∣A)` into `∫_{Γ_p(A)-FD}` shape, where the engine fires.
+
+The hypothesis `hFD` is the residual **W5a-2 crux** — that the `p+1` det-`p` Hecke tiles
+`β_i • Γ₁-FD` tile `Γ_p(A)\ℍ` (the covering/transversal half; the AE-disjoint half is
+`aedisjoint_pairwise_T_p_family`, SA:1431, and the index is `p+1` via
+`slGamma_p_αToGamma1_fiberCard_T_p_lower`). See the HARD-STOP note on
+`heckeT_p_aggregate_peeled_diagonal_balance`. -/
+theorem aggregate_D_petersson_eq_Gamma_p_A_fundDomain
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (hFD : IsFundamentalDomain
+      (((Gamma_p_α (N := N) (T_p_lower p hp.pos)).map SL2Z_to_PSL2R))
+      (⋃ i ∈ (Finset.univ : Finset (Option (Fin p))),
+        (match i with
+          | none => (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)
+          | some b => (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)) •
+          (Gamma1_fundDomain_PSL N : Set ℍ))
+      μ_hyp) :
+    peterssonInner k
+      (⋃ i ∈ (Finset.univ : Finset (Option (Fin p))),
+        (match i with
+          | none => (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)
+          | some b => (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)) •
+          (Gamma1_fundDomain_PSL N : Set ℍ))
+      ⇑f (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) =
+    ∫ τ in Gamma_p_α_fundDomain_PSL (N := N) (T_p_lower p hp.pos),
+      petersson k ⇑f (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) τ ∂μ_hyp := by
+  rw [peterssonInner]
+  refine hFD.setIntegral_eq
+    (isFundamentalDomain_Gamma_p_α_fundDomain_PSL_at_PSL_R (N := N) (T_p_lower p hp.pos))
+    (fun gp τ ↦ ?_)
+  exact inv_under_Gamma_p_α_PSL_R_of_inv_under_Gamma_p_α (N := N) (T_p_lower p hp.pos)
+    (fun γ hγ τ ↦ petersson_f_slash_T_p_lower_Gamma_p_invariant p hp f g hγ τ) gp τ
+
+open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory in
+/-- **`hFD` discharged.** The fundamental-domain hypothesis of
+`aggregate_D_petersson_eq_Gamma_p_A_fundDomain` is exactly the W5a-2 Hecke-tile FD
+identification `isFundamentalDomain_Hecke_tiles_Gamma_p_α` (DeltaBSystem), modulo the
+`⋃ i ∈ univ ↔ ⋃ i` biUnion/iUnion reshape. -/
+theorem isFundamentalDomain_Hecke_tiles_biUnion_Gamma_p_α
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
+    IsFundamentalDomain
+      (((Gamma_p_α (N := N) (T_p_lower p hp.pos)).map SL2Z_to_PSL2R))
+      (⋃ i ∈ (Finset.univ : Finset (Option (Fin p))),
+        (match i with
+          | none => (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)
+          | some b => (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)) •
+          (Gamma1_fundDomain_PSL N : Set ℍ))
+      μ_hyp := by
+  have hset : (⋃ i ∈ (Finset.univ : Finset (Option (Fin p))),
+      (match i with
+        | none => (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)
+        | some b => (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)) •
+        (Gamma1_fundDomain_PSL N : Set ℍ)) =
+      (⋃ i : Option (Fin p),
+        (match i with
+          | none => (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)
+          | some b => (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)) •
+          (Gamma1_fundDomain_PSL N : Set ℍ)) := by
+    refine Set.iUnion_congr fun i ↦ ?_
+    cases i <;> simp
+  rw [hset]
+  exact isFundamentalDomain_Hecke_tiles_Gamma_p_α p hp hpN
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **HARD-STOP — irreducible DS Lemma 5.5.1(c) / Miyake Thm 4.5.4 double-coset
+change-of-variables (the genuine analytic heart of the `T_p` adjoint), in its
+PEELED-DIAGONAL form over the single fixed aggregate domain.**
+
+After the two PROVEN, NON-circular aggregate expansions
+(`petN_heckeT_p_LHS_eq_aggregate` for `petN(T_p f, g)` and its Hermitian mirror
+`petN_heckeT_p_RHS_eq_aggregate` for `petN(⟨p⟩f, T_p g)`), the whole symmetric form
+`petN(T_p f, g) = petN(⟨p⟩f, T_p g)` collapses to a single `peterssonInner`-equality over
+ONE fixed domain `D = ⋃_i β_i • Γ₁-FD` and the FIXED matrix `A = glMap(T_p_lower) =
+diag(p, 1)`:
+```
+  ⟨D⟩ f (g ∣ A)  =  ⟨D⟩ ((⟨p⟩f) ∣ A) g.
+```
+Both sides are honest integrals over the *same* set `D`; the `c_N •` fiber factors are
+identical on both ends and cancel. NO `petN`, NO double coset, NO family sum survives — it
+is a pure change-of-variables statement about the Hecke double-coset domain `D`.
+
+WHY THIS IS NOT CLOSED HERE (verified, NOT from memory — confirmed against the recorded
+`learnings.jsonl` and re-derived three independent ways). This identity is **false
+tile-by-tile** (slot-1 carries `det A = p` on the right vs `det = 1` on the left, so no
+single-tile change of variables matches them) and holds **only globally**, via the genuine
+DS Lemma 5.5.1(c) Hecke double-coset change of variables `A • D = D` (a.e., under the
+`σ_p = Gamma1QuotEquivOfGamma0` reindexing of the `p+1` cosets). The proven `Γ_p(α)`
+trace/transfer engine in `FDTransport.lean` (1235/1612) does **NOT** discharge this: it
+requires the per-representative integrands `pet(f∣β_i) g` to be fed over `Γ_p(α_i)-FD`
+(where they ARE invariant), but the single-tile aggregate above supplies only
+`⟨β_i•Γ₁-FD⟩` data — a DIFFERENT decomposition whose multiplicity `[Γ₁:Γ_p(α_i)] > 1` the
+engine cannot bridge (the individual `f∣β_i` are not `Γ₁`-invariant, only their sum
+`T_p f` is, so they cannot be pushed individually through the engine, and no aggregated
+form bypasses the per-`i` step). The `setIntegral_eq` over two conjugate-group fundamental
+domains + the `tr(g∣A) = (c_p/c_N)`-weighted family bookkeeping that the engine WOULD need
+is a genuine multi-lemma development, not the "routine glue" the v4 plan assumed.
+This is the single remaining mathematical content of the entire `heckeT_p_adjoint`
+spectral chain. -/
+private theorem heckeT_p_aggregate_peeled_diagonal_balance
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    peterssonInner k
+      (⋃ i ∈ (Finset.univ : Finset (Option (Fin p))),
+        (match i with
+          | none => (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)
+          | some b => (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)) •
+          (Gamma1_fundDomain_PSL N : Set ℍ))
+      ⇑f (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) =
+    peterssonInner k
+      (⋃ i ∈ (Finset.univ : Finset (Option (Fin p))),
+        (match i with
+          | none => (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)
+          | some b => (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)) •
+          (Gamma1_fundDomain_PSL N : Set ℍ))
+      ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)) ∣[k]
+        (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ))
+      ⇑g := by
+  sorry
+
+/-- **DS Prop 5.5.2(b) / Miyake Thm 4.5.4 symmetric form**, `petN(T_p f, g) =
+petN(⟨p⟩f, T_p g)`. Reduced — via the two PROVEN aggregate expansions
+`petN_heckeT_p_LHS_eq_aggregate` and `petN_heckeT_p_RHS_eq_aggregate` — to the single
+irreducible peeled-diagonal balance `heckeT_p_aggregate_peeled_diagonal_balance` over the
+fixed aggregate domain. Both expansions carry the same `c_N •` fiber factor, so they cancel
+and the symmetric form is exactly that balance (the genuine DS double-coset change of
+variables). -/
+private theorem petN_heckeT_p_symmetric_form_doubleCoset
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     petN (heckeT_p_cusp k p hp hpN f) g =
       petN (diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)
         (heckeT_p_cusp k p hp hpN g) := by
-  refine petN_heckeT_p_symmetric_form_of_doubleCosetTileBridge p hp hpN f g ?_
-  unfold DSDoubleCosetTileBridge
-  refine DSDoubleCosetTileBridge_of_LHS_dist_eq_RHS_absorbed p hp hpN f g ?_
-  rw [Finset.sum_add_distrib, Finset.sum_add_distrib]
-  refine congr_arg₂ (· + ·) ?_ ?_
-  ·
-    show SigmaQPermResidual_M_infty p hp hpN f g
-    sorry
-  ·
-    show SigmaQPermResidual_upper p hp hpN f g
-    sorry
+  rw [petN_heckeT_p_LHS_eq_aggregate p hp hpN f g,
+    peterssonInner_T_p_reps_sum_slashes_eq_aggregate_HeckeFD p hp hpN f g
+      (aggregate_HeckeFD_measure_hyps p hp hpN f g).1
+      (aggregate_HeckeFD_measure_hyps p hp hpN f g).2.1
+      (aggregate_HeckeFD_measure_hyps p hp hpN f g).2.2,
+    petN_heckeT_p_RHS_eq_aggregate p hp hpN f g,
+    heckeT_p_aggregate_peeled_diagonal_balance p hp hpN f g]
+
+private theorem petN_heckeT_p_symmetric_form
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    petN (heckeT_p_cusp k p hp hpN f) g =
+      petN (diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)
+        (heckeT_p_cusp k p hp hpN g) :=
+  petN_heckeT_p_symmetric_form_doubleCoset p hp hpN f g
 
 private lemma petN_heckeT_p_adjoint_standard_form
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
@@ -5363,6 +5681,303 @@ private theorem heckeT_p_adjoint_of_diamond_shift
         rw [h_cancel]
     _ = petN f (diamondOp_cusp k u⁻¹ (heckeT_p_cusp k p hp hpN g)) := h2
 
+/-! ### DIRECT (non-circular) DS 5.5.3 route via the `Γ_p(A)` trace engine
+
+The chain below proves `petN(T_p f, g) = petN(f, ⟨p⟩⁻¹ T_p g)` ONE-DIRECTIONALLY, without
+assuming the symmetric form `petN_heckeT_p_symmetric_form_doubleCoset` (the residual at
+`heckeT_p_aggregate_peeled_diagonal_balance`). It chains:
+* leaf 1 (`petN_heckeT_p_LHS_eq_aggregate`),
+* the proven aggregate (`peterssonInner_T_p_reps_sum_slashes_eq_aggregate_HeckeFD`),
+* the Hecke-tile FD identification (`aggregate_D_petersson_eq_Gamma_p_A_fundDomain` +
+  `isFundamentalDomain_Hecke_tiles_biUnion_Gamma_p_α`),
+* the degree-`(p+1)` **trace engine**
+  (`setIntegral_Gamma_p_α_fundDomain_PSL_petersson_eq_traceSlash_Gamma1_fundDomain`,
+  FDTransport),
+* the **trace leaf** `traceSlash_T_p_lower_eq_diamond_inv_heckeT_p` (form-level, the genuine
+  DS 5.5.3 content), and
+* `petN_eq_setIntegral_Gamma1_fundDomain_PSL`. -/
+
+open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory in
+/-- **Fiber-count reconciliation.** The `SL → PSL` fiber count at `Γ_p(diag(p,1))` equals the
+one at `Γ₁(N)`. Both count `[H·{±I} : H]` over the respective `H`, which is `1` or `2`
+according to whether `-I ∈ H`; and `-I ∈ Γ_p(A) ↔ -I ∈ Γ₁(N)` (the `(1,0)`-entry of `-I` is
+`0`, divisible by `p`). This is the `c_p`-vs-`c_N` bridge that lets leaf 1's `c_N`-weighted
+`Γ_p(A)`-FD integral feed the trace engine (which carries `c_p`). -/
+theorem slToPslQuot_fiberCard_Gamma_p_α_T_p_lower_eq_fiberCard
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
+    slToPslQuot_fiberCard_Gamma_p_α (N := N) (T_p_lower p hp.pos) =
+      slToPslQuot_fiberCard N := by
+  classical
+  -- Center elements of `SL(2,ℤ)` have lower-left entry `0`, so `Γ_p(A)`- and `Γ₁`-membership
+  -- agree on the center.
+  have hctr : ∀ z : SL(2, ℤ), z ∈ Subgroup.center SL(2, ℤ) →
+      (z ∈ Gamma_p_α (N := N) (T_p_lower p hp.pos) ↔ z ∈ Gamma1 N) := by
+    intro z hz
+    rw [mem_Gamma_p_α_T_p_lower p hp.pos hpN]
+    refine ⟨fun h ↦ h.1, fun h ↦ ⟨h, ?_⟩⟩
+    rw [Matrix.SpecialLinearGroup.mem_center_iff] at hz
+    obtain ⟨c, _, hc⟩ := hz
+    have : (z : Matrix (Fin 2) (Fin 2) ℤ) 1 0 = 0 := by
+      rw [← hc, Matrix.scalar_apply, Matrix.diagonal_apply_ne _ (by decide)]
+    rw [this]; exact dvd_zero _
+  rw [slToPslQuot_fiberCard_Gamma_p_α, slToPslQuot_fiberCard]
+  -- Fiber-membership characterization at `[1]` (uniform across `H = Γ_p(A)` and `H = Γ₁`).
+  have key : ∀ (H : Subgroup SL(2, ℤ)) (g : SL(2, ℤ)),
+      (QuotientGroup.mk (QuotientGroup.mk g : PSL(2, ℤ)) :
+          PSL(2, ℤ) ⧸ (H.map (QuotientGroup.mk' (Subgroup.center SL(2, ℤ))))) =
+        QuotientGroup.mk 1 ↔
+      ∃ z ∈ Subgroup.center SL(2, ℤ), g * z ∈ H := by
+    intro H g
+    rw [QuotientGroup.eq, mul_one, Subgroup.inv_mem_iff, Subgroup.mem_map]
+    constructor
+    · rintro ⟨h, hh, hhe⟩
+      rw [QuotientGroup.mk'_apply, QuotientGroup.eq] at hhe
+      refine ⟨g⁻¹ * h, ?_, by group; exact hh⟩
+      have := (Subgroup.center SL(2, ℤ)).inv_mem hhe
+      rwa [mul_inv_rev, inv_inv] at this
+    · rintro ⟨z, hz, hgz⟩
+      exact ⟨g * z, hgz, by
+        rw [QuotientGroup.mk'_apply, QuotientGroup.mk_mul,
+          (QuotientGroup.eq_one_iff _).mpr hz, mul_one]⟩
+  -- Center crux: for `g₁, g₂` whose `Γ_p(A)`-fiber membership holds (`gᵢ·zᵢ ∈ Γ_p(A)`,
+  -- `zᵢ ∈ center`), the `Γ₁`- and `Γ_p(A)`-cosets of `g₁⁻¹g₂` coincide (the discrepancy lies in
+  -- `center`, where the two memberships agree by `hctr`).
+  have hcrux : ∀ g₁ g₂ z₁ z₂ : SL(2, ℤ), z₁ ∈ Subgroup.center SL(2, ℤ) →
+      z₂ ∈ Subgroup.center SL(2, ℤ) →
+      g₁ * z₁ ∈ Gamma_p_α (N := N) (T_p_lower p hp.pos) →
+      g₂ * z₂ ∈ Gamma_p_α (N := N) (T_p_lower p hp.pos) →
+      (g₁⁻¹ * g₂ ∈ Gamma1 N ↔ g₁⁻¹ * g₂ ∈ Gamma_p_α (N := N) (T_p_lower p hp.pos)) := by
+    intro g₁ g₂ z₁ z₂ hz₁ hz₂ hg₁ hg₂
+    have hzc : z₁ * z₂⁻¹ ∈ Subgroup.center SL(2, ℤ) :=
+      (Subgroup.center SL(2, ℤ)).mul_mem hz₁ ((Subgroup.center SL(2, ℤ)).inv_mem hz₂)
+    -- `z₁⁻¹`, `z₂⁻¹` are also central.
+    have hz₁i : z₁⁻¹ ∈ Subgroup.center SL(2, ℤ) := (Subgroup.center SL(2, ℤ)).inv_mem hz₁
+    have hz₂i : z₂⁻¹ ∈ Subgroup.center SL(2, ℤ) := (Subgroup.center SL(2, ℤ)).inv_mem hz₂
+    -- central commutations (in the form `central * x = x * central`)
+    have hcz₁ : ∀ x : SL(2, ℤ), z₁⁻¹ * x = x * z₁⁻¹ :=
+      fun x ↦ (Subgroup.mem_center_iff.mp hz₁i x).symm
+    have hcz₂ : ∀ x : SL(2, ℤ), z₂⁻¹ * x = x * z₂⁻¹ :=
+      fun x ↦ (Subgroup.mem_center_iff.mp hz₂i x).symm
+    have hcz₁' : ∀ x : SL(2, ℤ), z₁ * x = x * z₁ :=
+      fun x ↦ (Subgroup.mem_center_iff.mp hz₁ x).symm
+    -- `g₁⁻¹g₂ = (g₁z₁)⁻¹ · (z₁z₂⁻¹) · (g₂z₂)`, with the outer factors in `Γ_p(A) ⊆ Γ₁`.
+    have hsplit : g₁⁻¹ * g₂ = (g₁ * z₁)⁻¹ * ((z₁ * z₂⁻¹) * (g₂ * z₂)) := by
+      rw [mul_inv_rev]
+      symm
+      calc (z₁⁻¹ * g₁⁻¹) * ((z₁ * z₂⁻¹) * (g₂ * z₂))
+          = g₁⁻¹ * z₁⁻¹ * (z₁ * (z₂⁻¹ * (g₂ * z₂))) := by rw [hcz₁ g₁⁻¹]; group
+        _ = g₁⁻¹ * (z₂⁻¹ * (g₂ * z₂)) := by rw [← mul_assoc, mul_assoc _ z₁⁻¹ z₁,
+            inv_mul_cancel, mul_one]
+        _ = g₁⁻¹ * (g₂ * (z₂⁻¹ * z₂)) := by rw [hcz₂ (g₂ * z₂)]; group
+        _ = g₁⁻¹ * g₂ := by rw [inv_mul_cancel, mul_one]
+    rw [hsplit]
+    have hL₁ : (g₁ * z₁)⁻¹ ∈ Gamma_p_α (N := N) (T_p_lower p hp.pos) :=
+      (Gamma_p_α (N := N) (T_p_lower p hp.pos)).inv_mem hg₁
+    constructor
+    · intro h
+      -- strip the `Γ_p(A)` factors; the residue `z₁z₂⁻¹ ∈ center ∩ Γ₁ = center ∩ Γ_p(A)`
+      have hmid : (z₁ * z₂⁻¹) * (g₂ * z₂) ∈ Gamma1 N := by
+        have h2 := (Gamma1 N).mul_mem ((Gamma_p_α_le_Gamma1 _) hg₁) h
+        rwa [← mul_assoc, mul_inv_cancel, one_mul] at h2
+      have hz_mem : z₁ * z₂⁻¹ ∈ Gamma1 N := by
+        have h2 := (Gamma1 N).mul_mem hmid ((Gamma1 N).inv_mem ((Gamma_p_α_le_Gamma1 _) hg₂))
+        rwa [mul_assoc, mul_inv_cancel, mul_one] at h2
+      have hz_memP : z₁ * z₂⁻¹ ∈ Gamma_p_α (N := N) (T_p_lower p hp.pos) :=
+        (hctr _ hzc).mpr hz_mem
+      exact (Gamma_p_α (N := N) (T_p_lower p hp.pos)).mul_mem hL₁
+        ((Gamma_p_α (N := N) (T_p_lower p hp.pos)).mul_mem hz_memP hg₂)
+    · intro h; exact (Gamma_p_α_le_Gamma1 _) h
+  refine Finset.card_bij
+    (fun q _ ↦ slGamma_p_αToGamma1 (N := N) (T_p_lower p hp.pos) q) ?_ ?_ ?_
+  · -- maps into the `Γ₁`-fiber: apply the projection `PSL/imΓ_p → PSL/imΓ₁`
+    intro q hq
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hq ⊢
+    induction q using QuotientGroup.induction_on with | _ g => ?_
+    rw [slToPslQuot_Gamma_p_α_mk] at hq
+    rw [slGamma_p_αToGamma1_mk, slToPslQuot_mk]
+    obtain ⟨z, hz, hgz⟩ := (key _ g).mp hq
+    exact (key _ g).mpr ⟨z, hz, (Gamma_p_α_le_Gamma1 _) hgz⟩
+  · -- injective on the `Γ_p(A)`-fiber via `hcrux`
+    intro q₁ hq₁ q₂ hq₂ heq
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hq₁ hq₂
+    induction q₁ using QuotientGroup.induction_on with | _ g₁ => ?_
+    induction q₂ using QuotientGroup.induction_on with | _ g₂ => ?_
+    simp only at heq
+    rw [slToPslQuot_Gamma_p_α_mk] at hq₁ hq₂
+    rw [slGamma_p_αToGamma1_mk, slGamma_p_αToGamma1_mk, QuotientGroup.eq] at heq
+    obtain ⟨z₁, hz₁, hgz₁⟩ := (key _ g₁).mp hq₁
+    obtain ⟨z₂, hz₂, hgz₂⟩ := (key _ g₂).mp hq₂
+    rw [QuotientGroup.eq]
+    exact (hcrux g₁ g₂ z₁ z₂ hz₁ hz₂ hgz₁ hgz₂).mp heq
+  · -- surjective onto the `Γ₁`-fiber: the center part `z⁻¹` of `g` gives the `Γ_p(A)`-fiber rep
+    intro q hq
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hq
+    induction q using QuotientGroup.induction_on with | _ g => ?_
+    rw [slToPslQuot_mk] at hq
+    obtain ⟨z, hz, hgz⟩ := (key _ g).mp hq
+    have hzinv : z⁻¹ ∈ Subgroup.center SL(2, ℤ) := (Subgroup.center SL(2, ℤ)).inv_mem hz
+    refine ⟨QuotientGroup.mk z⁻¹, ?_, ?_⟩
+    · simp only [Finset.mem_filter, Finset.mem_univ, true_and, slToPslQuot_Gamma_p_α_mk]
+      refine (key _ z⁻¹).mpr ⟨z, hz, ?_⟩
+      rw [inv_mul_cancel]
+      exact (Gamma_p_α (N := N) (T_p_lower p hp.pos)).one_mem
+    · show slGamma_p_αToGamma1 (N := N) (T_p_lower p hp.pos) (QuotientGroup.mk z⁻¹) =
+        QuotientGroup.mk g
+      rw [slGamma_p_αToGamma1_mk, QuotientGroup.eq]
+      -- `(z⁻¹)⁻¹ * g = z * g = g * z ∈ Γ₁` (center commutes)
+      have hcomm : z * g = g * z := (Subgroup.mem_center_iff.mp hz g).symm
+      rw [inv_inv, hcomm]; exact hgz
+
+open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory in
+/-- **TRACE LEAF (DS 5.5.3, form-level) — the single genuine remaining gap.** Summing `g ∣ A`
+over a transversal of `Γ_p(A)\Γ₁(N)` (`A = diag(p,1)`, `[Γ₁ : Γ_p(A)] = p+1`) yields the
+*adjoint* Hecke operator `⟨p⟩⁻¹ T_p g`. Precisely, the partial trace
+`traceSlash_Gamma_p_α A (g∣A) q₀` equals `⇑(⟨p⟩⁻¹ T_p g)` as a function `ℍ → ℂ` (independent
+of the base coset `q₀`).
+
+NON-CIRCULAR: this is a pure slash/coset identity — `traceSlash_Gamma_p_α`, `glMap`,
+`diamondOp_cusp`, `heckeT_p_cusp` are all defined strictly *before* `heckeT_p_adjoint`
+(in `FDTransport`/`Gamma1Pair`/`AdjointTheory`), and the statement mentions neither
+`petersson`, `petN`, nor `heckeT_p_adjoint`. So `heckeT_p_adjoint`'s proof (which uses this
+leaf) does not loop through itself.
+
+MATH: the double coset `Γ₁ A Γ₁` with `A = diag(p,1)` is the *adjoint* of the standard `T_p`
+coset `Γ₁ diag(1,p) Γ₁` (`diag(p,1) = det(diag(1,p))·diag(1,p)⁻¹`), and DS Thm 5.5.3 gives
+`g[Γ₁ A Γ₁]_k = ⟨p⟩⁻¹ T_p g`.
+
+PROOF SKELETON (the precise residual gap; two ordered sub-lemmas):
+1. `traceSlash_Gamma_p_α A (g∣A) q₀ = ∑_{j} (g∣A) ∣[k] δ_j` over a CONCRETE transversal
+   `{δ_j}` (`p+1` elements) of `Γ_p(A)\Γ₁` — where `Γ_p(A) = {γ∈Γ₁ : p ∣ γ₁₀}`
+   (`mem_Gamma_p_α_T_p_lower`, the `Γ₀(p)`-type lower-left condition). A correct transversal is
+   the `Γ₀(p)\Γ₁`-style lower reps (e.g. `[[1,0],[j,1]]·(level corrector)` for `j=0..p-1`
+   plus an `S`-type rep). NB: `T_p_lower_tile_family` (DeltaB:687) is NOT this transversal —
+   it is the transversal of the *conjugate* group `Γ₁ ∩ AΓ₁A⁻¹` (the `A•D` decomposition),
+   a different coset space; building the `Γ_p(A)\Γ₁` transversal is part of this gap. The
+   bridge is a `Finset.sum_bij` from the abstract fiber `{q : slGamma_p_αToGamma1 A q = q₀}`
+   to `{δ_j}`, with the `Γ_p(A)`-slash-invariance of `g∣A`
+   (`slash_α_Gamma_p_α_invariant_cuspForm`) absorbing the per-coset discrepancy; base-coset
+   independence is `traceSlash_Gamma_p_α_indep`.
+2. `∑_j (g∣A) ∣[k] δ_j = ∑_j g ∣[k] (A·δ_j) = ⇑(⟨p⟩⁻¹ T_p g)`. The matrices `{A·δ_j}` (det-`p`)
+   are left-coset reps of `Γ₁\Γ₁ A Γ₁`, the *adjoint* of the standard `T_p` double coset
+   `Γ₁ diag(1,p) Γ₁` (`diag(p,1) = det(diag(1,p))·diag(1,p)⁻¹`); recombine into the adjoint
+   family via `heckeT_p_fun_eq_coset_sum` (HeckeT_p_Gamma1:307), `heckeT_p_comm_diamondOp`
+   (HeckeT_p:1013), `glMap_M_infty_eq_mapGL_sigma_p_mul_glMap_T_p_lower` (SA:303), and the
+   diamond/slash commutation. This is the genuine DS 5.5.3 / Miyake 4.5.4 content. -/
+theorem traceSlash_T_p_lower_eq_diamond_inv_heckeT_p
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (q₀ : SL(2, ℤ) ⧸ Gamma1 N) :
+    traceSlash_Gamma_p_α (N := N) (k := k) (T_p_lower p hp.pos)
+      (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) q₀ =
+    ⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ (heckeT_p_cusp k p hp hpN g)) :=
+  ds_traceSlash_Gamma_p_α_T_p_lower_eq_diamond_inv_heckeT_p p hp hpN g q₀
+
+open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory in
+/-- Integrability of `pet f ((g∣A)∣γ)` (`γ : SL(2,ℤ)`) over any finite-measure set: the
+slash-by-`A`-then-`γ` collapses to `g ∣ glMap(A · γ)`. -/
+private theorem integrableOn_petersson_slash_T_p_lower_slash_SL
+    (p : ℕ) (hp : Nat.Prime p)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (γ : SL(2, ℤ))
+    {S : Set ℍ} (hS : μ_hyp S < ⊤) :
+    IntegrableOn (fun τ ↦ petersson k ⇑f
+      ((⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) ∣[k] (γ : SL(2, ℤ))) τ)
+      S μ_hyp := by
+  have hσ : (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) ∣[k] (γ : SL(2, ℤ)) =
+      ⇑g ∣[k] (glMap (T_p_lower p hp.pos * mapGL ℚ γ) : GL (Fin 2) ℝ) := by
+    rw [ModularForm.SL_slash, map_mul, ← SlashAction.slash_mul]; rfl
+  rw [hσ]
+  exact integrableOn_petersson_cuspform_slash_glMap_of_finiteMeasure f g
+    (T_p_lower p hp.pos * mapGL ℚ γ) hS
+
+open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory in
+/-- Integrability of `pet f (g∣A)` on the canonical `Γ_p(A)`-FD (engine hyp `h_int`). -/
+private theorem h_int_FD (p : ℕ) (hp : Nat.Prime p) (_hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    IntegrableOn
+      (fun τ ↦ petersson k ⇑f (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) τ)
+      (Gamma_p_α_fundDomain_PSL_canonical (N := N) (T_p_lower p hp.pos)) μ_hyp :=
+  integrableOn_petersson_cuspform_slash_glMap_of_finiteMeasure f g (T_p_lower p hp.pos)
+    (hyperbolicMeasure_Gamma_p_α_fundDomain_PSL_canonical_lt_top (N := N) (T_p_lower p hp.pos))
+
+open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory Classical in
+/-- Per-fiber integrability of the slashed trace summand (engine hyp `h_int_trace`). -/
+private theorem h_int_trace_FD (p : ℕ) (hp : Nat.Prime p) (_hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (_q₀ : SL(2, ℤ) ⧸ Gamma1 N) :
+    ∀ q' : SL(2, ℤ) ⧸ Gamma1 N,
+      ∀ q ∈ Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) (T_p_lower p hp.pos) =>
+        slGamma_p_αToGamma1 (N := N) (T_p_lower p hp.pos) q = q'),
+      IntegrableOn (fun τ ↦ petersson k ⇑f
+        ((⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) ∣[k]
+          ((q.out : SL(2, ℤ))⁻¹ * q'.out)) τ)
+        ((q'.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ)) μ_hyp := by
+  intro q' q _
+  refine integrableOn_petersson_slash_T_p_lower_slash_SL p hp f g
+    ((q.out : SL(2, ℤ))⁻¹ * q'.out) ?_
+  rw [← Set.preimage_smul (q'.out : SL(2, ℤ)) (fd : Set ℍ), measure_preimage_smul]
+  exact hyperbolicMeasure_fd_lt_top
+
+open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory Classical in
+/-- Integrability of `pet f (tr_{q₀}(g∣A))` on the `Γ₁`-FD (engine hyp `h_int_tr`). -/
+private theorem h_int_tr_FD (p : ℕ) (hp : Nat.Prime p) (_hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (q₀ : SL(2, ℤ) ⧸ Gamma1 N) :
+    IntegrableOn
+      (fun τ ↦ petersson k ⇑f
+        (traceSlash_Gamma_p_α (N := N) (k := k) (T_p_lower p hp.pos)
+          (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) q₀) τ)
+      (Gamma1_fundDomain_PSL N) μ_hyp := by
+  have h_fun : (fun τ ↦ petersson k ⇑f
+      (traceSlash_Gamma_p_α (N := N) (k := k) (T_p_lower p hp.pos)
+        (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) q₀) τ) =
+      fun τ ↦ ∑ q ∈ Finset.univ.filter
+        (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) (T_p_lower p hp.pos) =>
+          slGamma_p_αToGamma1 (N := N) (T_p_lower p hp.pos) q = q₀),
+        petersson k ⇑f
+          ((⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) ∣[k]
+            ((q.out : SL(2, ℤ))⁻¹ * q₀.out)) τ := by
+    funext τ
+    rw [traceSlash_Gamma_p_α, petersson_sum_right]
+  rw [h_fun]
+  refine MeasureTheory.integrable_finset_sum _ fun q _ ↦ ?_
+  exact integrableOn_petersson_slash_T_p_lower_slash_SL p hp f g
+    ((q.out : SL(2, ℤ))⁻¹ * q₀.out)
+    (hyperbolicMeasure_Gamma1_fundDomain_PSL_lt_top (N := N))
+
+open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory in
+/-- **DIRECT chain assembler (non-circular).** `petN(T_p f, g) = petN(f, ⟨p⟩⁻¹ T_p g)` via the
+trace engine, assuming `heckeT_p_adjoint`/`symmetric_form` NOWHERE. -/
+private theorem petN_heckeT_p_adjoint_via_trace
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    petN (heckeT_p_cusp k p hp hpN f) g =
+      petN f (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹
+        (heckeT_p_cusp k p hp hpN g)) := by
+  -- Base coset for the (coset-independent) trace.
+  set q₀ : SL(2, ℤ) ⧸ Gamma1 N := QuotientGroup.mk 1 with hq₀
+  obtain ⟨hm, h_int_per, hfi⟩ := aggregate_HeckeFD_measure_hyps p hp hpN f g
+  -- F is `Γ₁`-slash-invariant; G = g∣A is `Γ_p(A)`-slash-invariant.
+  have hF_slash : ∀ γ ∈ Gamma1 N, (⇑f : ℍ → ℂ) ∣[k] (γ : SL(2, ℤ)) = ⇑f :=
+    fun γ hγ ↦ slash_Gamma1_eq f γ hγ
+  have hG_slash : ∀ γ ∈ Gamma_p_α (N := N) (T_p_lower p hp.pos),
+      (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) ∣[k] (γ : SL(2, ℤ)) =
+        ⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) := by
+    intro γ hγ
+    rw [ModularForm.SL_slash, glMap_T_p_lower_eq_map_castHom]
+    exact slash_α_Gamma_p_α_invariant_cuspForm (T_p_lower p hp.pos) g hγ
+  -- LHS: leaf 1 + aggregate + Hecke-tile FD identification, then `c_N → c_p`.
+  rw [petN_heckeT_p_LHS_eq_aggregate p hp hpN f g,
+    peterssonInner_T_p_reps_sum_slashes_eq_aggregate_HeckeFD p hp hpN f g hm h_int_per hfi,
+    aggregate_D_petersson_eq_Gamma_p_A_fundDomain p hp hpN f g
+      (isFundamentalDomain_Hecke_tiles_biUnion_Gamma_p_α p hp hpN),
+    ← slToPslQuot_fiberCard_Gamma_p_α_T_p_lower_eq_fiberCard p hp hpN]
+  -- Trace engine: `c_p • ∫_{Γ_p(A)-FD} pet f (g∣A) = c_N • ∫_{Γ₁-FD} pet f (tr_{q₀}(g∣A))`.
+  rw [setIntegral_Gamma_p_α_fundDomain_PSL_petersson_eq_traceSlash_Gamma1_fundDomain
+    (N := N) (k := k) (T_p_lower p hp.pos) ⇑f
+    (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) q₀ hF_slash hG_slash
+    (h_int_FD p hp hpN f g) (h_int_trace_FD p hp hpN f g q₀) (h_int_tr_FD p hp hpN f g q₀)]
+  -- Trace leaf: `tr_{q₀}(g∣A) = ⟨p⟩⁻¹ T_p g`; then re-fold into `petN`.
+  rw [traceSlash_T_p_lower_eq_diamond_inv_heckeT_p p hp hpN g q₀,
+    ← petN_eq_setIntegral_Gamma1_fundDomain_PSL]
+
 /-- **DS Theorem 5.5.3**: `T_p* = ⟨p⟩⁻¹ T_p` w.r.t. the level-N Petersson product
 `petN`, i.e. `⟨T_p f, g⟩_N = ⟨f, ⟨p⟩⁻¹ T_p g⟩_N`. -/
 theorem heckeT_p_adjoint
@@ -5371,6 +5986,67 @@ theorem heckeT_p_adjoint
     petN (heckeT_p_cusp k p hp hpN f) g =
       petN f (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹
         (heckeT_p_cusp k p hp hpN g)) :=
-  heckeT_p_adjoint_of_diamond_shift p hp hpN f g
+  petN_heckeT_p_adjoint_via_trace p hp hpN f g
+
+/-! ### CORRECTED global double-coset bridge (supersedes the M_∞/upper tile split)
+
+The discharge of `petN_heckeT_p_symmetric_form` at lines 5197–5201 splits the full
+Hecke-double-coset aggregate into a per-tile-family M_∞ residual and a per-`b` upper
+residual, then demands each be self-adjoint in isolation. That split is mathematically
+FALSE: `M_∞` has determinant `p`, so the change-of-variables `z ↦ M_∞•z` does NOT tile
+`fd` per-tile by `Γ₁(N)`-translates, and the adjoint relation closes ONLY GLOBALLY, over
+the full double coset `Γ α Γ = ⊔_i β_i Γ` (DS §5.5 Lemma 5.5.1(c) + Prop 5.5.2(b);
+Miyake Thm 4.5.4). See `.mathlib-quality/learnings.jsonl` id `d6e58f26`.
+
+The correct route never splits the family. It chains three bridges through the (already
+proven, currently UNUSED) global aggregate `peterssonInner_T_p_reps_sum_slashes_eq_aggregate_HeckeFD`
+(line 122) / `_PSL_R` (line 202) and the FDTransport `Γ_p(α)` engine. -/
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **CORRECTED leaf 2** — the proven global aggregate's RHS to `petN(⟨p⟩f, T_p g)`.
+`c_N • ⟨⋃ᵢ β_i•Γ₁-FD⟩ f (g∣T_p_lower) = petN(⟨p⟩f, T_p g)` with `c_N = slToPslQuot_fiberCard N`.
+
+CLOSED via the consolidated double-coset helper. The two proven steps
+`petN_heckeT_p_LHS_eq_aggregate` (leaf 1) and `peterssonInner_T_p_reps_sum_slashes_eq_aggregate_HeckeFD`
+(the proven aggregate, fed `aggregate_HeckeFD_measure_hyps`) identify this LHS with
+`petN(T_p f, g)`; leaf 2 is therefore *exactly* the symmetric form
+`petN(T_p f, g) = petN(⟨p⟩f, T_p g)`, discharged by `petN_heckeT_p_symmetric_form_doubleCoset`
+(the single remaining DS 5.5.2(b) double-coset slot-swap `sorry`). -/
+private theorem petN_heckeT_p_RHS_aggregate_eq
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    slToPslQuot_fiberCard N • peterssonInner k
+      (⋃ i ∈ (Finset.univ : Finset (Option (Fin p))),
+        (match i with
+          | none => (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)
+          | some b => (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)) •
+          (Gamma1_fundDomain_PSL N : Set ℍ))
+      ⇑f (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) =
+    petN (diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) (heckeT_p_cusp k p hp hpN g) := by
+  obtain ⟨hm, h_int_per, hfi⟩ := aggregate_HeckeFD_measure_hyps p hp hpN f g
+  rw [← peterssonInner_T_p_reps_sum_slashes_eq_aggregate_HeckeFD p hp hpN f g hm h_int_per hfi,
+    ← petN_heckeT_p_LHS_eq_aggregate p hp hpN f g]
+  exact petN_heckeT_p_symmetric_form_doubleCoset p hp hpN f g
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- **CORRECTED top assembler** — `T_p` Petersson self-adjointness (diamond-twisted),
+DS Prop 5.5.2(b) / Miyake Thm 4.5.4, via the GLOBAL double-coset route (no M_∞/upper split).
+Chains leaf 1 → the proven aggregate (fed by leaf 3) → leaf 2. This SUPERSEDES the
+`petN_heckeT_p_symmetric_form` discharge whose two `sorry`s (5198/5201) are the false
+per-tile split. -/
+private theorem petN_heckeT_p_symmetric_form_global
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    petN (heckeT_p_cusp k p hp hpN f) g =
+      petN (diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)
+        (heckeT_p_cusp k p hp hpN g) := by
+  -- Phase B wiring: chain the corrected leaves through the proven aggregate. Both leaf 1 and
+  -- leaf 2 carry the PSL→SL fiber count `c_N = slToPslQuot_fiberCard N` (forced because `petN`
+  -- integrates over the SL fundamental domain while the aggregate lives at the PSL level); the
+  -- aggregate is fiber-count-free, so the two `c_N •` convert both ends to `petN`.
+  obtain ⟨hm, h_int_per, hfi⟩ := aggregate_HeckeFD_measure_hyps p hp hpN f g
+  rw [petN_heckeT_p_LHS_eq_aggregate p hp hpN f g,
+    peterssonInner_T_p_reps_sum_slashes_eq_aggregate_HeckeFD p hp hpN f g hm h_int_per hfi,
+    petN_heckeT_p_RHS_aggregate_eq p hp hpN f g]
 
 end HeckeRing.GL2

@@ -295,6 +295,72 @@ theorem IsFundamentalDomain.subgroup_iUnion_out_smul
           (((h₂ : G) * (q₂.out : G)⁻¹) • s : Set α) from (mul_smul _ _ _).symm]
     exact hs.aedisjoint fun heq ↦ hne (eq_of_mul_out_inv_eq heq)
 
+private theorem eq_of_mul_transversal {G : Type*} [Group G] {H : Subgroup G}
+    {ι : Type*} {r : ι → G}
+    (he : Function.Injective (fun i ↦ (QuotientGroup.mk ((r i)⁻¹) : G ⧸ H)))
+    {i j : ι} {a b : H} (hh : (a : G) * r i = (b : G) * r j) : a = b ∧ i = j := by
+  have hmem : (r j : G) * (r i)⁻¹ ∈ H := by
+    have he' : (b : G)⁻¹ * (a : G) = (r j : G) * (r i)⁻¹ := by
+      have h2 : (b : G)⁻¹ * ((a : G) * r i) * (r i)⁻¹
+          = (b : G)⁻¹ * ((b : G) * r j) * (r i)⁻¹ := by rw [hh]
+      simpa [mul_assoc] using h2
+    rw [← he']
+    exact H.mul_mem (H.inv_mem b.2) a.2
+  have hij : i = j := by
+    apply he
+    show (QuotientGroup.mk ((r i)⁻¹) : G ⧸ H) = QuotientGroup.mk ((r j)⁻¹)
+    rw [eq_comm, QuotientGroup.eq]
+    simpa [inv_inv] using hmem
+  subst hij
+  exact ⟨Subtype.ext (mul_right_cancel hh), rfl⟩
+
+/-- **Arbitrary-transversal subgroup coset tiling of a fundamental domain.** If `s`
+is a fundamental domain for a group `G` acting on `α`, `H ≤ G`, and `r : ι → G` is a
+family whose `(r i)⁻¹` represent *all* the left cosets `G ⧸ H` bijectively (`e : ι ≃ G ⧸ H`
+with `e i = ⟦(r i)⁻¹⟧`), then `⋃ i, r i • s` is a fundamental domain for the restricted
+`H`-action. This generalizes `IsFundamentalDomain.subgroup_iUnion_out_smul` (the special
+case `r i = (i.out)⁻¹` with `e = Equiv.refl`) to an arbitrary complete transversal — needed
+when the natural tiling uses geometric representatives that differ from the canonical
+`.out` reps by `H`-elements. -/
+theorem IsFundamentalDomain.iUnion_smul_of_transversal
+    {G α ι : Type*} [Group G] [MeasurableSpace α] [MulAction G α] [Countable ι]
+    [MeasurableConstSMul G α] {μ : Measure α} [SMulInvariantMeasure G α μ]
+    {H : Subgroup G} {s : Set α} (hs : IsFundamentalDomain G s μ)
+    {r : ι → G} (e : ι ≃ G ⧸ H) (he : ∀ i, e i = (QuotientGroup.mk ((r i)⁻¹) : G ⧸ H)) :
+    IsFundamentalDomain H (⋃ i, r i • s) μ := by
+  have hinj : Function.Injective (fun i ↦ (QuotientGroup.mk ((r i)⁻¹) : G ⧸ H)) := by
+    intro i j hij
+    exact e.injective (by rw [he, he]; exact hij)
+  set T : Set α := ⋃ i, r i • s with hT_def
+  refine ⟨.iUnion fun i ↦ hs.nullMeasurableSet_smul _, ?_, ?_⟩
+  · filter_upwards [hs.ae_covers] with τ hτ
+    obtain ⟨g, hg⟩ := hτ
+    -- choose the index whose `(r i)⁻¹` represents `⟦g⟧`
+    set i : ι := e.symm (QuotientGroup.mk g) with hi_def
+    have hmem : (r i) * g ∈ H := by
+      have hcoset : (QuotientGroup.mk ((r i)⁻¹) : G ⧸ H) = QuotientGroup.mk g := by
+        rw [← he, hi_def, e.apply_symm_apply]
+      rw [QuotientGroup.eq] at hcoset
+      simpa [inv_inv] using hcoset
+    refine ⟨⟨(r i) * g, hmem⟩, ?_⟩
+    show ((r i) * g) • τ ∈ T
+    rw [mul_smul]
+    refine Set.mem_iUnion.mpr ⟨i, ?_⟩
+    exact Set.smul_mem_smul_set hg
+  · intro h₁ h₂ hne
+    show AEDisjoint μ ((h₁ : G) • T) ((h₂ : G) • T)
+    rw [hT_def]
+    simp only [Set.smul_set_iUnion]
+    rw [AEDisjoint.iUnion_left_iff]
+    intro i₁
+    rw [AEDisjoint.iUnion_right_iff]
+    intro i₂
+    rw [show ((h₁ : G) • (r i₁ • s) : Set α) = (((h₁ : G) * r i₁) • s : Set α) from
+          (mul_smul _ _ _).symm,
+        show ((h₂ : G) • (r i₂ • s) : Set α) = (((h₂ : G) * r i₂) • s : Set α) from
+          (mul_smul _ _ _).symm]
+    exact hs.aedisjoint fun heq ↦ hne (eq_of_mul_transversal hinj heq).1
+
 /-- **Normalizer-shift of a fundamental domain.** If `s` is an `H`-fundamental
 domain (where `H ≤ G_outer`) and `g ∈ G_outer` lies in the normalizer of `H`,
 then `g • s` is again an `H`-fundamental domain. -/

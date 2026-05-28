@@ -1704,7 +1704,7 @@ bounded — no false per-tile balance is invoked):
 section W5a
 
 /-- The real matrix `map (Rat.castHom ℝ) (T_p_lower p hp) = diag(p,1)`. -/
-private lemma map_T_p_lower_real_val (p : ℕ) (hp : 0 < p) :
+lemma map_T_p_lower_real_val (p : ℕ) (hp : 0 < p) :
     ((Matrix.GeneralLinearGroup.map (Rat.castHom ℝ) (T_p_lower p hp)) :
       Matrix (Fin 2) (Fin 2) ℝ) = !![(p : ℝ), 0; 0, 1] := by
   ext i j
@@ -1713,7 +1713,7 @@ private lemma map_T_p_lower_real_val (p : ℕ) (hp : 0 < p) :
 
 /-- The conjugate `A·(mapGL ℝ γ)·A⁻¹` for `A = diag(p,1)` has entries
 `!![a, p·b; c/p, d]` (over ℝ), where `γ = !![a,b;c,d]`. -/
-private lemma conj_T_p_lower_real_val (p : ℕ) (hp : 0 < p) (γ : SL(2, ℤ)) :
+lemma conj_T_p_lower_real_val (p : ℕ) (hp : 0 < p) (γ : SL(2, ℤ)) :
     (((Matrix.GeneralLinearGroup.map (Rat.castHom ℝ) (T_p_lower p hp)) *
         (toGL ((Matrix.SpecialLinearGroup.map (Int.castRingHom ℝ)) γ)) *
         ((Matrix.GeneralLinearGroup.map (Rat.castHom ℝ) (T_p_lower p hp)))⁻¹) :
@@ -2006,6 +2006,294 @@ theorem relIndex_Gamma_p_α_T_p_lower (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Co
       (Gamma1 N).index * (p + 1) := by
     rw [hrA, hrB]
   exact Nat.eq_of_mul_eq_mul_right hN_pos (by rw [hkey]; ring)
+
+/-! ### The upper-triangular congruence subgroup `Γ⁰(p)` and the adjoint-side index
+
+The adjoint-side covering count `[Γ₁(N) : Γ₁(N) ∩ Γ⁰(p)] = p + 1` (Miyake 4.5.6, the upper
+mirror of `relIndex_Gamma_p_α_T_p_lower`).  `Γ⁰(p) = {γ : p ∣ γ₀₁}` is the Fricke conjugate
+`S·Γ₀(p)·S⁻¹` (`S = [[0,-1],[1,0]] ∈ SL₂(ℤ)`), so its `SL₂(ℤ)`-index equals that of `Γ₀(p)`,
+namely `p + 1`.  The coprimality tower then proceeds exactly as for `Γ₀(p)`. -/
+
+open CongruenceSubgroup in
+/-- The upper-triangular congruence subgroup `Γ⁰(p) = {γ ∈ SL₂(ℤ) : γ₀₁ ≡ 0 mod p}`. -/
+def Gamma_up (p : ℕ) : Subgroup SL(2, ℤ) where
+  carrier := { g | (g 0 1 : ZMod p) = 0 }
+  one_mem' := by simp
+  mul_mem' := by
+    intro a b ha hb
+    simp only [Set.mem_setOf_eq] at *
+    have h := (Matrix.two_mul_expl a.1 b.1).2.1
+    simp only [Matrix.SpecialLinearGroup.coe_mul] at *
+    rw [h]; push_cast; rw [ha, hb]; ring
+  inv_mem' := by
+    intro a ha
+    simp only [Set.mem_setOf_eq] at *
+    rw [SL2_inv_expl a]
+    simp only [Matrix.cons_val_zero, Matrix.cons_val_one,
+      Matrix.cons_val', Matrix.empty_val', Matrix.cons_val_fin_one, Int.cast_neg, neg_eq_zero]
+    exact ha
+
+@[simp]
+theorem Gamma_up_mem {p : ℕ} {A : SL(2, ℤ)} : A ∈ Gamma_up p ↔ (A 0 1 : ZMod p) = 0 :=
+  Iff.rfl
+
+open CongruenceSubgroup Pointwise ConjAct in
+/-- **Fricke conjugate.** `Γ⁰(p) = S·Γ₀(p)·S⁻¹`, where `S = [[0,-1],[1,0]] ∈ SL₂(ℤ)`.
+Conjugation by `S` sends the lower-left entry `γ₁₀` to `-γ₀₁`, so the `Γ₀(p)` lower-left
+condition becomes the `Γ⁰(p)` upper-right condition. -/
+theorem Gamma_up_eq_conj_Gamma0 (p : ℕ) :
+    Gamma_up p = ConjAct.toConjAct ModularGroup.S • Gamma0 p := by
+  ext γ
+  rw [Gamma_up_mem, Subgroup.mem_pointwise_smul_iff_inv_smul_mem, Gamma0_mem]
+  have hentry : (((ConjAct.toConjAct ModularGroup.S)⁻¹ • γ : SL(2, ℤ)).val 1 0 : ℤ) =
+      -(γ.val 0 1) := by
+    rw [← map_inv, ConjAct.toConjAct_smul]
+    simp only [Matrix.SpecialLinearGroup.coe_mul, ModularGroup.coe_S,
+      Matrix.SpecialLinearGroup.coe_inv, Matrix.adjugate_fin_two_of, Matrix.mul_apply,
+      Fin.sum_univ_two, Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.of_apply,
+      Matrix.cons_val']
+    ring
+  rw [hentry]; push_cast; rw [neg_eq_zero]
+
+open CongruenceSubgroup in
+/-- `[SL₂(ℤ) : Γ⁰(p)] = p + 1` for prime `p`.  Fricke-conjugate of `Gamma0_prime_index`. -/
+theorem Gamma_up_prime_index (p : ℕ) (hp : Nat.Prime p) : (Gamma_up p).index = p + 1 := by
+  have htop : (ConjAct.toConjAct ModularGroup.S • (⊤ : Subgroup SL(2, ℤ))) = ⊤ := by
+    ext x; simp [Subgroup.mem_pointwise_smul_iff_inv_smul_mem]
+  rw [Gamma_up_eq_conj_Gamma0, ← Subgroup.relIndex_top_right, ← htop,
+    Subgroup.relIndex_pointwise_smul, Subgroup.relIndex_top_right,
+    HeckeRing.GL2.Gamma0_prime_index p hp]
+
+omit [NeZero N] in
+/-- The standard generator `T = [[1,1],[0,1]] ∈ Γ₁(N)` since `T₀₀ = T₁₁ = 1`, `T₁₀ = 0`. -/
+private lemma ModularGroup_T_mem_Gamma1 : ModularGroup.T ∈ Gamma1 N := by
+  rw [Gamma1_mem]
+  refine ⟨?_, ?_, ?_⟩ <;> simp [ModularGroup.coe_T]
+
+/-- The explicit `Γ₁(N)` element `kᵤ = [[a⁻¹p, -1], [-N·m, 1]]` where `a⁻¹p - N·m = 1`
+(`a⁻¹ = aInvOfCoprime`, `m = mIdxOfCoprime`).  Its upper-left entry `a⁻¹p ≡ 0 (mod p)`,
+which lets `S·kᵤ⁻¹` land in `Γ⁰(p)`. -/
+private noncomputable def Gamma1_S_corrector_up (N p : ℕ) [NeZero N] (hpN : Nat.Coprime p N) :
+    SL(2, ℤ) :=
+  ⟨!![(aInvOfCoprime N p hpN : ℤ) * p, -1; -(N : ℤ) * mIdxOfCoprime N p hpN, 1],
+    by rw [Matrix.det_fin_two_of]; have := N_mul_mIdx_eq N p hpN; ring_nf; linarith⟩
+
+private lemma Gamma1_S_corrector_up_mem (N p : ℕ) [NeZero N] (hpN : Nat.Coprime p N) :
+    Gamma1_S_corrector_up N p hpN ∈ Gamma1 N := by
+  rw [Gamma1_mem]
+  refine ⟨?_, ?_, ?_⟩
+  · change (((aInvOfCoprime N p hpN : ℤ) * p : ℤ) : ZMod N) = 1
+    push_cast; exact aInvOfCoprime_mul_eq_one N p hpN
+  · change ((1 : ℤ) : ZMod N) = 1; push_cast; rfl
+  · change ((-(N : ℤ) * mIdxOfCoprime N p hpN : ℤ) : ZMod N) = 0
+    push_cast; rw [ZMod.natCast_self]; ring
+
+open CongruenceSubgroup in
+/-- `Γ⁰(p) ⊔ Γ₁(N) = ⊤` when `gcd(p, N) = 1`.  Both generators `S, T` of `SL₂(ℤ)` lie in
+the join: `T ∈ Γ₁(N)`, and `S = (S·kᵤ⁻¹)·kᵤ` with `kᵤ ∈ Γ₁(N)` (`Gamma1_S_corrector_up`)
+and `S·kᵤ⁻¹ ∈ Γ⁰(p)` (its upper-right is `(kᵤ)₀₀ = a⁻¹p ≡ 0 mod p`). -/
+theorem Gamma_up_sup_Gamma1_eq_top (p : ℕ) (_hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
+    Gamma_up p ⊔ Gamma1 N = ⊤ := by
+  rw [eq_top_iff, ← SpecialLinearGroup.SL2Z_generators, Subgroup.closure_le]
+  rintro x (rfl | rfl)
+  · -- `S = (S · kᵤ⁻¹) · kᵤ`, with `kᵤ ∈ Γ₁(N)` and `S·kᵤ⁻¹ ∈ Γ⁰(p)`.
+    set k := Gamma1_S_corrector_up N p hpN with hk_def
+    have hk_mem : k ∈ Gamma1 N := Gamma1_S_corrector_up_mem N p hpN
+    have hSk_mem : ModularGroup.S * k⁻¹ ∈ Gamma_up p := by
+      rw [Gamma_up_mem]
+      have h01 : ((ModularGroup.S * k⁻¹).1 0 1 : ℤ) = -((aInvOfCoprime N p hpN : ℤ) * p) := by
+        rw [show ((ModularGroup.S * k⁻¹).1 0 1 : ℤ) =
+            ((ModularGroup.S).1 0 0) * ((k⁻¹).1 0 1) + ((ModularGroup.S).1 0 1) * ((k⁻¹).1 1 1)
+          from by rw [Matrix.SpecialLinearGroup.coe_mul, Matrix.mul_apply, Fin.sum_univ_two]]
+        simp only [ModularGroup.coe_S, Matrix.SpecialLinearGroup.coe_inv,
+          Matrix.adjugate_fin_two_of, hk_def, Gamma1_S_corrector_up,
+          Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
+          Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply]
+        ring
+      rw [h01]; push_cast; rw [ZMod.natCast_self, mul_zero, neg_zero]
+    have : ModularGroup.S = (ModularGroup.S * k⁻¹) * k := by group
+    rw [this]
+    exact Subgroup.mul_mem _ (Subgroup.mem_sup_left hSk_mem) (Subgroup.mem_sup_right hk_mem)
+  · -- `T ∈ Γ₁(N)`.
+    exact Subgroup.mem_sup_right (ModularGroup_T_mem_Gamma1 (N := N))
+
+open CongruenceSubgroup in
+/-- **Set-product surjectivity (the upper analog).** For `gcd(p, N) = 1`, every `g ∈ SL₂(ℤ)`
+factors as `g = (g·k⁻¹)·k` with `k ∈ Γ₁(N)` and `g·k⁻¹ ∈ Γ⁰(p)`.  Two cases on the top-left
+entry `a = g₀₀` mod `p`: if `a` is a unit pick `k = Tᵐ ∈ Γ₁(N)` (any power, since `T ∈ Γ₁`)
+killing the upper-right mod `p`; if `a ≡ 0` reuse `Gamma1_S_corrector_up`. -/
+theorem exists_Gamma1_mul_inv_mem_Gamma_up (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (g : SL(2, ℤ)) : ∃ k ∈ Gamma1 N, g * k⁻¹ ∈ Gamma_up p := by
+  haveI : NeZero p := ⟨hp.ne_zero⟩
+  haveI : Fact (Nat.Prime p) := ⟨hp⟩
+  by_cases ha : ((g.1 0 0 : ℤ) : ZMod p) = 0
+  · -- `a ≡ 0 mod p`: `k = Gamma1_S_corrector_up`, upper-right of `g·k⁻¹` is `a + b·(a⁻¹p) ≡ 0`.
+    refine ⟨Gamma1_S_corrector_up N p hpN, Gamma1_S_corrector_up_mem N p hpN, ?_⟩
+    rw [Gamma_up_mem]
+    have h01 : ((g * (Gamma1_S_corrector_up N p hpN)⁻¹).1 0 1 : ℤ) =
+        g.1 0 0 * 1 + g.1 0 1 * ((aInvOfCoprime N p hpN : ℤ) * p) := by
+      rw [show ((g * (Gamma1_S_corrector_up N p hpN)⁻¹).1 0 1 : ℤ) =
+          (g.1 0 0) * (((Gamma1_S_corrector_up N p hpN)⁻¹).1 0 1) +
+          (g.1 0 1) * (((Gamma1_S_corrector_up N p hpN)⁻¹).1 1 1)
+        from by rw [Matrix.SpecialLinearGroup.coe_mul, Matrix.mul_apply, Fin.sum_univ_two]]
+      simp only [Gamma1_S_corrector_up, Matrix.SpecialLinearGroup.coe_inv,
+        Matrix.adjugate_fin_two_of,
+        Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
+        Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply]
+      ring
+    rw [h01]; push_cast
+    rw [show ((g.1 0 1 : ℤ) : ZMod p) * ((aInvOfCoprime N p hpN : ZMod p) * (p : ZMod p)) = 0 by
+      rw [ZMod.natCast_self, mul_zero, mul_zero], add_zero, mul_one, ha]
+  · -- `a` a unit mod p: `k = Tᵐ`, `m ≡ b·a⁻¹ mod p`; `Tᵐ ∈ Γ₁(N)` for any `m`.
+    set m : ℤ := (((g.1 0 1 : ZMod p) * ((g.1 0 0 : ZMod p))⁻¹).val : ℤ) with hm_def
+    refine ⟨ModularGroup.T ^ m,
+      Subgroup.zpow_mem (Gamma1 N) (ModularGroup_T_mem_Gamma1 (N := N)) m, ?_⟩
+    rw [Gamma_up_mem]
+    have h01 : ((g * (ModularGroup.T ^ m)⁻¹).1 0 1 : ℤ) = g.1 0 1 - g.1 0 0 * m := by
+      rw [show ((g * (ModularGroup.T ^ m)⁻¹).1 0 1 : ℤ) =
+          (g.1 0 0) * (((ModularGroup.T ^ m)⁻¹).1 0 1) +
+          (g.1 0 1) * (((ModularGroup.T ^ m)⁻¹).1 1 1)
+        from by rw [Matrix.SpecialLinearGroup.coe_mul, Matrix.mul_apply, Fin.sum_univ_two]]
+      rw [← zpow_neg, ModularGroup.coe_T_zpow]
+      simp only [Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
+        Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply]
+      ring
+    rw [h01]; push_cast
+    have hm' : (m : ZMod p) = (g.1 0 1 : ZMod p) * ((g.1 0 0 : ZMod p))⁻¹ := by
+      rw [hm_def]; push_cast; rw [ZMod.natCast_val, ZMod.cast_id]
+    rw [hm']
+    have hone : (g.1 0 0 : ZMod p) * ((g.1 0 0 : ZMod p))⁻¹ = 1 := by
+      rw [ZMod.mul_inv_eq_gcd]
+      have hndvd : ¬ p ∣ (g.1 0 0 : ZMod p).val := by
+        rw [← ZMod.natCast_eq_zero_iff _ p, ZMod.natCast_val, ZMod.cast_id]
+        exact ha
+      have hcop : (g.1 0 0 : ZMod p).val.gcd p = 1 :=
+        (Nat.coprime_comm.mp ((Nat.Prime.coprime_iff_not_dvd hp).mpr hndvd))
+      rw [hcop, Nat.cast_one]
+    rw [show (g.1 0 0 : ZMod p) * ((g.1 0 1 : ZMod p) * ((g.1 0 0 : ZMod p))⁻¹) =
+        (g.1 0 1 : ZMod p) * ((g.1 0 0 : ZMod p) * ((g.1 0 0 : ZMod p))⁻¹) by ring,
+      hone, mul_one, sub_self]
+
+open CongruenceSubgroup in
+/-- **Coprimality index equality (upper).** Since `Γ⁰(p) · Γ₁(N) = SL₂(ℤ)`, the natural map
+`Γ⁰(p) ⧸ (Γ₁(N) ∩ Γ⁰(p)) → SL₂(ℤ) ⧸ Γ₁(N)` is a bijection, so
+`[Γ⁰(p) : Γ⁰(p) ∩ Γ₁(N)] = [SL₂(ℤ) : Γ₁(N)]`. -/
+theorem Gamma1_relIndex_Gamma_up_eq_index (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
+    (Gamma1 N).relIndex (Gamma_up p) = (Gamma1 N).index := by
+  rw [Subgroup.relIndex, Subgroup.index_eq_card, Subgroup.index_eq_card]
+  -- The natural map `Γ⁰p ⧸ (Γ₁N ∩ Γ⁰p) → SL₂ ⧸ Γ₁N`, `⟦h⟧ ↦ ⟦h⟧`.
+  set f : (Gamma_up p) ⧸ ((Gamma1 N).subgroupOf (Gamma_up p)) → SL(2, ℤ) ⧸ Gamma1 N :=
+    Quotient.lift (fun h : Gamma_up p ↦ (QuotientGroup.mk (h : SL(2, ℤ)) : SL(2, ℤ) ⧸ Gamma1 N))
+      (by
+        intro a b hab
+        change (QuotientGroup.leftRel _).r _ _ at hab
+        rw [QuotientGroup.leftRel_apply] at hab
+        rw [Subgroup.mem_subgroupOf] at hab
+        exact QuotientGroup.eq.mpr hab) with hf_def
+  have hf_bij : Function.Bijective f := by
+    constructor
+    · -- injective
+      intro x y hxy
+      induction x using QuotientGroup.induction_on with | _ a => ?_
+      induction y using QuotientGroup.induction_on with | _ b => ?_
+      have : (QuotientGroup.mk (a : SL(2, ℤ)) : SL(2, ℤ) ⧸ Gamma1 N) =
+          QuotientGroup.mk (b : SL(2, ℤ)) := hxy
+      rw [QuotientGroup.eq] at this ⊢
+      rw [Subgroup.mem_subgroupOf]
+      exact this
+    · -- surjective: every `⟦g⟧` has a `Γ⁰p`-rep by the set-product surjectivity
+      intro y
+      induction y using QuotientGroup.induction_on with | _ g => ?_
+      obtain ⟨k, hk_mem, hgk⟩ := exists_Gamma1_mul_inv_mem_Gamma_up p hp hpN g
+      refine ⟨QuotientGroup.mk ⟨g * k⁻¹, hgk⟩, ?_⟩
+      show (QuotientGroup.mk ((⟨g * k⁻¹, hgk⟩ : Gamma_up p) : SL(2, ℤ)) :
+        SL(2, ℤ) ⧸ Gamma1 N) = QuotientGroup.mk g
+      rw [QuotientGroup.eq]
+      have : (g * k⁻¹)⁻¹ * g = k := by group
+      rw [this]; exact hk_mem
+  rw [Nat.card_congr (Equiv.ofBijective f hf_bij)]
+
+open CongruenceSubgroup in
+/-- **W5a adjoint index — the upper crux.** `[Γ₁(N) : Γ₁(N) ∩ Γ⁰(p)] = p + 1`.  The
+adjoint-side `(p+1)`-coset count (Miyake 4.5.6, mirror of `relIndex_Gamma_p_α_T_p_lower`).
+Reduces to `[SL₂(ℤ) : Γ⁰(p)] = p + 1` (`Gamma_up_prime_index`) via `gcd(p, N) = 1`. -/
+theorem Gamma_up_relIndex_Gamma1 (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
+    (Gamma_up p).relIndex (Gamma1 N) = p + 1 := by
+  haveI : NeZero p := ⟨hp.ne_zero⟩
+  have hle₁ : Gamma_up p ⊓ Gamma1 N ≤ Gamma1 N := inf_le_right
+  have hle₀ : Gamma_up p ⊓ Gamma1 N ≤ Gamma_up p := inf_le_left
+  have hN_pos : 0 < (Gamma1 N).index := Nat.pos_of_ne_zero
+    (CongruenceSubgroup.instFiniteIndexGamma1 N).index_ne_zero
+  have hrA := Subgroup.relIndex_mul_index hle₁
+  have hrB := Subgroup.relIndex_mul_index hle₀
+  rw [Subgroup.inf_relIndex_right] at hrA
+  rw [Subgroup.inf_relIndex_left, Gamma1_relIndex_Gamma_up_eq_index p hp hpN,
+    Gamma_up_prime_index p hp] at hrB
+  -- Now: `(Γ⁰p).relIndex Γ₁ · Γ₁.index = (Γ⁰p ⊓ Γ₁).index = Γ₁.index · (p+1)`.
+  have hkey : (Gamma_up p).relIndex (Gamma1 N) * (Gamma1 N).index =
+      (Gamma1 N).index * (p + 1) := by
+    rw [hrA, hrB]
+  exact Nat.eq_of_mul_eq_mul_right hN_pos (by rw [hkey]; ring)
+
+open CongruenceSubgroup Classical in
+/-- **Fiber-card ↔ relindex bridge (the W5b foundation).** The SL-level fiber of
+`slGamma_p_αToGamma1` over the trivial `Γ₁(N)`-coset is in bijection with
+`Γ₁(N) ⧸ Γ_p(α)`, so the abstract uniform fiber count equals the relative index
+`[Γ₁(N) : Γ_p(α)]`. (The trace engine FDT:1612 consumes the PSL-level fiber cards
+`slToPslQuot_fiberCard_Gamma_p_α`; this SL-level card is the one feeding the
+`relIndex • petN` reassembly `sum_SL_Gamma_p_α_petN_summand_eq_relIndex_mul_petN`.) -/
+theorem slGamma_p_αToGamma1_fiberCard_eq_relIndex (α : GL (Fin 2) ℚ) :
+    slGamma_p_αToGamma1_fiberCard (N := N) α =
+      (Gamma_p_α (N := N) α).relIndex (Gamma1 N) := by
+  rw [← slGamma_p_αToGamma1_fiberCard_eq α (QuotientGroup.mk 1), Subgroup.relIndex,
+    Subgroup.index_eq_card, ← Fintype.card_coe, ← Nat.card_eq_fintype_card]
+  apply Nat.card_congr
+  -- Forward map `Γ₁ ⧸ Γ_p.subgroupOf Γ₁ → fiber`, `[h] ↦ [h]_{Γ_p}`.
+  refine Equiv.symm (Equiv.ofBijective
+    (Quotient.lift (fun h : Gamma1 N ↦
+      (⟨QuotientGroup.mk (h : SL(2, ℤ)), ?_⟩))
+      ?_) ?_)
+  · -- the value lands in the fiber over `[1]`
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+    rw [slGamma_p_αToGamma1_mk, QuotientGroup.eq, mul_one]
+    exact (Gamma1 N).inv_mem h.property
+  · -- well-defined: `Γ_p`-coset only depends on the `Γ_p.subgroupOf Γ₁`-coset
+    intro a b hab
+    change (QuotientGroup.leftRel _).r _ _ at hab
+    rw [QuotientGroup.leftRel_apply, Subgroup.mem_subgroupOf] at hab
+    apply Subtype.ext
+    show (QuotientGroup.mk (a : SL(2, ℤ)) : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α) =
+      QuotientGroup.mk (b : SL(2, ℤ))
+    rw [QuotientGroup.eq]
+    exact hab
+  · -- bijective: the lift is injective and surjective onto the fiber
+    constructor
+    · -- injective
+      intro x y hxy
+      induction x using QuotientGroup.induction_on with | _ a => ?_
+      induction y using QuotientGroup.induction_on with | _ b => ?_
+      have hmk : (QuotientGroup.mk (a : SL(2, ℤ)) : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α) =
+          QuotientGroup.mk (b : SL(2, ℤ)) := congrArg Subtype.val hxy
+      rw [QuotientGroup.eq] at hmk
+      rw [QuotientGroup.eq, Subgroup.mem_subgroupOf]
+      exact hmk
+    · -- surjective: every fiber element `⟨[g], _⟩` has `g ∈ Γ₁`, giving the `Γ₁`-rep
+      rintro ⟨q, hq⟩
+      induction q using QuotientGroup.induction_on with | _ g => ?_
+      simp only [Finset.mem_filter, Finset.mem_univ, true_and, slGamma_p_αToGamma1_mk,
+        QuotientGroup.eq, mul_one] at hq
+      refine ⟨QuotientGroup.mk ⟨g, (Gamma1 N).inv_mem_iff.mp hq⟩, ?_⟩
+      apply Subtype.ext
+      rfl
+
+/-- **W5b fiber-card bridge — the `T_p_lower` instance.** The SL-level fiber count of
+`slGamma_p_αToGamma1` at `α = T_p_lower = diag(p,1)` is `p + 1`, the `T_p` coset count
+`[Γ₁(N) : Γ_p(A)]` (Miyake 4.5.6(1)). Combines the generic bridge with the crux index
+`relIndex_Gamma_p_α_T_p_lower`. -/
+theorem slGamma_p_αToGamma1_fiberCard_T_p_lower (p : ℕ) (hp : Nat.Prime p)
+    (hpN : Nat.Coprime p N) :
+    slGamma_p_αToGamma1_fiberCard (N := N) (T_p_lower p hp.pos) = p + 1 := by
+  rw [slGamma_p_αToGamma1_fiberCard_eq_relIndex, relIndex_Gamma_p_α_T_p_lower p hp hpN]
 
 end W5a
 
