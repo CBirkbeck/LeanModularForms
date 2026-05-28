@@ -441,24 +441,10 @@ def MInftyIntegrableRHS
         ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
           (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp
 
-/-! #### α-parameterized variants (used in the inner `h_α_…` family) -/
+/-! #### α-parameterized variants (used in the inner `h_α_…` family)
 
-open UpperHalfPlane ModularGroup MeasureTheory in
-/-- The pairwise-AE-disjoint hypothesis for the `α`-shifted-tile union. -/
-def AlphaTilePairwiseAEDisjoint (α : GL (Fin 2) ℝ) : Prop :=
-  Pairwise (fun (q₁ q₂ : SL(2, ℤ) ⧸ Gamma1 N) ↦ AEDisjoint μ_hyp
-      ((α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-        (q₁.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ))
-      ((α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-        (q₂.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • fd))
-
-open UpperHalfPlane ModularGroup MeasureTheory in
-/-- The null-measurability hypothesis for each `α`-shifted-tile piece. -/
-def AlphaTileNullMeasurable (α : GL (Fin 2) ℝ) : Prop :=
-  ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
-    NullMeasurableSet
-      ((α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-        (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp
+`AlphaTilePairwiseAEDisjoint` and `AlphaTileNullMeasurable` are defined upstream in
+`DeltaBSystem` and reused here. -/
 
 open UpperHalfPlane ModularGroup MeasureTheory in
 /-- The LHS-side integrability hypothesis for the `α`-shifted-tile union. -/
