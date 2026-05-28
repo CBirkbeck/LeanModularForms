@@ -112,6 +112,291 @@ private abbrev petN_doubleCoset_adjoint_adjugate
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
   DSDoubleCosetTileBridge (k := k) p hp hpN f g
 
+/-! ### Named Prop bundles for recurring sum/equality patterns.
+
+The branch sum chains (M_∞ and T_p upper) reuse a small number of long
+expressions across many theorems. Bundling them as `Prop`s shrinks the
+signatures from 30-100 lines down to a few lines each. Each named Prop is
+`rfl`-equal to its inline form, so any value of the bundled type doubles as a
+proof of the original expression (and vice versa). -/
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- The M_∞-branch *tile-shift-to-prefactored* equation: sum-over-`q` of a
+`M_∞-shifted-tile` peterssonInner on `⟨d⟩⁻¹f` and `(⟨d⟩⁻¹g ∣[T_p_upper 0]) ∣[ε]`
+equals sum-over-`q` of `peterssonInner fd (f ∣[(q.out)⁻¹]) (g ∣[M_∞ * σ⟨ε⟩(q).out⁻¹])`.
+Used as both the conclusion of `h_M_infty_tile_shift_to_prefactored_*` and the
+hypothesis of `M_infty_branch_sum_slash_adjoint_reindex_prefactored` etc. -/
+def MInftyTileShiftPrefactored
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
+  (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+    peterssonInner k
+        ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
+          (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) •
+            (ModularGroup.fd : Set UpperHalfPlane)))
+        ⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)
+        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
+          (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))))) =
+  ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+    peterssonInner k ModularGroup.fd
+        (⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (q.out : SL(2, ℤ))⁻¹))
+        (⇑g ∣[k]
+          ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              ((Gamma1QuotEquivOfGamma0
+                ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
+                (adjointGamma0Rep p N hpN).property q).out :
+                SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- The T_p-upper-branch *tile-shift-to-prefactored* equation: sum-over-`(q,b)` of
+a `T_p_upper(b)-shifted-tile` peterssonInner on `⟨d⟩⁻¹f` and
+`(⟨d⟩⁻¹g ∣[T_p_upper 0]) ∣[ε]` equals sum-over-`(q,b)` of
+`peterssonInner fd (f ∣[(q.out)⁻¹]) (g ∣[T_p_upper(b) * σ⟨ε⟩(q).out⁻¹])`. -/
+def TpUpperTileShiftPrefactored
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
+  (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+    ∑ b ∈ Finset.range p,
+      peterssonInner k
+          ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) •
+            (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) •
+              (ModularGroup.fd : Set UpperHalfPlane)))
+          ⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)
+          ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
+            (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))))) =
+  ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+    ∑ b ∈ Finset.range p,
+      peterssonInner k ModularGroup.fd
+          (⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            (q.out : SL(2, ℤ))⁻¹))
+          (⇑g ∣[k]
+            ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
+              ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+                ((Gamma1QuotEquivOfGamma0
+                  ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
+                  (adjointGamma0Rep p N hpN).property q).out :
+                  SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- The M_∞-branch *FD-slash-exchange* equation: sum-over-`q` of
+`peterssonInner fd (f ∣[T_p_lower · γ₀ · (q.out)⁻¹]) (g ∣[σ⟨ε⟩(q).out⁻¹])`
+equals sum-over-`q` of `peterssonInner fd (f ∣[(q.out)⁻¹]) (g ∣[M_∞ · σ⟨ε⟩(q).out⁻¹])`.
+Used as hypothesis of `h_M_infty_tile_shift_to_prefactored_of_FD_slash_exchange`. -/
+def MInftyFDSlashExchange
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
+  (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+    peterssonInner k ModularGroup.fd
+        (⇑f ∣[k]
+          ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              (gamma0_T_p_upper_Gamma1_factor N p hpN 0 *
+                M_infty_Gamma1_factor N p hpN 0)) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
+        (⇑g ∣[k]
+          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            ((Gamma1QuotEquivOfGamma0
+              ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
+              (adjointGamma0Rep p N hpN).property q).out :
+              SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ))) =
+  ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+    peterssonInner k ModularGroup.fd
+        (⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (q.out : SL(2, ℤ))⁻¹))
+        (⇑g ∣[k]
+          ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              ((Gamma1QuotEquivOfGamma0
+                ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
+                (adjointGamma0Rep p N hpN).property q).out :
+                SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- The T_p-upper-branch *FD-slash-exchange* equation, double sum over `(q,b)`. -/
+def TpUpperFDSlashExchange
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
+  (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+    ∑ b ∈ Finset.range p,
+      peterssonInner k ModularGroup.fd
+          (⇑f ∣[k]
+            ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
+              ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+                (gamma0_T_p_upper_Gamma1_factor N p hpN b)) *
+              ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+                (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
+          (⇑g ∣[k]
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              ((Gamma1QuotEquivOfGamma0
+                ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
+                (adjointGamma0Rep p N hpN).property q).out :
+                SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ))) =
+  ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+    ∑ b ∈ Finset.range p,
+      peterssonInner k ModularGroup.fd
+          (⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+            (q.out : SL(2, ℤ))⁻¹))
+          (⇑g ∣[k]
+            ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
+              ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+                ((Gamma1QuotEquivOfGamma0
+                  ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
+                  (adjointGamma0Rep p N hpN).property q).out :
+                  SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- The M_∞-branch *balanced* equation (hypothesis of
+`petN_LHS_dist_eq_RHS_absorbed_from_branches`): sum-over-`q` of
+`peterssonInner fd (f ∣[T_p_lower · γ₀·M_∞ · (q.out)⁻¹]) (g ∣[ε · (q.out)⁻¹])`
+equals the σ-shifted form. -/
+def MInftyBranchBalanced
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
+  (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+    peterssonInner k ModularGroup.fd
+        (⇑f ∣[k]
+          ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              (gamma0_T_p_upper_Gamma1_factor N p hpN 0 *
+                M_infty_Gamma1_factor N p hpN 0)) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
+        (⇑g ∣[k]
+          (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))) =
+  ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+    peterssonInner k ModularGroup.fd
+        (⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (q.out : SL(2, ℤ))⁻¹))
+        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) g) ∣[k]
+          ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              (gamma0_T_p_upper_Gamma1_factor N p hpN 0 *
+                M_infty_Gamma1_factor N p hpN 0)) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              ((Gamma1QuotEquivOfGamma0
+                ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
+                (adjointGamma0Rep p N hpN).property q).out :
+                SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- The T_p-upper-branch *balanced* equation, double sum over `(q,b)`. -/
+def TpUpperBranchBalanced
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
+  (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+    ∑ b ∈ Finset.range p,
+      peterssonInner k ModularGroup.fd
+        (⇑f ∣[k]
+          ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              (gamma0_T_p_upper_Gamma1_factor N p hpN b)) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
+        (⇑g ∣[k]
+          (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))) =
+  ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+    ∑ b ∈ Finset.range p,
+      peterssonInner k ModularGroup.fd
+        (⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (q.out : SL(2, ℤ))⁻¹))
+        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) g) ∣[k]
+          ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              (gamma0_T_p_upper_Gamma1_factor N p hpN b)) *
+            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+              ((Gamma1QuotEquivOfGamma0
+                ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
+                (adjointGamma0Rep p N hpN).property q).out :
+                SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- The M_∞-shifted-tile *SL-tile balance* equation: peterssonInner on the
+`M_∞ · (q.out)⁻¹`-tile union, with `(⟨d⟩⁻¹f) ∣[M_∞]` slot 2 swapped to
+`⟨d⟩f ∣[M_∞]` on the right and the diamond moved from `f` to `g`. -/
+def MInftySLTileBalance
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
+  peterssonInner k
+      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ))
+      ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)) ∣[k]
+        (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ))
+      (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) =
+    peterssonInner k
+      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ))
+      (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f))
+      (⇑g ∣[k] (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ))
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- The pairwise-AE-disjoint hypothesis for the `M_∞`-shifted-tile union. -/
+def MInftyTilePairwiseAEDisjoint
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) : Prop :=
+  Pairwise (fun (q₁ q₂ : SL(2, ℤ) ⧸ Gamma1 N) ↦ AEDisjoint μ_hyp
+      (((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (q₁.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ))
+      (((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (q₂.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • fd))
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- The null-measurability hypothesis for each `M_∞`-shifted-tile piece. -/
+def MInftyTileNullMeasurable
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) : Prop :=
+  ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
+    NullMeasurableSet
+      (((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- The LHS-side integrability hypothesis for the `M_∞`-shifted-tile union. -/
+def MInftyIntegrableLHS
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
+  IntegrableOn
+    (fun τ ↦ petersson k
+      (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f))
+      ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) ∣[k]
+        peterssonAdj (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)) τ)
+    (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+      ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp
+
+open UpperHalfPlane ModularGroup MeasureTheory in
+/-- The RHS-side integrability hypothesis for the `M_∞`-shifted-tile union. -/
+def MInftyIntegrableRHS
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
+  IntegrableOn
+    (fun τ ↦ petersson k
+      ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)) ∣[k]
+        peterssonAdj (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ))
+      ⇑g τ)
+    (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
+      ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp
+
 open UpperHalfPlane ModularGroup MeasureTheory in
 lemma petN_diamond_heckeT_p_symm_RHS_sum_distributed_reindex
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
@@ -2087,29 +2372,7 @@ open UpperHalfPlane ModularGroup MeasureTheory in
 theorem M_infty_branch_sum_slash_adjoint_reindex_prefactored
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (h_tile_shift_to_prefactored :
-      (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-        peterssonInner k
-            ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
-              (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) •
-                (ModularGroup.fd : Set UpperHalfPlane)))
-            ⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)
-            ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
-              (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
-              ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))))) =
-      ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-        peterssonInner k ModularGroup.fd
-            (⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-              (q.out : SL(2, ℤ))⁻¹))
-            (⇑g ∣[k]
-              ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
-                ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                  ((Gamma1QuotEquivOfGamma0
-                    ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
-                    (adjointGamma0Rep p N hpN).property q).out :
-                    SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))) :
+    (h_tile_shift_to_prefactored : MInftyTileShiftPrefactored p hp hpN f g) :
     (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
       peterssonInner k ModularGroup.fd
           (⇑f ∣[k]
@@ -2166,57 +2429,9 @@ open UpperHalfPlane ModularGroup MeasureTheory in
 theorem M_infty_branch_hypothesis_via_sum_chain
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (h_tile_shift_to_prefactored :
-      (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-        peterssonInner k
-            ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
-              (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) •
-                (ModularGroup.fd : Set UpperHalfPlane)))
-            ⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)
-            ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
-              (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
-              ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))))) =
-      ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-        peterssonInner k ModularGroup.fd
-            (⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-              (q.out : SL(2, ℤ))⁻¹))
-            (⇑g ∣[k]
-              ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
-                ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                  ((Gamma1QuotEquivOfGamma0
-                    ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
-                    (adjointGamma0Rep p N hpN).property q).out :
-                    SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))) :
-    (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-      peterssonInner k ModularGroup.fd
-          (⇑f ∣[k]
-            ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
-              ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                (gamma0_T_p_upper_Gamma1_factor N p hpN 0 *
-                  M_infty_Gamma1_factor N p hpN 0)) *
-              ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
-          (⇑g ∣[k]
-            (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))) *
-              ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))) =
-    ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-      peterssonInner k ModularGroup.fd
-          (⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹))
-          (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) g) ∣[k]
-            ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
-              ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                (gamma0_T_p_upper_Gamma1_factor N p hpN 0 *
-                  M_infty_Gamma1_factor N p hpN 0)) *
-              ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                ((Gamma1QuotEquivOfGamma0
-                  ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
-                  (adjointGamma0Rep p N hpN).property q).out :
-                  SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ))) := by
+    (h_tile_shift_to_prefactored : MInftyTileShiftPrefactored p hp hpN f g) :
+    MInftyBranchBalanced p hp hpN f g := by
+  show _ = _
   rw [M_infty_branch_sum_slash_adjoint_reindex_prefactored p hp hpN f g
     h_tile_shift_to_prefactored,
     ← M_infty_branch_RHS_unfactor_slot2 p hp hpN f g]
@@ -2323,31 +2538,7 @@ open UpperHalfPlane ModularGroup MeasureTheory in
 theorem T_p_upper_branch_sum_slash_adjoint_reindex_prefactored
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (h_upper_tile_shift_to_prefactored :
-      (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ∑ b ∈ Finset.range p,
-          peterssonInner k
-              ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) •
-                (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                  (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) •
-                  (ModularGroup.fd : Set UpperHalfPlane)))
-              ⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)
-              ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
-                (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
-                ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                  ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))))) =
-      ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ∑ b ∈ Finset.range p,
-          peterssonInner k ModularGroup.fd
-              (⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                (q.out : SL(2, ℤ))⁻¹))
-              (⇑g ∣[k]
-                ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-                  ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                    ((Gamma1QuotEquivOfGamma0
-                      ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
-                      (adjointGamma0Rep p N hpN).property q).out :
-                      SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))) :
+    (h_upper_tile_shift_to_prefactored : TpUpperTileShiftPrefactored p hp hpN f g) :
     (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
       ∑ b ∈ Finset.range p,
         peterssonInner k ModularGroup.fd
@@ -2407,59 +2598,9 @@ open UpperHalfPlane ModularGroup MeasureTheory in
 theorem T_p_upper_branch_hypothesis_via_sum_chain
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (h_upper_tile_shift_to_prefactored :
-      (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ∑ b ∈ Finset.range p,
-          peterssonInner k
-              ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) •
-                (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                  (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) •
-                  (ModularGroup.fd : Set UpperHalfPlane)))
-              ⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)
-              ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
-                (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
-                ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                  ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))))) =
-      ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ∑ b ∈ Finset.range p,
-          peterssonInner k ModularGroup.fd
-              (⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                (q.out : SL(2, ℤ))⁻¹))
-              (⇑g ∣[k]
-                ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-                  ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                    ((Gamma1QuotEquivOfGamma0
-                      ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
-                      (adjointGamma0Rep p N hpN).property q).out :
-                      SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))) :
-    (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-      ∑ b ∈ Finset.range p,
-        peterssonInner k ModularGroup.fd
-          (⇑f ∣[k]
-            ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
-              ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                (gamma0_T_p_upper_Gamma1_factor N p hpN b)) *
-              ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
-          (⇑g ∣[k]
-            (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))) *
-              ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))) =
-    ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-      ∑ b ∈ Finset.range p,
-        peterssonInner k ModularGroup.fd
-          (⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹))
-          (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) g) ∣[k]
-            ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
-              ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                (gamma0_T_p_upper_Gamma1_factor N p hpN b)) *
-              ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                ((Gamma1QuotEquivOfGamma0
-                  ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
-                  (adjointGamma0Rep p N hpN).property q).out :
-                  SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ))) := by
+    (h_upper_tile_shift_to_prefactored : TpUpperTileShiftPrefactored p hp hpN f g) :
+    TpUpperBranchBalanced p hp hpN f g := by
+  show _ = _
   rw [T_p_upper_branch_sum_slash_adjoint_reindex_prefactored p hp hpN f g
     h_upper_tile_shift_to_prefactored,
     ← T_p_upper_branch_RHS_unfactor_slot2 p hp hpN f g]
@@ -2468,64 +2609,8 @@ open UpperHalfPlane ModularGroup MeasureTheory in
 theorem petN_LHS_dist_eq_RHS_absorbed_from_branches
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (h_M_infty_branch :
-      (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-        peterssonInner k ModularGroup.fd
-            (⇑f ∣[k]
-              ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
-                ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                  (gamma0_T_p_upper_Gamma1_factor N p hpN 0 *
-                    M_infty_Gamma1_factor N p hpN 0)) *
-                ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                  (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
-            (⇑g ∣[k]
-              (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                  ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))) *
-                ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                  (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))) =
-      ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-        peterssonInner k ModularGroup.fd
-            (⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-              (q.out : SL(2, ℤ))⁻¹))
-            (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) g) ∣[k]
-              ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
-                ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                  (gamma0_T_p_upper_Gamma1_factor N p hpN 0 *
-                    M_infty_Gamma1_factor N p hpN 0)) *
-                ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                  ((Gamma1QuotEquivOfGamma0
-                    ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
-                    (adjointGamma0Rep p N hpN).property q).out :
-                    SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ))))
-    (h_upper_branch :
-      (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ∑ b ∈ Finset.range p,
-          peterssonInner k ModularGroup.fd
-            (⇑f ∣[k]
-              ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
-                ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                  (gamma0_T_p_upper_Gamma1_factor N p hpN b)) *
-                ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                  (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
-            (⇑g ∣[k]
-              (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                  ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))) *
-                ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                  (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))) =
-      ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ∑ b ∈ Finset.range p,
-          peterssonInner k ModularGroup.fd
-            (⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-              (q.out : SL(2, ℤ))⁻¹))
-            (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) g) ∣[k]
-              ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
-                ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                  (gamma0_T_p_upper_Gamma1_factor N p hpN b)) *
-                ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                  ((Gamma1QuotEquivOfGamma0
-                    ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
-                    (adjointGamma0Rep p N hpN).property q).out :
-                    SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))) :
+    (h_M_infty_branch : MInftyBranchBalanced p hp hpN f g)
+    (h_upper_branch : TpUpperBranchBalanced p hp hpN f g) :
       (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
         (peterssonInner k ModularGroup.fd
             (⇑f ∣[k]
@@ -2734,55 +2819,9 @@ open UpperHalfPlane ModularGroup MeasureTheory in
 theorem h_M_infty_tile_shift_to_prefactored_of_FD_slash_exchange
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (h_FD_slash_exchange :
-      (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-        peterssonInner k ModularGroup.fd
-            (⇑f ∣[k]
-              ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
-                ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                  (gamma0_T_p_upper_Gamma1_factor N p hpN 0 *
-                    M_infty_Gamma1_factor N p hpN 0)) *
-                ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                  (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
-            (⇑g ∣[k]
-              ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                ((Gamma1QuotEquivOfGamma0
-                  ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
-                  (adjointGamma0Rep p N hpN).property q).out :
-                  SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ))) =
-      ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-        peterssonInner k ModularGroup.fd
-            (⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-              (q.out : SL(2, ℤ))⁻¹))
-            (⇑g ∣[k]
-              ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
-                ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                  ((Gamma1QuotEquivOfGamma0
-                    ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
-                    (adjointGamma0Rep p N hpN).property q).out :
-                    SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))) :
-    (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-      peterssonInner k
-          ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
-            (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-              (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) •
-              (ModularGroup.fd : Set UpperHalfPlane)))
-          ⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)
-          ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
-            (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
-            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-              ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))))) =
-    ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-      peterssonInner k ModularGroup.fd
-          (⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹))
-          (⇑g ∣[k]
-            ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
-              ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                ((Gamma1QuotEquivOfGamma0
-                  ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
-                  (adjointGamma0Rep p N hpN).property q).out :
-                  SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ))) := by
+    (h_FD_slash_exchange : MInftyFDSlashExchange p hp hpN f g) :
+    MInftyTileShiftPrefactored p hp hpN f g := by
+  show _ = _
   rw [peterssonInner_sum_M_infty_residual_LHS_to_dist p hp hpN f g,
       peterssonInner_sum_M_infty_LHS_dist_slot2_to_sigma p hp hpN f g,
       peterssonInner_sum_M_infty_LHS_dist_slot1_unfactor_diamond p hp hpN f g]
@@ -2898,58 +2937,9 @@ open UpperHalfPlane ModularGroup MeasureTheory in
 theorem h_upper_tile_shift_to_prefactored_of_FD_slash_exchange
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (h_FD_slash_exchange :
-      (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ∑ b ∈ Finset.range p,
-          peterssonInner k ModularGroup.fd
-              (⇑f ∣[k]
-                ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
-                  ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                    (gamma0_T_p_upper_Gamma1_factor N p hpN b)) *
-                  ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                    (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
-              (⇑g ∣[k]
-                ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                  ((Gamma1QuotEquivOfGamma0
-                    ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
-                    (adjointGamma0Rep p N hpN).property q).out :
-                    SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ))) =
-      ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ∑ b ∈ Finset.range p,
-          peterssonInner k ModularGroup.fd
-              (⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                (q.out : SL(2, ℤ))⁻¹))
-              (⇑g ∣[k]
-                ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-                  ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                    ((Gamma1QuotEquivOfGamma0
-                      ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
-                      (adjointGamma0Rep p N hpN).property q).out :
-                      SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))) :
-    (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-      ∑ b ∈ Finset.range p,
-        peterssonInner k
-            ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) •
-              (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) •
-                (ModularGroup.fd : Set UpperHalfPlane)))
-            ⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)
-            ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
-              (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
-              ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))))) =
-    ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-      ∑ b ∈ Finset.range p,
-        peterssonInner k ModularGroup.fd
-            (⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-              (q.out : SL(2, ℤ))⁻¹))
-            (⇑g ∣[k]
-              ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-                ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                  ((Gamma1QuotEquivOfGamma0
-                    ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))
-                    (adjointGamma0Rep p N hpN).property q).out :
-                    SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ))) := by
+    (h_FD_slash_exchange : TpUpperFDSlashExchange p hp hpN f g) :
+    TpUpperTileShiftPrefactored p hp hpN f g := by
+  show _ = _
   rw [peterssonInner_sum_T_p_upper_residual_LHS_to_dist p hp hpN f g,
       peterssonInner_sum_T_p_upper_LHS_dist_slot2_to_sigma p hp hpN f g,
       peterssonInner_sum_T_p_upper_LHS_dist_slot1_unfactor_diamond p hp hpN f g]

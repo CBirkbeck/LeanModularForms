@@ -398,6 +398,7 @@ private theorem h_upper_tile_shift_to_prefactored_from_SL_tile_balance_family
                     (adjointGamma0Rep p N hpN).property q).out :
                     SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ))) := by
   apply h_upper_tile_shift_to_prefactored_of_FD_slash_exchange p hp hpN f g
+  show _ = _
   rw [Finset.sum_comm]
   conv_rhs => rw [Finset.sum_comm]
   refine Finset.sum_congr rfl fun b hb ↦ ?_
