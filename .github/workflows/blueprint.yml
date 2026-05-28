@@ -1,0 +1,91 @@
+name: Blueprint
+
+on:
+  push:
+    branches:
+      - master
+      - feat/mathlib-prs
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install elan
+        run: |
+          set -e
+          curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Cache mathlib + lake
+        uses: actions/cache@v4
+        with:
+          path: |
+            .lake/build
+            .lake/packages
+          key: ${{ runner.os }}-lake-${{ hashFiles('lake-manifest.json', 'lean-toolchain', 'lakefile.lean') }}
+          restore-keys: |
+            ${{ runner.os }}-lake-
+
+      - name: Build Lean (mathlib cache first)
+        run: |
+          lake exe cache get || true
+          lake build LeanModularForms
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install leanblueprint
+        run: |
+          python -m pip install --upgrade pip
+          pip install leanblueprint
+
+      - name: Install minimal TeX Live (for plastex math rendering)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            texlive-xetex \
+            texlive-fonts-recommended \
+            texlive-latex-extra \
+            texlive-pictures \
+            texlive-science \
+            dvisvgm
+
+      - name: Build blueprint web
+        run: |
+          leanblueprint web
+
+      - name: Verify declarations exist
+        run: |
+          leanblueprint checkdecls
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: blueprint/web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
