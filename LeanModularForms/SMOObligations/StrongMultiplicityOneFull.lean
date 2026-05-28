@@ -1502,4 +1502,32 @@ theorem strongMultiplicityOne_constMul
   exact newPart_eq_smul_of_shared_eigenvalues f g χ hfχ hgχ
     ((mem_cuspFormsNew_iff_oldPart_eq_zero g.toCuspForm).mpr h_old_zero) S h_eig
 
+/-- **Strong Multiplicity One for both newforms (DS 5.8.2.1) — unconditional version.**
+Two `Newform`s at level `N` in the same Nebentypus eigenspace with equal eigenvalues outside a
+finite set `S` are equal.  Unlike the frozen `strongMultiplicityOne_axiom_clean`, this carries
+NO `h_chi_factor` hypothesis.
+
+Corollary of `strongMultiplicityOne_constMul` (T014): the constant multiple it returns is forced
+to be `1` since both newforms are normalised (`a₁ = 1`). -/
+theorem strongMultiplicityOne_axiom_clean_unconditional
+    (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
+    (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
+    (hgχ : g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
+    (S : Finset ℕ)
+    (h_eig : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S →
+      f.eigenvalue n = g.eigenvalue n) :
+    f.toCuspForm = g.toCuspForm := by
+  obtain ⟨c, hc⟩ :=
+    strongMultiplicityOne_constMul f g.toEigenform χ hfχ hgχ S h_eig
+  have hc1 : c = 1 := by
+    -- Bridge `hc` to function-level so it matches the smul shape of the lemma below.
+    have hcoe : (⇑g.toCuspForm : UpperHalfPlane → ℂ) = c • ⇑f.toCuspForm := by
+      rw [hc]; rfl
+    have h := g.isNorm
+    rw [show (⇑g.toCuspForm : UpperHalfPlane → ℂ) = c • ⇑f.toCuspForm from hcoe,
+      qExpansion_one_coeff_one_smul_local f.toCuspForm c, f.isNorm, mul_one] at h
+    exact h
+  rw [hc1, one_smul] at hc
+  exact hc.symm
+
 end HeckeRing.GL2
