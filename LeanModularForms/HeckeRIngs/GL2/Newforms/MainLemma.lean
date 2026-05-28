@@ -230,7 +230,7 @@ private lemma qExpansion_one_coeff_one_smul_of_norm
     qExpansion_smul one_pos h1_period_Gamma1_local, PowerSeries.coeff_smul,
     smul_eq_mul, h_norm, mul_one]
 
-private lemma qExpansion_one_coeff_one_heckeT_n_cusp_eq_coeff
+lemma qExpansion_one_coeff_one_heckeT_n_cusp_eq_coeff
     (n : ℕ) [NeZero n] (hn : Nat.Coprime n N) (χ : (ZMod N)ˣ →* ℂˣ)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (hf_char : f.toModularForm' ∈ modFormCharSpace k χ) :

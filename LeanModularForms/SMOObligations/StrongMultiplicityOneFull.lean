@@ -92,27 +92,6 @@ private lemma qExpansion_one_coeff_one_smul_local
     qExpansion_smul one_pos one_mem_strictPeriods_Gamma1_map_local, PowerSeries.coeff_smul,
     smul_eq_mul]
 
-/-- `a₁(T_n f) = a_n(f)` for the canonical (period-1) `q`-expansion of a cusp form lying in a
-single Nebentypus eigenspace, `(n, N) = 1`.  Local copy of the `private`
-`qExpansion_one_coeff_one_heckeT_n_cusp_eq_coeff` of `Newforms/MainLemma.lean`. -/
-private lemma qExpansion_one_coeff_one_heckeT_n_cusp_eq_coeff_local
-    (n : ℕ) [NeZero n] (hn : Nat.Coprime n N) (χ : (ZMod N)ˣ →* ℂˣ)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hf_char : f.toModularForm' ∈ modFormCharSpace k χ) :
-    (ModularFormClass.qExpansion (1 : ℝ) (heckeT_n_cusp k n f)).coeff 1 =
-      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n := by
-  rw [show (⇑(heckeT_n_cusp k n f) : UpperHalfPlane → ℂ) =
-        ⇑(heckeT_n_cusp k n f).toModularForm' from rfl,
-    show (⇑f : UpperHalfPlane → ℂ) = ⇑f.toModularForm' from rfl,
-    heckeT_n_cusp_toModularForm']
-  have h := fourierCoeff_heckeT_n_period_one (N := N) k n hn χ hf_char 1
-  simp only [Nat.gcd_one_left, Nat.divisors_one, Finset.sum_singleton] at h
-  have h_unit_one : ZMod.unitOfCoprime 1 (Nat.coprime_one_left N) = 1 := by
-    ext; simp [ZMod.coe_unitOfCoprime]
-  simp only [Nat.Coprime, Nat.gcd_one_left, dite_true, Nat.cast_one, one_zpow,
-    h_unit_one, map_one, Units.val_one, one_mul, Nat.div_one] at h
-  exact h
-
 /-- **Miyake Lemma 4.5.15(1)** (un-normalised form, period 1).  For an `Eigenform g`
 lying in the Nebentypus space `χ` and `n` coprime to the level, the `n`-th Fourier
 coefficient equals the leading coefficient times the classical Hecke eigenvalue:
@@ -130,7 +109,7 @@ theorem Eigenform.coeff_eq_coeff_one_mul_eigenvalue
       g.eigenvalue n * (ModularFormClass.qExpansion (1 : ℝ) g.toCuspForm).coeff 1 := by
     rw [g.isEigen n hn]
     exact qExpansion_one_coeff_one_smul_local g.toCuspForm _
-  rw [← qExpansion_one_coeff_one_heckeT_n_cusp_eq_coeff_local n.val hn χ g.toCuspForm hgχ,
+  rw [← qExpansion_one_coeff_one_heckeT_n_cusp_eq_coeff n.val hn χ g.toCuspForm hgχ,
     h_lhs, mul_comm]
 
 /-! ## Lemma 4.6.11: a nonzero new eigenform has `a₁ ≠ 0`
@@ -982,32 +961,6 @@ private theorem eigenvalue_at_prime_sq_of_coeff_one_ne_zero
   rw [hcq, hcqsq, hc1, mul_one] at h
   linear_combination -h
 
-private theorem exists_prime_coprime_avoiding_finset_local
-    (n : ℕ+) (S : Finset ℕ) :
-    ∃ q, Nat.Prime q ∧ Nat.Coprime q N ∧ Nat.Coprime n.val q ∧
-      q ∉ S ∧ q ^ 2 ∉ S ∧ n.val * q ∉ S ∧ n.val * q ^ 2 ∉ S := by
-  obtain ⟨q, hq_le, hq_prime⟩ := Nat.exists_infinite_primes (S.sup id + N + n.val + 2)
-  have hq_gt_S : ∀ s, s ∈ S → s < q := fun s hs ↦ by
-    have : s ≤ S.sup id := Finset.le_sup (f := id) hs
-    lia
-  have hq_N : Nat.Coprime q N := hq_prime.coprime_iff_not_dvd.mpr fun hqN ↦ by
-    have : q ≤ N := Nat.le_of_dvd (Nat.pos_of_ne_zero (NeZero.ne N)) hqN
-    lia
-  refine ⟨q, hq_prime, hq_N, (hq_prime.coprime_iff_not_dvd.mpr fun hqn ↦ by
-    have : q ≤ n.val := Nat.le_of_dvd n.pos hqn
-    lia).symm, fun hqS ↦ ?_, fun hqsqS ↦ ?_, fun hnqS ↦ ?_, fun hnqsqS ↦ ?_⟩
-  · have := hq_gt_S q hqS; lia
-  · have := hq_gt_S _ hqsqS
-    have hle : q ≤ q ^ 2 := by nlinarith [hq_prime.pos]
-    lia
-  · have := hq_gt_S _ hnqS
-    have hle : q ≤ n.val * q := Nat.le_mul_of_pos_left q n.pos
-    lia
-  · have := hq_gt_S _ hnqsqS
-    have h1 : q ≤ q ^ 2 := by nlinarith [hq_prime.pos]
-    have h2 : q ^ 2 ≤ n.val * q ^ 2 := Nat.le_mul_of_pos_left _ n.pos
-    lia
-
 private theorem eigenvalue_agree_of_cofactor_ne_zero
     (f : Newform N k) (g_new : Eigenform N k) (χ : (ZMod N)ˣ →* ℂˣ)
     (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
@@ -1035,7 +988,7 @@ private theorem eigenvalues_eq_all_coprime_of_eq_off_finite_eigenform
   intro n hn
   by_cases hn_S : n.val ∈ S
   · obtain ⟨q, hq_prime, hq_N, hn_coprime_q, hq_notin_S, hqsq_notin_S,
-      hnq_notin_S, hnqsq_notin_S⟩ := exists_prime_coprime_avoiding_finset_local (N := N) n S
+      hnq_notin_S, hnqsq_notin_S⟩ := exists_prime_coprime_avoiding_finset (N := N) n S
     have hqsq_N : Nat.Coprime (q ^ 2) N := Nat.Coprime.pow_left 2 hq_N
     let q_pnat : ℕ+ := ⟨q, hq_prime.pos⟩
     let qsq_pnat : ℕ+ := ⟨q ^ 2, pow_pos hq_prime.pos 2⟩
@@ -1116,7 +1069,7 @@ private theorem eigenvalues_eq_all_coprime_cross_level
   intro n hn
   by_cases hn_S : n.val ∈ S
   · obtain ⟨q, hq_prime, hq_N, hn_coprime_q, hq_notin_S, hqsq_notin_S,
-      hnq_notin_S, hnqsq_notin_S⟩ := exists_prime_coprime_avoiding_finset_local (N := N) n S
+      hnq_notin_S, hnqsq_notin_S⟩ := exists_prime_coprime_avoiding_finset (N := N) n S
     have hqsq_N : Nat.Coprime (q ^ 2) N := Nat.Coprime.pow_left 2 hq_N
     have hq_M : Nat.Coprime q M := hq_N.coprime_dvd_right hMN
     let q_pnat : ℕ+ := ⟨q, hq_prime.pos⟩

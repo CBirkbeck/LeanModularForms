@@ -394,7 +394,7 @@ theorem newform_unique_routeB
     ((cuspFormsNew N k).sub_mem (cuspFormsNewExtended_le_cuspFormsNew f.isNew)
       (cuspFormsNewExtended_le_cuspFormsNew g.isNew))
 
-private theorem exists_prime_coprime_avoiding_finset
+theorem exists_prime_coprime_avoiding_finset
     {N : ℕ} [NeZero N] (n : ℕ+) (S : Finset ℕ) :
     ∃ q, Nat.Prime q ∧ Nat.Coprime q N ∧ Nat.Coprime n.val q ∧
       q ∉ S ∧ q ^ 2 ∉ S ∧ n.val * q ∉ S ∧ n.val * q ^ 2 ∉ S := by
