@@ -81,6 +81,38 @@ theorem miyake_4_6_8_main_lemma_cuspForm
   exact miyake_4_6_8_subset_helper χ.toUnitHom N.primeFactors subset_rfl f hfχ
     (fun n hn ↦ h_vanish n ((h_prod_eq n).mp hn)) h_chi_factor
 
+/-- **Miyake Theorem 4.6.8 (Main Lemma), unconditional CuspForm form.**  As
+`miyake_4_6_8_main_lemma_cuspForm`, but with the `h_chi_factor` hypothesis removed:
+the per-prime factorisation is produced internally by the 4.6.4 dichotomy
+(`miyake_4_6_8_subset_helper_unconditional`). -/
+theorem miyake_4_6_8_main_lemma_cuspForm_unconditional
+    {N : ℕ} [NeZero N] {k : ℤ}
+    (χ : (ZMod N)ˣ →* ℂˣ)
+    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (hfχ : f ∈ cuspFormCharSpace k χ)
+    (h_vanish : ∀ n : ℕ, Nat.Coprime n N →
+      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0) :
+    ∃ f_p : ℕ → CuspForm ((Gamma1 N).map (mapGL ℝ)) k,
+      f = ∑ p ∈ N.primeFactors, f_p p ∧
+      (∀ p ∈ N.primeFactors,
+        f_p p ∈ HeckeRing.GL2.AtkinLehner.qSupportedOnDvdSubmodule N k p) ∧
+      (∀ p ∈ N.primeFactors,
+        f_p p ∈ cuspFormCharSpace k χ) := by
+  have hN0 : N ≠ 0 := NeZero.ne N
+  have h_prod_eq : ∀ n : ℕ, Nat.Coprime n (N.primeFactors.prod id) ↔ Nat.Coprime n N := by
+    intro n
+    refine ⟨fun h ↦ ?_, fun h ↦ h.coprime_dvd_right (Nat.prod_primeFactors_dvd N)⟩
+    rw [Nat.coprime_prod_right_iff] at h
+    by_contra h_not
+    obtain ⟨q, hq_prime, hq_dvd⟩ := Nat.exists_prime_and_dvd
+      (lt_of_le_of_ne (Nat.gcd_pos_of_pos_right _ (Nat.pos_of_ne_zero hN0)) (Ne.symm h_not)).ne'
+    exact hq_prime.coprime_iff_not_dvd.mp
+      (h q (Nat.mem_primeFactors.mpr
+        ⟨hq_prime, hq_dvd.trans (Nat.gcd_dvd_right _ _), hN0⟩)).symm
+      (hq_dvd.trans (Nat.gcd_dvd_left _ _))
+  exact miyake_4_6_8_subset_helper_unconditional χ N.primeFactors subset_rfl f hfχ
+    (fun n hn ↦ h_vanish n ((h_prod_eq n).mp hn))
+
 theorem coprimeSieve_admits_squarefree_decomposition_in_charSpace
     (χ : (ZMod N)ˣ →* ℂˣ)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
@@ -146,6 +178,44 @@ theorem coprimeSieve_admits_squarefree_decomposition_in_charSpace
       exact h_char d h_prime
     · simp only [h_prime, if_false]
       exact Submodule.zero_mem _
+
+/-- Unconditional analogue of `coprimeSieve_admits_squarefree_decomposition_in_charSpace`:
+the `h_chi_factor` hypothesis is dropped, the decomposition coming from
+`miyake_4_6_8_main_lemma_cuspForm_unconditional`. -/
+theorem coprimeSieve_admits_squarefree_decomposition_in_charSpace_unconditional
+    (χ : (ZMod N)ˣ →* ℂˣ)
+    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (hfχ : f ∈ cuspFormCharSpace k χ)
+    (h_vanish : ∀ n : ℕ, Nat.Coprime n N →
+      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0) :
+    ∃ f_d : ℕ → CuspForm ((Gamma1 N).map (mapGL ℝ)) k,
+      f = ∑ d ∈ N.divisors.filter (1 < ·), f_d d ∧
+      (∀ d ∈ N.divisors.filter (1 < ·),
+        f_d d ∈ HeckeRing.GL2.AtkinLehner.qSupportedOnDvdSubmodule N k d) ∧
+      (∀ d ∈ N.divisors.filter (1 < ·),
+        f_d d ∈ cuspFormCharSpace k χ) := by
+  obtain ⟨f_p, h_sum, h_supp, h_char⟩ :=
+    miyake_4_6_8_main_lemma_cuspForm_unconditional χ f hfχ h_vanish
+  refine ⟨fun d ↦ if d ∈ N.primeFactors then f_p d else 0, ?_, ?_, ?_⟩
+  · have h_primes_sub : N.primeFactors ⊆ N.divisors.filter (1 < ·) := by
+      intro p hp
+      rw [Finset.mem_filter, Nat.mem_divisors]
+      exact ⟨⟨Nat.dvd_of_mem_primeFactors hp, NeZero.ne N⟩,
+        (Nat.prime_of_mem_primeFactors hp).one_lt⟩
+    rw [h_sum]
+    symm
+    refine (Finset.sum_subset h_primes_sub ?_).symm.trans ?_
+    · intro d _hd_div hd_nprime
+      simp [hd_nprime]
+    · exact Finset.sum_congr rfl fun p hp ↦ by simp [hp]
+  · intro d _hd
+    by_cases h_prime : d ∈ N.primeFactors
+    · simpa only [h_prime, if_true] using h_supp d h_prime
+    · simpa only [h_prime, if_false] using Submodule.zero_mem _
+  · intro d _hd
+    by_cases h_prime : d ∈ N.primeFactors
+    · simpa only [h_prime, if_true] using h_char d h_prime
+    · simpa only [h_prime, if_false] using Submodule.zero_mem _
 
 private theorem heckeT_n_prime_sq_eq_heckeT_p_sq_sub_diamond
     {N : ℕ} [NeZero N] {k : ℤ} {q : ℕ} (hq : Nat.Prime q) (hqN : Nat.Coprime q N) :
@@ -255,6 +325,27 @@ theorem mainLemma_charSpace_routeB
     MulChar.equivToUnitHom.apply_symm_apply χ]
   exact h_char d hd
 
+/-- **Per-character unconditional Miyake 4.6.8 (route B).**  A cusp form
+`f ∈ S_k(Γ_1(N), χ)` whose period-1 `q`-expansion vanishes at every index coprime to
+`N` is an oldform.  This is `mainLemma_charSpace_routeB` with the `h_chi_factor`
+hypothesis **removed**: the per-prime character factorisation needed by the
+same-level divisor decomposition is supplied internally by Miyake's dichotomy 4.6.4
+(`coprimeSieve_admits_squarefree_decomposition_in_charSpace_unconditional`). -/
+theorem mainLemma_charSpace_routeB_unconditional
+    (χ : (ZMod N)ˣ →* ℂˣ)
+    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (hfχ : f ∈ cuspFormCharSpace k χ)
+    (h_vanish : ∀ n : ℕ, Nat.Coprime n N →
+      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0) :
+    f ∈ cuspFormsOld N k := by
+  obtain ⟨f_d, h_sum, h_supp, h_char⟩ :=
+    coprimeSieve_admits_squarefree_decomposition_in_charSpace_unconditional χ f hfχ h_vanish
+  refine HeckeRing.GL2.AtkinLehner.mainLemma_charSpace_of_sameLevelDivisorDecomposition
+    (Newform.dirichletLift χ) f f_d h_sum fun d hd ↦ ⟨h_supp d hd, ?_⟩
+  rw [show (Newform.dirichletLift χ).toUnitHom = χ from
+    MulChar.equivToUnitHom.apply_symm_apply χ]
+  exact h_char d hd
+
 theorem newform_unique_routeB
     {N : ℕ} [NeZero N] {k : ℤ}
     (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
@@ -302,7 +393,8 @@ theorem newform_unique_routeB
         f.toCuspForm).mp (by convert hfχ using 1))
       ((cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace (k := k) χ
         g.toCuspForm).mp (by convert hgχ using 1))) h_vanish h_chi_factor)
-    ((cuspFormsNew N k).sub_mem f.isNew g.isNew)
+    ((cuspFormsNew N k).sub_mem (cuspFormsNewExtended_le_cuspFormsNew f.isNew)
+      (cuspFormsNewExtended_le_cuspFormsNew g.isNew))
 
 private theorem exists_prime_coprime_avoiding_finset
     {N : ℕ} [NeZero N] (n : ℕ+) (S : Finset ℕ) :

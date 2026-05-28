@@ -501,27 +501,6 @@ theorem Newform.heckeT_n_cusp_preserves_cuspFormsNew_at_divN_of_classicalInputs
         g hg)
     f hf
 
-/-- The **extended new subspace**: cusp forms `petN`-orthogonal to every form in
-the extended oldspace `cuspFormsOldExtended N k`. It is a submodule of the
-classical newspace (`cuspFormsNewExtended ⊆ cuspFormsNew`), and is the correct
-object at bad primes, where classical `cuspFormsNew` is not preserved by `T_p`
-(e.g. at `N = p²`). -/
-def cuspFormsNewExtended (N : ℕ) [NeZero N] (k : ℤ) :
-    Submodule ℂ (CuspForm ((Gamma1 N).map (mapGL ℝ)) k) where
-  carrier := {f | ∀ g, g ∈ cuspFormsOldExtended N k → petN f g = 0}
-  zero_mem' g _ := petN_zero_left g
-  add_mem' h₁ h₂ g hg := by
-    show petN (_ + _) g = 0
-    rw [petN_add_left, h₁ g hg, h₂ g hg, add_zero]
-  smul_mem' c f hf g hg := by
-    show petN (c • f) g = 0
-    rw [petN_conj_smul_left, hf g hg, mul_zero]
-
-/-- `cuspFormsNewExtended ⊆ cuspFormsNew`. -/
-lemma cuspFormsNewExtended_le_cuspFormsNew {N : ℕ} [NeZero N] {k : ℤ} :
-    cuspFormsNewExtended N k ≤ cuspFormsNew N k :=
-  fun _ hf g hg => hf g (cuspFormsOld_le_cuspFormsOldExtended hg)
-
 /-- For `p ∣ N`, given a Petersson-adjoint `T_adj` for `T_p` that preserves
 `cuspFormsOldExtended`, the bad-prime Hecke operator preserves
 `cuspFormsNewExtended`. -/
@@ -895,7 +874,7 @@ theorem IsNewformExtended.isNewform
     {f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k}
     (h : IsNewformExtended f) : IsNewform f where
   isEigen := h.isEigen
-  isNew := cuspFormsNewExtended_le_cuspFormsNew h.isNew
+  isNew := h.isNew
   isNorm := h.isNorm
 
 /-- Bundled extended newform: an `Eigenform` together with extended-newspace
@@ -918,7 +897,7 @@ theorem NewformExtended.isNewformExtended (f : NewformExtended N k) :
 /-- Every `NewformExtended` gives a (classical) `Newform`. -/
 def NewformExtended.toNewform (f : NewformExtended N k) : Newform N k where
   toEigenform := f.toEigenform
-  isNew := cuspFormsNewExtended_le_cuspFormsNew f.isNew
+  isNew := f.isNew
   isNorm := f.isNorm
 
 /-- For `f ∈ cuspFormsNewExtended` and `p ∣ N`, the bad-prime Hecke operator

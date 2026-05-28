@@ -163,7 +163,7 @@ by their Hecke eigenvalues away from the level. -/
 structure Newform (N : ℕ) [NeZero N] (k : ℤ)
     extends Eigenform N k where
   /-- The form is in the new subspace. -/
-  isNew : toCuspForm ∈ cuspFormsNew N k
+  isNew : toCuspForm ∈ cuspFormsNewExtended N k
   /-- Normalisation at the **canonical Fourier period** (`h = 1`): the first
   Fourier coefficient is `1`, i.e. `a₁ = 1` (the Diamond–Shurman / Miyake
   normalisation). -/
@@ -173,7 +173,7 @@ structure Newform (N : ℕ) [NeZero N] (k : ℤ)
 with `a_1 = 1` (at period 1). -/
 structure IsNewform (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop where
   isEigen : IsEigenform f
-  isNew : f ∈ cuspFormsNew N k
+  isNew : f ∈ cuspFormsNewExtended N k
   isNorm : (ModularFormClass.qExpansion (1 : ℝ) f).coeff 1 = 1
 
 /-- A `Newform` satisfies `IsNewform`. -/
@@ -187,7 +187,7 @@ theorem Newform.isNewform (f : Newform N k) : IsNewform f.toCuspForm where
 /-- A `Newform` is **primitive** at its level if its underlying cusp form
 lies in the new subspace. -/
 def Newform.IsPrimitive (f : Newform N k) : Prop :=
-  f.toCuspForm ∈ cuspFormsNew N k
+  f.toCuspForm ∈ cuspFormsNewExtended N k
 
 /-- Every `Newform` is primitive at its own level. -/
 theorem Newform.isPrimitive (f : Newform N k) : f.IsPrimitive := f.isNew
@@ -265,6 +265,33 @@ theorem Newform.eigenvalue_eq_coeff (f : Newform N k) (n : ℕ+)
         (⇑f.toCuspForm.toModularForm')).coeff 1 = 1
     rw [show (⇑f.toCuspForm.toModularForm' : UpperHalfPlane → ℂ) = ⇑f.toCuspForm from rfl]
     exact f.isNorm
+  have h_lhs :
+      (ModularFormClass.qExpansion (1 : ℝ)
+        (heckeT_n_cusp k n.val f.toCuspForm)).coeff 1 = f.eigenvalue n := by
+    rw [f.isEigen n hn]
+    exact qExpansion_one_coeff_one_smul_of_norm f.toCuspForm h_norm _
+  rw [← qExpansion_one_coeff_one_heckeT_n_cusp_eq_coeff n.val hn χ f.toCuspForm hf_char,
+    h_lhs]
+
+/-- **Un-normalised analogue of `Newform.eigenvalue_eq_coeff`.**  For an
+`Eigenform` `f` lying in `modFormCharSpace k χ` and *assumed normalised at
+period 1* (`a₁ = 1`), the classical eigenvalue at `n` (coprime to `N`) equals
+the `n`-th canonical Fourier coefficient.  Identical proof to
+`Newform.eigenvalue_eq_coeff`, but the normalisation is taken as a hypothesis
+rather than read off the `Newform.isNorm` field. -/
+theorem Eigenform.eigenvalue_eq_coeff_of_norm (f : Eigenform N k) (n : ℕ+)
+    (hn : Nat.Coprime n.val N) (χ : (ZMod N)ˣ →* ℂˣ)
+    (hf_char : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
+    (h_norm₁ : (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm).coeff 1 = 1) :
+    f.eigenvalue n =
+      (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm).coeff n.val := by
+  haveI : NeZero n.val := ⟨n.pos.ne'⟩
+  have h_norm :
+      (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm.toModularForm').coeff 1 = 1 := by
+    change (ModularFormClass.qExpansion (1 : ℝ)
+        (⇑f.toCuspForm.toModularForm')).coeff 1 = 1
+    rw [show (⇑f.toCuspForm.toModularForm' : UpperHalfPlane → ℂ) = ⇑f.toCuspForm from rfl]
+    exact h_norm₁
   have h_lhs :
       (ModularFormClass.qExpansion (1 : ℝ)
         (heckeT_n_cusp k n.val f.toCuspForm)).coeff 1 = f.eigenvalue n := by
@@ -442,7 +469,9 @@ theorem newform_unique
   suffices hfg : f.toCuspForm - g.toCuspForm = 0 by
     exact sub_eq_zero.mp hfg
   have h_new : f.toCuspForm - g.toCuspForm ∈ cuspFormsNew N k :=
-    (cuspFormsNew N k).sub_mem f.isNew g.isNew
+    (cuspFormsNew N k).sub_mem
+      (cuspFormsNewExtended_le_cuspFormsNew f.isNew)
+      (cuspFormsNewExtended_le_cuspFormsNew g.isNew)
   have h_old : f.toCuspForm - g.toCuspForm ∈ cuspFormsOld N k := by
     apply mainLemma
     intro n hn
@@ -493,7 +522,9 @@ theorem newform_unique_of_newSubspace_coprime_vanishing_zero
   suffices hfg : f.toCuspForm - g.toCuspForm = 0 by
     exact sub_eq_zero.mp hfg
   have h_new : f.toCuspForm - g.toCuspForm ∈ cuspFormsNew N k :=
-    (cuspFormsNew N k).sub_mem f.isNew g.isNew
+    (cuspFormsNew N k).sub_mem
+      (cuspFormsNewExtended_le_cuspFormsNew f.isNew)
+      (cuspFormsNewExtended_le_cuspFormsNew g.isNew)
   have h_old : f.toCuspForm - g.toCuspForm ∈ cuspFormsOld N k := by
     apply mainLemma_of_newSubspace_coprime_vanishing_zero h_zero
     intro n hn

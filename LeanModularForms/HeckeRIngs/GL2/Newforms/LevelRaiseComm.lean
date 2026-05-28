@@ -421,6 +421,27 @@ lemma levelInclude_cusp_mem_cuspFormsOldExtended
   refine Submodule.subset_span (Or.inr ?_)
   exact ⟨M, inferInstance, hMN, hMltN, g, rfl⟩
 
+/-- The **extended new subspace**: cusp forms `petN`-orthogonal to every form in
+the extended oldspace `cuspFormsOldExtended N k`. It is a submodule of the
+classical newspace (`cuspFormsNewExtended ⊆ cuspFormsNew`), and is the correct
+object at bad primes, where classical `cuspFormsNew` is not preserved by `T_p`
+(e.g. at `N = p²`). -/
+def cuspFormsNewExtended (N : ℕ) [NeZero N] (k : ℤ) :
+    Submodule ℂ (CuspForm ((Gamma1 N).map (mapGL ℝ)) k) where
+  carrier := {f | ∀ g, g ∈ cuspFormsOldExtended N k → petN f g = 0}
+  zero_mem' g _ := petN_zero_left g
+  add_mem' h₁ h₂ g hg := by
+    show petN (_ + _) g = 0
+    rw [petN_add_left, h₁ g hg, h₂ g hg, add_zero]
+  smul_mem' c f hf g hg := by
+    show petN (c • f) g = 0
+    rw [petN_conj_smul_left, hf g hg, mul_zero]
+
+/-- `cuspFormsNewExtended ⊆ cuspFormsNew`. -/
+lemma cuspFormsNewExtended_le_cuspFormsNew {N : ℕ} [NeZero N] {k : ℤ} :
+    cuspFormsNewExtended N k ≤ cuspFormsNew N k :=
+  fun _ hf g hg => hf g (cuspFormsOld_le_cuspFormsOldExtended hg)
+
 /-- The hypothesis that the Lean `cuspFormsOld N k` equals the classical
 `cuspFormsOldExtended N k`; equivalently, every trivial-inclusion oldform
 generator lies in the level-raise span. -/
