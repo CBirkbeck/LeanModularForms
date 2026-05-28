@@ -660,6 +660,7 @@ Each axiom is concretely typed in terms of the existing
 mirrors the T124 obstruction structure exactly: a downstream worker
 can supply the two correctors independently (they target distinct
 coset families). -/
+@[ext]
 structure PartialTraceCorrection (N : ℕ) [NeZero N] (k : ℤ) (p : ℕ) where
   /-- Same-level candidate operator (e.g. trace ∘ levelRaise). -/
   core : CuspForm ((Gamma1 N).map (mapGL ℝ)) k →ₗ[ℂ]
@@ -1110,6 +1111,7 @@ and `∑ q ∈ (filter IsInftyFixingCoset).erase ⟦1⟧,
 quotientFunc (levelRaise f) q`, whose `Γ₁(N)`-level cusp-form
 bundling is the per-coset cusp-stabilizer obstruction documented in
 the structured-blocker docstring above. -/
+@[ext]
 structure TraceLevelRaiseCorrectionData (N : ℕ) [NeZero N] (k : ℤ)
     (p : ℕ) [NeZero p] where
   /-- Corrector absorbing the non-`∞`-fixing coset family (third
@@ -1363,6 +1365,7 @@ joint support/character axioms.
 The natural mathematical witness is the `ℋ`-orbit closure
 `{ q | ∃ γ : ℋ, ∃ q₀, IsInftyFixingCoset q₀ ∧ q = γ • q₀ }`,
 which is automatically `ℋ`-stable and contains the identity coset. -/
+@[ext]
 structure TraceLevelRaiseStableSaturationData
     (N : ℕ) [NeZero N] (k : ℤ) (p : ℕ) [NeZero p] where
   /-- The `Γ₁(N)`-stable saturated finite subset of cosets (containing

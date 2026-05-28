@@ -160,6 +160,7 @@ end CharSpaceDecomposition
 
 By Atkin-Lehner uniqueness (DS Theorem 5.8.2), newforms are uniquely determined
 by their Hecke eigenvalues away from the level. -/
+@[ext]
 structure Newform (N : ℕ) [NeZero N] (k : ℤ)
     extends Eigenform N k where
   /-- The form is in the new subspace. -/

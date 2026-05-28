@@ -1904,6 +1904,7 @@ inclusion `Γ₁(M·L.prod) ≤ Γ₁(M)`.  Given deep-level pieces summing to
 `restrictSubgroup h_le_full f` with prime q-support certificates, it
 produces a same-level divisor-indexed family `samePiece : ℕ → ModularForm
 Γ₁(M) k`. -/
+@[ext]
 structure ModularFormSameLevelDivisorProjections
     {M : ℕ} [NeZero M] {k : ℤ} {χ : (ZMod M)ˣ →* ℂˣ}
     (f : ModularForm ((Gamma1 M).map (mapGL ℝ)) k)

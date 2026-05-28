@@ -42,6 +42,7 @@ variable {N : ℕ} [NeZero N] {k : ℤ}
 /-- Per-newform classical inputs needed by
 `Newform.full_pole_witness_data_of_dirichletZero`, packaged as a single named
 structure with explicit fields. -/
+@[ext]
 structure Newform.PerNewformFullDirichletData
     {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
     (S : Finset ℕ) where
@@ -790,6 +791,7 @@ theorem strongMultiplicityOne_of_ImAxisMellinData_of_PerNewformFullDirichletData
 /-- The classical Atkin-Lehner input as a single named structure: a CuspForm `twist`
 whose imaginary axis represents the Fricke slash image, plus the Mellin-Dirichlet
 bridge. -/
+@[ext]
 structure Newform.FrickeSlashData {N : ℕ} [NeZero N] {k : ℤ}
     (f : Newform N k) where
   /-- CuspForm-valued Fricke slash image: `f|W_N` as a `Γ₁(N)`-cusp form. -/
@@ -1222,6 +1224,7 @@ theorem Newform.hasCompletedMellinIdentity {N : ℕ} [NeZero N] {k : ℤ}
 /-- The completed Mellin–LSeries data for a newform: a Mathlib `StrongFEPair`
 carrying the honest completed Mellin–Dirichlet identity (Gamma factor, full
 `lCoeff`) plus a separate finite Euler-stripping triple. -/
+@[ext]
 structure Newform.CompletedMellinData {N : ℕ} [NeZero N] {k : ℤ}
     (f : Newform N k) where
   /-- Mathlib `StrongFEPair`; provides an entire `pair.Λ = mellin pair.f`. -/
@@ -1322,6 +1325,7 @@ theorem Newform.HeckeEntireExtension_of_CompletedMellinData
 /-- The corrected Fricke / completed Mellin data for a newform: the Atkin-Lehner /
 Fricke slash-equality data (`twist`, `slash_eq`) together with the analytic content
 needed to construct `Newform.CompletedMellinData`. -/
+@[ext]
 structure Newform.CompletedFrickeData {N : ℕ} [NeZero N] {k : ℤ}
     (f : Newform N k) where
   /-- CuspForm-valued Fricke slash image: `f|W_N` as a `Γ₁(N)`-cusp form. -/
@@ -1542,6 +1546,7 @@ theorem Newform.hasEulerStrippingMultiplier_of_fullEulerProduct
 `Newform.hasEulerStrippingMultiplier_of_arithmeticInput` consumes: the
 character/eigenform context, the bad-prime Finset, the full Newform Euler product,
 and the bad-prime local Euler-factor identification and non-vanishing. -/
+@[ext]
 structure Newform.EulerStrippingArithmeticInput
     {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k)
     (χ : (ZMod N)ˣ →* ℂˣ) where

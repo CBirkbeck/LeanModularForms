@@ -45,6 +45,7 @@ canonical `Γ₀(N)` Hecke **ring** action `heckeRingHomCharSpace`.  The classic
 `T_n f = (eigenvalue n) • f` is a *derived* fact (`Eigenform.eigenvalue`, `Eigenform.isEigen`),
 differing from the ring eigenvalue by the diamond normalisation `χ(n)`.
 DS Definition 5.5.4 / Miyake §4.5. -/
+@[ext]
 structure Eigenform (N : ℕ) [NeZero N] (k : ℤ)
     extends CuspForm ((Gamma1 N).map (mapGL ℝ)) k where
   /-- The Nebentypus character of the eigenform. -/

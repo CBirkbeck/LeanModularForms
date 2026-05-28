@@ -33,6 +33,7 @@ abbrev GoodIndex (N : ℕ) := HeckeRing.GL2.coprimeToN N
 /-- A "good Hecke family" on a complex vector space, indexed by positive naturals
 coprime to the level `N`. This is the common algebraic interface currently used
 downstream in the `Γ₁(N), χ` theory. -/
+@[ext]
 structure GoodHeckeFamily (N : ℕ) [NeZero N] (V : Type*)
     [AddCommGroup V] [Module ℂ V] where
   op : GoodIndex N → Module.End ℂ V

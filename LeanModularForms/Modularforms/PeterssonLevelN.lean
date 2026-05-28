@@ -1218,6 +1218,7 @@ theorem peterssonInner_iUnion_finite_aedisjoint
 /-- A finite-family tile fundamental-domain bundle: a `Fintype`-indexed
 finite family `tile : ι → Set X` of pairwise AE-disjoint, null-measurable
 subsets covering a target set `T` AE under a measure `μ`. -/
+@[ext]
 structure FiniteTileFundamentalDomain
     {X : Type*} [MeasurableSpace X] (μ : Measure X)
     (ι : Type*) [Fintype ι] (T : Set X) where

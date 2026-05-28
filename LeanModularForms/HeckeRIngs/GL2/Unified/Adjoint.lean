@@ -36,6 +36,7 @@ variable {N : ℕ} [NeZero N]
 /-- A good Hecke family together with a pairing against which each good operator
 has scalar adjoint. The intended example is the Petersson pairing on cusp
 spaces, where the adjoint of `T_n` is a scalar multiple of `T_n` itself. -/
+@[ext]
 structure GoodHeckeFamilyScalarAdjoint
     {V : Type*} [AddCommGroup V] [Module ℂ V] (F : GoodHeckeFamily N V) where
   pairing : V → V → ℂ

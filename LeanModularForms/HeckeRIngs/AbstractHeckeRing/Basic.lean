@@ -63,6 +63,7 @@ lemma leftCoset_eq_of_subset (a b : G)
 
 /-- An arithmetic group pair `(H, Δ)` consisting of a subgroup `H` and a submonoid `Δ`
 of a group `G`, satisfying `H ≤ Δ ≤ commensurator(H)`. -/
+@[ext]
 structure HeckePair (G : Type*) [Group G] where
   H : Subgroup G
   Δ : Submonoid G

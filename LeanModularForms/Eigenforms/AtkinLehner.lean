@@ -715,6 +715,7 @@ theorem mainLemma_charSpace_primePower_via_divisor_iSup
 
 /-- A `TraceDescent N k χ f` is a witness that `f` admits a same-level `Γ₁(N)` divisor
 decomposition whose pieces each lie in a `d`-supported `χ`-character subspace. -/
+@[ext]
 structure TraceDescent {N : ℕ} [NeZero N] {k : ℤ}
     (χ : DirichletCharacter ℂ N)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) where
@@ -821,6 +822,7 @@ endomorphisms `P : ℕ → (CuspForm (Γ₁ N) k →ₗ[ℂ] CuspForm (Γ₁ N) 
 each image, preservation of every Nebentypus character space, and a Möbius-type
 finite-sum reconstruction for cusp forms satisfying the coprime-to-`N` vanishing
 hypothesis. -/
+@[ext]
 structure SameLevelDivisorProjections (N : ℕ) [NeZero N] (k : ℤ) where
   /-- The per-divisor linear projection operator at level `Γ₁(N)`. -/
   P : ℕ → (CuspForm ((Gamma1 N).map (mapGL ℝ)) k →ₗ[ℂ]
@@ -1047,6 +1049,7 @@ theorem mainLemma_charSpace_of_modularFormSameLevelDivisorProjections
 /-- The per-divisor local field of `SameLevelDivisorProjections`: a single linear
 endomorphism `P : CuspForm Γ₁(N) k →ₗ CuspForm Γ₁(N) k` with the local `P_supp` and
 `P_char` axioms (the global `mobius_reconstruction` is not part of the local field). -/
+@[ext]
 structure SameLevelDivisorProjectionsLocalField (N : ℕ) [NeZero N] (k : ℤ)
     (d : ℕ) where
   /-- The per-divisor projection operator at level `Γ₁(N)`. -/
@@ -1116,6 +1119,7 @@ noncomputable def SameLevelDivisorProjections.ofZeroLocalFields
 cusp-stabilizer `correction`, and the support and character-preservation obligations for
 the difference `core - correction`.  Slots into `SameLevelDivisorProjections.ofLocalFields`
 via `toLocalField`. -/
+@[ext]
 structure TraceCorrectionPrime (N : ℕ) [NeZero N] (k : ℤ) (p : ℕ) where
   /-- The candidate same-level operator at level `Γ₁(N)`. -/
   core : CuspForm ((Gamma1 N).map (mapGL ℝ)) k →ₗ[ℂ]

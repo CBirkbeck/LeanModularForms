@@ -46,6 +46,7 @@ variable {N : ℕ} [NeZero N] {k : ℤ}
 Bundle of the classical Atkin-Lehner / Fricke twist data needed to
 discharge the `h_feq` (functional equation) and `h_bridge`
 (Mellin–Dirichlet) fields of `Newform.ImAxisMellinData`. -/
+@[ext]
 structure Newform.FrickeTwistData
     {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) where
   /-- Atkin-Lehner / Fricke image of `f` as a CuspForm on `Γ₁(N)`. -/

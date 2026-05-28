@@ -23,6 +23,7 @@ variable {G : Type*} [Group G] (P : HeckePair G)
 
 /-- An anti-involution of an HeckePair: `ι : G →* Gᵐᵒᵖ`,
 involutive and preserving both `H` and `Δ`. -/
+@[ext]
 structure AntiInvolution where
   toFun : G →* MulOpposite G
   involutive : ∀ g, (toFun (toFun g).unop).unop = g

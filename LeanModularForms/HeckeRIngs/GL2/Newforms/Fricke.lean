@@ -127,6 +127,7 @@ def Newform.HeckeEntireExtension : Prop :=
 `LSeries.HasEntireExtension f.lCoeff_stripped` via a bridge equation on the
 absolute-convergence half-plane (Miyake §4.3.5 / Theorem 4.5.16;
 Diamond–Shurman §5.9). -/
+@[ext]
 structure Newform.HeckeFEData {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) where
   /-- Mathlib `StrongFEPair` capturing the cusp form's Mellin-transform pair. -/
   pair : StrongFEPair ℂ
@@ -178,6 +179,7 @@ noncomputable def Newform.HeckeFEData.ofMellinPairData
 /-- Bundles the Mellin-pair-side data needed to construct
 `Newform.HeckeFEData f`, capturing the analytic obligations of the Hecke 1936
 entire-continuation theorem (Diamond–Shurman §5.9 / Miyake §4.3.5). -/
+@[ext]
 structure Newform.MellinPairData
     {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) where
   /-- Mellin-side function for the cusp form (e.g. `t ↦ f(it)`
@@ -272,6 +274,7 @@ noncomputable def Newform.MellinPairData.ofImAxis
 `F := Newform.imAxis f`, dropping the auto-discharged `hF_int` field. The
 remaining fields are the analytic Mellin-pair obligations of the Hecke 1936
 entire-continuation theorem (Diamond–Shurman §5.9 / Miyake §4.3.5). -/
+@[ext]
 structure Newform.ImAxisMellinData
     {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) where
   /-- Atkin-Lehner / Fricke-twist Mellin-side function. -/

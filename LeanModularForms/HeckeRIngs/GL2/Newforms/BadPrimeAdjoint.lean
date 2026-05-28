@@ -879,6 +879,7 @@ theorem IsNewformExtended.isNewform
 
 /-- Bundled extended newform: an `Eigenform` together with extended-newspace
 membership and normalisation. Strictly stronger than `Newform N k`. -/
+@[ext]
 structure NewformExtended (N : ℕ) [NeZero N] (k : ℤ)
     extends Eigenform N k where
   /-- The form is in the *extended* new subspace `cuspFormsNewExtended`. -/
