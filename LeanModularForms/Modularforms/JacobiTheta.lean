@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2026 Chris Birkbeck. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Chris Birkbeck
+-/
 module
 
 public import LeanModularForms.Modularforms.ForMathlib_FunctionsBoundedAtInfty
@@ -11,9 +16,20 @@ public import LeanModularForms.Modularforms.DimensionFormulas
 /-!
 # Jacobi theta functions
 
-Define Jacobi theta functions Θ₂, Θ₃, Θ₄ and their fourth powers H₂, H₃, H₄.
-Prove that H₂, H₃, H₄ are modualar forms of weight 2 and level Γ(2).
-Also Jacobi identity: Θ₂^4 + Θ₄^4 = Θ₃^4.
+Define Jacobi theta functions `Θ₂`, `Θ₃`, `Θ₄` and their fourth powers `H₂`, `H₃`, `H₄`.
+Prove that `H₂`, `H₃`, `H₄` are modular forms of weight 2 and level `Γ(2)`.
+Also Jacobi identity: `Θ₂^4 + Θ₄^4 = Θ₃^4`.
+
+## Main definitions
+
+* `Θ₂`, `Θ₃`, `Θ₄`: the three Jacobi theta functions on the upper half plane.
+* `H₂`, `H₃`, `H₄`: the fourth powers of the theta functions.
+* `H₂_MF`, `H₃_MF`, `H₄_MF`: the modular form structures on `H₂`, `H₃`, `H₄`.
+
+## Main results
+
+* `jacobi_identity`: the Jacobi identity `H₂ + H₄ = H₃`.
+* `Delta_eq_H₂_H₃_H₄`: expresses `Delta` as `(H₂ · H₃ · H₄)² / 256`.
 -/
 
 open scoped Real MatrixGroups ModularForm
@@ -271,8 +287,6 @@ noncomputable def H₄_SIF : SlashInvariantForm (Γ 2) 2 where
 
 end H_SlashInvariant
 
-
-
 section H_MDifferentiable
 
 lemma H₂_SIF_MDifferentiable : MDiff H₂_SIF := by
@@ -390,13 +404,10 @@ lemma Θ₂_MDifferentiable : MDiff Θ₂ := by
 
 end H_MDifferentiable
 
-
-
 section H_isBoundedAtImInfty
 
 variable (γ : SL(2, ℤ))
 
--- TODO: Isolate this somewhere
 lemma jacobiTheta₂_term_half_apply (n : ℤ) (z : ℂ) :
     jacobiTheta₂_term n (z / 2) z = cexp (π * I * (n ^ 2 + n) * z) := by
   rw [jacobiTheta₂_term]
@@ -410,9 +421,6 @@ lemma jacobiTheta₂_rel_aux (n : ℤ) (t : ℝ) :
   ring_nf
   simp
   ring_nf!
-
--- lemma Complex.norm_exp (z : ℂ) : ‖cexp z‖ = rexp z.re := by
--- simp [abs_exp]
 
 lemma Complex.norm_exp_mul_I (z : ℂ) : ‖cexp (z * I)‖ = rexp (-z.im) := by
   simp [norm_exp]
@@ -437,8 +445,7 @@ theorem isBoundedAtImInfty_H₂ : IsBoundedAtImInfty H₂ := by
     _ = ∑' (n : ℤ), ‖rexp (-π * ((n + 1 / 2) ^ 2 : ℝ) * z.im)‖ := by
       simp_rw [im_ofReal_mul, UpperHalfPlane.im, ← mul_assoc]
     _ ≤ _ := Summable.tsum_le_tsum (fun b ↦ ?_) ?_ ?_
-  · -- TODO: simplify and refactor this proof with subproof 3 & 4
-    have (n : ℤ) : cexp (π * I * (n + 1 / 2) ^ 2 * z)
+  · have (n : ℤ) : cexp (π * I * (n + 1 / 2) ^ 2 * z)
         = cexp (π * I * z / 4) * jacobiTheta₂_term n (z / 2) z := by
       rw [jacobiTheta₂_term_half_apply, ← Complex.exp_add]
       ring_nf
@@ -608,23 +615,6 @@ noncomputable def H₄_MF : ModularForm (Γ 2) 2 := {
 
 @[simp] lemma H₄_MF_coe : (H₄_MF : ℍ → ℂ) = H₄ := rfl
 
-/-!
-## Jacobi identity
-
-The Jacobi identity states H₂ + H₄ = H₃ (equivalently Θ₂⁴ + Θ₄⁴ = Θ₃⁴).
-This is blueprint Lemma 6.41, proved via dimension vanishing for weight 4 cusp forms.
-
-The proof strategy:
-1. Define g := H₂ + H₄ - H₃ and f := g²
-2. Show f is SL₂(ℤ)-invariant (weight 4, level 1) via S/T invariance
-3. Show f vanishes at i∞ (is a cusp form)
-4. Apply cusp form vanishing: dim S₄(Γ₁) = 0
-5. From g² = 0 conclude g = 0
-
-The S/T slash action lemmas are proved here. The full proof requiring
-asymptotics (atImInfty) is in AtImInfty.lean to avoid circular imports.
--/
-
 section JacobiIdentity
 
 /-- The difference g := H₂ + H₄ - H₃ -/
@@ -691,12 +681,6 @@ lemma jacobi_f_SIF_MDifferentiable : MDiff jacobi_f_SIF := jacobi_f_MDifferentia
 
 end JacobiIdentity
 
-/-!
-## Limits at infinity
-
-We prove the limit of Θᵢ(z) and Hᵢ(z) as z tends to i∞. This is used to prove the Jacobi identity.
--/
-
 theorem jacobiTheta₂_half_mul_apply_tendsto_atImInfty :
     Tendsto (fun x : ℍ ↦ jacobiTheta₂ (x / 2) x) atImInfty (𝓝 2) := by
   simp_rw [jacobiTheta₂, jacobiTheta₂_term]
@@ -706,8 +690,7 @@ theorem jacobiTheta₂_half_mul_apply_tendsto_atImInfty :
     (g := Set.indicator {-1, 0} 1)
     (bound := fun n : ℤ ↦ rexp (π / 4) * rexp (-π * ((n : ℝ) + 1 / 2) ^ 2)) ?_ ?_ ?_
   · simp [← tsum_subtype]
-  · -- TODO: merge this with proof of isBoundedAtImInfty_H₂
-    apply summable_ofReal.mp
+  · apply summable_ofReal.mp
     have (n : ℤ) := jacobiTheta₂_rel_aux n 1
     simp_rw [mul_one] at this
     simp_rw [ofReal_mul, this, ← smul_eq_mul]
@@ -843,7 +826,6 @@ theorem Θ₂_tendsto_atImInfty : Tendsto Θ₂ atImInfty (𝓝 0) := by
     simp [neg_div]
   simp_rw [this]
   exact (Real.tendsto_exp_atBot).comp <|
-    -- TODO: tendsto_div_const_atBot_of_pos and its friends should be aliased under Tendsto.
     (tendsto_div_const_atBot_of_pos zero_lt_four).mpr
       (tendsto_im_atImInfty.const_mul_atTop_of_neg (neg_lt_zero.mpr Real.pi_pos))
 
@@ -864,13 +846,6 @@ theorem H₃_tendsto_atImInfty : Tendsto H₃ atImInfty (𝓝 1) := by
 theorem H₄_tendsto_atImInfty : Tendsto H₄ atImInfty (𝓝 1) := by
   convert Θ₄_tendsto_atImInfty.pow 4
   norm_num
-
-/-!
-## Jacobi identity proof
-
-We prove that g := H₂ + H₄ - H₃ → 0 at i∞, hence f := g² → 0.
-Combined with the dimension vanishing for weight 4 cusp forms, this proves the Jacobi identity.
--/
 
 /-- The function g := H₂ + H₄ - H₃ tends to 0 at i∞.
     Since H₂ → 0, H₃ → 1, H₄ → 1, we have g → 0 + 1 - 1 = 0. -/
@@ -1027,12 +1002,6 @@ lemma Delta_eq_H₂_H₃_H₄ (τ : ℍ) :
   simp only [theta_prod_sq] at h
   rw [eq_div_iff (show (256 : ℂ) ≠ 0 by norm_num), mul_comm]
   exact h
-
-/-!
-## Imaginary Axis Properties
-
-Properties of theta functions when restricted to the positive imaginary axis z = I*t.
--/
 
 section ImagAxisProperties
 
