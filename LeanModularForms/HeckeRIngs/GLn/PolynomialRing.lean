@@ -3,10 +3,10 @@ Copyright (c) 2024 Chris Birkbeck. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
+import Mathlib.RingTheory.MvPolynomial.Basic
+import LeanModularForms.HeckeRIngs.GL2.MultiplicationTable
 import LeanModularForms.HeckeRIngs.GLn.PrimeDecomposition
 import LeanModularForms.HeckeRIngs.GLn.TransposeAntiInvolution
-import LeanModularForms.HeckeRIngs.GL2.MultiplicationTable
-import Mathlib.RingTheory.MvPolynomial.Basic
 
 /-!
 # Polynomial Ring Structure of the p-local Hecke Ring
@@ -40,8 +40,6 @@ open scoped Pointwise
 namespace HeckeRing.GLn
 
 variable (n : ℕ)
-
-/-! ### Generator diagonals -/
 
 section TGen
 
@@ -112,8 +110,6 @@ omit hp
 
 end TGen
 
-/-! ### Weight of a p-power diagonal -/
-
 section Weight
 
 /-- Weight of a p-power diagonal: the sum of all exponents. -/
@@ -125,8 +121,6 @@ lemma ppowWeight_eq_zero_iff (e : Fin n → ℕ) :
   simp [ppowWeight, Finset.sum_eq_zero_iff]
 
 end Weight
-
-/-! ### Polynomial ring isomorphism (Theorem 3.20) -/
 
 section PolynomialRing
 
@@ -163,8 +157,6 @@ lemma T_gen_mem_evalHom_range (k : Fin n) :
 end PolynomialRing
 
 end HeckeRing.GLn
-
-/-! ### Surjectivity for n = 2 (Shimura Theorem 3.20) -/
 
 namespace HeckeRing.GLn.Surj
 
@@ -293,8 +285,6 @@ theorem T_gen_generates_R_p_two (p : ℕ) (hp : p.Prime) :
 
 end HeckeRing.GLn.Surj
 
-/-! ### Surjectivity for n = 1 -/
-
 namespace HeckeRing.GLn.SurjOne
 
 open HeckeRing.GLn
@@ -319,8 +309,6 @@ theorem T_gen_generates_R_p_one (p : ℕ) (hp : p.Prime) :
   exact (evalHom 1 p).range.pow_mem (T_gen_mem_evalHom_range 1 p 0) _
 
 end HeckeRing.GLn.SurjOne
-
-/-! ### Injectivity -/
 
 namespace HeckeRing.GLn.Inj
 
@@ -934,8 +922,6 @@ lemma evalHomR_injective (n : ℕ) [NeZero n] (p : ℕ) (_hp : p.Prime)
   exact h_inj (Subtype.ext_iff.mp hPQ)
 
 end HeckeRing.GLn.Inj
-
-/-! ### Assembly: Theorem 3.20 -/
 
 namespace HeckeRing.GLn
 
