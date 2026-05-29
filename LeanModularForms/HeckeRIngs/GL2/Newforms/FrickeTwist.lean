@@ -3,32 +3,52 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: LeanModularForms contributors
 -/
-import LeanModularForms.HeckeRIngs.GL2.AdjointTheoryPetersson
-import LeanModularForms.HeckeRIngs.GL2.CharacterDecomp
-import LeanModularForms.HeckeRIngs.GL2.LevelEmbed
-import LeanModularForms.HeckeRIngs.GL2.LevelRaise
-import LeanModularForms.HeckeRIngs.GL2.Unified.NebentypusHeckeRingHom
-import LeanModularForms.Modularforms.LFunction
-import LeanModularForms.Modularforms.PeterssonLevelN
-import LeanModularForms.Modularforms.DimensionFormulas
-import LeanModularForms.Modularforms.SlashActionAuxil
-import LeanModularForms.Eigenforms.ConductorTheorem
+import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
 import Mathlib.LinearAlgebra.BilinearForm.Orthogonal
 import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
 import Mathlib.NumberTheory.EulerProduct.Basic
 import Mathlib.NumberTheory.EulerProduct.DirichletLSeries
 import Mathlib.NumberTheory.LSeries.AbstractFuncEq
 import Mathlib.NumberTheory.LSeries.DirichletContinuation
-import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
+import LeanModularForms.Eigenforms.ConductorTheorem
+import LeanModularForms.HeckeRIngs.GL2.AdjointTheoryPetersson
+import LeanModularForms.HeckeRIngs.GL2.CharacterDecomp
+import LeanModularForms.HeckeRIngs.GL2.LevelEmbed
+import LeanModularForms.HeckeRIngs.GL2.LevelRaise
 import LeanModularForms.HeckeRIngs.GL2.Newforms.Fricke
+import LeanModularForms.HeckeRIngs.GL2.Unified.NebentypusHeckeRingHom
+import LeanModularForms.Modularforms.DimensionFormulas
+import LeanModularForms.Modularforms.LFunction
+import LeanModularForms.Modularforms.PeterssonLevelN
+import LeanModularForms.Modularforms.SlashActionAuxil
 
 /-!
 # Newforms: Atkin-Lehner / Fricke twist as a structured hypothesis
 
-The Atkin-Lehner / Fricke twist packaged as the structured hypothesis `FrickeTwistData` (T132 H1) and its downstream consumers up to the per-newform full Dirichlet-zero data.
+The Atkin-Lehner / Fricke twist packaged as the structured hypothesis
+`Newform.FrickeTwistData` and the downstream Dirichlet-quotient pole-witness
+chain up to the per-newform full Dirichlet-zero data feeding Strong
+Multiplicity One.
 
 This module is part of the split of `Newforms.lean`; see that file's header
 for the overall design.  Declarations are kept in their original order.
+
+## Main definitions
+
+* `Newform.FrickeTwistData`: bundled Atkin-Lehner / Fricke twist hypothesis.
+* `Newform.NoEntireExtensionUnderBadPrime`: bad-prime-zero ⇒ no entire extension.
+* `Newform.DirichletQuotientHasPoleUnderBadPrime`: per-newform Dirichlet pole witness.
+* `Newform.HasDirichletZeroCertificate`: per-newform Dirichlet-zero certificate.
+* `Newform.DirichletQuotientUniversalFClause`, `Newform.FullDirichletQuotientUniversalFClause`:
+  analytic-continuation universal-`F` clauses (simplified / full T111 quotient).
+
+## Main results
+
+* `strongMultiplicityOne_of_HeckeEntireExtension_of_HasDirichletZeroCertificate_of_newformUnique`:
+  reduces Strong Multiplicity One to the Hecke entire extension and a Dirichlet-zero certificate.
+* `Newform.analyticContradiction_of_HeckeFEData_of_full_dirichletZeroCertificate`:
+  full-quotient bridge from Hecke FE data + Dirichlet-zero certificate to the analytic
+  contradiction used downstream.
 -/
 
 noncomputable section
@@ -109,7 +129,7 @@ noncomputable def Newform.ImAxisMellinData.ofSlashEq
     Newform.ImAxisMellinData f := by
   have hN_pos : (0 : ℝ) < (N : ℝ) :=
     Nat.cast_pos.mpr (Nat.pos_of_ne_zero (NeZero.ne N))
-  have hN_ne : (N : ℂ) ≠ 0 := by exact_mod_cast hN_pos.ne'
+  have hN_ne : (N : ℂ) ≠ 0 := mod_cast hN_pos.ne'
   let G : ℝ → ℂ := fun t ↦ _root_.ModularForms.imAxis twist (t / (N : ℝ))
   let ε : ℂ := (N : ℂ) ^ (1 - k) * Complex.I ^ k
   have hG_continuousOn : ContinuousOn G (Set.Ioi (0 : ℝ)) :=
@@ -153,9 +173,8 @@ def Newform.NoEntireExtensionUnderBadPrime : Prop :=
 theorem Newform.analyticContradiction_of_HeckeEntireExtension_of_NoEntireExtensionUnderBadPrime
     (h_hecke : Newform.HeckeEntireExtension)
     (h_no : Newform.NoEntireExtensionUnderBadPrime) :
-    Newform.AnalyticContradiction := by
-  intro N _ k f χ hfχ S h_bad
-  exact h_no f χ hfχ S h_bad (h_hecke f)
+    Newform.AnalyticContradiction :=
+  fun _ _ _ f χ hfχ S h_bad ↦ h_no f χ hfχ S h_bad (h_hecke f)
 
 /-- If every newform's stripped Dirichlet series admits a meromorphic extension
 with a pole under the bad-prime hypothesis, then
@@ -167,10 +186,9 @@ theorem Newform.noEntireExtensionUnderBadPrime_of_meromorphicPole
         (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
           q ∉ S → f.lCoeff q = 0) →
         LSeries.HasMeromorphicExtensionWithPole f.lCoeff_stripped) :
-    Newform.NoEntireExtensionUnderBadPrime := by
-  intro N _ k f χ hfχ S h_bad
-  exact LSeries.HasMeromorphicExtensionWithPole.not_hasEntireExtension
-    (h f χ hfχ S h_bad)
+    Newform.NoEntireExtensionUnderBadPrime :=
+  fun _ _ _ f χ hfχ S h_bad ↦
+    LSeries.HasMeromorphicExtensionWithPole.not_hasEntireExtension (h f χ hfχ S h_bad)
 
 /-- For every newform-character pair and exceptional set satisfying the bad-prime
 hypothesis, the existence of a Dirichlet quotient `num/den` that is a
@@ -208,7 +226,7 @@ theorem Newform.noEntireExtensionUnderBadPrime_of_dirichletQuotientHasPole
 
 private lemma meromorphicOrderAt_ne_top_of_analyticAt_ne_zero {g : ℂ → ℂ} {z : ℂ}
     (hg : AnalyticAt ℂ g z) (hgz : g z ≠ 0) : meromorphicOrderAt g z ≠ ⊤ := by
-  rw [hg.meromorphicOrderAt_eq, hg.analyticOrderAt_eq_zero.mpr hgz]; simp
+  simp [hg.meromorphicOrderAt_eq, hg.analyticOrderAt_eq_zero.mpr hgz]
 
 private lemma meromorphicOrderAt_ne_top_of_ne_zero_somewhere {g : ℂ → ℂ}
     (hg_diff : Differentiable ℂ g) (z w : ℂ) (hgw : g w ≠ 0) :
@@ -218,10 +236,10 @@ private lemma meromorphicOrderAt_ne_top_of_ne_zero_somewhere {g : ℂ → ℂ}
   rw [(hg_an z (Set.mem_univ _)).meromorphicOrderAt_eq]
   have h_w : analyticOrderAt g w ≠ ⊤ :=
     ((hg_an w (Set.mem_univ _)).analyticOrderAt_eq_zero.mpr hgw).symm ▸ by simp
-  refine fun h ↦ ?_
+  intro h
   rw [ENat.map_eq_top_iff] at h
-  exact (AnalyticOnNhd.analyticOrderAt_ne_top_of_isPreconnected hg_an
-    isPreconnected_univ (Set.mem_univ _) (Set.mem_univ _) h_w) h
+  exact AnalyticOnNhd.analyticOrderAt_ne_top_of_isPreconnected hg_an
+    isPreconnected_univ (Set.mem_univ _) (Set.mem_univ _) h_w h
 
 private lemma meromorphicOrderAt_lt_of_ne_zero_of_zero {num den : ℂ → ℂ} {z : ℂ}
     (hnum : AnalyticAt ℂ num z) (hden : AnalyticAt ℂ den z)
@@ -243,8 +261,8 @@ private lemma meromorphicOrderAt_lt_of_ne_zero_of_zero {num den : ℂ → ℂ} {
 private lemma LFunction_dirichletLift_ne_zero_of_one_lt_re
     {N : ℕ} [NeZero N] {ψ : DirichletCharacter ℂ N} {z : ℂ} (hz : 1 < z.re) :
     DirichletCharacter.LFunction ψ z ≠ 0 := by
-  rw [DirichletCharacter.LFunction_eq_LSeries _ hz]
-  exact DirichletCharacter.LSeries_ne_zero_of_one_lt_re _ hz
+  simpa [DirichletCharacter.LFunction_eq_LSeries _ hz] using
+    DirichletCharacter.LSeries_ne_zero_of_one_lt_re _ hz
 
 private lemma differentiable_LFunction_comp {N : ℕ} [NeZero N]
     {ψ : DirichletCharacter ℂ N} (hψ : ψ ≠ 1) {g : ℂ → ℂ} (hg : Differentiable ℂ g) :
@@ -483,8 +501,8 @@ theorem strongMultiplicityOne_of_HeckeEntireExtension_of_dirichletZeroCertificat
     (S : Finset ℕ)
     (h : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S →
       f.eigenvalue n = g.eigenvalue n) :
-    f.toCuspForm = g.toCuspForm := by
-  exact strongMultiplicityOne_of_analyticContradiction
+    f.toCuspForm = g.toCuspForm :=
+  strongMultiplicityOne_of_analyticContradiction
     (Newform.analyticContradiction_of_HeckeEntireExtension_of_NoEntireExtensionUnderBadPrime
       h_hecke (Newform.noEntireExtensionUnderBadPrime_of_dirichletZeroCertificate h_cert))
     f g χ hfχ hgχ S h
@@ -515,13 +533,13 @@ theorem strongMultiplicityOne_of_analyticContradiction_of_newformUnique
       Newform.exists_nonzero_prime_eigenvalue_of_analyticContradiction
         h_ana f χ hfχ bad
     have hq_pos : 0 < q := hq_prime.pos
-    have hq_notin_S : q ∉ S := fun hqS ↦ hq_notin (by
-      simp only [bad, Finset.mem_union]; exact Or.inl (Or.inl hqS))
-    have hq_notin_img : q ∉ S.image (· / n.val) := fun h' ↦ hq_notin (by
-      simp only [bad, Finset.mem_union]; exact Or.inl (Or.inr h'))
-    have hq_nd_n : ¬ q ∣ n.val := fun hqn ↦ hq_notin (by
+    have hq_notin_S : q ∉ S := fun hqS ↦ hq_notin <| by
+      simp only [bad, Finset.mem_union]; exact Or.inl (Or.inl hqS)
+    have hq_notin_img : q ∉ S.image (· / n.val) := fun h' ↦ hq_notin <| by
+      simp only [bad, Finset.mem_union]; exact Or.inl (Or.inr h')
+    have hq_nd_n : ¬ q ∣ n.val := fun hqn ↦ hq_notin <| by
       simp only [bad, Finset.mem_union, Nat.mem_primeFactors]
-      exact Or.inr ⟨hq_prime, hqn, hn_pos.ne'⟩)
+      exact Or.inr ⟨hq_prime, hqn, hn_pos.ne'⟩
     have hn_coprime_q : Nat.Coprime n.val q :=
       ((hq_prime.coprime_iff_not_dvd).mpr hq_nd_n).symm
     have hnq_notin_S : n.val * q ∉ S := fun hnqS ↦ hq_notin_img <| by
@@ -583,8 +601,8 @@ theorem strongMultiplicityOne_of_HeckeEntireExtension_of_dirichletZeroCertificat
     (S : Finset ℕ)
     (h : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S →
       f.eigenvalue n = g.eigenvalue n) :
-    f.toCuspForm = g.toCuspForm := by
-  exact strongMultiplicityOne_of_analyticContradiction_of_newformUnique h_unique
+    f.toCuspForm = g.toCuspForm :=
+  strongMultiplicityOne_of_analyticContradiction_of_newformUnique h_unique
     (Newform.analyticContradiction_of_HeckeEntireExtension_of_NoEntireExtensionUnderBadPrime
       h_hecke (Newform.noEntireExtensionUnderBadPrime_of_dirichletZeroCertificate h_cert))
     f g χ hfχ hgχ S h
@@ -802,12 +820,13 @@ theorem Newform.DirichletQuotientUniversalFClause_of_halfPlane_identity
     congrFun (eq_of_eqOn_halfPlane
       (hF.mul (differentiable_LFunction_comp h_χ_ne_one (by fun_prop)))
       (differentiable_LFunction_comp h_chi_sq_ne_one (by fun_prop)) σ (fun s hs ↦ by
-        rw [h_F_eq (lt_of_lt_of_le h_abscissa_lt (by exact_mod_cast hs.le))]
+        rw [h_F_eq (lt_of_lt_of_le h_abscissa_lt (mod_cast hs.le))]
         exact h_halfPlane_id s hs))
   refine (LFunction_comp_affine_punctured_ne_zero (k := k) h_χ_ne_one s₀).mono
     (fun s h_den_s_ne ↦ ?_)
-  show F s = num s / den s
-  rw [eq_div_iff h_den_s_ne]; exact h_F_den_eq_num s
+  change F s = num s / den s
+  rw [eq_div_iff h_den_s_ne]
+  exact h_F_den_eq_num s
 
 /-- Discharge the half-plane identity of
 `Newform.DirichletQuotientUniversalFClause_of_halfPlane_identity` from the
@@ -905,7 +924,7 @@ theorem Newform.FullDirichletQuotientUniversalFClause_of_halfPlane_multIdentity
         ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1)))))
     ((hF.mul h_LF_chi_diff).mul h_LinFP1_diff)
     ((h_LF_chi_sq_diff.mul h_EFP_diff).mul h_LinFP2_diff) σ (fun s hs ↦ by
-      simp only [h_F_eq (lt_of_lt_of_le h_abscissa_lt (by exact_mod_cast hs.le))]
+      simp only [h_F_eq (lt_of_lt_of_le h_abscissa_lt (mod_cast hs.le))]
       exact h_halfPlane_id s hs)
   filter_upwards [prod_linearFactor_eventually_ne_zero
       (Newform.dirichletLift χ : DirichletCharacter ℂ N) T (g := fun s ↦ 2 * s - k + 1)
@@ -1160,8 +1179,8 @@ theorem strongMultiplicityOne_of_HeckeEntireExtension_of_full_dirichletZeroCerti
     (S : Finset ℕ)
     (h : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S →
       f.eigenvalue n = g.eigenvalue n) :
-    f.toCuspForm = g.toCuspForm := by
-  exact strongMultiplicityOne_of_analyticContradiction_of_newformUnique h_unique
+    f.toCuspForm = g.toCuspForm :=
+  strongMultiplicityOne_of_analyticContradiction_of_newformUnique h_unique
     (Newform.analyticContradiction_of_HeckeEntireExtension_of_NoEntireExtensionUnderBadPrime
       h_hecke (Newform.noEntireExtensionUnderBadPrime_of_full_dirichletZeroCertificate h_data))
     f g χ hfχ hgχ S h
@@ -1218,8 +1237,8 @@ theorem Newform.analyticContradiction_of_HeckeEntireExtension_of_full_dirichletZ
                 : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
                 ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀ ≠ ⊤ ∧
           Newform.FullDirichletQuotientUniversalFClause f χ S T s₀) :
-    Newform.AnalyticContradiction := by
-  exact Newform.analyticContradiction_of_HeckeEntireExtension_of_NoEntireExtensionUnderBadPrime
+    Newform.AnalyticContradiction :=
+  Newform.analyticContradiction_of_HeckeEntireExtension_of_NoEntireExtensionUnderBadPrime
     h_hecke (Newform.noEntireExtensionUnderBadPrime_of_full_dirichletZeroCertificate h_data)
 
 /-- **Direct full-quotient bridge to `exists_nonzero_prime_eigenvalue` (T132 step).**
@@ -1278,8 +1297,8 @@ theorem Newform.exists_nonzero_prime_eigenvalue_of_HeckeEntireExtension_of_full_
     (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
     (S : Finset ℕ) :
     ∃ q : ℕ, ∃ hq : Nat.Prime q, Nat.Coprime q N ∧ q ∉ S ∧
-      f.eigenvalue ⟨q, hq.pos⟩ ≠ 0 := by
-  exact Newform.exists_nonzero_prime_eigenvalue_of_analyticContradiction
+      f.eigenvalue ⟨q, hq.pos⟩ ≠ 0 :=
+  Newform.exists_nonzero_prime_eigenvalue_of_analyticContradiction
     (Newform.analyticContradiction_of_HeckeEntireExtension_of_full_dirichletZeroCertificate
       h_hecke h_data) f χ hfχ S
 
@@ -1482,10 +1501,8 @@ theorem Newform.full_pole_witness_data_of_dirichletZero
             ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀' ≠ ⊤ ∧
       Newform.FullDirichletQuotientUniversalFClause f χ S T' s₀' := by
   refine ⟨T, s₀, h_num_an, h_den_an, ?_, ?_, h_den_finite, h_clause⟩
-  · refine mul_ne_zero h_num_LF_ne ?_
-    refine Finset.prod_ne_zero_iff.mpr fun p hp ↦ ?_
-    refine mul_ne_zero (h_num_factors_ne p hp).1 ?_
-    exact inv_ne_zero (h_num_factors_ne p hp).2
+  · exact mul_ne_zero h_num_LF_ne <| Finset.prod_ne_zero_iff.mpr fun p hp ↦
+      mul_ne_zero (h_num_factors_ne p hp).1 (inv_ne_zero (h_num_factors_ne p hp).2)
   · rw [h_zero, zero_mul]
 
 
