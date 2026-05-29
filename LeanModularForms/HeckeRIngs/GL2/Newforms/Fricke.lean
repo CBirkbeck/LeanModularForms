@@ -450,7 +450,7 @@ lemma Newform.frickeMatrix_coe (N : ℕ) [NeZero N] :
 /-- Determinant of the Fricke matrix is `N`. -/
 lemma Newform.frickeMatrix_det (N : ℕ) [NeZero N] :
     (Newform.frickeMatrix N).det.val = (N : ℝ) := by
-  show ((Newform.frickeMatrix N : GL (Fin 2) ℝ) :
+  change ((Newform.frickeMatrix N : GL (Fin 2) ℝ) :
       Matrix (Fin 2) (Fin 2) ℝ).det = (N : ℝ)
   simp [Newform.frickeMatrix_coe, Matrix.det_fin_two_of]
 
@@ -470,7 +470,7 @@ lemma Newform.frickeMatrix_σ (N : ℕ) [NeZero N] :
 @[simp]
 lemma Newform.frickeMatrix_num (N : ℕ) [NeZero N] (τ : ℂ) :
     UpperHalfPlane.num (Newform.frickeMatrix N) τ = -1 := by
-  show ((Newform.frickeMatrix N : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) 0 0 *
+  change ((Newform.frickeMatrix N : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) 0 0 *
       τ + ((Newform.frickeMatrix N : GL (Fin 2) ℝ) :
           Matrix (Fin 2) (Fin 2) ℝ) 0 1 = -1
   simp [Newform.frickeMatrix_coe]
@@ -479,7 +479,7 @@ lemma Newform.frickeMatrix_num (N : ℕ) [NeZero N] (τ : ℂ) :
 @[simp]
 lemma Newform.frickeMatrix_denom (N : ℕ) [NeZero N] (τ : ℂ) :
     UpperHalfPlane.denom (Newform.frickeMatrix N) τ = (N : ℂ) * τ := by
-  show ((Newform.frickeMatrix N : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) 1 0 *
+  change ((Newform.frickeMatrix N : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) 1 0 *
       τ + ((Newform.frickeMatrix N : GL (Fin 2) ℝ) :
           Matrix (Fin 2) (Fin 2) ℝ) 1 1 = (N : ℂ) * τ
   simp [Newform.frickeMatrix_coe]
@@ -563,7 +563,7 @@ lemma Newform.frickeConj_frickeConj (N : ℕ) [NeZero N] (γ : SL(2, ℤ))
     Newform.frickeConj N (Newform.frickeConj N γ hγN)
         (Newform.frickeConj_mem_Gamma1 N γ hγN) = γ := by
   apply Subtype.ext
-  show Newform.frickeConjMat N (Newform.frickeConj N γ hγN) = γ.val
+  change Newform.frickeConjMat N (Newform.frickeConj N γ hγN) = γ.val
   have h_div : γ.val 1 0 / (N : ℤ) * (N : ℤ) = γ.val 1 0 :=
     Int.ediv_mul_cancel ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp
       ((Gamma1_mem N γ).mp hγN).2.2)
@@ -574,12 +574,12 @@ lemma Newform.frickeConj_frickeConj (N : ℕ) [NeZero N] (γ : SL(2, ℤ))
   fin_cases i
   · fin_cases j
     · rfl
-    · show -(-(N : ℤ) * γ.val 0 1 / (N : ℤ)) = γ.val 0 1
+    · change -(-(N : ℤ) * γ.val 0 1 / (N : ℤ)) = γ.val 0 1
       rw [Int.neg_mul, Int.neg_ediv_of_dvd ⟨γ.val 0 1, rfl⟩,
           Int.mul_ediv_cancel_left _ (Nat.cast_ne_zero.mpr (NeZero.ne N))]
       ring
   · fin_cases j
-    · show -(N : ℤ) * -(γ.val 1 0 / (N : ℤ)) = γ.val 1 0
+    · change -(N : ℤ) * -(γ.val 1 0 / (N : ℤ)) = γ.val 1 0
       linear_combination h_div
     · rfl
 
@@ -681,14 +681,14 @@ noncomputable def Newform.frickeSlashSIFLin
   toFun := Newform.frickeSlashSIF
   map_add' f g := by
     apply DFunLike.coe_injective
-    show ((f : UpperHalfPlane → ℂ) + (g : UpperHalfPlane → ℂ)) ∣[k]
+    change ((f : UpperHalfPlane → ℂ) + (g : UpperHalfPlane → ℂ)) ∣[k]
         Newform.frickeMatrix N =
       (f : UpperHalfPlane → ℂ) ∣[k] Newform.frickeMatrix N +
         (g : UpperHalfPlane → ℂ) ∣[k] Newform.frickeMatrix N
     exact SlashAction.add_slash _ _ _ _
   map_smul' c f := by
     apply DFunLike.coe_injective
-    show (c • (f : UpperHalfPlane → ℂ)) ∣[k] Newform.frickeMatrix N =
+    change (c • (f : UpperHalfPlane → ℂ)) ∣[k] Newform.frickeMatrix N =
       c • ((f : UpperHalfPlane → ℂ) ∣[k] Newform.frickeMatrix N)
     rw [ModularForm.smul_slash, Newform.frickeMatrix_σ, RingHom.id_apply]
 
@@ -702,10 +702,10 @@ noncomputable def Newform.frickeMatrixRat (N : ℕ) [NeZero N] : GL (Fin 2) ℚ 
 lemma Newform.glMap_frickeMatrixRat (N : ℕ) [NeZero N] :
     glMap (Newform.frickeMatrixRat N) = Newform.frickeMatrix N := by
   apply Units.ext
-  show (glMap (Newform.frickeMatrixRat N) : Matrix (Fin 2) (Fin 2) ℝ) =
+  change (glMap (Newform.frickeMatrixRat N) : Matrix (Fin 2) (Fin 2) ℝ) =
     (Newform.frickeMatrix N : Matrix (Fin 2) (Fin 2) ℝ)
   rw [Newform.frickeMatrix_coe]
-  show (Newform.frickeMatrixRat N : Matrix (Fin 2) (Fin 2) ℚ).map (algebraMap ℚ ℝ) =
+  change (Newform.frickeMatrixRat N : Matrix (Fin 2) (Fin 2) ℚ).map (algebraMap ℚ ℝ) =
     !![0, -1; (N : ℝ), 0]
   ext i j
   fin_cases i <;> fin_cases j <;>
@@ -740,14 +740,14 @@ noncomputable def Newform.frickeSlashModularForm
           (f.bdd_at_cusps' (Newform.frickeMatrix_smul_isCusp_Gamma1 hc)) }
   map_add' f g := by
     apply DFunLike.coe_injective
-    show ((f : UpperHalfPlane → ℂ) + (g : UpperHalfPlane → ℂ)) ∣[k]
+    change ((f : UpperHalfPlane → ℂ) + (g : UpperHalfPlane → ℂ)) ∣[k]
         Newform.frickeMatrix N =
       (f : UpperHalfPlane → ℂ) ∣[k] Newform.frickeMatrix N +
         (g : UpperHalfPlane → ℂ) ∣[k] Newform.frickeMatrix N
     exact SlashAction.add_slash _ _ _ _
   map_smul' c f := by
     apply DFunLike.coe_injective
-    show (c • (f : UpperHalfPlane → ℂ)) ∣[k] Newform.frickeMatrix N =
+    change (c • (f : UpperHalfPlane → ℂ)) ∣[k] Newform.frickeMatrix N =
       c • ((f : UpperHalfPlane → ℂ) ∣[k] Newform.frickeMatrix N)
     rw [ModularForm.smul_slash, Newform.frickeMatrix_σ, RingHom.id_apply]
 
@@ -775,14 +775,14 @@ noncomputable def Newform.frickeSlashCuspForm
           (f.zero_at_cusps' (Newform.frickeMatrix_smul_isCusp_Gamma1 hc)) }
   map_add' f g := by
     apply DFunLike.coe_injective
-    show ((f : UpperHalfPlane → ℂ) + (g : UpperHalfPlane → ℂ)) ∣[k]
+    change ((f : UpperHalfPlane → ℂ) + (g : UpperHalfPlane → ℂ)) ∣[k]
         Newform.frickeMatrix N =
       (f : UpperHalfPlane → ℂ) ∣[k] Newform.frickeMatrix N +
         (g : UpperHalfPlane → ℂ) ∣[k] Newform.frickeMatrix N
     exact SlashAction.add_slash _ _ _ _
   map_smul' c f := by
     apply DFunLike.coe_injective
-    show (c • (f : UpperHalfPlane → ℂ)) ∣[k] Newform.frickeMatrix N =
+    change (c • (f : UpperHalfPlane → ℂ)) ∣[k] Newform.frickeMatrix N =
       c • ((f : UpperHalfPlane → ℂ) ∣[k] Newform.frickeMatrix N)
     rw [ModularForm.smul_slash, Newform.frickeMatrix_σ, RingHom.id_apply]
 
@@ -962,7 +962,7 @@ lemma Newform.slash_peterssonAdj_frickeMatrix
     rw [if_pos (peterssonAdj_frickeMatrix_det_pos N)]
   have hadj_denom : UpperHalfPlane.denom (peterssonAdj (Newform.frickeMatrix N)) τ =
       -((N : ℂ) * (τ : ℂ)) := by
-    show (peterssonAdj (Newform.frickeMatrix N) : Matrix (Fin 2) (Fin 2) ℝ) 1 0 *
+    change (peterssonAdj (Newform.frickeMatrix N) : Matrix (Fin 2) (Fin 2) ℝ) 1 0 *
           (τ : ℂ) +
         (peterssonAdj (Newform.frickeMatrix N) : Matrix (Fin 2) (Fin 2) ℝ) 1 1 =
         -((N : ℂ) * (τ : ℂ))
@@ -1017,7 +1017,7 @@ theorem Newform.frickeSlashCuspForm_petN_adjoint
       (-1 : ℂ) ^ k * petN f (Newform.frickeSlashCuspForm g) := by
   have hg_adj : ⇑((-1 : ℂ) ^ k • Newform.frickeSlashCuspForm g) =
       ⇑g ∣[k] peterssonAdj (Newform.frickeMatrix N) := by
-    show ((-1 : ℂ) ^ k) • ⇑(Newform.frickeSlashCuspForm g) =
+    change ((-1 : ℂ) ^ k) • ⇑(Newform.frickeSlashCuspForm g) =
       ⇑g ∣[k] peterssonAdj (Newform.frickeMatrix N)
     rw [Newform.frickeSlashCuspForm_coe]
     exact (Newform.slash_peterssonAdj_frickeMatrix _).symm
@@ -1111,7 +1111,7 @@ noncomputable def Newform.frickeMatrix_PSL_R (N : ℕ) [NeZero N] : PSL(2, ℝ) 
 lemma Newform.frickeMatrix_PSL_R_smul (N : ℕ) [NeZero N] (τ : UpperHalfPlane) :
     Newform.frickeMatrix_PSL_R N • τ =
       (Newform.frickeMatrix N : GL (Fin 2) ℝ) • τ := by
-  show GLPos_to_PSL_R_term (Newform.frickeMatrix_GLPos N) • τ =
+  change GLPos_to_PSL_R_term (Newform.frickeMatrix_GLPos N) • τ =
     (Newform.frickeMatrix N : GL (Fin 2) ℝ) • τ
   rw [GLPos_to_PSL_R_term_smul]
   rfl
@@ -1135,7 +1135,7 @@ lemma Newform.GLPos_to_SLR_frickeMatrix_GLPos_toGL_matrix (N : ℕ) [NeZero N] :
           Matrix (Fin 2) (Fin 2) ℝ) := by
   rw [Matrix.SpecialLinearGroup.coe_GL_coe_matrix]
   unfold GLPos_to_SLR
-  show (Real.sqrt ((Newform.frickeMatrix_GLPos N : GL (Fin 2) ℝ).det.val))⁻¹ •
+  change (Real.sqrt ((Newform.frickeMatrix_GLPos N : GL (Fin 2) ℝ).det.val))⁻¹ •
       ((Newform.frickeMatrix_GLPos N : GL (Fin 2) ℝ) :
         Matrix (Fin 2) (Fin 2) ℝ) =
       (Real.sqrt (N : ℝ))⁻¹ •
@@ -1178,7 +1178,7 @@ lemma Newform.frickeMatrix_SL_R_mul_SLmap_eq
         GLPos_to_SLR (Newform.frickeMatrix_GLPos N) := by
   refine (Matrix.SpecialLinearGroup.toGL_injective (n := Fin 2) (R := ℝ)) ?_
   rw [map_mul, map_mul]
-  show (((GLPos_to_SLR (Newform.frickeMatrix_GLPos N) :
+  change (((GLPos_to_SLR (Newform.frickeMatrix_GLPos N) :
           SL(2, ℝ)) : GL (Fin 2) ℝ)) *
         ((Matrix.SpecialLinearGroup.map (Int.castRingHom ℝ) γ :
             SL(2, ℝ)) : GL (Fin 2) ℝ) =
@@ -1203,7 +1203,7 @@ lemma Newform.frickeMatrix_PSL_R_mul_SL2Z_to_PSL2R_eq
     Newform.frickeMatrix_PSL_R N * SL2Z_to_PSL2R γ =
       SL2Z_to_PSL2R (Newform.frickeConj N γ hγ) *
         Newform.frickeMatrix_PSL_R N := by
-  show (GLPos_to_SLR (Newform.frickeMatrix_GLPos N) : PSL(2, ℝ)) *
+  change (GLPos_to_SLR (Newform.frickeMatrix_GLPos N) : PSL(2, ℝ)) *
         SL2Z_to_PSL2R γ =
       SL2Z_to_PSL2R (Newform.frickeConj N γ hγ) *
         (GLPos_to_SLR (Newform.frickeMatrix_GLPos N) : PSL(2, ℝ))
@@ -1256,7 +1256,7 @@ private lemma GLPos_to_SLR_frickeMatrix_GLPos_sq_eq_neg_scalar (N : ℕ) [NeZero
 element `-1 : SL(2, ℝ)`). -/
 lemma Newform.frickeMatrix_PSL_R_mul_self (N : ℕ) [NeZero N] :
     Newform.frickeMatrix_PSL_R N * Newform.frickeMatrix_PSL_R N = 1 := by
-  show (GLPos_to_SLR (Newform.frickeMatrix_GLPos N) : PSL(2, ℝ)) *
+  change (GLPos_to_SLR (Newform.frickeMatrix_GLPos N) : PSL(2, ℝ)) *
         (GLPos_to_SLR (Newform.frickeMatrix_GLPos N) : PSL(2, ℝ)) = 1
   rw [show (GLPos_to_SLR (Newform.frickeMatrix_GLPos N) : PSL(2, ℝ)) *
         (GLPos_to_SLR (Newform.frickeMatrix_GLPos N) : PSL(2, ℝ)) =
@@ -1267,7 +1267,7 @@ lemma Newform.frickeMatrix_PSL_R_mul_self (N : ℕ) [NeZero N] :
   rw [QuotientGroup.eq_one_iff, Matrix.SpecialLinearGroup.mem_center_iff]
   refine ⟨-1, ?_, ?_⟩
   · simp [Fintype.card_fin]
-  · show Matrix.scalar (Fin 2) (-1) =
+  · change Matrix.scalar (Fin 2) (-1) =
       ((GLPos_to_SLR (Newform.frickeMatrix_GLPos N) *
         GLPos_to_SLR (Newform.frickeMatrix_GLPos N) : SL(2, ℝ)) :
         Matrix (Fin 2) (Fin 2) ℝ)
@@ -1356,7 +1356,7 @@ theorem Newform.sum_peterssonInner_frickeMatrix_smul_q_out_inv_fd_eq_petN
       ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane),
         petersson k ⇑f ⇑g τ ∂μ_hyp) = petN f g := by
     refine Finset.sum_congr rfl (fun q _ ↦ ?_)
-    show ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane),
+    change ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane),
         petersson k ⇑f ⇑g τ ∂μ_hyp =
       peterssonInner k fd (⇑f ∣[k] (q.out)⁻¹) (⇑g ∣[k] (q.out)⁻¹)
     rw [peterssonInner_fd_slash_SL_eq_setIntegral_shifted_fd ⇑f ⇑g (q.out)]
@@ -1425,7 +1425,7 @@ theorem Newform.imAxis_eq_frickeSlash
   rw [h_imAxis_eq, Newform.frickeMatrix_slash_apply (N := N) (k := k)
     (⇑f.toCuspForm.toModularForm' : UpperHalfPlane → ℂ) τ_inner, h_smul_eq]
   have h_τ_inner_coe : (N : ℂ) * (τ_inner : ℂ) = Complex.I * ((x : ℝ) : ℂ) := by
-    show (N : ℂ) * (Complex.I * ((x / (N : ℝ) : ℝ) : ℂ)) = Complex.I * (x : ℂ)
+    change (N : ℂ) * (Complex.I * ((x / (N : ℝ) : ℝ) : ℂ)) = Complex.I * (x : ℂ)
     push_cast
     field_simp
   rw [h_τ_inner_coe]
