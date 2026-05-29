@@ -101,6 +101,32 @@ def IsEigenform (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
 theorem Eigenform.isEigenform (f : Eigenform N k) : IsEigenform f.toCuspForm :=
   ⟨f.eigenvalue, f.isEigen⟩
 
+/-- **DS Definition 5.8.1 (formal eigenform notion)**: `f` is a `T_n`-eigenform for **all**
+`n ∈ ℕ⁺` (not just `(n,N) = 1`).  This is strictly stronger than `IsEigenform`, which only
+requires eigen-behaviour at the good primes — the working notion used by both Miyake §4.5 /
+Theorem 4.5.4(3) and DS §5.5–§5.7 / Corollary 5.6.3 throughout the development.
+
+The diamond-operator condition of DS Def 5.8.1 is automatic at bad primes (`⟨n⟩ = 0` for
+`(n,N) > 1`, so any modular form is trivially an `⟨n⟩`-eigenform with eigenvalue 0 there);
+so the only non-trivial content beyond `IsEigenform` is bad-prime `T_n`-eigen-behaviour.
+
+For `Newform`s, the upgrade `IsEigenform → IsFullEigenform` is the **Atkin–Lehner–Li**
+bad-prime extension theorem (DS Theorem 5.8.6 / Atkin–Lehner 1970): on a newform of
+conductor `N`, the bad-prime eigenvalues are explicit Atkin–Lehner signs (`±p^{(k−2)/2}`
+when `p ∥ N`, `0` when `p² ∣ N`).  That upgrade is a separate development not currently
+formalised here; this predicate gives downstream API a clean way to *assume* it. -/
+def IsFullEigenform (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
+  ∃ a : ℕ+ → ℂ, ∀ n : ℕ+,
+    haveI : NeZero n.val := ⟨n.pos.ne'⟩
+    heckeT_n_cusp k n.val f = a n • f
+
+/-- The DS Def 5.8.1 eigenform notion implies the project's working `IsEigenform`. -/
+theorem IsFullEigenform.isEigenform
+    {f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k} (h : IsFullEigenform f) :
+    IsEigenform f := by
+  obtain ⟨a, ha⟩ := h
+  exact ⟨a, fun n _ ↦ ha n⟩
+
 /-- The eigenform predicate matches `IsCommonEigenfunctionCusp` from AdjointTheory. -/
 theorem isEigenform_iff (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     IsEigenform f ↔ IsCommonEigenfunctionCusp k f := by
