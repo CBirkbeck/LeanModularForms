@@ -174,8 +174,8 @@ theorem IsHeckeCoefficientSequence.coeff_prime_pow_odd_eq_zero_of_a_p_zero
   induction j with
   | zero => simpa using h_zero
   | succ j ih =>
-    have h_eq : 2 * (j + 1) + 1 = (2 * j + 1) + 2 := by ring
-    rw [h_eq, h.recur hq hqN (2 * j + 1), h_zero, ih]
+    rw [show 2 * (j + 1) + 1 = (2 * j + 1) + 2 from by ring,
+      h.recur hq hqN (2 * j + 1), h_zero, ih]
     ring
 
 /-- **Even-prime-power closed form.**  If a Hecke coefficient sequence
@@ -192,8 +192,8 @@ theorem IsHeckeCoefficientSequence.coeff_prime_pow_even_eq_of_a_p_zero
   induction j with
   | zero => simp [h.one]
   | succ j ih =>
-    have h_eq : 2 * (j + 1) = 2 * j + 2 := by ring
-    rw [h_eq, h.recur hq hqN (2 * j), h_zero, ih, pow_succ]
+    rw [show 2 * (j + 1) = 2 * j + 2 from by ring,
+      h.recur hq hqN (2 * j), h_zero, ih, pow_succ]
     ring
 
 /-- **Combined closed form.**  Joint statement: under `a q = 0` (with `q`
@@ -210,12 +210,9 @@ theorem IsHeckeCoefficientSequence.coeff_prime_pow_eq_of_a_p_zero
       else 0 := by
   rcases Nat.even_or_odd r with hr | hr
   · obtain ⟨j, rfl⟩ := hr
-    have h_even : Even (j + j) := ⟨j, rfl⟩
-    have h_two_j : j + j = 2 * j := by ring
-    rw [if_pos h_even, h_two_j, h.coeff_prime_pow_even_eq_of_a_p_zero hq hqN h_zero j]
-    have hj_div : (2 * j) / 2 = j := by
-      rw [Nat.mul_div_cancel_left _ (by norm_num)]
-    rw [hj_div]
+    rw [if_pos ⟨j, rfl⟩, show j + j = 2 * j from by ring,
+      h.coeff_prime_pow_even_eq_of_a_p_zero hq hqN h_zero j,
+      Nat.mul_div_cancel_left _ (by norm_num)]
   · obtain ⟨j, rfl⟩ := hr
     rw [if_neg (Nat.not_even_iff_odd.mpr ⟨j, rfl⟩)]
     exact h.coeff_prime_pow_odd_eq_zero_of_a_p_zero hq hqN h_zero j
@@ -233,7 +230,6 @@ private lemma Newform.lCoeff_recur (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ
     ⟨p ^ (r + 1), hpow_pos⟩ ⟨p, hp_pos⟩ (hpN.pow_left _) hpN χ hfχ
     f.isNormalisedEigenform
   simp only [PNat.mk_coe] at h
-  have h_mn : p ^ (r + 1) * p = p ^ (r + 2) := by ring
   rw [Nat.gcd_eq_right (dvd_pow_self p (Nat.succ_ne_zero r)), hp.divisors,
       Finset.sum_insert (by simp only [Finset.mem_singleton]; exact hp.ne_one.symm),
       Finset.sum_singleton] at h
@@ -241,11 +237,11 @@ private lemma Newform.lCoeff_recur (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ
     ext; simp [ZMod.coe_unitOfCoprime]
   simp only [Nat.Coprime, Nat.gcd_one_left, dite_true, Nat.cast_one, one_zpow,
     h_unit_one, map_one, Units.val_one, one_mul, Nat.div_one] at h
-  rw [dif_pos hpN] at h
-  have h_div : p ^ (r + 1) * p / (p * p) = p ^ r := by
-    rw [show p ^ (r + 1) * p = p ^ r * (p * p) by ring]
-    exact Nat.mul_div_cancel _ (by positivity)
-  rw [h_div, h_mn] at h
+  rw [dif_pos hpN,
+    show p ^ (r + 1) * p / (p * p) = p ^ r by
+      rw [show p ^ (r + 1) * p = p ^ r * (p * p) by ring]
+      exact Nat.mul_div_cancel _ (by positivity),
+    show p ^ (r + 1) * p = p ^ (r + 2) by ring] at h
   simp only [Newform.lCoeff_apply]
   change (ModularFormClass.qExpansion (1 : ℝ)
         f.toCuspForm.toModularForm').coeff (p ^ (r + 2)) =
