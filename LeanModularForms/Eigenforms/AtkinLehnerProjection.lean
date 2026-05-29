@@ -216,24 +216,6 @@ theorem pSupportedProjection_zero {N : ℕ} [NeZero N] (k : ℤ) (p : ℕ)
     [NeZero p] (hp : Nat.Prime p) (hpN : ¬ Nat.Coprime p N) :
     pSupportedProjection k p hp hpN 0 = 0 := map_zero _
 
-/-! ### Conditional character-compatibility helpers (legacy, T122)
-
-The next two theorems are the **conditional** character-compatibility
-lemmas originally introduced in T122, stated modulo an explicit
-trace/diamond commutation hypothesis `h_commute`.  That commutation is
-now discharged unconditionally in T123 as
-`traceGamma1_diamondOpHom_commute`, and the unconditional
-consequences `traceGamma1_mem_modFormCharSpace` and
-`pSupportedProjection_mem_modFormCharSpace` are proved later in this
-file (see the `### Unconditional character compatibility (T123)`
-section).
-
-The conditional versions are retained as reusable lower-level helpers
-for any downstream setting where only a weaker commutation is
-available (e.g. restricting to a subset of `(ZMod M)ˣ`, or plugging a
-different trace variant).  They do **not** block the unconditional
-theorems. -/
-
 /-- **Character compatibility for `traceGamma1`** (conditional lemma,
 legacy T122 form).  If `f` at the deeper level `M` lies in the
 character space for `χ.comp (ZMod.unitsMap h)` (the natural lift of
@@ -302,14 +284,6 @@ theorem pSupportedProjection_mem_modFormCharSpace_of_commute
   rw [pSupportedProjection_eq_trace_pSupportedRaise]
   exact traceGamma1_mem_modFormCharSpace_of_commute
     (Nat.dvd_mul_left N p) χ hf_raise h_commute
-
-/-! ### Trace/diamond commutation (T123)
-
-The residual commutation between the trace and the diamond operator,
-proved here via the coset-conjugation equivalence induced by
-`β ∈ Γ₀(M)`.  Together with the T122 lift lemma it yields the
-unconditional character theorems `traceGamma1_mem_modFormCharSpace`
-and `pSupportedProjection_mem_modFormCharSpace`. -/
 
 section TraceCommute
 
@@ -473,8 +447,7 @@ theorem traceGamma1_diamondOpHom_commute
   set β_N : ↥(Gamma0 N) := ⟨(β : SL(2, ℤ)),
     Gamma0_le_of_dvd h β.property⟩ with hβ_N_def
   have hβN : Gamma0MapUnits β_N = ZMod.unitsMap h d_M := by
-    rw [hβ_N_def]
-    rw [Gamma0MapUnits_unitsMap_of_dvd h (β : SL(2, ℤ)) β.property
+    rw [hβ_N_def, Gamma0MapUnits_unitsMap_of_dvd h (β : SL(2, ℤ)) β.property
       (Gamma0_le_of_dvd h β.property), hβ]
   show diamondOp k (ZMod.unitsMap h d_M)
       (HeckeRing.GL2.TraceOperator.traceGamma1 h k f) =
@@ -518,28 +491,6 @@ theorem pSupportedProjection_mem_modFormCharSpace
   pSupportedProjection_mem_modFormCharSpace_of_commute p hp hpN χ hf
     (traceGamma1_diamondOpHom_commute
       (Nat.dvd_mul_left N p) (pSupportedRaise k p hp hpN f))
-
-/-! ### Decomposition → iSup-submodule membership (T127)
-
-Direct reduction step consumed by any future implementation of
-`mainLemma_charSpace_composite_via_Up`: a finite prime-indexed
-decomposition of `f` into character-space pieces supported on
-multiples of each prime divisor lifts to membership in the
-T126 supremum.  Composed with
-`mainLemma_charSpace_of_mem_iSup_qSupportedOnDvdSubmodule`, it yields
-the decomposition-to-oldform bridge at the character-space level.
-
-This is the **strongest reusable lemma immediately consumed** by the
-composite-`N` character-space `mainLemma` route: the U_p-eigenspace /
-Atkin–Lehner–Li decomposition (still outside scope) produces exactly
-such a finite sum, and the lemma below then discharges the submodule-
-membership obligation mechanically.
-
-No new Hecke infrastructure is used — only `Submodule.mem_iSup_of_mem`
-applied twice (for the outer `⨆ p` and the inner `⨆ _ : p ∈
-N.primeFactors`) plus `Submodule.sum_mem`.  Representative-system
-style: each summand enters the sup through its prime witness, never
-as part of a global permutation. -/
 
 /-- **Prime-indexed decomposition ⇒ iSup membership (T127).**  A finite
 sum decomposition `f = ∑ p ∈ N.primeFactors, f_p p` into cusp forms
@@ -590,47 +541,6 @@ theorem mainLemma_charSpace_of_finset_decomposition
   mainLemma_charSpace_of_mem_iSup_qSupportedOnDvdSubmodule χ
     (mem_iSup_qSupportedOnDvdSubmodule_inf_cuspFormCharSpace_of_decomposition
       χ f f_p h_decomp h_char h_supp)
-
-/-! ### T131 real p-primary trace-correction blocker (partial correction interface)
-
-This section addresses the real p-primary trace-correction blocker by
-exposing a precise **structured "partial correction" interface** that
-splits the `TraceCorrectionPrime` obligation into two concretely typed
-pieces, each corresponding to one source of non-`p`-supported leakage in
-the trace round-trip identified by the T124 obstruction (file docstring,
-lines 49–109).
-
-Concretely, the trace `traceGamma1_cuspForm` of a `p`-supported lift of
-`f` from level `Γ₁(N)` into `Γ₁(p · N)` (constructed from the existing
-`levelRaise` for cusp forms) splits via
-`traceGamma1_cuspForm_apply_three_way_split` into
-
-  identity-coset summand  +  remaining-`∞`-fixing summand  +  non-`∞`-fixing summand.
-
-The identity-coset summand is the canonical desired "core"; the other
-two summands are the "correction" obligation.  A
-`PartialTraceCorrection` separates that correction obligation into two
-operator-level pieces with the precise residual axioms each must
-satisfy.  Once *both* pieces are produced (by future cusp-stabilizer
-work on the T124 obstruction), they assemble through
-`PartialTraceCorrection.toTraceCorrectionPrime` into a real
-`TraceCorrectionPrime` consumed by `mainLemma_charSpace_of_traceCorrections`.
-
-This is the Outcome (2) deliverable for the long-stint task: the
-support obligation is **typed and split**, not papered over, into two
-named operator-level pieces, each with a Lean-typed signature naming
-exactly which q-expansion / character residue must vanish or commute,
-and the assembly back into `TraceCorrectionPrime` is mechanical
-(submodule closure + algebra).
-
-The Outcome (1) target — a non-trivial `TraceCorrectionPrime N k p`
-from `pSupportedProjection` alone — is structurally blocked because
-`TraceCorrectionPrime` is `CuspForm`-typed and `pSupportedProjection`
-is `ModularForm`-typed; lifting the latter to a cusp-form-level
-endomorphism with unconditional `qSupportedOnDvdSubmodule` membership
-is exactly the T124 cusp-stabilizer blocker.  The
-`PartialTraceCorrection` interface below makes the two missing
-sub-obligations mechanical and individually addressable. -/
 
 /-- **Partial trace-correction interface (Outcome 2).**  A
 `PartialTraceCorrection N k p` packages a `TraceCorrectionPrime`
@@ -773,94 +683,6 @@ theorem mainLemma_charSpace_of_partialTraceCorrections
   mainLemma_charSpace_of_traceCorrections
     (fun d hd ↦ (P d hd).toTraceCorrectionPrime) mobius χ f hfχ h_vanish
 
-/-! ### Structured blocker: the precise missing theorem (Outcome 3 minimal artifact)
-
-The exact remaining theorem needed to close the p-primary trace-correction
-blocker is the production of a `PartialTraceCorrection N k p` (or
-equivalently a `TraceCorrectionPrime N k p`) whose
-`core - nonFixingCorrection - remainingFixingCorrection` is **not**
-identically zero — i.e., a *non-trivial* witness.
-
-A natural concrete candidate is
-
-  `core f := traceGamma1_cuspForm (Nat.dvd_mul_left N p) k (levelRaise N p k f)`
-
-(which is well-typed, since `levelRaise` lifts `S_k(Γ₁(N))` to
-`S_k(Γ₁(p · N))` and `traceGamma1_cuspForm (N ∣ p · N)` descends back).
-The two correctors must then absorb the second and third summands of
-`traceGamma1_cuspForm_apply_three_way_split`:
-
-* `nonFixingCorrection f τ =
-    ∑ q ∈ filter (¬ IsInftyFixingCoset) Finset.univ,
-      SlashInvariantForm.quotientFunc (levelRaise N p k f) q τ`,
-  bundled as a cusp form via the slash-invariance per coset.
-* `remainingFixingCorrection f τ =
-    ∑ q ∈ (filter IsInftyFixingCoset Finset.univ).erase ⟦1⟧,
-      SlashInvariantForm.quotientFunc (levelRaise N p k f) q τ`.
-
-The remaining theorem obligations are:
-
-1. **Per-coset slash-invariance / holo / cusp-vanishing**: each summand
-   `SlashInvariantForm.quotientFunc (levelRaise f) q` lifts to a cusp
-   form at level `Γ₁(N)` (open lemma, supplied by the underlying
-   `Mathlib.NumberTheory.ModularForms.NormTrace` machinery via
-   per-coset slash invariance).
-2. **Joint support axiom (`combined_supp`)**: the q-expansion
-   identity for the difference reduces, via
-   `traceGamma1_cuspForm_apply_three_way_split` and the identity-coset
-   q-expansion calculation
-   `quotientFunc (levelRaise f) ⟦1⟧ = (levelRaise f) ∣[k] 1 = levelRaise f`,
-   to the q-expansion identity for `levelRaise N p k f`, which is
-   `p`-supported by the standard period-1 formula
-   `qExpansion 1 (levelRaise N p k f) ↔ p ∣ n`.
-3. **Joint character axiom (`combined_char`)**: each per-coset summand
-   commutes with the diamond operator via
-   `traceGamma1_diamondOpHom_commute` plus `levelRaise`'s character
-   compatibility.  The joint statement is then a finite-sum-of-
-   character-preserving sum.
-
-Each of these is now an **isolated obligation typed in named
-existing terms**.  The blocker reduces from "produce a
-`TraceCorrectionPrime`" to "produce the per-coset slash-bundling +
-fill the two correctors with the explicit coset finset sums above".
-
-End of T131 trace-correction interface. -/
-
-/-! ### T131 substantive concrete core: trace ∘ levelRaise (Outcome 2)
-
-The Outcome (2) deliverable: a real, non-wrapper `ℂ`-linear endomorphism
-of `S_k(Γ₁(N))` defined as the composition
-`traceGamma1_cuspForm (Nat.dvd_mul_left N p) k ∘ levelRaise N p k`,
-together with the **unconditional Nebentypus character preservation**
-theorem
-`traceLevelRaiseCore_mem_cuspFormCharSpace`.
-
-This is the substantive non-trivial content of the `core` field for any
-candidate `PartialTraceCorrection N k p`: an actual `LinearMap`
-endomorphism with a real, fully-proved character-space preservation
-property.  The `combined_supp` / per-coset bundling obstruction
-(individual filtered coset sums are not `Γ₁(N)`-invariant) is
-documented in the structured-blocker section above; what *is* proved
-here is the entire character-preservation half of the obligation,
-which works *without* the per-coset bundling.
-
-The proof chain:
-
-* `traceGamma1_cuspForm_diamondOpCusp_commute` — CuspForm port of the
-  trace/diamond commutation (T123 ModularForm version), via the
-  CuspForm → ModularForm bridge `cuspToMF`.
-* `traceGamma1_cuspForm_mem_cuspFormCharSpace` — CuspForm version of
-  the unconditional trace/character compatibility.
-* `levelRaise_mem_cuspFormCharSpace` — reuses `diamondOp_levelRaise_eq`
-  from `Newforms.lean` to lift character spaces along level-raising
-  with the natural pullback character.
-* `traceLevelRaiseCore_mem_cuspFormCharSpace` — composition of the
-  above two, instantiated at the deeper level `M = p · N`.
-
-The structured blocker for the support side reduces to a single
-remaining theorem signature stated below in
-`PartialTraceCorrection.ofTraceLevelRaiseCore_supp_obligation`.  -/
-
 /-- CuspForm → ModularForm with the same underlying function.  The
 internal bridge for porting `ModularForm`-typed trace and diamond
 identities to `CuspForm`. -/
@@ -920,8 +742,7 @@ theorem traceGamma1_cuspForm_diamondOpCusp_commute
   set β_N : ↥(Gamma0 N) := ⟨(β : SL(2, ℤ)),
     HeckeRing.GL2.Gamma0_le_of_dvd h β.property⟩ with hβ_N_def
   have hβN : HeckeRing.GL2.Gamma0MapUnits β_N = ZMod.unitsMap h d_M := by
-    rw [hβ_N_def]
-    rw [HeckeRing.GL2.AtkinLehner.Gamma0MapUnits_unitsMap_of_dvd h
+    rw [hβ_N_def, HeckeRing.GL2.AtkinLehner.Gamma0MapUnits_unitsMap_of_dvd h
       (β : SL(2, ℤ)) β.property
       (HeckeRing.GL2.Gamma0_le_of_dvd h β.property), hβ]
   apply DFunLike.coe_injective
@@ -936,9 +757,8 @@ theorem traceGamma1_cuspForm_diamondOpCusp_commute
     rw [HeckeRing.GL2.diamondOpCusp_eq k _ β_N hβN]; rfl
   rw [hLHS, traceGamma1_cuspForm_eq_mf]
   have hβ_eq : ((β_N : ↥(Gamma0 N)) : SL(2, ℤ)) = (β : SL(2, ℤ)) := rfl
-  rw [hβ_eq]
-  rw [HeckeRing.GL2.AtkinLehner.traceGamma1_slash_mapGL_commute h (cuspToMF f) β]
-  rw [traceGamma1_cuspForm_eq_mf]
+  rw [hβ_eq, HeckeRing.GL2.AtkinLehner.traceGamma1_slash_mapGL_commute h (cuspToMF f) β,
+    traceGamma1_cuspForm_eq_mf]
   haveI := HeckeRing.GL2.TraceOperator.Gamma1_mapGL_isFiniteRelIndex_of_dvd h
   show (⇑(ModularForm.trace _ (HeckeRing.GL2.diamondOpAux k β (cuspToMF f))) :
         UpperHalfPlane → ℂ) =
@@ -1073,25 +893,6 @@ noncomputable def PartialTraceCorrection.ofTraceLevelRaiseCore
   combined_supp := fun _ ↦ by simp
   combined_char := fun _ _ _ ↦ by simp
 
-/-! ### Structured residual obligation (Outcome 3 minimal artifact)
-
-Given the substantive content delivered above
-(`traceLevelRaiseCore`, `traceLevelRaiseCore_mem_cuspFormCharSpace`),
-the *single* remaining theorem needed to close the p-primary
-trace-correction blocker with `core := traceLevelRaiseCore` is to
-produce a pair of correctors (the non-`∞`-fixing and the remaining
-`∞`-fixing components of the trace three-way split) such that the
-fully corrected operator lands in `qSupportedOnDvdSubmodule N k p` and
-preserves `cuspFormCharSpace`.
-
-The structure `TraceLevelRaiseCorrectionData N k p` below exposes
-those two correctors and the two joint axioms as a *typed* Lean
-declaration (no prose placeholders).  Inhabitation of this structure
-is the strict remaining obligation; a witness composes mechanically,
-via `PartialTraceCorrection.ofTraceLevelRaiseCorrectionData` and
-`mainLemma_charSpace_of_partialTraceCorrections`, into the
-composite-`N` `mainLemma` chain. -/
-
 /-- **Structured T131/T124 blocker.**  The data of a non-trivial
 trace-correction with `core := traceLevelRaiseCore N p k`: the two
 correctors absorbing respectively the non-`∞`-fixing coset family
@@ -1164,28 +965,6 @@ theorem PartialTraceCorrection.ofTraceLevelRaiseCorrectionData_core
     (PartialTraceCorrection.ofTraceLevelRaiseCorrectionData D).core =
       traceLevelRaiseCore N p k := rfl
 
-/-! ### Typed `Γ`-stability predicate and structured reduction (Outcome 3)
-
-The naive coset filter `IsInftyFixingCoset` from `TraceOperator.lean` is
-**not** `ℋ`-left-stable (where `ℋ := (Γ₁(N)).map (mapGL ℝ)`): translating
-a representative `h` with `h 1 0 = 0` by some `γ ∈ ℋ` produces a coset
-`⟦γ * h⟧` whose canonical representatives need not have lower-left
-entry zero.  Concretely, the lower-left of `γ * h` is
-`γ 1 0 * h 0 0 + γ 1 1 * h 1 0 = γ 1 0 * h 0 0` (using `h 1 0 = 0`),
-which is generically nonzero whenever `γ 1 0 ≠ 0`.  Since `Γ₁(N)`
-contains matrices with `c ≠ 0` (e.g. `[[1,0],[N,1]]`), the filter is
-genuinely non-stable.
-
-Without `ℋ`-stability, the filtered coset sum
-`∑ q ∈ filter (¬ IsInftyFixingCoset), quotientFunc (levelRaise N p k f) q`
-is **not** automatically a `Γ₁(N)`-level cusp form: `Γ₁(N)`-invariance
-of the bundled function fails because a translation permutes filter
-membership.
-
-The remedy is to replace `IsInftyFixingCoset` by an `ℋ`-stable
-"saturation" — the smallest `ℋ`-stable superset.  The reduction below
-exposes this as the *single* missing input. -/
-
 /-- A `Finset` of cosets `T ⊆ ℋ ⧸ (𝒢.subgroupOf ℋ)` is **`ℋ`-stable**
 if it is closed under left multiplication by every element of `ℋ`,
 i.e. for every `γ ∈ ℋ` and `q ∈ T`, the translated coset
@@ -1219,23 +998,6 @@ lemma IsGammaStableCosetFinset.compl
     congr 1; group
   rw [heq] at hback
   exact hh.2 hback
-
-/-! ### Bundling theorem: `Γ`-stable finset cosets sum into a `CuspForm`
-
-The central technical content of T131 deliverable (1).  Given a
-`Γ`-stable finset `T ⊆ ℋ ⧸ (𝒢.subgroupOf ℋ)` (in the precise sense
-of `IsGammaStableCosetFinset`), the function
-
-```
-τ ↦ ∑ q ∈ T, SlashInvariantForm.quotientFunc f q τ
-```
-
-is `ℋ`-slash-invariant (because the `ℋ`-action permutes `T`),
-holomorphic (each summand is a translate of `f`), and
-cusp-vanishing (each summand vanishes at every cusp `c` of `ℋ`,
-via `IsCusp.of_isFiniteRelIndex_conj` plus
-`CuspForm.translate.zero_at_cusps'`).  We bundle it as a
-`CuspForm ℋ k` via the natural anonymous constructor. -/
 
 open SlashInvariantForm in
 /-- **`CuspForm` bundling of a `Γ`-stable finset coset sum** (T131
@@ -1288,13 +1050,11 @@ noncomputable def cuspFormOfGammaStableCosetSum
         = ∑ q ∈ T, SlashInvariantForm.quotientFunc f q :=
       funext fun _ ↦ (Finset.sum_apply _ _ _).symm
     rw [hfun, SlashAction.sum_slash, IsZeroAtImInfty, Filter.ZeroAtFilter,
-      Finset.sum_fn]
-    rw [show (0 : ℂ) = ∑ q ∈ T, (0 : ℂ) by simp]
+      Finset.sum_fn, show (0 : ℂ) = ∑ q ∈ T, (0 : ℂ) by simp]
     refine tendsto_finset_sum _ (fun q _ ↦ ?_)
     refine Quotient.inductionOn q (fun r ↦ ?_)
-    have hr : r.val ∈ ℋ := r.2
     refine (CuspForm.translate (f := f) (r.val : GL (Fin 2) ℝ)⁻¹).zero_at_cusps' ?_ γ hγ
-    simpa using hc.of_isFiniteRelIndex_conj hr
+    simpa using hc.of_isFiniteRelIndex_conj r.2
 
 /-- Underlying function of `cuspFormOfGammaStableCosetSum`. -/
 @[simp]
@@ -1443,20 +1203,6 @@ noncomputable def TraceLevelRaiseCorrectionData.ofStableSaturation
   remainingFixingCorrection := D.remainingFixingCorrection
   combined_supp := D.combined_supp
   combined_char := D.combined_char
-
-/-! ### T131 erase-stability obstruction (no-go theorems)
-
-The original T131 plan attempted to use `T.erase ⟦1⟧` as the support of
-`remainingFixingCorrection`.  The lemmas below show this is *fundamentally*
-unworkable: the `ℋ`-action on `ℋ ⧸ (𝒢.subgroupOf ℋ)` is **transitive**
-(every coset `q = ⟦h⟧` is the `h`-translate of `⟦1⟧`), so any
-`Γ`-stable finset containing `⟦1⟧` is automatically `Finset.univ`, and
-`Finset.univ.erase ⟦1⟧` is *never* `Γ`-stable when the quotient has more
-than one element.
-
-This forces the next worker away from any "filtered coset sum" strategy
-for the identity-coset summand and toward an Atkin–Lehner / Petersson
-orthogonality argument (T132). -/
 
 /-- **Transitivity of the `ℋ`-translation action on `ℋ ⧸ K`.**
 Any `Γ`-stable finset of cosets containing the identity coset is the
