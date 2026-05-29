@@ -404,12 +404,12 @@ private lemma finEquivSum_mk_one (k : ℕ) :
   unfold finEquivSum; simp [Equiv.trans_apply, Fin.castOrderIso]; rfl
 
 private lemma finEquivSum_symm_inl0 (k : ℕ) :
-    (finEquivSum k).symm (Sum.inl (0 : Fin 2)) = (0 : Fin (k + 2)) := by
-  apply (finEquivSum k).injective; rw [Equiv.apply_symm_apply]; exact (finEquivSum_mk_zero k).symm
+    (finEquivSum k).symm (Sum.inl (0 : Fin 2)) = (0 : Fin (k + 2)) :=
+  (finEquivSum k).symm_apply_eq.mpr (finEquivSum_mk_zero k).symm
 
 private lemma finEquivSum_symm_inl1 (k : ℕ) :
-    (finEquivSum k).symm (Sum.inl (1 : Fin 2)) = (1 : Fin (k + 2)) := by
-  apply (finEquivSum k).injective; rw [Equiv.apply_symm_apply]; exact (finEquivSum_mk_one k).symm
+    (finEquivSum k).symm (Sum.inl (1 : Fin 2)) = (1 : Fin (k + 2)) :=
+  (finEquivSum k).symm_apply_eq.mpr (finEquivSum_mk_one k).symm
 
 private lemma finEquivSum_symm_inr_ne_zero (k : ℕ) (i : Fin k) :
     (finEquivSum k).symm (Sum.inr i) ≠ (0 : Fin (k + 2)) := fun h ↦ by
@@ -613,14 +613,12 @@ private lemma genEquiv_j (k : ℕ) (j : Fin (k + 2)) (hj : j.val ≠ 0) :
   simp [Equiv.trans_apply, Fin.castOrderIso]; rfl
 
 private lemma genEquiv_symm_inl0 (k : ℕ) (j : Fin (k + 2)) (hj : j.val ≠ 0) :
-    (genEquiv k j hj).symm (Sum.inl (0 : Fin 2)) = (0 : Fin (k + 2)) := by
-  apply (genEquiv k j hj).injective; rw [Equiv.apply_symm_apply]
-  exact (genEquiv_zero k j hj).symm
+    (genEquiv k j hj).symm (Sum.inl (0 : Fin 2)) = (0 : Fin (k + 2)) :=
+  (genEquiv k j hj).symm_apply_eq.mpr (genEquiv_zero k j hj).symm
 
 private lemma genEquiv_symm_inl1 (k : ℕ) (j : Fin (k + 2)) (hj : j.val ≠ 0) :
-    (genEquiv k j hj).symm (Sum.inl (1 : Fin 2)) = j := by
-  apply (genEquiv k j hj).injective; rw [Equiv.apply_symm_apply]
-  exact (genEquiv_j k j hj).symm
+    (genEquiv k j hj).symm (Sum.inl (1 : Fin 2)) = j :=
+  (genEquiv k j hj).symm_apply_eq.mpr (genEquiv_j k j hj).symm
 
 private lemma genEquiv_symm_inr_ne_zero (k : ℕ) (j : Fin (k + 2)) (hj : j.val ≠ 0) (i : Fin k) :
     (genEquiv k j hj).symm (Sum.inr i) ≠ ⟨0, by omega⟩ := fun h ↦ by
@@ -702,12 +700,12 @@ private lemma fin1Sum_succ (k : ℕ) (i : Fin k) :
   simp [finSumFinEquiv, Fin.addCases]; ext; simp; omega
 
 private lemma fin1Sum_symm_inl (k : ℕ) :
-    (fin1Sum k).symm (Sum.inl (0 : Fin 1)) = (0 : Fin (k + 1)) := by
-  apply (fin1Sum k).injective; rw [Equiv.apply_symm_apply]; exact (fin1Sum_zero k).symm
+    (fin1Sum k).symm (Sum.inl (0 : Fin 1)) = (0 : Fin (k + 1)) :=
+  (fin1Sum k).symm_apply_eq.mpr (fin1Sum_zero k).symm
 
 private lemma fin1Sum_symm_inr (k : ℕ) (i : Fin k) :
-    (fin1Sum k).symm (Sum.inr i) = ⟨i.val + 1, by omega⟩ := by
-  apply (fin1Sum k).injective; rw [Equiv.apply_symm_apply]; exact (fin1Sum_succ k i).symm
+    (fin1Sum k).symm (Sum.inr i) = ⟨i.val + 1, by omega⟩ :=
+  (fin1Sum k).symm_apply_eq.mpr (fin1Sum_succ k i).symm
 
 private lemma diagonal_submatrix_fin1Sum (k : ℕ) (d : Fin (k + 1) → ℤ) :
     (Matrix.diagonal (d ∘ (fin1Sum k).symm)).submatrix (fin1Sum k) (fin1Sum k) =
