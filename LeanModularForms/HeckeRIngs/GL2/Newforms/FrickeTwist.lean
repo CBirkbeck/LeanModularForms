@@ -140,7 +140,7 @@ noncomputable def Newform.ImAxisMellinData.ofSlashEq
     intro x hx
     have h_cast : ((x ^ (k : ℝ) : ℝ) : ℂ) = ((x : ℝ) : ℂ) ^ k := by
       rw [Real.rpow_intCast x k, Complex.ofReal_zpow]
-    show Newform.imAxis f (1 / x) =
+    change Newform.imAxis f (1 / x) =
       (((N : ℂ) ^ (1 - k) * Complex.I ^ k) * ((x ^ (k : ℝ) : ℝ) : ℂ)) •
         _root_.ModularForms.imAxis twist (x / (N : ℝ))
     rw [Newform.imAxis_feq_of_slashEq f twist slash_eq hx, h_cast, smul_eq_mul]
