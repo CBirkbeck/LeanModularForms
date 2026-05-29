@@ -229,8 +229,8 @@ private lemma div_re_of_im_eq_zero {a b : ℂ} (hb : b.im = 0) :
 /-- The function-level discriminant is positive on the imaginary axis. -/
 lemma Δ_fun_imag_axis_pos : ResToImagAxis.Pos Δ_fun := Δ_fun_eq_Δ ▸ Delta_imag_axis_pos
 
-/-- The q-expansion exponent argument on imaginary axis z=it with ℕ+ index.
-Simplifies `2πi * n * z` where z=it to `-2πnt`. -/
+/-- On the imaginary axis `z = it`, the q-expansion exponent `2πi · n · z` simplifies
+to `-2π n t`. -/
 lemma qexp_arg_imag_axis_pnat (t : ℝ) (ht : 0 < t) (n : ℕ+) :
     2 * ↑Real.pi * Complex.I * ↑n * ↑(⟨Complex.I * t, by simp [ht]⟩ : UpperHalfPlane) =
     (-(2 * Real.pi * (n : ℝ) * t) : ℝ) := by
@@ -238,8 +238,7 @@ lemma qexp_arg_imag_axis_pnat (t : ℝ) (ht : 0 < t) (n : ℕ+) :
   simp only [mul_assoc, mul_left_comm, mul_comm] at h ⊢
   convert h using 2
 
-/-- Generic summability for n^a * σ_b(n) * exp(2πinz) series.
-Uses σ_b(n) ≤ n^(b+1) (sigma_bound) and a33 (a+b+1) for exponential summability. -/
+/-- Summability of the generic q-series `n^a σ_b(n) exp(2πinz)`. -/
 lemma sigma_qexp_summable_generic (a b : ℕ) (z : UpperHalfPlane) :
     Summable (fun n : ℕ+ ↦ (n : ℂ)^a * (ArithmeticFunction.sigma b n : ℂ) *
       Complex.exp (2 * Real.pi * Complex.I * n * z)) := by
@@ -267,9 +266,7 @@ lemma sigma_qexp_summable_generic (a b : ℕ) (z : UpperHalfPlane) :
     rw [heq]
     exact summable_norm_iff.mpr ha33
 
-/-- E₂ q-expansion in sigma form: E₂ = 1 - 24 * ∑ σ₁(n) * q^n.
-This follows from G2_q_exp and the definition E₂ = (1/(2*ζ(2))) • G₂.
-The proof expands the definitions and simplifies using ζ(2) = π²/6. -/
+/-- The q-expansion `E₂ = 1 - 24 ∑ σ₁(n) qⁿ`. -/
 lemma E₂_sigma_qexp (z : UpperHalfPlane) :
     E₂ z = 1 - 24 * ∑' (n : ℕ+), (ArithmeticFunction.sigma 1 n : ℂ) *
       Complex.exp (2 * Real.pi * Complex.I * n * z) := by
@@ -283,14 +280,13 @@ lemma E₂_sigma_qexp (z : UpperHalfPlane) :
   simp at *
   rw [ht]
 
-/-- Summability of σ₁ q-series (for D_qexp_tsum_pnat hypothesis). -/
+/-- Summability of the `σ₁` q-series. -/
 lemma sigma1_qexp_summable (z : UpperHalfPlane) :
     Summable (fun n : ℕ+ ↦ (ArithmeticFunction.sigma 1 n : ℂ) *
       Complex.exp (2 * Real.pi * Complex.I * n * z)) := by
   simpa [pow_zero, one_mul] using sigma_qexp_summable_generic 0 1 z
 
-/-- Generic derivative bound for σ_k q-series on compact sets.
-Uses σ_k(n) ≤ n^(k+1) (sigma_bound) and iter_deriv_comp_bound3 for exponential decay. -/
+/-- Uniform derivative bound for the generic `σ_k` q-series on compact subsets of `ℍ`. -/
 lemma sigma_qexp_deriv_bound_generic (k : ℕ) :
     ∀ K : Set ℂ, K ⊆ {w : ℂ | 0 < w.im} → IsCompact K →
       ∃ u : ℕ+ → ℝ, Summable u ∧ ∀ (n : ℕ+) (z : K),
@@ -324,8 +320,7 @@ lemma sigma_qexp_deriv_bound_generic (k : ℕ) :
           _ = (2 * π * ↑↑n) ^ (k + 2) := by ring
     _ ≤ u₀ n := hpow
 
-/-- Derivative bound for σ₁ q-series on compact sets (for D_qexp_tsum_pnat hypothesis).
-The bound uses σ₁(n) ≤ n² (sigma_bound) and iter_deriv_comp_bound3 for exponential decay. -/
+/-- Uniform derivative bound for the `σ₁` q-series on compact subsets of `ℍ`. -/
 lemma sigma1_qexp_deriv_bound :
     ∀ K : Set ℂ, K ⊆ {w : ℂ | 0 < w.im} → IsCompact K →
       ∃ u : ℕ+ → ℝ, Summable u ∧ ∀ (n : ℕ+) (k : K),
@@ -333,14 +328,13 @@ lemma sigma1_qexp_deriv_bound :
           Complex.exp (2 * Real.pi * Complex.I * n * k.1)‖ ≤ u n :=
   sigma_qexp_deriv_bound_generic 1
 
-/-- Summability of σ₃ q-series (for E₄ derivative). -/
+/-- Summability of the `σ₃` q-series. -/
 lemma sigma3_qexp_summable (z : UpperHalfPlane) :
     Summable (fun n : ℕ+ ↦ (ArithmeticFunction.sigma 3 n : ℂ) *
       Complex.exp (2 * Real.pi * Complex.I * n * z)) := by
   simpa [pow_zero, one_mul] using sigma_qexp_summable_generic 0 3 z
 
-/-- Derivative bound for σ₃ q-series on compact sets (for D_qexp_tsum_pnat hypothesis).
-The bound uses σ₃(n) ≤ n⁴ (sigma_bound) and iter_deriv_comp_bound3 for exponential decay. -/
+/-- Uniform derivative bound for the `σ₃` q-series on compact subsets of `ℍ`. -/
 lemma sigma3_qexp_deriv_bound :
     ∀ K : Set ℂ, K ⊆ {w : ℂ | 0 < w.im} → IsCompact K →
       ∃ u : ℕ+ → ℝ, Summable u ∧ ∀ (n : ℕ+) (k : K),
@@ -348,8 +342,7 @@ lemma sigma3_qexp_deriv_bound :
           Complex.exp (2 * Real.pi * Complex.I * n * k.1)‖ ≤ u n :=
   sigma_qexp_deriv_bound_generic 3
 
-/-- E₄ as explicit tsum (from E4_q_exp PowerSeries coefficients).
-Uses hasSum_qExpansion to convert from PowerSeries to tsum form. -/
+/-- The q-expansion `E₄ = 1 + 240 ∑ σ₃(n) qⁿ`. -/
 lemma E₄_sigma_qexp (z : UpperHalfPlane) :
     E₄ z = 1 + 240 * ∑' (n : ℕ+), (ArithmeticFunction.sigma 3 n : ℂ) *
       Complex.exp (2 * Real.pi * Complex.I * n * z) := by
@@ -380,8 +373,8 @@ lemma E₄_sigma_qexp (z : UpperHalfPlane) :
       Complex.exp (2 * π * Complex.I * n * z) from by rw [← Complex.exp_nat_mul]; congr 1; ring]
   ring
 
-/-- D E₄ q-expansion via termwise differentiation.
-D E₄ = 240 * ∑ n * σ₃(n) * qⁿ from differentiating E₄ = 1 + 240 * ∑ σ₃(n) * qⁿ. -/
+/-- The q-expansion `D E₄ = 240 ∑ n σ₃(n) qⁿ`, obtained by termwise differentiation
+of the q-expansion of `E₄`. -/
 theorem DE₄_qexp (z : UpperHalfPlane) :
     D E₄.toFun z = 240 * ∑' (n : ℕ+), (n : ℂ) * (ArithmeticFunction.sigma 3 n : ℂ) *
       Complex.exp (2 * Real.pi * Complex.I * n * z) := by
@@ -558,13 +551,11 @@ lemma L₁₀_SerreDer : L₁₀ = (serre_D 10 F) * G - F * (serre_D 10 G) := by
 
 lemma SerreDer_22_L₁₀_SerreDer :
     SerreDer_22_L₁₀ = (serre_D 12 (serre_D 10 F)) * G - F * (serre_D 12 (serre_D 10 G)) := by
-  calc
-    SerreDer_22_L₁₀ = serre_D 22 L₁₀ := rfl
-    _ = serre_D 22 (serre_D 10 F * G - F * serre_D 10 G) := by rw [L₁₀_SerreDer]
-    _ = serre_D 22 (serre_D 10 F * G) - serre_D 22 (F * serre_D 10 G) := by
-        apply serre_D_sub _ _ _
-        · exact MDifferentiable.mul SerreF_holo G_holo
-        · exact MDifferentiable.mul F_holo SerreG_holo
+  calc SerreDer_22_L₁₀
+      = serre_D 22 (serre_D 10 F * G - F * serre_D 10 G) := by rw [show SerreDer_22_L₁₀ =
+        serre_D 22 L₁₀ from rfl, L₁₀_SerreDer]
+    _ = serre_D 22 (serre_D 10 F * G) - serre_D 22 (F * serre_D 10 G) :=
+        serre_D_sub _ _ _ (SerreF_holo.mul G_holo) (F_holo.mul SerreG_holo)
     _ = serre_D (12 + 10) ((serre_D 10 F) * G) - serre_D (10 + 12) (F * serre_D 10 G) := by ring_nf
     _ = serre_D 12 (serre_D 10 F) * G + (serre_D 10 F) * (serre_D 10 G)
         - serre_D (10 + 12) (F * serre_D 10 G) := by
@@ -703,8 +694,7 @@ theorem F_vanishing_order :
   simp_rw [h_F_eq]
   exact E₂E₄_sub_E₆_div_q_tendsto.pow 2
 
-/-- D(E₂E₄ - E₆) = 720 * ∑ n²·σ₃(n)·qⁿ.
-Key for the log-derivative limit: `(D F)/F → 2` as `z → i∞`. -/
+/-- The q-expansion `D(E₂ E₄ - E₆) = 720 ∑ n² σ₃(n) qⁿ`. -/
 theorem D_diff_qexp (z : ℍ) :
     D (fun w ↦ E₂ w * E₄ w - E₆ w) z =
       720 * ∑' n : ℕ+, (↑↑n : ℂ) ^ 2 * ↑((ArithmeticFunction.sigma 3) ↑n) *
@@ -794,8 +784,7 @@ private theorem D_diff_div_q_tendsto :
   simp_rw [h_eq2]
   simpa [ha0] using (qexp_tendsto_of_poly_bound hbound).const_mul (720 : ℂ)
 
-/-- `(D F)/F → 2` as `im(z) → ∞`.
-The log-derivative limit, following from F having vanishing order 2. -/
+/-- The log-derivative limit `(D F) / F → 2` as `im(z) → ∞`. -/
 theorem D_F_div_F_tendsto :
     Filter.Tendsto (fun z : ℍ ↦ D F z / F z) atImInfty (nhds (2 : ℂ)) := by
   set f : ℍ → ℂ := fun z ↦ E₂ z * E₄.toFun z - E₆.toFun z with hf_def
@@ -1014,8 +1003,8 @@ theorem L₁₀_eventually_pos_imag_axis : ResToImagAxis.EventuallyPos L₁₀ :
   refine ⟨max t₀ 1, by positivity, fun t ht ↦ ?_⟩
   have ht_pos : 0 < t := lt_of_lt_of_le one_pos (le_trans (le_max_right _ _) ht)
   have hFG_pos := mul_pos (F_imag_axis_pos.2 t ht_pos) (G_imag_axis_pos.2 t ht_pos)
-  have h := mul_pos (ht₀ t (le_trans (le_max_left _ _) ht)) hFG_pos
-  rwa [div_mul_cancel₀ _ (ne_of_gt hFG_pos)] at h
+  have := mul_pos (ht₀ t (le_trans (le_max_left _ _) ht)) hFG_pos
+  rwa [div_mul_cancel₀ _ (ne_of_gt hFG_pos)] at this
 
 end AsymptoticAnalysis
 
@@ -1078,13 +1067,9 @@ theorem deriv_FmodGReal_neg (t : ℝ) (ht : 0 < t) : deriv FmodGReal t < 0 := by
   exact div_neg_of_neg_of_pos (by nlinarith [Real.pi_pos]) (by positivity)
 
 /-- **Proposition 8.12**: `FmodGReal` is strictly decreasing on `(0, ∞)`. -/
-theorem FmodG_strictAntiOn : StrictAntiOn FmodGReal (Set.Ioi 0) := by
-  apply strictAntiOn_of_deriv_neg
-  · exact convex_Ioi 0
-  · exact FmodGReal_differentiableOn.continuousOn
-  · intro t ht
-    rw [interior_Ioi] at ht
-    exact deriv_FmodGReal_neg t ht
+theorem FmodG_strictAntiOn : StrictAntiOn FmodGReal (Set.Ioi 0) :=
+  strictAntiOn_of_deriv_neg (convex_Ioi 0) FmodGReal_differentiableOn.continuousOn fun t ht ↦
+    deriv_FmodGReal_neg t (by rwa [interior_Ioi] at ht)
 
 /-- The right limit `lim_{t → 0⁺} F(it) / G(it) = 18 / π²`. -/
 theorem FmodG_rightLimitAt_zero :
