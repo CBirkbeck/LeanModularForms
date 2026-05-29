@@ -1272,21 +1272,14 @@ lemma Newform.frickeMatrix_PSL_R_mul_self (N : ℕ) [NeZero N] :
           GLPos_to_SLR (Newform.frickeMatrix_GLPos N) :
           SL(2, ℝ))) : PSL(2, ℝ)) from
       (QuotientGroup.mk_mul _ _ _).symm]
-  rw [QuotientGroup.eq_one_iff]
-  rw [Matrix.SpecialLinearGroup.mem_center_iff]
+  rw [QuotientGroup.eq_one_iff, Matrix.SpecialLinearGroup.mem_center_iff]
   refine ⟨-1, ?_, ?_⟩
   · simp [Fintype.card_fin]
   · show Matrix.scalar (Fin 2) (-1) =
       ((GLPos_to_SLR (Newform.frickeMatrix_GLPos N) *
         GLPos_to_SLR (Newform.frickeMatrix_GLPos N) : SL(2, ℝ)) :
         Matrix (Fin 2) (Fin 2) ℝ)
-    symm
-    show (GLPos_to_SLR (Newform.frickeMatrix_GLPos N) :
-          Matrix (Fin 2) (Fin 2) ℝ) *
-        (GLPos_to_SLR (Newform.frickeMatrix_GLPos N) :
-          Matrix (Fin 2) (Fin 2) ℝ) =
-      Matrix.scalar (Fin 2) (-1)
-    exact GLPos_to_SLR_frickeMatrix_GLPos_sq_eq_neg_scalar N
+    exact (GLPos_to_SLR_frickeMatrix_GLPos_sq_eq_neg_scalar N).symm
 
 /-- Inverse of `frickeMatrix_PSL_R N` is itself. -/
 lemma Newform.frickeMatrix_PSL_R_inv (N : ℕ) [NeZero N] :
@@ -1415,14 +1408,8 @@ theorem Newform.imAxis_eq_frickeSlash
     Newform.imAxis f (1 / x) =
       ((N : ℂ) ^ (1 - k) * Complex.I ^ k * ((x : ℝ) : ℂ) ^ k) *
       (⇑f.toCuspForm.toModularForm' ∣[k] Newform.frickeMatrix N)
-        ⟨Complex.I * ((x / (N : ℝ) : ℝ) : ℂ), by
-          have hN_pos : (0 : ℝ) < (N : ℝ) :=
-            Nat.cast_pos.mpr (Nat.pos_of_ne_zero (NeZero.ne N))
-          show 0 < (Complex.I * ((x / (N : ℝ) : ℝ) : ℂ)).im
-          rw [Complex.mul_im, Complex.I_im, Complex.I_re,
-            Complex.ofReal_re, Complex.ofReal_im]
-          have h_div_pos : 0 < x / (N : ℝ) := div_pos hx hN_pos
-          simpa using h_div_pos⟩ := by
+        ⟨Complex.I * ((x / (N : ℝ) : ℝ) : ℂ), im_I_mul_ofReal_pos
+          (div_pos hx (Nat.cast_pos.mpr (Nat.pos_of_ne_zero (NeZero.ne N))))⟩ := by
   have hN_ne : (N : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (NeZero.ne N)
   have hx_ne : (x : ℂ) ≠ 0 := by exact_mod_cast hx.ne'
   set τ_inner : UpperHalfPlane :=
@@ -1440,8 +1427,8 @@ theorem Newform.imAxis_eq_frickeSlash
   have h_imAxis_eq :
       Newform.imAxis f (1 / x) =
         (⇑f.toCuspForm.toModularForm' : UpperHalfPlane → ℂ) τ_outer := by
-    rw [show Newform.imAxis f = ModularForms.imAxis f.toCuspForm from rfl,
-      ModularForms.imAxis_apply_of_pos f.toCuspForm (one_div_pos.mpr hx)]
+    change ModularForms.imAxis f.toCuspForm (1 / x) = _
+    rw [ModularForms.imAxis_apply_of_pos f.toCuspForm (one_div_pos.mpr hx)]
     rfl
   rw [h_imAxis_eq, Newform.frickeMatrix_slash_apply (N := N) (k := k)
     (⇑f.toCuspForm.toModularForm' : UpperHalfPlane → ℂ) τ_inner, h_smul_eq]
