@@ -1234,9 +1234,8 @@ private lemma stripping_completion_factors_cancel {p : ℂ} (hp : p ≠ 0)
     a * p ^ s * g⁻¹ * (p ^ (-s) * g * L) = a * L := by
   have h1 : p ^ s * p ^ (-s) = 1 := by
     rw [← Complex.cpow_add _ _ hp, add_neg_cancel, Complex.cpow_zero]
-  calc a * p ^ s * g⁻¹ * (p ^ (-s) * g * L)
-      = a * (p ^ s * p ^ (-s)) * (g⁻¹ * g) * L := by ring
-    _ = a * L := by rw [h1, inv_mul_cancel₀ hg]; ring
+  field_simp
+  linear_combination (a * L) * h1
 
 private lemma eqOn_LSeries_of_entire_of_eqOn_halfPlane {c : ℕ → ℂ} {Λ : ℂ → ℂ}
     {b : ℝ} (hΛ : Differentiable ℂ Λ)
@@ -1325,8 +1324,7 @@ private lemma imAxis_scaled_locallyIntegrableOn {N : ℕ} [NeZero N] {k : ℤ}
     MeasureTheory.LocallyIntegrableOn
       (fun t : ℝ ↦ _root_.ModularForms.imAxis twist (t / (N : ℝ)))
       (Set.Ioi (0 : ℝ)) := by
-  have hN_pos : (0 : ℝ) < (N : ℝ) :=
-    Nat.cast_pos.mpr (Nat.pos_of_ne_zero (NeZero.ne N))
+  have hN_pos : (0 : ℝ) < (N : ℝ) := Nat.cast_pos.mpr (Nat.pos_of_neZero N)
   have h_div_cts : ContinuousOn (fun t : ℝ ↦ t / (N : ℝ)) (Set.Ioi (0 : ℝ)) :=
     Continuous.continuousOn (by fun_prop)
   exact ((_root_.ModularForms.continuousOn_imAxis twist).comp h_div_cts
@@ -1337,8 +1335,7 @@ private lemma imAxis_scaled_rapidDecay {N : ℕ} [NeZero N] {k : ℤ}
     Asymptotics.IsBigO Filter.atTop
       (fun x : ℝ ↦ _root_.ModularForms.imAxis twist (x / (N : ℝ)) - 0)
       (fun x : ℝ ↦ x ^ r) := by
-  have hN_pos : (0 : ℝ) < (N : ℝ) :=
-    Nat.cast_pos.mpr (Nat.pos_of_ne_zero (NeZero.ne N))
+  have hN_pos : (0 : ℝ) < (N : ℝ) := Nat.cast_pos.mpr (Nat.pos_of_neZero N)
   have h_twist_decay :=
     (_root_.ModularForms.HasImAxisRapidDecay_of_HasImAxisExponentialDecay
       twist (Newform.cuspForm_Gamma1_hasImAxisExponentialDecay twist)) r
