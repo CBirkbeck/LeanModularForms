@@ -136,18 +136,15 @@ theorem Newform.hasFrickeSlashCuspFormPreservesCuspFormsOld_iff_on_generators
       ?_ ?_ ?_ ?_ hf
     · intro f₀ h_f₀_gen
       exact h_gen f₀ h_f₀_gen
-    · show Newform.frickeSlashCuspForm
+    · change Newform.frickeSlashCuspForm
         (0 : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) ∈ cuspFormsOld N k
-      rw [map_zero]
-      exact Submodule.zero_mem _
+      rw [map_zero]; exact Submodule.zero_mem _
     · intro x y _ _ ihx ihy
-      show Newform.frickeSlashCuspForm (x + y) ∈ cuspFormsOld N k
-      rw [map_add]
-      exact Submodule.add_mem _ ihx ihy
+      change Newform.frickeSlashCuspForm (x + y) ∈ cuspFormsOld N k
+      rw [map_add]; exact Submodule.add_mem _ ihx ihy
     · intro c x _ ihx
-      show Newform.frickeSlashCuspForm (c • x) ∈ cuspFormsOld N k
-      rw [map_smul]
-      exact Submodule.smul_mem _ c ihx
+      change Newform.frickeSlashCuspForm (c • x) ∈ cuspFormsOld N k
+      rw [map_smul]; exact Submodule.smul_mem _ c ihx
 
 /-- `Newform.frickeSlashCuspForm` preserves `cuspFormsOldExtended N k` iff it
 maps every generator of the family
@@ -171,18 +168,15 @@ theorem Newform.frickeSlashCuspForm_preserves_cuspFormsOldExtended_iff_on_genera
       ?_ ?_ ?_ ?_ hg
     · intro f₀ h_f₀_gen
       exact h_gen f₀ h_f₀_gen
-    · show Newform.frickeSlashCuspForm
+    · change Newform.frickeSlashCuspForm
           (0 : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) ∈ cuspFormsOldExtended N k
-      rw [map_zero]
-      exact Submodule.zero_mem _
+      rw [map_zero]; exact Submodule.zero_mem _
     · intro x y _ _ ihx ihy
-      show Newform.frickeSlashCuspForm (x + y) ∈ cuspFormsOldExtended N k
-      rw [map_add]
-      exact Submodule.add_mem _ ihx ihy
+      change Newform.frickeSlashCuspForm (x + y) ∈ cuspFormsOldExtended N k
+      rw [map_add]; exact Submodule.add_mem _ ihx ihy
     · intro c x _ ihx
-      show Newform.frickeSlashCuspForm (c • x) ∈ cuspFormsOldExtended N k
-      rw [map_smul]
-      exact Submodule.smul_mem _ c ihx
+      change Newform.frickeSlashCuspForm (c • x) ∈ cuspFormsOldExtended N k
+      rw [map_smul]; exact Submodule.smul_mem _ c ihx
 
 private lemma frickeSlashCuspForm_levelInclude_cusp_eq_smul_levelRaise
     {M : ℕ} [NeZero M] {d : ℕ} [NeZero d] (hMN : M ∣ d * M) {k : ℤ}
@@ -241,8 +235,7 @@ theorem Newform.frickeSlashCuspForm_levelInclude_cusp_mem_cuspFormsOldExtended
     · exact hd_pos
   haveI : NeZero d := ⟨Nat.pos_iff_ne_zero.mp hd_pos⟩
   have hd_lt : 1 < d := by
-    by_contra h_le
-    push_neg at h_le
+    by_contra! h_le
     rw [le_antisymm h_le hd_pos, Nat.mul_one] at hd
     exact hMltN.ne hd.symm
   haveI : NeZero (d * M) := ⟨Nat.mul_ne_zero (NeZero.ne d) (NeZero.ne M)⟩
@@ -293,7 +286,7 @@ private lemma frickeSlashCuspForm_levelRaise_eq_smul_levelInclude_cusp
       (d : ℂ)⁻¹ • levelInclude_cusp hMN k (Newform.frickeSlashCuspForm g₀) := by
   haveI : NeZero (d * M) := ⟨Nat.mul_ne_zero (NeZero.ne d) (NeZero.ne M)⟩
   set h_inclusion : CuspForm ((Gamma1 (d * M)).map (mapGL ℝ)) k :=
-    levelInclude_cusp hMN k (Newform.frickeSlashCuspForm g₀) with h_inc_def
+    levelInclude_cusp hMN k (Newform.frickeSlashCuspForm g₀)
   apply CuspForm.ext
   intro τ
   show (⇑(Newform.frickeSlashCuspForm
@@ -631,7 +624,7 @@ theorem Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended
         simp only [levelInclude_cusp_coe]
       rw [h_eq]
       exact levelInclude_cusp_mem_cuspFormsOldExtended hpM_dvd hpM_lt _
-    · push_neg at hpM_lt
+    · push Not at hpM_lt
       have hpM_eq : p * M = N := le_antisymm
         (Nat.le_of_dvd (NeZero.pos N) hpM_dvd) hpM_lt
       exact h_minimal M hMN hMltN hpcop_M hpM_eq g
@@ -687,9 +680,9 @@ private lemma heckeT_n_cusp_levelInclude_cusp_eq_sub_smul_levelRaise_diamond
           levelRaise M p k (diamondOp_cusp k (ZMod.unitOfCoprime p hpcop_M) g) := by
   haveI : NeZero (p * M) := ⟨Nat.mul_ne_zero hp.ne_zero (NeZero.ne M)⟩
   have hpN : ¬ Nat.Coprime p (p * M) := fun h ↦ hp.coprime_iff_not_dvd.mp h ⟨M, rfl⟩
-  set a : (ZMod M)ˣ := ZMod.unitOfCoprime p hpcop_M with ha_def
+  set a : (ZMod M)ˣ := ZMod.unitOfCoprime p hpcop_M
   set LR_p_D : CuspForm ((Gamma1 (p * M)).map (mapGL ℝ)) k :=
-    levelRaise M p k (diamondOp_cusp k a g) with hLR_def
+    levelRaise M p k (diamondOp_cusp k a g)
   apply CuspForm.ext; intro z
   rw [heckeT_n_cusp_prime_apply_of_not_coprime hp hpN, levelInclude_cusp_coe]
   show heckeT_p_ut k p hp.pos ⇑g z =
@@ -1122,9 +1115,9 @@ private lemma heckeT_n_cusp_mem_cuspFormsNewExtended_bad_only_step
     haveI : NeZero m := ⟨by omega⟩
     heckeT_n_cusp k m g ∈ cuspFormsNewExtended N k := by
   haveI : NeZero m := ⟨by omega⟩
-  set p := m.minFac with hp_def
+  set p := m.minFac
   have hpp : p.Prime := Nat.minFac_prime (by omega : m ≠ 1)
-  set v := m.factorization p with hv_def
+  set v := m.factorization p
   have hpv_pos : 0 < p ^ v := pow_pos hpp.pos v
   have hdiv_pos : 0 < m / p ^ v :=
     Nat.div_pos (Nat.le_of_dvd (by omega) (Nat.ordProj_dvd m p)) hpv_pos
