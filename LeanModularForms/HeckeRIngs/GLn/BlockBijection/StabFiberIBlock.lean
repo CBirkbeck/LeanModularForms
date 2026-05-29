@@ -314,11 +314,7 @@ lemma sl_first_row_clear_with_col0_e0 {k : ℕ}
       · intro l hl; exact absurd hl (Finset.notMem_empty _)
       · intro l _; simp
       · intro i j; simp
-      · show (diagMat (k + 2) (Fin.cons 1 a))⁻¹ *
-          (mapGL ℚ (1 : SpecialLinearGroup (Fin (k + 2)) ℤ) : GL (Fin (k + 2)) ℚ) *
-          diagMat (k + 2) (Fin.cons 1 a) ∈ (GL_pair (k + 2)).H
-        rw [map_one, mul_one, inv_mul_cancel]
-        exact one_mem _
+      · simp
   | insert l₀ S' hl₀_notin ih =>
       obtain ⟨T', hT'_col0, hT'_S, hT'_outside, hT'_block, hT'_stab⟩ := ih
       exact sl_first_row_clear_insert_step a ha W h_col0_zero h_col0_succ_zero
@@ -338,11 +334,11 @@ private lemma adjugate_rearr_cancel {n : ℕ} (h_card : Fintype.card (Fin n) ≠
   have h_rearr_adj := congr_arg Matrix.adjugate h
   rw [show Matrix.adjugate (Da * X * Db * Matrix.adjugate νm) =
         Matrix.adjugate (Matrix.adjugate νm) *
-          (Matrix.adjugate Db * (Matrix.adjugate X * Matrix.adjugate Da)) from by
+          (Matrix.adjugate Db * (Matrix.adjugate X * Matrix.adjugate Da)) by
       rw [Matrix.adjugate_mul_distrib, Matrix.adjugate_mul_distrib,
           Matrix.adjugate_mul_distrib],
     show Matrix.adjugate (Matrix.adjugate Bm * Dc) =
-        Matrix.adjugate Dc * Matrix.adjugate (Matrix.adjugate Bm) from by
+        Matrix.adjugate Dc * Matrix.adjugate (Matrix.adjugate Bm) by
       rw [Matrix.adjugate_mul_distrib],
     adjugate_adjugate_of_det_one _ h_card hν,
     adjugate_adjugate_of_det_one _ h_card hB] at h_rearr_adj
@@ -352,11 +348,11 @@ private lemma adjugate_rearr_cancel {n : ℕ} (h_card : Fintype.card (Fin n) ≠
   rw [show Matrix.adjugate νm *
         (νm * (Matrix.adjugate Db * (Matrix.adjugate X * Matrix.adjugate Da))) =
       (Matrix.adjugate νm * νm) *
-        (Matrix.adjugate Db * (Matrix.adjugate X * Matrix.adjugate Da)) from by
+        (Matrix.adjugate Db * (Matrix.adjugate X * Matrix.adjugate Da)) by
       simp only [Matrix.mul_assoc],
     Matrix.adjugate_mul, hν, one_smul, Matrix.one_mul,
     show Matrix.adjugate Db * (Matrix.adjugate X * Matrix.adjugate Da) =
-      Matrix.adjugate Db * Matrix.adjugate X * Matrix.adjugate Da from by
+      Matrix.adjugate Db * Matrix.adjugate X * Matrix.adjugate Da by
       simp only [Matrix.mul_assoc]] at h_premul
   exact h_premul
 
@@ -364,13 +360,12 @@ private lemma det_block_eq_one_of_row0_e0 {k : ℕ}
     (N : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ) (hN_det : N.det = 1)
     (hN_00 : N 0 0 = 1) (hN_row0 : ∀ l : Fin (k + 1), N 0 l.succ = 0) :
     Matrix.det (Matrix.of fun I J : Fin (k + 1) ↦ N I.succ J.succ) = 1 := by
-  rw [Matrix.det_succ_row_zero, Fin.sum_univ_succ] at hN_det
-  rw [Finset.sum_eq_zero (fun j _ ↦ by rw [hN_row0 j]; ring), add_zero, hN_00] at hN_det
+  rw [Matrix.det_succ_row_zero, Fin.sum_univ_succ,
+    Finset.sum_eq_zero (fun j _ ↦ by rw [hN_row0 j]; ring), add_zero, hN_00] at hN_det
   simp only [Fin.val_zero, pow_zero, one_mul, mul_one] at hN_det
-  have h_submat : N.submatrix Fin.succ (0 : Fin (k + 2)).succAbove =
-      Matrix.of fun I J : Fin (k + 1) ↦ N I.succ J.succ := by
-    ext I J; rw [Fin.succAbove_zero]; rfl
-  rwa [h_submat] at hN_det
+  rwa [show N.submatrix Fin.succ (0 : Fin (k + 2)).succAbove =
+      Matrix.of fun I J : Fin (k + 1) ↦ N I.succ J.succ by
+    ext I J; rw [Fin.succAbove_zero]; rfl] at hN_det
 
 private lemma exists_block_form_of_col0_e0 {k : ℕ}
     (d : Fin (k + 1) → ℕ) (hd : ∀ i, 0 < d i)
@@ -487,32 +482,29 @@ private lemma fiber_int_mat_eq_via_i_block_explicit {k : ℕ}
     Matrix.diagonal (fun r : Fin (k + 2) ↦
       (((Fin.cons 1 b : Fin (k + 2) → ℕ) r : ℕ) : ℤ))
   have h_M_inv_M_val :
-      (M_i⁻¹).val * M_i.val = (1 : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ) := by
-    show ((M_i⁻¹) * M_i).val = (1 : SpecialLinearGroup (Fin (k + 2)) ℤ).val
-    rw [inv_mul_cancel]
+      (M_i⁻¹).val * M_i.val = (1 : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ) :=
+    show ((M_i⁻¹) * M_i).val = (1 : SpecialLinearGroup (Fin (k + 2)) ℤ).val by
+      rw [inv_mul_cancel]
   have h_N_N_inv_val :
-      N_i.val * (N_i⁻¹).val = (1 : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ) := by
-    show (N_i * N_i⁻¹).val = (1 : SpecialLinearGroup (Fin (k + 2)) ℤ).val
-    rw [mul_inv_cancel]
+      N_i.val * (N_i⁻¹).val = (1 : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ) :=
+    show (N_i * N_i⁻¹).val = (1 : SpecialLinearGroup (Fin (k + 2)) ℤ).val by
+      rw [mul_inv_cancel]
   have h_inv_conj : (M_i⁻¹).val * D_a = D_a * (N_i⁻¹).val := by
-    have step2 :
-        (M_i⁻¹).val * D_a * N_i.val * (N_i⁻¹).val = D_a * (N_i⁻¹).val := by
-      rw [show (M_i⁻¹).val * D_a * N_i.val = D_a from by
+    have step2 : (M_i⁻¹).val * D_a * N_i.val * (N_i⁻¹).val = D_a * (N_i⁻¹).val := by
+      rw [show (M_i⁻¹).val * D_a * N_i.val = D_a by
         rw [Matrix.mul_assoc, h_int_conj, ← Matrix.mul_assoc, h_M_inv_M_val, Matrix.one_mul]]
-    rw [Matrix.mul_assoc, h_N_N_inv_val, Matrix.mul_one] at step2
-    exact step2
-  have h_block_i_inv : toSL i.out = slSuccEmbed σ_i * M_i⁻¹ := by
-    rw [← h_block_i, mul_inv_cancel_right]
+    rwa [Matrix.mul_assoc, h_N_N_inv_val, Matrix.mul_one] at step2
   have h_block_i_inv_val : (toSL i.out).val =
-      (slSuccEmbed σ_i).val * (M_i⁻¹).val := by
-    show ((toSL i.out)).val = ((slSuccEmbed σ_i) * M_i⁻¹).val
-    rw [← h_block_i_inv]
+      (slSuccEmbed σ_i).val * (M_i⁻¹).val :=
+    show ((toSL i.out)).val = ((slSuccEmbed σ_i) * M_i⁻¹).val by
+      rw [show toSL i.out = slSuccEmbed σ_i * M_i⁻¹ by
+        rw [← h_block_i, mul_inv_cancel_right]]
   rw [show (N_i⁻¹ * toSL j.out).val = (N_i⁻¹).val * (toSL j.out).val from rfl,
     show (slSuccEmbed σ_i).val * D_a * ((N_i⁻¹).val * (toSL j.out).val) * D_b =
-      ((slSuccEmbed σ_i).val * (D_a * (N_i⁻¹).val)) * (toSL j.out).val * D_b from by
+      ((slSuccEmbed σ_i).val * (D_a * (N_i⁻¹).val)) * (toSL j.out).val * D_b by
       simp only [Matrix.mul_assoc], ← h_inv_conj,
     show (slSuccEmbed σ_i).val * ((M_i⁻¹).val * D_a) * (toSL j.out).val * D_b =
-      ((slSuccEmbed σ_i).val * (M_i⁻¹).val) * D_a * (toSL j.out).val * D_b from by
+      ((slSuccEmbed σ_i).val * (M_i⁻¹).val) * D_a * (toSL j.out).val * D_b by
       simp only [← Matrix.mul_assoc], ← h_block_i_inv_val]
   exact hν
 
@@ -614,29 +606,23 @@ private lemma fiber_int_mat_eq_via_i_block_rearr_explicit {k : ℕ}
       ν.val * Matrix.adjugate ν.val =
         (1 : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ) := by
     rw [Matrix.mul_adjugate, show ν.val.det = 1 from ν.2, one_smul]
-  have h_premul :
-      D_a * X * D_b =
-        Matrix.adjugate (slSuccEmbed σ_i).val * (D_c * ν.val) := by
+  have h_premul : D_a * X * D_b = Matrix.adjugate (slSuccEmbed σ_i).val * (D_c * ν.val) := by
     have h : Matrix.adjugate (slSuccEmbed σ_i).val *
         ((slSuccEmbed σ_i).val * D_a * X * D_b) =
-        Matrix.adjugate (slSuccEmbed σ_i).val * (D_c * ν.val) := by
-      rw [h_subst]
+        Matrix.adjugate (slSuccEmbed σ_i).val * (D_c * ν.val) := by rw [h_subst]
     rw [show Matrix.adjugate (slSuccEmbed σ_i).val *
             ((slSuccEmbed σ_i).val * D_a * X * D_b) =
           (Matrix.adjugate (slSuccEmbed σ_i).val * (slSuccEmbed σ_i).val) *
-            D_a * X * D_b from by
-        simp only [Matrix.mul_assoc]] at h
-    rw [h_adj_block_block, Matrix.one_mul] at h
+            D_a * X * D_b by simp only [Matrix.mul_assoc],
+      h_adj_block_block, Matrix.one_mul] at h
     exact h
   have h : D_a * X * D_b * Matrix.adjugate ν.val =
       Matrix.adjugate (slSuccEmbed σ_i).val * (D_c * ν.val) *
-        Matrix.adjugate ν.val := by
-    rw [h_premul]
+        Matrix.adjugate ν.val := by rw [h_premul]
   rw [show Matrix.adjugate (slSuccEmbed σ_i).val * (D_c * ν.val) *
         Matrix.adjugate ν.val =
-      Matrix.adjugate (slSuccEmbed σ_i).val * D_c * (ν.val * Matrix.adjugate ν.val)
-      by simp only [Matrix.mul_assoc]] at h
-  rw [h_ν_adj_ν, Matrix.mul_one] at h
+      Matrix.adjugate (slSuccEmbed σ_i).val * D_c * (ν.val * Matrix.adjugate ν.val) by
+      simp only [Matrix.mul_assoc], h_ν_adj_ν, Matrix.mul_one] at h
   exact h
 
 private lemma fiber_int_mat_eq_via_i_block_rearr {k : ℕ}
