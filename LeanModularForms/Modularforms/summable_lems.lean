@@ -311,7 +311,7 @@ private lemma aux (a b c : ℝ) (ha : 0 < a) (hb : 0 < b) (_hc : 0 < c) :
     a⁻¹ ≤ c * b⁻¹ ↔ b ≤ c * a := by
   rw [inv_le_iff_one_le_mul₀ ha, mul_right_comm, le_mul_inv_iff₀ hb, one_mul]
 
-lemma summable_hammerTime_nat {α : Type} [NormedField α] [CompleteSpace α] (f : ℕ → α) (a : ℝ)
+lemma summable_hammerTime_nat {α : Type*} [NormedField α] [CompleteSpace α] (f : ℕ → α) (a : ℝ)
     (hab : 1 < a) (hf : (fun n ↦ (f n)⁻¹) =O[cofinite] fun n ↦ (|(n : ℝ)| ^ (a : ℝ))⁻¹) :
     Summable fun n ↦ (f n)⁻¹ :=
   summable_of_isBigO ((Real.summable_nat_rpow_inv.mpr hab).congr (fun _ ↦ by simp)) hf
@@ -922,23 +922,19 @@ theorem aut_bound_on_comp (K : Set ℍ) (hk2 : IsCompact K) (k : ℕ) :
     rw [two_mul]
     exact add_le_add (by simpa using sub_bound s.1 A B hB (hAB s.2) k n)
       (by simpa using add_bound s.1 A B hB (hAB s.2) k n)
-  refine ⟨fun _ ↦ 0, summable_zero, ?_⟩
-  intro n
+  refine ⟨fun _ ↦ 0, summable_zero, fun _ r ↦ ?_⟩
   rw [not_nonempty_iff_eq_empty] at h1
-  intro r
   exfalso
-  have hr := r.2
-  simp_rw [h1] at hr
-  simp at hr
+  exact (h1 ▸ r.2 : (r.1 : ℍ) ∈ (∅ : Set ℍ))
 
 theorem diff_on_aux (k : ℕ) (n : ℕ+) :
     DifferentiableOn ℂ
       ((fun t : ℂ ↦ (-1 : ℂ) ^ k * k ! * (1 / (t - n) ^ (k + 1))) + fun t : ℂ ↦
         (-1) ^ k * k ! * (1 / (t + n) ^ (k + 1))) {z : ℂ | 0 < z.im} := by
-  have this (n : ℕ+) (z : ℂ) (hz : 0 < z.im) : (z + n) ^ (k + 1) ≠ 0 := by
-    simpa using upper_ne_int ⟨z, hz⟩ n
-  have this (n : ℕ+) (z : ℂ) (hz : 0 < z.im) : (z - n) ^ (k + 1) ≠ 0 := by
+  have hsub (n : ℕ+) (z : ℂ) (hz : 0 < z.im) : (z - n) ^ (k + 1) ≠ 0 := by
     simpa using upper_ne_int ⟨z, hz⟩ (-n)
+  have hadd (n : ℕ+) (z : ℂ) (hz : 0 < z.im) : (z + n) ^ (k + 1) ≠ 0 := by
+    simpa using upper_ne_int ⟨z, hz⟩ n
   fun_prop (disch := aesop)
 
 theorem diff_at_aux (s : {z : ℂ | 0 < z.im}) (k : ℕ) (n : ℕ+) :
@@ -1341,9 +1337,9 @@ lemma t9 (z : ℍ) : ∑' m : ℕ,
   have := tsum_sigma_eqn z (k := 1)
   rw [tsum_mul_left, ← this]
   have he : 2 * (2 * ↑π * Complex.I) ^ 2 = - 8 * π ^ 2 := by
-     rw [pow_two]
-     ring_nf
-     simp only [I_sq, mul_neg, mul_one, neg_mul]
+    rw [pow_two]
+    ring_nf
+    simp [I_sq]
   rw [he]
   simp only [neg_mul, pow_one, neg_inj, mul_eq_mul_left_iff, mul_eq_zero, OfNat.ofNat_ne_zero,
     ne_eq, not_false_eq_true, pow_eq_zero_iff, ofReal_eq_zero, false_or]
