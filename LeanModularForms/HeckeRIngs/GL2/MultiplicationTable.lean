@@ -220,10 +220,9 @@ lemma mulSupport_pp_dvd_p (k : ℕ) (_hk : 0 < k) (a : Fin 2 → ℕ)
       ((SL_j₀ : GL (Fin 2) ℚ) *
         ((SL_L₂ : GL (Fin 2) ℚ) * dpk * (SL_R₂ : GL (Fin 2) ℚ))) =
       (SL_La : GL (Fin 2) ℚ) * da * (SL_Ra : GL (Fin 2) ℚ) := by
-    rw [← hi₀, ← hj₀, ← hD1_eq, ← hD2_eq]
-    exact h_prod_eq_a
-  have := congr_arg₂ (· * ·) (congr_arg ((SL_La : GL (Fin 2) ℚ)⁻¹ * ·) hprod)
-    (show (SL_Ra : GL (Fin 2) ℚ)⁻¹ = (SL_Ra : GL (Fin 2) ℚ)⁻¹ from rfl)
+    rwa [← hi₀, ← hj₀, ← hD1_eq, ← hD2_eq]
+  have := congr_arg (· * (SL_Ra : GL (Fin 2) ℚ)⁻¹) (congr_arg
+    ((SL_La : GL (Fin 2) ℚ)⁻¹ * ·) hprod)
   simp only [mul_assoc, inv_mul_cancel_left] at this
   simp only [L', R', S_mid, map_mul, map_inv] at this ⊢
   convert this using 1; group
@@ -998,11 +997,10 @@ private lemma T_sum_mul_peel_prime_summand_rhs (q : ℕ) (hq : q.Prime) (a b : �
     T_sum ⟨q ^ (r + s - 2 * i), pow_pos hq.pos _⟩ *
       T_sum_nat (↑m' * ↑n' / (d' * d')) =
     T_sum_nat (q ^ a * ↑m' * (q ^ b * ↑n') / (q ^ i * d' * (q ^ i * d'))) := by
-  have hq_ndvd_mn : ¬ q ∣ ↑m' * ↑n' := fun h ↦
-    hqm ((hq.dvd_mul.mp h).elim id (fun h' ↦ absurd h' hqn))
-  have hq_ndvd_quot : ¬ q ∣ ↑m' * ↑n' / (d' * d') := fun h ↦ hq_ndvd_mn (dvd_trans h
-    (Nat.div_dvd_of_dvd (Nat.mul_dvd_mul (dvd_trans hd'_dvd (Nat.gcd_dvd_left _ _))
-      (dvd_trans hd'_dvd (Nat.gcd_dvd_right _ _)))))
+  have hq_ndvd_quot : ¬ q ∣ ↑m' * ↑n' / (d' * d') := fun h ↦
+    hqm ((hq.dvd_mul.mp (dvd_trans h
+      (Nat.div_dvd_of_dvd (Nat.mul_dvd_mul (dvd_trans hd'_dvd (Nat.gcd_dvd_left _ _))
+        (dvd_trans hd'_dvd (Nat.gcd_dvd_right _ _)))))).elim id (fun h' ↦ absurd h' hqn))
   have h_quot_pos : 0 < ↑m' * ↑n' / (d' * d') := Nat.div_pos
     (Nat.le_of_dvd (Nat.mul_pos m'.pos n'.pos) (Nat.mul_dvd_mul
       (dvd_trans hd'_dvd (Nat.gcd_dvd_left _ _))
@@ -1024,7 +1022,6 @@ private lemma T_sum_mul_peel_prime_summand_rhs (q : ℕ) (hq : q.Prime) (a b : �
       rw [← pow_add]; congr 1; omega,
     show q ^ (a + b - 2 * i) * q ^ (2 * i) * (↑m' * ↑n') =
       q ^ (2 * i) * (q ^ (a + b - 2 * i) * (↑m' * ↑n')) from by ring,
-    show q ^ (2 * i) * (d' * d') = q ^ (2 * i) * (d' * d') from rfl,
     Nat.mul_div_mul_left _ _ (pow_pos hq.pos (2 * i)),
     Nat.mul_div_assoc _ (Nat.mul_dvd_mul
       (dvd_trans hd'_dvd (Nat.gcd_dvd_left _ _)) (dvd_trans hd'_dvd (Nat.gcd_dvd_right _ _)))]
