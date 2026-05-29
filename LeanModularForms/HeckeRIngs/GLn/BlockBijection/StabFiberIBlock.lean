@@ -50,12 +50,9 @@ lemma mem_diagMat_cons_stabilizer_subgroupOf_iff {k : ℕ}
     (diagMat (k + 2) (Fin.cons 1 a))⁻¹ *
         (σ : GL (Fin (k + 2)) ℚ) *
         diagMat (k + 2) (Fin.cons 1 a) ∈ (GL_pair (k + 2)).H := by
-  rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
-      ConjAct.smul_def]
-  simp only [map_inv, ConjAct.ofConjAct_toConjAct, inv_inv]
-  rw [show ((diagMat_delta (k + 2) (Fin.cons 1 a) : (GL_pair (k + 2)).Δ) :
-        GL (Fin (k + 2)) ℚ) = diagMat (k + 2) (Fin.cons 1 a) from
-      diagMat_delta_val (k + 2) (Fin.cons 1 a) (cons_one_pos ha)]
+  simp only [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
+    ConjAct.smul_def, map_inv, ConjAct.ofConjAct_toConjAct, inv_inv,
+    diagMat_delta_val (k + 2) (Fin.cons 1 a) (cons_one_pos ha)]
 
 /-- Integer-level conjugation identity for a `Fin.cons 1 _`-stabilizer SL matrix: given
 `M : SL_(k+2)(ℤ)` whose `mapGL ℚ`-image lies in the diag-conjugation stabilizer of
@@ -89,9 +86,8 @@ lemma exists_stab_int_conjugate_diagMat_cons_one {k : ℕ}
     congr 1
   rw [show ((mapGL ℚ N : GL _ ℚ) : Matrix _ _ ℚ) = N.1.map (algebraMap ℤ ℚ) from rfl,
       show ((mapGL ℚ M : GL _ ℚ) : Matrix _ _ ℚ) = M.1.map (algebraMap ℤ ℚ) from rfl,
-      h_D] at h_mat
-  rw [← Matrix.map_mul, ← Matrix.map_mul] at h_mat
-  exact (Matrix.map_injective (algebraMap ℤ ℚ).injective_int h_mat)
+      h_D, ← Matrix.map_mul, ← Matrix.map_mul] at h_mat
+  exact Matrix.map_injective (algebraMap ℤ ℚ).injective_int h_mat
 
 private lemma stabilizer_implies_first_col_div_chain {k : ℕ}
     (a : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i)
@@ -116,13 +112,10 @@ private lemma stabilizer_implies_first_col_div_chain {k : ℕ}
           i.succ 0 :=
     congrFun
       (congrFun (by simpa only [Units.val_mul] using congr_arg Units.val h_GL_eq) i.succ) 0
-  rw [diagMat_val _ _ (cons_one_pos ha), Matrix.diagonal_mul, Matrix.mul_diagonal] at h_entry
-  have hcons_succ : ((Fin.cons 1 a : Fin (k + 2) → ℕ) i.succ : ℚ) = (a i : ℚ) := by
-    simp [Fin.cons_succ]
-  have hcons_zero : ((Fin.cons 1 a : Fin (k + 2) → ℕ) (0 : Fin (k + 2)) : ℚ) = 1 := by
-    simp [Fin.cons_zero]
-  rw [hcons_succ, hcons_zero, mul_one, mapGL_coe_matrix] at h_entry
-  simp only [Matrix.SpecialLinearGroup.map_apply_coe, RingHom.mapMatrix_apply,
+  rw [diagMat_val _ _ (cons_one_pos ha), Matrix.diagonal_mul, Matrix.mul_diagonal,
+    mapGL_coe_matrix] at h_entry
+  simp only [Fin.cons_succ, Fin.cons_zero, Nat.cast_one, mul_one,
+    Matrix.SpecialLinearGroup.map_apply_coe, RingHom.mapMatrix_apply,
     Matrix.map_apply, algebraMap_int_eq, eq_intCast] at h_entry
   rw [← toSL_val_cast σ i.succ 0] at h_entry
   exact_mod_cast h_entry.symm
@@ -145,10 +138,8 @@ private lemma exists_stab_with_inv_first_col_of_fiber {k : ℕ}
       (diagMat (k + 2) (Fin.cons 1 a))⁻¹ *
         (mapGL ℚ M : GL (Fin (k + 2)) ℚ) *
         diagMat (k + 2) (Fin.cons 1 a) ∈ (GL_pair (k + 2)).H := by
-  set w : Fin (k + 2) → ℤ :=
-    fun r ↦ ((toSL i.out)⁻¹ : SpecialLinearGroup (Fin (k + 2)) ℤ).1 r 0
-  exact sl_exists_col_stab_divChain a ha hda w
-    (fun d hd ↦ sl_first_col_primitive (toSL i.out)⁻¹ d hd)
+  exact sl_exists_col_stab_divChain a ha hda _
+    (sl_first_col_primitive (toSL i.out)⁻¹)
     (hfib_col_div_a a b c ha hb hc i j hfib)
 
 private lemma mul_first_col_eq_e0_of_col_eq_inv {k : ℕ}
@@ -223,16 +214,13 @@ private lemma slTransvec_zero_succ_stab {k : ℕ}
   · subst hi
     show ((Fin.cons 1 a : Fin (k + 2) → ℕ) 0 : ℤ) ∣ _
     simp
-  · have h_no_c : ¬ (0 = i' ∧ l.succ = j') := fun ⟨h0, _⟩ ↦ hi h0.symm
-    have h_entry :
-        (slTransvecG (0 : Fin (k + 2)) l.succ (Fin.succ_ne_zero l).symm c).1 i' j' =
-          if i' = j' then 1 else 0 := by
-      show (Matrix.transvection (0 : Fin (k + 2)) l.succ c) i' j' = _
-      simp [Matrix.transvection, Matrix.one_apply, h_no_c]
-    rw [h_entry]
+  · rw [show (slTransvecG (0 : Fin (k + 2)) l.succ (Fin.succ_ne_zero l).symm c).1 i' j' =
+          if i' = j' then 1 else 0 from by
+        show (Matrix.transvection (0 : Fin (k + 2)) l.succ c) i' j' = _
+        simp [Matrix.transvection, Matrix.one_apply,
+          show ¬ (0 = i' ∧ l.succ = j') from fun ⟨h0, _⟩ ↦ hi h0.symm]]
     by_cases h_diag : i' = j'
-    · subst h_diag
-      simp
+    · subst h_diag; simp
     · simp [h_diag]
 
 private lemma sl_first_row_clear_insert_step {k : ℕ}
@@ -260,37 +248,35 @@ private lemma sl_first_row_clear_insert_step {k : ℕ}
   set c_l₀ : ℤ := -(W.1 0 l₀.succ) with hc_l₀_def
   set T_l₀ : SpecialLinearGroup (Fin (k + 2)) ℤ :=
     slTransvecG (0 : Fin (k + 2)) l₀.succ (Fin.succ_ne_zero l₀).symm c_l₀ with hT_l₀_def
-  have h_WT'_00 : (W * T').1 0 0 = 1 := by rw [hT'_col0 0]; exact h_col0_zero
+  have h_assoc : W * (T' * T_l₀) = (W * T') * T_l₀ := (mul_assoc _ _ _).symm
   refine ⟨T' * T_l₀, ?_, ?_, ?_, ?_, ?_⟩
   · intro r
-    rw [show W * (T' * T_l₀) = (W * T') * T_l₀ from (mul_assoc _ _ _).symm, hT_l₀_def,
-      sl_addCol_preserves_col 0 l₀.succ (Fin.succ_ne_zero l₀).symm c_l₀ (W * T') r
-          (Fin.succ_ne_zero l₀).symm]
+    rw [h_assoc, hT_l₀_def, sl_addCol_preserves_col 0 l₀.succ (Fin.succ_ne_zero l₀).symm c_l₀
+        (W * T') r (Fin.succ_ne_zero l₀).symm]
     exact hT'_col0 r
   · intro l hl
-    rw [show W * (T' * T_l₀) = (W * T') * T_l₀ from (mul_assoc _ _ _).symm, hT_l₀_def]
+    rw [h_assoc, hT_l₀_def]
     obtain h_eq | hl_S' := Finset.mem_insert.mp hl
     · subst h_eq
       rw [sl_addCol_target_col 0 l.succ (Fin.succ_ne_zero l).symm c_l₀ (W * T') 0,
-        hT'_outside l hl₀_notin, h_WT'_00]
+        hT'_outside l hl₀_notin, show (W * T').1 0 0 = 1 from hT'_col0 0 ▸ h_col0_zero]
       show W.1 0 l.succ + c_l₀ * 1 = 0
       rw [hc_l₀_def]; ring
     · rw [sl_addCol_preserves_col 0 l₀.succ (Fin.succ_ne_zero l₀).symm c_l₀ (W * T') 0
           (fun h ↦ hl₀_notin (Fin.succ_injective _ h ▸ hl_S'))]
       exact hT'_S l hl_S'
   · intro l hl_notin
-    rw [show W * (T' * T_l₀) = (W * T') * T_l₀ from (mul_assoc _ _ _).symm, hT_l₀_def,
+    rw [h_assoc, hT_l₀_def,
         sl_addCol_preserves_col 0 l₀.succ (Fin.succ_ne_zero l₀).symm c_l₀ (W * T') 0
         (fun h ↦ hl_notin (Fin.succ_injective _ h ▸ Finset.mem_insert_self _ _))]
     exact hT'_outside l (fun h ↦ hl_notin (Finset.mem_insert_of_mem h))
   · intro i' j'
-    rw [show W * (T' * T_l₀) = (W * T') * T_l₀ from (mul_assoc _ _ _).symm, hT_l₀_def]
+    rw [h_assoc, hT_l₀_def]
     by_cases h_eq : j'.succ = l₀.succ
     · obtain rfl : j' = l₀ := Fin.succ_injective _ h_eq
-      rw [sl_addCol_target_col 0 j'.succ (Fin.succ_ne_zero j').symm c_l₀ (W * T') i'.succ]
-      have hcol0_succ : (W * T').1 i'.succ 0 = 0 := by
-        rw [hT'_col0 i'.succ]; exact h_col0_succ_zero i'
-      rw [hcol0_succ, mul_zero, add_zero]
+      rw [sl_addCol_target_col 0 j'.succ (Fin.succ_ne_zero j').symm c_l₀ (W * T') i'.succ,
+        show (W * T').1 i'.succ 0 = 0 from hT'_col0 i'.succ ▸ h_col0_succ_zero i',
+        mul_zero, add_zero]
       exact hT'_block i' j'
     · rw [sl_addCol_preserves_col 0 l₀.succ (Fin.succ_ne_zero l₀).symm c_l₀ (W * T') i'.succ
           h_eq]
