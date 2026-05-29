@@ -824,9 +824,7 @@ theorem T_sum_ppow_mul : ∀ r s : ℕ, r ≤ s →
   | 0 =>
     rw [Finset.sum_range_one]
     simp only [Nat.zero_add, pow_zero, one_smul, one_mul]
-    rw [show T_sum (⟨1, pow_pos hp.pos 0⟩ : ℕ+) = 1 from by
-      rw [show (⟨1, pow_pos hp.pos 0⟩ : ℕ+) = (1 : ℕ+) from
-        Subtype.ext rfl]; exact T_sum_one, one_mul]; simp
+    rw [show T_sum (⟨1, pow_pos hp.pos 0⟩ : ℕ+) = 1 from T_sum_one, one_mul]; simp
   | 1 =>
     rw [Finset.sum_range_succ, Finset.sum_range_one]
     simp only [pow_zero, one_smul, one_mul, pow_one]
@@ -839,12 +837,6 @@ theorem T_sum_ppow_mul : ∀ r s : ℕ, r ≤ s →
       (ih r (by omega) s (by omega))
 
 section CoprimeMultiplicativity
-
-open Finset in
-/-- `∏ i, (![a, d]) i (![a, d]) = a * d`. -/
-private lemma prod_mk2 (a d : ℕ) :
-    ∏ i, (![a, d]) i = a * d := by
-  simp [Fin.prod_univ_two]
 
 /-- Coprime factoring: `T(a,da) T(b,db) = T(ab,da*db)` when `a*da` and `b*db` are coprime. -/
 lemma T_ad_mul_of_coprime (a b da db : ℕ)
@@ -860,11 +852,10 @@ lemma T_ad_mul_of_coprime (a b da db : ℕ)
     (have : i = 0 := by omega); subst this; simpa using hdva
   have hb_div : DivChain 2 (![b, db]) := fun i hi ↦ by
     (have : i = 0 := by omega); subst this; simpa using hdvb
-  have mul_eq : (![a, da]) * (![b, db]) = ![a * b, da * db] := by
-    ext i; fin_cases i <;> simp [Pi.mul_apply]
-  rw [← show T_elem ((![a, da]) * (![b, db])) = T_elem ![a * b, da * db] by simp only [mul_eq]]
+  rw [← show T_elem ((![a, da]) * (![b, db])) = T_elem ![a * b, da * db] by
+    congr 1; ext i; fin_cases i <;> simp [Pi.mul_apply]]
   exact T_diag_mul_coprime 2 (![a, da]) (![b, db]) ha_pos hb_pos ha_div hb_div
-    (by rw [prod_mk2, prod_mk2]; exact hcop)
+    (by simpa [Fin.prod_univ_two] using hcop)
 
 /-- When `T_ad` conditions fail, the product is zero and so is the RHS. -/
 private lemma T_ad_mul_zero_of_not_dvd (a da : ℕ) (h : ¬(0 < a ∧ 0 < da ∧ a ∣ da))
@@ -880,20 +871,17 @@ lemma mul_injOn_coprime_divisors (m n : ℕ) (hcop : Nat.Coprime m n) :
   intro ⟨a₁, b₁⟩ h₁ ⟨a₂, b₂⟩ h₂ heq
   simp only [Finset.mem_coe, Finset.mem_product, Nat.mem_divisors] at h₁ h₂
   simp only at heq
-  have hcop₁₂ : Nat.Coprime a₁ b₂ :=
-    (hcop.coprime_dvd_left h₁.1.1).coprime_dvd_right h₂.2.1
-  have hcop₂₁ : Nat.Coprime a₂ b₁ :=
-    (hcop.coprime_dvd_left h₂.1.1).coprime_dvd_right h₁.2.1
   have haeq : a₁ = a₂ := Nat.dvd_antisymm
-    (hcop₁₂.dvd_of_dvd_mul_right (heq ▸ dvd_mul_right a₁ b₁))
-    (hcop₂₁.dvd_of_dvd_mul_right (heq ▸ dvd_mul_right a₂ b₂))
+    (((hcop.coprime_dvd_left h₁.1.1).coprime_dvd_right h₂.2.1).dvd_of_dvd_mul_right
+      (heq ▸ dvd_mul_right a₁ b₁))
+    (((hcop.coprime_dvd_left h₂.1.1).coprime_dvd_right h₁.2.1).dvd_of_dvd_mul_right
+      (heq ▸ dvd_mul_right a₂ b₂))
   have ha_pos : 0 < a₁ := Nat.pos_of_ne_zero fun h ↦ by simp [h] at h₁
   exact Prod.ext haeq (Nat.eq_of_mul_eq_mul_left ha_pos (haeq ▸ heq))
 
 /-- Theorem 3.24(3a): coprime multiplicativity `T(m) T(n) = T(mn)` when `gcd(m,n) = 1`. -/
 theorem T_sum_mul_coprime (m n : ℕ+) (hcop : Nat.Coprime m n) :
     T_sum m * T_sum n = T_sum ⟨m * n, Nat.mul_pos m.pos n.pos⟩ := by
-  open scoped Pointwise in
   set M := (m : ℕ) with hM; set N := (n : ℕ) with hN
   change (∑ a ∈ M.divisors, T_ad a (M / a)) * (∑ b ∈ N.divisors, T_ad b (N / b)) =
     ∑ c ∈ (M * N).divisors, T_ad c ((M * N) / c)
