@@ -363,7 +363,8 @@ private lemma descend_exists_fin_isUnit_mul_eq {p : ℕ} [NeZero p]
     ∃ m : Fin p, a * (m.val : ZMod p) = b := by
   obtain ⟨u, rfl⟩ := ha
   refine ⟨⟨((u⁻¹ : (ZMod p)ˣ).val * b).val, ZMod.val_lt _⟩, ?_⟩
-  rw [ZMod.natCast_zmod_val, ← mul_assoc, ← Units.val_mul, mul_inv_cancel, Units.val_one, one_mul]
+  rw [ZMod.natCast_zmod_val, ← mul_assoc, ← Units.val_mul, mul_inv_cancel, Units.val_one,
+    one_mul]
 
 private lemma descend_upper_tri_target_witness
     {N : ℕ} [NeZero N] {p : ℕ} [NeZero p] (hp : p.Prime) (hpN : p ∣ N)
@@ -398,13 +399,13 @@ private lemma descend_upper_tri_target_witness
   let α_mat : Matrix (Fin 2) (Fin 2) ℤ :=
     !![A + (m.val : ℤ) * C, α01_int; (p : ℤ) * C, D - C * (m'.val : ℤ)]
   have hα01' : (p : ℤ) * α01_int =
-      B + (m.val : ℤ) * D - (A + (m.val : ℤ) * C) * (m'.val : ℤ) := by linarith
+      B + (m.val : ℤ) * D - (A + (m.val : ℤ) * C) * (m'.val : ℤ) := by lia
   have h_det_α : α_mat.det = 1 := by
     rw [show α_mat.det = (A + (m.val : ℤ) * C) * (D - C * (m'.val : ℤ)) -
       α01_int * ((p : ℤ) * C) from Matrix.det_fin_two_of _ _ _ _]
     linear_combination hdet - C * hα01'
-  refine ⟨⟨α_mat, h_det_α⟩, descend_aux_α_mat_in_Gamma0 (x := C) hpN (by simp [α_mat]) h_C_dvd_Np,
-    ?_⟩
+  refine ⟨⟨α_mat, h_det_α⟩,
+    descend_aux_α_mat_in_Gamma0 (x := C) hpN (by simp [α_mat]) h_C_dvd_Np, ?_⟩
   refine descend_aux_lift_int_eq_to_GL hp m.val
     (by rw [Matrix.GeneralLinearGroup.val_mkOfDetNeZero]
         exact descend_aux_lit_real_eq_map_int p m'.val) ?_
@@ -781,8 +782,7 @@ private lemma descendCosetList_lt_matrix {p N : ℕ} [NeZero p] [NeZero N] (hp :
     {v : Fin (descendCosetCount p N)} (hv : v.val < p) :
     (descendCosetList p N hp v : Matrix (Fin 2) (Fin 2) ℝ) =
       !![(1 : ℝ), (v.val : ℝ); 0, (p : ℝ)] := by
-  rw [descendCosetList_apply_lt hp hv]
-  simp [Matrix.GeneralLinearGroup.val_mkOfDetNeZero]
+  rw [descendCosetList_apply_lt hp hv, Matrix.GeneralLinearGroup.val_mkOfDetNeZero]
 
 private lemma descendCosetCount_val_eq_p {p N : ℕ}
     (v : Fin (descendCosetCount p N)) (hv : ¬ v.val < p) : v.val = p := by
