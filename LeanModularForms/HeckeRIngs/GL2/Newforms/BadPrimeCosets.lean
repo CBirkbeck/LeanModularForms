@@ -3,24 +3,24 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: LeanModularForms contributors
 -/
-import LeanModularForms.HeckeRIngs.GL2.AdjointTheoryPetersson
-import LeanModularForms.HeckeRIngs.GL2.CharacterDecomp
-import LeanModularForms.HeckeRIngs.GL2.LevelEmbed
-import LeanModularForms.HeckeRIngs.GL2.LevelRaise
-import LeanModularForms.HeckeRIngs.GL2.Unified.NebentypusHeckeRingHom
-import LeanModularForms.Modularforms.LFunction
-import LeanModularForms.Modularforms.PeterssonLevelN
-import LeanModularForms.Modularforms.DimensionFormulas
-import LeanModularForms.Modularforms.SlashActionAuxil
-import LeanModularForms.Eigenforms.ConductorTheorem
+import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
 import Mathlib.LinearAlgebra.BilinearForm.Orthogonal
 import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
 import Mathlib.NumberTheory.EulerProduct.Basic
 import Mathlib.NumberTheory.EulerProduct.DirichletLSeries
 import Mathlib.NumberTheory.LSeries.AbstractFuncEq
 import Mathlib.NumberTheory.LSeries.DirichletContinuation
-import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
+import LeanModularForms.Eigenforms.ConductorTheorem
+import LeanModularForms.HeckeRIngs.GL2.AdjointTheoryPetersson
+import LeanModularForms.HeckeRIngs.GL2.CharacterDecomp
+import LeanModularForms.HeckeRIngs.GL2.LevelEmbed
+import LeanModularForms.HeckeRIngs.GL2.LevelRaise
 import LeanModularForms.HeckeRIngs.GL2.Newforms.BadPrimeAdjoint
+import LeanModularForms.HeckeRIngs.GL2.Unified.NebentypusHeckeRingHom
+import LeanModularForms.Modularforms.DimensionFormulas
+import LeanModularForms.Modularforms.LFunction
+import LeanModularForms.Modularforms.PeterssonLevelN
+import LeanModularForms.Modularforms.SlashActionAuxil
 
 /-!
 # Newforms: bad-prime coset combinatorics and per-coset Petersson adjoints
@@ -45,7 +45,7 @@ noncomputable def Newform.T_p_lower_with_offset
     (N : ℕ) {p : ℕ} (hp : 0 < p) (b : ℕ) : GL (Fin 2) ℝ :=
   Matrix.GeneralLinearGroup.mkOfDetNeZero
     (!![(p : ℝ), 0; -((N : ℝ) * b), 1] : Matrix (Fin 2) (Fin 2) ℝ)
-    (by simp [Matrix.det_fin_two]; exact_mod_cast hp.ne')
+    (by simp [Matrix.det_fin_two, hp.ne'])
 
 /-- Underlying matrix of `T_p_lower_with_offset N hp b`. -/
 @[simp]
@@ -844,7 +844,7 @@ theorem Newform.peterssonInner_alpha_p_doubleCoset_smul_whole_qOut_inv_fd_eq_pet
 lemma Newform.T_p_lower_with_offset_det
     (N : ℕ) {p : ℕ} (hp : 0 < p) (b : ℕ) :
     (Newform.T_p_lower_with_offset N hp b).det.val = (p : ℝ) := by
-  show ((Newform.T_p_lower_with_offset N hp b : GL (Fin 2) ℝ) :
+  change ((Newform.T_p_lower_with_offset N hp b : GL (Fin 2) ℝ) :
       Matrix (Fin 2) (Fin 2) ℝ).det = (p : ℝ)
   rw [Newform.T_p_lower_with_offset_coe]
   simp [Matrix.det_fin_two]
@@ -853,8 +853,7 @@ lemma Newform.T_p_lower_with_offset_det
 lemma Newform.T_p_lower_with_offset_det_pos
     (N : ℕ) {p : ℕ} (hp : 0 < p) (b : ℕ) :
     0 < (Newform.T_p_lower_with_offset N hp b).det.val := by
-  rw [Newform.T_p_lower_with_offset_det]
-  exact_mod_cast hp
+  rw [Newform.T_p_lower_with_offset_det]; exact_mod_cast hp
 
 open UpperHalfPlane MeasureTheory in
 /-- Per-coset Petersson adjoint identity at the bad-prime upper coset
@@ -892,7 +891,7 @@ noncomputable def Newform.T_p_lower_with_offset_adjugate
     (N : ℕ) {p : ℕ} (hp : 0 < p) (b : ℕ) : GL (Fin 2) ℝ :=
   Matrix.GeneralLinearGroup.mkOfDetNeZero
     (!![(1 : ℝ), 0; ((N : ℝ) * b), (p : ℝ)] : Matrix (Fin 2) (Fin 2) ℝ)
-    (by simp [Matrix.det_fin_two]; exact_mod_cast hp.ne')
+    (by simp [Matrix.det_fin_two, hp.ne'])
 
 /-- Underlying matrix of `T_p_lower_with_offset_adjugate`. -/
 @[simp]
@@ -908,7 +907,7 @@ lemma Newform.T_p_lower_with_offset_adjugate_coe
 lemma Newform.T_p_lower_with_offset_adjugate_det
     (N : ℕ) {p : ℕ} (hp : 0 < p) (b : ℕ) :
     (Newform.T_p_lower_with_offset_adjugate N hp b).det.val = (p : ℝ) := by
-  show ((Newform.T_p_lower_with_offset_adjugate N hp b : GL (Fin 2) ℝ) :
+  change ((Newform.T_p_lower_with_offset_adjugate N hp b : GL (Fin 2) ℝ) :
       Matrix (Fin 2) (Fin 2) ℝ).det = (p : ℝ)
   rw [Newform.T_p_lower_with_offset_adjugate_coe]
   simp [Matrix.det_fin_two]
@@ -917,8 +916,7 @@ lemma Newform.T_p_lower_with_offset_adjugate_det
 lemma Newform.T_p_lower_with_offset_adjugate_det_pos
     (N : ℕ) {p : ℕ} (hp : 0 < p) (b : ℕ) :
     0 < (Newform.T_p_lower_with_offset_adjugate N hp b).det.val := by
-  rw [Newform.T_p_lower_with_offset_adjugate_det]
-  exact_mod_cast hp
+  rw [Newform.T_p_lower_with_offset_adjugate_det]; exact_mod_cast hp
 
 /-- `peterssonAdj (T_p_lower_with_offset N hp b) = T_p_lower_with_offset_adjugate N hp b`
 as `GL (Fin 2) ℝ` elements. -/
@@ -927,7 +925,7 @@ lemma Newform.peterssonAdj_T_p_lower_with_offset_eq
     peterssonAdj (Newform.T_p_lower_with_offset N hp b : GL (Fin 2) ℝ) =
       Newform.T_p_lower_with_offset_adjugate N hp b := by
   apply Units.ext
-  show (peterssonAdj (Newform.T_p_lower_with_offset N hp b : GL (Fin 2) ℝ) :
+  change (peterssonAdj (Newform.T_p_lower_with_offset N hp b : GL (Fin 2) ℝ) :
         Matrix (Fin 2) (Fin 2) ℝ) =
       ((Newform.T_p_lower_with_offset_adjugate N hp b : GL (Fin 2) ℝ) :
         Matrix (Fin 2) (Fin 2) ℝ)
