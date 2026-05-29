@@ -279,33 +279,31 @@ theorem miyake_4_6_5_finset_sieve_heckeT_p_divN_one
       ∀ n : ℕ, (qExpansion (1 : ℝ) g).coeff n =
         (if ∃ p ∈ S, p ∣ n then 0 else (qExpansion (1 : ℝ) f).coeff n) := by
   induction S using Finset.induction_on with
-  | empty =>
-    refine ⟨M, inferInstance, ?_, f, ?_⟩
-    · simp
-    · intro n; simp
+  | empty => exact ⟨M, inferInstance, by simp, f, fun n ↦ by simp⟩
   | @insert p₀ S' hp₀_notin IH =>
-    have hS' : ∀ p ∈ S', p.Prime ∧ p ∣ M :=
-      fun p hp ↦ hS p (Finset.mem_insert_of_mem hp)
     have hp₀_prime : p₀.Prime := (hS p₀ (Finset.mem_insert_self p₀ S')).1
     have hp₀_M : p₀ ∣ M := (hS p₀ (Finset.mem_insert_self p₀ S')).2
-    obtain ⟨M_prev, hM_prev_ne, hM_prev_eq, g_prev, hg_prev⟩ := IH hS'
+    obtain ⟨M_prev, hM_prev_ne, hM_prev_eq, g_prev, hg_prev⟩ :=
+      IH fun p hp ↦ hS p (Finset.mem_insert_of_mem hp)
     have hp₀_not_coprime : ¬ Nat.Coprime p₀ M_prev :=
       insertPrime_not_coprime hp₀_prime hp₀_M hM_prev_eq
     haveI : NeZero p₀ := ⟨hp₀_prime.ne_zero⟩
     haveI hM_new_ne : NeZero (p₀ * M_prev) :=
       ⟨Nat.mul_ne_zero hp₀_prime.ne_zero hM_prev_ne.out⟩
-    have hM_new_eq := insertLevel_eq p₀ M M_prev S' hp₀_notin hM_prev_eq
     have h_le : (Gamma1 (p₀ * M_prev)).map (mapGL ℝ) ≤ (Gamma1 M_prev).map (mapGL ℝ) :=
       Gamma1_mapGL_le_of_dvd ⟨p₀, by ring⟩
-    refine ⟨p₀ * M_prev, hM_new_ne, hM_new_eq,
+    refine ⟨p₀ * M_prev, hM_new_ne, insertLevel_eq p₀ M M_prev S' hp₀_notin hM_prev_eq,
       ModularForm.restrictSubgroup h_le g_prev -
         HeckeRing.GL2.modularFormLevelRaise M_prev p₀ k
-          (HeckeRing.GL2.heckeT_p_divN k p₀ hp₀_prime hp₀_not_coprime g_prev), ?_⟩
-    intro n
+          (HeckeRing.GL2.heckeT_p_divN k p₀ hp₀_prime hp₀_not_coprime g_prev), fun n ↦ ?_⟩
     rw [ModularForm.coe_sub,
       qExpansion_coeff_sieve_step hp₀_prime hp₀_not_coprime h_le g_prev n, hg_prev n]
     exact ite_dvd_insert_eq_ite_exists p₀ n S' 0 _
 
+/-- Square-free sieve identity at period `1`: for `f ∈ M_k(Γ₁(M))` and
+`Squarefree L` with every prime factor of `L` dividing `M`, the witness
+produced by `miyake_4_6_5_finset_sieve_heckeT_p_divN_one` on `L.primeFactors`
+has period-1 Fourier coefficients equal to `sievedQExpansion 1 L ⇑f`. -/
 theorem miyake_4_6_5_squarefree_sieve_heckeT_p_divN_one
     {M : ℕ} [NeZero M] {k : ℤ} (f : ModularForm ((Gamma1 M).map (mapGL ℝ)) k)
     {L : ℕ} (hL : Squarefree L) (hL_M : ∀ p ∈ L.primeFactors, p ∣ M) :
@@ -322,8 +320,7 @@ theorem miyake_4_6_5_squarefree_sieve_heckeT_p_divN_one
     miyake_4_6_5_finset_sieve_heckeT_p_divN_one f L.primeFactors hS_prime_dvd
   rw [h_prod] at hM'_eq
   subst hM'_eq
-  refine ⟨hM'_ne, g, ?_⟩
-  intro n
+  refine ⟨hM'_ne, g, fun n ↦ ?_⟩
   rw [hg n, sievedQExpansion_eq_finsetPrimeCoeffSieve 1 L hL_ne ⇑f n]
   by_cases h_ex : ∃ p ∈ L.primeFactors, p ∣ n
   · rw [if_pos h_ex, finsetPrimeCoeffSieve_of_exists_dvd _ h_ex]
@@ -331,6 +328,9 @@ theorem miyake_4_6_5_squarefree_sieve_heckeT_p_divN_one
     push Not at h_ex
     rw [finsetPrimeCoeffSieve_of_forall_not_dvd _ h_ex, Nat.cast_one]
 
+/-- Restriction along `Γ₁(N) ≤ Γ₁(M)` (for `M ∣ N`) carries
+`modFormCharSpace k χ` into `modFormCharSpace k (χ.comp (ZMod.unitsMap h))`,
+i.e. the Nebentypus pulls back along the natural map `(ZMod N)ˣ → (ZMod M)ˣ`. -/
 theorem restrictSubgroup_mem_modFormCharSpace
     {M N : ℕ} [NeZero M] [NeZero N] {k : ℤ} (χ : (ZMod M)ˣ →* ℂˣ)
     (h : M ∣ N) (f : ModularForm ((Gamma1 M).map (mapGL ℝ)) k)
@@ -458,6 +458,10 @@ private theorem levelRaise_heckeT_mem_modFormCharSpace_comp
     N p₀ k (χ.comp (ZMod.unitsMap hdvd_prev)) h_ht
   rwa [h_comp_eq] at h_lr
 
+/-- Miyake Main Lemma 4.6.8 (finite-prime form).  For `f ∈ modFormCharSpace k χ`
+at level `Γ₁(M)` and a finite set `S` of primes each dividing `M`, there is a
+modular form `g` at level `Γ₁(M · ∏ S)` in the pulled-back character space
+whose period-1 Fourier coefficients are the `S`-sieved coefficients of `f`. -/
 theorem miyake_main_lemma_4_6_8_finset
     {M : ℕ} [NeZero M] {k : ℤ} (χ : (ZMod M)ˣ →* ℂˣ)
     (f : ModularForm ((Gamma1 M).map (mapGL ℝ)) k)
@@ -470,41 +474,36 @@ theorem miyake_main_lemma_4_6_8_finset
         (if ∃ p ∈ S, p ∣ n then 0 else (qExpansion (1 : ℝ) f).coeff n) := by
   induction S using Finset.induction_on with
   | empty =>
-    refine ⟨M, inferInstance, by simp, dvd_refl M, f, ?_, ?_⟩
-    · convert hf using 2
-      rw [ZMod.unitsMap_self, MonoidHom.comp_id]
-    · intro n; simp
+    refine ⟨M, inferInstance, by simp, dvd_refl M, f, ?_, fun n ↦ by simp⟩
+    convert hf using 2
+    rw [ZMod.unitsMap_self, MonoidHom.comp_id]
   | @insert p₀ S' hp₀_notin IH =>
-    have hS' : ∀ p ∈ S', p.Prime ∧ p ∣ M :=
-      fun p hp ↦ hS p (Finset.mem_insert_of_mem hp)
     have hp₀_prime : p₀.Prime := (hS p₀ (Finset.mem_insert_self p₀ S')).1
     have hp₀_M : p₀ ∣ M := (hS p₀ (Finset.mem_insert_self p₀ S')).2
     obtain ⟨M_prev, hM_prev_ne, hM_prev_eq, hdvd_prev, g_prev, hg_prev_char, hg_prev⟩ :=
-      IH hS'
+      IH fun p hp ↦ hS p (Finset.mem_insert_of_mem hp)
     have hp₀_not_coprime : ¬ Nat.Coprime p₀ M_prev :=
       insertPrime_not_coprime hp₀_prime hp₀_M hM_prev_eq
     haveI : NeZero p₀ := ⟨hp₀_prime.ne_zero⟩
     haveI hM_new_ne : NeZero (p₀ * M_prev) :=
       ⟨Nat.mul_ne_zero hp₀_prime.ne_zero hM_prev_ne.out⟩
-    have hM_new_eq := insertLevel_eq p₀ M M_prev S' hp₀_notin hM_prev_eq
     have h_mp_dvd : M_prev ∣ p₀ * M_prev := ⟨p₀, by ring⟩
     have hdvd_new : M ∣ p₀ * M_prev := hdvd_prev.trans h_mp_dvd
     have h_le : (Gamma1 (p₀ * M_prev)).map (mapGL ℝ) ≤ (Gamma1 M_prev).map (mapGL ℝ) :=
       Gamma1_mapGL_le_of_dvd h_mp_dvd
-    refine ⟨p₀ * M_prev, hM_new_ne, hM_new_eq, hdvd_new,
+    refine ⟨p₀ * M_prev, hM_new_ne, insertLevel_eq p₀ M M_prev S' hp₀_notin hM_prev_eq,
+      hdvd_new,
       ModularForm.restrictSubgroup h_le g_prev -
         HeckeRing.GL2.modularFormLevelRaise M_prev p₀ k
           (HeckeRing.GL2.heckeT_p_divN k p₀ hp₀_prime hp₀_not_coprime g_prev),
-      ?_, ?_⟩
-    · exact Submodule.sub_mem _
+      Submodule.sub_mem _
         (restrictSubgroup_mem_modFormCharSpace_comp χ hdvd_prev h_mp_dvd hdvd_new h_le
           hg_prev_char)
         (levelRaise_heckeT_mem_modFormCharSpace_comp hp₀_prime hp₀_not_coprime χ hdvd_prev
-          hdvd_new hg_prev_char)
-    · intro n
-      rw [ModularForm.coe_sub,
-        qExpansion_coeff_sieve_step hp₀_prime hp₀_not_coprime h_le g_prev n, hg_prev n]
-      exact ite_dvd_insert_eq_ite_exists p₀ n S' 0 _
+          hdvd_new hg_prev_char), fun n ↦ ?_⟩
+    rw [ModularForm.coe_sub,
+      qExpansion_coeff_sieve_step hp₀_prime hp₀_not_coprime h_le g_prev n, hg_prev n]
+    exact ite_dvd_insert_eq_ite_exists p₀ n S' 0 _
 
 /-- Miyake Main Lemma 4.6.8 (square-free case).  For a square-free sieve
 modulus `L` whose distinct prime factors all divide `M`, and
@@ -531,15 +530,13 @@ theorem miyake_main_lemma_4_6_8_squarefree
     miyake_main_lemma_4_6_8_finset χ f hf L.primeFactors hS_prime_dvd
   rw [h_prod] at hM'_eq
   subst hM'_eq
-  refine ⟨hM'_ne, g, ?_, ?_⟩
-  · exact hg_char
-  · intro n
-    rw [hg n, sievedQExpansion_eq_finsetPrimeCoeffSieve 1 L hL_ne ⇑f n]
-    by_cases h_ex : ∃ p ∈ L.primeFactors, p ∣ n
-    · rw [if_pos h_ex, finsetPrimeCoeffSieve_of_exists_dvd _ h_ex]
-    · rw [if_neg h_ex]
-      push Not at h_ex
-      rw [finsetPrimeCoeffSieve_of_forall_not_dvd _ h_ex, Nat.cast_one]
+  refine ⟨hM'_ne, g, hg_char, fun n ↦ ?_⟩
+  rw [hg n, sievedQExpansion_eq_finsetPrimeCoeffSieve 1 L hL_ne ⇑f n]
+  by_cases h_ex : ∃ p ∈ L.primeFactors, p ∣ n
+  · rw [if_pos h_ex, finsetPrimeCoeffSieve_of_exists_dvd _ h_ex]
+  · rw [if_neg h_ex]
+    push Not at h_ex
+    rw [finsetPrimeCoeffSieve_of_forall_not_dvd _ h_ex, Nat.cast_one]
 
 /-- Miyake Main Lemma 4.6.8 for general `L ≠ 0`, obtained from the
 square-free case by replacing `L` with its radical
@@ -620,8 +617,7 @@ theorem miyake_main_lemma_4_6_8_level_L
         χ.comp (ZMod.unitsMap (Nat.dvd_mul_right M L)) := by
       rw [MonoidHom.comp_assoc, ZMod.unitsMap_comp]
     exact h_comp_eq ▸ h_restrict
-  · intro n
-    exact hg0_coeff n
+  · exact hg0_coeff
 
 /-- Under the coprime-to-`L` Fourier vanishing hypothesis on `f`, the
 level-`Γ₁(M·L)` Miyake witness `g` produced by
@@ -762,8 +758,7 @@ private theorem qExpansion_coeff_cast_Gamma1
     (qExpansion (1 : ℝ)
         ((h ▸ g) : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)).coeff n =
       (qExpansion (1 : ℝ) g).coeff n := by
-  subst h
-  rfl
+  subst h; rfl
 
 private theorem iteratedSieveWitnessOnList_qExpansion_coeff
     {M : ℕ} [NeZero M] {k : ℤ}
@@ -837,8 +832,7 @@ private theorem cast_eq_zero_iff_Gamma1
     (h : M = N)
     (g : ModularForm ((Gamma1 M).map (mapGL ℝ)) k) :
     ((h ▸ g) : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) = 0 ↔ g = 0 := by
-  subst h
-  rfl
+  subst h; rfl
 
 private theorem iteratedSieveWitnessOnList_cons_zero_step
     {M : ℕ} [NeZero M] {k : ℤ}
@@ -1596,12 +1590,9 @@ theorem exists_oldform_pieces_decomposition_charSpace_of_coprime_prod_vanish
       f L hL h_vanish h_le_full, ?_, ?_⟩
   · exact restrictSubgroup_mem_modFormCharSpace χ
       (Nat.dvd_mul_right M L.prod) f hf_χ
-  · intro g hg
-    refine ⟨?_, ?_⟩
-    · exact iteratedSieveCorrectionPiecesOnList_forall_mem_modFormCharSpace
-        f hf_χ L hL g hg
-    · exact iteratedSieveCorrectionPiecesOnList_forall_mem_isOldformImage
-        f L hL g hg
+  · exact fun g hg ↦
+      ⟨iteratedSieveCorrectionPiecesOnList_forall_mem_modFormCharSpace f hf_χ L hL g hg,
+        iteratedSieveCorrectionPiecesOnList_forall_mem_isOldformImage f L hL g hg⟩
 
 private lemma IsOldformImageAtDeep.exists_prime_qExpansion_support
     {M : ℕ} [NeZero M] {k : ℤ}
@@ -1660,11 +1651,10 @@ theorem exists_oldform_pieces_decomposition_charSpace_qSupp_of_coprime_prod_vani
   obtain ⟨pieces, h_sum, h_restr_char, h_pieces⟩ :=
     exists_oldform_pieces_decomposition_charSpace_of_coprime_prod_vanish
       f hf_χ L hL h_vanish h_le_full
-  refine ⟨pieces, h_sum, h_restr_char, ?_⟩
-  intro g hg
+  refine ⟨pieces, h_sum, h_restr_char, fun g hg ↦ ?_⟩
   obtain ⟨h_char, h_old⟩ := h_pieces g hg
-  refine ⟨h_char, h_old, ?_⟩
-  exact IsOldformImageAtDeep.exists_prime_qExpansion_support f (M * L.prod) h_old
+  exact ⟨h_char, h_old, IsOldformImageAtDeep.exists_prime_qExpansion_support
+    f (M * L.prod) h_old⟩
 
 /-- Same-level collapse of deep oldform image (bridge form).  Given the
 coprime-to-`L.prod` Fourier vanishing hypothesis and an explicit bridge
@@ -1704,9 +1694,7 @@ theorem same_level_collapse_of_deep_oldform_image
   obtain ⟨pieces, h_sum, _h_restr_char, h_pieces⟩ :=
     exists_oldform_pieces_decomposition_charSpace_qSupp_of_coprime_prod_vanish
       f hf_χ L hL h_vanish h_le_full
-  refine h_bridge pieces h_sum ?_
-  intro g hg
-  exact (h_pieces g hg).2.2
+  exact h_bridge pieces h_sum fun g hg ↦ (h_pieces g hg).2.2
 
 /-- A bundle of same-level divisor projections at level `Γ₁(M)` for a fixed
 target form `f`, a prime-list `L` of primes dividing `M`, and the level
@@ -1772,9 +1760,7 @@ theorem same_level_collapse_of_deep_oldform_image_of_projections
   obtain ⟨pieces, h_sum, _h_restr_char, h_pieces⟩ :=
     exists_oldform_pieces_decomposition_charSpace_qSupp_of_coprime_prod_vanish
       f hf_χ L hL h_vanish h_le_full
-  obtain ⟨samePiece, h_sum_same, h_data, h_cusp⟩ :=
-    proj.collapse pieces h_sum (fun g hg ↦ (h_pieces g hg).2.2)
-  exact ⟨samePiece, h_sum_same, h_data, h_cusp⟩
+  exact proj.collapse pieces h_sum fun g hg ↦ (h_pieces g hg).2.2
 
 /-- Recursive Miyake-sieve witness on `Finset ℕ`, the Finset analogue of
 `iteratedSieveWitnessOnList` (delegating to it on `S.toList`). -/
@@ -1900,7 +1886,7 @@ theorem qExpansion_iteratedSieveWitness_coeff_sieve
     (S : Finset ℕ) (hS : ∀ p ∈ S, p.Prime ∧ p ∣ M) :
     ∀ n : ℕ, (qExpansion (1 : ℝ) (iteratedSieveWitness f S hS)).coeff n =
       (if ∃ p ∈ S, p ∣ n then 0 else (qExpansion (1 : ℝ) ⇑f).coeff n) :=
-  fun n ↦ qExpansion_iteratedSieveWitness_coeff f S hS n
+  qExpansion_iteratedSieveWitness_coeff f S hS
 
 /-- Finset wrapper for
 `exists_oldform_pieces_decomposition_of_coprime_prod_vanish`, phrasing the
