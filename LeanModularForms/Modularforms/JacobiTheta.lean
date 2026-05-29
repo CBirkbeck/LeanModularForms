@@ -431,9 +431,9 @@ theorem isBoundedAtImInfty_H₂ : IsBoundedAtImInfty H₂ := by
     rw [summable_jacobiTheta₂_term_iff, I_mul_im, ofReal_re]
     linarith
   · apply summable_ofReal.mp
-    have (n : ℤ) := jacobiTheta₂_rel_aux n 1
-    simp_rw [mul_one] at this
-    simp_rw [this, ← smul_eq_mul]
+    have h_aux (n : ℤ) := jacobiTheta₂_rel_aux n 1
+    simp_rw [mul_one] at h_aux
+    simp_rw [h_aux, ← smul_eq_mul]
     apply Summable.const_smul
     rw [summable_jacobiTheta₂_term_iff]
     simp
@@ -524,10 +524,9 @@ theorem isBoundedAtImInfty_H_slash : IsBoundedAtImInfty (H₂ ∣[(2 : ℤ)] γ)
     obtain ⟨s, rfl⟩ := hs
     rw [Set.mem_iInter, SetLike.mem_coe]
     intro hs
-    have hs2 : {S, T} ⊆ (s : Set (SL(2, ℤ))) := by
-      apply subset_trans _ hs
-      simp only [Set.singleton_subset_iff, Set.mem_insert_iff, Set.mem_singleton_iff, true_or,
-        Set.insert_subset_insert]
+    have hs2 : {S, T} ⊆ (s : Set (SL(2, ℤ))) :=
+      subset_trans (by simp only [Set.singleton_subset_iff, Set.mem_insert_iff,
+        Set.mem_singleton_iff, true_or, Set.insert_subset_insert]) hs
     simp only [top_le_iff.mp <| SL2Z_generate.symm ▸ (Subgroup.closure_le s).mpr hs2,
       Subgroup.mem_top]
 
@@ -636,9 +635,9 @@ theorem jacobiTheta₂_half_mul_apply_tendsto_atImInfty :
     (bound := fun n : ℤ ↦ rexp (π / 4) * rexp (-π * ((n : ℝ) + 1 / 2) ^ 2)) ?_ ?_ ?_
   · simp [← tsum_subtype]
   · apply summable_ofReal.mp
-    have (n : ℤ) := jacobiTheta₂_rel_aux n 1
-    simp_rw [mul_one] at this
-    simp_rw [ofReal_mul, this, ← smul_eq_mul]
+    have h_aux (n : ℤ) := jacobiTheta₂_rel_aux n 1
+    simp_rw [mul_one] at h_aux
+    simp_rw [ofReal_mul, h_aux, ← smul_eq_mul]
     apply Summable.const_smul
     apply Summable.const_smul
     rw [summable_jacobiTheta₂_term_iff]
