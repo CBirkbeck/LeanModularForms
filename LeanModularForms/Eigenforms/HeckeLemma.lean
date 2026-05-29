@@ -165,7 +165,8 @@ theorem IsPrimitiveDelta0.smith_decomp_rat {N : ℕ} {α : Delta0_submonoid N}
 For a primitive `α ∈ Δ₀(N)`, there exist `U V ∈ SL(2, ℤ)` (obtained as
 the inverses of the Smith factors from `smith_decomp_rat`) such that
 
-`(↑α : Matrix ℚ) = (U : Matrix ℤ).map cast * !![1, 0; 0, (intDet α : ℚ)] * (V : Matrix ℤ).map cast`.
+`(↑α : Matrix ℚ) =
+  (U : Matrix ℤ).map cast * !![1, 0; 0, (intDet α : ℚ)] * (V : Matrix ℤ).map cast`.
 
 Equivalently, `α = U · diag(1, m) · V` in `GL(2, ℚ)` at the matrix level,
 reflecting the 2×2 Smith normal form over `ℤ`.  This is the form used in
@@ -945,7 +946,7 @@ at level `N` vanish on indices not divisible by `p`.
 
 One-step support consequence of T049; does not itself imply full Miyake
 vanishing. -/
-theorem miyake_4_6_3_prime_slash_support
+theorem qExpansion_prime_diagGL_Q_slash_support
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} (hp : 0 < p)
     (hN_period : (N : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods)
     (f g : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
@@ -987,11 +988,11 @@ directly to be an eigenform); the theorem does not import any global
 closure.
 
 **Proof**: strong induction on `n`.  For `p ∤ n` use T049 via
-`miyake_4_6_3_prime_slash_support`.  For `p ∣ n`, write `n = p · m`
+`qExpansion_prime_diagGL_Q_slash_support`.  For `p ∣ n`, write `n = p · m`
 with `m < n` and apply the IH to `a_m` (and to `a_{m / p}` if `p ∣ m`);
 the `h_hecke` identity at index `m` then expresses `a_{pm}` in terms of
 these smaller-index coefficients, forcing `a_{pm} = 0`. -/
-theorem miyake_4_6_3_prime_eigenform_case
+theorem qExpansion_vanish_of_hecke_recurrence
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} (hp : 1 < p)
     (hN_period : (N : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods)
     (f g : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
@@ -1025,7 +1026,7 @@ theorem miyake_4_6_3_prime_eigenform_case
         exact h_rel.symm
       · rw [if_neg hdvdm, mul_zero, add_zero] at h_rel
         exact h_rel.symm
-    · exact miyake_4_6_3_prime_slash_support hp_pos hN_period f g h_eq n hdvd
+    · exact qExpansion_prime_diagGL_Q_slash_support hp_pos hN_period f g h_eq n hdvd
 
 /-- **Derivation of T056's Hecke recurrence from a `T_p`-eigenform hypothesis.**
 
@@ -1086,7 +1087,7 @@ Conclusion: `(qExpansion N f).coeff n = 0` for every `n ≥ 1`.
 
 Replaces T056's abstract `h_hecke` hypothesis with the concrete
 `T_p`-eigenform hypothesis from the Hecke operator API. -/
-theorem miyake_4_6_3_prime_T_p_eigenform_case
+theorem qExpansion_vanish_of_T_p_eigenform
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) (hp_gt : 1 < p)
     (hN_period : (N : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods)
@@ -1099,7 +1100,7 @@ theorem miyake_4_6_3_prime_T_p_eigenform_case
         (by exact_mod_cast (show 0 < p by lia)) : GL (Fin 2) ℚ))
     (lam : ℂ) (h_eigen : heckeT_p k p hp hpN f = lam • f) :
     ∀ n : ℕ, 0 < n → (qExpansion (N : ℝ) f).coeff n = 0 :=
-  miyake_4_6_3_prime_eigenform_case hp_gt hN_period f g h_eq
+  qExpansion_vanish_of_hecke_recurrence hp_gt hN_period f g h_eq
     lam (↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ)
     (hecke_recurrence_of_T_p_eigenform hp hpN hN_period hf_char lam h_eigen)
 
@@ -1111,7 +1112,7 @@ sum `f = ∑ i ∈ s, f_i` of `T_p`-eigenforms `f_i ∈ modFormCharSpace k χ`
 positive-index Fourier coefficients of `f` vanish.
 
 Proof strategy:
-* Per-component: apply T060's `miyake_4_6_3_prime_T_p_eigenform_case` to
+* Per-component: apply T060's `qExpansion_vanish_of_T_p_eigenform` to
   each `f_i` to conclude `(qExpansion N (f_i i)).coeff n = 0`.
 * Assembly: `qExpansion N (∑ i, f_i i) = ∑ i, qExpansion N (f_i i)` via
   the additive-monoid homomorphism `qExpansionAddHom`, and
@@ -1124,7 +1125,7 @@ explicit finite decomposition.  Removing that hypothesis requires the
 full spectral/eigenbasis decomposition of `modFormCharSpace k χ` under
 the commuting Hecke operators — an infrastructure obligation beyond
 the current local API. -/
-theorem miyake_4_6_3_prime_charspace_case
+theorem qExpansion_vanish_of_T_p_eigenform_decomp
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) (hp_gt : 1 < p)
     (hN_period : (N : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods)
@@ -1144,7 +1145,7 @@ theorem miyake_4_6_3_prime_charspace_case
   intro n hn
   have hN_pos_R : (0 : ℝ) < (N : ℝ) := Nat.cast_pos.mpr (Nat.pos_of_neZero N)
   have h_per : ∀ i ∈ s, (qExpansion (N : ℝ) (f_i i)).coeff n = 0 := fun i hi ↦
-    miyake_4_6_3_prime_T_p_eigenform_case hp hpN hp_gt hN_period
+    qExpansion_vanish_of_T_p_eigenform hp hpN hp_gt hN_period
       (f_i i) (h_char_i i hi) (g_i i) (h_eq_i i hi) (lam_i i) (h_eigen_i i hi) n hn
   have h_coeff_sum : (qExpansion (N : ℝ) f).coeff n =
       ∑ i ∈ s, (qExpansion (N : ℝ) (f_i i)).coeff n := by
