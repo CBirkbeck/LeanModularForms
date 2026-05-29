@@ -3,24 +3,24 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: LeanModularForms contributors
 -/
-import LeanModularForms.HeckeRIngs.GL2.AdjointTheoryPetersson
-import LeanModularForms.HeckeRIngs.GL2.CharacterDecomp
-import LeanModularForms.HeckeRIngs.GL2.LevelEmbed
-import LeanModularForms.HeckeRIngs.GL2.LevelRaise
-import LeanModularForms.HeckeRIngs.GL2.Unified.NebentypusHeckeRingHom
-import LeanModularForms.Modularforms.LFunction
-import LeanModularForms.Modularforms.PeterssonLevelN
-import LeanModularForms.Modularforms.DimensionFormulas
-import LeanModularForms.Modularforms.SlashActionAuxil
-import LeanModularForms.Eigenforms.ConductorTheorem
+import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
 import Mathlib.LinearAlgebra.BilinearForm.Orthogonal
 import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
 import Mathlib.NumberTheory.EulerProduct.Basic
 import Mathlib.NumberTheory.EulerProduct.DirichletLSeries
 import Mathlib.NumberTheory.LSeries.AbstractFuncEq
 import Mathlib.NumberTheory.LSeries.DirichletContinuation
-import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
+import LeanModularForms.Eigenforms.ConductorTheorem
+import LeanModularForms.HeckeRIngs.GL2.AdjointTheoryPetersson
+import LeanModularForms.HeckeRIngs.GL2.CharacterDecomp
+import LeanModularForms.HeckeRIngs.GL2.LevelEmbed
+import LeanModularForms.HeckeRIngs.GL2.LevelRaise
 import LeanModularForms.HeckeRIngs.GL2.Newforms.CoeffSeq
+import LeanModularForms.HeckeRIngs.GL2.Unified.NebentypusHeckeRingHom
+import LeanModularForms.Modularforms.DimensionFormulas
+import LeanModularForms.Modularforms.LFunction
+import LeanModularForms.Modularforms.PeterssonLevelN
+import LeanModularForms.Modularforms.SlashActionAuxil
 
 /-!
 # Newforms: analytic interface and the Fricke operator
