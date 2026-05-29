@@ -116,9 +116,7 @@ private theorem identity_coset_eq_pet
 
 private theorem petersson_self_ofReal (h : ℍ → ℂ) (τ : ℍ) :
     petersson k h h τ = ↑(Complex.normSq (h τ) * τ.im ^ k) := by
-  simp only [petersson]
-  rw [show (starRingEnd ℂ) (h τ) * h τ = ↑(Complex.normSq (h τ)) from
-    Complex.normSq_eq_conj_mul_self.symm]
+  simp only [petersson, ← Complex.normSq_eq_conj_mul_self]
   push_cast; ring
 
 private theorem peterssonInner_self_real (h : ℍ → ℂ) :
@@ -154,10 +152,10 @@ theorem petN_definite
   choose r hr_nonneg hr_eq using petN_summand_nonneg f
   have hsum : (↑(∑ q, r q) : ℂ) = 0 := by
     rw [Complex.ofReal_sum]; simp_rw [← hr_eq]; exact hpet
-  have hzero : ∀ q, r q = 0 := fun q ↦
+  rw [hr_eq ⟦1⟧,
     (Finset.sum_eq_zero_iff_of_nonneg fun q _ ↦ hr_nonneg q).mp
-      (Complex.ofReal_eq_zero.mp hsum) q (Finset.mem_univ q)
-  rw [hr_eq ⟦1⟧, hzero ⟦1⟧, Complex.ofReal_zero]
+      (Complex.ofReal_eq_zero.mp hsum) ⟦1⟧ (Finset.mem_univ _),
+    Complex.ofReal_zero]
 
 /-- Negation in the second argument. -/
 theorem petN_neg_right
@@ -177,11 +175,10 @@ theorem petN_neg_left
 theorem petN_add_right
     (f g₁ g₂ : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     petN f (g₁ + g₂) = petN f g₁ + petN f g₂ := by
-  simp only [petN]; rw [← Finset.sum_add_distrib]; congr 1; ext q
-  have : ⇑(g₁ + g₂) ∣[k] (q.out)⁻¹ =
-      (⇑g₁ ∣[k] (q.out)⁻¹) + (⇑g₂ ∣[k] (q.out)⁻¹) := by
-    rw [CuspForm.coe_add]; exact SlashAction.add_slash k _ _ _
-  rw [this]
+  simp only [petN, ← Finset.sum_add_distrib]
+  refine Finset.sum_congr rfl fun q _ ↦ ?_
+  rw [show ⇑(g₁ + g₂) ∣[k] q.out⁻¹ = (⇑g₁ ∣[k] q.out⁻¹) + (⇑g₂ ∣[k] q.out⁻¹) from by
+    rw [CuspForm.coe_add]; exact SlashAction.add_slash k _ _ _]
   exact peterssonInner_add_right k fd _ _ _
     (integrableOn_petersson_slash f g₁ (q.out)⁻¹)
     (integrableOn_petersson_slash f g₂ (q.out)⁻¹)
@@ -195,15 +192,10 @@ private lemma smul_slash_SL (c : ℂ) (f : ℍ → ℂ) (δ : SL(2, ℤ)) :
 theorem petN_smul_right (c : ℂ)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     petN f (c • g) = c * petN f g := by
-  simp only [petN]
-  simp_rw [show ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
-      peterssonInner k fd (⇑f ∣[k] q.out⁻¹) (⇑(c • g) ∣[k] q.out⁻¹) =
-      c * peterssonInner k fd (⇑f ∣[k] q.out⁻¹) (⇑g ∣[k] q.out⁻¹) from fun q ↦ by
-    rw [show ⇑(c • g) ∣[k] q.out⁻¹ = c • (⇑g ∣[k] q.out⁻¹) from by
-      change (c • ⇑g) ∣[k] q.out⁻¹ = c • (⇑g ∣[k] q.out⁻¹)
-      exact smul_slash_SL c _ _]
-    exact peterssonInner_smul_right k _ c _ _]
-  exact (Finset.mul_sum _ _ _).symm
+  simp only [petN, Finset.mul_sum]
+  refine Finset.sum_congr rfl fun q _ ↦ ?_
+  rw [show ⇑(c • g) ∣[k] q.out⁻¹ = c • (⇑g ∣[k] q.out⁻¹) from smul_slash_SL c _ _]
+  exact peterssonInner_smul_right k _ c _ _
 
 /-- Conjugate-complex scalar in the first argument:
 `petN (c • f) g = conj(c) * petN f g`. -/
@@ -275,10 +267,7 @@ theorem IsFundamentalDomain.subgroup_iUnion_out_smul
     intro q₁
     rw [AEDisjoint.iUnion_right_iff]
     intro q₂
-    rw [show ((h₁ : G) • ((q₁.out : G))⁻¹ • s : Set α) =
-          (((h₁ : G) * (q₁.out : G)⁻¹) • s : Set α) from (mul_smul _ _ _).symm,
-        show ((h₂ : G) • ((q₂.out : G))⁻¹ • s : Set α) =
-          (((h₂ : G) * (q₂.out : G)⁻¹) • s : Set α) from (mul_smul _ _ _).symm]
+    simp_rw [← mul_smul]
     exact hs.aedisjoint fun heq ↦ hne (eq_of_mul_out_inv_eq heq)
 
 private theorem eq_of_mul_transversal {G : Type*} [Group G] {H : Subgroup G}
@@ -341,10 +330,7 @@ theorem IsFundamentalDomain.iUnion_smul_of_transversal
     intro i₁
     rw [AEDisjoint.iUnion_right_iff]
     intro i₂
-    rw [show ((h₁ : G) • (r i₁ • s) : Set α) = (((h₁ : G) * r i₁) • s : Set α) from
-          (mul_smul _ _ _).symm,
-        show ((h₂ : G) • (r i₂ • s) : Set α) = (((h₂ : G) * r i₂) • s : Set α) from
-          (mul_smul _ _ _).symm]
+    simp_rw [← mul_smul]
     exact hs.aedisjoint fun heq ↦ hne (eq_of_mul_transversal hinj heq).1
 
 /-- **Normalizer-shift of a fundamental domain.** If `s` is an `H`-fundamental
@@ -410,17 +396,14 @@ theorem IsFundamentalDomain.aedisjoint_smul_of_mul_inv_mem
     {H : Subgroup G_outer} {D : Set α} (hD : IsFundamentalDomain H D μ)
     {g₁ g₂ : G_outer} (h_mem : g₁⁻¹ * g₂ ∈ H) (h_ne : g₁⁻¹ * g₂ ≠ 1) :
     AEDisjoint μ (g₁ • D) (g₂ • D) := by
-  have h_core : AEDisjoint μ ((1 : H) • D) ((⟨g₁⁻¹ * g₂, h_mem⟩ : H) • D) := by
-    refine hD.aedisjoint ?_
-    intro heq
-    apply h_ne
-    simpa [Subgroup.coe_one, eq_comm] using congr_arg (Subtype.val : H → G_outer) heq
-  rw [show ((1 : H) • D : Set α) = D from one_smul H D,
-    show ((⟨g₁⁻¹ * g₂, h_mem⟩ : H) • D : Set α) = (g₁⁻¹ * g₂) • D from rfl] at h_core
-  have h_inter : (g₁ • D) ∩ (g₂ • D) = g₁ • (D ∩ ((g₁⁻¹ * g₂) • D)) := by
-    rw [Set.smul_set_inter, ← mul_smul, mul_inv_cancel_left]
+  have h_core : AEDisjoint μ ((1 : H) • D) ((⟨g₁⁻¹ * g₂, h_mem⟩ : H) • D) :=
+    hD.aedisjoint fun heq ↦ h_ne <| by
+      simpa [Subgroup.coe_one, eq_comm] using congr_arg (Subtype.val : H → G_outer) heq
+  rw [one_smul, show ((⟨g₁⁻¹ * g₂, h_mem⟩ : H) • D : Set α) = (g₁⁻¹ * g₂) • D from rfl]
+    at h_core
   show μ ((g₁ • D) ∩ (g₂ • D)) = 0
-  rw [h_inter, measure_smul]
+  rw [show (g₁ • D) ∩ (g₂ • D) = g₁ • (D ∩ ((g₁⁻¹ * g₂) • D)) from by
+      rw [Set.smul_set_inter, ← mul_smul, mul_inv_cancel_left], measure_smul]
   exact h_core
 
 end MeasureTheory
@@ -461,13 +444,9 @@ theorem isFundamentalDomain_Gamma1_PSL :
 theorem aedisjoint_PSL_coset_tiles :
     Pairwise (fun q₁ q₂ : PSL(2, ℤ) ⧸ imageGamma1_PSL N ↦
       AEDisjoint μ_hyp ((q₁.out : PSL(2, ℤ))⁻¹ • (fdo : Set ℍ))
-        ((q₂.out : PSL(2, ℤ))⁻¹ • (fdo : Set ℍ))) := by
-  intro q₁ q₂ hne
-  have h_inv_ne : (q₁.out : PSL(2, ℤ))⁻¹ ≠ (q₂.out : PSL(2, ℤ))⁻¹ := by
-    intro hg
-    apply hne
+        ((q₂.out : PSL(2, ℤ))⁻¹ • (fdo : Set ℍ))) := fun q₁ q₂ hne ↦
+  isFundamentalDomain_fdo_PSL.aedisjoint fun hg ↦ hne <| by
     rw [← q₁.out_eq, ← q₂.out_eq, inv_injective hg]
-  exact isFundamentalDomain_fdo_PSL.aedisjoint h_inv_ne
 
 /-- Each PSL-coset tile is null-measurable. -/
 theorem nullMeasurableSet_PSL_coset_tile (q : PSL(2, ℤ) ⧸ imageGamma1_PSL N) :
@@ -783,6 +762,15 @@ private lemma PSL_inv_smul_set_eq_SL (g : SL(2, ℤ)) (S : Set ℍ) :
       (QuotientGroup.mk_inv _ g).symm,
     PSL_smul_set_eq_SL g⁻¹ S]
 
+/-- The integral over the SL₂(ℤ)-translate `δ • S` of a function
+can be reduced to an integral over `S`: `∫_{δ • S} h dμ = ∫_S h(δ • ·) dμ`. -/
+theorem setIntegral_smul_eq
+    (h : UpperHalfPlane → ℂ) (δ : SL(2, ℤ)) (S : Set UpperHalfPlane) :
+    ∫ τ in δ • S, h τ ∂μ_hyp = ∫ τ in S, h (δ • τ) ∂μ_hyp := by
+  rw [show (δ • S : Set ℍ) = (fun τ ↦ δ • τ) '' S from rfl,
+    (measurePreserving_smul δ μ_hyp).setIntegral_image_emb
+      (measurableEmbedding_const_smul δ)]
+
 /-- **Fiber-invariance of the SL-tile integral.** For a `Γ₁(N)`-invariant function
 `h`, the integral over the SL-tile `q.out⁻¹ • fdo` equals the integral over the
 corresponding PSL-tile `(slToPslQuot q).out⁻¹ • fdo`. -/
@@ -815,10 +803,7 @@ theorem setIntegral_SL_tile_eq_PSL_tile (h : ℍ → ℂ)
       rw [h_eq_PSL, mul_inv_rev, mul_smul]]
   rw [PSL_inv_smul_set_eq_SL q.out fdo, PSL_inv_smul_set_eq_SL γ _]
   symm
-  rw [show ((γ⁻¹ : SL(2, ℤ)) • ((q.out : SL(2, ℤ))⁻¹ • (fdo : Set ℍ)) : Set ℍ) =
-      (fun τ ↦ (γ⁻¹ : SL(2, ℤ)) • τ) '' ((q.out : SL(2, ℤ))⁻¹ • (fdo : Set ℍ)) from rfl,
-    (measurePreserving_smul (γ⁻¹ : SL(2, ℤ)) μ_hyp).setIntegral_image_emb
-      (measurableEmbedding_const_smul _)]
+  rw [setIntegral_smul_eq]
   congr 1; ext τ
   exact h_inv γ⁻¹ ((Gamma1 N).inv_mem hγ_mem) τ
 
@@ -907,7 +892,7 @@ theorem petN_summand_eq_setIntegral
     peterssonInner k fd (⇑f ∣[k] q.out⁻¹) (⇑g ∣[k] q.out⁻¹) =
       ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ),
         petersson k ⇑f ⇑g τ ∂μ_hyp := by
-  simp only [peterssonInner]; simp_rw [petersson_slash_SL]
+  simp only [peterssonInner, petersson_slash_SL]
   rw [← Set.image_smul,
     ← (measurePreserving_smul q.out⁻¹ μ_hyp).setIntegral_image_emb
       (measurableEmbedding_const_smul _)]
@@ -920,10 +905,7 @@ theorem setIntegral_Gamma1_smul_eq
     (h : UpperHalfPlane → ℂ) (η : SL(2, ℤ)) (_hη : η ∈ Gamma1 N)
     (h_inv : ∀ τ, h (η • τ) = h τ) (S : Set UpperHalfPlane) :
     ∫ τ in η • S, h τ ∂μ_hyp = ∫ τ in S, h τ ∂μ_hyp := by
-  rw [show (η • S : Set ℍ) = (fun τ ↦ η • τ) '' S from rfl,
-    (measurePreserving_smul η μ_hyp).setIntegral_image_emb
-      (measurableEmbedding_const_smul η)]
-  congr 1; ext τ; exact h_inv τ
+  rw [setIntegral_smul_eq h η S]; congr 1; ext τ; exact h_inv τ
 
 /-- Specialization of `setIntegral_Gamma1_smul_eq` to the Petersson integrand of
 two `Γ₁(N)`-cusp forms: for `η ∈ Γ₁(N)` and any set `S ⊆ ℍ`,
@@ -935,15 +917,6 @@ theorem setIntegral_Gamma1_smul_petersson
       ∫ τ in S, petersson k ⇑f ⇑g τ ∂μ_hyp :=
   setIntegral_Gamma1_smul_eq _ η hη
     (fun τ ↦ petersson_Gamma1_invariant f g η hη τ) S
-
-/-- The integral over the SL₂(ℤ)-translate `δ • S` of a function
-can be reduced to an integral over `S`: `∫_{δ • S} h dμ = ∫_S h(δ • ·) dμ`. -/
-theorem setIntegral_smul_eq
-    (h : UpperHalfPlane → ℂ) (δ : SL(2, ℤ)) (S : Set UpperHalfPlane) :
-    ∫ τ in δ • S, h τ ∂μ_hyp = ∫ τ in S, h (δ • τ) ∂μ_hyp := by
-  rw [show (δ • S : Set ℍ) = (fun τ ↦ δ • τ) '' S from rfl,
-    (measurePreserving_smul δ μ_hyp).setIntegral_image_emb
-      (measurableEmbedding_const_smul δ)]
 
 /-- Diamond unitarity for the level-N Petersson inner product:
 the inner product of slashed cusp forms equals the original inner product.
@@ -966,12 +939,6 @@ theorem petN_slash_invariant
       have h := Quotient.exact ((⟦δ⟧ : SL(2, ℤ) ⧸ Gamma1 N).out_eq)
       change (QuotientGroup.leftRel _).r _ _ at h
       rwa [QuotientGroup.leftRel_apply] at h
-  have G1_tile : ∀ (η : SL(2, ℤ)), η ∈ Gamma1 N → ∀ S : Set ℍ,
-      ∫ τ in η • S, petersson k (⇑f) (⇑g) τ ∂μ_hyp =
-      ∫ τ in S, petersson k (⇑f) (⇑g) τ ∂μ_hyp := fun η hη S ↦ by
-    rw [show (η • S : Set ℍ) = (fun τ ↦ η • τ) '' S from rfl,
-      (measurePreserving_smul η μ_hyp).setIntegral_image_emb (measurableEmbedding_const_smul η)]
-    congr 1; ext τ; rw [← petersson_slash_SL, slash_Gamma1_eq f η hη, slash_Gamma1_eq g η hη]
   suffices key : ∀ q, peterssonInner k fd (⇑f' ∣[k] q.out⁻¹) (⇑g' ∣[k] q.out⁻¹) =
       peterssonInner k fd (⇑f ∣[k] (σ q).out⁻¹) (⇑g ∣[k] (σ q).out⁻¹) by
     simp_rw [key]
@@ -982,25 +949,19 @@ theorem petN_slash_invariant
     peterssonInner k fd (⇑f ∣[k] (γ * (⟦δ⟧ : SL(2, ℤ) ⧸ Gamma1 N).out⁻¹))
       (⇑g ∣[k] (γ * (⟦δ⟧ : SL(2, ℤ) ⧸ Gamma1 N).out⁻¹)) from by
     congr 1 <;> [rw [hf']; rw [hg']] <;> rw [← SlashAction.slash_mul]]
-  simp only [peterssonInner]; simp_rw [petersson_slash_SL]
-  rw [← MeasurePreserving.setIntegral_image_emb (measurePreserving_smul
-        (γ * (⟦δ⟧ : SL(2, ℤ) ⧸ Gamma1 N).out⁻¹) μ_hyp)
-        (measurableEmbedding_const_smul _) _ fd, Set.image_smul,
-    ← MeasurePreserving.setIntegral_image_emb (measurePreserving_smul
-        ((σ ⟦δ⟧).out⁻¹) μ_hyp)
-        (measurableEmbedding_const_smul _) _ fd, Set.image_smul,
-    show σ ⟦δ⟧ = ⟦δ * γ⁻¹⟧ from by simp [σ],
-    show γ * (⟦δ⟧ : SL(2, ℤ) ⧸ Gamma1 N).out⁻¹ =
+  simp only [peterssonInner, petersson_slash_SL, ← setIntegral_smul_eq,
+    show σ ⟦δ⟧ = ⟦δ * γ⁻¹⟧ from by simp [σ]]
+  rw [show γ * (⟦δ⟧ : SL(2, ℤ) ⧸ Gamma1 N).out⁻¹ =
       (γ * (⟦δ⟧ : SL(2, ℤ) ⧸ Gamma1 N).out⁻¹ *
         (⟦δ * γ⁻¹⟧ : SL(2, ℤ) ⧸ Gamma1 N).out) *
       (⟦δ * γ⁻¹⟧ : SL(2, ℤ) ⧸ Gamma1 N).out⁻¹ from by group, mul_smul]
-  exact G1_tile _ (by
-    rw [show γ * (⟦δ⟧ : SL(2, ℤ) ⧸ Gamma1 N).out⁻¹ *
-        (⟦δ * γ⁻¹⟧ : SL(2, ℤ) ⧸ Gamma1 N).out =
-      ((⟦δ * γ⁻¹⟧ : SL(2, ℤ) ⧸ Gamma1 N).out⁻¹ * (δ * γ⁻¹) *
-       (γ * ((⟦δ⟧ : SL(2, ℤ) ⧸ Gamma1 N).out⁻¹ * δ)⁻¹ * γ⁻¹))⁻¹ from by group]
-    exact (Gamma1 N).inv_mem ((Gamma1 N).mul_mem (out_mem (δ * γ⁻¹))
-      (HeckeRing.GL2.Gamma0_normalizes_Gamma1 ⟨γ, hγ⟩ _ ((Gamma1 N).inv_mem (out_mem δ))))) _
+  refine setIntegral_Gamma1_smul_petersson f g _ ?_ _
+  rw [show γ * (⟦δ⟧ : SL(2, ℤ) ⧸ Gamma1 N).out⁻¹ *
+      (⟦δ * γ⁻¹⟧ : SL(2, ℤ) ⧸ Gamma1 N).out =
+    ((⟦δ * γ⁻¹⟧ : SL(2, ℤ) ⧸ Gamma1 N).out⁻¹ * (δ * γ⁻¹) *
+     (γ * ((⟦δ⟧ : SL(2, ℤ) ⧸ Gamma1 N).out⁻¹ * δ)⁻¹ * γ⁻¹))⁻¹ from by group]
+  exact (Gamma1 N).inv_mem ((Gamma1 N).mul_mem (out_mem (δ * γ⁻¹))
+    (HeckeRing.GL2.Gamma0_normalizes_Gamma1 ⟨γ, hγ⟩ _ ((Gamma1 N).inv_mem (out_mem δ))))
 
 /-- `∫_{q.out⁻¹ • fd} h dμ = ∫_{q.out⁻¹ • fdo} h dμ` for any `h`: the SL-tile
 integrals over `fd` and `fdo` agree (the boundary `fd \ fdo` has measure zero). -/
@@ -1008,15 +969,7 @@ theorem setIntegral_SL_tile_fd_eq_fdo
     (h : UpperHalfPlane → ℂ) (q : SL(2, ℤ) ⧸ Gamma1 N) :
     ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ), h τ ∂μ_hyp =
       ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (fdo : Set ℍ), h τ ∂μ_hyp := by
-  rw [show ((q.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ) : Set ℍ) =
-        (fun τ ↦ (q.out : SL(2, ℤ))⁻¹ • τ) '' (fd : Set ℍ) from rfl,
-    (measurePreserving_smul (q.out : SL(2, ℤ))⁻¹ μ_hyp).setIntegral_image_emb
-      (measurableEmbedding_const_smul _),
-    show ((q.out : SL(2, ℤ))⁻¹ • (fdo : Set ℍ) : Set ℍ) =
-        (fun τ ↦ (q.out : SL(2, ℤ))⁻¹ • τ) '' (fdo : Set ℍ) from rfl,
-    (measurePreserving_smul (q.out : SL(2, ℤ))⁻¹ μ_hyp).setIntegral_image_emb
-      (measurableEmbedding_const_smul _),
-    setIntegral_fd_eq_fdo]
+  rw [setIntegral_smul_eq, setIntegral_smul_eq, setIntegral_fd_eq_fdo]
 
 open Classical in
 /-- `petN` written as a sum of set-integrals over PSL-coset tiles, weighted by the
