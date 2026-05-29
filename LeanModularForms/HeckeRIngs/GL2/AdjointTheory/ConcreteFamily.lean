@@ -1896,42 +1896,24 @@ open UpperHalfPlane ModularGroup MeasureTheory in
 private theorem peterssonInner_sum_T_p_lower_gamma_M_tile_to_iUnion
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hm : ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
-      NullMeasurableSet
-        (((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (gamma0_T_p_upper_Gamma1_factor N p hpN 0 *
-              M_infty_Gamma1_factor N p hpN 0)) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) •
-          (ModularGroup.fd : Set UpperHalfPlane)) μ_hyp)
-    (hd : Pairwise (fun (q₁ q₂ : SL(2, ℤ) ⧸ Gamma1 N) ↦ AEDisjoint μ_hyp
-        (((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (gamma0_T_p_upper_Gamma1_factor N p hpN 0 *
-              M_infty_Gamma1_factor N p hpN 0)) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q₁.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) •
-          (ModularGroup.fd : Set UpperHalfPlane))
-        (((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (gamma0_T_p_upper_Gamma1_factor N p hpN 0 *
-              M_infty_Gamma1_factor N p hpN 0)) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q₂.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) •
-          (ModularGroup.fd : Set UpperHalfPlane))))
-    (hint : IntegrableOn
+    (hm : AlphaTileNullMeasurable (N := N)
+      ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (gamma0_T_p_upper_Gamma1_factor N p hpN 0 *
+            M_infty_Gamma1_factor N p hpN 0))))
+    (hd : AlphaTilePairwiseAEDisjoint (N := N)
+      ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (gamma0_T_p_upper_Gamma1_factor N p hpN 0 *
+            M_infty_Gamma1_factor N p hpN 0))))
+    (hint : AlphaIntegrableUnion (N := N)
+      ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (gamma0_T_p_upper_Gamma1_factor N p hpN 0 *
+            M_infty_Gamma1_factor N p hpN 0)))
       (fun τ ↦ petersson k ⇑f
         (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
-          (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) τ)
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        (((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (gamma0_T_p_upper_Gamma1_factor N p hpN 0 *
-              M_infty_Gamma1_factor N p hpN 0)) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) •
-          (ModularGroup.fd : Set UpperHalfPlane))) μ_hyp) :
+          (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) τ)) :
     (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
       peterssonInner k
         (((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
@@ -2572,76 +2554,39 @@ open UpperHalfPlane ModularGroup MeasureTheory in
 private theorem petN_heckeT_p_adjoint_standard_form_via_iUnion_residuals
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hm_M : ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
-      NullMeasurableSet
-        (((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (gamma0_T_p_upper_Gamma1_factor N p hpN 0 *
-              M_infty_Gamma1_factor N p hpN 0)) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) •
-          (ModularGroup.fd : Set UpperHalfPlane)) μ_hyp)
-    (hd_M : Pairwise (fun (q₁ q₂ : SL(2, ℤ) ⧸ Gamma1 N) ↦ AEDisjoint μ_hyp
-        (((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (gamma0_T_p_upper_Gamma1_factor N p hpN 0 *
-              M_infty_Gamma1_factor N p hpN 0)) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q₁.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) •
-          (ModularGroup.fd : Set UpperHalfPlane))
-        (((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (gamma0_T_p_upper_Gamma1_factor N p hpN 0 *
-              M_infty_Gamma1_factor N p hpN 0)) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q₂.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) •
-          (ModularGroup.fd : Set UpperHalfPlane))))
-    (hint_M : IntegrableOn
+    (hm_M : AlphaTileNullMeasurable (N := N)
+      ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (gamma0_T_p_upper_Gamma1_factor N p hpN 0 *
+            M_infty_Gamma1_factor N p hpN 0))))
+    (hd_M : AlphaTilePairwiseAEDisjoint (N := N)
+      ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (gamma0_T_p_upper_Gamma1_factor N p hpN 0 *
+            M_infty_Gamma1_factor N p hpN 0))))
+    (hint_M : AlphaIntegrableUnion (N := N)
+      ((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (gamma0_T_p_upper_Gamma1_factor N p hpN 0 *
+            M_infty_Gamma1_factor N p hpN 0)))
       (fun τ ↦ petersson k ⇑f
         (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
-          (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) τ)
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        (((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (gamma0_T_p_upper_Gamma1_factor N p hpN 0 *
-              M_infty_Gamma1_factor N p hpN 0)) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) •
-          (ModularGroup.fd : Set UpperHalfPlane))) μ_hyp)
-    (hm_T : ∀ q : SL(2, ℤ) ⧸ Gamma1 N, ∀ b ∈ Finset.range p,
-      NullMeasurableSet
-        (((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (gamma0_T_p_upper_Gamma1_factor N p hpN b)) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) •
-          (ModularGroup.fd : Set UpperHalfPlane)) μ_hyp)
-    (hd_T : ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
-      (↑(Finset.range p) : Set ℕ).Pairwise (fun b₁ b₂ ↦ AEDisjoint μ_hyp
-          (((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
-            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-              (gamma0_T_p_upper_Gamma1_factor N p hpN b₁)) *
-            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-              (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) •
-            (ModularGroup.fd : Set UpperHalfPlane))
-          (((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
-            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-              (gamma0_T_p_upper_Gamma1_factor N p hpN b₂)) *
-            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-              (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) •
-            (ModularGroup.fd : Set UpperHalfPlane))))
-    (hint_T : ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
-      IntegrableOn
-        (fun τ ↦ petersson k ⇑f
-          (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
-            (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) τ)
-        (⋃ b ∈ Finset.range p,
-          (((glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
-            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-              (gamma0_T_p_upper_Gamma1_factor N p hpN b)) *
-            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-              (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) •
-            (ModularGroup.fd : Set UpperHalfPlane))) μ_hyp)
+          (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) τ))
+    (hm_T : AlphaFamilyPerQTileNullMeasurable (N := N) p
+      (fun b ↦ (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (gamma0_T_p_upper_Gamma1_factor N p hpN b))))
+    (hd_T : AlphaFamilyPerQTilePairwiseAEDisjoint (N := N) p
+      (fun b ↦ (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (gamma0_T_p_upper_Gamma1_factor N p hpN b))))
+    (hint_T : AlphaFamilyPerQIntegrableBUnion (N := N) p
+      (fun b ↦ (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) *
+        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
+          (gamma0_T_p_upper_Gamma1_factor N p hpN b)))
+      (fun τ ↦ petersson k ⇑f
+        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g) ∣[k]
+          (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) τ))
     (h_M_infty_iUnion_eq_RHS_prefactored :
       peterssonInner k
         (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
@@ -3457,90 +3402,45 @@ open UpperHalfPlane ModularGroup MeasureTheory in
 private theorem petN_heckeT_p_adjoint_standard_form_from_per_tile_balances
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hd : Pairwise (fun (q₁ q₂ : SL(2, ℤ) ⧸ Gamma1 N) ↦ AEDisjoint μ_hyp
-        (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-          (q₁.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ))
-        (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-          (q₂.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • fd)))
-    (hm : ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
-      NullMeasurableSet
-        (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-          (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ)) μ_hyp)
-    (hd_M : Pairwise (fun (q₁ q₂ : SL(2, ℤ) ⧸ Gamma1 N) ↦ AEDisjoint μ_hyp
-        (((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q₁.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ))
-        (((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q₂.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • fd)))
-    (hm_M : ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
-      NullMeasurableSet
-        (((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp)
-    (hint_M_LHS : IntegrableOn
+    (hd : SLTilePairwiseAEDisjoint (N := N))
+    (hm : SLTileNullMeasurable (N := N))
+    (hd_M : AlphaTilePairwiseAEDisjoint (N := N) (glMap (M_infty N p hp.pos hpN)))
+    (hm_M : AlphaTileNullMeasurable (N := N) (glMap (M_infty N p hp.pos hpN)))
+    (hint_M_LHS : AlphaIntegrableUnion (N := N) (glMap (M_infty N p hp.pos hpN))
       (fun τ ↦ petersson k
         (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f))
         ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) ∣[k]
-          peterssonAdj (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)) τ)
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp)
-    (hint_M_RHS : IntegrableOn
+          peterssonAdj (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)) τ))
+    (hint_M_RHS : AlphaIntegrableUnion (N := N) (glMap (M_infty N p hp.pos hpN))
       (fun τ ↦ petersson k
         ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)) ∣[k]
           peterssonAdj (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ))
-        ⇑g τ)
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp)
-    (hd_T : ∀ b ∈ Finset.range p, Pairwise (fun (q₁ q₂ : SL(2, ℤ) ⧸ Gamma1 N) ↦ AEDisjoint μ_hyp
-        (((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q₁.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ))
-        (((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q₂.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • fd)))
-    (hm_T : ∀ b ∈ Finset.range p, ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
-      NullMeasurableSet
-        (((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp)
-    (hint_T_LHS : ∀ b ∈ Finset.range p, IntegrableOn
-      (fun τ ↦ petersson k
-        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f))
-        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) ∣[k]
-          peterssonAdj (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ)) τ)
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp)
-    (hint_T_RHS : ∀ b ∈ Finset.range p, IntegrableOn
-      (fun τ ↦ petersson k
-        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)) ∣[k]
-          peterssonAdj (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ))
-        ⇑g τ)
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp)
-    (hint_M_balance_LHS : IntegrableOn
+        ⇑g τ))
+    (hd_T : ∀ b ∈ Finset.range p,
+      AlphaTilePairwiseAEDisjoint (N := N) (glMap (T_p_upper p hp.pos b)))
+    (hm_T : ∀ b ∈ Finset.range p,
+      AlphaTileNullMeasurable (N := N) (glMap (T_p_upper p hp.pos b)))
+    (hint_T_LHS : ∀ b ∈ Finset.range p,
+      AlphaIntegrableUnion (N := N) (glMap (T_p_upper p hp.pos b))
+        (fun τ ↦ petersson k
+          (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f))
+          ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) ∣[k]
+            peterssonAdj (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ)) τ))
+    (hint_T_RHS : ∀ b ∈ Finset.range p,
+      AlphaIntegrableUnion (N := N) (glMap (T_p_upper p hp.pos b))
+        (fun τ ↦ petersson k
+          ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)) ∣[k]
+            peterssonAdj (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ))
+          ⇑g τ))
+    (hint_M_balance_LHS : SLTileIntegrableUnion (N := N)
       (fun τ ↦ petersson k
         ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)) ∣[k]
           (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ))
-        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) τ)
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-          (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ)) μ_hyp)
-    (hint_M_balance_RHS : IntegrableOn
+        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) τ))
+    (hint_M_balance_RHS : SLTileIntegrableUnion (N := N)
       (fun τ ↦ petersson k
         (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f))
-        ((⇑g) ∣[k] (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)) τ)
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-          (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ)) μ_hyp)
+        ((⇑g) ∣[k] (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)) τ))
     (h_per_tile_M : ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
       peterssonInner k
           (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
@@ -3553,21 +3453,15 @@ private theorem petN_heckeT_p_adjoint_standard_form_from_per_tile_balances
             (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ))
           (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f))
           ((⇑g) ∣[k] (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)))
-    (hint_T_balance_LHS : ∀ b ∈ Finset.range p, IntegrableOn
+    (hint_T_balance_LHS : ∀ b ∈ Finset.range p, SLTileIntegrableUnion (N := N)
       (fun τ ↦ petersson k
         ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)) ∣[k]
           (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ))
-        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) τ)
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-          (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ)) μ_hyp)
-    (hint_T_balance_RHS : ∀ b ∈ Finset.range p, IntegrableOn
+        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) τ))
+    (hint_T_balance_RHS : ∀ b ∈ Finset.range p, SLTileIntegrableUnion (N := N)
       (fun τ ↦ petersson k
         (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f))
-        ((⇑g) ∣[k] (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ)) τ)
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-          (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ)) μ_hyp)
+        ((⇑g) ∣[k] (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ)) τ))
     (h_per_tile_T : ∀ b ∈ Finset.range p, ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
       peterssonInner k
           (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
@@ -3594,90 +3488,45 @@ open UpperHalfPlane ModularGroup MeasureTheory in
 private theorem petN_heckeT_p_adjoint_standard_form_from_per_q_fd_balances
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hd : Pairwise (fun (q₁ q₂ : SL(2, ℤ) ⧸ Gamma1 N) ↦ AEDisjoint μ_hyp
-        (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-          (q₁.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ))
-        (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-          (q₂.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • fd)))
-    (hm : ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
-      NullMeasurableSet
-        (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-          (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ)) μ_hyp)
-    (hd_M : Pairwise (fun (q₁ q₂ : SL(2, ℤ) ⧸ Gamma1 N) ↦ AEDisjoint μ_hyp
-        (((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q₁.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ))
-        (((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q₂.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • fd)))
-    (hm_M : ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
-      NullMeasurableSet
-        (((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp)
-    (hint_M_LHS : IntegrableOn
+    (hd : SLTilePairwiseAEDisjoint (N := N))
+    (hm : SLTileNullMeasurable (N := N))
+    (hd_M : AlphaTilePairwiseAEDisjoint (N := N) (glMap (M_infty N p hp.pos hpN)))
+    (hm_M : AlphaTileNullMeasurable (N := N) (glMap (M_infty N p hp.pos hpN)))
+    (hint_M_LHS : AlphaIntegrableUnion (N := N) (glMap (M_infty N p hp.pos hpN))
       (fun τ ↦ petersson k
         (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f))
         ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) ∣[k]
-          peterssonAdj (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)) τ)
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp)
-    (hint_M_RHS : IntegrableOn
+          peterssonAdj (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)) τ))
+    (hint_M_RHS : AlphaIntegrableUnion (N := N) (glMap (M_infty N p hp.pos hpN))
       (fun τ ↦ petersson k
         ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)) ∣[k]
           peterssonAdj (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ))
-        ⇑g τ)
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp)
-    (hd_T : ∀ b ∈ Finset.range p, Pairwise (fun (q₁ q₂ : SL(2, ℤ) ⧸ Gamma1 N) ↦ AEDisjoint μ_hyp
-        (((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q₁.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ))
-        (((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q₂.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • fd)))
-    (hm_T : ∀ b ∈ Finset.range p, ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
-      NullMeasurableSet
-        (((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp)
-    (hint_T_LHS : ∀ b ∈ Finset.range p, IntegrableOn
-      (fun τ ↦ petersson k
-        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f))
-        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) ∣[k]
-          peterssonAdj (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ)) τ)
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp)
-    (hint_T_RHS : ∀ b ∈ Finset.range p, IntegrableOn
-      (fun τ ↦ petersson k
-        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)) ∣[k]
-          peterssonAdj (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ))
-        ⇑g τ)
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp)
-    (hint_M_balance_LHS : IntegrableOn
+        ⇑g τ))
+    (hd_T : ∀ b ∈ Finset.range p,
+      AlphaTilePairwiseAEDisjoint (N := N) (glMap (T_p_upper p hp.pos b)))
+    (hm_T : ∀ b ∈ Finset.range p,
+      AlphaTileNullMeasurable (N := N) (glMap (T_p_upper p hp.pos b)))
+    (hint_T_LHS : ∀ b ∈ Finset.range p,
+      AlphaIntegrableUnion (N := N) (glMap (T_p_upper p hp.pos b))
+        (fun τ ↦ petersson k
+          (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f))
+          ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) ∣[k]
+            peterssonAdj (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ)) τ))
+    (hint_T_RHS : ∀ b ∈ Finset.range p,
+      AlphaIntegrableUnion (N := N) (glMap (T_p_upper p hp.pos b))
+        (fun τ ↦ petersson k
+          ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)) ∣[k]
+            peterssonAdj (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ))
+          ⇑g τ))
+    (hint_M_balance_LHS : SLTileIntegrableUnion (N := N)
       (fun τ ↦ petersson k
         ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)) ∣[k]
           (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ))
-        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) τ)
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-          (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ)) μ_hyp)
-    (hint_M_balance_RHS : IntegrableOn
+        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) τ))
+    (hint_M_balance_RHS : SLTileIntegrableUnion (N := N)
       (fun τ ↦ petersson k
         (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f))
-        ((⇑g) ∣[k] (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)) τ)
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-          (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ)) μ_hyp)
+        ((⇑g) ∣[k] (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)) τ))
     (h_per_q_fd_M : ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
       peterssonInner k ModularGroup.fd
           ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)) ∣[k]
@@ -3695,21 +3544,15 @@ private theorem petN_heckeT_p_adjoint_standard_form_from_per_q_fd_balances
             ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
               ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
                 ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ))))
-    (hint_T_balance_LHS : ∀ b ∈ Finset.range p, IntegrableOn
+    (hint_T_balance_LHS : ∀ b ∈ Finset.range p, SLTileIntegrableUnion (N := N)
       (fun τ ↦ petersson k
         ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)) ∣[k]
           (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ))
-        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) τ)
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-          (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ)) μ_hyp)
-    (hint_T_balance_RHS : ∀ b ∈ Finset.range p, IntegrableOn
+        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) τ))
+    (hint_T_balance_RHS : ∀ b ∈ Finset.range p, SLTileIntegrableUnion (N := N)
       (fun τ ↦ petersson k
         (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f))
-        ((⇑g) ∣[k] (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ)) τ)
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-          (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ)) μ_hyp)
+        ((⇑g) ∣[k] (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ)) τ))
     (h_per_q_fd_T : ∀ b ∈ Finset.range p, ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
       peterssonInner k ModularGroup.fd
           ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)) ∣[k]
