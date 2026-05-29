@@ -930,7 +930,7 @@ lemma Newform.peterssonAdj_frickeMatrix_smul (N : ℕ) [NeZero N] (τ : UpperHal
   apply UpperHalfPlane.ext
   rw [UpperHalfPlane.coe_smul_of_det_pos (peterssonAdj_frickeMatrix_det_pos N),
       UpperHalfPlane.coe_smul_of_det_pos (Newform.frickeMatrix_det_pos N)]
-  show
+  change
       ((peterssonAdj (Newform.frickeMatrix N) : Matrix (Fin 2) (Fin 2) ℝ) 0 0 *
             (τ : ℂ) +
           (peterssonAdj (Newform.frickeMatrix N) :
@@ -1036,15 +1036,14 @@ lemma Newform.frickeMatrix_smul_petersson_invariant
     petersson k (⇑f) (⇑g₂)
         (Newform.frickeMatrix N • ((γ : SL(2, ℤ)) • τ)) =
       petersson k (⇑f) (⇑g₂) (Newform.frickeMatrix N • τ) := by
-  rw [show ((γ : SL(2, ℤ)) • τ : UpperHalfPlane) = (mapGL ℝ γ : GL (Fin 2) ℝ) • τ from rfl]
-  rw [show (Newform.frickeMatrix N • ((mapGL ℝ γ : GL (Fin 2) ℝ) • τ) : UpperHalfPlane) =
-      (Newform.frickeMatrix N * (mapGL ℝ γ : GL (Fin 2) ℝ)) • τ from
-      (mul_smul _ _ τ).symm]
-  rw [Newform.frickeMatrix_mul_mapGL_eq_mapGL_frickeConj_mul_frickeMatrix γ hγ]
-  rw [show (mapGL ℝ (Newform.frickeConj N γ hγ) * Newform.frickeMatrix N) • τ =
+  rw [show ((γ : SL(2, ℤ)) • τ : UpperHalfPlane) = (mapGL ℝ γ : GL (Fin 2) ℝ) • τ from rfl,
+    show (Newform.frickeMatrix N • ((mapGL ℝ γ : GL (Fin 2) ℝ) • τ) : UpperHalfPlane) =
+      (Newform.frickeMatrix N * (mapGL ℝ γ : GL (Fin 2) ℝ)) • τ from (mul_smul _ _ τ).symm,
+    Newform.frickeMatrix_mul_mapGL_eq_mapGL_frickeConj_mul_frickeMatrix γ hγ,
+    show (mapGL ℝ (Newform.frickeConj N γ hγ) * Newform.frickeMatrix N) • τ =
       (mapGL ℝ (Newform.frickeConj N γ hγ) : GL (Fin 2) ℝ) •
-        (Newform.frickeMatrix N • τ) from mul_smul _ _ _]
-  rw [show (mapGL ℝ (Newform.frickeConj N γ hγ) : GL (Fin 2) ℝ) •
+        (Newform.frickeMatrix N • τ) from mul_smul _ _ _,
+    show (mapGL ℝ (Newform.frickeConj N γ hγ) : GL (Fin 2) ℝ) •
         (Newform.frickeMatrix N • τ) =
       ((Newform.frickeConj N γ hγ : SL(2, ℤ)) : SL(2, ℤ)) •
         (Newform.frickeMatrix N • τ) from rfl]
