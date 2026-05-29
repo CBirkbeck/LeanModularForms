@@ -1035,22 +1035,12 @@ noncomputable def Newform.specialPoint (k : ℤ) : ℂ :=
 /-- Real part of the image point `s' = 2 · s₀ - k + 1` is `5`. -/
 lemma Newform.two_specialPoint_sub_k_add_one_re (k : ℤ) :
     (2 * Newform.specialPoint k - (k : ℂ) + 1).re = 5 := by
-  have h₁ : ((k : ℂ)).re = (k : ℝ) := by simp
-  have h₂ : ((2 : ℂ) * Newform.specialPoint k).re = (k : ℝ) + 4 := by
-    rw [Complex.mul_re]
-    simp [Newform.specialPoint_re, Newform.specialPoint_im]
-    ring
-  rw [Complex.add_re, Complex.sub_re, h₂, h₁]
-  simp
-  ring
+  simp [Newform.specialPoint, Complex.add_re, Complex.sub_re, Complex.mul_re]; ring
 
 /-- Real part of the doubled image point `2s' = 2 · (2 · s₀ - k + 1)` is `10`. -/
 lemma Newform.two_two_specialPoint_sub_k_add_one_re (k : ℤ) :
     (2 * (2 * Newform.specialPoint k - (k : ℂ) + 1)).re = 10 := by
-  rw [show (2 * (2 * Newform.specialPoint k - (k : ℂ) + 1) : ℂ).re =
-    2 * (2 * Newform.specialPoint k - (k : ℂ) + 1).re from by
-      rw [Complex.mul_re]; simp]
-  rw [Newform.two_specialPoint_sub_k_add_one_re]; norm_num
+  simp [Newform.specialPoint, Complex.add_re, Complex.sub_re, Complex.mul_re]; ring
 
 omit [NeZero N] in
 /-- **Geometric convergence at the special point.**  For any prime `q ≥ 2`
@@ -1060,32 +1050,23 @@ lemma Newform.norm_chi_q_cpow_neg_lt_one_of_re_pos [NeZero N]
     (χ : (ZMod N)ˣ →* ℂˣ) {q : ℕ} (hq : 2 ≤ q) (hqN : Nat.Coprime q N)
     {s' : ℂ} (hs' : (0 : ℝ) < s'.re) :
     ‖(χ (ZMod.unitOfCoprime q hqN) : ℂ) * (q : ℂ) ^ (-s')‖ < 1 := by
-  have hq_pos : (0 : ℝ) < (q : ℝ) := by
-    have : (2 : ℝ) ≤ (q : ℝ) := by exact_mod_cast hq
-    linarith
-  have hq_one : (1 : ℝ) < (q : ℝ) := by
-    have : (2 : ℝ) ≤ (q : ℝ) := by exact_mod_cast hq
-    linarith
+  have hq_two : (2 : ℝ) ≤ (q : ℝ) := by exact_mod_cast hq
   rw [norm_mul, Newform.norm_chi_unit_eq_one, one_mul,
     show ((q : ℂ) ^ (-s')) = ((q : ℝ) : ℂ) ^ (-s') from by push_cast; rfl,
-    Complex.norm_cpow_eq_rpow_re_of_pos hq_pos]
-  have hneg : (-s').re < 0 := by rw [Complex.neg_re]; linarith
-  exact Real.rpow_lt_one_of_one_lt_of_neg hq_one hneg
+    Complex.norm_cpow_eq_rpow_re_of_pos (by linarith)]
+  exact Real.rpow_lt_one_of_one_lt_of_neg (by linarith)
+    (by rw [Complex.neg_re]; linarith)
 
 /-- `1 + x ≠ 0` whenever `‖x‖ < 1`: otherwise `x = -1` and `‖x‖ = 1`. -/
 lemma Newform.one_add_ne_zero_of_norm_lt_one {x : ℂ} (hx : ‖x‖ < 1) :
-    (1 : ℂ) + x ≠ 0 := by
-  intro h
-  have hxeq : x = -1 := by linear_combination h
-  rw [hxeq] at hx
+    (1 : ℂ) + x ≠ 0 := fun h ↦ by
+  rw [show x = -1 by linear_combination h] at hx
   simp at hx
 
 /-- `1 - x ≠ 0` whenever `‖x‖ < 1`: otherwise `x = 1` and `‖x‖ = 1`. -/
 lemma Newform.one_sub_ne_zero_of_norm_lt_one {x : ℂ} (hx : ‖x‖ < 1) :
-    (1 : ℂ) - x ≠ 0 := by
-  intro h
-  have hxeq : x = 1 := by linear_combination -h
-  rw [hxeq] at hx
+    (1 : ℂ) - x ≠ 0 := fun h ↦ by
+  rw [show x = 1 by linear_combination -h] at hx
   simp at hx
 
 /-- **Value identity specialised at the special point `s₀ = k/2 + 2`.**
@@ -1126,25 +1107,22 @@ theorem Newform.lSeries_stripped_eq_dirichlet_quotient_value_at_special_point
   have h_geom : ∀ q : ℕ, ∀ (hq : Nat.Prime q) (hqN : Nat.Coprime q N),
       q ∉ S →
       ‖((χ (ZMod.unitOfCoprime q hqN) : ℂ) * (q : ℂ) ^ (k - 1)) *
-        ((q : ℂ) ^ (-Newform.specialPoint k)) ^ 2‖ < 1 := by
-    intro q hq hqN _
-    have hs_ge : ((k : ℝ) - 1) / 2 < (Newform.specialPoint k).re := by
+        ((q : ℂ) ^ (-Newform.specialPoint k)) ^ 2‖ < 1 := fun q hq hqN _ ↦
+    Newform.norm_eulerFactor_argument_lt_one χ k hq.two_le hqN _ <| by
       rw [Newform.specialPoint_re]; linarith
-    exact Newform.norm_eulerFactor_argument_lt_one χ k hq.two_le hqN _ hs_ge
   have h_pos_neg : ∀ q : ℕ, ∀ (hq : Nat.Prime q) (hqN : Nat.Coprime q N),
       q ∉ S →
       (1 : ℂ) + (χ (ZMod.unitOfCoprime q hqN) : ℂ) *
         (q : ℂ) ^ (-(2 * Newform.specialPoint k - (k : ℂ) + 1)) ≠ 0 ∧
       (1 : ℂ) - (χ (ZMod.unitOfCoprime q hqN) : ℂ) *
-        (q : ℂ) ^ (-(2 * Newform.specialPoint k - (k : ℂ) + 1)) ≠ 0 := by
-    intro q hq hqN _
+        (q : ℂ) ^ (-(2 * Newform.specialPoint k - (k : ℂ) + 1)) ≠ 0 := fun q hq hqN _ ↦
     have h_norm_lt :
         ‖(χ (ZMod.unitOfCoprime q hqN) : ℂ) *
-          (q : ℂ) ^ (-(2 * Newform.specialPoint k - (k : ℂ) + 1))‖ < 1 := by
-      apply Newform.norm_chi_q_cpow_neg_lt_one_of_re_pos χ hq.two_le hqN
-      rw [Newform.two_specialPoint_sub_k_add_one_re]; norm_num
-    exact ⟨Newform.one_add_ne_zero_of_norm_lt_one h_norm_lt,
-           Newform.one_sub_ne_zero_of_norm_lt_one h_norm_lt⟩
+          (q : ℂ) ^ (-(2 * Newform.specialPoint k - (k : ℂ) + 1))‖ < 1 :=
+      Newform.norm_chi_q_cpow_neg_lt_one_of_re_pos χ hq.two_le hqN <| by
+        rw [Newform.two_specialPoint_sub_k_add_one_re]; norm_num
+    ⟨Newform.one_add_ne_zero_of_norm_lt_one h_norm_lt,
+     Newform.one_sub_ne_zero_of_norm_lt_one h_norm_lt⟩
   exact f.lSeries_stripped_eq_dirichlet_quotient_value χ hfχ S h_bad
     hs hs' hs'' h_geom T hT_iff h_pos_neg
 
@@ -1224,6 +1202,5 @@ theorem strongMultiplicityOne
       rw [← hmul_f, hnq_eq, hmul_g, hq_eq]
     exact mul_right_cancel₀ hq_ne hcomb
   · exact h n hn hn_S
-
 
 end HeckeRing.GL2
