@@ -3,24 +3,24 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: LeanModularForms contributors
 -/
+import LeanModularForms.Eigenforms.ConductorTheorem
 import LeanModularForms.HeckeRIngs.GL2.AdjointTheoryPetersson
 import LeanModularForms.HeckeRIngs.GL2.CharacterDecomp
 import LeanModularForms.HeckeRIngs.GL2.LevelEmbed
 import LeanModularForms.HeckeRIngs.GL2.LevelRaise
+import LeanModularForms.HeckeRIngs.GL2.Newforms.FrickeTwist
 import LeanModularForms.HeckeRIngs.GL2.Unified.NebentypusHeckeRingHom
+import LeanModularForms.Modularforms.DimensionFormulas
 import LeanModularForms.Modularforms.LFunction
 import LeanModularForms.Modularforms.PeterssonLevelN
-import LeanModularForms.Modularforms.DimensionFormulas
 import LeanModularForms.Modularforms.SlashActionAuxil
-import LeanModularForms.Eigenforms.ConductorTheorem
+import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
 import Mathlib.LinearAlgebra.BilinearForm.Orthogonal
 import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
 import Mathlib.NumberTheory.EulerProduct.Basic
 import Mathlib.NumberTheory.EulerProduct.DirichletLSeries
 import Mathlib.NumberTheory.LSeries.AbstractFuncEq
 import Mathlib.NumberTheory.LSeries.DirichletContinuation
-import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
-import LeanModularForms.HeckeRIngs.GL2.Newforms.FrickeTwist
 
 /-!
 # Newforms: Fricke slash-equality input and completed Mellin-Dirichlet bridges
@@ -1484,7 +1484,7 @@ lemma Newform.coprimeStrip_lCoeff_eq_lCoeff_stripped
     exact p.prop.one_lt.ne' (Nat.dvd_one.mp hp_dvd_gcd)
   · rw [if_neg h]
     rw [if_neg]
-    push_neg
+    push Not
     rcases Nat.eq_zero_or_pos n with rfl | hn_pos
     ·
       have hN_ne_one : N ≠ 1 := by
