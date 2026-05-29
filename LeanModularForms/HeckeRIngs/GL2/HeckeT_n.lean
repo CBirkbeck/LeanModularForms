@@ -88,7 +88,7 @@ private lemma sum_slash' (k : ℤ) {ι : Type*} (s : Finset ι)
 private lemma zmod_mul_inv' {p : ℕ} [hp : Fact p.Prime] [NeZero p]
     {a : ZMod p} (ha : a ≠ 0) : a * a⁻¹ = 1 := by
   have hne : a.val ≠ 0 := fun h ↦ ha (by
-    rw [show a = (a.val : ZMod p) from by rw [ZMod.natCast_val, ZMod.cast_id]]; simp [h])
+    rw [show a = (a.val : ZMod p) by rw [ZMod.natCast_val, ZMod.cast_id]]; simp [h])
   have hcop : a.val.Coprime p :=
     (hp.out.coprime_iff_not_dvd.2 (fun h ↦ hne (Nat.eq_zero_of_dvd_of_lt h (ZMod.val_lt a)))).symm
   have vcz : ∀ x : ZMod p, (x.val : ZMod p) = x := fun x ↦ by rw [ZMod.natCast_val, ZMod.cast_id]
@@ -125,8 +125,8 @@ private lemma zmod_cross_mul {p : ℕ} [Fact p.Prime] [NeZero p] {a b c d : ZMod
     rw [mul_comm]; exact zmod_mul_inv' hx
   have := congr_arg (· * (b * d)) h
   simp only [mul_assoc] at this
-  rwa [show b⁻¹ * (b * d) = d from by rw [← mul_assoc, inv_mul hb, one_mul],
-       show d⁻¹ * (b * d) = b from by
+  rwa [show b⁻¹ * (b * d) = d by rw [← mul_assoc, inv_mul hb, one_mul],
+       show d⁻¹ * (b * d) = b by
           rw [mul_comm b d, ← mul_assoc, inv_mul hd, one_mul]] at this
 
 /-- For an SL₂ matrix mod `p`, the first column entry `M₀₀ + b·M₁₀` and `M₁₀` cannot
@@ -254,7 +254,7 @@ private lemma moebius_conj {p : ℕ} [Fact p.Prime] (hp : Nat.Prime p)
   have hAj'_mod : (A : ZMod p) * (j' : ZMod p) = (B : ZMod p) := by
     have key : (A : ZMod p) * ((B : ZMod p) * (A : ZMod p)⁻¹) = (B : ZMod p) := by
       rw [mul_comm (B : ZMod p) _, ← mul_assoc, zmod_mul_inv' hA_ne, one_mul]
-    rw [show (j' : ZMod p) = j'_zmod from by
+    rw [show (j' : ZMod p) = j'_zmod by
       show (j'_zmod.val : ZMod p) = j'_zmod; rw [ZMod.natCast_val, ZMod.cast_id]]
     exact key
   have hpBAj : (p : ℤ) ∣ (B - A * ↑j') := by
@@ -281,7 +281,7 @@ private lemma moebius_conj {p : ℕ} [Fact p.Prime] (hp : Nat.Prime p)
         Matrix.head_fin_const] <;>
       simp only [show (↑σ : Matrix (Fin 2) (Fin 2) ℤ) = M from rfl] <;>
       first | rfl | simp |
-        (exact_mod_cast (show B = A * ↑j' + q * ↑p from by linarith [hq_eq])) |
+        (exact_mod_cast (show B = A * ↑j' + q * ↑p by linarith [hq_eq])) |
         ring
   · show τ_mat 0 0 = A; simp [hτ_mat_def]
   · show τ_mat 1 0 = ↑p * M 1 0; simp [hτ_mat_def]
@@ -349,7 +349,7 @@ private theorem heckeT_p_ut_slash_invariant_divN [NeZero N] (k : ℤ) (p : ℕ)
     have h10 : ((M 1 0 : ℤ) : ZMod p) = 0 :=
       (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hp_dvd_σ10
     rw [show ((M 0 0 + ↑b.val * M 1 0 : ℤ) : ZMod p) =
-      ((M 0 0 : ℤ) : ZMod p) + ((b.val : ℤ) : ZMod p) * ((M 1 0 : ℤ) : ZMod p) from by
+      ((M 0 0 : ℤ) : ZMod p) + ((b.val : ℤ) : ZMod p) * ((M 1 0 : ℤ) : ZMod p) by
       push_cast; ring, h10, mul_zero, add_zero, hσ00_mod_p] at this
     exact one_ne_zero this
   have h_upper : ∀ b : Fin p,
@@ -626,33 +626,28 @@ private lemma crt_sum_eq {α : Type*} [AddCommMonoid α]
     ∑ j ∈ Finset.range (p * q), f j := by
   rw [← Finset.sum_product']
   refine Finset.sum_nbij (fun bc ↦ bc.1 + bc.2 * p) ?_ ?_ ?_ ?_
-  ·
-    intro ⟨b, c⟩ hbc
+  · intro ⟨b, c⟩ hbc
     simp only [Finset.mem_product, Finset.mem_range] at hbc ⊢
     nlinarith [hbc.1, hbc.2]
-  ·
-    intro ⟨b₁, c₁⟩ hbc₁ ⟨b₂, c₂⟩ hbc₂ h
+  · intro ⟨b₁, c₁⟩ hbc₁ ⟨b₂, c₂⟩ hbc₂ h
     simp only [Finset.mem_coe, Finset.mem_product, Finset.mem_range] at hbc₁ hbc₂
     simp only at h
-    have hb₁ := hbc₁.1; have hb₂ := hbc₂.1
     have hbeq : b₁ = b₂ := by
       by_contra hne
       rcases Nat.lt_or_gt_of_ne hne with hlt | hgt
-      · have : c₁ > c₂ := by nlinarith
-        nlinarith
-      · have : c₂ > c₁ := by nlinarith
-        nlinarith
+      · have : c₁ > c₂ := by nlinarith [hbc₁.1, hbc₂.1]
+        nlinarith [hbc₁.1, hbc₂.1]
+      · have : c₂ > c₁ := by nlinarith [hbc₁.1, hbc₂.1]
+        nlinarith [hbc₁.1, hbc₂.1]
     subst hbeq; simp only [Prod.mk.injEq, true_and]
     exact mul_right_cancel₀ (by omega : (p : ℕ) ≠ 0) (by omega : c₁ * p = c₂ * p)
-  ·
-    intro j hj
+  · intro j hj
     simp only [Set.mem_image, Finset.mem_coe, Finset.mem_product, Finset.mem_range] at hj ⊢
     refine ⟨(j % p, j / p), ⟨Nat.mod_lt j hp,
       Nat.div_lt_of_lt_mul (mul_comm p q ▸ hj)⟩, ?_⟩
     show j % p + j / p * p = j
     rw [mul_comm]; exact Nat.mod_add_div j p
-  ·
-    intro _ _; rfl
+  · intro _ _; rfl
 
 private lemma crt_sum_swap {α : Type*} [AddCommMonoid α]
     {p q : ℕ} (hp : 0 < p) (hq : 0 < q)
@@ -758,9 +753,9 @@ private theorem heckeT_p_ut_orbit_comm_gamma0 [NeZero N] (k : ℤ) (p : ℕ)
     have hdet_zmod : ((M 0 0 * M 1 1 - M 0 1 * M 1 0 : ℤ) : ZMod p) = 1 := by
       rw [det_fin_two] at hdet_M; simp [hdet_M]
     rw [show ((M 0 0 * M 1 1 - M 0 1 * M 1 0 : ℤ) : ZMod p) =
-      (M 0 0 : ZMod p) * (M 1 1 : ZMod p) - (M 0 1 : ZMod p) * (M 1 0 : ZMod p) from by
-      push_cast; ring, show (M 0 0 : ZMod p) = ((M 0 0 : ℤ) : ZMod p) from by ring,
-      h00, show (M 1 0 : ZMod p) = ((M 1 0 : ℤ) : ZMod p) from by ring,
+      (M 0 0 : ZMod p) * (M 1 1 : ZMod p) - (M 0 1 : ZMod p) * (M 1 0 : ZMod p) by
+      push_cast; ring, show (M 0 0 : ZMod p) = ((M 0 0 : ℤ) : ZMod p) by ring,
+      h00, show (M 1 0 : ZMod p) = ((M 1 0 : ℤ) : ZMod p) by ring,
       h10, zero_mul, mul_zero, sub_zero] at hdet_zmod
     exact zero_ne_one hdet_zmod
   have hA_all : ∀ b : Fin p,
@@ -771,7 +766,7 @@ private theorem heckeT_p_ut_orbit_comm_gamma0 [NeZero N] (k : ℤ) (p : ℕ)
     have h10 : ((M 1 0 : ℤ) : ZMod p) = 0 :=
       (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hp_dvd_σ10
     rw [show ((M 0 0 + ↑b.val * M 1 0 : ℤ) : ZMod p) =
-      ((M 0 0 : ℤ) : ZMod p) + ((b.val : ℤ) : ZMod p) * ((M 1 0 : ℤ) : ZMod p) from by
+      ((M 0 0 : ℤ) : ZMod p) + ((b.val : ℤ) : ZMod p) * ((M 1 0 : ℤ) : ZMod p) by
       push_cast; ring, h10, mul_zero, add_zero] at this
     exact hσ00_ne this
   have h_upper : ∀ b : Fin p,
@@ -847,15 +842,13 @@ private lemma heckeT_p_ut_slash_lower_comm [NeZero N] (k : ℤ) {p q : ℕ}
     (fun b₁ hb₁ b₂ hb₂ he ↦ ?_)
     (fun c hc ↦ ?_)
     (fun _ _ ↦ rfl)
-  ·
-    simp only [Finset.mem_coe, Finset.mem_range] at hb₁ hb₂
+  · simp only [Finset.mem_coe, Finset.mem_range] at hb₁ hb₂
     simp only at he
     have hmod : q * b₁ ≡ q * b₂ [MOD p] := by rwa [Nat.ModEq]
     have hbb : b₁ ≡ b₂ [MOD p] :=
       Nat.ModEq.cancel_left_of_coprime hpq_cop.symm hmod
     rwa [Nat.ModEq, Nat.mod_eq_of_lt hb₁, Nat.mod_eq_of_lt hb₂] at hbb
-  ·
-    simp only [Finset.mem_coe, Finset.mem_range, Set.mem_image] at hc ⊢
+  · simp only [Finset.mem_coe, Finset.mem_range, Set.mem_image] at hc ⊢
     have hq_unit : IsUnit ((q : ZMod p)) := (ZMod.isUnit_iff_coprime q p).mpr hpq_cop
     obtain ⟨u, hu⟩ := hq_unit
     set b_zmod := u⁻¹ * (c : ZMod p)
@@ -978,11 +971,9 @@ theorem heckeT_p_all_comm_distinct [NeZero N] (k : ℤ)
   show ((heckeT_p_all k p hp (heckeT_p_all k q hq f)) : UpperHalfPlane → ℂ) z =
     ((heckeT_p_all k q hq (heckeT_p_all k p hp f)) : UpperHalfPlane → ℂ) z
   by_cases hpN : Nat.Coprime p N <;> by_cases hqN : Nat.Coprime q N
-  ·
-    rw [heckeT_p_all_coprime k hp hpN, heckeT_p_all_coprime k hq hqN]
+  · rw [heckeT_p_all_coprime k hp hpN, heckeT_p_all_coprime k hq hqN]
     exact heckeT_p_comm_distinct_both_coprime k hp hq hpq hpN hqN f z
-  ·
-    rw [heckeT_p_all_coprime_apply k hp hpN (heckeT_p_all k q hq f),
+  · rw [heckeT_p_all_coprime_apply k hp hpN (heckeT_p_all k q hq f),
         heckeT_p_all_not_coprime_apply k hq hqN (heckeT_p_all k p hp f),
         heckeT_p_all_coprime_apply k hp hpN f]
     simp only [heckeT_p_fun, Pi.add_apply]
@@ -997,8 +988,7 @@ theorem heckeT_p_all_comm_distinct [NeZero N] (k : ℤ)
         (diamondOp k (ZMod.unitOfCoprime p hpN) f)) z
     simp only [heckeT_p_ut, SlashAction.sum_slash, Finset.sum_apply] at hC
     rw [hUU, hC]
-  ·
-    rw [heckeT_p_all_not_coprime_apply k hp hpN (heckeT_p_all k q hq f),
+  · rw [heckeT_p_all_not_coprime_apply k hp hpN (heckeT_p_all k q hq f),
         heckeT_p_all_coprime_apply k hq hqN f,
         heckeT_p_all_coprime_apply k hq hqN (heckeT_p_all k p hp f)]
     simp only [heckeT_p_fun, Pi.add_apply]
@@ -1013,8 +1003,7 @@ theorem heckeT_p_all_comm_distinct [NeZero N] (k : ℤ)
         (diamondOp k (ZMod.unitOfCoprime q hqN) f)) z
     simp only [heckeT_p_ut, SlashAction.sum_slash, Finset.sum_apply] at hC
     rw [hUU, hC]
-  ·
-    rw [heckeT_p_all_not_coprime_apply k hp hpN (heckeT_p_all k q hq f),
+  · rw [heckeT_p_all_not_coprime_apply k hp hpN (heckeT_p_all k q hq f),
         heckeT_p_all_not_coprime_apply k hq hqN f,
         heckeT_p_all_not_coprime_apply k hq hqN (heckeT_p_all k p hp f),
         heckeT_p_all_not_coprime_apply k hp hpN f]
@@ -1036,11 +1025,9 @@ theorem diamondOp_ext_comm_heckeT_ppow [NeZero N] (k : ℤ)
     diamondOp_ext (N := N) k p * heckeT_ppow k q hq b =
       heckeT_ppow k q hq b * diamondOp_ext k p := by
   by_cases hpN : Nat.Coprime p N
-  ·
-    rw [diamondOp_ext_coprime k hpN]
+  · rw [diamondOp_ext_coprime k hpN]
     by_cases hqN : Nat.Coprime q N
-    ·
-      have hbase : diamondOp k (ZMod.unitOfCoprime p hpN) * heckeT_p_all k q hq =
+    · have hbase : diamondOp k (ZMod.unitOfCoprime p hpN) * heckeT_p_all k q hq =
           heckeT_p_all k q hq * diamondOp k (ZMod.unitOfCoprime p hpN) := by
         rw [heckeT_p_all_coprime k hq hqN]
         exact LinearMap.ext fun f ↦ congr_fun (congr_arg DFunLike.coe
@@ -1066,11 +1053,9 @@ theorem diamondOp_ext_comm_heckeT_ppow [NeZero N] (k : ℤ)
             · rw [← mul_assoc, hbase, mul_assoc, ihb (n + 1) (by omega), ← mul_assoc]
             · rw [mul_smul_comm, smul_mul_assoc]; congr 1
               rw [← mul_assoc, hdd, mul_assoc, ihb n (by omega), ← mul_assoc]
-    ·
-      rw [heckeT_ppow_eq_pow_of_not_coprime k hq hqN]
+    · rw [heckeT_ppow_eq_pow_of_not_coprime k hq hqN]
       exact (diamondOp_commute_heckeT_p_all_of_divN k hpN hq hqN).pow_right b
-  ·
-    rw [diamondOp_ext_not_coprime k hpN]; simp [zero_mul, mul_zero]
+  · rw [diamondOp_ext_not_coprime k hpN]; simp [zero_mul, mul_zero]
 
 private theorem heckeT_p_all_comm_heckeT_ppow [NeZero N] (k : ℤ)
     {p q : ℕ} (hp : Nat.Prime p) (hq : Nat.Prime q) (hpq : p ≠ q) (b : ℕ) :
@@ -1087,8 +1072,7 @@ private theorem heckeT_p_all_comm_heckeT_ppow [NeZero N] (k : ℤ)
     | (m + 2) =>
       rw [heckeT_ppow_succ_succ k q hq m, mul_sub, sub_mul, mul_smul_comm, smul_mul_assoc]
       congr 1
-      ·
-        conv_lhs => rw [show heckeT_p_all k q hq = heckeT_ppow k q hq 1 from
+      · conv_lhs => rw [show heckeT_p_all k q hq = heckeT_ppow k q hq 1 from
           (heckeT_ppow_one k q hq).symm]
         conv_rhs => rw [show heckeT_p_all k q hq = heckeT_ppow k q hq 1 from
           (heckeT_ppow_one k q hq).symm]
@@ -1097,7 +1081,7 @@ private theorem heckeT_p_all_comm_heckeT_ppow [NeZero N] (k : ℤ)
       · congr 1
         rw [← mul_assoc,
             show heckeT_p_all k p hp * diamondOp_ext k q =
-              diamondOp_ext k q * heckeT_p_all k p hp from by
+              diamondOp_ext k q * heckeT_p_all k p hp by
               rw [← heckeT_ppow_one k p hp]
               exact (diamondOp_ext_comm_heckeT_ppow k q hp 1).symm,
             mul_assoc, ihb m (by omega), ← mul_assoc]
@@ -1120,14 +1104,13 @@ theorem heckeT_ppow_comm_same [NeZero N] (k : ℤ)
       | (n + 2) =>
         rw [heckeT_ppow_succ_succ k p hp n, mul_sub, sub_mul, mul_smul_comm, smul_mul_assoc]
         congr 1
-        ·
-          conv_rhs => rw [mul_assoc]
+        · conv_rhs => rw [mul_assoc]
           rw [← mul_assoc, mul_assoc, ihr (n + 1) (by omega)]
         · congr 1
           show heckeT_p_all k p hp * (diamondOp_ext k p * heckeT_ppow k p hp n) =
             diamondOp_ext k p * heckeT_ppow k p hp n * heckeT_p_all k p hp
           rw [← mul_assoc, show heckeT_p_all k p hp * diamondOp_ext k p =
-              diamondOp_ext k p * heckeT_p_all k p hp from by
+              diamondOp_ext k p * heckeT_p_all k p hp by
               rw [← heckeT_ppow_one k p hp]; exact (hdia 1).symm,
             mul_assoc, ihr n (by omega), ← mul_assoc]
   induction a using Nat.strongRecOn with
@@ -1161,8 +1144,7 @@ theorem heckeT_ppow_comm_heckeT_ppow [NeZero N] (k : ℤ)
     | (n + 2) =>
       rw [heckeT_ppow_succ_succ k p hp n, sub_mul, mul_sub]
       congr 1
-      ·
-        rw [mul_assoc, ih (n + 1) (by omega), ← mul_assoc,
+      · rw [mul_assoc, ih (n + 1) (by omega), ← mul_assoc,
             show heckeT_p_all k p hp * heckeT_ppow k q hq b =
               heckeT_ppow k q hq b * heckeT_p_all k p hp from
               heckeT_p_all_comm_heckeT_ppow k hp hq hpq b,
@@ -1179,14 +1161,12 @@ private theorem heckeT_ppow_comm_heckeT_n_aux [NeZero N] (k : ℤ)
   | _ m ih =>
     rw [heckeT_n_aux]
     split_ifs with h
-    ·
-      simp [mul_one, one_mul]
-    ·
-      push Not at h
+    · simp [mul_one, one_mul]
+    · push Not at h
       dsimp only
-      set q := m.minFac with hq_def
+      set q := m.minFac
       have hq : Nat.Prime q := Nat.minFac_prime (by omega)
-      set v := m.factorization q with hv_def
+      set v := m.factorization q
       have hpq : p ≠ q := by
         intro heq; exact hpm (heq ▸ Nat.minFac_dvd m)
       have hqv_dvd : q ^ v ∣ m := Nat.ordProj_dvd m q
@@ -1210,22 +1190,20 @@ private theorem heckeT_ppow_comm_heckeT_n_aux_all [NeZero N] (k : ℤ)
     · simp [mul_one, one_mul]
     · push Not at h
       dsimp only
-      set q := m.minFac with hq_def
+      set q := m.minFac
       have hq : Nat.Prime q := Nat.minFac_prime (by omega)
-      set v := m.factorization q with hv_def
+      set v := m.factorization q
       have hqv_dvd : q ^ v ∣ m := Nat.ordProj_dvd m q
       have hm_div_lt : m / q ^ v < m :=
         Nat.div_lt_self (by omega) (Nat.one_lt_pow
           (hq.factorization_pos_of_dvd (by omega) (Nat.minFac_dvd m)).ne' hq.one_lt)
       by_cases hpq : p = q
-      ·
-        subst hpq
+      · subst hpq
         have hp_not_dvd_div : ¬q ∣ m / q ^ v :=
           Nat.not_dvd_ordCompl hp (show m ≠ 0 by omega)
         rw [← mul_assoc, heckeT_ppow_comm_same k hp r v,
             mul_assoc, heckeT_ppow_comm_heckeT_n_aux k hp r _ hp_not_dvd_div, ← mul_assoc]
-      ·
-        rw [← mul_assoc, heckeT_ppow_comm_heckeT_ppow k hp hq hpq r v,
+      · rw [← mul_assoc, heckeT_ppow_comm_heckeT_ppow k hp hq hpq r v,
             mul_assoc, ih _ hm_div_lt, ← mul_assoc]
 
 private theorem heckeT_n_aux_mul_coprime_minFacL [NeZero N] (k : ℤ) {m n : ℕ}
@@ -1332,8 +1310,7 @@ private theorem heckeT_n_aux_mul_coprime [NeZero N] (k : ℤ) (m n : ℕ)
       have h1 : heckeT_n_aux (N := N) k 1 = 1 := by
         rw [heckeT_n_aux, dif_pos (le_refl 1)]
       rw [h1, mul_one]
-    ·
-      push Not at hm1 hn1
+    · push Not at hm1 hn1
       have hmn_ne : m * n ≠ 1 := by nlinarith
       have hp₀ := Nat.minFac_prime hmn_ne
       rcases hp₀.dvd_mul.mp (Nat.minFac_dvd (m * n)) with hp₀_dvd_m | hp₀_dvd_n
@@ -1362,14 +1339,12 @@ theorem heckeT_n_comm [NeZero N] (k : ℤ) (m n : ℕ) [NeZero m] [NeZero n] :
   | _ m ih =>
     rw [heckeT_n_aux]
     split_ifs with h
-    ·
-      simp [mul_one, one_mul]
-    ·
-      push Not at h
+    · simp [mul_one, one_mul]
+    · push Not at h
       dsimp only
-      set p := m.minFac with hp_def
+      set p := m.minFac
       have hp : Nat.Prime p := Nat.minFac_prime (by omega)
-      set v := m.factorization p with hv_def
+      set v := m.factorization p
       have hpv_dvd : p ^ v ∣ m := Nat.ordProj_dvd m p
       have hm_div_lt : m / p ^ v < m :=
         Nat.div_lt_self (by omega) (Nat.one_lt_pow
@@ -1439,8 +1414,8 @@ private lemma heckeT_ppow_mul_summand_eq [NeZero N] (k : ℤ) {p : ℕ} (hp : Na
         (↑p : ℂ) ^ (k - 1) • (diamondOp_ext (N := N) k p *
           heckeT_ppow k p hp (a + b - 2 * j)) := by
     have hrr := heckeT_p_all_mul_heckeT_ppow_succ (N := N) k hp (a + b - 2 * j)
-    rwa [show a + b - 2 * j + 1 = a + 1 + b - 2 * j from by omega,
-         show a + b - 2 * j + 2 = a + 2 + b - 2 * j from by omega] at hrr
+    rwa [show a + b - 2 * j + 1 = a + 1 + b - 2 * j by omega,
+         show a + b - 2 * j + 2 = a + 2 + b - 2 * j by omega] at hrr
   rw [mul_smul_comm]
   conv_lhs => arg 2; rw [mul_smul_comm, smul_smul]
   rw [show (↑p : ℂ) ^ (k - 1) * (↑p : ℂ) ^ (↑j * (k - 1)) =
@@ -1468,8 +1443,8 @@ private lemma heckeT_ppow_mul_boundary_eq [NeZero N] (k : ℤ) {p : ℕ} (hp : N
         (↑p : ℂ) ^ (k - 1) • (diamondOp_ext (N := N) k p *
           heckeT_ppow k p hp (b - a - 2)) := by
     have hrec := heckeT_p_all_mul_heckeT_ppow_succ (N := N) k hp (b - a - 2)
-    rwa [show b - a - 2 + 1 = b - a - 1 from by omega,
-         show b - a - 2 + 2 = b - a from by omega] at hrec
+    rwa [show b - a - 2 + 1 = b - a - 1 by omega,
+         show b - a - 2 + 2 = b - a by omega] at hrec
   calc heckeT_p_all k p hp * diamondOp_ext k p ^ (a + 1) *
           heckeT_ppow k p hp (b - a - 1)
       = diamondOp_ext k p ^ (a + 1) * heckeT_p_all k p hp *
@@ -1505,7 +1480,7 @@ private lemma heckeT_ppow_mul_step [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prim
   rw [heckeT_ppow_succ_succ k p hp a, sub_mul, smul_mul_assoc,
       mul_assoc (diamondOp_ext k p), mul_assoc (heckeT_p_all k p hp), ih_succ, ih_a]
   conv_rhs =>
-    rw [show a + 2 + 1 = a + 1 + 2 from by omega,
+    rw [show a + 2 + 1 = a + 1 + 2 by omega,
         Finset.sum_range_succ, Finset.sum_range_succ]
   rw [Finset.mul_sum]
   conv_lhs => arg 2; arg 2; rw [Finset.mul_sum]
@@ -1530,9 +1505,9 @@ private lemma heckeT_ppow_mul_step [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prim
     rw [h_sum]
     conv_rhs => rw [add_assoc]
     rw [add_left_cancel_iff]
-    rw [show a + 1 + b - 2 * (a + 1) = b - a - 1 from by omega,
-        show a + 2 + b - 2 * (a + 1) = b - a from by omega,
-        show a + 2 + b - 2 * (a + 2) = b - a - 2 from by omega]
+    rw [show a + 1 + b - 2 * (a + 1) = b - a - 1 by omega,
+        show a + 2 + b - 2 * (a + 1) = b - a by omega,
+        show a + 2 + b - 2 * (a + 2) = b - a - 2 by omega]
     rw [mul_smul_comm, ← mul_assoc]
     suffices hsuff : heckeT_p_all k p hp * diamondOp_ext k p ^ (a + 1) *
         heckeT_ppow k p hp (b - a - 1) =
@@ -1570,7 +1545,7 @@ private theorem heckeT_ppow_mul [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prime p
     show heckeT_ppow (N := N) k p hp 1 * heckeT_ppow k p hp (1 + c) =
       heckeT_ppow k p hp (1 + (1 + c)) +
         ((↑p : ℂ) ^ (k - 1)) • (diamondOp_ext k p * heckeT_ppow k p hp (1 + (1 + c) - 2))
-    rw [show 1 + (1 + c) - 2 = c from by omega, show 1 + (1 + c) = c + 2 from by omega]
+    rw [show 1 + (1 + c) - 2 = c by omega, show 1 + (1 + c) = c + 2 by omega]
     rw [heckeT_ppow_one, heckeT_ppow_succ_succ]
     abel
   | (a + 2) =>
@@ -1617,8 +1592,7 @@ private theorem diamondOp_n_pow_mul_eq [NeZero N] (k : ℤ) {p : ℕ}
     diamondOp_n (N := N) k (p ^ j * d) = diamondOp_ext k p ^ j * diamondOp_n k d := by
   by_cases hpN : Nat.Coprime p N
   · by_cases hdN : Nat.Coprime d N
-    ·
-      induction j with
+    · induction j with
       | zero => simp [pow_zero, one_mul]
       | succ j ih =>
         have hrw : p ^ (j + 1) * d = p * (p ^ j * d) := by ring
@@ -1626,19 +1600,17 @@ private theorem diamondOp_n_pow_mul_eq [NeZero N] (k : ℤ) {p : ℕ}
           Nat.Coprime.mul_left (hpN.pow_left j) hdN
         rw [hrw, pow_succ, mul_assoc,
             show diamondOp_n (N := N) k (p * (p ^ j * d)) =
-              diamondOp_ext k p * diamondOp_n k (p ^ j * d) from by
+              diamondOp_ext k p * diamondOp_n k (p ^ j * d) by
               rw [diamondOp_n, dif_pos (Nat.Coprime.mul_left hpN hpjd_cop),
                   diamondOp_ext_coprime k hpN, diamondOp_n, dif_pos hpjd_cop,
                   Module.End.mul_eq_comp, ← diamondOp_mul]
               congr 1; ext; simp [ZMod.coe_unitOfCoprime],
             ih]
         rw [← mul_assoc, (Commute.self_pow _ j).eq, mul_assoc]
-    ·
-      have hpjd_not : ¬Nat.Coprime (p ^ j * d) N := fun h ↦
+    · have hpjd_not : ¬Nat.Coprime (p ^ j * d) N := fun h ↦
         hdN (h.coprime_dvd_left (dvd_mul_left d (p ^ j)))
       simp [diamondOp_n, dif_neg hpjd_not, dif_neg hdN, mul_zero]
-  ·
-    rw [diamondOp_ext_not_coprime k hpN]
+  · rw [diamondOp_ext_not_coprime k hpN]
     rcases Nat.eq_zero_or_pos j with rfl | hj_pos
     · simp [pow_zero, one_mul]
     · have : ¬Nat.Coprime (p ^ j * d) N := fun h ↦
@@ -1674,7 +1646,7 @@ private lemma heckeT_n_aux_mn_div_pjd_eq [NeZero N] (k : ℤ) {p : ℕ} (hp : Na
   have hm'n'_dd_pos : 0 < m' * n' / (d' * d') :=
     Nat.div_pos (Nat.le_of_dvd (Nat.mul_pos hm'_pos hn'_pos) hdd_dvd)
       (Nat.mul_pos hd'_pos hd'_pos)
-  set r := va + vb - 2 * j with hr_def
+  set r := va + vb - 2 * j
   have hr_eq : min va vb + max va vb - 2 * j = r := by
     rw [min_add_max]
   have hmn_div_eq : m * n / (p ^ j * d' * (p ^ j * d')) =
@@ -1682,8 +1654,8 @@ private lemma heckeT_n_aux_mn_div_pjd_eq [NeZero N] (k : ℤ) {p : ℕ} (hp : Na
     rw [hm_eq, hn_eq]
     have h1 : p ^ va * m' * (p ^ vb * n') = p ^ (va + vb) * (m' * n') := by rw [pow_add]; ring
     have h2 : p ^ j * d' * (p ^ j * d') = p ^ (2 * j) * (d' * d') := by
-      rw [show 2 * j = j + j from by omega, pow_add]; ring
-    rw [h1, h2, show va + vb = 2 * j + r from by omega, pow_add, mul_assoc,
+      rw [show 2 * j = j + j by omega, pow_add]; ring
+    rw [h1, h2, show va + vb = 2 * j + r by omega, pow_add, mul_assoc,
         Nat.mul_div_mul_left _ _ (pow_pos hp.pos (2 * j)), Nat.mul_div_assoc _ hdd_dvd]
   have hp_not_dvd_m'n'_dd : ¬p ∣ (m' * n' / (d' * d')) := by
     intro h
@@ -1916,7 +1888,7 @@ private theorem heckeT_n_mul_aux_noncoprime [NeZero N] (k : ℤ) (g : ℕ) (m n 
     rcases Nat.eq_zero_or_pos g with rfl | h
     · rw [Nat.gcd_eq_zero_iff] at hg; exact absurd hg.1 (NeZero.ne m)
     · exact h
-  set p := g.minFac with hp_def
+  set p := g.minFac
   have hp : Nat.Prime p := Nat.minFac_prime (by omega)
   have hp_dvd_m : p ∣ m := dvd_trans (hg ▸ Nat.minFac_dvd g) (Nat.gcd_dvd_left m n)
   have hp_dvd_n : p ∣ n := dvd_trans (hg ▸ Nat.minFac_dvd g) (Nat.gcd_dvd_right m n)
@@ -1971,8 +1943,7 @@ private theorem heckeT_n_mul_aux [NeZero N] (k : ℤ) (g : ℕ) (m n : ℕ) [NeZ
   induction g using Nat.strong_induction_on generalizing m n with
   | _ g ih =>
   by_cases hg1 : g = 1
-  ·
-    subst hg1
+  · subst hg1
     have hmn_cop : Nat.Coprime m n := hg
     have h1_mem : 1 ∈ (Nat.gcd m n).divisors := by rw [hg]; exact Finset.mem_singleton_self 1
     have hattach : (Nat.gcd m n).divisors.attach =
@@ -1983,12 +1954,11 @@ private theorem heckeT_n_mul_aux [NeZero N] (k : ℤ) (g : ℕ) (m n : ℕ) [NeZ
       simp only [Finset.mem_singleton] at ha ⊢
       constructor
       · intro _; exact Subtype.ext ha
-      · intro h; exact Finset.mem_attach _ _
+      · intro _; exact Finset.mem_attach _ _
     rw [hattach, Finset.sum_singleton]
     simp only [Nat.cast_one, one_zpow, one_smul, Nat.one_mul, Nat.div_one]
     rw [diamondOp_n_one, one_mul, ← heckeT_n_mul_coprime k m n hmn_cop]
-  ·
-    exact heckeT_n_mul_aux_noncoprime k g m n hg hg1 ih
+  · exact heckeT_n_mul_aux_noncoprime k g m n hg hg1 ih
 
 theorem heckeT_n_mul [NeZero N] (k : ℤ) (m n : ℕ) [NeZero m] [NeZero n] :
     heckeT_n (N := N) k m * heckeT_n k n =
@@ -2007,14 +1977,12 @@ private theorem heckeT_n_aux_comm_diamondOp [NeZero N] (k : ℤ) (m : ℕ)
   | _ m ih =>
     rw [heckeT_n_aux]
     split_ifs with h
-    ·
-      simp [mul_one, one_mul]
-    ·
-      push Not at h
+    · simp [mul_one, one_mul]
+    · push Not at h
       dsimp only
-      set p := m.minFac with hp_def
+      set p := m.minFac
       have hp : Nat.Prime p := Nat.minFac_prime (by omega)
-      set v := m.factorization p with hv_def
+      set v := m.factorization p
       have hpN : Nat.Coprime p N :=
         Nat.Coprime.coprime_dvd_left (Nat.minFac_dvd m) hm
       have hpv_dvd : p ^ v ∣ m := Nat.ordProj_dvd m p
