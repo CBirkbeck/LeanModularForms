@@ -26,8 +26,6 @@ open CuspForm
 
 variable {N : ℕ} [NeZero N]
 
-/-! ### Phase E3 — concrete `Option (Fin p)` projective T_p tile family -/
-
 /-- **Phase E3 — rational `Option (Fin p)` T_p tile family.** -/
 noncomputable def α_T_p_Q
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
@@ -699,7 +697,7 @@ private lemma slash_diamond_out_Gamma1QuotEquiv_eq_slash_out_inv
 
 open UpperHalfPlane ModularGroup MeasureTheory in
 private theorem TpPerQSigmaAlignedBlocker_of_fd
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (p : ℕ) (_hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (M : GL (Fin 2) ℝ) (q : SL(2, ℤ) ⧸ Gamma1 N)
     (h_fd : TpPerQSigmaAlignedBlocker_fd (k := k) p hpN f g M q) :
@@ -718,7 +716,7 @@ private theorem TpPerQSigmaAlignedBlocker_of_fd
 
 open UpperHalfPlane ModularGroup MeasureTheory in
 private theorem TpUniformSigmaPermBlocker_of_per_q
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (p : ℕ) (_hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (M : GL (Fin 2) ℝ)
     (hd_LHS : Pairwise (fun (q₁ q₂ : SL(2, ℤ) ⧸ Gamma1 N) ↦ AEDisjoint μ_hyp
@@ -2465,6 +2463,7 @@ private noncomputable def Gamma1QuotEquivOfGamma0_out_correction
     ((q.out : SL(2, ℤ)) * ((γ : SL(2, ℤ))⁻¹))
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+omit [NeZero N] in
 private lemma Gamma1QuotEquivOfGamma0_out_correction_mem_Gamma1
     (γ : ↥(Gamma0 N)) (q : SL(2, ℤ) ⧸ Gamma1 N) :
     Gamma1QuotEquivOfGamma0_out_correction γ q ∈ Gamma1 N := by
@@ -2482,6 +2481,7 @@ private lemma Gamma1QuotEquivOfGamma0_out_correction_mem_Gamma1
   rwa [QuotientGroup.leftRel_apply] at h_left_rel
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+omit [NeZero N] in
 private lemma Gamma1QuotEquivOfGamma0_out_inv_eq_correction_mul
     (γ : ↥(Gamma0 N)) (q : SL(2, ℤ) ⧸ Gamma1 N) :
     ((Gamma1QuotEquivOfGamma0 (γ : SL(2, ℤ)) γ.property q).out : SL(2, ℤ))⁻¹ =
@@ -2937,7 +2937,7 @@ private theorem heckeFD_canonical_SL_tile_balance_M_infty_from_per_tile_balance
 open UpperHalfPlane ModularGroup MeasureTheory in
 private theorem heckeFD_canonical_SL_tile_balance_α_branch_from_per_tile_balance
     (α : GL (Fin 2) ℝ)
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (p : ℕ) (_hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (hd : SLTilePairwiseAEDisjoint (N := N))
     (hm : SLTileNullMeasurable (N := N))
@@ -2979,7 +2979,7 @@ private theorem heckeFD_canonical_SL_tile_balance_α_branch_from_per_tile_balanc
 open UpperHalfPlane ModularGroup MeasureTheory in
 private theorem heckeFD_canonical_SL_tile_balance_α_branch_per_tile_from_per_q_fd_balance
     (α : GL (Fin 2) ℝ)
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (p : ℕ) (_hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (h_per_q_fd : ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
       peterssonInner k ModularGroup.fd
@@ -3054,7 +3054,7 @@ private theorem heckeFD_canonical_SL_tile_balance_upper_per_tile_from_per_q_fd_b
 open UpperHalfPlane ModularGroup MeasureTheory in
 private theorem heckeFD_canonical_SL_tile_balance_α_branch_per_q_fd_from_shifted_tile_diamond_swap
     (α : GL (Fin 2) ℝ) (hα : 0 < α.det.val)
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (p : ℕ) (_hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (h_shifted : ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
       peterssonInner k
@@ -4155,22 +4155,6 @@ theorem isFundamentalDomain_Hecke_tiles_biUnion_Gamma_p_α
   rw [hset]
   exact isFundamentalDomain_Hecke_tiles_Gamma_p_α p hp hpN
 
-/-! ### DIRECT (non-circular) DS 5.5.3 route via the `Γ_p(A)` trace engine
-
-The chain below proves `petN(T_p f, g) = petN(f, ⟨p⟩⁻¹ T_p g)` ONE-DIRECTIONALLY, without
-assuming the symmetric form `petN_heckeT_p_symmetric_form_doubleCoset` (the residual at
-`heckeT_p_aggregate_peeled_diagonal_balance`). It chains:
-* leaf 1 (`petN_heckeT_p_LHS_eq_aggregate`),
-* the proven aggregate (`peterssonInner_T_p_reps_sum_slashes_eq_aggregate_HeckeFD`),
-* the Hecke-tile FD identification (`aggregate_D_petersson_eq_Gamma_p_A_fundDomain` +
-  `isFundamentalDomain_Hecke_tiles_biUnion_Gamma_p_α`),
-* the degree-`(p+1)` **trace engine**
-  (`setIntegral_Gamma_p_α_fundDomain_PSL_petersson_eq_traceSlash_Gamma1_fundDomain`,
-  FDTransport),
-* the **trace leaf** `traceSlash_T_p_lower_eq_diamond_inv_heckeT_p` (form-level, the genuine
-  DS 5.5.3 content), and
-* `petN_eq_setIntegral_Gamma1_fundDomain_PSL`. -/
-
 /-- Center elements of `SL(2,ℤ)` have lower-left entry `0`, so `Γ_p(A)`- and `Γ₁`-membership
 agree on the center (used for the fiber-count reconciliation). -/
 private theorem center_mem_Gamma_p_α_T_p_lower_iff_mem_Gamma1
@@ -4255,7 +4239,7 @@ open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory in
 `Γ₁`-fiber of `[1]`: a `Γ_p(A)`-fiber witness `z ∈ center, g·z ∈ Γ_p(A)` maps to the same
 `z` with `g·z ∈ Γ₁(N)` via `Gamma_p_α_le_Gamma1`. -/
 private theorem slGamma_p_αToGamma1_maps_into_Gamma1_fiber
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (p : ℕ) (hp : Nat.Prime p) (_hpN : Nat.Coprime p N)
     (q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) (T_p_lower p hp.pos))
     (hq : slToPslQuot_Gamma_p_α (N := N) (T_p_lower p hp.pos) q =
       (QuotientGroup.mk (1 : PSL(2, ℤ)) :
@@ -4300,7 +4284,7 @@ open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory in
 the center part `z⁻¹` of any `Γ₁`-fiber rep `g` gives the corresponding `Γ_p(A)`-fiber rep
 (since `z * g = g * z` by centrality, and `(z⁻¹)⁻¹·g = g·z ∈ Γ₁(N)`). -/
 private theorem slGamma_p_αToGamma1_surjective_onto_Gamma1_fiber
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (p : ℕ) (hp : Nat.Prime p) (_hpN : Nat.Coprime p N)
     (q : SL(2, ℤ) ⧸ Gamma1 N)
     (hq : slToPslQuot (N := N) q =
       (QuotientGroup.mk (1 : PSL(2, ℤ)) :
@@ -4443,7 +4427,7 @@ private theorem h_int_tr_FD (p : ℕ) (hp : Nat.Prime p) (_hpN : Nat.Coprime p N
       (traceSlash_Gamma_p_α (N := N) (k := k) (T_p_lower p hp.pos)
         (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) q₀) τ) =
       fun τ ↦ ∑ q ∈ Finset.univ.filter
-        (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) (T_p_lower p hp.pos) =>
+        (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) (T_p_lower p hp.pos) ↦
           slGamma_p_αToGamma1 (N := N) (T_p_lower p hp.pos) q = q₀),
         petersson k ⇑f
           ((⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) ∣[k]
