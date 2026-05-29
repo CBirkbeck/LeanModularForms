@@ -6,7 +6,21 @@ Authors: Chris Birkbeck
 import LeanModularForms.HeckeRIngs.GLn.BlockBijection.TrailingHNF
 
 /-!
-# Block Embedding Bijection: stabilizer and fiber block-form lemmas (i-side block reduction)
+# Block Embedding Bijection: stabilizer and fiber block-form lemmas
+
+This file develops the i-side block-reduction step of the block-embedding bijection used in
+the Hecke-ring construction for GL(n+2). Given a class `i` in the `Fin.cons 1 a`-diagonal
+fiber, it produces a stabilizer matrix `M ∈ SL(k+2, ℤ)` and a `(k+1)`-block factor `σ_m`
+with `toSL i.out * M = slSuccEmbed σ_m`, then packages the matching integer-conjugation and
+adjugate-rearrangement identities. The j-side analogue (`exists_stab_with_block_form_of_X_fiber`)
+is obtained by applying the i-side reduction to `X := N_i⁻¹ * toSL j.out`.
+
+## Main results
+
+* `exists_stab_with_block_form_of_fiber`: i-side block-form witness from the fiber relation.
+* `fiber_int_mat_eq_via_i_block`: integer-matrix equation in i-substituted form.
+* `hfib_col_div_b_via_i_block`: i-side block witnesses plus j-side column-divisibility.
+* `exists_stab_with_block_form_of_X_fiber`: X-side block-form witness from the substituted fiber.
 -/
 
 open Matrix Subgroup.Commensurable Pointwise HeckeRing DoubleCoset
