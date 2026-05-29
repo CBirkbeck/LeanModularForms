@@ -269,9 +269,8 @@ private lemma not_dvd_topLeft_add_of_dvd_botLeft (p : ℕ) (hp : Nat.Prime p)
     push_cast at this
     rwa [h10', mul_zero, add_zero] at this
   have hd : ((M 0 0 * M 1 1 - M 0 1 * M 1 0 : ℤ) : ZMod p) = 1 := by simp [hdet]
-  rw [show ((M 0 0 * M 1 1 - M 0 1 * M 1 0 : ℤ) : ZMod p) =
-    (M 0 0 : ZMod p) * (M 1 1 : ZMod p) - (M 0 1 : ZMod p) * (M 1 0 : ZMod p) by
-    push_cast; ring, h00, h10', zero_mul, mul_zero, sub_zero] at hd
+  push_cast at hd
+  rw [h00, h10', zero_mul, mul_zero, sub_zero] at hd
   exact zero_ne_one hd
 
 private lemma dvd_topLeft_add_canonicalIndex (p : ℕ) (hp : Nat.Prime p)
