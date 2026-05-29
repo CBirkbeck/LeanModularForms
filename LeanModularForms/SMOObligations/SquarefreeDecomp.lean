@@ -26,7 +26,7 @@ private lemma m7_N_dvd_div_prime {N l q : ℕ} (hq_prime : q.Prime) (hq_dvd_l : 
   have hq_dvd_l2 : q ∣ l ^ 2 := hq_dvd_l.trans (dvd_pow_self l two_ne_zero)
   rcases hq_dvd_l2 with ⟨c, hc⟩
   refine ⟨c, ?_⟩
-  rw [show N * l ^ 2 = N * (q * c) from by rw [hc],
+  rw [show N * l ^ 2 = N * (q * c) by rw [hc],
     show N * (q * c) = q * (N * c) by ring,
     Nat.mul_div_cancel_left _ hq_prime.pos]
 
@@ -76,7 +76,7 @@ private lemma m7_NeZero_Nl2_div_q {N l q : ℕ} [NeZero (N * l ^ 2)]
 
 private lemma m7_levelRaiseFun_zero (q : ℕ) [NeZero q] (k : ℤ) :
     (levelRaiseFun q k (0 : UpperHalfPlane → ℂ)) = 0 := by
-  ext τ; rw [levelRaiseFun]; simp
+  ext τ; simp [levelRaiseFun]
 
 private lemma m7_qExp_coeff_levelRaise_case_A {M q : ℕ} [NeZero M] [NeZero q] {k : ℤ}
     {Γ : Subgroup (GL (Fin 2) ℝ)}
@@ -97,7 +97,7 @@ private lemma m7_qExp_coeff_levelRaise_case_A {M q : ℕ} [NeZero M] [NeZero q] 
 private lemma m7_qExp_coeff_of_fun_eq_zero {Γ : Subgroup (GL (Fin 2) ℝ)} {k : ℤ}
     {g : CuspForm Γ k} (hg : (⇑g : UpperHalfPlane → ℂ) = 0) (n : ℕ) :
     (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑g) = 0 := by
-  rw [hg, qExpansion_zero (1 : ℝ)]; simp
+  simp [hg, qExpansion_zero (1 : ℝ)]
 
 private lemma m7_qExp_zero_branch {Γ : Subgroup (GL (Fin 2) ℝ)} {k : ℤ}
     (q n : ℕ) :
@@ -105,15 +105,12 @@ private lemma m7_qExp_zero_branch {Γ : Subgroup (GL (Fin 2) ℝ)} {k : ℤ}
         (PowerSeries.coeff (n / q))
           (ModularFormClass.qExpansion (1 : ℝ) (⇑(0 : CuspForm Γ k)))
       else (0 : ℂ)) = 0 := by
-  split_ifs with hqn
-  · exact m7_qExp_coeff_of_fun_eq_zero (g := (0 : CuspForm Γ k)) rfl (n / q)
-  · rfl
+  simp [qExpansion_zero (1 : ℝ)]
 
 private lemma m7_eq_q_of_mem_factors_one_eq_l {l l' q q' : ℕ} (hl'_eq1 : 1 = l')
     (h_pf_eq : l.primeFactors = insert q l'.primeFactors)
     (hq' : q' ∈ l.primeFactors) : q' = q := by
-  rw [h_pf_eq, ← hl'_eq1, Nat.primeFactors_one] at hq'
-  simpa using hq'
+  simpa [h_pf_eq, ← hl'_eq1, Nat.primeFactors_one] using hq'
 
 private lemma m7_mem_l'_of_ne_q {l l' q q' : ℕ}
     (h_pf_eq : l.primeFactors = insert q l'.primeFactors)
@@ -135,15 +132,8 @@ private lemma m7_qExp_split_f_eq_f'_plus_hform {ϕ_f ϕ_f' ϕ_h : PowerSeries �
     (n : ℕ) :
     (PowerSeries.coeff n) ϕ_f =
       (PowerSeries.coeff n) ϕ_f' + (PowerSeries.coeff n) ϕ_h := by
-  have h := hf'_qexp n
-  have h2 := h_form_qexp n
-  by_cases hcop : n.Coprime q
-  · rw [if_pos hcop] at h
-    rw [if_neg (not_not_intro hcop)] at h2
-    rw [h, h2, add_zero]
-  · rw [if_neg hcop] at h
-    rw [if_pos hcop] at h2
-    rw [h, h2, zero_add]
+  rw [hf'_qexp n, h_form_qexp n]
+  by_cases hcop : n.Coprime q <;> simp [hcop]
 
 /-- The conclusion of the strengthened squarefree decomposition (Miyake 4.6.7): cusp forms `g`
 at level `Γ_1(N·l²)`, companions `F` at the lower levels `Γ_1((N·l²)/q)` with characters `χ_F`,
@@ -197,9 +187,7 @@ private lemma qExpansion_one_sub_coeff_coprime {M : ℕ} [NeZero M] {k : ℤ} {q
   show (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) (⇑(a - b))) = _
   rw [show ModularFormClass.qExpansion (1 : ℝ) (⇑(a - b)) =
       ModularFormClass.qExpansion (1 : ℝ) (a - b) from rfl, h_sub_qexp, map_sub, hb n]
-  by_cases hcop : n.Coprime q
-  · rw [if_pos hcop, if_neg (not_not_intro hcop)]; ring
-  · rw [if_neg hcop, if_pos hcop]; ring
+  by_cases hcop : n.Coprime q <;> simp [hcop]
 
 /-- Assembles `Miyake467Decomp` in the single-prime case `l = q` (so `l.primeFactors = {q}`) from
 data for the prime `q` alone: a level-`N·l²` form `g_q`, a lower-level companion `F_q` sharing its
@@ -472,13 +460,11 @@ private lemma Miyake467Decomp_inductive_step {N : ℕ} [NeZero N] {k : ℤ} (n :
   haveI hNl2_ne : NeZero (N * l ^ 2) :=
     ⟨Nat.mul_ne_zero (NeZero.ne N) (pow_ne_zero 2 (by lia : l ≠ 0))⟩
   have hNM' : N ∣ N * l ^ 2 := Nat.dvd_mul_right N (l ^ 2)
-  show Miyake467Decomp χ f l hl_gt
   unfold Miyake467Decomp
   haveI hq_l'_sqfree : Squarefree q := hq_prime.squarefree
   have hl_eq_ql' : l = q * l' := hq_dvd_l'.symm
-  have h_inst_aux : NeZero (N * q ^ 2) :=
+  haveI hNq2_ne : NeZero (N * q ^ 2) :=
     ⟨Nat.mul_ne_zero (NeZero.ne N) (pow_ne_zero 2 hq_prime.ne_zero)⟩
-  haveI := h_inst_aux
   have hNNq2 : N ∣ N * q ^ 2 := Nat.dvd_mul_right N _
   obtain ⟨h_form, h_form_char, h_form_qexp⟩ :=
     miyake_h_form_general (N := N) (k := k) χ f hfχ q hq_prime.pos hq_l'_sqfree
@@ -504,12 +490,9 @@ private lemma Miyake467Decomp_inductive_step {N : ℕ} [NeZero N] {k : ℤ} (n :
       (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑f') = 0 := by
     intro n hn_cop_l'
     rw [hf'_qexp n]
-    by_cases hcop_q : n.Coprime q
-    · rw [if_pos hcop_q]
-      apply h_vanish n
-      rw [← hq_dvd_l']
-      exact Nat.Coprime.mul_right hcop_q hn_cop_l'
-    · rw [if_neg hcop_q]
+    split_ifs with hcop_q
+    · exact h_vanish n (hq_dvd_l' ▸ Nat.Coprime.mul_right hcop_q hn_cop_l')
+    · rfl
   have h_IH : Miyake467Decomp (χ.comp (ZMod.unitsMap hNNq2)) f' l' hl'_gt1 :=
     ih l' hl'_pf_card (N * q ^ 2) k (χ.comp (ZMod.unitsMap hNNq2))
       f' hf'_char hl'_gt1 hl'_sqfree hf'_vanish
@@ -727,8 +710,7 @@ theorem miyake_4_6_7_squarefree_decomp
 private lemma qExpansion_one_coe_zero_coeff (f : UpperHalfPlane → ℂ) (hf : f = 0) (n : ℕ) :
     (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0 := by
   subst hf
-  rw [qExpansion_zero]
-  simp
+  simp [qExpansion_zero]
 
 private lemma qExpansion_one_cuspForm_cast_coeff {A B : ℕ} {k : ℤ} (h : A = B)
     (x : CuspForm ((Gamma1 A).map (mapGL ℝ)) k) (n : ℕ) :
@@ -764,9 +746,9 @@ theorem miyake_V_p_descend_identity
     (hfχ : f ∈ cuspFormCharSpace k χ)
     (p : ℕ) [NeZero p] (hp : p.Prime) (hpN : p ∣ N) [NeZero (N / p)]
     (l' : ℕ) (hl'_pos : 0 < l') (hl'_sqfree : Squarefree l')
-    (hpl' : Nat.Coprime p l')
+    (_hpl' : Nat.Coprime p l')
     (hl'_dvd : ∀ q ∈ l'.primeFactors, q ∈ N.primeFactors)
-    (hp_not_in : p ∉ l'.primeFactors)
+    (_hp_not_in : p ∉ l'.primeFactors)
     (h_vanish : ∀ n : ℕ, Nat.Coprime n (p * l') →
       (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0) :
     haveI : NeZero (l' * (N / p)) := ⟨Nat.mul_ne_zero
@@ -836,9 +818,9 @@ private lemma miyake_V_p_descend_with_char_of_vanishing
     rw [qExpansion_one_coe_zero_coeff _ h_zero_low (n / p), hf_zero_cop n hn_cop_l']
   · intro m
     rw [qExpansion_one_coe_zero_coeff _ h_zero_low m]
-    by_cases hcop : Nat.Coprime m l'
-    · rw [if_pos hcop, hf_zero_cop (p * m) (Nat.coprime_mul_iff_left.mpr ⟨hpl', hcop⟩)]
-    · rw [if_neg hcop]
+    split_ifs with hcop
+    · exact (hf_zero_cop (p * m) (Nat.coprime_mul_iff_left.mpr ⟨hpl', hcop⟩)).symm
+    · rfl
 
 /-- **M-V_p-descend-strong: strengthened V_p descent identity with character info.**
 
@@ -855,7 +837,7 @@ theorem miyake_V_p_descend_identity_with_char
     (l' : ℕ) (hl'_pos : 0 < l') (hl'_sqfree : Squarefree l')
     (hpl' : Nat.Coprime p l')
     (hl'_dvd : ∀ q ∈ l'.primeFactors, q ∈ N.primeFactors)
-    (hp_not_in : p ∉ l'.primeFactors)
+    (_hp_not_in : p ∉ l'.primeFactors)
     (h_vanish : ∀ n : ℕ, Nat.Coprime n (p * l') →
       (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0) :
     haveI : NeZero (l' * (N / p)) := ⟨Nat.mul_ne_zero
@@ -943,13 +925,13 @@ lemma miyake_descent_l_prime_eq_one_helper
         ⇑(HeckeRing.GL2.modularFormLevelRaise M p k g_low_cast.toModularForm')).coeff n) :
     (⇑f.toModularForm' : UpperHalfPlane → ℂ) =
     ⇑(HeckeRing.GL2.modularFormLevelRaise M p k g_low_cast.toModularForm') := by
-  have hN_dvd_pM : N ∣ p * M := by rw [hp_M_eq_N]
+  have hN_dvd_pM : N ∣ p * M := hp_M_eq_N ▸ dvd_refl _
   have h1_period_pM : (1 : ℝ) ∈ ((Gamma1 (p * M)).map (mapGL ℝ)).strictPeriods := by
     rw [show (Gamma1 (p * M)).map (mapGL ℝ) =
         (Gamma1 (p * M) : Subgroup (GL (Fin 2) ℝ)) from rfl,
       strictPeriods_Gamma1]
     exact ⟨1, by simp⟩
-  have : NeZero (p * M) := by rw [hp_M_eq_N]; infer_instance
+  haveI : NeZero (p * M) := hp_M_eq_N ▸ inferInstance
   exact modularForm_fun_eq_of_qExp_eq_at_period_one (M := p * M)
     (k := k) h1_period_pM
     (ModularForm.restrictSubgroup
@@ -1013,8 +995,7 @@ noncomputable def slash_sum_V_q_cuspForm_descend
     (cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace
       (k := k) _ V_q_F_q).mpr hV_q_F_q_char
   have h_Mq_div_p_dvd_qMq_div_p : M_q / p ∣ (q * M_q) / p := by
-    rcases hpM_q with ⟨a, ha⟩
-    subst ha
+    obtain ⟨a, rfl⟩ := hpM_q
     simp [Nat.mul_div_cancel_left _ hp.pos, mul_comm q, mul_assoc]
   let χ_F_low_lifted : (ZMod ((q * M_q) / p))ˣ →* ℂˣ :=
     χ_F_low.comp (ZMod.unitsMap h_Mq_div_p_dvd_qMq_div_p)
