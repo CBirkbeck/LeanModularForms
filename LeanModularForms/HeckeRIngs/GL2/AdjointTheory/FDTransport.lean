@@ -580,9 +580,9 @@ open CongruenceSubgroup Classical in
 theorem slToPslQuot_Gamma_p_α_fiber_card_uniform (α : GL (Fin 2) ℚ)
     (q₁' q₂' : PSL(2, ℤ) ⧸ image_Gamma_p_α_PSL (N := N) α) :
     haveI : DecidableEq (PSL(2, ℤ) ⧸ image_Gamma_p_α_PSL (N := N) α) := Classical.decEq _
-    (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α =>
+    (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α ↦
         slToPslQuot_Gamma_p_α (N := N) α q = q₁')).card =
-      (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α =>
+      (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α ↦
         slToPslQuot_Gamma_p_α (N := N) α q = q₂')).card := by
   haveI : DecidableEq (PSL(2, ℤ) ⧸ image_Gamma_p_α_PSL (N := N) α) := Classical.decEq _
   obtain ⟨q₁, hq₁⟩ := slToPslQuot_Gamma_p_α_surjective (N := N) α q₁'
@@ -619,14 +619,14 @@ open CongruenceSubgroup Classical in
 identity coset. -/
 noncomputable def slToPslQuot_fiberCard_Gamma_p_α (α : GL (Fin 2) ℚ) : ℕ :=
   haveI : DecidableEq (PSL(2, ℤ) ⧸ image_Gamma_p_α_PSL (N := N) α) := Classical.decEq _
-  (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α =>
+  (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α ↦
     slToPslQuot_Gamma_p_α (N := N) α q =
       (QuotientGroup.mk (1 : PSL(2, ℤ)) : PSL(2, ℤ) ⧸ image_Gamma_p_α_PSL (N := N) α))).card
 
 theorem slToPslQuot_fiberCard_Gamma_p_α_eq (α : GL (Fin 2) ℚ)
     (q' : PSL(2, ℤ) ⧸ image_Gamma_p_α_PSL (N := N) α) :
     haveI : DecidableEq (PSL(2, ℤ) ⧸ image_Gamma_p_α_PSL (N := N) α) := Classical.decEq _
-    (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α =>
+    (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α ↦
       slToPslQuot_Gamma_p_α (N := N) α q = q')).card =
     slToPslQuot_fiberCard_Gamma_p_α (N := N) α := by
   rw [slToPslQuot_fiberCard_Gamma_p_α]
@@ -695,7 +695,7 @@ theorem sum_SL_tile_eq_fiberwise_PSL_tile_Gamma_p_α (α : GL (Fin 2) ℚ)
     ∑ q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α,
         ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (fdo : Set ℍ), h τ ∂μ_hyp =
       ∑ q' : PSL(2, ℤ) ⧸ image_Gamma_p_α_PSL (N := N) α,
-        (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α =>
+        (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α ↦
           slToPslQuot_Gamma_p_α (N := N) α q = q')).card •
             ∫ τ in ((q'.out : PSL(2, ℤ)))⁻¹ • (fdo : Set ℍ), h τ ∂μ_hyp := by
   calc ∑ q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α,
@@ -705,14 +705,14 @@ theorem sum_SL_tile_eq_fiberwise_PSL_tile_Gamma_p_α (α : GL (Fin 2) ℚ)
             (fdo : Set ℍ), h τ ∂μ_hyp :=
         Finset.sum_congr rfl fun q _ ↦ setIntegral_SL_tile_eq_PSL_tile_Gamma_p_α (N := N) α h h_inv q
     _ = ∑ q' : PSL(2, ℤ) ⧸ image_Gamma_p_α_PSL (N := N) α,
-          ∑ q ∈ Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α =>
+          ∑ q ∈ Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α ↦
             slToPslQuot_Gamma_p_α (N := N) α q = q'),
             ∫ τ in ((q'.out : PSL(2, ℤ)))⁻¹ • (fdo : Set ℍ), h τ ∂μ_hyp :=
         (Finset.sum_fiberwise' Finset.univ
           (slToPslQuot_Gamma_p_α (N := N) α)
           (fun q' ↦ ∫ τ in ((q'.out : PSL(2, ℤ)))⁻¹ • (fdo : Set ℍ), h τ ∂μ_hyp)).symm
     _ = ∑ q' : PSL(2, ℤ) ⧸ image_Gamma_p_α_PSL (N := N) α,
-          (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α =>
+          (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α ↦
             slToPslQuot_Gamma_p_α (N := N) α q = q')).card •
               ∫ τ in ((q'.out : PSL(2, ℤ)))⁻¹ • (fdo : Set ℍ), h τ ∂μ_hyp := by
         refine Finset.sum_congr rfl fun q' _ ↦ ?_
@@ -738,7 +738,7 @@ theorem setIntegral_SL_tile_fd_eq_fdo_Gamma_p_α
 open CongruenceSubgroup UpperHalfPlane ModularGroup MeasureTheory in
 /-- Pairwise AE-disjointness of the canonical PSL coset tiles for `Γ_p(α)`. -/
 theorem aedisjoint_PSL_coset_tiles_Gamma_p_α (α : GL (Fin 2) ℚ) :
-    Pairwise (fun q₁ q₂ : PSL(2, ℤ) ⧸ image_Gamma_p_α_PSL (N := N) α =>
+    Pairwise (fun q₁ q₂ : PSL(2, ℤ) ⧸ image_Gamma_p_α_PSL (N := N) α ↦
       MeasureTheory.AEDisjoint μ_hyp
         ((q₁.out : PSL(2, ℤ))⁻¹ • (fdo : Set ℍ))
         ((q₂.out : PSL(2, ℤ))⁻¹ • (fdo : Set ℍ))) := by
@@ -791,7 +791,7 @@ theorem setIntegral_Gamma_p_α_fundDomain_PSL_canonical_eq_SL_outer_q_sum
           ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (fdo : Set ℍ), h τ ∂μ_hyp :=
         Finset.sum_congr rfl fun q _ ↦ setIntegral_SL_tile_fd_eq_fdo_Gamma_p_α (N := N) α h q
     _ = ∑ q' : PSL(2, ℤ) ⧸ image_Gamma_p_α_PSL (N := N) α,
-          (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α =>
+          (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α ↦
             slToPslQuot_Gamma_p_α (N := N) α q = q')).card •
             ∫ τ in ((q'.out : PSL(2, ℤ)))⁻¹ • (fdo : Set ℍ), h τ ∂μ_hyp :=
         sum_SL_tile_eq_fiberwise_PSL_tile_Gamma_p_α (N := N) α h h_inv
@@ -1030,9 +1030,9 @@ open CongruenceSubgroup Classical in
 theorem slGamma_p_αToGamma1_fiber_card_uniform (α : GL (Fin 2) ℚ)
     (q₁' q₂' : SL(2, ℤ) ⧸ Gamma1 N) :
     haveI : DecidableEq (SL(2, ℤ) ⧸ Gamma1 N) := Classical.decEq _
-    (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α =>
+    (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α ↦
         slGamma_p_αToGamma1 (N := N) α q = q₁')).card =
-      (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α =>
+      (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α ↦
         slGamma_p_αToGamma1 (N := N) α q = q₂')).card := by
   haveI : DecidableEq (SL(2, ℤ) ⧸ Gamma1 N) := Classical.decEq _
   obtain ⟨q₁, hq₁⟩ := slGamma_p_αToGamma1_surjective (N := N) α q₁'
@@ -1083,14 +1083,14 @@ open CongruenceSubgroup Classical in
 /-- Uniform fiber cardinality of `slGamma_p_αToGamma1`, computed at the identity. -/
 noncomputable def slGamma_p_αToGamma1_fiberCard (α : GL (Fin 2) ℚ) : ℕ :=
   haveI : DecidableEq (SL(2, ℤ) ⧸ Gamma1 N) := Classical.decEq _
-  (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α =>
+  (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α ↦
     slGamma_p_αToGamma1 (N := N) α q =
       (QuotientGroup.mk (1 : SL(2, ℤ)) : SL(2, ℤ) ⧸ Gamma1 N))).card
 
 theorem slGamma_p_αToGamma1_fiberCard_eq (α : GL (Fin 2) ℚ)
     (q' : SL(2, ℤ) ⧸ Gamma1 N) :
     haveI : DecidableEq (SL(2, ℤ) ⧸ Gamma1 N) := Classical.decEq _
-    (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α =>
+    (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α ↦
       slGamma_p_αToGamma1 (N := N) α q = q')).card =
     slGamma_p_αToGamma1_fiberCard (N := N) α := by
   rw [slGamma_p_αToGamma1_fiberCard]
@@ -1145,7 +1145,7 @@ theorem sum_SL_tile_Gamma_p_α_eq_fiberCard_mul_SL_tile_Gamma1
             (fd : Set ℍ), h τ ∂μ_hyp :=
         Finset.sum_congr rfl fun q _ ↦ setIntegral_SL_tile_Gamma_p_α_eq_SL_tile_Gamma1 (N := N) α h h_inv q
     _ = ∑ q' : SL(2, ℤ) ⧸ Gamma1 N,
-          ∑ q ∈ Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α =>
+          ∑ q ∈ Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α ↦
             slGamma_p_αToGamma1 (N := N) α q = q'),
             ∫ τ in (q'.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ), h τ ∂μ_hyp :=
         (Finset.sum_fiberwise' Finset.univ
@@ -1261,23 +1261,6 @@ theorem peterssonInner_slash_adjoint_over_Gamma_p_α_for_heckeRep
         ⇑f ((⇑g : ℍ → ℂ) ∣[k] peterssonAdj ((α.map (Rat.castHom ℝ)) : GL (Fin 2) ℝ)) :=
   peterssonInner_slash_adjoint_over_Gamma_p_α (N := N) α hα ⇑f ⇑g
 
-/-! ### DS Exercise 5.4.4: the trace/transfer reassembly mechanism
-
-[DS] Exercise 5.4.4 (Diamond–Shurman p.183): *Let `Γ' ⊂ Γ ⊂ SL₂(ℤ)` be congruence
-subgroups with `−I ∈ Γ'`. Suppose `f ∈ S_k(Γ) ⊂ S_k(Γ')` and `g ∈ S_k(Γ')`.
-Letting `Γ = ⊔ᵢ Γ' αᵢ`, recall the trace `tr g = Σᵢ g[αᵢ]_k ∈ S_k(Γ)`. Then
-`V_{Γ'} ⟨f, g⟩_{Γ'} = V_Γ ⟨f, tr g⟩_Γ`.*
-
-In this project's UN-normalized convention (`peterssonInner`/`petN` carry no `1/V`),
-with `Γ = Γ₁(N)` and `Γ' = Γ_p(α) = α⁻¹Γ₁α ∩ Γ₁`, the identity reads:
-`∫_{Γ_p(α)-FD} petersson k F G = ∫_{Γ₁-FD} petersson k F (tr G)`, where `tr G`
-collects `G` over the `Γ₁/Γ_p(α)` cosets. Because the project's
-`petersson k F G τ = conj(F τ) · G τ · (Im τ)^k` is conjugate-linear in `F` and
-*linear in `G`*, the trace lands cleanly on the second (linear) argument `G` — the
-DS `g ∈ S_k(Γ')` form. Everything is realized over the *outer-`SL`-coset* substrate
-(`fd`-tiles), so `petersson_slash_SL` applies directly and no `PSL`-rep slashing is
-incurred. -/
-
 open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory in
 /-- **Per-tile slash-reindex (DS 5.4.4 leaf).** A single `SL/Γ_p(α)`-coset tile
 integral `∫_{q.out⁻¹•fd} petersson k F G` is reindexed onto its image
@@ -1331,7 +1314,7 @@ open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory Clas
 restricted to the `q'`-tile. -/
 noncomputable def traceSlash_Gamma_p_α (α : GL (Fin 2) ℚ) (G : ℍ → ℂ)
     (q' : SL(2, ℤ) ⧸ Gamma1 N) : ℍ → ℂ :=
-  ∑ q ∈ Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α =>
+  ∑ q ∈ Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α ↦
       slGamma_p_αToGamma1 (N := N) α q = q'),
     G ∣[k] ((q.out : SL(2, ℤ))⁻¹ * q'.out)
 
@@ -1343,7 +1326,7 @@ the function `petersson k F (G ∣[k] (q.out⁻¹·q'.out))` is integrable on th
 trace-transfer engines. -/
 def TraceFiberIntegrable (α : GL (Fin 2) ℚ) (F G : ℍ → ℂ) : Prop :=
   ∀ q' : SL(2, ℤ) ⧸ Gamma1 N,
-    ∀ q ∈ Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α =>
+    ∀ q ∈ Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α ↦
       slGamma_p_αToGamma1 (N := N) α q = q'),
     IntegrableOn (fun τ ↦ petersson k F
       (G ∣[k] ((q.out : SL(2, ℤ))⁻¹ * q'.out)) τ)
@@ -1375,7 +1358,7 @@ theorem sum_SL_tile_petersson_Gamma_p_α_eq_sum_SL_tile_traceSlash_Gamma1
           setIntegral_SL_tile_petersson_Gamma_p_α_slash_reindex_Gamma1
             (N := N) α F G hF q
     _ = ∑ q' : SL(2, ℤ) ⧸ Gamma1 N,
-          ∑ q ∈ Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α =>
+          ∑ q ∈ Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α ↦
             slGamma_p_αToGamma1 (N := N) α q = q'),
             ∫ τ in (q'.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ),
               petersson k F (G ∣[k] ((q.out : SL(2, ℤ))⁻¹ * q'.out)) τ ∂μ_hyp := by
@@ -1392,11 +1375,11 @@ theorem sum_SL_tile_petersson_Gamma_p_α_eq_sum_SL_tile_traceSlash_Gamma1
         refine Finset.sum_congr rfl fun q' _ ↦ ?_
         rw [traceSlash_Gamma_p_α]
         rw [show (fun τ ↦ petersson k F
-              (∑ q ∈ Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α =>
+              (∑ q ∈ Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α ↦
                 slGamma_p_αToGamma1 (N := N) α q = q'),
                 G ∣[k] ((q.out : SL(2, ℤ))⁻¹ * q'.out)) τ) =
             fun τ ↦ ∑ q ∈ Finset.univ.filter
-              (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α =>
+              (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α ↦
                 slGamma_p_αToGamma1 (N := N) α q = q'),
                 petersson k F (G ∣[k] ((q.out : SL(2, ℤ))⁻¹ * q'.out)) τ from by
           funext τ
@@ -1477,7 +1460,7 @@ theorem traceSlash_Gamma_p_α_indep
     show slGamma_p_αToGamma1 (N := N) α (QuotientGroup.mk (h * g)) = q₂'
     rw [slGamma_p_αToGamma1_mk]
     have h_g : (QuotientGroup.mk g : SL(2, ℤ) ⧸ Gamma1 N) = q₁' := by
-      rw [← slGamma_p_αToGamma1_mk (N := N) α g]; exact hq
+      rwa [← slGamma_p_αToGamma1_mk (N := N) α g]
     have h_gm : g⁻¹ * q₁'.out ∈ Gamma1 N :=
       QuotientGroup.eq.mp (h_g.trans q₁'.out_eq.symm)
     rw [← q₂'.out_eq, hh_def, QuotientGroup.eq]
@@ -1489,7 +1472,7 @@ theorem traceSlash_Gamma_p_α_indep
     show slGamma_p_αToGamma1 (N := N) α (QuotientGroup.mk (h⁻¹ * g)) = q₁'
     rw [slGamma_p_αToGamma1_mk]
     have h_g : (QuotientGroup.mk g : SL(2, ℤ) ⧸ Gamma1 N) = q₂' := by
-      rw [← slGamma_p_αToGamma1_mk (N := N) α g]; exact hq
+      rwa [← slGamma_p_αToGamma1_mk (N := N) α g]
     have h_gm : g⁻¹ * q₂'.out ∈ Gamma1 N :=
       QuotientGroup.eq.mp (h_g.trans q₂'.out_eq.symm)
     rw [← q₁'.out_eq, hh_def, mul_inv_rev, inv_inv, QuotientGroup.eq]
@@ -1531,10 +1514,10 @@ theorem traceSlash_Gamma_p_α_slash_Gamma1
       traceSlash_Gamma_p_α (N := N) (k := k) α G q' := by
   conv_lhs => rw [traceSlash_Gamma_p_α, SlashAction.sum_slash]
   rw [traceSlash_Gamma_p_α]
-  rw [show (∑ q ∈ Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α =>
+  rw [show (∑ q ∈ Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α ↦
         slGamma_p_αToGamma1 (N := N) α q = q'),
         (G ∣[k] ((q.out : SL(2, ℤ))⁻¹ * q'.out)) ∣[k] (γ : SL(2, ℤ))) =
-      ∑ q ∈ Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α =>
+      ∑ q ∈ Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α ↦
         slGamma_p_αToGamma1 (N := N) α q = q'),
         G ∣[k] ((q.out : SL(2, ℤ))⁻¹ * q'.out * γ) from
     Finset.sum_congr rfl fun q _ ↦ by rw [← SlashAction.slash_mul]]
@@ -1558,7 +1541,7 @@ theorem traceSlash_Gamma_p_α_slash_Gamma1
     induction q using QuotientGroup.induction_on with | _ g => ?_
     rw [slLeftMul_Gamma_p_α_mk, slGamma_p_αToGamma1_mk]
     have h_g : (QuotientGroup.mk g : SL(2, ℤ) ⧸ Gamma1 N) = q' := by
-      rw [← slGamma_p_αToGamma1_mk (N := N) α g]; exact hq
+      rwa [← slGamma_p_αToGamma1_mk (N := N) α g]
     have h_gm : g⁻¹ * q'.out ∈ Gamma1 N :=
       QuotientGroup.eq.mp (h_g.trans q'.out_eq.symm)
     rw [← q'.out_eq, hr_def, QuotientGroup.eq]
@@ -1572,7 +1555,7 @@ theorem traceSlash_Gamma_p_α_slash_Gamma1
     induction q using QuotientGroup.induction_on with | _ g => ?_
     rw [slLeftMul_Gamma_p_α_mk, slGamma_p_αToGamma1_mk]
     have h_g : (QuotientGroup.mk g : SL(2, ℤ) ⧸ Gamma1 N) = q' := by
-      rw [← slGamma_p_αToGamma1_mk (N := N) α g]; exact hq
+      rwa [← slGamma_p_αToGamma1_mk (N := N) α g]
     have h_gm : g⁻¹ * q'.out ∈ Gamma1 N :=
       QuotientGroup.eq.mp (h_g.trans q'.out_eq.symm)
     rw [← q'.out_eq, hr_def, QuotientGroup.eq]
@@ -1649,56 +1632,6 @@ theorem setIntegral_Gamma_p_α_fundDomain_PSL_petersson_eq_traceSlash_Gamma1_fun
           traceSlash_Gamma_p_α (N := N) (k := k) α G q₀ from
           traceSlash_Gamma_p_α_slash_Gamma1 (N := N) α G hG_slash q₀ hγ])
     h_int_tr
-
-/-! ### Composition map: how DS 5.4.4 assembles the global adjoint (DS 5.5.2(b))
-
-The trace/transfer machinery above is the reusable level-`Γ_p(α)` → level-`Γ₁(N)`
-reassembly mechanism. Here is the precise roadmap by which it discharges the single
-remaining gap of the *corrected global double-coset route*
-(`ConcreteFamily.petN_heckeT_p_RHS_aggregate_eq`, "Leaf 2"), the irreducible analytic
-heart of DS Prop 5.5.2(b) / Miyake Thm 4.5.4.
-
-**The corrected global route** (`ConcreteFamily.petN_heckeT_p_symmetric_form_global`)
-chains three steps, of which only Leaf 2 is open:
-* **Leaf 1** (proven): `petN(T_p f, g) = c_N • ⟨Γ₁-FD⟩ (Σᵢ f∣βᵢ) g`,
-  `c_N = slToPslQuot_fiberCard N`, `βᵢ ∈ {M_∞} ⊔ {T_p_upper b}`.
-* **Aggregate** (proven, `peterssonInner_T_p_reps_sum_slashes_eq_aggregate_HeckeFD`):
-  `⟨Γ₁-FD⟩ (Σᵢ f∣βᵢ) g = ⟨⋃ᵢ βᵢ•Γ₁-FD⟩ f (g∣T_p_lower)`.
-* **Leaf 2** (open): `c_N • ⟨⋃ᵢ βᵢ•Γ₁-FD⟩ f (g∣T_p_lower) = petN(⟨p⟩f, T_p g)`.
-
-**How the trace/transfer closes Leaf 2.** Write `T_p g = Σⱼ g∣βⱼ′` (the adjoint
-family; DS `g[Γα′Γ]_k = ⟨p⟩⁻¹T_p g`). Since `petN` is conjugate-linear in slot 1 and
-linear in slot 2, `petN(⟨p⟩f, T_p g) = Σⱼ petN(⟨p⟩f, g∣βⱼ′)`. The per-`j` exchange
-`peterssonInner_slash_adjoint_over_Gamma_p_α` (step 2, proven) moves each `βⱼ` across,
-turning `⟨βⱼ•Γ_p(αⱼ)-FD⟩` data into `⟨Γ_p(αⱼ)-FD⟩`-level data. The documented gap was:
-the aggregate supplies the *single tile* `βⱼ•Γ₁-FD`, whereas the `Γ_p(αⱼ)` engine works
-over `βⱼ•Γ_p(αⱼ)-FD = [Γ₁ : Γ_p(αⱼ)]` copies of it, and the coset indices differ by
-the fiber count `c_N`. The trace/transfer here resolves exactly that multiplicity:
-
-1. `setIntegral_Gamma_p_α_fundDomain_PSL_petersson_eq_traceSlash_SL_outer_q_sum` relates
-   the `Γ_p(αⱼ)-FD` integral (carrying its `c_p = slToPslQuot_fiberCard_Gamma_p_α αⱼ`)
-   to `∑_{q' : SL/Γ₁} ∫_{q'.out⁻¹•fd} petersson k F (tr_{q'} G)`.
-2. `traceSlash_Gamma_p_α_indep` collapses the per-`q'` trace `tr_{q'} G` to a single
-   `q'`-independent global trace `tr G` (DS's `tr g ∈ S_k(Γ)` well-definedness), so the
-   `∑_{q'}` becomes the *uniform* `SL/Γ₁`-tile sum of one integrand. The remaining
-   ingredient — that `tr G` is itself `Γ₁`-slash-invariant — then lets the analogous
-   `Γ₁` substrate (`setIntegral_Gamma1_fundDomain_PSL_eq_SL_outer_q_sum`) re-fold that
-   tile sum into `c_N • ∫_{Γ₁-FD} petersson k F (tr G)`. The two fiber counts then
-   reconcile: `c_p • ∫_{Γ_p-FD} = c_N • ∫_{Γ₁-FD} (with trace)`, which is precisely the
-   `[Γ₁:Γ_p(αⱼ)]`-vs-`c_N` bridge the route was missing.
-
-**Remaining lemmas for the full Leaf-2 wire-through** (each now source-grounded and
-bounded — no false per-tile balance is invoked):
-* `tr G` is a `Γ₁(N)`-form: `∀ γ ∈ Gamma1 N, (traceSlash_Gamma_p_α α G q') ∣[k] γ =
-  traceSlash_Gamma_p_α α G q'` (right-`Γ₁`-translation permutes the `Γ₁/Γ_p(α)` cosets;
-  combine with `traceSlash_Gamma_p_α_indep`). This upgrades step 2 above to the clean
-  `Γ_p-FD ↔ Γ₁-FD` corollary.
-* Identify, per `βⱼ`, the global trace `tr (g∣adjustment)` with the `petN`-summand
-  `g∣βⱼ′` of `T_p g` (the DS family-trace bookkeeping `Σⱼ g[αⱼ′] = T_p g`).
-* Assemble: `Σⱼ`-sum the per-`j` `Γ_p(αⱼ)-FD ↔ Γ₁-FD` corollary, matching the aggregate
-  `⋃ⱼ βⱼ•Γ₁-FD` decomposition (the `βⱼ•Γ₁-FD` tiles are the `q'`-tiles of step 1 after
-  the per-`j` change of variables), then re-collect into `petN(⟨p⟩f, T_p g)` via
-  `petN_eq_setIntegral_Gamma1_fundDomain_PSL`. -/
 
 section W5a
 
@@ -1978,7 +1911,7 @@ theorem Gamma1_relIndex_Gamma0_eq_index (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.
         SL(2, ℤ) ⧸ Gamma1 N) = QuotientGroup.mk g
       rw [QuotientGroup.eq]
       have : (g * k⁻¹)⁻¹ * g = k := by group
-      rw [this]; exact hk_mem
+      rwa [this]
   rw [Nat.card_congr (Equiv.ofBijective f hf_bij)]
 
 /-- **W5a index — the crux.** `[Γ₁(N) : Γ_p(T_p_lower)] = p + 1`.  Combinatorially this is
@@ -2005,13 +1938,6 @@ theorem relIndex_Gamma_p_α_T_p_lower (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Co
       (Gamma1 N).index * (p + 1) := by
     rw [hrA, hrB]
   exact Nat.eq_of_mul_eq_mul_right hN_pos (by rw [hkey]; ring)
-
-/-! ### The upper-triangular congruence subgroup `Γ⁰(p)` and the adjoint-side index
-
-The adjoint-side covering count `[Γ₁(N) : Γ₁(N) ∩ Γ⁰(p)] = p + 1` (Miyake 4.5.6, the upper
-mirror of `relIndex_Gamma_p_α_T_p_lower`).  `Γ⁰(p) = {γ : p ∣ γ₀₁}` is the Fricke conjugate
-`S·Γ₀(p)·S⁻¹` (`S = [[0,-1],[1,0]] ∈ SL₂(ℤ)`), so its `SL₂(ℤ)`-index equals that of `Γ₀(p)`,
-namely `p + 1`.  The coprimality tower then proceeds exactly as for `Γ₀(p)`. -/
 
 open CongruenceSubgroup in
 /-- The upper-triangular congruence subgroup `Γ⁰(p) = {γ ∈ SL₂(ℤ) : γ₀₁ ≡ 0 mod p}`. -/
@@ -2209,7 +2135,7 @@ theorem Gamma1_relIndex_Gamma_up_eq_index (p : ℕ) (hp : Nat.Prime p) (hpN : Na
         SL(2, ℤ) ⧸ Gamma1 N) = QuotientGroup.mk g
       rw [QuotientGroup.eq]
       have : (g * k⁻¹)⁻¹ * g = k := by group
-      rw [this]; exact hk_mem
+      rwa [this]
   rw [Nat.card_congr (Equiv.ofBijective f hf_bij)]
 
 open CongruenceSubgroup in
