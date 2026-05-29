@@ -44,6 +44,11 @@ jobs:
           lake exe cache get || true
           lake build LeanModularForms
 
+      - name: Build API docs (doc-gen4)
+        run: |
+          lake -R -Kenv=dev update doc-gen4
+          lake -R -Kenv=dev build LeanModularForms:docs
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -78,10 +83,19 @@ jobs:
         run: |
           leanblueprint checkdecls
 
+      - name: Combine blueprint + API docs into deploy site
+        run: |
+          mkdir -p _site
+          cp -r blueprint/web/. _site/
+          if [ -d .lake/build/doc ]; then
+            mkdir -p _site/docs
+            cp -r .lake/build/doc/. _site/docs/
+          fi
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: blueprint/web
+          path: _site
 
   deploy:
     needs: build
