@@ -4449,31 +4449,26 @@ private theorem petN_heckeT_p_adjoint_via_trace
     petN (heckeT_p_cusp k p hp hpN f) g =
       petN f (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹
         (heckeT_p_cusp k p hp hpN g)) := by
-  -- Base coset for the (coset-independent) trace.
-  set q₀ : SL(2, ℤ) ⧸ Gamma1 N := QuotientGroup.mk 1 with hq₀
+  set q₀ : SL(2, ℤ) ⧸ Gamma1 N := QuotientGroup.mk 1
   obtain ⟨hm, h_int_per, hfi⟩ := aggregate_HeckeFD_measure_hyps p hp hpN f g
-  -- F is `Γ₁`-slash-invariant; G = g∣A is `Γ_p(A)`-slash-invariant.
   have hF_slash : ∀ γ ∈ Gamma1 N, (⇑f : ℍ → ℂ) ∣[k] (γ : SL(2, ℤ)) = ⇑f :=
-    fun γ hγ ↦ slash_Gamma1_eq f γ hγ
+    slash_Gamma1_eq f
   have hG_slash : ∀ γ ∈ Gamma_p_α (N := N) (T_p_lower p hp.pos),
       (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) ∣[k] (γ : SL(2, ℤ)) =
         ⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) := by
     intro γ hγ
     rw [ModularForm.SL_slash, glMap_T_p_lower_eq_map_castHom]
     exact slash_α_Gamma_p_α_invariant_cuspForm (T_p_lower p hp.pos) g hγ
-  -- LHS: leaf 1 + aggregate + Hecke-tile FD identification, then `c_N → c_p`.
   rw [petN_heckeT_p_LHS_eq_aggregate p hp hpN f g,
     peterssonInner_T_p_reps_sum_slashes_eq_aggregate_HeckeFD p hp hpN f g hm h_int_per hfi,
     aggregate_D_petersson_eq_Gamma_p_A_fundDomain p hp hpN f g
       (isFundamentalDomain_Hecke_tiles_biUnion_Gamma_p_α p hp hpN),
-    ← slToPslQuot_fiberCard_Gamma_p_α_T_p_lower_eq_fiberCard p hp hpN]
-  -- Trace engine: `c_p • ∫_{Γ_p(A)-FD} pet f (g∣A) = c_N • ∫_{Γ₁-FD} pet f (tr_{q₀}(g∣A))`.
-  rw [setIntegral_Gamma_p_α_fundDomain_PSL_petersson_eq_traceSlash_Gamma1_fundDomain
-    (N := N) (k := k) (T_p_lower p hp.pos) ⇑f
-    (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) q₀ hF_slash hG_slash
-    (h_int_FD p hp hpN f g) (h_int_trace_FD p hp hpN f g q₀) (h_int_tr_FD p hp hpN f g q₀)]
-  -- Trace leaf: `tr_{q₀}(g∣A) = ⟨p⟩⁻¹ T_p g`; then re-fold into `petN`.
-  rw [traceSlash_T_p_lower_eq_diamond_inv_heckeT_p p hp hpN g q₀,
+    ← slToPslQuot_fiberCard_Gamma_p_α_T_p_lower_eq_fiberCard p hp hpN,
+    setIntegral_Gamma_p_α_fundDomain_PSL_petersson_eq_traceSlash_Gamma1_fundDomain
+      (N := N) (k := k) (T_p_lower p hp.pos) ⇑f
+      (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) q₀ hF_slash hG_slash
+      (h_int_FD p hp hpN f g) (h_int_trace_FD p hp hpN f g q₀) (h_int_tr_FD p hp hpN f g q₀),
+    traceSlash_T_p_lower_eq_diamond_inv_heckeT_p p hp hpN g q₀,
     ← petN_eq_setIntegral_Gamma1_fundDomain_PSL]
 
 /-- **DS Theorem 5.5.3**: `T_p* = ⟨p⟩⁻¹ T_p` w.r.t. the level-N Petersson product
