@@ -45,15 +45,13 @@ variable {N : ℕ} {k : ℤ}
 
 /-- The modular `T = [[1, 1], [0, 1]]` matrix lies in `Γ₁(N)` for every level. -/
 lemma ModularGroup_T_mem_Gamma1 (N : ℕ) : ModularGroup.T ∈ Gamma1 N := by
-  rw [Gamma1_mem]
-  refine ⟨?_, ?_, ?_⟩ <;> simp [ModularGroup.coe_T]
+  simp [Gamma1_mem, ModularGroup.coe_T]
 
 /-- The integer power `T^n = [[1, n], [0, 1]]` lies in `Γ₁(N)` for every `n : ℤ`
 and every level `N`. -/
 lemma ModularGroup_T_zpow_mem_Gamma1 (N : ℕ) (n : ℤ) :
     ModularGroup.T ^ n ∈ Gamma1 N := by
-  rw [Gamma1_mem]
-  refine ⟨?_, ?_, ?_⟩ <;> simp [ModularGroup.coe_T_zpow]
+  simp [Gamma1_mem, ModularGroup.coe_T_zpow]
 
 /-- A `Γ₁(N)`-cusp form is invariant under the slash action by `T`:
 `f ∣[k] T = f`. This is the basic "period-1 at `i∞`" statement of
@@ -76,10 +74,9 @@ lemma cuspForm_T_zpow_slash_eq_self [NeZero N] (n : ℤ)
 
 private lemma dvd_lower_left_of_dvd_of_mem_Gamma0
     {l N : ℕ} (h_dvd : l ∣ N) {γ : SL(2, ℤ)} (hγ : γ ∈ Gamma0 N) :
-    (l : ℤ) ∣ γ.val 1 0 := by
-  rw [Gamma0_mem] at hγ
-  exact dvd_trans (Int.natCast_dvd_natCast.mpr h_dvd)
-    ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp hγ)
+    (l : ℤ) ∣ γ.val 1 0 :=
+  (Int.natCast_dvd_natCast.mpr h_dvd).trans
+    ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp ((Gamma0_mem).mp hγ))
 
 /-- Case A conductor-lowering bridge, level-raised form: if
 `g ∈ modFormCharSpace k χ.toUnitHom` factors as `⇑g = levelRaiseFun l k f` and
@@ -165,13 +162,11 @@ lemma mdifferentiable_of_levelRaiseFun_eq (l : ℕ) [NeZero l] (k : ℤ)
 
 /-- Holomorphy of `f` from a `ModularForm` `g`: specialisation of
 `mdifferentiable_of_levelRaiseFun_eq` where holomorphy of `g` is automatic. -/
-lemma mdifferentiable_of_modularForm_levelRaiseFun_eq
-    {Γ : Subgroup (GL (Fin 2) ℝ)} (l : ℕ) [NeZero l] (k : ℤ)
-    (f : UpperHalfPlane → ℂ) (g : ModularForm Γ k)
+lemma mdifferentiable_of_modularForm_levelRaiseFun_eq {Γ : Subgroup (GL (Fin 2) ℝ)}
+    (l : ℕ) [NeZero l] (k : ℤ) (f : UpperHalfPlane → ℂ) (g : ModularForm Γ k)
     (hg_eq : ⇑g = levelRaiseFun l k f) :
     MDifferentiable 𝓘(ℂ) 𝓘(ℂ) f :=
-  mdifferentiable_of_levelRaiseFun_eq l k f ⇑g
-    (ModularFormClass.holo g) hg_eq
+  mdifferentiable_of_levelRaiseFun_eq l k f ⇑g (ModularFormClass.holo g) hg_eq
 
 /-- The Case A lowered character: when `χ` factors through level `N/l`,
 this is the unique `χ_low : DirichletCharacter ℂ (N/l)` with
@@ -201,15 +196,14 @@ private def slashStabilizerOfFun (k : ℤ) (f : UpperHalfPlane → ℂ) :
     Subgroup SL(2, ℤ) where
   carrier := { γ | f ∣[k] (mapGL ℝ γ : GL (Fin 2) ℝ) = f }
   one_mem' := by
-    show f ∣[k] (mapGL ℝ (1 : SL(2, ℤ)) : GL (Fin 2) ℝ) = f
+    change f ∣[k] (mapGL ℝ (1 : SL(2, ℤ)) : GL (Fin 2) ℝ) = f
     rw [map_one, SlashAction.slash_one]
   mul_mem' := fun {a b} ha hb ↦ by
-    show f ∣[k] (mapGL ℝ (a * b) : GL (Fin 2) ℝ) = f
+    change f ∣[k] (mapGL ℝ (a * b) : GL (Fin 2) ℝ) = f
     rw [map_mul, SlashAction.slash_mul, ha, hb]
   inv_mem' := fun {a} ha ↦ by
-    show f ∣[k] (mapGL ℝ a⁻¹ : GL (Fin 2) ℝ) = f
-    have h_mul := SlashAction.slash_mul k
-      (mapGL ℝ a) (mapGL ℝ a⁻¹) f
+    change f ∣[k] (mapGL ℝ a⁻¹ : GL (Fin 2) ℝ) = f
+    have h_mul := SlashAction.slash_mul k (mapGL ℝ a) (mapGL ℝ a⁻¹) f
     rw [show (mapGL ℝ a : GL (Fin 2) ℝ) * mapGL ℝ a⁻¹ = 1 by
         rw [← map_mul, mul_inv_cancel, map_one],
       SlashAction.slash_one, ha] at h_mul
@@ -227,12 +221,10 @@ Case A hypotheses plus the period-1 hypothesis `f ∣[k] T = f`, the slash
 identity for `f` extends to all matrices `T^i · γ̃ · T^j` with
 `γ̃ = α_l γ α_l⁻¹` (`γ ∈ Γ₀(N)`), giving
 `f ∣[k] (T^i · γ̃ · T^j) = (χ d_γ) • f`. -/
-lemma conductor_slash_T_conj_eq (l N : ℕ) [NeZero l] [NeZero N]
-    (h_dvd : l ∣ N) (k : ℤ) (χ : DirichletCharacter ℂ N)
-    (f : UpperHalfPlane → ℂ)
+lemma conductor_slash_T_conj_eq (l N : ℕ) [NeZero l] [NeZero N] (h_dvd : l ∣ N) (k : ℤ)
+    (χ : DirichletCharacter ℂ N) (f : UpperHalfPlane → ℂ)
     (g : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hg_char : g ∈ modFormCharSpace k χ.toUnitHom)
-    (hg_eq : ⇑g = levelRaiseFun l k f)
+    (hg_char : g ∈ modFormCharSpace k χ.toUnitHom) (hg_eq : ⇑g = levelRaiseFun l k f)
     (hf_period : f ∣[k] (mapGL ℝ ModularGroup.T : GL (Fin 2) ℝ) = f)
     (i j : ℤ) (γ : SL(2, ℤ)) (hγ : γ ∈ Gamma0 N) :
     f ∣[k] (mapGL ℝ
@@ -241,9 +233,7 @@ lemma conductor_slash_T_conj_eq (l N : ℕ) [NeZero l] [NeZero N]
             (dvd_lower_left_of_dvd_of_mem_Gamma0 h_dvd hγ) *
           ModularGroup.T ^ j) : GL (Fin 2) ℝ) =
       (χ.toUnitHom (Gamma0MapUnits ⟨γ, hγ⟩) : ℂ) • f := by
-  set gtilde := levelRaiseConjOfDvd l γ
-    (dvd_lower_left_of_dvd_of_mem_Gamma0 h_dvd hγ) with gtilde_def
-  set c := (χ.toUnitHom (Gamma0MapUnits ⟨γ, hγ⟩) : ℂ) with c_def
+  set gtilde := levelRaiseConjOfDvd l γ (dvd_lower_left_of_dvd_of_mem_Gamma0 h_dvd hγ)
   rw [show mapGL ℝ (ModularGroup.T ^ i * gtilde * ModularGroup.T ^ j) =
         mapGL ℝ (ModularGroup.T ^ i) * mapGL ℝ gtilde * mapGL ℝ (ModularGroup.T ^ j) from
       by simp [map_mul],
@@ -254,8 +244,7 @@ lemma conductor_slash_T_conj_eq (l N : ℕ) [NeZero l] [NeZero N]
       (mapGL ℝ (ModularGroup.T ^ j) : GL (Fin 2) ℝ) = RingHom.id ℂ := by
     unfold UpperHalfPlane.σ
     rw [if_pos]
-    show (0 : ℝ) < (Matrix.GeneralLinearGroup.det
-      (mapGL ℝ (ModularGroup.T ^ j))).val
+    change (0 : ℝ) < (Matrix.GeneralLinearGroup.det (mapGL ℝ (ModularGroup.T ^ j))).val
     rw [Matrix.SpecialLinearGroup.det_mapGL]; norm_num
   rw [ModularForm.smul_slash, hσ_T, RingHom.id_apply,
     slash_T_zpow_eq_self_of_slash_T_eq k f hf_period j]
@@ -264,20 +253,16 @@ lemma conductor_slash_T_conj_eq (l N : ℕ) [NeZero l] [NeZero N]
 `γ' ∈ Γ₀(N/l)` the slash action of `mapGL ℝ γ'` on `f` yields a Nebentypus
 character value times `f`, with character coordinate read off a `Γ₀(N)`-lift
 of `γ'`. -/
-lemma conductor_slash_eq_of_mem_Gamma0_div
-    (l N : ℕ) [NeZero l] [NeZero N] (h_dvd : l ∣ N) (k : ℤ)
-    (χ : DirichletCharacter ℂ N)
-    (f : UpperHalfPlane → ℂ)
+lemma conductor_slash_eq_of_mem_Gamma0_div (l N : ℕ) [NeZero l] [NeZero N] (h_dvd : l ∣ N)
+    (k : ℤ) (χ : DirichletCharacter ℂ N) (f : UpperHalfPlane → ℂ)
     (g : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hg_char : g ∈ modFormCharSpace k χ.toUnitHom)
-    (hg_eq : ⇑g = levelRaiseFun l k f)
+    (hg_char : g ∈ modFormCharSpace k χ.toUnitHom) (hg_eq : ⇑g = levelRaiseFun l k f)
     (hf_period : f ∣[k] (mapGL ℝ ModularGroup.T : GL (Fin 2) ℝ) = f)
     (γ' : SL(2, ℤ)) (hγ' : γ' ∈ Gamma0 (N / l)) :
     ∃ (γ : SL(2, ℤ)) (hγ : γ ∈ Gamma0 N),
       f ∣[k] (mapGL ℝ γ' : GL (Fin 2) ℝ) =
         (χ.toUnitHom (Gamma0MapUnits ⟨γ, hγ⟩) : ℂ) • f := by
-  obtain ⟨i, j, γ, hγ, hfact, _⟩ :=
-    exists_T_levelRaiseConj_T_factor l N h_dvd γ' hγ'
+  obtain ⟨i, j, γ, hγ, hfact, _⟩ := exists_T_levelRaiseConj_T_factor l N h_dvd γ' hγ'
   refine ⟨γ, hγ, ?_⟩
   rw [hfact]
   exact conductor_slash_T_conj_eq l N h_dvd k χ f g hg_char hg_eq hf_period i j γ hγ
@@ -285,20 +270,17 @@ lemma conductor_slash_eq_of_mem_Gamma0_div
 /-- Slash invariance of `f` under `Γ₁(N/l)`: under the Case A hypotheses
 including `χ.FactorsThrough (N/l)`, the function `f` transforms trivially
 under the slash action of `mapGL ℝ δ` for every `δ ∈ Γ₁(N/l)`. -/
-lemma conductor_slash_eq_self_of_mem_Gamma1_div
-    (l N : ℕ) [NeZero l] [NeZero N] (h_dvd : l ∣ N) (k : ℤ)
-    (χ : DirichletCharacter ℂ N) (h_fac : χ.FactorsThrough (N / l))
-    (f : UpperHalfPlane → ℂ)
+lemma conductor_slash_eq_self_of_mem_Gamma1_div (l N : ℕ) [NeZero l] [NeZero N]
+    (h_dvd : l ∣ N) (k : ℤ) (χ : DirichletCharacter ℂ N)
+    (h_fac : χ.FactorsThrough (N / l)) (f : UpperHalfPlane → ℂ)
     (g : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hg_char : g ∈ modFormCharSpace k χ.toUnitHom)
-    (hg_eq : ⇑g = levelRaiseFun l k f)
+    (hg_char : g ∈ modFormCharSpace k χ.toUnitHom) (hg_eq : ⇑g = levelRaiseFun l k f)
     (hf_period : f ∣[k] (mapGL ℝ ModularGroup.T : GL (Fin 2) ℝ) = f)
     (δ : SL(2, ℤ)) (hδ : δ ∈ Gamma1 (N / l)) :
     f ∣[k] (mapGL ℝ δ : GL (Fin 2) ℝ) = f := by
   obtain ⟨i, j, γ, hγ, hfact, hdiag⟩ :=
     exists_T_levelRaiseConj_T_factor l N h_dvd δ (Gamma1_in_Gamma0 _ hδ)
-  rw [hfact, conductor_slash_T_conj_eq l N h_dvd k χ f g hg_char hg_eq
-    hf_period i j γ hγ]
+  rw [hfact, conductor_slash_T_conj_eq l N h_dvd k χ f g hg_char hg_eq hf_period i j γ hγ]
   suffices h_char : χ.toUnitHom (Gamma0MapUnits ⟨γ, hγ⟩) = 1 by
     rw [h_char, Units.val_one, one_smul]
   rw [toUnitHom_loweredCharacter h_fac, MonoidHom.comp_apply]
@@ -317,28 +299,24 @@ lemma conductor_slash_eq_self_of_mem_Gamma1_div
 ℂ-coordinate by `1/l`: `(α_l⁻¹ • z).coe = z.coe / l`. -/
 lemma coe_levelRaiseMatrix_inv_smul (l : ℕ) [NeZero l] (z : UpperHalfPlane) :
     (((levelRaiseMatrix l)⁻¹ • z : UpperHalfPlane) : ℂ) = (↑z : ℂ) / (l : ℂ) := by
-  have h_unit : (levelRaiseMatrix l) • ((levelRaiseMatrix l)⁻¹ • z) = z := by
-    rw [smul_smul, mul_inv_cancel, one_smul]
   have h_coe_eq : (((levelRaiseMatrix l) • ((levelRaiseMatrix l)⁻¹ • z) :
-      UpperHalfPlane) : ℂ) = ((z : UpperHalfPlane) : ℂ) := by rw [h_unit]
+      UpperHalfPlane) : ℂ) = ((z : UpperHalfPlane) : ℂ) := by
+    rw [smul_smul, mul_inv_cancel, one_smul]
   rw [coe_levelRaiseMatrix_smul] at h_coe_eq
   rwa [eq_div_iff (Nat.cast_ne_zero.mpr (NeZero.ne l) : (l : ℂ) ≠ 0), mul_comm]
 
 /-- The imaginary part of `(α_l⁻¹ • z)` is `z.im / l`. -/
 lemma im_levelRaiseMatrix_inv_smul (l : ℕ) [NeZero l] (z : UpperHalfPlane) :
     ((levelRaiseMatrix l)⁻¹ • z : UpperHalfPlane).im = z.im / (l : ℝ) := by
-  show (((levelRaiseMatrix l)⁻¹ • z : UpperHalfPlane) : ℂ).im = z.im / (l : ℝ)
-  rw [coe_levelRaiseMatrix_inv_smul]
-  rw [show (l : ℂ) = ((l : ℝ) : ℂ) by push_cast; rfl,
-    Complex.div_ofReal_im]
+  change (((levelRaiseMatrix l)⁻¹ • z : UpperHalfPlane) : ℂ).im = z.im / (l : ℝ)
+  rw [coe_levelRaiseMatrix_inv_smul,
+    show (l : ℂ) = ((l : ℝ) : ℂ) by push_cast; rfl, Complex.div_ofReal_im]
   rfl
 
 /-- Boundedness at `i∞` transfer: if `g = levelRaiseFun l k f` and `g` is
 bounded at `i∞`, then so is `f`. -/
-lemma isBoundedAtImInfty_of_levelRaiseFun_eq
-    (l : ℕ) [NeZero l] (k : ℤ)
-    (f g : UpperHalfPlane → ℂ)
-    (hg_bdd : UpperHalfPlane.IsBoundedAtImInfty g)
+lemma isBoundedAtImInfty_of_levelRaiseFun_eq (l : ℕ) [NeZero l] (k : ℤ)
+    (f g : UpperHalfPlane → ℂ) (hg_bdd : UpperHalfPlane.IsBoundedAtImInfty g)
     (hg_eq : g = levelRaiseFun l k f) :
     UpperHalfPlane.IsBoundedAtImInfty f := by
   rw [UpperHalfPlane.isBoundedAtImInfty_iff] at *
@@ -361,7 +339,7 @@ lemma slash_inv_eq_smul_of_levelRaiseFun_eq (l : ℕ) [NeZero l] (k : ℤ)
     (f g : UpperHalfPlane → ℂ) (hg_eq : g = levelRaiseFun l k f) :
     g ∣[k] ((levelRaiseMatrix l)⁻¹ : GL (Fin 2) ℝ) = ((l : ℂ) ^ (1 - k)) • f := by
   rw [hg_eq]
-  show (((l : ℂ) ^ (1 - k)) • (f ∣[k] (levelRaiseMatrix l : GL (Fin 2) ℝ))) ∣[k]
+  change (((l : ℂ) ^ (1 - k)) • (f ∣[k] (levelRaiseMatrix l : GL (Fin 2) ℝ))) ∣[k]
       ((levelRaiseMatrix l)⁻¹ : GL (Fin 2) ℝ) = ((l : ℂ) ^ (1 - k)) • f
   rw [ModularForm.smul_slash, σ_levelRaiseMatrix_inv, RingHom.id_apply,
     ← SlashAction.slash_mul,
@@ -370,9 +348,8 @@ lemma slash_inv_eq_smul_of_levelRaiseFun_eq (l : ℕ) [NeZero l] (k : ℤ)
 
 /-- Slash-by-SL reduction: for any `A : SL(2, ℤ)`,
 `f ∣[k] mapGL ℝ A = (l^(k-1)) • g ∣[k] ((levelRaiseMatrix l)⁻¹ * mapGL ℝ A)`. -/
-lemma slash_eq_of_levelRaiseFun_eq (l : ℕ) [NeZero l] (k : ℤ)
-    (f g : UpperHalfPlane → ℂ) (hg_eq : g = levelRaiseFun l k f)
-    (A : SL(2, ℤ)) :
+lemma slash_eq_of_levelRaiseFun_eq (l : ℕ) [NeZero l] (k : ℤ) (f g : UpperHalfPlane → ℂ)
+    (hg_eq : g = levelRaiseFun l k f) (A : SL(2, ℤ)) :
     f ∣[k] (mapGL ℝ A : GL (Fin 2) ℝ) =
       ((l : ℂ) ^ (k - 1)) •
         (g ∣[k] (((levelRaiseMatrix l)⁻¹ : GL (Fin 2) ℝ) *
@@ -386,17 +363,15 @@ lemma slash_eq_of_levelRaiseFun_eq (l : ℕ) [NeZero l] (k : ℤ)
   have hσA : UpperHalfPlane.σ (mapGL ℝ A : GL (Fin 2) ℝ) = RingHom.id ℂ := by
     unfold UpperHalfPlane.σ
     rw [if_pos]
-    show (0 : ℝ) < (Matrix.GeneralLinearGroup.det (mapGL ℝ A)).val
+    change (0 : ℝ) < (Matrix.GeneralLinearGroup.det (mapGL ℝ A)).val
     rw [Matrix.SpecialLinearGroup.det_mapGL]; norm_num
   rw [ModularForm.smul_slash, hσA, RingHom.id_apply, ← SlashAction.slash_mul]
 
 /-- Slash-boundedness reduction: for any `A : SL(2, ℤ)`, the boundedness of
 `f ∣[k] mapGL ℝ A` at `i∞` is equivalent to the boundedness of
 `g ∣[k] (α_l⁻¹ * mapGL ℝ A)` at `i∞`. -/
-lemma isBoundedAtImInfty_slash_iff_levelRaiseFun_eq
-    (l : ℕ) [NeZero l] (k : ℤ)
-    (f g : UpperHalfPlane → ℂ) (hg_eq : g = levelRaiseFun l k f)
-    (A : SL(2, ℤ)) :
+lemma isBoundedAtImInfty_slash_iff_levelRaiseFun_eq (l : ℕ) [NeZero l] (k : ℤ)
+    (f g : UpperHalfPlane → ℂ) (hg_eq : g = levelRaiseFun l k f) (A : SL(2, ℤ)) :
     UpperHalfPlane.IsBoundedAtImInfty
         (f ∣[k] (mapGL ℝ A : GL (Fin 2) ℝ)) ↔
       UpperHalfPlane.IsBoundedAtImInfty
@@ -404,49 +379,39 @@ lemma isBoundedAtImInfty_slash_iff_levelRaiseFun_eq
           (mapGL ℝ A : GL (Fin 2) ℝ))) := by
   rw [slash_eq_of_levelRaiseFun_eq l k f g hg_eq A,
     UpperHalfPlane.isBoundedAtImInfty_iff, UpperHalfPlane.isBoundedAtImInfty_iff]
+  have hc_norm_pos : 0 < ‖((l : ℂ) ^ (k - 1))‖ := by
+    rw [norm_pos_iff]; exact zpow_ne_zero _ (Nat.cast_ne_zero.mpr (NeZero.ne l))
   constructor
   · rintro ⟨M, A_im, hbound⟩
     refine ⟨M / ‖((l : ℂ) ^ (k - 1))‖, A_im, fun τ hτ ↦ ?_⟩
     have h := hbound τ hτ
     rw [Pi.smul_apply, smul_eq_mul, norm_mul] at h
-    rwa [le_div_iff₀ (by rw [norm_pos_iff]; exact zpow_ne_zero _ (Nat.cast_ne_zero.mpr (NeZero.ne l))), mul_comm]
+    rwa [le_div_iff₀ hc_norm_pos, mul_comm]
   · rintro ⟨M, A_im, hbound⟩
     refine ⟨‖((l : ℂ) ^ (k - 1))‖ * M, A_im, fun τ hτ ↦ ?_⟩
     rw [Pi.smul_apply, smul_eq_mul, norm_mul]
     exact mul_le_mul_of_nonneg_left (hbound τ hτ) (norm_nonneg _)
 
-open OnePoint in
 private lemma levelRaiseMatrix_inv_apply_one_zero (l : ℕ) [NeZero l] :
     ((levelRaiseMatrix l)⁻¹ : GL (Fin 2) ℝ) 1 0 = 0 := by
-  show ((levelRaiseMatrix l)⁻¹ : GL (Fin 2) ℝ).val 1 0 = 0
-  rw [Matrix.GeneralLinearGroup.coe_inv]
-  show (((levelRaiseMatrix l : GL (Fin 2) ℝ)).val)⁻¹ 1 0 = 0
-  rw [Matrix.inv_def]
-  show (Ring.inverse ((levelRaiseMatrix l : GL (Fin 2) ℝ).val).det •
-      ((levelRaiseMatrix l : GL (Fin 2) ℝ).val).adjugate) 1 0 = 0
+  rw [Matrix.GeneralLinearGroup.coe_inv, Matrix.inv_def]
   simp [levelRaiseMatrix, Matrix.GeneralLinearGroup.mkOfDetNeZero,
     Matrix.adjugate_fin_two_of, Matrix.det_fin_two, Matrix.smul_apply]
 
-open OnePoint in
 private lemma levelRaiseMatrix_inv_apply_one_one (l : ℕ) [NeZero l] :
     ((levelRaiseMatrix l)⁻¹ : GL (Fin 2) ℝ) 1 1 = 1 := by
-  show ((levelRaiseMatrix l)⁻¹ : GL (Fin 2) ℝ).val 1 1 = 1
   rw [Matrix.GeneralLinearGroup.coe_inv, Matrix.inv_def]
   simp [levelRaiseMatrix, Matrix.GeneralLinearGroup.mkOfDetNeZero,
     Matrix.adjugate_fin_two_of, Matrix.det_fin_two, Matrix.smul_apply]
 
-open OnePoint in
 private lemma levelRaiseMatrix_inv_apply_zero_zero (l : ℕ) [NeZero l] :
     ((levelRaiseMatrix l)⁻¹ : GL (Fin 2) ℝ) 0 0 = (l : ℝ)⁻¹ := by
-  show ((levelRaiseMatrix l)⁻¹ : GL (Fin 2) ℝ).val 0 0 = (l : ℝ)⁻¹
   rw [Matrix.GeneralLinearGroup.coe_inv, Matrix.inv_def]
   simp [levelRaiseMatrix, Matrix.GeneralLinearGroup.mkOfDetNeZero,
     Matrix.adjugate_fin_two_of, Matrix.det_fin_two, Matrix.smul_apply]
 
-open OnePoint in
 private lemma levelRaiseMatrix_inv_apply_zero_one (l : ℕ) [NeZero l] :
     ((levelRaiseMatrix l)⁻¹ : GL (Fin 2) ℝ) 0 1 = 0 := by
-  show ((levelRaiseMatrix l)⁻¹ : GL (Fin 2) ℝ).val 0 1 = 0
   rw [Matrix.GeneralLinearGroup.coe_inv, Matrix.inv_def]
   simp [levelRaiseMatrix, Matrix.GeneralLinearGroup.mkOfDetNeZero,
     Matrix.adjugate_fin_two_of, Matrix.det_fin_two, Matrix.smul_apply]
