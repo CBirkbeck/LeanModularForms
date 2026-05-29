@@ -240,7 +240,7 @@ theorem miyake_4_6_5_prime_sieve_heckeT_p_divN_one
       (if p ∣ n then 0 else (qExpansion (1 : ℝ) f).coeff n) :=
   miyake_4_6_5_prime_sieve_from_no_diamond_one f
     (HeckeRing.GL2.heckeT_p_divN k p hp hpM f)
-    (fun m ↦ HeckeRing.GL2.qExpansion_one_heckeT_p_divN_coeff hp hpM f m) n
+    (HeckeRing.GL2.qExpansion_one_heckeT_p_divN_coeff hp hpM f) n
 
 private theorem qExpansion_coeff_sieve_step
     {M : ℕ} [NeZero M] {k : ℤ} {p₀ : ℕ} [NeZero p₀]
@@ -1181,11 +1181,10 @@ private theorem iteratedSieveCorrectionsOnList_eq_pieces_sum
               ModularForm ((Gamma1 (M * (p₀ :: L').prod)).map (mapGL ℝ)) k))) ++
             [(hM_eq ▸ lr :
               ModularForm ((Gamma1 (M * (p₀ :: L').prod)).map (mapGL ℝ)) k)] := rfl
-    rw [h_pieces_unfold, List.sum_append, List.sum_singleton]
-    rw [cast_add_Gamma1 hM_eq (ModularForm.restrictSubgroup h_le c_prev) lr]
-    rw [h_ih, restrictSubgroup_sum_eq h_le prev_pieces,
-      cast_sum_Gamma1 hM_eq
-        (prev_pieces.map (ModularForm.restrictSubgroup h_le)),
+    rw [h_pieces_unfold, List.sum_append, List.sum_singleton,
+      cast_add_Gamma1 hM_eq (ModularForm.restrictSubgroup h_le c_prev) lr,
+      h_ih, restrictSubgroup_sum_eq h_le prev_pieces,
+      cast_sum_Gamma1 hM_eq (prev_pieces.map (ModularForm.restrictSubgroup h_le)),
       List.map_map]
     rfl
 
