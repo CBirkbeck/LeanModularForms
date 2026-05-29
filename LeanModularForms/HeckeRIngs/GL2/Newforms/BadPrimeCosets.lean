@@ -524,8 +524,7 @@ theorem Newform.existsUnique_T_p_upper_left_factor_of_mem_alpha_p_doubleCoset
     exact ⟨γ, hγ, hmul⟩
   · intro c hc
     obtain ⟨γ', hγ', hmul'⟩ := hc
-    apply huniq
-    exact ⟨γ', hγ', glMap (T_p_upper p hp.pos c.val), rfl, hmul'⟩
+    exact huniq c ⟨γ', hγ', glMap (T_p_upper p hp.pos c.val), rfl, hmul'⟩
 
 open scoped Pointwise in
 /-- Membership in the bad-prime double coset as a left-factor biconditional:
