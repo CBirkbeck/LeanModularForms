@@ -236,62 +236,6 @@ theorem descendExtraGamma_exists
     simpa using congr_fun (congr_fun h_mod_Np 1) 0
   exact ⟨γ, h_mem, h_mod_p, h_mod_Np⟩
 
-/-- Number-theoretic adjustment lemma: for integers `c, d, N` with `d ≠ 0` and
-`Nat.gcd (Int.gcd c d) N.toNat = 1` (no prime divides all of `c, d, N`), there
-exists `t : ℤ` with `gcd(c + tN, d) = 1`. -/
-theorem int_exists_coprime_adjust
-    (c d N : ℤ) (hd_ne : d ≠ 0)
-    (h_gcd : Nat.Coprime (Int.gcd c d) N.toNat) :
-    ∃ t : ℤ, Int.gcd (c + t * N) d = 1 := by
-  classical
-  let a_fn : ℕ → ℕ := fun q ↦ if (q : ℤ) ∣ c then 1 else 0
-  have h_pairwise : (d.natAbs.primeFactors : Set ℕ).Pairwise
-      (Function.onFun Nat.Coprime id) := by
-    intro p hp q hq hpq
-    grind [Nat.coprime_primes, Nat.prime_of_mem_primeFactors]
-  obtain ⟨t_nat, h_t_modeq⟩ := Nat.chineseRemainderOfFinset
-    a_fn id d.natAbs.primeFactors
-    (fun q hq ↦ (Nat.prime_of_mem_primeFactors hq).ne_zero) h_pairwise
-  refine ⟨(t_nat : ℤ), ?_⟩
-  change Nat.gcd (c + (t_nat : ℤ) * N).natAbs d.natAbs = 1
-  apply Nat.Coprime.symm
-  apply Nat.coprime_of_dvd
-  intro q hq_prime hq_dvd_d hq_dvd_ctN
-  have hq_in_pf : q ∈ d.natAbs.primeFactors :=
-    Nat.mem_primeFactors.mpr ⟨hq_prime, hq_dvd_d, (Int.natAbs_pos.mpr hd_ne).ne'⟩
-  have h_t_mod_int : ((t_nat : ℤ)) ≡ ((a_fn q : ℕ) : ℤ) [ZMOD (q : ℤ)] :=
-    by exact_mod_cast h_t_modeq q hq_in_pf
-  have hq_dvd_aN : (q : ℤ) ∣ c + ((a_fn q : ℕ) : ℤ) * N := by
-    have h_diff : (q : ℤ) ∣ (c + (t_nat : ℤ) * N) - (c + ((a_fn q : ℕ) : ℤ) * N) := by
-      rw [show (c + (t_nat : ℤ) * N) - (c + ((a_fn q : ℕ) : ℤ) * N) =
-          ((t_nat : ℤ) - (a_fn q : ℤ)) * N from by ring]
-      exact (Int.modEq_iff_dvd.mp h_t_mod_int.symm).mul_right N
-    have hq_dvd_sub_swap := (Int.natCast_dvd.mpr hq_dvd_ctN).sub h_diff
-    rwa [show (c + (t_nat : ℤ) * N) -
-        ((c + (t_nat : ℤ) * N) - (c + ((a_fn q : ℕ) : ℤ) * N)) =
-        (c + ((a_fn q : ℕ) : ℤ) * N) from by ring] at hq_dvd_sub_swap
-  by_cases hqc : (q : ℤ) ∣ c
-  · have h_afn_eq : a_fn q = 1 := by simp [a_fn, hqc]
-    have hq_dvd_cN : (q : ℤ) ∣ c + N := by simpa [h_afn_eq] using hq_dvd_aN
-    have hq_dvd_Ntn : q ∣ N.toNat := by
-      have hN_natAbs : q ∣ N.natAbs :=
-        Int.natCast_dvd.mp (by simpa using hq_dvd_cN.sub hqc)
-      by_cases hN_sign : 0 ≤ N
-      · rwa [← Int.natAbs_of_nonneg hN_sign, ← Int.toNat_of_nonneg hN_sign] at hN_natAbs
-      · push Not at hN_sign; simp [Int.toNat_of_nonpos hN_sign.le]
-    exact hq_prime.one_lt.not_ge (Nat.le_of_dvd Nat.one_pos
-      (h_gcd ▸ Nat.dvd_gcd (Nat.dvd_gcd (Int.natCast_dvd.mp hqc) hq_dvd_d) hq_dvd_Ntn))
-  · exact hqc (by simpa [show a_fn q = 0 from by simp [a_fn, hqc]] using hq_dvd_aN)
-
-/-- The reduction-mod-`N` map `SL₂(ℤ) → SL₂(ZMod N)` is surjective (strong approximation
-for `SL₂`). See `SL2Reduction.SL2_reduction_surjective` for the full proof. -/
-theorem SL2Z_to_SL2_ZMod_surjective (N : ℕ) [NeZero N] :
-    Function.Surjective
-      ((Matrix.SpecialLinearGroup.map (Int.castRingHom (ZMod N))) :
-        Matrix.SpecialLinearGroup (Fin 2) ℤ →
-        Matrix.SpecialLinearGroup (Fin 2) (ZMod N)) :=
-  SL2Reduction.SL2_reduction_surjective N
-
 /-- Number of coset representatives for the Hecke descent operator: `p` when `p² ∣ N`,
 `p + 1` when `p² ∤ N` (Miyake's `d + 1`). -/
 def descendCosetCount (p N : ℕ) : ℕ := if p ^ 2 ∣ N then p else p + 1
@@ -325,10 +269,7 @@ noncomputable def descendCosetList (p N : ℕ) [NeZero p] [NeZero N] (hp : p.Pri
           (by simp [Matrix.det_fin_two]; exact_mod_cast hp.ne_zero)) *
       mapGL ℝ (descendExtraGamma p N)
 
-/-- Given `p · a01 = B + v · D - (A + v · C) · v'`, the matrix identity
-`[1, v; 0, p] · [A, B; C, D] = [A+vC, a01; pC, D-Cv'] · [1, v'; 0, p]`
-holds in `Matrix (Fin 2) (Fin 2) ℤ`. (Miyake p. 144.) -/
-lemma descend_upper_tri_raw_matrix_identity
+private lemma descend_upper_tri_raw_matrix_identity
     (p : ℕ) (A B C D : ℤ) (v v' a01 : ℤ)
     (ha01 : (p : ℤ) * a01 = B + v * D - (A + v * C) * v') :
     (!![(1 : ℤ), v; 0, (p : ℤ)] * !![A, B; C, D] : Matrix (Fin 2) (Fin 2) ℤ) =
@@ -391,12 +332,11 @@ private lemma descend_aux_α_mat_in_Gamma0
     {x : ℤ} (hα_10 : (α : Matrix (Fin 2) (Fin 2) ℤ) 1 0 = (p : ℤ) * x)
     (hx : ((N / p : ℕ) : ℤ) ∣ x) : α ∈ Gamma0 N := by
   rw [CongruenceSubgroup.Gamma0_mem, hα_10]
+  refine (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr ?_
   obtain ⟨y, hy⟩ := hx
   have hpNp : (p : ℤ) * ((N / p : ℕ) : ℤ) = (N : ℤ) := by
     exact_mod_cast Nat.mul_div_cancel' hpN
-  rw [hy, show ((p : ℤ) * (((N / p : ℕ) : ℤ) * y)) =
-    ((p : ℤ) * ((N / p : ℕ) : ℤ)) * y from by ring, hpNp]
-  simp
+  exact ⟨y, by linear_combination (p : ℤ) * hy + y * hpNp⟩
 
 private lemma descend_aux_lift_int_eq_to_GL
     {p : ℕ} [NeZero p] (hp : p.Prime) (m : ℕ)
@@ -521,6 +461,9 @@ theorem descendCosetList_action_upper_tri_clean
     (by linear_combination h_moebius + (m.val : ZMod p) * (m'.val : ZMod p) * h_C_mod_p)
   exact ⟨m', α, h_α_in_Γ0, h_moebius, h_GL⟩
 
+/-- Defining properties of `descendExtraGamma p N` (when `p.Prime`, `p ∣ N`,
+`¬ p² ∣ N`): it lies in `Γ_0(N/p)`, reduces to `[0, -1; 1, 0]` mod `p`, and to
+the identity mod `N/p`. -/
 lemma descendExtraGamma_spec
     {p N : ℕ} [NeZero p] [NeZero N]
     (hp : p.Prime) (hpN : p ∣ N) (hp_sq : ¬ p ^ 2 ∣ N) [NeZero (N / p)] :
@@ -787,7 +730,7 @@ theorem descendCosetList_action_extra
 `a·d − b·c·(N/p) = 1`, which forces `d` invertible mod `p`. -/
 theorem descendCosetList_moebius_inj
     {N : ℕ} [NeZero N]
-    (p : ℕ) [NeZero p] (hp : p.Prime) (hpN : p ∣ N) (hp_sq : p ^ 2 ∣ N)
+    (p : ℕ) [NeZero p] (hp : p.Prime) (hp_sq : p ^ 2 ∣ N)
     (γ' : Matrix.SpecialLinearGroup (Fin 2) ℤ) (h_γ' : γ' ∈ Gamma0 (N / p)) :
     Function.Injective (fun m : Fin p ↦
       ((m.val : ZMod p) * ((γ' : Matrix (Fin 2) (Fin 2) ℤ) 1 1 : ZMod p))) := by
@@ -813,24 +756,26 @@ theorem descendCosetList_moebius_inj
     congr_arg ZMod.val (mul_right_cancel₀
       (IsUnit.ne_zero (IsUnit.of_mul_eq_one_right _ h_a_d_mod_p)) h_eq))
 
+/-- Value of `descendCosetList p N hp v` on the upper-triangular branch
+(`v.val < p`): the matrix `[1, v.val; 0, p]`. -/
 lemma descendCosetList_apply_lt {p N : ℕ} [NeZero p] [NeZero N] (hp : p.Prime)
     {v : Fin (descendCosetCount p N)} (hv : v.val < p) :
     descendCosetList p N hp v =
       Matrix.GeneralLinearGroup.mkOfDetNeZero
         !![(1 : ℝ), (v.val : ℝ); 0, (p : ℝ)]
-        (by simp [Matrix.det_fin_two]; exact_mod_cast hp.ne_zero) := by
-  unfold descendCosetList
-  exact dif_pos hv
+        (by simp [Matrix.det_fin_two]; exact_mod_cast hp.ne_zero) :=
+  dif_pos hv
 
+/-- Value of `descendCosetList p N hp v` on the extra branch (`¬ v.val < p`,
+only possible when `p² ∤ N`): the product `[1, 0; 0, p] · descendExtraGamma p N`. -/
 lemma descendCosetList_apply_extra {p N : ℕ} [NeZero p] [NeZero N] (hp : p.Prime)
     {v : Fin (descendCosetCount p N)} (hv : ¬ v.val < p) :
     descendCosetList p N hp v =
       Matrix.GeneralLinearGroup.mkOfDetNeZero
         !![(1 : ℝ), 0; 0, (p : ℝ)]
         (by simp [Matrix.det_fin_two]; exact_mod_cast hp.ne_zero) *
-        mapGL ℝ (descendExtraGamma p N) := by
-  unfold descendCosetList
-  exact dif_neg hv
+        mapGL ℝ (descendExtraGamma p N) :=
+  dif_neg hv
 
 private lemma descendCosetList_lt_matrix {p N : ℕ} [NeZero p] [NeZero N] (hp : p.Prime)
     {v : Fin (descendCosetCount p N)} (hv : v.val < p) :
@@ -845,6 +790,9 @@ private lemma descendCosetCount_val_eq_p {p N : ℕ}
   simp only [descendCosetCount] at hlt
   split_ifs at hlt <;> lia
 
+/-- If a `Fin (descendCosetCount p N)` index `v` falls in the extra branch
+(`¬ v.val < p`), then `p² ∤ N` (the upper-triangular branch has only `p`
+indices when `p² ∣ N`, so the extra index `p` is unreachable). -/
 lemma not_p_sq_dvd_of_not_lt {p N : ℕ}
     {v : Fin (descendCosetCount p N)} (hv : ¬ v.val < p) : ¬ p ^ 2 ∣ N := by
   intro h
