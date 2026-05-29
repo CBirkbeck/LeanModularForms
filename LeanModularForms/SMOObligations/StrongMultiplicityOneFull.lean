@@ -561,8 +561,7 @@ private theorem oldNewGenSpan_le_oldNewGenCharSpan (N : ℕ) [NeZero N] (k : ℤ
     rw [Finsupp.sum, map_sum]
     subst heq; rfl
   rw [hpush]
-  refine Submodule.sum_mem _ (fun ψ _ ↦ ?_)
-  exact Submodule.subset_span
+  exact Submodule.sum_mem _ fun ψ _ ↦ Submodule.subset_span
     ⟨M, l, hM, hl, hl1, heq, ψ, c ψ, ⟨(hc_mem ψ).1, (hc_mem ψ).2⟩, rfl⟩
 
 open Classical in
@@ -627,7 +626,7 @@ private theorem oldNewGenCharSpan_inf_charSpace_le_cuspFormsOldChar
         ((DirichletCharacter.mem_conductorSet_iff χ).mpr hfac)
     have hMne : M ≠ N := by
       rintro rfl
-      have : l * M = 1 * M := by rw [one_mul]; exact heq
+      have : l * M = 1 * M := by simpa using heq
       exact absurd (mul_right_cancel₀ (NeZero.ne M) this) (Nat.ne_of_gt hl1)
     exact Submodule.subset_span ⟨M, l, hM, hl, hcond, hMne, heq, g, hg_new, rfl⟩
   set Ψ : CuspForm ((Gamma1 N).map (mapGL ℝ)) k → ((ZMod N)ˣ →* ℂˣ) :=
@@ -1177,7 +1176,6 @@ theorem oldPart_eq_zero_of_shared_eigenvalues
     exists_matching_summand f χ m_χ g_old hg_old hg_old_char hg0 S h_eig
   have hh_char_cusp : h ∈ cuspFormCharSpace k ψ := hh_char
   set h_eig_b : Eigenform M k := eigenformOfIsEigenform ψ h hh_char_cusp ⟨lam, hh_eig⟩
-    with hh_eig_b
   have hh_eig_b_cusp : h_eig_b.toCuspForm = h := rfl
   have hψ_mod' : h_eig_b.toCuspForm.toModularForm' ∈ modFormCharSpace k ψ :=
     (cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace (k := k) ψ h).mpr hh_char
@@ -1219,7 +1217,7 @@ theorem oldPart_eq_zero_of_shared_eigenvalues
           (CuspFormClass.zero_at_infty ιh).valueAtInfty_eq_zero,
           (CuspFormClass.zero_at_infty (c₁' • f.toCuspForm)).valueAtInfty_eq_zero]
     · have hn_pos : 0 < n := Nat.pos_of_ne_zero hn0
-      set np : ℕ+ := ⟨n, hn_pos⟩ with hnp
+      set np : ℕ+ := ⟨n, hn_pos⟩
       have hnp_val : (np : ℕ) = n := rfl
       have hnM : Nat.Coprime np.val M := hn.coprime_dvd_right hMN
       have hfun : (⇑ιh.toModularForm' : UpperHalfPlane → ℂ) =
