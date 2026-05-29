@@ -50,11 +50,9 @@ lemma delta0IntegralMatrix_upper_left_coprime (g : (Gamma0_pair N).Δ) :
   (Classical.choose_spec g.2.2.2).2.2
 
 /-- Any two integer witnesses for the same element of `Δ₀(N)` agree entrywise. -/
-lemma delta0IntegralMatrix_witness_unique
-    (g : (Gamma0_pair N).Δ)
+lemma delta0IntegralMatrix_witness_unique (g : (Gamma0_pair N).Δ)
     (A : Matrix (Fin 2) (Fin 2) ℤ)
-    (hA : ((g : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ) =
-      A.map (Int.cast : ℤ → ℚ)) :
+    (hA : ((g : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ) = A.map (Int.cast : ℤ → ℚ)) :
     delta0IntegralMatrix (N := N) g = A := by
   ext i j
   have h_entry :
@@ -88,8 +86,7 @@ lemma Delta0UpperUnit_val (g : (Gamma0_pair N).Δ) :
 
 /-- The chosen witness for a product in `Δ₀(N)` is the product of the chosen
 integer witnesses. -/
-lemma delta0IntegralMatrix_mul
-    (g h : (Gamma0_pair N).Δ) :
+lemma delta0IntegralMatrix_mul (g h : (Gamma0_pair N).Δ) :
     delta0IntegralMatrix (N := N) (g * h) =
       delta0IntegralMatrix (N := N) g * delta0IntegralMatrix (N := N) h := by
   apply delta0IntegralMatrix_witness_unique (N := N) (g := g * h)
@@ -106,8 +103,7 @@ lemma delta0IntegralMatrix_mul
             simp [Matrix.mul_apply]
 
 /-- The upper-left units multiply on `Δ₀(N)`. -/
-lemma Delta0UpperUnit_mul
-    (g h : (Gamma0_pair N).Δ) :
+lemma Delta0UpperUnit_mul (g h : (Gamma0_pair N).Δ) :
     Delta0UpperUnit (N := N) (g * h) =
       Delta0UpperUnit (N := N) g * Delta0UpperUnit (N := N) h := by
   ext
@@ -121,8 +117,7 @@ lemma Delta0UpperUnit_mul
   simp [hz, add_comm]
 
 /-- The semigroup character on `Δ₀(N)` obtained from the upper-left unit. -/
-noncomputable def delta0NebentypusDeltaChar
-    (χ : (ZMod N)ˣ →* ℂˣ) :
+noncomputable def delta0NebentypusDeltaChar (χ : (ZMod N)ˣ →* ℂˣ) :
     (Gamma0_pair N).Δ →* ℂˣ where
   toFun g := χ (Delta0UpperUnit (N := N) g)
   map_one' := by
@@ -145,36 +140,30 @@ private lemma units_coe_mul_inv_mul_right_cancel (a b : ℂˣ) :
 /-- The restriction of the `Δ₀(N)` upper-left character to `Γ₀(N) = H`. It is
 evaluated on `adj(h)` to match the adjugated representatives of the generalized
 Hecke action; for `h ∈ Γ₀(N)` this is the usual lower-right Nebentypus entry. -/
-noncomputable def delta0NebentypusHChar
-    (χ : (ZMod N)ˣ →* ℂˣ)
-    (h : GL (Fin 2) ℚ) (hh : h ∈ (Gamma0_pair N).H) : ℂˣ :=
+noncomputable def delta0NebentypusHChar (χ : (ZMod N)ˣ →* ℂˣ) (h : GL (Fin 2) ℚ)
+    (hh : h ∈ (Gamma0_pair N).H) : ℂˣ :=
   delta0NebentypusDeltaChar (N := N) χ ⟨h, (Gamma0_pair N).h₀ hh⟩
 
 /-- The concrete `Δ₀(N)` representative `σᵢ · rep(D)` attached to an index in the
 right-coset decomposition of a `Γ₀(N)` Hecke coset. -/
-noncomputable def deltaRep_gen
-    (D : HeckeCoset (Gamma0_pair N))
-    (i : decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) :
-    (Gamma0_pair N).Δ := by
+noncomputable def deltaRep_gen (D : HeckeCoset (Gamma0_pair N))
+    (i : decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) : (Gamma0_pair N).Δ := by
   refine ⟨(i.out : GL (Fin 2) ℚ) * (HeckeCoset.rep D : GL (Fin 2) ℚ), ?_⟩
   exact (Gamma0_pair N).Δ.mul_mem
     ((Gamma0_pair N).h₀ (show (i.out : GL (Fin 2) ℚ) ∈ (Gamma0_pair N).H from SetLike.coe_mem _))
     (show (HeckeCoset.rep D : GL (Fin 2) ℚ) ∈ (Gamma0_pair N).Δ from SetLike.coe_mem _)
 
 /-- The nebentypus weight attached to a `Γ₀(N)` Hecke-coset summand. -/
-noncomputable def delta0NebentypusWeight
-    (χ : (ZMod N)ˣ →* ℂˣ)
+noncomputable def delta0NebentypusWeight (χ : (ZMod N)ˣ →* ℂˣ)
     (D : HeckeCoset (Gamma0_pair N))
-    (i : decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) :
-    ℂˣ :=
+    (i : decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) : ℂˣ :=
   delta0NebentypusDeltaChar (N := N) χ (deltaRep_gen (N := N) D i)
 
 /-- The twisted Hecke slash action attached to the existing `Γ₀(N)` Hecke coset.
 Since the slash uses the adjugated representatives `tRep_gen = adj(σᵢ · rep(D))`,
 each summand carries the inverse of the upper-left Nebentypus character, matching
 the twisted fixed-space law `f ∣ h = η(h)⁻¹ f` for `h ∈ Γ₀(N)`. -/
-noncomputable def twistedHeckeSlash_gen
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+noncomputable def twistedHeckeSlash_gen (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (D : HeckeCoset (Gamma0_pair N)) (f : ℍ → ℂ) : ℍ → ℂ :=
   ∑ i : decompQuot (Gamma0_pair N) (HeckeCoset.rep D),
     (↑(delta0NebentypusWeight (N := N) χ D i) : ℂ)⁻¹ •
@@ -182,8 +171,7 @@ noncomputable def twistedHeckeSlash_gen
 
 /-- Positivity of the real determinant of an adjugated `Γ₀(N)` Hecke
 representative. -/
-lemma tRep_gen_Gamma0_det_pos
-    (D : HeckeCoset (Gamma0_pair N))
+lemma tRep_gen_Gamma0_det_pos (D : HeckeCoset (Gamma0_pair N))
     (i : decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) :
     0 < (glMap (tRep_gen (Gamma0_pair N) D i)).det.val := by
   have hRat : 0 < (tRep_gen (Gamma0_pair N) D i).det.val := by
@@ -206,17 +194,14 @@ private lemma tRep_gen_sigma_eq_id
   unfold UpperHalfPlane.σ
   simp only [tRep_gen_Gamma0_det_pos (N := N) D i, ↓reduceIte]
 
-private lemma glMap_sigma_eq_id_of_mem_H
-    (h : GL (Fin 2) ℚ) (hh : h ∈ (Gamma0_pair N).H) :
+private lemma glMap_sigma_eq_id_of_mem_H (h : GL (Fin 2) ℚ) (hh : h ∈ (Gamma0_pair N).H) :
     UpperHalfPlane.σ (glMap h) = RingHom.id ℂ := by
   unfold UpperHalfPlane.σ
   simp only [show 0 < (glMap h).det.val from by
     simpa using Gamma0_pair_det_pos N ⟨h, (Gamma0_pair N).h₀ hh⟩, ↓reduceIte]
 
-private lemma smul_slash_tRep_gen
-    (k : ℤ) (D : HeckeCoset (Gamma0_pair N))
-    (i : decompQuot (Gamma0_pair N) (HeckeCoset.rep D))
-    (c : ℂ) (f : ℍ → ℂ) :
+private lemma smul_slash_tRep_gen (k : ℤ) (D : HeckeCoset (Gamma0_pair N))
+    (i : decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) (c : ℂ) (f : ℍ → ℂ) :
     (c • f) ∣[k] tRep_gen (Gamma0_pair N) D i =
       c • (f ∣[k] tRep_gen (Gamma0_pair N) D i) := by
   change (c • f) ∣[k] glMap (tRep_gen (Gamma0_pair N) D i) =
@@ -225,8 +210,7 @@ private lemma smul_slash_tRep_gen
   rw [ModularForm.smul_slash, tRep_gen_sigma_eq_id (N := N) D i]
   rfl
 
-@[simp] lemma twistedHeckeSlash_gen_add
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+@[simp] lemma twistedHeckeSlash_gen_add (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (D : HeckeCoset (Gamma0_pair N)) (f g : ℍ → ℂ) :
     twistedHeckeSlash_gen (N := N) k χ D (f + g) =
       twistedHeckeSlash_gen (N := N) k χ D f +
@@ -234,8 +218,7 @@ private lemma smul_slash_tRep_gen
   ext z
   simp [twistedHeckeSlash_gen, Finset.sum_add_distrib]
 
-@[simp] lemma twistedHeckeSlash_gen_smul
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+@[simp] lemma twistedHeckeSlash_gen_smul (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (D : HeckeCoset (Gamma0_pair N)) (c : ℂ) (f : ℍ → ℂ) :
     twistedHeckeSlash_gen (N := N) k χ D (c • f) =
       c • twistedHeckeSlash_gen (N := N) k χ D f := by
@@ -251,8 +234,7 @@ private lemma smul_slash_tRep_gen
   rw [smul_slash_tRep_gen (N := N) k D i c f]
   simp [Pi.smul_apply, smul_eq_mul, mul_left_comm]
 
-@[simp] lemma twistedHeckeSlash_gen_one
-    (k : ℤ) (D : HeckeCoset (Gamma0_pair N)) (f : ℍ → ℂ) :
+@[simp] lemma twistedHeckeSlash_gen_one (k : ℤ) (D : HeckeCoset (Gamma0_pair N)) (f : ℍ → ℂ) :
     twistedHeckeSlash_gen (N := N) k (1 : (ZMod N)ˣ →* ℂˣ) D f =
       heckeSlash_gen (Gamma0_pair N) k D f := by
   ext z
@@ -261,18 +243,15 @@ private lemma smul_slash_tRep_gen
 
 /-- The weighted Hecke slash action extended by `ℤ`-linearity to the existing
 Hecke ring `𝕋 (Gamma0_pair N) ℤ`. -/
-noncomputable def twistedHeckeSlashExt_gen
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+noncomputable def twistedHeckeSlashExt_gen (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (T : 𝕋 (Gamma0_pair N) ℤ) (f : ℍ → ℂ) : ℍ → ℂ :=
   T.sum (fun D c ↦ c • twistedHeckeSlash_gen (N := N) k χ D f)
 
-@[simp] lemma twistedHeckeSlashExt_gen_zero
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (f : ℍ → ℂ) :
+@[simp] lemma twistedHeckeSlashExt_gen_zero (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (f : ℍ → ℂ) :
     twistedHeckeSlashExt_gen (N := N) k χ 0 f = 0 := by
   simp [twistedHeckeSlashExt_gen]
 
-lemma twistedHeckeSlashExt_gen_add
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+lemma twistedHeckeSlashExt_gen_add (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (T₁ T₂ : 𝕋 (Gamma0_pair N) ℤ) (f : ℍ → ℂ) :
     twistedHeckeSlashExt_gen (N := N) k χ (T₁ + T₂) f =
       twistedHeckeSlashExt_gen (N := N) k χ T₁ f +
@@ -285,31 +264,28 @@ lemma twistedHeckeSlashExt_gen_add
     ext z
     simp [add_smul]
 
-lemma twistedHeckeSlashExt_gen_single
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+lemma twistedHeckeSlashExt_gen_single (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (D : HeckeCoset (Gamma0_pair N)) (f : ℍ → ℂ) :
     twistedHeckeSlashExt_gen (N := N) k χ (Finsupp.single D 1) f =
       twistedHeckeSlash_gen (N := N) k χ D f := by
   simp [twistedHeckeSlashExt_gen, Finsupp.sum_single_index]
 
-@[simp] lemma twistedHeckeSlashExt_gen_one_char
-    (k : ℤ) (T : 𝕋 (Gamma0_pair N) ℤ) (f : ℍ → ℂ) :
+@[simp] lemma twistedHeckeSlashExt_gen_one_char (k : ℤ) (T : 𝕋 (Gamma0_pair N) ℤ) (f : ℍ → ℂ) :
     twistedHeckeSlashExt_gen (N := N) k (1 : (ZMod N)ˣ →* ℂˣ) T f =
       heckeSlashExt_gen (Gamma0_pair N) k T f := by
   ext z
   simp [twistedHeckeSlashExt_gen, heckeSlashExt_gen]
 
 /-- The raw function-space `Γ₀(N),χ` condition for the existing Hecke pair. -/
-def IsGamma0TwistedInvariant
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (f : ℍ → ℂ) : Prop :=
+def IsGamma0TwistedInvariant (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (f : ℍ → ℂ) : Prop :=
   ∀ h : GL (Fin 2) ℚ, ∀ hh : h ∈ (Gamma0_pair N).H,
     f ∣[k] glMap h =
       (↑(delta0NebentypusHChar (N := N) χ (GL_adjugate h)
         (HeckePairAction.adjugate_mem_H h hh)) : ℂ) • f
 
 /-- The abstract `Γ₀(N),χ` fixed submodule of functions. -/
-noncomputable def gamma0TwistedInvariantFunctionSubmodule
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) : Submodule ℂ (ℍ → ℂ) where
+noncomputable def gamma0TwistedInvariantFunctionSubmodule (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
+    Submodule ℂ (ℍ → ℂ) where
   carrier := {f | IsGamma0TwistedInvariant (N := N) k χ f}
   zero_mem' := by
     intro h hh
@@ -325,29 +301,26 @@ noncomputable def gamma0TwistedInvariantFunctionSubmodule
     ext z
     simp [Pi.smul_apply, smul_eq_mul, mul_left_comm]
 
-@[simp] lemma mem_gamma0TwistedInvariantFunctionSubmodule_iff
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (f : ℍ → ℂ) :
+@[simp] lemma mem_gamma0TwistedInvariantFunctionSubmodule_iff (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+    (f : ℍ → ℂ) :
     f ∈ gamma0TwistedInvariantFunctionSubmodule (N := N) k χ ↔
       IsGamma0TwistedInvariant (N := N) k χ f :=
   Iff.rfl
 
 /-- The `H`-correction element attached to replacing `h₁` by its quotient
 representative in a right-coset decomposition. -/
-noncomputable def gamma0Correction
-    (D : HeckeCoset (Gamma0_pair N))
+noncomputable def gamma0Correction (D : HeckeCoset (Gamma0_pair N))
     (q : decompQuot (Gamma0_pair N) (HeckeCoset.rep D))
     (h₁ h₂ : GL (Fin 2) ℚ) : GL (Fin 2) ℚ :=
   (HeckeCoset.rep D : GL _ ℚ)⁻¹ * ((q.out : GL _ ℚ)⁻¹ * h₁) *
     (HeckeCoset.rep D : GL _ ℚ) * h₂
 
 /-- The correction element lies in `Γ₀(N)`. -/
-lemma gamma0Correction_mem_H
-    (D : HeckeCoset (Gamma0_pair N))
+lemma gamma0Correction_mem_H (D : HeckeCoset (Gamma0_pair N))
     (q : decompQuot (Gamma0_pair N) (HeckeCoset.rep D))
     (h₁ : GL (Fin 2) ℚ) (hh₁ : h₁ ∈ (Gamma0_pair N).H)
     (h₂ : GL (Fin 2) ℚ) (hh₂ : h₂ ∈ (Gamma0_pair N).H)
-    (hq : (⟦q.out⟧ : decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) =
-      ⟦⟨h₁, hh₁⟩⟧) :
+    (hq : (⟦q.out⟧ : decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) = ⟦⟨h₁, hh₁⟩⟧) :
     gamma0Correction (N := N) D q h₁ h₂ ∈ (Gamma0_pair N).H := by
   have h_K := QuotientGroup.leftRel_apply.mp (Quotient.exact hq)
   rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
@@ -357,10 +330,8 @@ lemma gamma0Correction_mem_H
     convert h_K using 1) hh₂
 
 /-- The adjugate decomposition of a corrected representative. -/
-lemma gamma0_adjugate_decomp_eq
-    (D : HeckeCoset (Gamma0_pair N))
-    (q : decompQuot (Gamma0_pair N) (HeckeCoset.rep D))
-    (h₁ h₂ : GL (Fin 2) ℚ) :
+lemma gamma0_adjugate_decomp_eq (D : HeckeCoset (Gamma0_pair N))
+    (q : decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) (h₁ h₂ : GL (Fin 2) ℚ) :
     GL_adjugate (h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂) =
     GL_adjugate (gamma0Correction (N := N) D q h₁ h₂) *
       tRep_gen (Gamma0_pair N) D q := by
@@ -370,11 +341,9 @@ lemma gamma0_adjugate_decomp_eq
   simp only [mul_assoc, mul_inv_cancel_left]
 
 /-- The `Δ₀(N)` element `h₁ · rep(D) · h₂`. -/
-noncomputable def gamma0TripleDelta
-    (D : HeckeCoset (Gamma0_pair N))
+noncomputable def gamma0TripleDelta (D : HeckeCoset (Gamma0_pair N))
     (h₁ : GL (Fin 2) ℚ) (hh₁ : h₁ ∈ (Gamma0_pair N).H)
-    (h₂ : GL (Fin 2) ℚ) (hh₂ : h₂ ∈ (Gamma0_pair N).H) :
-    (Gamma0_pair N).Δ :=
+    (h₂ : GL (Fin 2) ℚ) (hh₂ : h₂ ∈ (Gamma0_pair N).H) : (Gamma0_pair N).Δ :=
   ⟨h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂,
     (Gamma0_pair N).Δ.mul_mem
       ((Gamma0_pair N).Δ.mul_mem ((Gamma0_pair N).h₀ hh₁)
@@ -382,17 +351,13 @@ noncomputable def gamma0TripleDelta
       ((Gamma0_pair N).h₀ hh₂)⟩
 
 /-- The correction term as a `Δ₀(N)` element via `H ⊆ Δ`. -/
-noncomputable def gamma0CorrectionDelta
-    (D : HeckeCoset (Gamma0_pair N))
-    (q : decompQuot (Gamma0_pair N) (HeckeCoset.rep D))
-    (h₁ h₂ : GL (Fin 2) ℚ)
-    (hκ : gamma0Correction (N := N) D q h₁ h₂ ∈ (Gamma0_pair N).H) :
-    (Gamma0_pair N).Δ :=
+noncomputable def gamma0CorrectionDelta (D : HeckeCoset (Gamma0_pair N))
+    (q : decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) (h₁ h₂ : GL (Fin 2) ℚ)
+    (hκ : gamma0Correction (N := N) D q h₁ h₂ ∈ (Gamma0_pair N).H) : (Gamma0_pair N).Δ :=
   ⟨gamma0Correction (N := N) D q h₁ h₂, (Gamma0_pair N).h₀ hκ⟩
 
 /-- The corrected representative factorization inside `Δ₀(N)`. -/
-lemma gamma0TripleDelta_eq_deltaRep_mul_correction
-    (D : HeckeCoset (Gamma0_pair N))
+lemma gamma0TripleDelta_eq_deltaRep_mul_correction (D : HeckeCoset (Gamma0_pair N))
     (q : decompQuot (Gamma0_pair N) (HeckeCoset.rep D))
     (h₁ : GL (Fin 2) ℚ) (hh₁ : h₁ ∈ (Gamma0_pair N).H)
     (h₂ : GL (Fin 2) ℚ) (hh₂ : h₂ ∈ (Gamma0_pair N).H)
@@ -406,9 +371,8 @@ lemma gamma0TripleDelta_eq_deltaRep_mul_correction
   simp only [gamma0Correction]
   group
 
-private lemma slash_GL_adjugate_triple_eq_correction_slash
-    (k : ℤ) (D : HeckeCoset (Gamma0_pair N))
-    (q : decompQuot (Gamma0_pair N) (HeckeCoset.rep D))
+private lemma slash_GL_adjugate_triple_eq_correction_slash (k : ℤ)
+    (D : HeckeCoset (Gamma0_pair N)) (q : decompQuot (Gamma0_pair N) (HeckeCoset.rep D))
     (h₁ h₂ : GL (Fin 2) ℚ) (f : ℍ → ℂ) :
     f ∣[k] GL_adjugate (h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂) =
       (f ∣[k] glMap (GL_adjugate (gamma0Correction (N := N) D q h₁ h₂))) ∣[k]
@@ -418,10 +382,8 @@ private lemma slash_GL_adjugate_triple_eq_correction_slash
       tRep_gen (Gamma0_pair N) D q) = _
   rw [map_mul, SlashAction.slash_mul]
 
-private lemma delta0NebentypusHChar_adjugate_adjugate_correction
-    (χ : (ZMod N)ˣ →* ℂˣ)
-    (D : HeckeCoset (Gamma0_pair N))
-    (q : decompQuot (Gamma0_pair N) (HeckeCoset.rep D))
+private lemma delta0NebentypusHChar_adjugate_adjugate_correction (χ : (ZMod N)ˣ →* ℂˣ)
+    (D : HeckeCoset (Gamma0_pair N)) (q : decompQuot (Gamma0_pair N) (HeckeCoset.rep D))
     (h₁ h₂ : GL (Fin 2) ℚ)
     (hκ : gamma0Correction (N := N) D q h₁ h₂ ∈ (Gamma0_pair N).H)
     (hκadj : GL_adjugate (gamma0Correction (N := N) D q h₁ h₂) ∈ (Gamma0_pair N).H) :
@@ -438,8 +400,7 @@ private lemma delta0NebentypusHChar_adjugate_adjugate_correction
 
 /-- Twisted replacement for `slash_tRep_gen_of_mem`: the `H` correction is
 absorbed by the inverse character coefficient. -/
-lemma twisted_weighted_slash_tRep_gen_of_mem
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+lemma twisted_weighted_slash_tRep_gen_of_mem (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (D : HeckeCoset (Gamma0_pair N))
     (h₁ : GL (Fin 2) ℚ) (hh₁ : h₁ ∈ (Gamma0_pair N).H)
     (h₂ : GL (Fin 2) ℚ) (hh₂ : h₂ ∈ (Gamma0_pair N).H)
@@ -491,28 +452,26 @@ private lemma units_coe_inv_right_eq_mul_inv_mul (a b : ℂˣ) (x : ℂ) :
     (↑b : ℂ)⁻¹ * x = (↑a : ℂ) * (((↑(a * b) : ℂ)⁻¹) * x) := by
   simp [Units.val_mul, _root_.mul_inv_rev, mul_assoc, mul_left_comm, a.ne_zero]
 
-private lemma units_coe_inv_right_smul_eq_mul_smul_inv_mul
-    (a b : ℂˣ) (g : ℍ → ℂ) :
+private lemma units_coe_inv_right_smul_eq_mul_smul_inv_mul (a b : ℂˣ) (g : ℍ → ℂ) :
     (↑b : ℂ)⁻¹ • g = (↑a : ℂ) • ((↑(a * b) : ℂ)⁻¹ • g) := by
   ext z
   simp only [Pi.smul_apply, smul_eq_mul]
   exact units_coe_inv_right_eq_mul_inv_mul a b (g z)
 
-private lemma units_inv_smul_inv_smul_eq_mul_inv_smul
-    (a b : ℂˣ) (g : ℍ → ℂ) :
+private lemma units_inv_smul_inv_smul_eq_mul_inv_smul (a b : ℂˣ) (g : ℍ → ℂ) :
     (↑a : ℂ)⁻¹ • ((↑b : ℂ)⁻¹ • g) = (↑(a * b) : ℂ)⁻¹ • g := by
   ext z
   simp [Pi.smul_apply, smul_eq_mul, Units.val_mul, _root_.mul_inv_rev,
     mul_left_comm, mul_comm]
 
-private noncomputable def gamma0LeftMulQuot
-    (D : HeckeCoset (Gamma0_pair N)) (σ : (Gamma0_pair N).H) :
+private noncomputable def gamma0LeftMulQuot (D : HeckeCoset (Gamma0_pair N))
+    (σ : (Gamma0_pair N).H) :
     decompQuot (Gamma0_pair N) (HeckeCoset.rep D) →
       decompQuot (Gamma0_pair N) (HeckeCoset.rep D) :=
   fun i ↦ ⟦⟨σ * i.out, (Gamma0_pair N).H.mul_mem σ.prop (SetLike.coe_mem _)⟩⟧
 
-private lemma gamma0LeftMulQuot_injective
-    (D : HeckeCoset (Gamma0_pair N)) (σ : (Gamma0_pair N).H) :
+private lemma gamma0LeftMulQuot_injective (D : HeckeCoset (Gamma0_pair N))
+    (σ : (Gamma0_pair N).H) :
     Function.Injective (gamma0LeftMulQuot (N := N) D σ) := by
   intro i₁ i₂ h
   simp only [gamma0LeftMulQuot] at h
@@ -536,15 +495,14 @@ private lemma gamma0LeftMulQuot_injective
       · rw [smul_eq_singleton_mul]
         exact ⟨_, rfl, 1, (Gamma0_pair N).H.one_mem, by group⟩))
 
-private noncomputable def gamma0LeftMulEquiv
-    (D : HeckeCoset (Gamma0_pair N)) (σ : (Gamma0_pair N).H) :
+private noncomputable def gamma0LeftMulEquiv (D : HeckeCoset (Gamma0_pair N))
+    (σ : (Gamma0_pair N).H) :
     decompQuot (Gamma0_pair N) (HeckeCoset.rep D) ≃
       decompQuot (Gamma0_pair N) (HeckeCoset.rep D) :=
   Equiv.ofBijective _ ⟨gamma0LeftMulQuot_injective (N := N) D σ,
     Finite.surjective_of_injective (gamma0LeftMulQuot_injective (N := N) D σ)⟩
 
-private lemma gamma0TripleDelta_left_eq_h_mul_deltaRep
-    (D : HeckeCoset (Gamma0_pair N))
+private lemma gamma0TripleDelta_left_eq_h_mul_deltaRep (D : HeckeCoset (Gamma0_pair N))
     (σ : GL (Fin 2) ℚ) (hσ : σ ∈ (Gamma0_pair N).H)
     (i : decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) :
     gamma0TripleDelta (N := N) D (σ * (i.out : GL (Fin 2) ℚ))
@@ -557,8 +515,7 @@ private lemma gamma0TripleDelta_left_eq_h_mul_deltaRep
     σ * ((i.out : GL _ ℚ) * (HeckeCoset.rep D : GL _ ℚ))
   group
 
-private lemma delta0Nebentypus_left_weight
-    (χ : (ZMod N)ˣ →* ℂˣ)
+private lemma delta0Nebentypus_left_weight (χ : (ZMod N)ˣ →* ℂˣ)
     (D : HeckeCoset (Gamma0_pair N))
     (σ : GL (Fin 2) ℚ) (hσ : σ ∈ (Gamma0_pair N).H)
     (i : decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) :
@@ -571,10 +528,8 @@ private lemma delta0Nebentypus_left_weight
   rw [gamma0TripleDelta_left_eq_h_mul_deltaRep (N := N) D σ hσ i]
   exact map_mul _ _ _
 
-private lemma twistedHeckeSlash_gen_slash_distrib
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
-    (D : HeckeCoset (Gamma0_pair N)) (f : ℍ → ℂ)
-    (g : GL (Fin 2) ℚ) :
+private lemma twistedHeckeSlash_gen_slash_distrib (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+    (D : HeckeCoset (Gamma0_pair N)) (f : ℍ → ℂ) (g : GL (Fin 2) ℚ) :
     (twistedHeckeSlash_gen (N := N) k χ D f) ∣[k] g =
       ∑ i : decompQuot (Gamma0_pair N) (HeckeCoset.rep D),
         (((↑(delta0NebentypusWeight (N := N) χ D i) : ℂ)⁻¹) •
@@ -585,9 +540,8 @@ private lemma twistedHeckeSlash_gen_slash_distrib
   | empty => simp [SlashAction.zero_slash]
   | cons a s has ih => simp [Finset.sum_cons, SlashAction.add_slash, ih]
 
-private lemma tRep_gen_mul_eq_adjugate_leftMul
-    (D : HeckeCoset (Gamma0_pair N)) (σ_Q : GL (Fin 2) ℚ)
-    (i : decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) :
+private lemma tRep_gen_mul_eq_adjugate_leftMul (D : HeckeCoset (Gamma0_pair N))
+    (σ_Q : GL (Fin 2) ℚ) (i : decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) :
     tRep_gen (Gamma0_pair N) D i * σ_Q =
       GL_adjugate (GL_adjugate σ_Q * (i.out : GL (Fin 2) ℚ) *
         (HeckeCoset.rep D : GL (Fin 2) ℚ)) := by
@@ -602,8 +556,7 @@ private lemma tRep_gen_mul_eq_adjugate_leftMul
       ((i.out : GL (Fin 2) ℚ) * (HeckeCoset.rep D : GL (Fin 2) ℚ)) from by
         group]
 
-private lemma twistedHeckeSlash_gen_perm_summand
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+private lemma twistedHeckeSlash_gen_perm_summand (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (D : HeckeCoset (Gamma0_pair N))
     (σ_Q : GL (Fin 2) ℚ) (hσ : σ_Q ∈ (Gamma0_pair N).H)
     (f : ℍ → ℂ) (hf : IsGamma0TwistedInvariant (N := N) k χ f)
@@ -656,8 +609,7 @@ private lemma twistedHeckeSlash_gen_perm_summand
       (HeckeCoset.rep D : GL (Fin 2) ℚ) * 1))
 
 /-- A single twisted Hecke-coset operator preserves the `Γ₀(N),χ` fixed space. -/
-lemma twistedHeckeSlash_gen_preserves_invariant
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+lemma twistedHeckeSlash_gen_preserves_invariant (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (D : HeckeCoset (Gamma0_pair N)) (f : ℍ → ℂ)
     (hf : IsGamma0TwistedInvariant (N := N) k χ f) :
     IsGamma0TwistedInvariant (N := N) k χ
@@ -686,8 +638,7 @@ lemma twistedHeckeSlash_gen_preserves_invariant
         (f ∣[k] tRep_gen (Gamma0_pair N) D i)) (fun _ ↦ rfl)]
   rfl
 
-private lemma delta0NebentypusWeight_mul_eq_tripleDelta
-    (χ : (ZMod N)ˣ →* ℂˣ)
+private lemma delta0NebentypusWeight_mul_eq_tripleDelta (χ : (ZMod N)ˣ →* ℂˣ)
     (D₁ D₂ D : HeckeCoset (Gamma0_pair N))
     (p : decompQuot (Gamma0_pair N) (HeckeCoset.rep D₁) ×
          decompQuot (Gamma0_pair N) (HeckeCoset.rep D₂))
@@ -716,8 +667,7 @@ private lemma delta0NebentypusWeight_mul_eq_tripleDelta
       (gamma0TripleDelta (N := N) D h₁ hh₁ h₂ hh₂)
   rw [← map_mul, hdelta_prod]
 
-private lemma twisted_weighted_slash_product_eq
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+private lemma twisted_weighted_slash_product_eq (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (D₁ D₂ D : HeckeCoset (Gamma0_pair N))
     (p : decompQuot (Gamma0_pair N) (HeckeCoset.rep D₁) ×
          decompQuot (Gamma0_pair N) (HeckeCoset.rep D₂))
@@ -776,14 +726,12 @@ private lemma twisted_weighted_slash_product_eq
           simpa [q, delta0NebentypusWeight] using
             twisted_weighted_slash_tRep_gen_of_mem (N := N) k χ D h₁ hh₁ h₂ hh₂ f hf
 
-private lemma twisted_slash_and_coset_of_mulMap_eq
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+private lemma twisted_slash_and_coset_of_mulMap_eq (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (D₁ D₂ D : HeckeCoset (Gamma0_pair N))
     (f : ℍ → ℂ) (hf : IsGamma0TwistedInvariant (N := N) k χ f)
     (p : decompQuot (Gamma0_pair N) (HeckeCoset.rep D₁) ×
          decompQuot (Gamma0_pair N) (HeckeCoset.rep D₂))
-    (hp : mulMap (Gamma0_pair N) (HeckeCoset.rep D₁) (HeckeCoset.rep D₂)
-      (p.1, p.2) = D) :
+    (hp : mulMap (Gamma0_pair N) (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) (p.1, p.2) = D) :
     ∃ q : decompQuot (Gamma0_pair N) (HeckeCoset.rep D),
       (((↑(delta0NebentypusWeight (N := N) χ D₁ p.1) : ℂ)⁻¹) •
         ((((↑(delta0NebentypusWeight (N := N) χ D₂ p.2) : ℂ)⁻¹) •
@@ -826,18 +774,15 @@ private lemma twisted_slash_and_coset_of_mulMap_eq
         simp only [smul_eq_mul, κ]
         group⟩⟩
 
-private lemma gamma0_prod_mem_D_of_rightCoset
-    (D : HeckeCoset (Gamma0_pair N)) (g : GL (Fin 2) ℚ)
-    (q : decompQuot (Gamma0_pair N) (HeckeCoset.rep D))
-    (h : GL (Fin 2) ℚ)
-    (hh : h ∈ ((Gamma0_pair N).H : Set (GL (Fin 2) ℚ)))
+private lemma gamma0_prod_mem_D_of_rightCoset (D : HeckeCoset (Gamma0_pair N))
+    (g : GL (Fin 2) ℚ) (q : decompQuot (Gamma0_pair N) (HeckeCoset.rep D))
+    (h : GL (Fin 2) ℚ) (hh : h ∈ ((Gamma0_pair N).H : Set (GL (Fin 2) ℚ)))
     (hprod : g = (q.out : GL _ ℚ) * (HeckeCoset.rep D : GL _ ℚ) * h) :
     g ∈ HeckeCoset.toSet D := by
   rw [HeckeCoset.toSet_eq_rep, DoubleCoset.mem_doubleCoset]
   exact ⟨(q.out : GL (Fin 2) ℚ), SetLike.coe_mem q.out, h, hh, hprod⟩
 
-private lemma gamma0_prod_mem_mulMap
-    (D₁ D₂ : HeckeCoset (Gamma0_pair N))
+private lemma gamma0_prod_mem_mulMap (D₁ D₂ : HeckeCoset (Gamma0_pair N))
     (p : decompQuot (Gamma0_pair N) (HeckeCoset.rep D₁) ×
          decompQuot (Gamma0_pair N) (HeckeCoset.rep D₂)) :
     (p.1.out : GL _ ℚ) * (HeckeCoset.rep D₁ : GL _ ℚ) *
@@ -848,8 +793,7 @@ private lemma gamma0_prod_mem_mulMap
   simp only [HeckeCoset.toSet_mk]
   exact DoubleCoset.mem_doubleCoset_self _ _ _
 
-private lemma gamma0_mulMap_eq_of_rightCoset
-    (D₁ D₂ D : HeckeCoset (Gamma0_pair N))
+private lemma gamma0_mulMap_eq_of_rightCoset (D₁ D₂ D : HeckeCoset (Gamma0_pair N))
     (p : decompQuot (Gamma0_pair N) (HeckeCoset.rep D₁) ×
          decompQuot (Gamma0_pair N) (HeckeCoset.rep D₂))
     (q : decompQuot (Gamma0_pair N) (HeckeCoset.rep D))
@@ -880,8 +824,7 @@ private lemma gamma0_mulMap_eq_of_rightCoset
       exact ⟨_, hm, hd⟩))
 
 open Classical in
-private lemma twisted_fiber_filter_card_eq
-    (D₁ D₂ D : HeckeCoset (Gamma0_pair N))
+private lemma twisted_fiber_filter_card_eq (D₁ D₂ D : HeckeCoset (Gamma0_pair N))
     (q_of : decompQuot (Gamma0_pair N) (HeckeCoset.rep D₁) ×
         decompQuot (Gamma0_pair N) (HeckeCoset.rep D₂) →
       decompQuot (Gamma0_pair N) (HeckeCoset.rep D))
@@ -923,10 +866,8 @@ private lemma twisted_fiber_filter_card_eq
     left_inv := fun ⟨_, _⟩ ↦ rfl
     right_inv := fun ⟨_, _⟩ ↦ rfl }
 
-private lemma twisted_filtered_sum_collapse_of_qOf
-    {M : Type*} [AddCommGroup M]
-    [DecidableEq (HeckeCoset (Gamma0_pair N))]
-    (D₁ D₂ D : HeckeCoset (Gamma0_pair N))
+private lemma twisted_filtered_sum_collapse_of_qOf {M : Type*} [AddCommGroup M]
+    [DecidableEq (HeckeCoset (Gamma0_pair N))] (D₁ D₂ D : HeckeCoset (Gamma0_pair N))
     (q_of : decompQuot (Gamma0_pair N) (HeckeCoset.rep D₁) ×
         decompQuot (Gamma0_pair N) (HeckeCoset.rep D₂) →
       decompQuot (Gamma0_pair N) (HeckeCoset.rep D))
@@ -1049,8 +990,7 @@ private lemma twistedHeckeSlash_gen_fiber_sum
       (f ∣[k] tRep_gen (Gamma0_pair N) D q))
     h_term_eq h_coset_eq
 
-private lemma twistedHeckeSlash_gen_comp_eq_prod_sum
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+private lemma twistedHeckeSlash_gen_comp_eq_prod_sum (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (D₁ D₂ : HeckeCoset (Gamma0_pair N)) (f : ℍ → ℂ) :
     twistedHeckeSlash_gen (N := N) k χ D₁
         (twistedHeckeSlash_gen (N := N) k χ D₂ f) =
@@ -1100,8 +1040,7 @@ private lemma twistedHeckeSlash_gen_comp_eq_prod_sum
 
 /-- Multiplicativity of the twisted slash action on `Γ₀(N),χ`-invariant
 functions, using the existing `Γ₀(N)` Hecke-ring multiplication. -/
-theorem twistedHeckeSlash_gen_comp
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+theorem twistedHeckeSlash_gen_comp (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (D₁ D₂ : HeckeCoset (Gamma0_pair N)) (f : ℍ → ℂ)
     (hf : IsGamma0TwistedInvariant (N := N) k χ f)
     (hcomm : T_single (Gamma0_pair N) ℤ D₂ 1 * T_single (Gamma0_pair N) ℤ D₁ 1 =
@@ -1138,9 +1077,8 @@ theorem twistedHeckeSlash_gen_comp
   exact Finset.sum_congr rfl fun D hD ↦
     twistedHeckeSlash_gen_fiber_sum (N := N) k χ D₁ D₂ D hD f hf
 
-private lemma twistedHeckeSlashExt_gen_zsmul
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
-    (n : ℤ) (T : 𝕋 (Gamma0_pair N) ℤ) (f : ℍ → ℂ) :
+private lemma twistedHeckeSlashExt_gen_zsmul (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (n : ℤ)
+    (T : 𝕋 (Gamma0_pair N) ℤ) (f : ℍ → ℂ) :
     twistedHeckeSlashExt_gen (N := N) k χ (n • T) f =
       n • twistedHeckeSlashExt_gen (N := N) k χ T f := by
   unfold twistedHeckeSlashExt_gen
@@ -1151,8 +1089,7 @@ private lemma twistedHeckeSlashExt_gen_zsmul
 
 /-- The endomorphism of the abstract `Γ₀(N),χ` function submodule attached to one
 existing `Γ₀(N)` Hecke double coset. -/
-noncomputable def twistedHeckeOperatorFunction
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+noncomputable def twistedHeckeOperatorFunction (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (D : HeckeCoset (Gamma0_pair N)) :
     Module.End ℂ (gamma0TwistedInvariantFunctionSubmodule (N := N) k χ) where
   toFun f := ⟨twistedHeckeSlash_gen (N := N) k χ D f,
@@ -1166,27 +1103,22 @@ noncomputable def twistedHeckeOperatorFunction
 
 /-- The `ℤ`-linear extension of the twisted coset operators over the existing
 Hecke ring source `𝕋 (Gamma0_pair N) ℤ`. -/
-noncomputable def twistedHeckeSumFunction
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+noncomputable def twistedHeckeSumFunction (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (T : 𝕋 (Gamma0_pair N) ℤ) :
     Module.End ℂ (gamma0TwistedInvariantFunctionSubmodule (N := N) k χ) :=
   T.sum (fun D c ↦ (c : ℂ) • twistedHeckeOperatorFunction (N := N) k χ D)
 
-@[simp] lemma twistedHeckeSumFunction_zero
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
+@[simp] lemma twistedHeckeSumFunction_zero (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
     twistedHeckeSumFunction (N := N) k χ (0 : 𝕋 (Gamma0_pair N) ℤ) = 0 := by
   simp [twistedHeckeSumFunction]
 
-@[simp] lemma twistedHeckeSumFunction_T_single
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+@[simp] lemma twistedHeckeSumFunction_T_single (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (D : HeckeCoset (Gamma0_pair N)) (c : ℤ) :
     twistedHeckeSumFunction (N := N) k χ (T_single (Gamma0_pair N) ℤ D c) =
       (c : ℂ) • twistedHeckeOperatorFunction (N := N) k χ D := by
   simp [twistedHeckeSumFunction, T_single]
 
-lemma twistedHeckeSumFunction_add
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
-    (T₁ T₂ : 𝕋 (Gamma0_pair N) ℤ) :
+lemma twistedHeckeSumFunction_add (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (T₁ T₂ : 𝕋 (Gamma0_pair N) ℤ) :
     twistedHeckeSumFunction (N := N) k χ (T₁ + T₂) =
       twistedHeckeSumFunction (N := N) k χ T₁ +
         twistedHeckeSumFunction (N := N) k χ T₂ := by
@@ -1223,8 +1155,7 @@ lemma twistedHeckeSumFunction_apply_coe
         (c : ℤ) • (twistedHeckeSlash_gen (N := N) k χ D (f : ℍ → ℂ)) z
       simp [Pi.smul_apply, smul_eq_mul, zsmul_eq_mul]
 
-private lemma twistedHeckeSumFunction_mul_T_single
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+private lemma twistedHeckeSumFunction_mul_T_single (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (D₁ D₂ : HeckeCoset (Gamma0_pair N)) (a b : ℤ) :
     twistedHeckeSumFunction (N := N) k χ
         (T_single (Gamma0_pair N) ℤ D₁ a * T_single (Gamma0_pair N) ℤ D₂ b) =
@@ -1258,9 +1189,7 @@ private lemma twistedHeckeSumFunction_mul_T_single
 
 /-- Multiplicativity of the endomorphism-valued twisted action for all elements
 of the existing Hecke ring `𝕋 (Gamma0_pair N) ℤ`. -/
-lemma twistedHeckeSumFunction_mul
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
-    (T₁ T₂ : 𝕋 (Gamma0_pair N) ℤ) :
+lemma twistedHeckeSumFunction_mul (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (T₁ T₂ : 𝕋 (Gamma0_pair N) ℤ) :
     twistedHeckeSumFunction (N := N) k χ (T₁ * T₂) =
       twistedHeckeSumFunction (N := N) k χ T₁ *
         twistedHeckeSumFunction (N := N) k χ T₂ := by
@@ -1280,8 +1209,7 @@ lemma twistedHeckeSumFunction_mul
       | single D₂ b =>
           exact twistedHeckeSumFunction_mul_T_single (N := N) k χ D₁ D₂ a b
 
-private lemma twistedHeckeSlash_gen_identity_coset
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (f : ℍ → ℂ)
+private lemma twistedHeckeSlash_gen_identity_coset (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (f : ℍ → ℂ)
     (hf : IsGamma0TwistedInvariant (N := N) k χ f) :
     twistedHeckeSlash_gen (N := N) k χ (HeckeCoset.one (Gamma0_pair N)) f = f := by
   haveI : Subsingleton (decompQuot (Gamma0_pair N)
@@ -1332,8 +1260,7 @@ private lemma twistedHeckeSlash_gen_identity_coset
   ext z
   simp [Pi.smul_apply, smul_eq_mul]
 
-@[simp] lemma twistedHeckeOperatorFunction_one
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
+@[simp] lemma twistedHeckeOperatorFunction_one (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
     twistedHeckeOperatorFunction (N := N) k χ (HeckeCoset.one (Gamma0_pair N)) = 1 := by
   apply LinearMap.ext
   intro f
@@ -1342,8 +1269,7 @@ private lemma twistedHeckeSlash_gen_identity_coset
       (f : ℍ → ℂ) = (f : ℍ → ℂ)
   exact twistedHeckeSlash_gen_identity_coset (N := N) k χ (f : ℍ → ℂ) f.property
 
-@[simp] lemma twistedHeckeSumFunction_one
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
+@[simp] lemma twistedHeckeSumFunction_one (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
     twistedHeckeSumFunction (N := N) k χ (1 : 𝕋 (Gamma0_pair N) ℤ) = 1 := by
   rw [show (1 : 𝕋 (Gamma0_pair N) ℤ) =
       T_single (Gamma0_pair N) ℤ (HeckeCoset.one (Gamma0_pair N)) 1 from
@@ -1353,8 +1279,7 @@ private lemma twistedHeckeSlash_gen_identity_coset
 
 /-- The existing `Γ₀(N)` Hecke ring acts on the abstract twisted
 `Γ₀(N),χ` function space by a genuine ring homomorphism. -/
-noncomputable def twistedHeckeRingHomFunction
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
+noncomputable def twistedHeckeRingHomFunction (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
     𝕋 (Gamma0_pair N) ℤ →+*
       Module.End ℂ (gamma0TwistedInvariantFunctionSubmodule (N := N) k χ) where
   toFun := twistedHeckeSumFunction (N := N) k χ
@@ -1363,13 +1288,11 @@ noncomputable def twistedHeckeRingHomFunction
   map_add' := twistedHeckeSumFunction_add (N := N) k χ
   map_mul' := twistedHeckeSumFunction_mul (N := N) k χ
 
-@[simp] lemma twistedHeckeRingHomFunction_apply
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (T : 𝕋 (Gamma0_pair N) ℤ) :
-    twistedHeckeRingHomFunction (N := N) k χ T =
-      twistedHeckeSumFunction (N := N) k χ T := rfl
+@[simp] lemma twistedHeckeRingHomFunction_apply (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+    (T : 𝕋 (Gamma0_pair N) ℤ) :
+    twistedHeckeRingHomFunction (N := N) k χ T = twistedHeckeSumFunction (N := N) k χ T := rfl
 
-@[simp] lemma twistedHeckeRingHomFunction_T_single
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+@[simp] lemma twistedHeckeRingHomFunction_T_single (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (D : HeckeCoset (Gamma0_pair N)) (c : ℤ) :
     twistedHeckeRingHomFunction (N := N) k χ (T_single (Gamma0_pair N) ℤ D c) =
       (c : ℂ) • twistedHeckeOperatorFunction (N := N) k χ D :=
@@ -1377,8 +1300,7 @@ noncomputable def twistedHeckeRingHomFunction
 
 /-- The image of the twisted `Γ₀(N),χ` Hecke-ring action is commutative because
 the source `𝕋 (Gamma0_pair N) ℤ` is commutative. -/
-theorem twistedHeckeRingHomFunction_commute
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+theorem twistedHeckeRingHomFunction_commute (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (T₁ T₂ : 𝕋 (Gamma0_pair N) ℤ) :
     Commute (twistedHeckeRingHomFunction (N := N) k χ T₁)
       (twistedHeckeRingHomFunction (N := N) k χ T₂) := by
@@ -1387,8 +1309,7 @@ theorem twistedHeckeRingHomFunction_commute
 
 /-- The individual twisted double-coset operators commute as images of
 `T_single` generators under the twisted Hecke-ring homomorphism. -/
-theorem twistedHeckeOperatorFunction_commute
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+theorem twistedHeckeOperatorFunction_commute (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (D₁ D₂ : HeckeCoset (Gamma0_pair N)) :
     Commute (twistedHeckeOperatorFunction (N := N) k χ D₁)
       (twistedHeckeOperatorFunction (N := N) k χ D₂) := by
