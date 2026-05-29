@@ -143,13 +143,11 @@ theorem coeff_one_ne_zero_of_mem_cuspFormsNew_of_eigen
       rw [ModularFormClass.qExpansion_coeff_zero _ one_pos
             one_mem_strictPeriods_Gamma1_map_local,
         (CuspFormClass.zero_at_infty g.toCuspForm).valueAtInfty_eq_zero]
-    · have hn_pos : 0 < n := Nat.pos_of_ne_zero hn0
-      have hcoeff := Eigenform.coeff_eq_coeff_one_mul_eigenvalue g χ hgχ ⟨n, hn_pos⟩ hn
-      rw [h1, zero_mul] at hcoeff
-      exact hcoeff
-  have h_old : g.toCuspForm ∈ cuspFormsOld N k :=
-    mainLemma_charSpace_routeB χ g.toCuspForm hgχ_cusp h_vanish h_chi_factor
-  exact hg_ne (Submodule.disjoint_def.mp cuspFormsOld_disjoint_cuspFormsNew _ h_old hg_new)
+    · have hcoeff := Eigenform.coeff_eq_coeff_one_mul_eigenvalue g χ hgχ
+        ⟨n, Nat.pos_of_ne_zero hn0⟩ hn
+      rwa [h1, zero_mul] at hcoeff
+  exact hg_ne (Submodule.disjoint_def.mp cuspFormsOld_disjoint_cuspFormsNew _
+    (mainLemma_charSpace_routeB χ g.toCuspForm hgχ_cusp h_vanish h_chi_factor) hg_new)
 
 /-- **Miyake Lemma 4.6.11, unconditional `Eigenform`/`cuspFormsNew` form.**  As
 `coeff_one_ne_zero_of_mem_cuspFormsNew_of_eigen`, but with the `h_chi_factor`
@@ -592,24 +590,25 @@ private theorem charSpace_finset_sum_filter_eq {ι : Type} (s : Finset ι)
     {f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k} (hf_sum : f = ∑ i ∈ s, x i)
     (hf_char : f ∈ cuspFormCharSpace k χ) :
     f = ∑ i ∈ s.filter (fun i ↦ ψ i = χ), x i := by
-  have hdisj := (CuspForm_Gamma1_iSupIndep_charSpace (N := N) k).disjoint_biSup
-    (x := χ) (y := {ψ' | ψ' ≠ χ}) (by simp)
   have hsplit : f = (∑ i ∈ s.filter (fun i ↦ ψ i = χ), x i) +
       ∑ i ∈ s.filter (fun i ↦ ψ i ≠ χ), x i := by
     rw [hf_sum, Finset.sum_filter_add_sum_filter_not s (fun i ↦ ψ i = χ)]
-  set a := ∑ i ∈ s.filter (fun i ↦ ψ i = χ), x i with ha
-  set b := ∑ i ∈ s.filter (fun i ↦ ψ i ≠ χ), x i with hb
+  set a := ∑ i ∈ s.filter (fun i ↦ ψ i = χ), x i
+  set b := ∑ i ∈ s.filter (fun i ↦ ψ i ≠ χ), x i
   have ha_char : a ∈ cuspFormCharSpace k χ :=
-    Submodule.sum_mem _ (fun i hi ↦ by
-      obtain ⟨his, hiχ⟩ := Finset.mem_filter.mp hi; rw [← hiχ]; exact hx i his)
+    Submodule.sum_mem _ fun i hi ↦ by
+      obtain ⟨his, hiχ⟩ := Finset.mem_filter.mp hi; rw [← hiχ]; exact hx i his
   have hb_sup : b ∈ ⨆ ψ' ∈ {ψ' | ψ' ≠ χ}, cuspFormCharSpace k ψ' :=
-    Submodule.sum_mem _ (fun i hi ↦ by
+    Submodule.sum_mem _ fun i hi ↦ by
       obtain ⟨his, hiχ⟩ := Finset.mem_filter.mp hi
-      exact Submodule.mem_iSup_of_mem (ψ i) (Submodule.mem_iSup_of_mem hiχ (hx i his)))
+      exact Submodule.mem_iSup_of_mem (ψ i) (Submodule.mem_iSup_of_mem hiχ (hx i his))
   have hb_char : b ∈ cuspFormCharSpace k χ := by
     have hbfa : b = f - a := by rw [hsplit]; abel
-    rw [hbfa]; exact Submodule.sub_mem _ hf_char ha_char
-  have hb0 : b = 0 := (Submodule.disjoint_def.mp hdisj) b hb_char hb_sup
+    rw [hbfa]
+    exact Submodule.sub_mem _ hf_char ha_char
+  have hb0 : b = 0 := (Submodule.disjoint_def.mp
+    ((CuspForm_Gamma1_iSupIndep_charSpace (N := N) k).disjoint_biSup
+      (x := χ) (y := {ψ' | ψ' ≠ χ}) (by simp))) b hb_char hb_sup
   rw [hsplit, hb0, add_zero]
 
 open Classical in
@@ -660,11 +659,10 @@ private theorem oldNewGenCharSpan_inf_charSpace_le_cuspFormsOldChar
     simp only [hΨ_def, dif_pos hmi] at hmiχ ⊢
     exact Submodule.smul_mem _ _ ((key mi hmi).choose_spec.2 hmiχ)
   have hf_sum : f = ∑ mi ∈ c.support, c mi • mi := by rw [← hc_sum, Finsupp.sum]
-  have hcollapse := charSpace_finset_sum_filter_eq c.support (fun mi ↦ c mi • mi) Ψ
-    χ.toUnitHom hΨ_char hf_sum hf_char
-  rw [hcollapse]
-  exact Submodule.sum_mem _ (fun mi hmi ↦
-    hΨ_old mi (Finset.mem_filter.mp hmi).1 (Finset.mem_filter.mp hmi).2)
+  rw [charSpace_finset_sum_filter_eq c.support (fun mi ↦ c mi • mi) Ψ χ.toUnitHom
+    hΨ_char hf_sum hf_char]
+  exact Submodule.sum_mem _ fun mi hmi ↦
+    hΨ_old mi (Finset.mem_filter.mp hmi).1 (Finset.mem_filter.mp hmi).2
 
 /-- **Gap #4, reverse inclusion (Miyake 4.6.12, T012).**  Every project-oldform in the
 `χ`-Nebentypus space is a Miyake `χ`-oldform.  This is the reverse of the proven forward
@@ -1329,9 +1327,8 @@ theorem strongMultiplicityOne_axiom_clean_unconditional
     strongMultiplicityOne_constMul f g.toEigenform χ hfχ hgχ S h_eig
   have hc1 : c = 1 := by
     have h := g.isNorm
-    rw [show (⇑g.toCuspForm : UpperHalfPlane → ℂ) = c • ⇑f.toCuspForm by rw [hc]; rfl,
+    rwa [show (⇑g.toCuspForm : UpperHalfPlane → ℂ) = c • ⇑f.toCuspForm by rw [hc]; rfl,
       qExpansion_one_coeff_one_smul_local f.toCuspForm c, f.isNorm, mul_one] at h
-    exact h
   rw [hc1, one_smul] at hc
   exact hc.symm
 
