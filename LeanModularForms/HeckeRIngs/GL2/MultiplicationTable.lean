@@ -89,8 +89,7 @@ theorem T_ad_one_ppow_eq (k : ℕ) (hk : 2 ≤ k) :
     T_pp p * T_sum ⟨p ^ (k - 2), pow_pos hp.pos (k - 2)⟩ := by
   suffices h : T_ad 1 (p ^ k) +
       T_pp p * T_sum ⟨p ^ (k - 2), pow_pos hp.pos (k - 2)⟩ =
-      T_sum ⟨p ^ k, pow_pos hp.pos k⟩ by
-    rw [eq_sub_iff_add_eq]; exact h
+      T_sum ⟨p ^ k, pow_pos hp.pos k⟩ from eq_sub_iff_add_eq.mpr h
   rw [T_sum_ppow_expansion p hp k, T_sum_ppow_expansion p hp (k - 2), Finset.mul_sum]
   have shift : ∀ j ∈ Finset.range ((k - 2) / 2 + 1),
       T_pp p * T_ad (p ^ j) (p ^ (k - 2 - j)) =
@@ -107,17 +106,12 @@ theorem T_ad_one_ppow_eq (k : ℕ) (hk : 2 ≤ k) :
 end Telescoping
 
 /-- If `L * M * R = D` with `L`, `R` having determinant 1, then `M = L.adj * D * R.adj`. -/
-lemma matrix_isolate_middle (L_ℤ M R_ℤ D : Matrix (Fin 2) (Fin 2) ℤ)
+private lemma matrix_isolate_middle (L_ℤ M R_ℤ D : Matrix (Fin 2) (Fin 2) ℤ)
     (hLadj : L_ℤ.adjugate * L_ℤ = 1) (hRadj : R_ℤ * R_ℤ.adjugate = 1)
     (heq_LMR : L_ℤ * M * R_ℤ = D) : M = L_ℤ.adjugate * D * R_ℤ.adjugate := by
-  ext i j
-  have h1 := congr_arg (L_ℤ.adjugate * · * R_ℤ.adjugate) heq_LMR; simp only at h1
-  have h2 : L_ℤ.adjugate * (L_ℤ * M * R_ℤ) * R_ℤ.adjugate = M := by
-    have : L_ℤ.adjugate * (L_ℤ * M * R_ℤ) * R_ℤ.adjugate =
-        (L_ℤ.adjugate * L_ℤ) * M * (R_ℤ * R_ℤ.adjugate) := by
-      ext r s; simp only [Matrix.mul_apply, Fin.sum_univ_two]; ring
-    rw [this, hLadj, hRadj, one_mul, mul_one]
-  exact congr_arg (· i j) (h2 ▸ h1)
+  rw [← heq_LMR, show L_ℤ.adjugate * (L_ℤ * M * R_ℤ) * R_ℤ.adjugate =
+    L_ℤ.adjugate * L_ℤ * M * (R_ℤ * R_ℤ.adjugate) by simp [mul_assoc], hLadj, hRadj,
+    one_mul, mul_one]
 
 private lemma first_invariant_dvd_p_of_product (S : Matrix.SpecialLinearGroup (Fin 2) ℤ)
     (a : Fin 2 → ℕ) (_ha_pos : ∀ i, 0 < a i) (hdiv : DivChain 2 a)
@@ -147,13 +141,9 @@ private lemma first_invariant_dvd_p_of_product (S : Matrix.SpecialLinearGroup (F
     · exact dvd_mul_of_dvd_left (dvd_mul_of_dvd_right
         (show (a 0 : ℤ) ∣ (a 1 : ℤ) from by exact_mod_cast hdiv 0 (by omega)) _) _
   have h_M00 : M 0 0 = S_ℤ 0 0 := by
-    simp only [M, S_ℤ, dp, dpk, Matrix.mul_apply, Fin.sum_univ_two, Matrix.diagonal_apply,
-      Matrix.cons_val_zero, Matrix.cons_val_one, show (1 : Fin 2) ≠ 0 from by decide,
-      if_false, if_true, mul_zero, add_zero, Matrix.cons_val_fin_one]; norm_num
+    simp [M, S_ℤ, dp, dpk, Matrix.mul_apply, Fin.sum_univ_two]
   have h_M10 : M 1 0 = (p : ℤ) * S_ℤ 1 0 := by
-    simp only [M, S_ℤ, dp, dpk, Matrix.mul_apply, Fin.sum_univ_two, Matrix.diagonal_apply,
-      Matrix.cons_val_zero, Matrix.cons_val_one, show (1 : Fin 2) ≠ 0 from by decide,
-      if_false, if_true, mul_zero, zero_mul, add_zero, Matrix.cons_val_fin_one]; norm_num
+    simp [M, S_ℤ, dp, dpk, Matrix.mul_apply, Fin.sum_univ_two, mul_comm]
   have h_cop : IsCoprime (S_ℤ 0 0) (S_ℤ 1 0) :=
     ⟨S.val 1 1, -(S.val 0 1), by
       have := S.prop; rw [Matrix.det_fin_two] at this; linarith⟩
@@ -165,6 +155,8 @@ private lemma first_invariant_dvd_p_of_product (S : Matrix.SpecialLinearGroup (F
       rw [show u * t * ↑(a 0) = u * (↑(a 0) * t) from by ring, ← ht]; exact huv⟩
     : IsCoprime (↑(a 0) : ℤ) (S_ℤ 1 0)).dvd_of_dvd_mul_right h2
 
+/-- Determinant balance for a `T(1,p) * T(1,pᵏ)` product: if the product lies in the
+double coset of a diagonal matrix `diag a`, then `a 0 * a 1 = p^(k+1)`. -/
 lemma mulSupport_pp_det_eq (k : ℕ) (a : Fin 2 → ℕ) (ha_pos : ∀ i, 0 < a i)
     (g₁ g₂ g₃ g₄ : GL (Fin 2) ℚ) (h1 : g₁.val.det = 1) (h2 : g₂.val.det = (p : ℚ))
     (h3 : g₃.val.det = 1) (h4 : g₄.val.det = (p : ℚ) ^ k)
@@ -177,7 +169,7 @@ lemma mulSupport_pp_det_eq (k : ℕ) (a : Fin 2 → ℕ) (ha_pos : ∀ i, 0 < a 
   have h_rhs : (g₁ * g₂ * (g₃ * g₄)).val.det = (a 0 : ℚ) * (a 1 : ℚ) := by
     rw [h_eq, Units.val_mul, Units.val_mul, Matrix.det_mul, Matrix.det_mul]
     simp only [SLnZ_to_GLnQ_det, diagMat_det 2 _ ha_pos, Fin.prod_univ_two, one_mul, mul_one]
-  exact_mod_cast show (a 0 : ℚ) * (a 1 : ℚ) = (p : ℚ) ^ (k + 1) by linarith
+  exact_mod_cast h_rhs.symm.trans h_lhs
 
 include hp in
 private lemma mulSupport_pp_dvd_p_aux
@@ -203,6 +195,8 @@ private lemma mulSupport_pp_dvd_p_aux
   exact first_invariant_dvd_p_of_product p S_mid a ha_pos hdiv L' R' k _hk h_int_5
 
 include hp in
+/-- Divisibility constraint for a `T(1,p) * T(1,pᵏ)` product: if the product lies in the
+double coset of `diag a`, then the first invariant `a 0` divides `p`. -/
 lemma mulSupport_pp_dvd_p (k : ℕ) (_hk : 0 < k) (a : Fin 2 → ℕ)
     (ha_pos : ∀ i, 0 < a i) (hdiv : DivChain 2 a) (D1c D2c i₀_gl j₀_gl : GL (Fin 2) ℚ)
     (SL_L₁ SL_R₁ SL_L₂ SL_R₂ SL_La SL_Ra SL_i₀ SL_j₀ :
@@ -235,6 +229,9 @@ lemma mulSupport_pp_dvd_p (k : ℕ) (_hk : 0 < k) (a : Fin 2 → ℕ)
   convert this using 1; group
 
 include hp in
+/-- Two-way case split for `T(1,p) * T(1,pᵏ)` support: combining `a 0 * a 1 = p^(k+1)`
+with `a 0 ∣ p` forces `T_diag a` to equal either `T_diag (![1,p^(k+1)])` or
+`T_diag (![p,pᵏ])`. -/
 lemma mulSupport_pp_case_split (k : ℕ) (_hk : 0 < k) (a : Fin 2 → ℕ)
     (_ha_pos : ∀ i, 0 < a i) (_hdiv : DivChain 2 a)
     (h_det_prod : a 0 * a 1 = p ^ (k + 1)) (h_dvd_p : a 0 ∣ p) :
@@ -251,7 +248,7 @@ lemma mulSupport_pp_case_split (k : ℕ) (_hk : 0 < k) (a : Fin 2 → ℕ)
       exact Nat.eq_of_mul_eq_mul_left hp.pos (by rw [h1, pow_succ]; ring)
 
 include hp in
-lemma mulSupport_pp_subset (k : ℕ) (_hk : 0 < k) (A : HeckeCoset (GL_pair 2))
+private lemma mulSupport_pp_subset (k : ℕ) (_hk : 0 < k) (A : HeckeCoset (GL_pair 2))
     (hA : A ∈ HeckeRing.mulSupport (GL_pair 2) (HeckeCoset.rep (T_diag (![1, p])))
       (HeckeCoset.rep (T_diag (![1, p ^ k])))) :
     A = T_diag (![1, p ^ (k + 1)]) ∨ A = T_diag (![p, p ^ k]) := by
@@ -298,17 +295,10 @@ lemma mulSupport_pp_subset (k : ℕ) (_hk : 0 < k) (A : HeckeCoset (GL_pair 2))
     SL_j₀ hD1_eq hD2_eq hSL_i₀.symm hSL_j₀.symm h_prod_eq
   rw [hA_eq]; exact mulSupport_pp_case_split p hp k _hk a ha_pos hdiv h_det h_dvd
 
-private lemma D_out1_group_aux {G : Type*} [Group G] (L₁ D₁ R₁ L₂ D₂ R₂ κ₁ κ₂ : G) :
-    L₁⁻¹ * κ₁ * (L₁ * D₁ * R₁) *
-      (((L₁ * D₁ * R₁)⁻¹ * κ₁ * (L₁ * D₁ * R₁))⁻¹ * R₁⁻¹ * L₂⁻¹ * κ₂ *
-        (L₂ * D₂ * R₂)) =
-    1 * (D₁ * D₂) * (R₂ * ((L₂ * D₂ * R₂)⁻¹ * κ₂ * (L₂ * D₂ * R₂))) := by group
-
 include hp in
-lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
+private lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
     T_diag (![1, p ^ (k + 1)]) ∈ HeckeRing.mulSupport (GL_pair 2)
       (HeckeCoset.rep (T_diag (![1, p]))) (HeckeCoset.rep (T_diag (![1, p ^ k]))) := by
-  -- Use h₁ = L₁⁻¹, h₂ = R₁⁻¹ * L₂⁻¹ to cancel the SL factors
   obtain ⟨L₁, hL₁, R₁, hR₁, hα_eq⟩ := T_diag_rep_decompose (![1, p])
     (fun i ↦ by fin_cases i <;> first | exact Nat.one_pos | exact hp.pos)
   obtain ⟨L₂, hL₂, R₂, hR₂, hβ_eq⟩ := T_diag_rep_decompose (![1, p ^ k])
@@ -317,13 +307,8 @@ lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
     ⟨L₁⁻¹, (GL_pair 2).H.inv_mem hL₁⟩
     ⟨R₁⁻¹ * L₂⁻¹,
       (GL_pair 2).H.mul_mem ((GL_pair 2).H.inv_mem hR₁) ((GL_pair 2).H.inv_mem hL₂)⟩
-  -- Goal: L₁⁻¹ * rep(D1) * ((R₁⁻¹L₂⁻¹) * rep(D2)) ∈ H diag(![1,p^{k+1}]) H
-  -- = L₁⁻¹ * (L₁ D₁ R₁) * (R₁⁻¹ L₂⁻¹ * L₂ D₂ R₂)
-  -- = D₁ * D₂ * R₂ (after cancellation)
-  -- This is in H * diag * H with witnesses 1 and R₂
   rw [hα_eq, hβ_eq, DoubleCoset.mem_doubleCoset]
   refine ⟨1, (GL_pair 2).H.one_mem, R₂, hR₂, ?_⟩
-  -- After simp cancellation: D₁ * (D₂ * R₂) = diagMat_delta(![1,p^{k+1}]) * R₂
   simp only [one_mul, mul_assoc, inv_mul_cancel_left, mul_inv_cancel_left]
   rw [diagMat_delta_val 2 (![1, p ^ (k + 1)])
     (fun i ↦ by fin_cases i <;> first | exact Nat.one_pos | exact pow_pos hp.pos (k + 1))]
@@ -332,7 +317,7 @@ lemma D_out1_pp_in_mulSupport (k : ℕ) (_hk : 0 < k) :
     (by intro i; fin_cases i <;> simp [pow_pos hp.pos k])]
   congr 2; ext i; fin_cases i <;> simp [Pi.mul_apply, pow_succ, mul_comm]
 
-lemma heckeMultiplicity_deg_sum_eq (D1 D2 D_out1 D_out2 : HeckeCoset (GL_pair 2))
+private lemma heckeMultiplicity_deg_sum_eq (D1 D2 D_out1 D_out2 : HeckeCoset (GL_pair 2))
     (h_ne : D_out1 ≠ D_out2) (h_zero : ∀ A, A ≠ D_out1 → A ≠ D_out2 →
       HeckeRing.heckeMultiplicity (GL_pair 2) (HeckeCoset.rep D1) (HeckeCoset.rep D2)
         (HeckeCoset.rep A) = 0) :
@@ -552,9 +537,8 @@ include hp in
 private lemma T_ad_p_ppow_eq (k : ℕ) (hk : 0 < k) :
     T_ad p (p ^ k) = T_pp p * T_ad 1 (p ^ (k - 1)) := by
   have h0 := T_pp_mul_T_ad_ppow p hp 0 (k - 1) (Nat.zero_le _)
-  simp only [pow_zero, zero_add, pow_one] at h0
   rw [show k - 1 + 1 = k from Nat.succ_pred_eq_of_pos hk] at h0
-  exact h0.symm
+  simpa [pow_zero, zero_add, pow_one] using h0.symm
 
 include hp in
 private lemma T_pp_comm_T_ad_one_p : T_pp p * T_ad 1 p = T_ad 1 p * T_pp p := by
@@ -568,7 +552,7 @@ private lemma T_sum_ppow_zero : T_sum ⟨p ^ 0, pow_pos hp.pos 0⟩ = 1 :=
   T_sum_one
 
 /-- `T_ad(1, p^0) = 1`. -/
-private lemma T_ad_one_ppow_zero : T_ad 1 (p ^ 0) = 1 := by simp only [pow_zero]; exact T_ad_one_one
+private lemma T_ad_one_ppow_zero : T_ad 1 (p ^ 0) = 1 := by simp [T_ad_one_one]
 
 /-- `T_ad(1, p^1) = T_ad(1, p)`: normalize `p^1` to `p`. -/
 private lemma T_ad_one_ppow_one : T_ad 1 (p ^ 1) = T_ad 1 p := by simp only [pow_one]
@@ -615,11 +599,7 @@ private lemma T_sum_ppow_recurrence_step (k : ℕ) (hk_pos : 0 < k)
     rw [ih k (by omega) hk_pos]; abel,
     mul_add (T_pp p), mul_smul_comm (↑p : ℤ),
     ← mul_assoc (T_pp p) (T_pp p), sub_eq_iff_eq_add] at h5
-  have h6 : T_sum ⟨p, hp.pos⟩ * T_sum ⟨p ^ (k + 2), pow_pos hp.pos (k + 2)⟩ =
-      T_sum ⟨p ^ (k + 2 + 1), pow_pos hp.pos (k + 2 + 1)⟩ +
-      (↑p : ℤ) • (T_pp p * T_sum ⟨p ^ (k + 1), pow_pos hp.pos (k + 1)⟩) := by
-    rw [h5]; abel
-  exact eq_sub_iff_add_eq.mpr h6.symm
+  linear_combination -h5
 
 /-- Theorem 3.24(6 recurrence): `T(p^{k+1}) = T(p) T(p^k) - p T(p,p) T(p^{k-1})` for k >= 1. -/
 theorem T_sum_ppow_recurrence : ∀ k : ℕ, 0 < k →
@@ -647,7 +627,7 @@ theorem T_sum_ppow_recurrence : ∀ k : ℕ, 0 < k →
     rw [show (↑(p + 1) : ℤ) • T_pp p = (↑p : ℤ) • T_pp p + T_pp p from by
       rw [show (↑(p + 1) : ℤ) = (↑p : ℤ) + 1 from by push_cast; ring,
         add_smul, one_smul]] at h5
-    rw [eq_sub_iff_add_eq]; have h5' := h5; abel_nf at h5' ⊢; exact h5'.symm
+    linear_combination -h5
   | 2, _, _ =>
     simp only [show (2 : ℕ) ≠ 1 from by omega, ite_false,
                show (2 : ℕ) - 1 = 1 from by omega] at h5 ⊢
@@ -658,8 +638,7 @@ theorem T_sum_ppow_recurrence : ∀ k : ℕ, 0 < k →
       by congr 1; exact Subtype.ext (pow_one p)] at h5 ⊢
     rw [T_sum_prime p hp] at h5 ⊢
     rw [(T_pp_comm_T_ad_one_p p hp).symm] at h5
-    rw [sub_eq_iff_eq_add] at h5; rw [eq_sub_iff_add_eq]
-    have h5' := h5; abel_nf at h5' ⊢; exact h5'.symm
+    linear_combination -h5
   | k + 3, _, ih =>
     exact T_sum_ppow_recurrence_step p hp (k + 1) (by omega) ih
 
