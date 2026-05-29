@@ -1047,8 +1047,10 @@ lemma diag_1p_mem_Delta1 (N p : ℕ) [NeZero N] (hp : 0 < p) :
     ext i j
     fin_cases i <;> fin_cases j <;>
       simp [A, Matrix.diagonal, Matrix.map_apply, Int.cast_natCast]
-  refine ⟨⟨A, hA_eq⟩, by rw [hcoe, Matrix.det_diagonal]; simp; exact_mod_cast hp,
-    A, hA_eq, ?_, ?_⟩
+  refine ⟨⟨A, hA_eq⟩, ?_, A, hA_eq, ?_, ?_⟩
+  · rw [hcoe, Matrix.det_diagonal]
+    simp
+    exact_mod_cast hp
   · simp [A, Matrix.diagonal]
   · simp [A, Matrix.diagonal]
 
