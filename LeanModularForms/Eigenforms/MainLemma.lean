@@ -167,10 +167,8 @@ theorem miyake_4_6_5_prime_sieve_witness_at_pN
       (if p ∣ n then 0 else (qExpansion ((p * N : ℕ) : ℝ) f).coeff n) := by
   have h_le : (Gamma1 (p * N)).map (mapGL ℝ) ≤ (Gamma1 N).map (mapGL ℝ) :=
     Gamma1_mapGL_le_of_dvd ⟨p, mul_comm _ _⟩
-  set f_pN : ModularForm ((Gamma1 (p * N)).map (mapGL ℝ)) k :=
-    ModularForm.restrictSubgroup h_le f
-  exact miyake_4_6_5_prime_sieve_from_no_diamond f_pN g
-    (fun m ↦ hg_no_diamond m) n
+  exact miyake_4_6_5_prime_sieve_from_no_diamond
+    (ModularForm.restrictSubgroup h_le f) g hg_no_diamond n
 
 /-- Indicator form of `miyake_4_6_5_prime_sieve_witness_at_pN`, matching
 the shape of `sievedQExpansion_coeff_*`. -/
@@ -775,7 +773,7 @@ private theorem iteratedSieveWitnessOnList_qExpansion_coeff
     set hL'_props : ∀ p ∈ L', p.Prime ∧ p ∣ M := consTail_prime_dvd hL'
     set hp₀_prime_M : p₀.Prime ∧ p₀ ∣ M := consHead_prime_dvd hL'
     set g_prev : ModularForm ((Gamma1 (M * L'.prod)).map (mapGL ℝ)) k :=
-      iteratedSieveWitnessOnList f L' hL'_props with hg_prev_def
+      iteratedSieveWitnessOnList f L' hL'_props
     haveI hM_prev_ne : NeZero (M * L'.prod) :=
       neZero_mul_list_prod_of_prime_dvd hL'_props
     haveI : NeZero p₀ := ⟨hp₀_prime_M.1.ne_zero⟩
@@ -1000,9 +998,9 @@ private theorem iteratedSieveWitnessOnList_add_corrections_eq_restrictDeep
     set hL'_props : ∀ p ∈ L', p.Prime ∧ p ∣ M := consTail_prime_dvd hL
     set hp₀_prime_M : p₀.Prime ∧ p₀ ∣ M := consHead_prime_dvd hL
     set g_prev : ModularForm ((Gamma1 (M * L'.prod)).map (mapGL ℝ)) k :=
-      iteratedSieveWitnessOnList f L' hL'_props with hg_prev_def
+      iteratedSieveWitnessOnList f L' hL'_props
     set c_prev : ModularForm ((Gamma1 (M * L'.prod)).map (mapGL ℝ)) k :=
-      iteratedSieveCorrectionsOnList f L' hL'_props with hc_prev_def
+      iteratedSieveCorrectionsOnList f L' hL'_props
     haveI hM_prev_ne : NeZero (M * L'.prod) :=
       neZero_mul_list_prod_of_prime_dvd hL'_props
     haveI : NeZero p₀ := ⟨hp₀_prime_M.1.ne_zero⟩
@@ -1013,7 +1011,6 @@ private theorem iteratedSieveWitnessOnList_add_corrections_eq_restrictDeep
     set lr : ModularForm ((Gamma1 (p₀ * (M * L'.prod))).map (mapGL ℝ)) k :=
       HeckeRing.GL2.modularFormLevelRaise (M * L'.prod) p₀ k
         (HeckeRing.GL2.heckeT_p_divN k p₀ hp₀_prime_M.1 hp₀_not_coprime g_prev)
-      with hlr_def
     rw [← cast_add_Gamma1 hM_eq
       (ModularForm.restrictSubgroup h_le g_prev - lr)
       (ModularForm.restrictSubgroup h_le c_prev + lr)]
@@ -1158,7 +1155,7 @@ private theorem iteratedSieveCorrectionsOnList_eq_pieces_sum
     set g_prev : ModularForm ((Gamma1 (M * L'.prod)).map (mapGL ℝ)) k :=
       iteratedSieveWitnessOnList f L' hL'_props
     set c_prev : ModularForm ((Gamma1 (M * L'.prod)).map (mapGL ℝ)) k :=
-      iteratedSieveCorrectionsOnList f L' hL'_props with hc_prev_def
+      iteratedSieveCorrectionsOnList f L' hL'_props
     haveI hM_prev_ne : NeZero (M * L'.prod) :=
       neZero_mul_list_prod_of_prime_dvd hL'_props
     haveI : NeZero p₀ := ⟨hp₀_prime_M.1.ne_zero⟩
@@ -1168,11 +1165,10 @@ private theorem iteratedSieveCorrectionsOnList_eq_pieces_sum
     have hM_eq := consLevel_eq p₀ M L'
     set prev_pieces :
         List (ModularForm ((Gamma1 (M * L'.prod)).map (mapGL ℝ)) k) :=
-      iteratedSieveCorrectionPiecesOnList f L' hL'_props with hpp_def
+      iteratedSieveCorrectionPiecesOnList f L' hL'_props
     set lr : ModularForm ((Gamma1 (p₀ * (M * L'.prod))).map (mapGL ℝ)) k :=
       HeckeRing.GL2.modularFormLevelRaise (M * L'.prod) p₀ k
         (HeckeRing.GL2.heckeT_p_divN k p₀ hp₀_prime_M.1 hp₀_not_coprime g_prev)
-      with hlr_def
     have h_ih : c_prev = prev_pieces.sum :=
       iteratedSieveCorrectionsOnList_eq_pieces_sum f L' hL'_props
     show (hM_eq ▸ (ModularForm.restrictSubgroup h_le c_prev + lr) :
@@ -1241,9 +1237,6 @@ private theorem iteratedSieveCorrectionPiecesOnList_getLast_cons
     have hp₀_not_coprime : ¬ Nat.Coprime p₀ (M * L'.prod) :=
       Nat.Prime.not_coprime_iff_dvd.mpr
         ⟨p₀, hp₀_prime_M.1, dvd_refl _, hp₀_prime_M.2.mul_right _⟩
-    have _h_le : (Gamma1 (p₀ * (M * L'.prod))).map (mapGL ℝ) ≤
-        (Gamma1 (M * L'.prod)).map (mapGL ℝ) :=
-      Gamma1_mapGL_le_of_dvd ⟨p₀, by ring⟩
     have hM_eq : p₀ * (M * L'.prod) = M * (p₀ :: L').prod := by
       rw [List.prod_cons]; ring
     ∃ h_ne : iteratedSieveCorrectionPiecesOnList f (p₀ :: L') hL ≠ [],
@@ -1350,7 +1343,7 @@ private theorem iteratedSieveCorrectionPiecesOnList_forall_mem_isOldformImage
       set hp₀_prime_M : p₀.Prime ∧ p₀ ∣ M := consHead_prime_dvd hL
       haveI hM_prev_ne : NeZero (M * L'.prod) :=
         neZero_mul_list_prod_of_prime_dvd hL'_props
-      haveI hp₀_ne : NeZero p₀ := ⟨hp₀_prime_M.1.ne_zero⟩
+      haveI : NeZero p₀ := ⟨hp₀_prime_M.1.ne_zero⟩
       haveI hM_full_ne : NeZero (M * (p₀ :: L').prod) :=
         neZero_mul_list_prod_of_prime_dvd hL
       have hp₀_not_coprime : ¬ Nat.Coprime p₀ (M * L'.prod) :=
@@ -1438,7 +1431,7 @@ private theorem iteratedSieveWitnessOnList_mem_modFormCharSpace
       have hIH := iteratedSieveWitnessOnList_mem_modFormCharSpace
         f hf_χ L' hL'_props
       set g_prev : ModularForm ((Gamma1 (M * L'.prod)).map (mapGL ℝ)) k :=
-        iteratedSieveWitnessOnList f L' hL'_props with hg_prev_def
+        iteratedSieveWitnessOnList f L' hL'_props
       have h_sub :
           ModularForm.restrictSubgroup h_le g_prev -
             HeckeRing.GL2.modularFormLevelRaise (M * L'.prod) p₀ k
@@ -1488,9 +1481,9 @@ private theorem iteratedSieveCorrectionsOnList_mem_modFormCharSpace
       have hIH_c := iteratedSieveCorrectionsOnList_mem_modFormCharSpace
         f hf_χ L' hL'_props
       set g_prev : ModularForm ((Gamma1 (M * L'.prod)).map (mapGL ℝ)) k :=
-        iteratedSieveWitnessOnList f L' hL'_props with hg_prev_def
+        iteratedSieveWitnessOnList f L' hL'_props
       set c_prev : ModularForm ((Gamma1 (M * L'.prod)).map (mapGL ℝ)) k :=
-        iteratedSieveCorrectionsOnList f L' hL'_props with hc_prev_def
+        iteratedSieveCorrectionsOnList f L' hL'_props
       have h_add :
           ModularForm.restrictSubgroup h_le c_prev +
             HeckeRing.GL2.modularFormLevelRaise (M * L'.prod) p₀ k
@@ -1585,14 +1578,12 @@ theorem exists_oldform_pieces_decomposition_charSpace_of_coprime_prod_vanish
               (List.prod_pos (fun p hp ↦ (hL p hp).1.pos)).ne'⟩) g := by
   haveI : NeZero (M * L.prod) := ⟨Nat.mul_ne_zero (NeZero.ne M)
     (List.prod_pos (fun p hp ↦ (hL p hp).1.pos)).ne'⟩
-  refine ⟨iteratedSieveCorrectionPiecesOnList f L hL,
-    restrictSubgroup_eq_sum_oldform_pieces_of_coprime_prod_vanish
-      f L hL h_vanish h_le_full, ?_, ?_⟩
-  · exact restrictSubgroup_mem_modFormCharSpace χ
-      (Nat.dvd_mul_right M L.prod) f hf_χ
-  · exact fun g hg ↦
+  exact ⟨iteratedSieveCorrectionPiecesOnList f L hL,
+    restrictSubgroup_eq_sum_oldform_pieces_of_coprime_prod_vanish f L hL h_vanish h_le_full,
+    restrictSubgroup_mem_modFormCharSpace χ (Nat.dvd_mul_right M L.prod) f hf_χ,
+    fun g hg ↦
       ⟨iteratedSieveCorrectionPiecesOnList_forall_mem_modFormCharSpace f hf_χ L hL g hg,
-        iteratedSieveCorrectionPiecesOnList_forall_mem_isOldformImage f L hL g hg⟩
+        iteratedSieveCorrectionPiecesOnList_forall_mem_isOldformImage f L hL g hg⟩⟩
 
 private lemma IsOldformImageAtDeep.exists_prime_qExpansion_support
     {M : ℕ} [NeZero M] {k : ℤ}
@@ -1998,15 +1989,10 @@ theorem same_level_collapse_of_deep_oldform_image_of_projections_finset
         ∀ {c : OnePoint ℝ}, IsCusp c ((Gamma1 M).map (mapGL ℝ)) →
           c.IsZeroAt (samePiece d).toFun k) := by
   have hprod : S.toList.prod = ∏ p ∈ S, p := Finset.prod_toList S
-  set L : List ℕ := S.toList with hL_def
+  set L : List ℕ := S.toList
   have hL : ∀ p ∈ L, p.Prime ∧ p ∣ M := fun p hp ↦
     hS p (Finset.mem_toList.mp hp)
-  have h_vanish_L : ∀ n : ℕ, Nat.Coprime n L.prod →
-      (qExpansion (1 : ℝ) ⇑f).coeff n = 0 := by
-    intro n hn; exact h_vanish n (hprod ▸ hn)
-  have h_le_full_L : (Gamma1 (M * L.prod)).map (mapGL ℝ) ≤
-      (Gamma1 M).map (mapGL ℝ) := by rw [hprod]; exact h_le_full
-  exact same_level_collapse_of_deep_oldform_image_of_projections
-    f hf_χ L hL h_vanish_L h_le_full_L proj
+  exact same_level_collapse_of_deep_oldform_image_of_projections f hf_χ L hL
+    (fun n hn ↦ h_vanish n (hprod ▸ hn)) (hprod ▸ h_le_full) proj
 
 end HeckeRing.GL2.MainLemma
