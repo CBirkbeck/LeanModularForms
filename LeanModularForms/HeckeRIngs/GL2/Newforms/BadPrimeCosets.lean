@@ -694,10 +694,8 @@ theorem Newform.iUnion_Gamma1_T_p_upper_left_factor_smul_eq_Gamma1_smul_T_p_uppe
   · rintro ⟨γ, hγ, y, hy, hzy⟩
     rcases hy with ⟨w, hw, hyw⟩
     refine ⟨⟨γ, hγ⟩, w, hw, ?_⟩
-    -- reduce the beta-redexes left by `rcases`/`simp` to literal `•`.
-    have hyw' : (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ) • w = y := hyw
-    have hzy' : γ • y = z := hzy
-    rw [mul_smul, hyw']; exact hzy'
+    rw [mul_smul, show (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ) • w = y from hyw]
+    exact hzy
 
 open scoped Pointwise in
 /-- `Γ₁`-action form of the bad-prime double-coset tile equality. -/
@@ -923,10 +921,6 @@ lemma Newform.peterssonAdj_T_p_lower_with_offset_eq
     peterssonAdj (Newform.T_p_lower_with_offset N hp b : GL (Fin 2) ℝ) =
       Newform.T_p_lower_with_offset_adjugate N hp b := by
   apply Units.ext
-  change (peterssonAdj (Newform.T_p_lower_with_offset N hp b : GL (Fin 2) ℝ) :
-        Matrix (Fin 2) (Fin 2) ℝ) =
-      ((Newform.T_p_lower_with_offset_adjugate N hp b : GL (Fin 2) ℝ) :
-        Matrix (Fin 2) (Fin 2) ℝ)
   rw [peterssonAdj_coe, Newform.T_p_lower_with_offset_coe,
       Newform.T_p_lower_with_offset_adjugate_coe, Matrix.adjugate_fin_two]
   ext i j
