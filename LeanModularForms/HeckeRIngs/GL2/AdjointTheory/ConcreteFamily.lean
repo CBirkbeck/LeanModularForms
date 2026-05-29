@@ -1105,66 +1105,18 @@ open UpperHalfPlane ModularGroup MeasureTheory in
 private theorem petN_heckeT_p_symmetric_form_from_TpHeckeFamilyBlocker
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hd_M : Pairwise (fun (q₁ q₂ : SL(2, ℤ) ⧸ Gamma1 N) ↦ AEDisjoint μ_hyp
-        (((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q₁.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ))
-        (((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q₂.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • fd)))
-    (hm_M : ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
-      NullMeasurableSet
-        (((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp)
-    (hint_LHS_M : IntegrableOn
-      (fun τ ↦ petersson k
-        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f))
-        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) ∣[k]
-          peterssonAdj (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)) τ)
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp)
-    (hint_RHS_M : IntegrableOn
-      (fun τ ↦ petersson k
-        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)) ∣[k]
-          peterssonAdj (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ))
-        ⇑g τ)
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp)
-    (hd_U : ∀ b ∈ Finset.range p, Pairwise (fun (q₁ q₂ : SL(2, ℤ) ⧸ Gamma1 N) ↦ AEDisjoint μ_hyp
-        (((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q₁.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ))
-        (((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q₂.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • fd)))
-    (hm_U : ∀ b ∈ Finset.range p, ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
-      NullMeasurableSet
-        (((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp)
-    (hint_LHS_U : ∀ b ∈ Finset.range p, IntegrableOn
-      (fun τ ↦ petersson k
-        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f))
-        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) ∣[k]
-          peterssonAdj (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ)) τ)
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp)
-    (hint_RHS_U : ∀ b ∈ Finset.range p, IntegrableOn
-      (fun τ ↦ petersson k
-        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)) ∣[k]
-          peterssonAdj (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ))
-        ⇑g τ)
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp)
+    (hd_M : MInftyTilePairwiseAEDisjoint p hp hpN)
+    (hm_M : MInftyTileNullMeasurable p hp hpN)
+    (hint_LHS_M : MInftyIntegrableLHS p hp hpN f g)
+    (hint_RHS_M : MInftyIntegrableRHS p hp hpN f g)
+    (hd_U : ∀ b ∈ Finset.range p,
+      AlphaTilePairwiseAEDisjoint (N := N) (glMap (T_p_upper p hp.pos b)))
+    (hm_U : ∀ b ∈ Finset.range p,
+      AlphaTileNullMeasurable (N := N) (glMap (T_p_upper p hp.pos b)))
+    (hint_LHS_U : ∀ b ∈ Finset.range p,
+      AlphaIntegrableLHS p hpN (glMap (T_p_upper p hp.pos b)) f g)
+    (hint_RHS_U : ∀ b ∈ Finset.range p,
+      AlphaIntegrableRHS p hpN (glMap (T_p_upper p hp.pos b)) f g)
     (h_family : TpHeckeFamilyBlocker p hp hpN f g) :
     petN (heckeT_p_cusp k p hp hpN f) g =
       petN (diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)
@@ -1178,66 +1130,18 @@ open UpperHalfPlane ModularGroup MeasureTheory in
 private theorem petN_heckeT_p_symmetric_form_from_TpHeckeFamilyBlocker_v2
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hd_M : Pairwise (fun (q₁ q₂ : SL(2, ℤ) ⧸ Gamma1 N) ↦ AEDisjoint μ_hyp
-        (((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q₁.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ))
-        (((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q₂.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • fd)))
-    (hm_M : ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
-      NullMeasurableSet
-        (((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp)
-    (hint_LHS_M : IntegrableOn
-      (fun τ ↦ petersson k
-        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f))
-        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) ∣[k]
-          peterssonAdj (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)) τ)
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp)
-    (hint_RHS_M : IntegrableOn
-      (fun τ ↦ petersson k
-        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)) ∣[k]
-          peterssonAdj (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ))
-        ⇑g τ)
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp)
-    (hd_U : ∀ b ∈ Finset.range p, Pairwise (fun (q₁ q₂ : SL(2, ℤ) ⧸ Gamma1 N) ↦ AEDisjoint μ_hyp
-        (((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q₁.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ))
-        (((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q₂.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • fd)))
-    (hm_U : ∀ b ∈ Finset.range p, ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
-      NullMeasurableSet
-        (((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp)
-    (hint_LHS_U : ∀ b ∈ Finset.range p, IntegrableOn
-      (fun τ ↦ petersson k
-        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f))
-        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) ∣[k]
-          peterssonAdj (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ)) τ)
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp)
-    (hint_RHS_U : ∀ b ∈ Finset.range p, IntegrableOn
-      (fun τ ↦ petersson k
-        ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)) ∣[k]
-          peterssonAdj (glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ))
-        ⇑g τ)
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp)
+    (hd_M : MInftyTilePairwiseAEDisjoint p hp hpN)
+    (hm_M : MInftyTileNullMeasurable p hp hpN)
+    (hint_LHS_M : MInftyIntegrableLHS p hp hpN f g)
+    (hint_RHS_M : MInftyIntegrableRHS p hp hpN f g)
+    (hd_U : ∀ b ∈ Finset.range p,
+      AlphaTilePairwiseAEDisjoint (N := N) (glMap (T_p_upper p hp.pos b)))
+    (hm_U : ∀ b ∈ Finset.range p,
+      AlphaTileNullMeasurable (N := N) (glMap (T_p_upper p hp.pos b)))
+    (hint_LHS_U : ∀ b ∈ Finset.range p,
+      AlphaIntegrableLHS p hpN (glMap (T_p_upper p hp.pos b)) f g)
+    (hint_RHS_U : ∀ b ∈ Finset.range p,
+      AlphaIntegrableRHS p hpN (glMap (T_p_upper p hp.pos b)) f g)
     (h_family_v2 : TpHeckeFamilyBlocker_v2 p hp hpN f g) :
     petN (heckeT_p_cusp k p hp hpN f) g =
       petN (diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)
