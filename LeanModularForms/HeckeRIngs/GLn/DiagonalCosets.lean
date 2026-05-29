@@ -83,9 +83,7 @@ lemma diagMat_mem_posDetInt (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
   simp [ha, Matrix.det_diagonal]
 
 lemma diagMat_one : diagMat n (fun _ ↦ 1) = 1 := by
-  simp only [diagMat, dif_pos (fun _ ↦ Nat.one_pos)]
-  apply Units.ext
-  ext i j; simp [Matrix.one_apply]
+  ext1; simp [diagMat]
 
 end Diagonal
 
@@ -118,15 +116,11 @@ lemma divChain_const (c : ℕ) : DivChain n (fun _ ↦ c) :=
 lemma divChain_dvd {a : Fin n → ℕ} (ha : DivChain n a) {i j : Fin n} (hij : i ≤ j) :
     a i ∣ a j := by
   suffices h : ∀ (d : ℕ) (hd : i.val + d < n), a i ∣ a ⟨i.val + d, hd⟩ by
-    have := h (j.val - i.val) (by omega)
-    simp only [Nat.add_sub_cancel' (Fin.val_le_of_le hij)] at this; exact this
+    simpa [Nat.add_sub_cancel' (Fin.val_le_of_le hij)] using h (j.val - i.val) (by omega)
   intro d
   induction d with
-  | zero =>
-    intro hd; show _ ∣ a ⟨i.val, hd⟩; rfl
-  | succ m ih =>
-    intro hd
-    exact dvd_trans (ih (by omega)) (ha (i.val + m) hd)
+  | zero => intro hd; show _ ∣ a ⟨i.val, hd⟩; rfl
+  | succ m ih => exact fun hd ↦ dvd_trans (ih (by omega)) (ha (i.val + m) hd)
 
 /-- The quotient `a j / a i` is positive when `i ≤ j` in a divisibility chain. -/
 lemma divChain_div_pos {a : Fin n → ℕ} (hpos : ∀ i, 0 < a i) (ha : DivChain n a) {i j : Fin n}
@@ -170,8 +164,7 @@ lemma T_diag_rep_decompose (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
   DoubleCoset.mem_doubleCoset.mp (T_diag_rep_mem_doubleCoset a ha)
 
 lemma T_diag_ones : T_diag (fun _ : Fin n ↦ 1) = HeckeCoset.one (GL_pair n) := by
-  simp only [T_diag, HeckeCoset.one]
-  rw [HeckeCoset.eq_iff]
+  simp only [T_diag, HeckeCoset.one]; rw [HeckeCoset.eq_iff]
   simp only [diagMat_delta, dif_pos (fun _ ↦ Nat.one_pos)]
   congr 1; exact diagMat_one n
 
@@ -282,7 +275,7 @@ private lemma sign_correct_unit_transform (A : Matrix (Fin n) (Fin n) ℤ) (d : 
   · exfalso; nlinarith [hLQ_one]
   · exfalso; nlinarith [hLQ_one]
   · have hn : 0 < n := by
-      by_contra h; push_neg at h; interval_cases n; simp [Matrix.det_isEmpty] at hLd
+      by_contra h; push Not at h; interval_cases n; simp [Matrix.det_isEmpty] at hLd
     haveI : NeZero n := ⟨by omega⟩
     set flip : Matrix (Fin n) (Fin n) ℤ := Matrix.diagonal (Function.update 1 0 (-1))
     have hflip_det : flip.det = -1 := by
@@ -299,11 +292,9 @@ private lemma sign_correct_unit_transform (A : Matrix (Fin n) (Fin n) ℤ) (d : 
       rw [hcomm, Matrix.mul_assoc, hflip_sq, Matrix.mul_one]
     have hflip_L_det : (flip * L_mat).det = 1 := by rw [det_mul, hflip_det, hLd]; norm_num
     have hflip_Q_det : (Q_mat * flip).det = 1 := by rw [det_mul, hQd, hflip_det]; norm_num
-    have hflip_eq : flip * L_mat * A * (Q_mat * flip) = Matrix.diagonal d := by
-      have : flip * L_mat * A * (Q_mat * flip) = flip * (L_mat * A * Q_mat) * flip := by
-        simp only [Matrix.mul_assoc]
-      rw [this, hL_eq, hflip_diag]
-    exact ⟨⟨flip * L_mat, hflip_L_det⟩, ⟨Q_mat * flip, hflip_Q_det⟩, hflip_eq⟩
+    refine ⟨⟨flip * L_mat, hflip_L_det⟩, ⟨Q_mat * flip, hflip_Q_det⟩, ?_⟩
+    rw [show flip * L_mat * A * (Q_mat * flip) = flip * (L_mat * A * Q_mat) * flip from by
+      simp only [Matrix.mul_assoc], hL_eq, hflip_diag]
 
 /-- Refine a unit-determinant diagonalization `P⁻¹ * A * Q = diag a` (with `a i ≠ 0`) of a
 positive-determinant matrix to an `SL_n(ℤ)`-diagonalization with the positive diagonal `|a|`:
@@ -372,8 +363,7 @@ theorem exists_diagonal_of_posdet (A : Matrix (Fin n) (Fin n) ℤ) (hdet : 0 < A
     have : (ab' i : Fin n → ℤ) = 0 := by rw [hsnf i, hi, zero_smul]
     exact ab'.ne_zero i (Subtype.ext this)
   choose r hr using fun i ↦ LinearMap.mem_range.mp (ab' i).2
-  have hkey : ∀ j, A *ᵥ r j = a j • b' j := by
-    intro j
+  have hkey : ∀ j, A *ᵥ r j = a j • b' j := fun j ↦ by
     show A *ᵥ r j = a j • b' j; rw [← hsnf j, ← hr j]; rfl
   set e := Pi.basisFun ℤ (Fin n)
   set P_mat : Matrix (Fin n) (Fin n) ℤ := Matrix.of (fun k j ↦ b' j k) with hP_def
@@ -426,14 +416,14 @@ private lemma finEquivSum_symm_inl1 (k : ℕ) :
   apply (finEquivSum k).injective; rw [Equiv.apply_symm_apply]; exact (finEquivSum_mk_one k).symm
 
 private lemma finEquivSum_symm_inr_ne_zero (k : ℕ) (i : Fin k) :
-    (finEquivSum k).symm (Sum.inr i) ≠ (0 : Fin (k + 2)) := by
-  intro h; have := Equiv.apply_symm_apply (finEquivSum k) (Sum.inr i)
-  rw [h, finEquivSum_mk_zero] at this; exact (by nomatch this)
+    (finEquivSum k).symm (Sum.inr i) ≠ (0 : Fin (k + 2)) := fun h ↦ by
+  have := Equiv.apply_symm_apply (finEquivSum k) (Sum.inr i)
+  rw [h, finEquivSum_mk_zero] at this; nomatch this
 
 private lemma finEquivSum_symm_inr_ne_one (k : ℕ) (i : Fin k) :
-    (finEquivSum k).symm (Sum.inr i) ≠ (1 : Fin (k + 2)) := by
-  intro h; have := Equiv.apply_symm_apply (finEquivSum k) (Sum.inr i)
-  rw [h, finEquivSum_mk_one] at this; exact (by nomatch this)
+    (finEquivSum k).symm (Sum.inr i) ≠ (1 : Fin (k + 2)) := fun h ↦ by
+  have := Equiv.apply_symm_apply (finEquivSum k) (Sum.inr i)
+  rw [h, finEquivSum_mk_one] at this; nomatch this
 
 private lemma gcd_2x2_det_L (a b : ℤ) (ha : 0 < a) :
     let g : ℤ := ↑(a.gcd b); let s := a.gcdA b; let t := a.gcdB b
@@ -637,14 +627,14 @@ private lemma genEquiv_symm_inl1 (k : ℕ) (j : Fin (k + 2)) (hj : j.val ≠ 0) 
   exact (genEquiv_j k j hj).symm
 
 private lemma genEquiv_symm_inr_ne_zero (k : ℕ) (j : Fin (k + 2)) (hj : j.val ≠ 0) (i : Fin k) :
-    (genEquiv k j hj).symm (Sum.inr i) ≠ ⟨0, by omega⟩ := by
-  intro h; have := Equiv.apply_symm_apply (genEquiv k j hj) (Sum.inr i)
-  rw [h, genEquiv_zero] at this; exact (by nomatch this)
+    (genEquiv k j hj).symm (Sum.inr i) ≠ ⟨0, by omega⟩ := fun h ↦ by
+  have := Equiv.apply_symm_apply (genEquiv k j hj) (Sum.inr i)
+  rw [h, genEquiv_zero] at this; nomatch this
 
 private lemma genEquiv_symm_inr_ne_j (k : ℕ) (j : Fin (k + 2)) (hj : j.val ≠ 0) (i : Fin k) :
-    (genEquiv k j hj).symm (Sum.inr i) ≠ j := by
-  intro h; have := Equiv.apply_symm_apply (genEquiv k j hj) (Sum.inr i)
-  rw [h, genEquiv_j] at this; exact (by nomatch this)
+    (genEquiv k j hj).symm (Sum.inr i) ≠ j := fun h ↦ by
+  have := Equiv.apply_symm_apply (genEquiv k j hj) (Sum.inr i)
+  rw [h, genEquiv_j] at this; nomatch this
 
 private lemma gcd_step_general (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : ∀ i, 0 < d i)
     (j : Fin (k + 2)) (hj : j.val ≠ 0) :
@@ -739,7 +729,7 @@ private lemma make_first_divide_all (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : �
     intro d hd ha_pos hN
     by_cases hall : ∀ j, d (0 : Fin (k + 2)) ∣ d j
     · exact ⟨d, hd, hall, 1, 1, by simp⟩
-    · push_neg at hall
+    · push Not at hall
       obtain ⟨j, hj_ndvd⟩ := hall
       have hj_ne : j.val ≠ 0 := by
         intro h; apply hj_ndvd; have : j = 0 := Fin.ext h; subst this; exact dvd_refl _
@@ -977,7 +967,7 @@ private lemma divChain_prod_dvd_of_injective {a : Fin n → ℕ} (hda : DivChain
     obtain ⟨j₀, _, hmax⟩ :=
       Finset.exists_max_image Finset.univ (fun j ↦ (f j).val) Finset.univ_nonempty
     have hge : k ≤ (f j₀).val := by
-      by_contra hlt; push_neg at hlt
+      by_contra hlt; push Not at hlt
       have : Fintype.card (Fin (k + 1)) ≤ Fintype.card (Fin k) :=
         Fintype.card_le_of_injective
           (fun j : Fin (k + 1) ↦ (⟨(f j).val, by
