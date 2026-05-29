@@ -144,9 +144,7 @@ private lemma first_invariant_dvd_p_of_product (S : Matrix.SpecialLinearGroup (F
     simp [M, S_ℤ, dp, dpk, Matrix.mul_apply, Fin.sum_univ_two]
   have h_M10 : M 1 0 = (p : ℤ) * S_ℤ 1 0 := by
     simp [M, S_ℤ, dp, dpk, Matrix.mul_apply, Fin.sum_univ_two, mul_comm]
-  have h_cop : IsCoprime (S_ℤ 0 0) (S_ℤ 1 0) :=
-    ⟨S.val 1 1, -(S.val 0 1), by
-      have := S.prop; rw [Matrix.det_fin_two] at this; linarith⟩
+  have h_cop : IsCoprime (S_ℤ 0 0) (S_ℤ 1 0) := S.isCoprime_col 0
   have h1 : (a 0 : ℤ) ∣ S_ℤ 0 0 := h_M00 ▸ h_dvd_entry 0 0
   have h2 : (a 0 : ℤ) ∣ (p : ℤ) * S_ℤ 1 0 := h_M10 ▸ h_dvd_entry 1 0
   exact_mod_cast (by
