@@ -822,8 +822,8 @@ theorem case_B_slash_relation (l N : ℕ) [NeZero l] [NeZero N] (h_dvd : l ∣ N
 /-- Algebraic two-multiplier contradiction: if `f ∣[k] M` is both `c₁ • f` and
 `c₂ • f` for two distinct scalars, then `f = 0`. -/
 lemma fun_eq_zero_of_two_multipliers (k : ℤ) (f : UpperHalfPlane → ℂ) (M : GL (Fin 2) ℝ)
-    {c₁ c₂ : ℂ} (hne : c₁ ≠ c₂) (h₁ : f ∣[k] M = c₁ • f) (h₂ : f ∣[k] M = c₂ • f) :
-    f = 0 := by
+    {c₁ c₂ : ℂ} (hne : c₁ ≠ c₂) (h₁ : f ∣[k] M = c₁ • f)
+    (h₂ : f ∣[k] M = c₂ • f) : f = 0 := by
   have h_diff : (c₁ - c₂) • f = 0 := by rw [sub_smul, h₁.symm.trans h₂, sub_self]
   exact (smul_eq_zero.mp h_diff).resolve_left (sub_ne_zero.mpr hne)
 
