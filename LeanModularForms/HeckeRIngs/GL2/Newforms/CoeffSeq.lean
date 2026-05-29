@@ -3,24 +3,25 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: LeanModularForms contributors
 -/
-import LeanModularForms.HeckeRIngs.GL2.AdjointTheoryPetersson
-import LeanModularForms.HeckeRIngs.GL2.CharacterDecomp
-import LeanModularForms.HeckeRIngs.GL2.LevelEmbed
-import LeanModularForms.HeckeRIngs.GL2.LevelRaise
-import LeanModularForms.HeckeRIngs.GL2.Unified.NebentypusHeckeRingHom
-import LeanModularForms.Modularforms.LFunction
-import LeanModularForms.Modularforms.PeterssonLevelN
-import LeanModularForms.Modularforms.DimensionFormulas
-import LeanModularForms.Modularforms.SlashActionAuxil
-import LeanModularForms.Eigenforms.ConductorTheorem
+import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
 import Mathlib.LinearAlgebra.BilinearForm.Orthogonal
 import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
 import Mathlib.NumberTheory.EulerProduct.Basic
 import Mathlib.NumberTheory.EulerProduct.DirichletLSeries
 import Mathlib.NumberTheory.LSeries.AbstractFuncEq
 import Mathlib.NumberTheory.LSeries.DirichletContinuation
-import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
+
+import LeanModularForms.Eigenforms.ConductorTheorem
+import LeanModularForms.HeckeRIngs.GL2.AdjointTheoryPetersson
+import LeanModularForms.HeckeRIngs.GL2.CharacterDecomp
+import LeanModularForms.HeckeRIngs.GL2.LevelEmbed
+import LeanModularForms.HeckeRIngs.GL2.LevelRaise
 import LeanModularForms.HeckeRIngs.GL2.Newforms.MainLemma
+import LeanModularForms.HeckeRIngs.GL2.Unified.NebentypusHeckeRingHom
+import LeanModularForms.Modularforms.DimensionFormulas
+import LeanModularForms.Modularforms.LFunction
+import LeanModularForms.Modularforms.PeterssonLevelN
+import LeanModularForms.Modularforms.SlashActionAuxil
 
 /-!
 # Newforms: Strong Multiplicity One inputs, coefficient sequences, and L-series
@@ -41,6 +42,20 @@ open scoped MatrixGroups ModularForm Pointwise DirectSum
 
 variable {N : ℕ} [NeZero N] {k : ℤ}
 
+/-- The underlying modular form of a `Newform` is a period-1 normalised
+eigenform (`IsNormalisedEigenform_one`) at the `ModularForm` level. -/
+theorem Newform.isNormalisedEigenform (f : Newform N k) :
+    IsNormalisedEigenform_one k f.toCuspForm.toModularForm' := by
+  refine ⟨?_, ?_⟩
+  · intro n' hn'
+    haveI : NeZero n'.val := ⟨n'.pos.ne'⟩
+    refine ⟨f.eigenvalue n', ?_⟩
+    have h_lift : (heckeT_n_cusp k n'.val f.toCuspForm).toModularForm' =
+        (f.eigenvalue n' • f.toCuspForm).toModularForm' := by rw [f.isEigen n' hn']
+    rw [heckeT_n_cusp_toModularForm'] at h_lift
+    exact h_lift
+  · exact f.isNorm
+
 /-- **Coprime multiplicativity of eigenvalues**: if `f` is a newform in the
 character eigenspace `modFormCharSpace k χ` and `gcd(m, n) = 1`, then
 `λ_{mn} = λ_m · λ_n`. -/
@@ -57,26 +72,12 @@ theorem Newform.eigenvalue_coprime_mul (f : Newform N k) (m n : ℕ+)
         hmn_N χ hf_char,
       Newform.eigenvalue_eq_coeff f m hm χ hf_char,
       Newform.eigenvalue_eq_coeff f n hn χ hf_char]
-  change (ModularFormClass.qExpansion (1 : ℝ) (⇑f.toCuspForm)).coeff (m.val * n.val) =
-      (ModularFormClass.qExpansion (1 : ℝ) (⇑f.toCuspForm)).coeff m.val *
-      (ModularFormClass.qExpansion (1 : ℝ) (⇑f.toCuspForm)).coeff n.val
-  rw [show (⇑f.toCuspForm : UpperHalfPlane → ℂ) = ⇑f.toCuspForm.toModularForm' from rfl]
-  have hf_eigen : IsNormalisedEigenform_one k f.toCuspForm.toModularForm' := by
-    refine ⟨?_, ?_⟩
-    · intro n' hn'
-      haveI : NeZero n'.val := ⟨n'.pos.ne'⟩
-      refine ⟨f.eigenvalue n', ?_⟩
-      have h_cusp := f.isEigen n' hn'
-      have h_lift : (heckeT_n_cusp k n'.val f.toCuspForm).toModularForm' =
-          (f.eigenvalue n' • f.toCuspForm).toModularForm' := by rw [h_cusp]
-      rw [heckeT_n_cusp_toModularForm'] at h_lift
-      exact h_lift
-    · change (ModularFormClass.qExpansion (1 : ℝ)
-          (⇑f.toCuspForm.toModularForm')).coeff 1 = 1
-      rw [show (⇑f.toCuspForm.toModularForm' : UpperHalfPlane → ℂ) =
-          ⇑f.toCuspForm from rfl]
-      exact f.isNorm
-  have h := eigenform_coeff_multiplicative_one k m n hm hn χ hf_char hf_eigen
+  change (ModularFormClass.qExpansion (1 : ℝ)
+        f.toCuspForm.toModularForm').coeff (m.val * n.val) =
+      (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm.toModularForm').coeff m.val *
+      (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm.toModularForm').coeff n.val
+  have h := eigenform_coeff_multiplicative_one k m n hm hn χ hf_char
+    f.isNormalisedEigenform
   have hgcd : Nat.gcd m.val n.val = 1 := hmn
   rw [hgcd, Nat.divisors_one, Finset.sum_singleton] at h
   have h_unit_one : ZMod.unitOfCoprime 1 (Nat.coprime_one_left N) = 1 := by
@@ -97,15 +98,13 @@ lemma Newform.lCoeff_apply (f : Newform N k) (n : ℕ) :
 
 /-- `a₀(f) = 0` for a newform (cusp forms vanish at infinity). -/
 lemma Newform.lCoeff_zero (f : Newform N k) : f.lCoeff 0 = 0 := by
-  have h1_pos : (0 : ℝ) < 1 := one_pos
   have h1_period : (1 : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
     rw [show (Gamma1 N).map (mapGL ℝ) = (Gamma1 N : Subgroup (GL (Fin 2) ℝ)) from rfl,
       strictPeriods_Gamma1]
     exact ⟨1, by simp⟩
-  have hcusp := CuspFormClass.zero_at_infty f.toCuspForm
   simp [Newform.lCoeff,
-    ModularFormClass.qExpansion_coeff_zero (f := f.toCuspForm) h1_pos h1_period,
-    hcusp.valueAtInfty_eq_zero]
+    ModularFormClass.qExpansion_coeff_zero (f := f.toCuspForm) one_pos h1_period,
+    (CuspFormClass.zero_at_infty f.toCuspForm).valueAtInfty_eq_zero]
 
 /-- **Normalisation**: `a₁(f) = 1` for a newform, directly from `f.isNorm`
 (which is stated at the canonical period 1). -/
@@ -223,25 +222,6 @@ theorem IsHeckeCoefficientSequence.coeff_prime_pow_eq_of_a_p_zero
     rw [if_neg (Nat.not_even_iff_odd.mpr ⟨j, rfl⟩)]
     exact h.coeff_prime_pow_odd_eq_zero_of_a_p_zero hq hqN h_zero j
 
-/-- The underlying modular form of a `Newform` is a period-1 normalised
-eigenform (`IsNormalisedEigenform_one`) at the `ModularForm` level. -/
-theorem Newform.isNormalisedEigenform (f : Newform N k) :
-    IsNormalisedEigenform_one k f.toCuspForm.toModularForm' := by
-  refine ⟨?_, ?_⟩
-  · intro n' hn'
-    haveI : NeZero n'.val := ⟨n'.pos.ne'⟩
-    refine ⟨f.eigenvalue n', ?_⟩
-    have h_cusp := f.isEigen n' hn'
-    have h_lift : (heckeT_n_cusp k n'.val f.toCuspForm).toModularForm' =
-        (f.eigenvalue n' • f.toCuspForm).toModularForm' := by rw [h_cusp]
-    rw [heckeT_n_cusp_toModularForm'] at h_lift
-    exact h_lift
-  · change (ModularFormClass.qExpansion (1 : ℝ)
-        (⇑f.toCuspForm.toModularForm')).coeff 1 = 1
-    rw [show (⇑f.toCuspForm.toModularForm' : UpperHalfPlane → ℂ) =
-        ⇑f.toCuspForm from rfl]
-    exact f.isNorm
-
 private lemma Newform.lCoeff_recur (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
     (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
     {p : ℕ} (hp : p.Prime) (hpN : Nat.Coprime p N) (r : ℕ) :
@@ -269,7 +249,7 @@ private lemma Newform.lCoeff_recur (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ
     exact Nat.mul_div_cancel _ (by positivity)
   rw [h_div, h_mn] at h
   simp only [Newform.lCoeff_apply]
-  show (ModularFormClass.qExpansion (1 : ℝ)
+  change (ModularFormClass.qExpansion (1 : ℝ)
         f.toCuspForm.toModularForm').coeff (p ^ (r + 2)) =
       (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm.toModularForm').coeff p *
       (ModularFormClass.qExpansion (1 : ℝ)
@@ -742,7 +722,7 @@ theorem Newform.eulerFactor_good_prime_eq_dirichlet_quotient
     rw [mul_pow,
       show ((q : ℂ) ^ (-(2 * s - k + 1))) ^ 2 = (q : ℂ) ^ (-(2 * s - k + 1) * 2) from by
         rw [← Complex.cpow_mul_nat]; rfl]
-    congr 1; ring
+    congr 2; ring
   rw [show (1 + χ * (q : ℂ) ^ (k - 1) * ((q : ℂ) ^ (-s)) ^ 2 : ℂ) =
       1 + χ * ((q : ℂ) ^ (k - 1) * ((q : ℂ) ^ (-s)) ^ 2) from by ring,
     h_pow, h_sq]
