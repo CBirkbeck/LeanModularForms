@@ -177,18 +177,16 @@ private lemma botLeft_ne_zero_of_topLeft_add_eq_zero {p : ℕ} [Fact p.Prime]
   intro h10
   have hdet_p : ((M 0 0 * M 1 1 - M 0 1 * M 1 0 : ℤ) : ZMod p) = 1 := by simp [hdet]
   have h00 : ((M 0 0 : ℤ) : ZMod p) = 0 := by
-    have hsum : ((M 0 0 + c * M 1 0 : ℤ) : ZMod p) =
-        ((M 0 0 : ℤ) : ZMod p) + ((c : ℤ) : ZMod p) * ((M 1 0 : ℤ) : ZMod p) := by
-      push_cast
-      ring
+    have hsum := hAc
+    push_cast at hsum
     rw [h10, mul_zero, add_zero] at hsum
-    rwa [← hsum]
-  have : ((M 0 0 * M 1 1 - M 0 1 * M 1 0 : ℤ) : ZMod p) = 0 := by
+    exact_mod_cast hsum
+  have hzero : ((M 0 0 * M 1 1 - M 0 1 * M 1 0 : ℤ) : ZMod p) = 0 := by
     push_cast
     rw [h00, h10]
     ring
-  rw [hdet_p] at this
-  exact one_ne_zero this
+  rw [hdet_p] at hzero
+  exact one_ne_zero hzero
 
 private lemma false_of_topLeft_zero_and_nonzero {p : ℕ} [Fact p.Prime] [NeZero p]
     (M : Matrix (Fin 2) (Fin 2) ℤ) (hdet : M 0 0 * M 1 1 - M 0 1 * M 1 0 = 1)
@@ -1008,15 +1006,9 @@ theorem heckeT_p_comm_diamondOp [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.Prime p
     (heckeT_p k p hp hpN).comp (diamondOp k d) := by
   obtain ⟨g, hg⟩ := Gamma0MapUnits_surjective (N := N) d
   ext f z
-  show (diamondOp k d (heckeT_p k p hp hpN f)) z =
+  change (diamondOp k d (heckeT_p k p hp hpN f)) z =
     (heckeT_p k p hp hpN (diamondOp k d f)) z
   rw [diamondOp_eq_diamondOpAux k d g hg]
-  show (diamondOpAux k g (heckeT_p k p hp hpN f)) z =
-    (heckeT_p k p hp hpN (diamondOpAux k g f)) z
-  change ((⇑(heckeT_p k p hp hpN f)) ∣[k] mapGL ℝ (g : SL(2, ℤ))) z =
-    (heckeT_p k p hp hpN (diamondOpAux k g f)) z
-  show (heckeT_p_fun k p hp hpN f ∣[k] mapGL ℝ (g : SL(2, ℤ))) z =
-    heckeT_p_fun k p hp hpN (diamondOpAux k g f) z
   exact congr_fun (orbit_sum_comm k p hp hpN f g) z
 
 /-- `T_p` preserves the modular form character space `M_k(Γ₁(N), χ)`. -/
@@ -1028,10 +1020,8 @@ theorem heckeT_p_preserves_modFormCharSpace [NeZero N] (k : ℤ) (p : ℕ)
   rw [mem_modFormCharSpace_iff] at hf ⊢
   intro d
   have h1 : diamondOpHom k d (heckeT_p k p hp hpN f) =
-      heckeT_p k p hp hpN (diamondOpHom k d f) := by
-    show (diamondOp k d).comp (heckeT_p k p hp hpN) f =
-      (heckeT_p k p hp hpN).comp (diamondOp k d) f
-    rw [heckeT_p_comm_diamondOp k p hp hpN d]
+      heckeT_p k p hp hpN (diamondOpHom k d f) :=
+    congr_fun (congr_arg DFunLike.coe (heckeT_p_comm_diamondOp k p hp hpN d)) f
   rw [h1, hf d, map_smul]
 
 /-- `T_p` preserves the cusp form character space `S_k(Γ₁(N), χ)`.
