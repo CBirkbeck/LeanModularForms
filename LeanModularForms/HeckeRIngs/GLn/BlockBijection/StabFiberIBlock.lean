@@ -710,10 +710,9 @@ private lemma fiber_int_mat_eq_via_i_block_rearr_adj_explicit {k : ℕ}
   obtain ⟨ν, h_rearr⟩ :=
     fiber_int_mat_eq_via_i_block_rearr_explicit a b c ha hb hc i M_i σ_i
       h_block_i N_i h_int_conj j hfib
-  refine ⟨ν, h_rearr, ?_⟩
-  have h_card : Fintype.card (Fin (k + 2)) ≠ 1 := by simp [Fintype.card_fin]
-  exact adjugate_rearr_cancel h_card _ (N_i⁻¹ * toSL j.out).val _ _
-    (slSuccEmbed σ_i).val ν.val ν.2 (slSuccEmbed σ_i).2 h_rearr
+  refine ⟨ν, h_rearr, adjugate_rearr_cancel ?_ _ (N_i⁻¹ * toSL j.out).val _ _
+    (slSuccEmbed σ_i).val ν.val ν.2 (slSuccEmbed σ_i).2 h_rearr⟩
+  simp [Fintype.card_fin]
 
 private lemma fiber_int_mat_eq_via_i_block_rearr_adj {k : ℕ}
     (a b c : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 < b i)
@@ -785,10 +784,10 @@ private lemma prod_cons_one_erase_succ_mul {k : ℕ} (d : Fin (k + 1) → ℕ)
       ∏ x : Fin (k + 2), (((Fin.cons 1 d : Fin (k + 2) → ℕ) x : ℕ) : ℤ) =
       ∏ q : Fin (k + 1), (d q : ℤ) := by
     rw [Fin.prod_univ_succ, show
-        (((Fin.cons 1 d : Fin (k + 2) → ℕ) (0 : Fin (k + 2)) : ℕ) : ℤ) = 1 from by
+        (((Fin.cons 1 d : Fin (k + 2) → ℕ) (0 : Fin (k + 2)) : ℕ) : ℤ) = 1 by
         simp [Fin.cons_zero], one_mul]
     exact Finset.prod_congr rfl fun i _ ↦ by simp [Fin.cons_succ]
-  rw [show (((Fin.cons 1 d : Fin (k + 2) → ℕ) r.succ : ℕ) : ℤ) = (d r : ℤ) from by
+  rw [show (((Fin.cons 1 d : Fin (k + 2) → ℕ) r.succ : ℕ) : ℤ) = (d r : ℤ) by
       simp [Fin.cons_succ], h_full] at h
   linarith [h]
 
@@ -808,7 +807,7 @@ private lemma mul_adjugate_diagMat_cons_block_col0 {k : ℕ} (c : Fin (k + 1) �
     refine Fin.cases ?_ ?_ p
     · rw [slSuccEmbed_val_zero_zero, mul_one, if_pos rfl,
         Finset.prod_erase (Finset.univ : Finset (Fin (k + 2)))
-          (show (((Fin.cons 1 c : Fin (k + 2) → ℕ) (0 : Fin (k + 2)) : ℕ) : ℤ) = 1 from by
+          (show (((Fin.cons 1 c : Fin (k + 2) → ℕ) (0 : Fin (k + 2)) : ℕ) : ℤ) = 1 by
             simp [Fin.cons_zero]), Fin.prod_univ_succ]
       simp [Fin.cons_zero, Fin.cons_succ]
     · intro p'; rw [slSuccEmbed_val_succ_zero, mul_zero, if_neg (Fin.succ_ne_zero p')]
@@ -848,12 +847,11 @@ private lemma adj_rearr_col0_entry {k : ℕ} (a b c : Fin (k + 1) → ℕ)
       Matrix.mul_one, Matrix.mul_smul] at h ⊢
     exact h
   have h_entry := congrFun (congrFun h_postmul r.succ) 0
-  rw [Matrix.smul_apply, smul_eq_mul, Matrix.adjugate_diagonal, Matrix.diagonal_mul,
+  rwa [Matrix.smul_apply, smul_eq_mul, Matrix.adjugate_diagonal, Matrix.diagonal_mul,
     hD_a_def, Matrix.mul_diagonal, show
-      (((Fin.cons 1 a : Fin (k + 2) → ℕ) (0 : Fin (k + 2)) : ℕ) : ℤ) = 1 from by
+      (((Fin.cons 1 a : Fin (k + 2) → ℕ) (0 : Fin (k + 2)) : ℕ) : ℤ) = 1 by
       simp [Fin.cons_zero], mul_one,
     mul_adjugate_diagMat_cons_block_col0 c σ (Matrix.adjugate νm.val) r] at h_entry
-  exact h_entry
 
 /-- j-side col-divisibility on `X := N_i⁻¹ · toSL j.out` from explicit i-side block witnesses:
 packages the rearranged and adjugate-rearranged equations together with the col-divisibility
@@ -911,11 +909,10 @@ lemma hfib_col_div_b_via_i_block_explicit {k : ℕ}
       (∏ q : Fin (k + 1), (a q : ℤ)) * (∏ q : Fin (k + 1), (b q : ℤ)) =
       ∏ q : Fin (k + 1), (c q : ℤ) := by
     have h := congr_arg Matrix.det h_rearr
-    simp only [Matrix.det_mul, Matrix.det_adjugate, (slSuccEmbed σ_i).2,
+    simpa only [Matrix.det_mul, Matrix.det_adjugate, (slSuccEmbed σ_i).2,
       (N_i⁻¹ * toSL j.out).2, ν.2, det_diagMat_cons_one_prod a,
       det_diagMat_cons_one_prod b, det_diagMat_cons_one_prod c,
-      one_pow, mul_one, one_mul] at h
-    exact h
+      one_pow, mul_one, one_mul] using h
   have h_mul_b_r := congr_arg (· * (b r : ℤ))
     (adj_rearr_col0_entry a b c (N_i⁻¹ * toSL j.out) σ_i ν r h_adj)
   simp only at h_mul_b_r
@@ -938,7 +935,7 @@ lemma hfib_col_div_b_via_i_block_explicit {k : ℕ}
   rw [h_LHS_b, show Matrix.adjugate ν.val r.succ 0 *
         (∏ q : Fin (k + 1), (c q : ℤ)) * (b r : ℤ) =
       (∏ q : Fin (k + 1), (c q : ℤ)) *
-        ((b r : ℤ) * Matrix.adjugate ν.val r.succ 0) from by ring] at h_mul_b_r
+        ((b r : ℤ) * Matrix.adjugate ν.val r.succ 0) by ring] at h_mul_b_r
   refine ⟨Matrix.adjugate ν.val r.succ 0, ?_⟩
   rw [Matrix.SpecialLinearGroup.coe_inv]
   exact mul_left_cancel₀ (Finset.prod_pos fun q _ ↦ by exact_mod_cast hc q).ne' h_mul_b_r
@@ -1033,9 +1030,7 @@ lemma exists_stab_with_block_form_of_X_fiber {k : ℕ}
     hfib_col_div_b_via_i_block a b c ha hb hc hda i j hfib
   set X : SpecialLinearGroup (Fin (k + 2)) ℤ := N_i⁻¹ * toSL j.out
   obtain ⟨M_0_X, hM_0_X_col, hM_0_X_stab⟩ :=
-    sl_exists_col_stab_divChain b hb hdb
-      (fun r ↦ (X⁻¹ : SpecialLinearGroup _ ℤ).val r 0)
-      (fun d hd ↦ sl_first_col_primitive X⁻¹ d hd) h_div
+    sl_exists_col_stab_divChain b hb hdb _ (sl_first_col_primitive X⁻¹) h_div
   obtain ⟨M_X, τ_X, h_block_X, h_stab_X⟩ :=
     exists_block_form_of_col0_e0 b hb X M_0_X
       (mul_first_col_eq_e0_of_col_eq_inv X M_0_X hM_0_X_col) hM_0_X_stab
