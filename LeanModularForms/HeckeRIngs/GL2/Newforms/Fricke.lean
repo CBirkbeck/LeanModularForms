@@ -914,9 +914,8 @@ lemma Newform.peterssonAdj_frickeMatrix_coe (N : ℕ) [NeZero N] :
   fin_cases i <;> fin_cases j <;> simp
 
 private lemma peterssonAdj_frickeMatrix_det_val (N : ℕ) [NeZero N] :
-    (peterssonAdj (Newform.frickeMatrix N)).det.val = (N : ℝ) := by
-  rw [congr_arg Units.val (peterssonAdj_det _)]
-  exact Newform.frickeMatrix_det N
+    (peterssonAdj (Newform.frickeMatrix N)).det.val = (N : ℝ) :=
+  (congr_arg Units.val (peterssonAdj_det _)).trans (Newform.frickeMatrix_det N)
 
 private lemma peterssonAdj_frickeMatrix_det_pos (N : ℕ) [NeZero N] :
     0 < (peterssonAdj (Newform.frickeMatrix N)).det.val := by
@@ -1234,18 +1233,18 @@ private lemma GLPos_to_SLR_frickeMatrix_GLPos_sq_eq_neg_scalar (N : ℕ) [NeZero
         Matrix (Fin 2) (Fin 2) ℝ) =
       (((GLPos_to_SLR (Newform.frickeMatrix_GLPos N) : SL(2, ℝ)) :
           GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) from
-      (Matrix.SpecialLinearGroup.coe_GL_coe_matrix _).symm]
-  rw [Newform.GLPos_to_SLR_frickeMatrix_GLPos_toGL_matrix]
-  rw [Matrix.smul_mul, Matrix.mul_smul, smul_smul]
-  rw [show ((Real.sqrt ((N : ℝ)))⁻¹ * (Real.sqrt (N : ℝ))⁻¹ : ℝ) = ((N : ℝ))⁻¹ by
-    rw [← mul_inv, Real.mul_self_sqrt (Nat.cast_nonneg N)]]
-  rw [show ((Newform.frickeMatrix N : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) *
+      (Matrix.SpecialLinearGroup.coe_GL_coe_matrix _).symm,
+    Newform.GLPos_to_SLR_frickeMatrix_GLPos_toGL_matrix,
+    Matrix.smul_mul, Matrix.mul_smul, smul_smul,
+    show ((Real.sqrt ((N : ℝ)))⁻¹ * (Real.sqrt (N : ℝ))⁻¹ : ℝ) = ((N : ℝ))⁻¹ by
+      rw [← mul_inv, Real.mul_self_sqrt (Nat.cast_nonneg N)],
+    show ((Newform.frickeMatrix N : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) *
         ((Newform.frickeMatrix N : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
         ((Newform.frickeMatrix N * Newform.frickeMatrix N : GL (Fin 2) ℝ) :
-          Matrix (Fin 2) (Fin 2) ℝ) from (Matrix.GeneralLinearGroup.coe_mul _ _).symm]
-  rw [Newform.frickeMatrix_mul_self_val, smul_smul]
-  rw [show ((N : ℝ))⁻¹ * (-(N : ℝ)) = -1 by
-    field_simp [Nat.cast_ne_zero.mpr (NeZero.ne N)]]
+          Matrix (Fin 2) (Fin 2) ℝ) from (Matrix.GeneralLinearGroup.coe_mul _ _).symm,
+    Newform.frickeMatrix_mul_self_val, smul_smul,
+    show ((N : ℝ))⁻¹ * (-(N : ℝ)) = -1 by
+      field_simp [Nat.cast_ne_zero.mpr (NeZero.ne N)]]
   ext i j
   fin_cases i <;> fin_cases j <;>
     simp [Matrix.smul_apply, Matrix.scalar]
@@ -1274,9 +1273,8 @@ lemma Newform.frickeMatrix_PSL_R_mul_self (N : ℕ) [NeZero N] :
 
 /-- Inverse of `frickeMatrix_PSL_R N` is itself. -/
 lemma Newform.frickeMatrix_PSL_R_inv (N : ℕ) [NeZero N] :
-    (Newform.frickeMatrix_PSL_R N)⁻¹ = Newform.frickeMatrix_PSL_R N := by
-  rw [eq_comm, ← mul_eq_one_iff_eq_inv]
-  exact Newform.frickeMatrix_PSL_R_mul_self N
+    (Newform.frickeMatrix_PSL_R N)⁻¹ = Newform.frickeMatrix_PSL_R N :=
+  (mul_eq_one_iff_eq_inv.mp (Newform.frickeMatrix_PSL_R_mul_self N)).symm
 
 /-- Conjugating any `h ∈ imageGamma1_PSL_R N` by `frickeMatrix_PSL_R N` keeps the
 result in `imageGamma1_PSL_R N`. -/
@@ -1405,10 +1403,9 @@ theorem Newform.imAxis_eq_frickeSlash
   have hx_ne : (x : ℂ) ≠ 0 := by exact_mod_cast hx.ne'
   set τ_inner : UpperHalfPlane :=
     ⟨Complex.I * ((x / (N : ℝ) : ℝ) : ℂ), im_I_mul_ofReal_pos (div_pos hx
-      (Nat.cast_pos.mpr (Nat.pos_of_ne_zero (NeZero.ne N))))⟩ with hτ_inner
+      (Nat.cast_pos.mpr (Nat.pos_of_ne_zero (NeZero.ne N))))⟩
   set τ_outer : UpperHalfPlane :=
     ⟨Complex.I * ((1 / x : ℝ) : ℂ), im_I_mul_ofReal_pos (one_div_pos.mpr hx)⟩
-    with hτ_outer
   have h_smul_eq : (Newform.frickeMatrix N • τ_inner : UpperHalfPlane) = τ_outer := by
     apply UpperHalfPlane.ext
     rw [show ((Newform.frickeMatrix N • τ_inner : UpperHalfPlane) : ℂ) =
@@ -1427,11 +1424,8 @@ theorem Newform.imAxis_eq_frickeSlash
     change (N : ℂ) * (Complex.I * ((x / (N : ℝ) : ℝ) : ℂ)) = Complex.I * (x : ℂ)
     push_cast
     field_simp
-  rw [h_τ_inner_coe]
-  set fv : ℂ := (⇑f.toCuspForm.toModularForm' : UpperHalfPlane → ℂ) τ_outer
-  have h_N_cast : ((N : ℝ) : ℂ) = (N : ℂ) := by push_cast; rfl
-  rw [h_N_cast, show Complex.I * ((x : ℝ) : ℂ) = ((x : ℝ) : ℂ) * Complex.I by ring,
-    mul_zpow]
+  rw [h_τ_inner_coe, show ((N : ℝ) : ℂ) = (N : ℂ) by push_cast; rfl,
+    show Complex.I * ((x : ℝ) : ℂ) = ((x : ℝ) : ℂ) * Complex.I by ring, mul_zpow]
   exact (frickeRootNumber_scalar_collapse hN_ne hx_ne Complex.I_ne_zero).symm
 
 /-- Imaginary-axis functional equation for a CuspForm `twist` whose underlying
