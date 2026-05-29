@@ -871,24 +871,16 @@ lemma Newform.frickeSlashCuspForm_apply_apply
     {N : ℕ} [NeZero N] {k : ℤ}
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     Newform.frickeSlashCuspForm (Newform.frickeSlashCuspForm f) =
-      Newform.frickeSquareScalar N k • f := by
-  apply DFunLike.coe_injective
-  show ((f : UpperHalfPlane → ℂ) ∣[k] Newform.frickeMatrix N) ∣[k]
-      Newform.frickeMatrix N =
-    Newform.frickeSquareScalar N k • (f : UpperHalfPlane → ℂ)
-  exact Newform.slash_frickeMatrix_frickeMatrix _
+      Newform.frickeSquareScalar N k • f :=
+  DFunLike.coe_injective <| Newform.slash_frickeMatrix_frickeMatrix _
 
 /-- Operator-level Fricke square (ModularForm version). -/
 lemma Newform.frickeSlashModularForm_apply_apply
     {N : ℕ} [NeZero N] {k : ℤ}
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
     Newform.frickeSlashModularForm (Newform.frickeSlashModularForm f) =
-      Newform.frickeSquareScalar N k • f := by
-  apply DFunLike.coe_injective
-  show ((f : UpperHalfPlane → ℂ) ∣[k] Newform.frickeMatrix N) ∣[k]
-      Newform.frickeMatrix N =
-    Newform.frickeSquareScalar N k • (f : UpperHalfPlane → ℂ)
-  exact Newform.slash_frickeMatrix_frickeMatrix _
+      Newform.frickeSquareScalar N k • f :=
+  DFunLike.coe_injective <| Newform.slash_frickeMatrix_frickeMatrix _
 
 /-- `LinearMap`-level Fricke square (CuspForm version). -/
 lemma Newform.frickeSlashCuspForm_comp_self {N : ℕ} [NeZero N] {k : ℤ} :
