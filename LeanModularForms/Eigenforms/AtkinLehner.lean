@@ -45,32 +45,23 @@ def IsSupportedOnDvd (d : ℕ) (P : PowerSeries ℂ) : Prop :=
 
 namespace IsSupportedOnDvd
 
-@[simp] lemma zero (d : ℕ) : IsSupportedOnDvd d (0 : PowerSeries ℂ) := by
-  intro n _
-  simp
+@[simp] lemma zero (d : ℕ) : IsSupportedOnDvd d (0 : PowerSeries ℂ) := fun _ _ ↦ by simp
 
 lemma add {d : ℕ} {P Q : PowerSeries ℂ}
     (hP : IsSupportedOnDvd d P) (hQ : IsSupportedOnDvd d Q) :
-    IsSupportedOnDvd d (P + Q) := by
-  intro n hn
+    IsSupportedOnDvd d (P + Q) := fun n hn ↦ by
   rw [map_add, hP n hn, hQ n hn, zero_add]
 
 lemma smul {d : ℕ} (c : ℂ) {P : PowerSeries ℂ} (hP : IsSupportedOnDvd d P) :
-    IsSupportedOnDvd d (c • P) := by
-  intro n hn
-  rw [show (PowerSeries.coeff n) (c • P) = c * (PowerSeries.coeff n) P by
-    simp [smul_eq_mul], hP n hn, mul_zero]
+    IsSupportedOnDvd d (c • P) := fun n hn ↦ by simp [smul_eq_mul, hP n hn]
 
 lemma neg {d : ℕ} {P : PowerSeries ℂ} (hP : IsSupportedOnDvd d P) :
-    IsSupportedOnDvd d (-P) := by
-  intro n hn
-  rw [map_neg, hP n hn, neg_zero]
+    IsSupportedOnDvd d (-P) := fun n hn ↦ by rw [map_neg, hP n hn, neg_zero]
 
 lemma sub {d : ℕ} {P Q : PowerSeries ℂ}
     (hP : IsSupportedOnDvd d P) (hQ : IsSupportedOnDvd d Q) :
     IsSupportedOnDvd d (P - Q) := by
-  rw [sub_eq_add_neg]
-  exact hP.add hQ.neg
+  rw [sub_eq_add_neg]; exact hP.add hQ.neg
 
 /-- The constant power series `1 : PowerSeries ℂ` is supported on multiples of any `d`. -/
 lemma one (d : ℕ) : IsSupportedOnDvd d (1 : PowerSeries ℂ) := by
@@ -173,8 +164,7 @@ private lemma cuspForm_coe_eq_of_cast {M N : ℕ} {k : ℤ} (h : M = N)
     (x : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) :
     (⇑(h ▸ x : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : UpperHalfPlane → ℂ) =
       ⇑x := by
-  cases h
-  rfl
+  cases h; rfl
 
 private lemma isOldformGenerator_of_funeq
     {N d : ℕ} [NeZero d] (hd : 1 < d) (hdN : d ∣ N) [NeZero N] [NeZero (N / d)]
@@ -215,10 +205,8 @@ theorem qSupportedOnDvd_mem_cuspFormsOld_of_char
   · have h_f_zero : f = 0 := by
       apply DFunLike.coe_injective
       show (⇑f : UpperHalfPlane → ℂ) = 0
-      rw [h_eq, h_zero]
-      simp [levelRaiseFun]
-    rw [h_f_zero]
-    exact Submodule.zero_mem _
+      rw [h_eq, h_zero]; simp [levelRaiseFun]
+    exact h_f_zero ▸ Submodule.zero_mem _
 
 /-- Reverse Atkin-Lehner explicit preimage (character-space): for a cusp form
 `f ∈ cuspFormCharSpace k χ.toUnitHom` at level `Γ₁(N)` whose period-1 `q`-expansion is
@@ -247,8 +235,7 @@ theorem qSupportedOnDvd_eq_zero_or_exists_levelRaise_preimage_of_char
   · left
     apply DFunLike.coe_injective
     show (⇑f : UpperHalfPlane → ℂ) = 0
-    rw [h_eq, h_zero]
-    simp [levelRaiseFun]
+    rw [h_eq, h_zero]; simp [levelRaiseFun]
 
 /-- Reverse Atkin-Lehner character-space iff: for a cusp form
 `f ∈ cuspFormCharSpace k χ.toUnitHom` at level `Γ₁(N)` and a proper divisor `d ∣ N`
@@ -349,16 +336,11 @@ theorem mem_qSupportedOnDvdSubmodule_inf_cuspFormCharSpace_iff_exists_cuspForm_l
       ∃ (g : CuspForm ((Gamma1 (N / d)).map (mapGL ℝ)) k),
         f = (Nat.mul_div_cancel' hdN) ▸ levelRaise (N / d) d k g := by
   rw [Submodule.mem_inf]
-  constructor
-  · rintro ⟨hsup, _⟩
-    exact
-      (qSupportedOnDvdSubmodule_mem_iff_exists_cuspForm_levelRaise_preimage_of_char
-        hd hdN χ f hfχ).mp hsup
-  · intro h
-    refine ⟨?_, hfχ⟩
-    exact
-      (qSupportedOnDvdSubmodule_mem_iff_exists_cuspForm_levelRaise_preimage_of_char
-        hd hdN χ f hfχ).mpr h
+  refine ⟨fun ⟨hsup, _⟩ ↦
+    (qSupportedOnDvdSubmodule_mem_iff_exists_cuspForm_levelRaise_preimage_of_char
+      hd hdN χ f hfχ).mp hsup, fun h ↦ ⟨?_, hfχ⟩⟩
+  exact (qSupportedOnDvdSubmodule_mem_iff_exists_cuspForm_levelRaise_preimage_of_char
+    hd hdN χ f hfχ).mpr h
 
 /-- For `h : M = N` a type-level equality of levels, the identity cast `(h ▸ ·)` is a
 `ℂ`-linear equivalence between the two CuspForm spaces. -/
