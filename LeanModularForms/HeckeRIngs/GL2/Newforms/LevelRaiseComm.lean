@@ -3,24 +3,24 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: LeanModularForms contributors
 -/
-import LeanModularForms.HeckeRIngs.GL2.AdjointTheoryPetersson
-import LeanModularForms.HeckeRIngs.GL2.CharacterDecomp
-import LeanModularForms.HeckeRIngs.GL2.LevelEmbed
-import LeanModularForms.HeckeRIngs.GL2.LevelRaise
-import LeanModularForms.HeckeRIngs.GL2.Unified.NebentypusHeckeRingHom
-import LeanModularForms.Modularforms.LFunction
-import LeanModularForms.Modularforms.PeterssonLevelN
-import LeanModularForms.Modularforms.DimensionFormulas
-import LeanModularForms.Modularforms.SlashActionAuxil
-import LeanModularForms.Eigenforms.ConductorTheorem
+import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
 import Mathlib.LinearAlgebra.BilinearForm.Orthogonal
 import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
 import Mathlib.NumberTheory.EulerProduct.Basic
 import Mathlib.NumberTheory.EulerProduct.DirichletLSeries
 import Mathlib.NumberTheory.LSeries.AbstractFuncEq
 import Mathlib.NumberTheory.LSeries.DirichletContinuation
-import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
+import LeanModularForms.Eigenforms.ConductorTheorem
+import LeanModularForms.HeckeRIngs.GL2.AdjointTheoryPetersson
+import LeanModularForms.HeckeRIngs.GL2.CharacterDecomp
+import LeanModularForms.HeckeRIngs.GL2.LevelEmbed
+import LeanModularForms.HeckeRIngs.GL2.LevelRaise
 import LeanModularForms.HeckeRIngs.GL2.Newforms.Basic
+import LeanModularForms.HeckeRIngs.GL2.Unified.NebentypusHeckeRingHom
+import LeanModularForms.Modularforms.DimensionFormulas
+import LeanModularForms.Modularforms.LFunction
+import LeanModularForms.Modularforms.PeterssonLevelN
+import LeanModularForms.Modularforms.SlashActionAuxil
 
 /-!
 # Newforms: level-raise / `T_p` commutation machinery
@@ -124,13 +124,11 @@ private lemma sum_reindex_mul_mod {α : Type*} [AddCommMonoid α] (d p : ℕ)
     (fun b _ ↦ Finset.mem_range.mpr (Nat.mod_lt _ hp.pos))
     h_inj ?_ (fun b _ ↦ rfl)
   intro b hb
-  have h_img : Finset.image (fun b ↦ d * b % p) (Finset.range p) = Finset.range p := by
-    apply Finset.eq_of_subset_of_card_le
-    · exact Finset.image_subset_iff.mpr (fun b _ ↦ Finset.mem_range.mpr (Nat.mod_lt _ hp.pos))
-    · rw [Finset.card_image_of_injOn h_inj]
-  have : b ∈ Finset.image (fun b ↦ d * b % p) (Finset.range p) := by
-    rw [h_img]; exact hb
-  exact Finset.mem_image.mp this
+  have h_img : Finset.image (fun b ↦ d * b % p) (Finset.range p) = Finset.range p :=
+    Finset.eq_of_subset_of_card_le
+      (Finset.image_subset_iff.mpr fun b _ ↦ Finset.mem_range.mpr (Nat.mod_lt _ hp.pos))
+      (by rw [Finset.card_image_of_injOn h_inj])
+  exact Finset.mem_image.mp (by rw [h_img]; exact hb)
 
 private lemma smul_slash_levelRaise (k : ℤ) (d : ℕ) [NeZero d] (c : ℂ)
     (f : UpperHalfPlane → ℂ) :
@@ -155,8 +153,8 @@ where `a' = unitsMap a` is the cast of `a` from `(ZMod N)ˣ` to `(ZMod M)ˣ`. -/
 lemma diamondOp_levelRaise_eq (a : (ZMod N)ˣ)
     (M : ℕ) (d : ℕ) [NeZero M] [NeZero d] (heq : d * M = N)
     (g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) :
-    diamondOp_cusp k a (heq ▸ levelRaise M d k g) =
-      heq ▸ levelRaise M d k (diamondOpCusp k (ZMod.unitsMap (heq ▸ Nat.dvd_mul_left M d) a) g) := by
+    diamondOp_cusp k a (heq ▸ levelRaise M d k g) = heq ▸ levelRaise M d k
+      (diamondOpCusp k (ZMod.unitsMap (heq ▸ Nat.dvd_mul_left M d) a) g) := by
   subst heq
   obtain ⟨g₀, hg₀⟩ := Gamma0MapUnits_surjective (N := d * M) a
   set g₀'_sl : SL(2, ℤ) := levelRaiseConjOfDvd d (g₀ : SL(2, ℤ))
@@ -357,13 +355,10 @@ lemma Gamma1_le_Gamma1_of_dvd {M N : ℕ} (hMN : M ∣ N) :
   intro A hA
   rw [Gamma1_mem] at hA ⊢
   obtain ⟨h00, h11, h10⟩ := hA
-  have h_cast : ∀ (k : ℤ), ((k : ℤ) : ZMod M) =
-      (ZMod.castHom hMN (ZMod M)) ((k : ℤ) : ZMod N) := fun k ↦ by
-    rw [ZMod.castHom_apply]; exact (ZMod.cast_intCast hMN _).symm
-  refine ⟨?_, ?_, ?_⟩
-  · rw [h_cast, h00, map_one]
-  · rw [h_cast, h11, map_one]
-  · rw [h_cast, h10, map_zero]
+  have h_cast : ∀ k : ℤ, ((k : ℤ) : ZMod M) = (ZMod.castHom hMN (ZMod M)) ((k : ℤ) : ZMod N) :=
+    fun k ↦ by rw [ZMod.castHom_apply]; exact (ZMod.cast_intCast hMN _).symm
+  exact ⟨by rw [h_cast, h00, map_one], by rw [h_cast, h11, map_one],
+    by rw [h_cast, h10, map_zero]⟩
 
 /-- GL-image version of `Gamma1_le_Gamma1_of_dvd`:
 `(Γ₁(N)).map (mapGL ℝ) ≤ (Γ₁(M)).map (mapGL ℝ)` for `M ∣ N`. -/
@@ -384,8 +379,7 @@ def levelInclude_cusp {M N : ℕ} [NeZero M] [NeZero N] (hMN : M ∣ N) (k : ℤ
 
 /-- **Coercion-level identity for `levelInclude_cusp`.** -/
 @[simp]
-lemma levelInclude_cusp_coe {M N : ℕ} [NeZero M] [NeZero N]
-    (hMN : M ∣ N) (k : ℤ)
+lemma levelInclude_cusp_coe {M N : ℕ} [NeZero M] [NeZero N] (hMN : M ∣ N) (k : ℤ)
     (f : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) :
     (⇑(levelInclude_cusp hMN k f) : UpperHalfPlane → ℂ) = ⇑f := rfl
 
@@ -417,9 +411,8 @@ inclusion generator). -/
 lemma levelInclude_cusp_mem_cuspFormsOldExtended
     {M : ℕ} [NeZero M] (hMN : M ∣ N) (hMltN : M < N)
     (g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) :
-    levelInclude_cusp hMN k g ∈ cuspFormsOldExtended N k := by
-  refine Submodule.subset_span (Or.inr ?_)
-  exact ⟨M, inferInstance, hMN, hMltN, g, rfl⟩
+    levelInclude_cusp hMN k g ∈ cuspFormsOldExtended N k :=
+  Submodule.subset_span (Or.inr ⟨M, inferInstance, hMN, hMltN, g, rfl⟩)
 
 /-- The **extended new subspace**: cusp forms `petN`-orthogonal to every form in
 the extended oldspace `cuspFormsOldExtended N k`. It is a submodule of the
@@ -470,10 +463,6 @@ def Newform.HasHeckeT_p_divN_LR_d_collapse_identity
     (heckeT_n_cusp k p (heq ▸ levelRaise M d k g) :
         CuspForm ((Gamma1 N).map (mapGL ℝ)) k).toFun z =
       levelRaiseFun (d / p) k ⇑g z
-
-private lemma mul_mod_eq_zero_of_dvd {p d b : ℕ} (_hp : 0 < p) (hpd : p ∣ d) :
-    d * b % p = 0 :=
-  Nat.mod_eq_zero_of_dvd (hpd.mul_right b)
 
 private lemma glMap_T_p_upper_zero_val (p : ℕ) (hp : 0 < p) :
     ((glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) :
@@ -556,9 +545,8 @@ private lemma T_p_upper_zero_mul_levelRaise_smul_coe
   have hp_cast_ne : ((p : ℕ) : ℂ) ≠ 0 :=
     Nat.cast_ne_zero.mpr (Nat.pos_iff_ne_zero.mp hp)
   have h_d_eq : ((d : ℕ) : ℂ) = ((p : ℕ) : ℂ) * ((d / p : ℕ) : ℂ) := by
-    rw [show ((p : ℕ) : ℂ) * ((d / p : ℕ) : ℂ) = (((p * (d / p) : ℕ) : ℂ)) from by
-      push_cast; ring,
-      Nat.mul_div_cancel' hpd]
+    rw [show ((p : ℕ) : ℂ) * ((d / p : ℕ) : ℂ) = (((p * (d / p) : ℕ) : ℂ)) by
+      push_cast; ring, Nat.mul_div_cancel' hpd]
   rw [h_d_eq]
   field_simp
 
@@ -651,14 +639,14 @@ private lemma T_p_divN_collapse_final_scalar
     rw [show (d : ℂ) = ((p * (d / p) : ℕ) : ℂ) by rw [Nat.mul_div_cancel' hpd]]
     push_cast; ring
   have hp_exp : (p : ℂ) * (p : ℂ) ^ (1 - k) * (p : ℂ) ^ (k - 2) = 1 := by
-    rw [mul_assoc, ← zpow_add₀ hpC, show ((1 - k) + (k - 2) : ℤ) = -1 from by ring,
+    rw [mul_assoc, ← zpow_add₀ hpC, show ((1 - k) + (k - 2) : ℤ) = -1 by ring,
       zpow_neg_one]
     exact mul_inv_cancel₀ hpC
   rw [hdC, mul_zpow,
     show (p : ℂ) * (((p : ℂ) ^ (1 - k) * ((d / p : ℕ) : ℂ) ^ (1 - k)) *
         ((p : ℂ) ^ (k - 2) * h)) =
       ((p : ℂ) * (p : ℂ) ^ (1 - k) * (p : ℂ) ^ (k - 2)) *
-        (((d / p : ℕ) : ℂ) ^ (1 - k) * h) from by ring,
+        (((d / p : ℕ) : ℂ) ^ (1 - k) * h) by ring,
     hp_exp, one_mul]
 
 private theorem Newform.HasHeckeT_p_divN_LR_d_collapse_identity_proof
@@ -679,7 +667,7 @@ private theorem Newform.HasHeckeT_p_divN_LR_d_collapse_identity_proof
   show heckeT_p_ut k p hp.pos (⇑((levelRaise M d k) g).toModularForm') z = _
   rw [heckeT_p_ut_levelRaise p hp M d g]
   simp only [Finset.sum_apply]
-  simp_rw [mul_mod_eq_zero_of_dvd hp.pos hpd]
+  simp_rw [Nat.mod_eq_zero_of_dvd (hpd.mul_right _)]
   simp_rw [show (⇑g.toModularForm' ∣[k] (T_p_upper p hp.pos 0 : GL (Fin 2) ℚ))
       ∣[k] levelRaiseMatrix d =
     ⇑g.toModularForm' ∣[k]
@@ -938,8 +926,7 @@ private lemma diamondOp_levelRaise_mem (a : (ZMod N)ˣ)
   exact Submodule.subset_span ⟨M, d, _, _, hd, rfl, _, rfl⟩
 
 /-- The oldform subspace is stable under all Hecke operators `T_n` for `(n, N) = 1`. -/
-theorem heckeT_n_preserves_cuspFormsOld
-    (n : ℕ) [NeZero n] (hn : Nat.Coprime n N)
+theorem heckeT_n_preserves_cuspFormsOld (n : ℕ) [NeZero n] (hn : Nat.Coprime n N)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (hf : f ∈ cuspFormsOld N k) :
     heckeT_n_cusp k n f ∈ cuspFormsOld N k := by
   refine Submodule.span_induction
@@ -960,8 +947,7 @@ theorem heckeT_n_preserves_cuspFormsOld
     exact (cuspFormsOld N k).smul_mem c ih
 
 /-- Diamond operators preserve the oldform subspace. -/
-theorem diamondOp_preserves_cuspFormsOld
-    (d : (ZMod N)ˣ)
+theorem diamondOp_preserves_cuspFormsOld (d : (ZMod N)ˣ)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (hf : f ∈ cuspFormsOld N k) :
     diamondOp_cusp k d f ∈ cuspFormsOld N k := by
   refine Submodule.span_induction
@@ -982,8 +968,7 @@ theorem diamondOp_preserves_cuspFormsOld
     exact (cuspFormsOld N k).smul_mem c ih
 
 /-- The newform subspace is stable under all Hecke operators `T_n` for `(n, N) = 1`. -/
-theorem heckeT_n_preserves_cuspFormsNew
-    (n : ℕ) [NeZero n] (hn : Nat.Coprime n N)
+theorem heckeT_n_preserves_cuspFormsNew (n : ℕ) [NeZero n] (hn : Nat.Coprime n N)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (hf : f ∈ cuspFormsNew N k) :
     heckeT_n_cusp k n f ∈ cuspFormsNew N k := by
   intro g hg
@@ -992,8 +977,7 @@ theorem heckeT_n_preserves_cuspFormsNew
     (heckeT_n_preserves_cuspFormsOld n hn g hg))
 
 /-- Diamond operators preserve the newform subspace. -/
-theorem diamondOp_preserves_cuspFormsNew
-    (d : (ZMod N)ˣ)
+theorem diamondOp_preserves_cuspFormsNew (d : (ZMod N)ˣ)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (hf : f ∈ cuspFormsNew N k) :
     diamondOp_cusp k d f ∈ cuspFormsNew N k := by
   intro g hg
@@ -1005,6 +989,5 @@ theorem diamondOp_preserves_cuspFormsNew
     rfl
   rw [← hgg, diamondOp_petersson_unitary]
   exact hf _ (diamondOp_preserves_cuspFormsOld _ _ hg)
-
 
 end HeckeRing.GL2
