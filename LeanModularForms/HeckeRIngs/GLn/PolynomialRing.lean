@@ -56,23 +56,15 @@ lemma T_gen_diag_val (k : Fin n) (i : Fin n) :
     if (i : ℕ) < n - 1 - (k : ℕ) then 1 else p := rfl
 
 lemma T_gen_diag_pos (hp : p.Prime) (k : Fin n) : ∀ i, 0 < T_gen_diag n p k i := by
-  intro i; simp only [T_gen_diag]; split_ifs with h
-  · omega
-  · exact hp.pos
+  intro i
+  simp only [T_gen_diag]
+  split_ifs <;> [omega; exact hp.pos]
 
 /-- The T_gen diagonal satisfies the divisibility chain condition. -/
-lemma divChain_T_gen (k : Fin n) :
-    DivChain n (T_gen_diag n p k) := by
+lemma divChain_T_gen (k : Fin n) : DivChain n (T_gen_diag n p k) := by
   intro i hi
   simp only [T_gen_diag_val]
-  by_cases h1 : i < n - 1 - (k : ℕ)
-  · by_cases h2 : i + 1 < n - 1 - (k : ℕ)
-    · simp [h1, h2]
-    · simp [h1, h2]
-  · have h2 : ¬ (i + 1 < n - 1 - (k : ℕ)) := by omega
-    simp [h1, h2]
-
-variable [NeZero n]
+  split_ifs <;> first | rfl | omega
 
 /-- The T_gen diagonal has p-power entries (each entry is 1 = p^0 or p = p^1). -/
 lemma T_gen_diag_is_ppow (k : Fin n) :
@@ -87,11 +79,9 @@ lemma T_gen_exp_monotone (k : Fin n) :
     Monotone (fun i : Fin n ↦ if (i : ℕ) < n - 1 - (k : ℕ) then 0 else 1) := by
   intro i j hij
   simp only
-  split_ifs with h1 h2 h2
-  · exact le_rfl
-  · exact Nat.zero_le _
-  · omega
-  · exact le_rfl
+  split_ifs <;> omega
+
+variable [NeZero n]
 
 include hp
 /-- The k-th generator of R_p: `T(1,...,1,p,...,p)` with `k+1` entries of `p`. -/
@@ -212,16 +202,12 @@ lemma T_sum_ppow_in_range (p : ℕ) (hp : p.Prime) (k : ℕ) :
     rw [h1, T_sum_p_eq_T_gen_zero p hp]; exact X_zero_mem_range p
   | k + 2 =>
     have h_rec := T_sum_ppow_recurrence p hp (k + 1) (by omega)
-    rw [show k + 1 - 1 = k from by omega,
-        show k + 1 + 1 = k + 2 from by omega] at h_rec
-    rw [h_rec]
-    have h_p1 : T_sum ⟨p, hp.pos⟩ ∈ (evalHom 2 p).range := by
-      rw [T_sum_p_eq_T_gen_zero p hp]; exact X_zero_mem_range p
+    rw [show k + 1 - 1 = k from by omega, show k + 1 + 1 = k + 2 from by omega] at h_rec
+    rw [h_rec, T_sum_p_eq_T_gen_zero p hp]
     exact (evalHom 2 p).range.sub_mem
-      ((evalHom 2 p).range.mul_mem h_p1 (ih (k + 1) (by omega)))
+      ((evalHom 2 p).range.mul_mem (X_zero_mem_range p) (ih (k + 1) (by omega)))
       ((evalHom 2 p).range.zsmul_mem
-        ((evalHom 2 p).range.mul_mem (T_pp_mem_range p hp) (ih k (by omega)))
-        (p : ℤ))
+        ((evalHom 2 p).range.mul_mem (T_pp_mem_range p hp) (ih k (by omega))) (p : ℤ))
 
 /-- `T_ad(1, p^k)` lies in the range of the evaluation homomorphism. -/
 lemma T_ad_one_ppow_in_range (p : ℕ) (hp : p.Prime) (k : ℕ) :
@@ -541,8 +527,7 @@ lemma T_gen_pow_entries_qpower (q : {p : ℕ // p.Prime})
   obtain ⟨a', rfl, ha'_pos, ha'_div, ha'_det⟩ := T_gen_pow_support_qpower q e D hD
   have ha_eq := diagonal_representative_unique 2 a a' ha_pos ha'_pos ha_div ha'_div ha.symm
   subst ha_eq
-  intro p hp hpq i
-  intro h_dvd
+  intro p hp hpq i h_dvd
   have : p ∣ ∏ j, a j := dvd_trans h_dvd (Finset.dvd_prod_of_mem _ (Finset.mem_univ i))
   rw [ha'_det] at this
   exact hpq ((Nat.prime_dvd_prime_iff_eq hp q.2).mp (hp.dvd_of_dvd_pow this))
