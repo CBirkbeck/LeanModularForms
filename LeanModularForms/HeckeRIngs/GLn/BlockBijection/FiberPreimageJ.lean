@@ -19,9 +19,8 @@ namespace HeckeRing.GLn
 variable {m : ℕ} [NeZero m]
 
 private lemma decompQuot_slSuccEmbed_eq_of_inv_block_stab {k : ℕ}
-    (a : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i)
-    (σ_H : (GL_pair (k + 1)).H) (g : (GL_pair (k + 2)).H)
-    (M : SpecialLinearGroup (Fin (k + 2)) ℤ)
+    (a : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i) (σ_H : (GL_pair (k + 1)).H)
+    (g : (GL_pair (k + 2)).H) (M : SpecialLinearGroup (Fin (k + 2)) ℤ)
     (h_GL_val : (((slSuccEmbed_H σ_H)⁻¹ * g : (GL_pair (k + 2)).H) :
         GL (Fin (k + 2)) ℚ) = (mapGL ℚ M)⁻¹)
     (h_M_stab : (diagMat (k + 2) (Fin.cons 1 a))⁻¹ *
@@ -33,12 +32,10 @@ private lemma decompQuot_slSuccEmbed_eq_of_inv_block_stab {k : ℕ}
   apply Quotient.sound
   change QuotientGroup.leftRel _ (slSuccEmbed_H σ_H) g
   rw [QuotientGroup.leftRel_apply, mem_diagMat_cons_stabilizer_subgroupOf_iff a ha,
-    h_GL_val]
-  have h_inv_form : (diagMat (k + 2) (Fin.cons 1 a))⁻¹ *
+    h_GL_val, show (diagMat (k + 2) (Fin.cons 1 a))⁻¹ *
       (mapGL ℚ M : GL (Fin (k + 2)) ℚ)⁻¹ * diagMat (k + 2) (Fin.cons 1 a) =
       ((diagMat (k + 2) (Fin.cons 1 a))⁻¹ * (mapGL ℚ M : GL (Fin (k + 2)) ℚ) *
-        diagMat (k + 2) (Fin.cons 1 a))⁻¹ := by group
-  rw [h_inv_form]
+        diagMat (k + 2) (Fin.cons 1 a))⁻¹ from by group]
   exact inv_mem h_M_stab
 
 private lemma decompQuot_slSuccEmbed_diagMat_mk_eq_of_block {k : ℕ}
@@ -65,7 +62,8 @@ private lemma decompQuot_slSuccEmbed_diagMat_mk_eq_of_block {k : ℕ}
       SpecialLinearGroup.mapGL_injective (S := ℚ) (by rw [toSL_spec]),
       ← h_block, map_mul, toSL_spec]
   push_cast
-  rw [h_slSuccEmbed_GL]; group
+  rw [h_slSuccEmbed_GL]
+  group
 
 private lemma exists_j_m_X_block_class_eq_of_fiber {k : ℕ}
     (a b c : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 < b i)
@@ -96,10 +94,9 @@ private lemma exists_j_m_X_block_class_eq_of_fiber {k : ℕ}
   obtain ⟨M_i, N_i, M_X, τ_X, h_stab_i, h_int_conj, h_X_block, h_M_X_stab⟩ :=
     exists_stab_with_block_form_of_X_fiber a b c ha hb hc hda hdb i j hfib
   set τ_X_H : (GL_pair (k + 1)).H := ⟨mapGL ℚ τ_X, coe_mem_SLnZ (k + 1) τ_X⟩
-    with hτ_X_H_def
   set N_i_inv_H : (GL_pair (k + 2)).H :=
-    ⟨mapGL ℚ N_i⁻¹, coe_mem_SLnZ (k + 2) N_i⁻¹⟩ with hN_i_inv_H_def
-  set j_corrected : (GL_pair (k + 2)).H := N_i_inv_H * j.out with hj_corr_def
+    ⟨mapGL ℚ N_i⁻¹, coe_mem_SLnZ (k + 2) N_i⁻¹⟩
+  set j_corrected : (GL_pair (k + 2)).H := N_i_inv_H * j.out
   refine ⟨M_i, N_i, ⟦τ_X_H⟧, h_stab_i, h_int_conj, ?_⟩
   change (⟦slSuccEmbed_H τ_X_H⟧ :
     decompQuot (GL_pair (k + 2)) (diagMat_delta (k + 2) (Fin.cons 1 b))) =
@@ -126,11 +123,11 @@ private lemma eq_slSuccEmbed_of_first_row_col_e0 {k : ℕ}
     (h_row : ∀ l : Fin (k + 1), N.val 0 l.succ = 0) :
     ∃ τ : SpecialLinearGroup (Fin (k + 1)) ℤ, N = slSuccEmbed τ := by
   have hN_00 : N.val 0 0 = 1 := by
-    have h := h_col 0; rwa [Matrix.one_apply_eq] at h
+    simpa [Matrix.one_apply_eq] using h_col 0
   have hN_succ0 : ∀ I : Fin (k + 1), N.val I.succ 0 = 0 := fun I ↦ by
-    have h := h_col I.succ; rwa [Matrix.one_apply_ne (Fin.succ_ne_zero I)] at h
+    simpa [Matrix.one_apply_ne (Fin.succ_ne_zero I)] using h_col I.succ
   set τ_raw : Matrix (Fin (k + 1)) (Fin (k + 1)) ℤ :=
-    fun I J ↦ N.val I.succ J.succ with hτ_raw_def
+    fun I J ↦ N.val I.succ J.succ
   have h_det : τ_raw.det = 1 := by
     have h_det_N : N.val.det = 1 := N.2
     rw [Matrix.det_succ_row_zero, Fin.sum_univ_succ,
@@ -164,14 +161,10 @@ private lemma sl_block_form_clearing_first_col_of_col_div {k : ℕ}
       (diagMat (k + 2) (Fin.cons 1 b))⁻¹ *
         (mapGL ℚ M_X : GL (Fin (k + 2)) ℚ) *
         diagMat (k + 2) (Fin.cons 1 b) ∈ (GL_pair (k + 2)).H := by
-  have hw_primitive :
-      ∀ d : ℤ, (∀ r : Fin (k + 2), d ∣ (X⁻¹ : SpecialLinearGroup _ ℤ).val r 0) →
-        IsUnit d :=
-    fun d hd ↦ sl_first_col_primitive (X⁻¹) d hd
   obtain ⟨M_0_X, hM_0_X_col, hM_0_X_stab⟩ :=
     sl_exists_col_stab_divChain b hb hdb
       (fun r ↦ (X⁻¹ : SpecialLinearGroup _ ℤ).val r 0)
-      hw_primitive h_div
+      (sl_first_col_primitive X⁻¹) h_div
   have h_col_e0 : ∀ r : Fin (k + 2),
       (X * M_0_X).val r 0 =
         (1 : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ) r 0 := by
@@ -185,8 +178,7 @@ private lemma sl_block_form_clearing_first_col_of_col_div {k : ℕ}
   obtain ⟨T_clear, hT_col0, hT_S, _, _, hT_stab⟩ :=
     sl_first_row_clear_with_col0_e0 b hb (X * M_0_X) h_col_e0 Finset.univ
   set M_X : SpecialLinearGroup (Fin (k + 2)) ℤ := M_0_X * T_clear with hM_X_def
-  have hM_X_assoc : X * M_X = (X * M_0_X) * T_clear := by
-    rw [hM_X_def]; exact (mul_assoc _ _ _).symm
+  have hM_X_assoc : X * M_X = (X * M_0_X) * T_clear := (mul_assoc _ _ _).symm
   have hN_col0 : ∀ r : Fin (k + 2),
       (X * M_X).val r 0 = (1 : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ) r 0 := by
     intro r
@@ -561,17 +553,12 @@ lemma fiber_block_form_preimage_corrected_j_mulMap_explicit {k : ℕ}
       h_block_i h_stab_i N_i h_int_conj j hfib
   refine ⟨⟦σ_i_H⟧, ⟦τ_X_H⟧, h_class_i, h_class_j, ?_⟩
   haveI : NeZero (k + 1) := ⟨Nat.succ_ne_zero k⟩
-  have h_set := (fiber_diagMat_iff_mem_H a b c ha hb hc σ_i_H τ_X_H).mpr h_fiber
-  have h_dval_a : ((diagMat_delta (k + 1) a : (GL_pair (k + 1)).Δ) :
-      GL (Fin (k + 1)) ℚ) = diagMat (k + 1) a := diagMat_delta_val (k + 1) a ha
-  have h_dval_b : ((diagMat_delta (k + 1) b : (GL_pair (k + 1)).Δ) :
-      GL (Fin (k + 1)) ℚ) = diagMat (k + 1) b := diagMat_delta_val (k + 1) b hb
-  have h_dval_c : ((diagMat_delta (k + 1) c : (GL_pair (k + 1)).Δ) :
-      GL (Fin (k + 1)) ℚ) = diagMat (k + 1) c := diagMat_delta_val (k + 1) c hc
   exact mulMap_eq_of_setForm_specific_reps
     (diagMat_delta (k + 1) a) (diagMat_delta (k + 1) b)
     (diagMat_delta (k + 1) c) σ_i_H τ_X_H
-    (by simp only [h_dval_a, h_dval_b, h_dval_c]; exact h_set)
+    (by simp only [diagMat_delta_val (k + 1) a ha, diagMat_delta_val (k + 1) b hb,
+          diagMat_delta_val (k + 1) c hc]
+        exact (fiber_diagMat_iff_mem_H a b c ha hb hc σ_i_H τ_X_H).mpr h_fiber)
 
 /-- See `fiber_block_form_preimage_corrected_j_mulMap_explicit` for the active
 explicit-input mulMap descent; this is now a thin wrapper that extracts the
@@ -679,10 +666,9 @@ lemma jout_conj_N_i_stab_of_iMi_c_stab {k : ℕ}
       _ = ν_g⁻¹ * (D_c⁻¹ * (i_g * M_g * i_g⁻¹) * D_c) * ν_g := by group
   rw [h_goal_eq]
   have h_ν_in_H : ν_g ∈ (GL_pair (k + 2)).H := coe_mem_SLnZ (k + 2) ν
-  have h_ν_inv_in_H : ν_g⁻¹ ∈ (GL_pair (k + 2)).H :=
-    (GL_pair (k + 2)).H.inv_mem h_ν_in_H
   exact (GL_pair (k + 2)).H.mul_mem
-    ((GL_pair (k + 2)).H.mul_mem h_ν_inv_in_H h_iMi_c_stab) h_ν_in_H
+    ((GL_pair (k + 2)).H.mul_mem ((GL_pair (k + 2)).H.inv_mem h_ν_in_H) h_iMi_c_stab)
+    h_ν_in_H
 
 private lemma jout_conj_N_i_stab_for_X_fiber_of_iMi_c_stab {k : ℕ}
     (a b c : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 < b i)
@@ -734,8 +720,7 @@ private lemma fiber_block_form_preimage_canonical_j_witness_specific {k : ℕ}
           (j.out : GL (Fin (k + 2)) ℚ)) *
         diagMat (k + 2) (Fin.cons 1 b) ∈ (GL_pair (k + 2)).H) :
     decompQuot_slSuccEmbed_diagMat b hb j_m = j := by
-  let _ := a
-  let _ := ha
+  let _ := a; let _ := ha
   rw [h_j_m_corrected]
   conv_rhs => rw [show j = ⟦j.out⟧ from (Quotient.out_eq j).symm]
   apply Quotient.sound
@@ -854,8 +839,8 @@ private lemma fiber_class_preimages_from_joint_block_witnesses {k : ℕ}
     ∃ (i_m : decompQuot (GL_pair (k + 1)) (diagMat_delta (k + 1) a))
       (j_m : decompQuot (GL_pair (k + 1)) (diagMat_delta (k + 1) b)),
       decompQuot_slSuccEmbed_diagMat a ha i_m = i ∧
-      decompQuot_slSuccEmbed_diagMat b hb j_m = j := by
-  exact ⟨⟦⟨mapGL ℚ σ_m, coe_mem_SLnZ (k + 1) σ_m⟩⟧, ⟦⟨mapGL ℚ τ_m, coe_mem_SLnZ (k + 1) τ_m⟩⟧,
+      decompQuot_slSuccEmbed_diagMat b hb j_m = j :=
+  ⟨⟦⟨mapGL ℚ σ_m, coe_mem_SLnZ (k + 1) σ_m⟩⟧, ⟦⟨mapGL ℚ τ_m, coe_mem_SLnZ (k + 1) τ_m⟩⟧,
     decompQuot_slSuccEmbed_diagMat_mk_eq_of_block a ha i M_i σ_m h_block_i h_stab_i,
     decompQuot_slSuccEmbed_diagMat_mk_eq_of_block b hb j M_j τ_m h_block_j h_stab_j⟩
 
@@ -900,9 +885,7 @@ lemma fiber_has_block_form_preimages_existential_reps {k : ℕ}
         (slSuccEmbed_H rep_j : GL (Fin (k + 2)) ℚ) *
         diagMat (k + 2) (Fin.cons 1 b) ∈ (GL_pair (k + 2)).H := by
   set σ_m_H : (GL_pair (k + 1)).H := ⟨mapGL ℚ σ_m, coe_mem_SLnZ (k + 1) σ_m⟩
-    with hσ_m_H_def
   set τ_m_H : (GL_pair (k + 1)).H := ⟨mapGL ℚ τ_m, coe_mem_SLnZ (k + 1) τ_m⟩
-    with hτ_m_H_def
   refine ⟨⟦σ_m_H⟧, ⟦τ_m_H⟧, σ_m_H, τ_m_H, rfl, rfl,
     decompQuot_slSuccEmbed_diagMat_mk_eq_of_block a ha i M_i σ_m h_block_i h_stab_i,
     decompQuot_slSuccEmbed_diagMat_mk_eq_of_block b hb j M_j τ_m h_block_j h_stab_j, ?_⟩
@@ -967,15 +950,9 @@ lemma fiber_block_form_preimage {k : ℕ} (hk : 1 ≤ k)
   obtain ⟨i_m, j_m, h1, h2, h_lifted⟩ :=
     fiber_has_block_form_preimages hk a b c ha hb hc hda hdb hdc i j hfib
   refine ⟨i_m, j_m, h1, h2, ?_⟩
-  have h_k1_mem := slSuccEmbed_H_fiber_transfer_converse a b c ha hb hc
-    i_m.out j_m.out h_lifted
-  have h_dval_a : ((diagMat_delta (k + 1) a : (GL_pair (k + 1)).Δ) :
-      GL (Fin (k + 1)) ℚ) = diagMat (k + 1) a := diagMat_delta_val (k + 1) a ha
-  have h_dval_b : ((diagMat_delta (k + 1) b : (GL_pair (k + 1)).Δ) :
-      GL (Fin (k + 1)) ℚ) = diagMat (k + 1) b := diagMat_delta_val (k + 1) b hb
-  have h_dval_c : ((diagMat_delta (k + 1) c : (GL_pair (k + 1)).Δ) :
-      GL (Fin (k + 1)) ℚ) = diagMat (k + 1) c := diagMat_delta_val (k + 1) c hc
-  simpa only [h_dval_a, h_dval_b, h_dval_c] using
-    (fiber_diagMat_iff_mem_H a b c ha hb hc i_m.out j_m.out).mpr h_k1_mem
+  simpa only [diagMat_delta_val (k + 1) a ha, diagMat_delta_val (k + 1) b hb,
+    diagMat_delta_val (k + 1) c hc] using
+    (fiber_diagMat_iff_mem_H a b c ha hb hc i_m.out j_m.out).mpr
+      (slSuccEmbed_H_fiber_transfer_converse a b c ha hb hc i_m.out j_m.out h_lifted)
 
 end HeckeRing.GLn
