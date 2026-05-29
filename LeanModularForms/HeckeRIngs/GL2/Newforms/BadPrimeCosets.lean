@@ -163,9 +163,8 @@ lemma Newform.frickeBadAdjointCandidateNormalized_coe_eq_bsum_lower
             (Newform.T_p_lower_with_offset N hp.pos b : GL (Fin 2) ℝ))
     exact Newform.slash_W_N_T_p_upper_W_N_eq_smul_T_p_lower_with_offset hp.pos b ⇑g
   rw [SlashAction.sum_slash, Finset.sum_congr rfl h_term, ← Finset.smul_sum, smul_smul]
-  have h_c_ne : Newform.frickeSquareScalar N k ≠ 0 := by
-    unfold Newform.frickeSquareScalar
-    exact mul_ne_zero (zpow_ne_zero _ (by norm_num))
+  have h_c_ne : Newform.frickeSquareScalar N k ≠ 0 :=
+    mul_ne_zero (zpow_ne_zero _ (by norm_num))
       (zpow_ne_zero _ (Nat.cast_ne_zero.mpr (NeZero.ne N)))
   rw [inv_mul_cancel₀ h_c_ne, one_smul]
 
@@ -958,9 +957,8 @@ lemma Newform.peterssonInner_fricke_T_p_upper_right_slot_rewrite
 
 /-- `frickeSquareScalar N k = (-1 : ℂ)^k * (N : ℂ)^(k - 2)` is non-zero. -/
 lemma Newform.frickeSquareScalar_ne_zero (N : ℕ) [NeZero N] (k : ℤ) :
-    Newform.frickeSquareScalar N k ≠ 0 := by
-  unfold Newform.frickeSquareScalar
-  exact mul_ne_zero (zpow_ne_zero _ (by norm_num))
+    Newform.frickeSquareScalar N k ≠ 0 :=
+  mul_ne_zero (zpow_ne_zero _ (by norm_num))
     (zpow_ne_zero _ (Nat.cast_ne_zero.mpr (NeZero.ne N)))
 
 open UpperHalfPlane MeasureTheory ModularGroup in
