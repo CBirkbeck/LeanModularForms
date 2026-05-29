@@ -336,9 +336,7 @@ private lemma Newform.exists_Gamma1_mul_T_p_upper_int
         γ'.val * !![(1 : ℤ), (b.val : ℤ); 0, (p : ℤ)] := by
   haveI : Fact p.Prime := ⟨hp⟩
   haveI : NeZero p := ⟨hp.ne_zero⟩
-  have hp_dvd_N : (p : ℕ) ∣ N := by
-    by_contra h_ndvd
-    exact hpN (hp.coprime_iff_not_dvd.mpr h_ndvd)
+  have hp_dvd_N : (p : ℕ) ∣ N := not_not.mp fun h ↦ hpN (hp.coprime_iff_not_dvd.mpr h)
   set a : ℤ := γ.val 0 0 with ha_def
   set b' : ℤ := γ.val 0 1 with hb'_def
   set c : ℤ := γ.val 1 0 with hc_def
@@ -367,13 +365,13 @@ private lemma Newform.exists_Gamma1_mul_T_p_upper_int
   refine ⟨⟨_, hM_det⟩, b, ?_, ?_⟩
   · rw [Gamma1_mem]
     refine ⟨?_, ?_, ?_⟩
-    · show ((a : ℤ) : ZMod N) = 1
+    · change ((a : ℤ) : ZMod N) = 1
       exact_mod_cast ha_mod_N
-    · show ((d - c * (b.val : ℤ) : ℤ) : ZMod N) = 1
+    · change ((d - c * (b.val : ℤ) : ℤ) : ZMod N) = 1
       push_cast; rw [hd_mod_N, hc_mod_N]; ring
-    · show (((p : ℤ) * c : ℤ) : ZMod N) = 0
+    · change (((p : ℤ) * c : ℤ) : ZMod N) = 0
       push_cast; rw [hc_mod_N]; ring
-  · show (!![(1 : ℤ), 0; 0, (p : ℤ)] : Matrix (Fin 2) (Fin 2) ℤ) * γ.val =
+  · change (!![(1 : ℤ), 0; 0, (p : ℤ)] : Matrix (Fin 2) (Fin 2) ℤ) * γ.val =
         !![a, B; (p : ℤ) * c, d - c * (b.val : ℤ)] *
           !![(1 : ℤ), (b.val : ℤ); 0, (p : ℤ)]
     rw [Matrix.eta_fin_two γ.val, ← ha_def, ← hb'_def, ← hc_def, ← hd_def]
