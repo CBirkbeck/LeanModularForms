@@ -330,8 +330,7 @@ theorem Gamma_p_α_PSL_R_FD_finite_index_decomp_shifted
       (Equiv.refl ℍ) (MeasureTheory.Measure.QuasiMeasurePreserving.id _)
       ((Subgroup.subgroupOfEquivOfLe (Subgroup.map_mono (Gamma_p_α_le_Gamma1 α))).symm.toEquiv)
       (fun _ _ ↦ rfl)
-    simp only [Equiv.coe_refl, Set.image_id] at h_image
-    exact h_image
+    simpa using h_image
   have h_set_eq :
       (⋃ q : ((Gamma1 N).map SL2Z_to_PSL2R) ⧸
               (((Gamma_p_α (N := N) α).map SL2Z_to_PSL2R).subgroupOf
@@ -865,8 +864,7 @@ theorem isFundamentalDomain_Gamma_p_α_fundDomain_PSL_at_PSL_R
     (Equiv.refl ℍ) (MeasureTheory.Measure.QuasiMeasurePreserving.id _)
     ((Subgroup.subgroupOfEquivOfLe (Subgroup.map_mono (Gamma_p_α_le_Gamma1 α))).symm.toEquiv)
     (fun _ _ ↦ rfl)
-  simp only [Equiv.coe_refl, Set.image_id] at h_image
-  exact h_image
+  simpa using h_image
 
 open CongruenceSubgroup Pointwise ConjAct UpperHalfPlane MeasureTheory in
 /-- **DS Lemma 5.5.1(a) FD-image identification.** Transporting the fundamental
