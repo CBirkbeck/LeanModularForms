@@ -149,16 +149,10 @@ theorem IsPrimitiveDelta0.smith_decomp_rat {N : ℕ} {α : Delta0_submonoid N}
           ((V : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ℚ)) =
         !![(1 : ℚ), 0; 0, (Delta0_submonoid.intDet α : ℚ)] := by
   obtain ⟨U, V, hUV⟩ :=
-    Matrix.smith_decomp_of_primitive_posDet
-      (A := Delta0_submonoid.intLift α) hα_prim
-      (Delta0_submonoid.intDet_pos α)
+    Matrix.smith_decomp_of_primitive_posDet (A := Delta0_submonoid.intLift α)
+      hα_prim (Delta0_submonoid.intDet_pos α)
   refine ⟨U, V, ?_⟩
-  have h : (Int.castRingHom ℚ).mapMatrix
-            ((U : Matrix (Fin 2) (Fin 2) ℤ) * Delta0_submonoid.intLift α *
-              (V : Matrix (Fin 2) (Fin 2) ℤ)) =
-        (Int.castRingHom ℚ).mapMatrix
-            (!![(1 : ℤ), 0; 0, (Delta0_submonoid.intLift α).det]) := by
-    rw [hUV]
+  have h := congrArg (Int.castRingHom ℚ).mapMatrix hUV
   rw [map_mul, map_mul] at h
   simp only [RingHom.mapMatrix_apply, Int.coe_castRingHom] at h
   rw [← Delta0_submonoid.coe_intLift α] at h
@@ -205,34 +199,17 @@ theorem IsPrimitiveDelta0.smith_decomp_Q {N : ℕ} {α : Delta0_submonoid N}
       _ = (U₀⁻¹).val *
             !![(1 : ℤ), 0; 0, (Delta0_submonoid.intLift α).det] *
             (V₀⁻¹).val := by rw [hUV]
-  calc ((α : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ)
-      = (Delta0_submonoid.intLift α).map (Int.cast : ℤ → ℚ) :=
-          Delta0_submonoid.coe_intLift α
-    _ = ((U₀⁻¹).val *
-          !![(1 : ℤ), 0; 0, (Delta0_submonoid.intLift α).det] *
-          (V₀⁻¹).val).map (Int.cast : ℤ → ℚ) := by
-          conv_lhs => rw [hIntLift_eq]
-    _ = ((U₀⁻¹).val).map (Int.cast : ℤ → ℚ) *
-        (!![(1 : ℤ), 0; 0, (Delta0_submonoid.intLift α).det] : Matrix (Fin 2) (Fin 2) ℤ).map
-          (Int.cast : ℤ → ℚ) *
-        ((V₀⁻¹).val).map (Int.cast : ℤ → ℚ) := by
-          have := (Int.castRingHom ℚ).mapMatrix.map_mul
-              ((U₀⁻¹).val * !![(1 : ℤ), 0; 0, (Delta0_submonoid.intLift α).det])
-              (V₀⁻¹).val
-          simp only [RingHom.mapMatrix_apply, Int.coe_castRingHom] at this
-          rw [this]
-          have := (Int.castRingHom ℚ).mapMatrix.map_mul (U₀⁻¹).val
-              !![(1 : ℤ), 0; 0, (Delta0_submonoid.intLift α).det]
-          simp only [RingHom.mapMatrix_apply, Int.coe_castRingHom] at this
-          rw [this]
-    _ = ((U₀⁻¹).val).map (Int.cast : ℤ → ℚ) *
-        !![(1 : ℚ), 0; 0, (Delta0_submonoid.intDet α : ℚ)] *
-        ((V₀⁻¹).val).map (Int.cast : ℤ → ℚ) := by
-          congr 1
-          congr 1
-          ext i j
-          fin_cases i <;> fin_cases j <;>
-            simp [Matrix.map_apply, Delta0_submonoid.intDet]
+  rw [Delta0_submonoid.coe_intLift α, hIntLift_eq]
+  have hmap (A B : Matrix (Fin 2) (Fin 2) ℤ) :
+      (A * B).map (Int.cast : ℤ → ℚ) =
+        A.map (Int.cast : ℤ → ℚ) * B.map (Int.cast : ℤ → ℚ) := by
+    simpa [RingHom.mapMatrix_apply] using
+      (Int.castRingHom ℚ).mapMatrix.map_mul A B
+  rw [hmap, hmap]
+  congr 2
+  ext i j
+  fin_cases i <;> fin_cases j <;>
+    simp [Matrix.map_apply, Delta0_submonoid.intDet]
 
 /-- The `GL(2, ℚ)` diagonal matrix `diag(1, m)` for positive integer `m`.
 Used as the middle Smith factor for a primitive `α ∈ Δ₀(N)`. -/
@@ -312,6 +289,18 @@ theorem IsPrimitiveDelta0.slash_decomp_R {N : ℕ} {α : Delta0_submonoid N}
          glMap (Matrix.SpecialLinearGroup.mapGL ℚ V) = _
   rw [glMap_mapGL_eq, glMap_mapGL_eq]
 
+private lemma glMap_diagGL_Q_det_val (m : ℤ) (hm : 0 < m) :
+    (glMap (diagGL_Q m hm)).det.val = (m : ℝ) := by
+  rw [show (glMap (diagGL_Q m hm)).det.val =
+    algebraMap ℚ ℝ (diagGL_Q m hm).det.val from
+    congr_arg Units.val (Matrix.GeneralLinearGroup.map_det (algebraMap ℚ ℝ) _),
+    Matrix.GeneralLinearGroup.val_det_apply]
+  simp [diagGL_Q, Matrix.GeneralLinearGroup.mkOfDetNeZero, Matrix.det_fin_two_of]
+
+private lemma glMap_diagGL_Q_det_val_pos (m : ℤ) (hm : 0 < m) :
+    0 < (glMap (diagGL_Q m hm)).det.val := by
+  rw [glMap_diagGL_Q_det_val]; exact_mod_cast hm
+
 /-- **Pointwise slash formula** for the rational diagonal `diag(1, m)` with
 `0 < m`.  Unfolded via the Mathlib `slash_apply` formula `f ∣[k] γ = σ γ (f
 (γ • τ)) * |det γ|^(k-1) * denom γ τ^(-k)`.  For `γ = diag(1, m)` with
@@ -326,16 +315,10 @@ lemma slash_diagGL_Q_apply (k : ℤ) (m : ℤ) (hm : 0 < m)
       (m : ℂ)⁻¹ * f (glMap (diagGL_Q m hm) • τ) := by
   show ((f ∣[k] glMap (diagGL_Q m hm)) τ) = _
   rw [ModularForm.slash_apply]
-  have hdet_val : (glMap (diagGL_Q m hm)).det.val = (m : ℝ) := by
-    rw [show (glMap (diagGL_Q m hm)).det.val =
-      algebraMap ℚ ℝ (diagGL_Q m hm).det.val from
-      congr_arg Units.val (Matrix.GeneralLinearGroup.map_det (algebraMap ℚ ℝ) _),
-      Matrix.GeneralLinearGroup.val_det_apply]
-    simp [diagGL_Q, Matrix.GeneralLinearGroup.mkOfDetNeZero, Matrix.det_fin_two_of]
-  have hdet_pos : 0 < (glMap (diagGL_Q m hm)).det.val := by
-    rw [hdet_val]; exact_mod_cast hm
+  have hdet_val := glMap_diagGL_Q_det_val m hm
   have hσ : UpperHalfPlane.σ (glMap (diagGL_Q m hm)) = RingHom.id ℂ := by
-    unfold UpperHalfPlane.σ; simp only [hdet_pos, ↓reduceIte]
+    unfold UpperHalfPlane.σ
+    simp only [glMap_diagGL_Q_det_val_pos m hm, ↓reduceIte]
   have hdenom : UpperHalfPlane.denom (glMap (diagGL_Q m hm)) ↑τ = (m : ℂ) := by
     simp [UpperHalfPlane.denom, glMap, diagGL_Q,
           Matrix.GeneralLinearGroup.mkOfDetNeZero, Matrix.cons_val_one]
@@ -352,16 +335,8 @@ lemma slash_diagGL_Q_apply (k : ℤ) (m : ℤ) (hm : 0 < m)
 complex coordinate `τ / m`.  Useful companion to `slash_diagGL_Q_apply`. -/
 lemma coe_diagGL_Q_smul (m : ℤ) (hm : 0 < m) (τ : UpperHalfPlane) :
     (↑(glMap (diagGL_Q m hm) • τ) : ℂ) = (τ : ℂ) / (m : ℂ) := by
-  have hdet_val : (glMap (diagGL_Q m hm)).det.val = (m : ℝ) := by
-    rw [show (glMap (diagGL_Q m hm)).det.val =
-      algebraMap ℚ ℝ (diagGL_Q m hm).det.val from
-      congr_arg Units.val (Matrix.GeneralLinearGroup.map_det (algebraMap ℚ ℝ) _),
-      Matrix.GeneralLinearGroup.val_det_apply]
-    simp [diagGL_Q, Matrix.GeneralLinearGroup.mkOfDetNeZero, Matrix.det_fin_two_of]
-  have hdet_pos : 0 < (glMap (diagGL_Q m hm)).det.val := by
-    rw [hdet_val]; exact_mod_cast hm
   simp only [UpperHalfPlane.coe_smul, UpperHalfPlane.num, UpperHalfPlane.denom,
-    UpperHalfPlane.σ, hdet_pos, ↓reduceIte, RingHom.id_apply]
+    UpperHalfPlane.σ, glMap_diagGL_Q_det_val_pos m hm, ↓reduceIte, RingHom.id_apply]
   set M := (↑(glMap (diagGL_Q m hm)) : Matrix (Fin 2) (Fin 2) ℝ)
   have h00 : M 0 0 = 1 := by
     simp [M, glMap, diagGL_Q, Matrix.GeneralLinearGroup.mkOfDetNeZero]
@@ -377,11 +352,11 @@ lemma coe_diagGL_Q_smul (m : ℤ) (hm : 0 < m) (τ : UpperHalfPlane) :
   ring
 
 /-- **Sparse-index `HasSum` reindexing through a multiplication.**
-For `0 < m`, if `HasSum (fun j => a j • (q ^ m) ^ j) S`, then the reindexed
+For `0 < m`, if `HasSum (fun j ↦ a j • (q ^ m) ^ j) S`, then the reindexed
 sum through `j ↦ m · j` — with zeros filled in at non-multiples of `m` —
 still sums to `S`:
 
-`HasSum (fun n => if m ∣ n then a (n / m) • q ^ n else 0) S`.
+`HasSum (fun n ↦ if m ∣ n then a (n / m) • q ^ n else 0) S`.
 
 Immediate from `Function.Injective.hasSum_iff` applied to `j ↦ m · j`
 (injective for `m > 0`), using that the sparse function vanishes outside
@@ -389,17 +364,13 @@ its range. -/
 lemma hasSum_pow_mul_reindex {m : ℕ} (hm : 0 < m) {a : ℕ → ℂ} {q : ℂ}
     {S : ℂ} (h : HasSum (fun j : ℕ ↦ a j • (q ^ m) ^ j) S) :
     HasSum (fun n : ℕ ↦ if m ∣ n then a (n / m) • q ^ n else 0) S := by
-  have hm_ne : m ≠ 0 := hm.ne'
-  have hinj : Function.Injective (fun j : ℕ ↦ m * j) := by
-    intro x y hxy
-    exact Nat.mul_left_cancel hm hxy
+  have hinj : Function.Injective (fun j : ℕ ↦ m * j) := fun _ _ ↦ Nat.mul_left_cancel hm
   have h_zero : ∀ n : ℕ, n ∉ Set.range (fun j : ℕ ↦ m * j) →
       (fun n : ℕ ↦ if m ∣ n then a (n / m) • q ^ n else 0) n = 0 := by
     intro n hn
     simp only
     rw [if_neg]
-    intro hdvd
-    obtain ⟨j, rfl⟩ := hdvd
+    rintro ⟨j, rfl⟩
     exact hn ⟨j, rfl⟩
   have h_eq : ((fun n : ℕ ↦ if m ∣ n then a (n / m) • q ^ n else 0) ∘
       (fun j : ℕ ↦ m * j)) = fun j : ℕ ↦ a j • (q ^ m) ^ j := by
@@ -471,17 +442,15 @@ theorem qExpansion_support_of_diagGL_Q_slash {N : ℕ} [NeZero N] {k : ℤ}
     ∀ n : ℕ, ¬ m ∣ n → (qExpansion (N : ℝ) f).coeff n = 0 := by
   have hm_int : (0 : ℤ) < (m : ℤ) := by exact_mod_cast hm
   have hm_ne_C : ((m : ℕ) : ℂ) ≠ 0 := by exact_mod_cast hm.ne'
-  have hm_ne_C_int : ((m : ℤ) : ℂ) ≠ 0 := by exact_mod_cast hm.ne'
   have hN_pos_R : (0 : ℝ) < (N : ℝ) := Nat.cast_pos.mpr (Nat.pos_of_neZero N)
-  have hm_pos_R : (0 : ℝ) < (m : ℝ) := Nat.cast_pos.mpr hm
-  have hNm_pos_R : (0 : ℝ) < (N : ℝ) * (m : ℝ) := mul_pos hN_pos_R hm_pos_R
+  have hNm_pos_R : (0 : ℝ) < (N : ℝ) * (m : ℝ) :=
+    mul_pos hN_pos_R (Nat.cast_pos.mpr hm)
   have hNm_period :
       ((N : ℝ) * (m : ℝ)) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
-    have hsmul_eq : (m : ℕ) • (N : ℝ) = (N : ℝ) * (m : ℝ) := by
-      rw [nsmul_eq_mul]; ring
-    rw [← hsmul_eq]
+    rw [show ((N : ℝ) * (m : ℝ)) = (m : ℕ) • (N : ℝ) by
+      rw [nsmul_eq_mul]; ring]
     exact AddSubgroup.nsmul_mem _ hN_period m
-  set γ : GL (Fin 2) ℚ := diagGL_Q (m : ℤ) hm_int with hγ_def
+  set γ : GL (Fin 2) ℚ := diagGL_Q (m : ℤ) hm_int
   have h_dense : ∀ τ : UpperHalfPlane,
       HasSum (fun n : ℕ ↦
         ((m : ℂ)⁻¹ * (qExpansion (N : ℝ) f).coeff n) •
@@ -521,22 +490,12 @@ theorem qExpansion_support_of_diagGL_Q_slash {N : ℕ} [NeZero N] {k : ℤ}
     · rfl
     · simp
   intro n hmn_ne
-  have h_dense_eq :
-      ((m : ℂ)⁻¹ * (qExpansion (N : ℝ) f).coeff n) =
-        (qExpansion ((N : ℝ) * (m : ℝ)) g).coeff n :=
-    qExpansion_coeff_unique hNm_pos_R hNm_period h_dense n
-  have h_sparse_eq :
-      (if m ∣ n then (qExpansion (N : ℝ) g).coeff (n / m) else 0 : ℂ) =
-        (qExpansion ((N : ℝ) * (m : ℝ)) g).coeff n :=
-    qExpansion_coeff_unique hNm_pos_R hNm_period h_sparse n
-  have h_comb :
-      (m : ℂ)⁻¹ * (qExpansion (N : ℝ) f).coeff n =
-        (if m ∣ n then (qExpansion (N : ℝ) g).coeff (n / m) else 0 : ℂ) := by
-    rw [h_dense_eq, ← h_sparse_eq]
+  have h_comb : (m : ℂ)⁻¹ * (qExpansion (N : ℝ) f).coeff n =
+      (if m ∣ n then (qExpansion (N : ℝ) g).coeff (n / m) else 0 : ℂ) :=
+    (qExpansion_coeff_unique hNm_pos_R hNm_period h_dense n).trans
+      (qExpansion_coeff_unique hNm_pos_R hNm_period h_sparse n).symm
   rw [if_neg hmn_ne] at h_comb
-  rcases mul_eq_zero.mp h_comb with h | h
-  · exact absurd h (inv_ne_zero hm_ne_C)
-  · exact h
+  exact (mul_eq_zero.mp h_comb).resolve_left (inv_ne_zero hm_ne_C)
 
 /-- Positive determinant of the rational diagonal `diagGL_Q m`. -/
 lemma diagGL_Q_det_pos (m : ℤ) (hm : 0 < m) :
@@ -597,15 +556,13 @@ theorem IsPrimitiveDelta0.qExpansion_support_of_Gamma0_factored
     (hg_eq : (⇑g : UpperHalfPlane → ℂ) =
       ⇑f ∣[k] ((α : GL (Fin 2) ℚ))) :
     ∀ n : ℕ, ¬ m ∣ n → (qExpansion (N : ℝ) f).coeff n = 0 := by
-  set χγ : ℂˣ := χ (Gamma0MapUnits γ) with hχγ_def
+  set χγ : ℂˣ := χ (Gamma0MapUnits γ)
   have hχγ_ne : (↑χγ : ℂ) ≠ 0 := χγ.ne_zero
-  have h_diag_pos : 0 < (diagGL_Q (m : ℤ) (by exact_mod_cast hm)).det.val :=
-    diagGL_Q_det_pos _ _
   have h_key : (⇑f : UpperHalfPlane → ℂ) ∣[k] (α : GL (Fin 2) ℚ) =
       (↑χγ : ℂ) • (⇑f ∣[k]
         (diagGL_Q (m : ℤ) (by exact_mod_cast hm) : GL (Fin 2) ℚ)) := by
     rw [hα_factor, SlashAction.slash_mul, slash_mapGL_Q_Gamma0_charSpace hf_char γ,
-        smul_slash_pos_det k _ _ _ h_diag_pos]
+        smul_slash_pos_det k _ _ _ (diagGL_Q_det_pos _ _)]
   let g' : ModularForm ((Gamma1 N).map (mapGL ℝ)) k := (↑χγ : ℂ)⁻¹ • g
   have hg'_eq : (⇑g' : UpperHalfPlane → ℂ) =
       ⇑f ∣[k] (diagGL_Q (m : ℤ) (by exact_mod_cast hm) : GL (Fin 2) ℚ) := by
@@ -661,35 +618,23 @@ theorem IsPrimitiveDelta0.qExpansion_support_of_Gamma0_factored_right
       ⇑f ∣[k] ((α : GL (Fin 2) ℚ))) :
     ∀ n : ℕ, ¬ m ∣ n → (qExpansion (N : ℝ) f).coeff n = 0 := by
   set χγ : ℂˣ := χ (Gamma0MapUnits γ) with hχγ_def
-  have hχγ_ne : (↑χγ : ℂ) ≠ 0 := χγ.ne_zero
-  have hγinv_coe :
-      ((γ⁻¹ : ↥(Gamma0 N)) : SL(2, ℤ)) = ((γ : ↥(Gamma0 N)) : SL(2, ℤ))⁻¹ :=
-    InvMemClass.coe_inv γ
   have hγγinv_one :
       (Matrix.SpecialLinearGroup.mapGL ℚ (γ : SL(2, ℤ)) : GL (Fin 2) ℚ) *
       (Matrix.SpecialLinearGroup.mapGL ℚ ((γ⁻¹ : ↥(Gamma0 N)) : SL(2, ℤ)) :
         GL (Fin 2) ℚ) = 1 := by
-    rw [hγinv_coe, ← map_mul, mul_inv_cancel, map_one]
-  have h_slash_gγinv : (⇑g : UpperHalfPlane → ℂ) ∣[k]
-      (Matrix.SpecialLinearGroup.mapGL ℚ ((γ⁻¹ : ↥(Gamma0 N)) : SL(2, ℤ)) :
-        GL (Fin 2) ℚ) =
-      ⇑f ∣[k] (diagGL_Q (m : ℤ) (by exact_mod_cast hm) : GL (Fin 2) ℚ) := by
-    rw [hg_eq, hα_factor, SlashAction.slash_mul, ← SlashAction.slash_mul,
-        hγγinv_one, SlashAction.slash_one]
-  have h_slash_gγinv_char : (⇑g : UpperHalfPlane → ℂ) ∣[k]
-      (Matrix.SpecialLinearGroup.mapGL ℚ ((γ⁻¹ : ↥(Gamma0 N)) : SL(2, ℤ)) :
-        GL (Fin 2) ℚ) =
-      (↑χγ : ℂ)⁻¹ • ⇑g := by
-    rw [slash_mapGL_Q_Gamma0_charSpace hg_char γ⁻¹]
-    simp [hχγ_def, map_inv]
-  have h_fD_eq : (⇑f : UpperHalfPlane → ℂ) ∣[k]
-      (diagGL_Q (m : ℤ) (by exact_mod_cast hm) : GL (Fin 2) ℚ) =
-      (↑χγ : ℂ)⁻¹ • ⇑g := h_slash_gγinv.symm.trans h_slash_gγinv_char
+    rw [InvMemClass.coe_inv γ, ← map_mul, mul_inv_cancel, map_one]
   let g' : ModularForm ((Gamma1 N).map (mapGL ℝ)) k := (↑χγ : ℂ)⁻¹ • g
   have hg'_eq : (⇑g' : UpperHalfPlane → ℂ) =
       ⇑f ∣[k] (diagGL_Q (m : ℤ) (by exact_mod_cast hm) : GL (Fin 2) ℚ) := by
     show (↑χγ : ℂ)⁻¹ • ⇑g = _
-    rw [h_fD_eq]
+    have h_slash_gγinv : (⇑g : UpperHalfPlane → ℂ) ∣[k]
+        (Matrix.SpecialLinearGroup.mapGL ℚ ((γ⁻¹ : ↥(Gamma0 N)) : SL(2, ℤ)) :
+          GL (Fin 2) ℚ) =
+        ⇑f ∣[k] (diagGL_Q (m : ℤ) (by exact_mod_cast hm) : GL (Fin 2) ℚ) := by
+      rw [hg_eq, hα_factor, SlashAction.slash_mul, ← SlashAction.slash_mul,
+          hγγinv_one, SlashAction.slash_one]
+    rw [← h_slash_gγinv, slash_mapGL_Q_Gamma0_charSpace hg_char γ⁻¹]
+    simp [hχγ_def, map_inv]
   exact qExpansion_support_of_diagGL_Q_slash hm hN_period f g' hg'_eq
 
 /-- **Explicit Γ₀-normalised factorisation of the upper-triangular Hecke
@@ -744,6 +689,18 @@ lemma qParam_mul_nat (h : ℝ) (m : ℕ) (z : ℂ) :
   congr 1
   ring
 
+private lemma glMap_diagGL_Q_lower_det_val (m : ℤ) (hm : 0 < m) :
+    (glMap (diagGL_Q_lower m hm)).det.val = (m : ℝ) := by
+  rw [show (glMap (diagGL_Q_lower m hm)).det.val =
+    algebraMap ℚ ℝ (diagGL_Q_lower m hm).det.val from
+    congr_arg Units.val (Matrix.GeneralLinearGroup.map_det (algebraMap ℚ ℝ) _),
+    Matrix.GeneralLinearGroup.val_det_apply]
+  simp [diagGL_Q_lower, Matrix.GeneralLinearGroup.mkOfDetNeZero, Matrix.det_fin_two_of]
+
+private lemma glMap_diagGL_Q_lower_det_val_pos (m : ℤ) (hm : 0 < m) :
+    0 < (glMap (diagGL_Q_lower m hm)).det.val := by
+  rw [glMap_diagGL_Q_lower_det_val]; exact_mod_cast hm
+
 /-- **Pointwise slash formula** for `diagGL_Q_lower m`.
 For any `f : ℍ → ℂ`, `k : ℤ`, `m : ℤ` with `0 < m`, and `τ : ℍ`,
 
@@ -757,17 +714,10 @@ lemma slash_diagGL_Q_lower_apply (k : ℤ) (m : ℤ) (hm : 0 < m)
       (m : ℂ) ^ (k - 1) * f (glMap (diagGL_Q_lower m hm) • τ) := by
   show ((f ∣[k] glMap (diagGL_Q_lower m hm)) τ) = _
   rw [ModularForm.slash_apply]
-  have hdet_val : (glMap (diagGL_Q_lower m hm)).det.val = (m : ℝ) := by
-    rw [show (glMap (diagGL_Q_lower m hm)).det.val =
-      algebraMap ℚ ℝ (diagGL_Q_lower m hm).det.val from
-      congr_arg Units.val (Matrix.GeneralLinearGroup.map_det (algebraMap ℚ ℝ) _),
-      Matrix.GeneralLinearGroup.val_det_apply]
-    simp [diagGL_Q_lower, Matrix.GeneralLinearGroup.mkOfDetNeZero,
-      Matrix.det_fin_two_of]
-  have hdet_pos : 0 < (glMap (diagGL_Q_lower m hm)).det.val := by
-    rw [hdet_val]; exact_mod_cast hm
+  have hdet_val := glMap_diagGL_Q_lower_det_val m hm
   have hσ : UpperHalfPlane.σ (glMap (diagGL_Q_lower m hm)) = RingHom.id ℂ := by
-    unfold UpperHalfPlane.σ; simp only [hdet_pos, ↓reduceIte]
+    unfold UpperHalfPlane.σ
+    simp only [glMap_diagGL_Q_lower_det_val_pos m hm, ↓reduceIte]
   have hdenom : UpperHalfPlane.denom (glMap (diagGL_Q_lower m hm)) ↑τ = 1 := by
     simp [UpperHalfPlane.denom, glMap, diagGL_Q_lower,
       Matrix.GeneralLinearGroup.mkOfDetNeZero, Matrix.cons_val_one]
@@ -779,17 +729,8 @@ lemma slash_diagGL_Q_lower_apply (k : ℤ) (m : ℤ) (hm : 0 < m)
 /-- Möbius action of `glMap (diagGL_Q_lower m hm)`: sends `τ ↦ m · τ`. -/
 lemma coe_diagGL_Q_lower_smul (m : ℤ) (hm : 0 < m) (τ : UpperHalfPlane) :
     (↑(glMap (diagGL_Q_lower m hm) • τ) : ℂ) = (m : ℂ) * (τ : ℂ) := by
-  have hdet_val : (glMap (diagGL_Q_lower m hm)).det.val = (m : ℝ) := by
-    rw [show (glMap (diagGL_Q_lower m hm)).det.val =
-      algebraMap ℚ ℝ (diagGL_Q_lower m hm).det.val from
-      congr_arg Units.val (Matrix.GeneralLinearGroup.map_det (algebraMap ℚ ℝ) _),
-      Matrix.GeneralLinearGroup.val_det_apply]
-    simp [diagGL_Q_lower, Matrix.GeneralLinearGroup.mkOfDetNeZero,
-      Matrix.det_fin_two_of]
-  have hdet_pos : 0 < (glMap (diagGL_Q_lower m hm)).det.val := by
-    rw [hdet_val]; exact_mod_cast hm
   simp only [UpperHalfPlane.coe_smul, UpperHalfPlane.num, UpperHalfPlane.denom,
-    UpperHalfPlane.σ, hdet_pos, ↓reduceIte, RingHom.id_apply]
+    UpperHalfPlane.σ, glMap_diagGL_Q_lower_det_val_pos m hm, ↓reduceIte, RingHom.id_apply]
   set M := (↑(glMap (diagGL_Q_lower m hm)) : Matrix (Fin 2) (Fin 2) ℝ)
   have h00 : M 0 0 = (m : ℝ) := by
     simp [M, glMap, diagGL_Q_lower, Matrix.GeneralLinearGroup.mkOfDetNeZero]
@@ -945,10 +886,9 @@ theorem qExpansion_support_of_prime_gl_p_sq
   rw [hgl_fmla]
   split_ifs with hdvd
   · have h_npdiv : ¬ p ∣ (n / p) := by
-      intro hpdvd
-      obtain ⟨q, hq⟩ := hpdvd
-      apply hnot
+      rintro ⟨q, hq⟩
       obtain ⟨r, hr⟩ := hdvd
+      apply hnot
       refine ⟨q, ?_⟩
       rw [show n = p * r from hr, Nat.mul_div_cancel_left r hp] at hq
       rw [hr, hq]; ring
@@ -1072,25 +1012,16 @@ theorem miyake_4_6_3_prime_eigenform_case
     intro hn
     by_cases hdvd : p ∣ n
     · obtain ⟨m, rfl⟩ := hdvd
-      have hm_pos : 0 < m := by
-        rcases Nat.eq_zero_or_pos m with hm0 | hm0
-        · exfalso; subst hm0; simp at hn
-        · exact hm0
+      have hm_pos : 0 < m := by rcases m with _ | _ <;> simp_all
       have hm_lt : m < p * m := by
-        have h1 : 1 * m < p * m := (Nat.mul_lt_mul_right hm_pos).mpr hp
-        simpa using h1
-      have ham : (qExpansion (N : ℝ) f).coeff m = 0 := IH m hm_lt hm_pos
+        simpa using (Nat.mul_lt_mul_right hm_pos).mpr hp
       have h_rel := h_hecke m hm_pos
-      rw [ham, mul_zero] at h_rel
+      rw [IH m hm_lt hm_pos, mul_zero] at h_rel
       by_cases hdvdm : p ∣ m
-      · rw [if_pos hdvdm] at h_rel
-        have hm_div_pos : 0 < m / p :=
-          Nat.div_pos (Nat.le_of_dvd hm_pos hdvdm) hp_pos
-        have hm_div_lt : m / p < p * m :=
-          lt_of_le_of_lt (Nat.div_le_self _ _) hm_lt
-        have ham_p : (qExpansion (N : ℝ) f).coeff (m / p) = 0 :=
-          IH (m / p) hm_div_lt hm_div_pos
-        rw [ham_p, mul_zero, add_zero] at h_rel
+      · rw [if_pos hdvdm,
+          IH (m / p) (lt_of_le_of_lt (Nat.div_le_self _ _) hm_lt)
+            (Nat.div_pos (Nat.le_of_dvd hm_pos hdvdm) hp_pos),
+          mul_zero, add_zero] at h_rel
         exact h_rel.symm
       · rw [if_neg hdvdm, mul_zero, add_zero] at h_rel
         exact h_rel.symm
@@ -1125,19 +1056,12 @@ lemma hecke_recurrence_of_T_p_eigenform {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ}
           (if p ∣ n then (qExpansion (N : ℝ) f).coeff (n / p) else 0) := by
   have hN_pos_R : (0 : ℝ) < (N : ℝ) := Nat.cast_pos.mpr (Nat.pos_of_neZero N)
   intro n _
-  have h_lhs : (qExpansion (N : ℝ) (heckeT_p k p hp hpN f)).coeff n =
-      (qExpansion (N : ℝ) f).coeff (p * n) +
-        (p : ℂ) ^ (k - 1) *
-          (↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ) *
-          (if p ∣ n then (qExpansion (N : ℝ) f).coeff (n / p) else 0) :=
-    fourierCoeff_heckeT_p k hp hpN χ hf_char n
+  have h_lhs := fourierCoeff_heckeT_p k hp hpN χ hf_char n
   have h_rhs : (qExpansion (N : ℝ) (heckeT_p k p hp hpN f)).coeff n =
       lam * (qExpansion (N : ℝ) f).coeff n := by
-    have h_eq : qExpansion (N : ℝ) (heckeT_p k p hp hpN f) =
-        lam • qExpansion (N : ℝ) f := by
-      rw [h_eigen]
-      exact qExpansion_smul hN_pos_R hN_period lam f
-    rw [h_eq, PowerSeries.coeff_smul, smul_eq_mul]
+    rw [show qExpansion (N : ℝ) (heckeT_p k p hp hpN f) = lam • qExpansion (N : ℝ) f by
+      rw [h_eigen]; exact qExpansion_smul hN_pos_R hN_period lam f,
+      PowerSeries.coeff_smul, smul_eq_mul]
   rw [h_rhs] at h_lhs
   exact h_lhs
 
