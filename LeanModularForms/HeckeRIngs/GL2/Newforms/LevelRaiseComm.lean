@@ -158,7 +158,7 @@ lemma diamondOp_levelRaise_eq (a : (ZMod N)ˣ)
   subst heq
   obtain ⟨g₀, hg₀⟩ := Gamma0MapUnits_surjective (N := d * M) a
   set g₀'_sl : SL(2, ℤ) := levelRaiseConjOfDvd d (g₀ : SL(2, ℤ))
-    (Gamma0_dmul_lower_left_dvd d M (g₀ : SL(2, ℤ)) g₀.property) with hg₀'_def
+    (Gamma0_dmul_lower_left_dvd d M (g₀ : SL(2, ℤ)) g₀.property)
   let g₀' : ↥(Gamma0 M) :=
     ⟨g₀'_sl, levelRaiseConjOfDvd_mem_Gamma0 d M (g₀ : SL(2, ℤ)) g₀.property⟩
   have h_units : Gamma0MapUnits g₀' =
@@ -373,7 +373,7 @@ with the same underlying function. -/
 def levelInclude_cusp {M N : ℕ} [NeZero M] [NeZero N] (hMN : M ∣ N) (k : ℤ) :
     CuspForm ((Gamma1 M).map (mapGL ℝ)) k →ₗ[ℂ]
     CuspForm ((Gamma1 N).map (mapGL ℝ)) k where
-  toFun f := CuspForm.restrictSubgroup (Gamma1_map_le_Gamma1_map_of_dvd hMN) f
+  toFun := CuspForm.restrictSubgroup (Gamma1_map_le_Gamma1_map_of_dvd hMN)
   map_add' _ _ := by ext; rfl
   map_smul' _ _ := by ext; rfl
 
@@ -398,13 +398,12 @@ the trivial-inclusion oldform generators, spanning both the level-raise summands
 `M < N`. -/
 def cuspFormsOldExtended (N : ℕ) [NeZero N] (k : ℤ) :
     Submodule ℂ (CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :=
-  Submodule.span ℂ
-    {f | IsOldformGenerator f ∨ IsLevelInclusionOldformGenerator f}
+  Submodule.span ℂ {f | IsOldformGenerator f ∨ IsLevelInclusionOldformGenerator f}
 
 /-- **`cuspFormsOld ≤ cuspFormsOldExtended`.** -/
 lemma cuspFormsOld_le_cuspFormsOldExtended :
     cuspFormsOld N k ≤ cuspFormsOldExtended N k :=
-  Submodule.span_mono (fun _ hf ↦ Or.inl hf)
+  Submodule.span_mono fun _ hf ↦ Or.inl hf
 
 /-- **`levelInclude_cusp g ∈ cuspFormsOldExtended`** (membership of a trivial
 inclusion generator). -/
@@ -565,8 +564,8 @@ private lemma T_p_upper_zero_mul_levelRaise_smul_eq
     show 0 < ((levelRaiseMatrix (d / p) : GL (Fin 2) ℝ) :
       Matrix (Fin 2) (Fin 2) ℝ).det
     rw [levelRaiseMatrix_val (d / p), Matrix.det_fin_two_of]
-    have h1 : (0 : ℝ) < ((d / p : ℕ) : ℝ) := by
-      exact_mod_cast Nat.div_pos (Nat.le_of_dvd (NeZero.pos d) hpd) hp
+    have : (0 : ℝ) < ((d / p : ℕ) : ℝ) :=
+      mod_cast Nat.div_pos (Nat.le_of_dvd (NeZero.pos d) hpd) hp
     linarith
   rw [UpperHalfPlane.coe_smul_of_det_pos h_LR_det_pos]
   have h_num : UpperHalfPlane.num (levelRaiseMatrix (d / p)) (z : ℂ) =
