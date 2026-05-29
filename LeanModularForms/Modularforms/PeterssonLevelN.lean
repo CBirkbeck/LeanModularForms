@@ -3,11 +3,11 @@ Copyright (c) 2026 Chris Birkbeck. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
+import Mathlib.GroupTheory.Coset.Basic
+import Mathlib.NumberTheory.ModularForms.CongruenceSubgroups
+import LeanModularForms.HeckeRIngs.GL2.Gamma1Pair
 import LeanModularForms.Modularforms.PeterssonInner
 import LeanModularForms.Modularforms.PSL2Action
-import LeanModularForms.HeckeRIngs.GL2.Gamma1Pair
-import Mathlib.NumberTheory.ModularForms.CongruenceSubgroups
-import Mathlib.GroupTheory.Coset.Basic
 
 /-!
 # Level-N Petersson Inner Product
@@ -50,8 +50,6 @@ variable {N : ℕ} [NeZero N] {k : ℤ}
 
 instance : Fintype (SL(2, ℤ) ⧸ Gamma1 N) := Subgroup.fintypeQuotientOfFiniteIndex
 
-/-! ### Slash invariance under Γ₁(N) -/
-
 /-- For `γ ∈ Γ₁(N)`, the weight-`k` slash action on a `Γ₁(N)`-cusp form is trivial. -/
 theorem slash_Gamma1_eq
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
@@ -60,15 +58,11 @@ theorem slash_Gamma1_eq
   rw [ModularForm.SL_slash]
   exact SlashInvariantFormClass.slash_action_eq f _ ⟨γ, hγ, rfl⟩
 
-/-! ### Level-N Petersson inner product -/
-
 /-- The level-N Petersson inner product on `S_k(Γ₁(N))`, defined as
 `petN f g = Σ_{[δ] ∈ SL₂(ℤ)/Γ₁(N)} ∫_fd petersson k (f∣δ⁻¹) (g∣δ⁻¹) dμ`. -/
 def petN (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : ℂ :=
   ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
     peterssonInner k fd (⇑f ∣[k] (q.out)⁻¹) (⇑g ∣[k] (q.out)⁻¹)
-
-/-! ### Algebraic properties -/
 
 /-- Hermitian symmetry: `conj(petN g f) = petN f g`. -/
 theorem petN_conj_symm
@@ -88,8 +82,6 @@ theorem petN_zero_left
     petN 0 g = 0 := by
   simp [petN, peterssonInner_zero_left]
 
-/-! ### Integrability of slashed petersson integrand -/
-
 /-- The Petersson integrand of slashed cusp forms is integrable on `fd`. -/
 theorem integrableOn_petersson_slash
     {F F' : Type*} [FunLike F ℍ ℂ] [FunLike F' ℍ ℂ]
@@ -106,8 +98,6 @@ theorem integrableOn_petersson_slash
       (ModularFormClass.continuous f')).comp (continuous_const_smul δ)
     |>.aestronglyMeasurable.restrict)
     C (ae_of_all _ fun τ ↦ hC (δ • τ))
-
-/-! ### Positive definiteness -/
 
 private theorem out_one_mem_Gamma1 :
     ((⟦1⟧ : SL(2, ℤ) ⧸ Gamma1 N)).out ∈ Gamma1 N := by
@@ -168,8 +158,6 @@ theorem petN_definite
     (Finset.sum_eq_zero_iff_of_nonneg fun q _ ↦ hr_nonneg q).mp
       (Complex.ofReal_eq_zero.mp hsum) q (Finset.mem_univ q)
   rw [hr_eq ⟦1⟧, hzero ⟦1⟧, Complex.ofReal_zero]
-
-/-! ### Sesquilinearity -/
 
 /-- Negation in the second argument. -/
 theorem petN_neg_right
@@ -237,8 +225,6 @@ theorem petN_add_left
     _ = starRingEnd ℂ (petN g f₁ + petN g f₂) := by rw [petN_add_right]
     _ = starRingEnd ℂ (petN g f₁) + starRingEnd ℂ (petN g f₂) := map_add _ _ _
     _ = petN f₁ g + petN f₂ g := by rw [petN_conj_symm, petN_conj_symm]
-
-/-! ### Γ₁(N)-fundamental domain infrastructure -/
 
 namespace MeasureTheory
 
@@ -439,12 +425,6 @@ theorem IsFundamentalDomain.aedisjoint_smul_of_mul_inv_mem
 
 end MeasureTheory
 
-/-! ### PSL-coset fundamental domain for `imageGamma1_PSL N`
-
-Since `Γ₁(N) ⊆ SL(2,ℤ)` does not act faithfully on `ℍ` (the `±I` subgroup acts
-trivially), the genuine `IsFundamentalDomain` statement is phrased via the image
-of `Γ₁(N)` in `PSL(2,ℤ)`. -/
-
 /-- The image of `Γ₁(N) ⊆ SL(2,ℤ)` in `PSL(2,ℤ) = SL(2,ℤ) / {±I}`. -/
 noncomputable def imageGamma1_PSL (N : ℕ) [NeZero N] : Subgroup PSL(2, ℤ) :=
   (Gamma1 N).map (QuotientGroup.mk' (Subgroup.center SL(2, ℤ)))
@@ -531,8 +511,6 @@ theorem integrableOn_petersson_Gamma1_fundDomain_PSL
       (ModularFormClass.continuous g)).aestronglyMeasurable.restrict)
     C (ae_of_all _ fun τ ↦ hC τ)
 
-/-! ### Γ₁(N) coset-tiling fundamental-domain API -/
-
 /-- Synonym: image of `Γ₁(N)` in the faithful `PSL(2,ℤ)`-action group on `ℍ`. -/
 noncomputable abbrev imageGamma1 (N : ℕ) [NeZero N] : Subgroup PSL(2, ℤ) :=
   imageGamma1_PSL N
@@ -573,8 +551,6 @@ theorem isFundamentalDomain_Gamma1_shift
     {α : PSL(2, ℤ)} (hα : α ∈ (imageGamma1 N).normalizer) :
     IsFundamentalDomain (imageGamma1 N) (α • Gamma1_fundDomain N) μ_hyp :=
   isFundamentalDomain_Gamma1_coset_tiling.smul_of_mem_normalizer hα
-
-/-! ### Γ₁(N) projective fundamental domain at the `PSL(2, ℝ)` ambient -/
 
 open scoped MatrixGroups
 
@@ -652,8 +628,6 @@ theorem map_SL2Z_to_PSL2R_eq_imageGamma1_PSL_R :
   rw [Subgroup.map_map]
   rfl
 
-/-! ### SL/Γ₁(N) → PSL/imageGamma1_PSL(N) quotient bridge -/
-
 /-- Natural quotient map `SL(2,ℤ) ⧸ Gamma1 N → PSL(2,ℤ) ⧸ imageGamma1_PSL N`,
 sending each `Γ₁(N)`-coset `[g]` to its `imageGamma1_PSL N`-coset `[PSL.mk g]`. -/
 noncomputable def slToPslQuot :
@@ -686,8 +660,6 @@ theorem slToPslQuot_surjective : Function.Surjective (slToPslQuot (N := N)) := b
   obtain ⟨g_sl, hg_sl⟩ := QuotientGroup.mk_surjective g_psl
   refine ⟨QuotientGroup.mk g_sl, ?_⟩
   rw [slToPslQuot_mk, hg_sl, hg_psl]
-
-/-! #### Left-multiplication action of `SL(2, ℤ)` on the coset space `SL(2, ℤ) ⧸ Gamma1 N` -/
 
 /-- Left multiplication by `h : SL(2, ℤ)` is a well-defined map on `SL(2, ℤ) ⧸ Gamma1 N`. -/
 noncomputable def slLeftMul (h : SL(2, ℤ)) :
@@ -881,8 +853,6 @@ theorem sum_SL_tile_eq_fiberwise_PSL_tile (h : ℍ → ℂ)
         refine Finset.sum_congr rfl fun q' _ ↦ ?_
         exact Finset.sum_const _
 
-/-! ### Right-translate reindexing of `SL(2, ℤ) ⧸ Γ₁(N)` by `Γ₀(N)` elements -/
-
 /-- Reindexing equivalence on `SL(2, ℤ) ⧸ Γ₁(N)` by right-multiplication by `γ⁻¹`
 for `γ ∈ Γ₀(N)` (well-defined since `γ` normalizes `Γ₁(N)`). The forward
 direction sends `[δ] ↦ [δ * γ⁻¹]`. -/
@@ -966,7 +936,7 @@ theorem setIntegral_Gamma1_smul_petersson
   setIntegral_Gamma1_smul_eq _ η hη
     (fun τ ↦ petersson_Gamma1_invariant f g η hη τ) S
 
-/-- The integral over the SL₂(ℤ)-translate `δ • S` of a `Γ₁(N)`-invariant function
+/-- The integral over the SL₂(ℤ)-translate `δ • S` of a function
 can be reduced to an integral over `S`: `∫_{δ • S} h dμ = ∫_S h(δ • ·) dμ`. -/
 theorem setIntegral_smul_eq
     (h : UpperHalfPlane → ℂ) (δ : SL(2, ℤ)) (S : Set UpperHalfPlane) :
@@ -974,12 +944,6 @@ theorem setIntegral_smul_eq
   rw [show (δ • S : Set ℍ) = (fun τ ↦ δ • τ) '' S from rfl,
     (measurePreserving_smul δ μ_hyp).setIntegral_image_emb
       (measurableEmbedding_const_smul δ)]
-
-/-! ### Diamond unitarity
-
-Diamond unitarity `petN (⟨d⟩f) (⟨d⟩g) = petN f g` ([DS] Theorem 5.5.3,
-[Miy] Thm 4.5.4) says the level-N inner product is preserved by diamond
-operators. -/
 
 /-- Diamond unitarity for the level-N Petersson inner product:
 the inner product of slashed cusp forms equals the original inner product.
@@ -1038,8 +1002,6 @@ theorem petN_slash_invariant
     exact (Gamma1 N).inv_mem ((Gamma1 N).mul_mem (out_mem (δ * γ⁻¹))
       (HeckeRing.GL2.Gamma0_normalizes_Gamma1 ⟨γ, hγ⟩ _ ((Gamma1 N).inv_mem (out_mem δ))))) _
 
-/-! ### `petN` as a fiber-weighted PSL-tile sum -/
-
 /-- `∫_{q.out⁻¹ • fd} h dμ = ∫_{q.out⁻¹ • fdo} h dμ` for any `h`: the SL-tile
 integrals over `fd` and `fdo` agree (the boundary `fd \ fdo` has measure zero). -/
 theorem setIntegral_SL_tile_fd_eq_fdo
@@ -1091,8 +1053,6 @@ theorem petN_eq_weighted_sum_setIntegral_PSL_tile
         sum_SL_tile_eq_fiberwise_PSL_tile (petersson k ⇑f ⇑g)
           (fun γ hγ τ ↦ petersson_Gamma1_invariant f g γ hγ τ)
 
-/-! ### Uniform fiber count -/
-
 /-- The uniform cardinality of any fiber of `slToPslQuot`, computed at the identity
 coset `⟦1⟧`. Uniform by `slToPslQuot_fiber_card_uniform`. -/
 noncomputable def slToPslQuot_fiberCard (N : ℕ) [NeZero N] : ℕ :=
@@ -1140,8 +1100,6 @@ theorem petN_eq_setIntegral_Gamma1_fundDomain_PSL
     setIntegral_Gamma1_fundDomain_PSL_eq_sum _
       (integrableOn_petersson_Gamma1_fundDomain_PSL f g)]
 
-/-! ### Petersson inner product as an integral over a fundamental domain -/
-
 /-- `petN f g` expressed as an integral over the canonical Γ₁(N)-fundamental
 domain `Gamma1_fundDomain N`. -/
 theorem petN_eq_setIntegral_Gamma1_fundDomain
@@ -1187,8 +1145,6 @@ theorem petN_eq_of_per_tile_integral_eq
   congr 1
   exact Finset.sum_congr rfl fun q' _ ↦ h_per_tile q'
 
-/-! ### Finite-family integration additivity for AE-disjoint covers -/
-
 /-- For a finite family `s : ι → Set ℍ` of null-measurable, pairwise AE-disjoint
 subsets of the upper half-plane, the integral of an integrable function over the
 union equals the finite sum of integrals over each piece. -/
@@ -1212,8 +1168,6 @@ theorem peterssonInner_iUnion_finite_aedisjoint
     peterssonInner k (⋃ i : ι, s i) f g =
       ∑ i : ι, peterssonInner k (s i) f g :=
   setIntegral_iUnion_finite_aedisjoint s hm hd _ hint
-
-/-! ### Finite-family tile fundamental-domain bundle -/
 
 /-- A finite-family tile fundamental-domain bundle: a `Fintype`-indexed
 finite family `tile : ι → Set X` of pairwise AE-disjoint, null-measurable
@@ -1281,8 +1235,6 @@ theorem FiniteTileFundamentalDomain.peterssonInner_eq_sum
     (hint : IntegrableOn (fun τ ↦ petersson k f g τ) F.union μ_hyp) :
     peterssonInner k T f g = ∑ i : ι, peterssonInner k (F.tile i) f g :=
   F.setIntegral_eq_sum hint
-
-/-! ### Finite-family Petersson tile bridge from AE-equal unions -/
 
 /-- Shifting the integration domain by an `SL₂(ℤ)` matrix `γ` is equivalent to
 slashing both Petersson slots by `γ`:
