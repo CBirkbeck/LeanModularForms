@@ -1260,9 +1260,8 @@ lemma Newform.frickeMatrix_PSL_R_mul_self (N : ℕ) [NeZero N] :
         (GLPos_to_SLR (Newform.frickeMatrix_GLPos N) : PSL(2, ℝ)) =
       (((GLPos_to_SLR (Newform.frickeMatrix_GLPos N) *
           GLPos_to_SLR (Newform.frickeMatrix_GLPos N) :
-          SL(2, ℝ))) : PSL(2, ℝ)) from
-      (QuotientGroup.mk_mul _ _ _).symm]
-  rw [QuotientGroup.eq_one_iff, Matrix.SpecialLinearGroup.mem_center_iff]
+          SL(2, ℝ))) : PSL(2, ℝ)) from (QuotientGroup.mk_mul _ _ _).symm,
+    QuotientGroup.eq_one_iff, Matrix.SpecialLinearGroup.mem_center_iff]
   refine ⟨-1, ?_, ?_⟩
   · simp [Fintype.card_fin]
   · change Matrix.scalar (Fin 2) (-1) =
@@ -1285,13 +1284,13 @@ lemma Newform.frickeMatrix_PSL_R_conj_mem_imageGamma1_PSL_R
       imageGamma1_PSL_R N := by
   rw [← map_SL2Z_to_PSL2R_eq_imageGamma1_PSL_R] at hh
   obtain ⟨γ, hγ, hγeq⟩ := hh
-  rw [← hγeq]
-  rw [show Newform.frickeMatrix_PSL_R N * SL2Z_to_PSL2R γ *
+  rw [← hγeq,
+    show Newform.frickeMatrix_PSL_R N * SL2Z_to_PSL2R γ *
         (Newform.frickeMatrix_PSL_R N)⁻¹ =
       SL2Z_to_PSL2R (Newform.frickeConj N γ hγ) by
-    rw [Newform.frickeMatrix_PSL_R_mul_SL2Z_to_PSL2R_eq γ hγ,
-        mul_assoc, mul_inv_cancel, mul_one]]
-  rw [← map_SL2Z_to_PSL2R_eq_imageGamma1_PSL_R]
+      rw [Newform.frickeMatrix_PSL_R_mul_SL2Z_to_PSL2R_eq γ hγ,
+          mul_assoc, mul_inv_cancel, mul_one],
+    ← map_SL2Z_to_PSL2R_eq_imageGamma1_PSL_R]
   exact ⟨_, Newform.frickeConj_mem_Gamma1 N γ hγ, rfl⟩
 
 /-- `frickeMatrix_PSL_R N` lies in the normalizer of `imageGamma1_PSL_R N`. -/
