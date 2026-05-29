@@ -510,27 +510,18 @@ theorem Newform.tsum_term_lCoeff_stripped_pow_of_good_prime (f : Newform N k)
     ∑' (e : ℕ), LSeries.term f.lCoeff_stripped s (q ^ e) =
       (1 + (χ (ZMod.unitOfCoprime q hqN) : ℂ) * (q : ℂ) ^ (k - 1) *
         ((q : ℂ) ^ (-s)) ^ 2)⁻¹ := by
-  have hqe_cop : ∀ e, Nat.Coprime (q ^ e) N := fun e ↦ hqN.pow_left e
-  have h_strip_eq : ∀ e, f.lCoeff_stripped (q ^ e) = f.lCoeff (q ^ e) := by
-    intro e
+  have h_strip_eq : ∀ e, f.lCoeff_stripped (q ^ e) = f.lCoeff (q ^ e) := fun e ↦ by
     unfold Newform.lCoeff_stripped
-    exact if_pos (hqe_cop e)
-  have hq_pos : 0 < q := hq.pos
-  have h_cpow_swap : ∀ e : ℕ,
-      ((q : ℂ) ^ e) ^ (-s) = ((q : ℂ) ^ (-s)) ^ e := by
-    intro e
-    rw [← Complex.natCast_cpow_natCast_mul q e (-s),
-      show ((e : ℂ) * (-s)) = (-s) * (e : ℂ) from by ring,
-      Complex.cpow_mul_nat]
+    exact if_pos (hqN.pow_left e)
   have h_term : ∀ e, LSeries.term f.lCoeff_stripped s (q ^ e) =
       f.lCoeff (q ^ e) * ((q : ℂ) ^ (-s)) ^ e := by
     intro e
     rw [LSeries.term_def₀ f.lCoeff_stripped_zero, h_strip_eq e]
     push_cast
-    rw [h_cpow_swap e]
+    rw [← Complex.natCast_cpow_natCast_mul q e (-s),
+      show ((e : ℂ) * (-s)) = (-s) * (e : ℂ) from by ring, Complex.cpow_mul_nat]
   rw [tsum_congr h_term]
-  exact f.tsum_lCoeff_pow_mul_eq_eulerFactor χ hfχ hq hqN h_zero
-    ((q : ℂ) ^ (-s)) hs
+  exact f.tsum_lCoeff_pow_mul_eq_eulerFactor χ hfχ hq hqN h_zero ((q : ℂ) ^ (-s)) hs
 
 /-- **Identified local Euler factor** at a prime `p` for the
 `Newform.lCoeff_stripped` Dirichlet series under the bad-primes-zero
@@ -584,10 +575,8 @@ theorem Newform.lSeries_stripped_hasProd_eulerFactor
     by_cases h_S : (p : ℕ) ∈ S
     · rw [if_pos h_S]
     · rw [if_neg h_S]
-      have h_zero : f.lCoeff (p : ℕ) = 0 := h_bad _ p.prop hpN h_S
-      have h_geom_p := h_geom _ p.prop hpN h_S
       exact (f.tsum_term_lCoeff_stripped_pow_of_good_prime χ hfχ p.prop hpN
-        h_zero s h_geom_p).symm
+        (h_bad _ p.prop hpN h_S) s (h_geom _ p.prop hpN h_S)).symm
 
 /-- **Dirichlet character lift.**  The Newform character
 `χ : (ZMod N)ˣ →* ℂˣ` lifts to a Mathlib `DirichletCharacter ℂ N` via
@@ -607,15 +596,13 @@ is a finite-order unit in ℂ, hence a root of unity. -/
 lemma Newform.norm_chi_unit_eq_one [NeZero N] (χ : (ZMod N)ˣ →* ℂˣ)
     (a : (ZMod N)ˣ) :
     ‖((χ a : ℂˣ) : ℂ)‖ = 1 := by
-  haveI : Fintype ((ZMod N)ˣ) := inferInstance
   have h_pow : (χ a) ^ Fintype.card ((ZMod N)ˣ) = 1 := by
     rw [← map_pow]; convert map_one χ; exact pow_card_eq_one
-  have h_card_pos : 0 < Fintype.card ((ZMod N)ˣ) := Fintype.card_pos
   have h_pow_C : ((χ a : ℂˣ) : ℂ) ^ Fintype.card ((ZMod N)ˣ) = 1 := by
-    have : ((χ a : ℂˣ) : ℂ) ^ Fintype.card ((ZMod N)ˣ) =
-        (((χ a) ^ Fintype.card ((ZMod N)ˣ) : ℂˣ) : ℂ) := by push_cast; rfl
-    rw [this, h_pow, Units.val_one]
-  exact Complex.norm_eq_one_of_pow_eq_one h_pow_C h_card_pos.ne'
+    rw [show ((χ a : ℂˣ) : ℂ) ^ Fintype.card ((ZMod N)ˣ) =
+        (((χ a) ^ Fintype.card ((ZMod N)ˣ) : ℂˣ) : ℂ) from by push_cast; rfl,
+      h_pow, Units.val_one]
+  exact Complex.norm_eq_one_of_pow_eq_one h_pow_C Fintype.card_pos.ne'
 
 omit [NeZero N] in
 /-- **Geometric convergence of the good-prime Euler factor argument.**  For
@@ -629,20 +616,20 @@ lemma Newform.norm_eulerFactor_argument_lt_one [NeZero N]
       ((q : ℂ) ^ (-s)) ^ 2‖ < 1 := by
   have hq_pos : (0 : ℝ) < (q : ℝ) := by
     exact_mod_cast Nat.lt_of_lt_of_le (by norm_num : 0 < 2) hq
-  rw [norm_mul, norm_mul, norm_pow]
-  rw [Newform.norm_chi_unit_eq_one χ (ZMod.unitOfCoprime q hqN), one_mul]
-  rw [show ((q : ℂ) ^ (-s)) = ((q : ℝ) : ℂ) ^ (-s) from by push_cast; rfl,
-    Complex.norm_cpow_eq_rpow_re_of_pos hq_pos]
-  rw [show ((q : ℂ) ^ (k - 1)) = ((q : ℝ) : ℂ) ^ (k - 1) from by push_cast; rfl,
+  rw [norm_mul, norm_mul, norm_pow,
+    Newform.norm_chi_unit_eq_one χ (ZMod.unitOfCoprime q hqN), one_mul,
+    show ((q : ℂ) ^ (-s)) = ((q : ℝ) : ℂ) ^ (-s) from by push_cast; rfl,
+    Complex.norm_cpow_eq_rpow_re_of_pos hq_pos,
+    show ((q : ℂ) ^ (k - 1)) = ((q : ℝ) : ℂ) ^ (k - 1) from by push_cast; rfl,
     show (((q : ℝ) : ℂ) ^ (k - 1)) = ((q : ℝ) : ℂ) ^ ((k - 1 : ℤ) : ℂ) from by
       rw [Complex.cpow_intCast],
-    Complex.norm_cpow_eq_rpow_re_of_pos hq_pos]
-  rw [show (-s).re = -s.re from by simp,
-    show ((k - 1 : ℤ) : ℂ).re = (k - 1 : ℤ) from by simp]
-  rw [show (((q : ℝ) ^ (-s.re : ℝ)) ^ 2) = (q : ℝ) ^ ((-s.re) * 2) from by
-    rw [← Real.rpow_natCast ((q : ℝ) ^ (-s.re : ℝ)) 2, ← Real.rpow_mul hq_pos.le]
-    norm_num]
-  rw [← Real.rpow_add hq_pos,
+    Complex.norm_cpow_eq_rpow_re_of_pos hq_pos,
+    show (-s).re = -s.re from by simp,
+    show ((k - 1 : ℤ) : ℂ).re = (k - 1 : ℤ) from by simp,
+    show (((q : ℝ) ^ (-s.re : ℝ)) ^ 2) = (q : ℝ) ^ ((-s.re) * 2) from by
+      rw [← Real.rpow_natCast ((q : ℝ) ^ (-s.re : ℝ)) 2, ← Real.rpow_mul hq_pos.le]
+      norm_num,
+    ← Real.rpow_add hq_pos,
     show ((↑(k - 1 : ℤ) : ℝ) + (-s.re) * 2) = ((k : ℝ) - 1) - 2 * s.re from by
       push_cast; ring]
   exact Real.rpow_lt_one_of_one_lt_of_neg (by exact_mod_cast hq) (by linarith)
