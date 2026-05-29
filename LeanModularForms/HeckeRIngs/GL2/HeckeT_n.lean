@@ -93,7 +93,7 @@ private lemma zmod_mul_inv' {p : ℕ} [hp : Fact p.Prime] [NeZero p]
     (hp.out.coprime_iff_not_dvd.2 (fun h ↦ hne (Nat.eq_zero_of_dvd_of_lt h (ZMod.val_lt a)))).symm
   have vcz : ∀ x : ZMod p, (x.val : ZMod p) = x := fun x ↦ by rw [ZMod.natCast_val, ZMod.cast_id]
   conv_lhs => rw [show a = (a.val : ZMod p) from (vcz a).symm,
-    show ((a.val : ZMod p))⁻¹ = (((a.val : ZMod p)⁻¹).val : ZMod p) from (vcz _).symm]
+    show (a.val : ZMod p)⁻¹ = (((a.val : ZMod p)⁻¹).val : ZMod p) from (vcz _).symm]
   exact ZMod.mul_val_inv hcop
 
 /-- Two elements of `Fin p` whose values differ by a multiple of `p` are equal. -/
@@ -926,7 +926,7 @@ private lemma heckeT_p_comm_distinct_both_coprime [NeZero N] (k : ℤ) {p q : �
       (diamondOp k (ZMod.unitOfCoprime q hqN) f)) := by
     congr 1
     have h := LinearMap.congr_fun (diamondOp_unitOfCoprime_comm k hpN hqN) f
-    simp only [LinearMap.comp_apply] at h; exact h.symm
+    simpa only [LinearMap.comp_apply] using h.symm
   have hLC := T_p_lower_comm q p hq.pos hp.pos
   ext w
   simp only [heckeT_p_fun, Pi.add_apply]
@@ -1791,7 +1791,7 @@ private theorem heckeT_n_mul_aux_divisor_sum [NeZero N]
   case refine_2 =>
     exact ordCompl_mem_divisors_of_dvd_mul_pow hp hg'_pos hpc_pos hp_not_dvd_g'
       (hgcd_eq ▸ Nat.dvd_of_mem_divisors d.prop)
-  case refine_3 => intro a ha; exact Finset.mem_attach _ _
+  case refine_3 => exact fun _ _ ↦ Finset.mem_attach _ _
   case refine_4 =>
     intro ⟨d, hd⟩ _
     simp only [Finset.mem_product, Finset.mem_range, Finset.mem_attach, and_true]
