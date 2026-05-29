@@ -226,14 +226,12 @@ theorem Newform.frickeSlashCuspForm_levelInclude_cusp_mem_cuspFormsOldExtended
     (g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) :
     Newform.frickeSlashCuspForm (levelInclude_cusp hMN k g) ∈
       cuspFormsOldExtended N k := by
-  have hMN_copy : M ∣ N := hMN
-  obtain ⟨d, hd⟩ := hMN_copy
+  obtain ⟨d, hd⟩ := id hMN
   have hd_pos : 0 < d := by
     rcases Nat.eq_zero_or_pos d with hd_zero | hd_pos
-    · exfalso; rw [hd_zero, Nat.mul_zero] at hd
-      exact NeZero.ne N hd
+    · simp [hd_zero] at hd; exact absurd hd (NeZero.ne N)
     · exact hd_pos
-  haveI : NeZero d := ⟨Nat.pos_iff_ne_zero.mp hd_pos⟩
+  haveI : NeZero d := ⟨hd_pos.ne'⟩
   have hd_lt : 1 < d := by
     by_contra! h_le
     rw [le_antisymm h_le hd_pos, Nat.mul_one] at hd
@@ -556,18 +554,15 @@ theorem Newform.HasHeckeT_n_cusp_at_divN_PreservesCuspFormsOldExtended_proof
         refine Submodule.subset_span ?_
         exact ⟨M, d, inferInstance, inferInstance, hd, heq, _, rfl⟩
     · exact h_trivial M hMN hMltN g
-  · show heckeT_n_cusp k p (0 : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) ∈
+  · change heckeT_n_cusp k p (0 : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) ∈
       cuspFormsOldExtended N k
-    rw [heckeT_n_cusp_zero]
-    exact (cuspFormsOldExtended N k).zero_mem
+    rw [heckeT_n_cusp_zero]; exact (cuspFormsOldExtended N k).zero_mem
   · intros f₁ f₂ _ _ ih₁ ih₂
-    show heckeT_n_cusp k p (f₁ + f₂) ∈ cuspFormsOldExtended N k
-    rw [heckeT_n_cusp_add]
-    exact (cuspFormsOldExtended N k).add_mem ih₁ ih₂
+    change heckeT_n_cusp k p (f₁ + f₂) ∈ cuspFormsOldExtended N k
+    rw [heckeT_n_cusp_add]; exact (cuspFormsOldExtended N k).add_mem ih₁ ih₂
   · intros c f₁ _ ih
-    show heckeT_n_cusp k p (c • f₁) ∈ cuspFormsOldExtended N k
-    rw [heckeT_n_cusp_smul]
-    exact (cuspFormsOldExtended N k).smul_mem c ih
+    change heckeT_n_cusp k p (c • f₁) ∈ cuspFormsOldExtended N k
+    rw [heckeT_n_cusp_smul]; exact (cuspFormsOldExtended N k).smul_mem c ih
 
 /-- Named Prop for the `Coprime p M ∧ p * M = N` corner case of trivial-inclusion
 preservation. -/
@@ -1164,10 +1159,10 @@ theorem NewformExtended.heckeT_n_cusp_mem_cuspFormsNewExtended_of_bad_only_T170
     haveI : NeZero m := ⟨by omega⟩
     by_cases hm1 : m = 1
     · subst hm1
-      have h_eq : heckeT_n_cusp k 1 g = g :=
+      rw [show heckeT_n_cusp k 1 g = g from
         CuspForm.ext fun z ↦ by rw [show (heckeT_n_cusp k 1 g) z =
-          (heckeT_n k 1 g.toModularForm').toFun z from rfl, heckeT_n_one]; rfl
-      rw [h_eq]; exact hg
+          (heckeT_n k 1 g.toModularForm').toFun z from rfl, heckeT_n_one]; rfl]
+      exact hg
     · exact heckeT_n_cusp_mem_cuspFormsNewExtended_bad_only_step m (by omega)
         h_bad h_adj ih g hg
 
@@ -1207,15 +1202,14 @@ lemma Newform.frickeMatrix_mul_glMap_T_p_upper_mul_frickeMatrix_val
           Matrix (Fin 2) (Fin 2) ℝ) =
       (-(N : ℝ)) •
         (!![(p : ℝ), 0; -((N : ℝ) * b), 1] : Matrix (Fin 2) (Fin 2) ℝ) := by
-  rw [Newform.frickeMatrix_coe]
-  rw [show ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) :
-        Matrix (Fin 2) (Fin 2) ℝ) =
-      !![(1 : ℝ), (b : ℝ); 0, (p : ℝ)] by
-    show (T_p_upper p hp b : Matrix (Fin 2) (Fin 2) ℚ).map (algebraMap ℚ ℝ) =
-        !![(1 : ℝ), (b : ℝ); 0, (p : ℝ)]
-    rw [T_p_upper_coe]
-    ext i j
-    fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply]]
+  rw [Newform.frickeMatrix_coe,
+    show ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
+        !![(1 : ℝ), (b : ℝ); 0, (p : ℝ)] by
+      show (T_p_upper p hp b : Matrix (Fin 2) (Fin 2) ℚ).map (algebraMap ℚ ℝ) =
+          !![(1 : ℝ), (b : ℝ); 0, (p : ℝ)]
+      rw [T_p_upper_coe]
+      ext i j
+      fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply]]
   ext i j
   fin_cases i <;> fin_cases j <;>
     simp [Matrix.mul_apply, Fin.sum_univ_two, Matrix.smul_apply,
@@ -1229,14 +1223,14 @@ private lemma frickeMatrix_mul_glMap_T_p_upper_eq_mul_frickeMatrix
         ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
       (!![(p : ℝ), 0; -((N : ℝ) * b), 1] : Matrix (Fin 2) (Fin 2) ℝ) *
         ((Newform.frickeMatrix N : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) := by
-  rw [Newform.frickeMatrix_coe]
-  rw [show ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
-      !![(1 : ℝ), (b : ℝ); 0, (p : ℝ)] by
-    show (T_p_upper p hp b : Matrix (Fin 2) (Fin 2) ℚ).map (algebraMap ℚ ℝ) =
-        !![(1 : ℝ), (b : ℝ); 0, (p : ℝ)]
-    rw [T_p_upper_coe]
-    ext i j
-    fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply]]
+  rw [Newform.frickeMatrix_coe,
+    show ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
+        !![(1 : ℝ), (b : ℝ); 0, (p : ℝ)] by
+      show (T_p_upper p hp b : Matrix (Fin 2) (Fin 2) ℚ).map (algebraMap ℚ ℝ) =
+          !![(1 : ℝ), (b : ℝ); 0, (p : ℝ)]
+      rw [T_p_upper_coe]
+      ext i j
+      fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply]]
   ext i j
   fin_cases i <;> fin_cases j <;>
     simp [Matrix.mul_apply, Fin.sum_univ_two,
