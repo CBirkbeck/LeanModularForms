@@ -717,11 +717,11 @@ private lemma slash_diamond_outAt_Gamma1QuotEquiv_eq_slash_outAt
         GL (Fin 2) ℝ)) =
       (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) :
         UpperHalfPlane → ℂ) from
-    (coe_diamondOp_cusp_eq_slash_adjointGamma0Rep_inv p hp hpN f).symm]
-  rw [slash_Gamma1QuotEquiv_out_inv_eq_diamond_slash_out_inv_GL
-    (adjointGamma0Rep p N hpN)
-    (diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) q]
-  rw [adjointGamma0Rep_units p N hpN]
+    (coe_diamondOp_cusp_eq_slash_adjointGamma0Rep_inv p hp hpN f).symm,
+    slash_Gamma1QuotEquiv_out_inv_eq_diamond_slash_out_inv_GL
+      (adjointGamma0Rep p N hpN)
+      (diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) q,
+    adjointGamma0Rep_units p N hpN]
   congr 1
   rw [diamondOp_cusp_inv_diamondOp_cusp]
 
@@ -740,8 +740,7 @@ lemma slash_M_infty_eq_diamond_slash_T_p_lower_factor
         ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ)) := by
   have h := slash_diamond_inv_M_infty_eq_T_p_lower_epsilon p hp hpN q
     (diamondOp_cusp k (ZMod.unitOfCoprime p hpN) g)
-  rw [diamondOp_cusp_inv_diamondOp_cusp (ZMod.unitOfCoprime p hpN) g] at h
-  exact h
+  rwa [diamondOp_cusp_inv_diamondOp_cusp (ZMod.unitOfCoprime p hpN) g] at h
 
 open UpperHalfPlane ModularGroup MeasureTheory in
 lemma slash_T_p_upper_eq_diamond_slash_T_p_lower_factor
@@ -757,8 +756,7 @@ lemma slash_T_p_upper_eq_diamond_slash_T_p_lower_factor
         ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ)) := by
   have h := slash_diamond_inv_T_p_upper_eq_T_p_lower_delta p hp hpN b q
     (diamondOp_cusp k (ZMod.unitOfCoprime p hpN) g)
-  rw [diamondOp_cusp_inv_diamondOp_cusp (ZMod.unitOfCoprime p hpN) g] at h
-  exact h
+  rwa [diamondOp_cusp_inv_diamondOp_cusp (ZMod.unitOfCoprime p hpN) g] at h
 
 open UpperHalfPlane ModularGroup MeasureTheory in
 private lemma peterssonInner_diamond_inv_T_p_upper_eq_T_p_lower
@@ -3251,8 +3249,7 @@ private lemma sum_peterssonInner_diamond_inv_g_slot_eq_g_slash_sigma
   congr 1
   have h := slash_Gamma1QuotEquiv_out_inv_eq_diamond_slash_out_inv_GL
     (adjointGamma0Rep p N hpN) g q
-  rw [adjointGamma0Rep_units p N hpN] at h
-  exact h
+  rwa [adjointGamma0Rep_units p N hpN] at h
 
 open UpperHalfPlane ModularGroup MeasureTheory in
 /-- RHS rewrite for `h_α_canonical_form_of_balanced`: reindex the `diamond f`/`g`
