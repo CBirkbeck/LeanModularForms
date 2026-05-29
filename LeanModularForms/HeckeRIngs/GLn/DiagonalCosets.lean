@@ -173,15 +173,11 @@ lemma T_diag_eq_iff (a b : Fin n → ℕ) (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 <
     T_diag a = T_diag b ↔
     DoubleCoset.doubleCoset (diagMat n a : GL (Fin n) ℚ) (SLnZ_subgroup n) (SLnZ_subgroup n) =
     DoubleCoset.doubleCoset (diagMat n b : GL (Fin n) ℚ) (SLnZ_subgroup n) (SLnZ_subgroup n) := by
-  constructor
-  · intro h; have := congr_arg HeckeCoset.toSet h
-    simp only [T_diag, HeckeCoset.toSet_mk, diagMat_delta_val n a ha,
-      diagMat_delta_val n b hb] at this
-    exact this
-  · intro h
-    simp only [T_diag]
-    rw [HeckeCoset.eq_iff]
-    simp only [diagMat_delta_val n a ha, diagMat_delta_val n b hb]; exact h
+  refine ⟨fun h ↦ ?_, fun h ↦ ?_⟩
+  · simpa [T_diag, HeckeCoset.toSet_mk, diagMat_delta_val n a ha, diagMat_delta_val n b hb]
+      using congr_arg HeckeCoset.toSet h
+  · simp only [T_diag]; rw [HeckeCoset.eq_iff]
+    simpa only [diagMat_delta_val n a ha, diagMat_delta_val n b hb]
 
 end TDiag
 
@@ -308,9 +304,9 @@ private lemma exists_SL_diagonal_of_unit_diagonalization (A P Q : Matrix (Fin n)
   set d := fun i ↦ |a i| with hd_def
   have hd_pos : ∀ i, 0 < d i := fun i ↦ abs_pos.mpr (ha_ne i)
   set sv := fun i ↦ if (0 : ℤ) < a i then (1 : ℤ) else -1 with hsv_def
-  have hsv_sq : ∀ i, sv i * sv i = 1 := by intro i; simp only [hsv_def]; split_ifs <;> ring
-  have hsv_mul_d : ∀ i, sv i * d i = a i := by
-    intro i; simp only [hsv_def, hd_def]; rcases lt_trichotomy (a i) 0 with h | h | h
+  have hsv_sq : ∀ i, sv i * sv i = 1 := fun i ↦ by simp only [hsv_def]; split_ifs <;> ring
+  have hsv_mul_d : ∀ i, sv i * d i = a i := fun i ↦ by
+    simp only [hsv_def, hd_def]; rcases lt_trichotomy (a i) 0 with h | h | h
     · rw [if_neg (not_lt.mpr h.le), abs_of_neg h]; ring
     · exact absurd h (ha_ne i)
     · rw [if_pos h, abs_of_pos h, one_mul]
@@ -763,10 +759,9 @@ private lemma slSuccEmbed_mul_diagonal (k : ℕ) (d : Fin (k + 2) → ℤ)
       (slSuccEmbed R : Matrix _ _ ℤ) = Matrix.diagonal d_out := by
   intro d_out
   set e := fin1Sum (k + 1)
-  have he_inl : e.symm (Sum.inl (0 : Fin 1)) = (0 : Fin (k + 2)) := by
-    simp only [e]; exact fin1Sum_symm_inl (k + 1)
-  have he_inr : ∀ i : Fin (k + 1), e.symm (Sum.inr i) = ⟨i.val + 1, by omega⟩ := by
-    intro i; simp only [e]; exact fin1Sum_symm_inr (k + 1) i
+  have he_inl : e.symm (Sum.inl (0 : Fin 1)) = (0 : Fin (k + 2)) := fin1Sum_symm_inl (k + 1)
+  have he_inr : ∀ i : Fin (k + 1), e.symm (Sum.inr i) = ⟨i.val + 1, by omega⟩ :=
+    fin1Sum_symm_inr (k + 1)
   rw [show Matrix.diagonal d = (Matrix.diagonal (d ∘ e.symm)).submatrix e e
       from (diagonal_submatrix_fin1Sum (k + 1) d).symm]
   show (fromBlocks 1 0 0 (L : Matrix _ _ ℤ)).submatrix e e *
@@ -975,7 +970,7 @@ private lemma divChain_prod_dvd_of_injective {a : Fin n → ℕ} (hda : DivChain
       simp at this
     rw [Fin.prod_univ_castSucc, Fin.prod_univ_succAbove _ j₀, mul_comm (a (f j₀)) _]
     exact mul_dvd_mul (ih (by omega) (f ∘ j₀.succAbove)
-      (hf.comp Fin.succAbove_right_injective)) (divChain_dvd (n := n) hda (by exact hge))
+      (hf.comp Fin.succAbove_right_injective)) (divChain_dvd (n := n) hda hge)
 
 omit [NeZero n] in
 /-- One direction of the elementary-divisor product comparison: if `diag d = P · diag c · Q`
