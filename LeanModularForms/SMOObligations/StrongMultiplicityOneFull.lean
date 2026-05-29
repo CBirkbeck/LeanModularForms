@@ -62,12 +62,6 @@ namespace HeckeRing.GL2
 
 variable {N : ℕ} [NeZero N] {k : ℤ}
 
-/-! ## Lemma 4.5.15(1): `aₙ = a₁ · λₙ` for an un-normalised eigenform
-
-Gap #1.  The normalised case (`a₁ = 1 ⟹ aₙ = λₙ`) is `Newform.eigenvalue_eq_coeff`
-and `eigenvalue_eq_fourierCoeff_one`.  Here we need the un-normalised statement for an
-`Eigenform` whose leading coefficient need not be `1`. -/
-
 omit [NeZero N] in
 /-- Period-1 strict-period membership for `Γ₁(N)` (local copy of the building block used
 throughout the Fourier-coefficient API). -/
@@ -111,12 +105,6 @@ theorem Eigenform.coeff_eq_coeff_one_mul_eigenvalue
     exact qExpansion_one_coeff_one_smul_local g.toCuspForm _
   rw [← qExpansion_one_coeff_one_heckeT_n_cusp_eq_coeff n.val hn χ g.toCuspForm hgχ,
     h_lhs, mul_comm]
-
-/-! ## Lemma 4.6.11: a nonzero new eigenform has `a₁ ≠ 0`
-
-Gap #2.  Proof: if `a₁ = 0`, then `aₙ = 0` for all `(n,L)=1` by 4.5.15(1), so the form
-lies in the old space by Theorem 4.6.8; being also new and nonzero contradicts
-`cuspFormsOld_disjoint_cuspFormsNew`. -/
 
 /-- **Miyake Lemma 4.6.11** (`Eigenform`/`cuspFormsNew` form).  A nonzero common
 eigenfunction in the new subspace has nonvanishing leading Fourier coefficient.
@@ -195,12 +183,6 @@ theorem coeff_one_ne_zero_of_mem_cuspFormsNew_of_eigen_unconditional
       ((cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace (k := k) χ
         g.toCuspForm).mp (by convert hgχ using 1)) h_vanish) hg_new)
 
-/-! ## Lemma 4.6.2: `V_l` preserves common eigenfunctions and their eigenvalues
-
-Gap #3.  `levelRaise M l k` is Miyake's `V_l : f ↦ f(l·)`.  The Hecke commutation
-`heckeT_n_levelRaise_comm` already holds (`Newforms/LevelRaiseComm.lean`); this lemma is
-its eigenvalue corollary. -/
-
 /-- **Miyake Lemma 4.6.2** (eigenvalue-preservation form).  If `h` is a `T_n`-eigenform
 at level `M` with eigenvalue `λ` for some `(n, l*M) = 1`, then its level-raise
 `V_l h = h(l·)` is a `T_n`-eigenform at level `l*M` with the same eigenvalue. -/
@@ -213,11 +195,6 @@ theorem heckeT_n_levelRaise_eigen
     heckeT_n_cusp k n (heq ▸ levelRaise M l k h) = lam • (heq ▸ levelRaise M l k h) := by
   subst heq
   rw [heckeT_n_levelRaise_comm n hn M l rfl h, h_eig, map_smul]
-
-/-! ## Lemma 4.6.9: the character-refined old space `S_k^♭(N,χ)`  — API GAP #4
-
-This is the structurally hardest part.  Miyake's old space is **not** the project's
-`cuspFormsOld N k`; it is the χ-refined, new-subspace-based span below. -/
 
 /-- **Miyake's old space** `S_k^♭(N,χ)` (p. 162): the submodule of `cuspFormCharSpace k χ`
 spanned by `V_l`-images of the **new** subspaces at proper divisor levels `M` that are
@@ -256,14 +233,6 @@ theorem cuspFormsOldChar_eq_bot_of_conductor_eq
   rw [hcond, cuspFormsOldChar, Submodule.span_eq_bot]
   rintro f ⟨M, l, _, _, hMdvd, hMne, heq, g, -, rfl⟩
   exact absurd (Nat.dvd_antisymm hMdvd ⟨l, by rw [← heq, Nat.mul_comm]⟩).symm hMne
-
-/-! ## New eigenform decomposition (spectral input for step (i))
-
-Every **new** cusp form lying in a Nebentypus space `S_k(Γ₁(N),χ)` is a finite sum of
-common Hecke eigenforms that are **themselves new**.  This is the spectral input consumed
-by Theorem 4.6.12's descent: T008 `span_induction`s over the `cuspFormsOldChar`
-generators `Vₗ(g)`, applies this lemma per generator `g`, and `Vₗ`-distributes the
-resulting eigenforms via Lemma 4.6.2 (`heckeT_n_levelRaise_eigen`). -/
 
 /-- **New eigenbasis decomposition.**  A new cusp form `g ∈ S_k^♯(N)` whose underlying
 modular form lies in the Nebentypus space `M_k(Γ₁(N),χ)` is a finite sum of common Hecke
@@ -493,32 +462,6 @@ theorem cuspFormsOldChar_le_cuspFormsOld
       · exact absurd (by simpa using heq) hMne
   exact Submodule.subset_span ⟨M, l, hM, hl, hl1, heq, g, rfl⟩
 
-/-! ## Gap #4, reverse inclusion (T012): `cuspFormsOld ⊓ charSpace χ ≤ cuspFormsOldChar`
-
-This is the **Atkin–Lehner–Li** new/old structure theorem: the project's
-character-agnostic Diamond–Shurman old space, intersected with the `χ`-Nebentypus space,
-sits inside Miyake's `χ`-refined old space `S_k^♭(N,χ)`.  Together with the proven forward
-`cuspFormsOldChar_le_cuspFormsOld` it makes `strongMultiplicityOne_constMul` unconditional.
-
-Proof strategy (two phases):
-
-* **Phase 1 (character-agnostic recursion).**  `cuspFormsOld N k ≤ oldNewGenSpan N k`, where
-  `oldNewGenSpan` is spanned by `V_l`-images of the **new** spaces at proper divisor levels.
-  By strong induction on `N`: each generator `V_d(g)` splits as `V_d(oldPart g) + V_d(newPart g)`;
-  the new piece is directly a generator, the old piece descends by the induction hypothesis at
-  level `M = N/d < N` and folds back via level-raise associativity `V_d ∘ V_e = V_{d·e}`
-  (`levelRaise_levelRaise`, Diamond–Shurman §5.6 Exercise 5.6.2 / Miyake 4.6.8 induction engine).
-
-* **Phase 2 (the character).**  Refine the generators to be `χ`-homogeneous at the source
-  (`oldNewGenSpan ≤ oldNewGenCharSpan`), then expand `f = Σ c_i · V_{l_i}(g_i)` with each
-  `g_i ∈ cuspFormsNew M_i ⊓ S_k(Γ₁(M_i), ψ_i)`.  Each summand lies in the level-`N` character
-  space `S_k(Γ₁(N), ψ_i∘unitsMap)`, so by character-space independence
-  (`CuspForm_Gamma1_iSupIndep_charSpace`) the pieces with `ψ_i∘unitsMap ≠ χ` vanish in the sum.
-  For a surviving piece, `χ` factors through `M_i`, forcing `m_χ = χ.conductor ∣ M_i`
-  (Miyake 4.6.4 / `DirichletCharacter.conductor_dvd_of_mem_conductorSet`); hence each surviving
-  `V_{l_i}(g_i)` is a generator of `cuspFormsOldChar` (`levelRaise_cuspFormsNew_le_cuspFormsOldChar`,
-  Miyake 4.6.9(2)). -/
-
 /-- Phase 1 target: the character-agnostic span of `V_l`-images of the **new** spaces at proper
 divisor levels.  The recursive normal form of `cuspFormsOld` (Diamond–Shurman §5.6). -/
 private noncomputable def oldNewGenSpan (N : ℕ) [NeZero N] (k : ℤ) :
@@ -740,12 +683,6 @@ theorem cuspFormsOld_inf_charSpace_le_cuspFormsOldChar
   refine le_trans (inf_le_inf_right _ (oldNewGenSpan_le_oldNewGenCharSpan N k)) ?_
   exact oldNewGenCharSpan_inf_charSpace_le_cuspFormsOldChar N k χ
 
-/-! ## Linear independence of distinct-eigenvalue eigenforms (step (i) helper)
-
-Public restatement of the orthogonality fact `eigenforms_orthogonal_of_ne_eigenvalues`
-(currently `private` in `AdjointTheoryPetersson.lean`), used to drop the
-wrong-eigenvalue summands in 4.6.9(3)'s decomposition. -/
-
 /-- Two nonzero common eigenfunctions in the same Nebentypus space with **different**
 `T_n`-eigenvalues at some `(n,N)=1` are Petersson-orthogonal (hence linearly
 independent).  Public form of `eigenforms_orthogonal_of_ne_eigenvalues`. -/
@@ -761,17 +698,6 @@ theorem petN_eq_zero_of_ne_eigenvalues
     petN f g = 0 :=
   eigenforms_orthogonal_of_ne_eigenvalues χ hf_char hg_char hf_ne hg_ne hn hf_eig hg_eig
     h_diff_ab
-
-/-! ## Lemma 4.6.10: old/new subspaces (hence the projections) are Hecke-stable
-
-Miyake Lemma 4.6.10 — the old and new subspaces are stable under `T(n)` and the diamond
-operators (`heckeT_n_preserves_cuspFormsOld`/`…cuspFormsNew`,
-`diamondOp_preserves_cuspFormsOld`/`…cuspFormsNew`).  Consequently the projections
-`oldPart`/`newPart` (along the orthogonal `IsCompl`) **commute** with `T(n)` and the diamond
-operators, and they preserve every Nebentypus character space.  This makes the projection of
-an eigenform an eigenform with the same eigenvalues — the structural input that lets
-Theorem 4.6.12 feed `oldPart g`/`newPart g` into the new-part (T004) and old-part (T010)
-arguments. -/
 
 /-- The old projection commutes with `T(n)` for `(n,N)=1` (Miyake 4.6.10). -/
 theorem oldPart_heckeT_n_cusp_comm
@@ -847,16 +773,6 @@ theorem newPart_isEigen_of_eigenform
       zero_add]
   rw [← hcomm, g.isEigen n hn]
   exact map_smul _ _ _
-
-/-! ## Step: the new part equals `b₁ • f`
-
-Close to the existing same-level uniqueness, but stated for an *un-normalised* new
-eigenform `g_new`.  Since `g_new ∈ cuspFormsNew` (the classical newspace) need not lie in
-`cuspFormsNewExtended`, it cannot be packaged as a (now-genuine) `Newform`; the argument
-therefore proceeds by *direct disjointness* (`mainLemma_charSpace_routeB` + new∩old=0),
-mirroring `newform_unique_routeB`.  The eigenvalue agreement off the finite set `S` is
-upgraded to *all* coprime indices via Hecke multiplicativity (Miyake 4.6.13), with
-`g_new`'s eigenvalue facts derived from the renormalised form `b₁⁻¹ • g_new`. -/
 
 private theorem coeff_smul_inv_eq_eigenvalue
     (g_new : Eigenform N k) (χ : (ZMod N)ˣ →* ℂˣ)
@@ -1015,15 +931,6 @@ private theorem eigenvalues_eq_all_coprime_of_eq_off_finite_eigenform
           (Nat.Coprime.mul_left hn hq_N) hnq_notin_S)
   · exact hyp n hn hn_S
 
-/-! ### Cross-level eigenvalue upgrade (for the descended summand `h` of level `M ∣ N`)
-
-For Theorem 4.6.12 step (ii) the eigenvalue agreement off `S` must be upgraded to all
-coprime indices, comparing a level-`N` `Newform f` (Nebentypus `χ`) with the descended
-level-`M` matching summand `h` (Nebentypus `ψ`, `ψ ∘ unitsMap = χ`).  The same-level
-upgrade `eigenvalues_eq_all_coprime_of_eq_off_finite_eigenform` does not apply; we redo
-the multiplicativity bootstrap with the second form at its own level `M`, using the
-character compatibility `χ(q) = ψ(q)` at indices `q` coprime to `N`. -/
-
 omit [NeZero N] in
 private theorem char_comp_unitsMap_unitOfCoprime
     {M : ℕ} [NeZero M] {q : ℕ} (hMN : M ∣ N) (χ : (ZMod N)ˣ →* ℂˣ)
@@ -1161,10 +1068,6 @@ theorem newPart_eq_smul_of_shared_eigenvalues
     have hkey : g₁ = f.toCuspForm :=
       sub_eq_zero.mp (Submodule.disjoint_def.mp cuspFormsOld_disjoint_cuspFormsNew _ h_old h_new)
     rw [← hkey, hg₁_def, smul_smul, mul_inv_cancel₀ hb₁_ne, one_smul]
-
-/-! ## Step: the old part is zero (the descent argument, steps (i)+(ii))
-
-This is where gap #4 (4.6.9) and gap #3 (4.6.2) are consumed. -/
 
 /-- A nonzero `Newform` at level `N` does not lie in the extended old space
 `cuspFormsOldExtended N k`. -/
@@ -1372,8 +1275,6 @@ theorem oldPart_eq_zero_of_shared_eigenvalues
   rw [hf0, show (⇑(0 : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : UpperHalfPlane → ℂ) =
       (0 : UpperHalfPlane → ℂ) from rfl, qExpansion_zero] at h1
   simp at h1
-
-/-! ## Theorem 4.6.12: assembly -/
 
 /-- **Miyake Theorem 4.6.12 (Strong Multiplicity One, full constant-multiple form).**
 If `f` is a normalised `Newform` at level `N` with Nebentypus `χ` and `g` is a common
