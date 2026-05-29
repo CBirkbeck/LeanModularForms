@@ -356,10 +356,10 @@ lemma Θ₂_MDifferentiable : MDiff Θ₂ := by
     ((differentiableAt_id.const_mul ((π : ℂ) * I / 4)).cexp).mul
       (differentiableAt_jacobiTheta₂_half τ)
   have hMD := hΘ₂_diff.mdifferentiableAt.comp τ τ.mdifferentiable_coe
-  have : (fun t : ℂ ↦ cexp ((π * I / 4) * t) * jacobiTheta₂ (t / 2) t) ∘
+  have heq : (fun t : ℂ ↦ cexp ((π * I / 4) * t) * jacobiTheta₂ (t / 2) t) ∘
       UpperHalfPlane.coe = Θ₂ := by
     ext x; simp only [Function.comp_apply, Θ₂_as_jacobiTheta₂]; ring_nf
-  rwa [this] at hMD
+  rwa [heq] at hMD
 
 end H_MDifferentiable
 
@@ -369,8 +369,7 @@ variable (γ : SL(2, ℤ))
 
 lemma jacobiTheta₂_term_half_apply (n : ℤ) (z : ℂ) :
     jacobiTheta₂_term n (z / 2) z = cexp (π * I * (n ^ 2 + n) * z) := by
-  rw [jacobiTheta₂_term]
-  ring_nf
+  rw [jacobiTheta₂_term]; ring_nf
 
 lemma jacobiTheta₂_rel_aux (n : ℤ) (t : ℝ) :
     rexp (-π * (n + 1 / 2) ^ 2 * t)
@@ -439,7 +438,7 @@ theorem isBoundedAtImInfty_H₂ : IsBoundedAtImInfty H₂ := by
     rw [summable_jacobiTheta₂_term_iff]
     simp
 
--- We isolate this lemma out as it's also used in the proof for Θ₄
+/-- Auxiliary bound for `‖Θ₃_term‖` used in `isBoundedAtImInfty_H₃` and `isBoundedAtImInfty_H₄`. -/
 lemma isBoundedAtImInfty_H₃_aux (z : ℍ) (hz : 1 ≤ z.im) :
     ∑' (n : ℤ), ‖Θ₃_term n z‖ ≤ ∑' (n : ℤ), rexp (-π * n ^ 2) := by
   have h_rw (z : ℍ) (n : ℤ) : -(π * n ^ 2 * z : ℂ).im = -π * n ^ 2 * z.im := by
@@ -471,7 +470,6 @@ theorem isBoundedAtImInfty_H₃ : IsBoundedAtImInfty H₃ := by
   intro z hz
   rw [norm_pow]
   gcongr
-  -- rw [← ]
   apply (norm_tsum_le_tsum_norm ?_).trans (isBoundedAtImInfty_H₃_aux z hz)
   simp_rw [Θ₃_term_as_jacobiTheta₂_term]
   apply Summable.norm
@@ -576,13 +574,12 @@ noncomputable def H₄_MF : ModularForm (Γ 2) 2 := {
 
 section JacobiIdentity
 
-/-- The difference g := H₂ + H₄ - H₃ -/
+/-- The difference `g := H₂ + H₄ - H₃`. -/
 noncomputable def jacobi_g : ℍ → ℂ := H₂ + H₄ - H₃
 
-/-- The squared difference f := g² -/
+/-- The squared difference `f := g²`. -/
 noncomputable def jacobi_f : ℍ → ℂ := jacobi_g ^ 2
 
-/-- S-action on g: g|[2]S = -g -/
 lemma jacobi_g_S_action : (jacobi_g ∣[(2 : ℤ)] S) = -jacobi_g := by
   change ((H₂ + H₄ - H₃) ∣[(2 : ℤ)] S) = -(H₂ + H₄ - H₃)
   simp only [sub_eq_add_neg, SlashAction.add_slash, SlashAction.neg_slash,
@@ -591,7 +588,6 @@ lemma jacobi_g_S_action : (jacobi_g ∣[(2 : ℤ)] S) = -jacobi_g := by
   simp only [Pi.add_apply, Pi.neg_apply]
   ring
 
-/-- T-action on g: g|[2]T = -g -/
 lemma jacobi_g_T_action : (jacobi_g ∣[(2 : ℤ)] T) = -jacobi_g := by
   change ((H₂ + H₄ - H₃) ∣[(2 : ℤ)] T) = -(H₂ + H₄ - H₃)
   simp only [sub_eq_add_neg, SlashAction.add_slash, SlashAction.neg_slash,
@@ -600,42 +596,32 @@ lemma jacobi_g_T_action : (jacobi_g ∣[(2 : ℤ)] T) = -jacobi_g := by
   simp only [Pi.add_apply, Pi.neg_apply]
   ring
 
-/-- Rewrite jacobi_f as a pointwise product -/
 lemma jacobi_f_eq_mul : jacobi_f = jacobi_g * jacobi_g := by
-  ext
-  simp [jacobi_f, sq]
+  ext; simp [jacobi_f, sq]
 
-/-- S-invariance of f: f|[4]S = f, because g|[2]S = -g. -/
 lemma jacobi_f_S_action : (jacobi_f ∣[(4 : ℤ)] S) = jacobi_f := by
-  -- simp only needed: lemmas must be applied in order (not a terminal simp)
   simp only [jacobi_f_eq_mul, show (4 : ℤ) = 2 + 2 by norm_num,
     mul_slash_SL2 2 2 S _ _, jacobi_g_S_action, neg_mul_neg]
 
-/-- T-invariance of f: f|[4]T = f, because g|[2]T = -g. -/
 lemma jacobi_f_T_action : (jacobi_f ∣[(4 : ℤ)] T) = jacobi_f := by
-  -- simp only needed: lemmas must be applied in order (not a terminal simp)
   simp only [jacobi_f_eq_mul, show (4 : ℤ) = 2 + 2 by norm_num,
     mul_slash_SL2 2 2 T _ _, jacobi_g_T_action, neg_mul_neg]
 
-/-- Full SL₂(ℤ) invariance of f with weight 4 -/
-lemma jacobi_f_SL2Z_invariant : ∀ γ : SL(2, ℤ), jacobi_f ∣[(4 : ℤ)] γ = jacobi_f :=
-  slashaction_generators_SL2Z jacobi_f 4 jacobi_f_S_action jacobi_f_T_action
+lemma jacobi_f_SL2Z_invariant (γ : SL(2, ℤ)) : jacobi_f ∣[(4 : ℤ)] γ = jacobi_f :=
+  slashaction_generators_SL2Z jacobi_f 4 jacobi_f_S_action jacobi_f_T_action γ
 
-/-- jacobi_f as a SlashInvariantForm of weight 4 and level Γ(1) -/
+/-- `jacobi_f` as a `SlashInvariantForm` of weight `4` and level `Γ(1)`. -/
 noncomputable def jacobi_f_SIF : SlashInvariantForm (CongruenceSubgroup.Gamma 1) 4 where
   toFun := jacobi_f
   slash_action_eq' := slashaction_generators_GL2R jacobi_f 4 jacobi_f_S_action jacobi_f_T_action
 
-/-- jacobi_g is holomorphic (MDifferentiable) since H₂, H₃, H₄ are -/
 lemma jacobi_g_MDifferentiable : MDiff jacobi_g := by unfold jacobi_g; fun_prop
 
-/-- jacobi_f is holomorphic (MDifferentiable) since jacobi_g is -/
 lemma jacobi_f_MDifferentiable : MDiff jacobi_f := by
   unfold jacobi_f
   have _ := jacobi_g_MDifferentiable
   fun_prop
 
-/-- jacobi_f_SIF is holomorphic -/
 lemma jacobi_f_SIF_MDifferentiable : MDiff jacobi_f_SIF := jacobi_f_MDifferentiable
 
 end JacobiIdentity
@@ -821,17 +807,17 @@ private noncomputable def jacobi_f_CF : CuspForm (Γ 1) 4 :=
   cuspFormOfSIFTendstoZero jacobi_f_SIF jacobi_f_SIF_MDifferentiable
     jacobi_f_tendsto_atImInfty
 
-/-- jacobi_f = 0 by dimension argument: weight-4 cusp forms vanish. -/
+/-- `jacobi_f = 0` by the dimension argument: weight-`4` cusp forms vanish. -/
 theorem jacobi_f_eq_zero : jacobi_f = 0 :=
   congr_arg (·.toFun)
     (rank_zero_iff_forall_zero.mp (cuspform_weight_lt_12_zero 4 (by norm_num)) jacobi_f_CF)
 
-/-- jacobi_g = 0 as a function (from g² = 0) -/
+/-- `jacobi_g = 0` as a function (from `g² = 0`). -/
 theorem jacobi_g_eq_zero : jacobi_g = 0 := by
   ext z
   simpa [jacobi_f] using congr_fun jacobi_f_eq_zero z
 
-/-- Jacobi identity: H₂ + H₄ = H₃ (Blueprint Lemma 6.41) -/
+/-- Jacobi identity: `H₂ + H₄ = H₃` (Blueprint Lemma 6.41). -/
 theorem jacobi_identity : H₂ + H₄ = H₃ := by
   ext z; simpa [jacobi_g, sub_eq_zero] using congr_fun jacobi_g_eq_zero z
 
@@ -894,8 +880,7 @@ private lemma finrank_cuspform_12 :
     Module.finrank ℂ (CuspForm (CongruenceSubgroup.Gamma 1) 12) = 1 := by
   apply Module.finrank_eq_of_rank_eq
   rw [LinearEquiv.rank_eq (CuspForms_iso_Modforms 12)]
-  simp
-  exact ModularForm.levelOne_weight_zero_rank_one
+  simpa using ModularForm.levelOne_weight_zero_rank_one
 
 private lemma theta_prod_sq_proportional :
     ∃ c : ℂ, c • Delta = theta_prod_sq_CF :=
@@ -964,7 +949,7 @@ lemma Delta_eq_H₂_H₃_H₄ (τ : ℍ) :
 
 section ImagAxisProperties
 
-/-- Each term Θ₂_term n (I*t) has zero imaginary part for t > 0. -/
+/-- Each term `Θ₂_term n (I*t)` has zero imaginary part for `t > 0`. -/
 lemma Θ₂_term_imag_axis_real (n : ℤ) (t : ℝ) (ht : 0 < t) :
     (Θ₂_term n ⟨I * t, by simp [ht]⟩).im = 0 := by
   unfold Θ₂_term
@@ -979,14 +964,13 @@ lemma Θ₂_term_imag_axis_real (n : ℤ) (t : ℝ) (ht : 0 < t) :
   rw [hexpr]
   exact exp_ofReal_im _
 
-/-- `im` distributes over tsum when each term has zero imaginary part. -/
+/-- `im` distributes over `tsum` when each term has zero imaginary part. -/
 lemma Complex.im_tsum_eq_zero_of_im_eq_zero (f : ℤ → ℂ)
     (hf : Summable f) (him : ∀ n, (f n).im = 0) :
     (∑' n : ℤ, f n).im = 0 := by
-  rw [Complex.im_tsum hf]
-  simp [him]
+  rw [Complex.im_tsum hf]; simp [him]
 
-/-- Θ₂(I*t) has zero imaginary part for t > 0. -/
+/-- `Θ₂(I*t)` has zero imaginary part for `t > 0`. -/
 lemma Θ₂_imag_axis_real (t : ℝ) (ht : 0 < t) :
     (Θ₂ ⟨I * t, by simp [ht]⟩).im = 0 := by
   unfold Θ₂
@@ -996,15 +980,13 @@ lemma Θ₂_imag_axis_real (t : ℝ) (ht : 0 < t) :
     apply Summable.mul_left
     rw [summable_jacobiTheta₂_term_iff]
     exact z.im_pos
-  apply Complex.im_tsum_eq_zero_of_im_eq_zero _ hsum
-  intro n
-  exact Θ₂_term_imag_axis_real n t ht
+  exact Complex.im_tsum_eq_zero_of_im_eq_zero _ hsum fun n ↦ Θ₂_term_imag_axis_real n t ht
 
-/-- `(-1 : ℂ)^n` has zero imaginary part for any integer n. -/
+/-- `(-1 : ℂ)^n` has zero imaginary part for any integer `n`. -/
 lemma neg_one_zpow_im_eq_zero (n : ℤ) : ((-1 : ℂ) ^ n).im = 0 := by
   rcases Int.even_or_odd n with hn | hn <;> (rw [hn.neg_one_zpow]; simp)
 
-/-- Each term Θ₄_term n (I*t) has zero imaginary part for t > 0. -/
+/-- Each term `Θ₄_term n (I*t)` has zero imaginary part for `t > 0`. -/
 lemma Θ₄_term_imag_axis_real (n : ℤ) (t : ℝ) (ht : 0 < t) :
     (Θ₄_term n ⟨I * t, by simp [ht]⟩).im = 0 := by
   unfold Θ₄_term
@@ -1020,7 +1002,7 @@ lemma Θ₄_term_imag_axis_real (n : ℤ) (t : ℝ) (ht : 0 < t) :
   simp only [Complex.mul_im, neg_one_zpow_im_eq_zero n, exp_ofReal_im,
     mul_zero, zero_mul, add_zero]
 
-/-- Θ₄(I*t) has zero imaginary part for t > 0. -/
+/-- `Θ₄(I*t)` has zero imaginary part for `t > 0`. -/
 lemma Θ₄_imag_axis_real (t : ℝ) (ht : 0 < t) :
     (Θ₄ ⟨I * t, by simp [ht]⟩).im = 0 := by
   unfold Θ₄
@@ -1029,9 +1011,7 @@ lemma Θ₄_imag_axis_real (t : ℝ) (ht : 0 < t) :
     simp_rw [Θ₄_term_as_jacobiTheta₂_term]
     rw [summable_jacobiTheta₂_term_iff]
     exact z.im_pos
-  apply Complex.im_tsum_eq_zero_of_im_eq_zero _ hsum
-  intro n
-  exact Θ₄_term_imag_axis_real n t ht
+  exact Complex.im_tsum_eq_zero_of_im_eq_zero _ hsum fun n ↦ Θ₄_term_imag_axis_real n t ht
 
 /-- `H₂(it)` is real for all `t > 0`: `H₂ = Θ₂^4` where `Θ₂(it) = ∑ₙ exp(-π(n+1/2)²t)`
 is a sum of real exponentials. -/
@@ -1041,7 +1021,7 @@ theorem H₂_imag_axis_real : ResToImagAxis.Real H₂ := by
   simp only [Function.resToImagAxis, ResToImagAxis, ht, ↓reduceDIte, H₂]
   exact Complex.im_pow_eq_zero_of_im_eq_zero (Θ₂_imag_axis_real t ht) 4
 
-/-- Each term Θ₂_term n (I*t) has positive real part equal to exp(-π(n+1/2)²t) for t > 0. -/
+/-- Each term `Θ₂_term n (I*t)` has positive real part `exp(-π(n+1/2)²t)` for `t > 0`. -/
 lemma Θ₂_term_imag_axis_re (n : ℤ) (t : ℝ) (ht : 0 < t) :
     (Θ₂_term n ⟨I * t, by simp [ht]⟩).re =
       Real.exp (-Real.pi * ((n : ℝ) + 1/2) ^ 2 * t) := by
@@ -1054,15 +1034,13 @@ lemma Θ₂_term_imag_axis_re (n : ℤ) (t : ℝ) (ht : 0 < t) :
     ring_nf
     simp only [hI]
     ring
-  rw [hexpr]
-  rw [Complex.exp_ofReal_re]
+  rw [hexpr, Complex.exp_ofReal_re]
   ring_nf
 
-/-- Each term Θ₂_term n (I*t) has positive real part for t > 0. -/
+/-- Each term `Θ₂_term n (I*t)` has positive real part for `t > 0`. -/
 lemma Θ₂_term_imag_axis_re_pos (n : ℤ) (t : ℝ) (ht : 0 < t) :
     0 < (Θ₂_term n ⟨I * t, by simp [ht]⟩).re := by
-  rw [Θ₂_term_imag_axis_re n t ht]
-  exact Real.exp_pos _
+  rw [Θ₂_term_imag_axis_re n t ht]; exact Real.exp_pos _
 
 /-- `Θ₂(I*t)` has positive real part for `t > 0`. -/
 lemma Θ₂_imag_axis_re_pos (t : ℝ) (ht : 0 < t) :
