@@ -779,7 +779,7 @@ private lemma prod_cons_one_erase_succ_mul {k : ℕ} (d : Fin (k + 1) → ℕ)
   have h := Finset.mul_prod_erase (Finset.univ : Finset (Fin (k + 2)))
     (fun x : Fin (k + 2) ↦ (((Fin.cons 1 d : Fin (k + 2) → ℕ) x : ℕ) : ℤ))
     (Finset.mem_univ r.succ)
-  simp only at h
+  beta_reduce at h
   have h_full :
       ∏ x : Fin (k + 2), (((Fin.cons 1 d : Fin (k + 2) → ℕ) x : ℕ) : ℤ) =
       ∏ q : Fin (k + 1), (d q : ℤ) := by
@@ -915,7 +915,7 @@ lemma hfib_col_div_b_via_i_block_explicit {k : ℕ}
       one_pow, mul_one, one_mul] using h
   have h_mul_b_r := congr_arg (· * (b r : ℤ))
     (adj_rearr_col0_entry a b c (N_i⁻¹ * toSL j.out) σ_i ν r h_adj)
-  simp only at h_mul_b_r
+  beta_reduce at h_mul_b_r
   have h_LHS_b :
       (∏ q : Fin (k + 1), (a q : ℤ)) *
           ((∏ x ∈ Finset.univ.erase r.succ,
