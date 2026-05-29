@@ -54,8 +54,7 @@ private lemma glMap_T_p_upper_det_pos (p : ℕ) (hp : 0 < p) (b : ℕ) :
   rw [show ((T_p_upper p hp b : GL (Fin 2) ℚ).val).det = (p : ℚ) by
     simp [T_p_upper, Matrix.GeneralLinearGroup.mkOfDetNeZero,
       Matrix.det_fin_two, Matrix.of_apply]]
-  show 0 < (algebraMap ℚ ℝ) ((p : ℚ))
-  rw [show (algebraMap ℚ ℝ) ((p : ℚ)) = ((p : ℚ) : ℝ) from rfl]
+  change 0 < ((p : ℚ) : ℝ)
   exact_mod_cast hp
 
 private lemma glMap_T_p_upper_mul_mapGL_det_pos
@@ -70,9 +69,8 @@ private lemma glMap_T_p_upper_mul_mapGL_det_pos
 
 private lemma det_val_inv_pos {α : GL (Fin 2) ℝ} (hα : 0 < α.det.val) :
     0 < (α⁻¹ : GL (Fin 2) ℝ).det.val := by
-  show 0 < (((α⁻¹).det : ℝˣ) : ℝ)
-  rw [show ((α⁻¹ : GL (Fin 2) ℝ)).det = α.det⁻¹ from map_inv _ _,
-    Units.val_inv_eq_inv_val]
+  change 0 < (((α⁻¹).det : ℝˣ) : ℝ)
+  rw [map_inv, Units.val_inv_eq_inv_val]
   exact inv_pos.mpr hα
 
 private lemma psl_mk_conj_ne_one (q x : SL(2, ℤ))
@@ -725,8 +723,7 @@ theorem integrableOn_petersson_cuspform_mixed_slash_on_fd
         norm_nonneg (⇑g_tr τ), h_im_nn]
     linarith [hC_f τ, hC_g τ]
   refine IntegrableOn.of_bound hyperbolicMeasure_fd_lt_top ?_ ((C_f + C_g) / 2) ?_
-  ·
-    refine ((petersson_continuous k (ModularFormClass.continuous f)
+  · refine ((petersson_continuous k (ModularFormClass.continuous f)
       ?_).comp (continuous_const_smul δ)).aestronglyMeasurable.restrict
     rw [← h_gtr_coe]
     exact ModularFormClass.continuous g_tr
@@ -875,8 +872,8 @@ theorem peterssonInner_sum_slash_adjoint_constantRHS
       (⋃ i ∈ s, (α i) • D) μ_hyp) :
     peterssonInner k D (∑ i ∈ s, f ∣[k] α i) g =
       peterssonInner k (⋃ i ∈ s, (α i) • D) f g' := by
-  rw [peterssonInner_sum_slash_adjoint s α hα D f g h_int]
-  rw [peterssonInner_biUnion_finset_ae s hm hd f g' hfi]
+  rw [peterssonInner_sum_slash_adjoint s α hα D f g h_int,
+    peterssonInner_biUnion_finset_ae s hm hd f g' hfi]
   exact Finset.sum_congr rfl fun i hi ↦ by rw [hadj i hi]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
@@ -936,10 +933,8 @@ private lemma integrableOn_petersson_slash_of_adj_image
     funext fun τ ↦ petersson_symm k f g' τ
   rw [h_symm_fn]
   refine ⟨?_, ?_⟩
-  ·
-    exact Complex.continuous_conj.comp_aestronglyMeasurable hfi.aestronglyMeasurable
-  ·
-    have h_finite := hfi.2
+  · exact Complex.continuous_conj.comp_aestronglyMeasurable hfi.aestronglyMeasurable
+  · have h_finite := hfi.2
     show HasFiniteIntegral _ _
     unfold HasFiniteIntegral at h_finite ⊢
     refine lt_of_le_of_lt (le_of_eq ?_) h_finite
@@ -1310,8 +1305,7 @@ theorem M_infty_Gamma1_factor_mem_Gamma1
     M_infty_Gamma1_factor N p hpN b ∈ Gamma1 N := by
   rw [Gamma1_mem]
   refine ⟨?_, ?_, ?_⟩
-  ·
-    change ((((aInvOfCoprime N p hpN : ℤ) * p -
+  · change ((((aInvOfCoprime N p hpN : ℤ) * p -
         (b : ℤ) * ((N : ℤ) * mIdxOfCoprime N p hpN)) : ℤ) : ZMod N) = 1
     push_cast
     have : (((b : ℕ) : ZMod N) *
@@ -1581,8 +1575,7 @@ theorem glMap_M_infty_det_pos
     rw [hmem_q]
     ring
   rw [h_det_Q]
-  show 0 < (algebraMap ℚ ℝ) ((p : ℚ))
-  rw [show (algebraMap ℚ ℝ) ((p : ℚ)) = ((p : ℚ) : ℝ) from rfl]
+  change 0 < ((p : ℚ) : ℝ)
   exact_mod_cast hp
 
 open UpperHalfPlane ModularGroup MeasureTheory in
