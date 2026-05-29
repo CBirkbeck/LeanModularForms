@@ -3,11 +3,11 @@ Copyright (c) 2024 Chris Birkbeck. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
+import Mathlib.Data.Finset.NatDivisors
+import Mathlib.NumberTheory.ArithmeticFunction.Misc
 import LeanModularForms.HeckeRIngs.GL2.Basic
 import LeanModularForms.HeckeRIngs.GLn.Degree
 import LeanModularForms.HeckeRIngs.GLn.TransposeAntiInvolution
-import Mathlib.Data.Finset.NatDivisors
-import Mathlib.NumberTheory.ArithmeticFunction.Misc
 
 /-!
 # Shimura Theorem 3.24: Multiplication Table for GL₂ Hecke Algebra
@@ -48,13 +48,6 @@ lemma SLnZ_to_GLnQ_val {n : ℕ} [NeZero n] (S : Matrix.SpecialLinearGroup (Fin 
   rw [Matrix.SpecialLinearGroup.mapGL_coe_matrix]; rfl
 
 variable (p : ℕ) (hp : p.Prime)
-
-/-! ### Identity 1: T(m) = Σ T(a,d) — definitional
-
-Shimura's T(m) is defined as `T_sum m`, which is exactly the sum
-`Σ_{a ∣ m, a²∣m} T(a, m/a)`. This identity is the definition itself. -/
-
-/-! ### Identity 2: Telescoping -/
 
 section Telescoping
 
@@ -112,8 +105,6 @@ theorem T_ad_one_ppow_eq (k : ℕ) (hk : 2 ≤ k) :
   abel
 
 end Telescoping
-
-/-! ### Identity 5: The key recursion -/
 
 /-- If `L * M * R = D` with `L`, `R` having determinant 1, then `M = L.adj * D * R.adj`. -/
 lemma matrix_isolate_middle (L_ℤ M R_ℤ D : Matrix (Fin 2) (Fin 2) ℤ)
@@ -672,8 +663,6 @@ theorem T_sum_ppow_recurrence : ∀ k : ℕ, 0 < k →
   | k + 3, _, ih =>
     exact T_sum_ppow_recurrence_step p hp (k + 1) (by omega) ih
 
-/-! ### Identity 4: General prime-power product -/
-
 /-- Theorem 3.24(4): `T(pʳ) · T(pˢ) = Σ_{i=0}^{r} pⁱ · T(pⁱ,pⁱ) · T(p^{r+s−2i})`
     for r ≤ s. Proved by induction on r using `T_sum_ppow_recurrence`. -/
 private lemma T_pp_comm_T_sum_ppow (k : ℕ) : T_pp p * T_sum ⟨p ^ k, pow_pos hp.pos k⟩ =
@@ -869,8 +858,6 @@ theorem T_sum_ppow_mul : ∀ r s : ℕ, r ≤ s →
   | r + 2 =>
     exact T_sum_ppow_mul_step p hp r s hrs (ih (r + 1) (by omega) s (by omega))
       (ih r (by omega) s (by omega))
-
-/-! ### Identity 3: General multiplicativity -/
 
 section CoprimeMultiplicativity
 
