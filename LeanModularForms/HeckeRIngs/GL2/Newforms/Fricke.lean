@@ -970,24 +970,24 @@ lemma Newform.slash_peterssonAdj_frickeMatrix
       Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply]
     push_cast
     ring
-  rw [Pi.smul_apply, smul_eq_mul, Newform.frickeMatrix_slash_apply]
-  rw [show (g ∣[k] peterssonAdj (Newform.frickeMatrix N)) τ =
+  rw [Pi.smul_apply, smul_eq_mul, Newform.frickeMatrix_slash_apply,
+    show (g ∣[k] peterssonAdj (Newform.frickeMatrix N)) τ =
       UpperHalfPlane.σ (peterssonAdj (Newform.frickeMatrix N))
         (g ((peterssonAdj (Newform.frickeMatrix N)) • τ)) *
         |((peterssonAdj (Newform.frickeMatrix N)).det.val)| ^ (k - 1) *
-        UpperHalfPlane.denom (peterssonAdj (Newform.frickeMatrix N)) τ ^ (-k) from rfl]
-  rw [hadj_σ, RingHom.id_apply, peterssonAdj_frickeMatrix_det_val, hadj_denom,
-      Newform.peterssonAdj_frickeMatrix_smul]
-  rw [show |(N : ℝ)| = (N : ℝ) from
-    abs_of_pos (Nat.cast_pos.mpr (Nat.pos_of_ne_zero (NeZero.ne N)))]
-  rw [show (-((N : ℂ) * (τ : ℂ))) ^ (-k) =
+        UpperHalfPlane.denom (peterssonAdj (Newform.frickeMatrix N)) τ ^ (-k) from rfl,
+    hadj_σ, RingHom.id_apply, peterssonAdj_frickeMatrix_det_val, hadj_denom,
+    Newform.peterssonAdj_frickeMatrix_smul,
+    show |(N : ℝ)| = (N : ℝ) from
+      abs_of_pos (Nat.cast_pos.mpr (Nat.pos_of_ne_zero (NeZero.ne N))),
+    show (-((N : ℂ) * (τ : ℂ))) ^ (-k) =
       (-1 : ℂ) ^ k * ((N : ℂ) * (τ : ℂ)) ^ (-k) by
-    rw [show (-((N : ℂ) * (τ : ℂ))) = (-1 : ℂ) * ((N : ℂ) * (τ : ℂ)) by ring,
-        mul_zpow]
-    rw [show (-1 : ℂ) ^ (-k) = (-1 : ℂ) ^ k by
-      rw [zpow_neg, show ((-1 : ℂ) ^ k)⁻¹ = ((-1 : ℂ)⁻¹) ^ k from
-            (inv_zpow _ _).symm,
-          show ((-1 : ℂ)⁻¹ : ℂ) = -1 by norm_num]]]
+      rw [show (-((N : ℂ) * (τ : ℂ))) = (-1 : ℂ) * ((N : ℂ) * (τ : ℂ)) by ring,
+          mul_zpow,
+        show (-1 : ℂ) ^ (-k) = (-1 : ℂ) ^ k by
+          rw [zpow_neg, show ((-1 : ℂ) ^ k)⁻¹ = ((-1 : ℂ)⁻¹) ^ k from
+                (inv_zpow _ _).symm,
+              show ((-1 : ℂ)⁻¹ : ℂ) = -1 by norm_num]]]
   ring
 
 /-- Petersson adjoint identity for the Fricke slash on cusp forms:
