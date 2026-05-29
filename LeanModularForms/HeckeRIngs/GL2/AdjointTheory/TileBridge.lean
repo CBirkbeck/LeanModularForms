@@ -26,8 +26,6 @@ open CuspForm
 
 variable {N : ℕ} [NeZero N]
 
-/-! ### T024 DS double-coset tile bridge interface -/
-
 open UpperHalfPlane ModularGroup MeasureTheory in
 def DSDoubleCosetTileBridge
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
@@ -111,14 +109,6 @@ private abbrev petN_doubleCoset_adjoint_adjugate
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
   DSDoubleCosetTileBridge (k := k) p hp hpN f g
-
-/-! ### Named Prop bundles for recurring sum/equality patterns.
-
-The branch sum chains (M_∞ and T_p upper) reuse a small number of long
-expressions across many theorems. Bundling them as `Prop`s shrinks the
-signatures from 30-100 lines down to a few lines each. Each named Prop is
-`rfl`-equal to its inline form, so any value of the bundled type doubles as a
-proof of the original expression (and vice versa). -/
 
 open UpperHalfPlane ModularGroup MeasureTheory in
 /-- The M_∞-branch *tile-shift-to-prefactored* equation: sum-over-`q` of a
@@ -440,11 +430,6 @@ def MInftyIntegrableRHS
       ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
         ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
           (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp
-
-/-! #### α-parameterized variants (used in the inner `h_α_…` family)
-
-`AlphaTilePairwiseAEDisjoint` and `AlphaTileNullMeasurable` are defined upstream in
-`DeltaBSystem` and reused here. -/
 
 open UpperHalfPlane ModularGroup MeasureTheory in
 /-- The LHS-side integrability hypothesis for the `α`-shifted-tile union. -/
@@ -1546,7 +1531,7 @@ lemma sum_peterssonInner_upper_tile_form_swap
 
 open UpperHalfPlane ModularGroup MeasureTheory in
 lemma sum_peterssonInner_upper_tile_form_per_b_collapse
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (b : ℕ) (hb : b ∈ Finset.range p)
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (b : ℕ) (_hb : b ∈ Finset.range p)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (h_meas : ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
       NullMeasurableSet
@@ -1970,6 +1955,7 @@ private theorem peterssonInner_per_tile_match_M_infty_branch
   exact SlashAction.slash_mul _ _ _ F
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+omit [NeZero N] in
 private theorem peterssonInner_per_tile_match_T_p_upper_branch
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (b : ℕ)
     (q : SL(2, ℤ) ⧸ Gamma1 N)
@@ -2086,6 +2072,7 @@ private theorem peterssonInner_per_tile_match_M_infty_branch_closed
     h_β_pos h_tile_eq h_slash_slot2
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+omit [NeZero N] in
 private theorem peterssonInner_per_tile_match_T_p_upper_branch_closed
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (b : ℕ)
     (q : SL(2, ℤ) ⧸ Gamma1 N)
@@ -2223,8 +2210,8 @@ private theorem peterssonInner_per_q_distributed_form_via_closed_branches
             ((glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ) *
               ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
                 (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
-      from Finset.sum_congr rfl fun b _ ↦ peterssonInner_per_tile_match_T_p_upper_branch_closed p hp hpN b.val q g F
-          (h_tile_eq b.succ)]
+      from Finset.sum_congr rfl fun b _ ↦
+        peterssonInner_per_tile_match_T_p_upper_branch_closed p hp hpN b.val q g F (h_tile_eq b.succ)]
     exact Fin.sum_univ_eq_sum_range
       (fun n : ℕ ↦ peterssonInner k ModularGroup.fd
         ((F ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
@@ -2810,8 +2797,8 @@ theorem T_p_upper_branch_sum_slash_adjoint_reindex_prefactored
             (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
             ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
               ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))))
-    from Finset.sum_congr rfl fun q _ ↦ Finset.sum_congr rfl fun b _ ↦ peterssonInner_slash_adj_T_p_upper_q_summand_eq p hp hpN b
-        (q.out : SL(2, ℤ))
+    from Finset.sum_congr rfl fun q _ ↦ Finset.sum_congr rfl fun b _ ↦
+      peterssonInner_slash_adj_T_p_upper_q_summand_eq p hp hpN b (q.out : SL(2, ℤ))
         (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)
         (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)]
   exact h_upper_tile_shift_to_prefactored
@@ -3315,7 +3302,7 @@ private lemma sum_peterssonInner_diamond_f_slot_sigma_reindex_to_g_α_form
 
 open UpperHalfPlane ModularGroup MeasureTheory in
 theorem h_α_canonical_form_of_balanced
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (p : ℕ) (_hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (α : GL (Fin 2) ℝ)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (h_balanced : AlphaBalanced p hpN α f g) :
@@ -3326,7 +3313,7 @@ theorem h_α_canonical_form_of_balanced
 
 open UpperHalfPlane ModularGroup MeasureTheory in
 theorem balanced_α_of_aggregate_FD_balance
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (p : ℕ) (_hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (α : GL (Fin 2) ℝ) (hα : 0 < α.det.val)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (hd : AlphaTilePairwiseAEDisjoint (N := N) α)
@@ -3384,7 +3371,7 @@ theorem balanced_α_of_aggregate_FD_balance
 
 open UpperHalfPlane ModularGroup MeasureTheory in
 theorem h_FD_balance_of_post_swap_balance
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (p : ℕ) (_hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (α : GL (Fin 2) ℝ) (hα : 0 < α.det.val)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (h_post_swap_balance : AlphaPostSwapBalance p hpN α f g) :
@@ -3437,6 +3424,7 @@ lemma peterssonAdj_mul_self_smul_set
     exact peterssonAdj_mul_self_smul β τ
 
 open UpperHalfPlane ModularGroup MeasureTheory in
+omit [NeZero N] in
 private lemma peterssonAdj_smul_aggregate_tile_union_eq
     (α : GL (Fin 2) ℝ) :
     ((peterssonAdj α : GL (Fin 2) ℝ) • ⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
@@ -3454,8 +3442,8 @@ private lemma peterssonAdj_smul_aggregate_tile_union_eq
 
 open UpperHalfPlane ModularGroup MeasureTheory in
 theorem h_post_swap_balance_of_SL_tile_balance
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
-    (α : GL (Fin 2) ℝ) (hα : 0 < α.det.val)
+    (p : ℕ) (_hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (α : GL (Fin 2) ℝ) (_hα : 0 < α.det.val)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (h_SL_tile_balance : AlphaSLTileBalance p hpN α f g) :
     AlphaPostSwapBalance p hpN α f g := by
@@ -3465,8 +3453,8 @@ theorem h_post_swap_balance_of_SL_tile_balance
 
 open UpperHalfPlane ModularGroup MeasureTheory in
 private theorem h_SL_tile_balance_of_post_swap_balance
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
-    (α : GL (Fin 2) ℝ) (hα : 0 < α.det.val)
+    (p : ℕ) (_hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (α : GL (Fin 2) ℝ) (_hα : 0 < α.det.val)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (h_post_swap_balance :
       peterssonInner k
