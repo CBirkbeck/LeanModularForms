@@ -181,12 +181,9 @@ private lemma botLeft_ne_zero_of_topLeft_add_eq_zero {p : ℕ} [Fact p.Prime]
     push_cast at hsum
     rw [h10, mul_zero, add_zero] at hsum
     exact_mod_cast hsum
-  have hzero : ((M 0 0 * M 1 1 - M 0 1 * M 1 0 : ℤ) : ZMod p) = 0 := by
-    push_cast
-    rw [h00, h10]
-    ring
-  rw [hdet_p] at hzero
-  exact one_ne_zero hzero
+  push_cast at hdet_p
+  rw [h00, h10] at hdet_p
+  simp at hdet_p
 
 private lemma false_of_topLeft_zero_and_nonzero {p : ℕ} [Fact p.Prime] [NeZero p]
     (M : Matrix (Fin 2) (Fin 2) ℤ) (hdet : M 0 0 * M 1 1 - M 0 1 * M 1 0 = 1)
@@ -198,9 +195,8 @@ private lemma false_of_topLeft_zero_and_nonzero {p : ℕ} [Fact p.Prime] [NeZero
   have hdet_p : ((M 0 0 * M 1 1 - M 0 1 * M 1 0 : ℤ) : ZMod p) = 1 := by simp [hdet]
   have hdet_d : ((M 1 1 : ℤ) : ZMod p) * ((M 0 0 + d * M 1 0 : ℤ) : ZMod p) -
       ((M 1 0 : ℤ) : ZMod p) * ((M 0 1 + d * M 1 1 : ℤ) : ZMod p) = 1 := by
-    rw [show ((M 1 1 : ℤ) : ZMod p) * ((M 0 0 + d * M 1 0 : ℤ) : ZMod p) -
-      ((M 1 0 : ℤ) : ZMod p) * ((M 0 1 + d * M 1 1 : ℤ) : ZMod p) =
-      ((M 0 0 * M 1 1 - M 0 1 * M 1 0 : ℤ) : ZMod p) by push_cast; ring, hdet_p]
+    push_cast at hdet_p ⊢
+    linear_combination hdet_p
   exact one_ne_zero (hdet_d.symm.trans (by
     rw [zmod_mul_eq_of_mul_inv_eq (botLeft_ne_zero_of_topLeft_add_eq_zero M hdet c hAc) hAd heq]
     ring))
