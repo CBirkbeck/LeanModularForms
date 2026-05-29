@@ -130,11 +130,9 @@ lemma Newform.lCoeff_mul_of_coprime (f : Newform N k) (m n : ℕ)
       (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm).coeff (m * n) :=
     Newform.eigenvalue_eq_coeff (f := f) ⟨m * n, Nat.mul_pos hm_pos hn_pos⟩
       (hm.mul_left hn) χ hf_char
-  have h_mul := Newform.eigenvalue_coprime_mul f ⟨m, hm_pos⟩ ⟨n, hn_pos⟩
-    hm hn hmn χ hf_char
   simp only [Newform.lCoeff_apply]
   rw [← h_mn, ← h_m, ← h_n]
-  exact h_mul
+  exact Newform.eigenvalue_coprime_mul f ⟨m, hm_pos⟩ ⟨n, hn_pos⟩ hm hn hmn χ hf_char
 
 /-- **A Hecke coefficient sequence** `a : ℕ → ℂ` at level `N`, weight `k`,
 with Nebentypus character `χ : (ZMod N)ˣ →* ℂˣ`: the four arithmetic
@@ -281,7 +279,7 @@ theorem Newform.lCoeff_isHeckeCoefficientSequence (f : Newform N k)
         change f.lCoeff (1 * 0) = f.lCoeff 1 * f.lCoeff 0
         rw [Nat.mul_zero, f.lCoeff_zero, mul_zero]
       · exact f.lCoeff_mul_of_coprime m n hm hn hmN hnN hmn χ hfχ
-  recur := fun hp hpN r ↦ f.lCoeff_recur χ hfχ hp hpN r
+  recur := f.lCoeff_recur χ hfχ
 
 /-- **Bridge to `ModularForms.lCoeff`.**  The `Newform.lCoeff` sequence is
 the same as the generic `ModularForms.lCoeff f.toCuspForm` sequence built
@@ -457,18 +455,14 @@ theorem Newform.lSeries_stripped_hasProd (f : Newform N k)
     HasProd (fun p : Nat.Primes ↦
         ∑' (e : ℕ), LSeries.term f.lCoeff_stripped s ((p : ℕ) ^ e))
       (LSeries f.lCoeff_stripped s) := by
-  set g : ℕ → ℂ := LSeries.term f.lCoeff_stripped s with hg_def
-  have h_g_zero : g 0 = 0 := by
-    show LSeries.term f.lCoeff_stripped s 0 = 0
-    rfl
-  have h_g_one : g 1 = 1 := by
-    show LSeries.term f.lCoeff_stripped s 1 = 1
+  have h_zero : LSeries.term f.lCoeff_stripped s 0 = 0 := rfl
+  have h_one : LSeries.term f.lCoeff_stripped s 1 = 1 := by
     rw [LSeries.term_def, if_neg one_ne_zero, f.lCoeff_stripped_one,
       Nat.cast_one, Complex.one_cpow, div_one]
-  have h_g_mul : ∀ {m n : ℕ}, m.Coprime n → g (m * n) = g m * g n := by
+  have h_mul : ∀ {m n : ℕ}, m.Coprime n →
+      LSeries.term f.lCoeff_stripped s (m * n) =
+        LSeries.term f.lCoeff_stripped s m * LSeries.term f.lCoeff_stripped s n := by
     intro m n hmn
-    show LSeries.term f.lCoeff_stripped s (m * n) =
-      LSeries.term f.lCoeff_stripped s m * LSeries.term f.lCoeff_stripped s n
     rw [LSeries.term_def₀ f.lCoeff_stripped_zero,
       LSeries.term_def₀ f.lCoeff_stripped_zero,
       LSeries.term_def₀ f.lCoeff_stripped_zero,
@@ -476,8 +470,8 @@ theorem Newform.lSeries_stripped_hasProd (f : Newform N k)
     push_cast
     rw [Complex.natCast_mul_natCast_cpow]
     ring
-  have h_g_summ : Summable fun n ↦ ‖g n‖ := (f.lSeriesSummable_stripped hs).norm
-  exact EulerProduct.eulerProduct_hasProd h_g_one h_g_mul h_g_summ h_g_zero
+  exact EulerProduct.eulerProduct_hasProd h_one h_mul
+    (f.lSeriesSummable_stripped hs).norm h_zero
 
 /-- **Trivial local Euler factor at a prime dividing the level.**  For a
 prime `p | N`, the stripped sequence vanishes at every positive power
@@ -486,28 +480,20 @@ so the local Euler factor reduces to the `e = 0` term, which is `1`. -/
 theorem Newform.tsum_term_lCoeff_stripped_pow_of_dvd (f : Newform N k)
     {p : ℕ} (hp : p.Prime) (hp_dvd : p ∣ N) (s : ℂ) :
     ∑' (e : ℕ), LSeries.term f.lCoeff_stripped s (p ^ e) = 1 := by
-  have hp_pos : 0 < p := hp.pos
   have h_term_zero : ∀ e, e ≥ 1 →
       LSeries.term f.lCoeff_stripped s (p ^ e) = 0 := by
     intro e he_pos
-    have h_pow_pos : 0 < p ^ e := pow_pos hp_pos e
-    have h_pow_ne : p ^ e ≠ 0 := h_pow_pos.ne'
-    rw [LSeries.term_def, if_neg h_pow_ne]
+    rw [LSeries.term_def, if_neg (pow_pos hp.pos e).ne']
     have h_not_cop : ¬ Nat.Coprime (p ^ e) N := by
       intro h_cop
       have h_p_cop : Nat.Coprime p N := Nat.Coprime.coprime_dvd_left
         (dvd_pow_self p (Nat.one_le_iff_ne_zero.mp he_pos)) h_cop
-      have hp_gcd : Nat.gcd p N = p := Nat.gcd_eq_left hp_dvd
-      rw [Nat.Coprime, hp_gcd] at h_p_cop
+      rw [Nat.Coprime, Nat.gcd_eq_left hp_dvd] at h_p_cop
       exact hp.one_lt.ne' h_p_cop
-    have h_strip_zero : f.lCoeff_stripped (p ^ e) = 0 := by
-      unfold Newform.lCoeff_stripped
-      exact if_neg h_not_cop
-    rw [h_strip_zero, zero_div]
-  rw [tsum_eq_single 0 (fun e he_ne_zero ↦
-    h_term_zero e (Nat.one_le_iff_ne_zero.mpr he_ne_zero))]
-  show LSeries.term f.lCoeff_stripped s (p ^ 0) = 1
-  rw [pow_zero, LSeries.term_def, if_neg one_ne_zero, f.lCoeff_stripped_one,
+    rw [show f.lCoeff_stripped (p ^ e) = 0 from if_neg h_not_cop, zero_div]
+  rw [tsum_eq_single 0 fun e he_ne_zero ↦
+      h_term_zero e (Nat.one_le_iff_ne_zero.mpr he_ne_zero),
+    pow_zero, LSeries.term_def, if_neg one_ne_zero, f.lCoeff_stripped_one,
     Nat.cast_one, Complex.one_cpow, div_one]
 
 /-- **Local Euler factor at a "good" prime.**  For a prime `q` coprime to
