@@ -683,9 +683,8 @@ theorem Newform.eulerFactor_good_prime_eq_dirichlet_quotient
   have hq_ne : (q : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr hq_pos.ne'
   have h_pow : (q : ℂ) ^ (k - 1) * ((q : ℂ) ^ (-s)) ^ 2 =
       (q : ℂ) ^ (-(2 * s - k + 1)) := by
-    have h1 : ((q : ℂ) ^ (-s)) ^ 2 = (q : ℂ) ^ (-s * 2) := by
-      rw [← Complex.cpow_mul_nat]; rfl
-    rw [h1,
+    rw [show ((q : ℂ) ^ (-s)) ^ 2 = (q : ℂ) ^ (-s * 2) from by
+        rw [← Complex.cpow_mul_nat]; rfl,
       show ((q : ℂ) ^ (k - 1) : ℂ) = (q : ℂ) ^ ((k - 1 : ℤ) : ℂ) from
         (Complex.cpow_intCast _ _).symm,
       ← Complex.cpow_add _ _ hq_ne]
@@ -756,21 +755,17 @@ theorem Newform.eulerFactor_stripped_mul_dirichlet_at_good_prime
       (1 - ((Newform.dirichletLift χ : DirichletCharacter ℂ N) ((q : ℕ) : ZMod N)) ^ 2 *
         ((q : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹ := by
   unfold Newform.eulerFactor_stripped
-  have h_dvd : ¬ ((⟨q, hq⟩ : Nat.Primes) : ℕ) ∣ N := by
-    intro h_div
-    exact absurd ((Nat.Prime.coprime_iff_not_dvd hq).mp hqN) (not_not.mpr h_div)
-  rw [dif_neg h_dvd, if_neg hqS]
-  rw [Newform.eulerFactor_good_prime_eq_dirichlet_quotient hq.pos k s
-        (χ (ZMod.unitOfCoprime q hqN) : ℂ) h_pos h_neg]
-  have h_chi_eq : (Newform.dirichletLift χ : DirichletCharacter ℂ N) ((q : ℕ) : ZMod N) =
-      (χ (ZMod.unitOfCoprime q hqN) : ℂ) := by
-    rw [show (((q : ℕ) : ZMod N)) =
-        ((ZMod.unitOfCoprime q hqN : (ZMod N)ˣ) : ZMod N) from by
-      simp [ZMod.coe_unitOfCoprime]]
-    exact MulChar.ofUnitHom_coe χ (ZMod.unitOfCoprime q hqN)
-  rw [h_chi_eq]
-  have h_ne : (1 : ℂ) - (χ (ZMod.unitOfCoprime q hqN) : ℂ) *
-      ((q : ℕ) : ℂ) ^ (-(2 * s - k + 1)) ≠ 0 := h_neg
+  rw [dif_neg (fun h_div ↦ absurd ((Nat.Prime.coprime_iff_not_dvd hq).mp hqN)
+        (not_not.mpr h_div)),
+    if_neg hqS,
+    Newform.eulerFactor_good_prime_eq_dirichlet_quotient hq.pos k s
+      (χ (ZMod.unitOfCoprime q hqN) : ℂ) h_pos h_neg,
+    show (Newform.dirichletLift χ : DirichletCharacter ℂ N) ((q : ℕ) : ZMod N) =
+        (χ (ZMod.unitOfCoprime q hqN) : ℂ) by
+      rw [show (((q : ℕ) : ZMod N)) =
+          ((ZMod.unitOfCoprime q hqN : (ZMod N)ˣ) : ZMod N) from by
+        simp [ZMod.coe_unitOfCoprime]]
+      exact MulChar.ofUnitHom_coe χ (ZMod.unitOfCoprime q hqN)]
   field_simp
 
 /-- **Pointwise factor identification at primes dividing the level.**  For
@@ -783,14 +778,12 @@ theorem Newform.eulerFactor_stripped_mul_dirichlet_at_dvd (f : Newform N k)
       (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N) ((p : ℕ) : ZMod N) *
         ((p : ℕ) : ℂ) ^ (-(2 * s - k + 1)))⁻¹ = 1 := by
   unfold Newform.eulerFactor_stripped
-  rw [dif_pos hp_dvd]
-  have h_chi_zero : (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-      ((p : ℕ) : ZMod N) = 0 := by
-    apply (Newform.dirichletLift χ : DirichletCharacter ℂ N).map_nonunit
-    rw [ZMod.isUnit_iff_coprime]
-    intro h_cop
-    exact (hp.coprime_iff_not_dvd.mp h_cop) hp_dvd
-  rw [h_chi_zero, zero_mul, sub_zero, inv_one, mul_one]
+  rw [dif_pos hp_dvd,
+    show (Newform.dirichletLift χ : DirichletCharacter ℂ N) ((p : ℕ) : ZMod N) = 0 by
+      apply (Newform.dirichletLift χ : DirichletCharacter ℂ N).map_nonunit
+      rw [ZMod.isUnit_iff_coprime]
+      exact fun h_cop ↦ (hp.coprime_iff_not_dvd.mp h_cop) hp_dvd,
+    zero_mul, sub_zero, inv_one, mul_one]
 
 omit [NeZero N] in
 /-- **Pointwise factor identification at primes dividing the level
@@ -801,18 +794,16 @@ theorem Newform.dirichletLift_sq_euler_factor_at_dvd (χ : (ZMod N)ˣ →* ℂˣ
     (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ :
         DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
       ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹ = 1 := by
-  have h_chi_zero : (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-      ((p : ℕ) : ZMod N) = 0 := by
-    apply (Newform.dirichletLift χ : DirichletCharacter ℂ N).map_nonunit
-    rw [ZMod.isUnit_iff_coprime]
-    intro h_cop
-    exact (hp.coprime_iff_not_dvd.mp h_cop) hp_dvd
   rw [show ((Newform.dirichletLift χ * Newform.dirichletLift χ :
-      DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) =
-    (Newform.dirichletLift χ : DirichletCharacter ℂ N) ((p : ℕ) : ZMod N) *
-    (Newform.dirichletLift χ : DirichletCharacter ℂ N) ((p : ℕ) : ZMod N) from
-      MulChar.mul_apply _ _ _]
-  rw [h_chi_zero, mul_zero, zero_mul, sub_zero, inv_one]
+        DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) =
+      (Newform.dirichletLift χ : DirichletCharacter ℂ N) ((p : ℕ) : ZMod N) *
+      (Newform.dirichletLift χ : DirichletCharacter ℂ N) ((p : ℕ) : ZMod N) from
+        MulChar.mul_apply _ _ _,
+    show (Newform.dirichletLift χ : DirichletCharacter ℂ N) ((p : ℕ) : ZMod N) = 0 by
+      apply (Newform.dirichletLift χ : DirichletCharacter ℂ N).map_nonunit
+      rw [ZMod.isUnit_iff_coprime]
+      exact fun h_cop ↦ (hp.coprime_iff_not_dvd.mp h_cop) hp_dvd,
+    mul_zero, zero_mul, sub_zero, inv_one]
 
 private lemma hasProd_mul_finset_prod_comm {ι : Type*} {g₁ g₂ : ι → ℂ} {a b : ℂ}
     (h₁ : HasProd g₁ a) (h₂ : HasProd g₂ b) (T : Finset ι)
@@ -867,21 +858,19 @@ private lemma Newform.eulerFactor_stripped_mul_dirichlet_eq_chiSq_factor_of_not_
       (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ :
           DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
           ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹ := by
-  have h_p_eq : (⟨(p : ℕ), p.prop⟩ : Nat.Primes) = p := Subtype.eta _ _
+  have h_p_eq : Newform.eulerFactor_stripped f χ S s p =
+      Newform.eulerFactor_stripped f χ S s ⟨(p : ℕ), p.prop⟩ := by
+    rw [Subtype.eta _ _]
   by_cases h_dvd : (p : ℕ) ∣ N
-  · rw [show Newform.eulerFactor_stripped f χ S s p =
-        Newform.eulerFactor_stripped f χ S s ⟨(p : ℕ), p.prop⟩ from by rw [h_p_eq]]
-    rw [Newform.eulerFactor_stripped_mul_dirichlet_at_dvd f χ S p.prop h_dvd s,
+  · rw [h_p_eq, Newform.eulerFactor_stripped_mul_dirichlet_at_dvd f χ S p.prop h_dvd s,
       Newform.dirichletLift_sq_euler_factor_at_dvd χ p.prop h_dvd s]
   · have hpN : Nat.Coprime (p : ℕ) N :=
       (Nat.Prime.coprime_iff_not_dvd p.prop).mpr h_dvd
     have hp_notS : (p : ℕ) ∉ S := fun hpS ↦ hp_notT ((hT_iff p).mpr ⟨hpS, hpN⟩)
-    have ⟨h_pos, h_neg⟩ := h_pos_neg (p : ℕ) p.prop hpN hp_notS
-    have h_good := f.eulerFactor_stripped_mul_dirichlet_at_good_prime χ hfχ S h_bad
-      p.prop hpN hp_notS s h_pos h_neg
-    rw [show Newform.eulerFactor_stripped f χ S s p =
-        Newform.eulerFactor_stripped f χ S s ⟨(p : ℕ), p.prop⟩ from by rw [h_p_eq]]
-    rw [h_good,
+    obtain ⟨h_pos, h_neg⟩ := h_pos_neg (p : ℕ) p.prop hpN hp_notS
+    rw [h_p_eq,
+      f.eulerFactor_stripped_mul_dirichlet_at_good_prime χ hfχ S h_bad p.prop hpN
+        hp_notS s h_pos h_neg,
       show ((Newform.dirichletLift χ * Newform.dirichletLift χ :
           DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) =
         (Newform.dirichletLift χ : DirichletCharacter ℂ N) ((p : ℕ) : ZMod N) ^ 2 from by
