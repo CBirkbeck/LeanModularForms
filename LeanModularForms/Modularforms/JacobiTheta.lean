@@ -217,7 +217,7 @@ lemma H₃_S_action : (H₃ ∣[(2 : ℤ)] S) = -H₃ := by
   rw [inv_pow, inv_I, even_two.neg_pow, I_sq, mul_neg_one, inv_inv, neg_mul, inv_mul_cancel₀]
   exact pow_ne_zero _ hx'
 
-lemma H₄_S_action : (H₄ ∣[(2 : ℤ)] S) = - H₂ := by
+lemma H₄_S_action : (H₄ ∣[(2 : ℤ)] S) = -H₂ := by
   rw [← neg_eq_iff_eq_neg.mpr H₂_S_action, neg_slash, ← slash_mul, modular_S_sq,
     ModularForm.slash_neg' _ _ (by decide), slash_one]
 
@@ -748,29 +748,25 @@ theorem jacobiTheta₂_half_apply_tendsto_atImInfty :
       simp
     · rw [tendsto_zero_iff_norm_tendsto_zero]
       simp_rw [hnorm]
-      have hk2_pos : 0 < (k : ℝ) ^ 2 := by
-        exact sq_pos_of_ne_zero (Int.cast_ne_zero.mpr hk)
-      exact (Real.tendsto_exp_atBot).comp
+      have hk2_pos : 0 < (k : ℝ) ^ 2 := sq_pos_of_ne_zero (Int.cast_ne_zero.mpr hk)
+      exact Real.tendsto_exp_atBot.comp
         (tendsto_im_atImInfty.const_mul_atTop_of_neg (by nlinarith [Real.pi_pos, hk2_pos]))
   · rw [eventually_atImInfty]
     use 1, fun z hz k ↦ ?_
     rw [hnorm]
     have hcoef_nonpos : (-π * (k : ℝ) ^ 2) ≤ 0 := by
       nlinarith [Real.pi_pos, sq_nonneg (k : ℝ)]
-    have hmul : (-π * (k : ℝ) ^ 2) * z.im ≤ (-π * (k : ℝ) ^ 2) * 1 := by
-      exact mul_le_mul_of_nonpos_left hz hcoef_nonpos
-    simpa using Real.exp_le_exp.mpr hmul
+    simpa using Real.exp_le_exp.mpr (mul_le_mul_of_nonpos_left hz hcoef_nonpos)
 
 theorem Θ₂_tendsto_atImInfty : Tendsto Θ₂ atImInfty (𝓝 0) := by
   rw [funext Θ₂_as_jacobiTheta₂, ← zero_mul (2 : ℂ)]
   refine Tendsto.mul ?_ jacobiTheta₂_half_mul_apply_tendsto_atImInfty
   apply tendsto_zero_iff_norm_tendsto_zero.mpr
-  -- simp_rw directly below fails
-  have (z : ℍ) : ‖cexp (π * I * z / 4)‖ = rexp (-π * z.im / 4) := by
-    rw [mul_right_comm, mul_div_right_comm, norm_exp_mul_I]
-    simp [neg_div]
-  simp_rw [this]
-  exact (Real.tendsto_exp_atBot).comp <|
+  -- `simp_rw` directly below fails, so we go via an explicit `have`.
+  have hnorm (z : ℍ) : ‖cexp (π * I * z / 4)‖ = rexp (-π * z.im / 4) := by
+    rw [mul_right_comm, mul_div_right_comm, norm_exp_mul_I]; simp [neg_div]
+  simp_rw [hnorm]
+  exact Real.tendsto_exp_atBot.comp <|
     (tendsto_div_const_atBot_of_pos zero_lt_four).mpr
       (tendsto_im_atImInfty.const_mul_atTop_of_neg (neg_lt_zero.mpr Real.pi_pos))
 
@@ -781,27 +777,23 @@ theorem Θ₄_tendsto_atImInfty : Tendsto Θ₄ atImInfty (𝓝 1) := by
   simpa [funext Θ₄_as_jacobiTheta₂] using jacobiTheta₂_half_apply_tendsto_atImInfty
 
 theorem H₂_tendsto_atImInfty : Tendsto H₂ atImInfty (𝓝 0) := by
-  convert Θ₂_tendsto_atImInfty.pow 4
-  norm_num
+  convert Θ₂_tendsto_atImInfty.pow 4; norm_num
 
 theorem H₃_tendsto_atImInfty : Tendsto H₃ atImInfty (𝓝 1) := by
-  convert Θ₃_tendsto_atImInfty.pow 4
-  norm_num
+  convert Θ₃_tendsto_atImInfty.pow 4; norm_num
 
 theorem H₄_tendsto_atImInfty : Tendsto H₄ atImInfty (𝓝 1) := by
-  convert Θ₄_tendsto_atImInfty.pow 4
-  norm_num
+  convert Θ₄_tendsto_atImInfty.pow 4; norm_num
 
-/-- The function g := H₂ + H₄ - H₃ tends to 0 at i∞.
-    Since H₂ → 0, H₃ → 1, H₄ → 1, we have g → 0 + 1 - 1 = 0. -/
+/-- The function `g := H₂ + H₄ - H₃` tends to `0` at `i∞`: since `H₂ → 0`, `H₃ → 1`, `H₄ → 1`,
+we have `g → 0 + 1 - 1 = 0`. -/
 theorem jacobi_g_tendsto_atImInfty : Tendsto jacobi_g atImInfty (𝓝 0) := by
   convert (H₂_tendsto_atImInfty.add H₄_tendsto_atImInfty).sub H₃_tendsto_atImInfty using 1
   norm_num
 
-/-- The function f := g² tends to 0 at i∞. -/
+/-- The function `f := g²` tends to `0` at `i∞`. -/
 theorem jacobi_f_tendsto_atImInfty : Tendsto jacobi_f atImInfty (𝓝 0) := by
-  convert jacobi_g_tendsto_atImInfty.pow 2 using 1
-  norm_num
+  convert jacobi_g_tendsto_atImInfty.pow 2 using 1; norm_num
 
 private noncomputable def jacobi_f_CF : CuspForm (Γ 1) 4 :=
   cuspFormOfSIFTendstoZero jacobi_f_SIF jacobi_f_SIF_MDifferentiable
@@ -859,8 +851,7 @@ private lemma theta_prod_sq_MDifferentiable : MDiff theta_prod_sq := by
 
 private lemma theta_prod_sq_tendsto_atImInfty : Tendsto theta_prod_sq atImInfty (𝓝 0) := by
   change Tendsto (fun z ↦ (H₂ z * H₃ z * H₄ z) ^ 2) atImInfty (𝓝 0)
-  have : (0 : ℂ) = (0 * 1 * 1) ^ 2 := by norm_num
-  rw [this]
+  rw [show (0 : ℂ) = (0 * 1 * 1) ^ 2 by norm_num]
   exact ((H₂_tendsto_atImInfty.mul H₃_tendsto_atImInfty).mul H₄_tendsto_atImInfty).pow 2
 
 private noncomputable def theta_prod_sq_SIF :
@@ -893,50 +884,44 @@ private lemma Θ₂_div_exp_tendsto :
 
 private lemma H₂_div_exp_tendsto :
     Tendsto (fun z : ℍ ↦ H₂ z / cexp (↑π * I * ↑z)) atImInfty (nhds 16) := by
-  have h_eq : ∀ z : ℍ, H₂ z / cexp (↑π * I * ↑z) = (jacobiTheta₂ (↑z / 2) ↑z) ^ 4 := by
-    intro z
-    rw [H₂, Θ₂_as_jacobiTheta₂, mul_pow]
-    have he : cexp (↑π * I * ↑z / 4) ^ 4 = cexp (↑π * I * ↑z) := by
-      rw [← Complex.exp_nat_mul]; congr 1; ring
-    rw [he, mul_div_cancel_left₀ _ (Complex.exp_ne_zero _)]
+  have h_eq (z : ℍ) : H₂ z / cexp (↑π * I * ↑z) = (jacobiTheta₂ (↑z / 2) ↑z) ^ 4 := by
+    rw [H₂, Θ₂_as_jacobiTheta₂, mul_pow,
+      show cexp (↑π * I * ↑z / 4) ^ 4 = cexp (↑π * I * ↑z) by
+        rw [← Complex.exp_nat_mul]; congr 1; ring,
+      mul_div_cancel_left₀ _ (Complex.exp_ne_zero _)]
   simp_rw [h_eq]
-  have h16 : (2 : ℂ) ^ 4 = (16 : ℂ) := by norm_num
-  rw [← h16]
+  rw [show (16 : ℂ) = 2 ^ 4 by norm_num]
   exact jacobiTheta₂_half_mul_apply_tendsto_atImInfty.pow 4
 
 lemma Delta_eq_H₂_H₃_H₄ (τ : ℍ) :
     Delta τ = ((H₂ τ) * (H₃ τ) * (H₄ τ))^2 / (256 : ℂ) := by
   obtain ⟨c, hc⟩ := theta_prod_sq_proportional
-  have hc_pw : ∀ z : ℍ, c * Delta z = theta_prod_sq z := by
-    intro z
+  have hc_pw (z : ℍ) : c * Delta z = theta_prod_sq z := by
     have h := DFunLike.congr_fun hc z
     rw [show (c • Delta : CuspForm _ _) z = c * Delta z from rfl] at h
     rwa [theta_prod_sq_CF_apply] at h
   have hc_eq : c = 256 := by
     have hD_asymp : Tendsto (fun z : ℍ ↦ Delta z / cexp (2 * ↑π * I * ↑z))
         atImInfty (nhds 1) := by
-      have h_eq : ∀ z : ℍ, Delta z / cexp (2 * ↑π * I * ↑z) =
+      have h_eq (z : ℍ) : Delta z / cexp (2 * ↑π * I * ↑z) =
           ∏' (n : ℕ), (1 - cexp (2 * ↑π * I * (↑n + 1) * ↑z)) ^ 24 := by
-        intro z; rw [Delta_apply, Δ]
-        rw [mul_div_cancel_left₀ _ (Complex.exp_ne_zero _)]
+        rw [Delta_apply, Δ, mul_div_cancel_left₀ _ (Complex.exp_ne_zero _)]
       simp_rw [h_eq]; exact Delta_boundedfactor
     have hP_asymp : Tendsto (fun z : ℍ ↦ theta_prod_sq z / cexp (2 * ↑π * I * ↑z))
         atImInfty (nhds 256) := by
-      have h_rewrite : ∀ z : ℍ, theta_prod_sq z / cexp (2 * ↑π * I * ↑z) =
+      have h_rewrite (z : ℍ) : theta_prod_sq z / cexp (2 * ↑π * I * ↑z) =
           (H₂ z / cexp (↑π * I * ↑z)) ^ 2 * (H₃ z) ^ 2 * (H₄ z) ^ 2 := by
-        intro z
-        have hq : cexp (2 * ↑π * I * ↑z) = cexp (↑π * I * ↑z) ^ 2 := by
-          rw [← Complex.exp_nat_mul]; ring_nf
         simp only [theta_prod_sq]
-        rw [hq]; field_simp
+        rw [show cexp (2 * ↑π * I * (z : ℂ)) = cexp (↑π * I * ↑z) ^ 2 by
+          rw [← Complex.exp_nat_mul]; ring_nf]
+        field_simp
       simp_rw [h_rewrite]
-      have : (256 : ℂ) = 16 ^ 2 * 1 ^ 2 * 1 ^ 2 := by norm_num
-      rw [this]
+      rw [show (256 : ℂ) = 16 ^ 2 * 1 ^ 2 * 1 ^ 2 by norm_num]
       exact ((H₂_div_exp_tendsto.pow 2).mul (H₃_tendsto_atImInfty.pow 2)).mul
         (H₄_tendsto_atImInfty.pow 2)
-    have h_eq_fns : ∀ z : ℍ, c * (Delta z / cexp (2 * ↑π * I * ↑z)) =
+    have h_eq_fns (z : ℍ) : c * (Delta z / cexp (2 * ↑π * I * ↑z)) =
         theta_prod_sq z / cexp (2 * ↑π * I * ↑z) := by
-      intro z; rw [← mul_div_assoc, hc_pw]
+      rw [← mul_div_assoc, hc_pw]
     have hc_lim : Tendsto (fun z : ℍ ↦ c * (Delta z / cexp (2 * ↑π * I * ↑z)))
         atImInfty (nhds c) := by
       have := hD_asymp.const_mul c; rwa [mul_one] at this
