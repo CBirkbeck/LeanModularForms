@@ -1169,10 +1169,9 @@ theorem peterssonInner_smul_set_eq_slash
     peterssonInner k ((γ : SL(2, ℤ)) • S) f g =
     peterssonInner k S (f ∣[k] (γ : SL(2, ℤ))) (g ∣[k] (γ : SL(2, ℤ))) := by
   unfold peterssonInner
-  rw [setIntegral_smul_eq (fun τ ↦ petersson k f g τ) γ S]
-  refine congrArg (fun (h : ℍ → ℂ) ↦ ∫ τ in S, h τ ∂μ_hyp) ?_
-  funext τ
-  exact (petersson_slash_SL k f g γ τ).symm
+  rw [setIntegral_smul_eq]
+  exact integral_congr_ae <| Filter.Eventually.of_forall fun τ ↦
+    (petersson_slash_SL k f g γ τ).symm
 
 /-- If two subsets of `ℍ` are AE-equal under `μ_hyp`, integrability of the
 Petersson kernel on one transfers to the other. -/
@@ -1181,8 +1180,7 @@ theorem integrableOn_petersson_congr_set_ae
     (f g : ℍ → ℂ) :
     IntegrableOn (fun τ ↦ petersson k f g τ) S μ_hyp ↔
     IntegrableOn (fun τ ↦ petersson k f g τ) T μ_hyp := by
-  unfold IntegrableOn
-  rw [Measure.restrict_congr_set hST]
+  simp only [IntegrableOn, Measure.restrict_congr_set hST]
 
 /-- If two finite AE-disjoint families of null-measurable subsets of `ℍ` have
 AE-equal unions, their Petersson-inner-product sum decompositions are equal. -/
@@ -1217,8 +1215,8 @@ theorem FiniteTileFundamentalDomain.peterssonInner_sum_eq_of_target_aeEq
     (f g : ℍ → ℂ)
     (hint : IntegrableOn (fun τ ↦ petersson k f g τ) F₁.union μ_hyp) :
     ∑ i : ι₁, peterssonInner k (F₁.tile i) f g =
-    ∑ j : ι₂, peterssonInner k (F₂.tile j) f g := by
-  exact peterssonInner_sum_eq_of_AEDisjoint_unions_AEEq F₁.tile F₂.tile
+    ∑ j : ι₂, peterssonInner k (F₂.tile j) f g :=
+  peterssonInner_sum_eq_of_AEDisjoint_unions_AEEq F₁.tile F₂.tile
     F₁.nullMeasurableSet_tile F₂.nullMeasurableSet_tile
     F₁.pairwiseAEDisjoint F₂.pairwiseAEDisjoint
     (F₁.aeCover.symm.trans (hT.trans F₂.aeCover)) f g hint
