@@ -61,13 +61,11 @@ theorem Newform.exists_nonzero_prime_eigenvalue_of_analyticContradiction
     (S : Finset ℕ) :
     ∃ q : ℕ, ∃ hq : Nat.Prime q, Nat.Coprime q N ∧ q ∉ S ∧
       f.eigenvalue ⟨q, hq.pos⟩ ≠ 0 := by
-  by_contra h_none
-  push Not at h_none
+  by_contra! h_none
   apply h_ana f χ hfχ S
   intro q hq hqN hqS
   have h_eq : f.eigenvalue ⟨q, hq.pos⟩ = f.lCoeff q := by
-    rw [Newform.eigenvalue_eq_coeff f ⟨q, hq.pos⟩ hqN χ hfχ]
-    rfl
+    rw [Newform.eigenvalue_eq_coeff f ⟨q, hq.pos⟩ hqN χ hfχ]; rfl
   exact h_eq.symm.trans (h_none q hq hqN hqS)
 
 /-- Under `Newform.AnalyticContradiction`, Strong Multiplicity One holds: a
@@ -91,13 +89,13 @@ theorem strongMultiplicityOne_of_analyticContradiction
       Newform.exists_nonzero_prime_eigenvalue_of_analyticContradiction
         h_ana f χ hfχ bad
     have hq_pos : 0 < q := hq_prime.pos
-    have hq_notin_S : q ∉ S := fun hqS ↦ hq_notin (by
-      simp only [bad, Finset.mem_union]; exact Or.inl (Or.inl hqS))
-    have hq_notin_img : q ∉ S.image (· / n.val) := fun h' ↦ hq_notin (by
-      simp only [bad, Finset.mem_union]; exact Or.inl (Or.inr h'))
-    have hq_nd_n : ¬ q ∣ n.val := fun hqn ↦ hq_notin (by
+    have hq_notin_S : q ∉ S := fun hqS ↦ hq_notin <| by
+      simp only [bad, Finset.mem_union]; exact .inl (.inl hqS)
+    have hq_notin_img : q ∉ S.image (· / n.val) := fun h' ↦ hq_notin <| by
+      simp only [bad, Finset.mem_union]; exact .inl (.inr h')
+    have hq_nd_n : ¬ q ∣ n.val := fun hqn ↦ hq_notin <| by
       simp only [bad, Finset.mem_union, Nat.mem_primeFactors]
-      exact Or.inr ⟨hq_prime, hqn, hn_pos.ne'⟩)
+      exact .inr ⟨hq_prime, hqn, hn_pos.ne'⟩
     have hn_coprime_q : Nat.Coprime n.val q :=
       ((hq_prime.coprime_iff_not_dvd).mpr hq_nd_n).symm
     have hnq_notin_S : n.val * q ∉ S := fun hnqS ↦ hq_notin_img <| by
@@ -514,14 +512,8 @@ lemma Newform.frickeMatrix_sq_matrix (N : ℕ) [NeZero N] :
 lemma Newform.frickeMatrix_mul_self_val (N : ℕ) [NeZero N] :
     ((Newform.frickeMatrix N * Newform.frickeMatrix N : GL (Fin 2) ℝ) :
       Matrix (Fin 2) (Fin 2) ℝ) =
-      (-(N : ℝ)) • (1 : Matrix (Fin 2) (Fin 2) ℝ) := by
-  rw [show ((Newform.frickeMatrix N * Newform.frickeMatrix N : GL (Fin 2) ℝ) :
-        Matrix (Fin 2) (Fin 2) ℝ) =
-      ((Newform.frickeMatrix N : GL (Fin 2) ℝ) :
-          Matrix (Fin 2) (Fin 2) ℝ) *
-        ((Newform.frickeMatrix N : GL (Fin 2) ℝ) :
-          Matrix (Fin 2) (Fin 2) ℝ) from rfl]
-  exact Newform.frickeMatrix_sq_matrix N
+      (-(N : ℝ)) • (1 : Matrix (Fin 2) (Fin 2) ℝ) :=
+  Newform.frickeMatrix_sq_matrix N
 
 /-- The integer Fricke conjugate matrix `δ = !![d, -(c/N); -N·b, a]` of
 `γ = !![a, b; c, d] ∈ Γ₁(N)` (integer-valued since `N ∣ c`), satisfying
@@ -605,12 +597,8 @@ noncomputable def Newform.frickeConjEquivGamma1 (N : ℕ) [NeZero N] :
               Newform.frickeConj_mem_Gamma1 N γ.val γ.property⟩
   invFun γ := ⟨Newform.frickeConj N γ.val γ.property,
                Newform.frickeConj_mem_Gamma1 N γ.val γ.property⟩
-  left_inv γ := by
-    apply Subtype.ext
-    exact Newform.frickeConj_frickeConj N γ.val γ.property
-  right_inv γ := by
-    apply Subtype.ext
-    exact Newform.frickeConj_frickeConj N γ.val γ.property
+  left_inv γ := Subtype.ext <| Newform.frickeConj_frickeConj N γ.val γ.property
+  right_inv γ := Subtype.ext <| Newform.frickeConj_frickeConj N γ.val γ.property
 
 /-- Fricke conjugation/normalisation identity at the integer-matrix level:
 `W_N · γ = δ · W_N` with `δ := frickeConjMat N γ`, showing `W_N` normalises
@@ -738,10 +726,9 @@ lemma Newform.frickeMatrix_smul_isCusp_Gamma1
   rw [← Newform.glMap_frickeMatrixRat]
   rw [Subgroup.IsArithmetic.isCusp_iff_isCusp_SL2Z, isCusp_SL2Z_iff] at hc ⊢
   obtain ⟨q, rfl⟩ := hc
-  rw [show glMap (Newform.frickeMatrixRat N) •
-        OnePoint.map (Rat.cast : ℚ → ℝ) q =
-      OnePoint.map (Rat.cast : ℚ → ℝ) (Newform.frickeMatrixRat N • q)
-      from (OnePoint.map_smul (algebraMap ℚ ℝ) (Newform.frickeMatrixRat N) q).symm]
+  rw [show glMap (Newform.frickeMatrixRat N) • OnePoint.map (Rat.cast : ℚ → ℝ) q =
+      OnePoint.map (Rat.cast : ℚ → ℝ) (Newform.frickeMatrixRat N • q) from
+      (OnePoint.map_smul (algebraMap ℚ ℝ) (Newform.frickeMatrixRat N) q).symm]
   exact ⟨_, rfl⟩
 
 /-- Slash by `W_N` as a `ℂ`-linear endomorphism of
@@ -1363,8 +1350,7 @@ PSL(2, ℝ) normalizer fact and the canonical PSL_R fundamental domain. -/
 lemma Newform.frickeMatrix_smul_isFundDomain_imageGamma1_PSL
     (N : ℕ) [NeZero N] :
     Newform.HasFrickeFundDomainTransport N := by
-  unfold Newform.HasFrickeFundDomainTransport
-  rw [← Newform.frickeMatrix_PSL_R_smul_set]
+  rw [Newform.HasFrickeFundDomainTransport, ← Newform.frickeMatrix_PSL_R_smul_set]
   exact isFundamentalDomain_imageGamma1_PSL_of_PSL_R
     (isFundamentalDomain_Gamma1_PSL_R.smul_of_mem_normalizer
       (Newform.frickeMatrix_PSL_R_mem_normalizer N))
@@ -1423,15 +1409,13 @@ private lemma frickeRootNumber_scalar_collapse {k : ℤ} {n x I fv : ℂ}
 
 private lemma im_I_mul_ofReal_pos {r : ℝ} (hr : 0 < r) :
     0 < (Complex.I * ((r : ℝ) : ℂ)).im := by
-  rw [Complex.mul_im, Complex.I_im, Complex.I_re, Complex.ofReal_re,
-    Complex.ofReal_im]
+  rw [Complex.mul_im, Complex.I_im, Complex.I_re, Complex.ofReal_re, Complex.ofReal_im]
   simpa using hr
 
-private lemma frickeMatrix_smul_imAxis_coe {N : ℕ} [NeZero N] {x : ℝ}
-    (hx : 0 < x) :
+private lemma frickeMatrix_smul_imAxis_coe {N : ℕ} [NeZero N] {x : ℝ} (hx : 0 < x) :
     (-1 : ℂ) / ((N : ℂ) * (Complex.I * ((x / (N : ℝ) : ℝ) : ℂ))) =
       Complex.I * ((1 / x : ℝ) : ℂ) := by
-  have hx_ne : (x : ℂ) ≠ 0 := by exact_mod_cast hx.ne'
+  have : (x : ℂ) ≠ 0 := by exact_mod_cast hx.ne'
   push_cast
   field_simp [Nat.cast_ne_zero.mpr (NeZero.ne N)]
   rw [Complex.I_sq]
