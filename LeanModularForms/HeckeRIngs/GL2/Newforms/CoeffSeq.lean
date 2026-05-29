@@ -652,17 +652,14 @@ lemma Newform.eulerFactor_dirichlet_quotient_form (x : ℂ)
 `f.lCoeff_stripped 1 = 1 ≠ 0`. -/
 lemma Newform.lSeries_stripped_ne_zero (f : Newform N k) :
     LSeries f.lCoeff_stripped ≠ 0 := by
-  have h_lCoeff_ne : f.lCoeff_stripped ≠ 0 := by
-    intro habs
+  have h_lCoeff_ne : f.lCoeff_stripped ≠ 0 := fun habs ↦ by
     have h1 : f.lCoeff_stripped 1 = 0 := by rw [habs]; rfl
     rw [f.lCoeff_stripped_one] at h1
     exact one_ne_zero h1
   have h_abscissa_lt_top : LSeries.abscissaOfAbsConv f.lCoeff_stripped < ⊤ := by
-    have h_summ : LSeriesSummable f.lCoeff_stripped (((k : ℝ) / 2 + 2 : ℝ) : ℂ) := by
-      apply f.lSeriesSummable_stripped
-      simp
-    refine lt_of_le_of_lt (LSeriesSummable.abscissaOfAbsConv_le h_summ) ?_
-    exact EReal.coe_lt_top _
+    have h_summ : LSeriesSummable f.lCoeff_stripped (((k : ℝ) / 2 + 2 : ℝ) : ℂ) :=
+      f.lSeriesSummable_stripped (by simp)
+    exact lt_of_le_of_lt (LSeriesSummable.abscissaOfAbsConv_le h_summ) (EReal.coe_lt_top _)
   intro habs
   rcases (LSeries_eq_zero_iff f.lCoeff_stripped_zero).mp habs with h | h
   · exact h_lCoeff_ne h
@@ -937,24 +934,20 @@ lemma Newform.dirichletLift_eulerFactor_ne_zero {N : ℕ} [NeZero N]
     (1 - χ ((p : ℕ) : ZMod N) * ((p : ℕ) : ℂ) ^ (-s'))⁻¹ ≠ 0 := by
   apply inv_ne_zero
   have hp_pos : (1 : ℝ) < (p : ℝ) := by exact_mod_cast hp.one_lt
-  have hpr_pos : (0 : ℝ) < (p : ℝ) := lt_trans one_pos hp_pos
   have h_norm : ‖χ ((p : ℕ) : ZMod N) * ((p : ℕ) : ℂ) ^ (-s')‖ < 1 := by
-    rw [norm_mul]
-    have h_chi : ‖χ ((p : ℕ) : ZMod N)‖ ≤ 1 := DirichletCharacter.norm_le_one χ _
-    have h_pow : ‖((p : ℕ) : ℂ) ^ (-s')‖ = (p : ℝ) ^ (-s'.re) := by
-      rw [show ((p : ℕ) : ℂ) ^ (-s') = ((p : ℝ) : ℂ) ^ (-s') from by push_cast; rfl,
-        Complex.norm_cpow_eq_rpow_re_of_pos hpr_pos]
-      simp
-    rw [h_pow]
+    rw [norm_mul,
+      show ‖((p : ℕ) : ℂ) ^ (-s')‖ = (p : ℝ) ^ (-s'.re) by
+        rw [show ((p : ℕ) : ℂ) ^ (-s') = ((p : ℝ) : ℂ) ^ (-s') from by push_cast; rfl,
+          Complex.norm_cpow_eq_rpow_re_of_pos (lt_trans one_pos hp_pos)]
+        simp]
     calc ‖χ ((p : ℕ) : ZMod N)‖ * (p : ℝ) ^ (-s'.re)
         ≤ 1 * (p : ℝ) ^ (-s'.re) := by
-          apply mul_le_mul_of_nonneg_right h_chi; positivity
+          apply mul_le_mul_of_nonneg_right (DirichletCharacter.norm_le_one χ _); positivity
       _ = (p : ℝ) ^ (-s'.re) := one_mul _
       _ < 1 := Real.rpow_lt_one_of_one_lt_of_neg hp_pos (by linarith)
   intro h_eq
-  have h_eq_one : χ ((p : ℕ) : ZMod N) * ((p : ℕ) : ℂ) ^ (-s') = 1 := by
-    have := sub_eq_zero.mp h_eq; rw [this]
-  rw [h_eq_one] at h_norm
+  rw [show χ ((p : ℕ) : ZMod N) * ((p : ℕ) : ℂ) ^ (-s') = 1 by
+    rw [sub_eq_zero.mp h_eq]] at h_norm
   simp at h_norm
 
 /-- **Finite product of χ̃² Mathlib-Dirichlet local Euler factors over a
@@ -1015,26 +1008,17 @@ theorem Newform.lSeries_stripped_eq_dirichlet_quotient_value
        (∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ :
           DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
           ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹)) := by
-  have h_id := f.lSeries_stripped_value_identity χ hfχ S h_bad hs hs' hs''
-    h_geom T hT_iff h_pos_neg
-  have h_LB_ne : LSeries (fun n ↦ (Newform.dirichletLift χ : DirichletCharacter ℂ N) n)
-      (2 * s - k + 1) ≠ 0 :=
-    DirichletCharacter.LSeries_ne_zero_of_one_lt_re _ hs'
-  have h_C_ne :
-    (∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ :
-        DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-        ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) ≠ 0 :=
-    Newform.prod_dirichletLift_sq_eulerFactor_ne_zero χ T hs''
   have h_BC_ne :
-    LSeries (fun n ↦ (Newform.dirichletLift χ : DirichletCharacter ℂ N) n)
-        (2 * s - k + 1) *
-      (∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ :
-          DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-          ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) ≠ 0 :=
-    mul_ne_zero h_LB_ne h_C_ne
-  rw [eq_div_iff h_BC_ne]
-  rw [← mul_assoc]
-  exact h_id
+      LSeries (fun n ↦ (Newform.dirichletLift χ : DirichletCharacter ℂ N) n)
+          (2 * s - k + 1) *
+        (∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ :
+            DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
+            ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) ≠ 0 :=
+    mul_ne_zero (DirichletCharacter.LSeries_ne_zero_of_one_lt_re _ hs')
+      (Newform.prod_dirichletLift_sq_eulerFactor_ne_zero χ T hs'')
+  rw [eq_div_iff h_BC_ne, ← mul_assoc]
+  exact f.lSeries_stripped_value_identity χ hfχ S h_bad hs hs' hs''
+    h_geom T hT_iff h_pos_neg
 
 /-- **Special evaluation point** `s₀ = ((k : ℝ) / 2 + 2 : ℂ)` for the
 Dirichlet-quotient value identity, at which the real-part and
