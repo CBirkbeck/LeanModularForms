@@ -349,9 +349,7 @@ for every `n`. -/
 lemma Newform.norm_lCoeff_stripped_le (f : Newform N k) (n : ℕ) :
     ‖f.lCoeff_stripped n‖ ≤ ‖f.lCoeff n‖ := by
   unfold lCoeff_stripped
-  split_ifs
-  · exact le_refl _
-  · simp
+  split_ifs <;> simp
 
 /-- **Full coprime multiplicativity** of the stripped sequence: for
 arbitrary `m, n` coprime to each other (not requiring coprime to `N`),
@@ -421,21 +419,19 @@ theorem Newform.tsum_lCoeff_pow_mul_eq_eulerFactor (f : Newform N k)
     (hs : ‖((χ (ZMod.unitOfCoprime q hqN) : ℂ) * (q : ℂ) ^ (k - 1)) * x ^ 2‖ < 1) :
     ∑' (r : ℕ), f.lCoeff (q ^ r) * x ^ r =
       (1 + (χ (ZMod.unitOfCoprime q hqN) : ℂ) * (q : ℂ) ^ (k - 1) * x ^ 2)⁻¹ := by
-  have h_seq : IsHeckeCoefficientSequence N k χ f.lCoeff :=
-    f.lCoeff_isHeckeCoefficientSequence χ hfχ
   have h_pointwise : ∀ r : ℕ,
       f.lCoeff (q ^ r) * x ^ r =
         (if r % 2 = 0 then
             ((-((χ (ZMod.unitOfCoprime q hqN) : ℂ) * (q : ℂ) ^ (k - 1))) ^ (r / 2) * x ^ r)
           else 0) := by
     intro r
-    rw [h_seq.coeff_prime_pow_eq_of_a_p_zero hq hqN h_zero r]
+    rw [(f.lCoeff_isHeckeCoefficientSequence χ hfχ).coeff_prime_pow_eq_of_a_p_zero
+      hq hqN h_zero r]
     rcases Nat.even_or_odd r with hr | hr
     · rw [if_pos hr, if_pos (Nat.even_iff.mp hr)]
       ring
     · have h_not : ¬ Even r := Nat.not_even_iff_odd.mpr hr
-      have h_mod : r % 2 ≠ 0 := fun heq ↦ h_not (Nat.even_iff.mpr heq)
-      rw [if_neg h_not, if_neg h_mod, zero_mul]
+      rw [if_neg h_not, if_neg fun heq ↦ h_not (Nat.even_iff.mpr heq), zero_mul]
   rw [tsum_congr h_pointwise]
   exact ModularForms.tsum_alternating_pow_eq
     ((χ (ZMod.unitOfCoprime q hqN) : ℂ) * (q : ℂ) ^ (k - 1)) x hs
@@ -912,12 +908,11 @@ theorem Newform.lSeries_stripped_value_identity
             (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
                 ((p : ℕ) : ZMod N) *
               ((p : ℕ) : ℂ) ^ (-(2 * s - k + 1)))⁻¹) := by
-  have h_compound :=
-    f.lSeries_stripped_mul_dirichlet_hasProd χ hfχ S h_bad hs hs' h_geom
-  have h_chi_sq := DirichletCharacter.LSeries_eulerProduct_hasProd
-    ((Newform.dirichletLift χ * Newform.dirichletLift χ :
-        DirichletCharacter ℂ N)) hs''
-  exact hasProd_mul_finset_prod_comm h_compound h_chi_sq T fun p hp_notT ↦
+  exact hasProd_mul_finset_prod_comm
+    (f.lSeries_stripped_mul_dirichlet_hasProd χ hfχ S h_bad hs hs' h_geom)
+    (DirichletCharacter.LSeries_eulerProduct_hasProd
+      ((Newform.dirichletLift χ * Newform.dirichletLift χ :
+        DirichletCharacter ℂ N)) hs'') T fun p hp_notT ↦
     f.eulerFactor_stripped_mul_dirichlet_eq_chiSq_factor_of_not_mem χ hfχ S h_bad T
       hT_iff h_pos_neg hp_notT
 
