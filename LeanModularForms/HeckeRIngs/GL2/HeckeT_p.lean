@@ -284,12 +284,8 @@ private lemma dvd_topLeft_add_canonicalIndex (p : ℕ) (hp : Nat.Prime p)
       ↑((-(M 0 0 : ZMod p) * ((M 1 0 : ℤ) : ZMod p)⁻¹).val) * M 1 0) := by
   haveI : Fact p.Prime := ⟨hp⟩
   haveI : NeZero p := ⟨hp.ne_zero⟩
-  rw [show (p : ℤ) ∣ _ ↔ ((M 0 0 +
-      ↑((-(M 0 0 : ZMod p) * ((M 1 0 : ℤ) : ZMod p)⁻¹).val) * M 1 0 : ℤ) : ZMod p) = 0 from
-    (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).symm]
+  rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
   push_cast
-  show (M 0 0 : ZMod p) + ((-(M 0 0 : ZMod p) * ((M 1 0 : ℤ) : ZMod p)⁻¹).val : ZMod p) *
-    ((M 1 0 : ℤ) : ZMod p) = 0
   rw [ZMod.natCast_val, ZMod.cast_id]
   have : (-(M 0 0 : ZMod p) * ((M 1 0 : ℤ) : ZMod p)⁻¹) * ((M 1 0 : ℤ) : ZMod p) =
       -(M 0 0 : ZMod p) := by
