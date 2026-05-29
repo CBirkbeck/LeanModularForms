@@ -229,11 +229,10 @@ private theorem eq_of_mul_out_inv_eq {G : Type*} [Group G] {H : Subgroup G}
           = (b : G)⁻¹ * ((b : G) * (r₂.out)⁻¹) * r₁.out := by rw [hh]
       simpa [mul_assoc] using h2
     rw [← he]; exact H.mul_mem (H.inv_mem b.2) a.2
-  have hq : r₁ = r₂ := by
-    have h_mk : (QuotientGroup.mk r₁.out : G ⧸ H) = QuotientGroup.mk r₂.out := by
+  obtain rfl : r₁ = r₂ := by
+    have : (QuotientGroup.mk r₁.out : G ⧸ H) = QuotientGroup.mk r₂.out := by
       rw [QuotientGroup.eq]; simpa [mul_inv_rev] using H.inv_mem hmem
-    simpa using h_mk
-  subst hq
+    simpa using this
   exact Subtype.ext (mul_right_cancel hh)
 
 /-- **Subgroup coset tiling of a fundamental domain.** If `s` is a fundamental
@@ -248,27 +247,20 @@ theorem IsFundamentalDomain.subgroup_iUnion_out_smul
     IsFundamentalDomain H (⋃ q : G ⧸ H, ((q.out : G))⁻¹ • s) μ := by
   set T : Set α := ⋃ q : G ⧸ H, ((q.out : G))⁻¹ • s with hT_def
   refine ⟨.iUnion fun q ↦ hs.nullMeasurableSet_smul _, ?_, ?_⟩
-  · filter_upwards [hs.ae_covers] with τ hτ
-    obtain ⟨g, hg⟩ := hτ
+  · filter_upwards [hs.ae_covers] with τ ⟨g, hg⟩
     set q : G ⧸ H := QuotientGroup.mk g
     have hmem : q.out⁻¹ * g ∈ H := by
-      rw [← QuotientGroup.leftRel_apply]
-      exact Quotient.exact q.out_eq
+      rw [← QuotientGroup.leftRel_apply]; exact Quotient.exact q.out_eq
     refine ⟨⟨q.out⁻¹ * g, hmem⟩, ?_⟩
     show (q.out⁻¹ * g) • τ ∈ T
     rw [mul_smul]
-    refine Set.mem_iUnion.mpr ⟨q, ?_⟩
-    exact Set.smul_mem_smul_set hg
+    exact Set.mem_iUnion.mpr ⟨q, Set.smul_mem_smul_set hg⟩
   · intro h₁ h₂ hne
     show AEDisjoint μ ((h₁ : G) • T) ((h₂ : G) • T)
     rw [hT_def]
-    simp only [Set.smul_set_iUnion]
-    rw [AEDisjoint.iUnion_left_iff]
-    intro q₁
-    rw [AEDisjoint.iUnion_right_iff]
-    intro q₂
-    simp_rw [← mul_smul]
-    exact hs.aedisjoint fun heq ↦ hne (eq_of_mul_out_inv_eq heq)
+    simp only [Set.smul_set_iUnion, AEDisjoint.iUnion_left_iff, AEDisjoint.iUnion_right_iff,
+      ← mul_smul]
+    exact fun q₁ q₂ ↦ hs.aedisjoint fun heq ↦ hne (eq_of_mul_out_inv_eq heq)
 
 private theorem eq_of_mul_transversal {G : Type*} [Group G] {H : Subgroup G}
     {ι : Type*} {r : ι → G}
@@ -281,12 +273,9 @@ private theorem eq_of_mul_transversal {G : Type*} [Group G] {H : Subgroup G}
       simpa [mul_assoc] using h2
     rw [← he']
     exact H.mul_mem (H.inv_mem b.2) a.2
-  have hij : i = j := by
-    apply he
+  obtain rfl : i = j := he <| by
     show (QuotientGroup.mk ((r i)⁻¹) : G ⧸ H) = QuotientGroup.mk ((r j)⁻¹)
-    rw [eq_comm, QuotientGroup.eq]
-    simpa [inv_inv] using hmem
-  subst hij
+    rw [eq_comm, QuotientGroup.eq]; simpa [inv_inv] using hmem
   exact ⟨Subtype.ext (mul_right_cancel hh), rfl⟩
 
 /-- **Arbitrary-transversal subgroup coset tiling of a fundamental domain.** If `s`
@@ -303,14 +292,11 @@ theorem IsFundamentalDomain.iUnion_smul_of_transversal
     {H : Subgroup G} {s : Set α} (hs : IsFundamentalDomain G s μ)
     {r : ι → G} (e : ι ≃ G ⧸ H) (he : ∀ i, e i = (QuotientGroup.mk ((r i)⁻¹) : G ⧸ H)) :
     IsFundamentalDomain H (⋃ i, r i • s) μ := by
-  have hinj : Function.Injective (fun i ↦ (QuotientGroup.mk ((r i)⁻¹) : G ⧸ H)) := by
-    intro i j hij
-    exact e.injective (by rw [he, he]; exact hij)
+  have hinj : Function.Injective (fun i ↦ (QuotientGroup.mk ((r i)⁻¹) : G ⧸ H)) :=
+    fun i j hij ↦ e.injective (by rw [he, he]; exact hij)
   set T : Set α := ⋃ i, r i • s with hT_def
   refine ⟨.iUnion fun i ↦ hs.nullMeasurableSet_smul _, ?_, ?_⟩
-  · filter_upwards [hs.ae_covers] with τ hτ
-    obtain ⟨g, hg⟩ := hτ
-    -- choose the index whose `(r i)⁻¹` represents `⟦g⟧`
+  · filter_upwards [hs.ae_covers] with τ ⟨g, hg⟩
     set i : ι := e.symm (QuotientGroup.mk g) with hi_def
     have hmem : (r i) * g ∈ H := by
       have hcoset : (QuotientGroup.mk ((r i)⁻¹) : G ⧸ H) = QuotientGroup.mk g := by
@@ -320,18 +306,13 @@ theorem IsFundamentalDomain.iUnion_smul_of_transversal
     refine ⟨⟨(r i) * g, hmem⟩, ?_⟩
     show ((r i) * g) • τ ∈ T
     rw [mul_smul]
-    refine Set.mem_iUnion.mpr ⟨i, ?_⟩
-    exact Set.smul_mem_smul_set hg
+    exact Set.mem_iUnion.mpr ⟨i, Set.smul_mem_smul_set hg⟩
   · intro h₁ h₂ hne
     show AEDisjoint μ ((h₁ : G) • T) ((h₂ : G) • T)
     rw [hT_def]
-    simp only [Set.smul_set_iUnion]
-    rw [AEDisjoint.iUnion_left_iff]
-    intro i₁
-    rw [AEDisjoint.iUnion_right_iff]
-    intro i₂
-    simp_rw [← mul_smul]
-    exact hs.aedisjoint fun heq ↦ hne (eq_of_mul_transversal hinj heq).1
+    simp only [Set.smul_set_iUnion, AEDisjoint.iUnion_left_iff, AEDisjoint.iUnion_right_iff,
+      ← mul_smul]
+    exact fun i₁ i₂ ↦ hs.aedisjoint fun heq ↦ hne (eq_of_mul_transversal hinj heq).1
 
 /-- **Normalizer-shift of a fundamental domain.** If `s` is an `H`-fundamental
 domain (where `H ≤ G_outer`) and `g ∈ G_outer` lies in the normalizer of `H`,
@@ -365,25 +346,21 @@ theorem IsFundamentalDomain.smul_of_eq_conjAct
     {g : G_outer} (hgH : H₂ = ConjAct.toConjAct g • H₁) :
     IsFundamentalDomain H₂ (g • s) μ := by
   subst hgH
-  exact hs.image_of_equiv (MulAction.toPerm g)
+  refine hs.image_of_equiv (MulAction.toPerm g)
     (measurePreserving_smul _ _).quasiMeasurePreserving
-    { toFun := fun h₂ ↦ ⟨g⁻¹ * (h₂ : G_outer) * g, by
-        have h_mem : (h₂ : G_outer) ∈ ConjAct.toConjAct g • H₁ := h₂.2
-        rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
-          ConjAct.smul_def, map_inv, ConjAct.ofConjAct_toConjAct, inv_inv] at h_mem
-        exact h_mem⟩
-      invFun := fun h₁ ↦ ⟨g * (h₁ : G_outer) * g⁻¹, by
-        rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
-          ConjAct.smul_def, map_inv, ConjAct.ofConjAct_toConjAct, inv_inv]
-        have h_simp : g⁻¹ * (g * (h₁ : G_outer) * g⁻¹) * g = (h₁ : G_outer) := by
-          group
-        rw [h_simp]
-        exact h₁.2⟩
+    { toFun := fun h₂ ↦ ⟨g⁻¹ * (h₂ : G_outer) * g, ?_⟩
+      invFun := fun h₁ ↦ ⟨g * (h₁ : G_outer) * g⁻¹, ?_⟩
       left_inv := fun _ ↦ Subtype.ext (by group)
-      right_inv := fun _ ↦ Subtype.ext (by group) }
-    fun h₂ x ↦ by
-      show g • ((g⁻¹ * (h₂ : G_outer) * g) • x) = (h₂ : G_outer) • (g • x)
-      simp only [smul_smul, mul_inv_cancel_left, mul_assoc]
+      right_inv := fun _ ↦ Subtype.ext (by group) } fun h₂ x ↦ ?_
+  · have := h₂.2
+    rwa [Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
+      ConjAct.smul_def, map_inv, ConjAct.ofConjAct_toConjAct, inv_inv] at this
+  · rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
+      ConjAct.smul_def, map_inv, ConjAct.ofConjAct_toConjAct, inv_inv,
+      show g⁻¹ * (g * (h₁ : G_outer) * g⁻¹) * g = (h₁ : G_outer) from by group]
+    exact h₁.2
+  · show g • ((g⁻¹ * (h₂ : G_outer) * g) • x) = (h₂ : G_outer) • (g • x)
+    simp only [smul_smul, mul_inv_cancel_left, mul_assoc]
 
 /-- **AE-disjointness of arbitrary `G_outer`-translates related by an `H`-element.**
 Let `D` be a fundamental domain for a subgroup `H ≤ G_outer` acting on `α` with a
@@ -619,11 +596,8 @@ noncomputable def slToPslQuot :
       intro a b hab
       change (QuotientGroup.leftRel _).r _ _ at hab
       rw [QuotientGroup.leftRel_apply] at hab
-      apply (QuotientGroup.eq).mpr
-      have h_psl : (QuotientGroup.mk a : PSL(2, ℤ))⁻¹ * QuotientGroup.mk b =
-          QuotientGroup.mk (a⁻¹ * b) := by
-        rw [← QuotientGroup.mk_inv, ← QuotientGroup.mk_mul]
-      rw [h_psl]
+      refine (QuotientGroup.eq).mpr ?_
+      rw [← QuotientGroup.mk_inv, ← QuotientGroup.mk_mul]
       exact ⟨a⁻¹ * b, hab, rfl⟩)
 
 @[simp]
@@ -648,9 +622,8 @@ noncomputable def slLeftMul (h : SL(2, ℤ)) :
       intro a b hab
       change (QuotientGroup.leftRel _).r _ _ at hab
       rw [QuotientGroup.leftRel_apply] at hab
-      apply QuotientGroup.eq.mpr
-      have : (h * a)⁻¹ * (h * b) = a⁻¹ * b := by group
-      rw [this]; exact hab)
+      refine QuotientGroup.eq.mpr ?_
+      rw [show (h * a)⁻¹ * (h * b) = a⁻¹ * b from by group]; exact hab)
 
 @[simp]
 theorem slLeftMul_mk (h g : SL(2, ℤ)) :
@@ -685,11 +658,10 @@ theorem slToPslQuot_slLeftMul (h : SL(2, ℤ)) (q : SL(2, ℤ) ⧸ Gamma1 N) :
           intro a b hab
           change (QuotientGroup.leftRel _).r _ _ at hab
           change (QuotientGroup.leftRel _).r _ _
-          rw [QuotientGroup.leftRel_apply] at hab
-          rw [QuotientGroup.leftRel_apply]
-          have : ((QuotientGroup.mk h : PSL(2, ℤ)) * a)⁻¹ *
-              ((QuotientGroup.mk h : PSL(2, ℤ)) * b) = a⁻¹ * b := by group
-          rw [this]; exact hab)
+          rw [QuotientGroup.leftRel_apply] at hab ⊢
+          rw [show ((QuotientGroup.mk h : PSL(2, ℤ)) * a)⁻¹ *
+              ((QuotientGroup.mk h : PSL(2, ℤ)) * b) = a⁻¹ * b from by group]
+          exact hab)
         (slToPslQuot q) := by
   induction q using QuotientGroup.induction_on with
   | _ g =>
