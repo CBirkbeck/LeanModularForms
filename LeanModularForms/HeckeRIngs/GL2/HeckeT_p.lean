@@ -141,14 +141,6 @@ private noncomputable def moebiusFin (p : ℕ) (hp : Nat.Prime p)
   else
     ⟨((B : ZMod p) * (A : ZMod p)⁻¹).val, ZMod.val_lt _⟩
 
-/-- Slash distributes over finset sums. -/
-lemma sum_slash (k : ℤ) {ι : Type*} (s : Finset ι)
-    (φ : ι → (UpperHalfPlane → ℂ)) (g : GL (Fin 2) ℝ) :
-    (∑ b ∈ s, φ b) ∣[k] g = ∑ b ∈ s, (φ b ∣[k] g) := by
-  induction s using Finset.cons_induction with
-  | empty => simp [SlashAction.zero_slash]
-  | cons a s has ih => simp only [Finset.sum_cons, SlashAction.add_slash, ih]
-
 private lemma intCast_zmod_eq_zero_of_mul (p : ℕ) (hp : Nat.Prime p) {a b : ℤ}
     (hab : ((a * b : ℤ) : ZMod p) = 0) (hb : ((b : ℤ) : ZMod p) ≠ 0) :
     ((a : ℤ) : ZMod p) = 0 := by
@@ -811,7 +803,7 @@ private theorem heckeT_p_slash_invariant [NeZero N] (k : ℤ) (p : ℕ)
     (heckeT_p_fun k p hp hpN f) ∣[k] γ = heckeT_p_fun k p hp hpN f := by
   obtain ⟨σ, hσ, rfl⟩ := Subgroup.mem_map.mp hγ
   simp only [heckeT_p_fun, heckeT_p_ut]
-  rw [SlashAction.add_slash, sum_slash]
+  rw [SlashAction.add_slash, SlashAction.sum_slash]
   by_cases hσ10p : (p : ℤ) ∣ (σ : Matrix (Fin 2) (Fin 2) ℤ) 1 0
   · exact heckeT_p_slash_invariant_case1 k p hp hpN f σ hσ hσ10p
   · exact heckeT_p_slash_invariant_case2 k p hp hpN f σ hσ hσ10p
@@ -921,7 +913,7 @@ private theorem orbit_sum_comm [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.Prime p)
     heckeT_p_fun k p hp hpN f ∣[k] mapGL ℝ (g : SL(2, ℤ)) =
     heckeT_p_fun k p hp hpN (diamondOpAux k g f) := by
   simp only [heckeT_p_fun, heckeT_p_ut]
-  rw [SlashAction.add_slash, sum_slash]
+  rw [SlashAction.add_slash, SlashAction.sum_slash]
   by_cases hσ10p : (p : ℤ) ∣ (g : Matrix (Fin 2) (Fin 2) ℤ) 1 0
   · exact orbit_sum_comm_case1 k p hp hpN f g hσ10p
   · exact orbit_sum_comm_case2 k p hp hpN f g hσ10p
