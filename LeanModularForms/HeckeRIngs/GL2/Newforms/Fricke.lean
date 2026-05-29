@@ -337,17 +337,24 @@ theorem Newform.imAxis_rapidDecay_of_exponentialDecay
   _root_.ModularForms.HasImAxisRapidDecay_of_HasImAxisExponentialDecay
     f.toCuspForm h
 
-/-- For every `Γ₁(N)` newform `f`, `Newform.HasImAxisExponentialDecay f` holds
-unconditionally (via `CuspFormClass.exp_decay_atImInfty` and the strict-period-1
-fact for `Γ₁(N)`). -/
-theorem Newform.hasImAxisExponentialDecay {N : ℕ} [NeZero N] {k : ℤ}
-    (f : Newform N k) : Newform.HasImAxisExponentialDecay f := by
+/-- `Γ₁(N)`-cusp-form-side `HasImAxisExponentialDecay` for any cusp form on
+`(Gamma1 N).map (mapGL ℝ)` (strict period `1`). -/
+theorem Newform.cuspForm_Gamma1_hasImAxisExponentialDecay {N : ℕ} [NeZero N]
+    {k : ℤ} (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    _root_.ModularForms.HasImAxisExponentialDecay g := by
   have h1_period : (1 : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
     rw [show (Gamma1 N).map (mapGL ℝ) = (Gamma1 N : Subgroup (GL (Fin 2) ℝ)) from rfl,
       CongruenceSubgroup.strictPeriods_Gamma1]
     exact ⟨1, by simp⟩
   exact _root_.ModularForms.hasImAxisExponentialDecay_of_strictPeriod
-    f.toCuspForm (h := 1) one_pos h1_period
+    g (h := 1) one_pos h1_period
+
+/-- For every `Γ₁(N)` newform `f`, `Newform.HasImAxisExponentialDecay f` holds
+unconditionally (via `CuspFormClass.exp_decay_atImInfty` and the strict-period-1
+fact for `Γ₁(N)`). -/
+theorem Newform.hasImAxisExponentialDecay {N : ℕ} [NeZero N] {k : ℤ}
+    (f : Newform N k) : Newform.HasImAxisExponentialDecay f :=
+  Newform.cuspForm_Gamma1_hasImAxisExponentialDecay f.toCuspForm
 
 /-- Rapid polynomial decay of `Newform.imAxis f`, unconditional for any
 `Γ₁(N)` newform. -/
@@ -403,18 +410,6 @@ noncomputable def Newform.ImAxisMellinData.ofData_auto
     Newform.ImAxisMellinData f :=
   Newform.ImAxisMellinData.ofExponentialDecay f G ε hG_int hk_pos hε_ne
     h_feq (Newform.hasImAxisExponentialDecay f) hG_top h_bridge
-
-/-- `Γ₁(N)`-cusp-form-side `HasImAxisExponentialDecay` for any cusp form on
-`(Gamma1 N).map (mapGL ℝ)` (strict period `1`). -/
-theorem Newform.cuspForm_Gamma1_hasImAxisExponentialDecay {N : ℕ} [NeZero N]
-    {k : ℤ} (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    _root_.ModularForms.HasImAxisExponentialDecay g := by
-  have h1_period : (1 : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
-    rw [show (Gamma1 N).map (mapGL ℝ) = (Gamma1 N : Subgroup (GL (Fin 2) ℝ)) from rfl,
-      CongruenceSubgroup.strictPeriods_Gamma1]
-    exact ⟨1, by simp⟩
-  exact _root_.ModularForms.hasImAxisExponentialDecay_of_strictPeriod
-    g (h := 1) one_pos h1_period
 
 /-- `Newform.ImAxisMellinData` constructor taking the Atkin-Lehner / Fricke
 twist as a CuspForm `g`, discharging the entire twist (`G`-) side
@@ -530,7 +525,6 @@ lemma Newform.frickeConjMat_det (N : ℕ) [NeZero N] (γ : SL(2, ℤ))
   have h_det_γ : γ 0 0 * γ 1 1 - γ 0 1 * γ 1 0 = 1 := by
     have hγ_det : γ.val.det = 1 := γ.2
     rw [Matrix.det_fin_two] at hγ_det
-    show γ.val 0 0 * γ.val 1 1 - γ.val 0 1 * γ.val 1 0 = 1
     convert hγ_det using 1
   rw [Newform.frickeConjMat, Matrix.det_fin_two_of]
   linear_combination h_det_γ - (γ 0 1 : ℤ) * h_div
@@ -841,12 +835,9 @@ lemma Newform.slash_frickeMatrix_frickeMatrix
   funext τ
   have hN_ne : (N : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (NeZero.ne N)
   have hτ_ne : (τ : ℂ) ≠ 0 := UpperHalfPlane.ne_zero τ
-  rw [show ((f ∣[k] Newform.frickeMatrix N) ∣[k] Newform.frickeMatrix N) τ =
-      ((f ∣[k] Newform.frickeMatrix N) (Newform.frickeMatrix N • τ)) *
-        ((N : ℝ) : ℂ) ^ (k - 1) * ((N : ℂ) * (τ : ℂ)) ^ (-k) from
-      Newform.frickeMatrix_slash_apply (f ∣[k] Newform.frickeMatrix N) τ]
-  rw [Newform.frickeMatrix_slash_apply f (Newform.frickeMatrix N • τ)]
-  rw [show Newform.frickeMatrix N • Newform.frickeMatrix N • τ = τ by
+  rw [Newform.frickeMatrix_slash_apply (f ∣[k] Newform.frickeMatrix N) τ,
+    Newform.frickeMatrix_slash_apply f (Newform.frickeMatrix N • τ),
+    show Newform.frickeMatrix N • Newform.frickeMatrix N • τ = τ by
       rw [← mul_smul]; exact frickeMatrix_sq_smul τ]
   rw [Newform.frickeMatrix_smul,
     show ((N : ℂ) * (-1 / ((N : ℂ) * (τ : ℂ)))) = -1 / (τ : ℂ) by field_simp,
@@ -932,8 +923,7 @@ lemma Newform.peterssonAdj_frickeMatrix_coe (N : ℕ) [NeZero N] :
 
 private lemma peterssonAdj_frickeMatrix_det_val (N : ℕ) [NeZero N] :
     (peterssonAdj (Newform.frickeMatrix N)).det.val = (N : ℝ) := by
-  rw [show (peterssonAdj (Newform.frickeMatrix N)).det.val =
-      (Newform.frickeMatrix N).det.val from congr_arg Units.val (peterssonAdj_det _)]
+  rw [congr_arg Units.val (peterssonAdj_det _)]
   exact Newform.frickeMatrix_det N
 
 private lemma peterssonAdj_frickeMatrix_det_pos (N : ℕ) [NeZero N] :
@@ -1327,21 +1317,19 @@ lemma Newform.frickeMatrix_PSL_R_mem_normalizer (N : ℕ) [NeZero N] :
     Newform.frickeMatrix_PSL_R N ∈ (imageGamma1_PSL_R N).normalizer := by
   rw [Subgroup.mem_normalizer_iff]
   intro h
-  refine ⟨Newform.frickeMatrix_PSL_R_conj_mem_imageGamma1_PSL_R, ?_⟩
-  intro h_conj_mem
+  refine ⟨Newform.frickeMatrix_PSL_R_conj_mem_imageGamma1_PSL_R, fun h_conj_mem ↦ ?_⟩
   have h_simplify :
       Newform.frickeMatrix_PSL_R N *
           (Newform.frickeMatrix_PSL_R N * h *
             (Newform.frickeMatrix_PSL_R N)⁻¹) *
           (Newform.frickeMatrix_PSL_R N)⁻¹ = h := by
-    rw [Newform.frickeMatrix_PSL_R_inv N]
-    have : Newform.frickeMatrix_PSL_R N *
-            (Newform.frickeMatrix_PSL_R N * h * Newform.frickeMatrix_PSL_R N) *
-            Newform.frickeMatrix_PSL_R N =
+    rw [Newform.frickeMatrix_PSL_R_inv N,
+      show Newform.frickeMatrix_PSL_R N *
+          (Newform.frickeMatrix_PSL_R N * h * Newform.frickeMatrix_PSL_R N) *
+          Newform.frickeMatrix_PSL_R N =
         (Newform.frickeMatrix_PSL_R N * Newform.frickeMatrix_PSL_R N) * h *
-          (Newform.frickeMatrix_PSL_R N * Newform.frickeMatrix_PSL_R N) := by
-      group
-    rw [this, Newform.frickeMatrix_PSL_R_mul_self N, one_mul, mul_one]
+          (Newform.frickeMatrix_PSL_R N * Newform.frickeMatrix_PSL_R N) by group,
+      Newform.frickeMatrix_PSL_R_mul_self N, one_mul, mul_one]
   rw [← h_simplify]
   exact Newform.frickeMatrix_PSL_R_conj_mem_imageGamma1_PSL_R h_conj_mem
 
