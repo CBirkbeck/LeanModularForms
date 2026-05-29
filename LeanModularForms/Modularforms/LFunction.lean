@@ -3,8 +3,8 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: LeanModularForms contributors
 -/
-import Mathlib.Analysis.Complex.CauchyIntegral
 import Mathlib.Analysis.Analytic.Uniqueness
+import Mathlib.Analysis.Complex.CauchyIntegral
 import Mathlib.Analysis.MellinTransform
 import Mathlib.Analysis.Meromorphic.Basic
 import Mathlib.Analysis.Meromorphic.Order
@@ -14,10 +14,11 @@ import Mathlib.MeasureTheory.Integral.Gamma
 import Mathlib.NumberTheory.LSeries.Basic
 import Mathlib.NumberTheory.LSeries.Convergence
 import Mathlib.NumberTheory.LSeries.Injectivity
-import Mathlib.NumberTheory.ModularForms.Bounds
-import Mathlib.NumberTheory.ModularForms.Cusps
-import Mathlib.NumberTheory.ModularForms.CongruenceSubgroups
 import Mathlib.NumberTheory.Modular
+import Mathlib.NumberTheory.ModularForms.Bounds
+import Mathlib.NumberTheory.ModularForms.CongruenceSubgroups
+import Mathlib.NumberTheory.ModularForms.Cusps
+
 import LeanModularForms.Modularforms.ResToImagAxis
 
 /-!
@@ -104,19 +105,17 @@ lemma abscissaOfAbsConv_lCoeff_le_cuspForm [Γ.IsArithmetic]
 a weight-`k` modular form of non-negative weight. -/
 lemma lSeriesSummable_of_modularForm [Γ.IsArithmetic] [ModularFormClass F Γ k]
     (hk : 0 ≤ k) (f : F) {s : ℂ} (hs : (k : ℝ) + 1 < s.re) :
-    LSeriesSummable (lCoeff f) s := by
-  apply LSeriesSummable_of_abscissaOfAbsConv_lt_re
-  refine lt_of_le_of_lt (abscissaOfAbsConv_lCoeff_le hk f) ?_
-  exact_mod_cast hs
+    LSeriesSummable (lCoeff f) s :=
+  LSeriesSummable_of_abscissaOfAbsConv_lt_re
+    ((abscissaOfAbsConv_lCoeff_le hk f).trans_lt (by exact_mod_cast hs))
 
 /-- Convergence of `LSeries (lCoeff f) s` on the half-plane `Re s > k/2 + 1` for
 a weight-`k` cusp form.  This is the standard absolute-convergence region. -/
 lemma lSeriesSummable_of_cuspForm [Γ.IsArithmetic] [CuspFormClass F Γ k]
     (f : F) {s : ℂ} (hs : (k : ℝ) / 2 + 1 < s.re) :
-    LSeriesSummable (lCoeff f) s := by
-  apply LSeriesSummable_of_abscissaOfAbsConv_lt_re
-  refine lt_of_le_of_lt (abscissaOfAbsConv_lCoeff_le_cuspForm f) ?_
-  exact_mod_cast hs
+    LSeriesSummable (lCoeff f) s :=
+  LSeriesSummable_of_abscissaOfAbsConv_lt_re
+    ((abscissaOfAbsConv_lCoeff_le_cuspForm f).trans_lt (by exact_mod_cast hs))
 
 /-- For a cusp form, the `0`-th `q`-expansion coefficient vanishes. -/
 lemma lCoeff_zero_of_cuspForm [Γ.IsArithmetic] [CuspFormClass F Γ k]
@@ -165,9 +164,8 @@ open CongruenceSubgroup Matrix.SpecialLinearGroup in
 /-- **Strict width at infinity of the GL₂(ℝ) image of Γ₁(N) is `1`.** -/
 @[simp]
 lemma strictWidthInfty_Gamma1_mapGL (N : ℕ) :
-    ((Gamma1 N).map (mapGL ℝ)).strictWidthInfty = 1 := by
-  rw [show (Gamma1 N).map (mapGL ℝ) = (Gamma1 N : Subgroup (GL (Fin 2) ℝ)) from rfl]
-  exact CongruenceSubgroup.strictWidthInfty_Gamma1 N
+    ((Gamma1 N).map (mapGL ℝ)).strictWidthInfty = 1 :=
+  CongruenceSubgroup.strictWidthInfty_Gamma1 N
 
 open CongruenceSubgroup Matrix.SpecialLinearGroup in
 /-- **`ModularForms.lCoeff` on a `Γ₁(N)` form reduces to `qExpansion 1`.** -/
@@ -187,18 +185,12 @@ theorem tsum_alternating_pow_eq (c x : ℂ) (h : ‖c * x ^ 2‖ < 1) :
     rw [show (-c) * x ^ 2 = -(c * x ^ 2) by ring, norm_neg]; exact h
   have h_even_term : ∀ k : ℕ,
       (if (2 * k) % 2 = 0 then ((-c) ^ ((2 * k) / 2) * x ^ (2 * k)) else 0) =
-        ((-c) * x ^ 2) ^ k := by
-    intro k
-    have h_mod : (2 * k) % 2 = 0 := by omega
-    have h_div : (2 * k) / 2 = k := by omega
-    rw [if_pos h_mod, h_div]; ring
+        ((-c) * x ^ 2) ^ k := fun k ↦ by
+    rw [if_pos (by omega : (2 * k) % 2 = 0), show (2 * k) / 2 = k by omega]; ring
   have h_odd_term : ∀ k : ℕ,
       (if (2 * k + 1) % 2 = 0 then
           ((-c) ^ ((2 * k + 1) / 2) * x ^ (2 * k + 1))
-        else 0) = 0 := by
-    intro k
-    have h_mod : (2 * k + 1) % 2 ≠ 0 := by omega
-    rw [if_neg h_mod]
+        else 0) = 0 := fun k ↦ if_neg (by omega)
   have h_summ_even : Summable fun k : ℕ ↦
       (if (2 * k) % 2 = 0 then ((-c) ^ ((2 * k) / 2) * x ^ (2 * k)) else 0) := by
     refine Summable.congr (summable_geometric_of_norm_lt_one h_neg) (fun k ↦ ?_)
@@ -287,9 +279,7 @@ theorem HasImAxisRapidDecay_of_HasImAxisExponentialDecay
 lemma imAxis_eq_resToImagAxis [ModularFormClass F Γ k] (f : F) :
     imAxis f = ResToImagAxis (⇑f) := by
   funext t
-  by_cases ht : 0 < t
-  · simp only [imAxis, ResToImagAxis, dif_pos ht]
-  · simp only [imAxis, ResToImagAxis, dif_neg ht]
+  simp only [imAxis, ResToImagAxis]
 
 /-- **`atImInfty` exponential decay ⇒ `HasImAxisExponentialDecay`.**
 
@@ -301,14 +291,12 @@ theorem hasImAxisExponentialDecay_of_atImInfty_decay [ModularFormClass F Γ k]
     (hf : (⇑f : ℍ → ℂ) =O[UpperHalfPlane.atImInfty]
       fun τ : ℍ ↦ Real.exp (-c * τ.im)) :
     HasImAxisExponentialDecay f := by
-  refine ⟨c, hc, ?_⟩
-  refine (Asymptotics.IsBigO.congr'
-    (isBigO_resToImagAxis_of_isBigO_atImInfty hc hf) ?_ ?_).mono le_rfl
-  · refine Filter.Eventually.of_forall (fun x ↦ ?_)
-    rw [imAxis_eq_resToImagAxis f]
-    show ResToImagAxis (⇑f) x = ResToImagAxis (⇑f) x - 0
-    ring
-  · exact Filter.EventuallyEq.refl _ _
+  refine ⟨c, hc, (Asymptotics.IsBigO.congr'
+    (isBigO_resToImagAxis_of_isBigO_atImInfty hc hf) ?_ .rfl).mono le_rfl⟩
+  refine .of_forall fun x ↦ ?_
+  rw [imAxis_eq_resToImagAxis f]
+  show ResToImagAxis (⇑f) x = ResToImagAxis (⇑f) x - 0
+  ring
 
 /-- **Cusp-form-side `HasImAxisExponentialDecay` from a strict period.**
 
@@ -321,12 +309,10 @@ theorem hasImAxisExponentialDecay_of_strictPeriod
   haveI : Fact (IsCusp OnePoint.infty Γ) :=
     ⟨Γ.isCusp_of_mem_strictPeriods hh hΓ⟩
   have hc : (0 : ℝ) < 2 * Real.pi / h := by positivity
-  have h_decay' : (⇑f : ℍ → ℂ) =O[UpperHalfPlane.atImInfty]
-      fun τ : ℍ ↦ Real.exp (-(2 * Real.pi / h) * τ.im) := by
-    refine (CuspFormClass.exp_decay_atImInfty f hh hΓ).congr_right (fun τ ↦ ?_)
-    congr 1
-    field_simp
-  exact hasImAxisExponentialDecay_of_atImInfty_decay f hc h_decay'
+  refine hasImAxisExponentialDecay_of_atImInfty_decay f hc ?_
+  refine (CuspFormClass.exp_decay_atImInfty f hh hΓ).congr_right fun τ ↦ ?_
+  congr 1
+  field_simp
 
 /-- **The classical Hecke 1936 completed Mellin–Dirichlet identity for cusp forms**
 (Diamond–Shurman §5.9 Theorem 5.9.2 / Miyake Theorem 4.3.5 / 4.5.16):
@@ -347,11 +333,8 @@ on `Re s > 0`. -/
 theorem mellin_realExp_neg_const_mul {c : ℝ} (hc : 0 < c) {s : ℂ} (hs : 0 < s.re) :
     mellin (fun t : ℝ ↦ (Real.exp (-(c * t)) : ℂ)) s =
       (c : ℂ) ^ (-s) * Complex.Gamma s := by
-  have h_fun_eq :
-      (fun t : ℝ ↦ (Real.exp (-(c * t)) : ℂ)) =
-        (fun t : ℝ ↦ (fun u : ℝ ↦ (Real.exp (-u) : ℂ)) (c * t)) := by
-    funext t; rfl
-  rw [h_fun_eq, mellin_comp_mul_left (fun u : ℝ ↦ (Real.exp (-u) : ℂ)) s hc,
+  show mellin (fun t : ℝ ↦ (fun u : ℝ ↦ (Real.exp (-u) : ℂ)) (c * t)) s = _
+  rw [mellin_comp_mul_left (fun u : ℝ ↦ (Real.exp (-u) : ℂ)) s hc,
     ← Complex.GammaIntegral_eq_mellin, ← Complex.Gamma_eq_integral hs, smul_eq_mul]
 
 /-- **Identification of `Function.Periodic.qParam` on the imaginary axis with a real
@@ -365,10 +348,9 @@ lemma qParam_imAxis_eq_realExp (h : ℝ) (t : ℝ) :
   unfold Function.Periodic.qParam
   rw [Complex.ofReal_exp]
   congr 1
-  have rearrange :
-      2 * (Real.pi : ℂ) * Complex.I * (Complex.I * (t : ℂ)) =
-        2 * (Real.pi : ℂ) * (Complex.I * Complex.I) * (t : ℂ) := by ring
-  rw [rearrange, Complex.I_mul_I]
+  rw [show 2 * (Real.pi : ℂ) * Complex.I * (Complex.I * (t : ℂ)) =
+        2 * (Real.pi : ℂ) * (Complex.I * Complex.I) * (t : ℂ) by ring,
+      Complex.I_mul_I]
   push_cast
   ring
 
@@ -388,16 +370,14 @@ theorem mellin_qParam_pow_imAxis {h : ℝ} (hh : 0 < h) {m : ℕ} (hm : 1 ≤ m)
       (fun t : ℝ ↦ Function.Periodic.qParam h (Complex.I * (t : ℂ)) ^ m) =
         (fun t : ℝ ↦ (Real.exp (-(2 * Real.pi * m / h * t)) : ℂ)) := by
     funext t
-    rw [qParam_imAxis_eq_realExp h t]
-    rw [show ((Real.exp (-(2 * Real.pi * t / h)) : ℝ) : ℂ) ^ m =
-            (((Real.exp (-(2 * Real.pi * t / h)))^m : ℝ) : ℂ) by push_cast; rfl]
-    rw [show (Real.exp (-(2 * Real.pi * t / h)))^m =
+    rw [qParam_imAxis_eq_realExp h t,
+        show ((Real.exp (-(2 * Real.pi * t / h)) : ℝ) : ℂ) ^ m =
+            (((Real.exp (-(2 * Real.pi * t / h)))^m : ℝ) : ℂ) by push_cast; rfl,
+        show (Real.exp (-(2 * Real.pi * t / h)))^m =
             Real.exp (-(2 * Real.pi * m / h * t)) by
-        rw [← Real.exp_nat_mul]; congr 1; ring]
-  have hc_pos : 0 < 2 * Real.pi * m / h := by
-    have hm_pos : (0 : ℝ) < m := by exact_mod_cast Nat.lt_of_lt_of_le Nat.zero_lt_one hm
-    positivity
-  rw [h_eq, mellin_realExp_neg_const_mul hc_pos hs]
+          rw [← Real.exp_nat_mul]; congr 1; ring]
+  have hm_pos : (0 : ℝ) < m := by exact_mod_cast hm.trans_lt' Nat.zero_lt_one
+  rw [h_eq, mellin_realExp_neg_const_mul (by positivity) hs]
 
 /-- **Factored q-expansion termwise Mellin identity**.
 
@@ -411,20 +391,14 @@ theorem mellin_qParam_pow_imAxis_split {h : ℝ} (hh : 0 < h) {m : ℕ} (hm : 1 
     {s : ℂ} (hs : 0 < s.re) :
     mellin (fun t : ℝ ↦ Function.Periodic.qParam h (Complex.I * (t : ℂ)) ^ m) s =
       ((2 * Real.pi / h : ℝ) : ℂ) ^ (-s) * Complex.Gamma s * ((m : ℕ) : ℂ) ^ (-s) := by
-  rw [mellin_qParam_pow_imAxis hh hm hs]
-  have h_arg :
-      (2 * Real.pi * (m : ℕ) / h : ℝ) = (2 * Real.pi / h : ℝ) * ((m : ℕ) : ℝ) := by
-    ring
-  have h_split : ((2 * Real.pi * (m : ℕ) / h : ℝ) : ℂ) ^ (-s) =
-                 ((2 * Real.pi / h : ℝ) : ℂ) ^ (-s) * ((m : ℕ) : ℂ) ^ (-s) := by
-    rw [show ((2 * Real.pi * (m : ℕ) / h : ℝ) : ℂ) =
+  rw [mellin_qParam_pow_imAxis hh hm hs,
+      show ((2 * Real.pi * (m : ℕ) / h : ℝ) : ℂ) =
           ((2 * Real.pi / h : ℝ) : ℂ) * (((m : ℕ) : ℝ) : ℂ) by
-        rw [← Complex.ofReal_mul]; exact_mod_cast congrArg ((↑) : ℝ → ℂ) h_arg]
-    rw [Complex.mul_cpow_ofReal_nonneg
+        rw [← Complex.ofReal_mul]; push_cast; ring_nf,
+      Complex.mul_cpow_ofReal_nonneg
         (by positivity : (0 : ℝ) ≤ 2 * Real.pi / h)
-        (by positivity : (0 : ℝ) ≤ ((m : ℕ) : ℝ))]
-    rw [Complex.ofReal_natCast]
-  rw [h_split]
+        (by positivity : (0 : ℝ) ≤ ((m : ℕ) : ℝ)),
+      Complex.ofReal_natCast]
   ring
 
 /-- **Conditional sum-swap for the Mellin transform of a tsum**.
@@ -480,8 +454,7 @@ theorem tsum_mellin_qParam_pow_imAxis_eq_LSeries
   have h_each : ∀ m : ℕ,
       a m * mellin (fun t : ℝ ↦
           Function.Periodic.qParam h (Complex.I * (t : ℂ)) ^ m) s =
-        (((2 * Real.pi / h : ℝ) : ℂ) ^ (-s) * Complex.Gamma s) * LSeries.term a s m := by
-    intro m
+        (((2 * Real.pi / h : ℝ) : ℂ) ^ (-s) * Complex.Gamma s) * LSeries.term a s m := fun m ↦ by
     rcases Nat.eq_zero_or_pos m with rfl | hm_pos
     · rw [LSeries.term_zero, h_a0, zero_mul, mul_zero]
     · rw [mellin_qParam_pow_imAxis_split hh hm_pos hs, LSeries.term_def₀ h_a0]
@@ -545,9 +518,8 @@ theorem mellin_eq_completedLSeries_of_qExpansion_swap_hypotheses_one
     mellin g s =
       (2 * Real.pi : ℂ) ^ (-s) * Complex.Gamma s * LSeries a s := by
   have h := mellin_eq_completedLSeries_of_qExpansion_swap_hypotheses
-    (h := 1) (by norm_num : (0 : ℝ) < 1) h_a0 hs h_decomp h_meas h_summ
-  rw [show ((2 * Real.pi / 1 : ℝ) : ℂ) = (2 * Real.pi : ℂ) by push_cast; ring] at h
-  exact h
+    (h := 1) one_pos h_a0 hs h_decomp h_meas h_summ
+  rwa [show ((2 * Real.pi / 1 : ℝ) : ℂ) = (2 * Real.pi : ℂ) by push_cast; ring] at h
 
 /-- **Continuity on `Ioi 0` of the period-one weighted Mellin integrand**
 `t ↦ (t : ℂ)^{s-1} • (a m · qParam 1 (I·t)^m)`. -/
@@ -556,14 +528,10 @@ lemma continuousOn_qParam_pow_imAxis_term {a : ℕ → ℂ} (m : ℕ) (s : ℂ) 
       (fun t : ℝ ↦ (t : ℂ) ^ (s - 1) •
         (a m * Function.Periodic.qParam 1 (Complex.I * (t : ℂ)) ^ m))
       (Set.Ioi (0 : ℝ)) := by
-  have h_cpow : ContinuousOn (fun t : ℝ ↦ ((t : ℝ) : ℂ) ^ (s - 1)) (Set.Ioi 0) := by
-    apply (Complex.continuous_ofReal.continuousOn (s := Set.Ioi (0 : ℝ))).cpow_const
-    intro t ht; rw [Complex.ofReal_mem_slitPlane]; exact ht
-  have h_rest :
-      Continuous (fun t : ℝ ↦
-        a m * Function.Periodic.qParam 1 (Complex.I * ((t : ℝ) : ℂ)) ^ m) := by
-    fun_prop
-  exact h_cpow.smul h_rest.continuousOn
+  have h_cpow : ContinuousOn (fun t : ℝ ↦ ((t : ℝ) : ℂ) ^ (s - 1)) (Set.Ioi 0) :=
+    (Complex.continuous_ofReal.continuousOn (s := Set.Ioi (0 : ℝ))).cpow_const
+      fun _ ht ↦ Complex.ofReal_mem_slitPlane.mpr ht
+  exact h_cpow.smul (by fun_prop)
 
 /-- **AE strong measurability of the period-one weighted Mellin integrand**. -/
 lemma aestronglyMeasurable_qParam_pow_imAxis_term {a : ℕ → ℂ} (m : ℕ) (s : ℂ) :
@@ -647,20 +615,10 @@ theorem hasSum_qExpansion_imAxis_Gamma1_mapGL_of_pos
   have h1_period : (1 : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
     rw [← strictWidthInfty_Gamma1_mapGL N]
     exact ((Gamma1 N).map (mapGL ℝ)).strictWidthInfty_mem_strictPeriods
-  have h_qexp :=
-    ModularFormClass.hasSum_qExpansion (f := f) one_pos h1_period
-      ⟨Complex.I * (t : ℂ), h_im⟩
-  have h_fun_eq :
-      (fun m : ℕ ↦ (ModularFormClass.qExpansion 1 f).coeff m •
-          Function.Periodic.qParam 1
-            ((⟨Complex.I * (t : ℂ), h_im⟩ : ℍ) : ℂ) ^ m) =
-        (fun m : ℕ ↦
-          lCoeff f m * Function.Periodic.qParam 1 (Complex.I * (t : ℂ)) ^ m) := by
-    funext m
-    rw [smul_eq_mul, ← lCoeff_Gamma1_mapGL_eq N f]
   rw [imAxis_apply_of_pos f ht]
-  rw [h_fun_eq] at h_qexp
-  exact h_qexp
+  refine (ModularFormClass.hasSum_qExpansion (f := f) one_pos h1_period
+    ⟨Complex.I * (t : ℂ), h_im⟩).congr_fun fun m ↦ ?_
+  rw [smul_eq_mul, ← lCoeff_Gamma1_mapGL_eq N f]
 
 open CongruenceSubgroup Matrix.SpecialLinearGroup in
 /-- **a.e. q-expansion decomposition of `imAxis f` for `(Gamma1 N).map (mapGL ℝ)`**,
@@ -705,15 +663,15 @@ lemma norm_qParam_pow_imAxis_term (a : ℂ) (m : ℕ) (s : ℂ)
     {t : ℝ} (ht : 0 < t) :
     ‖(t : ℂ) ^ (s - 1) • (a * Function.Periodic.qParam 1 (Complex.I * (t : ℂ)) ^ m)‖
       = t ^ (s.re - 1) * ‖a‖ * Real.exp (-(2 * Real.pi * m * t)) := by
-  rw [norm_smul, norm_mul, Complex.norm_cpow_eq_rpow_re_of_pos ht]
-  rw [show (s - 1).re = s.re - 1 by simp [Complex.sub_re, Complex.one_re]]
-  rw [qParam_imAxis_eq_realExp]
-  rw [show ((Real.exp (-(2 * Real.pi * t / 1)) : ℝ) : ℂ) ^ m
-        = (((Real.exp (-(2 * Real.pi * t / 1))) ^ m : ℝ) : ℂ) by push_cast; rfl]
-  rw [show ((Real.exp (-(2 * Real.pi * t / 1)))) ^ m
-        = Real.exp (-(2 * Real.pi * m * t)) by
-      rw [← Real.exp_nat_mul]; congr 1; ring]
-  rw [Complex.norm_real, Real.norm_eq_abs, abs_of_pos (Real.exp_pos _)]
+  rw [norm_smul, norm_mul, Complex.norm_cpow_eq_rpow_re_of_pos ht,
+      show (s - 1).re = s.re - 1 by simp [Complex.sub_re, Complex.one_re],
+      qParam_imAxis_eq_realExp,
+      show ((Real.exp (-(2 * Real.pi * t / 1)) : ℝ) : ℂ) ^ m
+          = (((Real.exp (-(2 * Real.pi * t / 1))) ^ m : ℝ) : ℂ) by push_cast; rfl,
+      show ((Real.exp (-(2 * Real.pi * t / 1)))) ^ m
+          = Real.exp (-(2 * Real.pi * m * t)) by
+        rw [← Real.exp_nat_mul]; congr 1; ring,
+      Complex.norm_real, Real.norm_eq_abs, abs_of_pos (Real.exp_pos _)]
   ring
 
 /-- **Pointwise enorm of the period-one Mellin integrand on `Ioi 0`**, the
@@ -741,9 +699,8 @@ lemma lintegral_enorm_qParam_pow_imAxis_term (a : ℂ) (m : ℕ) (s : ℂ) :
       ‖(t : ℂ) ^ (s - 1) • (a * Function.Periodic.qParam 1 (Complex.I * (t : ℂ)) ^ m)‖ₑ
       = ∫⁻ t in Set.Ioi (0 : ℝ),
           ENNReal.ofReal (t ^ (s.re - 1) * ‖a‖ * Real.exp (-(2 * Real.pi * m * t))) := by
-  refine MeasureTheory.setLIntegral_congr_fun measurableSet_Ioi ?_
-  intro t ht
-  exact enorm_qParam_pow_imAxis_term_of_pos a m s ht
+  exact MeasureTheory.setLIntegral_congr_fun measurableSet_Ioi fun _ ht ↦
+    enorm_qParam_pow_imAxis_term_of_pos a m s ht
 
 private lemma ofReal_rpow_mul_norm_mul_exp_ae_eq (a : ℂ) (m : ℕ) (s : ℂ) :
     ∀ᵐ (t : ℝ) ∂(MeasureTheory.volume.restrict (Set.Ioi (0 : ℝ))),
@@ -752,8 +709,7 @@ private lemma ofReal_rpow_mul_norm_mul_exp_ae_eq (a : ℂ) (m : ℕ) (s : ℂ) :
           = ENNReal.ofReal ‖a‖ *
               ENNReal.ofReal
                 (t ^ (s.re - 1) * Real.exp (-(2 * Real.pi * (m : ℝ) * t))) := by
-  refine (MeasureTheory.ae_restrict_iff' measurableSet_Ioi).mpr ?_
-  filter_upwards with t _ht
+  filter_upwards with t
   rw [show t ^ (s.re - 1) * ‖a‖ * Real.exp (-(2 * Real.pi * (m : ℝ) * t)) =
         ‖a‖ * (t ^ (s.re - 1) * Real.exp (-(2 * Real.pi * (m : ℝ) * t))) by ring]
   exact ENNReal.ofReal_mul (norm_nonneg _)
@@ -772,14 +728,13 @@ theorem lintegral_real_qExpansion_term_eq_Gamma {a : ℂ} {m : ℕ} (hm : 1 ≤ 
       = ENNReal.ofReal
           (‖a‖ * (2 * Real.pi * m : ℝ) ^ (-s.re) * Real.Gamma s.re) := by
   have hb_pos : (0 : ℝ) < 2 * Real.pi * (m : ℝ) := by
-    have hm_pos : (0 : ℝ) < (m : ℝ) := by exact_mod_cast hm.trans_lt' Nat.zero_lt_one
+    have : (0 : ℝ) < (m : ℝ) := by exact_mod_cast hm.trans_lt' Nat.zero_lt_one
     positivity
   have hq : -1 < s.re - 1 := by linarith
   let f_mathlib : ℝ → ℝ := fun x : ℝ ↦
     x ^ (s.re - 1) * Real.exp (-(2 * Real.pi * (m : ℝ)) * x ^ (1 : ℝ))
   have h_align : ∀ t : ℝ, 0 < t →
-      f_mathlib t = t ^ (s.re - 1) * Real.exp (-(2 * Real.pi * (m : ℝ) * t)) := by
-    intro t _ht
+      f_mathlib t = t ^ (s.re - 1) * Real.exp (-(2 * Real.pi * (m : ℝ) * t)) := fun t _ ↦ by
     show t ^ (s.re - 1) * Real.exp (-(2 * Real.pi * (m : ℝ)) * t ^ (1 : ℝ))
         = t ^ (s.re - 1) * Real.exp (-(2 * Real.pi * (m : ℝ) * t))
     rw [Real.rpow_one]; ring_nf
@@ -794,9 +749,9 @@ theorem lintegral_real_qExpansion_term_eq_Gamma {a : ℂ} {m : ℕ} (hm : 1 ≤ 
     exact mul_nonneg (Real.rpow_nonneg ht.le _) (Real.exp_pos _).le
   rw [← MeasureTheory.ofReal_integral_eq_lintegral_ofReal
         (integrableOn_rpow_mul_exp_neg_mul_rpow (p := 1) (s := s.re - 1)
-          (b := 2 * Real.pi * (m : ℝ)) hq (le_refl 1) hb_pos) h_nn,
+          (b := 2 * Real.pi * (m : ℝ)) hq le_rfl hb_pos) h_nn,
       integral_rpow_mul_exp_neg_mul_rpow (p := 1) (q := s.re - 1)
-        (b := 2 * Real.pi * (m : ℝ)) (by norm_num : (0 : ℝ) < 1) hq hb_pos,
+        (b := 2 * Real.pi * (m : ℝ)) one_pos hq hb_pos,
       show -(s.re - 1 + 1) / 1 = -s.re by ring,
       show (s.re - 1 + 1) / 1 = s.re by ring,
       show (1 : ℝ) / 1 = 1 by norm_num, mul_one,
@@ -824,7 +779,7 @@ lemma lintegral_qExpansion_term_eq_Gamma_of_succ
       = ENNReal.ofReal
           (‖a‖ * (2 * Real.pi * ((n : ℝ) + 1)) ^ (-s.re) * Real.Gamma s.re) := by
   rw [lintegral_enorm_qParam_pow_imAxis_term a (n + 1) s,
-      lintegral_real_qExpansion_term_eq_Gamma (a := a) (Nat.succ_le_succ (Nat.zero_le _)) hs]
+      lintegral_real_qExpansion_term_eq_Gamma (a := a) n.succ_pos hs]
   congr 2
   push_cast
   ring
@@ -846,32 +801,29 @@ theorem h_summ_of_tail_summable_Gamma1_mapGL
           (lCoeff f m * Function.Periodic.qParam 1 (Complex.I * (t : ℂ)) ^ m)‖ₑ) ≠
       ⊤ := by
   have hs_re : 0 < s.re := by linarith [show (0 : ℝ) < (k : ℝ) / 2 + 1 by linarith]
-  have h2π_pos : (0 : ℝ) < 2 * Real.pi := by positivity
-  have h_shift :
-      (∑' m : ℕ, ∫⁻ t in Set.Ioi (0 : ℝ),
+  rw [show (∑' m : ℕ, ∫⁻ t in Set.Ioi (0 : ℝ),
           ‖(t : ℂ) ^ (s - 1) •
             (lCoeff f m * Function.Periodic.qParam 1 (Complex.I * (t : ℂ)) ^ m)‖ₑ) =
         ∑' n : ℕ, ∫⁻ t in Set.Ioi (0 : ℝ),
             ‖(t : ℂ) ^ (s - 1) •
               (lCoeff f (n + 1) *
-                Function.Periodic.qParam 1 (Complex.I * (t : ℂ)) ^ (n + 1))‖ₑ := by
+                Function.Periodic.qParam 1 (Complex.I * (t : ℂ)) ^ (n + 1))‖ₑ by
     rw [tsum_eq_zero_add' ENNReal.summable,
-        lintegral_qExpansion_term_zero_of_cuspForm f s, zero_add]
-  rw [h_shift, tsum_congr (fun n ↦ lintegral_qExpansion_term_eq_Gamma_of_succ n hs_re)]
+        lintegral_qExpansion_term_zero_of_cuspForm f s, zero_add],
+    tsum_congr fun n ↦ lintegral_qExpansion_term_eq_Gamma_of_succ n hs_re]
   have h_per_term : ∀ n : ℕ,
       ENNReal.ofReal
           (‖lCoeff f (n + 1)‖ * (2 * Real.pi * ((n : ℝ) + 1)) ^ (-s.re) *
             Real.Gamma s.re) =
         ENNReal.ofReal (Real.Gamma s.re * (2 * Real.pi) ^ (-s.re)) *
-          ENNReal.ofReal (‖lCoeff f (n + 1)‖ * ((n : ℝ) + 1) ^ (-s.re)) := by
-    intro n
+          ENNReal.ofReal (‖lCoeff f (n + 1)‖ * ((n : ℝ) + 1) ^ (-s.re)) := fun n ↦ by
     rw [Real.mul_rpow (by positivity) (by positivity),
         show ‖lCoeff f (n + 1)‖ * ((2 * Real.pi) ^ (-s.re) * ((n : ℝ) + 1) ^ (-s.re))
             * Real.Gamma s.re =
           (Real.Gamma s.re * (2 * Real.pi) ^ (-s.re)) *
             (‖lCoeff f (n + 1)‖ * ((n : ℝ) + 1) ^ (-s.re)) by ring]
     exact ENNReal.ofReal_mul
-      (mul_nonneg (Real.Gamma_pos_of_pos hs_re).le (Real.rpow_nonneg h2π_pos.le _))
+      (mul_nonneg (Real.Gamma_pos_of_pos hs_re).le (Real.rpow_nonneg (by positivity) _))
   rw [tsum_congr h_per_term, ENNReal.tsum_mul_left]
   exact ENNReal.mul_ne_top ENNReal.ofReal_ne_top h_tail
 
@@ -903,47 +855,36 @@ theorem summable_lCoeff_mul_rpow_of_cuspForm_Gamma1_mapGL
       fun n : ℕ ↦ (n : ℝ) ^ ((k : ℝ) / 2) := by
     simpa [lCoeff] using CuspFormClass.qExpansion_isBigO f
   obtain ⟨C, hCev⟩ := h_bigO.bound
-  rw [Filter.eventually_atTop] at hCev
-  obtain ⟨N₀, hC⟩ := hCev
+  obtain ⟨N₀, hC⟩ := Filter.eventually_atTop.mp hCev
   have h_target_bigO :
       (fun n : ℕ ↦ ‖lCoeff f (n + 1)‖ * ((n : ℝ) + 1) ^ (-s.re)) =O[atTop]
         fun n : ℕ ↦ ((n : ℝ) + 1) ^ ((k : ℝ) / 2 - s.re) := by
-    refine Asymptotics.IsBigO.of_bound |C| ?_
-    rw [Filter.eventually_atTop]
-    refine ⟨N₀, fun n hn ↦ ?_⟩
+    refine Asymptotics.IsBigO.of_bound |C| (Filter.eventually_atTop.mpr ⟨N₀, fun n hn ↦ ?_⟩)
     have h_n1_pos : (0 : ℝ) < (n : ℝ) + 1 := by positivity
-    have h_n1_nn : (0 : ℝ) ≤ (n : ℝ) + 1 := h_n1_pos.le
-    have h_pow_neg_nn : (0 : ℝ) ≤ ((n : ℝ) + 1) ^ (-s.re) :=
-      Real.rpow_nonneg h_n1_nn _
+    have h_pow_neg_nn : (0 : ℝ) ≤ ((n : ℝ) + 1) ^ (-s.re) := Real.rpow_nonneg h_n1_pos.le _
     have h_pow_diff_nn : (0 : ℝ) ≤ ((n : ℝ) + 1) ^ ((k : ℝ) / 2 - s.re) :=
-      Real.rpow_nonneg h_n1_nn _
+      Real.rpow_nonneg h_n1_pos.le _
     rw [Real.norm_eq_abs, abs_of_nonneg (mul_nonneg (norm_nonneg _) h_pow_neg_nn),
         Real.norm_eq_abs, abs_of_nonneg h_pow_diff_nn]
-    have h_cast : ((n + 1 : ℕ) : ℝ) = (n : ℝ) + 1 := by push_cast; ring
     have h_norm_bound : ‖lCoeff f (n + 1)‖ ≤ C * ((n : ℝ) + 1) ^ ((k : ℝ) / 2) := by
       have h0 := hC (n + 1) (Nat.le_succ_of_le hn)
-      rw [h_cast, Real.norm_eq_abs, abs_of_nonneg (Real.rpow_nonneg h_n1_nn _)] at h0
+      rw [show ((n + 1 : ℕ) : ℝ) = (n : ℝ) + 1 by push_cast; ring,
+          Real.norm_eq_abs, abs_of_nonneg (Real.rpow_nonneg h_n1_pos.le _)] at h0
       exact h0
-    have h_combine :
-        ((n : ℝ) + 1) ^ ((k : ℝ) / 2) * ((n : ℝ) + 1) ^ (-s.re) =
-          ((n : ℝ) + 1) ^ ((k : ℝ) / 2 - s.re) := by
-      rw [← Real.rpow_add h_n1_pos]; ring_nf
     calc ‖lCoeff f (n + 1)‖ * ((n : ℝ) + 1) ^ (-s.re)
-        ≤ (C * ((n : ℝ) + 1) ^ ((k : ℝ) / 2)) * ((n : ℝ) + 1) ^ (-s.re) :=
+        ≤ C * ((n : ℝ) + 1) ^ ((k : ℝ) / 2) * ((n : ℝ) + 1) ^ (-s.re) :=
           mul_le_mul_of_nonneg_right h_norm_bound h_pow_neg_nn
-      _ = C * ((n : ℝ) + 1) ^ ((k : ℝ) / 2 - s.re) := by rw [mul_assoc, h_combine]
+      _ = C * ((n : ℝ) + 1) ^ ((k : ℝ) / 2 - s.re) := by
+          rw [mul_assoc, ← Real.rpow_add h_n1_pos]; ring_nf
       _ ≤ |C| * ((n : ℝ) + 1) ^ ((k : ℝ) / 2 - s.re) :=
           mul_le_mul_of_nonneg_right (le_abs_self _) h_pow_diff_nn
-  have h_sum_pow :
-      Summable (fun n : ℕ ↦ ((n : ℝ) + 1) ^ ((k : ℝ) / 2 - s.re)) := by
-    have h_eq : (fun n : ℕ ↦ ((n : ℝ) + 1) ^ ((k : ℝ) / 2 - s.re)) =
-        fun n : ℕ ↦ ((n + 1 : ℕ) : ℝ) ^ ((k : ℝ) / 2 - s.re) := by
-      funext n; push_cast; ring_nf
-    rw [h_eq]
-    exact (summable_nat_add_iff
-        (f := fun n : ℕ ↦ (n : ℝ) ^ ((k : ℝ) / 2 - s.re)) 1).mpr
-      (Real.summable_nat_rpow.mpr hp_lt)
-  exact summable_of_isBigO_nat h_sum_pow h_target_bigO
+  refine summable_of_isBigO_nat ?_ h_target_bigO
+  rw [show (fun n : ℕ ↦ ((n : ℝ) + 1) ^ ((k : ℝ) / 2 - s.re)) =
+      fun n : ℕ ↦ ((n + 1 : ℕ) : ℝ) ^ ((k : ℝ) / 2 - s.re) by
+    funext n; push_cast; ring_nf]
+  exact (summable_nat_add_iff
+      (f := fun n : ℕ ↦ (n : ℝ) ^ ((k : ℝ) / 2 - s.re)) 1).mpr
+    (Real.summable_nat_rpow.mpr hp_lt)
 
 open CongruenceSubgroup Matrix.SpecialLinearGroup in
 /-- **ENNReal-form coefficient-tail summability for `Γ₁(N)` cusp forms**, the
@@ -987,12 +928,11 @@ If `b : ℕ → ℂ` is dominated by `a : ℕ → ℂ` pointwise in norm
 `abscissaOfAbsConv b ≤ abscissaOfAbsConv a`. -/
 lemma abscissaOfAbsConv_le_of_norm_le {a b : ℕ → ℂ}
     (h : ∀ n, ‖b n‖ ≤ ‖a n‖) :
-    abscissaOfAbsConv b ≤ abscissaOfAbsConv a := by
-  refine abscissaOfAbsConv_le_of_forall_lt_LSeriesSummable' ?_
-  intro y hy
-  exact Summable.of_norm_bounded (g := fun n ↦ ‖LSeries.term a (y : ℂ) n‖)
-    (LSeriesSummable_of_abscissaOfAbsConv_lt_re (by simpa using hy)).norm
-    (fun n ↦ LSeries.norm_term_le _ (h n))
+    abscissaOfAbsConv b ≤ abscissaOfAbsConv a :=
+  abscissaOfAbsConv_le_of_forall_lt_LSeriesSummable' fun y hy ↦
+    .of_norm_bounded (g := fun n ↦ ‖LSeries.term a (y : ℂ) n‖)
+      (LSeriesSummable_of_abscissaOfAbsConv_lt_re (by simpa using hy)).norm
+      fun n ↦ LSeries.norm_term_le _ (h n)
 
 /-- **Hecke entire-continuation predicate.**  A coefficient sequence
 `a : ℕ → ℂ` *has an entire extension* if there exists an entire
@@ -1086,7 +1026,7 @@ theorem _root_.meromorphicOrderAt_div_neg_of_orderAt_lt
   rw [show -((m : ℤ) : WithTop ℤ) = (((-m) : ℤ) : WithTop ℤ) from rfl,
       ← WithTop.coe_add, show (0 : WithTop ℤ) = ((0 : ℤ) : WithTop ℤ) from rfl,
       WithTop.coe_lt_coe]
-  omega
+  lia
 
 end HasMeromorphicExtensionWithPole
 
@@ -1159,10 +1099,8 @@ lemma coprimeStrip_mul_of_coprime (S : Finset Nat.Primes) (f : ℕ → ℂ)
     push Not at hmn_strip
     obtain ⟨p, hp, hp_dvd⟩ := hmn_strip
     rcases p.prop.dvd_mul.mp hp_dvd with h_dvd_m | h_dvd_n
-    · have hm_neg : ¬ ∀ p ∈ S, ¬ (p : ℕ) ∣ m := fun h ↦ h p hp h_dvd_m
-      rw [if_neg hm_neg, zero_mul]
-    · have hn_neg : ¬ ∀ p ∈ S, ¬ (p : ℕ) ∣ n := fun h ↦ h p hp h_dvd_n
-      rw [if_neg hn_neg, mul_zero]
+    · rw [if_neg (fun h ↦ h p hp h_dvd_m : ¬ ∀ p ∈ S, ¬ (p : ℕ) ∣ m), zero_mul]
+    · rw [if_neg (fun h ↦ h p hp h_dvd_n : ¬ ∀ p ∈ S, ¬ (p : ℕ) ∣ n), mul_zero]
 
 /-- **`coprimeStrip` value on a positive prime power at a prime in `S`**:
 `coprimeStrip S f (p^e) = 0` for `p ∈ S` and `e ≥ 1`. -/
@@ -1194,17 +1132,14 @@ lemma coprimeStrip_eulerFactor_at_S
     (s : ℂ) {p : Nat.Primes} (hp : p ∈ S) :
     ∑' e : ℕ, LSeries.term (coprimeStrip S f) s ((p : ℕ) ^ e) = 1 := by
   have h_term_zero : ∀ e : ℕ, 1 ≤ e →
-      LSeries.term (coprimeStrip S f) s ((p : ℕ) ^ e) = 0 := by
-    intro e he
+      LSeries.term (coprimeStrip S f) s ((p : ℕ) ^ e) = 0 := fun e he ↦ by
     rw [LSeries.term_def, if_neg (pow_pos p.prop.pos e).ne',
       coprimeStrip_prime_pow_at_S S f hp he, zero_div]
-  rw [tsum_eq_single 0 (fun e he_ne_zero ↦
-    h_term_zero e (Nat.one_le_iff_ne_zero.mpr he_ne_zero))]
+  rw [tsum_eq_single 0 fun e he_ne_zero ↦
+    h_term_zero e (Nat.one_le_iff_ne_zero.mpr he_ne_zero)]
   show LSeries.term (coprimeStrip S f) s ((p : ℕ) ^ 0) = 1
-  rw [pow_zero, LSeries.term_def, if_neg one_ne_zero]
-  have h_strip_one : coprimeStrip S f 1 = 1 := by
-    rw [coprimeStrip_one S f, hf₁]
-  rw [h_strip_one, Nat.cast_one, Complex.one_cpow, div_one]
+  rw [pow_zero, LSeries.term_def, if_neg one_ne_zero, coprimeStrip_one S f, hf₁,
+      Nat.cast_one, Complex.one_cpow, div_one]
 
 /-- **Local Euler factor of the coprimeStrip sequence at a prime not in `S`**:
 for `p ∉ S` it equals the local Euler factor of `f` at `p`. -/
@@ -1213,14 +1148,12 @@ lemma coprimeStrip_eulerFactor_off_S
     (s : ℂ) {p : Nat.Primes} (hp : p ∉ S) :
     ∑' e : ℕ, LSeries.term (coprimeStrip S f) s ((p : ℕ) ^ e) =
       ∑' e : ℕ, LSeries.term f s ((p : ℕ) ^ e) := by
-  apply tsum_congr
-  intro e
-  by_cases he : e = 0
-  · subst he
-    simp [coprimeStrip_one S f]
-  · have h_pow_pos : 0 < (p : ℕ) ^ e := pow_pos p.prop.pos e
-    rw [LSeries.term_def, LSeries.term_def, if_neg h_pow_pos.ne',
-      if_neg h_pow_pos.ne', coprimeStrip_prime_pow_off_S S f hp e]
+  refine tsum_congr fun e ↦ ?_
+  rcases Nat.eq_zero_or_pos e with rfl | he
+  · simp [coprimeStrip_one S f]
+  · have h_pow_ne : ((p : ℕ) ^ e : ℕ) ≠ 0 := (pow_pos p.prop.pos e).ne'
+    rw [LSeries.term_def, LSeries.term_def, if_neg h_pow_ne,
+      if_neg h_pow_ne, coprimeStrip_prime_pow_off_S S f hp e]
 
 /-- **Euler-stripping bridge from named `HasProd` Euler-product hypotheses.**
 
@@ -1241,32 +1174,30 @@ theorem eulerStripping_bridge_via_eulerProduct
     LSeries f s = (∏ p ∈ S, ∑' e : ℕ, LSeries.term f s ((p : ℕ) ^ e)) *
                     LSeries (coprimeStrip S f) s := by
   set φ_f : Nat.Primes → ℂ :=
-    fun p ↦ ∑' e : ℕ, LSeries.term f s ((p : ℕ) ^ e) with hφ_f_def
+    fun p ↦ ∑' e : ℕ, LSeries.term f s ((p : ℕ) ^ e)
   set φ_g : Nat.Primes → ℂ :=
-    fun p ↦ ∑' e : ℕ, LSeries.term (coprimeStrip S f) s ((p : ℕ) ^ e) with hφ_g_def
+    fun p ↦ ∑' e : ℕ, LSeries.term (coprimeStrip S f) s ((p : ℕ) ^ e)
   have h_φ_g_eq : ∀ p : Nat.Primes,
-      φ_g p = if p ∈ S then 1 else φ_f p := by
-    intro p
+      φ_g p = if p ∈ S then 1 else φ_f p := fun p ↦ by
     by_cases hp : p ∈ S
     · rw [if_pos hp]; exact coprimeStrip_eulerFactor_at_S S hf₁ s hp
     · rw [if_neg hp]; exact coprimeStrip_eulerFactor_off_S S f s hp
-  set ψ : Nat.Primes → ℂ := fun p ↦ if p ∈ S then 1 else φ_f p with hψ_def
-  set r : Nat.Primes → ℂ := fun p ↦ if p ∈ S then φ_f p else 1 with hr_def
+  set ψ : Nat.Primes → ℂ := fun p ↦ if p ∈ S then 1 else φ_f p
+  set r : Nat.Primes → ℂ := fun p ↦ if p ∈ S then φ_f p else 1
   have h_r_HasProd : HasProd r (∏ p ∈ S, φ_f p) :=
     Finset.prod_congr rfl (fun p hp ↦ by
         show (if p ∈ S then φ_f p else 1) = φ_f p; rw [if_pos hp]) ▸
       hasProd_prod_of_ne_finset_one (s := S)
-        (fun p hp ↦ by show (if p ∈ S then φ_f p else 1) = 1; rw [if_neg hp])
+        fun p hp ↦ by show (if p ∈ S then φ_f p else 1) = 1; rw [if_neg hp]
   have h_mul : HasProd (fun p ↦ ψ p * r p)
       ((LSeries (coprimeStrip S f) s) * ∏ p ∈ S, φ_f p) :=
-    (hg_euler.congr_fun (fun p ↦ (h_φ_g_eq p).symm)).mul h_r_HasProd
-  have h_ψr_eq_φf : ∀ p : Nat.Primes, ψ p * r p = φ_f p := by
-    intro p
+    (hg_euler.congr_fun fun p ↦ (h_φ_g_eq p).symm).mul h_r_HasProd
+  have h_ψr_eq_φf : ∀ p : Nat.Primes, ψ p * r p = φ_f p := fun p ↦ by
     show (if p ∈ S then (1 : ℂ) else φ_f p) * (if p ∈ S then φ_f p else 1) = φ_f p
     by_cases hp : p ∈ S
     · rw [if_pos hp, if_pos hp, one_mul]
     · rw [if_neg hp, if_neg hp, mul_one]
-  rw [hf_euler.unique (h_mul.congr_fun (fun p ↦ (h_ψr_eq_φf p).symm))]; ring
+  rw [hf_euler.unique (h_mul.congr_fun fun p ↦ (h_ψr_eq_φf p).symm)]; ring
 
 /-- **Inverted Euler-stripping bridge: `coprimeStrip` LSeries factors as a
 polynomial multiplier times the original LSeries.**
@@ -1292,11 +1223,9 @@ theorem coprimeStrip_LSeries_eq_polynomial_mul_LSeries
     (h_poly_inv : ∀ p ∈ S,
       ∑' e : ℕ, LSeries.term f s ((p : ℕ) ^ e) = (poly p)⁻¹) :
     LSeries (coprimeStrip S f) s = (∏ p ∈ S, poly p) * LSeries f s := by
-  have h_bridge :=
-    eulerStripping_bridge_via_eulerProduct S hf₁ hf_euler hg_euler
-  rw [Finset.prod_congr rfl h_poly_inv, Finset.prod_inv_distrib,
-    eq_inv_mul_iff_mul_eq₀ (Finset.prod_ne_zero_iff.mpr h_poly_ne_zero)] at h_bridge
-  exact h_bridge.symm
+  have h_bridge := eulerStripping_bridge_via_eulerProduct S hf₁ hf_euler hg_euler
+  rwa [Finset.prod_congr rfl h_poly_inv, Finset.prod_inv_distrib,
+    eq_inv_mul_iff_mul_eq₀ (Finset.prod_ne_zero_iff.mpr h_poly_ne_zero), eq_comm] at h_bridge
 
 /-- **Entirety of the explicit finite-Euler-factor polynomial multiplier.**
 
@@ -1309,9 +1238,8 @@ theorem differentiable_eulerFactor_polynomial_finset
     (S : Finset Nat.Primes) (a : Nat.Primes → ℂ) :
     Differentiable ℂ (fun s : ℂ ↦
       ∏ p ∈ S, (1 - a p * ((p : ℕ) : ℂ) ^ (-s))) := by
-  refine Differentiable.fun_finset_prod (fun p _ ↦ ?_)
-  have hp_ne : ((p : ℕ) : ℂ) ≠ 0 := by exact_mod_cast p.prop.pos.ne'
-  haveI : NeZero (((p : ℕ) : ℂ)) := ⟨hp_ne⟩
+  refine Differentiable.fun_finset_prod fun p _ ↦ ?_
+  haveI : NeZero (((p : ℕ) : ℂ)) := ⟨by exact_mod_cast p.prop.pos.ne'⟩
   fun_prop
 
 /-- **Euler-stripping multiplier as an entire function plus pointwise bridge.**
