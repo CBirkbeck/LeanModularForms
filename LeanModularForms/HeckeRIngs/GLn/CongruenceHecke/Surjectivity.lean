@@ -39,22 +39,22 @@ private theorem T_coprime_mul (N : ℕ) [NeZero N]
     (m n : ℕ) (hm_pos : 0 < m) (hn_pos : 0 < n) (hcop : Nat.Coprime m n) :
     HeckeRing.T_single (Gamma0_pair N) ℤ
       (T_diag_Gamma0 N (![1, m])
-        (fun i ↦ by fin_cases i <;> simp [hm_pos]) (by simp [Int.gcd_one_left])) 1 *
+        (fun i ↦ by fin_cases i <;> simp [hm_pos]) (by simp)) 1 *
     HeckeRing.T_single (Gamma0_pair N) ℤ
       (T_diag_Gamma0 N (![1, n])
-        (fun i ↦ by fin_cases i <;> simp [hn_pos]) (by simp [Int.gcd_one_left])) 1 =
+        (fun i ↦ by fin_cases i <;> simp [hn_pos]) (by simp)) 1 =
     HeckeRing.T_single (Gamma0_pair N) ℤ
       (T_diag_Gamma0 N (![1, m * n])
         (fun i ↦ by fin_cases i <;> simp [Nat.mul_pos hm_pos hn_pos])
-        (by simp [Int.gcd_one_left])) 1 := by
+        (by simp)) 1 := by
   refine HeckeRing.T_single_one_mul_eq_single (Gamma0_pair N) _ _ _ (by
     set D₁ := T_diag_Gamma0 N (![1, m]) (fun i ↦ by fin_cases i <;> simp [hm_pos])
-      (by simp [Int.gcd_one_left])
+      (by simp)
     set D₂ := T_diag_Gamma0 N (![1, n]) (fun i ↦ by fin_cases i <;> simp [hn_pos])
-      (by simp [Int.gcd_one_left])
+      (by simp)
     set D_out := T_diag_Gamma0 N (![1, m * n])
       (fun i ↦ by fin_cases i <;> simp [Nat.mul_pos hm_pos hn_pos])
-      (by simp [Int.gcd_one_left])
+      (by simp)
     set μ := HeckeRing.heckeMultiplicity (Gamma0_pair N) D₁.rep D₂.rep D_out.rep
     have h_mulMap : ∀ p, HeckeRing.mulMap (Gamma0_pair N) D₁.rep D₂.rep p = D_out :=
       mulMap_Gamma0_coprime_eq N m n hm_pos hn_pos hcop
@@ -246,7 +246,7 @@ private lemma prod_gen_det_eq (S : Finset {p : ℕ // p.Prime})
     rw [hD_eq, show (HeckeCoset.one (GL_pair 2) : HeckeCoset (GL_pair 2)) =
       T_diag (fun _ : Fin 2 ↦ 1) from T_diag_ones.symm,
       prod_rep_T_diag _ (fun _ ↦ Nat.one_pos)]
-    simp [Fin.prod_univ_two]
+    simp
   | @insert q' S'' hq'' ih =>
     intro D hD
     rw [Finset.prod_insert hq''] at hD
@@ -292,7 +292,7 @@ private lemma eq_of_mul_eq_mul_coprime_cross {a b c d : ℕ} (h : a * b = c * d)
     (Nat.Coprime.dvd_of_dvd_mul_right hcb (h.symm ▸ dvd_mul_right _ _))
 
 private lemma monotone_cons_le {a b : ℕ} (h : a ≤ b) : Monotone (![a, b] : Fin 2 → ℕ) := by
-  intro i j hij; fin_cases i <;> fin_cases j <;> simp_all [Fin.le_def] <;> omega
+  intro i j hij; fin_cases i <;> fin_cases j <;> simp_all [Fin.le_def]
 
 private lemma multi_prime_step_coprime (q : {p : ℕ // p.Prime})
     (S' : Finset {p : ℕ // p.Prime}) (hq : q ∉ S') (e : {p : ℕ // p.Prime} → Fin 2 → ℕ)
@@ -463,7 +463,7 @@ private lemma prod_ppowDiag_eq (S : Finset {p : ℕ // p.Prime})
   apply Finset.prod_congr rfl
   intro p _
   simp only [ppowDiag, Fin.prod_univ_two, Matrix.cons_val_zero, Matrix.cons_val_one,
-    Matrix.head_cons, ← pow_add]
+    ← pow_add]
   congr 1; omega
 
 private lemma monomial_eval_zero_of_det_ne (d s : GenIdx →₀ ℕ)
@@ -473,7 +473,7 @@ private lemma monomial_eval_zero_of_det_ne (d s : GenIdx →₀ ℕ)
       T_gen 2 p.1 1 ^ (toPrimeExp d p 1)))
       (T_diag (∏ p ∈ primesOf s, ppowDiag 2 p.1
         ![toPrimeExp s p 1, toPrimeExp s p 0 + toPrimeExp s p 1])) = 0 := by
-  by_contra h; push_neg at h
+  by_contra! h
   apply h_det
   obtain ⟨a, ha_eq, ha_pos, ha_div, ha_det⟩ := prod_gen_support_det (primesOf d) (toPrimeExp d)
     (T_diag _) (by rwa [ne_eq] at h)
@@ -487,7 +487,7 @@ private lemma monomial_eval_zero_of_det_ne (d s : GenIdx →₀ ℕ)
     (fun a b ha hb ↦ DivChain_mul 2 a b ha hb) (fun _ _ ↦ dvd_refl 1)
     (fun (p : {p : ℕ // p.Prime}) _ ↦ divChain_ppow 2 p.1 _ (by
       intro i j h
-      fin_cases i <;> fin_cases j <;> simp_all [Fin.le_def] <;> omega))
+      fin_cases i <;> fin_cases j <;> simp_all [Fin.le_def]))
   have hc_prod : ∏ i, c i = ∏ p ∈ primesOf s, p.1 ^ (toPrimeExp s p 0 + 2 * toPrimeExp s p 1) :=
     prod_ppowDiag_eq (primesOf s) (toPrimeExp s)
   have hac := diagonal_representative_unique 2 a c ha_pos hc_pos ha_div hc_div ha_eq.symm
@@ -544,7 +544,7 @@ private lemma exists_primesOf_snd_exp_lt (d s : GenIdx →₀ ℕ) (hds : d ≠ 
     (h_weight_le : (s.sum (fun i c ↦ if i.2 = (1 : Fin 2) then c else 0)) ≤
                    (d.sum (fun i c ↦ if i.2 = (1 : Fin 2) then c else 0))) :
     ∃ p₀ ∈ primesOf s, toPrimeExp s p₀ 1 < toPrimeExp d p₀ 1 := by
-  by_contra h_all_le; push_neg at h_all_le
+  by_contra! h_all_le
   apply hds; ext ⟨p, k⟩
   by_cases hp : p ∈ primesOf s
   · have h_per_prime : toPrimeExp d p 0 + 2 * toPrimeExp d p 1 =
@@ -604,7 +604,7 @@ private lemma monomial_prod_eval_at_Ds_eq_indicator (s d : GenIdx →₀ ℕ)
       HeckeRing.GLn.Inj.monomial_eval_kronecker p.1 p.2
         (toPrimeExp d p 0) (toPrimeExp d p 1)
         (toPrimeExp d p 0) (toPrimeExp d p 1) le_rfl)]
-    simp [mul_one]
+    simp
   · simp only [hds, ite_false]
     by_cases h_det_eq :
         ∏ p ∈ primesOf d, p.1 ^ (toPrimeExp d p 0 + 2 * toPrimeExp d p 1) =
@@ -900,8 +900,6 @@ private lemma T_Gamma0_scalar_mul (c m : ℕ) (hc : 0 < c) (hm : 0 < m)
   set D_out := T_diag_Gamma0 N ((fun _ : Fin 2 ↦ c) * ![1, m])
     (fun i ↦ Nat.mul_pos hc (by fin_cases i <;> simp [hm]))
     (by show Int.gcd (↑(c * 1)) ↑N = 1; simp [hc_gcd])
-  change HeckeRing.T_single _ ℤ D_c 1 * HeckeRing.T_single _ ℤ D_m 1 =
-    HeckeRing.T_single _ ℤ D_out 1
   have hca_gcd : Int.gcd ((((fun _ : Fin 2 ↦ c) * (![1, m] : Fin 2 → ℕ)) 0 : ℕ) : ℤ) ↑N = 1 := by
     simp [hc_gcd]
   have h_mulMap : ∀ p, HeckeRing.mulMap (Gamma0_pair N) D_c.rep D_m.rep p = D_out := by
@@ -1016,7 +1014,7 @@ private lemma T_diag_Gamma0_one_ppow_ne_p_ppow (p : ℕ) (hp : p.Prime) (k : ℕ
   exact absurd this.symm (Nat.Prime.one_lt hp).ne'
 
 private lemma D_out1_Gamma0_pp_in_mulSupport (p : ℕ) (hp : p.Prime)
-    (hpN : (p : ℤ).gcd N = 1) (k : ℕ) (hk : 1 ≤ k) :
+    (_hpN : (p : ℤ).gcd N = 1) (k : ℕ) (_hk : 1 ≤ k) :
     (T_diag_Gamma0 N (![1, p^(k+1)])
         (fun i ↦ by fin_cases i <;> simp [pow_pos hp.pos]) (by simp)) ∈
       HeckeRing.mulSupport (Gamma0_pair N)
@@ -1245,7 +1243,7 @@ private lemma heckeMult_pp_deg_facts (p : ℕ) (hp : p.Prime)
   rw [show HeckeRing.HeckeCoset_deg (Gamma0_pair N) D1 = ↑((p + 1 : ℕ) : ℤ) by
         rw [h_D1_eq]
         have := HeckeCoset_deg_Gamma0_one_ppow N p hp h_pN_cop 1 (by omega)
-        push_cast at this ⊢; push_cast; convert this using 1; push_cast; ring,
+        push_cast at this ⊢; convert this using 1; ring,
       HeckeCoset_deg_Gamma0_one_ppow N p hp h_pN_cop k hk,
       HeckeCoset_deg_Gamma0_one_ppow N p hp h_pN_cop (k+1) (by omega),
       HeckeCoset_deg_Gamma0_p_ppow N p hp h_pN_cop k hk] at h_deg
@@ -1468,7 +1466,7 @@ private lemma T_1m_composite_mem (m p : ℕ) (hp : p.Prime) (hp_dvd : p ∣ m) (
   have hb_pos : 0 < b := Nat.pos_of_ne_zero (by intro hb0; rw [hb0, Nat.mul_zero] at hab; omega)
   have ha_lt : a < m := by
     rw [hab]; refine lt_mul_of_one_lt_right ha_pos ?_
-    by_contra h; push_neg at h
+    by_contra! h
     rw [show b = 1 by omega, Nat.mul_one] at hab
     exact hm_not_ppow ⟨v, hab⟩
   have hb_lt : b < m := by
@@ -1515,8 +1513,7 @@ private lemma T_1m_mem_ψ_range (m : ℕ) (hm : 0 < m) :
     · by_cases hm_ppow : ∃ k, m = p ^ k
       · obtain ⟨k, rfl⟩ := hm_ppow
         have hk : 2 ≤ k := by
-          by_contra h
-          push_neg at h
+          by_contra! h
           interval_cases k
           · exact hm1 rfl
           · apply hcop
@@ -1623,16 +1620,16 @@ private lemma ψ_surjective :
 private noncomputable def shimura_ring_hom :
     HeckeAlgebra 2 →+* HeckeRing.𝕋 (Gamma0_pair N) ℤ :=
   (Ideal.Quotient.lift (RingHom.ker π_hom) (ψ_hom N)
-    (fun a ha ↦ (ker_π_le_ker_ψ N) ha)).comp
+    (fun _ ha ↦ (ker_π_le_ker_ψ N) ha)).comp
     (RingHom.quotientKerEquivOfSurjective π_surjective).symm.toRingHom
 
 private theorem shimura_ring_hom_surjective :
     Function.Surjective (shimura_ring_hom N) := by
   show Function.Surjective ((Ideal.Quotient.lift (RingHom.ker π_hom) (ψ_hom N)
-    (fun a ha ↦ (ker_π_le_ker_ψ N) ha)).comp
+    (fun _ ha ↦ (ker_π_le_ker_ψ N) ha)).comp
     (RingHom.quotientKerEquivOfSurjective π_surjective).symm.toRingHom)
   exact (Ideal.Quotient.lift_surjective_of_surjective (RingHom.ker π_hom)
-      (fun a ha ↦ (ker_π_le_ker_ψ N) ha) (ψ_surjective N)).comp
+      (fun _ ha ↦ (ker_π_le_ker_ψ N) ha) (ψ_surjective N)).comp
     (RingHom.quotientKerEquivOfSurjective π_surjective).symm.surjective
 
 /-- **Shimura Theorem 3.35**: There exists a surjective ring homomorphism
