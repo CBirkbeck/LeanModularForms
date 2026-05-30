@@ -467,21 +467,16 @@ private lemma mulMap_eq_of_setForm_specific_reps {n : ℕ} [NeZero n]
       ha',
     b' * ((g₂ : GL (Fin n) ℚ)⁻¹ * (n_b : GL (Fin n) ℚ) * g₂),
     (GL_pair n).H.mul_mem hb' hn_b_conj, ?_⟩
-  have h_eq : ((σ : GL (Fin n) ℚ) * (n_a : GL (Fin n) ℚ) *
+  symm
+  rw [show ((σ : GL (Fin n) ℚ) * (n_a : GL (Fin n) ℚ) *
         (σ : GL (Fin n) ℚ)⁻¹ * a') * (d : GL (Fin n) ℚ) *
         (b' * ((g₂ : GL (Fin n) ℚ)⁻¹ * (n_b : GL (Fin n) ℚ) * g₂)) =
-      (σ : GL (Fin n) ℚ) * (n_a : GL (Fin n) ℚ) * g₁ *
-        ((τ : GL (Fin n) ℚ) * (n_b : GL (Fin n) ℚ) * g₂) := by
-    have h1 : ((σ : GL (Fin n) ℚ) * (n_a : GL (Fin n) ℚ) *
-          (σ : GL (Fin n) ℚ)⁻¹ * a') * (d : GL (Fin n) ℚ) *
-          (b' * ((g₂ : GL (Fin n) ℚ)⁻¹ * (n_b : GL (Fin n) ℚ) * g₂)) =
-        ((σ : GL (Fin n) ℚ) * (n_a : GL (Fin n) ℚ) *
-          (σ : GL (Fin n) ℚ)⁻¹) *
-          ((a' : GL (Fin n) ℚ) * d * b') *
-          ((g₂ : GL (Fin n) ℚ)⁻¹ * (n_b : GL (Fin n) ℚ) * g₂) := by group
-    rw [h1, ← habp]
-    group
-  exact h_eq.symm
+      ((σ : GL (Fin n) ℚ) * (n_a : GL (Fin n) ℚ) *
+        (σ : GL (Fin n) ℚ)⁻¹) *
+        ((a' : GL (Fin n) ℚ) * d * b') *
+        ((g₂ : GL (Fin n) ℚ)⁻¹ * (n_b : GL (Fin n) ℚ) * g₂) from by group,
+    ← habp]
+  group
 
 /-- Corrected-j mulMap-form descent with explicit i-side block witnesses
 `(M_i, σ_i, N_i, h_block_i, h_stab_i, h_int_conj)`: returns the dim-`(k+1)` class
