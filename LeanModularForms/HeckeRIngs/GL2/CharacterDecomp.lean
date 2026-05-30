@@ -58,9 +58,7 @@ lemma charDecomp_char_one_of_jointEigenvector
   by_contra hne
   have heq : (χ 1 - 1) • v = 0 := by
     rw [sub_smul, one_smul, sub_eq_zero]; exact h1.symm
-  rcases smul_eq_zero.mp heq with hc | hv'
-  · exact hne (sub_eq_zero.mp hc)
-  · exact hv hv'
+  exact (smul_eq_zero.mp heq).elim (fun hc ↦ hne (sub_eq_zero.mp hc)) hv
 
 /-- If `v ≠ 0` is a joint eigenvector of a monoid-hom representation
 `ρ : G →* Module.End K V` with eigenvalues `χ g`, then the eigenvalues are
@@ -75,14 +73,12 @@ lemma charDecomp_char_mul_of_jointEigenvector
   have h₁ := hv_mem g₁; rw [Module.End.mem_eigenspace_iff] at h₁
   have h₂ := hv_mem g₂; rw [Module.End.mem_eigenspace_iff] at h₂
   have hcomp : (ρ g₁ * ρ g₂) v = (χ g₁ * χ g₂) • v := by
-    show ρ g₁ (ρ g₂ v) = (χ g₁ * χ g₂) • v
+    change ρ g₁ (ρ g₂ v) = (χ g₁ * χ g₂) • v
     rw [h₂, map_smul, h₁, smul_smul, mul_comm]
   rw [hcomp] at h
   by_contra hne
   have heq : (χ (g₁ * g₂) - χ g₁ * χ g₂) • v = 0 := by rw [sub_smul, h, sub_self]
-  rcases smul_eq_zero.mp heq with hc | hv'
-  · exact hne (sub_eq_zero.mp hc)
-  · exact hv hv'
+  exact (smul_eq_zero.mp heq).elim (fun hc ↦ hne (sub_eq_zero.mp hc)) hv
 
 /-- If `g` has finite order and `v ≠ 0` is a joint eigenvector with eigenvalues
 `χ`, then `χ g ≠ 0`: the eigenvalue of a finite-order element is a root of
@@ -95,8 +91,7 @@ lemma charDecomp_char_ne_zero_of_jointEigenvector
   obtain ⟨n, hnpos, hn⟩ := hg.exists_pow_eq_one
   have hχ_mul := charDecomp_char_mul_of_jointEigenvector ρ χ v hv hv_mem
   have hχ_one := charDecomp_char_one_of_jointEigenvector ρ χ v hv hv_mem
-  have hχ_pow : ∀ (m : ℕ), χ (g ^ m) = (χ g) ^ m := by
-    intro m
+  have hχ_pow : ∀ m : ℕ, χ (g ^ m) = (χ g) ^ m := fun m ↦ by
     induction m with
     | zero => simp [hχ_one]
     | succ k ih => rw [pow_succ, hχ_mul, ih, pow_succ]
@@ -143,29 +138,25 @@ private lemma iSup_inf_iInf_eigenspace_eq_self_of_invariant {ι : Type*}
     (htop : ∀ i, ⨆ μ : K, (f i).eigenspace μ = ⊤)
     (p : Submodule K V) (hp : ∀ i, ∀ x ∈ p, f i x ∈ p) :
     (⨆ χ : ι → K, p ⊓ ⨅ i, (f i).eigenspace (χ i)) = p := by
-  have hmax : ∀ (i : ι) (μ : K),
-      (f i).maxGenEigenspace μ = (f i).eigenspace μ :=
+  have hmax : ∀ (i : ι) (μ : K), (f i).maxGenEigenspace μ = (f i).eigenspace μ :=
     fun i μ ↦ Module.End.IsFinitelySemisimple.maxGenEigenspace_eq_eigenspace
       (hss i).isFinitelySemisimple μ
-  simp_rw [← hmax]
-  have h_per_χ : ∀ χ : ι → K,
-      p ⊓ (⨅ i, (f i).maxGenEigenspace (χ i)) =
-        (⨅ i, Module.End.maxGenEigenspace ((f i).restrict (hp i)) (χ i)).map p.subtype :=
-    fun χ ↦ Submodule.inf_iInf_maxGenEigenspace_of_forall_mapsTo
-      (f := f) (μ := χ) p (fun i ↦ hp i)
-  simp_rw [h_per_χ, ← Submodule.map_iSup]
+  simp_rw [← hmax,
+    fun χ : ι → K ↦ Submodule.inf_iInf_maxGenEigenspace_of_forall_mapsTo
+      (f := f) (μ := χ) p (fun i ↦ hp i),
+    ← Submodule.map_iSup]
   suffices h_restrict_top :
       (⨆ χ : ι → K, ⨅ i,
         Module.End.maxGenEigenspace ((f i).restrict (hp i)) (χ i)) = ⊤ by
     rw [h_restrict_top, Submodule.map_top, Submodule.range_subtype]
   apply Module.End.iSup_iInf_maxGenEigenspace_eq_top_of_iSup_maxGenEigenspace_eq_top_of_commute
   · intro i j hij
-    refine LinearMap.ext fun ⟨x, hx⟩ ↦ Subtype.ext ?_
+    refine LinearMap.ext fun ⟨x, _⟩ ↦ Subtype.ext ?_
     simp only [Module.End.mul_apply, LinearMap.restrict_coe_apply]
     exact LinearMap.congr_fun (hcomm hij).eq x
   · intro i
     refine Module.End.genEigenspace_restrict_eq_top (hp i) ?_
-    show ⨆ μ : K, (f i).maxGenEigenspace μ = ⊤
+    change ⨆ μ : K, (f i).maxGenEigenspace μ = ⊤
     simp_rw [hmax]; exact htop i
 
 end Abstract
@@ -187,28 +178,20 @@ lemma diamondOp_isSemisimple (d : (ZMod N)ˣ) :
 monoid homomorphism `diamondOpHom` from the abelian group `(ZMod N)ˣ`, so their
 images commute. -/
 lemma diamondOpHom_pairwise_commute :
-    Pairwise fun d₁ d₂ : (ZMod N)ˣ ↦ Commute (diamondOpHom k d₁) (diamondOpHom k d₂) := by
-  intro d₁ d₂ _
-  show diamondOpHom k d₁ * diamondOpHom k d₂ = diamondOpHom k d₂ * diamondOpHom k d₁
-  rw [← map_mul, ← map_mul, mul_comm]
+    Pairwise fun d₁ d₂ : (ZMod N)ˣ ↦ Commute (diamondOpHom k d₁) (diamondOpHom k d₂) :=
+  fun _ _ _ ↦ (Commute.all _ _).map (diamondOpHom k)
 
 /-- Finite-dimensionality of the space of modular forms for `Γ₁(N)`. Derived
 from `dim_gen_cong_levels` in `DimensionFormulas.lean`. -/
 instance modularForm_Gamma1_finiteDimensional :
-    FiniteDimensional ℂ (ModularForm ((Gamma1 N).map (mapGL ℝ)) k) := by
-  have hidx : (Gamma1 N).index ≠ 0 := Subgroup.FiniteIndex.index_ne_zero
-  have := dim_gen_cong_levels k (Gamma1 N) hidx
-  show FiniteDimensional ℂ (ModularForm ((Gamma1 N : Subgroup (GL (Fin 2) ℝ))) k)
-  exact this
+    FiniteDimensional ℂ (ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :=
+  dim_gen_cong_levels k (Gamma1 N) Subgroup.FiniteIndex.index_ne_zero
 
 /-- Finite-dimensionality of the space of modular forms for `Γ₀(N)`, derived
 from `dim_gen_cong_levels`. -/
 instance modularForm_Gamma0_finiteDimensional :
-    FiniteDimensional ℂ (ModularForm ((Gamma0 N).map (mapGL ℝ)) k) := by
-  have hidx : (Gamma0 N).index ≠ 0 := Subgroup.FiniteIndex.index_ne_zero
-  have := dim_gen_cong_levels k (Gamma0 N) hidx
-  show FiniteDimensional ℂ (ModularForm ((Gamma0 N : Subgroup (GL (Fin 2) ℝ))) k)
-  exact this
+    FiniteDimensional ℂ (ModularForm ((Gamma0 N).map (mapGL ℝ)) k) :=
+  dim_gen_cong_levels k (Gamma0 N) Subgroup.FiniteIndex.index_ne_zero
 
 /-- For each diamond operator, the supremum of its eigenspaces is the whole
 space. -/
@@ -216,11 +199,8 @@ lemma diamondOp_iSup_eigenspace_eq_top (d : (ZMod N)ˣ) :
     ⨆ μ : ℂ, (diamondOpHom k d).eigenspace μ =
     (⊤ : Submodule ℂ (ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) := by
   have h_top := Module.End.iSup_maxGenEigenspace_eq_top (diamondOpHom k d)
-  have heq : ∀ μ : ℂ, (diamondOpHom k d).maxGenEigenspace μ =
-      (diamondOpHom k d).eigenspace μ :=
-    fun μ ↦ Module.End.IsFinitelySemisimple.maxGenEigenspace_eq_eigenspace
-      (diamondOp_isSemisimple d).isFinitelySemisimple μ
-  simp_rw [heq] at h_top
+  simp_rw [Module.End.IsFinitelySemisimple.maxGenEigenspace_eq_eigenspace
+    (diamondOp_isSemisimple d).isFinitelySemisimple] at h_top
   exact h_top
 
 /-- The joint eigenspace indexed by a function `χ : (ZMod N)ˣ → ℂ`. When `χ` is
@@ -230,6 +210,8 @@ noncomputable def jointDiamondEigenspace (k : ℤ) (χ : (ZMod N)ˣ → ℂ) :
     Submodule ℂ (ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :=
   ⨅ d : (ZMod N)ˣ, (diamondOpHom k d).eigenspace (χ d)
 
+/-- Membership in `jointDiamondEigenspace` unfolded as a joint eigenvalue
+condition on each diamond operator. -/
 lemma mem_jointDiamondEigenspace_iff (χ : (ZMod N)ˣ → ℂ)
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
     f ∈ jointDiamondEigenspace k χ ↔
@@ -248,13 +230,9 @@ lemma exists_charHom_of_jointDiamondEigenspace_ne_bot {χ : (ZMod N)ˣ → ℂ}
     ∃ χ₀ : (ZMod N)ˣ →* ℂˣ, (fun d ↦ ((χ₀ d) : ℂ)) = χ := by
   rw [Submodule.ne_bot_iff] at hχ
   obtain ⟨f, hf_mem, hf_ne⟩ := hχ
-  have hmem : ∀ d : (ZMod N)ˣ, f ∈ (diamondOpHom k d).eigenspace (χ d) := by
-    intro d
-    exact (Submodule.mem_iInf (p := fun d : (ZMod N)ˣ ↦
-      (diamondOpHom k d).eigenspace (χ d))).mp hf_mem d
   exact ⟨charDecomp_charHomOfEigenvector
     (V := ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (diamondOpHom k) χ f hf_ne hmem, rfl⟩
+    (diamondOpHom k) χ f hf_ne fun d ↦ Submodule.mem_iInf _ |>.mp hf_mem d, rfl⟩
 
 /-- **The character subspaces `modFormCharSpace k χ` span the whole space**:
 modular forms for `Γ₁(N)` decompose into the span of Nebentypus character
@@ -262,24 +240,17 @@ spaces, one for each character `(ZMod N)ˣ →* ℂˣ`. -/
 theorem ModularForm_Gamma1_iSup_charSpace (k : ℤ) :
     (⨆ χ : (ZMod N)ˣ →* ℂˣ, modFormCharSpace k χ) =
     (⊤ : Submodule ℂ (ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) := by
+  have heq : ∀ d (μ : ℂ), (diamondOpHom (N := N) k d).maxGenEigenspace μ =
+      (diamondOpHom k d).eigenspace μ :=
+    fun d μ ↦ Module.End.IsFinitelySemisimple.maxGenEigenspace_eq_eigenspace
+      (diamondOp_isSemisimple d).isFinitelySemisimple μ
   have h_top_fun :
       (⨆ χ : (ZMod N)ˣ → ℂ, jointDiamondEigenspace k χ) =
       (⊤ : Submodule ℂ (ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) := by
     have h := Module.End.iSup_iInf_maxGenEigenspace_eq_top_of_iSup_maxGenEigenspace_eq_top_of_commute
       (diamondOpHom (N := N) k) diamondOpHom_pairwise_commute
-      (fun d ↦ by
-        have heq : ∀ μ : ℂ, (diamondOpHom k d).maxGenEigenspace μ =
-            (diamondOpHom k d).eigenspace μ :=
-          fun μ ↦ Module.End.IsFinitelySemisimple.maxGenEigenspace_eq_eigenspace
-            (diamondOp_isSemisimple d).isFinitelySemisimple μ
-        simp_rw [heq]
-        exact diamondOp_iSup_eigenspace_eq_top d)
-    have heq : ∀ (χ : (ZMod N)ˣ → ℂ) d, (diamondOpHom k d).maxGenEigenspace (χ d) =
-        (diamondOpHom k d).eigenspace (χ d) :=
-      fun _ d ↦ Module.End.IsFinitelySemisimple.maxGenEigenspace_eq_eigenspace
-        (diamondOp_isSemisimple d).isFinitelySemisimple _
-    simp_rw [heq] at h
-    exact h
+      (fun d ↦ by simp_rw [heq]; exact diamondOp_iSup_eigenspace_eq_top d)
+    simpa [jointDiamondEigenspace, heq] using h
   apply le_antisymm le_top
   rw [← h_top_fun]
   refine iSup_le (fun χ ↦ ?_)
@@ -295,10 +266,14 @@ diamond operator; the eigenspaces of that operator at distinct eigenvalues are
 disjoint. -/
 theorem ModularForm_Gamma1_iSupIndep_charSpace (k : ℤ) :
     iSupIndep (fun χ : (ZMod N)ˣ →* ℂˣ ↦ modFormCharSpace k χ) := by
+  have heq : ∀ d (μ : ℂ), (diamondOpHom (N := N) k d).maxGenEigenspace μ =
+      (diamondOpHom k d).eigenspace μ :=
+    fun d μ ↦ Module.End.IsFinitelySemisimple.maxGenEigenspace_eq_eigenspace
+      (diamondOp_isSemisimple d).isFinitelySemisimple μ
   have h_indep_fun :
       iSupIndep (fun χ : (ZMod N)ˣ → ℂ ↦ jointDiamondEigenspace k χ) := by
-    have h_mapsTo :
-        ∀ (i j : (ZMod N)ˣ) (φ : ℂ), Set.MapsTo (diamondOpHom (N := N) k i)
+    have h_mapsTo : ∀ (i j : (ZMod N)ˣ) (φ : ℂ),
+        Set.MapsTo (diamondOpHom (N := N) k i)
           ((diamondOpHom k j).maxGenEigenspace φ : Set _)
           ((diamondOpHom k j).maxGenEigenspace φ : Set _) := by
       intro i j φ
@@ -309,23 +284,12 @@ theorem ModularForm_Gamma1_iSupIndep_charSpace (k : ℤ) :
     have h_indep :=
       Module.End.independent_iInf_maxGenEigenspace_of_forall_mapsTo
         (f := diamondOpHom (N := N) k) h_mapsTo
-    have heq : ∀ (χ : (ZMod N)ˣ → ℂ),
-        (⨅ d, (diamondOpHom (N := N) k d).maxGenEigenspace (χ d)) =
-        jointDiamondEigenspace k χ := by
-      intro χ
-      unfold jointDiamondEigenspace
-      refine iInf_congr (fun d ↦ ?_)
-      exact Module.End.IsFinitelySemisimple.maxGenEigenspace_eq_eigenspace
-        (diamondOp_isSemisimple d).isFinitelySemisimple _
-    simp_rw [heq] at h_indep
-    exact h_indep
-  have hφ_inj : Function.Injective
-      (fun (χ₀ : (ZMod N)ˣ →* ℂˣ) ↦ fun d ↦ ((χ₀ d) : ℂ)) := by
-    intro χ₁ χ₂ h
-    ext d
-    have hd : ((χ₁ d) : ℂ) = ((χ₂ d) : ℂ) := congr_fun h d
-    exact_mod_cast hd
-  exact h_indep_fun.comp hφ_inj
+    simpa [jointDiamondEigenspace, heq] using h_indep
+  refine h_indep_fun.comp ?_
+  intro χ₁ χ₂ h
+  ext d
+  have hd : ((χ₁ d) : ℂ) = ((χ₂ d) : ℂ) := congr_fun h d
+  exact_mod_cast hd
 
 /-- **Internal direct sum decomposition**: `ModularForm (Γ₁(N)) k` decomposes
 as the direct sum of the Nebentypus character spaces `modFormCharSpace k χ`. -/
@@ -381,9 +345,9 @@ private noncomputable def cuspFormToModularFormLin_local :
   map_add' f g := by ext z; rfl
   map_smul' c f := by ext z; rfl
 
+omit [NeZero N] in
 private lemma cuspFormToModularFormLin_local_injective :
-    Function.Injective
-      (cuspFormToModularFormLin_local (N := N) (k := k)) := by
+    Function.Injective (cuspFormToModularFormLin_local (N := N) (k := k)) := by
   intro f g hfg
   ext z
   exact congr_arg (fun h : ModularForm _ _ ↦ h.toFun z) hfg
@@ -409,11 +373,8 @@ lemma diamondOpCusp_isSemisimple (d : (ZMod N)ˣ) :
 /-- The cusp-form diamond operators pairwise commute. -/
 lemma diamondOpCuspHom_pairwise_commute :
     Pairwise fun d₁ d₂ : (ZMod N)ˣ ↦
-      Commute (diamondOpCuspHom k d₁) (diamondOpCuspHom k d₂) := by
-  intro d₁ d₂ _
-  show diamondOpCuspHom k d₁ * diamondOpCuspHom k d₂ =
-    diamondOpCuspHom k d₂ * diamondOpCuspHom k d₁
-  rw [← map_mul, ← map_mul, mul_comm]
+      Commute (diamondOpCuspHom k d₁) (diamondOpCuspHom k d₂) :=
+  fun _ _ _ ↦ (Commute.all _ _).map (diamondOpCuspHom k)
 
 /-- For each cusp-form diamond operator, the supremum of its eigenspaces is
 the whole space. -/
@@ -421,11 +382,8 @@ lemma diamondOpCusp_iSup_eigenspace_eq_top (d : (ZMod N)ˣ) :
     ⨆ μ : ℂ, (diamondOpCuspHom k d).eigenspace μ =
     (⊤ : Submodule ℂ (CuspForm ((Gamma1 N).map (mapGL ℝ)) k)) := by
   have h_top := Module.End.iSup_maxGenEigenspace_eq_top (diamondOpCuspHom k d)
-  have heq : ∀ μ : ℂ, (diamondOpCuspHom k d).maxGenEigenspace μ =
-      (diamondOpCuspHom k d).eigenspace μ :=
-    fun μ ↦ Module.End.IsFinitelySemisimple.maxGenEigenspace_eq_eigenspace
-      (diamondOpCusp_isSemisimple d).isFinitelySemisimple μ
-  simp_rw [heq] at h_top
+  simp_rw [Module.End.IsFinitelySemisimple.maxGenEigenspace_eq_eigenspace
+    (diamondOpCusp_isSemisimple d).isFinitelySemisimple] at h_top
   exact h_top
 
 /-- The joint cusp-form eigenspace indexed by an arbitrary function
@@ -435,6 +393,8 @@ noncomputable def jointDiamondCuspEigenspace (k : ℤ) (χ : (ZMod N)ˣ → ℂ)
     Submodule ℂ (CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :=
   ⨅ d : (ZMod N)ˣ, (diamondOpCuspHom k d).eigenspace (χ d)
 
+/-- Membership in `jointDiamondCuspEigenspace` unfolded as a joint eigenvalue
+condition on each cusp-form diamond operator. -/
 lemma mem_jointDiamondCuspEigenspace_iff (χ : (ZMod N)ˣ → ℂ)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     f ∈ jointDiamondCuspEigenspace k χ ↔
@@ -442,22 +402,21 @@ lemma mem_jointDiamondCuspEigenspace_iff (χ : (ZMod N)ˣ → ℂ)
   simp only [jointDiamondCuspEigenspace, Submodule.mem_iInf,
     Module.End.mem_eigenspace_iff]
 
+/-- `jointDiamondCuspEigenspace` at the underlying function of a character
+agrees with `cuspFormCharSpace`. -/
 lemma jointDiamondCuspEigenspace_eq_cuspFormCharSpace (χ₀ : (ZMod N)ˣ →* ℂˣ) :
     jointDiamondCuspEigenspace k (fun d ↦ (χ₀ d : ℂ)) =
       cuspFormCharSpace k χ₀ := rfl
 
+/-- If `jointDiamondCuspEigenspace k χ ≠ ⊥`, then `χ` comes from a character. -/
 lemma exists_charHom_of_jointDiamondCuspEigenspace_ne_bot {χ : (ZMod N)ˣ → ℂ}
     (hχ : jointDiamondCuspEigenspace k χ ≠ ⊥) :
     ∃ χ₀ : (ZMod N)ˣ →* ℂˣ, (fun d ↦ ((χ₀ d) : ℂ)) = χ := by
   rw [Submodule.ne_bot_iff] at hχ
   obtain ⟨f, hf_mem, hf_ne⟩ := hχ
-  have hmem : ∀ d : (ZMod N)ˣ, f ∈ (diamondOpCuspHom k d).eigenspace (χ d) := by
-    intro d
-    exact (Submodule.mem_iInf (p := fun d : (ZMod N)ˣ ↦
-      (diamondOpCuspHom k d).eigenspace (χ d))).mp hf_mem d
   exact ⟨charDecomp_charHomOfEigenvector
     (V := CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (diamondOpCuspHom k) χ f hf_ne hmem, rfl⟩
+    (diamondOpCuspHom k) χ f hf_ne fun d ↦ Submodule.mem_iInf _ |>.mp hf_mem d, rfl⟩
 
 /-- **The cusp-form character subspaces `cuspFormCharSpace k χ` span
 `CuspForm (Γ₁(N)) k`.**  The reverse/consumer analogue of
@@ -465,25 +424,17 @@ lemma exists_charHom_of_jointDiamondCuspEigenspace_ne_bot {χ : (ZMod N)ˣ → �
 theorem CuspForm_Gamma1_iSup_charSpace (k : ℤ) :
     (⨆ χ : (ZMod N)ˣ →* ℂˣ, cuspFormCharSpace k χ) =
     (⊤ : Submodule ℂ (CuspForm ((Gamma1 N).map (mapGL ℝ)) k)) := by
+  have heq : ∀ d (μ : ℂ), (diamondOpCuspHom (N := N) k d).maxGenEigenspace μ =
+      (diamondOpCuspHom k d).eigenspace μ :=
+    fun d μ ↦ Module.End.IsFinitelySemisimple.maxGenEigenspace_eq_eigenspace
+      (diamondOpCusp_isSemisimple d).isFinitelySemisimple μ
   have h_top_fun :
       (⨆ χ : (ZMod N)ˣ → ℂ, jointDiamondCuspEigenspace k χ) =
       (⊤ : Submodule ℂ (CuspForm ((Gamma1 N).map (mapGL ℝ)) k)) := by
     have h := Module.End.iSup_iInf_maxGenEigenspace_eq_top_of_iSup_maxGenEigenspace_eq_top_of_commute
       (diamondOpCuspHom (N := N) k) diamondOpCuspHom_pairwise_commute
-      (fun d ↦ by
-        have heq : ∀ μ : ℂ, (diamondOpCuspHom k d).maxGenEigenspace μ =
-            (diamondOpCuspHom k d).eigenspace μ :=
-          fun μ ↦ Module.End.IsFinitelySemisimple.maxGenEigenspace_eq_eigenspace
-            (diamondOpCusp_isSemisimple d).isFinitelySemisimple μ
-        simp_rw [heq]
-        exact diamondOpCusp_iSup_eigenspace_eq_top d)
-    have heq : ∀ (χ : (ZMod N)ˣ → ℂ) d,
-        (diamondOpCuspHom k d).maxGenEigenspace (χ d) =
-        (diamondOpCuspHom k d).eigenspace (χ d) :=
-      fun _ d ↦ Module.End.IsFinitelySemisimple.maxGenEigenspace_eq_eigenspace
-        (diamondOpCusp_isSemisimple d).isFinitelySemisimple _
-    simp_rw [heq] at h
-    exact h
+      (fun d ↦ by simp_rw [heq]; exact diamondOpCusp_iSup_eigenspace_eq_top d)
+    simpa [jointDiamondCuspEigenspace, heq] using h
   apply le_antisymm le_top
   rw [← h_top_fun]
   refine iSup_le (fun χ ↦ ?_)
@@ -496,13 +447,16 @@ theorem CuspForm_Gamma1_iSup_charSpace (k : ℤ) :
 /-- **The cusp-form character subspaces form an independent family.** -/
 theorem CuspForm_Gamma1_iSupIndep_charSpace (k : ℤ) :
     iSupIndep (fun χ : (ZMod N)ˣ →* ℂˣ ↦ cuspFormCharSpace k χ) := by
+  have heq : ∀ d (μ : ℂ), (diamondOpCuspHom (N := N) k d).maxGenEigenspace μ =
+      (diamondOpCuspHom k d).eigenspace μ :=
+    fun d μ ↦ Module.End.IsFinitelySemisimple.maxGenEigenspace_eq_eigenspace
+      (diamondOpCusp_isSemisimple d).isFinitelySemisimple μ
   have h_indep_fun :
       iSupIndep (fun χ : (ZMod N)ˣ → ℂ ↦ jointDiamondCuspEigenspace k χ) := by
-    have h_mapsTo :
-        ∀ (i j : (ZMod N)ˣ) (φ : ℂ),
-          Set.MapsTo (diamondOpCuspHom (N := N) k i)
-            ((diamondOpCuspHom k j).maxGenEigenspace φ : Set _)
-            ((diamondOpCuspHom k j).maxGenEigenspace φ : Set _) := by
+    have h_mapsTo : ∀ (i j : (ZMod N)ˣ) (φ : ℂ),
+        Set.MapsTo (diamondOpCuspHom (N := N) k i)
+          ((diamondOpCuspHom k j).maxGenEigenspace φ : Set _)
+          ((diamondOpCuspHom k j).maxGenEigenspace φ : Set _) := by
       intro i j φ
       refine Module.End.mapsTo_maxGenEigenspace_of_comm ?_ φ
       rcases eq_or_ne i j with rfl | hij
@@ -511,23 +465,12 @@ theorem CuspForm_Gamma1_iSupIndep_charSpace (k : ℤ) :
     have h_indep :=
       Module.End.independent_iInf_maxGenEigenspace_of_forall_mapsTo
         (f := diamondOpCuspHom (N := N) k) h_mapsTo
-    have heq : ∀ (χ : (ZMod N)ˣ → ℂ),
-        (⨅ d, (diamondOpCuspHom (N := N) k d).maxGenEigenspace (χ d)) =
-        jointDiamondCuspEigenspace k χ := by
-      intro χ
-      unfold jointDiamondCuspEigenspace
-      refine iInf_congr (fun d ↦ ?_)
-      exact Module.End.IsFinitelySemisimple.maxGenEigenspace_eq_eigenspace
-        (diamondOpCusp_isSemisimple d).isFinitelySemisimple _
-    simp_rw [heq] at h_indep
-    exact h_indep
-  have hφ_inj : Function.Injective
-      (fun (χ₀ : (ZMod N)ˣ →* ℂˣ) ↦ fun d ↦ ((χ₀ d) : ℂ)) := by
-    intro χ₁ χ₂ h
-    ext d
-    have hd : ((χ₁ d) : ℂ) = ((χ₂ d) : ℂ) := congr_fun h d
-    exact_mod_cast hd
-  exact h_indep_fun.comp hφ_inj
+    simpa [jointDiamondCuspEigenspace, heq] using h_indep
+  refine h_indep_fun.comp ?_
+  intro χ₁ χ₂ h
+  ext d
+  have hd : ((χ₁ d) : ℂ) = ((χ₂ d) : ℂ) := congr_fun h d
+  exact_mod_cast hd
 
 /-- **Internal direct sum decomposition for cusp forms**: `CuspForm (Γ₁(N)) k`
 decomposes as the direct sum of the Nebentypus character spaces
@@ -588,16 +531,11 @@ theorem modFormCharSpace_iSup_inf_of_diamondOpHom_invariant
   refine iSup_le (fun χ ↦ ?_)
   by_cases hχ : p ⊓ jointDiamondEigenspace k χ = ⊥
   · rw [hχ]; exact bot_le
-  · have hchar_ne_bot : jointDiamondEigenspace k χ ≠ ⊥ := by
-      intro h_bot
-      exact hχ (by rw [h_bot, inf_bot_eq])
+  · have hchar_ne_bot : jointDiamondEigenspace k χ ≠ ⊥ :=
+      fun h_bot ↦ hχ (by rw [h_bot, inf_bot_eq])
     obtain ⟨χ₀, hχ₀⟩ := exists_charHom_of_jointDiamondEigenspace_ne_bot hchar_ne_bot
-    calc p ⊓ jointDiamondEigenspace k χ
-        = p ⊓ jointDiamondEigenspace k (fun d ↦ (χ₀ d : ℂ)) := by rw [hχ₀]
-      _ = p ⊓ modFormCharSpace k χ₀ := by
-            rw [jointDiamondEigenspace_eq_modFormCharSpace]
-      _ ≤ ⨆ ψ : (ZMod N)ˣ →* ℂˣ, p ⊓ modFormCharSpace k ψ :=
-          le_iSup (fun ψ : (ZMod N)ˣ →* ℂˣ ↦ p ⊓ modFormCharSpace k ψ) χ₀
+    rw [← hχ₀, jointDiamondEigenspace_eq_modFormCharSpace]
+    exact le_iSup (fun ψ : (ZMod N)ˣ →* ℂˣ ↦ p ⊓ modFormCharSpace k ψ) χ₀
 
 /-- **`iSupIndep` for the character decomposition of a diamond-invariant
 submodule of `ModularForm (Γ₁(N)) k`.**  The family of intersections
@@ -628,17 +566,12 @@ theorem cuspFormCharSpace_iSup_inf_of_diamondOpCuspHom_invariant
   refine iSup_le (fun χ ↦ ?_)
   by_cases hχ : p ⊓ jointDiamondCuspEigenspace k χ = ⊥
   · rw [hχ]; exact bot_le
-  · have hchar_ne_bot : jointDiamondCuspEigenspace k χ ≠ ⊥ := by
-      intro h_bot
-      exact hχ (by rw [h_bot, inf_bot_eq])
+  · have hchar_ne_bot : jointDiamondCuspEigenspace k χ ≠ ⊥ :=
+      fun h_bot ↦ hχ (by rw [h_bot, inf_bot_eq])
     obtain ⟨χ₀, hχ₀⟩ :=
       exists_charHom_of_jointDiamondCuspEigenspace_ne_bot hchar_ne_bot
-    calc p ⊓ jointDiamondCuspEigenspace k χ
-        = p ⊓ jointDiamondCuspEigenspace k (fun d ↦ (χ₀ d : ℂ)) := by rw [hχ₀]
-      _ = p ⊓ cuspFormCharSpace k χ₀ := by
-            rw [jointDiamondCuspEigenspace_eq_cuspFormCharSpace]
-      _ ≤ ⨆ ψ : (ZMod N)ˣ →* ℂˣ, p ⊓ cuspFormCharSpace k ψ :=
-          le_iSup (fun ψ : (ZMod N)ˣ →* ℂˣ ↦ p ⊓ cuspFormCharSpace k ψ) χ₀
+    rw [← hχ₀, jointDiamondCuspEigenspace_eq_cuspFormCharSpace]
+    exact le_iSup (fun ψ : (ZMod N)ˣ →* ℂˣ ↦ p ⊓ cuspFormCharSpace k ψ) χ₀
 
 /-- **`iSupIndep` for the character decomposition of a diamond-invariant
 submodule of `CuspForm (Γ₁(N)) k`.**  As in the ModularForm case, the
