@@ -60,16 +60,9 @@ open scoped MatrixGroups ModularForm
 
 namespace HeckeRing.GL2.TraceOperator
 
-/-- For a subgroup `Γ ≤ GL(2, ℝ)` with `HasDetOne`, the Möbius-action twist
-`σ g` acts as the identity on `ℂ` whenever `g ∈ Γ`.  This gives
-`(c • f) ∣[k] g = c • f ∣[k] g` via `ModularForm.smul_slash`. -/
 private lemma σ_apply_of_mem {Γ : Subgroup (GL (Fin 2) ℝ)} [Γ.HasDetOne]
     {g : GL (Fin 2) ℝ} (hg : g ∈ Γ) (c : ℂ) : UpperHalfPlane.σ g c = c := by
-  show (if 0 < g.det.val then RingHom.id ℂ else starRingEnd ℂ) c = c
-  rw [Subgroup.HasDetOne.det_eq hg, Units.val_one, if_pos one_pos]
-  rfl
-
-/-! ### Finite relative index instance -/
+  simp [UpperHalfPlane.σ, Subgroup.HasDetOne.det_eq hg]
 
 /-- For `N ∣ M` with `M ≠ 0`, `(Γ₁(M)).map (mapGL ℝ)` has finite
 relative index in `(Γ₁(N)).map (mapGL ℝ)`.  This is the hypothesis
@@ -86,8 +79,6 @@ instance Gamma1_mapGL_isFiniteRelIndex_of_dvd
     rw [h_rel_zero] at h_dvd
     exact Subgroup.FiniteIndex.index_ne_zero (zero_dvd_iff.mp h_dvd)
 
-/-! ### Trace linear map on `ModularForm` -/
-
 /-- The trace operator `M_k(Γ₁(M)) →ₗ[ℂ] M_k(Γ₁(N))` for `N ∣ M`,
 obtained by wrapping `ModularForm.trace` as a `ℂ`-linear map.
 
@@ -103,20 +94,17 @@ noncomputable def traceGamma1 {M N : ℕ} [NeZero M] (h : N ∣ M) (k : ℤ) :
   haveI : ((Gamma1 M).map (mapGL ℝ)).IsFiniteRelIndex ((Gamma1 N).map (mapGL ℝ)) :=
     Gamma1_mapGL_isFiniteRelIndex_of_dvd h
   { toFun := fun f ↦ ModularForm.trace ((Gamma1 N).map (mapGL ℝ)) f
-    map_add' := fun f g ↦ by
+    map_add' f g := by
       refine DFunLike.ext _ _ fun τ ↦ ?_
       simp only [ModularForm.coe_add, ModularForm.coe_trace, Pi.add_apply,
         Finset.sum_apply, ← Finset.sum_add_distrib]
       refine Finset.sum_congr rfl fun q _ ↦ ?_
       induction q using Quotient.inductionOn with
-      | h r =>
-        simp only [SlashInvariantForm.quotientFunc_mk, ModularForm.coe_add,
-          SlashAction.add_slash, Pi.add_apply]
-    map_smul' := fun c f ↦ by
+      | h r => simp [SlashAction.add_slash]
+    map_smul' c f := by
       refine DFunLike.ext _ _ fun τ ↦ ?_
       simp only [RingHom.id_apply, ModularForm.coe_trace, ModularForm.IsGLPos.smul_apply,
-        Finset.sum_apply]
-      rw [Finset.smul_sum]
+        Finset.sum_apply, Finset.smul_sum]
       refine Finset.sum_congr rfl fun q _ ↦ ?_
       induction q using Quotient.inductionOn with
       | h r =>
@@ -135,8 +123,6 @@ lemma traceGamma1_apply {M N : ℕ} [NeZero M] (h : N ∣ M) (k : ℤ)
         Gamma1_mapGL_isFiniteRelIndex_of_dvd h
       ModularForm.trace ((Gamma1 N).map (mapGL ℝ)) f := rfl
 
-/-! ### Trace linear map on `CuspForm` -/
-
 /-- The trace operator `S_k(Γ₁(M)) →ₗ[ℂ] S_k(Γ₁(N))` for `N ∣ M`,
 obtained by wrapping `CuspForm.trace` as a `ℂ`-linear map.
 
@@ -149,42 +135,23 @@ noncomputable def traceGamma1_cuspForm {M N : ℕ} [NeZero M] (h : N ∣ M) (k :
   haveI : ((Gamma1 M).map (mapGL ℝ)).IsFiniteRelIndex ((Gamma1 N).map (mapGL ℝ)) :=
     Gamma1_mapGL_isFiniteRelIndex_of_dvd h
   { toFun := fun f ↦ CuspForm.trace ((Gamma1 N).map (mapGL ℝ)) f
-    map_add' := fun f g ↦ by
+    map_add' f g := by
       refine DFunLike.ext _ _ fun τ ↦ ?_
       simp only [CuspForm.coe_add, CuspForm.coe_trace, Pi.add_apply,
         Finset.sum_apply, ← Finset.sum_add_distrib]
       refine Finset.sum_congr rfl fun q _ ↦ ?_
       induction q using Quotient.inductionOn with
-      | h r =>
-        simp only [SlashInvariantForm.quotientFunc_mk, CuspForm.coe_add,
-          SlashAction.add_slash, Pi.add_apply]
-    map_smul' := fun c f ↦ by
+      | h r => simp [SlashAction.add_slash]
+    map_smul' c f := by
       refine DFunLike.ext _ _ fun τ ↦ ?_
       simp only [RingHom.id_apply, CuspForm.coe_trace, CuspForm.IsGLPos.smul_apply,
-        Finset.sum_apply]
-      rw [Finset.smul_sum]
+        Finset.sum_apply, Finset.smul_sum]
       refine Finset.sum_congr rfl fun q _ ↦ ?_
       induction q using Quotient.inductionOn with
       | h r =>
         simp only [SlashInvariantForm.quotientFunc_mk, CuspForm.IsGLPos.coe_smul,
           ModularForm.smul_slash, Pi.smul_apply]
         rw [σ_apply_of_mem (Γ := (Gamma1 N).map (mapGL ℝ)) (inv_mem r.prop)] }
-
-/-! ### Infinity-fixing cosets in the trace sum (T131, deliverable I)
-
-The trace sum unfolding `ModularForm.coe_trace` ranges over the quotient
-`𝒬 := ℋ ⧸ (𝒢.subgroupOf ℋ)`, where `ℋ := (Γ₁(N)).map (mapGL ℝ)` and
-`𝒢 := (Γ₁(M)).map (mapGL ℝ)`.  For the `∞`-Fourier expansion of the
-trace, only those cosets whose representative fixes `∞ ∈ OnePoint ℝ`
-contribute a phase-shifted copy of the input's `∞`-q-expansion (see
-`AtkinLehnerProjection.lean` lines 49–109 for the cusp-geometry
-discussion of T124).  This section provides the predicate and basic
-API for those cosets.
-
-Concretely, by `OnePoint.smul_infty_eq_self_iff`, a matrix `g : GL(2,ℝ)`
-fixes `∞` iff `g 1 0 = 0`.  We package this at the coset level by
-asking for a representative with that property — automatically
-well-defined as an existential. -/
 
 variable {𝒢 ℋ : Subgroup (GL (Fin 2) ℝ)}
 
@@ -238,15 +205,6 @@ lemma isInftyFixingCoset_one_Gamma1
       (⟦(1 : ↥((Gamma1 N).map (mapGL ℝ)))⟧) :=
   isInftyFixingCoset_one
 
-/-! ### Splitting the trace sum by `IsInftyFixingCoset` (T131, deliverable I)
-
-`ModularForm.coe_trace` unfolds the trace as `∑ q, quotientFunc f q` over
-`𝒬 = ℋ ⧸ (𝒢.subgroupOf ℋ)`.  The following purely structural decomposition
-splits that sum into the infinity-fixing and non-infinity-fixing parts via
-`Finset.sum_filter_add_sum_filter_not`.  No claim is made that the
-non-fixing part vanishes — that is a stronger cusp-stabilizer statement
-deferred to a future ticket. -/
-
 open scoped Classical in
 /-- Pointwise split of the `ModularForm` trace sum by `IsInftyFixingCoset`.
 This is purely the partitioning of `Finset.univ : Finset 𝒬` into the
@@ -270,14 +228,7 @@ theorem traceGamma1_apply_split_inftyFixing
             (𝒢 := (Gamma1 M).map (mapGL ℝ))
             (ℋ := (Gamma1 N).map (mapGL ℝ)) q),
           SlashInvariantForm.quotientFunc f q τ) := by
-  haveI : ((Gamma1 M).map (mapGL ℝ)).IsFiniteRelIndex
-      ((Gamma1 N).map (mapGL ℝ)) := Gamma1_mapGL_isFiniteRelIndex_of_dvd h
-  haveI : Fintype ((Gamma1 N).map (mapGL ℝ) ⧸
-      ((Gamma1 M).map (mapGL ℝ)).subgroupOf ((Gamma1 N).map (mapGL ℝ))) :=
-    Fintype.ofFinite _
-  show (ModularForm.trace ((Gamma1 N).map (mapGL ℝ)) f : ℍ → ℂ) τ = _
-  rw [ModularForm.coe_trace, Finset.sum_apply]
-  convert (Finset.sum_filter_add_sum_filter_not Finset.univ _ _).symm using 2
+  simp [traceGamma1, ModularForm.coe_trace, Finset.sum_filter_add_sum_filter_not]
 
 open scoped Classical in
 /-- `CuspForm` analogue of `traceGamma1_apply_split_inftyFixing`: the same
@@ -300,22 +251,7 @@ theorem traceGamma1_cuspForm_apply_split_inftyFixing
             (𝒢 := (Gamma1 M).map (mapGL ℝ))
             (ℋ := (Gamma1 N).map (mapGL ℝ)) q),
           SlashInvariantForm.quotientFunc f q τ) := by
-  haveI : ((Gamma1 M).map (mapGL ℝ)).IsFiniteRelIndex
-      ((Gamma1 N).map (mapGL ℝ)) := Gamma1_mapGL_isFiniteRelIndex_of_dvd h
-  haveI : Fintype ((Gamma1 N).map (mapGL ℝ) ⧸
-      ((Gamma1 M).map (mapGL ℝ)).subgroupOf ((Gamma1 N).map (mapGL ℝ))) :=
-    Fintype.ofFinite _
-  show (CuspForm.trace ((Gamma1 N).map (mapGL ℝ)) f : ℍ → ℂ) τ = _
-  rw [CuspForm.coe_trace, Finset.sum_apply]
-  convert (Finset.sum_filter_add_sum_filter_not Finset.univ _ _).symm using 2
-
-/-! ### Identity-coset isolation (T131, deliverable I extension)
-
-The identity coset `⟦1⟧` is a member of the infinity-fixing filter
-(by `isInftyFixingCoset_one`).  Combined with `Finset.add_sum_erase`,
-this lets us split the infinity-fixing block of the trace sum into
-the identity-coset summand plus a sum over the remaining
-infinity-fixing cosets, yielding a 3-way decomposition. -/
+  simp [traceGamma1_cuspForm, CuspForm.coe_trace, Finset.sum_filter_add_sum_filter_not]
 
 open scoped Classical in
 /-- The identity coset `⟦1⟧` is a member of the (filtered) infinity-fixing
@@ -377,21 +313,8 @@ theorem traceGamma1_apply_three_way_split
     Fintype.ofFinite _
   rw [traceGamma1_apply_split_inftyFixing h k f τ]
   congr 1
-  have hmem :
-      (⟦(1 : ↥((Gamma1 N).map (mapGL ℝ)))⟧ :
-        (Gamma1 N).map (mapGL ℝ) ⧸
-          ((Gamma1 M).map (mapGL ℝ)).subgroupOf ((Gamma1 N).map (mapGL ℝ))) ∈
-      (@Finset.univ _
-          (Fintype.ofFinite ((Gamma1 N).map (mapGL ℝ) ⧸
-            ((Gamma1 M).map (mapGL ℝ)).subgroupOf ((Gamma1 N).map (mapGL ℝ))))).filter
-        (IsInftyFixingCoset (𝒢 := (Gamma1 M).map (mapGL ℝ))
-          (ℋ := (Gamma1 N).map (mapGL ℝ))) :=
-    Finset.mem_filter.mpr
-      ⟨@Finset.mem_univ _
-          (Fintype.ofFinite ((Gamma1 N).map (mapGL ℝ) ⧸
-            ((Gamma1 M).map (mapGL ℝ)).subgroupOf ((Gamma1 N).map (mapGL ℝ)))) _,
-        isInftyFixingCoset_one⟩
-  exact (Finset.add_sum_erase _ (fun q ↦ SlashInvariantForm.quotientFunc f q τ) hmem).symm
+  convert (Finset.add_sum_erase _ (fun q ↦ SlashInvariantForm.quotientFunc f q τ)
+    identity_mem_inftyFixing_filter_Gamma1).symm
 
 open scoped Classical in
 /-- `CuspForm` analogue of `traceGamma1_apply_three_way_split`. -/
@@ -423,39 +346,7 @@ theorem traceGamma1_cuspForm_apply_three_way_split
     Fintype.ofFinite _
   rw [traceGamma1_cuspForm_apply_split_inftyFixing h k f τ]
   congr 1
-  have hmem :
-      (⟦(1 : ↥((Gamma1 N).map (mapGL ℝ)))⟧ :
-        (Gamma1 N).map (mapGL ℝ) ⧸
-          ((Gamma1 M).map (mapGL ℝ)).subgroupOf ((Gamma1 N).map (mapGL ℝ))) ∈
-      (@Finset.univ _
-          (Fintype.ofFinite ((Gamma1 N).map (mapGL ℝ) ⧸
-            ((Gamma1 M).map (mapGL ℝ)).subgroupOf ((Gamma1 N).map (mapGL ℝ))))).filter
-        (IsInftyFixingCoset (𝒢 := (Gamma1 M).map (mapGL ℝ))
-          (ℋ := (Gamma1 N).map (mapGL ℝ))) :=
-    Finset.mem_filter.mpr
-      ⟨@Finset.mem_univ _
-          (Fintype.ofFinite ((Gamma1 N).map (mapGL ℝ) ⧸
-            ((Gamma1 M).map (mapGL ℝ)).subgroupOf ((Gamma1 N).map (mapGL ℝ)))) _,
-        isInftyFixingCoset_one⟩
-  exact (Finset.add_sum_erase _ (fun q ↦ SlashInvariantForm.quotientFunc f q τ) hmem).symm
-
-/-! ### Next-theorem signature
-
-The same-level `p`-supported projection (T121, future work) is
-
-```lean
-noncomputable def pSupportedProjection {N : ℕ} [NeZero N] (k : ℤ)
-    (p : ℕ) [NeZero p] (hp : Nat.Prime p) (hpN : ¬ Nat.Coprime p N) :
-    ModularForm ((Gamma1 N).map (mapGL ℝ)) k →ₗ[ℂ]
-    ModularForm ((Gamma1 N).map (mapGL ℝ)) k :=
-  (traceGamma1 (Nat.dvd_mul_left N p) k).comp
-    (HeckeRing.GL2.AtkinLehner.pSupportedRaise k p hp hpN)
-```
-
-which by construction lives at `M_k(Γ₁(N))`.  Its period-1 q-expansion
-coefficient and Nebentypus character compatibility are **not** direct
-consequences of `traceGamma1_apply` — both require a further
-cusp-stabilizer / coset calculation — so they are deferred to a
-dedicated ticket. -/
+  convert (Finset.add_sum_erase _ (fun q ↦ SlashInvariantForm.quotientFunc f q τ)
+    identity_mem_inftyFixing_filter_Gamma1).symm
 
 end HeckeRing.GL2.TraceOperator
