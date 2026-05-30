@@ -39,7 +39,8 @@ section Holomorphicity
 
 /-- The Hecke slash action preserves holomorphicity. -/
 lemma heckeSlash_holomorphic (k : ℤ) (D : HeckeCoset (GL_pair 2)) (f : ℍ → ℂ)
-    (hf : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) f) : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (heckeSlash k D f) :=
+    (hf : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) f) :
+    MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (heckeSlash k D f) :=
   MDifferentiable.sum fun _ _ ↦ hf.slash k _
 
 end Holomorphicity
@@ -87,15 +88,10 @@ noncomputable def heckeOperatorLinear (k : ℤ) (D : HeckeCoset (GL_pair 2)) :
   toFun := heckeOperator k D
   map_add' f g := by
     ext z
-    change heckeSlash k D (↑(f + g)) z =
-      (heckeOperator k D f + heckeOperator k D g) z
-    simp only [ModularForm.add_apply]
-    change heckeSlash k D (↑f + ↑g) z =
-      heckeSlash k D (↑f) z + heckeSlash k D (↑g) z
+    change heckeSlash k D (↑f + ↑g) z = heckeSlash k D (↑f) z + heckeSlash k D (↑g) z
     rw [heckeSlash_add]; rfl
   map_smul' c f := by
     ext z
-    change heckeSlash k D (↑(c • f)) z = (c • heckeOperator k D f) z
     change heckeSlash k D (c • ↑f) z = c • heckeSlash k D (↑f) z
     rw [heckeSlash_smul]; rfl
 
@@ -181,16 +177,15 @@ private lemma mulMap_eq_of_rightCoset (D₁ D₂ D : HeckeCoset (GL_pair 2))
     exact ⟨_, rfl, 1, (GL_pair 2).H.one_mem, by simp only [mul_one]⟩
   obtain ⟨_, hd_eq, h, hh, hprod⟩ := h_in_rc
   rw [Set.mem_singleton_iff] at hd_eq; subst hd_eq
-  set M := mulMap (GL_pair 2) (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) (p.1, p.2)
-  exact HeckeCoset_ext_toSet (GL_pair 2) (by
-    rw [HeckeCoset.toSet_eq_rep, HeckeCoset.toSet_eq_rep]
-    exact DoubleCoset.eq_of_not_disjoint (by
-      rw [Set.not_disjoint_iff]
-      have hm := prod_mem_mulMap D₁ D₂ p
-      rw [HeckeCoset.toSet_eq_rep] at hm
-      have hd := prod_mem_D_of_rightCoset D _ q h hh hprod.symm
-      rw [HeckeCoset.toSet_eq_rep] at hd
-      exact ⟨_, hm, hd⟩))
+  refine HeckeCoset_ext_toSet (GL_pair 2) ?_
+  rw [HeckeCoset.toSet_eq_rep, HeckeCoset.toSet_eq_rep]
+  refine DoubleCoset.eq_of_not_disjoint ?_
+  rw [Set.not_disjoint_iff]
+  have hm := prod_mem_mulMap D₁ D₂ p
+  rw [HeckeCoset.toSet_eq_rep] at hm
+  have hd := prod_mem_D_of_rightCoset D _ q h hh hprod.symm
+  rw [HeckeCoset.toSet_eq_rep] at hd
+  exact ⟨_, hm, hd⟩
 
 /-- Globalize `slash_and_coset_of_mulMap_eq`: choose, for every pair `p` with
     `mulMap(p) = D`, a single coset `q_of p` realizing both the slash equality and the
@@ -388,16 +383,6 @@ end Composition
 
 section RingHom
 
-/-! ### The Hecke algebra as endomorphisms of modular forms
-
-Packages `heckeOperatorLinear` into a ring homomorphism
-`𝕋 (GL_pair 2) ℤ →+* Module.End ℂ (ModularForm 𝒮ℒ k)`.
-
-Composition of Hecke operators corresponds to `T(D₂) * T(D₁)` in the Hecke ring (Shimura
-Prop 3.30). Since `𝕋 (GL_pair 2) ℤ` is commutative (Shimura Prop 3.8, via the transpose
-anti-involution), this ordering ambiguity is irrelevant and we obtain a genuine
-homomorphism rather than an anti-homomorphism. -/
-
 open HeckeRing (T_single)
 
 /-- The `ℂ`-linear endomorphism of modular forms attached to a Hecke algebra element
@@ -464,13 +449,10 @@ private lemma heckeSlash_one (k : ℤ) (f : ℍ → ℂ) (hf : ∀ γ ∈ 𝒮�
     apply Finset.eq_singleton_iff_unique_mem.mpr
     refine ⟨Finset.mem_univ _, fun i _ ↦ Subsingleton.elim _ _⟩,
     Finset.sum_singleton]
-  -- tRep = transpose of q.out * rep(one); this is an H-element transpose
   set q : decompQuot (GL_pair 2) (HeckeCoset.rep (HeckeCoset.one (GL_pair 2))) := default
   have hmem_H : (q.out : GL (Fin 2) ℚ) *
       (HeckeCoset.rep (HeckeCoset.one (GL_pair 2)) : GL (Fin 2) ℚ) ∈ (GL_pair 2).H :=
     (GL_pair 2).H.mul_mem (SetLike.coe_mem _) (HeckeCoset.one_rep_mem_H _)
-  -- tRep(one) q is the transpose of h = q.out * rep(one), which is in H.
-  -- Its transpose (an element of H via GL_transpose_mem_SLnZ) fixes f via Γ-invariance.
   show f ∣[k] tRep (HeckeCoset.one (GL_pair 2)) q = f
   have htr_mem : (GL_transposeEquiv 2
       ((q.out : GL (Fin 2) ℚ) *
@@ -478,7 +460,6 @@ private lemma heckeSlash_one (k : ℤ) (f : ℍ → ℂ) (hf : ∀ γ ∈ 𝒮�
       (GL_pair 2).H :=
     GL_transpose_mem_SLnZ 2 hmem_H
   show f ∣[k] glMap (tRep (HeckeCoset.one (GL_pair 2)) q) = f
-  -- glMap of an H-element gives an element of 𝒮ℒ
   obtain ⟨s, hs⟩ := htr_mem
   have hmap : glMap (tRep (HeckeCoset.one (GL_pair 2)) q) = mapGL ℝ s := by
     have hrep : (tRep (HeckeCoset.one (GL_pair 2)) q : GL (Fin 2) ℚ) = mapGL ℚ s := by
@@ -491,8 +472,7 @@ private lemma heckeSlash_one (k : ℤ) (f : ℍ → ℂ) (hf : ∀ γ ∈ 𝒮�
 /-- `heckeOperator k (HeckeCoset.one _) = id` on modular forms. -/
 @[simp] lemma heckeOperator_one (k : ℤ) (f : ModularForm 𝒮ℒ k) :
     heckeOperator k (HeckeCoset.one (GL_pair 2)) f = f := by
-  apply ModularForm.ext
-  intro z
+  ext z
   change heckeSlash k (HeckeCoset.one (GL_pair 2)) (f : ℍ → ℂ) z = f z
   rw [heckeSlash_one k (f : ℍ → ℂ)
     (fun γ hγ ↦ SlashInvariantFormClass.slash_action_eq f γ hγ)]
@@ -514,33 +494,22 @@ private lemma heckeSlashExt_zsmul (k : ℤ) (n : ℤ) (T : HeckeAlgebra 2) (f : 
   unfold heckeSlashExt
   rw [Finsupp.sum_smul_index (g := T) (b := n) (h := fun D c ↦ c • heckeSlash k D f)
       (by simp), Finsupp.smul_sum]
-  refine Finsupp.sum_congr ?_
-  intro D _
-  exact SemigroupAction.mul_smul _ _ _
+  exact Finsupp.sum_congr fun D _ ↦ SemigroupAction.mul_smul _ _ _
 
 /-- Helper: multiplicativity of `heckeSum` on basis elements. -/
 private lemma heckeSum_mul_T_single (k : ℤ) (D₁ D₂ : HeckeCoset (GL_pair 2)) (a b : ℤ) :
     heckeSum k (T_single (GL_pair 2) ℤ D₁ a * T_single (GL_pair 2) ℤ D₂ b) =
       heckeSum k (T_single (GL_pair 2) ℤ D₁ a) *
         heckeSum k (T_single (GL_pair 2) ℤ D₂ b) := by
-  -- Step 1: flip using commutativity of 𝕋 (GL_pair 2) ℤ
   rw [show T_single (GL_pair 2) ℤ D₁ a * T_single (GL_pair 2) ℤ D₂ b =
       T_single (GL_pair 2) ℤ D₂ b * T_single (GL_pair 2) ℤ D₁ a from mul_comm _ _]
-  apply LinearMap.ext
-  intro f
-  apply ModularForm.ext
-  intro z
-  -- Step 2: convert LHS to underlying ℍ → ℂ
+  refine LinearMap.ext fun f ↦ ModularForm.ext fun z ↦ ?_
   rw [heckeSum_apply_apply]
-  -- Step 3: expand T_single * T_single = (b*a) • (T_single 1 * T_single 1)
   have h_prod : T_single (GL_pair 2) ℤ D₂ b * T_single (GL_pair 2) ℤ D₁ a =
       (b * a) • (T_single (GL_pair 2) ℤ D₂ 1 * T_single (GL_pair 2) ℤ D₁ 1) := by
     rw [HeckeRing.T_single_mul_T_single, HeckeRing.T_single_mul_T_single,
       one_smul, one_smul, ← SemigroupAction.mul_smul]
-  rw [h_prod, heckeSlashExt_zsmul]
-  -- Now apply heckeOperator_comp
-  rw [← heckeOperator_comp k D₁ D₂ f]
-  -- Compute RHS
+  rw [h_prod, heckeSlashExt_zsmul, ← heckeOperator_comp k D₁ D₂ f]
   show (b * a : ℤ) • (heckeOperator k D₁ (heckeOperator k D₂ f) : ℍ → ℂ) z =
       ((heckeSum k (T_single (GL_pair 2) ℤ D₁ a) *
         heckeSum k (T_single (GL_pair 2) ℤ D₂ b)) f) z
