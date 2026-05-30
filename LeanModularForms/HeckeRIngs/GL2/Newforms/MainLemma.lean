@@ -3,24 +3,24 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: LeanModularForms contributors
 -/
-import LeanModularForms.HeckeRIngs.GL2.AdjointTheoryPetersson
-import LeanModularForms.HeckeRIngs.GL2.CharacterDecomp
-import LeanModularForms.HeckeRIngs.GL2.LevelEmbed
-import LeanModularForms.HeckeRIngs.GL2.LevelRaise
-import LeanModularForms.HeckeRIngs.GL2.Unified.NebentypusHeckeRingHom
-import LeanModularForms.Modularforms.LFunction
-import LeanModularForms.Modularforms.PeterssonLevelN
-import LeanModularForms.Modularforms.DimensionFormulas
-import LeanModularForms.Modularforms.SlashActionAuxil
-import LeanModularForms.Eigenforms.ConductorTheorem
+import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
 import Mathlib.LinearAlgebra.BilinearForm.Orthogonal
 import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
 import Mathlib.NumberTheory.EulerProduct.Basic
 import Mathlib.NumberTheory.EulerProduct.DirichletLSeries
 import Mathlib.NumberTheory.LSeries.AbstractFuncEq
 import Mathlib.NumberTheory.LSeries.DirichletContinuation
-import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
+import LeanModularForms.Eigenforms.ConductorTheorem
+import LeanModularForms.HeckeRIngs.GL2.AdjointTheoryPetersson
+import LeanModularForms.HeckeRIngs.GL2.CharacterDecomp
+import LeanModularForms.HeckeRIngs.GL2.LevelEmbed
+import LeanModularForms.HeckeRIngs.GL2.LevelRaise
 import LeanModularForms.HeckeRIngs.GL2.Newforms.LevelRaiseComm
+import LeanModularForms.HeckeRIngs.GL2.Unified.NebentypusHeckeRingHom
+import LeanModularForms.Modularforms.DimensionFormulas
+import LeanModularForms.Modularforms.LFunction
+import LeanModularForms.Modularforms.PeterssonLevelN
+import LeanModularForms.Modularforms.SlashActionAuxil
 
 /-!
 # Newforms: character decomposition, the `Newform` structure, and the Main Lemma
@@ -39,7 +39,6 @@ open HeckeRing.GL2.Unified
 open scoped MatrixGroups ModularForm Pointwise DirectSum
 
 variable {N : ℕ} [NeZero N] {k : ℤ}
-/-! ### Character decomposition of the oldform / newform subspaces -/
 
 section CharSpaceDecomposition
 
@@ -64,14 +63,14 @@ theorem cuspFormsOld_iSup_inf_charSpace (k : ℤ) :
     (⨆ χ : (ZMod N)ˣ →* ℂˣ, cuspFormsOld N k ⊓ cuspFormCharSpace k χ) =
       cuspFormsOld N k :=
   cuspFormCharSpace_iSup_inf_of_diamondOpCuspHom_invariant k (cuspFormsOld N k)
-    (fun d f hf ↦ diamondOpCuspHom_preserves_cuspFormsOld d f hf)
+    diamondOpCuspHom_preserves_cuspFormsOld
 
 /-- **Character decomposition of `cuspFormsNew N k`**. -/
 theorem cuspFormsNew_iSup_inf_charSpace (k : ℤ) :
     (⨆ χ : (ZMod N)ˣ →* ℂˣ, cuspFormsNew N k ⊓ cuspFormCharSpace k χ) =
       cuspFormsNew N k :=
   cuspFormCharSpace_iSup_inf_of_diamondOpCuspHom_invariant k (cuspFormsNew N k)
-    (fun d f hf ↦ diamondOpCuspHom_preserves_cuspFormsNew d f hf)
+    diamondOpCuspHom_preserves_cuspFormsNew
 
 /-- **Independence of the character-wise pieces of `cuspFormsOld N k`.** -/
 theorem cuspFormsOld_iSupIndep_inf_charSpace (k : ℤ) :
@@ -95,7 +94,7 @@ theorem exists_finsupp_charSpace_of_cuspFormsOld (k : ℤ)
       (∀ χ : (ZMod N)ˣ →* ℂˣ, g χ ∈ cuspFormsOld N k ⊓ cuspFormCharSpace k χ) ∧
       (g.sum fun _ y ↦ y) = f :=
   exists_finsupp_charSpace_of_diamondOpCuspHom_invariant k (cuspFormsOld N k)
-    (fun d f hf ↦ diamondOpCuspHom_preserves_cuspFormsOld d f hf) hf
+    diamondOpCuspHom_preserves_cuspFormsOld hf
 
 /-- **Finsupp-indexed character decomposition of a newform subspace element.**
 Every `f ∈ cuspFormsNew N k` is a finitely-supported sum of Nebentypus
@@ -107,7 +106,7 @@ theorem exists_finsupp_charSpace_of_cuspFormsNew (k : ℤ)
       (∀ χ : (ZMod N)ˣ →* ℂˣ, g χ ∈ cuspFormsNew N k ⊓ cuspFormCharSpace k χ) ∧
       (g.sum fun _ y ↦ y) = f :=
   exists_finsupp_charSpace_of_diamondOpCuspHom_invariant k (cuspFormsNew N k)
-    (fun d f hf ↦ diamondOpCuspHom_preserves_cuspFormsNew d f hf) hf
+    diamondOpCuspHom_preserves_cuspFormsNew hf
 
 /-- **Range of the χ-component direct-sum map onto `cuspFormsOld N k`.**  The
 natural linear map
@@ -151,8 +150,6 @@ theorem injective_cuspFormsNew_charSpace_coeLinearMap
 
 end CharSpaceDecomposition
 
-/-! ### Newforms (DS Definition 5.8.1) -/
-
 /-- A **newform** of level Γ₁(N) and weight k: a cusp form that is
 1. an eigenform (common eigenfunction of all T_n with (n,N)=1)
 2. in the new subspace
@@ -183,8 +180,6 @@ theorem Newform.isNewform (f : Newform N k) : IsNewform f.toCuspForm where
   isNew := f.isNew
   isNorm := f.isNorm
 
-/-! ### Primitive forms and conductor -/
-
 /-- A `Newform` is **primitive** at its level if its underlying cusp form
 lies in the new subspace. -/
 def Newform.IsPrimitive (f : Newform N k) : Prop :=
@@ -209,8 +204,6 @@ theorem dirichletCharacter_conductor_dvd_newform_conductor
   rw [Newform.conductor_eq_level]
   exact χ.conductor_dvd_level
 
-/-! ### Eigenvalue = canonical Fourier coefficient for Newforms -/
-
 omit [NeZero N] in
 private lemma h1_period_Gamma1_local :
     (1 : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
@@ -224,8 +217,7 @@ private lemma qExpansion_one_coeff_one_smul_of_norm
     (h_norm : (ModularFormClass.qExpansion (1 : ℝ) f.toModularForm').coeff 1 = 1)
     (c : ℂ) :
     (ModularFormClass.qExpansion (1 : ℝ) (c • f)).coeff 1 = c := by
-  show (ModularFormClass.qExpansion (1 : ℝ)
-      (⇑(c • f : CuspForm _ k))).coeff 1 = c
+  change (ModularFormClass.qExpansion (1 : ℝ) (⇑(c • f : CuspForm _ k))).coeff 1 = c
   rw [show (⇑(c • f : CuspForm _ k) : UpperHalfPlane → ℂ) = c • ⇑f from rfl,
     show (⇑f : UpperHalfPlane → ℂ) = ⇑f.toModularForm' from rfl,
     qExpansion_smul one_pos h1_period_Gamma1_local, PowerSeries.coeff_smul,
@@ -260,19 +252,9 @@ theorem Newform.eigenvalue_eq_coeff (f : Newform N k) (n : ℕ+)
     f.eigenvalue n =
       (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm).coeff n.val := by
   haveI : NeZero n.val := ⟨n.pos.ne'⟩
-  have h_norm :
-      (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm.toModularForm').coeff 1 = 1 := by
-    change (ModularFormClass.qExpansion (1 : ℝ)
-        (⇑f.toCuspForm.toModularForm')).coeff 1 = 1
-    rw [show (⇑f.toCuspForm.toModularForm' : UpperHalfPlane → ℂ) = ⇑f.toCuspForm from rfl]
-    exact f.isNorm
-  have h_lhs :
-      (ModularFormClass.qExpansion (1 : ℝ)
-        (heckeT_n_cusp k n.val f.toCuspForm)).coeff 1 = f.eigenvalue n := by
-    rw [f.isEigen n hn]
-    exact qExpansion_one_coeff_one_smul_of_norm f.toCuspForm h_norm _
   rw [← qExpansion_one_coeff_one_heckeT_n_cusp_eq_coeff n.val hn χ f.toCuspForm hf_char,
-    h_lhs]
+    f.isEigen n hn]
+  exact (qExpansion_one_coeff_one_smul_of_norm f.toCuspForm f.isNorm _).symm
 
 /-- **Un-normalised analogue of `Newform.eigenvalue_eq_coeff`.**  For an
 `Eigenform` `f` lying in `modFormCharSpace k χ` and *assumed normalised at
@@ -290,8 +272,6 @@ theorem Eigenform.eigenvalue_eq_coeff_of_norm (f : Eigenform N k) (n : ℕ+)
   rw [← qExpansion_one_coeff_one_heckeT_n_cusp_eq_coeff n.val hn χ f.toCuspForm hf_char,
     f.isEigen n hn]
   exact (qExpansion_one_coeff_one_smul_of_norm f.toCuspForm h_norm₁ (f.eigenvalue n)).symm
-
-/-! ### Reverse/consumer direction of the Main Lemma -/
 
 private lemma qExpansion_one_levelRaise_coeff_eq_zero_of_not_dvd
     {M : ℕ} [NeZero M] {d : ℕ} [NeZero d]
@@ -312,8 +292,8 @@ private lemma qExpansion_one_levelRaise_coeff_eq_zero_of_not_dvd
       qExpansion_ext2 _ _ h_fun_eq,
     qExpansion_one_modularFormLevelRaise_coeff, if_neg hn]
 
-/-- **Oldforms have zero Fourier coefficients at indices coprime to the
-level.**  This is the **reverse (easy) direction** of
+/-- **Oldforms have zero Fourier coefficients at indices coprime to the level.**
+This is the **reverse (easy) direction** of
 `Newforms.mainLemma` (DS Theorem 5.7.1): every `f ∈ S_k(Γ₁(N))^old`
 satisfies `a_n(f) = 0` whenever `(n, N) = 1`.
 
@@ -331,19 +311,11 @@ theorem cuspFormsOld_coeff_eq_zero_of_coprime
     ?_ ?_ ?_ ?_ hf
   · rintro f₀ ⟨M, d, _, _, hd_lt, heq, g, rfl⟩
     subst heq
-    have hd_dvd : d ∣ d * M := ⟨M, rfl⟩
-    have h_coprime_d : Nat.Coprime n d := hn.coprime_dvd_right hd_dvd
-    have h_not_dvd : ¬ d ∣ n := by
-      intro h_dvd
-      have h_gcd : n.gcd d = d := Nat.gcd_eq_right h_dvd
-      rw [Nat.Coprime, h_gcd] at h_coprime_d
-      omega
-    exact qExpansion_one_levelRaise_coeff_eq_zero_of_not_dvd g n h_not_dvd
-  · show (ModularFormClass.qExpansion (1 : ℝ)
-        ⇑(0 : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)).coeff n = 0
-    rw [show (⇑(0 : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : UpperHalfPlane → ℂ) =
-        (0 : UpperHalfPlane → ℂ) from rfl, qExpansion_zero]
-    simp
+    have h_coprime_d : Nat.Coprime n d := hn.coprime_dvd_right ⟨M, rfl⟩
+    refine qExpansion_one_levelRaise_coeff_eq_zero_of_not_dvd g n fun h_dvd ↦ ?_
+    rw [Nat.Coprime, Nat.gcd_eq_right h_dvd] at h_coprime_d
+    lia
+  · simp [qExpansion_zero]
   · intro x y _ _ ihx ihy
     have h_eq : ModularFormClass.qExpansion (1 : ℝ)
         (⇑(x + y) : UpperHalfPlane → ℂ) =
@@ -352,7 +324,7 @@ theorem cuspFormsOld_coeff_eq_zero_of_coprime
       have := qExpansion_add (Γ := (Gamma1 N).map (mapGL ℝ)) (h := 1) (a := k) (b := k)
         one_pos h1_period_Gamma1_local x y
       convert this using 2
-    show (PowerSeries.coeff n) (ModularFormClass.qExpansion 1 ⇑(x + y)) = 0
+    change (PowerSeries.coeff n) (ModularFormClass.qExpansion 1 ⇑(x + y)) = 0
     rw [h_eq, map_add, ihx, ihy, zero_add]
   · intro c x _ ihx
     have h_eq : ModularFormClass.qExpansion (1 : ℝ)
@@ -361,14 +333,12 @@ theorem cuspFormsOld_coeff_eq_zero_of_coprime
       have := qExpansion_smul (Γ := (Gamma1 N).map (mapGL ℝ)) (k := k) (h := 1) one_pos
         h1_period_Gamma1_local c x
       convert this using 2
-    show (PowerSeries.coeff n) (ModularFormClass.qExpansion 1 ⇑(c • x)) = 0
+    change (PowerSeries.coeff n) (ModularFormClass.qExpansion 1 ⇑(c • x)) = 0
     rw [h_eq, show (PowerSeries.coeff n)
         (c • ModularFormClass.qExpansion (1 : ℝ) ⇑x) =
         c * (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑x) from
       by simp [smul_eq_mul],
       ihx, mul_zero]
-
-/-! ### Coefficient-vanishing transfer to the new part -/
 
 /-- **Coprime coefficient vanishing for the oldform part.**  For any cusp
 form `f` and any `n` coprime to `N`, the `n`th period-1 Fourier
@@ -396,11 +366,8 @@ theorem newPart_coeff_eq_zero_of_coprime_of_vanish
       one_pos h1_period_Gamma1_local (oldPart f) (newPart f)
     convert this using 2
   rw [oldPart_add_newPart f] at h_eq
-  have h_coeff : (ModularFormClass.qExpansion (1 : ℝ) f).coeff n =
-      (ModularFormClass.qExpansion (1 : ℝ) (oldPart f)).coeff n +
-      (ModularFormClass.qExpansion (1 : ℝ) (newPart f)).coeff n := by
-    have h := congrArg (fun ps : PowerSeries ℂ ↦ ps.coeff n) h_eq
-    simpa using h
+  have h_coeff := congrArg (fun ps : PowerSeries ℂ ↦ ps.coeff n) h_eq
+  simp only [map_add] at h_coeff
   rw [h_vanish n hn, oldPart_coeff_eq_zero_of_coprime f n hn, zero_add] at h_coeff
   exact h_coeff.symm
 
@@ -419,13 +386,10 @@ theorem mainLemma_of_newSubspace_coprime_vanishing_zero
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (h_vanish : ∀ n : ℕ, Nat.Coprime n N →
       (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0) :
-    f ∈ cuspFormsOld N k := by
-  have h_newPart_zero : newPart f = 0 :=
+    f ∈ cuspFormsOld N k :=
+  mainLemma_of_newPart_eq_zero f h_vanish <|
     h_new_zero (newPart f) (newPart_mem_cuspFormsNew f)
       (newPart_coeff_eq_zero_of_coprime_of_vanish f h_vanish)
-  exact mainLemma_of_newPart_eq_zero f h_vanish h_newPart_zero
-
-/-! ### Main Lemma (DS Theorem 5.7.1, Atkin-Lehner) -/
 
 /-- **The Main Lemma** (DS Theorem 5.7.1, Atkin-Lehner [AL70]):
 If `f ∈ S_k(Γ₁(N))` has Fourier expansion `f(τ) = Σ aₙ qⁿ` with `aₙ = 0`
@@ -445,7 +409,40 @@ theorem mainLemma
   -- available, so the conclusion is left unproved.
   sorry
 
-/-! ### Atkin-Lehner uniqueness -/
+private lemma newform_diff_coprime_coeff_eq_zero
+    (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
+    (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
+    (hgχ : g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
+    (h : ∀ n : ℕ+, Nat.Coprime n.val N → f.eigenvalue n = g.eigenvalue n)
+    (n : ℕ) (hn : Nat.Coprime n N) :
+    (ModularFormClass.qExpansion (1 : ℝ) (f.toCuspForm - g.toCuspForm)).coeff n = 0 := by
+  have h1_pos : (0 : ℝ) < 1 := one_pos
+  have h1_period := h1_period_Gamma1_local (N := N)
+  conv_lhs =>
+    rw [show (⇑f.toCuspForm - ⇑g.toCuspForm) =
+        (⇑f.toCuspForm.toModularForm' - ⇑g.toCuspForm.toModularForm') from rfl]
+  rw [qExpansion_sub h1_pos h1_period, map_sub, sub_eq_zero]
+  by_cases hn0 : n = 0
+  · subst hn0
+    simp [Nat.Coprime, Nat.gcd_zero_left] at hn
+    subst hn
+    have h_zero_f := (CuspFormClass.zero_at_infty f.toCuspForm).valueAtInfty_eq_zero
+    have h_zero_g := (CuspFormClass.zero_at_infty g.toCuspForm).valueAtInfty_eq_zero
+    rw [ModularFormClass.qExpansion_coeff_zero _ h1_pos h1_period,
+        ModularFormClass.qExpansion_coeff_zero _ h1_pos h1_period,
+        show (⇑f.toModularForm' : UpperHalfPlane → ℂ) = ⇑f.toCuspForm from rfl,
+        show (⇑g.toModularForm' : UpperHalfPlane → ℂ) = ⇑g.toCuspForm from rfl,
+        h_zero_f, h_zero_g]
+  · have hn_pos : 0 < n := Nat.pos_of_ne_zero hn0
+    have h_eq := h ⟨n, hn_pos⟩ hn
+    rw [Newform.eigenvalue_eq_coeff f ⟨n, hn_pos⟩ hn χ hfχ,
+        Newform.eigenvalue_eq_coeff g ⟨n, hn_pos⟩ hn χ hgχ] at h_eq
+    exact h_eq
+
+private lemma newform_diff_mem_cuspFormsNew (f g : Newform N k) :
+    f.toCuspForm - g.toCuspForm ∈ cuspFormsNew N k :=
+  (cuspFormsNew N k).sub_mem (cuspFormsNewExtended_le_cuspFormsNew f.isNew)
+    (cuspFormsNewExtended_le_cuspFormsNew g.isNew)
 
 /-- **Atkin-Lehner uniqueness** (DS Theorem 5.8.2 part 1): two newforms in
 `S_k(Γ₁(N), χ)` with the same eigenvalues at all primes `(p, N) = 1` are equal.
@@ -457,42 +454,10 @@ theorem newform_unique
     (hgχ : g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
     (h : ∀ n : ℕ+, Nat.Coprime n.val N → f.eigenvalue n = g.eigenvalue n) :
     f.toCuspForm = g.toCuspForm := by
-  suffices hfg : f.toCuspForm - g.toCuspForm = 0 by
-    exact sub_eq_zero.mp hfg
-  have h_new : f.toCuspForm - g.toCuspForm ∈ cuspFormsNew N k :=
-    (cuspFormsNew N k).sub_mem
-      (cuspFormsNewExtended_le_cuspFormsNew f.isNew)
-      (cuspFormsNewExtended_le_cuspFormsNew g.isNew)
-  have h_old : f.toCuspForm - g.toCuspForm ∈ cuspFormsOld N k := by
-    apply mainLemma
-    intro n hn
-    have h1_pos : (0 : ℝ) < 1 := one_pos
-    have h1_period : (1 : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
-      rw [show (Gamma1 N).map (mapGL ℝ) = (Gamma1 N : Subgroup (GL (Fin 2) ℝ)) from rfl,
-        strictPeriods_Gamma1]
-      exact ⟨1, by simp⟩
-    simp only [CuspForm.coe_sub]
-    conv_lhs =>
-      rw [show (⇑f.toCuspForm - ⇑g.toCuspForm) =
-          (⇑f.toCuspForm.toModularForm' - ⇑g.toCuspForm.toModularForm') from rfl]
-    rw [qExpansion_sub h1_pos h1_period, map_sub, sub_eq_zero]
-    by_cases hn0 : n = 0
-    · subst hn0
-      simp [Nat.Coprime, Nat.gcd_zero_left] at hn
-      subst hn
-      have h_zero_f := (CuspFormClass.zero_at_infty f.toCuspForm).valueAtInfty_eq_zero
-      have h_zero_g := (CuspFormClass.zero_at_infty g.toCuspForm).valueAtInfty_eq_zero
-      rw [ModularFormClass.qExpansion_coeff_zero _ h1_pos h1_period,
-          ModularFormClass.qExpansion_coeff_zero _ h1_pos h1_period,
-          show (⇑f.toModularForm' : UpperHalfPlane → ℂ) = ⇑f.toCuspForm from rfl,
-          show (⇑g.toModularForm' : UpperHalfPlane → ℂ) = ⇑g.toCuspForm from rfl,
-          h_zero_f, h_zero_g]
-    · have hn_pos : 0 < n := Nat.pos_of_ne_zero hn0
-      have h_eq := h ⟨n, hn_pos⟩ hn
-      rw [Newform.eigenvalue_eq_coeff f ⟨n, hn_pos⟩ hn χ hfχ,
-          Newform.eigenvalue_eq_coeff g ⟨n, hn_pos⟩ hn χ hgχ] at h_eq
-      exact h_eq
-  exact Submodule.disjoint_def.mp cuspFormsOld_disjoint_cuspFormsNew _ h_old h_new
+  refine sub_eq_zero.mp <|
+    Submodule.disjoint_def.mp cuspFormsOld_disjoint_cuspFormsNew _ ?_
+      (newform_diff_mem_cuspFormsNew f g)
+  exact mainLemma _ (newform_diff_coprime_coeff_eq_zero f g χ hfχ hgχ h)
 
 /-- **Conditional Atkin–Lehner uniqueness via the explicit `cuspFormsNew`
 zero criterion.**  The conditional twin of `newform_unique` in which the
@@ -510,41 +475,10 @@ theorem newform_unique_of_newSubspace_coprime_vanishing_zero
     (hgχ : g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
     (h : ∀ n : ℕ+, Nat.Coprime n.val N → f.eigenvalue n = g.eigenvalue n) :
     f.toCuspForm = g.toCuspForm := by
-  suffices hfg : f.toCuspForm - g.toCuspForm = 0 by
-    exact sub_eq_zero.mp hfg
-  have h_new : f.toCuspForm - g.toCuspForm ∈ cuspFormsNew N k :=
-    (cuspFormsNew N k).sub_mem
-      (cuspFormsNewExtended_le_cuspFormsNew f.isNew)
-      (cuspFormsNewExtended_le_cuspFormsNew g.isNew)
-  have h_old : f.toCuspForm - g.toCuspForm ∈ cuspFormsOld N k := by
-    apply mainLemma_of_newSubspace_coprime_vanishing_zero h_zero
-    intro n hn
-    have h1_pos : (0 : ℝ) < 1 := one_pos
-    have h1_period : (1 : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
-      rw [show (Gamma1 N).map (mapGL ℝ) = (Gamma1 N : Subgroup (GL (Fin 2) ℝ)) from rfl,
-        strictPeriods_Gamma1]
-      exact ⟨1, by simp⟩
-    simp only [CuspForm.coe_sub]
-    conv_lhs =>
-      rw [show (⇑f.toCuspForm - ⇑g.toCuspForm) =
-          (⇑f.toCuspForm.toModularForm' - ⇑g.toCuspForm.toModularForm') from rfl]
-    rw [qExpansion_sub h1_pos h1_period, map_sub, sub_eq_zero]
-    by_cases hn0 : n = 0
-    · subst hn0
-      simp [Nat.Coprime, Nat.gcd_zero_left] at hn
-      subst hn
-      have h_zero_f := (CuspFormClass.zero_at_infty f.toCuspForm).valueAtInfty_eq_zero
-      have h_zero_g := (CuspFormClass.zero_at_infty g.toCuspForm).valueAtInfty_eq_zero
-      rw [ModularFormClass.qExpansion_coeff_zero _ h1_pos h1_period,
-          ModularFormClass.qExpansion_coeff_zero _ h1_pos h1_period,
-          show (⇑f.toModularForm' : UpperHalfPlane → ℂ) = ⇑f.toCuspForm from rfl,
-          show (⇑g.toModularForm' : UpperHalfPlane → ℂ) = ⇑g.toCuspForm from rfl,
-          h_zero_f, h_zero_g]
-    · have hn_pos : 0 < n := Nat.pos_of_ne_zero hn0
-      have h_eq := h ⟨n, hn_pos⟩ hn
-      rw [Newform.eigenvalue_eq_coeff f ⟨n, hn_pos⟩ hn χ hfχ,
-          Newform.eigenvalue_eq_coeff g ⟨n, hn_pos⟩ hn χ hgχ] at h_eq
-      exact h_eq
-  exact Submodule.disjoint_def.mp cuspFormsOld_disjoint_cuspFormsNew _ h_old h_new
+  refine sub_eq_zero.mp <|
+    Submodule.disjoint_def.mp cuspFormsOld_disjoint_cuspFormsNew _ ?_
+      (newform_diff_mem_cuspFormsNew f g)
+  exact mainLemma_of_newSubspace_coprime_vanishing_zero h_zero _
+    (newform_diff_coprime_coeff_eq_zero f g χ hfχ hgχ h)
 
 end HeckeRing.GL2
