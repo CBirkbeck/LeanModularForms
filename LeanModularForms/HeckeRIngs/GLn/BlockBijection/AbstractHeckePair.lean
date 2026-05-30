@@ -23,8 +23,6 @@ open scoped Pointwise
 
 namespace HeckeRing
 
-/-! ### Stabilizer subgroup invariance -/
-
 section StabilizerInvariance
 
 variable {G : Type*} [Group G] (P : HeckePair G)
@@ -37,16 +35,13 @@ lemma stabilizerSubgroup_mul_right_H (g : P.Δ) (h : P.H) :
   ext x
   simp only [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
     ConjAct.smul_def, map_inv, ConjAct.ofConjAct_toConjAct, inv_inv]
-  constructor
-  · intro hx
-    have key : (g : G)⁻¹ * (x : G) * g =
-        (h : G) * (((g : G) * (h : G))⁻¹ * (x : G) * ((g : G) * (h : G))) * (h : G)⁻¹ := by
-      group
-    rw [key]; exact P.H.mul_mem (P.H.mul_mem h.2 hx) (P.H.inv_mem h.2)
-  · intro hx
-    have key : ((g : G) * (h : G))⁻¹ * (x : G) * ((g : G) * (h : G)) =
-        (h : G)⁻¹ * ((g : G)⁻¹ * (x : G) * (g : G)) * (h : G) := by group
-    rw [key]; exact P.H.mul_mem (P.H.mul_mem (P.H.inv_mem h.2) hx) h.2
+  refine ⟨fun hx ↦ ?_, fun hx ↦ ?_⟩
+  · rw [show (g : G)⁻¹ * (x : G) * g =
+      (h : G) * (((g : G) * (h : G))⁻¹ * (x : G) * ((g : G) * (h : G))) * (h : G)⁻¹ by group]
+    exact P.H.mul_mem (P.H.mul_mem h.2 hx) (P.H.inv_mem h.2)
+  · rw [show ((g : G) * (h : G))⁻¹ * (x : G) * ((g : G) * (h : G)) =
+      (h : G)⁻¹ * ((g : G)⁻¹ * (x : G) * (g : G)) * (h : G) by group]
+    exact P.H.mul_mem (P.H.mul_mem (P.H.inv_mem h.2) hx) h.2
 
 /-- Left multiplication by `h ∈ H` conjugates the stabilizer:
 `Stab(h·g) = conj(h)(Stab(g))` as subgroups of `H`.
@@ -59,27 +54,23 @@ lemma stab_mul_left_eq_map_conj (g : P.Δ) (h : P.H) :
   simp only [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
     ConjAct.smul_def, map_inv, ConjAct.ofConjAct_toConjAct, inv_inv,
     Subgroup.mem_map, MulEquiv.coe_toMonoidHom, MulAut.conj_apply]
-  constructor
-  · intro hx
-    refine ⟨⟨(h : G)⁻¹ * (x : G) * (h : G),
+  refine ⟨fun hx ↦ ?_, ?_⟩
+  · refine ⟨⟨(h : G)⁻¹ * (x : G) * (h : G),
       P.H.mul_mem (P.H.mul_mem (P.H.inv_mem h.2) x.2) h.2⟩, ?_, ?_⟩
-    · show (g : G)⁻¹ * ((h : G)⁻¹ * (x : G) * (h : G)) * (g : G) ∈ P.H
+    · change (g : G)⁻¹ * ((h : G)⁻¹ * (x : G) * (h : G)) * (g : G) ∈ P.H
       rw [show (g : G)⁻¹ * ((h : G)⁻¹ * (x : G) * (h : G)) * (g : G) =
-        ((h : G) * (g : G))⁻¹ * (x : G) * ((h : G) * (g : G)) from by
-        rw [_root_.mul_inv_rev]; simp [mul_assoc]]
+        ((h : G) * (g : G))⁻¹ * (x : G) * ((h : G) * (g : G)) by group]
       exact hx
-    · ext; show (h : G) * ((h : G)⁻¹ * (x : G) * (h : G)) * (h : G)⁻¹ = (x : G)
-      simp [mul_assoc]
+    · ext
+      change (h : G) * ((h : G)⁻¹ * (x : G) * (h : G)) * (h : G)⁻¹ = (x : G)
+      group
   · rintro ⟨y, hy, rfl⟩
-    show ((h : G) * (g : G))⁻¹ * ((h : G) * (y : G) * (h : G)⁻¹) * ((h : G) * (g : G)) ∈ P.H
+    change ((h : G) * (g : G))⁻¹ * ((h : G) * (y : G) * (h : G)⁻¹) * ((h : G) * (g : G)) ∈ P.H
     rw [show ((h : G) * (g : G))⁻¹ * ((h : G) * (y : G) * (h : G)⁻¹) * ((h : G) * (g : G)) =
-      (g : G)⁻¹ * (y : G) * (g : G) from by
-      rw [_root_.mul_inv_rev]; simp [mul_assoc]]
+      (g : G)⁻¹ * (y : G) * (g : G) by group]
     exact hy
 
 end StabilizerInvariance
-
-/-! ### Conjugation equivalence on decompQuots -/
 
 section ConjugationEquiv
 
@@ -102,28 +93,36 @@ noncomputable def decompQuot_mul_left_equiv (g : P.Δ) (h : P.H)
     rw [QuotientGroup.leftRel_apply] at hab ⊢
     rw [show ((MulAut.conj h⁻¹) a)⁻¹ * (MulAut.conj h⁻¹) b =
       (MulAut.conj h⁻¹) (a⁻¹ * b) by simp [map_inv, map_mul]]
-    rw [Subgroup.mem_map] at hab; obtain ⟨k, hk, hkeq⟩ := hab
+    rw [Subgroup.mem_map] at hab
+    obtain ⟨k, hk, hkeq⟩ := hab
     show (MulAut.conj h⁻¹) (a⁻¹ * b) ∈ K
-    have : a⁻¹ * b = (MulAut.conj h) k := hkeq.symm
-    rw [this]; convert hk using 1; ext; simp [MulAut.conj_apply, mul_assoc]
+    rw [show a⁻¹ * b = (MulAut.conj h) k from hkeq.symm]
+    convert hk using 1
+    ext
+    simp [MulAut.conj_apply, mul_assoc]
   exact Equiv.ofBijective
     (Quotient.map' (MulAut.conj h⁻¹) h_wd)
     ⟨fun x y hxy ↦ by
-      revert x y; exact Quotient.ind₂ fun a b hxy ↦ by
-        simp only [Quotient.map'_mk''] at hxy
-        rw [Quotient.eq''] at hxy ⊢
-        rw [QuotientGroup.leftRel_apply] at hxy ⊢
-        rw [show ((MulAut.conj h⁻¹) a)⁻¹ * (MulAut.conj h⁻¹) b =
-          (MulAut.conj h⁻¹) (a⁻¹ * b) by simp [map_inv, map_mul]] at hxy
-        rw [Subgroup.mem_map]
-        exact ⟨(MulAut.conj h⁻¹) (a⁻¹ * b), hxy, by
-          ext; simp [MulAut.conj_apply, mul_assoc]⟩,
+      revert x y
+      refine Quotient.ind₂ fun a b hxy ↦ ?_
+      simp only [Quotient.map'_mk''] at hxy
+      rw [Quotient.eq''] at hxy ⊢
+      rw [QuotientGroup.leftRel_apply] at hxy ⊢
+      rw [show ((MulAut.conj h⁻¹) a)⁻¹ * (MulAut.conj h⁻¹) b =
+        (MulAut.conj h⁻¹) (a⁻¹ * b) by simp [map_inv, map_mul]] at hxy
+      rw [Subgroup.mem_map]
+      exact ⟨(MulAut.conj h⁻¹) (a⁻¹ * b), hxy, by
+        ext
+        simp [MulAut.conj_apply, mul_assoc]⟩,
     fun x ↦ by
-      revert x; exact Quotient.ind fun b ↦ ⟨Quotient.mk'' ((MulAut.conj h) b), by
-        simp only [Quotient.map'_mk'']; rw [Quotient.eq'', QuotientGroup.leftRel_apply]
-        rw [show ((MulAut.conj h⁻¹) ((MulAut.conj h) b))⁻¹ * b =
-          1 by ext; simp [MulAut.conj_apply, mul_assoc]]
-        exact K.one_mem⟩⟩
+      revert x
+      refine Quotient.ind fun b ↦ ⟨Quotient.mk'' ((MulAut.conj h) b), ?_⟩
+      simp only [Quotient.map'_mk'']
+      rw [Quotient.eq'', QuotientGroup.leftRel_apply]
+      rw [show ((MulAut.conj h⁻¹) ((MulAut.conj h) b))⁻¹ * b = 1 by
+        ext
+        simp [MulAut.conj_apply, mul_assoc]]
+      exact K.one_mem⟩
 
 /-- Combined left-right invariance: `decompQuot(h·g·k) ≃ decompQuot(g)` for `h, k ∈ H`.
 Composes right-invariance (stabilizer equality) with left-conjugation. -/
@@ -135,13 +134,12 @@ noncomputable def decompQuot_double_H_equiv (g : P.Δ) (h k : P.H)
   refine (Subgroup.quotientEquivOfEq ?_).trans
     ((decompQuot_mul_left_equiv P ⟨(g : G) * k, hgk⟩ h hhgk).trans
     (Subgroup.quotientEquivOfEq (stabilizerSubgroup_mul_right_H P g k)))
-  show (ConjAct.toConjAct ((h : G) * (g : G) * (k : G)) • P.H).subgroupOf P.H =
+  change (ConjAct.toConjAct ((h : G) * (g : G) * (k : G)) • P.H).subgroupOf P.H =
     (ConjAct.toConjAct ((h : G) * ((g : G) * (k : G))) • P.H).subgroupOf P.H
-  congr 2; exact mul_assoc _ _ _
+  congr 2
+  exact mul_assoc _ _ _
 
 end ConjugationEquiv
-
-/-! ### Coset manipulation helpers -/
 
 section CosetHelpers
 
@@ -150,8 +148,10 @@ variable {G : Type*} [Group G] (P : HeckePair G)
 /-- Right-multiplying by an H-element doesn't change the right coset `{a} * H`. -/
 lemma singleton_mul_H_absorb_right (a c : G) (hc : c ∈ P.H) :
     ({a * c} : Set G) * (P.H : Set G) = ({a} : Set G) * (P.H : Set G) := by
-  ext x; constructor
-  · rintro ⟨_, rfl, k, hk, rfl⟩; exact ⟨_, rfl, c * k, P.H.mul_mem hc hk, by group⟩
+  ext x
+  refine ⟨?_, ?_⟩
+  · rintro ⟨_, rfl, k, hk, rfl⟩
+    exact ⟨_, rfl, c * k, P.H.mul_mem hc hk, by group⟩
   · rintro ⟨_, rfl, k, hk, rfl⟩
     exact ⟨_, rfl, c⁻¹ * k, P.H.mul_mem (P.H.inv_mem hc) hk, by group⟩
 
@@ -169,21 +169,21 @@ lemma decompQuot_coset_indep' (g : P.Δ)
   simp only [map_inv, ConjAct.ofConjAct_toConjAct, Subgroup.coe_mul, Subgroup.coe_inv,
     inv_inv] at hxy
   have hxy' : (g : G)⁻¹ * (x : G)⁻¹ * (y : G) * (g : G) ∈ P.H := by
-    convert hxy using 1; group
-  ext z; simp only [Set.singleton_mul, Set.image_mul_left, Set.mem_preimage, SetLike.mem_coe]
-  constructor
-  · intro hz
-    show ((y : G) * (g : G))⁻¹ * z ∈ P.H
-    have key : ((y : G) * (g : G))⁻¹ * z =
-        ((g : G)⁻¹ * (x : G)⁻¹ * (y : G) * (g : G))⁻¹ *
-        (((x : G) * (g : G))⁻¹ * z) := by group
-    rw [key]; exact P.H.mul_mem (P.H.inv_mem hxy') hz
-  · intro hz
-    show ((x : G) * (g : G))⁻¹ * z ∈ P.H
-    have key : ((x : G) * (g : G))⁻¹ * z =
-        ((g : G)⁻¹ * (x : G)⁻¹ * (y : G) * (g : G)) *
-        (((y : G) * (g : G))⁻¹ * z) := by group
-    rw [key]; exact P.H.mul_mem hxy' hz
+    convert hxy using 1
+    group
+  ext z
+  simp only [Set.singleton_mul, Set.image_mul_left, Set.mem_preimage, SetLike.mem_coe]
+  refine ⟨fun hz ↦ ?_, fun hz ↦ ?_⟩
+  · show ((y : G) * (g : G))⁻¹ * z ∈ P.H
+    rw [show ((y : G) * (g : G))⁻¹ * z =
+      ((g : G)⁻¹ * (x : G)⁻¹ * (y : G) * (g : G))⁻¹ *
+        (((x : G) * (g : G))⁻¹ * z) by group]
+    exact P.H.mul_mem (P.H.inv_mem hxy') hz
+  · show ((x : G) * (g : G))⁻¹ * z ∈ P.H
+    rw [show ((x : G) * (g : G))⁻¹ * z =
+      ((g : G)⁻¹ * (x : G)⁻¹ * (y : G) * (g : G)) *
+        (((y : G) * (g : G))⁻¹ * z) by group]
+    exact P.H.mul_mem hxy' hz
 
 /-- The `out` representative of a quotient element gives the same coset as the original. -/
 lemma decompQuot_out_coset_eq' (g : P.Δ) (x : P.H) :
