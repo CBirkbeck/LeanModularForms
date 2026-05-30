@@ -41,8 +41,6 @@ namespace HeckeRing.GL2
 
 variable {N : ℕ} [NeZero N] {k : ℤ}
 
-/-! ### Forward map: `modFormCharSpace k 1 → ModularForm ((Gamma0 N).map (mapGL ℝ)) k` -/
-
 /-- A `Γ₁(N)`-form in the trivial-character eigenspace is `Γ₀(N)`-slash-invariant.
 The proof factors any `γ ∈ Γ₀(N)` through its diamond operator
 `⟨Gamma0MapUnits γ⟩`, which acts as the identity on the trivial-character
@@ -55,15 +53,11 @@ private lemma modFormCharSpace_one_slash_Gamma0
   obtain ⟨g, hg, rfl⟩ := Subgroup.mem_map.mp hγ
   set g₀ : ↥(Gamma0 N) := ⟨g, hg⟩
   have hd : diamondOp k (Gamma0MapUnits g₀) f = f := by
-    have := (mem_modFormCharSpace_iff k (1 : (ZMod N)ˣ →* ℂˣ) f).mp hf
-      (Gamma0MapUnits g₀)
-    simpa using this
+    simpa using (mem_modFormCharSpace_iff k (1 : (ZMod N)ˣ →* ℂˣ) f).mp hf (Gamma0MapUnits g₀)
   have heq : diamondOpAux k g₀ f = f := by
     rw [← diamondOp_eq_diamondOpAux k (Gamma0MapUnits g₀) g₀ rfl]; exact hd
-  -- Pointwise extraction of the slash equation from `diamondOpAux _ _ f = f`.
   ext z
-  have := congrArg (fun h : ModularForm _ _ ↦ h z) heq
-  exact this
+  exact congrArg (fun h : ModularForm _ _ ↦ h z) heq
 
 /-- The forward map sending an element of the trivial-character eigenspace inside
 `M_k(Γ₁(N))` to a `Γ₀(N)`-modular form. -/
@@ -72,24 +66,19 @@ noncomputable def modFormCharSpaceOneToGamma0
     ModularForm ((Gamma0 N).map (mapGL ℝ)) k where
   toSlashInvariantForm :=
     { toFun := ⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-      slash_action_eq' γ hγ :=
+      slash_action_eq' _ hγ :=
         modFormCharSpace_one_slash_Gamma0 f.property hγ }
   holo' := ModularFormClass.holo (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-  bdd_at_cusps' {c} hc := by
-    -- Cusps for Γ₀(N).map and Γ₁(N).map agree (both arithmetic, commensurable).
-    have h₁ : IsCusp c ((Gamma1 N).map (mapGL ℝ)) :=
-      (Subgroup.IsArithmetic.isCusp_iff_isCusp_SL2Z _).mpr
-        ((Subgroup.IsArithmetic.isCusp_iff_isCusp_SL2Z _).mp hc)
-    exact ModularFormClass.bdd_at_cusps
-      (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) h₁
+  bdd_at_cusps' {_} hc :=
+    ModularFormClass.bdd_at_cusps (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
+      ((Subgroup.IsArithmetic.isCusp_iff_isCusp_SL2Z _).mpr
+        ((Subgroup.IsArithmetic.isCusp_iff_isCusp_SL2Z _).mp hc))
 
 @[simp]
 lemma modFormCharSpaceOneToGamma0_apply
     (f : modFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ)) (z : ℍ) :
     modFormCharSpaceOneToGamma0 f z =
       (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) z := rfl
-
-/-! ### Backward map: `ModularForm ((Gamma0 N).map (mapGL ℝ)) k → modFormCharSpace k 1` -/
 
 /-- A `Γ₀(N)`-modular form, viewed as a `Γ₁(N)`-modular form via the inclusion
 `Γ₁(N) ≤ Γ₀(N)`. -/
@@ -98,17 +87,13 @@ noncomputable def modFormGamma0ToGamma1
     ModularForm ((Gamma1 N).map (mapGL ℝ)) k where
   toSlashInvariantForm :=
     { toFun := ⇑g
-      slash_action_eq' γ hγ := by
-        have hγ' : γ ∈ (Gamma0 N).map (mapGL ℝ) :=
-          Subgroup.map_mono (Gamma1_in_Gamma0 N) hγ
-        exact SlashInvariantFormClass.slash_action_eq g γ hγ' }
+      slash_action_eq' γ hγ :=
+        SlashInvariantFormClass.slash_action_eq g γ (Subgroup.map_mono (Gamma1_in_Gamma0 N) hγ) }
   holo' := ModularFormClass.holo g
-  bdd_at_cusps' {c} hc := by
-    -- IsCusp c (Γ₁.map) ↔ IsCusp c 𝒮ℒ ↔ IsCusp c (Γ₀.map).
-    have h₀ : IsCusp c ((Gamma0 N).map (mapGL ℝ)) :=
-      (Subgroup.IsArithmetic.isCusp_iff_isCusp_SL2Z _).mpr
-        ((Subgroup.IsArithmetic.isCusp_iff_isCusp_SL2Z _).mp hc)
-    exact ModularFormClass.bdd_at_cusps g h₀
+  bdd_at_cusps' {_} hc :=
+    ModularFormClass.bdd_at_cusps g
+      ((Subgroup.IsArithmetic.isCusp_iff_isCusp_SL2Z _).mpr
+        ((Subgroup.IsArithmetic.isCusp_iff_isCusp_SL2Z _).mp hc))
 
 @[simp]
 lemma modFormGamma0ToGamma1_apply
@@ -126,12 +111,10 @@ lemma modFormGamma0ToGamma1_mem_modFormCharSpace_one
   obtain ⟨g₀, hg₀⟩ := Gamma0MapUnits_surjective (N := N) d
   have hrep : diamondOp k d = diamondOpAux k g₀ :=
     diamondOp_eq_diamondOpAux k d g₀ hg₀
-  -- Slash-invariance of g.
   have hmem : mapGL ℝ (g₀ : SL(2, ℤ)) ∈ (Gamma0 N).map (mapGL ℝ) :=
     Subgroup.mem_map.mpr ⟨_, g₀.property, rfl⟩
   have hslash : (⇑g : ℍ → ℂ) ∣[k] mapGL ℝ (g₀ : SL(2, ℤ)) = ⇑g :=
     SlashInvariantFormClass.slash_action_eq g _ hmem
-  -- Reduce to: `diamondOp k d (modFormGamma0ToGamma1 g) = modFormGamma0ToGamma1 g`.
   have hd_eq : diamondOp k d (modFormGamma0ToGamma1 g) = modFormGamma0ToGamma1 g := by
     rw [hrep]
     apply ModularForm.ext
@@ -140,7 +123,6 @@ lemma modFormGamma0ToGamma1_mem_modFormCharSpace_one
       modFormGamma0ToGamma1 g z
     show ((⇑g : ℍ → ℂ) ∣[k] mapGL ℝ (g₀ : SL(2, ℤ))) z = g z
     rw [hslash]
-  -- Conclude by combining triviality of `(1 : (ZMod N)ˣ →* ℂˣ)` with `hd_eq`.
   show diamondOpHom k d (modFormGamma0ToGamma1 g) =
     ((1 : (ZMod N)ˣ →* ℂˣ) d : ℂ) • modFormGamma0ToGamma1 g
   show diamondOp k d (modFormGamma0ToGamma1 g) =
@@ -159,8 +141,6 @@ lemma modFormGamma0ToCharSpaceOne_val
     (g : ModularForm ((Gamma0 N).map (mapGL ℝ)) k) :
     (modFormGamma0ToCharSpaceOne g :
         ModularForm ((Gamma1 N).map (mapGL ℝ)) k) = modFormGamma0ToGamma1 g := rfl
-
-/-! ### The linear isomorphism -/
 
 /-- The forward map as a `ℂ`-linear map. -/
 noncomputable def modFormCharSpaceOneToGamma0Linear :
