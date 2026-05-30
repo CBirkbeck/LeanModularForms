@@ -52,14 +52,14 @@ noncomputable def HeckeCoset_deg (D : HeckeCoset P) : ℤ :=
 
 /-- The degree of the identity double coset is 1. -/
 @[simp] lemma HeckeCoset_deg_T_one : HeckeCoset_deg P (HeckeCoset.one P) = 1 := by
-  simp only [HeckeCoset_deg]; haveI := subsingleton_decompQuot_T_one P
+  haveI := subsingleton_decompQuot_T_one P
   haveI : Unique (decompQuot P (HeckeCoset.one P).rep) :=
     uniqueOfSubsingleton (one_in_decompQuot_T_one P).some
-  simp [Fintype.card_unique]
+  simp [HeckeCoset_deg, Fintype.card_unique]
 
 /-- Every double coset has positive degree. -/
 lemma HeckeCoset_deg_pos (D : HeckeCoset P) : 0 < HeckeCoset_deg P D := by
-  simp only [HeckeCoset_deg]; exact_mod_cast Fintype.card_pos
+  unfold HeckeCoset_deg; exact_mod_cast Fintype.card_pos
 
 section SmulOrbitCard
 
@@ -69,34 +69,28 @@ private lemma smulOrbit_map_inj (g : P.Δ) (β : P.Δ) :
         delta_mul_mem P.H P.Δ i.out β g P.h₀⟩⟧ : HeckeLeftCoset P)) := by
   intro i₁ i₂ heq
   by_contra hne
-  have hset : ({(β : G) * (i₁.out : G) *
-      (g : G)} : Set G) * (P.H : Set G) =
-    {(β : G) * (i₂.out : G) *
-      (g : G)} * P.H := Quotient.exact heq
+  have hset : ({(β : G) * (i₁.out : G) * (g : G)} : Set G) * (P.H : Set G) =
+      {(β : G) * (i₂.out : G) * (g : G)} * P.H := Quotient.exact heq
   have hmem : (β : G) * (i₁.out : G) * (g : G) ∈
-      ({(β : G) * (i₂.out : G) * (g : G)} : Set G) *
-      (P.H : Set G) := by
+      ({(β : G) * (i₂.out : G) * (g : G)} : Set G) * (P.H : Set G) := by
     rw [← hset]; exact ⟨_, rfl, 1, P.H.one_mem, mul_one _⟩
   obtain ⟨_, ha, k, hk, hkk⟩ := hmem
   rw [Set.mem_singleton_iff] at ha; subst ha
-  have cancel : (i₂.out : G) * (g : G) * k =
-      (i₁.out : G) * (g : G) := by
+  have cancel : (i₂.out : G) * (g : G) * k = (i₁.out : G) * (g : G) := by
     apply mul_left_cancel (a := (β : G))
     have := hkk; group at this ⊢; exact this
   exact decompQuot_coset_diff P g i₁ i₂ hne
     (leftCoset_eq_of_not_disjoint (H := P.H) _ _ (by
       rw [@not_disjoint_iff]
-      exact ⟨(i₁.out : G) * (g : G),
-        ⟨1, P.H.one_mem, mul_one _⟩,
-        ⟨k, hk, cancel⟩⟩))
+      exact ⟨(i₁.out : G) * (g : G), ⟨1, P.H.one_mem, mul_one _⟩, ⟨k, hk, cancel⟩⟩))
 
 /-- The cardinality of a smul orbit equals the degree of the acting double coset. -/
 lemma smulOrbit_card (g : P.Δ) (β : P.Δ) :
     (smulOrbit P g β).card = Fintype.card (decompQuot P g) := by
-  have hinj := smulOrbit_map_inj P g β
   show (Finset.image _ ⊤).card = _
   rw [Finset.top_eq_univ]
-  convert (Finset.card_image_of_injective Finset.univ hinj).trans Finset.card_univ
+  convert (Finset.card_image_of_injective Finset.univ
+    (smulOrbit_map_inj P g β)).trans Finset.card_univ
 
 /-- The cardinality of a smul orbit cast to `ℤ` equals `HeckeCoset_deg`. -/
 lemma smulOrbit_card_intCast (D : HeckeCoset P) (β : P.Δ) :
@@ -213,12 +207,10 @@ section API
 @[simp] lemma deg_one_val : deg P (1 : 𝕋 P ℤ) = 1 := (deg P).map_one
 
 /-- The degree map is multiplicative: `deg(f * g) = deg(f) * deg(g)`. -/
-lemma deg_mul (f g : 𝕋 P ℤ) :
-    deg P (f * g) = deg P f * deg P g := (deg P).map_mul f g
+lemma deg_mul (f g : 𝕋 P ℤ) : deg P (f * g) = deg P f * deg P g := (deg P).map_mul f g
 
 /-- The degree map is additive: `deg(f + g) = deg(f) + deg(g)`. -/
-lemma deg_add (f g : 𝕋 P ℤ) :
-    deg P (f + g) = deg P f + deg P g := (deg P).map_add f g
+lemma deg_add (f g : 𝕋 P ℤ) : deg P (f + g) = deg P f + deg P g := (deg P).map_add f g
 
 /-- The degree of an integer cast is the integer itself. -/
 @[simp] lemma deg_intCast (n : ℤ) : deg P (n : 𝕋 P ℤ) = n := by
