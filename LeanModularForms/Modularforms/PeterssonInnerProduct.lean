@@ -4,20 +4,20 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
 import Mathlib.Analysis.Complex.UpperHalfPlane.Topology
-import Mathlib.MeasureTheory.Constructions.BorelSpace.Complex
-import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
-import Mathlib.MeasureTheory.Measure.Lebesgue.Complex
-import Mathlib.MeasureTheory.Measure.WithDensity
-import Mathlib.MeasureTheory.Measure.Prod
-import Mathlib.MeasureTheory.Measure.OpenPos
-import Mathlib.MeasureTheory.Integral.Bochner.Set
-import Mathlib.MeasureTheory.Integral.Bochner.ContinuousLinearMap
 import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.InverseDeriv
+import Mathlib.MeasureTheory.Constructions.BorelSpace.Complex
+import Mathlib.MeasureTheory.Integral.Bochner.ContinuousLinearMap
+import Mathlib.MeasureTheory.Integral.Bochner.Set
 import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
-import Mathlib.NumberTheory.ModularForms.Petersson
-import Mathlib.NumberTheory.ModularForms.Bounds
+import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
+import Mathlib.MeasureTheory.Measure.Lebesgue.Complex
+import Mathlib.MeasureTheory.Measure.OpenPos
+import Mathlib.MeasureTheory.Measure.Prod
+import Mathlib.MeasureTheory.Measure.WithDensity
 import Mathlib.NumberTheory.Modular
+import Mathlib.NumberTheory.ModularForms.Bounds
+import Mathlib.NumberTheory.ModularForms.Petersson
 
 /-!
 # Petersson Inner Product
@@ -76,7 +76,8 @@ instance : ContinuousConstSMul SL(2, ℤ) ℍ where
 instance : MeasurableConstSMul SL(2, ℤ) ℍ where
   measurable_const_smul g := (continuous_const_smul g).measurable
 
-instance : Countable (Matrix (Fin 2) (Fin 2) ℤ) := by unfold Matrix; infer_instance
+instance : Countable (Matrix (Fin 2) (Fin 2) ℤ) :=
+  inferInstanceAs (Countable (Fin 2 → Fin 2 → ℤ))
 instance : Countable SL(2, ℤ) := Subtype.countable
 
 namespace UpperHalfPlane
@@ -173,11 +174,11 @@ theorem hyperbolicMeasure_fd_lt_top : μ_hyp fd < ⊤ := by
   set T := Icc (-1/2 : ℝ) (1/2) ×ˢ Ioi (Real.sqrt 3 / 4)
   have h_prod : ∫⁻ z in equivRealProd ⁻¹' T, f z ∂(volume : Measure ℂ) =
       ∫⁻ p in T, ENNReal.ofReal (p.2 ^ (-2 : ℤ)) ∂(volume : Measure (ℝ × ℝ)) := by
-    have := volume_preserving_equiv_real_prod.setLIntegral_comp_emb
-      measurableEquivRealProd.measurableEmbedding
-      (fun p : ℝ × ℝ ↦ ENNReal.ofReal (p.2 ^ (-2 : ℤ)))
-      (measurableEquivRealProd ⁻¹' T)
-    simp only [MeasurableEquiv.image_preimage] at this; exact this
+    simpa only [MeasurableEquiv.image_preimage] using
+      volume_preserving_equiv_real_prod.setLIntegral_comp_emb
+        measurableEquivRealProd.measurableEmbedding
+        (fun p : ℝ × ℝ ↦ ENNReal.ofReal (p.2 ^ (-2 : ℤ)))
+        (measurableEquivRealProd ⁻¹' T)
   calc ∫⁻ z in UpperHalfPlane.coe '' fd, f z ∂volume.restrict (range UpperHalfPlane.coe)
       ≤ ∫⁻ z in UpperHalfPlane.coe '' fd, f z ∂volume :=
         lintegral_mono' (restrict_mono Subset.rfl restrict_le_self) le_rfl
@@ -206,9 +207,7 @@ def peterssonInner (k : ℤ) (D : Set ℍ) (f g : ℍ → ℂ) : ℂ :=
 /-- Hermitian symmetry: `conj ⟨g, f⟩ = ⟨f, g⟩`. -/
 theorem peterssonInner_conj_symm (k : ℤ) (D : Set ℍ) (f g : ℍ → ℂ) :
     conj (peterssonInner k D g f) = peterssonInner k D f g := by
-  simp only [peterssonInner, ← integral_conj]
-  congr 1; ext τ
-  exact (petersson_symm k g f τ).symm
+  simp only [peterssonInner, ← integral_conj, petersson_symm k g f]
 
 /-- The pairing with zero on the right vanishes. -/
 theorem peterssonInner_zero_right (k : ℤ) (D : Set ℍ) (f : ℍ → ℂ) :
@@ -223,18 +222,12 @@ theorem peterssonInner_zero_left (k : ℤ) (D : Set ℍ) (g : ℍ → ℂ) :
 /-- Negation in the right argument. -/
 theorem peterssonInner_neg_right (k : ℤ) (D : Set ℍ) (f g : ℍ → ℂ) :
     peterssonInner k D f (-g) = -peterssonInner k D f g := by
-  simp only [peterssonInner]
-  rw [show (fun τ ↦ petersson k f (-g) τ) = fun τ ↦ -(petersson k f g τ) from by
-    ext τ; simp [petersson, Pi.neg_apply, mul_neg]]
-  exact integral_neg _
+  simp only [peterssonInner, petersson, Pi.neg_apply, mul_neg, neg_mul, integral_neg]
 
 /-- Negation in the left argument. -/
 theorem peterssonInner_neg_left (k : ℤ) (D : Set ℍ) (f g : ℍ → ℂ) :
     peterssonInner k D (-f) g = -peterssonInner k D f g := by
-  simp only [peterssonInner]
-  rw [show (fun τ ↦ petersson k (-f) g τ) = fun τ ↦ -(petersson k f g τ) from by
-    ext τ; simp [petersson, Pi.neg_apply, map_neg, neg_mul]]
-  exact integral_neg _
+  simp only [peterssonInner, petersson, Pi.neg_apply, map_neg, neg_mul, integral_neg]
 
 /-- The norm of the Petersson pairing is symmetric. -/
 theorem norm_peterssonInner_symm (k : ℤ) (D : Set ℍ) (f g : ℍ → ℂ) :
@@ -282,28 +275,25 @@ theorem peterssonInner_add_right (k : ℤ) (D : Set ℍ) (f g₁ g₂ : ℍ → 
     (hg₁ : IntegrableOn (fun τ ↦ petersson k f g₁ τ) D μ_hyp)
     (hg₂ : IntegrableOn (fun τ ↦ petersson k f g₂ τ) D μ_hyp) :
     peterssonInner k D f (g₁ + g₂) = peterssonInner k D f g₁ + peterssonInner k D f g₂ := by
-  simp only [peterssonInner]
-  rw [show (fun τ ↦ petersson k f (g₁ + g₂) τ) =
-      fun τ ↦ petersson k f g₁ τ + petersson k f g₂ τ from by
-    ext τ; simp only [petersson, Pi.add_apply]; ring]
+  rw [show peterssonInner k D f (g₁ + g₂) =
+      ∫ τ in D, (petersson k f g₁ τ + petersson k f g₂ τ) ∂μ_hyp from by
+    simp only [peterssonInner, petersson, Pi.add_apply]; congr 1; ext τ; ring]
   exact integral_add hg₁ hg₂
 
 /-- Scalar multiplication in the second argument. -/
 theorem peterssonInner_smul_right (k : ℤ) (D : Set ℍ) (c : ℂ) (f g : ℍ → ℂ) :
     peterssonInner k D f (c • g) = c * peterssonInner k D f g := by
-  simp only [peterssonInner]
-  rw [show (fun τ ↦ petersson k f (c • g) τ) =
-      fun τ ↦ c * petersson k f g τ from by
-    ext τ; simp [petersson, Pi.smul_apply, smul_eq_mul, mul_comm c, mul_assoc]]
+  rw [show peterssonInner k D f (c • g) = ∫ τ in D, c * petersson k f g τ ∂μ_hyp from by
+    simp only [peterssonInner, petersson, Pi.smul_apply, smul_eq_mul]
+    congr 1; ext τ; ring]
   exact integral_const_mul c _
 
 /-- Conjugate-scalar multiplication in the left argument. -/
 theorem peterssonInner_conj_smul_left (k : ℤ) (D : Set ℍ) (c : ℂ) (f g : ℍ → ℂ) :
     peterssonInner k D (c • f) g = conj c * peterssonInner k D f g := by
-  simp only [peterssonInner]
-  rw [show (fun τ ↦ petersson k (c • f) g τ) =
-      fun τ ↦ conj c * petersson k f g τ from by
-    ext τ; simp [petersson, Pi.smul_apply, smul_eq_mul, map_mul, mul_assoc]]
+  rw [show peterssonInner k D (c • f) g = ∫ τ in D, conj c * petersson k f g τ ∂μ_hyp from by
+    simp only [peterssonInner, petersson, Pi.smul_apply, smul_eq_mul, map_mul]
+    congr 1; ext τ; ring]
   exact integral_const_mul (conj c) _
 
 /-- At `(f, f)`, the Petersson integrand is real and non-negative pointwise. -/
@@ -371,7 +361,7 @@ theorem volume_complex_re_eq (c : ℝ) : volume {z : ℂ | z.re = c} = 0 := by
 private theorem finite_sq_eq (d : ℝ) : Set.Finite {y : ℝ | y ^ 2 = d} := by
   by_cases hd : d < 0
   · convert Set.finite_empty; ext y; simp; intro h; linarith [sq_nonneg y]
-  · push_neg at hd
+  · push Not at hd
     exact (({Real.sqrt d, -Real.sqrt d} : Set ℝ).toFinite).subset (fun y hy ↦ by
       simp only [mem_setOf_eq] at hy
       exact (sq_eq_sq_iff_eq_or_eq_neg.mp (by rw [hy, Real.sq_sqrt hd])).elim
@@ -422,7 +412,7 @@ theorem hyperbolicMeasure_fd_boundary : μ_hyp (fd \ fdo) = 0 := by
     have habs : |τ.re| = 1 / 2 := le_antisymm h2 (hfdo hns)
     by_cases hre : 0 ≤ τ.re
     · left; right; rw [coe_re]; rwa [abs_of_nonneg hre] at habs
-    · push_neg at hre; right
+    · push Not at hre; right
       rw [coe_re]; rw [abs_of_neg hre] at habs; linarith
 
 /-- `fd` and `fdo` are a.e. equal w.r.t. the hyperbolic measure. -/
@@ -589,7 +579,7 @@ private theorem fd_region_lintegral_section_eq (x : ℝ) :
     rw [lintegral_indicator measurableSet_Ici, setLIntegral_congr Ioi_ae_eq_Ici.symm,
       ← ofReal_integral_eq_lintegral_ofReal (integrableOn_zpow_neg_two_Ioi hsc)
         (ae_of_all _ fun y ↦ by positivity), integral_zpow_neg_two_Ioi hsc]
-  · push_neg at hx
+  · push Not at hx
     have hx_nmem : x ∉ Icc (-1/2 : ℝ) (1/2) := fun ⟨h1, h2⟩ ↦
       absurd (abs_le.mpr ⟨by linarith, h2⟩) (not_le.mpr hx)
     rw [Set.indicator_of_notMem hx_nmem]
@@ -673,38 +663,44 @@ scales accordingly. -/
 noncomputable def pet (f g : CuspForm Γ k) : ℂ :=
   peterssonInner k ModularGroup.fd f g
 
+/-- Hermitian symmetry for `pet`. -/
 theorem pet_conj_symm (f g : CuspForm Γ k) : conj (pet g f) = pet f g :=
   peterssonInner_conj_symm k _ _ _
 
+/-- The Petersson pairing with the zero cusp form on the right vanishes. -/
 theorem pet_zero_right (f : CuspForm Γ k) : pet f 0 = 0 :=
   peterssonInner_zero_right k _ _
 
+/-- The Petersson pairing with the zero cusp form on the left vanishes. -/
 theorem pet_zero_left (g : CuspForm Γ k) : pet 0 g = 0 :=
   peterssonInner_zero_left k _ _
 
+/-- Negation in the right argument of `pet`. -/
 theorem pet_neg_right (f g : CuspForm Γ k) : pet f (-g) = -pet f g :=
   peterssonInner_neg_right k _ _ _
 
+/-- Negation in the left argument of `pet`. -/
 theorem pet_neg_left (f g : CuspForm Γ k) : pet (-f) g = -pet f g :=
   peterssonInner_neg_left k _ _ _
 
+/-- The norm of the Petersson pairing is symmetric. -/
 theorem norm_pet_symm (f g : CuspForm Γ k) : ‖pet f g‖ = ‖pet g f‖ :=
   norm_peterssonInner_symm k _ _ _
 
+/-- Real-scalar multiplication in the right argument of `pet`. -/
 theorem pet_smul_right (c : ℝ) (f g : CuspForm Γ k) :
     pet f (c • g) = c * pet f g := by
-  simp only [pet, peterssonInner]
-  have : (fun τ ↦ petersson k (↑f) (↑(c • g)) τ) =
-      fun τ ↦ (c : ℂ) * petersson k f g τ := by
-    ext τ; simp [petersson, mul_comm (c : ℂ), mul_assoc]
-  rw [this]; exact integral_const_mul (c : ℂ) _
+  unfold pet peterssonInner
+  rw [← integral_const_mul]
+  congr 1; ext τ
+  simp [petersson, mul_comm (c : ℂ), mul_assoc]
 
+/-- Real-scalar multiplication in the left argument of `pet`. -/
 theorem pet_smul_left (c : ℝ) (f g : CuspForm Γ k) :
     pet (c • f) g = c * pet f g := by
-  simp only [pet, peterssonInner]
-  have : (fun τ ↦ petersson k (↑(c • f)) (↑g) τ) =
-      fun τ ↦ (c : ℂ) * petersson k f g τ := by
-    ext τ; simp [petersson, map_mul, Complex.conj_ofReal, mul_assoc]
-  rw [this]; exact integral_const_mul (c : ℂ) _
+  unfold pet peterssonInner
+  rw [← integral_const_mul]
+  congr 1; ext τ
+  simp [petersson, map_mul, Complex.conj_ofReal, mul_assoc]
 
 end CuspForm
