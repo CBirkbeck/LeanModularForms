@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2026 Chris Birkbeck. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Chris Birkbeck
+-/
 import LeanModularForms.HeckeRIngs.GL2.Unified.TwistedHeckeRing
 import LeanModularForms.HeckeRIngs.GL2.Prop334_HeckeSlashDiag
 import LeanModularForms.HeckeRIngs.GL2.HeckeT_p_CharSpace_Comm
@@ -386,11 +391,11 @@ noncomputable def heckeRingHomCharSpace :
     apply DFunLike.coe_injective
     dsimp only
     rw [show (1 : 𝕋 (Gamma0_pair N) ℤ) = T_single (Gamma0_pair N) ℤ
-      (HeckeCoset.one (Gamma0_pair N)) 1 from HeckeRing.one_def _ _]
-    rw [nebentypusHeckeSum_coe_eq_twistedHeckeSumFunction]
-    rw [show T_single (Gamma0_pair N) ℤ (HeckeCoset.one (Gamma0_pair N)) 1 =
-      (1 : 𝕋 (Gamma0_pair N) ℤ) from (HeckeRing.one_def _ _).symm]
-    rw [twistedHeckeSumFunction_one]
+        (HeckeCoset.one (Gamma0_pair N)) 1 from HeckeRing.one_def _ _,
+      nebentypusHeckeSum_coe_eq_twistedHeckeSumFunction,
+      show T_single (Gamma0_pair N) ℤ (HeckeCoset.one (Gamma0_pair N)) 1 =
+        (1 : 𝕋 (Gamma0_pair N) ℤ) from (HeckeRing.one_def _ _).symm,
+      twistedHeckeSumFunction_one]
     rfl
   map_mul' T₁ T₂ := by
     refine LinearMap.ext fun f ↦ ?_
@@ -463,9 +468,9 @@ private lemma adj_factorisation (p : ℕ) (hp : Nat.Prime p)
     (Gamma0_pair N).H.mul_mem (HeckePairAction.adjugate_mem_H c hc) hr₁,
     r₂ * GL_adjugate a,
     (Gamma0_pair N).H.mul_mem hr₂ (HeckePairAction.adjugate_mem_H a ha), ?_⟩
-  rw [heq, GL_adjugate_mul, GL_adjugate_mul]
-  rw [show GL_adjugate (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) =
-    r₁ * (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) * r₂ from hrep_eq]
+  rw [heq, GL_adjugate_mul, GL_adjugate_mul,
+    show GL_adjugate (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) =
+      r₁ * (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) * r₂ from hrep_eq]
   group
 
 private lemma delta0Char_congr (χ : (ZMod N)ˣ →* ℂˣ)
@@ -677,7 +682,7 @@ private lemma twistedTpPsi_bijective (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Cop
   rw [Fintype.card_fin]
   have h := HeckeCoset_deg_D_p_Gamma0 N p hp hpN
   rw [Nat.card_eq_fintype_card] at h
-  rw [h]
+  exact h.symm
 
 private lemma twistedTpPsi_val_eq (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     {f : ℍ → ℂ} (hf : IsGamma0TwistedInvariant (N := N) k χ f) (j : Fin (p + 1)) :
@@ -779,17 +784,15 @@ theorem heckeRingHomCharSpace_D_p_eq_heckeT_p_all (p : ℕ) (hp : Nat.Prime p)
     change (⇑(((nebentypusHeckeSum (N := N) (k := k) (χ := χ)
         (T_single (Gamma0_pair N) ℤ (D_p_Gamma0 N p hp.pos) 1)) f :
         modFormCharSpace k χ) : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) : ℍ → ℂ) = _
-    rw [nebentypusHeckeSum_apply_coe, twistedHeckeSlashExt_gen]
-    rw [Finsupp.sum_single_index (by simp :
-      (0 : ℤ) • twistedHeckeSlash_gen (N := N) k χ (D_p_Gamma0 N p hp.pos)
-        (⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) = 0)]
-    rw [one_smul]
-  rw [hLHS]
-  rw [twisted_matches_T_p (k := k) (χ := χ) p hp hpN
-    (coe_mem_twistedInvariant (f : ModularForm _ k) f.2)]
-  rw [heckeT_p_all_coe_eq (k := k) (χ := χ) p hp hpN
-    (f : ModularForm _ k) f.2]
-  rw [smul_add, smul_smul, inv_mul_cancel₀ (Units.ne_zero _), one_smul]
+    rw [nebentypusHeckeSum_apply_coe, twistedHeckeSlashExt_gen,
+      Finsupp.sum_single_index (by simp :
+        (0 : ℤ) • twistedHeckeSlash_gen (N := N) k χ (D_p_Gamma0 N p hp.pos)
+          (⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) = 0),
+      one_smul]
+  rw [hLHS, twisted_matches_T_p (k := k) (χ := χ) p hp hpN
+      (coe_mem_twistedInvariant (f : ModularForm _ k) f.2),
+    heckeT_p_all_coe_eq (k := k) (χ := χ) p hp hpN (f : ModularForm _ k) f.2,
+    smul_add, smul_smul, inv_mul_cancel₀ (Units.ne_zero _), one_smul]
 
 private lemma slash_diag_scalar (k : ℤ) (c : ℕ) (hc : 0 < c) (f : ℍ → ℂ) :
     f ∣[k] (diagMat 2 (fun _ : Fin 2 ↦ c) : GL (Fin 2) ℚ) = (c : ℂ) ^ (k - 2) • f := by
@@ -949,9 +952,8 @@ private lemma adj_diagScalar_factorisation (p : ℕ) (hp : Nat.Prime p)
   rw [hD, T_diag_Gamma0, HeckeCoset.toSet_mk, DoubleCoset.mem_doubleCoset] at hrep
   obtain ⟨a, ha, c, hc, hrep_eq⟩ := hrep
   refine ⟨a⁻¹, (Gamma0_pair N).H.inv_mem ha, c⁻¹, (Gamma0_pair N).H.inv_mem hc, ?_⟩
-  rw [adj_diag_scalar p hp.pos]
-  rw [show (HeckeCoset.rep D : GL _ ℚ) =
-    a * (diagMat 2 (fun _ : Fin 2 ↦ p) : GL _ ℚ) * c from hrep_eq]
+  rw [adj_diag_scalar p hp.pos, show (HeckeCoset.rep D : GL _ ℚ) =
+      a * (diagMat 2 (fun _ : Fin 2 ↦ p) : GL _ ℚ) * c from hrep_eq]
   group
 
 private lemma diagScalar_triple_weight (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
@@ -995,10 +997,10 @@ theorem heckeRingHomCharSpace_T_pp_eq_scalar (p : ℕ) (hp : Nat.Prime p)
     change (⇑(((nebentypusHeckeSum (N := N) (k := k) (χ := χ)
         (T_single (Gamma0_pair N) ℤ D 1)) f :
         modFormCharSpace k χ) : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) : ℍ → ℂ) = _
-    rw [nebentypusHeckeSum_apply_coe, twistedHeckeSlashExt_gen]
-    rw [Finsupp.sum_single_index (by simp :
-      (0 : ℤ) • twistedHeckeSlash_gen (N := N) k χ D (⇑f0) = 0)]
-    rw [one_smul]
+    rw [nebentypusHeckeSum_apply_coe, twistedHeckeSlashExt_gen,
+      Finsupp.sum_single_index (by simp :
+        (0 : ℤ) • twistedHeckeSlash_gen (N := N) k χ D (⇑f0) = 0),
+      one_smul]
   rw [hLHS]
   haveI hsub : Subsingleton (decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) :=
     subsingleton_decompQuot_scalar (N := N) p hp.pos hgcd
@@ -1387,6 +1389,7 @@ theorem heckeT_n_charRestrict_mul_coprime (m n : ℕ) [NeZero m] [NeZero n]
   rw [heckeT_n_mul_coprime k m n hmn]
   rfl
 
+omit [NeZero N] in
 /-- The χ-character is multiplicative on coprime parts: for `m, n` coprime to `N` and to
 each other, `χ(unitOfCoprime (mn)) = χ(unitOfCoprime m) · χ(unitOfCoprime n)`. -/
 theorem chi_unitOfCoprime_mul (χ : (ZMod N)ˣ →* ℂˣ) {m n : ℕ}
@@ -1399,6 +1402,7 @@ theorem chi_unitOfCoprime_mul (χ : (ZMod N)ˣ →* ℂˣ) {m n : ℕ}
   push_cast [ZMod.coe_unitOfCoprime]
   ring
 
+omit [NeZero N] in
 private lemma chi_unitOfCoprime_pow (χ : (ZMod N)ˣ →* ℂˣ) {p : ℕ} (v : ℕ)
     (hpN : Nat.Coprime p N) :
     (↑(χ (ZMod.unitOfCoprime (p ^ v) (hpN.pow_left v))) : ℂ) =
@@ -1409,6 +1413,7 @@ private lemma chi_unitOfCoprime_pow (χ : (ZMod N)ˣ →* ℂˣ) {p : ℕ} (v : 
   push_cast [ZMod.coe_unitOfCoprime]
   ring
 
+omit [NeZero N] in
 private lemma chi_eq_ordProj_mul_ordCompl (χ : (ZMod N)ˣ →* ℂˣ) {n : ℕ}
     (hn : Nat.Coprime n N) (p : ℕ)
     (hpvN : Nat.Coprime (p ^ n.factorization p) N)
