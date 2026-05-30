@@ -46,8 +46,6 @@ open scoped Manifold
 
 variable {Γ : Subgroup (GL (Fin 2) ℝ)} {k : ℤ}
 
-/-! ### Additivity -/
-
 /-- Additivity of `pet` in the second argument. -/
 theorem pet_add_right [Γ.IsArithmetic] (f g₁ g₂ : CuspForm Γ k) :
     pet f (g₁ + g₂) = pet f g₁ + pet f g₂ :=
@@ -64,8 +62,6 @@ theorem pet_add_left [Γ.IsArithmetic] (f₁ f₂ g : CuspForm Γ k) :
     _ = starRingEnd ℂ (pet g f₁) + starRingEnd ℂ (pet g f₂) := map_add _ _ _
     _ = pet f₁ g + pet f₂ g := by rw [pet_conj_symm, pet_conj_symm]
 
-/-! ### Complex-sesquilinear properties -/
-
 /-- Complex scalar in the second argument: `⟨f, c • g⟩ = c * ⟨f, g⟩`.
 Requires `[Γ.HasDetOne]` for `Module ℂ (CuspForm Γ k)`. -/
 theorem pet_smul_right_complex [Γ.HasDetOne] (c : ℂ) (f g : CuspForm Γ k) :
@@ -79,16 +75,12 @@ theorem pet_conj_smul_left [Γ.HasDetOne] (c : ℂ) (f g : CuspForm Γ k) :
     pet (c • f) g = starRingEnd ℂ c * pet f g :=
   peterssonInner_conj_smul_left k _ c f g
 
-/-! ### Inner product instance -/
-
 /-- The Petersson inner product as an `Inner ℂ` instance on cusp forms. -/
 instance innerProductCuspForm : Inner ℂ (CuspForm Γ k) where
   inner := pet
 
 @[simp]
 theorem inner_pet (f g : CuspForm Γ k) : @inner ℂ _ _ f g = pet f g := rfl
-
-/-! ### Positive definiteness -/
 
 /-- **Positive definiteness** of the Petersson inner product for general `Γ`.
 
@@ -102,21 +94,17 @@ This generalises `peterssonInner_definite_levelOne` (which uses `SL₂(ℤ)`
 reduction instead). -/
 theorem pet_definite [Γ.IsArithmetic] (f : CuspForm Γ k) (hpet : pet f f = 0) :
     f = 0 := by
-  -- f = 0 on the open fundamental domain fdo
   have hfdo : ∀ τ ∈ fdo, (⇑f) τ = 0 := fun τ hτ ↦
     eq_zero_on_fd_of_peterssonInner_self_eq_zero f hpet (fdo_subset_fd hτ)
-  -- f is holomorphic (MDifferentiable) on ℍ
-  have hmdiff : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (⇑f) := CuspFormClass.holo f
-  -- The point 2i ∈ fdo (|2i|² = 4 > 1, |Re(2i)| = 0 < 1/2)
   set τ₀ : ℍ := ⟨⟨0, 2⟩, by norm_num⟩
   have hτ₀ : τ₀ ∈ fdo := by
     refine ⟨by norm_num [Complex.normSq_apply], ?_⟩
-    show |(τ₀ : ℂ).re| < 1 / 2; norm_num
-  -- f is eventually zero near τ₀ (since fdo is open and f = 0 on fdo)
+    change |(τ₀ : ℂ).re| < 1 / 2
+    norm_num
   have hev := Filter.eventually_of_mem (isOpen_fdo.mem_nhds hτ₀) hfdo
-  -- Identity theorem: f = 0 on all of ℍ
-  have h := UpperHalfPlane.eq_zero_of_frequently hmdiff
+  have h := UpperHalfPlane.eq_zero_of_frequently (CuspFormClass.holo f)
     (hev.filter_mono nhdsWithin_le_nhds).frequently
-  ext τ; exact congr_fun h τ
+  ext τ
+  exact congr_fun h τ
 
 end CuspForm
