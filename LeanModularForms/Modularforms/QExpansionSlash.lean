@@ -62,9 +62,7 @@ theorem rootOfUnity_sum_eq' {n : ℕ} (hn : 1 < n) {ζ : ℂ} (hζ : IsPrimitive
 This is the key identity for computing q-expansions of `f(pτ)`. -/
 theorem qParam_mul_nat (h : ℝ) (p : ℕ) (z : ℂ) :
     Function.Periodic.qParam h (↑p * z) = Function.Periodic.qParam h z ^ p := by
-  simp only [Function.Periodic.qParam]
-  conv_rhs => rw [← exp_nat_mul]
-  congr 1; ring
+  simp only [Function.Periodic.qParam, ← exp_nat_mul]; congr 1; ring
 
 /-- Shifting by `b` multiplies the q-parameter: `qParam h (z + b) = qParam h z · (qParam h b)`.
 For integer `b`, this becomes multiplication by a root of unity when `h | b`. -/
@@ -120,6 +118,24 @@ theorem qExpansion_coeff_eq_zero_of_not_dvd [NeZero N]
   exact (mul_eq_zero.mp (by rw [mul_sub, mul_one, h_coeff_eq n, sub_self])).resolve_right
     (sub_ne_zero.mpr hζn_ne)
 
+private theorem coe_smul_T_p_upper (p : ℕ) (hp : 0 < p) (b : ℕ) (τ : ℍ) :
+    (↑(glMap (T_p_upper p hp b) • τ) : ℂ) = ↑τ / ↑p + ↑b / ↑p := by
+  simp only [UpperHalfPlane.coe_smul, UpperHalfPlane.num, UpperHalfPlane.denom]
+  have hdet_pos : 0 < (glMap (T_p_upper p hp b)).det.val := by
+    rw [show (glMap (T_p_upper p hp b)).det.val =
+      algebraMap ℚ ℝ (T_p_upper p hp b).det.val from
+      congr_arg Units.val (GeneralLinearGroup.map_det (algebraMap ℚ ℝ) _),
+      GeneralLinearGroup.val_det_apply, T_p_upper_det]; simp; linarith [hp]
+  simp only [UpperHalfPlane.σ, hdet_pos, ↓reduceIte, RingHom.id_apply,
+    show (↑(glMap (T_p_upper p hp b)) : Matrix (Fin 2) (Fin 2) ℝ) 0 0 = 1
+      from by simp [glMap, T_p_upper],
+    show (↑(glMap (T_p_upper p hp b)) : Matrix (Fin 2) (Fin 2) ℝ) 0 1 = b
+      from by simp [glMap, T_p_upper],
+    show (↑(glMap (T_p_upper p hp b)) : Matrix (Fin 2) (Fin 2) ℝ) 1 0 = 0
+      from by simp [glMap, T_p_upper],
+    show (↑(glMap (T_p_upper p hp b)) : Matrix (Fin 2) (Fin 2) ℝ) 1 1 = p
+      from by simp [glMap, T_p_upper, Matrix.cons_val_one]]
+  push_cast; ring
 
 /-- Pointwise slash evaluation for `T_p_upper = [[1,b],[0,p]]`:
 `(f ∣[k] T_p_upper b)(τ) = p⁻¹ * f((τ+b)/p)`.
@@ -140,43 +156,17 @@ theorem slash_T_p_upper_eval (k : ℤ) (p : ℕ) (hp : Nat.Prime p)
   have hdet_pos : 0 < (glMap (T_p_upper p hp.pos b)).det.val :=
     hdet_val ▸ Nat.cast_pos.mpr hp.pos
   have hσ : UpperHalfPlane.σ (glMap (T_p_upper p hp.pos b)) = RingHom.id ℂ := by
-    unfold UpperHalfPlane.σ; simp only [hdet_pos, ↓reduceIte]
+    simp only [UpperHalfPlane.σ, hdet_pos, ↓reduceIte]
   have hdenom : UpperHalfPlane.denom (glMap (T_p_upper p hp.pos b)) ↑τ = ↑p := by
     simp [UpperHalfPlane.denom, glMap, T_p_upper, Matrix.cons_val_one]
   have hmob : (↑(glMap (T_p_upper p hp.pos b) • τ) : ℂ) = (↑τ + ↑b) / ↑p := by
-    simp only [UpperHalfPlane.coe_smul, UpperHalfPlane.num, UpperHalfPlane.denom,
-      UpperHalfPlane.σ, hdet_pos, ↓reduceIte, RingHom.id_apply]
-    set M := (↑(glMap (T_p_upper p hp.pos b)) : Matrix (Fin 2) (Fin 2) ℝ)
-    have h00 : M 0 0 = 1 := by simp [M, glMap, T_p_upper]
-    have h01 : M 0 1 = b := by simp [M, glMap, T_p_upper]
-    have h10 : M 1 0 = 0 := by simp [M, glMap, T_p_upper]
-    have h11 : M 1 1 = p := by simp [M, glMap, T_p_upper, Matrix.cons_val_one]
-    simp only [h00, h01, h10, h11]; push_cast; ring
+    rw [coe_smul_T_p_upper p hp.pos b τ]; ring
   rw [hσ, RingHom.id_apply, hdet_val, abs_of_pos (Nat.cast_pos.mpr hp.pos), hdenom]
   have hp_ne : (↑p : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr hp.ne_zero
   have halg (x : ℂ) : x * (↑p : ℂ) ^ (k - 1) * (↑p : ℂ) ^ (-k) = (↑p : ℂ)⁻¹ * x := by
     rw [mul_assoc, ← zpow_add₀ hp_ne]; simp [show (k - 1 + -k : ℤ) = -1 by omega]; ring
   convert halg (f (glMap (T_p_upper p hp.pos b) • τ)) using 2
   exact congr_arg f (by ext : 1; exact hmob.symm)
-
-private theorem coe_smul_T_p_upper (p : ℕ) (hp : 0 < p) (b : ℕ) (τ : ℍ) :
-    (↑(glMap (T_p_upper p hp b) • τ) : ℂ) = ↑τ / ↑p + ↑b / ↑p := by
-  simp only [UpperHalfPlane.coe_smul, UpperHalfPlane.num, UpperHalfPlane.denom]
-  have hdet_pos : 0 < (glMap (T_p_upper p hp b)).det.val := by
-    rw [show (glMap (T_p_upper p hp b)).det.val =
-      algebraMap ℚ ℝ (T_p_upper p hp b).det.val from
-      congr_arg Units.val (GeneralLinearGroup.map_det (algebraMap ℚ ℝ) _),
-      GeneralLinearGroup.val_det_apply, T_p_upper_det]; simp; linarith [hp]
-  simp only [UpperHalfPlane.σ, hdet_pos, ↓reduceIte, RingHom.id_apply,
-    show (↑(glMap (T_p_upper p hp b)) : Matrix (Fin 2) (Fin 2) ℝ) 0 0 = 1
-      from by simp [glMap, T_p_upper],
-    show (↑(glMap (T_p_upper p hp b)) : Matrix (Fin 2) (Fin 2) ℝ) 0 1 = b
-      from by simp [glMap, T_p_upper],
-    show (↑(glMap (T_p_upper p hp b)) : Matrix (Fin 2) (Fin 2) ℝ) 1 0 = 0
-      from by simp [glMap, T_p_upper],
-    show (↑(glMap (T_p_upper p hp b)) : Matrix (Fin 2) (Fin 2) ℝ) 1 1 = p
-      from by simp [glMap, T_p_upper, Matrix.cons_val_one]]
-  push_cast; ring
 
 private theorem qParam_smul_T_p_upper_pow (h : ℝ) (p : ℕ) (hp : 0 < p) (b : ℕ)
     (τ : ℍ) (n : ℕ) :
@@ -209,7 +199,7 @@ private theorem slash_T_p_lower_eval (k : ℤ) (p : ℕ) (hp : Nat.Prime p)
   have hdet_pos : 0 < (glMap (T_p_lower p hp.pos)).det.val := by
     rw [hdet_val]; exact Nat.cast_pos.mpr hp.pos
   have hσ : UpperHalfPlane.σ (glMap (T_p_lower p hp.pos)) = RingHom.id ℂ := by
-    unfold UpperHalfPlane.σ; simp only [hdet_pos, ↓reduceIte]
+    simp only [UpperHalfPlane.σ, hdet_pos, ↓reduceIte]
   have hmob : glMap (T_p_lower p hp.pos) • τ = pτ := by
     ext : 1; rw [hpτ]; show (↑(glMap (T_p_lower p hp.pos) • τ) : ℂ) = ↑p * ↑τ
     simp only [UpperHalfPlane.coe_smul, UpperHalfPlane.num, UpperHalfPlane.denom,
@@ -286,11 +276,11 @@ private theorem hasSum_heckeT_p_ut_period_N {N : ℕ} [NeZero N] (k : ℤ) {p : 
     (ha_zero : ∀ n, ¬ (N : ℕ) ∣ n → a n = 0) :
     HasSum (fun n ↦ a (p * n) • Function.Periodic.qParam (↑N) ↑τ ^ n)
       (heckeT_p_ut k p hp.pos f τ) := by
-  set q := Function.Periodic.qParam (↑N) ↑τ with hq_def
+  set q := Function.Periodic.qParam (↑N) ↑τ
   rw [heckeT_p_ut_eq_inv_mul_sum k p hp f τ]
   have hinj : Function.Injective (p * · : ℕ → ℕ) := mul_right_injective₀ hp.ne_zero
   set w := Function.Periodic.qParam (↑N) ((↑τ : ℂ) / ↑p) with hw_def
-  set ζ := Function.Periodic.qParam (↑N) (1 / (↑p : ℂ)) with hζ_def
+  set ζ := Function.Periodic.qParam (↑N) (1 / (↑p : ℂ))
   have hp_ne : (↑p : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr hp.ne_zero
   have hw_pow_p : w ^ p = q := by rw [hw_def, ← qParam_mul_nat]; congr 1; field_simp
   have h_rewritten : HasSum
@@ -331,11 +321,11 @@ private theorem hasSum_heckeT_p_ut_period_one (k : ℤ) {p : ℕ} (hp : Nat.Prim
       (fun n ↦ a n • Function.Periodic.qParam (1 : ℝ) ↑σ ^ n) (f σ)) :
     HasSum (fun n ↦ a (p * n) • Function.Periodic.qParam (1 : ℝ) ↑τ ^ n)
       (heckeT_p_ut k p hp.pos f τ) := by
-  set q := Function.Periodic.qParam (1 : ℝ) ↑τ with hq_def
+  set q := Function.Periodic.qParam (1 : ℝ) ↑τ
   rw [heckeT_p_ut_eq_inv_mul_sum k p hp f τ]
   have hinj : Function.Injective (p * · : ℕ → ℕ) := mul_right_injective₀ hp.ne_zero
   set w := Function.Periodic.qParam (1 : ℝ) ((↑τ : ℂ) / ↑p) with hw_def
-  set ζ := Function.Periodic.qParam (1 : ℝ) (1 / (↑p : ℂ)) with hζ_def
+  set ζ := Function.Periodic.qParam (1 : ℝ) (1 / (↑p : ℂ))
   have hp_ne : (↑p : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr hp.ne_zero
   have hw_pow_p : w ^ p = q := by rw [hw_def, ← qParam_mul_nat]; congr 1; field_simp
   have h_rewritten : HasSum
@@ -378,9 +368,9 @@ private theorem hasSum_heckeT_p_of_ut {N : ℕ} [NeZero N] (k : ℤ) {p : ℕ}
     HasSum (fun n : ℕ ↦ ((a (p * n) + (↑p : ℂ) ^ (k - 1) *
         ↑(χ (ZMod.unitOfCoprime p hpN)) * if p ∣ n then a (n / p) else 0)) •
       Function.Periodic.qParam h ↑τ ^ n) ((heckeT_p k p hp hpN f) τ) := by
-  set q := Function.Periodic.qParam h ↑τ with hq_def
-  set χp := (↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ) with hχp_def
-  set pk := (↑p : ℂ) ^ (k - 1) with hpk_def
+  set q := Function.Periodic.qParam h ↑τ
+  set χp := (↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ)
+  set pk := (↑p : ℂ) ^ (k - 1)
   have hpτ_im : 0 < ((p : ℂ) * ↑τ).im := by
     simp [Complex.mul_im]; exact mul_pos (Nat.cast_pos.mpr hp.pos) τ.im_pos
   set pτ : ℍ := ⟨(p : ℂ) * ↑τ, hpτ_im⟩
@@ -431,7 +421,7 @@ theorem fourierCoeff_heckeT_p [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prime p)
     rw [hΓ, strictPeriods_Gamma1]; exact ⟨(N : ℤ), by simp⟩
   have h1_period : (1 : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
     rw [hΓ, strictPeriods_Gamma1]; exact ⟨1, by simp⟩
-  set a := fun n ↦ (qExpansion (↑N) (⇑f)).coeff n with ha_def
+  set a := fun n ↦ (qExpansion (↑N) (⇑f)).coeff n
   have hf_hs : ∀ σ : ℍ, HasSum (fun n ↦ a n • (Function.Periodic.qParam (↑N) ↑σ) ^ n)
       (f σ) := hasSum_qExpansion f hN_pos hN_period
   suffices key : ∀ τ : ℍ, HasSum
@@ -461,7 +451,7 @@ theorem fourierCoeff_heckeT_p_period_one [NeZero N] (k : ℤ) {p : ℕ}
     rw [show (Gamma1 N).map (mapGL ℝ) = (Gamma1 N : Subgroup (GL (Fin 2) ℝ)) from rfl,
       strictPeriods_Gamma1]
     exact ⟨1, by simp⟩
-  set a := fun n ↦ (qExpansion (1 : ℝ) (⇑f)).coeff n with ha_def
+  set a := fun n ↦ (qExpansion (1 : ℝ) (⇑f)).coeff n
   have hf_hs : ∀ σ : ℍ, HasSum (fun n ↦ a n • (Function.Periodic.qParam (1 : ℝ) ↑σ) ^ n)
       (f σ) := hasSum_qExpansion f h1_pos h1_period
   suffices key : ∀ τ : ℍ, HasSum
@@ -488,7 +478,7 @@ theorem qExpansion_one_heckeT_p_divN_coeff
     rw [show (Gamma1 M).map (mapGL ℝ) = (Gamma1 M : Subgroup (GL (Fin 2) ℝ)) from rfl,
       strictPeriods_Gamma1]
     exact ⟨1, by simp⟩
-  set a := fun n ↦ (qExpansion (1 : ℝ) (⇑f)).coeff n with ha_def
+  set a := fun n ↦ (qExpansion (1 : ℝ) (⇑f)).coeff n
   have hf_hs : ∀ σ : ℍ, HasSum (fun n ↦ a n • (Function.Periodic.qParam (1 : ℝ) ↑σ) ^ n)
       (f σ) := hasSum_qExpansion f h1_pos h1_period
   refine (qExpansion_coeff_unique (c := fun n ↦ a (p * n)) h1_pos h1_period
