@@ -18,16 +18,14 @@ namespace HeckeRing.GLn
 
 variable {m : ℕ} [NeZero m]
 
-private lemma slSuccEmbed_preserves_col_zero {k : ℕ}
-    (R : SpecialLinearGroup (Fin (k + 1)) ℤ)
+private lemma slSuccEmbed_preserves_col_zero {k : ℕ} (R : SpecialLinearGroup (Fin (k + 1)) ℤ)
     (N₀ : SpecialLinearGroup (Fin (k + 2)) ℤ) (i : Fin (k + 2)) :
     (N₀ * slSuccEmbed R).1 i 0 = N₀.1 i 0 := by
   simp only [SpecialLinearGroup.coe_mul, Matrix.mul_apply]
-  rw [Fin.sum_univ_succ]
-  rw [slSuccEmbed_val_zero_zero, mul_one]
+  rw [Fin.sum_univ_succ, slSuccEmbed_val_zero_zero, mul_one]
   have hzero : ∀ j : Fin (k + 1),
-      N₀.1 i j.succ * (slSuccEmbed R).1 j.succ 0 = 0 := by
-    intro j; rw [slSuccEmbed_val_succ_zero]; ring
+      N₀.1 i j.succ * (slSuccEmbed R).1 j.succ 0 = 0 := fun j ↦ by
+    rw [slSuccEmbed_val_succ_zero]; ring
   simp [hzero]
 
 private def bezout2 (x y : ℤ) : Matrix (Fin 2) (Fin 2) ℤ :=
@@ -45,8 +43,7 @@ private lemma bezout2_action_col0 (x y : ℤ) :
   · rw [if_neg hg]
     simp only [Matrix.cons_val', Matrix.cons_val_zero, Matrix.empty_val',
       Matrix.cons_val_fin_one, Matrix.cons_val_one, Matrix.of_apply]
-    have := Int.gcd_eq_gcd_ab x y
-    linarith
+    linarith [Int.gcd_eq_gcd_ab x y]
 
 private lemma bezout2_action_col1 (x y : ℤ) :
     x * (bezout2 x y) 0 1 + y * (bezout2 x y) 1 1 = 0 := by
@@ -58,11 +55,9 @@ private lemma bezout2_action_col1 (x y : ℤ) :
   · rw [if_neg hg]
     simp only [Matrix.cons_val', Matrix.cons_val_zero, Matrix.empty_val',
       Matrix.cons_val_fin_one, Matrix.cons_val_one, Matrix.of_apply]
-    have hxg : (Int.gcd x y : ℤ) ∣ x := Int.gcd_dvd_left x y
-    have hyg : (Int.gcd x y : ℤ) ∣ y := Int.gcd_dvd_right x y
-    set g : ℤ := (Int.gcd x y : ℤ) with hg_def
-    obtain ⟨a, ha⟩ := hxg
-    obtain ⟨b, hb⟩ := hyg
+    set g : ℤ := (Int.gcd x y : ℤ)
+    obtain ⟨a, ha⟩ : g ∣ x := Int.gcd_dvd_left x y
+    obtain ⟨b, hb⟩ : g ∣ y := Int.gcd_dvd_right x y
     rw [ha, hb, show -(g * b) = g * (-b) by ring,
         Int.mul_ediv_cancel_left _ hg, Int.mul_ediv_cancel_left _ hg]
     ring
@@ -73,22 +68,17 @@ private lemma bezout2_det (x y : ℤ) (hg : (Int.gcd x y : ℤ) ≠ 0) :
   rw [if_neg hg, Matrix.det_fin_two]
   simp only [Matrix.cons_val', Matrix.cons_val_zero, Matrix.empty_val',
     Matrix.cons_val_fin_one, Matrix.cons_val_one, Matrix.of_apply]
-  have hxg : (Int.gcd x y : ℤ) ∣ x := Int.gcd_dvd_left x y
-  have hyg : (Int.gcd x y : ℤ) ∣ y := Int.gcd_dvd_right x y
   have hbez := Int.gcd_eq_gcd_ab x y
-  set g : ℤ := (Int.gcd x y : ℤ) with hg_def
-  obtain ⟨a, ha⟩ := hxg
-  obtain ⟨b, hb⟩ := hyg
+  set g : ℤ := (Int.gcd x y : ℤ)
+  obtain ⟨a, ha⟩ : g ∣ x := Int.gcd_dvd_left x y
+  obtain ⟨b, hb⟩ : g ∣ y := Int.gcd_dvd_right x y
   have hbez' : g * (Int.gcdA x y * a + Int.gcdB x y * b) = g * 1 := by
-    rw [mul_one, mul_add]
-    calc g * (Int.gcdA x y * a) + g * (Int.gcdB x y * b)
-        = (g * a) * Int.gcdA x y + (g * b) * Int.gcdB x y := by ring
-      _ = x * Int.gcdA x y + y * Int.gcdB x y := by rw [← ha, ← hb]
-      _ = g := by linarith [hbez]
+    have : g * a * Int.gcdA x y + g * b * Int.gcdB x y = g := by
+      rw [← ha, ← hb]; linarith
+    linarith [this]
   have h1 : Int.gcdA x y * a + Int.gcdB x y * b = 1 := mul_left_cancel₀ hg hbez'
   rw [ha, hb, show -(g * b) = g * (-b) by ring,
-      Int.mul_ediv_cancel_left _ hg, Int.mul_ediv_cancel_left _ hg]
-  rw [← ha, ← hb]
+      Int.mul_ediv_cancel_left _ hg, Int.mul_ediv_cancel_left _ hg, ← ha, ← hb]
   linarith
 
 private noncomputable def bezout2SL (x y : ℤ) (hg : (Int.gcd x y : ℤ) ≠ 0) :
@@ -108,6 +98,18 @@ private lemma bezout2TrailingSL_succ (r : ℕ) (x y : ℤ)
     bezout2TrailingSL (r + 1) x y hg =
       slSuccEmbed (bezout2TrailingSL r x y hg) := rfl
 
+private lemma castAdd_zero_eq_zero {r : ℕ} :
+    (Fin.castAdd 2 (0 : Fin (r + 1)) : Fin (r + 1 + 2)) = 0 := by
+  ext; simp [Fin.castAdd]
+
+private lemma castAdd_succ_eq_succ {r : ℕ} (i : Fin r) :
+    (Fin.castAdd 2 i.succ : Fin (r + 1 + 2)) = (Fin.castAdd 2 i).succ := by
+  ext; simp [Fin.castAdd, Fin.succ]
+
+private lemma natAdd_succ_eq_succ {r : ℕ} (i : Fin 2) :
+    (Fin.natAdd (r + 1) i : Fin (r + 1 + 2)) = (Fin.natAdd r i).succ := by
+  ext; simp [Fin.natAdd, Fin.succ]; ring
+
 private lemma bezout2TrailingSL_val_natAdd (r : ℕ) (x y : ℤ)
     (hg : (Int.gcd x y : ℤ) ≠ 0) (i j : Fin 2) :
     (bezout2TrailingSL r x y hg).val (Fin.natAdd r i) (Fin.natAdd r j) =
@@ -119,11 +121,8 @@ private lemma bezout2TrailingSL_val_natAdd (r : ℕ) (x y : ℤ)
     rw [hi, hj, bezout2TrailingSL_zero]
     rfl
   | succ r ih =>
-    have hi : (Fin.natAdd (r + 1) i : Fin (r + 1 + 2)) = (Fin.natAdd r i).succ := by
-      ext; simp [Fin.natAdd, Fin.succ]; ring
-    have hj : (Fin.natAdd (r + 1) j : Fin (r + 1 + 2)) = (Fin.natAdd r j).succ := by
-      ext; simp [Fin.natAdd, Fin.succ]; ring
-    rw [bezout2TrailingSL_succ, hi, hj, slSuccEmbed_val_succ_succ, ih]
+    rw [bezout2TrailingSL_succ, natAdd_succ_eq_succ, natAdd_succ_eq_succ,
+      slSuccEmbed_val_succ_succ, ih]
 
 private lemma bezout2TrailingSL_val_castAdd (r : ℕ) (x y : ℤ)
     (hg : (Int.gcd x y : ℤ) ≠ 0) (i j : Fin r) :
@@ -134,39 +133,28 @@ private lemma bezout2TrailingSL_val_castAdd (r : ℕ) (x y : ℤ)
   | succ r ih =>
     rcases Fin.eq_zero_or_eq_succ i with hi | ⟨i', hi⟩
     · rcases Fin.eq_zero_or_eq_succ j with hj | ⟨j', hj⟩
-      · subst hi; subst hj
+      · subst hi
+        subst hj
         rw [bezout2TrailingSL_succ]
         show (slSuccEmbed _).val (Fin.castAdd 2 (0 : Fin (r+1)))
           (Fin.castAdd 2 (0 : Fin (r+1))) = _
-        have h0 : (Fin.castAdd 2 (0 : Fin (r + 1)) : Fin (r + 1 + 2)) = 0 := by
-          ext; simp [Fin.castAdd]
-        rw [h0, slSuccEmbed_val_zero_zero]
+        rw [castAdd_zero_eq_zero, slSuccEmbed_val_zero_zero]
         simp
-      · subst hi; subst hj
-        rw [bezout2TrailingSL_succ]
-        have h0 : (Fin.castAdd 2 (0 : Fin (r + 1)) : Fin (r + 1 + 2)) = 0 := by
-          ext; simp [Fin.castAdd]
-        have hsucc : (Fin.castAdd 2 j'.succ : Fin (r + 1 + 2)) =
-            (Fin.castAdd 2 j').succ := by ext; simp [Fin.castAdd, Fin.succ]
-        rw [h0, hsucc, slSuccEmbed_val_zero_succ]
+      · subst hi
+        subst hj
+        rw [bezout2TrailingSL_succ, castAdd_zero_eq_zero, castAdd_succ_eq_succ,
+          slSuccEmbed_val_zero_succ]
         exact (if_neg (Fin.succ_ne_zero j').symm).symm
     · rcases Fin.eq_zero_or_eq_succ j with hj | ⟨j', hj⟩
-      · subst hi; subst hj
-        rw [bezout2TrailingSL_succ]
-        have h0 : (Fin.castAdd 2 (0 : Fin (r + 1)) : Fin (r + 1 + 2)) = 0 := by
-          ext; simp [Fin.castAdd]
-        have hsucc : (Fin.castAdd 2 i'.succ : Fin (r + 1 + 2)) =
-            (Fin.castAdd 2 i').succ := by ext; simp [Fin.castAdd, Fin.succ]
-        rw [h0, hsucc, slSuccEmbed_val_succ_zero]
-        have : i'.succ ≠ 0 := Fin.succ_ne_zero _
-        simp [this]
-      · subst hi; subst hj
-        rw [bezout2TrailingSL_succ]
-        have hsucci : (Fin.castAdd 2 i'.succ : Fin (r + 1 + 2)) =
-            (Fin.castAdd 2 i').succ := by ext; simp [Fin.castAdd, Fin.succ]
-        have hsuccj : (Fin.castAdd 2 j'.succ : Fin (r + 1 + 2)) =
-            (Fin.castAdd 2 j').succ := by ext; simp [Fin.castAdd, Fin.succ]
-        rw [hsucci, hsuccj, slSuccEmbed_val_succ_succ, ih]
+      · subst hi
+        subst hj
+        rw [bezout2TrailingSL_succ, castAdd_zero_eq_zero, castAdd_succ_eq_succ,
+          slSuccEmbed_val_succ_zero]
+        simp [Fin.succ_ne_zero]
+      · subst hi
+        subst hj
+        rw [bezout2TrailingSL_succ, castAdd_succ_eq_succ, castAdd_succ_eq_succ,
+          slSuccEmbed_val_succ_succ, ih]
         by_cases h : i' = j' <;> simp [h, Fin.succ_inj]
 
 private lemma bezout2TrailingSL_val_castAdd_natAdd (r : ℕ) (x y : ℤ)
@@ -177,19 +165,11 @@ private lemma bezout2TrailingSL_val_castAdd_natAdd (r : ℕ) (x y : ℤ)
   | succ r ih =>
     rcases Fin.eq_zero_or_eq_succ i with hi | ⟨i', hi⟩
     · subst hi
-      rw [bezout2TrailingSL_succ]
-      have h0 : (Fin.castAdd 2 (0 : Fin (r + 1)) : Fin (r + 1 + 2)) = 0 := by
-        ext; simp [Fin.castAdd]
-      have hjs : (Fin.natAdd (r + 1) j : Fin (r + 1 + 2)) = (Fin.natAdd r j).succ := by
-        ext; simp [Fin.natAdd, Fin.succ]; ring
-      rw [h0, hjs, slSuccEmbed_val_zero_succ]
+      rw [bezout2TrailingSL_succ, castAdd_zero_eq_zero, natAdd_succ_eq_succ,
+        slSuccEmbed_val_zero_succ]
     · subst hi
-      rw [bezout2TrailingSL_succ]
-      have hsucci : (Fin.castAdd 2 i'.succ : Fin (r + 1 + 2)) =
-          (Fin.castAdd 2 i').succ := by ext; simp [Fin.castAdd, Fin.succ]
-      have hjs : (Fin.natAdd (r + 1) j : Fin (r + 1 + 2)) = (Fin.natAdd r j).succ := by
-        ext; simp [Fin.natAdd, Fin.succ]; ring
-      rw [hsucci, hjs, slSuccEmbed_val_succ_succ, ih]
+      rw [bezout2TrailingSL_succ, castAdd_succ_eq_succ, natAdd_succ_eq_succ,
+        slSuccEmbed_val_succ_succ, ih]
 
 private lemma bezout2TrailingSL_val_natAdd_castAdd (r : ℕ) (x y : ℤ)
     (hg : (Int.gcd x y : ℤ) ≠ 0) (i : Fin 2) (j : Fin r) :
@@ -199,65 +179,15 @@ private lemma bezout2TrailingSL_val_natAdd_castAdd (r : ℕ) (x y : ℤ)
   | succ r ih =>
     rcases Fin.eq_zero_or_eq_succ j with hj | ⟨j', hj⟩
     · subst hj
-      rw [bezout2TrailingSL_succ]
-      have h0 : (Fin.castAdd 2 (0 : Fin (r + 1)) : Fin (r + 1 + 2)) = 0 := by
-        ext; simp [Fin.castAdd]
-      have his : (Fin.natAdd (r + 1) i : Fin (r + 1 + 2)) = (Fin.natAdd r i).succ := by
-        ext; simp [Fin.natAdd, Fin.succ]; ring
-      rw [h0, his, slSuccEmbed_val_succ_zero]
+      rw [bezout2TrailingSL_succ, castAdd_zero_eq_zero, natAdd_succ_eq_succ,
+        slSuccEmbed_val_succ_zero]
     · subst hj
-      rw [bezout2TrailingSL_succ]
-      have hsuccj : (Fin.castAdd 2 j'.succ : Fin (r + 1 + 2)) =
-          (Fin.castAdd 2 j').succ := by ext; simp [Fin.castAdd, Fin.succ]
-      have his : (Fin.natAdd (r + 1) i : Fin (r + 1 + 2)) = (Fin.natAdd r i).succ := by
-        ext; simp [Fin.natAdd, Fin.succ]; ring
-      rw [hsuccj, his, slSuccEmbed_val_succ_succ, ih]
-
-private lemma row_mul_bezout2TrailingSL_natAdd_zero {n r : ℕ} (x y : ℤ)
-    (hg : (Int.gcd x y : ℤ) ≠ 0)
-    (M : Matrix (Fin n) (Fin (r + 2)) ℤ) (i : Fin n)
-    (hxx : M i (Fin.natAdd r 0) = x) (hyy : M i (Fin.natAdd r 1) = y) :
-    (M * (bezout2TrailingSL r x y hg).val) i (Fin.natAdd r 0) =
-      (Int.gcd x y : ℤ) := by
-  rw [Matrix.mul_apply, Fin.sum_univ_add]
-  have hcast : ∑ k : Fin r,
-      M i (Fin.castAdd 2 k) *
-        (bezout2TrailingSL r x y hg).val (Fin.castAdd 2 k) (Fin.natAdd r 0) = 0 := by
-    apply Finset.sum_eq_zero
-    intro k _
-    rw [bezout2TrailingSL_val_castAdd_natAdd, mul_zero]
-  have hnat : ∑ k : Fin 2,
-      M i (Fin.natAdd r k) *
-        (bezout2TrailingSL r x y hg).val (Fin.natAdd r k) (Fin.natAdd r 0) =
-        (Int.gcd x y : ℤ) := by
-    rw [Fin.sum_univ_two]
-    rw [bezout2TrailingSL_val_natAdd, bezout2TrailingSL_val_natAdd, hxx, hyy]
-    exact bezout2_action_col0 x y
-  rw [hcast, hnat, zero_add]
-
-private lemma row_mul_bezout2TrailingSL_natAdd_one {n r : ℕ} (x y : ℤ)
-    (hg : (Int.gcd x y : ℤ) ≠ 0)
-    (M : Matrix (Fin n) (Fin (r + 2)) ℤ) (i : Fin n)
-    (hxx : M i (Fin.natAdd r 0) = x) (hyy : M i (Fin.natAdd r 1) = y) :
-    (M * (bezout2TrailingSL r x y hg).val) i (Fin.natAdd r 1) = 0 := by
-  rw [Matrix.mul_apply, Fin.sum_univ_add]
-  have hcast : ∑ k : Fin r,
-      M i (Fin.castAdd 2 k) *
-        (bezout2TrailingSL r x y hg).val (Fin.castAdd 2 k) (Fin.natAdd r 1) = 0 := by
-    apply Finset.sum_eq_zero
-    intro k _
-    rw [bezout2TrailingSL_val_castAdd_natAdd, mul_zero]
-  have hnat : ∑ k : Fin 2,
-      M i (Fin.natAdd r k) *
-        (bezout2TrailingSL r x y hg).val (Fin.natAdd r k) (Fin.natAdd r 1) = 0 := by
-    rw [Fin.sum_univ_two]
-    rw [bezout2TrailingSL_val_natAdd, bezout2TrailingSL_val_natAdd, hxx, hyy]
-    exact bezout2_action_col1 x y
-  rw [hcast, hnat, zero_add]
+      rw [bezout2TrailingSL_succ, castAdd_succ_eq_succ, natAdd_succ_eq_succ,
+        slSuccEmbed_val_succ_succ, ih]
 
 private lemma col_mul_bezout2TrailingSL_castAdd {n r : ℕ} (x y : ℤ)
-    (hg : (Int.gcd x y : ℤ) ≠ 0)
-    (M : Matrix (Fin n) (Fin (r + 2)) ℤ) (i : Fin n) (j : Fin r) :
+    (hg : (Int.gcd x y : ℤ) ≠ 0) (M : Matrix (Fin n) (Fin (r + 2)) ℤ) (i : Fin n)
+    (j : Fin r) :
     (M * (bezout2TrailingSL r x y hg).val) i (Fin.castAdd 2 j) =
       M i (Fin.castAdd 2 j) := by
   rw [Matrix.mul_apply, Fin.sum_univ_add]
@@ -269,15 +199,33 @@ private lemma col_mul_bezout2TrailingSL_castAdd {n r : ℕ} (x y : ℤ)
     · rw [bezout2TrailingSL_val_castAdd, if_pos rfl, mul_one]
     · intro k _ hk
       rw [bezout2TrailingSL_val_castAdd, if_neg hk, mul_zero]
-    · intro hj
-      exact (hj (Finset.mem_univ _)).elim
+    · exact fun hj ↦ (hj (Finset.mem_univ _)).elim
   have hnat : ∑ k : Fin 2,
       M i (Fin.natAdd r k) *
-        (bezout2TrailingSL r x y hg).val (Fin.natAdd r k) (Fin.castAdd 2 j) = 0 := by
-    apply Finset.sum_eq_zero
-    intro k _
-    rw [bezout2TrailingSL_val_natAdd_castAdd, mul_zero]
+        (bezout2TrailingSL r x y hg).val (Fin.natAdd r k) (Fin.castAdd 2 j) = 0 :=
+    Finset.sum_eq_zero fun k _ ↦ by
+      rw [bezout2TrailingSL_val_natAdd_castAdd, mul_zero]
   rw [hcast, hnat, add_zero]
+
+private lemma row_mul_bezout2TrailingSL_natAdd {n r : ℕ} (x y : ℤ)
+    (hg : (Int.gcd x y : ℤ) ≠ 0) (M : Matrix (Fin n) (Fin (r + 2)) ℤ) (i : Fin n)
+    (j : Fin 2) :
+    (M * (bezout2TrailingSL r x y hg).val) i (Fin.natAdd r j) =
+      M i (Fin.natAdd r 0) * (bezout2 x y) 0 j +
+        M i (Fin.natAdd r 1) * (bezout2 x y) 1 j := by
+  rw [Matrix.mul_apply, Fin.sum_univ_add]
+  have hcast : ∑ k : Fin r,
+      M i (Fin.castAdd 2 k) *
+        (bezout2TrailingSL r x y hg).val (Fin.castAdd 2 k) (Fin.natAdd r j) = 0 :=
+    Finset.sum_eq_zero fun k _ ↦ by
+      rw [bezout2TrailingSL_val_castAdd_natAdd, mul_zero]
+  have hnat : ∑ k : Fin 2,
+      M i (Fin.natAdd r k) *
+        (bezout2TrailingSL r x y hg).val (Fin.natAdd r k) (Fin.natAdd r j) =
+      M i (Fin.natAdd r 0) * (bezout2 x y) 0 j +
+        M i (Fin.natAdd r 1) * (bezout2 x y) 1 j := by
+    rw [Fin.sum_univ_two, bezout2TrailingSL_val_natAdd, bezout2TrailingSL_val_natAdd]
+  rw [hcast, hnat, zero_add]
 
 private def TrailingBlockHNFData {k : ℕ}
     (a : Fin (k + 1) → ℕ) (w : Fin (k + 2) → ℤ) : Prop :=
@@ -288,9 +236,18 @@ private def TrailingBlockHNFData {k : ℕ}
       (((a i / a j : ℕ) : ℤ) ∣
         ∑ k' : Fin (k + 1), N₀.1 i.succ k'.succ * R.1 k' j))
 
+private lemma N₀_mul_slSuccEmbed_apply_succ_succ {n : ℕ}
+    (N₀ : SpecialLinearGroup (Fin (n + 2)) ℤ) (U : SpecialLinearGroup (Fin (n + 1)) ℤ)
+    (i j : Fin (n + 1)) :
+    (N₀ * slSuccEmbed U).1 i.succ j.succ =
+      ∑ k' : Fin (n + 1), N₀.1 i.succ k'.succ * U.val k' j := by
+  simp only [SpecialLinearGroup.coe_mul, Matrix.mul_apply]
+  rw [Fin.sum_univ_succ, slSuccEmbed_val_zero_succ, mul_zero, zero_add]
+  refine Finset.sum_congr rfl fun k' _ ↦ ?_
+  rw [slSuccEmbed_val_succ_succ]
+
 private lemma strengthenedCompletionTarget_of_trailing_hnf_data {k : ℕ}
-    (a : Fin (k + 1) → ℕ) (w : Fin (k + 2) → ℤ)
-    (h : TrailingBlockHNFData a w) :
+    (a : Fin (k + 1) → ℕ) (w : Fin (k + 2) → ℤ) (h : TrailingBlockHNFData a w) :
     StrengthenedCompletionTarget a w := by
   obtain ⟨N₀, R, hcol₀, h_div⟩ := h
   refine ⟨N₀ * slSuccEmbed R, ?_, ?_⟩
@@ -298,51 +255,37 @@ private lemma strengthenedCompletionTarget_of_trailing_hnf_data {k : ℕ}
     rw [slSuccEmbed_preserves_col_zero R N₀ i]
     exact hcol₀ i
   · intro i j hji
-    have hentry :
-        (N₀ * slSuccEmbed R).1 i.succ j.succ =
-          ∑ k' : Fin (k + 1), N₀.1 i.succ k'.succ * R.1 k' j := by
-      simp only [SpecialLinearGroup.coe_mul, Matrix.mul_apply]
-      rw [Fin.sum_univ_succ]
-      rw [slSuccEmbed_val_zero_succ, mul_zero, zero_add]
-      refine Finset.sum_congr rfl ?_
-      intro k' _
-      rw [slSuccEmbed_val_succ_succ]
-    rw [hentry]
+    rw [N₀_mul_slSuccEmbed_apply_succ_succ]
     exact h_div i j hji
 
 private lemma sl_exists_col_stab_divChain_of_trailing_hnf_data {k : ℕ}
     (a : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i) (hda : DivChain (k + 1) a)
-    (w : Fin (k + 2) → ℤ)
-    (hw_col_div : ∀ i : Fin (k + 1), (a i : ℤ) ∣ w i.succ)
+    (w : Fin (k + 2) → ℤ) (hw_col_div : ∀ i : Fin (k + 1), (a i : ℤ) ∣ w i.succ)
     (h : TrailingBlockHNFData a w) :
     ∃ N : SpecialLinearGroup (Fin (k + 2)) ℤ,
       (∀ i, N.1 i 0 = w i) ∧
       (diagMat (k + 2) (Fin.cons 1 a))⁻¹ *
         (mapGL ℚ N : GL (Fin (k + 2)) ℚ) *
-        diagMat (k + 2) (Fin.cons 1 a) ∈ (GL_pair (k + 2)).H := by
-  exact sl_exists_col_stab_divChain_of_strengthened_completion a ha hda w hw_col_div
+        diagMat (k + 2) (Fin.cons 1 a) ∈ (GL_pair (k + 2)).H :=
+  sl_exists_col_stab_divChain_of_strengthened_completion a ha hda w hw_col_div
     (strengthenedCompletionTarget_of_trailing_hnf_data a w h)
 
 private lemma trailingBlockHNFData_of_strengthenedCompletionTarget {k : ℕ}
-    (a : Fin (k + 1) → ℕ) (w : Fin (k + 2) → ℤ)
-    (h : StrengthenedCompletionTarget a w) :
+    (a : Fin (k + 1) → ℕ) (w : Fin (k + 2) → ℤ) (h : StrengthenedCompletionTarget a w) :
     TrailingBlockHNFData a w := by
   obtain ⟨N, hcol, h_div⟩ := h
-  refine ⟨N, 1, hcol, ?_⟩
-  intro i j hji
+  refine ⟨N, 1, hcol, fun i j hji ↦ ?_⟩
   have hsum :
-      ∑ k' : Fin (k + 1), N.1 i.succ k'.succ *
-          (1 : SpecialLinearGroup (Fin (k + 1)) ℤ).1 k' j =
+      ∑ k' : Fin (k + 1),
+          N.1 i.succ k'.succ * (1 : SpecialLinearGroup (Fin (k + 1)) ℤ).1 k' j =
         N.1 i.succ j.succ := by
     simp [SpecialLinearGroup.coe_one, Matrix.one_apply, Finset.sum_ite_eq']
   rw [hsum]
   exact h_div i j hji
 
-private lemma trailingBlockHNFData_of_R_existence {k : ℕ}
-    (a : Fin (k + 1) → ℕ) (w : Fin (k + 2) → ℤ)
-    (hw_primitive : ∀ d : ℤ, (∀ i, d ∣ w i) → IsUnit d)
-    (h_R : ∀ N₀ : SpecialLinearGroup (Fin (k + 2)) ℤ,
-      (∀ i, N₀.1 i 0 = w i) →
+private lemma trailingBlockHNFData_of_R_existence {k : ℕ} (a : Fin (k + 1) → ℕ)
+    (w : Fin (k + 2) → ℤ) (hw_primitive : ∀ d : ℤ, (∀ i, d ∣ w i) → IsUnit d)
+    (h_R : ∀ N₀ : SpecialLinearGroup (Fin (k + 2)) ℤ, (∀ i, N₀.1 i 0 = w i) →
       ∃ R : SpecialLinearGroup (Fin (k + 1)) ℤ,
         ∀ i j : Fin (k + 1), j < i →
           (((a i / a j : ℕ) : ℤ) ∣
@@ -352,12 +295,9 @@ private lemma trailingBlockHNFData_of_R_existence {k : ℕ}
   obtain ⟨R, hR⟩ := h_R N₀ hcol₀
   exact ⟨N₀, R, hcol₀, hR⟩
 
-private lemma matrix_mul_bezout2TrailingSL_apply {n r : ℕ}
-    (x y : ℤ) (hg : (Int.gcd x y : ℤ) ≠ 0)
-    (M : Matrix (Fin n) (Fin (r + 2)) ℤ)
-    (i_target : Fin n)
-    (hxx : M i_target (Fin.natAdd r 0) = x)
-    (hyy : M i_target (Fin.natAdd r 1) = y) :
+private lemma matrix_mul_bezout2TrailingSL_apply {n r : ℕ} (x y : ℤ)
+    (hg : (Int.gcd x y : ℤ) ≠ 0) (M : Matrix (Fin n) (Fin (r + 2)) ℤ) (i_target : Fin n)
+    (hxx : M i_target (Fin.natAdd r 0) = x) (hyy : M i_target (Fin.natAdd r 1) = y) :
     (M * (bezout2TrailingSL r x y hg).val) i_target (Fin.natAdd r 0) =
         (Int.gcd x y : ℤ) ∧
     (M * (bezout2TrailingSL r x y hg).val) i_target (Fin.natAdd r 1) = 0 ∧
@@ -371,62 +311,16 @@ private lemma matrix_mul_bezout2TrailingSL_apply {n r : ℕ}
     (∀ i : Fin n,
       (M * (bezout2TrailingSL r x y hg).val) i (Fin.natAdd r 1) =
         M i (Fin.natAdd r 0) * (bezout2 x y) 0 1 +
-        M i (Fin.natAdd r 1) * (bezout2 x y) 1 1) := by
-  refine ⟨row_mul_bezout2TrailingSL_natAdd_zero x y hg M i_target hxx hyy,
-          row_mul_bezout2TrailingSL_natAdd_one  x y hg M i_target hxx hyy,
-          fun i j ↦ col_mul_bezout2TrailingSL_castAdd x y hg M i j,
-          ?_, ?_⟩
-  · intro i
-    rw [Matrix.mul_apply, Fin.sum_univ_add]
-    have hcast : ∑ k : Fin r,
-        M i (Fin.castAdd 2 k) *
-          (bezout2TrailingSL r x y hg).val (Fin.castAdd 2 k) (Fin.natAdd r 0) = 0 := by
-      apply Finset.sum_eq_zero
-      intro k _
-      rw [bezout2TrailingSL_val_castAdd_natAdd, mul_zero]
-    have hnat : ∑ k : Fin 2,
-        M i (Fin.natAdd r k) *
-          (bezout2TrailingSL r x y hg).val (Fin.natAdd r k) (Fin.natAdd r 0) =
-        M i (Fin.natAdd r 0) * (bezout2 x y) 0 0 +
-          M i (Fin.natAdd r 1) * (bezout2 x y) 1 0 := by
-      rw [Fin.sum_univ_two]
-      rw [bezout2TrailingSL_val_natAdd, bezout2TrailingSL_val_natAdd]
-    rw [hcast, hnat, zero_add]
-  · intro i
-    rw [Matrix.mul_apply, Fin.sum_univ_add]
-    have hcast : ∑ k : Fin r,
-        M i (Fin.castAdd 2 k) *
-          (bezout2TrailingSL r x y hg).val (Fin.castAdd 2 k) (Fin.natAdd r 1) = 0 := by
-      apply Finset.sum_eq_zero
-      intro k _
-      rw [bezout2TrailingSL_val_castAdd_natAdd, mul_zero]
-    have hnat : ∑ k : Fin 2,
-        M i (Fin.natAdd r k) *
-          (bezout2TrailingSL r x y hg).val (Fin.natAdd r k) (Fin.natAdd r 1) =
-        M i (Fin.natAdd r 0) * (bezout2 x y) 0 1 +
-          M i (Fin.natAdd r 1) * (bezout2 x y) 1 1 := by
-      rw [Fin.sum_univ_two]
-      rw [bezout2TrailingSL_val_natAdd, bezout2TrailingSL_val_natAdd]
-    rw [hcast, hnat, zero_add]
+        M i (Fin.natAdd r 1) * (bezout2 x y) 1 1) :=
+  ⟨by rw [row_mul_bezout2TrailingSL_natAdd, hxx, hyy]; exact bezout2_action_col0 x y,
+   by rw [row_mul_bezout2TrailingSL_natAdd, hxx, hyy]; exact bezout2_action_col1 x y,
+   fun i j ↦ col_mul_bezout2TrailingSL_castAdd x y hg M i j,
+   fun i ↦ row_mul_bezout2TrailingSL_natAdd x y hg M i 0,
+   fun i ↦ row_mul_bezout2TrailingSL_natAdd x y hg M i 1⟩
 
-private lemma N₀_mul_slSuccEmbed_apply_succ_succ {r : ℕ}
-    (N₀ : SpecialLinearGroup (Fin (r + 3)) ℤ)
-    (U : SpecialLinearGroup (Fin (r + 2)) ℤ)
-    (i j : Fin (r + 2)) :
-    (N₀ * slSuccEmbed U).1 i.succ j.succ =
-      ∑ k' : Fin (r + 2), N₀.1 i.succ k'.succ * U.val k' j := by
-  simp only [SpecialLinearGroup.coe_mul, Matrix.mul_apply]
-  rw [Fin.sum_univ_succ]
-  rw [slSuccEmbed_val_zero_succ, mul_zero, zero_add]
-  refine Finset.sum_congr rfl ?_
-  intro k' _
-  rw [slSuccEmbed_val_succ_succ]
-
-private lemma sl_mul_slSuccEmbed_bezout2TrailingSL_apply {r : ℕ}
-    (x y : ℤ) (hg : (Int.gcd x y : ℤ) ≠ 0)
-    (N₀ : SpecialLinearGroup (Fin (r + 3)) ℤ)
-    (i_target : Fin (r + 2))
-    (hxx : N₀.1 i_target.succ (Fin.natAdd r 0).succ = x)
+private lemma sl_mul_slSuccEmbed_bezout2TrailingSL_apply {r : ℕ} (x y : ℤ)
+    (hg : (Int.gcd x y : ℤ) ≠ 0) (N₀ : SpecialLinearGroup (Fin (r + 3)) ℤ)
+    (i_target : Fin (r + 2)) (hxx : N₀.1 i_target.succ (Fin.natAdd r 0).succ = x)
     (hyy : N₀.1 i_target.succ (Fin.natAdd r 1).succ = y) :
     let N₁ := N₀ * slSuccEmbed (bezout2TrailingSL r x y hg)
     (∀ i : Fin (r + 3), N₁.1 i 0 = N₀.1 i 0) ∧
@@ -446,69 +340,45 @@ private lemma sl_mul_slSuccEmbed_bezout2TrailingSL_apply {r : ℕ}
     Matrix.of (fun i j ↦ N₀.1 i.succ j.succ) with hM_def
   have hbridge : ∀ i j : Fin (r + 2),
       (N₀ * slSuccEmbed (bezout2TrailingSL r x y hg)).1 i.succ j.succ =
-        (M * (bezout2TrailingSL r x y hg).val) i j := by
-    intro i j
+        (M * (bezout2TrailingSL r x y hg).val) i j := fun i j ↦ by
     rw [N₀_mul_slSuccEmbed_apply_succ_succ]
     simp [Matrix.mul_apply, hM_def]
-  have hxx' : M i_target (Fin.natAdd r 0) = x := by simpa [hM_def] using hxx
-  have hyy' : M i_target (Fin.natAdd r 1) = y := by simpa [hM_def] using hyy
   obtain ⟨h1, h2, h3, h4, h5⟩ :=
-    matrix_mul_bezout2TrailingSL_apply x y hg M i_target hxx' hyy'
-  refine ⟨?col0, ?cast, ?nat0, ?nat1, ?lin0, ?lin1⟩
-  · intro i
-    exact slSuccEmbed_preserves_col_zero (bezout2TrailingSL r x y hg) N₀ i
-  · intro i j
-    have := h3 i j
-    rw [hbridge i (Fin.castAdd 2 j)]
-    simpa [hM_def] using this
-  · rw [hbridge i_target (Fin.natAdd r 0)]; exact h1
-  · rw [hbridge i_target (Fin.natAdd r 1)]; exact h2
-  · intro i
-    have := h4 i
-    rw [hbridge i (Fin.natAdd r 0)]
-    simpa [hM_def] using this
-  · intro i
-    have := h5 i
-    rw [hbridge i (Fin.natAdd r 1)]
-    simpa [hM_def] using this
+    matrix_mul_bezout2TrailingSL_apply x y hg M i_target hxx hyy
+  refine ⟨fun i ↦ slSuccEmbed_preserves_col_zero (bezout2TrailingSL r x y hg) N₀ i,
+    fun i j ↦ by rw [hbridge i (Fin.castAdd 2 j)]; simpa [hM_def] using h3 i j,
+    by rw [hbridge i_target (Fin.natAdd r 0)]; exact h1,
+    by rw [hbridge i_target (Fin.natAdd r 1)]; exact h2,
+    fun i ↦ by rw [hbridge i (Fin.natAdd r 0)]; simpa [hM_def] using h4 i,
+    fun i ↦ by rw [hbridge i (Fin.natAdd r 1)]; simpa [hM_def] using h5 i⟩
 
 private lemma exists_sl2_first_col_orthogonal (x y : ℤ) :
     ∃ R : SpecialLinearGroup (Fin 2) ℤ, x * R.1 0 0 + y * R.1 1 0 = 0 := by
   by_cases hxy : x = 0 ∧ y = 0
-  · refine ⟨1, ?_⟩
-    obtain ⟨hx, hy⟩ := hxy
-    rw [hx, hy]; ring
-  · push_neg at hxy
+  · obtain ⟨hx, hy⟩ := hxy
+    exact ⟨1, by rw [hx, hy]; ring⟩
+  · push Not at hxy
     have hg_pos_nat : 0 < Int.gcd x y := by
       rcases Nat.eq_zero_or_pos (Int.gcd x y) with h0 | hpos
       · rw [Int.gcd_eq_zero_iff] at h0
         exact absurd h0.2 (hxy h0.1)
       · exact hpos
     set g : ℤ := (Int.gcd x y : ℤ) with hg_def
-    have hg_ne : g ≠ 0 := by
-      show (Int.gcd x y : ℤ) ≠ 0
-      exact_mod_cast hg_pos_nat.ne'
-    have hg_dvd_x : g ∣ x := Int.gcd_dvd_left _ _
-    have hg_dvd_y : g ∣ y := Int.gcd_dvd_right _ _
-    obtain ⟨p, hxp⟩ := hg_dvd_x
-    obtain ⟨q, hyq⟩ := hg_dvd_y
+    have hg_ne : g ≠ 0 := by show (Int.gcd x y : ℤ) ≠ 0; exact_mod_cast hg_pos_nat.ne'
+    obtain ⟨p, hxp⟩ : g ∣ x := Int.gcd_dvd_left _ _
+    obtain ⟨q, hyq⟩ : g ∣ y := Int.gcd_dvd_right _ _
     have hpq_cop : Int.gcd p q = 1 := by
       have h1 : x / g = p := by rw [hxp]; exact Int.mul_ediv_cancel_left _ hg_ne
       have h2 : y / g = q := by rw [hyq]; exact Int.mul_ediv_cancel_left _ hg_ne
       have hkey := Int.gcd_div_gcd_div_gcd hg_pos_nat
-      rw [h1, h2] at hkey
-      exact hkey
-    have hcop_pq : IsCoprime p q := Int.isCoprime_iff_gcd_eq_one.mpr hpq_cop
-    have hcop : IsCoprime q (-p) := hcop_pq.symm.neg_right
+      rwa [h1, h2] at hkey
+    have hcop : IsCoprime q (-p) :=
+      (Int.isCoprime_iff_gcd_eq_one.mpr hpq_cop).symm.neg_right
     obtain ⟨R, hR0, hR1⟩ := IsCoprime.exists_SL2_col hcop 0
-    refine ⟨R, ?_⟩
-    have h_R0 : R.1 0 0 = q := hR0
-    have h_R1 : R.1 1 0 = -p := hR1
-    rw [h_R0, h_R1, hxp, hyq]; ring
+    exact ⟨R, by rw [show R.1 0 0 = q from hR0, show R.1 1 0 = -p from hR1, hxp, hyq]; ring⟩
 
-private lemma sl_exists_col_stab_divChain_one
-    (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i) (hda : DivChain 2 a)
-    (w : Fin 3 → ℤ)
+private lemma sl_exists_col_stab_divChain_one (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i)
+    (hda : DivChain 2 a) (w : Fin 3 → ℤ)
     (hw_primitive : ∀ d : ℤ, (∀ i, d ∣ w i) → IsUnit d)
     (hw_col_div : ∀ i : Fin 2, (a i : ℤ) ∣ w i.succ) :
     ∃ N : SpecialLinearGroup (Fin 3) ℤ,
@@ -545,19 +415,15 @@ private lemma exists_nonzero_kernel_vec {m : ℕ}
   let L : (Fin (m + 2) → ℤ) →ₗ[ℤ] (Fin (m + 1) → ℤ) := N.mulVecLin
   have hker_ne : LinearMap.ker L ≠ ⊥ := by
     intro hbot
-    have hinj : Function.Injective L := LinearMap.ker_eq_bot.mp hbot
     have h_le : Module.finrank ℤ (Fin (m + 2) → ℤ) ≤
         Module.finrank ℤ (Fin (m + 1) → ℤ) :=
-      LinearMap.finrank_le_finrank_of_injective hinj
+      LinearMap.finrank_le_finrank_of_injective (LinearMap.ker_eq_bot.mp hbot)
     rw [Module.finrank_fin_fun, Module.finrank_fin_fun] at h_le
     omega
   obtain ⟨v, hv_mem, hv_ne⟩ := Submodule.exists_mem_ne_zero_of_ne_bot hker_ne
-  refine ⟨v, hv_ne, ?_⟩
-  intro i
-  have h_Lv : L v = 0 := LinearMap.mem_ker.mp hv_mem
-  have h_app : (N *ᵥ v) i = (0 : Fin (m + 1) → ℤ) i := by
-    show (L v) i = (0 : Fin (m + 1) → ℤ) i
-    exact congrFun h_Lv i
+  refine ⟨v, hv_ne, fun i ↦ ?_⟩
+  have h_app : (N *ᵥ v) i = (0 : Fin (m + 1) → ℤ) i :=
+    congrFun (LinearMap.mem_ker.mp hv_mem) i
   simpa [Matrix.mulVec, dotProduct] using h_app
 
 private lemma exists_primitive_kernel_vec {m : ℕ}
@@ -575,35 +441,20 @@ private lemma exists_primitive_kernel_vec {m : ℕ}
     have hgvj : g ∣ v j := hg_dvd j
     rw [hg0] at hgvj
     exact zero_dvd_iff.mp hgvj
-  refine ⟨fun j ↦ v j / g, ?_, ?_⟩
-  · intro d hd
-    have hdg_dvd_v : ∀ j, d * g ∣ v j := by
-      intro j
-      have hvj_eq : v j = g * (v j / g) := (Int.mul_ediv_cancel' (hg_dvd j)).symm
-      rw [hvj_eq, mul_comm d g]
+  refine ⟨fun j ↦ v j / g, fun d hd ↦ ?_, fun i ↦ ?_⟩
+  · have hdg_dvd_v : ∀ j, d * g ∣ v j := fun j ↦ by
+      rw [(Int.mul_ediv_cancel' (hg_dvd j)).symm, mul_comm d g]
       exact mul_dvd_mul_left g (hd j)
-    have hdg_dvd_g : d * g ∣ g :=
-      Finset.dvd_gcd (fun j _ ↦ hdg_dvd_v j)
-    have hd_dvd_one : d ∣ 1 := by
-      have hone : d * g ∣ 1 * g := by rwa [one_mul]
-      exact (mul_dvd_mul_iff_right hg_ne_zero).mp hone
-    exact isUnit_of_dvd_one hd_dvd_one
-  · intro i
-    show ∑ j : Fin (m + 2), N i j * (v j / g) = 0
-    have hLHS_g :
-        g * (∑ j, N i j * (v j / g)) = 0 := by
-      rw [Finset.mul_sum]
-      have h_term : ∀ j ∈ (Finset.univ : Finset (Fin (m + 2))),
-          g * (N i j * (v j / g)) = N i j * v j := by
-        intro j _
-        have h_cancel : g * (v j / g) = v j := Int.mul_ediv_cancel' (hg_dvd j)
-        calc g * (N i j * (v j / g))
-            = N i j * (g * (v j / g)) := by ring
-          _ = N i j * v j := by rw [h_cancel]
-      rw [Finset.sum_congr rfl h_term]
+    have hdg_dvd_g : d * g ∣ g := Finset.dvd_gcd fun j _ ↦ hdg_dvd_v j
+    exact isUnit_of_dvd_one <| (mul_dvd_mul_iff_right hg_ne_zero).mp (by rwa [one_mul])
+  · show ∑ j : Fin (m + 2), N i j * (v j / g) = 0
+    have hLHS_g : g * (∑ j, N i j * (v j / g)) = 0 := by
+      rw [Finset.mul_sum,
+        Finset.sum_congr rfl (g := fun j ↦ N i j * v j) fun j _ ↦ by
+          rw [show g * (N i j * (v j / g)) = N i j * (g * (v j / g)) from by ring,
+            Int.mul_ediv_cancel' (hg_dvd j)]]
       exact hv_kernel i
-    have h_eq : g * (∑ j, N i j * (v j / g)) = g * 0 := by rw [mul_zero]; exact hLHS_g
-    exact mul_left_cancel₀ hg_ne_zero h_eq
+    exact mul_left_cancel₀ hg_ne_zero (by rw [mul_zero]; exact hLHS_g)
 
 private lemma exists_sl_clear_col_zero {n : ℕ}
     (M : Matrix (Fin (n + 2)) (Fin (n + 2)) ℤ) :
@@ -612,24 +463,16 @@ private lemma exists_sl_clear_col_zero {n : ℕ}
   obtain ⟨v, hv_prim, hv_kernel⟩ :=
     exists_primitive_kernel_vec (fun (i : Fin (n + 1)) (j : Fin (n + 2)) ↦ M i.succ j)
   obtain ⟨R, hR⟩ := sl_exists_col_of_primitive v hv_prim
-  refine ⟨R, ?_⟩
-  intro i
-  rw [Matrix.mul_apply]
-  have h_sum_eq :
-      ∑ k : Fin (n + 2), M i.succ k * R.val k 0 =
-      ∑ k : Fin (n + 2), M i.succ k * v k := by
-    apply Finset.sum_congr rfl
-    intro k _
-    rw [hR k]
-  rw [h_sum_eq]
+  refine ⟨R, fun i ↦ ?_⟩
+  rw [Matrix.mul_apply, Finset.sum_congr rfl (g := fun k ↦ M i.succ k * v k)
+    fun k _ ↦ by rw [hR k]]
   exact hv_kernel i
 
 private lemma exists_sl_upperTri_two (M : Matrix (Fin 2) (Fin 2) ℤ) :
     ∃ R : SpecialLinearGroup (Fin 2) ℤ,
       ∀ i j : Fin 2, j < i → (M * R.val) i j = 0 := by
   obtain ⟨R, hR⟩ := exists_sl2_first_col_orthogonal (M 1 0) (M 1 1)
-  refine ⟨R, ?_⟩
-  intro i j hji
+  refine ⟨R, fun i j hji ↦ ?_⟩
   have hi : i = 1 := by
     fin_cases i
     · exact absurd hji (Fin.not_lt_zero _)
@@ -644,20 +487,19 @@ private lemma exists_sl_upperTri_two (M : Matrix (Fin 2) (Fin 2) ℤ) :
   exact hR
 
 private lemma exists_sl_upperTri_succ_of_clear_tail {n : ℕ}
-    (M : Matrix (Fin (n + 3)) (Fin (n + 3)) ℤ)
-    (R₁ : SpecialLinearGroup (Fin (n + 3)) ℤ)
+    (M : Matrix (Fin (n + 3)) (Fin (n + 3)) ℤ) (R₁ : SpecialLinearGroup (Fin (n + 3)) ℤ)
     (hR₁ : ∀ i : Fin (n + 2), (M * R₁.val) i.succ 0 = 0)
     (R' : SpecialLinearGroup (Fin (n + 2)) ℤ)
     (hR' : ∀ i j : Fin (n + 2), j < i →
       (Matrix.of (fun (i k' : Fin (n + 2)) ↦ (M * R₁.val) i.succ k'.succ) * R'.val) i j = 0) :
     ∃ R : SpecialLinearGroup (Fin (n + 3)) ℤ,
       ∀ i j : Fin (n + 3), j < i → (M * R.val) i j = 0 := by
-  refine ⟨R₁ * slSuccEmbed R', ?_⟩
-  intro i j hji
+  refine ⟨R₁ * slSuccEmbed R', fun i j hji ↦ ?_⟩
   show (M * (R₁ * slSuccEmbed R').val) i j = 0
   rw [SpecialLinearGroup.coe_mul, ← Matrix.mul_assoc, Matrix.mul_apply, Fin.sum_univ_succ]
   rcases Fin.eq_zero_or_eq_succ i with hi | ⟨i', hi⟩
-  · subst hi; exact absurd hji (Fin.not_lt_zero _)
+  · subst hi
+    exact absurd hji (Fin.not_lt_zero _)
   · subst hi
     rcases Fin.eq_zero_or_eq_succ j with hj | ⟨j', hj⟩
     · subst hj
@@ -672,9 +514,9 @@ private lemma exists_sl_upperTri_succ_of_clear_tail {n : ℕ}
         simp only [Fin.val_succ] at h1
         exact Fin.lt_def.mpr (by omega)
       have h_sum_eq :
-          ∑ k' : Fin (n + 2),
-            (M * R₁.val) i'.succ k'.succ * R'.val k' j' =
-          (Matrix.of (fun (i k' : Fin (n + 2)) ↦ (M * R₁.val) i.succ k'.succ) * R'.val) i' j' := by
+          ∑ k' : Fin (n + 2), (M * R₁.val) i'.succ k'.succ * R'.val k' j' =
+          (Matrix.of (fun (i k' : Fin (n + 2)) ↦ (M * R₁.val) i.succ k'.succ) *
+            R'.val) i' j' := by
         simp only [Matrix.mul_apply, Matrix.of_apply]
       rw [h_sum_eq, hR' i' j' hji_sub]
 
@@ -682,13 +524,10 @@ private lemma sl_upperTri_for_matrix : ∀ {n : ℕ} (M : Matrix (Fin n) (Fin n)
     ∃ R : SpecialLinearGroup (Fin n) ℤ,
       ∀ i j : Fin n, j < i → (M * R.val) i j = 0
   | 0, _M => ⟨1, fun i _ _ ↦ i.elim0⟩
-  | 1, _M => ⟨1, by
-      intro i j hji
+  | 1, _M => ⟨1, fun i j hji ↦ by
       have hi : i.val = 0 := Nat.lt_one_iff.mp i.isLt
       have hj : j.val = 0 := Nat.lt_one_iff.mp j.isLt
-      have : ¬ j < i := by
-        rw [Fin.lt_def, hi, hj]; exact lt_irrefl _
-      exact absurd hji this⟩
+      exact absurd hji (by rw [Fin.lt_def, hi, hj]; exact lt_irrefl _)⟩
   | 2, M => exists_sl_upperTri_two M
   | n + 3, M => by
       obtain ⟨R₁, hR₁⟩ := exists_sl_clear_col_zero M
@@ -700,9 +539,8 @@ private lemma sl_upperTri_for_matrix : ∀ {n : ℕ} (M : Matrix (Fin n) (Fin n)
 the DivChain-forced column-0 divisibility `a_{i-1} ∣ w_{i.succ}`, there exists
 `N ∈ SL_{k+2}(ℤ)` with first column `w` lying in the stabilizer of
 `diagMat (Fin.cons 1 a)`. -/
-lemma sl_exists_col_stab_divChain {k : ℕ}
-    (a : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i) (hda : DivChain (k + 1) a)
-    (w : Fin (k + 2) → ℤ)
+lemma sl_exists_col_stab_divChain {k : ℕ} (a : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i)
+    (hda : DivChain (k + 1) a) (w : Fin (k + 2) → ℤ)
     (hw_primitive : ∀ d : ℤ, (∀ i, d ∣ w i) → IsUnit d)
     (hw_col_div : ∀ i : Fin (k + 1), (a i : ℤ) ∣ w i.succ) :
     ∃ N : SpecialLinearGroup (Fin (k + 2)) ℤ,
@@ -718,13 +556,9 @@ lemma sl_exists_col_stab_divChain {k : ℕ}
     let Mtail : Matrix (Fin (k + 3)) (Fin (k + 3)) ℤ :=
       fun i k' ↦ N₀.1 i.succ k'.succ
     obtain ⟨R, hR⟩ := sl_upperTri_for_matrix Mtail
-    refine ⟨N₀, R, hcol₀, ?_⟩
-    intro i j hji
-    have h_sum :
-        ∑ k' : Fin (k + 3), N₀.1 i.succ k'.succ * R.val k' j =
-        (Mtail * R.val) i j := by
-      rw [Matrix.mul_apply]
-    rw [h_sum, hR i j hji]
+    refine ⟨N₀, R, hcol₀, fun i j hji ↦ ?_⟩
+    rw [show ∑ k' : Fin (k + 3), N₀.1 i.succ k'.succ * R.val k' j = (Mtail * R.val) i j
+      from by rw [Matrix.mul_apply], hR i j hji]
     exact dvd_zero _
 
 end HeckeRing.GLn
