@@ -18,9 +18,7 @@ Auxiliary `Tendsto` reindexing lemmas (`ℤ` / `ℕ` / `ℕ+`) and a perturbatio
 internally by the modular-forms development.
 -/
 
-open TopologicalSpace Set Metric Filter Function Complex
-
-open scoped Interval Real NNReal ENNReal Topology BigOperators Nat
+open Filter Topology
 
 private lemma int_tendsto_nat {f : ℤ → ℂ} {x : ℂ} (hf : Tendsto f atTop (𝓝 x)) :
     Tendsto (fun n : ℕ ↦ f n) atTop (𝓝 x) :=
