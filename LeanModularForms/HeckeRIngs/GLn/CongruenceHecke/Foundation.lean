@@ -90,9 +90,8 @@ lemma Gamma0_le_Delta0 (N : ℕ) [NeZero N] :
       -(σ : Matrix (Fin 2) (Fin 2) ℤ) 0 1 * k, by rw [hk] at hdet; linarith⟩
 
 lemma Delta0_le_posDetInt (N : ℕ) :
-    Delta0_submonoid N ≤ posDetInt_submonoid 2 := by
-  intro g ⟨hint, hdet, _⟩
-  exact ⟨hint, hdet⟩
+    Delta0_submonoid N ≤ posDetInt_submonoid 2 :=
+  fun _ ⟨hint, hdet, _⟩ ↦ ⟨hint, hdet⟩
 
 private lemma Gamma0_map_commensurable_SLnZ (N : ℕ) [NeZero N] :
     Subgroup.Commensurable ((CongruenceSubgroup.Gamma0 N).map (mapGL ℚ))
@@ -124,159 +123,25 @@ section FoundationLemmas
 
 variable (N : ℕ) [NeZero N]
 
-private lemma SL2_mul_Delta0_in_Gamma0_doubleCoset
-    (A : Matrix (Fin 2) (Fin 2) ℤ) (hAN : (N : ℤ) ∣ A 1 0)
-    (hAco : Int.gcd (A 0 0) N = 1) (hAdet : 0 < A.det)
-    (σ : SpecialLinearGroup (Fin 2) ℤ)
-    (hσA : (N : ℤ) ∣ ((σ : Matrix (Fin 2) (Fin 2) ℤ) * A) 1 0) :
-    ∃ (δ₁ δ₂ : SpecialLinearGroup (Fin 2) ℤ),
-      δ₁ ∈ CongruenceSubgroup.Gamma0 N ∧
-      δ₂ ∈ CongruenceSubgroup.Gamma0 N ∧
-      (σ : Matrix (Fin 2) (Fin 2) ℤ) * A = (δ₁ : Matrix (Fin 2) (Fin 2) ℤ) * A *
-        (δ₂ : Matrix (Fin 2) (Fin 2) ℤ) := by
-  have hσ_mem : σ ∈ CongruenceSubgroup.Gamma0 N := by
-    rw [CongruenceSubgroup.Gamma0_mem, ZMod.intCast_zmod_eq_zero_iff_dvd]
-    have key : ((σ : Matrix (Fin 2) (Fin 2) ℤ) * A) 1 0 =
-      (σ : Matrix (Fin 2) (Fin 2) ℤ) 1 0 * A 0 0 +
-      (σ : Matrix (Fin 2) (Fin 2) ℤ) 1 1 * A 1 0 := by
-      simp [Matrix.mul_apply, Fin.sum_univ_two]
-    rw [key] at hσA
-    have h1 : (↑N : ℤ) ∣ ((σ : Matrix (Fin 2) (Fin 2) ℤ) 1 1) * (A 1 0) :=
-      dvd_mul_of_dvd_right hAN _
-    have h2 : (↑N : ℤ) ∣ ((σ : Matrix (Fin 2) (Fin 2) ℤ) 1 0) * (A 0 0) := by
-      have := Int.dvd_sub hσA h1; rwa [add_sub_cancel_right] at this
-    exact (Int.isCoprime_iff_gcd_eq_one.mpr hAco).symm.dvd_of_dvd_mul_right h2
-  exact ⟨σ, 1, hσ_mem,
-    by rw [CongruenceSubgroup.Gamma0_mem]; simp [SpecialLinearGroup.coe_one],
-    by simp [SpecialLinearGroup.coe_one]⟩
-
-private lemma left_mul_mem_Gamma0_doubleCoset
-    (α : GL (Fin 2) ℚ) (hα : α ∈ Delta0_submonoid N)
-    (γ : GL (Fin 2) ℚ) (hγ : γ ∈ SLnZ_subgroup 2)
-    (hγα : γ * α ∈ Delta0_submonoid N) :
-    γ * α ∈ DoubleCoset.doubleCoset α
-      ((CongruenceSubgroup.Gamma0 N).map (mapGL ℚ))
-      ((CongruenceSubgroup.Gamma0 N).map (mapGL ℚ)) := by
-  obtain ⟨_, hdet_pos, A, hA, hAN, hAco⟩ := hα
-  obtain ⟨σ, rfl⟩ := hγ
-  obtain ⟨_, _, B, hB, hBN, _⟩ := hγα
-  have hσA : (↑N : ℤ) ∣ ((σ : Matrix (Fin 2) (Fin 2) ℤ) * A) 1 0 := by
-    have hB_eq : B = (σ : Matrix (Fin 2) (Fin 2) ℤ) * A := by
-      have : (B.map (Int.cast : ℤ → ℚ)) = ((σ : Matrix (Fin 2) (Fin 2) ℤ) * A).map
-          (Int.cast : ℤ → ℚ) := by
-        simp only [GeneralLinearGroup.coe_mul, mapGL_coe_matrix, map_apply_coe,
-          RingHom.mapMatrix_apply, algebraMap_int_eq, Int.coe_castRingHom] at hB
-        rw [← hB, hA]; ext i j; simp [Matrix.mul_apply, Matrix.map_apply]
-      ext i j; have := congr_fun₂ this i j; simp [Matrix.map_apply] at this; exact this
-    rwa [← hB_eq]
-  have hAdet : 0 < A.det := by
-    have h1 : (A.det : ℚ) = (A.map (Int.cast : ℤ → ℚ)).det :=
-      (det_intMat_cast 2 A).symm
-    have h2 : (0 : ℚ) < A.det := by rw [h1, ← hA]; exact hdet_pos
-    exact Int.cast_pos.mp h2
-  obtain ⟨δ₁, δ₂, hδ₁, hδ₂, h_eq⟩ :=
-    SL2_mul_Delta0_in_Gamma0_doubleCoset N A hAN hAco hAdet σ hσA
-  rw [DoubleCoset.mem_doubleCoset]
-  refine ⟨mapGL ℚ δ₁, Subgroup.mem_map_of_mem _ hδ₁,
-    mapGL ℚ δ₂, Subgroup.mem_map_of_mem _ hδ₂, ?_⟩
-  apply Units.ext
-  simp only [GeneralLinearGroup.coe_mul, mapGL_coe_matrix, map_apply_coe,
-    RingHom.mapMatrix_apply, algebraMap_int_eq, Int.coe_castRingHom, hA]
-  ext i j
-  simp only [Matrix.map_apply, Matrix.mul_apply, Fin.sum_univ_two]
-  have h_eq_ij := congr_fun₂ h_eq i j
-  simp only [Matrix.mul_apply, Fin.sum_univ_two] at h_eq_ij
-  exact_mod_cast h_eq_ij
-
-private lemma SL2_mul_Delta0_in_Gamma0_doubleCoset_right
-    (A : Matrix (Fin 2) (Fin 2) ℤ) (hAN : (N : ℤ) ∣ A 1 0)
-    (hAco : Int.gcd (A 0 0) N = 1) (hAdet : 0 < A.det)
-    (σ : SpecialLinearGroup (Fin 2) ℤ)
-    (hAσ : (N : ℤ) ∣ (A * (σ : Matrix (Fin 2) (Fin 2) ℤ)) 1 0)
-    (hAco2 : Int.gcd (A 1 1) N = 1) :
-    ∃ (δ₁ δ₂ : SpecialLinearGroup (Fin 2) ℤ),
-      δ₁ ∈ CongruenceSubgroup.Gamma0 N ∧
-      δ₂ ∈ CongruenceSubgroup.Gamma0 N ∧
-      A * (σ : Matrix (Fin 2) (Fin 2) ℤ) = (δ₁ : Matrix (Fin 2) (Fin 2) ℤ) * A *
-        (δ₂ : Matrix (Fin 2) (Fin 2) ℤ) := by
-  have hσ_mem : σ ∈ CongruenceSubgroup.Gamma0 N := by
-    rw [CongruenceSubgroup.Gamma0_mem, ZMod.intCast_zmod_eq_zero_iff_dvd]
-    have key : (A * (σ : Matrix (Fin 2) (Fin 2) ℤ)) 1 0 =
-      A 1 0 * (σ : Matrix (Fin 2) (Fin 2) ℤ) 0 0 +
-      A 1 1 * (σ : Matrix (Fin 2) (Fin 2) ℤ) 1 0 := by
-      simp [Matrix.mul_apply, Fin.sum_univ_two]
-    rw [key] at hAσ
-    have h1 : (↑N : ℤ) ∣ A 1 0 * ((σ : Matrix (Fin 2) (Fin 2) ℤ) 0 0) :=
-      dvd_mul_of_dvd_left hAN _
-    have h2 : (↑N : ℤ) ∣ A 1 1 * ((σ : Matrix (Fin 2) (Fin 2) ℤ) 1 0) := by
-      have := Int.dvd_sub hAσ h1; rwa [add_sub_cancel_left] at this
-    rw [mul_comm] at h2
-    exact (Int.isCoprime_iff_gcd_eq_one.mpr hAco2).symm.dvd_of_dvd_mul_right h2
-  exact ⟨1, σ,
-    by rw [CongruenceSubgroup.Gamma0_mem]; simp [SpecialLinearGroup.coe_one],
-    hσ_mem, by simp [SpecialLinearGroup.coe_one]⟩
-
-private lemma right_mul_mem_Gamma0_doubleCoset
-    (α : GL (Fin 2) ℚ) (hα : α ∈ Delta0_submonoid N)
-    (γ : GL (Fin 2) ℚ) (hγ : γ ∈ SLnZ_subgroup 2)
-    (hαγ : α * γ ∈ Delta0_submonoid N)
-    (hd_co : ∀ A : Matrix (Fin 2) (Fin 2) ℤ,
-      (↑α : Matrix (Fin 2) (Fin 2) ℚ) = A.map (Int.cast : ℤ → ℚ) →
-      Int.gcd (A 1 1) N = 1) :
-    α * γ ∈ DoubleCoset.doubleCoset α
-      ((CongruenceSubgroup.Gamma0 N).map (mapGL ℚ))
-      ((CongruenceSubgroup.Gamma0 N).map (mapGL ℚ)) := by
-  obtain ⟨_, hdet_pos, A, hA, hAN, hAco⟩ := hα
-  obtain ⟨σ, rfl⟩ := hγ
-  obtain ⟨_, _, B, hB, hBN, _⟩ := hαγ
-  have hAco2 : Int.gcd (A 1 1) N = 1 := hd_co A hA
-  have hAσ : (↑N : ℤ) ∣ (A * (σ : Matrix (Fin 2) (Fin 2) ℤ)) 1 0 := by
-    have hB_eq : B = A * (σ : Matrix (Fin 2) (Fin 2) ℤ) := by
-      have : (B.map (Int.cast : ℤ → ℚ)) = (A * (σ : Matrix (Fin 2) (Fin 2) ℤ)).map
-          (Int.cast : ℤ → ℚ) := by
-        simp only [GeneralLinearGroup.coe_mul, mapGL_coe_matrix, map_apply_coe,
-          RingHom.mapMatrix_apply, algebraMap_int_eq, Int.coe_castRingHom] at hB
-        rw [← hB, hA]; ext i j; simp [Matrix.mul_apply, Matrix.map_apply]
-      ext i j; have := congr_fun₂ this i j; simp [Matrix.map_apply] at this; exact this
-    rwa [← hB_eq]
-  have hAdet : 0 < A.det := by
-    have h1 : (A.det : ℚ) = (A.map (Int.cast : ℤ → ℚ)).det :=
-      (det_intMat_cast 2 A).symm
-    have h2 : (0 : ℚ) < A.det := by rw [h1, ← hA]; exact hdet_pos
-    exact Int.cast_pos.mp h2
-  obtain ⟨δ₁, δ₂, hδ₁, hδ₂, h_eq⟩ :=
-    SL2_mul_Delta0_in_Gamma0_doubleCoset_right N A hAN hAco hAdet σ hAσ hAco2
-  rw [DoubleCoset.mem_doubleCoset]
-  refine ⟨mapGL ℚ δ₁, Subgroup.mem_map_of_mem _ hδ₁,
-    mapGL ℚ δ₂, Subgroup.mem_map_of_mem _ hδ₂, ?_⟩
-  apply Units.ext
-  simp only [GeneralLinearGroup.coe_mul, mapGL_coe_matrix, map_apply_coe,
-    RingHom.mapMatrix_apply, algebraMap_int_eq, Int.coe_castRingHom, hA]
-  ext i j
-  simp only [Matrix.map_apply, Matrix.mul_apply, Fin.sum_univ_two]
-  have h_eq_ij := congr_fun₂ h_eq i j
-  simp only [Matrix.mul_apply, Fin.sum_univ_two] at h_eq_ij
-  exact_mod_cast h_eq_ij
-
+omit [NeZero N] in
 /-- `Γ₀(N) ≤ SL₂(ℤ)` (as subgroups of `GL₂(ℚ)`): every Gamma0 element is in SLnZ. -/
-lemma Gamma0_le_SLnZ :
-    (CongruenceSubgroup.Gamma0 N).map (mapGL ℚ) ≤ SLnZ_subgroup 2 := by
+lemma Gamma0_le_SLnZ : (CongruenceSubgroup.Gamma0 N).map (mapGL ℚ) ≤ SLnZ_subgroup 2 := by
   intro g hg
   rw [Subgroup.mem_map] at hg
   obtain ⟨σ, _, rfl⟩ := hg
   exact MonoidHom.mem_range.mpr ⟨σ, rfl⟩
 
+omit [NeZero N] in
 /-- `Γ(N) ≤ Γ₀(N)`: the principal congruence subgroup is contained in Gamma0. -/
-lemma GammaN_le_Gamma0 :
-    CongruenceSubgroup.Gamma N ≤ CongruenceSubgroup.Gamma0 N := by
+lemma GammaN_le_Gamma0 : CongruenceSubgroup.Gamma N ≤ CongruenceSubgroup.Gamma0 N := by
   intro σ hσ
   rw [CongruenceSubgroup.Gamma_mem] at hσ
   rw [CongruenceSubgroup.Gamma0_mem]
   exact hσ.2.2.1
 
+omit [NeZero N] in
 private lemma gcd_A11_N_eq_one
     (A : Matrix (Fin 2) (Fin 2) ℤ) (hAN : (N : ℤ) ∣ A 1 0)
-    (_hAco : Int.gcd (A 0 0) N = 1)
     (hdet_coprime : Int.gcd A.det N = 1) :
     Int.gcd (A 1 1) N = 1 := by
   rw [← Int.isCoprime_iff_gcd_eq_one] at hdet_coprime ⊢
@@ -289,20 +154,16 @@ private lemma gcd_A11_N_eq_one
     rw [this]; exact hdet_coprime.add_mul_right_left _
   exact (IsCoprime.mul_left_iff.mp hdet_co').2
 
+private lemma intCast_eq_zero_of_dvd {m n : ℕ} (h : m ∣ n) (x : ℤ)
+    (hx : (x : ZMod n) = 0) : (x : ZMod m) = 0 :=
+  (ZMod.intCast_zmod_eq_zero_iff_dvd _ m).mpr
+    ((Int.natCast_dvd_natCast.mpr h).trans ((ZMod.intCast_zmod_eq_zero_iff_dvd _ n).mp hx))
+
 private lemma intCast_eq_one_of_dvd {m n : ℕ} (h : m ∣ n) (x : ℤ)
     (hx : (x : ZMod n) = 1) : (x : ZMod m) = 1 := by
   have h1 : ((x - 1 : ℤ) : ZMod n) = 0 := by push_cast; simp [hx]
-  have h2 : ((x - 1 : ℤ) : ZMod m) = 0 := by
-    have := (ZMod.intCast_zmod_eq_zero_iff_dvd _ n).mp h1
-    exact (ZMod.intCast_zmod_eq_zero_iff_dvd _ m).mpr
-      (dvd_trans (by exact_mod_cast h) this)
+  have h2 := intCast_eq_zero_of_dvd h _ h1
   push_cast at h2; rwa [sub_eq_zero] at h2
-
-private lemma intCast_eq_zero_of_dvd {m n : ℕ} (h : m ∣ n) (x : ℤ)
-    (hx : (x : ZMod n) = 0) : (x : ZMod m) = 0 := by
-  have := (ZMod.intCast_zmod_eq_zero_iff_dvd _ n).mp hx
-  exact (ZMod.intCast_zmod_eq_zero_iff_dvd _ m).mpr
-    (dvd_trans (by exact_mod_cast h) this)
 
 open CongruenceSubgroup in
 private lemma Gamma_le_of_dvd {m n : ℕ} (h : m ∣ n) : Gamma n ≤ Gamma m := by
@@ -312,13 +173,6 @@ private lemma Gamma_le_of_dvd {m n : ℕ} (h : m ∣ n) : Gamma n ≤ Gamma m :=
     intCast_eq_zero_of_dvd h _ hγ.2.1,
     intCast_eq_zero_of_dvd h _ hγ.2.2.1,
     intCast_eq_one_of_dvd h _ hγ.2.2.2⟩
-
-private lemma SL_map_comp
-    {R S T : Type*} [CommRing R] [CommRing S] [CommRing T]
-    (f : S →+* T) (g : R →+* S) (σ : SpecialLinearGroup (Fin 2) R) :
-    SpecialLinearGroup.map f (SpecialLinearGroup.map g σ) =
-    SpecialLinearGroup.map (f.comp g) σ := by
-  ext i j; simp [map_apply_coe, RingHom.mapMatrix_apply, map_apply]
 
 private lemma int_crt {m n x y : ℤ} (h : x ≡ y [ZMOD ↑(Int.gcd m n)]) :
     ∃ z : ℤ, z ≡ x [ZMOD m] ∧ z ≡ y [ZMOD n] := by
@@ -330,28 +184,18 @@ private lemma int_crt {m n x y : ℤ} (h : x ≡ y [ZMOD ↑(Int.gcd m n)]) :
     exact ⟨Int.gcdB m n * k,
       by rw [show y = x + g * k from by linarith, hbez]; ring⟩
 
-private lemma intModEq_to_zmod {m : ℕ} [NeZero m] {a b : ℤ}
-    (h : a ≡ b [ZMOD ↑m]) : (a : ZMod m) = (b : ZMod m) := by
-  rw [Int.modEq_iff_dvd] at h
-  have h1 : ((b - a : ℤ) : ZMod m) = 0 :=
-    (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr (by exact_mod_cast h)
-  have h2 : (b : ZMod m) - (a : ZMod m) = 0 := by push_cast at h1; exact h1
-  exact eq_of_sub_eq_zero h2 |>.symm
+private lemma intModEq_to_zmod {m : ℕ} {a b : ℤ}
+    (h : a ≡ b [ZMOD ↑m]) : (a : ZMod m) = (b : ZMod m) :=
+  (ZMod.intCast_eq_intCast_iff _ _ _).mpr h
 
-private lemma SL2_gamma_entry_modEq (N : ℕ) [NeZero N]
-    (γ : SpecialLinearGroup (Fin 2) ℤ)
+private lemma SL2_gamma_entry_modEq (N : ℕ) (γ : SpecialLinearGroup (Fin 2) ℤ)
     (hγ : γ ∈ CongruenceSubgroup.Gamma N) (i j : Fin 2) :
-    ((1 : SpecialLinearGroup (Fin 2) ℤ) i j : ℤ) ≡
-    (γ i j : ℤ) [ZMOD ↑N] := by
+    ((1 : SpecialLinearGroup (Fin 2) ℤ) i j : ℤ) ≡ (γ i j : ℤ) [ZMOD ↑N] := by
   rw [CongruenceSubgroup.Gamma_mem'] at hγ
   have h := congr_fun₂ (congr_arg Subtype.val hγ) i j
   simp only [map_apply_coe, RingHom.mapMatrix_apply, Matrix.map_apply, coe_one,
     Int.coe_castRingHom] at h
-  rw [Int.modEq_iff_dvd]
-  have : ((↑(γ i j) - ↑((1 : SpecialLinearGroup (Fin 2) ℤ) i j) : ℤ) :
-      ZMod N) = 0 := by
-    simp only [coe_one, Int.cast_sub, sub_eq_zero]; rw [h]; simp [one_apply]
-  exact_mod_cast (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp this
+  rw [← ZMod.intCast_eq_intCast_iff]; simpa [one_apply] using h.symm
 
 private lemma crt_lift_reduces_mod {a b : ℕ} [NeZero (Nat.lcm a b)]
     (M : Matrix (Fin 2) (Fin 2) ℤ) (β : SpecialLinearGroup (Fin 2) ℤ)
@@ -441,6 +285,7 @@ theorem Gamma_gcd_eq_mul (a b : ℕ) [NeZero a] [NeZero b]
   · exact sup_le (Gamma_le_of_dvd (Nat.gcd_dvd_left a b))
       (Gamma_le_of_dvd (Nat.gcd_dvd_right a b))
 
+omit [NeZero N] in
 private lemma dvd_apply_one_zero_of_dvd_mul (P Q : Matrix (Fin 2) (Fin 2) ℤ)
     (hPQ : (N : ℤ) ∣ (P * Q) 1 0) (hP10 : (N : ℤ) ∣ P 1 0)
     (hP11 : Int.gcd (P 1 1) N = 1) : (N : ℤ) ∣ Q 1 0 := by
@@ -448,12 +293,12 @@ private lemma dvd_apply_one_zero_of_dvd_mul (P Q : Matrix (Fin 2) (Fin 2) ℤ)
     simp [Matrix.mul_apply, Fin.sum_univ_two]
   rw [key] at hPQ
   have h2 : (N : ℤ) ∣ P 1 1 * Q 1 0 := by
-    have h1 : (N : ℤ) ∣ P 1 0 * Q 0 0 := dvd_mul_of_dvd_left hP10 _
-    have := Int.dvd_sub hPQ h1
+    have := Int.dvd_sub hPQ (dvd_mul_of_dvd_left hP10 (Q 0 0))
     rwa [add_sub_cancel_left] at this
   rw [mul_comm] at h2
   exact (Int.isCoprime_iff_gcd_eq_one.mpr hP11).symm.dvd_of_dvd_mul_right h2
 
+omit [NeZero N] in
 private lemma Gamma0_mul_apply_one_zero_and_gcd (τ A : Matrix (Fin 2) (Fin 2) ℤ)
     (hτ10 : (N : ℤ) ∣ τ 1 0) (hτ11 : (N : ℤ) ∣ (τ 1 1 - 1))
     (hAN : (N : ℤ) ∣ A 1 0) (hAco2 : Int.gcd (A 1 1) N = 1) :
@@ -544,7 +389,6 @@ theorem doubleCoset_eq_of_Gamma0_coprimeDet
     (A : Matrix (Fin 2) (Fin 2) ℤ)
     (hA : (↑α : Matrix (Fin 2) (Fin 2) ℚ) = A.map (Int.cast : ℤ → ℚ))
     (hAN : (N : ℤ) ∣ A 1 0)
-    (hAco : Int.gcd (A 0 0) N = 1)
     (hdet_coprime : Int.gcd A.det N = 1) :
     DoubleCoset.doubleCoset α (SLnZ_subgroup 2) (SLnZ_subgroup 2) ∩
       (Delta0_submonoid N : Set (GL (Fin 2) ℚ)) =
@@ -557,7 +401,7 @@ theorem doubleCoset_eq_of_Gamma0_coprimeDet
       (det_intMat_cast 2 A).symm
     exact Int.cast_pos.mp (by rw [h1, ← hA]; exact hdet_pos)
   have hAco2 : Int.gcd (A 1 1) N = 1 :=
-    gcd_A11_N_eq_one N A hAN hAco hdet_coprime
+    gcd_A11_N_eq_one N A hAN hdet_coprime
   ext x; constructor
   · intro ⟨hx_dc, hx_delta⟩
     rw [DoubleCoset.mem_doubleCoset] at hx_dc
@@ -572,25 +416,22 @@ theorem doubleCoset_eq_of_Gamma0_coprimeDet
     obtain ⟨δ₁, hδ₁, δ₂, hδ₂, hx_eq⟩ := hx
     refine ⟨?_, ?_⟩
     · rw [DoubleCoset.mem_doubleCoset]
-      obtain ⟨τ₁, hτ₁, rfl⟩ := Subgroup.mem_map.mp hδ₁
-      obtain ⟨τ₂, hτ₂, rfl⟩ := Subgroup.mem_map.mp hδ₂
+      obtain ⟨τ₁, _, rfl⟩ := Subgroup.mem_map.mp hδ₁
+      obtain ⟨τ₂, _, rfl⟩ := Subgroup.mem_map.mp hδ₂
       exact ⟨mapGL ℚ τ₁, ⟨τ₁, rfl⟩, mapGL ℚ τ₂, ⟨τ₂, rfl⟩, hx_eq⟩
     · rw [hx_eq, SetLike.mem_coe]
-      have hδ₁_delta : δ₁ ∈ Delta0_submonoid N :=
-        Gamma0_le_Delta0 N ((Subgroup.mem_toSubmonoid _ _).mpr hδ₁)
-      have hδ₂_delta : δ₂ ∈ Delta0_submonoid N :=
-        Gamma0_le_Delta0 N ((Subgroup.mem_toSubmonoid _ _).mpr hδ₂)
-      exact (Delta0_submonoid N).mul_mem
-        ((Delta0_submonoid N).mul_mem hδ₁_delta hα) hδ₂_delta
+      exact (Delta0_submonoid N).mul_mem ((Delta0_submonoid N).mul_mem
+        (Gamma0_le_Delta0 N ((Subgroup.mem_toSubmonoid _ _).mpr hδ₁)) hα)
+        (Gamma0_le_Delta0 N ((Subgroup.mem_toSubmonoid _ _).mpr hδ₂))
 
 open CongruenceSubgroup in
+omit [NeZero N] in
 /-- `Γ₀(N)αΓ₀(N) ⊆ ΓαΓ`: the `Γ₀(N)`-double coset is contained in
     the `Γ`-double coset. Immediate from `Γ₀(N) ≤ Γ = SL₂(ℤ)`. -/
 theorem Gamma0_doubleCoset_subset_Gamma (α : GL (Fin 2) ℚ) :
     DoubleCoset.doubleCoset α
       ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ)) ⊆
-    DoubleCoset.doubleCoset α (SLnZ_subgroup 2) (SLnZ_subgroup 2) := by
-  intro x hx
+    DoubleCoset.doubleCoset α (SLnZ_subgroup 2) (SLnZ_subgroup 2) := fun x hx ↦ by
   rw [DoubleCoset.mem_doubleCoset] at hx ⊢
   obtain ⟨γ₁, hγ₁, γ₂, hγ₂, hx_eq⟩ := hx
   exact ⟨γ₁, Gamma0_le_SLnZ N hγ₁, γ₂, Gamma0_le_SLnZ N hγ₂, hx_eq⟩

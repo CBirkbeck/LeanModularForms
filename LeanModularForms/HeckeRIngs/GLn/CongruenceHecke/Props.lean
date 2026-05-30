@@ -80,12 +80,10 @@ theorem shimura_prop_3_31 (N : ℕ) [NeZero N]
     ⟦Delta0_inclusion N b⟧ at h
   rw [HeckeCoset.eq_iff] at h
   rw [HeckeCoset.eq_iff]
-  obtain ⟨_, _, Aa, hAa, hAaN, hAaco⟩ := a.2
-  obtain ⟨_, _, Ab, hAb, hAbN, hAbco⟩ := b.2
-  have eq_a := doubleCoset_eq_of_Gamma0_coprimeDet N a.1 a.2 Aa hAa hAaN hAaco
-    (ha Aa hAa)
-  have eq_b := doubleCoset_eq_of_Gamma0_coprimeDet N b.1 b.2 Ab hAb hAbN hAbco
-    (hb Ab hAb)
+  obtain ⟨_, _, Aa, hAa, hAaN, _⟩ := a.2
+  obtain ⟨_, _, Ab, hAb, hAbN, _⟩ := b.2
+  have eq_a := doubleCoset_eq_of_Gamma0_coprimeDet N a.1 a.2 Aa hAa hAaN (ha Aa hAa)
+  have eq_b := doubleCoset_eq_of_Gamma0_coprimeDet N b.1 b.2 Ab hAb hAbN (hb Ab hAb)
   have h' : DoubleCoset.doubleCoset (↑a : GL (Fin 2) ℚ) (SLnZ_subgroup 2)
       (SLnZ_subgroup 2) =
     DoubleCoset.doubleCoset (↑b : GL (Fin 2) ℚ) (SLnZ_subgroup 2)
