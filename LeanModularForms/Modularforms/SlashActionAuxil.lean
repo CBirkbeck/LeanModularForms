@@ -33,7 +33,8 @@ def negI : Γ 2 := ⟨⟨!![-1, 0; 0, -1], by simp⟩, by simp⟩
 
 theorem α_eq_T_sq : α = ⟨T ^ 2, by simp [sq, T]; decide⟩ := by ext; simp [α, T, sq]
 
-theorem β_eq_negI_mul_S_mul_α_inv_mul_S : β = negI * S * α⁻¹ * S := by ext; simp [β, S, α, negI]
+theorem β_eq_negI_mul_S_mul_α_inv_mul_S : β = negI * S * α⁻¹ * S := by
+  ext; simp [β, S, α, negI]
 
 theorem ModularGroup.modular_negI_sq : negI ^ 2 = 1 := by
   ext i j; fin_cases i <;> fin_cases j <;> rfl
@@ -104,7 +105,7 @@ lemma Γ2_c_eq_zero (A : Γ 2) (h : A.1 1 0 = 0) : A ∈ Subgroup.closure {α, �
     | inl h_1 =>
       obtain ⟨k, hk⟩ : ∃ k : ℤ, val.val 0 1 = 2 * k := by
         simp only [Gamma_mem] at property
-        erw [ZMod.intCast_zmod_eq_zero_iff_dvd] at property
+        rw [ZMod.intCast_zmod_eq_zero_iff_dvd] at property
         exact property.2.1
       have h11 : val.val 1 1 = 1 := by
         have := val.2; rw [Matrix.det_fin_two] at this; simp_all
@@ -116,11 +117,11 @@ lemma Γ2_c_eq_zero (A : Γ 2) (h : A.1 1 0 = 0) : A ∈ Subgroup.closure {α, �
     | inr h_2 =>
       obtain ⟨k, hk⟩ : ∃ k : ℤ, val.val 0 1 = 2 * k := by
         simp only [Gamma_mem] at property
-        erw [ZMod.intCast_zmod_eq_zero_iff_dvd] at property
+        rw [ZMod.intCast_zmod_eq_zero_iff_dvd] at property
         exact property.2.1
       have h11 : val.val 1 1 = -1 := by
         have := val.2; rw [Matrix.det_fin_two] at this; grind
-      have h_val : val = negI * α^(-k) := by
+      have h_val : val = negI * α ^ (-k) := by
         refine Subtype.ext ?_
         simp only [SpecialLinearGroup.coe_mul, zpow_neg, SpecialLinearGroup.coe_inv]
         rw [α_zpow_val]
@@ -132,11 +133,9 @@ lemma Γ2_c_eq_zero (A : Γ 2) (h : A.1 1 0 = 0) : A ∈ Subgroup.closure {α, �
         Subgroup.subset_closure (Set.mem_insert _ _)
       convert Subgroup.mul_mem _ hnegI_mem (Subgroup.inv_mem _ (Subgroup.zpow_mem _ hα_mem k))
       simp only [zpow_neg, Subgroup.coe_mul, Subgroup.coe_inv, SubgroupClass.coe_zpow, h_val]
-  · have h_det : (A.val.val 0 0) * (A.val.val 1 1) = 1 := by
-      have := A.1.2; rw [Matrix.det_fin_two] at this
-      simp_all only [Fin.isValue, Int.reduceNeg, not_or, mul_zero, sub_zero]
-    simp_all only [Fin.isValue, Int.reduceNeg, not_or, Int.mul_eq_one_iff_eq_one_or_neg_one,
-      false_and, or_self]
+  · have := A.1.2
+    rw [Matrix.det_fin_two] at this
+    simp_all [Int.mul_eq_one_iff_eq_one_or_neg_one]
 
 lemma Γ2_reduce_row (a c : ℤ) (ha : Odd a) (hc : Even c) (hc0 : c ≠ 0) :
     ∃ n, |a + 2 * n * c| < |c| := by
@@ -183,8 +182,7 @@ lemma Γ2_descent (A : Γ 2) (h : A.1 1 0 ≠ 0) :
     ∃ (M : Γ 2), M ∈ Subgroup.closure {α, β, negI} ∧ |(M * A).1 1 0| < |A.1 1 0| := by
   have h_odd := Γ2_odd_00 A
   have h_even := Γ2_even_10 A
-  obtain ⟨k, hk⟩ : ∃ k, A.val.val 1 0 = 2 * k := by
-    obtain ⟨k, hk⟩ := h_even; exact ⟨k, by omega⟩
+  obtain ⟨k, hk⟩ : ∃ k, A.val.val 1 0 = 2 * k := h_even.imp fun _ _ ↦ by omega
   have hn := Γ2_reduce_row (A.val.val 0 0) (2 * k) h_odd (by simp [parity_simps])
     (by simp only [ne_eq, mul_eq_zero, OfNat.ofNat_ne_zero, false_or]; omega)
   simp only [← hk] at hn
@@ -192,11 +190,10 @@ lemma Γ2_descent (A : Γ 2) (h : A.1 1 0 ≠ 0) :
   have ha'_odd : Odd (A.val.val 0 0 + 2 * n * A.val.val 1 0) := by simp [parity_simps, h_odd]
   have ha'_ne : A.val.val 0 0 + 2 * n * A.val.val 1 0 ≠ 0 := fun h' ↦ by simp_all
   obtain ⟨m, hm⟩ := Γ2_reduce_col _ _ ha'_odd h_even ha'_ne
-  have hβ_mem : β ∈ Subgroup.closure {α, β, negI} :=
-    Subgroup.subset_closure (Set.mem_insert_of_mem _ (Set.mem_insert _ _))
-  have hα_mem : α ∈ Subgroup.closure {α, β, negI} := Subgroup.subset_closure (Set.mem_insert _ _)
-  refine ⟨β ^ m * α ^ n, Subgroup.mul_mem _ (Subgroup.zpow_mem _ hβ_mem _)
-    (Subgroup.zpow_mem _ hα_mem _), ?_⟩
+  refine ⟨β ^ m * α ^ n, Subgroup.mul_mem _
+    (Subgroup.zpow_mem _ (Subgroup.subset_closure
+      (Set.mem_insert_of_mem _ (Set.mem_insert _ _))) _)
+    (Subgroup.zpow_mem _ (Subgroup.subset_closure (Set.mem_insert _ _)) _), ?_⟩
   simp only [Subgroup.coe_mul, SubgroupClass.coe_zpow, SpecialLinearGroup.coe_mul,
     α_zpow_val, β_zpow_val, Matrix.mul_apply, Fin.sum_univ_two, Matrix.of_apply,
     Matrix.cons_val_zero, Matrix.cons_val_one] at hn hm ⊢
@@ -207,7 +204,8 @@ theorem Γ2_generate : (⊤ : Subgroup (Γ 2)) = Subgroup.closure {α, β, negI}
   refine le_antisymm ?_ le_top
   intro A hA
   by_contra h_contra
-  let d := sInf {n : ℕ | ∃ M ∈ Subgroup.closure {α, β, negI}, n = Int.natAbs ((M * A).val.val 1 0)}
+  let d := sInf
+    {n : ℕ | ∃ M ∈ Subgroup.closure {α, β, negI}, n = Int.natAbs ((M * A).val.val 1 0)}
   obtain ⟨M, hM₁, hM₂⟩ :
     ∃ M ∈ Subgroup.closure {α, β, negI}, Int.natAbs ((M * A).val.val 1 0) = d := by
     have h_nonempty :
@@ -222,7 +220,7 @@ theorem Γ2_generate : (⊤ : Subgroup (Γ 2)) = Subgroup.closure {α, β, negI}
     have h_inf_le :
       ∀ n ∈ {n : ℕ | ∃ M ∈ Subgroup.closure {α, β, negI}, n
         = Int.natAbs ((M * A).val.val 1 0)}, d ≤ n :=
-      fun n hn ↦ Nat.sInf_le hn
+      fun _ hn ↦ Nat.sInf_le hn
     exact not_lt_of_ge (h_inf_le _ ⟨M' * M, Subgroup.mul_mem _ hM'₁ hM₁, rfl⟩)
       (by simpa [mul_assoc] using hM'₂)
   · have hMA_zero : (M * A).val.val 1 0 = 0 :=
@@ -234,17 +232,15 @@ theorem Γ2_generate : (⊤ : Subgroup (Γ 2)) = Subgroup.closure {α, β, negI}
 /-- If `G` is generated by a set `s`, then the slash action by elements in G is
 uniquely determined by the slash action by elements in s. See `slashaction_generators'` for a
 version where `s` is a set of elements in `G`. -/
-theorem slashaction_generators
-    (f : ℍ → ℂ) (G : Subgroup SL(2, ℤ)) (s : Set SL(2, ℤ)) (hG : G = Subgroup.closure s) (k : ℤ) :
+theorem slashaction_generators (f : ℍ → ℂ) (G : Subgroup SL(2, ℤ)) (s : Set SL(2, ℤ))
+    (hG : G = Subgroup.closure s) (k : ℤ) :
     (∀ γ : G, f ∣[k] γ.1 = f) ↔ (∀ γ ∈ s, f ∣[k] γ = f) := by
   subst hG
   constructor <;> intro h
-  · intro γ hγ
-    convert h ⟨γ, Subgroup.subset_closure hγ⟩
+  · exact fun γ hγ ↦ h ⟨γ, Subgroup.subset_closure hγ⟩
   · simp only [Subtype.forall]
     intro ⟨γ, hγ⟩
-    -- key idea: this lemma allows induction on the "words" of the group
-    apply Subgroup.closure_induction (G := SL(2, ℤ)) (p := fun γ _ ↦ f ∣[k] γ = f) h --hγ h
+    apply Subgroup.closure_induction (G := SL(2, ℤ)) (p := fun γ _ ↦ f ∣[k] γ = f) h
     · exact SlashAction.slash_one _ _
     · intro _ _ _ _ hf₁ hf₂
       rw [SlashAction.slash_mul, hf₁, hf₂]
@@ -254,24 +250,20 @@ theorem slashaction_generators
 /-- If `G` is generated by a set `s`, then the slash action by elements in G is
 uniquely determined by the slash action by elements in s. See `slashaction_generators` for a
 version where `s` is a set of elements in SL(2, ℤ). -/
-theorem slashaction_generators'
-    (f : ℍ → ℂ) {G : Subgroup SL(2, ℤ)} (s : Set G) (hG : ⊤ = Subgroup.closure s) (k : ℤ) :
+theorem slashaction_generators' (f : ℍ → ℂ) {G : Subgroup SL(2, ℤ)} (s : Set G)
+    (hG : ⊤ = Subgroup.closure s) (k : ℤ) :
     (∀ γ : G, f ∣[k] γ.1 = f) ↔ (∀ γ ∈ s, f ∣[k] γ.1 = f) := by
   constructor <;> intro h
-  · intro γ _
-    exact h _
+  · exact fun γ _ ↦ h _
   · intro ⟨γ, hγ⟩
-    -- key idea: this lemma allows induction on the "words" of the group
     apply Subgroup.closure_induction (G := G) (p := fun γ _ ↦ f ∣[k] γ.1 = f) (k := s) ?_ ?_
     · intro _ _ _ _ hf₁ hf₂
-      rw [@Subgroup.coe_mul]
-      rw [SlashAction.slash_mul, hf₁, hf₂]
+      rw [Subgroup.coe_mul, SlashAction.slash_mul, hf₁, hf₂]
     · intro x _ hf
       rw [← hf, ← SlashAction.slash_mul]
       simp [hf]
     · simp [← hG]
-    · intro γ hγ
-      exact h γ hγ
+    · exact h
     · exact SlashAction.slash_one k f
 
 theorem slashaction_generators_SL2Z
@@ -279,32 +271,23 @@ theorem slashaction_generators_SL2Z
     (∀ γ : SL(2, ℤ), f ∣[k] γ = f) := by
   intro γ
   refine (slashaction_generators f ⊤ _ SL2Z_generate k).mpr ?_ ⟨γ, by simp⟩
-  intro γ hγ
-  rcases hγ with (rfl | rfl | rfl | _) <;> assumption
+  rintro γ (rfl | rfl | rfl | _) <;> assumption
 
 theorem slashaction_generators_GL2R
     (f : ℍ → ℂ) (k : ℤ) (hS : f ∣[k] S = f) (hT : f ∣[k] T = f) :
     (∀ γ ∈ Subgroup.map (Matrix.SpecialLinearGroup.mapGL ℝ) (CongruenceSubgroup.Gamma 1),
        f ∣[k] γ = f) := by
-  intro γ hγ
-  simp only [Subgroup.mem_map] at hγ
-  obtain ⟨A, hA₁, hA₂⟩ := hγ
-  rw [←hA₂]
-  change f ∣[k] A = f
+  rintro γ ⟨A, hA₁, hA₂⟩
+  rw [← hA₂]
   refine (slashaction_generators f ⊤ _ SL2Z_generate k).mpr ?_ ⟨A, by simp⟩
-  intro γ hγ
-  rcases hγ with (rfl | rfl | rfl | _) <;> assumption
+  rintro γ (rfl | rfl | rfl | _) <;> assumption
 
-theorem slashaction_generators_Γ2
-    (f : ℍ → ℂ) (k : ℤ) (hα : f ∣[k] α.1 = f) (hβ : f ∣[k] β.1 = f) (hnegI : f ∣[k] negI.1 = f) :
+theorem slashaction_generators_Γ2 (f : ℍ → ℂ) (k : ℤ) (hα : f ∣[k] α.1 = f)
+    (hβ : f ∣[k] β.1 = f) (hnegI : f ∣[k] negI.1 = f) :
     (∀ γ ∈ Subgroup.map (SpecialLinearGroup.mapGL ℝ) (Γ 2), f ∣[k] γ = f) := by
-  intro γ hγ
-  simp only [Subgroup.mem_map] at hγ
-  obtain ⟨A, hA₁, hA₂⟩ := hγ
-  rw [←hA₂]
-  change f ∣[k] A = f
+  rintro γ ⟨A, hA₁, hA₂⟩
+  rw [← hA₂]
   refine (slashaction_generators' f {α, β, negI} Γ2_generate k).mpr ?_ ⟨_, hA₁⟩
-  intro γ hγ
-  rcases hγ with (rfl | rfl | rfl | _) <;> assumption
+  rintro γ (rfl | rfl | rfl | _) <;> assumption
 
 end slashaction_generators
