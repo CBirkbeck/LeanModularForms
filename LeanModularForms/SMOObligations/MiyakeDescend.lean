@@ -180,7 +180,7 @@ private lemma levelRaiseConj_mul_inv_zero_one_dvd_p
     (hγ'_p : (γ' : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod p) = !![0, -1; 1, 0]) :
     (p : ℤ) ∣ ((HeckeRing.GL2.levelRaiseConjOfDvd l γ hdvd * γ'⁻¹ : SL(2, ℤ))
                 : Matrix (Fin 2) (Fin 2) ℤ) 0 1 := by
-  set γt := HeckeRing.GL2.levelRaiseConjOfDvd l γ hdvd with hγt
+  set γt := HeckeRing.GL2.levelRaiseConjOfDvd l γ hdvd
   have h_γt_00 : ((γt : Matrix (Fin 2) (Fin 2) ℤ) 0 0 : ZMod p) = 0 := by
     simpa [Matrix.map_apply] using congr_fun (congr_fun hγ_p 0) 0
   have h_γt_01 : ((γt : Matrix (Fin 2) (Fin 2) ℤ) 0 1 : ZMod p) = -(l : ZMod p) := by
@@ -303,13 +303,12 @@ lemma m6_2_extra_rep_levelRaise_bridge
           (by simp [Matrix.det_fin_two]; exact_mod_cast hp.ne_zero) : GL (Fin 2) ℝ)) ∣[k]
           (mapGL ℝ (descendExtraGamma p N) : GL (Fin 2) ℝ)) z := by
   intro z
-  set γ_lN := descendExtraGamma p (l * N) with hγ_lN_def
+  set γ_lN := descendExtraGamma p (l * N)
   set γtilde : Matrix.SpecialLinearGroup (Fin 2) ℤ :=
-    HeckeRing.GL2.levelRaiseConjOfDvd l γ_lN hdvd_lN with hγtilde_def
-  set γ_N := descendExtraGamma p N with hγ_N_def
+    HeckeRing.GL2.levelRaiseConjOfDvd l γ_lN hdvd_lN
+  set γ_N := descendExtraGamma p N
   have h_γ_N_spec := descendExtraGamma_spec hp hpN hp_sq
   have h_γ_lN_spec := descendExtraGamma_spec (p := p) (N := l * N) hp hpN_lN hp_sq_lN
-  -- `δ := γtilde · γ_N⁻¹` reduces to the identity modulo `N/p`.
   have h_Np_dvd_lNp : N / p ∣ (l * N) / p := by
     rcases hpN with ⟨c, hc⟩
     exact ⟨l, by rw [hc, show l * (p * c) = p * (l * c) by ring,
@@ -327,8 +326,6 @@ lemma m6_2_extra_rep_levelRaise_bridge
   set δ : Matrix.SpecialLinearGroup (Fin 2) ℤ := γtilde * γ_N⁻¹ with hδ_def
   have hδ_mod_Np : (δ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod (N / p)) = 1 :=
     specialLinearGroup_map_intCast_mul_inv_eq_one γtilde γ_N h_γtilde_mod_Np h_γ_N_spec.2.2
-  -- Conjugating `δ` by `D = diag(1, p)` lands in `Γ₀(N)` with trivial character;
-  -- `δ 0 1` is divisible by `p`, from the mod-`p` reductions of `γ_lN` and `γ_N`.
   let D : GL (Fin 2) ℝ := Matrix.GeneralLinearGroup.mkOfDetNeZero
       !![(1 : ℝ), 0; 0, (p : ℝ)]
       (by simp [Matrix.det_fin_two]; exact_mod_cast hp.ne_zero)
@@ -714,8 +711,7 @@ private lemma miyake_hecke_descend_lifted_coe_eq
     (k : ℤ) {M N : ℕ} (h : M = N)
     (G : ModularForm ((Gamma1 M).map (mapGL ℝ)) k) :
     (⇑(h ▸ G : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) : UpperHalfPlane → ℂ) = ⇑G := by
-  subst h
-  rfl
+  subst h; rfl
 
 private lemma miyake_hecke_descend_slashSum_eq
     {N : ℕ} [NeZero N] {k : ℤ}
