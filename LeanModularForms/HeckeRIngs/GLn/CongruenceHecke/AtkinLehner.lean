@@ -93,7 +93,7 @@ private lemma Gamma0_AL_map_H (N : ℕ) [NeZero N]
       Matrix.cons_val_one]
     have : A.det = A 0 0 * A 1 1 - A 0 1 * A 1 0 := Matrix.det_fin_two A
     rw [hA_det] at this
-    linarith [show c' * (↑N * A 0 1) = A 0 1 * A 1 0 from by rw [hc']; ring]
+    linarith [show c' * (↑N * A 0 1) = A 0 1 * A 1 0 by rw [hc']; ring]
   set τ : SpecialLinearGroup (Fin 2) ℤ := ⟨B, hB_det⟩
   refine ⟨τ, ?_, ?_⟩
   · rw [CongruenceSubgroup.Gamma0_mem]
@@ -127,7 +127,7 @@ private lemma Gamma0_AL_map_Δ (N : ℕ) [NeZero N]
     simp only [B, Matrix.det_fin_two, Matrix.of_apply, Matrix.cons_val_zero,
       Matrix.cons_val_one]
     have : A.det = A 0 0 * A 1 1 - A 0 1 * A 1 0 := Matrix.det_fin_two A
-    linarith [show c' * (↑N * A 0 1) = A 0 1 * A 1 0 from by rw [hc']; ring]
+    linarith [show c' * (↑N * A 0 1) = A 0 1 * A 1 0 by rw [hc']; ring]
   have hA_det_pos : 0 < A.det := by
     rwa [← Int.cast_pos (R := ℚ), ← det_intMat_cast 2 A, ← hA]
   have hB_det_pos : 0 < B.det := hB_det ▸ hA_det_pos
@@ -146,7 +146,7 @@ private lemma Gamma0_AL_map_Δ (N : ℕ) [NeZero N]
     fin_cases i <;> fin_cases j <;>
       norm_num [B, Matrix.of_apply, Matrix.cons_val_zero, Matrix.cons_val_one,
         Matrix.head_cons, Matrix.head_fin_const, Matrix.map_apply]
-    · exact_mod_cast show c' * ↑N = A 1 0 from by rw [hc']; ring
+    · exact_mod_cast show c' * ↑N = A 1 0 by rw [hc']; ring
     · ring
   rw [hg'_eq]
   have hval : (↑g' : Matrix (Fin 2) (Fin 2) ℚ) = B.map (Int.cast : ℤ → ℚ) := rfl
@@ -204,14 +204,14 @@ private lemma snf_first_dvd_entry₂ (M : Matrix (Fin 2) (Fin 2) ℤ)
         L.val 0 1 * (L.val 1 0 * M 0 l + L.val 1 1 * M 1 l) =
         (L.val 0 0 * L.val 1 1 - L.val 0 1 * L.val 1 0) * M 0 l := by ring
     rw [show M 0 l = L.val 1 1 * (L.val 0 0 * M 0 l + L.val 0 1 * M 1 l) -
-        L.val 0 1 * (L.val 1 0 * M 0 l + L.val 1 1 * M 1 l) from by rw [this, hdet_L, one_mul]]
+        L.val 0 1 * (L.val 1 0 * M 0 l + L.val 1 1 * M 1 l) by rw [this, hdet_L, one_mul]]
     exact dvd_sub (dvd_mul_of_dvd_right (hd0 l) _) (dvd_mul_of_dvd_right (hd1 l) _)
   have h_M1 : ∀ l, d 0 ∣ M 1 l := fun l ↦ by
     have : L.val 0 0 * (L.val 1 0 * M 0 l + L.val 1 1 * M 1 l) -
         L.val 1 0 * (L.val 0 0 * M 0 l + L.val 0 1 * M 1 l) =
         (L.val 0 0 * L.val 1 1 - L.val 0 1 * L.val 1 0) * M 1 l := by ring
     rw [show M 1 l = L.val 0 0 * (L.val 1 0 * M 0 l + L.val 1 1 * M 1 l) -
-        L.val 1 0 * (L.val 0 0 * M 0 l + L.val 0 1 * M 1 l) from by rw [this, hdet_L, one_mul]]
+        L.val 1 0 * (L.val 0 0 * M 0 l + L.val 0 1 * M 1 l) by rw [this, hdet_L, one_mul]]
     exact dvd_sub (dvd_mul_of_dvd_right (hd1 l) _) (dvd_mul_of_dvd_right (hd0 l) _)
   fin_cases i
   · exact h_M0 j
@@ -277,7 +277,7 @@ private lemma snf_mutual_dvd_eq (A B : Matrix (Fin 2) (Fin 2) ℤ)
     _ = B := by
         simp only [Matrix.mul_assoc]
         rw [show (LB⁻¹).val * (LB.val * (B * (RB.val * (RB⁻¹).val))) =
-            (LB⁻¹).val * (LB.val * (B * 1)) from by rw [hRR]]
+            (LB⁻¹).val * (LB.val * (B * 1)) by rw [hRR]]
         rw [Matrix.mul_one, ← Matrix.mul_assoc (LB⁻¹).val, hLL, Matrix.one_mul]
 
 private lemma bar_val_eq_swap (N : ℕ) [NeZero N] (g : GL (Fin 2) ℚ)
@@ -290,7 +290,7 @@ private lemma bar_val_eq_swap (N : ℕ) [NeZero N] (g : GL (Fin 2) ℚ)
   have hB_det : B.det = A.det := by
     simp only [B, Matrix.det_fin_two, Matrix.of_apply, Matrix.cons_val_zero, Matrix.cons_val_one]
     have : A.det = A 0 0 * A 1 1 - A 0 1 * A 1 0 := Matrix.det_fin_two A
-    linarith [show c₀ * (↑N * A 0 1) = A 0 1 * A 1 0 from by rw [hc₀]; ring]
+    linarith [show c₀ * (↑N * A 0 1) = A 0 1 * A 1 0 by rw [hc₀]; ring]
   have hA_det_ne : A.det ≠ 0 := by
     have hg_ne : (g : Matrix (Fin 2) (Fin 2) ℚ).det ≠ 0 := Matrix.GeneralLinearGroup.det_ne_zero g
     rw [hA, det_intMat_cast] at hg_ne; exact_mod_cast hg_ne
@@ -308,7 +308,7 @@ private lemma bar_val_eq_swap (N : ℕ) [NeZero N] (g : GL (Fin 2) ℚ)
       Fin.sum_univ_two, hA, g', GeneralLinearGroup.mkOfDetNeZero]
     fin_cases i <;> fin_cases j <;>
       simp [B, Matrix.of_apply, Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.map_apply]
-    · exact_mod_cast show c₀ * ↑N = A 1 0 from by rw [hc₀]; ring
+    · exact_mod_cast show c₀ * ↑N = A 1 0 by rw [hc₀]; ring
     · ring
   rw [hg'_eq]; rfl
 
@@ -352,7 +352,7 @@ private lemma bar_eq_SL2_conj (N : ℕ) [NeZero N] (g : GL (Fin 2) ℚ) (hg : g 
   have hB_det : B.det = A.det := by
     simp only [B, Matrix.det_fin_two, Matrix.of_apply, Matrix.cons_val_zero, Matrix.cons_val_one]
     have : A.det = A 0 0 * A 1 1 - A 0 1 * A 1 0 := Matrix.det_fin_two A
-    linarith [show c₀ * (↑N * A 0 1) = A 0 1 * A 1 0 from by rw [hc₀]; ring]
+    linarith [show c₀ * (↑N * A 0 1) = A 0 1 * A 1 0 by rw [hc₀]; ring]
   have hA_det_pos : 0 < A.det := by
     rw [← Int.cast_pos (R := ℚ), ← det_intMat_cast 2 A, ← hA]; exact hg.2.1
   obtain ⟨dA, hdA_pos, hdA_div, LA, RA, hSNF_A⟩ :=
@@ -429,29 +429,29 @@ private lemma entry_clear_prime (A : Matrix (Fin 2) (Fin 2) ℤ) (N : ℤ)
           dvd_add (dvd_add ha hc) (dvd_mul_of_dvd_right hb _)
         have h2 := dvd_sub h h1
         rw [show A 0 0 + 1 * A 1 0 + N * 1 * (A 0 1 + 1 * A 1 1) -
-          (A 0 0 + A 1 0 + N * A 0 1) = N * A 1 1 from by ring] at h2
+          (A 0 0 + A 1 0 + N * A 0 1) = N * A 1 1 by ring] at h2
         exact (hp'.dvd_mul.mp h2).resolve_left hpN
       · refine ⟨0, 1, fun h ↦ hb ?_⟩
         have h1 := dvd_sub h ha
         rw [show A 0 0 + 0 * A 1 0 + N * 1 * (A 0 1 + 0 * A 1 1) - A 0 0 =
-          N * A 0 1 from by ring] at h1
+          N * A 0 1 by ring] at h1
         exact (hp'.dvd_mul.mp h1).resolve_left hpN
     · refine ⟨1, 0, fun h ↦ hc ?_⟩
       have h1 := dvd_sub h ha
       rwa [show A 0 0 + 1 * A 1 0 + N * 0 * (A 0 1 + 1 * A 1 1) - A 0 0 =
-        A 1 0 from by ring] at h1
+        A 1 0 by ring] at h1
   · exact ⟨0, 0, by rwa [show A 0 0 + 0 * A 1 0 + N * 0 * (A 0 1 + 0 * A 1 1) =
-      A 0 0 from by ring]⟩
+      A 0 0 by ring]⟩
 
 private lemma f_congr_mod (p : ℕ) (l l' t t' a b c₀ d N : ℤ)
     (hl : (p : ℤ) ∣ (l - l')) (ht : (p : ℤ) ∣ (t - t')) :
     (p : ℤ) ∣ ((a + l * c₀ + N * t * (b + l * d)) -
       (a + l' * c₀ + N * t' * (b + l' * d))) := by
   have hlt : (p : ℤ) ∣ (l * t - l' * t') := by
-    rw [show l * t - l' * t' = (l - l') * t + l' * (t - t') from by ring]
+    rw [show l * t - l' * t' = (l - l') * t + l' * (t - t') by ring]
     exact dvd_add (dvd_mul_of_dvd_left hl _) (dvd_mul_of_dvd_right ht _)
   rw [show a + l * c₀ + N * t * (b + l * d) - (a + l' * c₀ + N * t' * (b + l' * d)) =
-    (l - l') * c₀ + N * ((t - t') * b + (l * t - l' * t') * d) from by ring]
+    (l - l') * c₀ + N * ((t - t') * b + (l * t - l' * t') * d) by ring]
   exact dvd_add (dvd_mul_of_dvd_left hl _)
     (dvd_mul_of_dvd_right (dvd_add (dvd_mul_of_dvd_left ht _) (dvd_mul_of_dvd_left hlt _)) _)
 
@@ -495,7 +495,7 @@ lemma Gamma0_content_quotient (N : ℕ) [NeZero N]
   · intro q hq ⟨hq00, hq01, hq10, hq11⟩
     have hqd_nat : ∀ i j : Fin 2, q * d ∣ (A i j).natAbs := fun i j ↦ by
       have h : (↑q : ℤ) ∣ A₀ i j := by fin_cases i <;> fin_cases j <;> assumption
-      rw [show (A i j).natAbs = ((↑d : ℤ) * A₀ i j).natAbs from by rw [← hA_eq],
+      rw [show (A i j).natAbs = ((↑d : ℤ) * A₀ i j).natAbs by rw [← hA_eq],
         Int.natAbs_mul, Int.natAbs_natCast]
       rw [mul_comm]; exact Nat.mul_dvd_mul_left d (Int.natAbs_dvd_natAbs.mpr h)
     have hqd_dvd_d : q * d ∣ d := by
@@ -557,8 +557,8 @@ private lemma exists_coprime_entry (A : Matrix (Fin 2) (Fin 2) ℤ) (N : ℤ)
     (A 0 0) (A 0 1) (A 1 0) (A 1 1) N
     (int_dvd_sub_of_modEq_toNat l₀ p (wit p).1 hp_ne hl_crt)
     (int_dvd_sub_of_modEq_toNat t₀ p (wit p).2 hp_ne ht_crt)
-  rw [show (wit p).1 = (havoid p hp hpc).choose from by rw [hwit],
-      show (wit p).2 = (havoid p hp hpc).choose_spec.choose from by rw [hwit]] at hcongr
+  rw [show (wit p).1 = (havoid p hp hpc).choose by rw [hwit],
+      show (wit p).2 = (havoid p hp hpc).choose_spec.choose by rw [hwit]] at hcongr
   apply (havoid p hp hpc).choose_spec.choose_spec
   obtain ⟨k, hk⟩ := hcongr
   obtain ⟨m, hm⟩ := dvd_trans (Int.natCast_dvd_natCast.mpr hpg) (Int.gcd_dvd_left _ _)
@@ -629,14 +629,14 @@ lemma Gamma0_two_sided_coprime_rep_prim (N : ℕ) [NeZero N]
     ring
   refine ⟨A', ?_, ?_, ?_, ?_⟩
   · exact mapGL_conj_val g A hA L_sl R_sl
-  · rw [h10, show A 1 0 + A 1 1 * (↑N * t₀) = A 1 0 + ↑N * (A 1 1 * t₀) from by ring]
+  · rw [h10, show A 1 0 + A 1 1 * (↑N * t₀) = A 1 0 + ↑N * (A 1 1 * t₀) by ring]
     exact dvd_add hAN (dvd_mul_right _ _)
   · obtain ⟨k, hk⟩ := hAN
     rw [h00, hk, show A 0 0 + l₀ * (↑N * k) + (A 0 1 + l₀ * A 1 1) * (↑N * t₀) =
-      A 0 0 + ↑N * (l₀ * k + (A 0 1 + l₀ * A 1 1) * t₀) from by ring]
+      A 0 0 + ↑N * (l₀ * k + (A 0 1 + l₀ * A 1 1) * t₀) by ring]
     rw [Int.gcd_add_mul_left_left]; exact hAco
   · rw [h00, show A 0 0 + l₀ * A 1 0 + (A 0 1 + l₀ * A 1 1) * (↑N * t₀) =
-      A 0 0 + l₀ * A 1 0 + ↑N * t₀ * (A 0 1 + l₀ * A 1 1) from by ring]
+      A 0 0 + l₀ * A 1 0 + ↑N * t₀ * (A 0 1 + l₀ * A 1 1) by ring]
     exact hlt
 
 private lemma Gamma0_AL_scalar_reduce (N : ℕ) [NeZero N]
@@ -668,9 +668,9 @@ private lemma Gamma0_AL_preserves_00 (N : ℕ) [NeZero N]
   simp only [Matrix.mul_apply, Fin.sum_univ_two, wN_val, Matrix.diagonal,
     Matrix.transpose_apply] at h00
   exact_mod_cast show (B 0 0 : ℚ) = (A 0 0 : ℚ) from
-    (by rw [show (B 0 0 : ℚ) = (B.map (Int.cast : ℤ → ℚ)) 0 0 from by
+    (by rw [show (B 0 0 : ℚ) = (B.map (Int.cast : ℤ → ℚ)) 0 0 by
         simp [Matrix.map_apply], ← hB]; simpa using h00 : (B 0 0 : ℚ) = g.val 0 0).trans
-    (by rw [show (A 0 0 : ℚ) = (A.map (Int.cast : ℤ → ℚ)) 0 0 from by
+    (by rw [show (A 0 0 : ℚ) = (A.map (Int.cast : ℤ → ℚ)) 0 0 by
         simp [Matrix.map_apply], ← hA] : g.val 0 0 = (A 0 0 : ℚ))
 
 private lemma Gamma0_AL_in_DC_of_gcd_a00_m_coprime (N : ℕ) [NeZero N]
@@ -709,7 +709,7 @@ private lemma bar_mem_DC_of_bar_conj_mem (N : ℕ) [NeZero N] (g : GL (Fin 2) �
   rw [show (Gamma0_antiInvolution N).bar ((γL : GL _ ℚ) * g * (γR : GL _ ℚ)) =
       (Gamma0_antiInvolution N).bar (γR : GL _ ℚ) *
       (Gamma0_antiInvolution N).bar g *
-      (Gamma0_antiInvolution N).bar (γL : GL _ ℚ) from by
+      (Gamma0_antiInvolution N).bar (γL : GL _ ℚ) by
     simp only [AntiInvolution.bar_mul]; group,
     DoubleCoset.mem_doubleCoset] at h
   obtain ⟨δ₁, hδ₁, δ₂, hδ₂, h_eq⟩ := h
@@ -732,7 +732,7 @@ private lemma gcd_eq_one_of_factor_split (x : ℤ) (N m b c : ℕ)
     (hbc : m = b * c) (hb_dvd : b ∣ N ^ m)
     (hxN : Int.gcd x N = 1) (hxc : Int.gcd x c = 1) :
     Int.gcd x m = 1 := by
-  rw [show (m : ℤ) = ↑b * ↑c from by exact_mod_cast hbc]
+  rw [show (m : ℤ) = ↑b * ↑c by exact_mod_cast hbc]
   exact Int.isCoprime_iff_gcd_eq_one.mp (IsCoprime.mul_right
     (IsCoprime.of_isCoprime_of_dvd_right
       ((Int.isCoprime_iff_gcd_eq_one.mpr hxN).pow_right (n := m))
