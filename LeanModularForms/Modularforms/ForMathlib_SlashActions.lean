@@ -5,7 +5,6 @@ Authors: Chris Birkbeck
 -/
 module
 
-public import Mathlib.Analysis.CStarAlgebra.Classes
 public import Mathlib.NumberTheory.ModularForms.SlashActions
 
 @[expose] public section
@@ -24,9 +23,6 @@ matrices, for even weight `k`. Candidate for upstreaming to
 * `ModularForm.slash_neg` / `ModularForm.slash_neg'`: `f ∣[k] (-g) = f ∣[k] g` in
   `GL(2, ℝ)⁺` / `SL(2, ℤ)` respectively (for even `k`).
 -/
-
-local notation "GL(" n ", " R ")" "⁺" => @Matrix.GLPos (Fin n) R (instDecidableEqFin n)
-  (Fin.fintype n) Real.linearOrderedCommRing
 
 open ModularForm MatrixGroups UpperHalfPlane
 
@@ -50,4 +46,6 @@ theorem ModularForm.slash_neg {k : ℤ} (g : GL (Fin 2) ℝ) (f : ℍ → ℂ) (
 /-- See `ModularForm.slash_neg` for the version where `g` is a GL(n, ℝ)⁺ matrix. -/
 theorem ModularForm.slash_neg' {k : ℤ} (g : SL(2, ℤ)) (f : ℍ → ℂ) (hk : Even k) :
     f ∣[k] (-g) = f ∣[k] g := by
-  rw [SL_slash, ← slash_neg _ _ hk]; congr; aesop
+  rw [SL_slash, ← slash_neg _ _ hk]
+  congr
+  aesop
