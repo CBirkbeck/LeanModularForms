@@ -1,4 +1,4 @@
- /-
+/-
 Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: LeanModularForms contributors
@@ -65,16 +65,15 @@ theorem gamma0TrivialFamily_prime_eq_heckeOperator_Gamma0
               ModularForm ((Gamma1 N).map (mapGL ℝ)) k),
           heckeT_p_preserves_modFormCharSpace k p hp hpN
             (1 : (ZMod N)ˣ →* ℂˣ) (e.symm f).property⟩ := by
-          rw [gamma0TrivialFamily_apply]
-          apply congrArg e
-          apply Subtype.ext
-          simpa [ambientHeckeOfGoodIndex, heckeT_n_prime_coprime (N := N) k hp hpN] using
-            (modFormCharSpaceFamily_coe (N := N) k (1 : (ZMod N)ˣ →* ℂˣ)
-              ⟨p, hp.pos, hpN⟩ (e.symm f))
+      rw [gamma0TrivialFamily_apply]
+      refine congrArg e (Subtype.ext ?_)
+      simpa [ambientHeckeOfGoodIndex, heckeT_n_prime_coprime (N := N) k hp hpN] using
+        (modFormCharSpaceFamily_coe (N := N) k (1 : (ZMod N)ˣ →* ℂˣ)
+          ⟨p, hp.pos, hpN⟩ (e.symm f))
     _ = heckeOperator_Gamma0 N k (D_p_Gamma0 N p hp.pos) (e (e.symm f)) := by
-          simpa using hbridge.symm
+      simpa using hbridge.symm
     _ = heckeOperator_Gamma0 N k (D_p_Gamma0 N p hp.pos) f := by
-          rw [e.apply_symm_apply]
+      rw [e.apply_symm_apply]
 
 /-- The `N = 1` instance of `gamma0TrivialFamily` is the level-1 experimental
 unified model. Since `Γ₀(1) = SL₂(ℤ)`, this is the common "away from the level"
