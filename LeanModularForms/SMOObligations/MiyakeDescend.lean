@@ -110,9 +110,8 @@ private lemma levelRaiseConjOfDvd_lower_left_dvd
       (l : ℤ) * (HeckeRing.GL2.levelRaiseConjOfDvd l γ hdvd).val 1 0 := by
     show _ = (l : ℤ) * (γ.val 1 0 / (l : ℤ))
     rw [mul_comm, Int.ediv_mul_cancel hdvd]
-  have h_dvd_lNp : ((l * (N / p) : ℕ) : ℤ) ∣ γ.val 1 0 := by
-    have hcast : (((l * N) / p : ℕ) : ℤ) = ((l * (N / p) : ℕ) : ℤ) := by exact_mod_cast h_lNp_eq
-    exact hcast ▸ h
+  have h_dvd_lNp : ((l * (N / p) : ℕ) : ℤ) ∣ γ.val 1 0 :=
+    (show (((l * N) / p : ℕ) : ℤ) = ((l * (N / p) : ℕ) : ℤ) by exact_mod_cast h_lNp_eq) ▸ h
   obtain ⟨j, hj⟩ := h_dvd_lNp
   refine ⟨j, mul_left_cancel₀ hl ?_⟩
   rw [← h10_eq, hj]
