@@ -50,13 +50,6 @@ open HeckeRing.GL2
 
 variable {N : ℕ} [NeZero N] {k : ℤ} {χ : (ZMod N)ˣ →* ℂˣ}
 
-/-! ## An eigenform is a simultaneous eigenvector of the ring
-
-The cusp connection `cuspFormCharSpace_toModularForm'_mem` and the ring-image identity
-`heckeT_n_cusp_eq_heckeRingHom` have been relocated upstream to `NebentypusHeckeRingHom.lean`
-(so the `Eigenform` definition itself can take its eigen-condition from the ring map); they
-are reused here under their original names. -/
-
 /-- **Eigenforms are ring eigenvectors.** If the modular-form coercion of an `Eigenform`
 `f` lies in `modFormCharSpace k χ`, then `↑f` is a simultaneous eigenvector of the canonical
 `Γ₀(N)` Hecke ring action: for each `n` coprime to `N`,
@@ -75,16 +68,13 @@ theorem Eigenform.isRingEigenvector (f : Eigenform N k)
         (⟨f.toCuspForm.toModularForm', cuspFormCharSpace_toModularForm'_mem hf⟩ :
           modFormCharSpace k χ) := by
   haveI : NeZero n.val := ⟨n.pos.ne'⟩
-  -- Apply the endomorphism bridge to the eigenvector and use the eigenform equation.
   apply Subtype.ext
   rw [heckeRingHomCharSpace_heckeRingD_n (k := k) (χ := χ) n.val hn]
   simp only [LinearMap.smul_apply, SetLike.val_smul, heckeT_n_charRestrict_coe]
-  -- The eigenform equation, transported through `toModularForm'`.
   have heig : (heckeT_n_cusp k n.val f.toCuspForm).toModularForm' =
       f.eigenvalue n • f.toCuspForm.toModularForm' := by
     rw [f.isEigen n hn]; rfl
   rw [heckeT_n_cusp_toModularForm' n.val f.toCuspForm] at heig
-  -- `heig : heckeT_n n f.toModularForm' = eigenvalue n • f.toModularForm'`.
   rw [heig, smul_smul]
 
 /-- The predicate-level statement: a cusp form in `cuspFormCharSpace k χ` that is an
