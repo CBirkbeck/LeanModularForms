@@ -75,16 +75,14 @@ namespace HeckeRing.GL2
 
 variable {N : ℕ}
 
-private theorem gcd_quot_sq_eq {m a b d₁ : ℕ} (hab : Nat.Coprime a b)
-    (hd₁m : d₁ ∣ m) (hd₁a : d₁ ∣ a) :
-    (m * a / (d₁ * d₁)).gcd b = m.gcd b := by
+private theorem gcd_quot_sq_eq {m a b d₁ : ℕ} (hab : Nat.Coprime a b) (hd₁m : d₁ ∣ m)
+    (hd₁a : d₁ ∣ a) : (m * a / (d₁ * d₁)).gcd b = m.gcd b := by
   rw [Nat.mul_div_mul_comm hd₁m hd₁a,
     Nat.Coprime.gcd_mul_right_cancel (m / d₁) (hab.coprime_dvd_left (Nat.div_dvd_of_dvd hd₁a))]
   conv_rhs => rw [show m = m / d₁ * d₁ from (Nat.div_mul_cancel hd₁m).symm]
   rw [Nat.Coprime.gcd_mul_right_cancel (m / d₁) (hab.coprime_dvd_left hd₁a)]
 
-private theorem div_sq_product {m a b d₁ d₂ : ℕ}
-    (hd₁ : d₁ * d₁ ∣ m * a) :
+private theorem div_sq_product {m a b d₁ d₂ : ℕ} (hd₁ : d₁ * d₁ ∣ m * a) :
     m * (a * b) / (d₁ * d₂ * (d₁ * d₂)) = m * a / (d₁ * d₁) * b / (d₂ * d₂) := by
   rw [show d₁ * d₂ * (d₁ * d₂) = d₁ * d₁ * (d₂ * d₂) by ring,
     show m * (a * b) = m * a * b by ring, ← Nat.div_div_eq_div_mul]
@@ -92,8 +90,7 @@ private theorem div_sq_product {m a b d₁ d₂ : ℕ}
   exact Nat.mul_div_right_comm hd₁ b
 
 private theorem unitOfCoprime_mul {N d₁ d₂ : ℕ} (h₁ : d₁.Coprime N) (h₂ : d₂.Coprime N)
-    (h₁₂ : (d₁ * d₂).Coprime N)
-    (χ : (ZMod N)ˣ →* ℂˣ) :
+    (h₁₂ : (d₁ * d₂).Coprime N) (χ : (ZMod N)ˣ →* ℂˣ) :
     (↑(χ (ZMod.unitOfCoprime (d₁ * d₂) h₁₂)) : ℂ) =
       ↑(χ (ZMod.unitOfCoprime d₁ h₁)) * ↑(χ (ZMod.unitOfCoprime d₂ h₂)) := by
   have : χ (ZMod.unitOfCoprime (d₁ * d₂) h₁₂) =
@@ -111,8 +108,7 @@ private lemma unitOfCoprime_one_eq_one {N : ℕ} :
   ext
   simp [ZMod.coe_unitOfCoprime]
 
-private lemma chi_unitOfCoprime_one_eq_one {N : ℕ} (χ : (ZMod N)ˣ →* ℂˣ)
-    (h : Nat.Coprime 1 N) :
+private lemma chi_unitOfCoprime_one_eq_one {N : ℕ} (χ : (ZMod N)ˣ →* ℂˣ) (h : Nat.Coprime 1 N) :
     (↑(χ (ZMod.unitOfCoprime 1 h)) : ℂ) = 1 := by
   rw [unitOfCoprime_one_eq_one, map_one, Units.val_one]
 
@@ -134,7 +130,6 @@ private theorem mul_injOn_divisors_coprime {m a b : ℕ} (hab : Nat.Coprime a b)
   intro ⟨d₁, d₂⟩ hd ⟨e₁, e₂⟩ he hmul
   simp only [Finset.coe_product, Set.mem_prod, Finset.mem_coe] at hd he
   have hmul' : d₁ * d₂ = e₁ * e₂ := hmul
-  have hd₁_pos : 0 < d₁ := Nat.pos_of_mem_divisors hd.1
   have heq1 : d₁ = e₁ := Nat.dvd_antisymm
     (((hab.coprime_dvd_left
         ((Nat.dvd_of_mem_divisors hd.1).trans (Nat.gcd_dvd_right m a))).coprime_dvd_right
@@ -144,11 +139,11 @@ private theorem mul_injOn_divisors_coprime {m a b : ℕ} (hab : Nat.Coprime a b)
         ((Nat.dvd_of_mem_divisors he.1).trans (Nat.gcd_dvd_right m a))).coprime_dvd_right
         ((Nat.dvd_of_mem_divisors hd.2).trans (Nat.gcd_dvd_right m b))).dvd_of_dvd_mul_right
       (hmul'.symm ▸ dvd_mul_right e₁ e₂))
-  exact Prod.ext heq1 (Nat.eq_of_mul_eq_mul_left hd₁_pos (heq1 ▸ hmul'))
+  exact Prod.ext heq1 (Nat.eq_of_mul_eq_mul_left (Nat.pos_of_mem_divisors hd.1) (heq1 ▸ hmul'))
 
-private theorem divisorSum_coprime_summand {N : ℕ} [NeZero N]
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (c : ℕ → ℂ) (m a b d₁ : ℕ)
-    (hd₁sq : d₁ * d₁ ∣ m * a) (h_inner : (m * a / (d₁ * d₁)).gcd b = m.gcd b) :
+private theorem divisorSum_coprime_summand {N : ℕ} [NeZero N] (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+    (c : ℕ → ℂ) (m a b d₁ : ℕ) (hd₁sq : d₁ * d₁ ∣ m * a)
+    (h_inner : (m * a / (d₁ * d₁)).gcd b = m.gcd b) :
     ∑ d₂ ∈ (m.gcd b).divisors,
       (if h : (d₁ * d₂).Coprime N then
         (↑(d₁ * d₂) : ℂ) ^ (k - 1) * ↑(χ (ZMod.unitOfCoprime (d₁ * d₂) h)) *
@@ -167,7 +162,7 @@ private theorem divisorSum_coprime_summand {N : ℕ} [NeZero N]
     apply Finset.sum_congr rfl
     intro d₂ _
     by_cases h₂ : d₂.Coprime N
-    · have h₁₂ : (d₁ * d₂).Coprime N := Nat.Coprime.mul_left h₁ h₂
+    · have h₁₂ : (d₁ * d₂).Coprime N := h₁.mul_left h₂
       rw [dif_pos h₁₂, dif_pos h₂, show (↑(d₁ * d₂) : ℂ) = (↑d₁ : ℂ) * ↑d₂ by push_cast; ring,
         mul_zpow, div_sq_product hd₁sq, unitOfCoprime_mul h₁ h₂ h₁₂ χ]
       ring
@@ -179,9 +174,8 @@ private theorem divisorSum_coprime_summand {N : ℕ} [NeZero N]
     simp [show ¬(d₁ * d₂).Coprime N from
       fun h ↦ h₁ (h.coprime_dvd_left (dvd_mul_right d₁ d₂))]
 
-private theorem divisorSum_coprime_conv {N : ℕ} [NeZero N]
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (c : ℕ → ℂ) (m a b : ℕ)
-    (hab : Nat.Coprime a b) :
+private theorem divisorSum_coprime_conv {N : ℕ} [NeZero N] (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+    (c : ℕ → ℂ) (m a b : ℕ) (hab : Nat.Coprime a b) :
     ∑ d ∈ (m.gcd (a * b)).divisors,
       (if h : d.Coprime N then
         (↑d : ℂ) ^ (k - 1) * ↑(χ (ZMod.unitOfCoprime d h)) *
@@ -213,15 +207,6 @@ private theorem divisorSum_coprime_conv {N : ℕ} [NeZero N]
   exact divisorSum_coprime_summand k χ c m a b d₁ (Nat.mul_dvd_mul hd₁m hd₁a)
     (gcd_quot_sq_eq hab hd₁m hd₁a)
 
-private lemma sum_divisors_ppow_succ {p : ℕ} (hp : Nat.Prime p) (s : ℕ) (f : ℕ → ℂ) :
-    ∑ d ∈ (p ^ (s + 1)).divisors, f d = f 1 + ∑ d ∈ (p ^ s).divisors, f (p * d) := by
-  rw [Nat.divisors_prime_pow hp, Nat.divisors_prime_pow hp]
-  simp only [Finset.sum_map, Function.Embedding.coeFn_mk]
-  have step : ∀ i, f (p * p ^ i) = f (p ^ (i + 1)) := fun i ↦ by rw [pow_succ']
-  simp_rw [step]
-  rw [Finset.sum_range_succ' (fun i ↦ f (p ^ i))]
-  simp [pow_zero, add_comm]
-
 private theorem sum_divisors_ppow_eq_range {N : ℕ} (k : ℤ) {p : ℕ} (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) (χ : (ZMod N)ˣ →* ℂˣ) (c : ℕ → ℂ) (s n : ℕ) :
     (∑ d ∈ (p ^ s).divisors,
@@ -235,8 +220,8 @@ private theorem sum_divisors_ppow_eq_range {N : ℕ} (k : ℤ) {p : ℕ} (hp : N
   simp only [Function.Embedding.coeFn_mk]
   exact Finset.sum_congr rfl fun j _ ↦ dif_pos (hpN.pow_left j)
 
-private theorem ppow_summand_factor {N : ℕ} (k : ℤ) {p : ℕ}
-    (hpN : Nat.Coprime p N) (χ : (ZMod N)ˣ →* ℂˣ) (c : ℕ → ℂ) (j n : ℕ) :
+private theorem ppow_summand_factor {N : ℕ} (k : ℤ) {p : ℕ} (hpN : Nat.Coprime p N)
+    (χ : (ZMod N)ˣ →* ℂˣ) (c : ℕ → ℂ) (j n : ℕ) :
     (↑(p ^ (j + 1)) : ℂ) ^ (k - 1) *
         ↑(χ (ZMod.unitOfCoprime (p ^ (j + 1)) (hpN.pow_left (j + 1)))) *
         c (n / (p ^ (j + 1) * p ^ (j + 1))) =
@@ -392,8 +377,7 @@ private theorem ppow_divisorSum_recurrence_not_dvd [NeZero N] (k : ℤ) {p : ℕ
   ring
 
 private theorem ppow_divisorSum_recurrence [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prime p)
-    (hpN : Nat.Coprime p N)
-    (χ : (ZMod N)ˣ →* ℂˣ) (r : ℕ) (m : ℕ) (c : ℕ → ℂ) :
+    (hpN : Nat.Coprime p N) (χ : (ZMod N)ˣ →* ℂˣ) (r : ℕ) (m : ℕ) (c : ℕ → ℂ) :
     (((∑ d ∈ ((p * m).gcd (p ^ (r + 1))).divisors,
           if h : d.Coprime N then
             (↑d : ℂ) ^ (k - 1) * ↑(χ (ZMod.unitOfCoprime d h)) *
@@ -423,10 +407,8 @@ private theorem ppow_divisorSum_recurrence [NeZero N] (k : ℤ) {p : ℕ} (hp : 
   · exact ppow_divisorSum_recurrence_not_dvd k hp hpN χ r m c hdvd
 
 private theorem heckeT_ppow_preserves_charSpace [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prime p)
-    (hpN : Nat.Coprime p N) (r : ℕ)
-    (χ : (ZMod N)ˣ →* ℂˣ)
-    {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
-    (hf : f ∈ modFormCharSpace k χ) :
+    (hpN : Nat.Coprime p N) (r : ℕ) (χ : (ZMod N)ˣ →* ℂˣ)
+    {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k} (hf : f ∈ modFormCharSpace k χ) :
     heckeT_ppow k p hp r f ∈ modFormCharSpace k χ := by
   rw [mem_modFormCharSpace_iff] at hf ⊢
   intro d
@@ -434,10 +416,8 @@ private theorem heckeT_ppow_preserves_charSpace [NeZero N] (k : ℤ) {p : ℕ} (
       heckeT_ppow k p hp r (diamondOpHom k d f) from
     DFunLike.congr_fun (heckeT_ppow_comm_diamondOp k hp hpN r d) f, hf d, map_smul]
 
-private theorem diamondOp_ext_charSpace [NeZero N] (k : ℤ) {p : ℕ}
-    (hpN : Nat.Coprime p N)
-    (χ : (ZMod N)ˣ →* ℂˣ)
-    {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
+private theorem diamondOp_ext_charSpace [NeZero N] (k : ℤ) {p : ℕ} (hpN : Nat.Coprime p N)
+    (χ : (ZMod N)ˣ →* ℂˣ) {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
     (hf : f ∈ modFormCharSpace k χ) :
     diamondOp_ext k p f = (↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ) • f := by
   rw [diamondOp_ext_coprime k hpN]
@@ -478,8 +458,7 @@ private abbrev HeckeTpCoeffFormula (k : ℤ) {p N : ℕ} [NeZero N] (hp : Nat.Pr
         (if p ∣ m' then (qExpansion t g).coeff (m' / p) else 0)
 
 private theorem fourierCoeff_heckeT_ppow_one_eq [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prime p)
-    (hpN : Nat.Coprime p N) (χ : (ZMod N)ˣ →* ℂˣ) {t : ℝ}
-    (hTp : HeckeTpCoeffFormula k hp hpN χ t)
+    (hpN : Nat.Coprime p N) (χ : (ZMod N)ˣ →* ℂˣ) {t : ℝ} (hTp : HeckeTpCoeffFormula k hp hpN χ t)
     {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k} (hf : f ∈ modFormCharSpace k χ) (m : ℕ) :
     (qExpansion t (heckeT_ppow k p hp 1 f)).coeff m =
       ∑ d ∈ (Nat.gcd m (p ^ 1)).divisors,
@@ -538,8 +517,7 @@ private theorem fourierCoeff_heckeT_ppow_succ_succ_eq [NeZero N] (k : ℤ) {p : 
 
 private theorem fourierCoeff_heckeT_ppow [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) (χ : (ZMod N)ˣ →* ℂˣ) (v : ℕ)
-    {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
-    (hf : f ∈ modFormCharSpace k χ) (m : ℕ) :
+    {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k} (hf : f ∈ modFormCharSpace k χ) (m : ℕ) :
     (qExpansion N (heckeT_ppow k p hp v f)).coeff m =
       ∑ d ∈ (Nat.gcd m (p ^ v)).divisors,
         if h : d.Coprime N then
@@ -606,11 +584,9 @@ private theorem fourierCoeff_heckeT_n_prime [NeZero N] (k : ℤ) {n : ℕ} [NeZe
     rw [if_neg hdvd, mul_zero, add_zero, Nat.mul_comm n m]
 
 private theorem fourierCoeff_heckeT_n_eq_ppow [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prime p)
-    (χ : (ZMod N)ˣ →* ℂˣ) {t : ℝ}
-    (hTppow : HeckeTppowCoeffFormula k hp χ t) (n : ℕ) [NeZero n] (v m : ℕ)
-    (hn_ppow : n = p ^ v)
-    {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k} (hf : f ∈ modFormCharSpace k χ)
-    (h_eq : heckeT_n k n f = heckeT_ppow k p hp v f) :
+    (χ : (ZMod N)ˣ →* ℂˣ) {t : ℝ} (hTppow : HeckeTppowCoeffFormula k hp χ t) (n : ℕ) [NeZero n]
+    (v m : ℕ) (hn_ppow : n = p ^ v) {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
+    (hf : f ∈ modFormCharSpace k χ) (h_eq : heckeT_n k n f = heckeT_ppow k p hp v f) :
     (qExpansion t (heckeT_n k n f)).coeff m =
       ∑ d ∈ (Nat.gcd m n).divisors,
         if h : d.Coprime N then
@@ -621,9 +597,8 @@ private theorem fourierCoeff_heckeT_n_eq_ppow [NeZero N] (k : ℤ) {p : ℕ} (hp
   exact hTppow v f hf m
 
 private theorem fourierCoeff_heckeT_n_coprime_split [NeZero N] (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
-    {t : ℝ} (n pv q m : ℕ) [NeZero n] [NeZero pv] [NeZero q]
-    (hcop : Nat.Coprime pv q) (hn_eq : n = pv * q)
-    {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
+    {t : ℝ} (n pv q m : ℕ) [NeZero n] [NeZero pv] [NeZero q] (hcop : Nat.Coprime pv q)
+    (hn_eq : n = pv * q) {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
     (h_apply : heckeT_n k n f = heckeT_n k pv (heckeT_n k q f))
     (ih_pv : (qExpansion t (heckeT_n k pv (heckeT_n k q f))).coeff m =
         ∑ d ∈ (Nat.gcd m pv).divisors,
@@ -671,10 +646,10 @@ private theorem fourierCoeff_heckeT_n_composite [NeZero N] (k : ℤ) (n : ℕ) [
             (qExpansion t f).coeff (m * n / (d * d))
         else 0 := by
   have hn0 : n ≠ 0 := by omega
-  set p := n.minFac with hp_def
+  set p := n.minFac
   have hp : Nat.Prime p := Nat.minFac_prime (by omega)
-  set v := n.factorization p with hv_def
-  set q := n / p ^ v with hq_def
+  set v := n.factorization p
+  set q := n / p ^ v
   have hq_pos : 0 < q :=
     Nat.div_pos (Nat.le_of_dvd (by omega) (Nat.ordProj_dvd n p)) (pow_pos hp.pos v)
   have hn_eq : n = p ^ v * q := (Nat.ordProj_mul_ordCompl_eq_self n p).symm
@@ -711,9 +686,8 @@ private theorem fourierCoeff_heckeT_n_composite [NeZero N] (k : ℤ) (n : ℕ) [
 /-- **General Fourier coefficient formula for `T_n`** (DS Prop 5.3.1, Miy Thm 4.5.13): for
 `f ∈ M_k(Γ₁(N), χ)` and positive integer `n` coprime to `N`,
 `a_m(T_n f) = Σ_{d | gcd(m,n)} d^{k-1} · χ(d) · a_{mn/d²}(f)`. -/
-theorem fourierCoeff_heckeT_n [NeZero N] (k : ℤ) (n : ℕ) [NeZero n]
-    (hn : Nat.Coprime n N) (χ : (ZMod N)ˣ →* ℂˣ)
-    {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
+theorem fourierCoeff_heckeT_n [NeZero N] (k : ℤ) (n : ℕ) [NeZero n] (hn : Nat.Coprime n N)
+    (χ : (ZMod N)ˣ →* ℂˣ) {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
     (hf : f ∈ modFormCharSpace k χ) (m : ℕ) :
     (qExpansion N (heckeT_n k n f)).coeff m =
       ∑ d ∈ (Nat.gcd m n).divisors,
@@ -750,22 +724,20 @@ theorem fourierCoeff_heckeT_n [NeZero N] (k : ℤ) (n : ℕ) [NeZero n]
 
 /-- A modular form is a **common eigenfunction** of all `T_n` with `(n,N) = 1`
 if `T_n f = a · f` for some eigenvalue `a ∈ ℂ`. -/
-abbrev IsCommonEigenfunction [NeZero N] (k : ℤ)
-    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
+abbrev IsCommonEigenfunction [NeZero N] (k : ℤ) (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    Prop :=
   ∀ n : ℕ+, Nat.Coprime n.val N →
     haveI : NeZero n.val := ⟨n.pos.ne'⟩
     ∃ a : ℂ, heckeT_n k n.val f = a • f
 
 /-- The eigenvalue of a common eigenfunction at `n`. -/
-def eigenvalue [NeZero N] (k : ℤ)
-    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
+def eigenvalue [NeZero N] (k : ℤ) (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
     (hf : IsCommonEigenfunction k f) (n : ℕ+) (hn : Nat.Coprime n.val N) : ℂ :=
   haveI : NeZero n.val := ⟨n.pos.ne'⟩
   (hf n hn).choose
 
 /-- The eigenvalue equation: `T_n f = eigenvalue k f hf n hn • f`. -/
-theorem eigenvalue_spec [NeZero N] (k : ℤ)
-    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
+theorem eigenvalue_spec [NeZero N] (k : ℤ) (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
     (hf : IsCommonEigenfunction k f) (n : ℕ+) (hn : Nat.Coprime n.val N) :
     haveI : NeZero n.val := ⟨n.pos.ne'⟩
     heckeT_n k n.val f = eigenvalue k f hf n hn • f :=
@@ -773,17 +745,15 @@ theorem eigenvalue_spec [NeZero N] (k : ℤ)
   (hf n hn).choose_spec
 
 /-- A **normalised eigenform** is a common eigenfunction with `a_1(f) = 1`. -/
-def IsNormalisedEigenform [NeZero N] (k : ℤ)
-    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
+def IsNormalisedEigenform [NeZero N] (k : ℤ) (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    Prop :=
   IsCommonEigenfunction k f ∧ (qExpansion N f).coeff 1 = 1
 
 /-- **Eigenvalue = Fourier coefficient** (Miyake Thm 4.5.16, DS (5.21)): if `f` is a normalised
 eigenform (`a_1 = 1`) in `M_k(Γ₁(N), χ)` and `(n, N) = 1`, then `λ_n = a_n(f)`. -/
-theorem eigenvalue_eq_fourierCoeff [NeZero N] (k : ℤ) (n : ℕ+)
-    (hn : Nat.Coprime n.val N) (χ : (ZMod N)ˣ →* ℂˣ)
-    {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
-    (hf_char : f ∈ modFormCharSpace k χ)
-    (hf_eigen : IsNormalisedEigenform k f) :
+theorem eigenvalue_eq_fourierCoeff [NeZero N] (k : ℤ) (n : ℕ+) (hn : Nat.Coprime n.val N)
+    (χ : (ZMod N)ˣ →* ℂˣ) {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
+    (hf_char : f ∈ modFormCharSpace k χ) (hf_eigen : IsNormalisedEigenform k f) :
     eigenvalue k f hf_eigen.1 n hn = (qExpansion N f).coeff n.val := by
   have : NeZero n.val := ⟨n.pos.ne'⟩
   have h1 := fourierCoeff_heckeT_n k n.val hn χ hf_char 1
@@ -800,11 +770,9 @@ theorem eigenvalue_eq_fourierCoeff [NeZero N] (k : ℤ) (n : ℕ+)
 /-- The Fourier coefficients of a normalised eigenform in `M_k(N, χ)` satisfy the **Hecke
 multiplicativity relations** `a_m · a_n = Σ_{d | gcd(m,n)} d^{k-1} χ(d) a_{mn/d²}`; in particular
 `a_m a_n = a_{mn}` when `gcd(m,n) = 1` ([Miy] Lemma 4.5.15). -/
-theorem eigenform_coeff_multiplicative [NeZero N] (k : ℤ) (m n : ℕ+)
-    (hm : Nat.Coprime m.val N) (_ : Nat.Coprime n.val N)
-    (χ : (ZMod N)ˣ →* ℂˣ)
-    {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
-    (hf_char : f ∈ modFormCharSpace k χ)
+theorem eigenform_coeff_multiplicative [NeZero N] (k : ℤ) (m n : ℕ+) (hm : Nat.Coprime m.val N)
+    (_ : Nat.Coprime n.val N) (χ : (ZMod N)ˣ →* ℂˣ)
+    {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k} (hf_char : f ∈ modFormCharSpace k χ)
     (hf_eigen : IsNormalisedEigenform k f) :
     (qExpansion N f).coeff m.val * (qExpansion N f).coeff n.val =
       ∑ d ∈ (Nat.gcd m.val n.val).divisors,
@@ -825,8 +793,7 @@ theorem eigenform_coeff_multiplicative [NeZero N] (k : ℤ) (m n : ℕ+)
 
 private theorem fourierCoeff_heckeT_ppow_period_one [NeZero N] (k : ℤ) {p : ℕ}
     (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (χ : (ZMod N)ˣ →* ℂˣ) (v : ℕ)
-    {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
-    (hf : f ∈ modFormCharSpace k χ) (m : ℕ) :
+    {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k} (hf : f ∈ modFormCharSpace k χ) (m : ℕ) :
     (qExpansion (1 : ℝ) (heckeT_ppow k p hp v f)).coeff m =
       ∑ d ∈ (Nat.gcd m (p ^ v)).divisors,
         if h : d.Coprime N then
@@ -863,8 +830,7 @@ private theorem fourierCoeff_heckeT_ppow_period_one [NeZero N] (k : ℤ) {p : �
 every `coeff` taken at the canonical Fourier period `h = 1`. -/
 theorem fourierCoeff_heckeT_n_period_one [NeZero N] (k : ℤ) (n : ℕ) [NeZero n]
     (hn : Nat.Coprime n N) (χ : (ZMod N)ˣ →* ℂˣ)
-    {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
-    (hf : f ∈ modFormCharSpace k χ) (m : ℕ) :
+    {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k} (hf : f ∈ modFormCharSpace k χ) (m : ℕ) :
     (qExpansion (1 : ℝ) (heckeT_n k n f)).coeff m =
       ∑ d ∈ (Nat.gcd m n).divisors,
         if h : d.Coprime N then
@@ -902,18 +868,16 @@ theorem fourierCoeff_heckeT_n_period_one [NeZero N] (k : ℤ) (n : ℕ) [NeZero 
 normalisation `a_1 = (qExpansion (1 : ℝ) f).coeff 1 = 1`. This is the Miyake / Diamond–Shurman
 `a_1 = 1` normalisation and supersedes `IsNormalisedEigenform`, whose period-`N` condition is
 vacuous for `N > 1`. -/
-def IsNormalisedEigenform_one [NeZero N] (k : ℤ)
-    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
+def IsNormalisedEigenform_one [NeZero N] (k : ℤ) (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    Prop :=
   IsCommonEigenfunction k f ∧ (qExpansion (1 : ℝ) f).coeff 1 = 1
 
 /-- **Period-1 eigenvalue = Fourier coefficient** (period-1 analog of
 `eigenvalue_eq_fourierCoeff`): if `f` is a period-1 normalised eigenform in `M_k(Γ₁(N), χ)` and
 `(n, N) = 1`, then `λ_n = a_n(f)`. -/
-theorem eigenvalue_eq_fourierCoeff_one [NeZero N] (k : ℤ) (n : ℕ+)
-    (hn : Nat.Coprime n.val N) (χ : (ZMod N)ˣ →* ℂˣ)
-    {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
-    (hf_char : f ∈ modFormCharSpace k χ)
-    (hf_eigen : IsNormalisedEigenform_one k f) :
+theorem eigenvalue_eq_fourierCoeff_one [NeZero N] (k : ℤ) (n : ℕ+) (hn : Nat.Coprime n.val N)
+    (χ : (ZMod N)ˣ →* ℂˣ) {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
+    (hf_char : f ∈ modFormCharSpace k χ) (hf_eigen : IsNormalisedEigenform_one k f) :
     eigenvalue k f hf_eigen.1 n hn = (qExpansion (1 : ℝ) f).coeff n.val := by
   have : NeZero n.val := ⟨n.pos.ne'⟩
   have h1 := fourierCoeff_heckeT_n_period_one k n.val hn χ hf_char 1
@@ -931,10 +895,8 @@ eigenform: `a_m · a_n = Σ_{d | gcd(m, n)} d^{k-1} · χ(d) · a_{mn/d²}`. In 
 `a_m · a_n = a_{mn}` when `gcd(m, n) = 1`. Period-1 analog of
 `eigenform_coeff_multiplicative`. -/
 theorem eigenform_coeff_multiplicative_one [NeZero N] (k : ℤ) (m n : ℕ+)
-    (hm : Nat.Coprime m.val N) (_ : Nat.Coprime n.val N)
-    (χ : (ZMod N)ˣ →* ℂˣ)
-    {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
-    (hf_char : f ∈ modFormCharSpace k χ)
+    (hm : Nat.Coprime m.val N) (_ : Nat.Coprime n.val N) (χ : (ZMod N)ˣ →* ℂˣ)
+    {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k} (hf_char : f ∈ modFormCharSpace k χ)
     (hf_eigen : IsNormalisedEigenform_one k f) :
     (qExpansion (1 : ℝ) f).coeff m.val * (qExpansion (1 : ℝ) f).coeff n.val =
       ∑ d ∈ (Nat.gcd m.val n.val).divisors,
