@@ -718,7 +718,7 @@ equality. -/
 theorem GLPos_to_PSL_R_term_smul_set (α' : GL(2, ℝ)⁺) (S : Set ℍ) :
     (GLPos_to_PSL_R_term α' • S : Set ℍ) = ((α' : GL(2, ℝ)⁺) • S : Set ℍ) := by
   ext τ
-  simp only [Set.mem_smul_set, GLPos_to_PSL_R_term_smul]
+  simp [Set.mem_smul_set, GLPos_to_PSL_R_term_smul]
 
 end PSL_R_action
 
