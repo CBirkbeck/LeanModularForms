@@ -451,8 +451,8 @@ open UpperHalfPlane Matrix.SpecialLinearGroup MeasureTheory
 /-- The center of `SL(2, ℝ)` consists of `{I, -I}`. Every central element acts
 trivially on `ℍ` because it is a scalar matrix `ζI` with `ζ² = 1`, and the Möbius
 formula `(ζτ + 0)/(0τ + ζ) = τ` is invariant under the sign of `ζ`. -/
-theorem center_SL2R_smul_eq (c : SL(2, ℝ))
-    (hc : c ∈ Subgroup.center SL(2, ℝ)) (τ : ℍ) : c • τ = τ := by
+theorem center_SL2R_smul_eq (c : SL(2, ℝ)) (hc : c ∈ Subgroup.center SL(2, ℝ)) (τ : ℍ) :
+    c • τ = τ := by
   rw [mem_center_iff] at hc
   obtain ⟨ζ, hζ, hζ_eq⟩ := hc
   simp only [Fintype.card_fin] at hζ
