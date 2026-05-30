@@ -19,8 +19,13 @@ namespace HeckeRing.GL2
 
 variable {N : ℕ} [NeZero N] {k : ℤ}
 
+private lemma one_mem_strictPeriods_Gamma1_map (M : ℕ) :
+    (1 : ℝ) ∈ ((Gamma1 M).map (mapGL ℝ)).strictPeriods := by
+  rw [show (Gamma1 M).map (mapGL ℝ) = (Gamma1 M : Subgroup (GL (Fin 2) ℝ)) from rfl,
+    strictPeriods_Gamma1]
+  exact ⟨1, by simp⟩
+
 private theorem miyake_descent_witness_exists
-    {N : ℕ} [NeZero N] {k : ℤ}
     (χ : (ZMod N)ˣ →* ℂˣ)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (hfχ : f ∈ cuspFormCharSpace k χ)
@@ -42,14 +47,12 @@ private theorem miyake_descent_witness_exists
     (cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace
       (k := k) χ f).mpr hfχ
   have h_cnt_pos : 0 < descendCosetCount p N := by
-    have := hp.pos
-    unfold descendCosetCount; split_ifs <;> lia
+    have := hp.pos; unfold descendCosetCount; split_ifs <;> lia
   set c : ℂ := (p : ℂ) / (descendCosetCount p N : ℂ) with hc_def
   let Φ : CuspForm ((Gamma1 (N / p)).map (mapGL ℝ)) k :=
     descendSlashSumCuspForm χ f p hp hpN χ' hχ_eq hfχ_mod
-  have hΦ_char : Φ ∈ cuspFormCharSpace k χ' :=
-    descendSlashSumCuspForm_mem_charSpace χ f p hp hpN χ' hχ_eq hfχ_mod
-  refine ⟨c • Φ, Submodule.smul_mem _ c hΦ_char, fun m hm_cop ↦ ?_⟩
+  refine ⟨c • Φ, Submodule.smul_mem _ c
+    (descendSlashSumCuspForm_mem_charSpace χ f p hp hpN χ' hχ_eq hfχ_mod), fun m hm_cop ↦ ?_⟩
   rw [show (ModularFormClass.qExpansion (1 : ℝ) ⇑(c • Φ)).coeff m =
         c * (ModularFormClass.qExpansion (1 : ℝ) Φ).coeff m from
       qExpansion_smul_cuspForm_coeff_aux c Φ m]
@@ -69,12 +72,8 @@ private theorem miyake_descent_witness_exists
   have : (descendCosetCount p N : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr h_cnt_pos.ne'
   field_simp
 
-/-- The arithmetic input `l' = ∏_{q ∈ S.erase p} q` to the descent witness is
-positive, coprime to `p`, squarefree, supported on `N.primeFactors`, and does
-not have `p` as a prime factor — all flowing from `S ⊆ N.primeFactors`. -/
 private theorem erase_prod_descent_properties
-    {N : ℕ} [NeZero N] (S : Finset ℕ) (hS : S ⊆ N.primeFactors)
-    {p : ℕ} (hp_prime : p.Prime) :
+    (S : Finset ℕ) (hS : S ⊆ N.primeFactors) {p : ℕ} (hp_prime : p.Prime) :
     0 < (S.erase p).prod id ∧ Nat.Coprime p ((S.erase p).prod id) ∧
       Squarefree ((S.erase p).prod id) ∧
       (∀ q ∈ ((S.erase p).prod id).primeFactors, q ∈ N.primeFactors) ∧
@@ -90,27 +89,20 @@ private theorem erase_prod_descent_properties
     refine Finset.squarefree_prod_of_pairwise_isCoprime (fun q₁ hq₁ q₂ hq₂ hne ↦ ?_)
       fun q hq ↦
         (Nat.prime_of_mem_primeFactors (hS (Finset.mem_of_mem_erase hq))).squarefree
-    have hq₁_prime : q₁.Prime :=
-      Nat.prime_of_mem_primeFactors (hS (Finset.mem_of_mem_erase hq₁))
-    have hq₂_prime : q₂.Prime :=
-      Nat.prime_of_mem_primeFactors (hS (Finset.mem_of_mem_erase hq₂))
     show IsRelPrime (id q₁) (id q₂)
     rw [← Nat.coprime_iff_isRelPrime]
-    exact (Nat.coprime_primes hq₁_prime hq₂_prime).mpr hne
-  have hl'_dvd_N : (S.erase p).prod id ∣ N :=
-    Finset.prod_primes_dvd N
-      (fun _ hq ↦ (Nat.prime_of_mem_primeFactors (hS (Finset.mem_of_mem_erase hq))).prime)
-      fun _ hq ↦ Nat.dvd_of_mem_primeFactors (hS (Finset.mem_of_mem_erase hq))
+    exact (Nat.coprime_primes (Nat.prime_of_mem_primeFactors (hS (Finset.mem_of_mem_erase hq₁)))
+      (Nat.prime_of_mem_primeFactors (hS (Finset.mem_of_mem_erase hq₂)))).mpr hne
   exact ⟨hl'_pos, hpl', hl'_sqfree,
-    fun _ hq ↦ Nat.primeFactors_mono hl'_dvd_N (NeZero.ne N) hq,
+    fun _ hq ↦ Nat.primeFactors_mono (Finset.prod_primes_dvd N
+      (fun _ hq ↦ (Nat.prime_of_mem_primeFactors (hS (Finset.mem_of_mem_erase hq))).prime)
+      fun _ hq ↦ Nat.dvd_of_mem_primeFactors (hS (Finset.mem_of_mem_erase hq)))
+        (NeZero.ne N) hq,
     fun hp_in_l' ↦
       (hp_prime.coprime_iff_not_dvd.mp hpl') (Nat.dvd_of_mem_primeFactors hp_in_l')⟩
 
-/-- The level-raised cast `castLevelRaise N p hpN k f_lower` lands in the
-Nebentypus character space `cuspFormCharSpace k χ`, provided the lower-level
-form `f_lower` lies in `cuspFormCharSpace k χ'` and `χ = χ' ∘ unitsMap`. -/
 private theorem castLevelRaise_mem_cuspFormCharSpace
-    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p] [NeZero (N / p)]
+    {p : ℕ} [NeZero p] [NeZero (N / p)]
     (hpN : p ∣ N) (χ : (ZMod N)ˣ →* ℂˣ) (χ' : (ZMod (N / p))ˣ →* ℂˣ)
     (hχ_eq : χ = χ'.comp (ZMod.unitsMap (Nat.div_dvd_of_dvd hpN)))
     (f_lower : CuspForm ((Gamma1 (N / p)).map (mapGL ℝ)) k)
@@ -122,21 +114,14 @@ private theorem castLevelRaise_mem_cuspFormCharSpace
         cuspFormCharSpace k (χ'.comp (ZMod.unitsMap (Nat.dvd_mul_left (N / p) p))) :=
     cuspForm_levelRaise_mem_cuspFormCharSpace (N / p) p k χ' hf_lower_char
   rw [HeckeRing.GL2.AtkinLehner.castLevelRaise_apply, hχ_eq]
-  have key : ∀ (M : ℕ) [NeZero M] (heq : p * (N / p) = M) (h₁ : (N / p) ∣ M),
+  exact (show ∀ (M : ℕ) [NeZero M] (heq : p * (N / p) = M) (h₁ : (N / p) ∣ M),
       (heq ▸ HeckeRing.GL2.levelRaise (N / p) p k f_lower :
           CuspForm ((Gamma1 M).map (mapGL ℝ)) k) ∈
-        cuspFormCharSpace k (χ'.comp (ZMod.unitsMap h₁)) := by
-    rintro M _ rfl h₁
-    convert h_lr_char using 2
-  exact key N (Nat.mul_div_cancel' hpN) _
+        cuspFormCharSpace k (χ'.comp (ZMod.unitsMap h₁)) by
+    rintro M _ rfl h₁; convert h_lr_char using 2) N (Nat.mul_div_cancel' hpN) _
 
-/-- The `n`-th `q`-expansion coefficient of `castLevelRaise N p hpN k f_lower`
-agrees with that of `f` whenever `n` is coprime to `l'`: on the `p ∣ n` branch
-it reduces to the descent identity `hf_lower_qexp`, and on the `p ∤ n` branch
-both sides vanish by `h_vanish'`. -/
 private theorem castLevelRaise_qExpansion_coeff_eq
-    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p] [NeZero (N / p)]
-    (hp_prime : p.Prime) (hpN : p ∣ N)
+    {p : ℕ} [NeZero p] [NeZero (N / p)] (hp_prime : p.Prime) (hpN : p ∣ N)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (f_lower : CuspForm ((Gamma1 (N / p)).map (mapGL ℝ)) k) {l' : ℕ}
     (hf_lower_qexp : ∀ m : ℕ, Nat.Coprime m l' →
@@ -153,10 +138,10 @@ private theorem castLevelRaise_qExpansion_coeff_eq
           UpperHalfPlane → ℂ) =
         ⇑(HeckeRing.GL2.levelRaise (N / p) p k f_lower) := by
     rw [HeckeRing.GL2.AtkinLehner.castLevelRaise_apply]
-    have : ∀ {A B : ℕ} (heq : A = B) (x : CuspForm ((Gamma1 A).map (mapGL ℝ)) k),
+    exact (show ∀ {A B : ℕ} (heq : A = B) (x : CuspForm ((Gamma1 A).map (mapGL ℝ)) k),
         (⇑(heq ▸ x : CuspForm ((Gamma1 B).map (mapGL ℝ)) k) :
-            UpperHalfPlane → ℂ) = ⇑x := fun heq x ↦ by cases heq; rfl
-    exact this (Nat.mul_div_cancel' hpN) _
+            UpperHalfPlane → ℂ) = ⇑x from fun heq x ↦ by cases heq; rfl)
+      (Nat.mul_div_cancel' hpN) _
   have h_lr_coe : (⇑(HeckeRing.GL2.levelRaise (N / p) p k f_lower) :
           UpperHalfPlane → ℂ) =
         ⇑(HeckeRing.GL2.modularFormLevelRaise (N / p) p k
@@ -177,15 +162,13 @@ coprime-vanishing on the prime-subset `S` and `p ∈ S`, there exists
 `f_p ∈ qSupportedOnDvdSubmodule N k p ∩ cuspFormCharSpace` such that
 `f - f_p` has coprime-vanishing on `S.erase p`. -/
 theorem miyake_4_6_8_inductive_step
-    {N : ℕ} [NeZero N] {k : ℤ}
     (χ : (ZMod N)ˣ →* ℂˣ)
     (S : Finset ℕ) (hS : S ⊆ N.primeFactors)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (hfχ : f ∈ cuspFormCharSpace k χ)
     (h_vanish : ∀ n : ℕ, Nat.Coprime n (S.prod id) →
       (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0)
-    {p : ℕ} (hp_in : p ∈ S)
-    [hNp_NeZero : NeZero (N / p)]
+    {p : ℕ} (hp_in : p ∈ S) [NeZero (N / p)]
     (χ' : (ZMod (N / p))ˣ →* ℂˣ)
     (hχ_eq : χ = χ'.comp (ZMod.unitsMap
       (Nat.div_dvd_of_dvd (Nat.dvd_of_mem_primeFactors (hS hp_in))))) :
@@ -196,40 +179,29 @@ theorem miyake_4_6_8_inductive_step
         (ModularFormClass.qExpansion (1 : ℝ) (f - f_p)).coeff n = 0 := by
   set l' := (S.erase p).prod id with hl'_def
   have h_prod_eq : S.prod id = p * l' := by
-    rw [hl'_def, ← Finset.mul_prod_erase S id hp_in]
-    simp
+    rw [hl'_def, ← Finset.mul_prod_erase S id hp_in]; simp
   have hp_prime : p.Prime := Nat.prime_of_mem_primeFactors (hS hp_in)
   have hpN : p ∣ N := Nat.dvd_of_mem_primeFactors (hS hp_in)
   have h_vanish' : ∀ n : ℕ, Nat.Coprime n (p * l') →
       (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0 :=
     fun n hn ↦ h_vanish n (h_prod_eq ▸ hn)
-  haveI hp_NeZero : NeZero p := ⟨hp_prime.ne_zero⟩
+  haveI : NeZero p := ⟨hp_prime.ne_zero⟩
   obtain ⟨hl'_pos, hpl', hl'_sqfree, hl'_dvd, hp_not_in_l'⟩ :=
     erase_prod_descent_properties S hS hp_prime
   obtain ⟨f_lower, hf_lower_char, hf_lower_qexp⟩ :=
     miyake_descent_witness_exists χ f hfχ p hp_prime hpN χ' hχ_eq l' hl'_pos
       hl'_sqfree hpl' hl'_dvd hp_not_in_l' h_vanish'
-  let f_p : CuspForm ((Gamma1 N).map (mapGL ℝ)) k :=
+  set f_p : CuspForm ((Gamma1 N).map (mapGL ℝ)) k :=
     HeckeRing.GL2.AtkinLehner.castLevelRaise N p hpN k f_lower
-  have h_M8_construct :
-      ∃ f_p : CuspForm ((Gamma1 N).map (mapGL ℝ)) k,
-        f_p ∈ HeckeRing.GL2.AtkinLehner.qSupportedOnDvdSubmodule N k p ∧
-        f_p ∈ cuspFormCharSpace k χ ∧
-        ∀ n : ℕ, Nat.Coprime n l' →
-          (ModularFormClass.qExpansion (1 : ℝ) f_p).coeff n =
-          (ModularFormClass.qExpansion (1 : ℝ) f).coeff n :=
-    ⟨f_p,
-      HeckeRing.GL2.AtkinLehner.range_castLevelRaise_le_qSupportedOnDvdSubmodule
-        hpN k ⟨f_lower, rfl⟩,
-      castLevelRaise_mem_cuspFormCharSpace hpN χ χ' hχ_eq f_lower hf_lower_char,
-      fun n hn ↦ castLevelRaise_qExpansion_coeff_eq hp_prime hpN f f_lower
-        hf_lower_qexp h_vanish' hn⟩
-  obtain ⟨f_p, h_supp, h_char, h_qexp_eq⟩ := h_M8_construct
-  refine ⟨f_p, h_supp, h_char, fun n hn ↦ ?_⟩
-  have h1_period : (1 : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
-    rw [show (Gamma1 N).map (mapGL ℝ) = (Gamma1 N : Subgroup (GL (Fin 2) ℝ)) from rfl,
-      strictPeriods_Gamma1]
-    exact ⟨1, by simp⟩
+  have h_qexp_eq : ∀ n : ℕ, Nat.Coprime n l' →
+      (ModularFormClass.qExpansion (1 : ℝ) f_p).coeff n =
+        (ModularFormClass.qExpansion (1 : ℝ) f).coeff n := fun n hn ↦
+    castLevelRaise_qExpansion_coeff_eq hp_prime hpN f f_lower hf_lower_qexp h_vanish' hn
+  refine ⟨f_p, HeckeRing.GL2.AtkinLehner.range_castLevelRaise_le_qSupportedOnDvdSubmodule
+      hpN k ⟨f_lower, rfl⟩,
+    castLevelRaise_mem_cuspFormCharSpace hpN χ χ' hχ_eq f_lower hf_lower_char,
+    fun n hn ↦ ?_⟩
+  have h1_period := one_mem_strictPeriods_Gamma1_map (M := N)
   have h_sub : ModularFormClass.qExpansion (1 : ℝ) (f - f_p) =
       ModularFormClass.qExpansion (1 : ℝ) f -
       ModularFormClass.qExpansion (1 : ℝ) f_p := by
@@ -238,26 +210,16 @@ theorem miyake_4_6_8_inductive_step
       one_pos h1_period f (- f_p)
   rw [h_sub, map_sub, h_qexp_eq n hn, sub_self]
 
-/-- A cusp form on `Γ₁(N)` whose every `q`-expansion coefficient (at period `1`)
-vanishes is the zero form, via injectivity of the `q`-expansion. -/
-private theorem cuspForm_eq_zero_of_qExpansion_coeff_eq_zero
-    {N : ℕ} [NeZero N] {k : ℤ} (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (h : ∀ n : ℕ,
-      (ModularFormClass.qExpansion (1 : ℝ) f.toModularForm').coeff n = 0) :
+private theorem cuspForm_eq_zero_of_qExpansion_coeff_eq_zero {N : ℕ} {k : ℤ}
+    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (h : ∀ n : ℕ, (ModularFormClass.qExpansion (1 : ℝ) f.toModularForm').coeff n = 0) :
     f = 0 := by
-  have h1_period : (1 : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
-    rw [show (Gamma1 N).map (mapGL ℝ) = (Gamma1 N : Subgroup (GL (Fin 2) ℝ)) from rfl,
-      strictPeriods_Gamma1]
-    exact ⟨1, by simp⟩
-  have h_qExp_zero : ModularFormClass.qExpansion (1 : ℝ) f.toModularForm' = 0 :=
-    PowerSeries.ext fun n ↦ by rw [map_zero]; exact h n
   refine DFunLike.coe_injective ?_
   show (⇑f : UpperHalfPlane → ℂ) = 0
   rw [show (⇑f : UpperHalfPlane → ℂ) = ⇑f.toModularForm' from rfl,
-    (qExpansion_eq_zero_iff one_pos h1_period f.toModularForm').mp h_qExp_zero]; rfl
+    (qExpansion_eq_zero_iff one_pos (one_mem_strictPeriods_Gamma1_map N) f.toModularForm').mp
+      (PowerSeries.ext fun n ↦ by rw [map_zero]; exact h n)]; rfl
 
-/-- Splitting a two-branch piecewise sum over `S` at a member `p ∈ S`: the
-distinguished branch contributes `a` and the rest sums over `S.erase p`. -/
 private theorem sum_ite_eq_add_sum_erase {M : Type*} [AddCommMonoid M]
     {S : Finset ℕ} {p : ℕ} (hp_in : p ∈ S) (a : M) (g : ℕ → M) :
     ∑ q ∈ S, (if q = p then a else g q) = a + ∑ q ∈ S.erase p, g q := by
@@ -275,7 +237,6 @@ there is a decomposition `f = ∑_{p ∈ S} f_p` with each `f_p` in
 
 Proven by induction on `S.card` using M8 at each step. -/
 theorem miyake_4_6_8_subset_helper
-    {N : ℕ} [NeZero N] {k : ℤ}
     (χ : (ZMod N)ˣ →* ℂˣ)
     (S : Finset ℕ) (hS : S ⊆ N.primeFactors)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
@@ -283,12 +244,9 @@ theorem miyake_4_6_8_subset_helper
     (h_vanish : ∀ n : ℕ, Nat.Coprime n (S.prod id) →
       (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0)
     (h_chi_factor : ∀ (p : ℕ) (hp_in : p ∈ N.primeFactors),
-      haveI : NeZero (N / p) := ⟨by
-        have hp_prime : p.Prime := Nat.prime_of_mem_primeFactors hp_in
-        have hpN : p ∣ N := Nat.dvd_of_mem_primeFactors hp_in
-        have hN_pos : 0 < N := Nat.pos_of_ne_zero (NeZero.ne N)
-        exact (Nat.div_pos (Nat.le_of_dvd hN_pos hpN) hp_prime.pos).ne'⟩
-      ∃ (χ' : (ZMod (N / p))ˣ →* ℂˣ),
+      haveI : NeZero (N / p) := ⟨(Nat.div_pos (Nat.le_of_dvd (Nat.pos_of_ne_zero (NeZero.ne N))
+        (Nat.dvd_of_mem_primeFactors hp_in)) (Nat.prime_of_mem_primeFactors hp_in).pos).ne'⟩
+      ∃ χ' : (ZMod (N / p))ˣ →* ℂˣ,
         χ = χ'.comp (ZMod.unitsMap
           (Nat.div_dvd_of_dvd (Nat.dvd_of_mem_primeFactors hp_in)))) :
     ∃ f_p : ℕ → CuspForm ((Gamma1 N).map (mapGL ℝ)) k,
@@ -297,23 +255,18 @@ theorem miyake_4_6_8_subset_helper
       (∀ p ∈ S, f_p p ∈ cuspFormCharSpace k χ) := by
   induction hSc : S.card generalizing f S with
   | zero =>
-    have hS_empty : S = ∅ := Finset.card_eq_zero.mp hSc
-    subst hS_empty
+    obtain rfl : S = ∅ := Finset.card_eq_zero.mp hSc
     refine ⟨fun _ ↦ 0, ?_, ?_, ?_⟩
-    · have hf_zero : f = 0 :=
-        cuspForm_eq_zero_of_qExpansion_coeff_eq_zero f fun n ↦
-          h_vanish n (by simp [Nat.Coprime, Finset.prod_empty])
-      rw [hf_zero, Finset.sum_empty]
+    · rw [cuspForm_eq_zero_of_qExpansion_coeff_eq_zero f fun n ↦
+        h_vanish n (by simp [Nat.Coprime, Finset.prod_empty]), Finset.sum_empty]
     · exact fun p hp ↦ absurd hp (Finset.notMem_empty p)
     · exact fun p hp ↦ absurd hp (Finset.notMem_empty p)
   | succ n ih =>
-    have hS_nonempty : S.Nonempty := Finset.card_pos.mp (hSc ▸ Nat.succ_pos n)
-    obtain ⟨p, hp_in⟩ := hS_nonempty
+    obtain ⟨p, hp_in⟩ : S.Nonempty := Finset.card_pos.mp (hSc ▸ Nat.succ_pos n)
     have hp_prime : p.Prime := Nat.prime_of_mem_primeFactors (hS hp_in)
     have hpN : p ∣ N := Nat.dvd_of_mem_primeFactors (hS hp_in)
-    haveI hNp_NeZero : NeZero (N / p) := ⟨by
-      have hN_pos : 0 < N := Nat.pos_of_ne_zero (NeZero.ne N)
-      exact (Nat.div_pos (Nat.le_of_dvd hN_pos hpN) hp_prime.pos).ne'⟩
+    haveI : NeZero (N / p) := ⟨(Nat.div_pos
+      (Nat.le_of_dvd (Nat.pos_of_ne_zero (NeZero.ne N)) hpN) hp_prime.pos).ne'⟩
     obtain ⟨χ', hχ_eq⟩ := h_chi_factor p (hS hp_in)
     obtain ⟨f_p, h_supp, h_char, h_diff_vanish⟩ :=
       miyake_4_6_8_inductive_step χ S hS f hfχ h_vanish hp_in χ' hχ_eq
@@ -321,37 +274,21 @@ theorem miyake_4_6_8_subset_helper
       hS (Finset.mem_of_mem_erase hq)
     have h_erase_card : (S.erase p).card = n := by
       rw [Finset.card_erase_of_mem hp_in, hSc]; lia
-    have h_diff_char : f - f_p ∈ cuspFormCharSpace k χ :=
-      Submodule.sub_mem _ hfχ h_char
     obtain ⟨f_q, h_sum, h_supp_q, h_char_q⟩ :=
-      ih (S.erase p) h_erase_sub (f - f_p) h_diff_char h_diff_vanish
+      ih (S.erase p) h_erase_sub (f - f_p) (Submodule.sub_mem _ hfχ h_char) h_diff_vanish
         h_erase_card
     refine ⟨fun q ↦ if q = p then f_p else f_q q, ?_, ?_, ?_⟩
-    · rw [sum_ite_eq_add_sum_erase hp_in f_p f_q, ← h_sum]
-      abel
+    · rw [sum_ite_eq_add_sum_erase hp_in f_p f_q, ← h_sum]; abel
     · intro q hq
       by_cases hqp : q = p
-      · subst hqp
-        simpa only [if_true] using h_supp
+      · subst hqp; simpa only [if_true] using h_supp
       · simp only [hqp, if_false]
         exact h_supp_q q (Finset.mem_erase.mpr ⟨hqp, hq⟩)
     · intro q hq
       by_cases hqp : q = p
-      · subst hqp
-        simpa only [if_true] using h_char
+      · subst hqp; simpa only [if_true] using h_char
       · simp only [hqp, if_false]
         exact h_char_q q (Finset.mem_erase.mpr ⟨hqp, hq⟩)
-
-/-! ## Unconditional Miyake 4.6.8: dropping `h_chi_factor` via the 4.6.4 dichotomy
-
-The conditional helpers above obtain the per-prime factorisation
-`χ = χ'.comp (unitsMap …)` from the `h_chi_factor` hypothesis, which Miyake imposes
-as the character-conductor restriction (p. 160) and which **fails** for some primes
-(e.g. `N = p²`, `χ` of conductor `p`).  We replace `h_chi_factor` by a per-prime
-case split on Miyake's dichotomy `miyake_4_6_4_dichotomy_strong`: applied to the
-`p`-supported piece `g` of `f`, it either returns `g = 0` (then `f` already vanishes
-on the `(·, l')`-coprime indices, so the `p`-piece drops out) or it *produces* the
-factorisation through `(l'·N)/p`, which we transport down to `N/p` via the conductor. -/
 
 private lemma factorsThrough_of_conductor_dvd {n : ℕ} (χ : DirichletCharacter ℂ n)
     {d : ℕ} (hcd : χ.conductor ∣ d) (hdn : d ∣ n) :
@@ -368,15 +305,15 @@ private lemma conductor_dvd_of_factorsThrough {n : ℕ} (χ : DirichletCharacter
 private lemma conductor_changeLevel {n m : ℕ} (hnm : n ∣ m) [NeZero n] [NeZero m]
     (χ : DirichletCharacter ℂ n) :
     (DirichletCharacter.changeLevel hnm χ).conductor = χ.conductor := by
-  set c := (DirichletCharacter.changeLevel hnm χ).conductor with hc
+  set c := (DirichletCharacter.changeLevel hnm χ).conductor
   have hcn : c ∣ n :=
     conductor_dvd_of_factorsThrough (DirichletCharacter.changeLevel hnm χ) (NeZero.ne m)
       (DirichletCharacter.changeLevel_factorsThrough χ hnm)
   have hχ_fac_c : χ.FactorsThrough c := by
     obtain ⟨_hcm, χ_c, hχc⟩ := DirichletCharacter.factorsThrough_conductor
       (DirichletCharacter.changeLevel hnm χ)
-    refine ⟨hcn, χ_c, DirichletCharacter.changeLevel_injective hnm ?_⟩
-    rw [← DirichletCharacter.changeLevel_trans χ_c hcn hnm, ← hχc]
+    exact ⟨hcn, χ_c, DirichletCharacter.changeLevel_injective hnm <| by
+      rw [← DirichletCharacter.changeLevel_trans χ_c hcn hnm, ← hχc]⟩
   refine Nat.dvd_antisymm ?_ (conductor_dvd_of_factorsThrough χ (NeZero.ne n) hχ_fac_c)
   refine conductor_dvd_of_factorsThrough (DirichletCharacter.changeLevel hnm χ) (NeZero.ne m)
     ⟨χ.conductor_dvd_level.trans hnm, χ.primitiveCharacter, ?_⟩
@@ -384,7 +321,6 @@ private lemma conductor_changeLevel {n m : ℕ} (hnm : n ∣ m) [NeZero n] [NeZe
     χ.conductor_dvd_level hnm, DirichletCharacter.changeLevel_primitiveCharacter]
 
 private theorem miyake_4_6_8_factor_dichotomy
-    {N : ℕ} [NeZero N] {k : ℤ}
     (χ : (ZMod N)ˣ →* ℂˣ)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (hfχ : f ∈ cuspFormCharSpace k χ)
@@ -420,11 +356,8 @@ private theorem miyake_4_6_8_factor_dichotomy
   · refine Or.inl fun n hn_cop ↦ ?_
     have hgn := hg_qexp n
     rw [if_pos hn_cop] at hgn
-    rw [← hgn, hg_zero]
-    show (ModularFormClass.qExpansion (1 : ℝ)
-      (⇑(0 : CuspForm ((Gamma1 (l' * N)).map (mapGL ℝ)) k) : UpperHalfPlane → ℂ)).coeff n = 0
-    rw [show (⇑(0 : CuspForm ((Gamma1 (l' * N)).map (mapGL ℝ)) k) : UpperHalfPlane → ℂ) =
-        (0 : UpperHalfPlane → ℂ) from rfl, qExpansion_zero, map_zero]
+    rw [← hgn, hg_zero, show (⇑(0 : CuspForm ((Gamma1 (l' * N)).map (mapGL ℝ)) k) :
+      UpperHalfPlane → ℂ) = (0 : UpperHalfPlane → ℂ) from rfl, qExpansion_zero, map_zero]
   · refine Or.inr ?_
     have h_cond_dvd_lNp : χ_dir.conductor ∣ l' * (N / p) := by
       have : χ_M.conductor ∣ (l' * N) / p :=
@@ -438,9 +371,9 @@ private theorem miyake_4_6_8_factor_dichotomy
         hpl', Nat.mul_one] at hcd_gcd
     refine ⟨(loweredCharacter (l := p)
       (factorsThrough_of_conductor_dvd χ_dir h_cond_dvd_Np (Nat.div_dvd_of_dvd hpN))).toUnitHom, ?_⟩
-    have h := toUnitHom_loweredCharacter (χ := χ_dir) (l := p)
+    have := toUnitHom_loweredCharacter (χ := χ_dir) (l := p)
       (factorsThrough_of_conductor_dvd χ_dir h_cond_dvd_Np (Nat.div_dvd_of_dvd hpN))
-    rwa [hχ_dir_unit] at h
+    rwa [hχ_dir_unit] at this
 
 /-- **Unconditional subset-indexed helper for Miyake 4.6.8.**  For `f ∈ S_k(Γ_1(N), χ)`
 vanishing on indices coprime to `S.prod id` (`S ⊆ N.primeFactors`), there is a
@@ -448,7 +381,6 @@ decomposition `f = ∑_{p ∈ S} f_p` with each `f_p` `p`-supported and in the c
 space.  No `h_chi_factor` is needed: the per-prime factorisation is produced by
 `miyake_4_6_8_factor_dichotomy`. -/
 theorem miyake_4_6_8_subset_helper_unconditional
-    {N : ℕ} [NeZero N] {k : ℤ}
     (χ : (ZMod N)ˣ →* ℂˣ)
     (S : Finset ℕ) (hS : S ⊆ N.primeFactors)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
@@ -485,7 +417,7 @@ theorem miyake_4_6_8_subset_helper_unconditional
     rcases miyake_4_6_8_factor_dichotomy χ f hfχ hp_prime hpN l' hl'_pos hl'_sqfree hpl'
       hl'_dvd (fun m hm ↦ h_vanish m (h_prod_eq ▸ hm)) with h_f_vanish | ⟨χ', hχ_eq⟩
     · obtain ⟨f_q, h_sum, h_supp_q, h_char_q⟩ :=
-        ih (S.erase p) h_erase_sub f hfχ (fun m hm ↦ h_f_vanish m hm) h_erase_card
+        ih (S.erase p) h_erase_sub f hfχ h_f_vanish h_erase_card
       refine ⟨fun q ↦ if q = p then 0 else f_q q, ?_, ?_, ?_⟩
       · rw [sum_ite_eq_add_sum_erase hp_in 0 f_q, zero_add, ← h_sum]
       · intro q hq
