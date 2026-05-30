@@ -3,9 +3,9 @@ Copyright (c) 2024 Chris Birkbeck. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
+import Mathlib.GroupTheory.Commensurable
 import Mathlib.LinearAlgebra.Matrix.GeneralLinearGroup.Defs
 import Mathlib.LinearAlgebra.Matrix.SpecialLinearGroup
-import Mathlib.GroupTheory.Commensurable
 import LeanModularForms.HeckeRIngs.AbstractHeckeRing.Basic
 
 /-!
@@ -64,9 +64,9 @@ def HasIntEntries (g : GL (Fin n) ℚ) : Prop :=
     (↑g : Matrix (Fin n) (Fin n) ℚ) = A.map (Int.cast : ℤ → ℚ)
 
 lemma SLnZ_subgroup_hasIntEntries {g : GL (Fin n) ℚ}
-    (hg : g ∈ SLnZ_subgroup n) : HasIntEntries n g := by
-  obtain ⟨σ, rfl⟩ := hg
-  exact ⟨σ.val, by simp [mapGL_coe_matrix, algebraMap_int_eq]⟩
+    (hg : g ∈ SLnZ_subgroup n) : HasIntEntries n g :=
+  let ⟨σ, hσ⟩ := hg
+  ⟨σ.val, hσ ▸ by simp [mapGL_coe_matrix, algebraMap_int_eq]⟩
 
 /-- The identity matrix has integer entries. -/
 @[simp]
@@ -75,10 +75,9 @@ lemma hasIntEntries_one : HasIntEntries n (1 : GL (Fin n) ℚ) :=
 
 /-- Product of integer-entry matrices has integer entries. -/
 lemma HasIntEntries.mul {a b : GL (Fin n) ℚ} (ha : HasIntEntries n a) (hb : HasIntEntries n b) :
-    HasIntEntries n (a * b) := by
-  obtain ⟨A, hA⟩ := ha
-  obtain ⟨B, hB⟩ := hb
-  exact ⟨A * B, by ext i j; simp [hA, hB, Matrix.mul_apply, Matrix.map_apply]⟩
+    HasIntEntries n (a * b) :=
+  let ⟨A, hA⟩ := ha; let ⟨B, hB⟩ := hb
+  ⟨A * B, by ext i j; simp [hA, hB, Matrix.mul_apply, Matrix.map_apply]⟩
 
 /-- `det (A.map Int.cast) = ↑(det A)` for integer matrices cast to `ℚ`. -/
 lemma det_intMat_cast (A : Matrix (Fin n) (Fin n) ℤ) :
@@ -98,10 +97,9 @@ private lemma intMat_map_mul (A B : Matrix (Fin n) (Fin n) ℤ) :
 noncomputable def posDetInt_submonoid : Submonoid (GL (Fin n) ℚ) where
   carrier := {g | HasIntEntries n g ∧ 0 < (↑g : Matrix (Fin n) (Fin n) ℚ).det}
   one_mem' := ⟨hasIntEntries_one n, by simp⟩
-  mul_mem' := by
-    intro a b ⟨ha, hda⟩ ⟨hb, hdb⟩
-    exact ⟨HasIntEntries.mul (n := n) ha hb, by
-      simp only [GeneralLinearGroup.coe_mul, Matrix.det_mul]; exact mul_pos hda hdb⟩
+  mul_mem' := fun ⟨ha, hda⟩ ⟨hb, hdb⟩ ↦ ⟨HasIntEntries.mul (n := n) ha hb, by
+    simp only [GeneralLinearGroup.coe_mul, Matrix.det_mul]
+    exact mul_pos hda hdb⟩
 
 end PosDetInt
 
@@ -109,13 +107,8 @@ section Pair
 
 /-- `SL_n(ℤ) ⊆ Δ`: elements of `SL_n(ℤ)` have integer entries and det = 1 > 0. -/
 lemma SLnZ_le_posDetInt : (SLnZ_subgroup n).toSubmonoid ≤ posDetInt_submonoid n := by
-  intro g hg
-  rw [Subgroup.mem_toSubmonoid, MonoidHom.mem_range] at hg
-  obtain ⟨A, rfl⟩ := hg
-  refine ⟨⟨A.val, by simp [mapGL_coe_matrix, algebraMap_int_eq]⟩, ?_⟩
-  simp [det_intMat_cast, A.prop]
-
-/-! ### Helper lemmas for the commensurator proof (Shimura Lemma 3.10) -/
+  rintro g ⟨A, rfl⟩
+  exact ⟨⟨A.val, by simp [mapGL_coe_matrix, algebraMap_int_eq]⟩, by simp [det_intMat_cast, A.prop]⟩
 
 /-- `mapGL ℚ` is injective on `SL_n(ℤ)`. -/
 private lemma mapGL_injective : Function.Injective
@@ -131,17 +124,19 @@ private lemma ker_entry_dvd (d : ℕ) [NeZero d] (γ : SpecialLinearGroup (Fin n
   simp [SpecialLinearGroup.map, RingHom.mapMatrix_apply, Matrix.map_apply] at h
   rw [Matrix.one_apply] at h ⊢
   split_ifs at h ⊢
-  · exact (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp (by push_cast; simp [h])
-  · rw [sub_zero]; exact (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp h
+  · exact (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp (by simp [h])
+  · rw [sub_zero]
+    exact (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp h
 
 /-- When `d | (gamma - I)` entry-wise, decompose `gamma = I + d * M`. -/
 private lemma gamma_decompose (d : ℤ) (gamma : Matrix (Fin n) (Fin n) ℤ)
     (hgamma : ∀ i j : Fin n, d ∣ (gamma i j - (1 : Matrix (Fin n) (Fin n) ℤ) i j)) :
     gamma = 1 + d • Matrix.of fun i j ↦ (gamma i j - (1 : Matrix _ _ ℤ) i j) / d := by
-  ext i j; simp only [Matrix.add_apply, Matrix.one_apply, Matrix.smul_apply, smul_eq_mul,
-    Matrix.of_apply]; simp only [Matrix.one_apply] at hgamma
+  ext i j
+  simp only [Matrix.add_apply, Matrix.one_apply, Matrix.smul_apply, smul_eq_mul, Matrix.of_apply]
+  simp only [Matrix.one_apply] at hgamma
   nlinarith [mul_comm ((gamma i j - if i = j then 1 else 0) / d) d,
-             Int.ediv_mul_cancel (hgamma i j)]
+    Int.ediv_mul_cancel (hgamma i j)]
 
 /-- If `d | (γ - I)` entry-wise, then `d | (adj(A) * γ * A)` entry-wise.
     Key: `adj(A) * (I + dM) * A = d·I + d·(adj(A)·M·A)`. -/
@@ -166,11 +161,13 @@ private lemma det_entrywise_div_eq_one (d : ℤ) (P : Matrix (Fin n) (Fin n) ℤ
   suffices h : ((Matrix.of fun i j ↦ P i j / d).det : ℚ) = 1 by exact_mod_cast h
   have h_mat_eq : (Matrix.of fun i j ↦ P i j / d).map (Int.cast : ℤ → ℚ) =
       (d : ℚ)⁻¹ • (P.map (Int.cast : ℤ → ℚ)) := by
-    ext i j; simp only [Matrix.map_apply, Matrix.smul_apply, smul_eq_mul, Matrix.of_apply]
-    rw [Int.cast_div (hdvd i j) (Int.cast_ne_zero.mpr hd)]; ring
+    ext i j
+    simp only [Matrix.map_apply, Matrix.smul_apply, smul_eq_mul, Matrix.of_apply]
+    rw [Int.cast_div (hdvd i j) (Int.cast_ne_zero.mpr hd)]
+    ring
   have hdQ : (d : ℚ) ≠ 0 := Int.cast_ne_zero.mpr hd
-  rw [← det_intMat_cast, h_mat_eq, det_smul, Fintype.card_fin, det_intMat_cast, hdet]
-  exact by rw [inv_pow]; exact inv_mul_cancel₀ (pow_ne_zero n hdQ)
+  rw [← det_intMat_cast, h_mat_eq, det_smul, Fintype.card_fin, det_intMat_cast, hdet, inv_pow]
+  exact inv_mul_cancel₀ (pow_ne_zero n hdQ)
 
 variable [NeZero n]
 
@@ -181,9 +178,10 @@ private lemma conj_mat_det_one (A gamma : Matrix (Fin n) (Fin n) ℤ) (hgamma_de
     (Matrix.of fun i j ↦ (A.adjugate * gamma * A) i j / A.det).det = 1 := by
   apply det_entrywise_div_eq_one n A.det _ hdvd hAdet
   simp only [Matrix.det_mul, det_adjugate, hgamma_det]
-  push_cast; rw [mul_one, Fintype.card_fin, ← pow_succ,
-    Nat.sub_one_add_one_eq_of_pos (NeZero.pos n)]
+  push_cast
+  rw [mul_one, Fintype.card_fin, ← pow_succ, Nat.sub_one_add_one_eq_of_pos (NeZero.pos n)]
 
+omit [NeZero n] in
 /-- If `A * δ = γ * A` at the integer level, then `g * δ_GL = γ_GL * g` at the GL level,
     so `δ_GL = g⁻¹ * γ_GL * g`. -/
 private lemma int_mul_eq (A gamma : Matrix (Fin n) (Fin n) ℤ) (hAdet : A.det ≠ 0)
@@ -191,10 +189,12 @@ private lemma int_mul_eq (A gamma : Matrix (Fin n) (Fin n) ℤ) (hAdet : A.det �
     A * (Matrix.of fun i j ↦ (A.adjugate * gamma * A) i j / A.det) = gamma * A := by
   set delta := Matrix.of fun i j ↦ (A.adjugate * gamma * A) i j / A.det
   have ha : A.det • delta = A.adjugate * gamma * A := by
-    ext i j; simp only [Matrix.smul_apply, smul_eq_mul, Matrix.of_apply, delta]
+    ext i j
+    simp only [Matrix.smul_apply, smul_eq_mul, Matrix.of_apply, delta]
     exact Int.mul_ediv_cancel' (hdvd i j)
   suffices h : A.det • (A * delta) = A.det • (gamma * A) by
-    ext i j; exact mul_left_cancel₀ hAdet
+    ext i j
+    exact mul_left_cancel₀ hAdet
       (by simpa [Matrix.smul_apply, smul_eq_mul] using congr_fun₂ h i j)
   rw [← mul_smul_comm, ha, ← Matrix.mul_assoc, ← Matrix.mul_assoc,
     mul_adjugate, smul_mul_assoc, one_mul, smul_mul_assoc]
@@ -208,38 +208,34 @@ lemma conj_ker_mem_SLnZ (g : GL (Fin n) ℚ) (A : Matrix (Fin n) (Fin n) ℤ)
     (hγ : γ ∈ (SpecialLinearGroup.map (Int.castRingHom (ZMod A.det.natAbs))).ker) :
     g⁻¹ * (γ : GL (Fin n) ℚ) * g ∈ SLnZ_subgroup n := by
   have hnatAbs_ne : NeZero A.det.natAbs := ⟨Int.natAbs_ne_zero.mpr hAdet⟩
-  have h_entry : ∀ i j, A.det ∣ (γ.val i j - (1 : Matrix _ _ ℤ) i j) := by
-    intro i j; exact Int.natAbs_dvd.mp (ker_entry_dvd n A.det.natAbs γ hγ i j)
+  have h_entry : ∀ i j, A.det ∣ (γ.val i j - (1 : Matrix _ _ ℤ) i j) :=
+    fun i j ↦ Int.natAbs_dvd.mp (ker_entry_dvd n A.det.natAbs γ hγ i j)
   have hdvd := adjugate_conj_dvd n A γ.val h_entry
-  set delta_mat := Matrix.of fun i j ↦ (A.adjugate * γ.val * A) i j / A.det with hdelta_def
+  set delta_mat := Matrix.of fun i j ↦ (A.adjugate * γ.val * A) i j / A.det
   have hdelta_det : delta_mat.det = 1 := conj_mat_det_one n A γ.val γ.prop hdvd hAdet
   set delta : SpecialLinearGroup (Fin n) ℤ := ⟨delta_mat, hdelta_det⟩
   rw [SLnZ_subgroup, MonoidHom.mem_range]
   refine ⟨delta, ?_⟩
   have h_int_eq : A * delta_mat = γ.val * A := int_mul_eq n A γ.val hAdet hdvd
-  have h_mat_eq : (g * (delta : GL (Fin n) ℚ)).val =
-      ((γ : GL (Fin n) ℚ) * g).val := by
-    show (g.val * (delta : GL (Fin n) ℚ).val : Matrix _ _ ℚ) =
-         ((γ : GL (Fin n) ℚ).val * g.val : Matrix _ _ ℚ)
+  have h_mat_eq : (g * (delta : GL (Fin n) ℚ)).val = ((γ : GL (Fin n) ℚ) * g).val := by
+    change (g.val * (delta : GL (Fin n) ℚ).val : Matrix _ _ ℚ) =
+      ((γ : GL (Fin n) ℚ).val * g.val : Matrix _ _ ℚ)
     simp only [mapGL_coe_matrix, algebraMap_int_eq,
       map_apply_coe, RingHom.mapMatrix_apply, Int.coe_castRingHom] at *
     rw [hA, intMat_map_mul, intMat_map_mul, h_int_eq]
   have h_unit_eq : g * (delta : GL (Fin n) ℚ) = (γ : GL (Fin n) ℚ) * g := Units.ext h_mat_eq
-  calc (delta : GL (Fin n) ℚ)
-      = g⁻¹ * (g * (delta : GL (Fin n) ℚ)) := by rw [inv_mul_cancel_left]
-    _ = g⁻¹ * ((γ : GL (Fin n) ℚ) * g) := by rw [h_unit_eq]
-    _ = g⁻¹ * (γ : GL (Fin n) ℚ) * g := by rw [mul_assoc]
+  rw [show (delta : GL (Fin n) ℚ) = g⁻¹ * ((γ : GL (Fin n) ℚ) * g) by
+    rw [← h_unit_eq, inv_mul_cancel_left], mul_assoc]
 
+omit [NeZero n] in
 /-- Reverse direction of `adjugate_conj_dvd`: `d | (γ - I)` entry-wise implies
     `d | (A * γ * adj(A))` entry-wise. -/
 private lemma conj_dvd_reverse (A gamma : Matrix (Fin n) (Fin n) ℤ)
     (hgamma : ∀ i j : Fin n, A.det ∣ (gamma i j - (1 : Matrix (Fin n) (Fin n) ℤ) i j))
     (i j : Fin n) :
     A.det ∣ (A * gamma * A.adjugate) i j := by
-  set M := Matrix.of fun i j ↦
-    (gamma i j - (1 : Matrix _ _ ℤ) i j) / A.det
-  have : A * gamma * A.adjugate =
-      A * A.adjugate + A.det • (A * M * A.adjugate) := by
+  set M := Matrix.of fun i j ↦ (gamma i j - (1 : Matrix _ _ ℤ) i j) / A.det
+  have : A * gamma * A.adjugate = A * A.adjugate + A.det • (A * M * A.adjugate) := by
     rw [gamma_decompose n A.det gamma hgamma]
     conv_lhs => rw [mul_add, Matrix.mul_one, mul_smul_comm]
     rw [add_mul, smul_mul_assoc]
@@ -255,10 +251,10 @@ private lemma conj_mat_det_one_reverse
     (Matrix.of fun i j ↦ (A * gamma * A.adjugate) i j / A.det).det = 1 := by
   apply det_entrywise_div_eq_one n A.det _ hdvd hAdet
   simp only [Matrix.det_mul, det_adjugate, hgamma_det, Fintype.card_fin]
-  push_cast; simp only [det_intMat_cast]; rw [mul_one,
-    show (A.det : ℚ) * (A.det : ℚ) ^ (n - 1) = (A.det : ℚ) ^ n from by
-      rw [← pow_succ']; congr 1; exact Nat.succ_pred_eq_of_pos (NeZero.pos n)]
+  push_cast
+  rw [mul_one, mul_comm, ← pow_succ, Nat.sub_one_add_one_eq_of_pos (NeZero.pos n)]
 
+omit [NeZero n] in
 /-- Reverse direction of `int_mul_eq`: `δ * A = A * γ` where
     `δ = (A * γ * adj(A)) / det(A)`. -/
 private lemma int_mul_eq_reverse (A gamma : Matrix (Fin n) (Fin n) ℤ) (hAdet : A.det ≠ 0)
@@ -266,10 +262,12 @@ private lemma int_mul_eq_reverse (A gamma : Matrix (Fin n) (Fin n) ℤ) (hAdet :
     (Matrix.of fun i j ↦ (A * gamma * A.adjugate) i j / A.det) * A = A * gamma := by
   set delta := Matrix.of fun i j ↦ (A * gamma * A.adjugate) i j / A.det
   have ha : A.det • delta = A * gamma * A.adjugate := by
-    ext i j; simp only [Matrix.smul_apply, smul_eq_mul, Matrix.of_apply, delta]
+    ext i j
+    simp only [Matrix.smul_apply, smul_eq_mul, Matrix.of_apply, delta]
     exact Int.mul_ediv_cancel' (hdvd i j)
   suffices h : A.det • (delta * A) = A.det • (A * gamma) by
-    ext i j; exact mul_left_cancel₀ hAdet
+    ext i j
+    exact mul_left_cancel₀ hAdet
       (by simpa [Matrix.smul_apply, smul_eq_mul] using congr_fun₂ h i j)
   rw [← smul_mul_assoc, ha, Matrix.mul_assoc, adjugate_mul, mul_smul_comm, Matrix.mul_one]
 
@@ -281,24 +279,24 @@ private lemma conj_ker_mem_SLnZ_inv (g : GL (Fin n) ℚ) (A : Matrix (Fin n) (Fi
     (hγ : γ ∈ (SpecialLinearGroup.map (Int.castRingHom (ZMod A.det.natAbs))).ker) :
     g * (γ : GL (Fin n) ℚ) * g⁻¹ ∈ SLnZ_subgroup n := by
   have hnatAbs_ne : NeZero A.det.natAbs := ⟨Int.natAbs_ne_zero.mpr hAdet⟩
-  have h_entry : ∀ i j, A.det ∣ (γ.val i j - (1 : Matrix _ _ ℤ) i j) := by
-    intro i j; exact Int.natAbs_dvd.mp (ker_entry_dvd n A.det.natAbs γ hγ i j)
+  have h_entry : ∀ i j, A.det ∣ (γ.val i j - (1 : Matrix _ _ ℤ) i j) :=
+    fun i j ↦ Int.natAbs_dvd.mp (ker_entry_dvd n A.det.natAbs γ hγ i j)
   have hdvd := conj_dvd_reverse n A γ.val h_entry
   set delta_mat := Matrix.of fun i j ↦ (A * γ.val * A.adjugate) i j / A.det
   have hdelta_det : delta_mat.det = 1 :=
     conj_mat_det_one_reverse n A γ.val γ.prop hdvd hAdet
   set delta : SpecialLinearGroup (Fin n) ℤ := ⟨delta_mat, hdelta_det⟩
   have h_int_eq : delta_mat * A = A * γ.val := int_mul_eq_reverse n A γ.val hAdet hdvd
-  have h_mat_eq : ((delta : GL (Fin n) ℚ) * g).val =
-      (g * (γ : GL (Fin n) ℚ)).val := by
-    show ((delta : GL (Fin n) ℚ).val * g.val : Matrix _ _ ℚ) =
-         (g.val * (γ : GL (Fin n) ℚ).val : Matrix _ _ ℚ)
+  have h_mat_eq : ((delta : GL (Fin n) ℚ) * g).val = (g * (γ : GL (Fin n) ℚ)).val := by
+    change ((delta : GL (Fin n) ℚ).val * g.val : Matrix _ _ ℚ) =
+      (g.val * (γ : GL (Fin n) ℚ).val : Matrix _ _ ℚ)
     simp only [mapGL_coe_matrix, algebraMap_int_eq,
       map_apply_coe, RingHom.mapMatrix_apply, Int.coe_castRingHom] at *
     rw [hA, intMat_map_mul, intMat_map_mul, h_int_eq]
   have h_unit_eq : (delta : GL (Fin n) ℚ) * g = g * (γ : GL (Fin n) ℚ) := Units.ext h_mat_eq
-  rw [SLnZ_subgroup, MonoidHom.mem_range]
-  exact ⟨delta, by rw [← h_unit_eq]; group⟩
+  rw [SLnZ_subgroup, MonoidHom.mem_range, show g * (γ : GL (Fin n) ℚ) * g⁻¹ =
+    (delta : GL (Fin n) ℚ) by rw [← h_unit_eq, mul_inv_cancel_right]]
+  exact ⟨delta, rfl⟩
 
 omit [NeZero n] in
 /-- The image in `GL_n(ℚ)` of the congruence kernel `Γ(d) = ker(SL_n(ℤ) → SL_n(ℤ/dℤ))`
@@ -307,7 +305,7 @@ private lemma congruence_ker_image_relIndex_ne_zero (d : ℕ) [NeZero d] :
     (Subgroup.map (mapGL ℚ) (SpecialLinearGroup.map (Int.castRingHom (ZMod d))).ker).relIndex
       (SLnZ_subgroup n) ≠ 0 := by
   set phi : SpecialLinearGroup (Fin n) ℤ →* SpecialLinearGroup (Fin n) (ZMod d) :=
-    SpecialLinearGroup.map (Int.castRingHom (ZMod d)) with hphi_def
+    SpecialLinearGroup.map (Int.castRingHom (ZMod d))
   have h1 : SLnZ_subgroup n =
       Subgroup.map (mapGL ℚ : SpecialLinearGroup (Fin n) ℤ →* GL (Fin n) ℚ) ⊤ := by
     simp [SLnZ_subgroup, MonoidHom.range_eq_map]
@@ -325,7 +323,7 @@ private lemma congruence_ker_image_le_conj (g : GL (Fin n) ℚ) (A : Matrix (Fin
   rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem]
   simp only [Subgroup.mem_map] at hx
   obtain ⟨γ, hγ_ker, rfl⟩ := hx
-  show (ConjAct.toConjAct g)⁻¹ • (γ : GL (Fin n) ℚ) ∈ SLnZ_subgroup n
+  change (ConjAct.toConjAct g)⁻¹ • (γ : GL (Fin n) ℚ) ∈ SLnZ_subgroup n
   rw [ConjAct.smul_def, ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct]
   exact conj_ker_mem_SLnZ n g A hA hAdet γ hγ_ker
 
@@ -337,10 +335,9 @@ private lemma congruence_ker_image_le_conj_inv (g : GL (Fin n) ℚ) (A : Matrix 
       ConjAct.toConjAct g⁻¹ • SLnZ_subgroup n := by
   intro x hx
   rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem]
-  simp only [ConjAct.toConjAct_inv, inv_inv]
-  simp only [Subgroup.mem_map] at hx
+  simp only [ConjAct.toConjAct_inv, inv_inv, Subgroup.mem_map] at hx ⊢
   obtain ⟨γ, hγ_ker, rfl⟩ := hx
-  show ConjAct.toConjAct g • (γ : GL (Fin n) ℚ) ∈ SLnZ_subgroup n
+  change ConjAct.toConjAct g • (γ : GL (Fin n) ℚ) ∈ SLnZ_subgroup n
   rw [ConjAct.smul_def, ConjAct.ofConjAct_toConjAct]
   exact conj_ker_mem_SLnZ_inv n g A hA hAdet γ hγ_ker
 
@@ -357,27 +354,23 @@ lemma posDetInt_le_commensurator :
   rw [Subgroup.mem_toSubmonoid, commensurator_mem_iff]
   set H := SLnZ_subgroup n
   have hAdet_ne : A.det ≠ 0 := by
-    have : (0 : ℚ) < (A.det : ℚ) := by rw [← det_intMat_cast, ← hA]; exact hdet
+    have : (0 : ℚ) < (A.det : ℚ) := by
+      rw [← det_intMat_cast, ← hA]
+      exact hdet
     exact (Int.cast_pos.mp this).ne'
   have hnatAbs_ne : NeZero A.det.natAbs := ⟨Int.natAbs_ne_zero.mpr hAdet_ne⟩
   set K := (SpecialLinearGroup.map (Int.castRingHom (ZMod A.det.natAbs))).ker.map
-    (mapGL ℚ : SpecialLinearGroup (Fin n) ℤ →* GL (Fin n) ℚ) with hK_def
+    (mapGL ℚ : SpecialLinearGroup (Fin n) ℤ →* GL (Fin n) ℚ)
   have hK_relIndex : K.relIndex H ≠ 0 := congruence_ker_image_relIndex_ne_zero n A.det.natAbs
   have hK_le_gH : K ≤ ConjAct.toConjAct g • H := congruence_ker_image_le_conj n g A hA hAdet_ne
   have hK_le_ginvH : K ≤ ConjAct.toConjAct g⁻¹ • H :=
     congruence_ker_image_le_conj_inv n g A hA hAdet_ne
-  constructor
-  · exact ne_zero_of_dvd_ne_zero hK_relIndex
-      (Subgroup.relIndex_dvd_of_le_left H hK_le_gH)
-  · rw [show H.relIndex (ConjAct.toConjAct g • H) =
-        (ConjAct.toConjAct g⁻¹ • H).relIndex H from by
-      have h1 : ConjAct.toConjAct g⁻¹ • (ConjAct.toConjAct g • H) = H := by
-        rw [smul_smul, ← map_mul, inv_mul_cancel, map_one, one_smul]
-      have := Subgroup.relIndex_pointwise_smul (ConjAct.toConjAct g⁻¹) H
-        (ConjAct.toConjAct g • H)
-      rw [h1] at this; exact this.symm]
-    exact ne_zero_of_dvd_ne_zero hK_relIndex
-      (Subgroup.relIndex_dvd_of_le_left H hK_le_ginvH)
+  refine ⟨ne_zero_of_dvd_ne_zero hK_relIndex (Subgroup.relIndex_dvd_of_le_left H hK_le_gH), ?_⟩
+  have h1 : ConjAct.toConjAct g⁻¹ • (ConjAct.toConjAct g • H) = H := by
+    rw [smul_smul, ← map_mul, inv_mul_cancel, map_one, one_smul]
+  rw [(Subgroup.relIndex_pointwise_smul (ConjAct.toConjAct g⁻¹) H
+    (ConjAct.toConjAct g • H)).symm.trans (by rw [h1])]
+  exact ne_zero_of_dvd_ne_zero hK_relIndex (Subgroup.relIndex_dvd_of_le_left H hK_le_ginvH)
 
 /-- The standard arithmetic group pair for number theory:
     `SL_n(ℤ) ≤ Δ ≤ commensurator(SL_n(ℤ))` in `GL_n(ℚ)`. -/
@@ -398,14 +391,14 @@ abbrev HeckeAlgebra := 𝕋 (GL_pair n) ℤ
 
 /-- Embed an integer matrix with positive determinant into `Δ` as a `GL_n(ℚ)` element. -/
 noncomputable def intMat_to_delta (A : Matrix (Fin n) (Fin n) ℤ) (hdet : 0 < A.det) :
-    (GL_pair n).Δ := by
+    (GL_pair n).Δ :=
   have hne : (A.map (Int.cast : ℤ → ℚ)).det ≠ 0 := by
-    rw [det_intMat_cast]; exact_mod_cast hdet.ne'
-  have hval : (↑(GeneralLinearGroup.mkOfDetNeZero _ hne) : Matrix (Fin n) (Fin n) ℚ) =
-      A.map (Int.cast : ℤ → ℚ) := rfl
-  exact ⟨GeneralLinearGroup.mkOfDetNeZero _ hne,
-    ⟨A, hval⟩,
-    by rw [hval, det_intMat_cast]; exact_mod_cast hdet⟩
+    rw [det_intMat_cast]
+    exact_mod_cast hdet.ne'
+  ⟨GeneralLinearGroup.mkOfDetNeZero _ hne, ⟨A, rfl⟩, by
+    change 0 < (A.map (Int.cast : ℤ → ℚ)).det
+    rw [det_intMat_cast]
+    exact_mod_cast hdet⟩
 
 /-- Embed an integer matrix with positive determinant into a double coset element `HeckeCoset`. -/
 noncomputable def intMat_to_HeckeCoset (A : Matrix (Fin n) (Fin n) ℤ) (hdet : 0 < A.det) :
