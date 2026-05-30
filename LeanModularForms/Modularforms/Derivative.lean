@@ -203,7 +203,6 @@ private lemma hasDerivAt_qexp (a c w : ℂ) :
   simp only [smul_eq_mul] at this ⊢
   convert this using 1; ring
 
-/-- Helper: derivWithin for qexp term on upper half-plane. -/
 private lemma derivWithin_qexp (a c : ℂ) (w : ℂ) (hw : 0 < w.im) :
     derivWithin (fun z ↦ a * cexp (2 * π * I * c * z))
       {z : ℂ | 0 < z.im} w = a * (2 * π * I * c) * cexp (2 * π * I * c * w) :=
@@ -488,14 +487,11 @@ lemma D_slash (k : ℤ) (F : ℍ → ℂ) (hF : MDiff F) (γ : SL(2, ℤ)) :
   simp only [zpow_neg_one]
   ring
 
-/--
-Serre derivative is equivariant under the slash action. More precisely, if `F` is invariant
-under the slash action of weight `k`, then `serre_D k F` is invariant under the slash action
-of weight `k + 2`.
--/
-theorem serre_D_slash_equivariant (k : ℤ) (F : ℍ → ℂ) (hF : MDiff F) :
-    ∀ γ : SL(2, ℤ), serre_D k F ∣[k + 2] γ = serre_D k (F ∣[k] γ) := by
-  intro γ
+/-- Serre derivative is equivariant under the slash action: if `F` is invariant under the
+slash action of weight `k`, then `serre_D k F` is invariant under the slash action of weight
+`k + 2`. -/
+theorem serre_D_slash_equivariant (k : ℤ) (F : ℍ → ℂ) (hF : MDiff F) (γ : SL(2, ℤ)) :
+    serre_D k F ∣[k + 2] γ = serre_D k (F ∣[k] γ) := by
   have hD := D_slash k F hF γ
   have hE₂ := E₂_slash_transform γ
   have hmul := ModularForm.mul_slash_SL2 (2 : ℤ) k γ E₂ F
@@ -514,20 +510,17 @@ theorem serre_D_slash_equivariant (k : ℤ) (F : ℍ → ℂ) (hF : MDiff F) :
   have hDz := congrFun hD z
   simp only [Pi.sub_apply] at hDz
   rw [hDz]
-  simp only [show D₂ γ z = (2 * ↑π * I * ↑↑(γ 1 0)) / denom γ ↑z from rfl,
-    riemannZeta_two]
+  simp only [show D₂ γ z = (2 * ↑π * I * ↑↑(γ 1 0)) / denom γ ↑z from rfl, riemannZeta_two]
   have hpi_ne : (↑π : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr Real.pi_ne_zero
   have hdenom_ne : denom γ ↑z ≠ 0 := UpperHalfPlane.denom_ne_zero γ z
-  field_simp [hdenom_ne, hpi_ne]
-  ring_nf
-  simp only [I_sq]
-  ring
+  field_simp
+  ring_nf; simp only [I_sq]; ring
 
-theorem serre_D_slash_invariant (k : ℤ) (F : ℍ → ℂ) (hF : MDiff F)
-    (γ : SL(2, ℤ)) (h : F ∣[k] γ = F) :
-    serre_D k F ∣[k + 2] γ = serre_D k F := by
-  rw [serre_D_slash_equivariant, h]
-  exact hF
+/-- A `SL(2, ℤ)`-slash-invariant function gives rise to a `SL(2, ℤ)`-slash-invariant
+Serre derivative of weight `k + 2`. -/
+theorem serre_D_slash_invariant (k : ℤ) (F : ℍ → ℂ) (hF : MDiff F) (γ : SL(2, ℤ))
+    (h : F ∣[k] γ = F) : serre_D k F ∣[k + 2] γ = serre_D k F := by
+  rw [serre_D_slash_equivariant _ _ hF, h]
 
 /-- A strictly antitone function on `Ioi 0` that is eventually positive on `[t₀, ∞)`
 is positive on all of `Ioi 0`. -/
@@ -538,16 +531,8 @@ lemma StrictAntiOn.eventuallyPos_Ioi {g : ℝ → ℝ} (hAnti : StrictAntiOn g (
   · exact hEv t hcase
   · exact (hEv t₀ le_rfl).trans (hAnti ht ht₀_pos (lt_of_not_ge hcase))
 
-/--
-Chain rule for restriction to imaginary axis: `d/dt F(it) = -2π * (D F)(it)`.
-
-This connects the real derivative along the imaginary axis to the normalized derivative D.
-The key computation is:
-- The imaginary axis is parametrized by g(t) = I * t
-- By chain rule: d/dt F(it) = (dF/dz)(it) · (d/dt)(it) = F'(it) · I
-- Since D = (2πi)⁻¹ · d/dz, we have F' = 2πi · D F
-- So d/dt F(it) = 2πi · D F(it) · I = -2π · D F(it)
--/
+/-- Chain rule for restriction to the imaginary axis: `d/dt F(it) = -2π · (D F)(it)`.
+This connects the real derivative along the imaginary axis to the normalized derivative `D`. -/
 theorem deriv_resToImagAxis_eq (F : ℍ → ℂ) (hF : MDiff F) {t : ℝ} (ht : 0 < t) :
     deriv F.resToImagAxis t = -2 * π * (D F).resToImagAxis t := by
   let z : ℍ := ⟨I * t, by simp [ht]⟩
@@ -571,7 +556,7 @@ lemma im_deriv_eq_zero_of_im_eq_zero {f : ℝ → ℂ} {t : ℝ}
     (deriv f t).im = 0 := by
   simpa [funext him] using ((hasDerivAt_const t Complex.imCLM).clm_apply hf.hasDerivAt).deriv.symm
 
-/-- If F is real on the imaginary axis and MDifferentiable, then D F is also real
+/-- If `F` is real on the imaginary axis and MDifferentiable, then `D F` is also real
 on the imaginary axis. -/
 theorem D_real_of_real {F : ℍ → ℂ} (hF_real : ResToImagAxis.Real F)
     (hF_diff : MDiff F) : ResToImagAxis.Real (D F) := fun t ht ↦ by
@@ -586,35 +571,30 @@ theorem D_real_of_real {F : ℍ → ℂ} (hF_real : ResToImagAxis.Real F)
   exact (mul_eq_zero.mp (h_im_deriv ▸ h_im_eq).symm).resolve_left
     (mul_ne_zero (by norm_num) Real.pi_ne_zero)
 
-/-- The real part of F.resToImagAxis has derivative -2π * ((D F).resToImagAxis t).re at t. -/
-lemma hasDerivAt_resToImagAxis_re {F : ℍ → ℂ} (hdiff : MDiff F)
-    {t : ℝ} (ht : 0 < t) :
+/-- The real part of `F.resToImagAxis` has derivative `-2π · ((D F).resToImagAxis t).re` at `t`. -/
+lemma hasDerivAt_resToImagAxis_re {F : ℍ → ℂ} (hdiff : MDiff F) {t : ℝ} (ht : 0 < t) :
     HasDerivAt (fun s ↦ (F.resToImagAxis s).re) (-2 * π * ((D F).resToImagAxis t).re) t := by
-  have hdiffAt := ResToImagAxis.Differentiable F hdiff t ht
-  have hderivC := hdiffAt.hasDerivAt.congr_deriv (deriv_resToImagAxis_eq F hdiff ht)
+  have hderivC := (ResToImagAxis.Differentiable F hdiff t ht).hasDerivAt.congr_deriv
+    (deriv_resToImagAxis_eq F hdiff ht)
   simpa using (hasDerivAt_const t (Complex.reCLM : ℂ →L[ℝ] ℝ)).clm_apply hderivC
 
-/-- If F is MDifferentiable and antitone on the imaginary axis,
-then D F has non-negative real part on the imaginary axis. -/
-theorem D_nonneg_from_antitone {F : ℍ → ℂ}
-    (hdiff : MDiff F)
+/-- If `F` is MDifferentiable and antitone on the imaginary axis, then `D F` has non-negative
+real part on the imaginary axis. -/
+theorem D_nonneg_from_antitone {F : ℍ → ℂ} (hdiff : MDiff F)
     (hanti : AntitoneOn (fun t ↦ (F.resToImagAxis t).re) (Set.Ioi 0)) :
-    ∀ t, 0 < t → 0 ≤ ((D F).resToImagAxis t).re := by
-  intro t ht
+    ∀ t, 0 < t → 0 ≤ ((D F).resToImagAxis t).re := fun t ht ↦ by
   have hderiv_nonpos : deriv (fun s ↦ (F.resToImagAxis s).re) t ≤ 0 :=
     (derivWithin_of_isOpen isOpen_Ioi ht).symm.trans_le hanti.derivWithin_nonpos
   rw [(hasDerivAt_resToImagAxis_re hdiff ht).deriv] at hderiv_nonpos
   nlinarith [Real.pi_pos]
 
-/-- If F is real on the imaginary axis, MDifferentiable, and has strictly negative derivative
-on the imaginary axis, then D F is positive on the imaginary axis.
+/-- If `F` is real on the imaginary axis, MDifferentiable, and has strictly negative derivative
+on the imaginary axis, then `D F` is positive on the imaginary axis.
 
-Note: `StrictAntiOn` is NOT sufficient - a strictly decreasing function can have deriv = 0
-at isolated points (e.g., -x³ at x=0). Use this theorem when you can prove the derivative
-is strictly negative, typically from q-expansion analysis. -/
-theorem D_pos_from_deriv_neg {F : ℍ → ℂ}
-    (hreal : ResToImagAxis.Real F)
-    (hdiff : MDiff F)
+`StrictAntiOn` is NOT sufficient: a strictly decreasing function can have derivative `0`
+at isolated points (e.g. `-x³` at `x = 0`). Use this theorem when the derivative can be
+shown strictly negative, typically from `q`-expansion analysis. -/
+theorem D_pos_from_deriv_neg {F : ℍ → ℂ} (hreal : ResToImagAxis.Real F) (hdiff : MDiff F)
     (hderiv_neg : ∀ t, 0 < t → deriv (fun s ↦ (F.resToImagAxis s).re) t < 0) :
     ResToImagAxis.Pos (D F) := by
   refine ⟨D_real_of_real hreal hdiff, fun t ht ↦ ?_⟩
@@ -659,18 +639,16 @@ lemma diffContOnCl_comp_ofComplex_of_mdifferentiable {f : ℍ → ℂ}
    fun z hz ↦ (MDifferentiableAt_DifferentiableAt
       (hf ⟨z, hclosed (Metric.closure_ball_subset_closedBall hz)⟩)).continuousAt.continuousWithinAt⟩
 
-/-- Closed ball centered at z with radius z.im/2 is contained in the upper half plane. -/
+/-- Closed ball centered at `z` with radius `z.im / 2` is contained in the upper half-plane. -/
 lemma closedBall_center_subset_upperHalfPlane (z : ℍ) :
-    Metric.closedBall (z : ℂ) (z.im / 2) ⊆ {w : ℂ | 0 < w.im} := by
-  intro w hw
-  have hdist : dist w z ≤ z.im / 2 := Metric.mem_closedBall.mp hw
+    Metric.closedBall (z : ℂ) (z.im / 2) ⊆ {w : ℂ | 0 < w.im} := fun w hw ↦ by
   have habs : |w.im - z.im| ≤ z.im / 2 := calc |w.im - z.im|
     _ = |(w - z).im| := by simp [Complex.sub_im]
     _ ≤ ‖w - z‖ := abs_im_le_norm _
     _ = dist w z := (dist_eq_norm _ _).symm
-    _ ≤ z.im / 2 := hdist
+    _ ≤ z.im / 2 := Metric.mem_closedBall.mp hw
   have hlower : z.im / 2 ≤ w.im := by linarith [(abs_le.mp habs).1]
-  exact lt_of_lt_of_le (by linarith [z.im_pos] : 0 < z.im / 2) hlower
+  exact lt_of_lt_of_le (by linarith [z.im_pos] : (0 : ℝ) < z.im / 2) hlower
 
 /-- Cauchy estimate for the D-derivative: if `f ∘ ofComplex` is holomorphic on a disk
 of radius `r` around `z` and bounded by `M` on the boundary sphere,
@@ -685,14 +663,12 @@ lemma norm_D_le_of_sphere_bound {f : ℍ → ℂ} {z : ℍ} {r M : ℝ}
         gcongr; exact Complex.norm_deriv_le_of_forall_mem_sphere_norm_le hr hDiff hbdd
   _ = M / (2 * π * r) := by ring
 
-/-- The D-derivative is bounded at infinity for bounded holomorphic functions.
+/-- The `D`-derivative is bounded at infinity for bounded holomorphic functions.
 
-For y large (y ≥ 2·max(A,0) + 1), we use a ball of radius z.im/2 around z.
-The ball lies in the upper half plane, f is bounded by M on it, and
-`norm_D_le_of_sphere_bound` gives ‖D f z‖ ≤ M/(π·z.im) ≤ M/π. -/
-lemma D_isBoundedAtImInfty_of_bounded {f : ℍ → ℂ}
-    (hf : MDiff f)
-    (hbdd : IsBoundedAtImInfty f) :
+For `y ≥ 2 · max A 0 + 1`, a ball of radius `z.im / 2` around `z` lies in the upper
+half-plane, `f` is bounded by `M` on the boundary sphere, and `norm_D_le_of_sphere_bound`
+gives `‖D f z‖ ≤ M / (π · z.im) ≤ M / π`. -/
+lemma D_isBoundedAtImInfty_of_bounded {f : ℍ → ℂ} (hf : MDiff f) (hbdd : IsBoundedAtImInfty f) :
     IsBoundedAtImInfty (D f) := by
   rw [isBoundedAtImInfty_iff] at hbdd ⊢
   obtain ⟨M, A, hMA⟩ := hbdd
@@ -720,12 +696,11 @@ lemma D_isBoundedAtImInfty_of_bounded {f : ℍ → ℂ}
     _ ≤ M / (π * 1) := by gcongr
     _ = M / π := by ring
 
-/-- The D-derivative of a bounded holomorphic function tends to zero at infinity.
+/-- The `D`-derivative of a bounded holomorphic function tends to zero at infinity.
 
-For z with im(z) = y, a Cauchy estimate on a ball of radius y/2 gives
-‖D f z‖ ≤ M / (π · y), which tends to zero as y → ∞. -/
-theorem D_tendsto_zero_of_isBoundedAtImInfty {f : ℍ → ℂ}
-    (hf : MDiff f)
+For `z` with `im(z) = y`, a Cauchy estimate on a ball of radius `y / 2` gives
+`‖D f z‖ ≤ M / (π · y)`, which tends to zero as `y → ∞`. -/
+theorem D_tendsto_zero_of_isBoundedAtImInfty {f : ℍ → ℂ} (hf : MDiff f)
     (hbdd : IsBoundedAtImInfty f) :
     Filter.Tendsto (D f) atImInfty (nhds 0) := by
   obtain ⟨M, A, hMA⟩ := isBoundedAtImInfty_iff.mp hbdd
