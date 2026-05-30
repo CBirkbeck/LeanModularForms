@@ -28,8 +28,7 @@ variable {N : ℕ} [NeZero N]
 
 /-- The twisted `Γ₀(N)` slash action on `M_k(Γ₁(N))`, realised as an actual
 linear endomorphism of the ambient modular-form space. -/
-noncomputable def gamma0TwistedSlashModHom
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
+noncomputable def gamma0TwistedSlashModHom (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
     ↥(Gamma0 N) →* Module.End ℂ (ModularForm ((Gamma1 N).map (mapGL ℝ)) k) where
   toFun g :=
     (↑(gamma0NebentypusChar (N := N) χ g) : ℂ)⁻¹ •
@@ -41,9 +40,8 @@ noncomputable def gamma0TwistedSlashModHom
     ext f z
     simp [gamma0NebentypusChar, map_mul, Module.End.mul_apply, smul_smul, mul_comm, mul_assoc]
 
-@[simp] lemma gamma0TwistedSlashModHom_apply
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
-    (g : ↥(Gamma0 N)) (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
+@[simp] lemma gamma0TwistedSlashModHom_apply (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (g : ↥(Gamma0 N))
+    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
     ((gamma0TwistedSlashModHom (N := N) k χ g) f : UpperHalfPlane → ℂ) =
       twistedSlash k (gamma0NebentypusChar (N := N) χ) g (f : UpperHalfPlane → ℂ) := by
   ext z
@@ -55,8 +53,7 @@ noncomputable def gamma0TwistedSlashModHom
 
 /-- The twisted `Γ₀(N)` slash action on `S_k(Γ₁(N))`, realised as an actual
 linear endomorphism of the ambient cusp-form space. -/
-noncomputable def gamma0TwistedSlashCuspHom
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
+noncomputable def gamma0TwistedSlashCuspHom (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
     ↥(Gamma0 N) →* Module.End ℂ (CuspForm ((Gamma1 N).map (mapGL ℝ)) k) where
   toFun g :=
     (↑(gamma0NebentypusChar (N := N) χ g) : ℂ)⁻¹ •
@@ -68,9 +65,8 @@ noncomputable def gamma0TwistedSlashCuspHom
     ext f z
     simp [gamma0NebentypusChar, map_mul, Module.End.mul_apply, smul_smul, mul_comm, mul_assoc]
 
-@[simp] lemma gamma0TwistedSlashCuspHom_apply
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
-    (g : ↥(Gamma0 N)) (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+@[simp] lemma gamma0TwistedSlashCuspHom_apply (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (g : ↥(Gamma0 N))
+    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     ((gamma0TwistedSlashCuspHom (N := N) k χ g) f : UpperHalfPlane → ℂ) =
       twistedSlash k (gamma0NebentypusChar (N := N) χ) g (f : UpperHalfPlane → ℂ) := by
   ext z
@@ -82,20 +78,17 @@ noncomputable def gamma0TwistedSlashCuspHom
 
 /-- The fixed submodule of the twisted `Γ₀(N)` action on the ambient modular
 form space. -/
-noncomputable def gamma0TwistedSlashModFixedSubmodule
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
+noncomputable def gamma0TwistedSlashModFixedSubmodule (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
     Submodule ℂ (ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :=
   ⨅ g : ↥(Gamma0 N), Module.End.eigenspace (gamma0TwistedSlashModHom (N := N) k χ g) (1 : ℂ)
 
-  @[simp] lemma mem_gamma0TwistedSlashModFixedSubmodule_iff
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+@[simp] lemma mem_gamma0TwistedSlashModFixedSubmodule_iff (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
     f ∈ gamma0TwistedSlashModFixedSubmodule (N := N) k χ ↔
       ∀ g : ↥(Gamma0 N), gamma0TwistedSlashModHom (N := N) k χ g f = f := by
   simp [gamma0TwistedSlashModFixedSubmodule, Submodule.mem_iInf]
 
-theorem gamma0TwistedSlashModFixedSubmodule_eq_modFormCharSpace
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
+theorem gamma0TwistedSlashModFixedSubmodule_eq_modFormCharSpace (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
     gamma0TwistedSlashModFixedSubmodule (N := N) k χ = modFormCharSpace k χ := by
   ext f
   rw [mem_gamma0TwistedSlashModFixedSubmodule_iff, mem_modFormCharSpace_iff]
@@ -106,8 +99,7 @@ theorem gamma0TwistedSlashModFixedSubmodule_eq_modFormCharSpace
     change (↑(gamma0NebentypusChar (N := N) χ g) : ℂ)⁻¹ •
         diamondOpHom (N := N) k (Gamma0MapUnits g) f = f at hgfix
     have hgfix' := congrArg (fun x ↦ (↑(gamma0NebentypusChar (N := N) χ g) : ℂ) • x) hgfix
-    simp [gamma0NebentypusChar] at hgfix'
-    rw [hg] at hgfix'
+    simp [gamma0NebentypusChar, hg] at hgfix'
     simpa [gamma0NebentypusChar, hg] using hgfix'
   · intro hf g
     have hfg := hf (Gamma0MapUnits g)
@@ -126,20 +118,17 @@ theorem gamma0TwistedSlashModFixedSubmodule_eq_gamma0NebentypusSubmodule
 
 /-- The fixed submodule of the twisted `Γ₀(N)` action on the ambient cusp-form
 space. -/
-noncomputable def gamma0TwistedSlashCuspFixedSubmodule
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
+noncomputable def gamma0TwistedSlashCuspFixedSubmodule (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
     Submodule ℂ (CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :=
   ⨅ g : ↥(Gamma0 N), Module.End.eigenspace (gamma0TwistedSlashCuspHom (N := N) k χ g) (1 : ℂ)
 
-  @[simp] lemma mem_gamma0TwistedSlashCuspFixedSubmodule_iff
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+@[simp] lemma mem_gamma0TwistedSlashCuspFixedSubmodule_iff (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     f ∈ gamma0TwistedSlashCuspFixedSubmodule (N := N) k χ ↔
       ∀ g : ↥(Gamma0 N), gamma0TwistedSlashCuspHom (N := N) k χ g f = f := by
   simp [gamma0TwistedSlashCuspFixedSubmodule, Submodule.mem_iInf]
 
-theorem gamma0TwistedSlashCuspFixedSubmodule_eq_cuspFormCharSpace
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
+theorem gamma0TwistedSlashCuspFixedSubmodule_eq_cuspFormCharSpace (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
     gamma0TwistedSlashCuspFixedSubmodule (N := N) k χ = cuspFormCharSpace k χ := by
   ext f
   rw [mem_gamma0TwistedSlashCuspFixedSubmodule_iff, mem_cuspFormCharSpace_iff]
@@ -150,8 +139,7 @@ theorem gamma0TwistedSlashCuspFixedSubmodule_eq_cuspFormCharSpace
     change (↑(gamma0NebentypusChar (N := N) χ g) : ℂ)⁻¹ •
         diamondOpCuspHom (N := N) k (Gamma0MapUnits g) f = f at hgfix
     have hgfix' := congrArg (fun x ↦ (↑(gamma0NebentypusChar (N := N) χ g) : ℂ) • x) hgfix
-    simp [gamma0NebentypusChar] at hgfix'
-    rw [hg] at hgfix'
+    simp [gamma0NebentypusChar, hg] at hgfix'
     simpa [gamma0NebentypusChar, hg] using hgfix'
   · intro hf g
     have hfg := hf (Gamma0MapUnits g)
