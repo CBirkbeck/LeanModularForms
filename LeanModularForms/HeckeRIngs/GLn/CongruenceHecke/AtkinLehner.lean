@@ -10,9 +10,17 @@ import LeanModularForms.HeckeRIngs.GLn.CongruenceHecke.Props
 
 The Atkin–Lehner anti-involution `ι(g) = w · gᵀ · w⁻¹` with `w = diag(1, N)`,
 which preserves `Γ₀(N)` and `Δ₀(N)` and fixes every diagonal double coset.
-Via Shimura Prop 3.8 this yields commutativity of `𝕋 (Γ₀(N)) ℤ`
-(`Gamma0_pair_HeckeAlgebra_mul_comm` and the `CommRing` instance
-`instCommRing_Gamma0`).
+Via Shimura Prop 3.8 this yields commutativity of `𝕋 (Γ₀(N)) ℤ`.
+
+## Main results
+
+* `Gamma0_content_quotient`: a `Δ₀(N)` matrix with content `d` factors as `d` times
+  a primitive `Δ₀(N)`-matrix.
+* `Gamma0_two_sided_coprime_rep_prim`: two-sided `Γ₀(N)`-clearing producing a
+  representative whose `(0,0)` entry is coprime to a target factor of the determinant.
+* `instCommRing_Gamma0`: the Hecke ring `𝕋 (Γ₀(N)) ℤ` is commutative.
+* `Gamma0_pair_HeckeAlgebra_mul_comm`: the commutativity statement for the Hecke
+  ring of `Γ₀(N)` (Shimura Prop 3.8).
 
 ## References
 
@@ -578,13 +586,13 @@ private lemma not_intCast_dvd_of_coprime (c N p : ℕ) (hp : p.Prime)
 `gcd(entries of A) = 1` and coprime-to-`N` target `c ∣ det`, find `γL, γR ∈ Γ₀(N)` such that
 `γL * g * γR` has integer matrix `A'` with `gcd(A' 0 0, c) = 1`. -/
 lemma Gamma0_two_sided_coprime_rep_prim (N : ℕ) [NeZero N]
-    (g : GL (Fin 2) ℚ) (hg : g ∈ (Gamma0_pair N).Δ)
+    (g : GL (Fin 2) ℚ) (_hg : g ∈ (Gamma0_pair N).Δ)
     (A : Matrix (Fin 2) (Fin 2) ℤ)
     (hA : (g : Matrix (Fin 2) (Fin 2) ℚ) = A.map (Int.cast : ℤ → ℚ))
     (hAN : (N : ℤ) ∣ A 1 0) (hAco : Int.gcd (A 0 0) N = 1)
     (hprim : ∀ (p : ℕ), p.Prime → ¬((p : ℤ) ∣ A 0 0 ∧ (p : ℤ) ∣ A 0 1 ∧
       (p : ℤ) ∣ A 1 0 ∧ (p : ℤ) ∣ A 1 1))
-    (c : ℕ) (hc_pos : 0 < c) (hc_cop : Nat.Coprime c N) (hc_dvd : (c : ℤ) ∣ A.det) :
+    (c : ℕ) (hc_pos : 0 < c) (hc_cop : Nat.Coprime c N) (_hc_dvd : (c : ℤ) ∣ A.det) :
     ∃ (γL γR : (Gamma0_pair N).H),
       let g' := (γL : GL (Fin 2) ℚ) * g * (γR : GL (Fin 2) ℚ)
       ∃ (A' : Matrix (Fin 2) (Fin 2) ℤ),
@@ -833,7 +841,7 @@ private lemma Gamma0_AL_in_DC_of_smul (N : ℕ) [NeZero N] (g g₀ : GL (Fin 2) 
     simp only [s, GeneralLinearGroup.mkOfDetNeZero, GeneralLinearGroup.coe_mul,
       GL_transposeEquiv_val, wN_val, Matrix.mul_apply, Matrix.transpose_apply,
       Matrix.diagonal, Fin.sum_univ_two]
-    fin_cases i <;> fin_cases j <;> simp <;> ring
+    fin_cases i <;> fin_cases j <;> simp [mul_comm]
   rw [hg_eq]
   exact Gamma0_AL_scalar_reduce N g₀ s hs_central hs_bar h_bar_g₀
 
