@@ -25,19 +25,6 @@ lemma multipass_sigma_eq_id_of_det_pos (g : GL (Fin 2) ℝ)
     (hg : 0 < g.det.val) : UpperHalfPlane.σ g = RingHom.id ℂ := by
   simp only [UpperHalfPlane.σ, if_pos hg]
 
-/-- Any two ring homomorphisms `ℤ →+* R` are equal. -/
-lemma multipass_int_castRingHom_unique {R : Type*} [NonAssocSemiring R]
-    (φ ψ : ℤ →+* R) : φ = ψ := Subsingleton.elim _ _
-
-/-- `(if p² ∣ N then p - 1 else p) + 1 = descendCosetCount p N`. -/
-lemma multipass_d_succ_eq_descendCosetCount (p N : ℕ) [NeZero p]
-    (hp : p.Prime) :
-    (if p ^ 2 ∣ N then p - 1 else p) + 1 = descendCosetCount p N := by
-  unfold descendCosetCount
-  split_ifs
-  · exact Nat.sub_add_cancel hp.pos
-  · rfl
-
 /-- For `γ ∈ Γ₁(N)`, there exists `hγ' : γ ∈ Γ₀(N)` with `Gamma0MapUnits ⟨γ, hγ'⟩ = 1`. -/
 lemma multipass_char_trivial_on_Gamma1 {N : ℕ} [NeZero N]
     (γ : Matrix.SpecialLinearGroup (Fin 2) ℤ)
@@ -48,40 +35,6 @@ lemma multipass_char_trivial_on_Gamma1 {N : ℕ} [NeZero N]
   obtain ⟨_h00, h11, h10⟩ := hγ
   exact ⟨Gamma0_mem.mpr h10, by ext; simpa [Gamma0MapUnits_val, Gamma0Map] using h11⟩
 
-/-- For `a b d : ZMod p` and `m : Fin p`, `(a⁻¹ * (b + m.val * d)).val < p`. -/
-lemma multipass_moebius_fin_p_well_defined (p : ℕ) [Fact p.Prime]
-    (a b d : ZMod p) (m : Fin p) :
-    (a⁻¹ * (b + (m.val : ZMod p) * d)).val < p :=
-  ZMod.val_lt _
-
-/-- If `p² ∣ N` and `a * m' ≡ b + m * d (mod p)`, then `p ∣ b + m·d − (a + m·c·(N/p))·m'`. -/
-lemma multipass_alpha_integer_entries_p_sq_dvd_N
-    (p N : ℕ) [NeZero p] (hp : p.Prime)
-    (hp_sq : p ^ 2 ∣ N)
-    (a b c d : ℤ) (m m' : Fin p)
-    (h_moebius :
-      ((a : ZMod p) * (m'.val : ZMod p) =
-        (b : ZMod p) + (m.val : ZMod p) * (d : ZMod p))) :
-    (p : ℤ) ∣ (b + m.val * d - (a + m.val * (c * (N / p : ℕ))) * m'.val) := by
-  rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
-  rcases hp_sq with ⟨k, hk⟩
-  have h_int_div : ((N : ℤ) / (p : ℤ)) = (p : ℤ) * (k : ℤ) := by
-    norm_cast
-    rw [hk, sq, mul_assoc, Nat.mul_div_cancel_left _ hp.pos]
-  push_cast
-  rw [h_int_div]
-  push_cast
-  rw [show ((p : ZMod p) : ZMod p) = 0 from ZMod.natCast_self p]
-  linear_combination -h_moebius
-
-/-- `descendExtraGamma p N` is invertible in `SL₂(ℤ)`. -/
-lemma multipass_descendExtraGamma_inverse
-    (p N : ℕ) [NeZero p] [NeZero N] [NeZero (N / p)] :
-    ∃ ζ : Matrix.SpecialLinearGroup (Fin 2) ℤ,
-      ζ * descendExtraGamma p N = 1 ∧
-      descendExtraGamma p N * ζ = 1 :=
-  ⟨(descendExtraGamma p N)⁻¹, inv_mul_cancel _, mul_inv_cancel _⟩
-
 /-- For `f ∈ modFormCharSpace k χ` and `α ∈ Γ₀(N)`, `f ∣[k] mapGL ℝ α = χ(α) • f`. -/
 lemma multipass_modFormCharSpace_slash_apply
     {N : ℕ} [NeZero N] {k : ℤ} (χ : (ZMod N)ˣ →* ℂˣ)
@@ -90,35 +43,6 @@ lemma multipass_modFormCharSpace_slash_apply
     (⇑f ∣[k] (mapGL ℝ α : GL (Fin 2) ℝ) : UpperHalfPlane → ℂ) =
       ((χ (Gamma0MapUnits ⟨α, hα⟩) : ℂ) • ⇑f) :=
   (modFormCharSpace_iff_nebentypus k χ f).mp hfχ ⟨α, hα⟩
-
-private lemma multipass_slash_eq_of_diamond_eq
-    {N : ℕ} [NeZero N] {k : ℤ} {χ : (ZMod N)ˣ →* ℂˣ}
-    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) (hfχ : f ∈ modFormCharSpace k χ)
-    (γ₁ γ₂ : Matrix.SpecialLinearGroup (Fin 2) ℤ)
-    (h_γ₁_mem : γ₁ ∈ Gamma0 N) (h_γ₂_mem : γ₂ ∈ Gamma0 N)
-    (h_diamond_eq : Gamma0MapUnits (N := N) ⟨γ₁, h_γ₁_mem⟩ =
-                    Gamma0MapUnits (N := N) ⟨γ₂, h_γ₂_mem⟩) :
-    ⇑f ∣[k] (mapGL ℝ γ₁ : GL (Fin 2) ℝ) = ⇑f ∣[k] (mapGL ℝ γ₂ : GL (Fin 2) ℝ) := by
-  rw [multipass_modFormCharSpace_slash_apply χ hfχ γ₁ h_γ₁_mem,
-      multipass_modFormCharSpace_slash_apply χ hfχ γ₂ h_γ₂_mem,
-      h_diamond_eq]
-
-private lemma modularFormLevelRaise_slash_gamma1
-    {N : ℕ} [NeZero N] (l : ℕ) [NeZero l] {k : ℤ}
-    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (γ : Matrix.SpecialLinearGroup (Fin 2) ℤ) (hγ : γ ∈ Gamma1 (l * N)) :
-    ⇑(modularFormLevelRaise N l k f) ∣[k] (mapGL ℝ γ : GL (Fin 2) ℝ) =
-      ⇑(modularFormLevelRaise N l k f) :=
-  (modularFormLevelRaise N l k f).slash_action_eq' _ (Subgroup.mem_map.mpr ⟨γ, hγ, rfl⟩)
-
-/-- The descent slash-sum operator as a function on `ℍ`, defined by
-`z ↦ Σ_v (⇑f ∣[k] descendCosetList p N hp v) z`. -/
-noncomputable def multipass_slashSumOp {N : ℕ} [NeZero N] {k : ℤ}
-    (p : ℕ) [NeZero p] (hp : p.Prime) [NeZero (N / p)]
-    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    UpperHalfPlane → ℂ :=
-  fun z ↦ ∑ v : Fin (descendCosetCount p N),
-    (⇑f ∣[k] descendCosetList p N hp v) z
 
 /-- If the image of `α ∈ SL(2, ℤ)` under reduction mod `N` equals the identity, then
 `α ∈ Γ_1(N)`. -/
@@ -359,7 +283,7 @@ lemma m6_2_extra_rep_levelRaise_bridge
     {N : ℕ} [NeZero N] {k : ℤ}
     (p : ℕ) [NeZero p] (hp : p.Prime) (hpN : p ∣ N) (hp_sq : ¬ p ^ 2 ∣ N)
     [NeZero (N / p)]
-    (l : ℕ) [NeZero l] (hpl : Nat.Coprime p l) (hlNp : l ∣ N / p)
+    (l : ℕ) [NeZero l] (_hpl : Nat.Coprime p l) (_hlNp : l ∣ N / p)
     (χ : (ZMod N)ˣ →* ℂˣ)
     (χ' : (ZMod (N / p))ˣ →* ℂˣ)
     (hχ_eq : χ = χ'.comp (ZMod.unitsMap (Nat.div_dvd_of_dvd hpN)))
@@ -630,7 +554,7 @@ lemma miyake_descent_upper_tri_qExpansion
 vanishes at every cusp of `Γ_1(N/p)` (Miyake p. 158). -/
 theorem miyake_hecke_descend_cusp
     {N : ℕ} [NeZero N] {k : ℤ}
-    (p : ℕ) [NeZero p] (hp : p.Prime) (hpN : p ∣ N) [NeZero (N / p)]
+    (p : ℕ) [NeZero p] (hp : p.Prime) (_hpN : p ∣ N) [NeZero (N / p)]
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     ∀ {c : OnePoint ℝ}, IsCusp c ((Gamma1 (N / p)).map (mapGL ℝ)) →
       c.IsZeroAt
