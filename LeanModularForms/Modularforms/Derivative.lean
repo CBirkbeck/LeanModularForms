@@ -1,9 +1,13 @@
+/-
+Copyright (c) 2026 Chris Birkbeck. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Chris Birkbeck
+-/
 module
 
-public import LeanModularForms.Modularforms.MDifferentiableFunProp
-
-public import LeanModularForms.Modularforms.Eisenstein
 public import Mathlib.Analysis.Calculus.DiffContOnCl
+public import LeanModularForms.Modularforms.Eisenstein
+public import LeanModularForms.Modularforms.MDifferentiableFunProp
 
 @[expose] public section
 
@@ -12,6 +16,29 @@ open Real Complex CongruenceSubgroup SlashAction SlashInvariantForm ContinuousMa
 open Metric Filter Function
 
 open scoped ModularForm MatrixGroups Manifold Topology BigOperators
+
+/-!
+# Derivative of modular forms
+
+Definition of the (Serre) derivative of modular forms, basic linearity / Leibniz /
+slash-equivariance properties, termwise differentiation of `q`-series, restriction
+to the imaginary axis, and Cauchy estimates for the `D`-derivative used in
+Ramanujan-type identities for Eisenstein series.
+
+## Main definitions
+
+* `D`: the normalized complex derivative `(2 π i)⁻¹ d/dz` of a function on `ℍ`.
+* `serre_D`: the Serre derivative of weight `k`, `D F - (k / 12) · E₂ · F`.
+* `serre_D_ModularForm`: Serre derivative as a weight-`(k+2)` modular form on `Gamma 1`.
+
+## Main results
+
+* `D_slash`: the anomaly identity expressing how `D` interacts with the slash action.
+* `serre_D_slash_equivariant`, `serre_D_slash_invariant`: weight `k + 2`
+  equivariance/invariance of the Serre derivative.
+* `D_isBoundedAtImInfty_of_bounded`, `D_tendsto_zero_of_isBoundedAtImInfty`,
+  `serre_D_isBoundedAtImInfty_of_bounded`: Cauchy-estimate consequences.
+-/
 
 /-- Constant Pi functions (numeric literals) are MDifferentiable. -/
 @[fun_prop]
@@ -25,10 +52,7 @@ lemma MDifferentiable.pi_inv_ofNat (n : ℕ) [n.AtLeastTwo] :
   change MDiff (fun (_ : ℍ) ↦ (OfNat.ofNat n : ℂ)⁻¹)
   exact mdifferentiable_const
 
-/-!
-Definition of (Serre) derivative of modular forms.
-Prove Ramanujan's formulas on derivatives of Eisenstein series.
--/
+/-- Normalized derivative `(2 π i)⁻¹ d/dz` of a function on the upper half-plane. -/
 noncomputable def D (F : ℍ → ℂ) : ℍ → ℂ :=
   fun (z : ℍ) ↦ (2 * π * I)⁻¹ * ((deriv (F ∘ ofComplex)) z)
 
@@ -224,8 +248,6 @@ lemma pi_ofNat_eq_const (n : ℕ) [n.AtLeastTwo] :
 @[simp]
 lemma pi_inv_const_eq_const (c : ℂ) :
     (Function.const ℍ c)⁻¹ = Function.const ℍ c⁻¹ := rfl
-
-/-! ### Termwise differentiation of q-series (Lemma 6.45) -/
 
 /-- Helper: HasDerivAt for a·exp(2πicw) with chain rule. -/
 private lemma hasDerivAt_qexp (a c w : ℂ) :
@@ -438,11 +460,6 @@ theorem serre_D_differentiable {F : ℍ → ℂ} {k : ℂ}
       MDifferentiable.mul mdifferentiable_const (E₂_holo'.mul hF)
     convert h1 using 1; ext z; simp only [mul_assoc]
   exact (D_differentiable hF).sub h_term
-
-/-! ### Helper lemmas for D_slash
-
-These micro-lemmas compute derivatives of the components in the slash action formula.
--/
 
 section DSlashHelpers
 
@@ -816,11 +833,6 @@ If $F(it)$ is positive for sufficiently large $t$, then $F(it)$ is positive for 
 theorem antiSerreDerPos {F : ℍ → ℂ} {k : ℤ} (hSDF : ResToImagAxis.Pos (serre_D k F))
     (hF : ResToImagAxis.EventuallyPos F) : ResToImagAxis.Pos F := by
   sorry
-
-/-! ## Cauchy Estimates for D-derivative
-
-Infrastructure for bounding derivatives using Cauchy estimates on disks in the upper half plane.
--/
 
 /-- If `f : ℍ → ℂ` is `MDifferentiable` and a closed disk in `ℂ` lies in the upper
 half-plane, then `f ∘ ofComplex` is `DiffContOnCl` on the corresponding open disk. -/
