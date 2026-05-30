@@ -38,12 +38,14 @@ lemma GL_transposeEquiv_val (g : GL (Fin n) ℚ) :
 
 lemma GL_transposeEquiv_involutive (g : GL (Fin n) ℚ) :
     (GL_transposeEquiv n (GL_transposeEquiv n g).unop).unop = g := by
-  apply Units.ext; ext i j
+  apply Units.ext
+  ext i j
   simp [GL_transposeEquiv_val]
 
 lemma SLnZ_to_GLnQ_transpose (σ : SpecialLinearGroup (Fin n) ℤ) :
     (GL_transposeEquiv n (σ : GL (Fin n) ℚ)).unop = (σ.transpose : GL (Fin n) ℚ) := by
-  apply Units.ext; ext i j
+  apply Units.ext
+  ext i j
   simp only [GL_transposeEquiv_val, mapGL_coe_matrix, algebraMap_int_eq]
   simp [SpecialLinearGroup.coe_transpose]
 
@@ -84,15 +86,13 @@ noncomputable def GL_pair_antiInvolution : AntiInvolution (GL_pair n) where
 lemma GL_pair_onHeckeCoset_eq (D : HeckeCoset (GL_pair n)) :
     (GL_pair_antiInvolution n).onHeckeCoset D = D := by
   obtain ⟨a, ha, _hdiv, hrep⟩ := exists_diagonal_representative n (HeckeCoset.rep D)
-  have hD : D = T_diag a := by
-    rw [← hrep]; exact (Quotient.out_eq D).symm
+  have hD : D = T_diag a := hrep ▸ (Quotient.out_eq D).symm
   rw [hD]
   simp only [T_diag, AntiInvolution.onHeckeCoset_mk]
   rw [HeckeCoset.eq_iff]
   simp only [AntiInvolution.bar, GL_pair_antiInvolution, diagMat_delta_val n a ha]
-  have : (GL_transposeEquiv n).toMonoidHom (diagMat n a) =
-      GL_transposeEquiv n (diagMat n a) := rfl
-  rw [this, diagMat_GL_transpose_eq n a ha]
+  congr 1
+  exact diagMat_GL_transpose_eq n a ha
 
 /-- **Shimura Proposition 3.8 for GL_n**: the Hecke algebra is commutative. -/
 noncomputable instance instCommRing_HeckeAlgebra : CommRing (HeckeAlgebra n) :=
