@@ -61,15 +61,13 @@ noncomputable def sievedQExpansion (N L : ℕ) (f : UpperHalfPlane → ℂ) :
 `Σ d ∈ (Nat.gcd n L).divisors, μ d`. -/
 lemma coprime_indicator_eq_sum_moebius (n L : ℕ) :
     (if Nat.Coprime n L then (1 : ℤ) else 0) =
-      ∑ d ∈ (Nat.gcd n L).divisors,
-        ArithmeticFunction.moebius d := by
-  have h_apply :
-      (ArithmeticFunction.moebius * (ArithmeticFunction.zeta : ArithmeticFunction ℤ))
-          (Nat.gcd n L) =
+      ∑ d ∈ (Nat.gcd n L).divisors, ArithmeticFunction.moebius d := by
+  have h_apply : (ArithmeticFunction.moebius *
+      (ArithmeticFunction.zeta : ArithmeticFunction ℤ)) (Nat.gcd n L) =
         (1 : ArithmeticFunction ℤ) (Nat.gcd n L) := by
     rw [ArithmeticFunction.moebius_mul_coe_zeta]
   rw [ArithmeticFunction.coe_mul_zeta_apply, ArithmeticFunction.one_apply] at h_apply
-  rw [← h_apply]
+  exact h_apply.symm
 
 /-- Single-prime coefficient sieve: zeros out the coefficient at every
 index divisible by `p`, leaving other coefficients unchanged. -/
@@ -90,12 +88,6 @@ coprime sieve with respect to `∏ p ∈ S, p`. -/
 def finsetPrimeCoeffSieve {α : Type*} [Zero α] (S : Finset ℕ) (A : ℕ → α)
     (n : ℕ) : α :=
   if ∀ p ∈ S, ¬ p ∣ n then A n else 0
-
-/-- Pointwise formula for `finsetPrimeCoeffSieve`, named for rewriting. -/
-theorem finite_prime_coeff_sieve_iteration {α : Type*} [Zero α] (S : Finset ℕ)
-    (A : ℕ → α) (n : ℕ) :
-    finsetPrimeCoeffSieve S A n =
-      if ∀ p ∈ S, ¬ p ∣ n then A n else 0 := rfl
 
 @[simp] lemma finsetPrimeCoeffSieve_empty {α : Type*} [Zero α]
     (A : ℕ → α) (n : ℕ) : finsetPrimeCoeffSieve ∅ A n = A n := by
@@ -119,18 +111,11 @@ lemma finsetPrimeCoeffSieve_insert {α : Type*} [Zero α] (p : ℕ) (S : Finset 
   show (if ∀ q ∈ insert p S, ¬ q ∣ n then A n else 0) =
     (if p ∣ n then 0 else if ∀ q ∈ S, ¬ q ∣ n then A n else 0)
   by_cases hdvd : p ∣ n
-  · have hfail : ¬ ∀ q ∈ insert p S, ¬ q ∣ n := fun h ↦
-      h p (Finset.mem_insert_self p S) hdvd
-    rw [if_neg hfail, if_pos hdvd]
+  · rw [if_neg fun h ↦ h p (Finset.mem_insert_self p S) hdvd, if_pos hdvd]
   · rw [if_neg hdvd]
-    have hiff : (∀ q ∈ insert p S, ¬ q ∣ n) ↔ (∀ q ∈ S, ¬ q ∣ n) := by
-      constructor
-      · intro h q hqS
-        exact h q (Finset.mem_insert.mpr (Or.inr hqS))
-      · intro h q hq
-        rcases Finset.mem_insert.mp hq with rfl | hqS
-        · exact hdvd
-        · exact h q hqS
+    have hiff : (∀ q ∈ insert p S, ¬ q ∣ n) ↔ (∀ q ∈ S, ¬ q ∣ n) :=
+      ⟨fun h q hqS ↦ h q (Finset.mem_insert.mpr (Or.inr hqS)),
+       fun h q hq ↦ (Finset.mem_insert.mp hq).elim (fun e ↦ e ▸ hdvd) (h q)⟩
     by_cases h : ∀ q ∈ S, ¬ q ∣ n
     · rw [if_pos (hiff.mpr h), if_pos h]
     · rw [if_neg (fun h' ↦ h (hiff.mp h')), if_neg h]
@@ -175,26 +160,19 @@ lemma sievedQExpansion_eq_finsetPrimeCoeffSieve
       finsetPrimeCoeffSieve L.primeFactors
         (fun n' ↦ (qExpansion (N : ℝ) f).coeff n') n := by
   have hiff : Nat.Coprime n L ↔ ∀ p ∈ L.primeFactors, ¬ p ∣ n := by
-    constructor
-    · intro hcop p hp
-      have hp_prime : p.Prime := Nat.prime_of_mem_primeFactors hp
-      have hp_dvd_L : p ∣ L := Nat.dvd_of_mem_primeFactors hp
-      have hcop_np : Nat.Coprime n p := hcop.coprime_dvd_right hp_dvd_L
-      exact hp_prime.coprime_iff_not_dvd.mp hcop_np.symm
-    · intro h
-      by_contra hcop
-      have hgcd_ne : Nat.gcd n L ≠ 1 := hcop
-      obtain ⟨p, hp_prime, hp_dvd_gcd⟩ :=
-        Nat.exists_prime_and_dvd hgcd_ne
-      have hp_dvd_n : p ∣ n := hp_dvd_gcd.trans (Nat.gcd_dvd_left n L)
-      have hp_dvd_L : p ∣ L := hp_dvd_gcd.trans (Nat.gcd_dvd_right n L)
-      exact h p (Nat.mem_primeFactors.mpr ⟨hp_prime, hp_dvd_L, hL⟩) hp_dvd_n
+    refine ⟨fun hcop p hp ↦ ?_, fun h ↦ ?_⟩
+    · exact (Nat.prime_of_mem_primeFactors hp).coprime_iff_not_dvd.mp
+        (hcop.coprime_dvd_right (Nat.dvd_of_mem_primeFactors hp)).symm
+    · by_contra hcop
+      obtain ⟨p, hp_prime, hp_dvd_gcd⟩ := Nat.exists_prime_and_dvd hcop
+      exact h p (Nat.mem_primeFactors.mpr ⟨hp_prime,
+          hp_dvd_gcd.trans (Nat.gcd_dvd_right n L), hL⟩)
+        (hp_dvd_gcd.trans (Nat.gcd_dvd_left n L))
   by_cases h : Nat.Coprime n L
   · rw [sievedQExpansion_coeff_coprime N L f h,
       finsetPrimeCoeffSieve_of_forall_not_dvd _ (hiff.mp h)]
   · have hex : ∃ p ∈ L.primeFactors, p ∣ n := by
-      by_contra hall
-      push_neg at hall
+      by_contra! hall
       exact h (hiff.mpr hall)
     rw [sievedQExpansion_coeff_not_coprime N L f h,
       finsetPrimeCoeffSieve_of_exists_dvd _ hex]
