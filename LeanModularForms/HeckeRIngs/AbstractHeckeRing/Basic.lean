@@ -27,22 +27,22 @@ open scoped Pointwise
 namespace HeckeRing
 
 variable {G : Type*} [Group G] (H : Subgroup G) (Δ : Submonoid G)
-  (h₀ : H.toSubmonoid ≤ Δ) (h₁ : (Δ ≤ (commensurator H).toSubmonoid))
 
 /-- The conjugation action on `H` as a set product: `gHg⁻¹ = {g} * H * {g⁻¹}`. -/
 lemma conjAct_smul_coe_eq (g : G) :
     ((ConjAct.toConjAct g • H) : Set G) = {g} * H * {g⁻¹} := by
-  ext x; refine ⟨?_, ?_⟩ <;> intro h
-  · rw [Set.mem_smul_set] at h; obtain ⟨a, ha⟩ := h
-    rw [ConjAct.smul_def, ConjAct.ofConjAct_toConjAct] at ha; rw [← ha.2]
+  ext x
+  refine ⟨fun h ↦ ?_, fun h ↦ ?_⟩
+  · obtain ⟨a, ha⟩ := Set.mem_smul_set.mp h
+    rw [ConjAct.smul_def, ConjAct.ofConjAct_toConjAct] at ha
+    rw [← ha.2]
     simp only [singleton_mul, image_mul_left, mul_singleton, image_mul_right,
       inv_inv, mem_preimage, inv_mul_cancel_right, inv_mul_cancel_left, ha.1]
-  · rw [Set.mem_smul_set]; use g⁻¹ * x * g
-    rw [ConjAct.smul_def, ConjAct.ofConjAct_toConjAct]; group
-    simp only [singleton_mul, image_mul_left, mul_singleton, image_mul_right,
-      inv_inv, mem_preimage, SetLike.mem_coe, Int.reduceNeg, zpow_neg, zpow_one,
-      and_true] at *
-    rwa [← mul_assoc] at h
+  · refine Set.mem_smul_set.mpr ⟨g⁻¹ * x * g, ?_, ?_⟩
+    · simp only [singleton_mul, image_mul_left, mul_singleton, image_mul_right,
+        inv_inv, mem_preimage, SetLike.mem_coe] at *
+      rwa [← mul_assoc] at h
+    · rw [ConjAct.smul_def, ConjAct.ofConjAct_toConjAct]; group
 
 /-- Conjugation by an element of `H` fixes `H`. -/
 lemma conjAct_smul_elt_eq (h : H) :
@@ -56,8 +56,8 @@ lemma conjAct_smul_elt_eq (h : H) :
 lemma leftCoset_eq_of_subset (a b : G)
     (h : {a} * (H : Set G) ⊆ {b} * H) : {a} * (H : Set G) = {b} * H := by
   have ha : a ∈ {a} * (H : Set G) := by rw [Set.mem_mul]; use a; simp
-  have hb := h ha; rw [Set.mem_mul] at hb
-  obtain ⟨b', hb', y, hy, hb_eq⟩ := hb; simp at hb'
+  obtain ⟨b', hb', y, hy, hb_eq⟩ := Set.mem_mul.mp (h ha)
+  simp only [Set.mem_singleton_iff] at hb'
   rw [← hb_eq, hb', ← Set.singleton_mul_singleton, mul_assoc,
     Subgroup.singleton_mul_subgroup hy]
 
@@ -131,27 +131,24 @@ lemma mem_toSet_mk (g : P.Δ) (x : G) :
 
 /-- If two `HeckeCoset`s have the same `toSet`, they are equal. -/
 lemma ext_toSet {D₁ D₂ : HeckeCoset P} (h : HeckeCoset.toSet D₁ = HeckeCoset.toSet D₂) :
-    D₁ = D₂ := by
-  exact Quotient.ind₂ (fun g₁ g₂ ↦ by intro h; exact Quotient.sound h) D₁ D₂ h
+    D₁ = D₂ :=
+  Quotient.ind₂ (fun _ _ h ↦ Quotient.sound h) D₁ D₂ h
 
 /-- The carrier set equals the double coset of the representative. -/
 lemma toSet_eq_rep (D : HeckeCoset P) :
     HeckeCoset.toSet D = DoubleCoset.doubleCoset (HeckeCoset.rep D : G) P.H P.H := by
   refine Quotient.inductionOn D fun g ↦ ?_
-  simp only [toSet_mk]
-  have h := Quotient.out_eq (⟦g⟧ : HeckeCoset P)
-  exact (Quotient.exact h).symm
+  simpa only [toSet_mk] using (Quotient.exact (Quotient.out_eq (⟦g⟧ : HeckeCoset P))).symm
 
 /-- The representative lies in its double coset. -/
-lemma rep_mem (D : HeckeCoset P) : (HeckeCoset.rep D : G) ∈ HeckeCoset.toSet D := by
-  rw [toSet_eq_rep]; exact DoubleCoset.mem_doubleCoset_self P.H P.H _
+lemma rep_mem (D : HeckeCoset P) : (HeckeCoset.rep D : G) ∈ HeckeCoset.toSet D :=
+  toSet_eq_rep D ▸ DoubleCoset.mem_doubleCoset_self P.H P.H _
 
 /-- If `x ∈ HgH`, then `HxH = HgH`. The fundamental double coset absorption lemma. -/
 lemma doubleCoset_eq_of_mem {g : P.Δ} {x : G}
     (hx : x ∈ DoubleCoset.doubleCoset (g : G) P.H P.H) :
     DoubleCoset.doubleCoset x P.H P.H = DoubleCoset.doubleCoset (g : G) P.H P.H := by
   obtain ⟨_, ⟨l, hl, _, rfl, rfl⟩, r, hr, rfl⟩ := hx
-  -- x = l * g * r with l ∈ H, r ∈ H. H(lgr)H = HgH
   simp only [DoubleCoset.doubleCoset]
   ext y; simp only [Set.mem_mul, Set.mem_singleton_iff, SetLike.mem_coe]
   constructor
@@ -182,13 +179,13 @@ protected lemma ind₂ {motive : HeckeCoset P → HeckeCoset P → Prop}
 lemma one_rep_mem_H (P : HeckePair G) : ((one P).rep : G) ∈ P.H := by
   have hm := rep_mem (one P)
   rw [toSet_eq_rep] at hm
-  have h2 := @Quotient.exact _ (dcSetoid P) (rep (one P)) ⟨(1 : G), P.Δ.one_mem⟩
-    (Quotient.out_eq (⟦⟨(1 : G), P.Δ.one_mem⟩⟧ : HeckeCoset P))
-  change _ = _ at h2
+  have h2 : DoubleCoset.doubleCoset ((rep (one P)) : G) P.H P.H =
+      DoubleCoset.doubleCoset (1 : G) P.H P.H :=
+    Quotient.exact (Quotient.out_eq (⟦⟨(1 : G), P.Δ.one_mem⟩⟧ : HeckeCoset P))
   rw [h2, mem_doubleCoset] at hm
   obtain ⟨a, ha, b, hb, hab⟩ := hm
-  rw [show (⟨(1 : G), P.Δ.one_mem⟩ : P.Δ).1 = (1 : G) from rfl, mul_one] at hab
-  rw [hab]; exact P.H.mul_mem ha hb
+  rw [mul_one] at hab
+  exact hab ▸ P.H.mul_mem ha hb
 
 end HeckeCoset
 
@@ -241,21 +238,21 @@ lemma smul_eq_singleton_mul (s : Set G) (g : G) : g • s = {g} * s :=
 lemma set_eq_iUnion_leftCosets (K : Subgroup G) (hK : K ≤ H) :
     (H : Set G) = ⋃ (i : H ⧸ K.subgroupOf H), (i.out : G) • (K : Set G) := by
   ext a; constructor
-  · intro ha; simp only [Set.mem_iUnion]
+  · intro ha
+    simp only [Set.mem_iUnion]
     use (⟨a, ha⟩ : H)
     obtain ⟨h, hh⟩ := QuotientGroup.mk_out_eq_mul (K.subgroupOf H) (⟨a, ha⟩ : H)
-    rw [hh]; simp
-    refine Set.mem_smul_set.mpr ?h.intro.a
-    have : (h : H) • (K : Set G) = K := by
-      apply smul_coe_set; exact Subgroup.mem_subgroupOf.mp (SetLike.coe_mem _)
-    use h⁻¹; simp; exact Subgroup.mem_subgroupOf.mp (SetLike.coe_mem h)
-  · intro ha; simp only [Set.mem_iUnion] at ha; obtain ⟨i, hi⟩ := ha
-    have : Quotient.out i • (K : Set G) ⊆ (H : Set G) := by
-      intro a ha; rw [Set.mem_smul_set] at ha; obtain ⟨h, hh⟩ := ha
-      rw [← hh.2]; simp
-      rw [show Quotient.out i • h = Quotient.out i * h from rfl]
-      exact mul_mem (by simp) (hK hh.1)
-    exact this hi
+    rw [hh]
+    simp only [coe_mul]
+    refine Set.mem_smul_set.mpr ?_
+    use h⁻¹
+    simp
+    exact Subgroup.mem_subgroupOf.mp (SetLike.coe_mem h)
+  · intro ha
+    simp only [Set.mem_iUnion] at ha
+    obtain ⟨i, h, hh, rfl⟩ := ha
+    show ((Quotient.out i : H) : G) * h ∈ H
+    exact mul_mem (by simp) (hK hh)
 
 /-- The conjugate subgroup `gHg⁻¹` is closed under multiplication. -/
 lemma conjAct_mul_self_eq_self (g : G) :
@@ -265,17 +262,17 @@ lemma conjAct_mul_self_eq_self (g : G) :
     show {g} * (H : Set G) * {g⁻¹} * ({g} * ↑H * {g⁻¹}) =
       {g} * ↑H * (({g⁻¹} * {g}) * ↑H) * {g⁻¹} by simp_rw [← mul_assoc],
     Set.singleton_mul_singleton]
-  conv => enter [1, 1, 2]; simp
+  conv => enter [1, 1, 2]; simp only [inv_mul_cancel, Set.singleton_one, one_mul]
   conv => enter [1, 1]; rw [mul_assoc, coe_mul_coe H]
 
 /-- The intersection `H ∩ gHg⁻¹` acts trivially on `gHg⁻¹` by left multiplication. -/
 lemma inter_mul_conjAct_eq_conjAct (g : G) :
     ((H : Set G) ∩ (ConjAct.toConjAct g • H)) * (ConjAct.toConjAct g • H) =
     (ConjAct.toConjAct g • H) := by
-  have := Set.inter_mul_subset (s₁ := (H : Set G))
-    (s₂ := (ConjAct.toConjAct g • H)) (t := (ConjAct.toConjAct g • H))
   refine Subset.antisymm ?_ ?_
-  · exact le_trans this (by simp [conjAct_mul_self_eq_self])
+  · exact le_trans (Set.inter_mul_subset (s₁ := (H : Set G))
+      (s₂ := (ConjAct.toConjAct g • H)) (t := (ConjAct.toConjAct g • H)))
+      (by simp [conjAct_mul_self_eq_self])
   · exact subset_mul_right _ ⟨Subgroup.one_mem H,
       Subgroup.one_mem (ConjAct.toConjAct g • H)⟩
 
@@ -299,11 +296,11 @@ lemma DoubleCoset.doubleCoset_eq_iUnion_leftCosets (g : G) :
     ((ConjAct.toConjAct g • H) : Set G)
   rw [Set.iUnion_mul, inter_comm] at h2
   apply mul_singleton_right_cancel g⁻¹
-  rw [conjAct_smul_coe_eq] at *; simp_rw [← mul_assoc] at h2; rw [h2]
-  have : (Subgroup.map H.subtype
-      ((ConjAct.toConjAct g • H).subgroupOf H)).subgroupOf H =
-    (ConjAct.toConjAct g • H).subgroupOf H := by simp
-  rw [this]
+  rw [conjAct_smul_coe_eq] at *
+  simp_rw [← mul_assoc] at h2
+  rw [h2, show (Subgroup.map H.subtype
+    ((ConjAct.toConjAct g • H).subgroupOf H)).subgroupOf H =
+    (ConjAct.toConjAct g • H).subgroupOf H by simp]
   have h1 : ∀ (i : H ⧸ (ConjAct.toConjAct g • H).subgroupOf H),
       ((i.out) : G) • ((H : Set G) ∩ ({g} * ↑H * {g⁻¹})) *
         {g} * ↑H * {g⁻¹} =
@@ -311,14 +308,12 @@ lemma DoubleCoset.doubleCoset_eq_iUnion_leftCosets (g : G) :
     intro i
     have := inter_mul_conjAct_eq_conjAct H g
     rw [conjAct_smul_coe_eq] at this
-    have hr : ((i.out) : G) • ((H : Set G) ∩ ({g} * ↑H * {g⁻¹})) *
-        {g} * ↑H * {g⁻¹} =
-      (i.out : G) • (((H : Set G) ∩ ({g} * ↑H * {g⁻¹})) *
-        {g} * ↑H * {g⁻¹}) := by simp_rw [smul_mul_assoc]
-    rw [hr]; simp_rw [← mul_assoc] at this
+    simp_rw [smul_mul_assoc]
+    simp_rw [← mul_assoc] at this
     conv => enter [1, 2]; rw [this]
     simp_rw [smul_eq_singleton_mul, ← Set.singleton_mul_singleton, ← mul_assoc]
-  convert Set.iUnion_congr h1; rw [Set.iUnion_mul]
+  convert Set.iUnion_congr h1
+  rw [Set.iUnion_mul]
 
 /-- The product of two double cosets simplifies using `H * H = H` on the left. -/
 lemma doubleCoset_mul_doubleCoset_left (g h : G) :
@@ -346,13 +341,11 @@ lemma doubleCoset_mul_eq_iUnion_doubleCoset (g h : G) :
   rw [doubleCoset_mul_doubleCoset_right, DoubleCoset.doubleCoset_eq_iUnion_leftCosets,
     Set.mul_iUnion]
   simp_rw [DoubleCoset.doubleCoset]
-  apply Set.iUnion_congr fun i ↦ by
-    rw [smul_eq_singleton_mul,
-      show (H : Set G) * {g} * ({↑(Quotient.out i) * h} * ↑H) =
-        H * {g} * {↑(Quotient.out i) * h} * ↑H by simp_rw [← mul_assoc],
-      ← Set.singleton_mul_singleton, ← Set.singleton_mul_singleton,
-      ← Set.singleton_mul_singleton]
-    simp_rw [← mul_assoc]
+  refine Set.iUnion_congr fun i ↦ ?_
+  rw [smul_eq_singleton_mul,
+    show (H : Set G) * {g} * ({↑(Quotient.out i) * h} * ↑H) =
+      H * {g} * {↑(Quotient.out i) * h} * ↑H by simp_rw [← mul_assoc]]
+  simp_rw [← Set.singleton_mul_singleton, ← mul_assoc]
 
 /-- The double coset `HhH` is a constant union indexed by the trivial quotient. -/
 lemma DoubleCoset.doubleCoset_one_mul (h : G) :
