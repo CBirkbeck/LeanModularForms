@@ -29,8 +29,6 @@ namespace HeckeRing.GL2
 
 variable (p : ℕ) (hp : p.Prime)
 
-/-! ### Identity 6: Degree formulas (wrapping existing results) -/
-
 include hp in
 /-- Theorem 3.24(6): `deg(T(pⁱ, p^{i+k})) = p^{k-1}(p+1)` for k > 0. -/
 theorem deg_T_diag_ppow (i k : ℕ) (hk : 0 < k) :
@@ -50,69 +48,43 @@ theorem deg_T_diag_scalar (c : ℕ) (hc : 0 < c) :
     HeckeCoset_deg (GL_pair 2) (T_diag (fun _ ↦ c)) = 1 :=
   HeckeCoset_deg_T_diag_two_scalar (fun _ ↦ c) (fun _ ↦ hc) (divChain_const 2 c) rfl
 
-/-! ### Identity 7: Degree of T(m) -/
-
-/-- `deg` of a `T_ad` equals the `HeckeCoset_deg` of its underlying double coset. -/
-private lemma deg_T_ad (a d : ℕ) (ha : 0 < a) (hd : 0 < d) (h : a ∣ d) :
-    deg (GL_pair 2) (T_ad a d) =
-    HeckeCoset_deg (GL_pair 2) (T_diag (![a, d])) := by
-  rw [T_ad_of_pos a d ha hd h]
-  show deg (GL_pair 2) (Finsupp.single (T_diag _) 1) = _
-  rw [deg_T_single]
+private lemma deg_T_ad_of_pos (a d : ℕ) (ha : 0 < a) (hd : 0 < d) (hdvd : a ∣ d) :
+    deg (GL_pair 2) (T_ad a d) = HeckeCoset_deg (GL_pair 2) (T_diag ![a, d]) := by
+  unfold deg
+  rw [T_ad_of_pos a d ha hd hdvd]
+  unfold T_elem
   simp
 
-/-- `deg` of `T_ad` when conditions hold. -/
-private lemma deg_T_ad_of_pos' (a d : ℕ) (ha : 0 < a) (hd : 0 < d) (hdvd : a ∣ d) :
-    deg (GL_pair 2) (T_ad a d) =
-    HeckeCoset_deg (GL_pair 2) (T_diag ![a, d]) := by
-  unfold deg; rw [T_ad_of_pos a d ha hd hdvd]
-  unfold T_elem; simp
-
 include hp in
-/-- Non-scalar case: `deg(T_ad(pⁱ, p^{k-i})) = p^{k-2i-1}(p+1)` when `2i < k`. -/
-private lemma deg_ppow_term_lt' (i k : ℕ) (h2i : 2 * i < k) :
+private lemma deg_ppow_term_lt (i k : ℕ) (h2i : 2 * i < k) :
     deg (GL_pair 2) (T_ad (p ^ i) (p ^ (k - i))) =
     ↑(p ^ (k - 2 * i - 1) * (p + 1)) := by
   have h_exp_eq : k - i = i + (k - 2 * i) := by omega
-  rw [deg_T_ad_of_pos' (p ^ i) (p ^ (k - i))
-    (pow_pos hp.pos i) (pow_pos hp.pos (k - i))
-    (Nat.pow_dvd_pow p (by omega))]
-  show HeckeCoset_deg (GL_pair 2) (T_diag (![p ^ i, p ^ (k - i)])) =
-    ↑(p ^ (k - 2 * i - 1) * (p + 1))
-  have h_mk2_eq :
-      (![p ^ i, p ^ (k - i)] : Fin 2 → ℕ) =
-      (![p ^ i, p ^ (i + (k - 2 * i))] : Fin 2 → ℕ) := by
-    ext j; fin_cases j <;> simp only [h_exp_eq]
-  rw [show T_diag (![p ^ i, p ^ (k - i)]) =
-    T_diag (![p ^ i, p ^ (i + (k - 2 * i))]) from by rw [h_mk2_eq]]
+  rw [deg_T_ad_of_pos (p ^ i) (p ^ (k - i)) (pow_pos hp.pos i) (pow_pos hp.pos (k - i))
+      (Nat.pow_dvd_pow p (by omega)),
+    show (![p ^ i, p ^ (k - i)] : Fin 2 → ℕ) = ![p ^ i, p ^ (i + (k - 2 * i))] from by
+      ext j; fin_cases j <;> simp only [h_exp_eq]]
   exact deg_T_diag_ppow p hp i (k - 2 * i) (by omega)
 
 include hp in
-/-- Scalar case: `deg(T_ad(p^i, p^i)) = 1` when `2i = k`. -/
-private lemma deg_ppow_term_eq' (i k : ℕ) (h2i : 2 * i = k) :
+private lemma deg_ppow_term_eq (i k : ℕ) (h2i : 2 * i = k) :
     deg (GL_pair 2) (T_ad (p ^ i) (p ^ (k - i))) = 1 := by
   rw [show k - i = i from by omega,
-    deg_T_ad_of_pos' (p ^ i) (p ^ i) (pow_pos hp.pos i)
-      (pow_pos hp.pos i) (dvd_refl _)]
-  set c := p ^ i with hc_def
-  have hc : 0 < c := pow_pos hp.pos i
-  rw [show T_diag (![c, c]) =
-      T_diag (fun _ ↦ c) from by
-    congr 1; exact funext fun j ↦ by fin_cases j <;> rfl]
-  exact deg_T_diag_scalar c hc
+    deg_T_ad_of_pos (p ^ i) (p ^ i) (pow_pos hp.pos i) (pow_pos hp.pos i) (dvd_refl _),
+    show T_diag (![p ^ i, p ^ i]) = T_diag (fun _ ↦ p ^ i) from by
+      congr 1; exact funext fun j ↦ by fin_cases j <;> rfl]
+  exact deg_T_diag_scalar (p ^ i) (pow_pos hp.pos i)
 
 include hp in
-/-- For i in the shifted tail, degree of the (k+2)-expansion term equals the k-expansion term.
-    Key fact: both have the same "gap" (ratio d/a), so their degrees coincide. -/
-private lemma deg_ppow_shift' (i k : ℕ) (hi : i < k / 2 + 1) :
+private lemma deg_ppow_shift (i k : ℕ) (hi : i < k / 2 + 1) :
     deg (GL_pair 2) (T_ad (p ^ (i + 1)) (p ^ (k + 2 - (i + 1)))) =
     deg (GL_pair 2) (T_ad (p ^ i) (p ^ (k - i))) := by
   by_cases h2i : 2 * i < k
-  · rw [deg_ppow_term_lt' p hp (i + 1) (k + 2) (by omega),
+  · rw [deg_ppow_term_lt p hp (i + 1) (k + 2) (by omega),
       show k + 2 - 2 * (i + 1) - 1 = k - 2 * i - 1 from by omega,
-      (deg_ppow_term_lt' p hp i k h2i).symm]
-  · rw [deg_ppow_term_eq' p hp (i + 1) (k + 2) (by omega),
-      deg_ppow_term_eq' p hp i k (by omega)]
+      (deg_ppow_term_lt p hp i k h2i).symm]
+  · rw [deg_ppow_term_eq p hp (i + 1) (k + 2) (by omega),
+      deg_ppow_term_eq p hp i k (by omega)]
 
 /-- `deg(T(pᵏ)) = 1 + p + ⋯ + pᵏ`.
     Proof by strong induction: for k >= 2, split the expansion at i=0 to get
@@ -128,10 +100,10 @@ theorem deg_T_sum_prime_pow (k : ℕ) :
   match k with
   | 0 =>
     simp only [Nat.zero_div, Nat.zero_add, Finset.sum_range_one, Nat.sub_zero]
-    simpa [pow_zero] using deg_ppow_term_eq' p hp 0 0 rfl
+    exact deg_ppow_term_eq p hp 0 0 rfl
   | 1 =>
     simp only [show (1 : ℕ) / 2 = 0 from rfl, Nat.zero_add, Finset.sum_range_one, Nat.sub_zero]
-    convert deg_ppow_term_lt' p hp 0 1 (by omega) using 1
+    convert deg_ppow_term_lt p hp 0 1 (by omega) using 1
     simp only [Finset.sum_range_succ, Finset.sum_range_zero, zero_add, pow_zero, pow_one]
     push_cast; ring
   | k + 2 =>
@@ -141,11 +113,11 @@ theorem deg_T_sum_prime_pow (k : ℕ) :
         (deg (GL_pair 2)) (T_ad (p ^ (i + 1)) (p ^ (k + 2 - (i + 1)))) =
         ∑ i ∈ Finset.range (k / 2 + 1), (deg (GL_pair 2)) (T_ad (p ^ i) (p ^ (k - i))) :=
       Finset.sum_congr rfl fun i hi ↦ by
-        rw [Finset.mem_range] at hi; exact deg_ppow_shift' p hp i k hi
+        rw [Finset.mem_range] at hi; exact deg_ppow_shift p hp i k hi
     rw [h_tail, show deg (GL_pair 2) (T_ad (p ^ 0) (p ^ (k + 2 - 0))) =
         ↑(p ^ (k + 1) * (p + 1)) from by
       simpa [show k + 2 - 0 - 1 = k + 1 from by omega] using
-        deg_ppow_term_lt' p hp 0 (k + 2) (by omega)]
+        deg_ppow_term_lt p hp 0 (k + 2) (by omega)]
     have ih_k := ih k (by omega)
     rw [T_sum_ppow_expansion p hp k, map_sum] at ih_k; rw [ih_k]
     conv_rhs =>
@@ -154,17 +126,13 @@ theorem deg_T_sum_prime_pow (k : ℕ) :
         show k + 1 + 1 = (k + 1) + 1 from by omega,
         Finset.sum_range_succ]
     push_cast; ring
-/-- `deg(T_sum(1)) = 1`, used as base case for deg_T_sum. -/
 private lemma deg_T_sum_one : deg (GL_pair 2) (T_sum 1) = 1 := by
   change deg (GL_pair 2) (∑ a ∈ Nat.divisors 1, T_ad a (1 / a)) = 1
   simp only [Nat.divisors_one, Finset.sum_singleton, Nat.div_self one_pos]
-  rw [deg_T_ad_of_pos' 1 1 one_pos one_pos (dvd_refl 1)]
-  set c : ℕ := 1 with hc_def
-  have hc : 0 < c := Nat.one_pos
-  rw [show T_diag (![c, c]) =
-      T_diag (fun _ ↦ c) from by
-    congr 1; exact funext fun j ↦ by fin_cases j <;> rfl]
-  exact deg_T_diag_scalar c hc
+  rw [deg_T_ad_of_pos 1 1 one_pos one_pos (dvd_refl 1),
+    show T_diag (![1, 1]) = T_diag (fun _ ↦ (1 : ℕ)) from by
+      congr 1; exact funext fun j ↦ by fin_cases j <;> rfl]
+  exact deg_T_diag_scalar 1 one_pos
 
 /-- Theorem 3.24(7): `deg(T(m)) = σ₁(m)`.
     By prime factorization + coprime multiplicativity + prime-power case. -/
