@@ -245,9 +245,8 @@ private theorem center_SL2Z_smul_eq_of_forall (g : SL(2, ℤ))
   set z₀ : ℍ := ⟨⟨0, 2⟩, by norm_num⟩
   have z₀_fdo : z₀ ∈ fdo :=
     ⟨by norm_num [Complex.normSq_apply], by
-      show |z₀.re| < 1 / 2
-      simp only [UpperHalfPlane.re, z₀]
-      norm_num⟩
+      change |z₀.re| < 1 / 2
+      simp [UpperHalfPlane.re, z₀]⟩
   rcases Int.eq_one_or_neg_one_of_mul_eq_one' hdet with ⟨ha, hd⟩ | ⟨ha, hd⟩
   · have hg : g = T ^ ((↑g : Matrix (Fin 2) (Fin 2) ℤ) 0 1) := by
       ext i j
@@ -356,9 +355,7 @@ private lemma moebGL_hasDerivAt (g : GL₂⁺) (z : ℂ) (hz : 0 < z.im) :
       ↑(M.det : ℝ) / (c * z + d) ^ 2 by
     rw [← h]
     exact (hn.div hdn hd).hasDerivAt
-  rw [show (fun w ↦ (a * w + b) / (c * w + d)) =
-      ((fun w ↦ a * w + b) / (fun w ↦ c * w + d)) from funext fun _ ↦ rfl,
-    deriv_div hn hdn hd, deriv_add_const, deriv_const_mul_field,
+  rw [← Pi.div_def, deriv_div hn hdn hd, deriv_add_const, deriv_const_mul_field,
     deriv_add_const, deriv_const_mul_field]
   simp only [deriv_id'', mul_one]
   have hdet : a * d - b * c = ↑(M.det : ℝ) := by
@@ -416,16 +413,13 @@ instance instSMulInvMeasure_GLpos : SMulInvariantMeasure GL(2, ℝ)⁺ ℍ μ_hy
   measure_preimage_smul g s hs := by
     set g' := (g : GL (Fin 2) ℝ)
     have hs' : MeasurableSet ((g' • ·) ⁻¹' s) := (measurable_const_smul g') hs
-    simp_rw [hyperbolicMeasure, show ∀ (τ : ℍ), τ.im = (↑τ : ℂ).im from coe_im]
+    simp_rw [hyperbolicMeasure, ← UpperHalfPlane.coe_im]
     rw [show (fun τ ↦ (g : GL₂⁺) • τ) ⁻¹' s = (g' • ·) ⁻¹' s from rfl,
       withDensity_apply _ hs', withDensity_apply _ hs,
       setLIntegral_comap_coe _ hs' (fun z ↦ ENNReal.ofReal (z.im ^ (-2 : ℤ))),
       setLIntegral_comap_coe _ hs (fun z ↦ ENNReal.ofReal (z.im ^ (-2 : ℤ)))]
     set A := UpperHalfPlane.coe '' ((g' • ·) ⁻¹' s)
-    set B := UpperHalfPlane.coe '' s
-    set ρ : ℂ → ENNReal := fun z ↦ ENNReal.ofReal (z.im ^ (-2 : ℤ))
-    change ∫⁻ z in A, ρ z = ∫⁻ z in B, ρ z
-    rw [show B = moebGL g '' A from (moebGL_image_eq g s).symm,
+    rw [show UpperHalfPlane.coe '' s = moebGL g '' A from (moebGL_image_eq g s).symm,
       lintegral_image_eq_lintegral_abs_det_fderiv_mul volume
         (isOpenEmbedding_coe.measurableEmbedding.measurableSet_image.mpr hs')
         (fun z hz ↦ (moebGL_hasDerivAt g z (by
@@ -439,7 +433,7 @@ instance instSMulInvMeasure_GLpos : SMulInvariantMeasure GL(2, ℝ)⁺ ℍ μ_hy
     refine setLIntegral_congr_fun
       (isOpenEmbedding_coe.measurableEmbedding.measurableSet_image.mpr hs') fun z hz ↦ ?_
     obtain ⟨τ, _, rfl⟩ := hz
-    simp only [ρ, det_complexSmul]
+    simp only [det_complexSmul]
     rw [abs_of_nonneg (Complex.normSq_nonneg _),
       ← ENNReal.ofReal_mul (Complex.normSq_nonneg _),
       moebGL_coe]
@@ -486,7 +480,7 @@ private def pslSmul_R : PSL(2, ℝ) → ℍ → ℍ :=
   Quotient.lift (fun (a : SL(2, ℝ)) (τ : ℍ) ↦ a • τ) (by
     intro a b hab
     funext τ
-    show a • τ = b • τ
+    change a • τ = b • τ
     rw [show b = a * (a⁻¹ * b) by group, mul_smul,
       center_SL2R_smul_eq _ (QuotientGroup.leftRel_apply.mp hab)])
 
@@ -503,8 +497,7 @@ instance instMulActionPSL_R : MulAction PSL(2, ℝ) ℍ where
   mul_smul g₁ g₂ τ := by
     induction g₁ using Quotient.inductionOn with | h a => ?_
     induction g₂ using Quotient.inductionOn with | h b => ?_
-    show pslSmul_R ((↑a : PSL(2, ℝ)) * ↑b) τ =
-      pslSmul_R ↑a (pslSmul_R ↑b τ)
+    change pslSmul_R ((↑a : PSL(2, ℝ)) * ↑b) τ = pslSmul_R ↑a (pslSmul_R ↑b τ)
     rw [← QuotientGroup.mk_mul, pslSmul_R_coe, pslSmul_R_coe, pslSmul_R_coe, mul_smul]
 
 /-- Compatibility: the `PSL(2, ℝ)` action of a representative coincides with
@@ -516,7 +509,7 @@ theorem PSL_R_smul_coe (g : SL(2, ℝ)) (τ : ℍ) :
 instance : MeasurableConstSMul PSL(2, ℝ) ℍ where
   measurable_const_smul g := by
     induction g using Quotient.inductionOn with | h a => ?_
-    show Measurable (fun τ ↦ (↑a : PSL(2, ℝ)) • τ)
+    change Measurable (fun τ ↦ (↑a : PSL(2, ℝ)) • τ)
     simpa only [PSL_R_smul_coe] using (continuous_const_smul (mapGL ℝ a)).measurable
 
 instance instSMulInvMeasure_PSL_R : SMulInvariantMeasure PSL(2, ℝ) ℍ μ_hyp where
@@ -524,10 +517,7 @@ instance instSMulInvMeasure_PSL_R : SMulInvariantMeasure PSL(2, ℝ) ℍ μ_hyp 
     induction g using Quotient.inductionOn with | h a => ?_
     change μ_hyp ((fun τ ↦ (↑a : PSL(2, ℝ)) • τ) ⁻¹' s) = μ_hyp s
     simp only [PSL_R_smul_coe]
-    set g_GL : GL (Fin 2) ℝ := mapGL ℝ a
-    have h_det : (Matrix.GeneralLinearGroup.det g_GL).val = (1 : ℝ) := by simp [g_GL]
-    set g_GLPos : GL(2, ℝ)⁺ :=
-      ⟨g_GL, (h_det ▸ one_pos : 0 < (Matrix.GeneralLinearGroup.det g_GL).val)⟩
+    let g_GLPos : GL(2, ℝ)⁺ := ⟨mapGL ℝ a, by simp [mapGL]⟩
     exact (measurePreserving_smul g_GLPos μ_hyp).measure_preimage hs.nullMeasurableSet
 
 /-- The lift `SL(2, ℤ) →* PSL(2, ℝ)`: cast `SL(2, ℤ)` entries to `ℝ` via
@@ -585,13 +575,12 @@ private lemma g_mem_center_of_map_intCast_mem_center (g : SL(2, ℤ))
       rw [hr_z]
       simpa [Fintype.card_fin] using hr_pow
     exact_mod_cast hz_sq_R
-  refine ⟨z, ?_, ?_⟩
-  · simpa [Fintype.card_fin] using hz_sq
-  · ext i j
-    by_cases hij : i = j
-    · subst hij
-      rw [Matrix.scalar_apply, Matrix.diagonal_apply_eq, h_diag]
-    · rw [Matrix.scalar_apply, Matrix.diagonal_apply_ne _ hij, h_off i j hij]
+  refine ⟨z, by simpa [Fintype.card_fin] using hz_sq, ?_⟩
+  ext i j
+  by_cases hij : i = j
+  · subst hij
+    rw [Matrix.scalar_apply, Matrix.diagonal_apply_eq, h_diag]
+  · rw [Matrix.scalar_apply, Matrix.diagonal_apply_ne _ hij, h_off i j hij]
 
 private lemma map_intCast_mem_center_of_g_mem_center (g : SL(2, ℤ))
     (hmem : g ∈ Subgroup.center SL(2, ℤ)) :
@@ -599,17 +588,16 @@ private lemma map_intCast_mem_center_of_g_mem_center (g : SL(2, ℤ))
       Subgroup.center SL(2, ℝ) := by
   rw [Matrix.SpecialLinearGroup.mem_center_iff] at hmem ⊢
   obtain ⟨z, hz_pow, hz_scalar⟩ := hmem
-  refine ⟨(z : ℝ), ?_, ?_⟩
-  · exact_mod_cast hz_pow
-  · ext i j
-    have h_ij := congr_fun (congr_fun hz_scalar i) j
-    rw [map_intCast_entry]
-    by_cases hij : i = j
-    · subst hij
-      rw [Matrix.scalar_apply, Matrix.diagonal_apply_eq] at h_ij ⊢
-      exact_mod_cast h_ij
-    · rw [Matrix.scalar_apply, Matrix.diagonal_apply_ne _ hij] at h_ij ⊢
-      exact_mod_cast h_ij
+  refine ⟨(z : ℝ), by exact_mod_cast hz_pow, ?_⟩
+  ext i j
+  have h_ij := congr_fun (congr_fun hz_scalar i) j
+  rw [map_intCast_entry]
+  by_cases hij : i = j
+  · subst hij
+    rw [Matrix.scalar_apply, Matrix.diagonal_apply_eq] at h_ij ⊢
+    exact_mod_cast h_ij
+  · rw [Matrix.scalar_apply, Matrix.diagonal_apply_ne _ hij] at h_ij ⊢
+    exact_mod_cast h_ij
 
 /-- The kernel of `SL2Z_to_PSL2R` is the center of `SL(2, ℤ)`: an integer matrix
 casts to a real scalar matrix iff it is itself a scalar matrix. -/
@@ -634,8 +622,7 @@ hom sends `[g] : PSL(2, ℤ)` to a `PSL(2, ℝ)`-element acting on `ℍ` exactly
 underlying `SL(2, ℤ)`-action does. -/
 @[simp]
 theorem PSL2Z_to_PSL2R_smul (g : SL(2, ℤ)) (τ : ℍ) :
-    PSL2Z_to_PSL2R (↑g : PSL(2, ℤ)) • τ = g • τ := by
-  rw [PSL2Z_to_PSL2R_mk, SL2Z_to_PSL2R_smul]
+    PSL2Z_to_PSL2R (↑g : PSL(2, ℤ)) • τ = g • τ :=
   rfl
 
 /-- Action compatibility for `PSL2Z_to_PSL2R` (generic form): for any
@@ -650,7 +637,7 @@ theorem PSL2Z_to_PSL2R_smul_eq (p : PSL(2, ℤ)) (τ : ℍ) :
 `SL2Z_to_PSL2R.ker = center SL(2, ℤ)` under the `PSL(2, ℤ)`-projection, which is `⊥`. -/
 theorem PSL2Z_to_PSL2R_injective : Function.Injective PSL2Z_to_PSL2R := by
   rw [← MonoidHom.ker_eq_bot_iff]
-  show (QuotientGroup.lift (Subgroup.center SL(2, ℤ)) SL2Z_to_PSL2R _).ker = ⊥
+  change (QuotientGroup.lift (Subgroup.center SL(2, ℤ)) SL2Z_to_PSL2R _).ker = ⊥
   rw [QuotientGroup.ker_lift, ker_SL2Z_to_PSL2R, QuotientGroup.map_mk'_self]
 
 /-- Positive-scalar action invariance for `GL (Fin 2) ℝ`: if `h` has matrix obtained
@@ -666,7 +653,7 @@ lemma GL_smul_pos_eq
   have hc_C : (c : ℂ) ≠ 0 := by exact_mod_cast ne_of_gt hc
   have hh_det : 0 < h.det.val := by
     have h_det_eq : h.det.val = c ^ 2 * g.det.val := by
-      show ((h : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ).det =
+      change ((h : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ).det =
         c ^ 2 * ((g : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ).det
       rw [h_eq, Matrix.det_smul]
       simp [Fintype.card_fin]
@@ -680,12 +667,12 @@ lemma GL_smul_pos_eq
     rw [h_eq]
     simp [Matrix.smul_apply, smul_eq_mul]
   have h_num : num h τ = (c : ℂ) * num g τ := by
-    show ((h 0 0 : ℝ) : ℂ) * τ + ((h 0 1 : ℝ) : ℂ) =
+    change ((h 0 0 : ℝ) : ℂ) * τ + ((h 0 1 : ℝ) : ℂ) =
       (c : ℂ) * (((g 0 0 : ℝ) : ℂ) * τ + ((g 0 1 : ℝ) : ℂ))
     push_cast [h_entry 0 0, h_entry 0 1]
     ring
   have h_denom : denom h τ = (c : ℂ) * denom g τ := by
-    show ((h 1 0 : ℝ) : ℂ) * τ + ((h 1 1 : ℝ) : ℂ) =
+    change ((h 1 0 : ℝ) : ℂ) * τ + ((h 1 1 : ℝ) : ℂ) =
       (c : ℂ) * (((g 1 0 : ℝ) : ℂ) * τ + ((g 1 1 : ℝ) : ℂ))
     push_cast [h_entry 1 0, h_entry 1 1]
     ring
@@ -698,7 +685,7 @@ noncomputable def GLPos_to_SLR (g : GL(2, ℝ)⁺) : SL(2, ℝ) :=
       ((g : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ),
     by
       have hg_pos : 0 < ((g : GL (Fin 2) ℝ).det.val : ℝ) := g.property
-      show ((Real.sqrt ((g : GL (Fin 2) ℝ).det.val))⁻¹ •
+      change ((Real.sqrt ((g : GL (Fin 2) ℝ).det.val))⁻¹ •
           ((g : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ)).det = 1
       rw [Matrix.det_smul, Fintype.card_fin, inv_pow, Real.sq_sqrt hg_pos.le]
       exact inv_mul_cancel₀ (ne_of_gt hg_pos)⟩
@@ -717,11 +704,11 @@ theorem GLPos_to_PSL_R_term_smul (g : GL(2, ℝ)⁺) (τ : ℍ) :
   have h_sqrt_pos : 0 < (Real.sqrt ((g : GL (Fin 2) ℝ).det.val))⁻¹ := by
     rw [inv_pos]
     exact Real.sqrt_pos.mpr hg_pos
-  show ((GLPos_to_SLR g : SL(2, ℝ)) : PSL(2, ℝ)) • τ = g • τ
+  change ((GLPos_to_SLR g : SL(2, ℝ)) : PSL(2, ℝ)) • τ = g • τ
   rw [PSL_R_smul_coe]
-  show (mapGL ℝ (GLPos_to_SLR g) : GL (Fin 2) ℝ) • τ = (g : GL (Fin 2) ℝ) • τ
+  change (mapGL ℝ (GLPos_to_SLR g) : GL (Fin 2) ℝ) • τ = (g : GL (Fin 2) ℝ) • τ
   refine GL_smul_pos_eq h_sqrt_pos hg_pos ?_ τ
-  show ((mapGL ℝ (GLPos_to_SLR g) : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
+  change ((mapGL ℝ (GLPos_to_SLR g) : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
     (Real.sqrt ((g : GL (Fin 2) ℝ).det.val))⁻¹ •
       ((g : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ)
   rw [Matrix.SpecialLinearGroup.mapGL_coe_matrix]
