@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2026 Chris Birkbeck. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Chris Birkbeck
+-/
 module
 public import LeanModularForms.Modularforms.DimGenCongLevels.NormReduction
 
@@ -43,21 +48,6 @@ lemma norm_apply_eq_mul_restProd
   letI : DecidableEq (Q Γ) := Classical.decEq (Q Γ)
   set q₁ : Q Γ := (⟦(1 : 𝒮ℒ)⟧ : Q Γ)
   have hmem : q₁ ∈ (Finset.univ : Finset (Q Γ)) := by simp [q₁]
-  have hnorm :
-      (ModularForm.norm 𝒮ℒ f) τ =
-        ∏ q : Q Γ,
-          (SlashInvariantForm.quotientFunc (ℋ := 𝒮ℒ) (𝒢 := G Γ) (k := k) f q) τ := by
-    simp [ModularForm.coe_norm]
-  have hsplit :
-      (∏ q : Q Γ,
-          (SlashInvariantForm.quotientFunc (ℋ := 𝒮ℒ) (𝒢 := G Γ) (k := k) f q) τ) =
-        (SlashInvariantForm.quotientFunc (ℋ := 𝒮ℒ) (𝒢 := G Γ) (k := k) f q₁) τ *
-          ∏ q ∈ (Finset.univ : Finset (Q Γ)).erase q₁,
-            (SlashInvariantForm.quotientFunc (ℋ := 𝒮ℒ) (𝒢 := G Γ) (k := k) f q) τ := by
-    simpa using
-      (Finset.mul_prod_erase (s := (Finset.univ : Finset (Q Γ)))
-        (f := fun q ↦
-          (SlashInvariantForm.quotientFunc (ℋ := 𝒮ℒ) (𝒢 := G Γ) (k := k) f q) τ) hmem).symm
   have hone :
       (SlashInvariantForm.quotientFunc (ℋ := 𝒮ℒ) (𝒢 := G Γ) (k := k) f q₁) τ = f τ := by
     simp [q₁, SlashInvariantForm.quotientFunc_mk]
@@ -67,16 +57,20 @@ lemma norm_apply_eq_mul_restProd
         restProd (Γ := Γ) (k := k) f τ := by
     simp [NormReduction.restProd, q₁, Finset.prod_apply]
     rfl
+  have hsplit := (Finset.mul_prod_erase (s := (Finset.univ : Finset (Q Γ)))
+    (f := fun q ↦
+      (SlashInvariantForm.quotientFunc (ℋ := 𝒮ℒ) (𝒢 := G Γ) (k := k) f q) τ) hmem).symm
   calc
     (ModularForm.norm 𝒮ℒ f) τ =
         ∏ q : Q Γ,
-          (SlashInvariantForm.quotientFunc (ℋ := 𝒮ℒ) (𝒢 := G Γ) (k := k) f q) τ := hnorm
+          (SlashInvariantForm.quotientFunc (ℋ := 𝒮ℒ) (𝒢 := G Γ) (k := k) f q) τ := by
+        simp [ModularForm.coe_norm]
     _ =
         (SlashInvariantForm.quotientFunc (ℋ := 𝒮ℒ) (𝒢 := G Γ) (k := k) f q₁) τ *
           ∏ q ∈ (Finset.univ : Finset (Q Γ)).erase q₁,
-            (SlashInvariantForm.quotientFunc (ℋ := 𝒮ℒ) (𝒢 := G Γ) (k := k) f q) τ := hsplit
-    _ = f τ * restProd (Γ := Γ) (k := k) f τ := by
-        simp [hone, hrest]
+            (SlashInvariantForm.quotientFunc (ℋ := 𝒮ℒ) (𝒢 := G Γ) (k := k) f q) τ := by
+        simpa using hsplit
+    _ = f τ * restProd (Γ := Γ) (k := k) f τ := by simp [hone, hrest]
 
 lemma cuspFunction_norm_eq_mul_restProd_of_ne_zero
     (Γ : Subgroup SL(2, ℤ)) [(G Γ).IsFiniteRelIndex 𝒮ℒ] (f : ModularForm (G Γ) k) {h : ℝ} {q : ℂ}
@@ -110,8 +104,7 @@ lemma valueAtInfty_norm_eq_zero_of_valueAtInfty_eq_zero
   have hperSL : cuspWidth (Γ := Γ) ∈ (𝒮ℒ : Subgroup (GL (Fin 2) ℝ)).strictPeriods :=
     cuspWidth_mem_strictPeriods_levelOne (Γ := Γ)
   haveI : (G Γ).IsArithmetic := instIsArithmetic (Γ := Γ) hΓ
-  haveI : (G Γ).IsFiniteRelIndex 𝒮ℒ := by
-    exact Subgroup.IsArithmetic.isFiniteRelIndexSL (𝒢 := (G Γ))
+  haveI : (G Γ).IsFiniteRelIndex 𝒮ℒ := Subgroup.IsArithmetic.isFiniteRelIndexSL (𝒢 := (G Γ))
   have ht_f :
       Tendsto (fun τ : ℍ ↦ f τ) UpperHalfPlane.atImInfty (𝓝 (0 : ℂ)) := by
     simpa [hval0] using
@@ -134,12 +127,8 @@ lemma valueAtInfty_norm_eq_zero_of_valueAtInfty_eq_zero
   have ht_norm :
       Tendsto (fun τ : ℍ ↦ (ModularForm.norm 𝒮ℒ f) τ) UpperHalfPlane.atImInfty (𝓝 (0 : ℂ)) := by
     simpa [norm_apply_eq_mul_restProd (Γ := Γ) (k := k) f] using ht_mul
-  have ht_val :
-      Tendsto (fun τ : ℍ ↦ (ModularForm.norm 𝒮ℒ f) τ) UpperHalfPlane.atImInfty
-        (𝓝 (valueAtInfty (ModularForm.norm 𝒮ℒ f))) :=
-    modularForm_tendsto_valueAtInfty (f := ModularForm.norm 𝒮ℒ f)
-      (h := cuspWidth (Γ := Γ)) hh hperSL
-  exact (tendsto_nhds_unique ht_norm ht_val).symm
+  exact (tendsto_nhds_unique ht_norm <| modularForm_tendsto_valueAtInfty
+    (f := ModularForm.norm 𝒮ℒ f) (h := cuspWidth (Γ := Γ)) hh hperSL).symm
 
 /-- Vanishing of the first `N` `q`-coefficients is preserved under taking the norm to level one. -/
 public lemma qExpansion_coeff_eq_zero_norm_of_qExpansion_coeff_eq_zero
@@ -157,27 +146,22 @@ public lemma qExpansion_coeff_eq_zero_norm_of_qExpansion_coeff_eq_zero
   haveI : (G Γ).IsFiniteRelIndex 𝒮ℒ := Subgroup.IsArithmetic.isFiniteRelIndexSL (𝒢 := (G Γ))
   letI : Fintype (Q Γ) := Fintype.ofFinite (Q Γ)
   letI : DecidableEq (Q Γ) := Classical.decEq _
-  -- Step 1: the vanishing of coefficients for `f` gives a `O(‖q‖^N)` bound for `cuspFunction`.
   have hO_f :
-      cuspFunction (cuspWidth (Γ := Γ)) f =O[𝓝 (0 : ℂ)] fun q : ℂ ↦
-        ‖q‖ ^ N :=
+      cuspFunction (cuspWidth (Γ := Γ)) f =O[𝓝 (0 : ℂ)] fun q : ℂ ↦ ‖q‖ ^ N :=
     cuspFunction_isBigO_pow_of_qExpansion_coeff_eq_zero (f := f) hh hperΓ N hcoeff
-  -- Step 2: `restProd` is bounded at `∞`, hence bounded after composing with `invQParam`.
   have hbd_rest :
       Filter.BoundedAtFilter (𝓝[≠] (0 : ℂ))
         (fun q : ℂ ↦ restProd (Γ := Γ) (k := k) f (τfun (cuspWidth (Γ := Γ)) q)) := by
     simpa [UpperHalfPlane.IsBoundedAtImInfty, τfun] using
       (restProd_isBoundedAtImInfty (Γ := Γ) (k := k) hΓ f).comp_tendsto
         (tendsto_τfun_atImInfty (h := cuspWidth (Γ := Γ)) hh)
-  -- Step 3: on `𝓝[≠] 0`, use the product formula and boundedness of the remaining factor.
   have hEq :
       (fun q : ℂ ↦
           cuspFunction (cuspWidth (Γ := Γ)) (ModularForm.norm 𝒮ℒ f) q) =ᶠ[𝓝[≠] (0 : ℂ)]
         fun q : ℂ ↦
           cuspFunction (cuspWidth (Γ := Γ)) f q *
             restProd (Γ := Γ) (k := k) f (τfun (cuspWidth (Γ := Γ)) q) := by
-    have hne : ∀ᶠ q : ℂ in 𝓝[≠] (0 : ℂ), q ∈ ({0}ᶜ : Set ℂ) := self_mem_nhdsWithin
-    filter_upwards [hne] with q hq
+    filter_upwards [self_mem_nhdsWithin (s := ({0}ᶜ : Set ℂ))] with q hq
     have hq0 : q ≠ 0 := by
       simpa [Set.mem_compl_iff, Set.mem_singleton_iff] using hq
     simpa [τfun] using
@@ -187,17 +171,14 @@ public lemma qExpansion_coeff_eq_zero_norm_of_qExpansion_coeff_eq_zero
       (fun q : ℂ ↦
           cuspFunction (cuspWidth (Γ := Γ)) f q *
             restProd (Γ := Γ) (k := k) f (τfun (cuspWidth (Γ := Γ)) q)) =O[𝓝[≠] (0 : ℂ)]
-        fun q : ℂ ↦ ‖q‖ ^ N :=
-    by
-      simpa [Filter.BoundedAtFilter, mul_one] using (hO_f.mono nhdsWithin_le_nhds).mul hbd_rest
+        fun q : ℂ ↦ ‖q‖ ^ N := by
+    simpa [Filter.BoundedAtFilter, mul_one] using (hO_f.mono nhdsWithin_le_nhds).mul hbd_rest
   have hO_norm_punct :
       cuspFunction (cuspWidth (Γ := Γ)) (ModularForm.norm 𝒮ℒ f) =O[𝓝[≠] (0 : ℂ)] fun q : ℂ ↦
         ‖q‖ ^ N :=
-    (hO_prod_punct.congr' hEq.symm Filter.EventuallyEq.rfl)
-  -- Step 4: show the value at `q = 0` is `0`, so we can upgrade to a bound on `𝓝 0`.
+    hO_prod_punct.congr' hEq.symm Filter.EventuallyEq.rfl
   have hval0 : valueAtInfty f = 0 := by
-    have h0 :
-        (qExpansion (cuspWidth (Γ := Γ)) f).coeff 0 = valueAtInfty f :=
+    have h0 : (qExpansion (cuspWidth (Γ := Γ)) f).coeff 0 = valueAtInfty f :=
       ModularFormClass.qExpansion_coeff_zero (f := f) (h := cuspWidth (Γ := Γ)) hh hperΓ
     simpa [h0] using hcoeff 0 hNpos
   have hnorm0 : valueAtInfty (ModularForm.norm 𝒮ℒ f) = 0 :=
@@ -209,13 +190,9 @@ public lemma qExpansion_coeff_eq_zero_norm_of_qExpansion_coeff_eq_zero
       ‖cuspFunction (cuspWidth (Γ := Γ)) (ModularForm.norm 𝒮ℒ f) 0‖ =
           ‖valueAtInfty (ModularForm.norm 𝒮ℒ f)‖ := by simpa using congrArg norm h0
       _ = 0 := by simpa using congrArg norm hnorm0
-  have hO_norm :
-      cuspFunction (cuspWidth (Γ := Γ)) (ModularForm.norm 𝒮ℒ f) =O[𝓝 (0 : ℂ)] fun q : ℂ ↦
-        ‖q‖ ^ N :=
-    isBigO_nhds_of_isBigO_punctured hO_norm_punct hcf0
-  -- Step 5: apply the analytic lemma that `O(‖q‖^N)` forces vanishing of coefficients below `N`.
   exact qExpansion_coeff_eq_zero_of_cuspFunction_isBigO_pow (f := ModularForm.norm 𝒮ℒ f)
-    (hh := hh) (hΓ := hperSL) (n := n) (N := N) hn hO_norm
+    (hh := hh) (hΓ := hperSL) (n := n) (N := N) hn
+      (isBigO_nhds_of_isBigO_punctured hO_norm_punct hcf0)
 
 end
 
