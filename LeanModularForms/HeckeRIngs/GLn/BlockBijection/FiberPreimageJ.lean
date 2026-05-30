@@ -18,6 +18,14 @@ namespace HeckeRing.GLn
 
 variable {m : ℕ} [NeZero m]
 
+private lemma slSuccEmbed_H_mk_coe_eq {k : ℕ}
+    (σ : SpecialLinearGroup (Fin (k + 1)) ℤ) :
+    (slSuccEmbed_H ⟨mapGL ℚ σ, coe_mem_SLnZ (k + 1) σ⟩ : GL (Fin (k + 2)) ℚ) =
+      mapGL ℚ (slSuccEmbed σ) := by
+  show mapGL ℚ (slSuccEmbed (toSL ⟨mapGL ℚ σ, coe_mem_SLnZ (k + 1) σ⟩)) = _
+  rw [show toSL ⟨mapGL ℚ σ, coe_mem_SLnZ (k + 1) σ⟩ = σ from
+    SpecialLinearGroup.mapGL_injective (S := ℚ) (by rw [toSL_spec])]
+
 private lemma decompQuot_slSuccEmbed_eq_of_inv_block_stab {k : ℕ}
     (a : Fin (k + 1) → ℕ) (ha : ∀ i, 0 < a i) (σ_H : (GL_pair (k + 1)).H)
     (g : (GL_pair (k + 2)).H) (M : SpecialLinearGroup (Fin (k + 2)) ℤ)
@@ -54,15 +62,8 @@ private lemma decompQuot_slSuccEmbed_diagMat_mk_eq_of_block {k : ℕ}
   change ⟦slSuccEmbed_H ⟨mapGL ℚ σ, coe_mem_SLnZ (k + 1) σ⟩⟧ = (⟦g.out⟧ : decompQuot _ _)
   refine decompQuot_slSuccEmbed_eq_of_inv_block_stab a ha
     ⟨mapGL ℚ σ, coe_mem_SLnZ (k + 1) σ⟩ g.out M ?_ h_stab
-  have h_slSuccEmbed_GL :
-      (slSuccEmbed_H ⟨mapGL ℚ σ, coe_mem_SLnZ (k + 1) σ⟩ : GL (Fin (k + 2)) ℚ) =
-      (g.out : GL (Fin (k + 2)) ℚ) * mapGL ℚ M := by
-    show mapGL ℚ (slSuccEmbed (toSL ⟨mapGL ℚ σ, coe_mem_SLnZ (k + 1) σ⟩)) = _
-    rw [show toSL ⟨mapGL ℚ σ, coe_mem_SLnZ (k + 1) σ⟩ = σ from
-      SpecialLinearGroup.mapGL_injective (S := ℚ) (by rw [toSL_spec]),
-      ← h_block, map_mul, toSL_spec]
   push_cast
-  rw [h_slSuccEmbed_GL]
+  rw [slSuccEmbed_H_mk_coe_eq, ← h_block, map_mul, toSL_spec]
   group
 
 private lemma exists_j_m_X_block_class_eq_of_fiber {k : ℕ}
@@ -101,17 +102,10 @@ private lemma exists_j_m_X_block_class_eq_of_fiber {k : ℕ}
   change (⟦slSuccEmbed_H τ_X_H⟧ :
     decompQuot (GL_pair (k + 2)) (diagMat_delta (k + 2) (Fin.cons 1 b))) =
     (⟦j_corrected⟧ : decompQuot _ _)
-  have h_toSL : toSL τ_X_H = τ_X := by
-    apply SpecialLinearGroup.mapGL_injective (S := ℚ)
-    rw [toSL_spec]
   refine decompQuot_slSuccEmbed_eq_of_inv_block_stab b hb τ_X_H j_corrected M_X ?_
     h_M_X_stab
-  have h_slSuccEmbed_GL : (slSuccEmbed_H τ_X_H : GL (Fin (k + 2)) ℚ) =
-      (mapGL ℚ N_i⁻¹) * (j.out : GL (Fin (k + 2)) ℚ) * mapGL ℚ M_X := by
-    show mapGL ℚ (slSuccEmbed (toSL τ_X_H)) = _
-    rw [h_toSL, ← h_X_block, map_mul, map_mul, toSL_spec]
   push_cast
-  rw [h_slSuccEmbed_GL]
+  rw [slSuccEmbed_H_mk_coe_eq, ← h_X_block, map_mul, map_mul, toSL_spec]
   show (mapGL ℚ N_i⁻¹ * (j.out : GL (Fin (k + 2)) ℚ) * mapGL ℚ M_X)⁻¹ *
     (mapGL ℚ N_i⁻¹ * (j.out : GL (Fin (k + 2)) ℚ)) = _
   group
@@ -261,17 +255,11 @@ private lemma slSuccEmbed_block_witnesses_lifted_mem_H {k : ℕ}
   have h_slSucc_σ_GL :
       (slSuccEmbed_H ⟨mapGL ℚ σ_i, coe_mem_SLnZ (k + 1) σ_i⟩ : GL (Fin (k + 2)) ℚ) =
       (i.out : GL (Fin (k + 2)) ℚ) * mapGL ℚ M_i := by
-    show mapGL ℚ (slSuccEmbed (toSL ⟨mapGL ℚ σ_i, coe_mem_SLnZ (k + 1) σ_i⟩)) = _
-    rw [show toSL ⟨mapGL ℚ σ_i, coe_mem_SLnZ (k + 1) σ_i⟩ = σ_i from
-      SpecialLinearGroup.mapGL_injective (S := ℚ) (by rw [toSL_spec]),
-      ← h_block_i, map_mul, toSL_spec]
+    rw [slSuccEmbed_H_mk_coe_eq, ← h_block_i, map_mul, toSL_spec]
   have h_slSucc_τ_GL :
       (slSuccEmbed_H ⟨mapGL ℚ τ_X, coe_mem_SLnZ (k + 1) τ_X⟩ : GL (Fin (k + 2)) ℚ) =
       (mapGL ℚ N_i⁻¹) * (j.out : GL (Fin (k + 2)) ℚ) * mapGL ℚ M_X := by
-    show mapGL ℚ (slSuccEmbed (toSL ⟨mapGL ℚ τ_X, coe_mem_SLnZ (k + 1) τ_X⟩)) = _
-    rw [show toSL ⟨mapGL ℚ τ_X, coe_mem_SLnZ (k + 1) τ_X⟩ = τ_X from
-      SpecialLinearGroup.mapGL_injective (S := ℚ) (by rw [toSL_spec]),
-      ← h_X_block, map_mul, map_mul, toSL_spec]
+    rw [slSuccEmbed_H_mk_coe_eq, ← h_X_block, map_mul, map_mul, toSL_spec]
   have h_cancel :
       (mapGL ℚ M_i : GL (Fin (k + 2)) ℚ) * diagMat (k + 2) (Fin.cons 1 a) *
         (mapGL ℚ N_i⁻¹ : GL (Fin (k + 2)) ℚ) = diagMat (k + 2) (Fin.cons 1 a) := by
@@ -353,27 +341,14 @@ private lemma fiber_block_form_preimage_corrected_j_explicit {k : ℕ}
   · rw [show i = ⟦i.out⟧ from (Quotient.out_eq i).symm]
     refine decompQuot_slSuccEmbed_eq_of_inv_block_stab a ha
       ⟨mapGL ℚ σ_i, coe_mem_SLnZ (k + 1) σ_i⟩ i.out M_i ?_ h_stab_i
-    have h_slSuccEmbed_GL :
-        (slSuccEmbed_H ⟨mapGL ℚ σ_i, coe_mem_SLnZ (k + 1) σ_i⟩ : GL (Fin (k + 2)) ℚ) =
-        (i.out : GL (Fin (k + 2)) ℚ) * mapGL ℚ M_i := by
-      show mapGL ℚ (slSuccEmbed (toSL ⟨mapGL ℚ σ_i, coe_mem_SLnZ (k + 1) σ_i⟩)) = _
-      rw [show toSL ⟨mapGL ℚ σ_i, coe_mem_SLnZ (k + 1) σ_i⟩ = σ_i from
-        SpecialLinearGroup.mapGL_injective (S := ℚ) (by rw [toSL_spec]),
-        ← h_block_i, map_mul, toSL_spec]
     push_cast
-    rw [h_slSuccEmbed_GL]; group
+    rw [slSuccEmbed_H_mk_coe_eq, ← h_block_i, map_mul, toSL_spec]
+    group
   · refine decompQuot_slSuccEmbed_eq_of_inv_block_stab b hb
       ⟨mapGL ℚ τ_X, coe_mem_SLnZ (k + 1) τ_X⟩
       (⟨mapGL ℚ N_i⁻¹, coe_mem_SLnZ (k + 2) N_i⁻¹⟩ * j.out) M_X ?_ h_M_X_stab
-    have h_slSuccEmbed_GL :
-        (slSuccEmbed_H ⟨mapGL ℚ τ_X, coe_mem_SLnZ (k + 1) τ_X⟩ : GL (Fin (k + 2)) ℚ) =
-        (mapGL ℚ N_i⁻¹) * (j.out : GL (Fin (k + 2)) ℚ) * mapGL ℚ M_X := by
-      show mapGL ℚ (slSuccEmbed (toSL ⟨mapGL ℚ τ_X, coe_mem_SLnZ (k + 1) τ_X⟩)) = _
-      rw [show toSL ⟨mapGL ℚ τ_X, coe_mem_SLnZ (k + 1) τ_X⟩ = τ_X from
-        SpecialLinearGroup.mapGL_injective (S := ℚ) (by rw [toSL_spec]),
-        ← h_X_block', map_mul, map_mul, toSL_spec]
     push_cast
-    rw [h_slSuccEmbed_GL]
+    rw [slSuccEmbed_H_mk_coe_eq, ← h_X_block', map_mul, map_mul, toSL_spec]
     show (mapGL ℚ N_i⁻¹ * (j.out : GL (Fin (k + 2)) ℚ) * mapGL ℚ M_X)⁻¹ *
       (mapGL ℚ N_i⁻¹ * (j.out : GL (Fin (k + 2)) ℚ)) = _
     group
