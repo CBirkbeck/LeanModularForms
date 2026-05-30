@@ -7,8 +7,6 @@ module
 
 public import Mathlib.Analysis.Complex.UpperHalfPlane.FunctionsBoundedAtInfty
 
-@[expose] public section
-
 /-!
 # Closure of `IsBoundedAtImInfty` under negation
 
@@ -16,11 +14,13 @@ The predicate `IsBoundedAtImInfty` is invariant under negation of the function. 
 for upstreaming to `Mathlib.Analysis.Complex.UpperHalfPlane.FunctionsBoundedAtInfty`.
 -/
 
+@[expose] public section
+
 open UpperHalfPlane
 
 /-- `IsBoundedAtImInfty (-f) ↔ IsBoundedAtImInfty f`. -/
 theorem isBoundedAtImInfty_neg_iff (f : ℍ → ℂ) :
     IsBoundedAtImInfty (-f) ↔ IsBoundedAtImInfty f := by
-  simp_rw [UpperHalfPlane.isBoundedAtImInfty_iff, Pi.neg_apply, norm_neg]
+  simp [UpperHalfPlane.isBoundedAtImInfty_iff]
 
 alias ⟨_, IsBoundedAtImInfty.neg⟩ := isBoundedAtImInfty_neg_iff
