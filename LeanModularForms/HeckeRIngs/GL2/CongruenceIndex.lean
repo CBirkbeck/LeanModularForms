@@ -3,9 +3,9 @@ Copyright (c) 2024 Chris Birkbeck. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import Mathlib.NumberTheory.ModularForms.CongruenceSubgroups
-import Mathlib.GroupTheory.Index
 import Mathlib.Data.ZMod.Units
+import Mathlib.GroupTheory.Index
+import Mathlib.NumberTheory.ModularForms.CongruenceSubgroups
 
 /-!
 # Index of Congruence Subgroups
@@ -36,9 +36,8 @@ private lemma ZMod_inv_mul_cancel (p : ℕ) (hp : Nat.Prime p) (a : ℤ)
   rw [isCoprime_comm, Int.isCoprime_iff_gcd_eq_one]
   show Nat.Coprime p a.natAbs
   rw [hp.coprime_iff_not_dvd]
-  intro hdvd
-  exact h ((ZMod.intCast_zmod_eq_zero_iff_dvd a p).mpr
-    (dvd_trans (Int.natCast_dvd_natCast.mpr hdvd) (Int.natAbs_dvd.mpr (dvd_refl a))))
+  exact fun hdvd => h ((ZMod.intCast_zmod_eq_zero_iff_dvd a p).mpr
+    (Int.natCast_dvd_natCast.mpr hdvd |>.trans (Int.natAbs_dvd.mpr dvd_rfl)))
 
 private lemma SL2_entry_mul (A B : SL(2, ℤ)) (i j : Fin 2) :
     (A * B).1 i j = A.1 i 0 * B.1 0 j + A.1 i 1 * B.1 1 j := by
@@ -83,21 +82,15 @@ private lemma Gamma0_prime_index_inj :
   · rw [rep_diff_10, ZMod.intCast_zmod_eq_zero_iff_dvd] at hf
     obtain ⟨k, hk⟩ := hf
     have hk0 : k = 0 := by
-      by_contra hk_ne
-      rcases Ne.lt_or_gt hk_ne with hk_neg | hk_pos
-      · have : (p : ℤ) * k ≤ -(p : ℤ) := by nlinarith [hp.pos]
-        linarith [Int.natCast_nonneg j₁]
-      · have : (p : ℤ) ≤ (p : ℤ) * k := by nlinarith [hp.pos]
-        linarith [show (j₂ : ℤ) < p from by exact_mod_cast h2]
+      rcases lt_trichotomy k 0 with hk_neg | rfl | hk_pos
+      · nlinarith [hp.pos, Int.natCast_nonneg j₁]
+      · rfl
+      · nlinarith [hp.pos, show (j₂ : ℤ) < p from by exact_mod_cast h2]
     subst hk0; simp only [Fin.mk.injEq]; omega
-  · simp only [mul_one] at hf
-    rw [TjS_inv_10] at hf
-    simp only [Int.cast_neg, Int.cast_one, neg_eq_zero] at hf
-    exact absurd hf one_ne_zero
-  · simp only [inv_one, one_mul] at hf
-    rw [TjS_10] at hf
-    simp only [Int.cast_one] at hf
-    exact absurd hf one_ne_zero
+  · rw [mul_one, TjS_inv_10] at hf
+    exact absurd hf (by norm_num)
+  · rw [inv_one, one_mul, TjS_10] at hf
+    exact absurd hf (by norm_num)
   · simp only [Fin.mk.injEq]; omega
 
 private lemma Gamma0_prime_index_surj :
@@ -112,17 +105,13 @@ private lemma Gamma0_prime_index_surj :
     simp only [Gamma0Rep, show ¬(p < p) from lt_irrefl p, ite_false, inv_one, one_mul]
     exact h
   · set j₀ := ((σ.1 0 0 : ℤ) : ZMod p) * ((σ.1 1 0 : ℤ) : ZMod p)⁻¹ with hj₀_def
-    set j := ZMod.val j₀ with hj_def
-    have hj_lt : j < p := ZMod.val_lt j₀
-    refine ⟨⟨j, by omega⟩, ?_⟩
+    refine ⟨⟨j₀.val, Nat.lt_succ_of_lt (ZMod.val_lt j₀)⟩, ?_⟩
     rw [QuotientGroup.eq, Gamma0_mem]
-    simp only [Gamma0Rep, show j < p from hj_lt, ite_true]
+    simp only [Gamma0Rep, show j₀.val < p from ZMod.val_lt _, ite_true]
     rw [TjS_inv_mul_10]
     push_cast
-    simp only [hj_def]
     rw [ZMod.natCast_zmod_val, hj₀_def]
-    have h_inv := ZMod_inv_mul_cancel p hp (σ.1 1 0) h
-    simp only [mul_assoc, h_inv, mul_one, sub_self]
+    simp [mul_assoc, ZMod_inv_mul_cancel p hp (σ.1 1 0) h]
 
 /-- `[SL₂(ℤ) : Γ₀(p)] = p + 1` for prime `p`. -/
 theorem Gamma0_prime_index : (Gamma0 p).index = p + 1 := by
@@ -143,9 +132,8 @@ private def lowerTriRep (k : ℕ) (c : Fin p) : SL(2, ℤ) :=
 omit hp in
 private lemma lowerTriRep_mem_Gamma0 (k : ℕ) (_hk : 0 < k) (c : Fin p) :
     (lowerTriRep p k c : SL(2, ℤ)) ∈ Gamma0 (p ^ k) := by
-  rw [Gamma0_mem]
-  have h10 : (lowerTriRep p k c) 1 0 = (c : ℤ) * (p : ℤ) ^ k := by simp [lowerTriRep]
-  rw [h10, ZMod.intCast_zmod_eq_zero_iff_dvd]
+  rw [Gamma0_mem, show (lowerTriRep p k c).1 1 0 = (c : ℤ) * (p : ℤ) ^ k from by
+    simp [lowerTriRep], ZMod.intCast_zmod_eq_zero_iff_dvd]
   exact_mod_cast dvd_mul_left (p ^ k : ℕ) (c.val)
 
 omit hp in
@@ -176,23 +164,18 @@ private lemma Gamma0_relindex_step_inj (k : ℕ) (hk : 0 < k) :
   intro ⟨c₁, hc₁⟩ ⟨c₂, hc₂⟩ hf
   rw [QuotientGroup.eq, Subgroup.mem_subgroupOf, Gamma0_mem] at hf
   simp only [InvMemClass.coe_inv, MulMemClass.coe_mul, relindexRep] at hf
-  rw [show ((lowerTriRep p k ⟨c₁, hc₁⟩)⁻¹ * lowerTriRep p k ⟨c₂, hc₂⟩) 1 0 =
-      ((lowerTriRep p k ⟨c₁, hc₁⟩)⁻¹ * lowerTriRep p k ⟨c₂, hc₂⟩).1 1 0 from rfl,
-    lowerTriRep_diff_entry p, ZMod.intCast_zmod_eq_zero_iff_dvd] at hf
-  have hpk_ne : (p : ℤ) ^ k ≠ 0 := pow_ne_zero k (by exact_mod_cast hp.ne_zero)
-  have hpk1 : (↑(p ^ (k + 1)) : ℤ) = (p : ℤ) ^ k * (p : ℤ) := by push_cast; rw [pow_succ]
-  rw [hpk1,
-    show ((↑c₂ : ℤ) - ↑c₁) * (p : ℤ) ^ k =
-      (p : ℤ) ^ k * ((↑c₂ : ℤ) - ↑c₁) from mul_comm _ _,
-    mul_dvd_mul_iff_left hpk_ne] at hf
+  change (((lowerTriRep p k ⟨c₁, hc₁⟩)⁻¹ * lowerTriRep p k ⟨c₂, hc₂⟩).1 1 0 :
+    ZMod (p ^ (k + 1))) = 0 at hf
+  rw [lowerTriRep_diff_entry p, ZMod.intCast_zmod_eq_zero_iff_dvd] at hf
+  rw [show (↑(p ^ (k + 1)) : ℤ) = (p : ℤ) ^ k * (p : ℤ) from by push_cast; rw [pow_succ],
+    mul_comm ((↑c₂ : ℤ) - ↑c₁) ((p : ℤ) ^ k),
+    mul_dvd_mul_iff_left (pow_ne_zero k (Int.natCast_ne_zero.mpr hp.ne_zero))] at hf
   obtain ⟨m, hm⟩ := hf
   have hm0 : m = 0 := by
-    by_contra hm_ne
-    rcases Ne.lt_or_gt hm_ne with hm_neg | hm_pos
-    · linarith [show (p : ℤ) * m ≤ -(p : ℤ) from by nlinarith [hp.pos],
-        Int.natCast_nonneg c₂, show (c₁ : ℤ) < p from by exact_mod_cast hc₁]
-    · linarith [show (p : ℤ) ≤ (p : ℤ) * m from by nlinarith [hp.pos],
-        Int.natCast_nonneg c₁, show (c₂ : ℤ) < p from by exact_mod_cast hc₂]
+    rcases lt_trichotomy m 0 with hm_neg | rfl | hm_pos
+    · nlinarith [hp.pos, Int.natCast_nonneg c₂, show (c₁ : ℤ) < p from by exact_mod_cast hc₁]
+    · rfl
+    · nlinarith [hp.pos, Int.natCast_nonneg c₁, show (c₂ : ℤ) < p from by exact_mod_cast hc₂]
   subst hm0; simp only [mul_zero, sub_eq_zero] at hm
   simp only [Fin.mk.injEq]; exact_mod_cast hm.symm
 
@@ -207,39 +190,35 @@ private lemma Gamma0_relindex_step_surj (k : ℕ) (hk : 0 < k) :
   have h_dvd : (↑(p ^ k) : ℤ) ∣ σ.1 1 0 := by
     rwa [← ZMod.intCast_zmod_eq_zero_iff_dvd, ← Gamma0_mem]
   obtain ⟨q, hq⟩ := h_dvd
-  have hq' : σ.1 1 0 = (p : ℤ) ^ k * q := by push_cast at hq; exact hq
-  have hdet : σ.1 0 0 * σ.1 1 1 - σ.1 0 1 * σ.1 1 0 = 1 := by
-    have h := σ.2; rwa [Matrix.det_fin_two] at h
+  push_cast at hq
   have h00_ne : ((σ.1 0 0 : ℤ) : ZMod p) ≠ 0 := by
     intro h_zero
     have h00_dvd := (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp h_zero
-    have h10_dvd : (p : ℤ) ∣ σ.1 1 0 := by
-      have : (p : ℕ) ∣ p ^ k := dvd_pow dvd_rfl (by omega)
-      exact dvd_trans (by exact_mod_cast this) ⟨q, hq⟩
+    have h10_dvd : (p : ℤ) ∣ σ.1 1 0 :=
+      hq ▸ dvd_mul_of_dvd_left (dvd_pow_self _ (Nat.pos_iff_ne_zero.mp hk)) q
+    have hdet : σ.1 0 0 * σ.1 1 1 - σ.1 0 1 * σ.1 1 0 = 1 :=
+      Matrix.det_fin_two σ.1 ▸ σ.2
     have h1_dvd : (p : ℤ) ∣ 1 :=
       hdet ▸ dvd_sub (dvd_mul_of_dvd_left h00_dvd _) (dvd_mul_of_dvd_right h10_dvd _)
     linarith [Int.le_of_dvd one_pos h1_dvd, show (1 : ℤ) < p from by exact_mod_cast hp.one_lt]
   set c₀ := ((q : ℤ) : ZMod p) * ((σ.1 0 0 : ℤ) : ZMod p)⁻¹ with hc₀_def
-  set c := ZMod.val c₀ with hc_def
-  have hc_lt : c < p := ZMod.val_lt c₀
-  refine ⟨⟨c, hc_lt⟩, ?_⟩
+  have hc_lt : c₀.val < p := ZMod.val_lt c₀
+  refine ⟨⟨c₀.val, hc_lt⟩, ?_⟩
   rw [QuotientGroup.eq, Subgroup.mem_subgroupOf]
   simp only [InvMemClass.coe_inv, MulMemClass.coe_mul]
   rw [Gamma0_mem]
-  have h_p_dvd : (p : ℤ) ∣ (q - ↑c * σ.1 0 0) := by
+  have h_p_dvd : (p : ℤ) ∣ (q - ↑c₀.val * σ.1 0 0) := by
     rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
     push_cast
-    simp only [hc_def]
     rw [ZMod.natCast_zmod_val, hc₀_def]
-    have h_inv := ZMod_inv_mul_cancel p hp (σ.1 0 0) h00_ne
-    simp only [mul_assoc, h_inv, mul_one, sub_self]
-  show (((lowerTriRep p k ⟨c, hc_lt⟩)⁻¹ * σ).1 1 0 : ZMod (p ^ (k + 1))) = 0
-  rw [lowerTriRep_inv_mul_10 p k ⟨c, hc_lt⟩ σ, hq', ZMod.intCast_zmod_eq_zero_iff_dvd]
+    simp [mul_assoc, ZMod_inv_mul_cancel p hp (σ.1 0 0) h00_ne]
+  show (((lowerTriRep p k ⟨c₀.val, hc_lt⟩)⁻¹ * σ).1 1 0 : ZMod (p ^ (k + 1))) = 0
+  rw [lowerTriRep_inv_mul_10 p k ⟨c₀.val, hc_lt⟩ σ, hq, ZMod.intCast_zmod_eq_zero_iff_dvd]
   push_cast
   rw [pow_succ]
   calc (p : ℤ) ^ k * (p : ℤ)
-      ∣ (p : ℤ) ^ k * (q - ↑c * σ.1 0 0) := mul_dvd_mul_left _ h_p_dvd
-    _ = ((p : ℤ) ^ k * q - ↑c * (p : ℤ) ^ k * σ.1 0 0) := by ring
+      ∣ (p : ℤ) ^ k * (q - ↑c₀.val * σ.1 0 0) := mul_dvd_mul_left _ h_p_dvd
+    _ = ((p : ℤ) ^ k * q - ↑c₀.val * (p : ℤ) ^ k * σ.1 0 0) := by ring
 
 /-- `[Γ₀(pᵏ) : Γ₀(p^{k+1})] = p` for `k >= 1`. -/
 theorem Gamma0_relindex_step (k : ℕ) (hk : 0 < k) :
@@ -258,14 +237,11 @@ theorem Gamma0_prime_power_index (p : ℕ) (hp : Nat.Prime p) (k : ℕ) (hk : 0 
   | succ m ih =>
     rcases Nat.eq_zero_or_pos m with rfl | hm'
     · simp [Gamma0_prime_index p hp]
-    · rw [show m + 1 - 1 = m from Nat.succ_sub_one m]
-      have h_le : Gamma0 (p ^ (m + 1)) ≤ Gamma0 (p ^ m) := by
-        intro σ hσ; rw [Gamma0_mem] at hσ ⊢
-        rw [ZMod.intCast_zmod_eq_zero_iff_dvd] at hσ ⊢
-        exact dvd_trans (by exact_mod_cast pow_dvd_pow p (Nat.le_succ m)) hσ
-      have hpm : p * p ^ (m - 1) = p ^ m := by
-        rw [mul_comm, ← pow_succ]; congr 1; omega
-      rw [← Subgroup.relIndex_mul_index h_le,
-        Gamma0_relindex_step p hp m hm', ih hm', ← mul_assoc, hpm]
+    · have h_le : Gamma0 (p ^ (m + 1)) ≤ Gamma0 (p ^ m) := fun σ hσ => by
+        rw [Gamma0_mem, ZMod.intCast_zmod_eq_zero_iff_dvd] at hσ ⊢
+        exact (Int.natCast_dvd_natCast.mpr (pow_dvd_pow p (Nat.le_succ m))).trans hσ
+      rw [Nat.succ_sub_one, ← Subgroup.relIndex_mul_index h_le,
+        Gamma0_relindex_step p hp m hm', ih hm', ← mul_assoc,
+        show p * p ^ (m - 1) = p ^ m by rw [mul_comm, ← pow_succ]; congr 1; omega]
 
 end HeckeRing.GL2
