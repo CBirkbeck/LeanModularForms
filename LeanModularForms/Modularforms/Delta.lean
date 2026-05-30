@@ -83,10 +83,10 @@ lemma Discriminant_T_invariant : (Δ ∣[(12 : ℤ)] ModularGroup.T) = Δ := by
   rw [modular_slash_T_apply, Δ, Δ]
   simp only [coe_vadd, ofReal_one]
   rw [show cexp (2 * ↑π * Complex.I * (1 + ↑z)) = cexp (2 * ↑π * Complex.I * (↑z)) by
-        simpa using exp_periodo z 1]
+        simpa using cexp_two_pi_I_natMul_add_one z 1]
   simp only [mul_eq_mul_left_iff, Complex.exp_ne_zero, or_false]
   refine tprod_congr fun b ↦ ?_
-  have := exp_periodo z (b + 1)
+  have := cexp_two_pi_I_natMul_add_one z (b + 1)
   simp only [Nat.cast_add, Nat.cast_one] at this
   rw [this]
 
