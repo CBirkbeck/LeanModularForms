@@ -130,6 +130,81 @@ lemma valueAtInfty_norm_eq_zero_of_valueAtInfty_eq_zero
   exact (tendsto_nhds_unique ht_norm <| modularForm_tendsto_valueAtInfty
     (f := ModularForm.norm 𝒮ℒ f) (h := cuspWidth (Γ := Γ)) hh hperSL).symm
 
+/-- `restProd` precomposed with `τfun` is bounded at the punctured neighbourhood of `0`. -/
+private lemma restProd_τfun_boundedAtFilter_punctNhds
+    (Γ : Subgroup SL(2, ℤ)) [Γ.FiniteIndex] [(G Γ).IsFiniteRelIndex 𝒮ℒ]
+    (f : ModularForm (G Γ) k) (hΓ : Subgroup.index Γ ≠ 0)
+    (hh : 0 < cuspWidth (Γ := Γ)) :
+    Filter.BoundedAtFilter (𝓝[≠] (0 : ℂ))
+      (fun q : ℂ ↦ restProd (Γ := Γ) (k := k) f (τfun (cuspWidth (Γ := Γ)) q)) := by
+  simpa [UpperHalfPlane.IsBoundedAtImInfty, τfun] using
+    (restProd_isBoundedAtImInfty (Γ := Γ) (k := k) hΓ f).comp_tendsto
+      (tendsto_τfun_atImInfty (h := cuspWidth (Γ := Γ)) hh)
+
+/-- Near the puncture, the cusp function of `ModularForm.norm 𝒮ℒ f` factors as the cusp
+function of `f` times `restProd ∘ τfun`. -/
+private lemma cuspFunction_norm_eventuallyEq_mul_punctNhds
+    (Γ : Subgroup SL(2, ℤ)) [(G Γ).IsFiniteRelIndex 𝒮ℒ]
+    (f : ModularForm (G Γ) k) :
+    (fun q : ℂ ↦
+        cuspFunction (cuspWidth (Γ := Γ)) (ModularForm.norm 𝒮ℒ f) q) =ᶠ[𝓝[≠] (0 : ℂ)]
+      fun q : ℂ ↦
+        cuspFunction (cuspWidth (Γ := Γ)) f q *
+          restProd (Γ := Γ) (k := k) f (τfun (cuspWidth (Γ := Γ)) q) := by
+  filter_upwards [self_mem_nhdsWithin (s := ({0}ᶜ : Set ℂ))] with q hq
+  have hq0 : q ≠ 0 := by
+    simpa [Set.mem_compl_iff, Set.mem_singleton_iff] using hq
+  simpa [τfun] using
+    cuspFunction_norm_eq_mul_restProd_of_ne_zero (Γ := Γ) (k := k) f (h := cuspWidth (Γ := Γ))
+      (q := q) hq0
+
+/-- Punctured-neighbourhood `O`-bound for the cusp function of the norm of `f`, when the first
+`N` `q`-coefficients of `f` vanish. -/
+private lemma cuspFunction_norm_isBigO_pow_punctNhds_of_qExpansion_coeff_eq_zero
+    (Γ : Subgroup SL(2, ℤ)) [Γ.FiniteIndex] [(G Γ).IsFiniteRelIndex 𝒮ℒ]
+    (f : ModularForm (G Γ) k) (N : ℕ) (hΓ : Subgroup.index Γ ≠ 0)
+    (hh : 0 < cuspWidth (Γ := Γ))
+    (hperΓ : cuspWidth (Γ := Γ) ∈ (G Γ).strictPeriods)
+    (hcoeff : ∀ m < N, (qExpansion (cuspWidth (Γ := Γ)) f).coeff m = 0) :
+    cuspFunction (cuspWidth (Γ := Γ)) (ModularForm.norm 𝒮ℒ f) =O[𝓝[≠] (0 : ℂ)]
+      fun q : ℂ ↦ ‖q‖ ^ N := by
+  have hO_f :
+      cuspFunction (cuspWidth (Γ := Γ)) f =O[𝓝 (0 : ℂ)] fun q : ℂ ↦ ‖q‖ ^ N :=
+    cuspFunction_isBigO_pow_of_qExpansion_coeff_eq_zero (f := f) hh hperΓ N hcoeff
+  have hbd_rest := restProd_τfun_boundedAtFilter_punctNhds (Γ := Γ) (k := k) f hΓ hh
+  have hO_prod_punct :
+      (fun q : ℂ ↦
+          cuspFunction (cuspWidth (Γ := Γ)) f q *
+            restProd (Γ := Γ) (k := k) f (τfun (cuspWidth (Γ := Γ)) q)) =O[𝓝[≠] (0 : ℂ)]
+        fun q : ℂ ↦ ‖q‖ ^ N := by
+    simpa [Filter.BoundedAtFilter, mul_one] using (hO_f.mono nhdsWithin_le_nhds).mul hbd_rest
+  exact hO_prod_punct.congr'
+    (cuspFunction_norm_eventuallyEq_mul_punctNhds (Γ := Γ) (k := k) f).symm
+    Filter.EventuallyEq.rfl
+
+/-- If the first `N ≥ 1` `q`-coefficients of `f` vanish, then the cusp function of the norm of
+`f` vanishes at `0`. -/
+private lemma norm_cuspFunction_apply_zero_eq_zero_of_qExpansion_coeff_eq_zero
+    (Γ : Subgroup SL(2, ℤ)) [Γ.FiniteIndex] [(G Γ).IsFiniteRelIndex 𝒮ℒ]
+    (f : ModularForm (G Γ) k) (N : ℕ) (hΓ : Subgroup.index Γ ≠ 0) (hNpos : 0 < N)
+    (hh : 0 < cuspWidth (Γ := Γ))
+    (hperΓ : cuspWidth (Γ := Γ) ∈ (G Γ).strictPeriods)
+    (hperSL : cuspWidth (Γ := Γ) ∈ (𝒮ℒ : Subgroup (GL (Fin 2) ℝ)).strictPeriods)
+    (hcoeff : ∀ m < N, (qExpansion (cuspWidth (Γ := Γ)) f).coeff m = 0) :
+    ‖cuspFunction (cuspWidth (Γ := Γ)) (ModularForm.norm 𝒮ℒ f) 0‖ = 0 := by
+  have hval0 : valueAtInfty f = 0 := by
+    have h0 : (qExpansion (cuspWidth (Γ := Γ)) f).coeff 0 = valueAtInfty f :=
+      ModularFormClass.qExpansion_coeff_zero (f := f) (h := cuspWidth (Γ := Γ)) hh hperΓ
+    simpa [h0] using hcoeff 0 hNpos
+  have hnorm0 : valueAtInfty (ModularForm.norm 𝒮ℒ f) = 0 :=
+    valueAtInfty_norm_eq_zero_of_valueAtInfty_eq_zero (k := k) Γ f hΓ hval0
+  have h0 :=
+    ModularFormClass.cuspFunction_apply_zero (f := ModularForm.norm 𝒮ℒ f) hh hperSL
+  calc
+    ‖cuspFunction (cuspWidth (Γ := Γ)) (ModularForm.norm 𝒮ℒ f) 0‖ =
+        ‖valueAtInfty (ModularForm.norm 𝒮ℒ f)‖ := by simpa using congrArg norm h0
+    _ = 0 := by simpa using congrArg norm hnorm0
+
 /-- Vanishing of the first `N` `q`-coefficients is preserved under taking the norm to level one. -/
 public lemma qExpansion_coeff_eq_zero_norm_of_qExpansion_coeff_eq_zero
     (Γ : Subgroup SL(2, ℤ)) [Γ.FiniteIndex] (f : ModularForm (G Γ) k) (N n : ℕ)
@@ -144,52 +219,12 @@ public lemma qExpansion_coeff_eq_zero_norm_of_qExpansion_coeff_eq_zero
     cuspWidth_mem_strictPeriods_levelOne (Γ := Γ)
   haveI : (G Γ).IsArithmetic := instIsArithmetic (Γ := Γ) hΓ
   haveI : (G Γ).IsFiniteRelIndex 𝒮ℒ := Subgroup.IsArithmetic.isFiniteRelIndexSL (𝒢 := (G Γ))
-  letI : Fintype (Q Γ) := Fintype.ofFinite (Q Γ)
-  letI : DecidableEq (Q Γ) := Classical.decEq _
-  have hO_f :
-      cuspFunction (cuspWidth (Γ := Γ)) f =O[𝓝 (0 : ℂ)] fun q : ℂ ↦ ‖q‖ ^ N :=
-    cuspFunction_isBigO_pow_of_qExpansion_coeff_eq_zero (f := f) hh hperΓ N hcoeff
-  have hbd_rest :
-      Filter.BoundedAtFilter (𝓝[≠] (0 : ℂ))
-        (fun q : ℂ ↦ restProd (Γ := Γ) (k := k) f (τfun (cuspWidth (Γ := Γ)) q)) := by
-    simpa [UpperHalfPlane.IsBoundedAtImInfty, τfun] using
-      (restProd_isBoundedAtImInfty (Γ := Γ) (k := k) hΓ f).comp_tendsto
-        (tendsto_τfun_atImInfty (h := cuspWidth (Γ := Γ)) hh)
-  have hEq :
-      (fun q : ℂ ↦
-          cuspFunction (cuspWidth (Γ := Γ)) (ModularForm.norm 𝒮ℒ f) q) =ᶠ[𝓝[≠] (0 : ℂ)]
-        fun q : ℂ ↦
-          cuspFunction (cuspWidth (Γ := Γ)) f q *
-            restProd (Γ := Γ) (k := k) f (τfun (cuspWidth (Γ := Γ)) q) := by
-    filter_upwards [self_mem_nhdsWithin (s := ({0}ᶜ : Set ℂ))] with q hq
-    have hq0 : q ≠ 0 := by
-      simpa [Set.mem_compl_iff, Set.mem_singleton_iff] using hq
-    simpa [τfun] using
-      cuspFunction_norm_eq_mul_restProd_of_ne_zero (Γ := Γ) (k := k) f (h := cuspWidth (Γ := Γ))
-        (q := q) hq0
-  have hO_prod_punct :
-      (fun q : ℂ ↦
-          cuspFunction (cuspWidth (Γ := Γ)) f q *
-            restProd (Γ := Γ) (k := k) f (τfun (cuspWidth (Γ := Γ)) q)) =O[𝓝[≠] (0 : ℂ)]
-        fun q : ℂ ↦ ‖q‖ ^ N := by
-    simpa [Filter.BoundedAtFilter, mul_one] using (hO_f.mono nhdsWithin_le_nhds).mul hbd_rest
-  have hO_norm_punct :
-      cuspFunction (cuspWidth (Γ := Γ)) (ModularForm.norm 𝒮ℒ f) =O[𝓝[≠] (0 : ℂ)] fun q : ℂ ↦
-        ‖q‖ ^ N :=
-    hO_prod_punct.congr' hEq.symm Filter.EventuallyEq.rfl
-  have hval0 : valueAtInfty f = 0 := by
-    have h0 : (qExpansion (cuspWidth (Γ := Γ)) f).coeff 0 = valueAtInfty f :=
-      ModularFormClass.qExpansion_coeff_zero (f := f) (h := cuspWidth (Γ := Γ)) hh hperΓ
-    simpa [h0] using hcoeff 0 hNpos
-  have hnorm0 : valueAtInfty (ModularForm.norm 𝒮ℒ f) = 0 :=
-    valueAtInfty_norm_eq_zero_of_valueAtInfty_eq_zero (k := k) Γ f hΓ hval0
-  have hcf0 : ‖cuspFunction (cuspWidth (Γ := Γ)) (ModularForm.norm 𝒮ℒ f) 0‖ = 0 := by
-    have h0 :=
-      ModularFormClass.cuspFunction_apply_zero (f := ModularForm.norm 𝒮ℒ f) hh hperSL
-    calc
-      ‖cuspFunction (cuspWidth (Γ := Γ)) (ModularForm.norm 𝒮ℒ f) 0‖ =
-          ‖valueAtInfty (ModularForm.norm 𝒮ℒ f)‖ := by simpa using congrArg norm h0
-      _ = 0 := by simpa using congrArg norm hnorm0
+  have hO_norm_punct :=
+    cuspFunction_norm_isBigO_pow_punctNhds_of_qExpansion_coeff_eq_zero
+      (Γ := Γ) (k := k) f N hΓ hh hperΓ hcoeff
+  have hcf0 :=
+    norm_cuspFunction_apply_zero_eq_zero_of_qExpansion_coeff_eq_zero
+      (Γ := Γ) (k := k) f N hΓ hNpos hh hperΓ hperSL hcoeff
   exact qExpansion_coeff_eq_zero_of_cuspFunction_isBigO_pow (f := ModularForm.norm 𝒮ℒ f)
     (hh := hh) (hΓ := hperSL) (n := n) (N := N) hn
       (isBigO_nhds_of_isBigO_punctured hO_norm_punct hcf0)
