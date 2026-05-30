@@ -36,15 +36,12 @@ at level `N` and at level `l·N` produce compatible choices (any such
 This is the combinatorial step in Miyake Lemma 4.6.6's proof
 (p. 158, in the diagram setup). -/
 theorem descendCosetList_level_agree
-    {N : ℕ} [NeZero N] (l : ℕ) [NeZero l]
-    (p : ℕ) [NeZero p] (hp : p.Prime) (hpN : p ∣ N) (hpl : Nat.Coprime p l) :
+    {N : ℕ} [NeZero N] (l : ℕ) [NeZero l] (p : ℕ) [NeZero p] (hpl : Nat.Coprime p l) :
     haveI : NeZero (l * N) := ⟨Nat.mul_ne_zero (NeZero.ne l) (NeZero.ne N)⟩
     descendCosetCount p N = descendCosetCount p (l * N) := by
   unfold descendCosetCount
   congr 1
-  refine propext ⟨fun h ↦ ?_, fun h ↦ ?_⟩
-  · exact h.mul_left l
-  · exact (hpl.pow_left 2).dvd_of_dvd_mul_left h
+  exact propext ⟨fun h ↦ h.mul_left l, fun h ↦ (hpl.pow_left 2).dvd_of_dvd_mul_left h⟩
 
 private lemma SL2_diff_map_eq_one_aux {R : Type*} [CommRing R]
     (γ₁ γ₂ : Matrix.SpecialLinearGroup (Fin 2) ℤ)
@@ -98,11 +95,10 @@ private lemma SL2_map_eq_one_of_mod_aux
       rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
       push_cast
       simp [h_ij_Np]
-    have hN_dvd := hN_of_dvd _ hp_dvd hNp_dvd
     have hmodeq : (δ : Matrix (Fin 2) (Fin 2) ℤ) i i ≡ 1 [ZMOD (N : ℤ)] := by
       rw [Int.modEq_iff_dvd, show 1 - (δ : Matrix (Fin 2) (Fin 2) ℤ) i i =
         -((δ : Matrix (Fin 2) (Fin 2) ℤ) i i - 1) by ring]
-      exact dvd_neg.mpr hN_dvd
+      exact dvd_neg.mpr (hN_of_dvd _ hp_dvd hNp_dvd)
     simpa using (ZMod.intCast_eq_intCast_iff _ 1 N).mpr hmodeq
   · simp only [if_neg h] at h_ij_p h_ij_Np
     have hp_dvd : ((p : ℕ) : ℤ) ∣ (δ : Matrix (Fin 2) (Fin 2) ℤ) i j := by
@@ -111,15 +107,11 @@ private lemma SL2_map_eq_one_of_mod_aux
     have hNp_dvd : ((N / p : ℕ) : ℤ) ∣ (δ : Matrix (Fin 2) (Fin 2) ℤ) i j := by
       rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
       exact_mod_cast h_ij_Np
-    have hN_dvd := hN_of_dvd _ hp_dvd hNp_dvd
     have hmodeq : (δ : Matrix (Fin 2) (Fin 2) ℤ) i j ≡ 0 [ZMOD (N : ℤ)] := by
       rw [Int.modEq_iff_dvd]
-      simpa using hN_dvd
+      simpa using hN_of_dvd _ hp_dvd hNp_dvd
     simpa using (ZMod.intCast_eq_intCast_iff _ 0 N).mpr hmodeq
 
-/-- The difference of two `SL₂(ℤ)` matrices agreeing mod `p` and mod `N/p` reduces
-to `1` mod `N`, when `p` is prime, `p ∣ N` and `¬ p² ∣ N` (so `p` and `N/p` are
-coprime and the CRT combine applies). -/
 private lemma SL2_diff_reduces_mod_level_of_mod_p_mod_div
     {N : ℕ} [NeZero N] {p : ℕ} [NeZero p] (hp : p.Prime) (hpN : p ∣ N)
     (hp_sq : ¬ p ^ 2 ∣ N) [NeZero (N / p)]
@@ -139,11 +131,7 @@ private lemma SL2_diff_reduces_mod_level_of_mod_p_mod_div
     exact_mod_cast hcop.isCoprime
   exact SL2_map_eq_one_of_mod_aux hpN hcop_int δ hδ_mod_p hδ_mod_Np
 
-/-- Conjugation identity `D · mapGL δ = mapGL α' · D` for the diagonal matrix
-`D = !![1,0;0,p]` and the explicit conjugate `α' = !![δ₀₀, k'; p·δ₁₀, δ₁₁]`,
-given `δ₀₁ = p · k'`. -/
-private lemma diag_conj_mapGL_eq_of_entries
-    {p : ℕ} [NeZero p] (hp : p.Prime)
+private lemma diag_conj_mapGL_eq_of_entries {p : ℕ} [NeZero p] (hp : p.Prime)
     (δ α' : Matrix.SpecialLinearGroup (Fin 2) ℤ) (k' : ℤ)
     (hk' : (δ : Matrix (Fin 2) (Fin 2) ℤ) 0 1 = (p : ℤ) * k')
     (hα'_val : (α' : Matrix (Fin 2) (Fin 2) ℤ) =
@@ -172,15 +160,11 @@ private lemma diag_conj_mapGL_eq_of_entries
 /-- **T6b-coset-invariance**: the slash sum is invariant under choice of extra coset
 representative `γ_p^(p)` (within the CRT congruence class), provided `f` is a
 `χ`-eigenform under `Γ_0(N)`. -/
-theorem descendCosetList_slash_sum_rep_invariance
-    {N : ℕ} [NeZero N] {k : ℤ}
-    (p : ℕ) [NeZero p] (hp : p.Prime) (hpN : p ∣ N) (hp_sq : ¬ p ^ 2 ∣ N)
-    [NeZero (N / p)]
-    (χ : (ZMod N)ˣ →* ℂˣ)
-    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
+theorem descendCosetList_slash_sum_rep_invariance {N : ℕ} [NeZero N] {k : ℤ}
+    (p : ℕ) [NeZero p] (hp : p.Prime) (hpN : p ∣ N) (hp_sq : ¬ p ^ 2 ∣ N) [NeZero (N / p)]
+    (χ : (ZMod N)ˣ →* ℂˣ) (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
     (hfχ : f ∈ modFormCharSpace k χ)
     (γ₁ γ₂ : Matrix.SpecialLinearGroup (Fin 2) ℤ)
-    (h₁_mem : γ₁ ∈ Gamma0 (N / p)) (h₂_mem : γ₂ ∈ Gamma0 (N / p))
     (h₁_mod_p : ((γ₁ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod p)
                   = !![(0 : ZMod p), -1; 1, 0]))
     (h₂_mod_p : ((γ₂ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod p)
@@ -211,11 +195,10 @@ theorem descendCosetList_slash_sum_rep_invariance
     multipass_gamma1_conjugate_in_gamma1 δ hδ_mod_N
   have hδ_01_N : (N : ℤ) ∣ (δ : Matrix (Fin 2) (Fin 2) ℤ) 0 1 := by
     rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
-    have := congr_fun (congr_fun hδ_mod_N 0) 1
-    simpa [Matrix.map_apply, Matrix.one_apply_ne (show (0 : Fin 2) ≠ 1 by decide)] using this
-  have hδ_01_p : (p : ℤ) ∣ (δ : Matrix (Fin 2) (Fin 2) ℤ) 0 1 :=
+    simpa [Matrix.map_apply, Matrix.one_apply_ne (show (0 : Fin 2) ≠ 1 by decide)] using
+      congr_fun (congr_fun hδ_mod_N 0) 1
+  obtain ⟨k', hk'⟩ : (p : ℤ) ∣ (δ : Matrix (Fin 2) (Fin 2) ℤ) 0 1 :=
     (show (p : ℤ) ∣ N by exact_mod_cast hpN).trans hδ_01_N
-  obtain ⟨k', hk'⟩ := hδ_01_p
   let a := (δ : Matrix (Fin 2) (Fin 2) ℤ) 0 0
   let c := (δ : Matrix (Fin 2) (Fin 2) ℤ) 1 0
   let d := (δ : Matrix (Fin 2) (Fin 2) ℤ) 1 1
@@ -225,25 +208,22 @@ theorem descendCosetList_slash_sum_rep_invariance
     simp only [Matrix.det_fin_two] at hdet
     linarith [hk'.symm ▸ hdet]
   let α' : Matrix.SpecialLinearGroup (Fin 2) ℤ := ⟨!![a, k'; (p : ℤ) * c, d], h_det_α'⟩
-  rw [Gamma1_mem] at hδ_Gamma1
-  obtain ⟨_, h22, h10⟩ := hδ_Gamma1
+  obtain ⟨_, h22, h10⟩ := Gamma1_mem _ _|>.mp hδ_Gamma1
   have hα'_mem : α' ∈ Gamma0 N := by
     rw [Gamma0_mem]
     change ((!![a, k'; (p : ℤ) * c, d] : Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ZMod N) = 0
     simp [Matrix.cons_val_one, show c = (δ : Matrix (Fin 2) (Fin 2) ℤ) 1 0 from rfl, h10]
   have h_chi_α' : χ (Gamma0MapUnits ⟨α', hα'_mem⟩) = 1 := by
-    have hd : Gamma0MapUnits ⟨α', hα'_mem⟩ = 1 := Units.ext <| by
-      simpa [Gamma0MapUnits_val, Gamma0Map] using h22
-    rw [hd, map_one]
+    rw [show Gamma0MapUnits ⟨α', hα'_mem⟩ = 1 from Units.ext <| by
+      simpa [Gamma0MapUnits_val, Gamma0Map] using h22, map_one]
   let D : GL (Fin 2) ℝ := Matrix.GeneralLinearGroup.mkOfDetNeZero
       !![(1 : ℝ), 0; 0, (p : ℝ)]
       (by simp [Matrix.det_fin_two]; exact_mod_cast hp.ne_zero)
   have hD_δ : D * mapGL ℝ δ = mapGL ℝ α' * D :=
     diag_conj_mapGL_eq_of_entries hp δ α' k' hk' rfl
-  have hγ₁_eq : mapGL ℝ γ₁ = mapGL ℝ δ * mapGL ℝ γ₂ := by
-    simp [δ]
   have h_split : D * mapGL ℝ γ₁ = mapGL ℝ α' * (D * mapGL ℝ γ₂) := by
-    rw [hγ₁_eq, ← mul_assoc, ← mul_assoc, hD_δ, mul_assoc]
+    rw [show mapGL ℝ γ₁ = mapGL ℝ δ * mapGL ℝ γ₂ by simp [δ],
+      ← mul_assoc, ← mul_assoc, hD_δ, mul_assoc]
   intro z
   rw [h_split, SlashAction.slash_mul,
     multipass_modFormCharSpace_slash_apply χ hfχ α' hα'_mem]
@@ -269,12 +249,9 @@ private lemma map_intCast_eq_one_of_dvd_aux {m₁ m₂ : ℕ} (hdvd : m₂ ∣ m
   · rw [Matrix.one_apply_ne hij, Matrix.one_apply_ne hij, map_zero]
 
 /-- Function-level commutation of the slash sum across levels (Miyake Lemma 4.6.6(1)). -/
-theorem descendCosetList_slash_sum_commute
-    {N : ℕ} [NeZero N] (l : ℕ) [NeZero l] {k : ℤ}
-    (p : ℕ) [NeZero p] (hp : p.Prime) (hpN : p ∣ N) (hpl : Nat.Coprime p l)
-    [NeZero (N / p)]
-    (χ : (ZMod N)ˣ →* ℂˣ)
-    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
+theorem descendCosetList_slash_sum_commute {N : ℕ} [NeZero N] (l : ℕ) [NeZero l] {k : ℤ}
+    (p : ℕ) [NeZero p] (hp : p.Prime) (hpN : p ∣ N) (hpl : Nat.Coprime p l) [NeZero (N / p)]
+    (χ : (ZMod N)ˣ →* ℂˣ) (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
     (hfχ : f ∈ modFormCharSpace k χ) :
     haveI : NeZero (l * N) := ⟨Nat.mul_ne_zero (NeZero.ne l) (NeZero.ne N)⟩
     ∀ z : UpperHalfPlane,
@@ -285,7 +262,7 @@ theorem descendCosetList_slash_sum_commute
   haveI : NeZero (l * N) := ⟨Nat.mul_ne_zero (NeZero.ne l) (NeZero.ne N)⟩
   intro z
   have h_count_eq : descendCosetCount p N = descendCosetCount p (l * N) :=
-    descendCosetList_level_agree l p hp hpN hpl
+    descendCosetList_level_agree l p hpl
   symm
   refine Fintype.sum_equiv (finCongr h_count_eq.symm) _ _ fun v ↦ ?_
   by_cases h_v_lt : v.val < p
@@ -301,7 +278,7 @@ theorem descendCosetList_slash_sum_commute
       (Nat.pos_of_ne_zero (NeZero.ne N))) hpN_lN) hp.pos).ne'⟩
   obtain ⟨-, h_γ_lN_one, h_γ_lN_stronger⟩ :=
     descendExtraGamma_spec hp hpN_lN hp_sq_lN (p := p) (N := l * N)
-  obtain ⟨h_γ_N_pos, h_γ_N_one, h_γ_N_mod⟩ :=
+  obtain ⟨-, h_γ_N_one, h_γ_N_mod⟩ :=
     descendExtraGamma_spec hp hpN hp_sq (p := p) (N := N)
   have h_Np_dvd_lNp : N / p ∣ (l * N) / p := by
     obtain ⟨c, hc⟩ := hpN
@@ -311,15 +288,11 @@ theorem descendCosetList_slash_sum_commute
         Nat.mul_div_cancel_left _ hp.pos, mul_comm]
   have h_γ_lN_mod_Np :=
     map_intCast_eq_one_of_dvd_aux h_Np_dvd_lNp _ h_γ_lN_stronger
-  have h_γ_lN_mem_Np : descendExtraGamma p (l * N) ∈ Gamma0 (N / p) := by
-    rw [CongruenceSubgroup.Gamma0_mem]
-    simpa [Matrix.map_apply, show (1 : Fin 2) ≠ 0 by decide] using
-      congr_fun (congr_fun h_γ_lN_mod_Np 1) 0
   rw [descendCosetList_apply_extra hp h_v_lt,
       descendCosetList_apply_extra hp (show ¬ (finCongr h_count_eq.symm v).val < p from h_v_lt)]
   exact descendCosetList_slash_sum_rep_invariance p hp hpN hp_sq χ f hfχ
     (descendExtraGamma p (l * N)) (descendExtraGamma p N)
-    h_γ_lN_mem_Np h_γ_N_pos h_γ_lN_one h_γ_N_one h_γ_lN_mod_Np h_γ_N_mod z
+    h_γ_lN_one h_γ_N_one h_γ_lN_mod_Np h_γ_N_mod z
 
 /-- **M6: Miyake Lemma 4.6.6 — level commutation of the Hecke descent
 operator** (Miyake p. 158).
@@ -335,25 +308,20 @@ M_k(Γ_1(M)) ─Φ_M→ M_k(Γ_1(M/p))
 ```
 
 commutes at the function level on `ℍ`. -/
-theorem miyake_4_6_6_level_commute
-    {N l : ℕ} [NeZero N] [NeZero l] {k : ℤ}
-    (p : ℕ) [NeZero p] (hp : p.Prime) (hpN : p ∣ N)
-    (hpl : Nat.Coprime p l) [NeZero (N / p)]
-    (χ : (ZMod N)ˣ →* ℂˣ)
-    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
+theorem miyake_4_6_6_level_commute {N l : ℕ} [NeZero N] [NeZero l] {k : ℤ}
+    (p : ℕ) [NeZero p] (hp : p.Prime) (hpN : p ∣ N) (hpl : Nat.Coprime p l) [NeZero (N / p)]
+    (χ : (ZMod N)ˣ →* ℂˣ) (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
     (hfχ : f ∈ modFormCharSpace k χ) :
     haveI : NeZero (l * N) := ⟨Nat.mul_ne_zero (NeZero.ne l) (NeZero.ne N)⟩
     ∀ z : UpperHalfPlane,
       (∑ v : Fin (descendCosetCount p N),
         (⇑f ∣[k] (descendCosetList p N hp v)) z) =
       (∑ v : Fin (descendCosetCount p (l * N)),
-        (⇑f ∣[k] (descendCosetList p (l * N) hp v)) z) := by
-  intro z
-  exact descendCosetList_slash_sum_commute l p hp hpN hpl χ f hfχ z
+        (⇑f ∣[k] (descendCosetList p (l * N) hp v)) z) :=
+  descendCosetList_slash_sum_commute l p hp hpN hpl χ f hfχ
 
-private lemma descendCosetList_upper_tri_eq_glMap_T_p_upper
-    {p N : ℕ} [NeZero p] [NeZero N] (hp : p.Prime)
-    {v : Fin (descendCosetCount p N)} (hv : v.val < p) :
+private lemma descendCosetList_upper_tri_eq_glMap_T_p_upper {p N : ℕ} [NeZero p] [NeZero N]
+    (hp : p.Prime) {v : Fin (descendCosetCount p N)} (hv : v.val < p) :
     descendCosetList p N hp v = glMap (T_p_upper p hp.pos v.val) := by
   rw [descendCosetList_apply_lt hp hv]
   ext1
@@ -367,23 +335,18 @@ private lemma m6_2_delta_period_aux
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) (m : ℕ) (w : UpperHalfPlane) :
     f ((m : ℝ) +ᵥ w) = f w := by
   apply SlashInvariantForm.vAdd_apply_of_mem_strictPeriods
-  rw [show (Gamma1 N).map (mapGL ℝ) = (Gamma1 N : Subgroup (GL (Fin 2) ℝ)) from rfl,
-    strictPeriods_Gamma1]
+  rw [strictPeriods_Gamma1]
   exact ⟨(m : ℤ), by simp⟩
 
-private lemma m6_2_delta_div_p_im_pos
-    {p : ℕ} (hp : p.Prime) (z : UpperHalfPlane) (b : ℕ) :
+private lemma m6_2_delta_div_p_im_pos {p : ℕ} (hp : p.Prime) (z : UpperHalfPlane) (b : ℕ) :
     0 < (((z : ℂ) + (b : ℂ)) / (p : ℂ)).im := by
-  have : (p : ℂ) = ((p : ℝ) : ℂ) := by push_cast; rfl
-  rw [this, Complex.div_ofReal]
+  rw [show (p : ℂ) = ((p : ℝ) : ℂ) by push_cast; rfl, Complex.div_ofReal]
   simp [Complex.add_im]
   exact div_pos z.im_pos (Nat.cast_pos.mpr hp.pos)
 
-private lemma m6_2_delta_slash_V_l_upper_tri
-    {N : ℕ} [NeZero N] {k : ℤ}
-    (p : ℕ) [NeZero p] (hp : p.Prime)
-    (l : ℕ) [NeZero l] (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-    [NeZero (l * N)]
+private lemma m6_2_delta_slash_V_l_upper_tri {N : ℕ} [NeZero N] {k : ℤ}
+    (p : ℕ) [NeZero p] (hp : p.Prime) (l : ℕ) [NeZero l]
+    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) [NeZero (l * N)]
     {v : Fin (descendCosetCount p (l * N))} (hv : v.val < p) (z : UpperHalfPlane) :
     (⇑(HeckeRing.GL2.modularFormLevelRaise N l k f) ∣[k]
         descendCosetList p (l * N) hp v) z =
@@ -399,13 +362,10 @@ private lemma m6_2_delta_slash_V_l_upper_tri
   congr 1
   exact HeckeRing.GL2.modularFormLevelRaise_apply N l k f _
 
-private lemma m6_2_delta_period_shift
-    {N : ℕ} [NeZero N] {k : ℤ}
-    (p : ℕ) [NeZero p] (hp : p.Prime)
-    (l : ℕ) [NeZero l] (hpl : Nat.Coprime p l)
+private lemma m6_2_delta_period_shift {N : ℕ} [NeZero N] {k : ℤ}
+    (p : ℕ) [NeZero p] (hp : p.Prime) (l : ℕ) [NeZero l]
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (σ_perm : Equiv.Perm (Fin p))
-    (hσ : ∀ m : Fin p, (σ_perm m).val = (l * m.val) % p)
+    (σ_perm : Equiv.Perm (Fin p)) (hσ : ∀ m : Fin p, (σ_perm m).val = (l * m.val) % p)
     (z : UpperHalfPlane) (v : Fin p) :
     f (HeckeRing.GL2.levelRaiseMatrix l •
         (⟨((z : ℂ) + v.val) / p, m6_2_delta_div_p_im_pos hp z v.val⟩ :
@@ -426,17 +386,15 @@ private lemma m6_2_delta_period_shift
     apply UpperHalfPlane.ext
     simp only [lhs_pt, rhs_pt, HeckeRing.GL2.coe_levelRaiseMatrix_smul,
       UpperHalfPlane.coe_vadd]
-    have hp_ne : (p : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr hp.ne_zero
     have h_arith_C : (l : ℂ) * v.val = p * n + (σ_perm v).val := by exact_mod_cast h_arith
-    field_simp [hp_ne]
+    field_simp [show (p : ℂ) ≠ 0 from Nat.cast_ne_zero.mpr hp.ne_zero]
     linear_combination h_arith_C
   rw [h_pt_eq]
   exact m6_2_delta_period_aux f n _
 
-private lemma m6_2_delta_diag_commute
-    {N : ℕ} [NeZero N] {k : ℤ}
-    (p : ℕ) [NeZero p] (hp : p.Prime)
-    (l : ℕ) [NeZero l] (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
+private lemma m6_2_delta_diag_commute {N : ℕ} [NeZero N] {k : ℤ}
+    (p : ℕ) [NeZero p] (hp : p.Prime) (l : ℕ) [NeZero l]
+    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
     (⇑(HeckeRing.GL2.modularFormLevelRaise N l k f) ∣[k]
         (Matrix.GeneralLinearGroup.mkOfDetNeZero !![(1 : ℝ), 0; 0, (p : ℝ)]
           (by simp [Matrix.det_fin_two]; exact_mod_cast hp.ne_zero) : GL (Fin 2) ℝ)) =
@@ -458,12 +416,9 @@ private lemma m6_2_delta_diag_commute
           Matrix.GeneralLinearGroup.val_mkOfDetNeZero]
 
 private lemma m6_2_delta_upper_tri_match
-    {N : ℕ} [NeZero N] {k : ℤ}
-    (p : ℕ) [NeZero p] (hp : p.Prime)
-    (l : ℕ) [NeZero l] (hpl : Nat.Coprime p l)
+    {N : ℕ} [NeZero N] {k : ℤ} (p : ℕ) [NeZero p] (hp : p.Prime) (l : ℕ) [NeZero l]
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (σ_perm : Equiv.Perm (Fin p))
-    (hσ : ∀ m : Fin p, (σ_perm m).val = (l * m.val) % p)
+    (σ_perm : Equiv.Perm (Fin p)) (hσ : ∀ m : Fin p, (σ_perm m).val = (l * m.val) % p)
     (z : UpperHalfPlane) [NeZero (l * N)]
     {v : Fin (descendCosetCount p (l * N))} (hv : v.val < p)
     {w : Fin (descendCosetCount p N)} (hw : w.val < p)
@@ -479,10 +434,9 @@ private lemma m6_2_delta_upper_tri_match
           (HeckeRing.GL2.levelRaiseMatrix l • z) from rfl,
     HeckeRing.GL2.slash_T_p_upper_eval k p hp w.val (⇑f) _, hvw]
   congr 1
-  exact m6_2_delta_period_shift p hp l hpl f σ_perm hσ z ⟨v.val, hv⟩
+  exact m6_2_delta_period_shift p hp l f σ_perm hσ z ⟨v.val, hv⟩
 
-private lemma m6_2_delta_l_dvd_extra
-    {N : ℕ} [NeZero N]
+private lemma m6_2_delta_l_dvd_extra {N : ℕ} [NeZero N]
     (p : ℕ) [NeZero p] (hp : p.Prime) (hpN : p ∣ N)
     (l : ℕ) [NeZero l] [NeZero (l * N)] (hpN_lN : p ∣ l * N) (hp_sq_lN : ¬ p ^ 2 ∣ l * N) :
     (l : ℤ) ∣ (descendExtraGamma p (l * N) : Matrix (Fin 2) (Fin 2) ℤ) 1 0 := by
@@ -501,17 +455,11 @@ private lemma m6_2_delta_l_dvd_extra
     ring
   exact h_l_dvd_lNp.trans h_dvd_lNp
 
-/-- The `δ_l`-commutation for the descent sum in the case `p² ∣ N`, where every
-coset is upper-triangular (count `= p`): the permutation `σ` matching the
-upper-triangular reps reindexes the two sums. -/
 private lemma delta_levelRaise_sum_commute_of_p_sq_dvd
-    {N : ℕ} [NeZero N] {k : ℤ}
-    (p : ℕ) [NeZero p] (hp : p.Prime)
-    (l : ℕ) [NeZero l] (hpl : Nat.Coprime p l)
+    {N : ℕ} [NeZero N] {k : ℤ} (p : ℕ) [NeZero p] (hp : p.Prime) (l : ℕ) [NeZero l]
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
     (hp_sq : p ^ 2 ∣ N) [NeZero (l * N)]
-    (σ_perm : Equiv.Perm (Fin p))
-    (hσ : ∀ m : Fin p, (σ_perm m).val = (l * m.val) % p)
+    (σ_perm : Equiv.Perm (Fin p)) (hσ : ∀ m : Fin p, (σ_perm m).val = (l * m.val) % p)
     (z : UpperHalfPlane) :
     (∑ v : Fin (descendCosetCount p (l * N)),
       (⇑(HeckeRing.GL2.modularFormLevelRaise N l k f) ∣[k]
@@ -525,31 +473,24 @@ private lemma delta_levelRaise_sum_commute_of_p_sq_dvd
   apply Fintype.sum_equiv
     ((finCongr h_cnt_lN).trans (σ_perm.trans (finCongr h_cnt_N.symm)))
   intro v
-  have hv_lt : v.val < p := by have := v.isLt; simpa [h_cnt_lN] using this
+  have hv_lt : v.val < p := by simpa [h_cnt_lN] using v.isLt
   have h_bij_val : ((finCongr h_cnt_lN).trans (σ_perm.trans (finCongr h_cnt_N.symm)) v).val =
       (σ_perm ⟨v.val, hv_lt⟩).val := by
     simp only [Equiv.trans_apply, finCongr_apply, Fin.val_cast]
     have : Fin.cast h_cnt_lN v = (⟨v.val, hv_lt⟩ : Fin p) := by ext; simp
     rw [this]
-  exact m6_2_delta_upper_tri_match p hp l hpl f σ_perm hσ z hv_lt
+  exact m6_2_delta_upper_tri_match p hp l f σ_perm hσ z hv_lt
     (h_bij_val ▸ (σ_perm ⟨v.val, hv_lt⟩).isLt) h_bij_val
 
-/-- The `δ_l`-commutation for the single extra coset representative
-(`descendExtraGamma`) in the case `p² ∤ N`: after splitting off the diagonal
-factor, this reduces to `m6_2_extra_rep_levelRaise_bridge`. -/
-private lemma delta_levelRaise_extra_term_commute
-    {N : ℕ} [NeZero N] {k : ℤ}
+private lemma delta_levelRaise_extra_term_commute {N : ℕ} [NeZero N] {k : ℤ}
     (p : ℕ) [NeZero p] (hp : p.Prime) (hpN : p ∣ N) [NeZero (N / p)]
     (l : ℕ) [NeZero l] (hpl : Nat.Coprime p l) (hlNp : l ∣ N / p)
     (χ : (ZMod N)ˣ →* ℂˣ) (χ' : (ZMod (N / p))ˣ →* ℂˣ)
     (hχ_eq : χ = χ'.comp (ZMod.unitsMap (Nat.div_dvd_of_dvd hpN)))
-    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hfχ : f ∈ modFormCharSpace k χ)
-    (hp_sq : ¬ p ^ 2 ∣ N) [NeZero (l * N)]
-    (hp_sq_lN : ¬ p ^ 2 ∣ l * N)
+    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) (hfχ : f ∈ modFormCharSpace k χ)
+    (hp_sq : ¬ p ^ 2 ∣ N) [NeZero (l * N)] (hp_sq_lN : ¬ p ^ 2 ∣ l * N)
     (h_cnt_N : descendCosetCount p N = p + 1)
-    (h_cnt_lN : descendCosetCount p (l * N) = p + 1)
-    (z : UpperHalfPlane) :
+    (h_cnt_lN : descendCosetCount p (l * N) = p + 1) (z : UpperHalfPlane) :
     (⇑(HeckeRing.GL2.modularFormLevelRaise N l k f) ∣[k]
         descendCosetList p (l * N) hp (finCongr h_cnt_lN.symm (Fin.last p))) z =
       (⇑f ∣[k] descendCosetList p N hp (finCongr h_cnt_N.symm (Fin.last p)))
@@ -600,15 +541,12 @@ reconciled via `descendCosetList_slash_sum_rep_invariance`.
 
 Requires `l ∣ N/p` to ensure the level-`lN` extra representative satisfies
 the level-`N` congruence mod `N/p`, as needed by rep-invariance. -/
-theorem miyake_4_6_6_level_commute_delta
-    {N : ℕ} [NeZero N] {k : ℤ}
+theorem miyake_4_6_6_level_commute_delta {N : ℕ} [NeZero N] {k : ℤ}
     (p : ℕ) [NeZero p] (hp : p.Prime) (hpN : p ∣ N) [NeZero (N / p)]
     (l : ℕ) [NeZero l] (hpl : Nat.Coprime p l) (hlNp : l ∣ N / p)
-    (χ : (ZMod N)ˣ →* ℂˣ)
-    (χ' : (ZMod (N / p))ˣ →* ℂˣ)
+    (χ : (ZMod N)ˣ →* ℂˣ) (χ' : (ZMod (N / p))ˣ →* ℂˣ)
     (hχ_eq : χ = χ'.comp (ZMod.unitsMap (Nat.div_dvd_of_dvd hpN)))
-    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hfχ : f ∈ modFormCharSpace k χ) :
+    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) (hfχ : f ∈ modFormCharSpace k χ) :
     haveI : NeZero (l * N) := ⟨Nat.mul_ne_zero (NeZero.ne l) (NeZero.ne N)⟩
     ∀ z : UpperHalfPlane,
       (∑ v : Fin (descendCosetCount p (l * N)),
@@ -621,7 +559,7 @@ theorem miyake_4_6_6_level_commute_delta
   intro z
   obtain ⟨σ_perm, hσ⟩ := multipass_mul_mod_p_perm_exists hp hpl
   by_cases hp_sq : p ^ 2 ∣ N
-  · exact delta_levelRaise_sum_commute_of_p_sq_dvd p hp l hpl f hp_sq σ_perm hσ z
+  · exact delta_levelRaise_sum_commute_of_p_sq_dvd p hp l f hp_sq σ_perm hσ z
   · have h_cnt_N : descendCosetCount p N = p + 1 := by simp [descendCosetCount, hp_sq]
     have hp_sq_lN : ¬ p ^ 2 ∣ l * N := fun h ↦
       hp_sq ((hpl.pow_left 2).dvd_of_dvd_mul_left h)
@@ -640,15 +578,17 @@ theorem miyake_4_6_6_level_commute_delta
     · apply Fintype.sum_equiv σ_perm
       intro i
       have hi_lN : i.val < descendCosetCount p (l * N) := by
-        rw [h_cnt_lN]; exact Nat.lt_succ_of_lt i.isLt
+        rw [h_cnt_lN]
+        exact Nat.lt_succ_of_lt i.isLt
       have hsi_N : (σ_perm i).val < descendCosetCount p N := by
-        rw [h_cnt_N]; exact Nat.lt_succ_of_lt (σ_perm i).isLt
+        rw [h_cnt_N]
+        exact Nat.lt_succ_of_lt (σ_perm i).isLt
       have h_lhs_eq : descendCosetList p (l * N) hp (finCongr h_cnt_lN.symm i.castSucc) =
           descendCosetList p (l * N) hp ⟨i.val, hi_lN⟩ := by congr 1
       have h_rhs_eq : descendCosetList p N hp (finCongr h_cnt_N.symm (σ_perm i).castSucc) =
           descendCosetList p N hp ⟨(σ_perm i).val, hsi_N⟩ := by congr 1
       rw [h_lhs_eq, h_rhs_eq]
-      exact m6_2_delta_upper_tri_match p hp l hpl f σ_perm hσ z i.isLt
+      exact m6_2_delta_upper_tri_match p hp l f σ_perm hσ z i.isLt
         (σ_perm i).isLt (by simp)
     · exact delta_levelRaise_extra_term_commute p hp hpN l hpl hlNp χ χ' hχ_eq f hfχ
         hp_sq hp_sq_lN h_cnt_N h_cnt_lN z
