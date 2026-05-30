@@ -35,13 +35,11 @@ variable {N : ℕ} [NeZero N]
 
 /-- The `Γ₀(N)`-character obtained from a Dirichlet character `χ` by composing
 with `Gamma0MapUnits`. -/
-noncomputable def gamma0NebentypusChar (χ : (ZMod N)ˣ →* ℂˣ) :
-    ↥(Gamma0 N) →* ℂˣ :=
+noncomputable def gamma0NebentypusChar (χ : (ZMod N)ˣ →* ℂˣ) : ↥(Gamma0 N) →* ℂˣ :=
   χ.comp (Gamma0MapUnits (N := N))
 
 omit [NeZero N] in
-@[simp] lemma gamma0NebentypusChar_apply
-    (χ : (ZMod N)ˣ →* ℂˣ) (g : ↥(Gamma0 N)) :
+@[simp] lemma gamma0NebentypusChar_apply (χ : (ZMod N)ˣ →* ℂˣ) (g : ↥(Gamma0 N)) :
     gamma0NebentypusChar (N := N) χ g = χ (Gamma0MapUnits g) :=
   rfl
 
@@ -57,89 +55,53 @@ noncomputable def gamma0NebentypusSubmodule (k : ℤ) (χ : (ZMod N)ˣ →* ℂ�
 
 /-- Membership in the experimental `Γ₀(N), χ`-style space is exactly the twisted
 slash/Nebentypus condition. -/
-@[simp] lemma mem_gamma0NebentypusSubmodule_iff
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+@[simp] lemma mem_gamma0NebentypusSubmodule_iff (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
     f ∈ gamma0NebentypusSubmodule (N := N) k χ ↔
-      IsNebentypus k (gamma0NebentypusChar (N := N) χ) (f : UpperHalfPlane → ℂ) := by
-  rw [gamma0NebentypusSubmodule]
-  change IsNebentypus k (gamma0NebentypusChar (N := N) χ) (f : UpperHalfPlane → ℂ) ↔
-    IsNebentypus k (gamma0NebentypusChar (N := N) χ) (f : UpperHalfPlane → ℂ)
-  simp
+      IsNebentypus k (gamma0NebentypusChar (N := N) χ) (f : UpperHalfPlane → ℂ) :=
+  Iff.rfl
 
 /-- The identity map gives a linear equivalence from the existing
 `modFormCharSpace k χ` to the experimental `Γ₀(N), χ`-style space. -/
-noncomputable def modFormCharSpace_equiv_gamma0Nebentypus
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
+noncomputable def modFormCharSpace_equiv_gamma0Nebentypus (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
     modFormCharSpace k χ ≃ₗ[ℂ] gamma0NebentypusSubmodule (N := N) k χ where
   toFun f := ⟨f.1, by
     rw [gamma0NebentypusSubmodule]
     change IsNebentypus k (gamma0NebentypusChar (N := N) χ) (f.1 : UpperHalfPlane → ℂ)
     exact (isNebentypus_iff k (gamma0NebentypusChar (N := N) χ) (f.1 : UpperHalfPlane → ℂ)).2
       ((modFormCharSpace_iff_nebentypus (N := N) k χ f.1).1 f.2)⟩
-  invFun f := ⟨f.1, by
-    exact (modFormCharSpace_iff_nebentypus (N := N) k χ f.1).2
-      ((isNebentypus_iff k (gamma0NebentypusChar (N := N) χ)
-        (f : UpperHalfPlane → ℂ)).1
-        ((mem_gamma0NebentypusSubmodule_iff (N := N) k χ f.1).1 f.2))⟩
-  left_inv f := by
-    rfl
-  right_inv f := by
-    rfl
-  map_add' f g := by
-    rfl
-  map_smul' c f := by
-    rfl
+  invFun f := ⟨f.1, (modFormCharSpace_iff_nebentypus (N := N) k χ f.1).2
+    ((isNebentypus_iff k (gamma0NebentypusChar (N := N) χ) (f : UpperHalfPlane → ℂ)).1
+      ((mem_gamma0NebentypusSubmodule_iff (N := N) k χ f.1).1 f.2))⟩
+  left_inv _ := rfl
+  right_inv _ := rfl
+  map_add' _ _ := rfl
+  map_smul' _ _ := rfl
 
-@[simp] lemma mem_modFormCharSpace_iff_mem_gamma0NebentypusSubmodule
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
-    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    f ∈ modFormCharSpace k χ ↔ f ∈ gamma0NebentypusSubmodule (N := N) k χ := by
-  constructor
-  · intro hf
-    exact (modFormCharSpace_equiv_gamma0Nebentypus (N := N) k χ ⟨f, hf⟩).property
-  · intro hf
-    exact ((modFormCharSpace_equiv_gamma0Nebentypus (N := N) k χ).symm ⟨f, hf⟩).property
+@[simp] lemma mem_modFormCharSpace_iff_mem_gamma0NebentypusSubmodule (k : ℤ)
+    (χ : (ZMod N)ˣ →* ℂˣ) (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    f ∈ modFormCharSpace k χ ↔ f ∈ gamma0NebentypusSubmodule (N := N) k χ :=
+  ⟨fun hf ↦ (modFormCharSpace_equiv_gamma0Nebentypus (N := N) k χ ⟨f, hf⟩).property,
+    fun hf ↦ ((modFormCharSpace_equiv_gamma0Nebentypus (N := N) k χ).symm ⟨f, hf⟩).property⟩
 
 /-- The good Hecke family transported to the experimental `Γ₀(N), χ`-style
 space. This is still the same away-from-the-level family, but it now lives on a
 space whose carrier is stated using the `Γ₀(N)` twisted slash law. -/
-noncomputable def gamma0NebentypusFamily
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
+noncomputable def gamma0NebentypusFamily (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
     GoodHeckeFamily N (gamma0NebentypusSubmodule (N := N) k χ) :=
-  GoodHeckeFamily.transport
-    (modFormCharSpace_equiv_gamma0Nebentypus (N := N) k χ)
+  GoodHeckeFamily.transport (modFormCharSpace_equiv_gamma0Nebentypus (N := N) k χ)
     (modFormCharSpaceFamily (N := N) k χ)
 
 /-- Coercing the transported experimental operator back to the ambient modular
 form space gives the original `heckeT_n` operator on the underlying function. -/
-@[simp] lemma gamma0NebentypusFamily_coe
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+@[simp] lemma gamma0NebentypusFamily_coe (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (n : GoodIndex N) (f : gamma0NebentypusSubmodule (N := N) k χ) :
     (((gamma0NebentypusFamily (N := N) k χ).op n f :
         gamma0NebentypusSubmodule (N := N) k χ) :
         ModularForm ((Gamma1 N).map (mapGL ℝ)) k) =
       ambientHeckeOfGoodIndex (N := N) k n
-        (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) := by
-  let e := modFormCharSpace_equiv_gamma0Nebentypus (N := N) k χ
-  calc
-    (((gamma0NebentypusFamily (N := N) k χ).op n f :
-        gamma0NebentypusSubmodule (N := N) k χ) :
-        ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-      = ((e ((modFormCharSpaceFamily (N := N) k χ).op n (e.symm f)) :
-            gamma0NebentypusSubmodule (N := N) k χ) :
-            ModularForm ((Gamma1 N).map (mapGL ℝ)) k) := by
-          rfl
-    _ = (((modFormCharSpaceFamily (N := N) k χ).op n (e.symm f) :
-            modFormCharSpace k χ) :
-            ModularForm ((Gamma1 N).map (mapGL ℝ)) k) := by
-          rfl
-    _ = ambientHeckeOfGoodIndex (N := N) k n
-          ((e.symm f : modFormCharSpace k χ) :
-            ModularForm ((Gamma1 N).map (mapGL ℝ)) k) := by
-          exact modFormCharSpaceFamily_coe (N := N) k χ n (e.symm f)
-    _ = ambientHeckeOfGoodIndex (N := N) k n
-          (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) := by
-          rfl
+        (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :=
+  modFormCharSpaceFamily_coe (N := N) k χ n
+    ((modFormCharSpace_equiv_gamma0Nebentypus (N := N) k χ).symm f)
 
 end HeckeRing.GL2.Unified
