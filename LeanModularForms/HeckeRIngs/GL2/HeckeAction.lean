@@ -68,29 +68,23 @@ private lemma delta_det_pos_real (g : (GL_pair 2).Δ) :
 private lemma SLnZ_det_one_real (σ : (GL_pair 2).H) :
     (glMap (σ : GL (Fin 2) ℚ)).det.val = 1 := by
   obtain ⟨s, hs⟩ := σ.prop
-  rw [show (σ : GL (Fin 2) ℚ) = mapGL ℚ s from hs.symm,
-    glMap_det, det_mapGL s, map_one]
-  rfl
+  rw [show (σ : GL (Fin 2) ℚ) = mapGL ℚ s from hs.symm, glMap_det, det_mapGL s, map_one]; rfl
 
 private lemma cosetRep_delta_det_pos (σ : (GL_pair 2).H) (g : (GL_pair 2).Δ) :
     0 < (glMap ((σ : GL (Fin 2) ℚ) * (g : GL (Fin 2) ℚ))).det.val := by
-  have hmul : (glMap ((σ : GL (Fin 2) ℚ) * ↑g)).det =
-      (glMap ↑σ).det * (glMap ↑g).det := by rw [map_mul, map_mul]
   rw [show (glMap ((σ : GL (Fin 2) ℚ) * ↑g)).det.val =
-    ((glMap ↑σ).det * (glMap ↑g).det).val from congrArg Units.val hmul,
-    Units.val_mul]
-  exact mul_pos (by rw [SLnZ_det_one_real]; exact one_pos) (delta_det_pos_real g)
+    ((glMap ↑σ).det * (glMap ↑g).det).val from congrArg Units.val (by rw [map_mul, map_mul]),
+    Units.val_mul, SLnZ_det_one_real, one_mul]
+  exact delta_det_pos_real g
 
 private lemma sigma_eq_id_of_pos_det {g : GL (Fin 2) ℝ} (hg : 0 < g.det.val) :
     UpperHalfPlane.σ g = RingHom.id ℂ := by
-  unfold UpperHalfPlane.σ; simp only [hg, ↓reduceIte]
+  simp only [UpperHalfPlane.σ, hg, ↓reduceIte]
 
 private lemma glMap_transpose_det_val (g : GL (Fin 2) ℚ) :
     (glMap (GL_transposeEquiv 2 g).unop).det.val = (glMap g).det.val := by
   rw [glMap_det_val, glMap_det_val]
-  show (algebraMap ℚ ℝ) ((GL_transposeEquiv 2 g).unop.det : ℚ) = _
   congr 1
-  show ((GL_transposeEquiv 2 g).unop.det : ℚ) = (g.det : ℚ)
   rw [GeneralLinearGroup.val_det_apply, GeneralLinearGroup.val_det_apply,
     GL_transposeEquiv_val, Matrix.det_transpose]
 
@@ -167,15 +161,13 @@ private lemma leftMulQuot_injective (D : HeckeCoset (GL_pair 2)) (σ : (GL_pair 
   intro i₁ i₂ h; simp only [leftMulQuot] at h
   by_contra hne
   have h_K := QuotientGroup.leftRel_apply.mp (Quotient.exact h)
-  rw [Subgroup.mem_subgroupOf] at h_K
-  -- Extract H-membership from K-membership
+  rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
+    ConjAct.smul_def] at h_K
+  simp only [ConjAct.ofConjAct_toConjAct, map_inv, inv_inv] at h_K
   have h_mem : (HeckeCoset.rep D : GL _ ℚ)⁻¹ *
       ((i₁.out : GL _ ℚ)⁻¹ * (i₂.out : GL _ ℚ)) *
       (HeckeCoset.rep D : GL _ ℚ) ∈ (GL_pair 2).H := by
-    have := h_K
-    rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def] at this
-    simp only [ConjAct.ofConjAct_toConjAct, map_inv, inv_inv] at this
-    convert this using 1
+    convert h_K using 1
     simp only [Subgroup.coe_mul, Subgroup.coe_inv]; group
   exact decompQuot_coset_diff (GL_pair 2) (HeckeCoset.rep D) i₁ i₂ hne
     (leftCoset_eq_of_not_disjoint (GL_pair 2).H _ _ (by
@@ -199,11 +191,7 @@ private noncomputable def leftMulEquiv (D : HeckeCoset (GL_pair 2)) (σ : (GL_pa
 private lemma heckeSlash_slash (k : ℤ) (D : HeckeCoset (GL_pair 2)) (f : ℍ → ℂ)
     (g : GL (Fin 2) ℚ) : (heckeSlash k D f) ∣[k] g =
     ∑ i : decompQuot (GL_pair 2) (HeckeCoset.rep D), (f ∣[k] tRep D i) ∣[k] g := by
-  simp only [heckeSlash]
-  induction Finset.univ (α := decompQuot (GL_pair 2) (HeckeCoset.rep D))
-      using Finset.cons_induction with
-  | empty => simp [SlashAction.zero_slash]
-  | cons a s has ih => simp [Finset.sum_cons, SlashAction.add_slash, ih]
+  simp only [heckeSlash, SlashAction.sum_slash]
 
 /-- Left multiplication by a transposed H-element preserves the slash action
     under Γ-invariance: `f ∣[k] (hᵀ * g) = f ∣[k] g` when `h ∈ H`. -/
@@ -211,8 +199,7 @@ private lemma slash_left_H_transpose_mul (k : ℤ) (f : ℍ → ℂ)
     (hf : ∀ γ ∈ 𝒮ℒ, f ∣[k] γ = f) (h : GL (Fin 2) ℚ)
     (hh : h ∈ (GL_pair 2).H) (g : GL (Fin 2) ℚ) :
     f ∣[k] ((GL_transposeEquiv 2 h).unop * g) = f ∣[k] g := by
-  show f ∣[k] glMap ((GL_transposeEquiv 2 h).unop * g) =
-    f ∣[k] glMap g
+  show f ∣[k] glMap ((GL_transposeEquiv 2 h).unop * g) = f ∣[k] glMap g
   rw [map_mul, SlashAction.slash_mul]; congr 1
   exact hf _ (glMap_mem_SL ⟨_, GL_transpose_mem_SLnZ 2 hh⟩)
 
@@ -227,8 +214,8 @@ private lemma h_coset_mem_H (D : HeckeCoset (GL_pair 2))
     ((HeckeCoset.rep D : GL _ ℚ)⁻¹ * ((q.out : GL _ ℚ)⁻¹ * h₁) *
       (HeckeCoset.rep D : GL _ ℚ) * h₂) ∈ (GL_pair 2).H := by
   have h_K := QuotientGroup.leftRel_apply.mp (Quotient.exact hq)
-  rw [Subgroup.mem_subgroupOf] at h_K
-  rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def] at h_K
+  rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
+    ConjAct.smul_def] at h_K
   simp only [ConjAct.ofConjAct_toConjAct, map_inv, inv_inv] at h_K
   exact (GL_pair 2).H.mul_mem (by convert h_K using 1) hh₂
 
@@ -241,11 +228,8 @@ private lemma transpose_decomp_eq (D : HeckeCoset (GL_pair 2))
     (GL_transposeEquiv 2 ((HeckeCoset.rep D : GL _ ℚ)⁻¹ *
       ((q.out : GL _ ℚ)⁻¹ * h₁) *
       (HeckeCoset.rep D : GL _ ℚ) * h₂)).unop * tRep D q := by
-  simp only [tRep]
-  rw [← MulOpposite.unop_mul, ← (GL_transposeEquiv 2).map_mul]
-  apply congrArg MulOpposite.unop
-  apply congrArg (GL_transposeEquiv 2).toFun
-  simp only [mul_assoc, mul_inv_cancel_left]
+  simp only [tRep, ← MulOpposite.unop_mul, ← (GL_transposeEquiv 2).map_mul,
+    mul_assoc, mul_inv_cancel_left]
 
 /-- Slashing by a transpose of `h₁ * delta * h₂` with `h₁, h₂ in H` equals slashing
     by `tRep D ⟦h₁⟧`, using Gamma-invariance to absorb the `H`-elements. -/
@@ -269,14 +253,10 @@ private lemma tRep_mul_eq_transpose (D : HeckeCoset (GL_pair 2))
         (HeckeCoset.rep D : GL _ ℚ))).unop := by
   show (GL_transposeEquiv 2 _).unop * σ_Q = _
   conv_lhs =>
-    rw [show σ_Q = (GL_transposeEquiv 2
-      (GL_transposeEquiv 2 σ_Q).unop).unop from
-      (GL_transposeEquiv_involutive 2 σ_Q).symm,
+    rw [show σ_Q = (GL_transposeEquiv 2 (GL_transposeEquiv 2 σ_Q).unop).unop from
+        (GL_transposeEquiv_involutive 2 σ_Q).symm,
       ← MulOpposite.unop_mul, ← (GL_transposeEquiv 2).map_mul]
-  rw [show (GL_transposeEquiv 2 σ_Q).unop * (i.out : GL _ ℚ) *
-      (HeckeCoset.rep D : GL _ ℚ) =
-      (GL_transposeEquiv 2 σ_Q).unop *
-      ((i.out : GL _ ℚ) * (HeckeCoset.rep D : GL _ ℚ)) from by group]
+  rw [mul_assoc (GL_transposeEquiv 2 σ_Q).unop]
 
 /-- The Hecke slash action preserves slash-invariance under `SL₂(Z)` (Shimura Prop 3.30). -/
 lemma heckeSlash_slash_invariant (k : ℤ) (D : HeckeCoset (GL_pair 2)) (f : ℍ → ℂ)
@@ -286,20 +266,14 @@ lemma heckeSlash_slash_invariant (k : ℤ) (D : HeckeCoset (GL_pair 2)) (f : ℍ
   set σ_QT : (GL_pair 2).H :=
     ⟨(GL_transposeEquiv 2 σ_Q).unop, GL_transpose_mem_SLnZ 2 hσ_Q⟩
   set π := leftMulEquiv D σ_QT
-  -- Each term: slash_mul then transpose round-trip via slash_tRep_of_mem
   have h_perm : ∀ i, (f ∣[k] tRep D i) ∣[k] (σ_Q : GL _ ℚ) =
-      f ∣[k] tRep D (π i) := by
-    intro i
-    -- slash_mul for the ℚ-instance: (f ∣[k] a) ∣[k] b = f ∣[k] (a * b)
-    rw [(SlashAction.slash_mul k (tRep D i) σ_Q f).symm,
-      tRep_mul_eq_transpose,
+      f ∣[k] tRep D (π i) := fun i ↦ by
+    rw [(SlashAction.slash_mul k (tRep D i) σ_Q f).symm, tRep_mul_eq_transpose,
       show σ_QT.val * ↑i.out * (HeckeCoset.rep D : GL _ ℚ) =
-        σ_QT.val * ↑i.out * (HeckeCoset.rep D : GL _ ℚ) * 1 from
-        (mul_one _).symm,
+        σ_QT.val * ↑i.out * (HeckeCoset.rep D : GL _ ℚ) * 1 from (mul_one _).symm,
       slash_tRep_of_mem k D _ 1
         ((GL_pair 2).H.mul_mem σ_QT.prop (SetLike.coe_mem _))
         (GL_pair 2).H.one_mem f hf]; rfl
-  -- Combine: γ = glMap σ_Q, distribute, rewrite each term, reindex by π
   have hγ_σ : (heckeSlash k D f) ∣[k] γ = (heckeSlash k D f) ∣[k] σ_Q := by
     show _ = (heckeSlash k D f) ∣[k] glMap σ_Q; rw [hγ_eq]
   rw [hγ_σ, heckeSlash_slash,
@@ -311,8 +285,7 @@ lemma heckeSlash_slash_invariant (k : ℤ) (D : HeckeCoset (GL_pair 2)) (f : ℍ
 noncomputable def heckeSlashInvariant (k : ℤ) (D : HeckeCoset (GL_pair 2))
     (f : SlashInvariantForm 𝒮ℒ k) : SlashInvariantForm 𝒮ℒ k where
   toFun := heckeSlash k D f
-  slash_action_eq' γ hγ := heckeSlash_slash_invariant k D f
-    (fun γ' hγ' ↦ f.slash_action_eq' γ' hγ') γ hγ
+  slash_action_eq' := heckeSlash_slash_invariant k D f f.slash_action_eq'
 
 /-- The transpose anti-homomorphism applied to the product of two coset reps:
     `tRep D₂ j * tRep D₁ i = (σᵢδ₁ · σⱼδ₂)ᵀ`. -/
@@ -323,8 +296,7 @@ lemma tRep_mul_anti (D₁ D₂ : HeckeCoset (GL_pair 2))
     (GL_transposeEquiv 2
       ((i.out : GL _ ℚ) * (HeckeCoset.rep D₁ : GL _ ℚ) *
        ((j.out : GL _ ℚ) * (HeckeCoset.rep D₂ : GL _ ℚ)))).unop := by
-  show (GL_transposeEquiv 2 _).unop * (GL_transposeEquiv 2 _).unop = _
-  rw [← MulOpposite.unop_mul, ← (GL_transposeEquiv 2).map_mul]
+  simp only [tRep, ← MulOpposite.unop_mul, ← (GL_transposeEquiv 2).map_mul]
 
 /-- Key term-equality: the product `tRep D₂ j * tRep D₁ i` equals
     `f ∣[k] tRep(D, q)` for some coset representative `q` in
