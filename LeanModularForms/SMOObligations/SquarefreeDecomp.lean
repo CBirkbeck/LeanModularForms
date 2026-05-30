@@ -240,6 +240,76 @@ private lemma Miyake467Decomp_single_prime_assemble {N : ℕ} [NeZero N] {k : �
       not_false_eq_true, Finset.sum_empty, add_zero, if_true]
     exact h_qexp n
 
+/-- Character chain identity used in both branches of `Miyake467Decomp_of_prime`: composing
+the lowered character of `χ_M = ofUnitHom (χ ∘ ZMod.unitsMap hNM')` with the unit-group reduction
+at level `N·l²/q` recovers the original lifted `χ ∘ ZMod.unitsMap hNM'`. -/
+private lemma Miyake467Decomp_of_prime_lowered_char_chain {N : ℕ} [NeZero N]
+    (χ : (ZMod N)ˣ →* ℂˣ) (l q : ℕ) [NeZero (N * l ^ 2)] [NeZero ((N * l ^ 2) / q)]
+    (hNM' : N ∣ N * l ^ 2) (h_divq_dvd_M : (N * l ^ 2) / q ∣ N * l ^ 2)
+    {χ_M : DirichletCharacter ℂ (N * l ^ 2)}
+    (h_χ_M_toUnit : χ_M.toUnitHom = χ.comp (ZMod.unitsMap hNM'))
+    (h_fac : χ_M.FactorsThrough ((N * l ^ 2) / q)) :
+    (loweredCharacter h_fac).toUnitHom.comp (ZMod.unitsMap h_divq_dvd_M) =
+      χ.comp (ZMod.unitsMap hNM') := by
+  rw [← toUnitHom_loweredCharacter h_fac, h_χ_M_toUnit]
+
+/-- Dichotomy left-branch (factorization) discharge for `Miyake467Decomp_of_prime`: from the
+factored character data `(h_fac, F, hF_char, hF_eq)` produced by Case A of
+`conductor_theorem_dichotomy_cuspForm_strong`, build the singleton `Miyake467Decomp`. -/
+private lemma Miyake467Decomp_of_prime_left_branch {N : ℕ} [NeZero N] {k : ℤ}
+    (χ : (ZMod N)ˣ →* ℂˣ) (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (l q : ℕ) [NeZero q] (hl : 1 < l) (hq_in : q ∈ l.primeFactors)
+    (hl'_eq1 : 1 = l / q) [NeZero (N * l ^ 2)] [NeZero ((N * l ^ 2) / q)]
+    (hNM' : N ∣ N * l ^ 2) (h_divq_dvd_M : (N * l ^ 2) / q ∣ N * l ^ 2)
+    (h_sub : (Gamma1 (N * l ^ 2)).map (mapGL ℝ) ≤ (Gamma1 N).map (mapGL ℝ))
+    (h_sub_q : (Gamma1 (N * l ^ 2)).map (mapGL ℝ) ≤
+      (Gamma1 ((N * l ^ 2) / q)).map (mapGL ℝ))
+    {χ_M : DirichletCharacter ℂ (N * l ^ 2)}
+    (h_χ_M_toUnit : χ_M.toUnitHom = χ.comp (ZMod.unitsMap hNM'))
+    (φ : UpperHalfPlane → ℂ)
+    (h_eq : (⇑(CuspForm.restrictSubgroup h_sub f) : UpperHalfPlane → ℂ) =
+      levelRaiseFun q k φ)
+    {h_fac : χ_M.FactorsThrough ((N * l ^ 2) / q)}
+    {F : CuspForm ((Gamma1 ((N * l ^ 2) / q)).map (mapGL ℝ)) k}
+    (hF_char : F ∈ cuspFormCharSpace k (loweredCharacter h_fac).toUnitHom)
+    (hF_eq : (⇑F : UpperHalfPlane → ℂ) = φ) :
+    Miyake467Decomp χ f l hl := by
+  refine Miyake467Decomp_single_prime_assemble χ f l q hl
+      hq_in hl'_eq1 hNM' (CuspForm.restrictSubgroup h_sub_q F) F
+      (loweredCharacter h_fac).toUnitHom ?_ hF_char rfl ?_ ?_
+  · rw [← Miyake467Decomp_of_prime_lowered_char_chain χ l q hNM' h_divq_dvd_M
+      h_χ_M_toUnit h_fac]
+    exact cuspForm_restrictSubgroup_mem_cuspFormCharSpace
+      (loweredCharacter h_fac).toUnitHom h_divq_dvd_M hF_char
+  · exact Miyake467Decomp_of_prime_lowered_char_chain χ l q hNM' h_divq_dvd_M
+      h_χ_M_toUnit h_fac
+  · intro n
+    have h_fres_eq : (⇑(CuspForm.restrictSubgroup h_sub f) : UpperHalfPlane → ℂ) =
+        ⇑(HeckeRing.GL2.levelRaise ((N * l ^ 2) / q) q k F) := by
+      rw [h_eq, ← hF_eq]; rfl
+    exact m7_qExp_coeff_levelRaise_case_A (CuspForm.restrictSubgroup h_sub f) F h_fres_eq n
+
+/-- Dichotomy right-branch (vanishing) discharge for `Miyake467Decomp_of_prime`: from the
+zero witness `hφ_zero` produced by Case B of `conductor_theorem_dichotomy_cuspForm_strong`,
+build the singleton `Miyake467Decomp` using zero data. -/
+private lemma Miyake467Decomp_of_prime_right_branch {N : ℕ} [NeZero N] {k : ℤ}
+    (χ : (ZMod N)ˣ →* ℂˣ) (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (l q : ℕ) [NeZero q] (hl : 1 < l) (hq_prime : q.Prime) (hq_dvd_l : q ∣ l)
+    (hq_in : q ∈ l.primeFactors)
+    (hl'_eq1 : 1 = l / q) [NeZero (N * l ^ 2)] [NeZero ((N * l ^ 2) / q)]
+    (hNM' : N ∣ N * l ^ 2)
+    (h_sub : (Gamma1 (N * l ^ 2)).map (mapGL ℝ) ≤ (Gamma1 N).map (mapGL ℝ))
+    (hf_res_zero : (⇑(CuspForm.restrictSubgroup h_sub f) : UpperHalfPlane → ℂ) = 0) :
+    Miyake467Decomp χ f l hl := by
+  refine Miyake467Decomp_single_prime_assemble χ f l q hl
+      hq_in hl'_eq1 hNM' 0 0 (χ.comp (ZMod.unitsMap (m7_N_dvd_div_prime hq_prime hq_dvd_l)))
+      (Submodule.zero_mem _) (Submodule.zero_mem _) rfl ?_ ?_
+  · rw [MonoidHom.comp_assoc, ZMod.unitsMap_comp]
+  · intro n
+    have h_f_zero : (⇑f : UpperHalfPlane → ℂ) = 0 := hf_res_zero
+    rw [m7_qExp_coeff_of_fun_eq_zero h_f_zero]
+    exact (m7_qExp_zero_branch q n).symm
+
 /-- Base case of Miyake 4.6.7 (`l` itself prime): peel the single prime `q = l` off `f` directly,
 either via the conductor dichotomy's lowered form or (in the vanishing case) the zero form. -/
 private lemma Miyake467Decomp_of_prime {N : ℕ} [NeZero N] {k : ℤ}
@@ -250,9 +320,7 @@ private lemma Miyake467Decomp_of_prime {N : ℕ} [NeZero N] {k : ℤ}
     Miyake467Decomp χ f l (hl_eq_q ▸ hq_prime.one_lt) := by
   haveI hq_ne : NeZero q := ⟨hq_prime.ne_zero⟩
   have hq_dvd_l : q ∣ l := hl_eq_q ▸ dvd_refl q
-  set l' := l / q with hl'_def
-  have hq_dvd_l' : q * l' = l := Nat.mul_div_cancel' hq_dvd_l
-  have hl'_eq1 : 1 = l' := by rw [hl'_def, hl_eq_q, Nat.div_self hq_prime.pos]
+  have hl'_eq1 : 1 = l / q := by rw [hl_eq_q, Nat.div_self hq_prime.pos]
   haveI hNl2_ne : NeZero (N * l ^ 2) :=
     ⟨Nat.mul_ne_zero (NeZero.ne N) (pow_ne_zero 2 (hl_eq_q ▸ hq_prime.ne_zero))⟩
   have hNM' : N ∣ N * l ^ 2 := Nat.dvd_mul_right N (l ^ 2)
@@ -293,33 +361,12 @@ private lemma Miyake467Decomp_of_prime {N : ℕ} [NeZero N] {k : ℤ}
   rcases HeckeRing.GL2.conductor_theorem_dichotomy_cuspForm_strong
       q (N * l ^ 2) hq_dvd_Nl2 k χ_M φ f_res hf_res_char h_eq h_period with
     ⟨h_fac, F, hF_char, hF_eq⟩ | hφ_zero
-  · refine Miyake467Decomp_single_prime_assemble χ f l q (hl_eq_q ▸ hq_prime.one_lt)
-      hq_in hl'_eq1 hNM' (CuspForm.restrictSubgroup h_sub_q F) F
-      (loweredCharacter h_fac).toUnitHom ?_ hF_char rfl ?_ ?_
-    · have h_char_eq : (loweredCharacter h_fac).toUnitHom.comp
-          (ZMod.unitsMap h_divq_dvd_M) = χ.comp (ZMod.unitsMap hNM') := by
-        rw [← toUnitHom_loweredCharacter h_fac, h_χ_M_toUnit]
-      rw [← h_char_eq]
-      exact cuspForm_restrictSubgroup_mem_cuspFormCharSpace
-        (loweredCharacter h_fac).toUnitHom h_divq_dvd_M hF_char
-    · rw [← toUnitHom_loweredCharacter h_fac, h_χ_M_toUnit]
-    · intro n
-      have h_fres_eq : (⇑f_res : UpperHalfPlane → ℂ) =
-          ⇑(HeckeRing.GL2.levelRaise ((N * l ^ 2) / q) q k F) := by
-        rw [h_eq, ← hF_eq]; rfl
-      exact m7_qExp_coeff_levelRaise_case_A f_res F h_fres_eq n
+  · exact Miyake467Decomp_of_prime_left_branch χ f l q (hl_eq_q ▸ hq_prime.one_lt) hq_in hl'_eq1
+      hNM' h_divq_dvd_M h_sub h_sub_q (χ_M := χ_M) h_χ_M_toUnit φ h_eq hF_char hF_eq
   · have hf_res_zero : (⇑f_res : UpperHalfPlane → ℂ) = 0 := by
       rw [h_eq, hφ_zero]; exact m7_levelRaiseFun_zero q k
-    refine Miyake467Decomp_single_prime_assemble χ f l q (hl_eq_q ▸ hq_prime.one_lt)
-      hq_in hl'_eq1 hNM' 0 0 (χ.comp (ZMod.unitsMap (m7_N_dvd_div_prime hq_prime hq_dvd_l)))
-      (Submodule.zero_mem _) (Submodule.zero_mem _) rfl ?_ ?_
-    · rw [MonoidHom.comp_assoc, ZMod.unitsMap_comp]
-    · intro n
-      have h_an_f_zero : (PowerSeries.coeff n)
-          (ModularFormClass.qExpansion (1 : ℝ) ⇑f) =
-          (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑f_res) := rfl
-      rw [h_an_f_zero, m7_qExp_coeff_of_fun_eq_zero hf_res_zero]
-      exact (m7_qExp_zero_branch q n).symm
+    exact Miyake467Decomp_of_prime_right_branch χ f l q (hl_eq_q ▸ hq_prime.one_lt) hq_prime
+      hq_dvd_l hq_in hl'_eq1 hNM' h_sub hf_res_zero
 
 /-- Assembles `Miyake467Decomp` for `l = q · l'` (`l' > 1`) from the induction hypothesis applied to
 an auxiliary form `f'` at modulus `l'` (`h_IH`, whose families cover the primes of `l'`), the
@@ -372,44 +419,34 @@ private lemma Miyake467Decomp_inductive_assemble {N : ℕ} [NeZero N] {k : ℤ}
     show (if q' = q then g_q else CuspForm.restrictSubgroup _ (g_helper q')) ∈ _
     split_ifs with hq'_eq
     · exact h_g_q_char
-    · have hq'_in_l' : q' ∈ l'.primeFactors := m7_mem_l'_of_ne_q h_pf_eq hq'_in hq'_eq
-      exact m7_gHelper_char_restrict χ hNNq2 (Nat.dvd_mul_right _ _) h_lvl_dvd hNM'
-        (g_helper_char q' hq'_in_l') (Gamma1_map_le_Gamma1_map_of_dvd h_lvl_dvd)
+    · exact m7_gHelper_char_restrict χ hNNq2 (Nat.dvd_mul_right _ _) h_lvl_dvd hNM'
+        (g_helper_char q' (m7_mem_l'_of_ne_q h_pf_eq hq'_in hq'_eq))
+        (Gamma1_map_le_Gamma1_map_of_dvd h_lvl_dvd)
   · intro q' hq'_in
     by_cases hq'_eq : q' = q
-    · subst hq'_eq
-      simpa using h_F_q_char
+    · subst hq'_eq; simpa using h_F_q_char
     · have hq'_in_l' : q' ∈ l'.primeFactors := m7_mem_l'_of_ne_q h_pf_eq hq'_in hq'_eq
       haveI := m7_NeZero_Nl2_div_q (N := N) (l := l) hq'_in
       haveI : NeZero ((N * q ^ 2 * l' ^ 2) / q') := by rw [h_level_eq]; infer_instance
-      have h_div_dvd : (N * q ^ 2 * l' ^ 2) / q' ∣ (N * l ^ 2) / q' := by rw [h_level_eq]
       simp only [dif_neg hq'_eq]
       exact cuspForm_restrictSubgroup_mem_cuspFormCharSpace
-        (χ_F_helper q' hq'_in_l') h_div_dvd (F_helper_char q' hq'_in_l')
+        (χ_F_helper q' hq'_in_l') (by rw [h_level_eq]) (F_helper_char q' hq'_in_l')
   · intro q' hq'_in
     by_cases hq'_eq : q' = q
-    · subst hq'_eq
-      simp only [↓reduceDIte, ↓reduceIte]
-      exact h_F_q_g_q
-    · have hq'_in_l' : q' ∈ l'.primeFactors := m7_mem_l'_of_ne_q h_pf_eq hq'_in hq'_eq
-      simp only [dif_neg hq'_eq, if_neg hq'_eq]
-      change (⇑(F_helper q' hq'_in_l') : UpperHalfPlane → ℂ) = ⇑(g_helper q')
-      exact F_helper_eq q' hq'_in_l'
+    · subst hq'_eq; simp only [↓reduceDIte, ↓reduceIte]; exact h_F_q_g_q
+    · simp only [dif_neg hq'_eq, if_neg hq'_eq]
+      exact F_helper_eq q' (m7_mem_l'_of_ne_q h_pf_eq hq'_in hq'_eq)
   · intro q' hq'_in
     by_cases hq'_eq : q' = q
-    · subst hq'_eq
-      simp only [↓reduceDIte]
-      exact h_χ_q
+    · subst hq'_eq; simp only [↓reduceDIte]; exact h_χ_q
     · have hq'_in_l' : q' ∈ l'.primeFactors := m7_mem_l'_of_ne_q h_pf_eq hq'_in hq'_eq
       haveI := m7_NeZero_Nl2_div_q (N := N) (l := l) hq'_in
       haveI : NeZero ((N * q ^ 2 * l' ^ 2) / q') := by rw [h_level_eq]; infer_instance
-      have h_dvd_inner : (N * q ^ 2 * l' ^ 2) / q' ∣ N * q ^ 2 * l' ^ 2 :=
-        Nat.div_dvd_of_dvd (by rw [h_level_eq]; exact m7_q_dvd_Nl2 (N := N) hq'_in)
-      have h_chain := m7_chiFHelper_chain χ hNNq2 (Nat.dvd_mul_right _ _) hNM'
-        h_lvl_dvd h_dvd_inner (χ_F_helper_rel q' hq'_in_l')
       dsimp only
       rw [dif_neg hq'_eq, MonoidHom.comp_assoc, ZMod.unitsMap_comp]
-      convert h_chain using 2
+      convert m7_chiFHelper_chain χ hNNq2 (Nat.dvd_mul_right _ _) hNM' h_lvl_dvd
+        (Nat.div_dvd_of_dvd (by rw [h_level_eq]; exact m7_q_dvd_Nl2 (N := N) hq'_in))
+        (χ_F_helper_rel q' hq'_in_l') using 2
   · intro n
     rw [h_pf_eq, Finset.sum_insert hq_not_in_l', h_f_split n, g_helper_qexp n]
     simp only [↓reduceIte]
@@ -419,6 +456,242 @@ private lemma Miyake467Decomp_inductive_assemble {N : ℕ} [NeZero N] {k : ℤ}
     have hq'_ne_q : q' ≠ q := fun h ↦ hq_not_in_l' (h ▸ hq'_in_l')
     rw [if_neg hq'_ne_q]
     rfl
+
+/-- Prime-factor structure for the Miyake 4.6.7 induction step at `l` squarefree with
+`l.primeFactors.card = n+1`: pick a prime `q ∣ l` and decompose `l = q · l'`, package
+the squarefreeness of `l'`, the `primeFactors` insertion `{q} ∪ l'.pf = l.pf`, the
+`q ∉ l'.primeFactors` (from squarefreeness), and the inductive step's card reduction
+`l'.pf.card = n`. -/
+private lemma Miyake467Decomp_inductive_step_factor_structure
+    (l q : ℕ) (hl_sqfree : Squarefree l) (hq_in : q ∈ l.primeFactors) {n : ℕ}
+    (hl_card : l.primeFactors.card = n + 1) :
+    let l' := l / q
+    Squarefree l' ∧ q * l' = l ∧ 0 < l' ∧
+    l.primeFactors = insert q l'.primeFactors ∧
+    q ∉ l'.primeFactors ∧ l'.primeFactors.card = n := by
+  have hq_prime : q.Prime := Nat.prime_of_mem_primeFactors hq_in
+  have hq_dvd_l : q ∣ l := Nat.dvd_of_mem_primeFactors hq_in
+  set l' := l / q
+  have hq_dvd_l' : q * l' = l := Nat.mul_div_cancel' hq_dvd_l
+  have hl_ne : l ≠ 0 := hl_sqfree.ne_zero
+  have hl'_pos : 0 < l' :=
+    Nat.div_pos (Nat.le_of_dvd (Nat.pos_of_ne_zero hl_ne) hq_dvd_l) hq_prime.pos
+  have hl'_sqfree : Squarefree l' :=
+    hl_sqfree.squarefree_of_dvd (Nat.div_dvd_of_dvd hq_dvd_l)
+  have h_pf_eq : l.primeFactors = insert q l'.primeFactors := by
+    rw [← hq_dvd_l', Nat.primeFactors_mul hq_prime.ne_zero hl'_pos.ne',
+        hq_prime.primeFactors, Finset.singleton_union]
+  have hq_not_in_l' : q ∉ l'.primeFactors := fun hq_in_l' ↦
+    (Nat.squarefree_iff_prime_squarefree.mp hl_sqfree q hq_prime)
+      (hq_dvd_l' ▸ Nat.mul_dvd_mul_left q (Nat.dvd_of_mem_primeFactors hq_in_l'))
+  have hl'_pf_card : l'.primeFactors.card = n := by
+    have := hl_card
+    rw [h_pf_eq, Finset.card_insert_of_notMem hq_not_in_l'] at this
+    lia
+  exact ⟨hl'_sqfree, hq_dvd_l', hl'_pos, h_pf_eq, hq_not_in_l', hl'_pf_card⟩
+
+/-- Bundle of level relations needed by the Miyake 4.6.7 induction step: for `l = q · l'`,
+the level shifts among `N·l²`, `N·q²`, `N·q²·l'²`, and `(N·l²)/q` and the corresponding
+subgroup inclusions on `Γ_1`. Returned as a single `∃`-tuple to slim the inductive-step body. -/
+private lemma Miyake467Decomp_inductive_step_level_relations {N : ℕ} [NeZero N]
+    (l q l' : ℕ) [NeZero (N * l ^ 2)] [NeZero (N * q ^ 2)] [NeZero ((N * q ^ 2) / q)]
+    (hq_prime : q.Prime) (hl_eq_ql' : l = q * l') (hl'_pos : 0 < l') :
+    NeZero ((N * q ^ 2) * l' ^ 2) ∧
+    ((N * q ^ 2) * l' ^ 2 = N * l ^ 2) ∧
+    ((N * q ^ 2) * l' ^ 2 ∣ N * l ^ 2) ∧
+    (N * q ^ 2 / q ∣ N * q ^ 2) ∧
+    ((Gamma1 (N * q ^ 2)).map (mapGL ℝ) ≤ (Gamma1 ((N * q ^ 2) / q)).map (mapGL ℝ)) ∧
+    (N * q ^ 2 ∣ N * l ^ 2) ∧
+    ((Gamma1 (N * l ^ 2)).map (mapGL ℝ) ≤ (Gamma1 (N * q ^ 2)).map (mapGL ℝ)) ∧
+    (N * q ^ 2 / q ∣ N * l ^ 2 / q) ∧
+    ((Gamma1 ((N * l ^ 2) / q)).map (mapGL ℝ) ≤ (Gamma1 (N * q ^ 2 / q)).map (mapGL ℝ)) := by
+  have hNq2l'2_ne : NeZero ((N * q ^ 2) * l' ^ 2) :=
+    ⟨Nat.mul_ne_zero (NeZero.ne _) (pow_ne_zero 2 hl'_pos.ne')⟩
+  have h_level_eq : (N * q ^ 2) * l' ^ 2 = N * l ^ 2 := by
+    rw [hl_eq_ql', mul_pow]; ring
+  have h_lvl_dvd : (N * q ^ 2) * l' ^ 2 ∣ N * l ^ 2 := by rw [h_level_eq]
+  have h_Nq2_div_q : N * q ^ 2 / q = N * q := by
+    rw [sq, ← mul_assoc, Nat.mul_div_cancel _ hq_prime.pos]
+  have h_divq_dvd_Nq2 : (N * q ^ 2) / q ∣ N * q ^ 2 := by
+    rw [h_Nq2_div_q, sq, ← mul_assoc]
+    exact Nat.dvd_mul_right (N * q) q
+  have hNq2_dvd_Nl2 : N * q ^ 2 ∣ N * l ^ 2 := by
+    rw [hl_eq_ql', mul_pow]; exact ⟨l' ^ 2, by ring⟩
+  have h_Nl2_div_q_eq : (N * l ^ 2) / q = (N * q ^ 2 / q) * l' ^ 2 := by
+    rw [h_Nq2_div_q, hl_eq_ql', mul_pow,
+      show N * (q ^ 2 * l' ^ 2) = (N * q * l' ^ 2) * q by ring,
+      Nat.mul_div_cancel _ hq_prime.pos]
+  have hNq_dvd_Nl2divq : (N * q ^ 2 / q) ∣ (N * l ^ 2) / q := by
+    rw [h_Nl2_div_q_eq]; exact Nat.dvd_mul_right _ _
+  exact ⟨hNq2l'2_ne, h_level_eq, h_lvl_dvd,
+    h_divq_dvd_Nq2, Gamma1_map_le_Gamma1_map_of_dvd h_divq_dvd_Nq2,
+    hNq2_dvd_Nl2, Gamma1_map_le_Gamma1_map_of_dvd hNq2_dvd_Nl2,
+    hNq_dvd_Nl2divq, Gamma1_map_le_Gamma1_map_of_dvd hNq_dvd_Nl2divq⟩
+
+/-- `(N · q^2) / q = N · q`, hence `NeZero` whenever `N` and `q` are nonzero. Used to populate
+the level-`(N·q²)/q` typeclass at the conductor-theorem application in the inductive step. -/
+private lemma m7_NeZero_Nq2_div_q {N q : ℕ} [NeZero N] (hq_prime : q.Prime) :
+    NeZero ((N * q ^ 2) / q) := by
+  rw [show N * q ^ 2 / q = N * q from by
+    rw [sq, ← mul_assoc, Nat.mul_div_cancel _ hq_prime.pos]]
+  exact ⟨Nat.mul_ne_zero (NeZero.ne N) hq_prime.ne_zero⟩
+
+/-- `q ∣ N · q^2`. -/
+private lemma m7_q_dvd_Nq2 (N q : ℕ) : q ∣ N * q ^ 2 := by
+  rw [sq, ← mul_assoc]; exact Nat.dvd_mul_left q (N * q)
+
+/-- Constructs the level-`N·q²` auxiliary form `f'` for the Miyake 4.6.7 induction step,
+returning `f' = restrictSubgroup f - h_form` together with its character membership,
+`q`-coprime `q`-expansion identity, and `l'`-coprime vanishing. Used in the inductive step
+to feed the IH at modulus `l'`. -/
+private lemma Miyake467Decomp_inductive_auxiliary_form {N : ℕ} [NeZero N] {k : ℤ}
+    (χ : (ZMod N)ˣ →* ℂˣ) (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (hfχ : f ∈ cuspFormCharSpace k χ) (l q l' : ℕ) [NeZero (N * q ^ 2)]
+    (hq_dvd_l' : q * l' = l) (hNNq2 : N ∣ N * q ^ 2)
+    (h_form : CuspForm ((Gamma1 (N * q ^ 2)).map (mapGL ℝ)) k)
+    (h_form_char : h_form ∈ cuspFormCharSpace k (χ.comp (ZMod.unitsMap hNNq2)))
+    (h_form_qexp : ∀ n : ℕ,
+      (ModularFormClass.qExpansion (1 : ℝ) h_form).coeff n =
+      if ¬ n.Coprime q then (ModularFormClass.qExpansion (1 : ℝ) f).coeff n else 0)
+    (h_vanish : ∀ n : ℕ, Nat.Coprime n l →
+      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0) :
+    ∃ f' : CuspForm ((Gamma1 (N * q ^ 2)).map (mapGL ℝ)) k,
+      f' ∈ cuspFormCharSpace k (χ.comp (ZMod.unitsMap hNNq2)) ∧
+      (∀ n : ℕ, (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑f') =
+        if n.Coprime q then (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑f)
+        else 0) ∧
+      (∀ n : ℕ, n.Coprime l' →
+        (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑f') = 0) := by
+  have h_sub_Nq2 : (Gamma1 (N * q ^ 2)).map (mapGL ℝ) ≤ (Gamma1 N).map (mapGL ℝ) :=
+    Gamma1_map_le_Gamma1_map_of_dvd hNNq2
+  let f_at_Nq2 : CuspForm ((Gamma1 (N * q ^ 2)).map (mapGL ℝ)) k :=
+    CuspForm.restrictSubgroup h_sub_Nq2 f
+  have hf_at_Nq2_char : f_at_Nq2 ∈ cuspFormCharSpace k (χ.comp (ZMod.unitsMap hNNq2)) :=
+    cuspForm_restrictSubgroup_mem_cuspFormCharSpace χ hNNq2 hfχ
+  refine ⟨f_at_Nq2 - h_form, Submodule.sub_mem _ hf_at_Nq2_char h_form_char,
+    qExpansion_one_sub_coeff_coprime f_at_Nq2 h_form
+      (m7_one_mem_strictPeriods_Gamma1_map _) h_form_qexp, ?_⟩
+  intro n hn_cop_l'
+  rw [qExpansion_one_sub_coeff_coprime f_at_Nq2 h_form
+    (m7_one_mem_strictPeriods_Gamma1_map _) h_form_qexp n]
+  split_ifs with hcop_q
+  · exact h_vanish n (hq_dvd_l' ▸ Nat.Coprime.mul_right hcop_q hn_cop_l')
+  · rfl
+
+/-- Inductive-step dichotomy left-branch (Case A) discharge: from the conductor-theorem
+factorization data `(h_fac, F, hF_char, hF_eq)` for `h_form` at level `N·q²`, build the
+`Miyake467Decomp` at level `N·l²` via `Miyake467Decomp_inductive_assemble`. -/
+private lemma Miyake467Decomp_inductive_step_left_branch {N : ℕ} [NeZero N] {k : ℤ}
+    (χ : (ZMod N)ˣ →* ℂˣ) (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (l q l' : ℕ) [NeZero (N * l ^ 2)] [NeZero (N * q ^ 2)] [NeZero q]
+    [NeZero ((N * q ^ 2) / q)] [NeZero ((N * l ^ 2) / q)]
+    (hl_gt : 1 < l) (hl'_gt1 : 1 < l') (hq_in : q ∈ l.primeFactors)
+    (h_pf_eq : l.primeFactors = insert q l'.primeFactors)
+    (hq_not_in_l' : q ∉ l'.primeFactors)
+    (hNM' : N ∣ N * l ^ 2) (hNNq2 : N ∣ N * q ^ 2)
+    (h_level_eq : N * q ^ 2 * l' ^ 2 = N * l ^ 2)
+    (h_lvl_dvd : N * q ^ 2 * l' ^ 2 ∣ N * l ^ 2)
+    (hNq2_dvd_Nl2 : N * q ^ 2 ∣ N * l ^ 2)
+    (hNq_dvd_Nl2divq : N * q ^ 2 / q ∣ N * l ^ 2 / q)
+    (h_divq_dvd_Nq2 : (N * q ^ 2) / q ∣ N * q ^ 2)
+    (h_sub_q : (Gamma1 (N * q ^ 2)).map (mapGL ℝ) ≤
+      (Gamma1 ((N * q ^ 2) / q)).map (mapGL ℝ))
+    (h_sub_Nl2_Nq2 : (Gamma1 (N * l ^ 2)).map (mapGL ℝ) ≤
+      (Gamma1 (N * q ^ 2)).map (mapGL ℝ))
+    (h_sub_lift_q : (Gamma1 ((N * l ^ 2) / q)).map (mapGL ℝ) ≤
+      (Gamma1 (N * q ^ 2 / q)).map (mapGL ℝ))
+    (h_form : CuspForm ((Gamma1 (N * q ^ 2)).map (mapGL ℝ)) k)
+    (h_form_qexp : ∀ n : ℕ,
+      (ModularFormClass.qExpansion (1 : ℝ) h_form).coeff n =
+      if ¬ n.Coprime q then (ModularFormClass.qExpansion (1 : ℝ) f).coeff n else 0)
+    (f' : CuspForm ((Gamma1 (N * q ^ 2)).map (mapGL ℝ)) k)
+    (h_IH : Miyake467Decomp (χ.comp (ZMod.unitsMap hNNq2)) f' l' hl'_gt1)
+    (hf'_qexp : ∀ n : ℕ,
+      (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑f') =
+      if n.Coprime q then
+        (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑f)
+      else 0)
+    {χ_M : DirichletCharacter ℂ (N * q ^ 2)}
+    (h_χ_M_toUnit : χ_M.toUnitHom = χ.comp (ZMod.unitsMap hNNq2))
+    (φ : UpperHalfPlane → ℂ)
+    (hφ_eq : (⇑h_form : UpperHalfPlane → ℂ) = levelRaiseFun q k φ)
+    {h_fac : χ_M.FactorsThrough ((N * q ^ 2) / q)}
+    {F : CuspForm ((Gamma1 ((N * q ^ 2) / q)).map (mapGL ℝ)) k}
+    (hF_char : F ∈ cuspFormCharSpace k (loweredCharacter h_fac).toUnitHom)
+    (hF_eq : (⇑F : UpperHalfPlane → ℂ) = φ) :
+    Miyake467Decomp χ f l hl_gt := by
+  have h_hform_eq : (⇑h_form : UpperHalfPlane → ℂ) =
+      ⇑(HeckeRing.GL2.levelRaise ((N * q ^ 2) / q) q k F) := by
+    rw [hφ_eq, ← hF_eq]; rfl
+  have h_char_eq : (loweredCharacter h_fac).toUnitHom.comp
+      (ZMod.unitsMap h_divq_dvd_Nq2) = χ.comp (ZMod.unitsMap hNNq2) := by
+    rw [← toUnitHom_loweredCharacter h_fac, h_χ_M_toUnit]
+  have hF_at_Nq2_char :
+      CuspForm.restrictSubgroup h_sub_q F ∈ cuspFormCharSpace k (χ.comp (ZMod.unitsMap hNNq2)) :=
+    h_char_eq ▸ cuspForm_restrictSubgroup_mem_cuspFormCharSpace
+      (loweredCharacter h_fac).toUnitHom h_divq_dvd_Nq2 hF_char
+  have h_chainNl2 : (χ.comp (ZMod.unitsMap hNNq2)).comp
+      (ZMod.unitsMap hNq2_dvd_Nl2) = χ.comp (ZMod.unitsMap hNM') := by
+    rw [MonoidHom.comp_assoc, ZMod.unitsMap_comp]
+  refine Miyake467Decomp_inductive_assemble χ f l q l' hl_gt hl'_gt1 hq_in h_pf_eq
+    hq_not_in_l' hNM' hNNq2 h_level_eq h_lvl_dvd hNq2_dvd_Nl2 hNq_dvd_Nl2divq f' h_IH
+    (CuspForm.restrictSubgroup h_sub_Nl2_Nq2 (CuspForm.restrictSubgroup h_sub_q F))
+    (CuspForm.restrictSubgroup h_sub_lift_q F)
+    ((loweredCharacter h_fac).toUnitHom.comp (ZMod.unitsMap hNq_dvd_Nl2divq))
+    (h_chainNl2 ▸ cuspForm_restrictSubgroup_mem_cuspFormCharSpace
+      (χ.comp (ZMod.unitsMap hNNq2)) hNq2_dvd_Nl2 hF_at_Nq2_char)
+    (cuspForm_restrictSubgroup_mem_cuspFormCharSpace
+      (loweredCharacter h_fac).toUnitHom hNq_dvd_Nl2divq hF_char) rfl ?_ ?_
+  · rw [MonoidHom.comp_assoc, ZMod.unitsMap_comp,
+      ← ZMod.unitsMap_comp h_divq_dvd_Nq2 hNq2_dvd_Nl2, ← MonoidHom.comp_assoc,
+      ← toUnitHom_loweredCharacter h_fac, h_χ_M_toUnit, MonoidHom.comp_assoc, ZMod.unitsMap_comp]
+  · intro n
+    rw [m7_qExp_split_f_eq_f'_plus_hform hf'_qexp h_form_qexp n,
+      m7_qExp_coeff_levelRaise_case_A h_form F h_hform_eq n, add_comm]
+    rfl
+
+/-- Inductive-step dichotomy right-branch (Case B) discharge: from the vanishing witness
+`hφ_zero` for `h_form`'s level-raise preimage, build the `Miyake467Decomp` at level
+`N·l²` using zero data for the per-prime-`q` slot. -/
+private lemma Miyake467Decomp_inductive_step_right_branch {N : ℕ} [NeZero N] {k : ℤ}
+    (χ : (ZMod N)ˣ →* ℂˣ) (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (l q l' : ℕ) [NeZero (N * l ^ 2)] [NeZero (N * q ^ 2)] [NeZero q]
+    (hl_gt : 1 < l) (hl'_gt1 : 1 < l') (hq_prime : q.Prime) (hq_dvd_l : q ∣ l)
+    (hq_in : q ∈ l.primeFactors)
+    (h_pf_eq : l.primeFactors = insert q l'.primeFactors)
+    (hq_not_in_l' : q ∉ l'.primeFactors)
+    (hNM' : N ∣ N * l ^ 2) (hNNq2 : N ∣ N * q ^ 2)
+    (h_level_eq : N * q ^ 2 * l' ^ 2 = N * l ^ 2)
+    (h_lvl_dvd : N * q ^ 2 * l' ^ 2 ∣ N * l ^ 2)
+    (hNq2_dvd_Nl2 : N * q ^ 2 ∣ N * l ^ 2)
+    (hNq_dvd_Nl2divq : N * q ^ 2 / q ∣ N * l ^ 2 / q)
+    (h_form : CuspForm ((Gamma1 (N * q ^ 2)).map (mapGL ℝ)) k)
+    (h_form_qexp : ∀ n : ℕ,
+      (ModularFormClass.qExpansion (1 : ℝ) h_form).coeff n =
+      if ¬ n.Coprime q then (ModularFormClass.qExpansion (1 : ℝ) f).coeff n else 0)
+    (f' : CuspForm ((Gamma1 (N * q ^ 2)).map (mapGL ℝ)) k)
+    (h_IH : Miyake467Decomp (χ.comp (ZMod.unitsMap hNNq2)) f' l' hl'_gt1)
+    (hf'_qexp : ∀ n : ℕ,
+      (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑f') =
+      if n.Coprime q then
+        (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑f)
+      else 0)
+    (hh_form_zero : (⇑h_form : UpperHalfPlane → ℂ) = 0) :
+    Miyake467Decomp χ f l hl_gt := by
+  have h_an_f'_eq_f : ∀ n,
+      (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑f') =
+      (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑f) := fun n ↦ by
+    rw [m7_qExp_split_f_eq_f'_plus_hform hf'_qexp h_form_qexp n,
+      m7_qExp_coeff_of_fun_eq_zero hh_form_zero n, add_zero]
+  have hN_dvd_divq_indB : N ∣ (N * l ^ 2) / q := m7_N_dvd_div_prime hq_prime hq_dvd_l
+  haveI := m7_NeZero_Nl2_div_q (N := N) (l := l) hq_in
+  refine Miyake467Decomp_inductive_assemble χ f l q l' hl_gt hl'_gt1 hq_in h_pf_eq
+    hq_not_in_l' hNM' hNNq2 h_level_eq h_lvl_dvd hNq2_dvd_Nl2 hNq_dvd_Nl2divq f' h_IH
+    0 0 (χ.comp (ZMod.unitsMap hN_dvd_divq_indB))
+    (Submodule.zero_mem _) (Submodule.zero_mem _) rfl ?_ ?_
+  · rw [MonoidHom.comp_assoc, ZMod.unitsMap_comp]
+  · intro n
+    rw [m7_qExp_zero_branch q n, zero_add, h_an_f'_eq_f n]
 
 /-- Inductive step of Miyake 4.6.7 (`l = q · l'` with `l' > 1`): split off the prime `q` via the
 auxiliary `h_form` and `f' = f - h_form`, apply the induction hypothesis `ih` to `f'` at level
@@ -442,162 +715,52 @@ private lemma Miyake467Decomp_inductive_step {N : ℕ} [NeZero N] {k : ℤ} (n :
   have hq_dvd_l : q ∣ l := Nat.dvd_of_mem_primeFactors hq_in
   haveI hq_ne : NeZero q := ⟨hq_prime.ne_zero⟩
   set l' := l / q with hl'_def
-  have hq_dvd_l' : q * l' = l := Nat.mul_div_cancel' hq_dvd_l
-  have hl'_pos : 0 < l' := Nat.div_pos (Nat.le_of_dvd (by lia) hq_dvd_l) hq_prime.pos
-  have hl'_sqfree : Squarefree l' := hl_sqfree.squarefree_of_dvd (Nat.div_dvd_of_dvd hq_dvd_l)
-  have h_pf_eq : l.primeFactors = insert q l'.primeFactors := by
-    rw [← hq_dvd_l', Nat.primeFactors_mul hq_prime.ne_zero hl'_pos.ne',
-        hq_prime.primeFactors, Finset.singleton_union]
-  have hq_not_in_l' : q ∉ l'.primeFactors := by
-    intro hq_in_l'
-    have hq_dvd_l'_val : q ∣ l' := Nat.dvd_of_mem_primeFactors hq_in_l'
-    have hqq_dvd_l : q * q ∣ l := hq_dvd_l' ▸ Nat.mul_dvd_mul_left q hq_dvd_l'_val
-    exact (Nat.squarefree_iff_prime_squarefree.mp hl_sqfree q hq_prime) hqq_dvd_l
-  have hl'_pf_card : l'.primeFactors.card = n := by
-    have := hl_card
-    rw [h_pf_eq, Finset.card_insert_of_notMem hq_not_in_l'] at this
-    lia
+  obtain ⟨hl'_sqfree, hq_dvd_l', hl'_pos, h_pf_eq, hq_not_in_l', hl'_pf_card⟩ :=
+    Miyake467Decomp_inductive_step_factor_structure l q hl_sqfree hq_in hl_card
   haveI hNl2_ne : NeZero (N * l ^ 2) :=
     ⟨Nat.mul_ne_zero (NeZero.ne N) (pow_ne_zero 2 (by lia : l ≠ 0))⟩
   have hNM' : N ∣ N * l ^ 2 := Nat.dvd_mul_right N (l ^ 2)
-  unfold Miyake467Decomp
-  haveI hq_l'_sqfree : Squarefree q := hq_prime.squarefree
   have hl_eq_ql' : l = q * l' := hq_dvd_l'.symm
   haveI hNq2_ne : NeZero (N * q ^ 2) :=
     ⟨Nat.mul_ne_zero (NeZero.ne N) (pow_ne_zero 2 hq_prime.ne_zero)⟩
   have hNNq2 : N ∣ N * q ^ 2 := Nat.dvd_mul_right N _
   obtain ⟨h_form, h_form_char, h_form_qexp⟩ :=
-    miyake_h_form_general (N := N) (k := k) χ f hfχ q hq_prime.pos hq_l'_sqfree
-  have h_sub_Nq2 : (Gamma1 (N * q ^ 2)).map (mapGL ℝ) ≤ (Gamma1 N).map (mapGL ℝ) :=
-    Gamma1_map_le_Gamma1_map_of_dvd hNNq2
-  let f_at_Nq2 : CuspForm ((Gamma1 (N * q ^ 2)).map (mapGL ℝ)) k :=
-    CuspForm.restrictSubgroup h_sub_Nq2 f
-  have hf_at_Nq2_char : f_at_Nq2 ∈ cuspFormCharSpace k (χ.comp (ZMod.unitsMap hNNq2)) :=
-    cuspForm_restrictSubgroup_mem_cuspFormCharSpace χ hNNq2 hfχ
-  let f' : CuspForm ((Gamma1 (N * q ^ 2)).map (mapGL ℝ)) k := f_at_Nq2 - h_form
-  have hf'_char : f' ∈ cuspFormCharSpace k (χ.comp (ZMod.unitsMap hNNq2)) :=
-    Submodule.sub_mem _ hf_at_Nq2_char h_form_char
-  have h1_period_Nq2 :
-      (1 : ℝ) ∈ ((Gamma1 (N * q ^ 2)).map (mapGL ℝ)).strictPeriods :=
-    m7_one_mem_strictPeriods_Gamma1_map _
-  have hf'_qexp : ∀ n : ℕ,
-      (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑f') =
-      if n.Coprime q then
-        (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑f)
-      else 0 :=
-    qExpansion_one_sub_coeff_coprime f_at_Nq2 h_form h1_period_Nq2 h_form_qexp
-  have hf'_vanish : ∀ n : ℕ, n.Coprime l' →
-      (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑f') = 0 := by
-    intro n hn_cop_l'
-    rw [hf'_qexp n]
-    split_ifs with hcop_q
-    · exact h_vanish n (hq_dvd_l' ▸ Nat.Coprime.mul_right hcop_q hn_cop_l')
-    · rfl
+    miyake_h_form_general (N := N) (k := k) χ f hfχ q hq_prime.pos hq_prime.squarefree
+  obtain ⟨f', hf'_char, hf'_qexp, hf'_vanish⟩ :=
+    Miyake467Decomp_inductive_auxiliary_form χ f hfχ l q l' hq_dvd_l' hNNq2
+      h_form h_form_char h_form_qexp h_vanish
   have h_IH : Miyake467Decomp (χ.comp (ZMod.unitsMap hNNq2)) f' l' hl'_gt1 :=
     ih l' hl'_pf_card (N * q ^ 2) k (χ.comp (ZMod.unitsMap hNNq2))
       f' hf'_char hl'_gt1 hl'_sqfree hf'_vanish
-  haveI hNq2l'2_ne : NeZero ((N * q ^ 2) * l' ^ 2) :=
-    ⟨Nat.mul_ne_zero (NeZero.ne _) (pow_ne_zero 2 hl'_pos.ne')⟩
-  have h_level_eq : (N * q ^ 2) * l' ^ 2 = N * l ^ 2 := by
-    rw [hl_eq_ql', mul_pow]; ring
-  have h_lvl_dvd : (N * q ^ 2) * l' ^ 2 ∣ N * l ^ 2 := by rw [h_level_eq]
-  have hh_form_supp : h_form ∈ HeckeRing.GL2.AtkinLehner.qSupportedOnDvdSubmodule
-      (N * q ^ 2) k q := fun n hn_not_dvd ↦ by
-    rw [h_form_qexp n, if_neg (not_not_intro
-      (hq_prime.coprime_iff_not_dvd.mpr hn_not_dvd).symm)]
   let χ_M : DirichletCharacter ℂ (N * q ^ 2) :=
     MulChar.ofUnitHom (χ.comp (ZMod.unitsMap hNNq2))
   have h_χ_M_toUnit : χ_M.toUnitHom = χ.comp (ZMod.unitsMap hNNq2) :=
     MulChar.equivToUnitHom.apply_symm_apply _
-  have hh_form_char_χ_M : h_form ∈ cuspFormCharSpace k χ_M.toUnitHom := by
-    rw [h_χ_M_toUnit]; exact h_form_char
-  have hq_dvd_Nq2 : q ∣ N * q ^ 2 := by
-    rw [sq, ← mul_assoc]; exact Nat.dvd_mul_left q (N * q)
-  have h_Nq2_div_q : N * q ^ 2 / q = N * q := by
-    rw [sq, ← mul_assoc, Nat.mul_div_cancel _ hq_prime.pos]
-  haveI hNq2_div_q_ne : NeZero (N * q ^ 2 / q) := by
-    rw [h_Nq2_div_q]
-    exact ⟨Nat.mul_ne_zero (NeZero.ne N) hq_prime.ne_zero⟩
+  haveI hNq2_div_q_ne : NeZero (N * q ^ 2 / q) := m7_NeZero_Nq2_div_q (N := N) hq_prime
   obtain ⟨φ, hφ_eq, hφ_period⟩ :=
     HeckeRing.GL2.exists_levelRaise_preimage_of_coeff_support_multiples
-      hq_prime.one_lt hq_dvd_Nq2 h_form (fun n hn ↦ hh_form_supp n hn)
-  have h_divq_dvd_Nq2 : (N * q ^ 2) / q ∣ N * q ^ 2 := by
-    rw [h_Nq2_div_q, sq, ← mul_assoc]
-    exact Nat.dvd_mul_right (N * q) q
-  have h_sub_q : (Gamma1 (N * q ^ 2)).map (mapGL ℝ) ≤
-      (Gamma1 ((N * q ^ 2) / q)).map (mapGL ℝ) :=
-    Gamma1_map_le_Gamma1_map_of_dvd h_divq_dvd_Nq2
-  have hNq2_dvd_Nl2 : N * q ^ 2 ∣ N * l ^ 2 := by
-    rw [hl_eq_ql', mul_pow]
-    exact ⟨l' ^ 2, by ring⟩
-  have h_sub_Nl2_Nq2 : (Gamma1 (N * l ^ 2)).map (mapGL ℝ) ≤
-      (Gamma1 (N * q ^ 2)).map (mapGL ℝ) :=
-    Gamma1_map_le_Gamma1_map_of_dvd hNq2_dvd_Nl2
-  have h_Nl2_div_q_eq : (N * l ^ 2) / q = (N * q ^ 2 / q) * l' ^ 2 := by
-    rw [h_Nq2_div_q, hl_eq_ql', mul_pow,
-      show N * (q ^ 2 * l' ^ 2) = (N * q * l' ^ 2) * q by ring,
-      Nat.mul_div_cancel _ hq_prime.pos]
-  have hNq_dvd_Nl2divq : (N * q ^ 2 / q) ∣ (N * l ^ 2) / q := by
-    rw [h_Nl2_div_q_eq]
-    exact Nat.dvd_mul_right _ _
-  haveI hNl2_div_q_ne : NeZero ((N * l ^ 2) / q) := by
-    have hq_dvd_l2 : q ∣ l ^ 2 :=
-      hq_dvd_l.trans (dvd_pow_self l two_ne_zero)
-    have hq_dvd : q ∣ N * l ^ 2 := dvd_mul_of_dvd_right hq_dvd_l2 N
-    have hl_ne : l ≠ 0 := by lia
-    have hNl2_pos : 0 < N * l ^ 2 := Nat.pos_of_ne_zero
-      (Nat.mul_ne_zero (NeZero.ne N) (pow_ne_zero 2 hl_ne))
-    exact ⟨(Nat.div_pos (Nat.le_of_dvd hNl2_pos hq_dvd) hq_prime.pos).ne'⟩
-  have h_sub_lift_q : (Gamma1 ((N * l ^ 2) / q)).map (mapGL ℝ) ≤
-      (Gamma1 (N * q ^ 2 / q)).map (mapGL ℝ) :=
-    Gamma1_map_le_Gamma1_map_of_dvd hNq_dvd_Nl2divq
+      hq_prime.one_lt (m7_q_dvd_Nq2 N q) h_form fun n hn_not_dvd ↦ by
+        rw [h_form_qexp n, if_neg (not_not_intro
+          (hq_prime.coprime_iff_not_dvd.mpr hn_not_dvd).symm)]
+  haveI hNl2_div_q_ne : NeZero ((N * l ^ 2) / q) :=
+    m7_NeZero_Nl2_div_q (N := N) (l := l) hq_in
+  obtain ⟨hNq2l'2_ne, h_level_eq, h_lvl_dvd, h_divq_dvd_Nq2, h_sub_q,
+      hNq2_dvd_Nl2, h_sub_Nl2_Nq2, hNq_dvd_Nl2divq, h_sub_lift_q⟩ :=
+    Miyake467Decomp_inductive_step_level_relations (N := N) l q l' hq_prime hl_eq_ql' hl'_pos
+  haveI : NeZero ((N * q ^ 2) * l' ^ 2) := hNq2l'2_ne
   rcases HeckeRing.GL2.conductor_theorem_dichotomy_cuspForm_strong
-      q (N * q ^ 2) hq_dvd_Nq2 k χ_M φ h_form hh_form_char_χ_M hφ_eq hφ_period with
+      q (N * q ^ 2) (m7_q_dvd_Nq2 N q) k χ_M φ h_form (h_χ_M_toUnit ▸ h_form_char)
+      hφ_eq hφ_period with
     ⟨h_fac, F, hF_char, hF_eq⟩ | hφ_zero
-  · have h_hform_eq : (⇑h_form : UpperHalfPlane → ℂ) =
-        ⇑(HeckeRing.GL2.levelRaise ((N * q ^ 2) / q) q k F) := by
-      rw [hφ_eq, ← hF_eq]; rfl
-    have h_char_eq : (loweredCharacter h_fac).toUnitHom.comp
-        (ZMod.unitsMap h_divq_dvd_Nq2) = χ.comp (ZMod.unitsMap hNNq2) := by
-      rw [← toUnitHom_loweredCharacter h_fac, h_χ_M_toUnit]
-    have hF_at_Nq2_char :
-        CuspForm.restrictSubgroup h_sub_q F ∈ cuspFormCharSpace k (χ.comp (ZMod.unitsMap hNNq2)) :=
-      h_char_eq ▸ cuspForm_restrictSubgroup_mem_cuspFormCharSpace
-        (loweredCharacter h_fac).toUnitHom h_divq_dvd_Nq2 hF_char
-    have h_chainNl2 : (χ.comp (ZMod.unitsMap hNNq2)).comp
-        (ZMod.unitsMap hNq2_dvd_Nl2) = χ.comp (ZMod.unitsMap hNM') := by
-      rw [MonoidHom.comp_assoc, ZMod.unitsMap_comp]
-    refine Miyake467Decomp_inductive_assemble χ f l q l' hl_gt hl'_gt1 hq_in h_pf_eq
-      hq_not_in_l' hNM' hNNq2 h_level_eq h_lvl_dvd hNq2_dvd_Nl2 hNq_dvd_Nl2divq f' h_IH
-      (CuspForm.restrictSubgroup h_sub_Nl2_Nq2 (CuspForm.restrictSubgroup h_sub_q F))
-      (CuspForm.restrictSubgroup h_sub_lift_q F)
-      ((loweredCharacter h_fac).toUnitHom.comp (ZMod.unitsMap hNq_dvd_Nl2divq))
-      (h_chainNl2 ▸ cuspForm_restrictSubgroup_mem_cuspFormCharSpace
-        (χ.comp (ZMod.unitsMap hNNq2)) hNq2_dvd_Nl2 hF_at_Nq2_char)
-      (cuspForm_restrictSubgroup_mem_cuspFormCharSpace
-        (loweredCharacter h_fac).toUnitHom hNq_dvd_Nl2divq hF_char) rfl ?_ ?_
-    · rw [MonoidHom.comp_assoc, ZMod.unitsMap_comp,
-        ← ZMod.unitsMap_comp h_divq_dvd_Nq2 hNq2_dvd_Nl2, ← MonoidHom.comp_assoc,
-        ← toUnitHom_loweredCharacter h_fac, h_χ_M_toUnit, MonoidHom.comp_assoc, ZMod.unitsMap_comp]
-    · intro n
-      rw [m7_qExp_split_f_eq_f'_plus_hform hf'_qexp h_form_qexp n,
-        m7_qExp_coeff_levelRaise_case_A h_form F h_hform_eq n, add_comm]
-      rfl
+  · exact Miyake467Decomp_inductive_step_left_branch χ f l q l' hl_gt hl'_gt1 hq_in h_pf_eq
+      hq_not_in_l' hNM' hNNq2 h_level_eq h_lvl_dvd hNq2_dvd_Nl2 hNq_dvd_Nl2divq
+      h_divq_dvd_Nq2 h_sub_q h_sub_Nl2_Nq2 h_sub_lift_q h_form h_form_qexp f' h_IH hf'_qexp
+      (χ_M := χ_M) h_χ_M_toUnit φ hφ_eq hF_char hF_eq
   · have hh_form_zero : (⇑h_form : UpperHalfPlane → ℂ) = 0 := by
       rw [hφ_eq, hφ_zero]; exact m7_levelRaiseFun_zero q k
-    have h_an_f'_eq_f : ∀ n,
-        (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑f') =
-        (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑f) := fun n ↦ by
-      rw [m7_qExp_split_f_eq_f'_plus_hform hf'_qexp h_form_qexp n,
-        m7_qExp_coeff_of_fun_eq_zero hh_form_zero n, add_zero]
-    have hN_dvd_divq_indB : N ∣ (N * l ^ 2) / q := m7_N_dvd_div_prime hq_prime hq_dvd_l
-    refine Miyake467Decomp_inductive_assemble χ f l q l' hl_gt hl'_gt1 hq_in h_pf_eq
-      hq_not_in_l' hNM' hNNq2 h_level_eq h_lvl_dvd hNq2_dvd_Nl2 hNq_dvd_Nl2divq f' h_IH
-      0 0 (χ.comp (ZMod.unitsMap hN_dvd_divq_indB))
-      (Submodule.zero_mem _) (Submodule.zero_mem _) rfl ?_ ?_
-    · rw [MonoidHom.comp_assoc, ZMod.unitsMap_comp]
-    · intro n
-      rw [m7_qExp_zero_branch q n, zero_add, h_an_f'_eq_f n]
+    exact Miyake467Decomp_inductive_step_right_branch χ f l q l' hl_gt hl'_gt1 hq_prime
+      hq_dvd_l hq_in h_pf_eq hq_not_in_l' hNM' hNNq2 h_level_eq h_lvl_dvd hNq2_dvd_Nl2
+      hNq_dvd_Nl2divq h_form h_form_qexp f' h_IH hf'_qexp hh_form_zero
 
 /-- **Strengthened M7-sqfree** (Miyake p. 159-160) — same as
 `miyake_4_6_7_squarefree_decomp` but ALSO exposes, for each prime `q ∣ l`, a
