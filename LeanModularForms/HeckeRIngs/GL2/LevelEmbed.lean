@@ -35,8 +35,6 @@ open scoped MatrixGroups ModularForm
 
 namespace HeckeRing.GL2
 
-/-! ### Level-raising subgroup inclusions -/
-
 /-- `Gamma1(N) ≤ Gamma1(M)` when `M ∣ N`: if `a ≡ 1 mod N` then `a ≡ 1 mod M`,
 and if `N ∣ c` then `M ∣ c`. -/
 theorem Gamma1_le_of_dvd {M N : ℕ} (h : M ∣ N) :
@@ -44,41 +42,22 @@ theorem Gamma1_le_of_dvd {M N : ℕ} (h : M ∣ N) :
   intro A hA
   rw [Gamma1_mem] at hA ⊢
   obtain ⟨ha, hd, hc⟩ := hA
-  -- The cast ZMod N → ZMod M sends the ZMod N conditions to ZMod M conditions
   set φ := ZMod.castHom h (ZMod M)
-  refine ⟨?_, ?_, ?_⟩ <;> [skip; skip; skip] <;>
-  · first
-    | (have := congr_arg φ ha; simp [map_intCast, map_one] at this; exact this)
-    | (have := congr_arg φ hd; simp [map_intCast, map_one] at this; exact this)
-    | (have := congr_arg φ hc; simp [map_intCast, map_zero] at this; exact this)
+  refine ⟨?_, ?_, ?_⟩
+  · simpa [map_intCast, map_one] using congr_arg φ ha
+  · simpa [map_intCast, map_one] using congr_arg φ hd
+  · simpa [map_intCast, map_zero] using congr_arg φ hc
 
 /-- `Gamma0(N) ≤ Gamma0(M)` when `M ∣ N`: if `N ∣ c` then `M ∣ c`. -/
 theorem Gamma0_le_of_dvd {M N : ℕ} (h : M ∣ N) :
     Gamma0 N ≤ Gamma0 M := by
   intro A hA
   rw [Gamma0_mem] at hA ⊢
-  have := congr_arg (ZMod.castHom h (ZMod M)) hA
-  simp [map_intCast, map_zero] at this; exact this
+  simpa [map_intCast, map_zero] using congr_arg (ZMod.castHom h (ZMod M)) hA
 
 /-- `Gamma1(N) ≤ Gamma0(N)` (standard inclusion, for convenience). -/
 theorem Gamma1_le_Gamma0 (N : ℕ) : Gamma1 N ≤ Gamma0 N :=
-  fun _ hA ↦ Gamma1_in_Gamma0 N hA
-
-/-! ### Cusp forms from lower levels
-
-The submodule `S_k^1(N, χ)` of cusp forms coming from lower levels is defined
-as the span of all images of level-raising embeddings `f(z) ↦ f(lz)` for
-proper divisors `M | N`, `M ≠ N`.
-
-The actual level-embedding map `levelEmbed l : S_k(M, χ) → S_k(l*M, χ)` requires:
-- the slash action by `[l 0; 0 1]` preserves holomorphicity and cusp vanishing
-- the conjugation `[l 0; 0 1]⁻¹ Gamma1(l*M) [l 0; 0 1] ≤ Gamma1(M)` (proved above
-  conceptually, needs the matrix computation)
-- character compatibility
-
-These are Phase 2/3 constructions. Here we define the TARGET submodule
-structure so that downstream Phase 6 work can reference it.
--/
+  Gamma1_in_Gamma0 N
 
 /-- The set of proper-divisor level pairs `(M, l)` with `M * l = N` and `M ≠ N`.
 These are the sources for level-raising into `S_k(N, χ)`. -/
