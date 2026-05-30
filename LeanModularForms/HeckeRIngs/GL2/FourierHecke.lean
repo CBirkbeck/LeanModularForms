@@ -201,9 +201,8 @@ private theorem divisorSum_coprime_conv {N : ℕ} [NeZero N] (k : ℤ) (χ : (ZM
     Finset.sum_image (fun _ ha _ hb h ↦ mul_injOn_divisors_coprime hab ha hb h),
     Finset.sum_product]
   refine Finset.sum_congr rfl fun d₁ hd₁ ↦ ?_
-  have hd₁_dvd := Nat.dvd_of_mem_divisors hd₁
-  have hd₁m : d₁ ∣ m := hd₁_dvd.trans (Nat.gcd_dvd_left m a)
-  have hd₁a : d₁ ∣ a := hd₁_dvd.trans (Nat.gcd_dvd_right m a)
+  have hd₁m : d₁ ∣ m := (Nat.dvd_of_mem_divisors hd₁).trans (Nat.gcd_dvd_left m a)
+  have hd₁a : d₁ ∣ a := (Nat.dvd_of_mem_divisors hd₁).trans (Nat.gcd_dvd_right m a)
   exact divisorSum_coprime_summand k χ c m a b d₁ (Nat.mul_dvd_mul hd₁m hd₁a)
     (gcd_quot_sq_eq hab hd₁m hd₁a)
 
