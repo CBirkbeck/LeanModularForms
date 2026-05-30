@@ -13,15 +13,14 @@ public import Mathlib.Analysis.SpecialFunctions.Complex.LogBounds
 public import Mathlib.Analysis.SpecialFunctions.Log.Summable
 public import Mathlib.Analysis.SpecificLimits.Normed
 
-@[expose] public section
-
 /-!
 # Products of one plus a complex number
 
 We gather some results about the uniform convergence of the product of `1 + f n x` for a
-sequence `f n x` or complex numbers.
-
+sequence `f n x` of complex numbers.
 -/
+
+@[expose] public section
 
 open Filter Function Complex Real
 
