@@ -164,37 +164,31 @@ def IsOldform (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
   f ∈ cuspFormsOld N k
 
 /-- Additivity in the first argument, derived from `petN_add_right` + Hermitian symmetry. -/
-theorem petN_add_left
-    (f₁ f₂ g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+theorem petN_add_left (f₁ f₂ g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     petN (f₁ + f₂) g = petN f₁ g + petN f₂ g := by
-  have h := petN_add_right g f₁ f₂
-  have e := congr_arg (starRingEnd ℂ) h
+  have e := congr_arg (starRingEnd ℂ) (petN_add_right g f₁ f₂)
   rw [petN_conj_symm, map_add, petN_conj_symm, petN_conj_symm] at e
   exact e
 
-/-- Conjugate-scalar multiplication in the first argument: `petN (c • f) g = conj c * petN f g`. -/
-theorem petN_conj_smul_left
-    (c : ℂ) (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+/-- Conjugate-scalar multiplication in the first argument:
+`petN (c • f) g = conj c * petN f g`. -/
+theorem petN_conj_smul_left (c : ℂ) (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     petN (c • f) g = starRingEnd ℂ c * petN f g := by
   simp only [petN, Finset.mul_sum]
-  congr 1; ext q
-  have hcoe : ⇑(c • f) = c • ⇑f := rfl
-  have h1 : ⇑(c • f) ∣[k] (q.out : SL(2, ℤ))⁻¹ = c • (⇑f ∣[k] (q.out : SL(2, ℤ))⁻¹) := by
-    rw [hcoe]
-    exact ModularForm.SL_smul_slash k _ ⇑f c
+  congr 1
+  ext q
+  have h1 : ⇑(c • f) ∣[k] (q.out : SL(2, ℤ))⁻¹ =
+      c • (⇑f ∣[k] (q.out : SL(2, ℤ))⁻¹) := ModularForm.SL_smul_slash k _ ⇑f c
   rw [h1]
   exact UpperHalfPlane.peterssonInner_conj_smul_left k ModularGroup.fd c _ _
 
 /-- Linear scalar multiplication in the second argument: `petN g (c • f) = c * petN g f`.
 Derived from `petN_conj_smul_left` and Hermitian symmetry. -/
-theorem petN_smul_right
-    (c : ℂ) (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+theorem petN_smul_right (c : ℂ) (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     petN g (c • f) = c * petN g f := by
-  have h1 : petN (c • f) g = starRingEnd ℂ c * petN f g := petN_conj_smul_left c f g
-  have h2 := congr_arg (starRingEnd ℂ) h1
+  have h2 := congr_arg (starRingEnd ℂ) (petN_conj_smul_left c f g)
   rw [petN_conj_symm, map_mul, petN_conj_symm] at h2
-  simp at h2
-  exact h2
+  simpa using h2
 
 /-- A cusp form is in the **new subspace** if it is orthogonal (w.r.t. `petN`)
 to every oldform. -/
@@ -207,15 +201,9 @@ DS (5.19): `S_k^new = (S_k^old)⊥`. -/
 def cuspFormsNew (N : ℕ) [NeZero N] (k : ℤ) :
     Submodule ℂ (CuspForm ((Gamma1 N).map (mapGL ℝ)) k) where
   carrier := {f | IsInNewSubspace f}
-  add_mem' {f₁ f₂} h₁ h₂ g hg := by
-    show petN (f₁ + f₂) g = 0
-    rw [petN_add_left, h₁ g hg, h₂ g hg, add_zero]
-  zero_mem' g _ := by
-    show petN 0 g = 0
-    exact petN_zero_left g
-  smul_mem' c f hf g hg := by
-    show petN (c • f) g = 0
-    rw [petN_conj_smul_left, hf g hg, mul_zero]
+  add_mem' h₁ h₂ g hg := by rw [petN_add_left, h₁ g hg, h₂ g hg, add_zero]
+  zero_mem' g _ := petN_zero_left g
+  smul_mem' c _ hf g hg := by rw [petN_conj_smul_left, hf g hg, mul_zero]
 
 /-- The intersection of `cuspFormsOld` and `cuspFormsNew` is trivial: applying orthogonality
 of `f ∈ cuspFormsNew` to `g = f ∈ cuspFormsOld` gives `petN f f = 0`, so `f = 0` by
@@ -223,9 +211,7 @@ of `f ∈ cuspFormsNew` to `g = f ∈ cuspFormsOld` gives `petN f f = 0`, so `f 
 theorem cuspFormsOld_disjoint_cuspFormsNew :
     Disjoint (cuspFormsOld N k) (cuspFormsNew N k) := by
   rw [Submodule.disjoint_def]
-  intro f hf_old hf_new
-  have h0 : petN f f = 0 := hf_new f hf_old
-  exact petN_definite f h0
+  exact fun f hf_old hf_new ↦ petN_definite f (hf_new f hf_old)
 
 /-- The natural embedding `CuspForm → ModularForm` as a `ℂ`-linear map. -/
 def cuspFormToModularFormLin :
@@ -247,13 +233,9 @@ lemma cuspFormToModularFormLin_injective :
 `cuspFormToModularFormLin`. -/
 theorem cuspForm_finiteDimensional :
     FiniteDimensional ℂ (CuspForm ((Gamma1 N).map (mapGL ℝ)) k) := by
-  haveI : FiniteDimensional ℂ (ModularForm ((Gamma1 N).map (mapGL ℝ)) k) := by
-    have hidx : (Gamma1 N).index ≠ 0 := Subgroup.FiniteIndex.index_ne_zero
-    have := dim_gen_cong_levels k (Gamma1 N) hidx
-    show FiniteDimensional ℂ (ModularForm ((Gamma1 N : Subgroup (GL (Fin 2) ℝ))) k)
-    exact this
-  exact FiniteDimensional.of_injective
-    (cuspFormToModularFormLin (N := N) (k := k))
+  haveI : FiniteDimensional ℂ (ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :=
+    dim_gen_cong_levels k (Gamma1 N) Subgroup.FiniteIndex.index_ne_zero
+  exact .of_injective (cuspFormToModularFormLin (N := N) (k := k))
     cuspFormToModularFormLin_injective
 
 /-- The real-valued bilinear form `B_ℝ(f, g) := Re(petN f g)` on cusp forms, viewed as an
@@ -261,11 +243,11 @@ theorem cuspForm_finiteDimensional :
 noncomputable def petN_realBilin :
     LinearMap.BilinForm ℝ (CuspForm ((Gamma1 N).map (mapGL ℝ)) k) where
   toFun f :=
-    { toFun := fun g ↦ (petN f g).re
-      map_add' := fun g₁ g₂ ↦ by
+    { toFun g := (petN f g).re
+      map_add' g₁ g₂ := by
         show (petN f (g₁ + g₂)).re = (petN f g₁).re + (petN f g₂).re
         rw [petN_add_right, Complex.add_re]
-      map_smul' := fun (c : ℝ) g ↦ by
+      map_smul' (c : ℝ) g := by
         show (petN f (c • g)).re = c * (petN f g).re
         rw [show (c • g : CuspForm _ _) = (c : ℂ) • g from rfl, petN_smul_right,
           Complex.mul_re, Complex.ofReal_re, Complex.ofReal_im, zero_mul, sub_zero] }
@@ -285,27 +267,23 @@ lemma petN_realBilin_apply (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
 lemma petN_realBilin_isRefl : (petN_realBilin (N := N) (k := k)).IsRefl := by
   intro f g hfg
   rw [petN_realBilin_apply] at hfg ⊢
-  have h := petN_conj_symm f g
-  have : (petN g f).re = (petN f g).re := by
-    rw [← h, Complex.conj_re]
+  rw [← petN_conj_symm f g, Complex.conj_re] at hfg
   linarith
 
-private lemma petN_swap_eq_zero
-    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (h : petN f g = 0) :
-    petN g f = 0 := by
+private lemma petN_swap_eq_zero (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (h : petN f g = 0) : petN g f = 0 := by
   have hc := petN_conj_symm f g
   rw [h] at hc
   simpa using congr_arg (starRingEnd ℂ) hc
 
 private lemma petN_eq_zero_of_re_eq_zero_of_I_smul_re_eq_zero
-    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hre : (petN g f).re = 0) (hIre : (petN (Complex.I • g) f).re = 0) :
-    petN g f = 0 := by
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (hre : (petN g f).re = 0)
+    (hIre : (petN (Complex.I • g) f).re = 0) : petN g f = 0 := by
   rw [petN_conj_smul_left] at hIre
   have h_im : (petN g f).im = 0 := by
     simp [Complex.mul_re, Complex.I_re, Complex.I_im] at hIre
     linarith
-  exact Complex.ext (by simpa using hre) (by simpa using h_im)
+  exact Complex.ext hre h_im
 
 /-- The orthogonal complement of `(cuspFormsOld).restrictScalars ℝ` w.r.t. `petN_realBilin`
 equals `(cuspFormsNew).restrictScalars ℝ` as ℝ-submodules. The proof uses Hermitian
@@ -315,17 +293,13 @@ lemma petN_realBilin_orthogonal_cuspFormsOld_eq :
         ((cuspFormsOld N k).restrictScalars ℝ) =
       (cuspFormsNew N k).restrictScalars ℝ := by
   ext f
-  refine ⟨fun hf ↦ ?_, fun hf g hg ↦ ?_⟩
-  · show f ∈ cuspFormsNew N k
-    intro g hg
-    have re_eq_zero : ∀ h ∈ Submodule.restrictScalars ℝ (cuspFormsOld N k),
+  refine ⟨fun hf g hg ↦ ?_, fun hf g hg ↦ ?_⟩
+  · have re_eq_zero : ∀ h ∈ Submodule.restrictScalars ℝ (cuspFormsOld N k),
         (petN h f).re = 0 := fun h hh ↦ by
-      have := hf h hh
-      simpa only [LinearMap.BilinForm.IsOrtho, petN_realBilin_apply] using this
-    have hgf : petN g f = 0 :=
+      simpa only [LinearMap.BilinForm.IsOrtho, petN_realBilin_apply] using hf h hh
+    exact petN_swap_eq_zero g f <|
       petN_eq_zero_of_re_eq_zero_of_I_smul_re_eq_zero f g (re_eq_zero g hg)
         (re_eq_zero (Complex.I • g) ((cuspFormsOld N k).smul_mem Complex.I hg))
-    exact petN_swap_eq_zero g f hgf
   · show (petN_realBilin g) f = 0
     rw [petN_realBilin_apply, petN_swap_eq_zero f g (hf g hg), Complex.zero_re]
 
@@ -340,31 +314,21 @@ theorem cuspFormsOld_isCompl_cuspFormsNew :
     cuspForm_finiteDimensional
   haveI : FiniteDimensional ℝ (CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :=
     Module.Finite.trans ℂ _
-  have hdisj_R : Disjoint
-      ((cuspFormsOld N k).restrictScalars ℝ)
+  have hdisj_R : Disjoint ((cuspFormsOld N k).restrictScalars ℝ)
       ((petN_realBilin (N := N) (k := k)).orthogonal
         ((cuspFormsOld N k).restrictScalars ℝ)) := by
-    rw [petN_realBilin_orthogonal_cuspFormsOld_eq]
+    rw [petN_realBilin_orthogonal_cuspFormsOld_eq, Submodule.disjoint_def]
     have hdisj_C := cuspFormsOld_disjoint_cuspFormsNew (N := N) (k := k)
-    rw [Submodule.disjoint_def] at hdisj_C ⊢
-    intro f hf₁ hf₂
-    exact hdisj_C f hf₁ hf₂
+    rw [Submodule.disjoint_def] at hdisj_C
+    exact fun f hf₁ hf₂ ↦ hdisj_C f hf₁ hf₂
   have h_iscompl_R := (LinearMap.BilinForm.isCompl_orthogonal_iff_disjoint
     petN_realBilin_isRefl (W := (cuspFormsOld N k).restrictScalars ℝ)).mpr hdisj_R
   rw [petN_realBilin_orthogonal_cuspFormsOld_eq] at h_iscompl_R
-  rw [codisjoint_iff]
-  have : ((cuspFormsOld N k).restrictScalars ℝ) ⊔
-      ((cuspFormsNew N k).restrictScalars ℝ) = ⊤ :=
-    h_iscompl_R.sup_eq_top
-  apply Submodule.eq_top_iff'.mpr
-  intro f
-  have hf : f ∈ ((cuspFormsOld N k).restrictScalars ℝ) ⊔
-      ((cuspFormsNew N k).restrictScalars ℝ) := by
-    rw [this]; exact Submodule.mem_top
-  rw [Submodule.mem_sup] at hf
-  obtain ⟨x, hx, y, hy, hxy⟩ := hf
-  rw [Submodule.mem_sup]
-  exact ⟨x, hx, y, hy, hxy⟩
+  rw [codisjoint_iff, eq_top_iff]
+  intro f _
+  obtain ⟨x, hx, y, hy, hxy⟩ := Submodule.mem_sup.mp <|
+    h_iscompl_R.sup_eq_top ▸ Submodule.mem_top (R := ℝ) (x := f)
+  exact Submodule.mem_sup.mpr ⟨x, hx, y, hy, hxy⟩
 
 /-- **Oldform linear projection.**  The `ℂ`-linear endomorphism of `CuspForm Γ₁(N) k` that
 projects onto `cuspFormsOld N k` along `cuspFormsNew N k`. -/
@@ -411,9 +375,7 @@ theorem oldPart_add_newPart (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     oldPart f + newPart f = f := by
   have h := (Submodule.prodEquivOfIsCompl (cuspFormsOld N k) (cuspFormsNew N k)
     cuspFormsOld_isCompl_cuspFormsNew).apply_symm_apply f
-  rw [Submodule.prodEquivOfIsCompl_symm_apply,
-    Submodule.coe_prodEquivOfIsCompl'] at h
-  exact h
+  rwa [Submodule.prodEquivOfIsCompl_symm_apply, Submodule.coe_prodEquivOfIsCompl'] at h
 
 /-- Alternative reconstruction form: `newPart f = f - oldPart f`. -/
 theorem newPart_eq_sub_oldPart (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
@@ -424,86 +386,55 @@ theorem newPart_eq_sub_oldPart (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
 @[simp] theorem oldPart_of_mem_cuspFormsOld
     {f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k} (hf : f ∈ cuspFormsOld N k) :
     oldPart f = f := by
-  show ((cuspFormsOld N k).subtype
-    (Submodule.linearProjOfIsCompl _ _ cuspFormsOld_isCompl_cuspFormsNew f) :
-    CuspForm ((Gamma1 N).map (mapGL ℝ)) k) = f
-  have := Submodule.linearProjOfIsCompl_apply_left
-    cuspFormsOld_isCompl_cuspFormsNew ⟨f, hf⟩
-  simp [this]
+  simp [oldPart, cuspFormsOldProjection,
+    Submodule.linearProjOfIsCompl_apply_left cuspFormsOld_isCompl_cuspFormsNew ⟨f, hf⟩]
 
 /-- If `f ∈ cuspFormsNew N k`, then `oldPart f = 0`. -/
 @[simp] theorem oldPart_of_mem_cuspFormsNew
     {f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k} (hf : f ∈ cuspFormsNew N k) :
     oldPart f = 0 := by
-  show ((cuspFormsOld N k).subtype
-    (Submodule.linearProjOfIsCompl _ _ cuspFormsOld_isCompl_cuspFormsNew f) :
-    CuspForm ((Gamma1 N).map (mapGL ℝ)) k) = 0
-  have hproj : Submodule.linearProjOfIsCompl (cuspFormsOld N k) (cuspFormsNew N k)
-      cuspFormsOld_isCompl_cuspFormsNew f = 0 :=
-    (Submodule.linearProjOfIsCompl_apply_eq_zero_iff
-      cuspFormsOld_isCompl_cuspFormsNew).mpr hf
-  rw [hproj]
-  simp
+  simp [oldPart, cuspFormsOldProjection,
+    (Submodule.linearProjOfIsCompl_apply_eq_zero_iff cuspFormsOld_isCompl_cuspFormsNew).mpr hf]
 
 /-- If `f ∈ cuspFormsNew N k`, then `newPart f = f`. -/
 @[simp] theorem newPart_of_mem_cuspFormsNew
     {f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k} (hf : f ∈ cuspFormsNew N k) :
     newPart f = f := by
-  show ((cuspFormsNew N k).subtype
-    (Submodule.linearProjOfIsCompl _ _
-      cuspFormsOld_isCompl_cuspFormsNew.symm f) :
-    CuspForm ((Gamma1 N).map (mapGL ℝ)) k) = f
-  have := Submodule.linearProjOfIsCompl_apply_left
-    cuspFormsOld_isCompl_cuspFormsNew.symm ⟨f, hf⟩
-  simp [this]
+  simp [newPart, cuspFormsNewProjection,
+    Submodule.linearProjOfIsCompl_apply_left cuspFormsOld_isCompl_cuspFormsNew.symm ⟨f, hf⟩]
 
 /-- If `f ∈ cuspFormsOld N k`, then `newPart f = 0`. -/
 @[simp] theorem newPart_of_mem_cuspFormsOld
     {f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k} (hf : f ∈ cuspFormsOld N k) :
     newPart f = 0 := by
-  show ((cuspFormsNew N k).subtype
-    (Submodule.linearProjOfIsCompl _ _
-      cuspFormsOld_isCompl_cuspFormsNew.symm f) :
-    CuspForm ((Gamma1 N).map (mapGL ℝ)) k) = 0
-  have hproj : Submodule.linearProjOfIsCompl (cuspFormsNew N k) (cuspFormsOld N k)
-      cuspFormsOld_isCompl_cuspFormsNew.symm f = 0 :=
+  simp [newPart, cuspFormsNewProjection,
     (Submodule.linearProjOfIsCompl_apply_eq_zero_iff
-      cuspFormsOld_isCompl_cuspFormsNew.symm).mpr hf
-  rw [hproj]
-  simp
+      cuspFormsOld_isCompl_cuspFormsNew.symm).mpr hf]
 
 /-- **Characterisation of `cuspFormsOld` by vanishing newform part:**
 `f ∈ cuspFormsOld N k ↔ newPart f = 0`. -/
-theorem mem_cuspFormsOld_iff_newPart_eq_zero
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+theorem mem_cuspFormsOld_iff_newPart_eq_zero (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     f ∈ cuspFormsOld N k ↔ newPart f = 0 :=
-  ⟨newPart_of_mem_cuspFormsOld,
-    fun h ↦ by rw [← oldPart_add_newPart f, h, add_zero]; exact oldPart_mem_cuspFormsOld f⟩
+  ⟨newPart_of_mem_cuspFormsOld, fun h ↦ by
+    rw [← oldPart_add_newPart f, h, add_zero]; exact oldPart_mem_cuspFormsOld f⟩
 
 /-- **Characterisation of `cuspFormsNew` by vanishing oldform part.** -/
-theorem mem_cuspFormsNew_iff_oldPart_eq_zero
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+theorem mem_cuspFormsNew_iff_oldPart_eq_zero (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     f ∈ cuspFormsNew N k ↔ oldPart f = 0 :=
-  ⟨oldPart_of_mem_cuspFormsNew,
-    fun h ↦ by
-      rw [show f = oldPart f + newPart f from (oldPart_add_newPart f).symm, h, zero_add]
-      exact newPart_mem_cuspFormsNew f⟩
+  ⟨oldPart_of_mem_cuspFormsNew, fun h ↦ by
+    rw [← oldPart_add_newPart f, h, zero_add]; exact newPart_mem_cuspFormsNew f⟩
 
 /-- **Uniqueness of the old/new decomposition.**  If `f = fo + fn` with
 `fo ∈ cuspFormsOld N k` and `fn ∈ cuspFormsNew N k`, then `fo = oldPart f`
 and `fn = newPart f`. -/
-theorem oldPart_newPart_unique
-    {f fo fn : CuspForm ((Gamma1 N).map (mapGL ℝ)) k}
-    (hfo : fo ∈ cuspFormsOld N k) (hfn : fn ∈ cuspFormsNew N k)
-    (heq : f = fo + fn) :
+theorem oldPart_newPart_unique {f fo fn : CuspForm ((Gamma1 N).map (mapGL ℝ)) k}
+    (hfo : fo ∈ cuspFormsOld N k) (hfn : fn ∈ cuspFormsNew N k) (heq : f = fo + fn) :
     oldPart f = fo ∧ newPart f = fn := by
   refine ⟨?_, ?_⟩
-  · rw [heq]
-    have h_lin : oldPart (fo + fn) = oldPart fo + oldPart fn := map_add _ _ _
-    rw [h_lin, oldPart_of_mem_cuspFormsOld hfo, oldPart_of_mem_cuspFormsNew hfn, add_zero]
-  · rw [heq]
-    have h_lin : newPart (fo + fn) = newPart fo + newPart fn := map_add _ _ _
-    rw [h_lin, newPart_of_mem_cuspFormsOld hfo, newPart_of_mem_cuspFormsNew hfn, zero_add]
+  · rw [heq, show oldPart (fo + fn) = oldPart fo + oldPart fn from map_add _ _ _,
+      oldPart_of_mem_cuspFormsOld hfo, oldPart_of_mem_cuspFormsNew hfn, add_zero]
+  · rw [heq, show newPart (fo + fn) = newPart fo + newPart fn from map_add _ _ _,
+      newPart_of_mem_cuspFormsOld hfo, newPart_of_mem_cuspFormsNew hfn, zero_add]
 
 /-- Conditional `mainLemma` consumer: under the coprime-to-`N` Fourier vanishing hypothesis,
 if additionally `newPart f = 0` then `f ∈ cuspFormsOld N k`.  The `_h_vanish` hypothesis
@@ -517,19 +448,23 @@ theorem mainLemma_of_newPart_eq_zero
   (mem_cuspFormsOld_iff_newPart_eq_zero f).mpr h_newPart_zero
 
 /-- `T_n` commutes with addition on cusp forms. -/
-lemma heckeT_n_cusp_add (n : ℕ) [NeZero n] (f₁ f₂ : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+lemma heckeT_n_cusp_add (n : ℕ) [NeZero n]
+    (f₁ f₂ : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     heckeT_n_cusp k n (f₁ + f₂) = heckeT_n_cusp k n f₁ + heckeT_n_cusp k n f₂ := by
   ext z
-  show (heckeT_n k n (f₁ + f₂).toModularForm').toFun z =
+  change (heckeT_n k n (f₁ + f₂).toModularForm').toFun z =
     (heckeT_n k n f₁.toModularForm').toFun z + (heckeT_n k n f₂.toModularForm').toFun z
-  rw [show (f₁ + f₂).toModularForm' = f₁.toModularForm' + f₂.toModularForm' from rfl, map_add]
+  rw [show (f₁ + f₂).toModularForm' = f₁.toModularForm' + f₂.toModularForm' from rfl,
+    map_add]
   rfl
 
 /-- `T_n` commutes with scalar multiplication on cusp forms. -/
-lemma heckeT_n_cusp_smul (n : ℕ) [NeZero n] (c : ℂ) (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+lemma heckeT_n_cusp_smul (n : ℕ) [NeZero n] (c : ℂ)
+    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     heckeT_n_cusp k n (c • f) = c • heckeT_n_cusp k n f := by
   ext z
-  show (heckeT_n k n (c • f).toModularForm').toFun z = c • (heckeT_n k n f.toModularForm').toFun z
+  change (heckeT_n k n (c • f).toModularForm').toFun z =
+    c • (heckeT_n k n f.toModularForm').toFun z
   rw [show (c • f).toModularForm' = c • f.toModularForm' from rfl, map_smul]
   rfl
 
@@ -537,7 +472,7 @@ lemma heckeT_n_cusp_smul (n : ℕ) [NeZero n] (c : ℂ) (f : CuspForm ((Gamma1 N
 lemma heckeT_n_cusp_zero (n : ℕ) [NeZero n] :
     heckeT_n_cusp k n (0 : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) = 0 := by
   ext z
-  show (heckeT_n k n (0 : CuspForm ((Gamma1 N).map (mapGL ℝ)) k).toModularForm').toFun z = 0
+  change (heckeT_n k n (0 : CuspForm ((Gamma1 N).map (mapGL ℝ)) k).toModularForm').toFun z = 0
   rw [show ((0 : CuspForm ((Gamma1 N).map (mapGL ℝ)) k).toModularForm') =
       (0 : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) from rfl, map_zero]
   rfl
