@@ -445,6 +445,104 @@ private lemma lunip_inject_surjective (N : ℕ) [NeZero N]
     convert this using 2; group
   rw [← h_conj]; exact h_wit_mem
 
+/-- Algebraic identity in `SL₂(ℤ)`: the inverse-product of two row-2 unipotents
+indexed by `r₁, r₂` (i.e. `(1,0; N·r,1)`) equals the row-2 unipotent indexed
+by `r₂ - r₁`. -/
+private lemma lunip_diff_unipotent_mul (N : ℕ) (r₁ r₂ : ℤ)
+    (u1 u2 u_diff : SpecialLinearGroup (Fin 2) ℤ)
+    (hu1 : u1.1 = Matrix.of ![![(1 : ℤ), 0], ![(N : ℤ) * r₁, 1]])
+    (hu2 : u2.1 = Matrix.of ![![(1 : ℤ), 0], ![(N : ℤ) * r₂, 1]])
+    (huD : u_diff.1 = Matrix.of ![![(1 : ℤ), 0], ![(N : ℤ) * (r₂ - r₁), 1]]) :
+    u1⁻¹ * u2 = u_diff := by
+  apply Subtype.ext
+  ext i j; fin_cases i <;> fin_cases j <;>
+    simp [hu1, hu2, huD, Matrix.mul_apply, Fin.sum_univ_two,
+      SpecialLinearGroup.coe_inv, SpecialLinearGroup.coe_mul,
+      Matrix.adjugate_fin_two, Matrix.of_apply,
+      Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
+      Matrix.empty_val']
+    <;> ring
+
+/-- Given the matrix equation `D · τ = σ₁⁻¹ · u_diff · σ₁ · D` in `GL₂(ℚ)`
+(viewed at position `(1,0)`), with `τ.1 1 0 = N·q₂`, derive the integer
+identity `σ₁.1 0 0 ^ 2 · (r₂ - r₁) = k_exp · q₂`. This is the arithmetic
+core of `lunip_inject_injective`. -/
+private lemma lunip_inject_witness_eq (N : ℕ) [NeZero N] (k_exp : ℕ)
+    (ha : ∀ i : Fin 2, 0 < (![1, k_exp] : Fin 2 → ℕ) i)
+    (σ₁ τ u_diff : SpecialLinearGroup (Fin 2) ℤ)
+    (r₁ r₂ : Fin k_exp) (q₂ : ℤ) (hq₂ : τ.1 1 0 = ↑N * q₂)
+    (huD : u_diff.1 = Matrix.of ![![(1 : ℤ), 0], ![(N : ℤ) * (↑↑r₂ - ↑↑r₁), 1]])
+    (h_mul : (↑(diagMat 2 (![1, k_exp] : Fin 2 → ℕ)) : GL (Fin 2) ℚ) * mapGL ℚ τ =
+      mapGL ℚ (σ₁⁻¹ * u_diff * σ₁) *
+        ↑(diagMat 2 (![1, k_exp] : Fin 2 → ℕ))) :
+    σ₁.1 0 0 ^ 2 * ((↑↑r₂ : ℤ) - ↑↑r₁) = ↑k_exp * q₂ := by
+  set D := diagMat 2 (![1, k_exp] : Fin 2 → ℕ)
+  have h_e2 := congr_arg
+    (fun x : GL (Fin 2) ℚ ↦ (x : Matrix (Fin 2) (Fin 2) ℚ) 1 0) h_mul
+  simp only [Units.val_mul, Matrix.mul_apply, Fin.sum_univ_two, D,
+    diagMat_val 2 _ ha, Matrix.diagonal_apply, if_true,
+    mapGL_coe_matrix, algebraMap_int_eq] at h_e2
+  simp only [SpecialLinearGroup.coe_matrix_coe, Matrix.map_apply,
+    Int.coe_castRingHom, SpecialLinearGroup.coe_mul,
+    Matrix.cons_val_zero, Matrix.cons_val_one,
+    Nat.cast_one, mul_one] at h_e2
+  have h_sl2 := sl2_conj_lunip_10 σ₁ (↑N * (↑↑r₂ - ↑↑r₁))
+  have h_rhs_z : ((σ₁⁻¹ : SpecialLinearGroup (Fin 2) ℤ).1 * u_diff.1 * σ₁.1) 1 0 =
+      σ₁.1 0 0 ^ 2 * ((N : ℤ) * ((↑↑r₂ : ℤ) - ↑↑r₁)) := by
+    rw [huD]; exact h_sl2
+  rw [congr_arg (Int.cast (R := ℚ)) h_rhs_z, hq₂] at h_e2
+  have hN_ne : ((N : ℤ) : ℚ) ≠ 0 :=
+    Int.cast_ne_zero.mpr (Nat.cast_ne_zero.mpr (NeZero.ne N))
+  have h_q : ((σ₁.1 0 0 ^ 2 * ((↑↑r₂ : ℤ) - ↑↑r₁) : ℤ) : ℚ) =
+      ((↑k_exp * q₂ : ℤ) : ℚ) := by
+    apply mul_left_cancel₀ hN_ne; push_cast; push_cast at h_e2; nlinarith [h_e2]
+  exact_mod_cast h_q
+
+/-- The conjugation bridge for `lunip_inject_injective`: combines the unipotent
+algebra with the matrix-coefficient witness to extract divisibility from the
+conjugation hypothesis. -/
+private lemma lunip_inject_dvd_of_conj (N : ℕ) [NeZero N] (k_exp : ℕ)
+    (ha : ∀ i : Fin 2, 0 < (![1, k_exp] : Fin 2 → ℕ) i)
+    (σ₁ τ : SpecialLinearGroup (Fin 2) ℤ) (r₁ r₂ : Fin k_exp)
+    (hτ_dvd : (↑N : ℤ) ∣ τ.1 1 0)
+    (ha₁k : Int.gcd (σ₁.1 0 0) ↑k_exp = 1)
+    (h_mul : (↑(diagMat 2 (![1, k_exp] : Fin 2 → ℕ)) : GL (Fin 2) ℚ) * mapGL ℚ τ =
+      (mapGL ℚ σ₁)⁻¹ *
+        ((mapGL ℚ ⟨Matrix.of ![![(1 : ℤ), 0], ![(N : ℤ) * ↑↑r₁, 1]],
+            by simp [Matrix.det_fin_two, Matrix.of_apply, Matrix.cons_val_zero,
+              Matrix.cons_val_one]⟩)⁻¹ *
+         mapGL ℚ ⟨Matrix.of ![![(1 : ℤ), 0], ![(N : ℤ) * ↑↑r₂, 1]],
+            by simp [Matrix.det_fin_two, Matrix.of_apply, Matrix.cons_val_zero,
+              Matrix.cons_val_one]⟩) *
+        mapGL ℚ σ₁ * ↑(diagMat 2 (![1, k_exp] : Fin 2 → ℕ))) :
+    (k_exp : ℤ) ∣ ((↑↑r₂ : ℤ) - ↑↑r₁) := by
+  set u1 : SpecialLinearGroup (Fin 2) ℤ :=
+    ⟨Matrix.of ![![(1 : ℤ), 0], ![(N : ℤ) * ↑↑r₁, 1]],
+     by simp [Matrix.det_fin_two, Matrix.of_apply, Matrix.cons_val_zero,
+       Matrix.cons_val_one]⟩
+  set u2 : SpecialLinearGroup (Fin 2) ℤ :=
+    ⟨Matrix.of ![![(1 : ℤ), 0], ![(N : ℤ) * ↑↑r₂, 1]],
+     by simp [Matrix.det_fin_two, Matrix.of_apply, Matrix.cons_val_zero,
+       Matrix.cons_val_one]⟩
+  set u_diff : SpecialLinearGroup (Fin 2) ℤ :=
+    ⟨Matrix.of ![![(1 : ℤ), 0], ![(N : ℤ) * (↑↑r₂ - ↑↑r₁), 1]],
+     by simp [Matrix.det_fin_two, Matrix.of_apply, Matrix.cons_val_zero,
+       Matrix.cons_val_one]⟩
+  have hu : u1⁻¹ * u2 = u_diff :=
+    lunip_diff_unipotent_mul N (↑↑r₁) (↑↑r₂) u1 u2 u_diff rfl rfl rfl
+  have h_mul' : (↑(diagMat 2 (![1, k_exp] : Fin 2 → ℕ)) : GL (Fin 2) ℚ) * mapGL ℚ τ =
+      mapGL ℚ (σ₁⁻¹ * u_diff * σ₁) *
+        ↑(diagMat 2 (![1, k_exp] : Fin 2 → ℕ)) := by
+    rw [h_mul, show ((mapGL ℚ σ₁)⁻¹ : GL (Fin 2) ℚ) = mapGL ℚ σ₁⁻¹ from
+      (map_inv (mapGL ℚ) σ₁).symm,
+      show (mapGL ℚ u1)⁻¹ = mapGL ℚ u1⁻¹ from (map_inv (mapGL ℚ) u1).symm,
+      ← map_mul, hu, ← map_mul, ← map_mul]
+  have ha₁k_cop : IsCoprime (σ₁.1 0 0 ^ 2) (↑k_exp : ℤ) :=
+    (Int.isCoprime_iff_gcd_eq_one.mpr ha₁k).pow_left
+  refine ha₁k_cop.symm.dvd_of_dvd_mul_left ?_
+  obtain ⟨q₂, hq₂⟩ := hτ_dvd
+  exact ⟨q₂, lunip_inject_witness_eq N k_exp ha σ₁ τ u_diff r₁ r₂ q₂ hq₂ rfl h_mul'⟩
+
 private lemma lunip_inject_injective (N : ℕ) [NeZero N]
     (k_exp : ℕ) (hk_pos : 0 < k_exp) (g : (Gamma0_pair N).Δ)
     (γ₁ γ₂ : GL (Fin 2) ℚ) (hγ₂ : γ₂ ∈ (Gamma0_pair N).H)
@@ -458,8 +556,7 @@ private lemma lunip_inject_injective (N : ℕ) [NeZero N]
   rw [@Quotient.eq'', QuotientGroup.leftRel_apply] at h_eq
   have h_mem := Subgroup.mem_subgroupOf.mp h_eq
   rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def] at h_mem
-  simp only [ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct] at h_mem
-  simp only [inv_inv] at h_mem
+  simp only [ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct, inv_inv] at h_mem
   rw [hg_eq] at h_mem
   suffices h_dvd : (k_exp : ℤ) ∣ ((↑↑r₂ : ℤ) - ↑↑r₁) by
     have hr₁ := r₁.isLt; have hr₂ := r₂.isLt
@@ -479,76 +576,7 @@ private lemma lunip_inject_injective (N : ℕ) [NeZero N]
   simp only [← mul_assoc, mul_inv_cancel, one_mul] at h_mul
   have hτ_dvd : (↑N : ℤ) ∣ τ.1 1 0 :=
     (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp hτ_mem
-  have h_sl2 := sl2_conj_lunip_10 σ₁ (↑N * (↑↑r₂ - ↑↑r₁))
-  have ha₁k_cop : IsCoprime (σ₁.1 0 0 ^ 2) (↑k_exp : ℤ) :=
-    (Int.isCoprime_iff_gcd_eq_one.mpr ha₁k).pow_left
-  exact ha₁k_cop.symm.dvd_of_dvd_mul_left (by
-    obtain ⟨q₂, hq₂⟩ := hτ_dvd
-    exact ⟨q₂, by
-      set u1 : SpecialLinearGroup (Fin 2) ℤ :=
-        ⟨Matrix.of ![![(1 : ℤ), 0], ![(N : ℤ) * ↑↑r₁, 1]],
-         by simp [Matrix.det_fin_two, Matrix.of_apply, Matrix.cons_val_zero,
-           Matrix.cons_val_one]⟩
-      set u2 : SpecialLinearGroup (Fin 2) ℤ :=
-        ⟨Matrix.of ![![(1 : ℤ), 0], ![(N : ℤ) * ↑↑r₂, 1]],
-         by simp [Matrix.det_fin_two, Matrix.of_apply, Matrix.cons_val_zero,
-           Matrix.cons_val_one]⟩
-      set u_diff : SpecialLinearGroup (Fin 2) ℤ :=
-        ⟨Matrix.of ![![(1 : ℤ), 0], ![(N : ℤ) * (↑↑r₂ - ↑↑r₁), 1]],
-         by simp [Matrix.det_fin_two, Matrix.of_apply, Matrix.cons_val_zero,
-           Matrix.cons_val_one]⟩
-      have hu : u1⁻¹ * u2 = u_diff := by
-        ext i j; fin_cases i <;> fin_cases j <;>
-          simp [u1, u2, u_diff, Matrix.mul_apply, Fin.sum_univ_two,
-            SpecialLinearGroup.coe_inv, SpecialLinearGroup.coe_mul,
-            Matrix.adjugate_fin_two, Matrix.of_apply,
-            Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
-            Matrix.empty_val']
-          <;> ring
-      set mid_H := (⟨(mapGL ℚ) u1, Subgroup.mem_map_of_mem _ (by
-            rw [CongruenceSubgroup.Gamma0_mem]
-            simp [u1, Matrix.of_apply, Matrix.cons_val_one])⟩ :
-          (Gamma0_pair N).H)⁻¹ *
-        ⟨(mapGL ℚ) u2, Subgroup.mem_map_of_mem _ (by
-            rw [CongruenceSubgroup.Gamma0_mem]
-            simp [u2, Matrix.of_apply, Matrix.cons_val_one])⟩
-      have hu_gl : (↑mid_H : GL (Fin 2) ℚ) = mapGL ℚ (u1⁻¹ * u2) := by
-        show (mapGL ℚ u1)⁻¹ * mapGL ℚ u2 = mapGL ℚ (u1⁻¹ * u2)
-        rw [← map_inv, ← map_mul]
-      have h_mid_gl : ((mapGL ℚ σ₁)⁻¹ * ↑mid_H * mapGL ℚ σ₁ : GL (Fin 2) ℚ) =
-          mapGL ℚ (σ₁⁻¹ * u_diff * σ₁) := by
-        rw [show ((mapGL ℚ σ₁)⁻¹ : GL (Fin 2) ℚ) = mapGL ℚ σ₁⁻¹ from
-          (map_inv (mapGL ℚ) σ₁).symm, hu_gl, hu, ← map_mul, ← map_mul]
-      have h_mid10 := congr_fun₂
-        (congr_arg (fun x : GL (Fin 2) ℚ ↦ (x : Matrix (Fin 2) (Fin 2) ℚ)) h_mid_gl) 1 0
-      simp only [mapGL_coe_matrix, algebraMap_int_eq] at h_mid10
-      have h_e := congr_arg
-        (fun x : GL (Fin 2) ℚ ↦ (x : Matrix (Fin 2) (Fin 2) ℚ) 1 0) h_mul
-      simp only [Units.val_mul, Matrix.mul_apply, Fin.sum_univ_two, D,
-        diagMat_val 2 _ ha, Matrix.diagonal_apply, if_true] at h_e
-      rw [h_mid_gl] at h_mul
-      have h_e2 := congr_arg
-        (fun x : GL (Fin 2) ℚ ↦ (x : Matrix (Fin 2) (Fin 2) ℚ) 1 0) h_mul
-      simp only [Units.val_mul, Matrix.mul_apply, Fin.sum_univ_two, D,
-        diagMat_val 2 _ ha, Matrix.diagonal_apply, if_true,
-        mapGL_coe_matrix, algebraMap_int_eq] at h_e2
-      simp only [SpecialLinearGroup.coe_matrix_coe, Matrix.map_apply,
-        Int.coe_castRingHom, SpecialLinearGroup.coe_mul,
-        Matrix.cons_val_zero, Matrix.cons_val_one,
-        Nat.cast_one, mul_one] at h_e2
-      have h_rhs_z : ((σ₁⁻¹ : SpecialLinearGroup (Fin 2) ℤ).1 * u_diff.1 * σ₁.1) 1 0 =
-          σ₁.1 0 0 ^ 2 * ((N : ℤ) * ((↑↑r₂ : ℤ) - ↑↑r₁)) := by
-        simp only [u_diff]; exact h_sl2
-      rw [congr_arg (Int.cast (R := ℚ)) h_rhs_z, hq₂] at h_e2
-      have hN_ne_z : (N : ℤ) ≠ 0 := Nat.cast_ne_zero.mpr (NeZero.ne N)
-      have hN_ne : ((N : ℤ) : ℚ) ≠ 0 := Int.cast_ne_zero.mpr hN_ne_z
-      have h_q : ((σ₁.1 0 0 ^ 2 * ((↑↑r₂ : ℤ) - ↑↑r₁) : ℤ) : ℚ) =
-          ((↑k_exp * q₂ : ℤ) : ℚ) := by
-        apply mul_left_cancel₀ hN_ne
-        push_cast
-        push_cast at h_e2
-        nlinarith [h_e2]
-      exact_mod_cast h_q⟩)
+  exact lunip_inject_dvd_of_conj N k_exp ha σ₁ τ r₁ r₂ hτ_dvd ha₁k h_mul
 
 private lemma decompQuot_Npow_natcard (N : ℕ) [NeZero N]
     (k_exp : ℕ) (hk_pos : 0 < k_exp) (hk : ℕ) (hk_dvd : k_exp ∣ N ^ hk)
