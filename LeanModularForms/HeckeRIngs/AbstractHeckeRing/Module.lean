@@ -45,42 +45,35 @@ lemma smulOrbit_nonempty (g : P.Δ) (β : P.Δ) :
     replace `HeckeLeftCoset.rep j` with any representative of `j`. -/
 lemma smulOrbit_lcRel (g : P.Δ) {β₁ β₂ : P.Δ} (h : lcRel P β₁ β₂) :
     smulOrbit P g β₁ = smulOrbit P g β₂ := by
-  -- lcRel means {β₁} * H = {β₂} * H
-  -- Each orbit element ⟦⟨β * i.out * g, ...⟩⟧ only depends on the left coset {β * i.out * g} * H
-  -- Since β₁H = β₂H, for each i there exists i' with {β₁ * i.out * g} * H = {β₂ * i'.out * g} * H
-  ext x; simp only [smulOrbit, Finset.top_eq_univ, Finset.mem_image, Finset.mem_univ, true_and]
-  -- Both directions: show ⟦⟨β₁ * i.out * g⟩⟧ ∈ image iff ⟦⟨β₂ * j.out * g⟩⟧ ∈ image
-  -- by showing they produce the same set of HeckeLeftCoset values
+  ext x
+  simp only [smulOrbit, Finset.top_eq_univ, Finset.mem_image, Finset.mem_univ, true_and]
   suffices hsuff : ∀ (β β' : P.Δ), lcRel P β β' → ∀ i : decompQuot P g,
       ∃ j : decompQuot P g,
         (⟦⟨(β : G) * (i.out : G) * (g : G),
           delta_mul_mem P.H P.Δ i.out β g P.h₀⟩⟧ : HeckeLeftCoset P) =
         ⟦⟨(β' : G) * (j.out : G) * (g : G),
           delta_mul_mem P.H P.Δ j.out β' g P.h₀⟩⟧ by
-    constructor
-    · rintro ⟨i, hi⟩; obtain ⟨j, hj⟩ := hsuff β₁ β₂ h i; exact ⟨j, hi ▸ hj.symm⟩
-    · rintro ⟨i, hi⟩; obtain ⟨j, hj⟩ := hsuff β₂ β₁ h.symm i; exact ⟨j, hi ▸ hj.symm⟩
+    refine ⟨fun ⟨i, hi⟩ ↦ ?_, fun ⟨i, hi⟩ ↦ ?_⟩
+    · obtain ⟨j, hj⟩ := hsuff β₁ β₂ h i; exact ⟨j, hi ▸ hj.symm⟩
+    · obtain ⟨j, hj⟩ := hsuff β₂ β₁ h.symm i; exact ⟨j, hi ▸ hj.symm⟩
   intro β β' hlc i
-  -- hlc : {β} * H = {β'} * H, so β' ∈ {β} * H
   have hβ'_mem : (β' : G) ∈ ({(β : G)} : Set G) * (P.H : Set G) := by
     rw [hlc]; exact ⟨β', rfl, 1, P.H.one_mem, mul_one _⟩
   obtain ⟨_, hβ_eq, k, hk, hβ'_eq⟩ := hβ'_mem
-  rw [Set.mem_singleton_iff] at hβ_eq; subst hβ_eq
-  -- hβ'_eq : β * k = β', so β' = β * k, k ∈ H
-  -- We need j s.t. {β * i.out * g} * H = {β' * j.out * g} * H
-  -- Use j = ⟦k⁻¹ * i.out⟧ so β' * j.out * g ≈ (β*k) * (k⁻¹*i.out) * g = β * i.out * g
+  rw [Set.mem_singleton_iff] at hβ_eq
+  subst hβ_eq
   set j : decompQuot P g := ⟦⟨k⁻¹ * i.out, P.H.mul_mem (P.H.inv_mem hk) (SetLike.coe_mem i.out)⟩⟧
   refine ⟨j, Quotient.sound ?_⟩
   show ({(β : G) * (i.out : G) * (g : G)} : Set G) * (P.H : Set G) =
     {(β' : G) * (j.out : G) * (g : G)} * P.H
-  -- j.out = (k⁻¹ * i.out) * n for some n in the conjugate subgroup
   obtain ⟨n, hn_eq⟩ := QuotientGroup.mk_out_eq_mul
     ((ConjAct.toConjAct (g : G) • P.H).subgroupOf P.H)
     ⟨k⁻¹ * i.out, P.H.mul_mem (P.H.inv_mem hk) i.out.2⟩
   have hj_coe : (j.out : G) = k⁻¹ * (i.out : G) * (n : G) := by
-    have := congr_arg (Subtype.val : P.H → G) hn_eq; simpa [Subgroup.coe_mul] using this
+    simpa [Subgroup.coe_mul] using congr_arg (Subtype.val : P.H → G) hn_eq
   have hn_conj : (g : G)⁻¹ * (n : G) * g ∈ P.H := by
-    have := n.2; rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
+    have := n.2
+    rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
       ConjAct.smul_def] at this
     simpa [ConjAct.ofConjAct_toConjAct] using this
   rw [hj_coe, ← hβ'_eq]
@@ -94,7 +87,6 @@ lemma smulOrbit_lcRel (g : P.Δ) {β₁ β₂ : P.Δ} (h : lcRel P β₁ β₂) 
 lemma smulOrbit_rep_mk (g β : P.Δ) :
     smulOrbit P g (HeckeLeftCoset.rep ⟦β⟧) = smulOrbit P g β :=
   smulOrbit_lcRel P g (Quotient.exact (Quotient.out_eq (⟦β⟧ : HeckeLeftCoset P)))
-
 
 /-- The module action of the Hecke ring on formal sums of left cosets. -/
 noncomputable instance instSMulHeckeModule : SMul (𝕋 P Z) (HeckeModule P Z) where
@@ -178,46 +170,36 @@ lemma smul_add_right (T : 𝕋 P Z) (m₁ m₂ : HeckeModule P Z) :
   rw [← Finsupp.sum_add]
 
 /-- The smul orbits of distinct double cosets acting on the same left coset are disjoint. -/
-lemma smulOrbit_disjoint_of_ne (g₁ g₂ : P.Δ) (β : P.Δ)
-    (hne : (⟦g₁⟧ : HeckeCoset P) ≠ ⟦g₂⟧) :
+lemma smulOrbit_disjoint_of_ne (g₁ g₂ : P.Δ) (β : P.Δ) (hne : (⟦g₁⟧ : HeckeCoset P) ≠ ⟦g₂⟧) :
     Disjoint (smulOrbit P g₁ β) (smulOrbit P g₂ β) := by
   rw [Finset.disjoint_left]
   intro x hx₁ hx₂
-  apply hne; apply Quotient.sound; show dcRel P _ _
+  apply hne
+  apply Quotient.sound
+  show dcRel P _ _
   simp only [smulOrbit, Finset.mem_image] at hx₁ hx₂
-  obtain ⟨i₁, _, hi₁⟩ := hx₁; obtain ⟨i₂, _, hi₂⟩ := hx₂
+  obtain ⟨i₁, _, hi₁⟩ := hx₁
+  obtain ⟨i₂, _, hi₂⟩ := hx₂
   rw [← hi₂] at hi₁
-  have hset : ({(β : G) * (i₁.out : G) *
-      (g₁ : G)} : Set G) * (P.H : Set G) =
-    {(β : G) * (i₂.out : G) *
-      (g₂ : G)} * P.H := by
-    have := Quotient.exact hi₁
-    exact this
+  have hset : ({(β : G) * (i₁.out : G) * (g₁ : G)} : Set G) * (P.H : Set G) =
+      {(β : G) * (i₂.out : G) * (g₂ : G)} * P.H := Quotient.exact hi₁
   have hmem : (β : G) * ↑i₁.out * (g₁ : G) ∈
       ({(β : G) * ↑i₂.out * (g₂ : G)} : Set G) * (↑P.H : Set G) := by
     rw [← hset]; exact ⟨_, rfl, 1, P.H.one_mem, mul_one _⟩
   obtain ⟨_, ha, k, hk, hkk⟩ := hmem
-  rw [Set.mem_singleton_iff] at ha; subst ha
-  have hstep : ↑i₂.out * (g₂ : G) * k =
-      ↑i₁.out * (g₁ : G) := by
-    have h : (β : G) *
-        (↑i₂.out * (g₂ : G) * k) =
-        (β : G) *
-        (↑i₁.out * (g₁ : G)) := by
-      have := hkk; dsimp at this; group at this ⊢; exact this
-    exact mul_left_cancel h
-  have hg : (g₁ : G) =
-      ↑(i₁.out⁻¹ * i₂.out) *
-        (g₂ : G) * k := by
-    apply mul_left_cancel (a := (↑i₁.out : G))
-    have : ↑i₁.out *
-        (↑(i₁.out⁻¹ * i₂.out) *
-        (g₂ : G) * k) =
-        ↑i₂.out * (g₂ : G) * k := by
+  rw [Set.mem_singleton_iff] at ha
+  subst ha
+  have hstep : ↑i₂.out * (g₂ : G) * k = ↑i₁.out * (g₁ : G) := by
+    refine mul_left_cancel (a := (β : G)) ?_
+    dsimp at hkk
+    group at hkk ⊢
+    exact hkk
+  have hg : (g₁ : G) = ↑(i₁.out⁻¹ * i₂.out) * (g₂ : G) * k := by
+    refine mul_left_cancel (a := (↑i₁.out : G)) ?_
+    have : ↑i₁.out * (↑(i₁.out⁻¹ * i₂.out) * (g₂ : G) * k) = ↑i₂.out * (g₂ : G) * k := by
       simp only [Subgroup.coe_mul, Subgroup.coe_inv]; group
     rw [this]; exact hstep.symm
-  show DoubleCoset.doubleCoset (g₁ : G) P.H P.H =
-    DoubleCoset.doubleCoset (g₂ : G) P.H P.H
+  show DoubleCoset.doubleCoset (g₁ : G) P.H P.H = DoubleCoset.doubleCoset (g₂ : G) P.H P.H
   conv_lhs => rw [show (g₁ : G) = _ from hg]
   exact (DoubleCoset.doubleCoset_mul_right_eq_self P ⟨k, hk⟩ _).trans
     (doset_mul_left_eq_self P (i₁.out⁻¹ * i₂.out) _)
