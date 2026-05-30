@@ -3,13 +3,13 @@ Copyright (c) 2026 Chris Birkbeck. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import Mathlib.LinearAlgebra.Matrix.ProjectiveSpecialLinearGroup
-import Mathlib.NumberTheory.Modular
-import Mathlib.MeasureTheory.Group.FundamentalDomain
-import Mathlib.Analysis.Complex.RealDeriv
-import Mathlib.Analysis.Calculus.Deriv.Inv
 import Mathlib.Analysis.Calculus.Deriv.Add
+import Mathlib.Analysis.Calculus.Deriv.Inv
+import Mathlib.Analysis.Complex.RealDeriv
+import Mathlib.LinearAlgebra.Matrix.ProjectiveSpecialLinearGroup
 import Mathlib.MeasureTheory.Function.Jacobian
+import Mathlib.MeasureTheory.Group.FundamentalDomain
+import Mathlib.NumberTheory.Modular
 import Mathlib.NumberTheory.NumberField.Norm
 import LeanModularForms.Modularforms.PeterssonInnerProduct
 
@@ -41,8 +41,8 @@ open ModularGroup UpperHalfPlane Matrix.SpecialLinearGroup MeasureTheory
 /-- The center of `SL(2, ℤ)` consists of `{I, -I}`. Every center element
 acts trivially on `ℍ` because it is a scalar matrix `ζI` with `ζ = ±1`,
 and `(ζτ + 0)/(0τ + ζ) = τ`. -/
-theorem center_SL2Z_smul_eq (c : SL(2, ℤ))
-    (hc : c ∈ Subgroup.center SL(2, ℤ)) (τ : ℍ) : c • τ = τ := by
+theorem center_SL2Z_smul_eq (c : SL(2, ℤ)) (hc : c ∈ Subgroup.center SL(2, ℤ)) (τ : ℍ) :
+    c • τ = τ := by
   rw [mem_center_iff] at hc
   obtain ⟨ζ, hζ, hζ_eq⟩ := hc
   simp only [Fintype.card_fin] at hζ
@@ -63,7 +63,7 @@ private def pslSmul : PSL(2, ℤ) → ℍ → ℍ :=
   Quotient.lift (fun (a : SL(2, ℤ)) (τ : ℍ) ↦ a • τ) (by
     intro a b hab
     funext τ
-    show a • τ = b • τ
+    change a • τ = b • τ
     rw [show b = a * (a⁻¹ * b) by group, mul_smul,
       center_SL2Z_smul_eq _ (QuotientGroup.leftRel_apply.mp hab)])
 
@@ -80,7 +80,7 @@ instance instMulActionPSL : MulAction PSL(2, ℤ) ℍ where
   mul_smul g₁ g₂ τ := by
     induction g₁ using Quotient.inductionOn with | h a => ?_
     induction g₂ using Quotient.inductionOn with | h b => ?_
-    show pslSmul ((↑a : PSL(2, ℤ)) * ↑b) τ = pslSmul ↑a (pslSmul ↑b τ)
+    change pslSmul ((↑a : PSL(2, ℤ)) * ↑b) τ = pslSmul ↑a (pslSmul ↑b τ)
     rw [← QuotientGroup.mk_mul, pslSmul_coe, pslSmul_coe, pslSmul_coe, mul_smul]
 
 /-- The `PSL(2, ℤ)` action is compatible with the `SL(2, ℤ)` action:
@@ -97,20 +97,12 @@ instance : BorelSpace UpperHalfPlane := ⟨rfl⟩
 instance : MeasurableConstSMul PSL(2, ℤ) ℍ where
   measurable_const_smul g := by
     induction g using Quotient.inductionOn with | h a => ?_
-    show Measurable (fun τ ↦ (↑a : PSL(2, ℤ)) • τ)
+    change Measurable (fun τ ↦ (↑a : PSL(2, ℤ)) • τ)
     simpa only [PSL_smul_coe] using (continuous_const_smul (mapGL ℝ a)).measurable
 
 private lemma mapGL_det_abs_eq_one (g : SL(2, ℤ)) :
     |(Matrix.GeneralLinearGroup.det (mapGL ℝ g)).val| = 1 := by
-  have h1 : ((Matrix.SpecialLinearGroup.map (Int.castRingHom ℝ) g).1).det = (1 : ℝ) := by
-    rw [show (Matrix.SpecialLinearGroup.map (Int.castRingHom ℝ) g).1 =
-        (Int.castRingHom ℝ).mapMatrix (↑g : Matrix (Fin 2) (Fin 2) ℤ) by
-      ext i j; simp [Matrix.SpecialLinearGroup.map],
-      ← RingHom.map_det, g.det_coe, map_one]
-  rw [show (Matrix.GeneralLinearGroup.det (mapGL ℝ g)).val =
-      ((Matrix.SpecialLinearGroup.map (Int.castRingHom ℝ) g).1).det by
-    simp [mapGL, Matrix.SpecialLinearGroup.toGL, Matrix.GeneralLinearGroup.det],
-    h1, abs_one]
+  simp [mapGL]
 
 /-- The density identity from [Miyake] (1.4.3)+(1.1.7): for `g ∈ SL₂(ℤ)` and `τ ∈ ℍ`,
 `Im(τ)⁻² = Im(gτ)⁻² · normSq(denom g τ)⁻²`. The `normSq` from `Im(gτ)⁻²` exactly cancels
@@ -130,8 +122,8 @@ private def moeb (g : SL(2, ℤ)) (z : ℂ) : ℂ :=
   (((g.1 0 0 : ℤ) : ℂ) * z + (g.1 0 1 : ℤ)) / ((g.1 1 0 : ℤ) * z + (g.1 1 1 : ℤ))
 
 private lemma moeb_denom_ne_zero (g : SL(2, ℤ)) (z : ℂ) (hz : 0 < z.im) :
-    ((g.1 1 0 : ℤ) : ℂ) * z + (g.1 1 1 : ℤ) ≠ 0 := by
-  convert UpperHalfPlane.denom_ne_zero (mapGL ℝ g) (⟨z, hz⟩ : ℍ) using 1
+    ((g.1 1 0 : ℤ) : ℂ) * z + (g.1 1 1 : ℤ) ≠ 0 :=
+  UpperHalfPlane.denom_ne_zero (mapGL ℝ g) (⟨z, hz⟩ : ℍ)
 
 private lemma moeb_hasDerivAt (g : SL(2, ℤ)) (z : ℂ) (hz : 0 < z.im) :
     HasDerivAt (moeb g) (1 / ((g.1 1 0 : ℤ) * z + (g.1 1 1 : ℤ) : ℂ) ^ 2) z := by
@@ -148,9 +140,7 @@ private lemma moeb_hasDerivAt (g : SL(2, ℤ)) (z : ℂ) (hz : 0 < z.im) :
   suffices h : deriv (fun w ↦ (a * w + b) / (c * w + d)) z = 1 / (c * z + d) ^ 2 by
     rw [← h]
     exact (hn.div hdn hd).hasDerivAt
-  rw [show (fun w ↦ (a * w + b) / (c * w + d)) =
-      ((fun w ↦ a * w + b) / (fun w ↦ c * w + d)) from funext fun _ ↦ rfl,
-    deriv_div hn hdn hd, deriv_add_const, deriv_const_mul_field,
+  rw [← Pi.div_def, deriv_div hn hdn hd, deriv_add_const, deriv_const_mul_field,
     deriv_add_const, deriv_const_mul_field]
   simp only [deriv_id'', mul_one]
   have hdet : a * d - b * c = 1 := by
@@ -165,7 +155,7 @@ private lemma det_complexSmul (w : ℂ) : (w • (1 : ℂ →L[ℝ] ℂ)).det = 
   rw [show w • (1 : ℂ →L[ℝ] ℂ) =
       (ContinuousLinearMap.toSpanSingleton ℂ w).restrictScalars ℝ by
     ext z; simp [ContinuousLinearMap.toSpanSingleton, mul_comm]]
-  show ((ContinuousLinearMap.toSpanSingleton ℂ w).restrictScalars ℝ).toLinearMap.det = _
+  change ((ContinuousLinearMap.toSpanSingleton ℂ w).restrictScalars ℝ).toLinearMap.det = _
   rw [show ((ContinuousLinearMap.toSpanSingleton ℂ w).restrictScalars ℝ).toLinearMap =
       (Algebra.lmul ℝ ℂ) w by ext z; simp [ContinuousLinearMap.toSpanSingleton, mul_comm],
     ← LinearMap.det_toMatrix Complex.basisOneI, Matrix.det_fin_two]
@@ -202,15 +192,12 @@ private lemma setLIntegral_comap_coe (t : Set ℍ) (ht : MeasurableSet t) (f : �
 instance instSMulInvMeasure_SL : SMulInvariantMeasure SL(2, ℤ) ℍ μ_hyp where
   measure_preimage_smul g s hs := by
     have hs' : MeasurableSet ((g • ·) ⁻¹' s) := (measurable_const_smul g) hs
-    simp_rw [hyperbolicMeasure, show ∀ (τ : ℍ), τ.im = (↑τ : ℂ).im from coe_im]
+    simp_rw [hyperbolicMeasure, ← UpperHalfPlane.coe_im]
     rw [withDensity_apply _ hs', withDensity_apply _ hs,
       setLIntegral_comap_coe _ hs' (fun z ↦ ENNReal.ofReal (z.im ^ (-2 : ℤ))),
       setLIntegral_comap_coe _ hs (fun z ↦ ENNReal.ofReal (z.im ^ (-2 : ℤ)))]
     set A := UpperHalfPlane.coe '' ((g • ·) ⁻¹' s)
-    set B := UpperHalfPlane.coe '' s
-    set ρ : ℂ → ENNReal := fun z ↦ ENNReal.ofReal (z.im ^ (-2 : ℤ))
-    change ∫⁻ z in A, ρ z = ∫⁻ z in B, ρ z
-    rw [show B = moeb g '' A from (moeb_image_eq g s).symm,
+    rw [show UpperHalfPlane.coe '' s = moeb g '' A from (moeb_image_eq g s).symm,
       lintegral_image_eq_lintegral_abs_det_fderiv_mul volume
         (isOpenEmbedding_coe.measurableEmbedding.measurableSet_image.mpr hs')
         (fun z hz ↦ (moeb_hasDerivAt g z (by
@@ -224,7 +211,7 @@ instance instSMulInvMeasure_SL : SMulInvariantMeasure SL(2, ℤ) ℍ μ_hyp wher
     refine setLIntegral_congr_fun
       (isOpenEmbedding_coe.measurableEmbedding.measurableSet_image.mpr hs') fun z hz ↦ ?_
     obtain ⟨τ, _, rfl⟩ := hz
-    simp only [ρ, det_complexSmul]
+    simp only [det_complexSmul]
     rw [abs_of_nonneg (Complex.normSq_nonneg _),
       ← ENNReal.ofReal_mul (Complex.normSq_nonneg _),
       moeb_coe, UpperHalfPlane.coe_im]
