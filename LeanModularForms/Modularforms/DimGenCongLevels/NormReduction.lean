@@ -80,19 +80,15 @@ lemma quotientFunc_isBoundedAtImInfty
 This is the product of `SlashInvariantForm.quotientFunc` over `Q Γ`, excluding the identity coset.
 -/
 @[expose] public noncomputable def restProd (Γ : Subgroup SL(2, ℤ))
-    [(G Γ).IsFiniteRelIndex 𝒮ℒ]
-    (f : ModularForm (G Γ) k) :
-    ℍ → ℂ := by
+    [(G Γ).IsFiniteRelIndex 𝒮ℒ] (f : ModularForm (G Γ) k) : ℍ → ℂ := by
   let _ : Fintype (Q Γ) := Fintype.ofFinite (Q Γ)
   let _ : DecidableEq (Q Γ) := Classical.decEq _
   exact (Finset.univ.erase (⟦(1 : 𝒮ℒ)⟧ : Q Γ)).prod fun q ↦
     SlashInvariantForm.quotientFunc (ℋ := 𝒮ℒ) (𝒢 := G Γ) (k := k) f q
 
 /-- The product `restProd` is bounded at `Im z → ∞`. -/
-public lemma restProd_isBoundedAtImInfty
-    (Γ : Subgroup SL(2, ℤ)) [(G Γ).IsFiniteRelIndex 𝒮ℒ]
-    (hΓ : Subgroup.index Γ ≠ 0)
-    (f : ModularForm (G Γ) k) :
+public lemma restProd_isBoundedAtImInfty (Γ : Subgroup SL(2, ℤ))
+    [(G Γ).IsFiniteRelIndex 𝒮ℒ] (hΓ : Subgroup.index Γ ≠ 0) (f : ModularForm (G Γ) k) :
     IsBoundedAtImInfty (restProd (k := k) (Γ := Γ) f) := by
   have : (G Γ).IsArithmetic := instIsArithmetic Γ hΓ
   let _ : Fintype (Q Γ) := Fintype.ofFinite (Q Γ)
