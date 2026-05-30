@@ -58,9 +58,8 @@ noncomputable def cosetMap (N : ℕ) [NeZero N] :
 /-- **Shimura Proposition 3.30**: If `Γ' ⊂ Γ` and `Δ' ⊂ Δ`, the correspondence
     `Γ'αΓ' ↦ ΓαΓ` defines an additive homomorphism `R(Γ', Δ') → R(Γ, Δ)`. -/
 theorem shimura_prop_3_30 (N : ℕ) [NeZero N] :
-    ∃ φ : HeckeRing.𝕋 (Gamma0_pair N) ℤ →+ HeckeRing.𝕋 (GL_pair 2) ℤ,
-      True := by
-  exact ⟨Finsupp.mapDomain.addMonoidHom (cosetMap N), trivial⟩
+    ∃ _ : HeckeRing.𝕋 (Gamma0_pair N) ℤ →+ HeckeRing.𝕋 (GL_pair 2) ℤ, True :=
+  ⟨Finsupp.mapDomain.addMonoidHom (cosetMap N), trivial⟩
 
 /-- An element `g ∈ Δ₀(N)` has **coprime determinant** if `gcd(det(A), N) = 1`
     where `A` is the integer matrix representing `g`. -/
@@ -117,20 +116,21 @@ private noncomputable instance instInfiniteGLCoset : Infinite (HeckeCoset (GL_pa
   Infinite.of_injective (fun n : ℕ ↦ T_diag (![1, n + 1]))
     (fun m n h ↦ by
       have hpos : ∀ k : ℕ, ∀ i, 0 < (![1, k + 1]) i :=
-        fun k i ↦ by fin_cases i <;> simp <;> omega
+        fun k i ↦ by fin_cases i <;> simp
       have := diagonal_representative_unique 2 _ _ (hpos m) (hpos n)
         (divChain_one_succ m) (divChain_one_succ n) h
       have h1 := congr_fun this 1
-      simp [Matrix.cons_val_one, Matrix.head_cons] at h1; omega)
+      simp [Matrix.cons_val_one] at h1
+      omega)
 
 private lemma diagMat_one_mem_Delta0 (N : ℕ) (n : ℕ) :
     diagMat 2 (![1, n + 1]) ∈ Delta0_submonoid N := by
-  refine ⟨diagMat_hasIntEntries 2 _ (fun i ↦ by fin_cases i <;> simp <;> omega),
-    diagMat_det_pos 2 _ (fun i ↦ by fin_cases i <;> simp <;> omega),
+  refine ⟨diagMat_hasIntEntries 2 _ (fun i ↦ by fin_cases i <;> simp),
+    diagMat_det_pos 2 _ (fun i ↦ by fin_cases i <;> simp),
     Matrix.diagonal (fun i ↦ (![1, n + 1] i : ℤ)), ?_, ?_, ?_⟩
   · ext i j; simp [diagMat, Matrix.diagonal, Matrix.map_apply]
   · simp [Matrix.diagonal]
-  · simp [Matrix.diagonal, Int.gcd_one_left]
+  · simp [Matrix.diagonal]
 
 private noncomputable instance instInfiniteGamma0Coset (N : ℕ) [NeZero N] :
     Infinite (HeckeCoset (Gamma0_pair N)) :=
@@ -152,14 +152,15 @@ private noncomputable instance instInfiniteGamma0Coset (N : ℕ) [NeZero N] :
       have h_T : T_diag (![1, m + 1]) = T_diag (![1, n + 1]) := by
         rw [T_diag, T_diag, HeckeCoset.eq_iff]
         simp only [diagMat_delta, show ∀ k : ℕ, (∀ i : Fin 2, 0 < (![1, k + 1]) i) from
-          fun k i ↦ by fin_cases i <;> simp <;> omega, dite_true]
+          fun k i ↦ by fin_cases i <;> simp]
         exact h_gl
       have hpos : ∀ k : ℕ, ∀ i, 0 < (![1, k + 1]) i :=
-        fun k i ↦ by fin_cases i <;> simp <;> omega
+        fun k i ↦ by fin_cases i <;> simp
       have := diagonal_representative_unique 2 _ _ (hpos m) (hpos n)
         (divChain_one_succ m) (divChain_one_succ n) h_T
       have h1 := congr_fun this 1
-      simp [Matrix.cons_val_one, Matrix.head_cons] at h1; omega)
+      simp [Matrix.cons_val_one] at h1
+      omega)
 
 
 /-- `diagMat 2 a ∈ Δ₀(N)` when all entries are positive and `gcd(a 0, N) = 1`. -/
@@ -185,7 +186,7 @@ private lemma exists_mod_clearing (a c : ℤ) (p : ℕ)
   refine ⟨-c * Int.gcdA a p, ⟨c * Int.gcdB a p, ?_⟩⟩
   have bez := Int.gcd_eq_gcd_ab a p
   rw [hap] at bez
-  linear_combination c * (bez - 1)
+  linear_combination c * bez
 
 private lemma coprime_of_dvd_Npow (a : ℤ) (N : ℕ) (haN : Int.gcd a N = 1)
     (m : ℕ) (k : ℕ) (hm : m ∣ N ^ k) : Int.gcd a m = 1 :=
@@ -203,15 +204,10 @@ private lemma dvd_lowerRight_witness (A : Matrix (Fin 2) (Fin 2) ℤ) (N m : ℕ
     (h_key ▸ dvd_add (dvd_refl _) (dvd_mul_of_dvd_left hm_ba _))
 
 private lemma Gamma0_left_coset_of_Npow_det (N : ℕ) [NeZero N]
-    (A : Matrix (Fin 2) (Fin 2) ℤ)
-    (hA_det_pos : 0 < A.det)
-    (hAN : (N : ℤ) ∣ A 1 0)
-    (m : ℕ) (hm_pos : 0 < m)
-    (hdet : A.det = m)
-    (ham : Int.gcd (A 0 0) m = 1) :
+    (A : Matrix (Fin 2) (Fin 2) ℤ) (hA_det_pos : 0 < A.det) (hAN : (N : ℤ) ∣ A 1 0)
+    (m : ℕ) (_hm_pos : 0 < m) (hdet : A.det = m) (ham : Int.gcd (A 0 0) m = 1) :
     ∃ (L : Matrix (Fin 2) (Fin 2) ℤ) (r : ℤ),
-      L.det = 1 ∧ (N : ℤ) ∣ L 1 0 ∧
-      0 ≤ r ∧ r < m ∧
+      L.det = 1 ∧ (N : ℤ) ∣ L 1 0 ∧ 0 ≤ r ∧ r < m ∧
       A = L * (Matrix.of ![![(1 : ℤ), r], ![0, m]]) := by
   obtain ⟨c₀, hc₀⟩ := hAN
   obtain ⟨t_inv, ht⟩ := exists_mod_clearing (A 0 0) (- A 0 1) m ham
@@ -219,7 +215,8 @@ private lemma Gamma0_left_coset_of_Npow_det (N : ℕ) [NeZero N]
   have hr_nonneg : 0 ≤ r := Int.emod_nonneg _ (by omega)
   have hr_lt : r < m := Int.emod_lt_of_pos _ (by omega)
   have hm_tr : (m : ℤ) ∣ (t_inv - r) := by
-    rw [hr_def, show t_inv - t_inv % ↑m = ↑m * (t_inv / ↑m) from by linarith [Int.ediv_add_emod t_inv (↑m : ℤ)]]
+    rw [hr_def, show t_inv - t_inv % ↑m = ↑m * (t_inv / ↑m) from by
+      linarith [Int.mul_ediv_add_emod t_inv (↑m : ℤ)]]
     exact dvd_mul_right _ _
   have hm_ar_b : (m : ℤ) ∣ (A 0 0 * r - A 0 1) := by
     have h := dvd_sub ht (dvd_mul_of_dvd_left hm_tr (A 0 0))
@@ -228,7 +225,7 @@ private lemma Gamma0_left_coset_of_Npow_det (N : ℕ) [NeZero N]
   obtain ⟨q₁, hq₁⟩ := hm_ar_b
   refine ⟨Matrix.of ![![A 0 0, -q₁], ![↑N * c₀, q₂]], r, ?_, ?_, hr_nonneg, hr_lt, ?_⟩
   · simp only [Matrix.det_fin_two, Matrix.of_apply, Matrix.cons_val_zero,
-      Matrix.cons_val_one, Matrix.head_cons, Matrix.head_fin_const, Matrix.cons_val']
+      Matrix.cons_val_one, Matrix.cons_val']
     have hAdet' : A.det = A 0 0 * A 1 1 - A 0 1 * (↑N * c₀) := by rw [Matrix.det_fin_two, hc₀]
     have h1 : (A 0 0 * q₂ + q₁ * (↑N * c₀)) * ↑m = ↑m := by
       have h_det_val := hAdet'; rw [hdet] at h_det_val
@@ -251,41 +248,8 @@ private lemma Gamma0_left_coset_of_Npow_det (N : ℕ) [NeZero N]
     ext i j; fin_cases i <;> fin_cases j <;>
       simp only [Matrix.mul_apply, Fin.sum_univ_two, Matrix.of_apply, Fin.isValue,
         Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
-        Matrix.head_cons, Matrix.head_fin_const, Matrix.empty_val'] <;>
+        Matrix.empty_val'] <;>
       first | exact h00 | exact h01 | exact h10 | exact h11
-
-private lemma Gamma0_left_coset_distinct (N : ℕ) [NeZero N]
-    (m : ℕ) (hm_pos : 0 < m)
-    (r s : ℤ) (hr : 0 ≤ r) (hr' : r < m) (hs : 0 ≤ s) (hs' : s < m)
-    (L : Matrix (Fin 2) (Fin 2) ℤ)
-    (hL_det : L.det = 1) (hL_N : (N : ℤ) ∣ L 1 0)
-    (hL_eq : L * Matrix.of ![![(1 : ℤ), r], ![0, m]] =
-             Matrix.of ![![(1 : ℤ), s], ![0, m]]) :
-    r = s := by
-  have h00 : L 0 0 = 1 := by
-    have := congr_fun (congr_fun hL_eq 0) 0
-    simp only [Matrix.mul_apply, Fin.sum_univ_two, Matrix.of_apply, Fin.isValue,
-      Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
-      Matrix.head_cons, Matrix.head_fin_const, Matrix.empty_val',
-      mul_zero, mul_one, add_zero] at this
-    linarith
-  have h10 : L 1 0 = 0 := by
-    have := congr_fun (congr_fun hL_eq 1) 0
-    simp only [Matrix.mul_apply, Fin.sum_univ_two, Matrix.of_apply, Fin.isValue,
-      Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
-      Matrix.head_cons, Matrix.head_fin_const, Matrix.empty_val',
-      mul_zero, mul_one, add_zero] at this
-    linarith
-  have h01 : L 0 0 * r + L 0 1 * m = s := by
-    have := congr_fun (congr_fun hL_eq 0) 1
-    simp only [Matrix.mul_apply, Fin.sum_univ_two, Matrix.of_apply, Fin.isValue,
-      Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
-      Matrix.head_cons, Matrix.head_fin_const, Matrix.empty_val'] at this
-    linarith
-  rw [h00, one_mul] at h01
-  have hm_z : (0 : ℤ) < ↑m := Int.ofNat_lt.mpr hm_pos
-  have hL01 : L 0 1 = 0 := by nlinarith
-  rw [hL01, zero_mul, add_zero] at h01; exact h01
 
 private lemma fin2_col_scale (m : ℕ) (j : Fin 2) :
     (![0, (m : ℤ)] : Fin 2 → ℤ) j = (m : ℤ) * (![0, 1] : Fin 2 → ℤ) j := by
@@ -295,10 +259,10 @@ private noncomputable def lunip_inject (N : ℕ) [NeZero N] (k_exp : ℕ)
     (g : (Gamma0_pair N).Δ) : Fin k_exp → HeckeRing.decompQuot (Gamma0_pair N) g :=
   fun r ↦ ⟦⟨mapGL ℚ ⟨Matrix.of ![![(1 : ℤ), 0], ![↑N * (↑r : ℤ), 1]],
     by simp [Matrix.det_fin_two, Matrix.of_apply, Matrix.cons_val_zero,
-      Matrix.cons_val_one, Matrix.head_cons]⟩,
+      Matrix.cons_val_one]⟩,
     Subgroup.mem_map_of_mem _ (by
       rw [CongruenceSubgroup.Gamma0_mem]
-      simp [Matrix.of_apply, Matrix.cons_val_one, Matrix.head_cons])⟩⟧
+      simp [Matrix.of_apply, Matrix.cons_val_one])⟩⟧
 
 /-- **Generalized Shimura 3.33**: all `β ∈ Δ₀(N)` with `det = m` and
 `gcd(A 0 0, m) = 1` are in `DC(diag(1, m), Γ₀, Γ₀)`. -/
@@ -326,21 +290,21 @@ lemma shimura_prop_3_33_gen (N : ℕ) [NeZero N]
   set R : Matrix (Fin 2) (Fin 2) ℤ := Matrix.of ![![1, r], ![0, 1]] with hR_def
   have hR_det : R.det = 1 := by
     simp [R, Matrix.det_fin_two, Matrix.of_apply, Matrix.cons_val_zero,
-      Matrix.cons_val_one, Matrix.head_cons, Matrix.head_fin_const]
+      Matrix.cons_val_one]
   set R_sl : SpecialLinearGroup (Fin 2) ℤ := ⟨R, hR_det⟩
   have hL_Gamma0 : L_sl ∈ CongruenceSubgroup.Gamma0 N := by
     rw [CongruenceSubgroup.Gamma0_mem]
     exact (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr hL_N
   have hR_Gamma0 : R_sl ∈ CongruenceSubgroup.Gamma0 N := by
     rw [CongruenceSubgroup.Gamma0_mem]
-    simp [R_sl, R, Matrix.of_apply, Matrix.cons_val_one, Matrix.head_cons]
+    simp [R_sl, R, Matrix.of_apply, Matrix.cons_val_one]
   refine ⟨mapGL ℚ L_sl, Subgroup.mem_map_of_mem _ hL_Gamma0,
     mapGL ℚ R_sl, Subgroup.mem_map_of_mem _ hR_Gamma0, ?_⟩
   apply Units.ext; ext i j
   have hA_ij := congr_fun₂ hA_eq i j
   simp only [Matrix.mul_apply, Fin.sum_univ_two, Matrix.of_apply, Fin.isValue,
     Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
-    Matrix.head_cons, Matrix.head_fin_const, Matrix.empty_val'] at hA_ij
+    Matrix.empty_val'] at hA_ij
   set D := diagMat 2 (![1, m] : Fin 2 → ℕ)
   have hD_pos : ∀ i : Fin 2, 0 < (![1, m] : Fin 2 → ℕ) i := by intro i; fin_cases i <;> simp [hm_pos]
   have hDv := diagMat_val 2 (![1, m] : Fin 2 → ℕ) hD_pos
@@ -353,12 +317,9 @@ lemma shimura_prop_3_33_gen (N : ℕ) [NeZero N]
     Matrix.map_apply, SpecialLinearGroup.map, MonoidHom.coe_mk, OneHom.coe_mk,
     L_sl, R_sl, SpecialLinearGroup.coe_mk, R, Matrix.of_apply, Fin.isValue,
     Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
-    Matrix.head_cons, Matrix.head_fin_const, Matrix.empty_val',
-    hd00, hd01, hd10, hd11]
+    Matrix.empty_val', hd00, hd01, hd10, hd11]
   fin_cases i <;> fin_cases j <;> (
-    simp only [Fin.isValue, Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
-      Matrix.head_cons, Matrix.head_fin_const, Matrix.empty_val',
-      mul_zero, mul_one, zero_mul, add_zero, zero_add, one_mul] at hA_ij ⊢
+    simp only [Fin.isValue, mul_zero, mul_one, add_zero, zero_add] at hA_ij ⊢
     simp only [fin2_col_scale] at hA_ij
     norm_cast; linarith [hA_ij])
 
@@ -385,7 +346,7 @@ private lemma sl2_conj_lunip_10 (σ : SpecialLinearGroup (Fin 2) ℤ) (c : ℤ) 
   rw [SpecialLinearGroup.coe_inv, Matrix.adjugate_fin_two]
   simp only [Matrix.mul_apply, Fin.sum_univ_two, Matrix.of_apply,
     Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
-    Matrix.head_cons, Matrix.head_fin_const, Matrix.empty_val', Fin.isValue]
+    Matrix.empty_val', Fin.isValue]
   ring
 
 private lemma exists_clearing_mod (a c' : ℤ) (k : ℕ) (hk_pos : 0 < k)
@@ -397,7 +358,7 @@ private lemma exists_clearing_mod (a c' : ℤ) (k : ℕ) (hk_pos : 0 < k)
     rw [this]; exact dvd_mul_of_dvd_left ⟨-w, by linarith⟩ c'
   refine ⟨(u_bez * c') % k, Int.emod_nonneg _ (by omega), Int.emod_lt_of_pos _ (by omega), ?_⟩
   have h2 : (k : ℤ) ∣ ((u_bez * c') - (u_bez * c') % k) :=
-    ⟨(u_bez * c') / k, by have := Int.ediv_add_emod (u_bez * c') (k : ℤ); omega⟩
+    ⟨(u_bez * c') / k, by have := Int.mul_ediv_add_emod (u_bez * c') (k : ℤ); omega⟩
   have hd : (k : ℤ) ∣ (a * ((u_bez * c') % k) - c') := by
     have e : a * ((u_bez * c') % k) - c' =
         (a * (u_bez * c') - c') - a * ((u_bez * c') - (u_bez * c') % k) := by ring
@@ -420,17 +381,14 @@ private lemma lunip_conj_diag_eq (N : ℕ) [NeZero N] (k_exp : ℕ)
   rw [show ((mapGL ℚ τ')⁻¹ : GL (Fin 2) ℚ) = mapGL ℚ τ'⁻¹ from (map_inv (mapGL ℚ) τ').symm,
     ← map_mul]
   apply Units.ext; ext i j
-  simp only [diagMat_val 2 _ ha, mapGL_coe_matrix, RingHom.mapMatrix_apply, GeneralLinearGroup.coe_mul,
+  simp only [diagMat_val 2 _ ha, mapGL_coe_matrix, GeneralLinearGroup.coe_mul,
     algebraMap_int_eq, Int.coe_castRingHom, Matrix.map_apply,
-    SpecialLinearGroup.coe_matrix_coe, SpecialLinearGroup.coe_mk,
+    SpecialLinearGroup.coe_matrix_coe,
     SpecialLinearGroup.coe_inv, SpecialLinearGroup.coe_mul,
     Matrix.adjugate_fin_two, Matrix.of_apply,
     Matrix.mul_apply, Fin.sum_univ_two, Fin.isValue, Matrix.diagonal_apply,
     Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
-    Matrix.head_cons, Matrix.head_fin_const, Matrix.empty_val',
-    mul_zero, zero_mul, mul_one, one_mul, add_zero, zero_add,
-    neg_mul, mul_neg, sub_mul, mul_sub,
-    show (1 : Fin 2) ≠ 0 from by decide, if_false, if_true, Nat.cast_one]
+    Matrix.empty_val', mul_zero, mul_one, zero_add, neg_mul, Nat.cast_one]
   have hr_cast : ((r_int).toNat : ℤ) = r_int := Int.toNat_of_nonneg hr_nn
   fin_cases i <;> fin_cases j <;>
     simp only [hr_cast] <;>
@@ -467,18 +425,18 @@ private lemma lunip_inject_surjective (N : ℕ) [NeZero N]
   have hc'_eq : c' = τ'.1 0 0 * r_int - ↑k_exp * c'' := by linarith [hc'']
   have hwit_det : wit.det = 1 := by
     simp only [wit, Matrix.det_fin_two, Matrix.of_apply,
-      Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.head_cons]
+      Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one]
     rw [hc'] at hτ'_det
     linear_combination hτ'_det + τ'.1 0 1 * (N : ℤ) * hc'_eq
   have hwit_Gamma0 : (⟨wit, hwit_det⟩ : SpecialLinearGroup (Fin 2) ℤ) ∈
       CongruenceSubgroup.Gamma0 N := by
     rw [CongruenceSubgroup.Gamma0_mem]
-    simp [wit, Matrix.of_apply, Matrix.cons_val_one, Matrix.head_cons]
+    simp [wit, Matrix.of_apply, Matrix.cons_val_one]
   have h_wit_mem := Subgroup.mem_map_of_mem (mapGL ℚ) hwit_Gamma0
   set D_gl := (↑g_diag : GL (Fin 2) ℚ)
   set U_r : SpecialLinearGroup (Fin 2) ℤ := ⟨!![1, 0; (N : ℤ) * ↑r_int.toNat, 1],
     by simp [Matrix.det_fin_two, Matrix.of_apply, Matrix.cons_val_zero,
-      Matrix.cons_val_one, Matrix.head_cons]⟩ with hU_r_def
+      Matrix.cons_val_one]⟩ with hU_r_def
   have h_eq : D_gl * mapGL ℚ ⟨wit, hwit_det⟩ = σ_gl⁻¹ * mapGL ℚ U_r * D_gl := by
     rw [← hτ'_eq]
     exact lunip_conj_diag_eq N k_exp ha τ' r_int c' c'' hc' hc'' hwit_det U_r.2 hr_nn
@@ -532,31 +490,30 @@ private lemma lunip_inject_injective (N : ℕ) [NeZero N]
       set u1 : SpecialLinearGroup (Fin 2) ℤ :=
         ⟨Matrix.of ![![(1 : ℤ), 0], ![(N : ℤ) * ↑↑r₁, 1]],
          by simp [Matrix.det_fin_two, Matrix.of_apply, Matrix.cons_val_zero,
-           Matrix.cons_val_one, Matrix.head_cons]⟩
+           Matrix.cons_val_one]⟩
       set u2 : SpecialLinearGroup (Fin 2) ℤ :=
         ⟨Matrix.of ![![(1 : ℤ), 0], ![(N : ℤ) * ↑↑r₂, 1]],
          by simp [Matrix.det_fin_two, Matrix.of_apply, Matrix.cons_val_zero,
-           Matrix.cons_val_one, Matrix.head_cons]⟩
+           Matrix.cons_val_one]⟩
       set u_diff : SpecialLinearGroup (Fin 2) ℤ :=
         ⟨Matrix.of ![![(1 : ℤ), 0], ![(N : ℤ) * (↑↑r₂ - ↑↑r₁), 1]],
          by simp [Matrix.det_fin_two, Matrix.of_apply, Matrix.cons_val_zero,
-           Matrix.cons_val_one, Matrix.head_cons]⟩
+           Matrix.cons_val_one]⟩
       have hu : u1⁻¹ * u2 = u_diff := by
         ext i j; fin_cases i <;> fin_cases j <;>
           simp [u1, u2, u_diff, Matrix.mul_apply, Fin.sum_univ_two,
             SpecialLinearGroup.coe_inv, SpecialLinearGroup.coe_mul,
-            SpecialLinearGroup.coe_mk,
             Matrix.adjugate_fin_two, Matrix.of_apply,
             Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
-            Matrix.head_cons, Matrix.head_fin_const, Matrix.empty_val']
+            Matrix.empty_val']
           <;> ring
       set mid_H := (⟨(mapGL ℚ) u1, Subgroup.mem_map_of_mem _ (by
             rw [CongruenceSubgroup.Gamma0_mem]
-            simp [u1, Matrix.of_apply, Matrix.cons_val_one, Matrix.head_cons])⟩ :
+            simp [u1, Matrix.of_apply, Matrix.cons_val_one])⟩ :
           (Gamma0_pair N).H)⁻¹ *
         ⟨(mapGL ℚ) u2, Subgroup.mem_map_of_mem _ (by
             rw [CongruenceSubgroup.Gamma0_mem]
-            simp [u2, Matrix.of_apply, Matrix.cons_val_one, Matrix.head_cons])⟩
+            simp [u2, Matrix.of_apply, Matrix.cons_val_one])⟩
       have hu_gl : (↑mid_H : GL (Fin 2) ℚ) = mapGL ℚ (u1⁻¹ * u2) := by
         show (mapGL ℚ u1)⁻¹ * mapGL ℚ u2 = mapGL ℚ (u1⁻¹ * u2)
         rw [← map_inv, ← map_mul]
@@ -566,32 +523,24 @@ private lemma lunip_inject_injective (N : ℕ) [NeZero N]
           (map_inv (mapGL ℚ) σ₁).symm, hu_gl, hu, ← map_mul, ← map_mul]
       have h_mid10 := congr_fun₂
         (congr_arg (fun x : GL (Fin 2) ℚ ↦ (x : Matrix (Fin 2) (Fin 2) ℚ)) h_mid_gl) 1 0
-      simp only [mapGL_coe_matrix, RingHom.mapMatrix_apply, algebraMap_int_eq,
-        Int.coe_castRingHom, Matrix.map_apply, SpecialLinearGroup.coe_mul] at h_mid10
+      simp only [mapGL_coe_matrix, algebraMap_int_eq] at h_mid10
       have h_e := congr_arg
         (fun x : GL (Fin 2) ℚ ↦ (x : Matrix (Fin 2) (Fin 2) ℚ) 1 0) h_mul
       simp only [Units.val_mul, Matrix.mul_apply, Fin.sum_univ_two, D,
-        diagMat_val 2 _ ha, Matrix.diagonal_apply,
-        show (1 : Fin 2) ≠ 0 from by decide, if_false, if_true,
-        Nat.cast_one, mul_zero, zero_mul, zero_add, add_zero,
-        mul_one, one_mul] at h_e
+        diagMat_val 2 _ ha, Matrix.diagonal_apply, if_true] at h_e
       rw [h_mid_gl] at h_mul
       have h_e2 := congr_arg
         (fun x : GL (Fin 2) ℚ ↦ (x : Matrix (Fin 2) (Fin 2) ℚ) 1 0) h_mul
       simp only [Units.val_mul, Matrix.mul_apply, Fin.sum_univ_two, D,
-        diagMat_val 2 _ ha, Matrix.diagonal_apply,
-        show (1 : Fin 2) ≠ 0 from by decide, if_false, if_true,
-        Nat.cast_one, mul_zero, zero_mul, zero_add, add_zero,
-        mul_one, one_mul,
-        mapGL_coe_matrix, RingHom.mapMatrix_apply, algebraMap_int_eq,
-        Int.coe_castRingHom, Matrix.map_apply, SpecialLinearGroup.coe_mul] at h_e2
+        diagMat_val 2 _ ha, Matrix.diagonal_apply, if_true,
+        mapGL_coe_matrix, algebraMap_int_eq] at h_e2
       simp only [SpecialLinearGroup.coe_matrix_coe, Matrix.map_apply,
-        algebraMap_int_eq, Int.coe_castRingHom, SpecialLinearGroup.coe_mul,
-        Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
-        Matrix.head_cons, Nat.cast_one, mul_one] at h_e2
+        Int.coe_castRingHom, SpecialLinearGroup.coe_mul,
+        Matrix.cons_val_zero, Matrix.cons_val_one,
+        Nat.cast_one, mul_one] at h_e2
       have h_rhs_z : ((σ₁⁻¹ : SpecialLinearGroup (Fin 2) ℤ).1 * u_diff.1 * σ₁.1) 1 0 =
           σ₁.1 0 0 ^ 2 * ((N : ℤ) * ((↑↑r₂ : ℤ) - ↑↑r₁)) := by
-        simp only [u_diff, SpecialLinearGroup.coe_mk]; exact h_sl2
+        simp only [u_diff]; exact h_sl2
       rw [congr_arg (Int.cast (R := ℚ)) h_rhs_z, hq₂] at h_e2
       have hN_ne_z : (N : ℤ) ≠ 0 := Nat.cast_ne_zero.mpr (NeZero.ne N)
       have hN_ne : ((N : ℤ) : ℚ) ≠ 0 := Int.cast_ne_zero.mpr hN_ne_z
@@ -607,7 +556,7 @@ private lemma decompQuot_Npow_natcard (N : ℕ) [NeZero N]
     (k_exp : ℕ) (hk_pos : 0 < k_exp) (hk : ℕ) (hk_dvd : k_exp ∣ N ^ hk)
     (g : (Gamma0_pair N).Δ)
     (hg : (⟦g⟧ : HeckeCoset (Gamma0_pair N)) = T_diag_Gamma0 N (![1, k_exp])
-        (by intro i; fin_cases i <;> simp [hk_pos]) (by simp [Int.gcd_one_left])) :
+        (by intro i; fin_cases i <;> simp [hk_pos]) (by simp)) :
     Nat.card (HeckeRing.decompQuot (Gamma0_pair N) g) = k_exp := by
   have ha : ∀ i : Fin 2, 0 < (![1, k_exp] : Fin 2 → ℕ) i := by intro i; fin_cases i <;> simp [hk_pos]
   have hgcd : Int.gcd (↑((![1, k_exp] : Fin 2 → ℕ) 0)) ↑N = 1 := by simp
@@ -662,7 +611,7 @@ private lemma Gamma0_bad_deg (N : ℕ) [NeZero N]
     (k_exp : ℕ) (hk_pos : 0 < k_exp) (hk : ℕ) (hk_dvd : k_exp ∣ N ^ hk) :
     HeckeRing.HeckeCoset_deg (Gamma0_pair N)
       (T_diag_Gamma0 N (![1, k_exp])
-        (by intro i; fin_cases i <;> simp [hk_pos]) (by simp [Int.gcd_one_left])) = k_exp := by
+        (by intro i; fin_cases i <;> simp [hk_pos]) (by simp)) = k_exp := by
   simp only [HeckeRing.HeckeCoset_deg]
   rw [← Nat.card_eq_fintype_card]
   exact_mod_cast decompQuot_Npow_natcard N k_exp hk_pos hk hk_dvd _ (HeckeCoset.mk_rep _)
@@ -711,7 +660,7 @@ private lemma mulMap_rep_T_diag_eq (N : ℕ) [NeZero N]
         (HeckeCoset.rep (T_diag_Gamma0 N (![1, m]) ham hgm)).2)
       (Submonoid.mul_mem _ ((Gamma0_pair N).h₀ p.2.out.2)
         (HeckeCoset.rep (T_diag_Gamma0 N (![1, n]) han hgn)).2)
-  · simp only [Subtype.coe_mk, Units.val_mul, Matrix.det_mul]
+  · simp only [Units.val_mul, Matrix.det_mul]
     obtain ⟨σi, _, hσi⟩ := Subgroup.mem_map.mp p.1.out.2
     obtain ⟨σj, _, hσj⟩ := Subgroup.mem_map.mp p.2.out.2
     have hdi : (↑p.1.out : GL (Fin 2) ℚ).val.det = 1 := by
@@ -720,8 +669,7 @@ private lemma mulMap_rep_T_diag_eq (N : ℕ) [NeZero N]
       rw [← hσj, mapGL_coe_matrix]; simp [det_intMat_cast 2, σj.prop]
     rw [hdi, hdj, rep_T_diag_Gamma0_det N (![1, m]) ham hgm,
       rep_T_diag_Gamma0_det N (![1, n]) han hgn]
-    simp only [one_mul, mul_one, Fin.prod_univ_two, Matrix.cons_val_zero, Matrix.cons_val_one,
-      Matrix.head_cons]
+    simp only [one_mul, Fin.prod_univ_two, Matrix.cons_val_zero, Matrix.cons_val_one]
     push_cast; ring
 
 /-- **Bad-part multiplication** (Shimura Prop 3.33 consequence):
@@ -731,23 +679,21 @@ theorem T_bad_mul (N : ℕ) [NeZero N]
     (km : ℕ) (hm_dvd : m ∣ N ^ km) (kn : ℕ) (hn_dvd : n ∣ N ^ kn) :
     HeckeRing.T_single (Gamma0_pair N) ℤ
       (T_diag_Gamma0 N (![1, m])
-        (by intro i; fin_cases i <;> simp [hm_pos]) (by simp [Int.gcd_one_left])) 1 *
+        (by intro i; fin_cases i <;> simp [hm_pos]) (by simp)) 1 *
     HeckeRing.T_single (Gamma0_pair N) ℤ
       (T_diag_Gamma0 N (![1, n])
-        (by intro i; fin_cases i <;> simp [hn_pos]) (by simp [Int.gcd_one_left])) 1 =
+        (by intro i; fin_cases i <;> simp [hn_pos]) (by simp)) 1 =
     HeckeRing.T_single (Gamma0_pair N) ℤ
       (T_diag_Gamma0 N (![1, m * n])
         (by intro i; fin_cases i <;> simp [Nat.mul_pos hm_pos hn_pos])
-        (by simp [Int.gcd_one_left])) 1 := by
+        (by simp)) 1 := by
   set D₁ := T_diag_Gamma0 N (![1, m]) (by intro i; fin_cases i <;> simp [hm_pos])
-    (by simp [Int.gcd_one_left])
+    (by simp)
   set D₂ := T_diag_Gamma0 N (![1, n]) (by intro i; fin_cases i <;> simp [hn_pos])
-    (by simp [Int.gcd_one_left])
+    (by simp)
   set D_out := T_diag_Gamma0 N (![1, m * n])
     (by intro i; fin_cases i <;> simp [Nat.mul_pos hm_pos hn_pos])
-    (by simp [Int.gcd_one_left])
-  change HeckeRing.T_single _ ℤ D₁ 1 * HeckeRing.T_single _ ℤ D₂ 1 =
-    HeckeRing.T_single _ ℤ D_out 1
+    (by simp)
   have h_mulMap : ∀ (p : HeckeRing.decompQuot (Gamma0_pair N) (HeckeCoset.rep D₁) ×
       HeckeRing.decompQuot (Gamma0_pair N) (HeckeCoset.rep D₂)),
       HeckeRing.mulMap (Gamma0_pair N) (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) p = D_out :=
