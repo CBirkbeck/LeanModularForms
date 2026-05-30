@@ -1,4 +1,4 @@
-/- 
+/-
 Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: LeanModularForms contributors
@@ -44,25 +44,10 @@ an endomorphism of `W` induces one of `V` by conjugation. -/
 noncomputable def conjEndRingHom (e : V ≃ₗ[ℂ] W) :
     Module.End ℂ W →+* Module.End ℂ V where
   toFun T := e.symm.toLinearMap ∘ₗ T ∘ₗ e.toLinearMap
-  map_one' := by
-    apply LinearMap.ext
-    intro v
-    simp only [LinearMap.comp_apply, LinearEquiv.coe_coe, Module.End.one_apply]
-    exact e.symm_apply_apply v
-  map_mul' T S := by
-    apply LinearMap.ext
-    intro v
-    simp only [LinearMap.comp_apply, LinearEquiv.coe_coe, Module.End.mul_apply,
-      LinearEquiv.apply_symm_apply]
-  map_zero' := by
-    apply LinearMap.ext
-    intro v
-    simp
-  map_add' T S := by
-    apply LinearMap.ext
-    intro v
-    simp only [LinearMap.comp_apply, LinearEquiv.coe_coe, LinearMap.add_apply]
-    rw [map_add]
+  map_one' := by ext v; simp
+  map_mul' T S := by ext v; simp
+  map_zero' := by ext v; simp
+  map_add' T S := by ext v; simp
 
 /-- Transport a ring hom `R → End(W)` across a linear equivalence `V ≃ₗ W`. -/
 noncomputable def transportRingHom {R : Type*} [Semiring R]
@@ -71,8 +56,6 @@ noncomputable def transportRingHom {R : Type*} [Semiring R]
   (conjEndRingHom e).comp ρ
 
 end Transport
-
-/-! ### Prime Hecke generators -/
 
 /-- The abstract `Γ₀(N)` Hecke-algebra element attached to the prime double coset
 `D_p_Gamma0`. -/
@@ -98,11 +81,8 @@ theorem primeHeckeElement_commute_apply_of_ringHom
     (ρ : 𝕋 (Gamma0_pair N) ℤ →+* Module.End ℂ V)
     {p q : ℕ} (hp : Nat.Prime p) (hq : Nat.Prime q) (v : V) :
     ρ (primeHeckeElement p hp) (ρ (primeHeckeElement q hq) v) =
-      ρ (primeHeckeElement q hq) (ρ (primeHeckeElement p hp) v) := by
-  exact LinearMap.congr_fun
-    (primeHeckeElement_commute_of_ringHom ρ hp hq).eq v
-
-/-! ### The trivial-character experimental `Γ₀(N)` route -/
+      ρ (primeHeckeElement q hq) (ρ (primeHeckeElement p hp) v) :=
+  LinearMap.congr_fun (primeHeckeElement_commute_of_ringHom ρ hp hq).eq v
 
 /-- The experimental `Γ₀(N), χ = 1` space is linearly equivalent to the actual
 `Γ₀(N)` modular-form space. -/
@@ -138,11 +118,8 @@ theorem gamma0NebentypusOne_prime_commute_apply_from_ring
     gamma0NebentypusOneRingHom (N := N) k (primeHeckeElement p hp)
         (gamma0NebentypusOneRingHom (N := N) k (primeHeckeElement q hq) f) =
       gamma0NebentypusOneRingHom (N := N) k (primeHeckeElement q hq)
-        (gamma0NebentypusOneRingHom (N := N) k (primeHeckeElement p hp) f) := by
-  exact LinearMap.congr_fun
-    (gamma0NebentypusOne_prime_commute_from_ring (N := N) k hp hq).eq f
-
-/-! ### Ring-based prime commutativity for the experimental `Γ₀(N)` family -/
+        (gamma0NebentypusOneRingHom (N := N) k (primeHeckeElement p hp) f) :=
+  LinearMap.congr_fun (gamma0NebentypusOne_prime_commute_from_ring (N := N) k hp hq).eq f
 
 /-- Pointwise prime commutativity on the transported experimental `Γ₀(N)` family,
 with proof source the commutativity of `𝕋 (Gamma0_pair N) ℤ`. -/
@@ -184,22 +161,10 @@ theorem gamma0TrivialFamily_prime_commute_from_ring
 theorem levelOneFamily_prime_commute_from_ring
     (k : ℤ) {p q : ℕ} (hp : Nat.Prime p) (hq : Nat.Prime q) :
     Commute
-      ((levelOneFamily k).op ⟨p, hp.pos, by simpa using Nat.coprime_one_right p⟩)
-      ((levelOneFamily k).op ⟨q, hq.pos, by simpa using Nat.coprime_one_right q⟩) := by
+      ((levelOneFamily k).op ⟨p, hp.pos, Nat.coprime_one_right p⟩)
+      ((levelOneFamily k).op ⟨q, hq.pos, Nat.coprime_one_right q⟩) := by
   simpa [levelOneFamily] using
-    (gamma0TrivialFamily_prime_commute_from_ring (N := 1) k hp hq
-      (by simpa using Nat.coprime_one_right p)
-      (by simpa using Nat.coprime_one_right q))
-
-/-! ### Interface point
-
-Theorems above isolate the exact remaining gap for the general-`χ` route:
-
-* once one has a ring hom
-  `𝕋 (Gamma0_pair N) ℤ →+* End(Γ₀(N), χ-space)`,
-  `primeHeckeElement_commute_of_ringHom` gives prime commutativity immediately;
-* the current codebase supplies that ring hom only for `χ = 1`, so the unified
-  proof source is presently real only in the trivial-character branch.
--/
+    gamma0TrivialFamily_prime_commute_from_ring (N := 1) k hp hq
+      (Nat.coprime_one_right p) (Nat.coprime_one_right q)
 
 end HeckeRing.GL2.Unified
