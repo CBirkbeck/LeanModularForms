@@ -1,4 +1,4 @@
-/- 
+/-
 Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: LeanModularForms contributors
@@ -42,14 +42,8 @@ variable {N : ℕ} [NeZero N]
 
 private lemma prime_coprime_of_ne {p q : ℕ}
     (hp : Nat.Prime p) (hq : Nat.Prime q) (hpq : p ≠ q) :
-    Nat.Coprime p q := by
-  rw [hp.coprime_iff_not_dvd]
-  intro hdiv
-  rcases (Nat.dvd_prime hq).1 hdiv with h1 | hEq
-  · exact hp.ne_one h1
-  · exact hpq hEq
-
-/-! ### Ambient `Γ₁(N)` operators -/
+    Nat.Coprime p q :=
+  (Nat.coprime_primes hp hq).mpr hpq
 
 /-- On the ambient `Γ₁(N)` modular-form space, the good-index operators satisfy
 coprime multiplicativity via `heckeT_n_mul_coprime`. -/
@@ -76,18 +70,9 @@ theorem ambientHeckeOfGoodIndex_commute_of_coprime
       ambientHeckeOfGoodIndex (N := N) k n =
     ambientHeckeOfGoodIndex (N := N) k n *
       ambientHeckeOfGoodIndex (N := N) k m
-  calc
-    ambientHeckeOfGoodIndex (N := N) k m *
-        ambientHeckeOfGoodIndex (N := N) k n =
-      ambientHeckeOfGoodIndex (N := N) k (m * n) := by
-        symm
-        exact ambientHeckeOfGoodIndex_mul_of_coprime (N := N) k m n hmn
-    _ = ambientHeckeOfGoodIndex (N := N) k (n * m) := by
-      congr 1
-      exact Subtype.ext (Nat.mul_comm (m : ℕ) (n : ℕ))
-    _ = ambientHeckeOfGoodIndex (N := N) k n *
-        ambientHeckeOfGoodIndex (N := N) k m := by
-        exact ambientHeckeOfGoodIndex_mul_of_coprime (N := N) k n m hmn.symm
+  rw [← ambientHeckeOfGoodIndex_mul_of_coprime (N := N) k m n hmn,
+    ← ambientHeckeOfGoodIndex_mul_of_coprime (N := N) k n m hmn.symm,
+    show m * n = n * m from Subtype.ext (Nat.mul_comm (m : ℕ) (n : ℕ))]
 
 /-- Pointwise form of `ambientHeckeOfGoodIndex_commute_of_coprime`. -/
 theorem ambientHeckeOfGoodIndex_commute_apply_of_coprime
@@ -96,8 +81,8 @@ theorem ambientHeckeOfGoodIndex_commute_apply_of_coprime
     ambientHeckeOfGoodIndex (N := N) k m
         (ambientHeckeOfGoodIndex (N := N) k n f) =
       ambientHeckeOfGoodIndex (N := N) k n
-        (ambientHeckeOfGoodIndex (N := N) k m f) := by
-  exact LinearMap.congr_fun
+        (ambientHeckeOfGoodIndex (N := N) k m f) :=
+  LinearMap.congr_fun
     (ambientHeckeOfGoodIndex_commute_of_coprime (N := N) k m n hmn).eq f
 
 /-- Distinct good primes commute on the ambient `Γ₁(N)` space by the same
@@ -111,8 +96,6 @@ theorem ambientHeckeOfGoodIndex_prime_commute_from_mul
   ambientHeckeOfGoodIndex_commute_of_coprime (N := N) k
     ⟨p, hp.pos, hpN⟩ ⟨q, hq.pos, hqN⟩
     (prime_coprime_of_ne hp hq hpq)
-
-/-! ### `Γ₁(N), χ` and transported `Γ₀(N), χ` spaces -/
 
 /-- On the existing `Γ₁(N), χ` character spaces, coprime good-index operators
 already commute by multiplicativity alone. -/
@@ -183,8 +166,6 @@ theorem gamma0NebentypusFamily_prime_commute_from_mul
   gamma0NebentypusFamily_commute_of_coprime_from_mul (N := N) k χ
     ⟨p, hp.pos, hpN⟩ ⟨q, hq.pos, hqN⟩
     (prime_coprime_of_ne hp hq hpq)
-
-/-! ### Cusp-space analogues -/
 
 /-- On `cuspFormCharSpace k χ`, coprime good-index operators commute from
 coprime multiplicativity alone. -/
