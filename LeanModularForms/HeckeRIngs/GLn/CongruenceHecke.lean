@@ -39,27 +39,22 @@ that downstream files may continue to `import …CongruenceHecke`):
 
 * `shimura_thm_3_35` — `R(Γ, Δ) →+* R(Γ₀(N), Δ₀(N))` (Shimura Thm 3.35)
 
+## Consequences for the multiplication table
+
+By applying the surjection to our existing `T_sum_mul`, `T_sum_ppow_recurrence`,
+etc., we get the level-N versions automatically. The key simplification: since
+`T(p,p) ↦ 0` for `p | N`, the prime-power recurrence becomes
+
+  For p ∤ N:  T'(p^{k+1}) = T'(p)T'(p^k) - p·T'(p,p)·T'(p^{k-1})  (same as level 1)
+  For p | N:  T'(p^k) = T'(p)^k                                    (simplified)
+
+and the general formula (3.3.6) becomes
+
+  T'(m)T'(n) = Σ_{d|(m,n), (d,N)=1} d · T'(d,d) · T'(mn/d²).
+
+The condition `(d,N) = 1` arises because `T'(d,d) = 0` when `d` has a factor dividing N.
+
 ## References
 
 * Shimura, *Introduction to the Arithmetic Theory of Automorphic Functions*, §3.3
 -/
-
-namespace HeckeRing.GLn
-
-/-! ### Consequences for the multiplication table
-
-By applying the surjection to our existing `T_sum_mul`, `T_sum_ppow_recurrence`,
-etc., we get the level-N versions automatically. The key simplification:
-since `T(p,p) ↦ 0` for `p | N`, the prime-power recurrence becomes:
-
-  For p ∤ N:  T'(p^{k+1}) = T'(p)T'(p^k) - p·T'(p,p)·T'(p^{k-1})  (same as level 1)
-  For p | N:  T'(p^k) = T'(p)^k                                     (simplified)
-
-And the general formula (3.3.6) becomes:
-
-  T'(m)T'(n) = Σ_{d|(m,n), (d,N)=1} d · T'(d,d) · T'(mn/d²)
-
-The condition `(d,N) = 1` arises because `T'(d,d) = 0` when `d` has a factor dividing N.
--/
-
-end HeckeRing.GLn
