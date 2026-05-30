@@ -319,7 +319,7 @@ lemma heckeMultiplicity_mul_one (g₁ d : P.Δ) :
     simp only [heckeMultiplicity]
     norm_cast
     rw [Nat.card_eq_one_iff_unique]
-    haveI : Subsingleton (decompQuot P (HeckeCoset.one P).rep) :=
+    have : Subsingleton (decompQuot P (HeckeCoset.one P).rep) :=
       subsingleton_decompQuot_T_one P
     refine ⟨⟨?_⟩, nonempty_mul_one_witness_of_dcRel P g₁ d hg₁d⟩
     intro ⟨⟨i₁, j₁⟩, h₁⟩ ⟨⟨i₂, j₂⟩, h₂⟩
@@ -363,8 +363,8 @@ private lemma nonempty_witness_of_doubleCoset_eq (g₁ g₂ : P.Δ) (c : G)
         {(↑x.2.out : G) * (↑g₂ : G)} * P.H = {c} * (P.H : Set G)} := by
   obtain ⟨h₁, hh₁, h₂, hh₂, hprod⟩ := (DoubleCoset.eq P.H P.H _ _).mp
     (DoubleCoset.mk_eq_of_doubleCoset_eq hset_eq)
-  set α := (↑g₁ : G) with hα_def
-  set β := (↑g₂ : G) with hβ_def
+  set α := (↑g₁ : G)
+  set β := (↑g₂ : G)
   set K₁ := (ConjAct.toConjAct α • P.H).subgroupOf P.H
   set i' : decompQuot P g₁ := ⟦⟨h₁ * ↑i₀.out, P.H.mul_mem hh₁ i₀.out.2⟩⟧
   obtain ⟨κ₁, hκ₁_eq⟩ := QuotientGroup.mk_out_eq_mul K₁
@@ -556,7 +556,7 @@ lemma heckeMultiplicity_one_mul (g₁ d : P.Δ) :
     simp only [heckeMultiplicity]
     norm_cast
     rw [Nat.card_eq_one_iff_unique]
-    haveI : Subsingleton (decompQuot P (HeckeCoset.one P).rep) :=
+    have : Subsingleton (decompQuot P (HeckeCoset.one P).rep) :=
       subsingleton_decompQuot_T_one P
     refine ⟨⟨?_⟩, nonempty_one_mul_witness_of_dcRel P g₁ d hg₁d⟩
     intro ⟨⟨i₁, j₁⟩, h₁⟩ ⟨⟨i₂, j₂⟩, h₂⟩
