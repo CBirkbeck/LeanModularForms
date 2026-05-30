@@ -100,13 +100,9 @@ theorem Gamma0MapUnits_surjOn_stab_diag
   have hγ_H : γ_gl ∈ (Gamma0_pair N).H :=
     Subgroup.mem_map.mpr ⟨σ, hσ_mem_N, rfl⟩
   refine ⟨⟨γ_gl, hγ_H⟩, ?_, σ_N, rfl, ?_⟩
-  · rw [stab_diag_eq_Gamma0 N k hk]
-    rw [Subgroup.mem_subgroupOf]
-    show γ_gl ∈ (Gamma0 (k * N)).map (mapGL ℚ)
+  · rw [stab_diag_eq_Gamma0 N k hk, Subgroup.mem_subgroupOf]
     exact Subgroup.mem_map.mpr ⟨σ, hσ_mem_kN, rfl⟩
   · have hbridge := Gamma0MapUnits_unitsMap_of_Gamma0_mul N k σ hσ_mem_kN
-    have hσ_eq : (⟨σ, hσ_mem_kN⟩ : ↥(Gamma0 (k * N))) = σ_kN := rfl
-    rw [hσ_eq] at hbridge
     show Gamma0MapUnits σ_N = d
     rw [hbridge, hσ_kN_map, hd'_map]
 
@@ -123,7 +119,8 @@ private lemma mem_H_conj_of_source_stab {N : ℕ} [NeZero N]
       ∈ (Gamma0_pair N).H := by
   have h_conj_eq :
       g_target⁻¹ * ((γ_L : GL (Fin 2) ℚ)⁻¹ * γ_src_gl * (γ_L : GL (Fin 2) ℚ)) * g_target =
-        (γ_R : GL (Fin 2) ℚ) * (g_source⁻¹ * γ_src_gl * g_source) * (γ_R : GL (Fin 2) ℚ)⁻¹ := by
+        (γ_R : GL (Fin 2) ℚ) * (g_source⁻¹ * γ_src_gl * g_source) *
+          (γ_R : GL (Fin 2) ℚ)⁻¹ := by
     subst h_eq; group
   rw [h_conj_eq]
   exact (Gamma0_pair N).H.mul_mem ((Gamma0_pair N).H.mul_mem γ_R.property h_src)
@@ -131,9 +128,10 @@ private lemma mem_H_conj_of_source_stab {N : ℕ} [NeZero N]
 
 /-- **Stabilizer-surjectivity transports across the `Γ₀(N)`-double coset action**.
 
-If `g_source` is obtained from `g_target` by `Γ₀(N)`-conjugation (`g_source = γ_L · g_target · γ_R`
-with `γ_L, γ_R ∈ (Gamma0_pair N).H`), and the stabilizer-surjectivity of
-`Gamma0MapUnits` holds at `g_source`, then it also holds at `g_target`. -/
+If `g_source` is obtained from `g_target` by `Γ₀(N)`-conjugation
+(`g_source = γ_L · g_target · γ_R` with `γ_L, γ_R ∈ (Gamma0_pair N).H`), and the
+stabilizer-surjectivity of `Gamma0MapUnits` holds at `g_source`, then it also holds at
+`g_target`. -/
 theorem Gamma0MapUnits_surjOn_stab_transport
     {N : ℕ} [NeZero N] (g_target : GL (Fin 2) ℚ) (g_source : GL (Fin 2) ℚ)
     (γ_L γ_R : (Gamma0_pair N).H)
@@ -156,11 +154,9 @@ theorem Gamma0MapUnits_surjOn_stab_transport
   obtain ⟨γ_src_gl, hγ_src_gl_H⟩ := γ_src
   set γ_tgt_gl : GL (Fin 2) ℚ :=
     (γ_L : GL (Fin 2) ℚ)⁻¹ * γ_src_gl * (γ_L : GL (Fin 2) ℚ)
-  have hγ_tgt_H : γ_tgt_gl ∈ (Gamma0_pair N).H := by
-    have hγ_L_inv : ((γ_L : GL (Fin 2) ℚ)⁻¹) ∈ (Gamma0_pair N).H :=
-      (Gamma0_pair N).H.inv_mem γ_L.property
-    exact (Gamma0_pair N).H.mul_mem
-      ((Gamma0_pair N).H.mul_mem hγ_L_inv hγ_src_gl_H) γ_L.property
+  have hγ_tgt_H : γ_tgt_gl ∈ (Gamma0_pair N).H :=
+    (Gamma0_pair N).H.mul_mem ((Gamma0_pair N).H.mul_mem
+      ((Gamma0_pair N).H.inv_mem γ_L.property) hγ_src_gl_H) γ_L.property
   have hγ_tgt_stab :
       (⟨γ_tgt_gl, hγ_tgt_H⟩ : (Gamma0_pair N).H) ∈
       (ConjAct.toConjAct g_target •
@@ -172,9 +168,9 @@ theorem Gamma0MapUnits_surjOn_stab_transport
     exact mem_H_conj_of_source_stab g_target g_source γ_src_gl γ_L γ_R h_eq hγ_src_stab
   obtain ⟨γ_L_SL, hγ_L_SL_mem, hγ_L_SL_eq⟩ := Subgroup.mem_map.mp γ_L.property
   set γ_SL_tgt : SL(2, ℤ) := γ_L_SL⁻¹ * (γ_SL_src : SL(2, ℤ)) * γ_L_SL
-  have hγ_SL_tgt_mem : γ_SL_tgt ∈ Gamma0 N := by
-    have h1 : γ_L_SL⁻¹ ∈ Gamma0 N := (Gamma0 N).inv_mem hγ_L_SL_mem
-    exact (Gamma0 N).mul_mem ((Gamma0 N).mul_mem h1 γ_SL_src.property) hγ_L_SL_mem
+  have hγ_SL_tgt_mem : γ_SL_tgt ∈ Gamma0 N :=
+    (Gamma0 N).mul_mem ((Gamma0 N).mul_mem
+      ((Gamma0 N).inv_mem hγ_L_SL_mem) γ_SL_src.property) hγ_L_SL_mem
   have hγ_SL_tgt_eq : (mapGL ℚ γ_SL_tgt : GL (Fin 2) ℚ) = γ_tgt_gl := by
     show (mapGL ℚ (γ_L_SL⁻¹ * (γ_SL_src : SL(2, ℤ)) * γ_L_SL) : GL (Fin 2) ℚ) =
       (γ_L : GL (Fin 2) ℚ)⁻¹ * γ_src_gl * (γ_L : GL (Fin 2) ℚ)
@@ -182,11 +178,12 @@ theorem Gamma0MapUnits_surjOn_stab_transport
     rw [hγ_L_SL_eq, hγ_SL_src_eq]
   have hγ_SL_tgt_map : Gamma0MapUnits ⟨γ_SL_tgt, hγ_SL_tgt_mem⟩ = d := by
     have h_prod_eq : (⟨γ_SL_tgt, hγ_SL_tgt_mem⟩ : ↥(Gamma0 N)) =
-        (⟨γ_L_SL, hγ_L_SL_mem⟩ : ↥(Gamma0 N))⁻¹ * γ_SL_src * ⟨γ_L_SL, hγ_L_SL_mem⟩ := by
+        (⟨γ_L_SL, hγ_L_SL_mem⟩ : ↥(Gamma0 N))⁻¹ * γ_SL_src *
+          ⟨γ_L_SL, hγ_L_SL_mem⟩ := by
       apply Subtype.ext; simp [γ_SL_tgt, mul_assoc]
     rw [h_prod_eq, Gamma0MapUnits_conj_eq, hγ_SL_src_map]
-  refine ⟨⟨γ_tgt_gl, hγ_tgt_H⟩, hγ_tgt_stab, ⟨γ_SL_tgt, hγ_SL_tgt_mem⟩, hγ_SL_tgt_eq,
-    hγ_SL_tgt_map⟩
+  exact ⟨⟨γ_tgt_gl, hγ_tgt_H⟩, hγ_tgt_stab,
+    ⟨γ_SL_tgt, hγ_SL_tgt_mem⟩, hγ_SL_tgt_eq, hγ_SL_tgt_map⟩
 
 /-- **Stab-surjectivity from diagonal reduction** (specialized form).
 
