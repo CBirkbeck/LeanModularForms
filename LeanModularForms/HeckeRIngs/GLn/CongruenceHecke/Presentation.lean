@@ -24,7 +24,6 @@ open Matrix Subgroup.Commensurable Pointwise Matrix.SpecialLinearGroup
 open scoped Pointwise MatrixGroups
 
 namespace HeckeRing.GLn
-/-! #### Stage A: Free presentation of HeckeAlgebra 2 -/
 
 /-- Index type for all p-local generators: `(p, k)` with `p` prime, `k ∈ Fin 2`. -/
 abbrev GenIdx := { p : ℕ // p.Prime } × Fin 2
@@ -46,16 +45,12 @@ private lemma π_comp_embed (p : ℕ) (hp : p.Prime) :
     π_hom.comp (embedPoly p hp) = evalHom 2 p := by
   apply MvPolynomial.ringHom_ext
   · intro n; simp [π_hom, embedPoly, evalHom]
-  · intro k
-    simp only [π_hom, embedPoly, RingHom.comp_apply, AlgHom.toRingHom_eq_coe,
-      RingHom.coe_coe, MvPolynomial.rename_X, MvPolynomial.eval₂Hom_X', evalHom]
+  · intro k; simp [π_hom, embedPoly, evalHom]
 
 /-- Each p-power-diagonal T_elem is in the range of π. -/
 private lemma ppow_mem_π_range (p : ℕ) (hp : p.Prime)
     (e : Fin 2 → ℕ) (he : Monotone e) :
     T_elem (ppowDiag 2 p e) ∈ π_hom.range := by
-  -- Use the clean n=2 surjectivity block directly (not the bundled all-`n`
-  -- `T_gen_generates_R_p`, whose general-`n` case carries a `sorry`).
   obtain ⟨poly, hpoly⟩ := Surj.T_gen_generates_R_p_two p hp
     (T_elem (ppowDiag 2 p e)) (T_elem_ppow_mem_R_p 2 p hp e he)
   rw [show evalHom 2 p = π_hom.comp (embedPoly p hp) from
@@ -85,21 +80,23 @@ private lemma T_elem_mem_π_range (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i)
   suffices ∀ (n : ℕ) (a : Fin 2 → ℕ), (∀ i, 0 < a i) → DivChain 2 a →
       ∏ i, a i = n → T_elem a ∈ π_hom.range by
     exact this _ a ha hdiv rfl
-  intro n; induction n using Nat.strongRecOn with
+  intro n
+  induction n using Nat.strongRecOn with
   | _ n ih =>
     intro a ha hdiv hprod
     by_cases h_one : n = 1
     · subst h_one
-      have : a = fun _ ↦ 1 := by
-        ext i; exact Nat.eq_one_of_dvd_one
-          (hprod ▸ Finset.dvd_prod_of_mem _ (Finset.mem_univ i))
-      subst this; rw [T_elem_ones_eq_one 2]; exact π_hom.range.one_mem'
-    · obtain ⟨p, hp, hp_dvd⟩ := Nat.exists_prime_and_dvd (by omega : n ≠ 1)
+      have : a = fun _ ↦ 1 := funext fun i ↦ Nat.eq_one_of_dvd_one
+        (hprod ▸ Finset.dvd_prod_of_mem _ (Finset.mem_univ i))
+      subst this
+      rw [T_elem_ones_eq_one 2]
+      exact π_hom.range.one_mem'
+    · obtain ⟨p, hp, hp_dvd⟩ := Nat.exists_prime_and_dvd (by lia : n ≠ 1)
       rw [T_elem_split_prime 2 a ha hdiv p hp]
       apply π_hom.range.mul_mem
       · exact ppow_mem_π_range p hp _ (pComponent_monotone 2 a ha hdiv p)
-      · have h_lt : ∏ i, removePrime 2 p a i < n := by
-          rw [← hprod]; exact prod_removePrime_lt a ha p hp (hprod ▸ hp_dvd)
+      · have h_lt : ∏ i, removePrime 2 p a i < n :=
+          hprod ▸ prod_removePrime_lt a ha p hp (hprod ▸ hp_dvd)
         exact ih _ h_lt _ (removePrime_pos 2 p a ha)
           (removePrime_divChain 2 p a hdiv) rfl
 
@@ -108,10 +105,9 @@ lemma π_surjective : Function.Surjective π_hom := by
   rw [← RingHom.range_eq_top, eq_top_iff]
   intro f _
   obtain ⟨S, c, hf⟩ := T_diag_span 2 f
-  rw [hf]; apply π_hom.range.sum_mem; intro s _
-  exact π_hom.range.zsmul_mem (T_elem_mem_π_range s.1.1 s.1.2.1 s.1.2.2) _
-
-/-! #### Stage B: Target ring hom -/
+  rw [hf]
+  exact π_hom.range.sum_mem fun s _ ↦
+    π_hom.range.zsmul_mem (T_elem_mem_π_range s.1.1 s.1.2.1 s.1.2.2) _
 
 variable (N : ℕ) [NeZero N]
 
@@ -125,29 +121,15 @@ noncomputable def ψ_hom :
       HeckeRing.T_single (Gamma0_pair N) ℤ
         (T_diag_Gamma0 N (![1, p])
           (fun i ↦ by fin_cases i <;> simp [hp.pos])
-          (by simp [Int.gcd_one_left])) 1
+          (by simp)) 1
     else if h : p ∣ N then 0
     else
       HeckeRing.T_single (Gamma0_pair N) ℤ
         (T_diag_Gamma0 N (![p, p])
           (fun i ↦ by fin_cases i <;> simp [hp.pos])
           (by show Int.gcd (↑p) ↑N = 1
-              rw [Int.gcd_natCast_natCast]; exact hp.coprime_iff_not_dvd.mpr h)) 1)
-
-/-- Scalar centrality for double cosets: if `s` is central in `GL₂(ℚ)` and
-`x ∈ DC_Γ₀(y)`, then `s * x ∈ DC_Γ₀(s * y)`. -/
-private lemma doubleCoset_smul_central (N : ℕ) [NeZero N]
-    (s x y : GL (Fin 2) ℚ) (hs : ∀ h : GL (Fin 2) ℚ, s * h = h * s)
-    (hx : x ∈ DoubleCoset.doubleCoset y ((Gamma0_pair N).H : Set _)
-      ((Gamma0_pair N).H : Set _)) :
-    s * x ∈ DoubleCoset.doubleCoset (s * y) ((Gamma0_pair N).H : Set _)
-      ((Gamma0_pair N).H : Set _) := by
-  rw [DoubleCoset.mem_doubleCoset] at hx ⊢
-  obtain ⟨γ₁, hγ₁, γ₂, hγ₂, hx_eq⟩ := hx
-  exact ⟨γ₁, hγ₁, γ₂, hγ₂, by rw [hx_eq]; calc
-    s * (γ₁ * y * γ₂) = s * γ₁ * y * γ₂ := by group
-    _ = γ₁ * s * y * γ₂ := by rw [hs γ₁]
-    _ = γ₁ * (s * y) * γ₂ := by group⟩
+              rw [Int.gcd_natCast_natCast]
+              exact hp.coprime_iff_not_dvd.mpr h)) 1)
 
 /-- Every Gamma0 double coset equals `T_diag_Gamma0 N (![1, m])` for some `m > 0`:
 any `g ∈ Δ₀(N)` with integer matrix `A`, `gcd(A 0 0, det) = 1`, has
@@ -169,22 +151,21 @@ private lemma Gamma0_coset_eq_T_diag_of_coprime (N : ℕ) [NeZero N]
 by `m = (gcd m Nᵐ) * c`, force `p₀ ^ k ∣ m` for all `k`, contradicting `m > 0`. -/
 private lemma cofactor_coprime_to_level (m N : ℕ) (hm_pos : 0 < m)
     (c : ℕ) (hbc : m = Nat.gcd m (N ^ m) * c) : Nat.Coprime c N := by
-  rw [Nat.coprime_comm]; by_contra h_nc
+  rw [Nat.coprime_comm]
+  by_contra h_nc
   obtain ⟨p₀, hp₀, hpg⟩ := Nat.exists_prime_and_dvd h_nc
-  have hp₀N := (Nat.dvd_gcd_iff.mp hpg).1
-  have hp₀c := (Nat.dvd_gcd_iff.mp hpg).2
-  suffices ∀ k, p₀ ^ k ∣ m by
-    exact absurd (Nat.le_of_dvd hm_pos (this (m + 1)))
-      (not_le.mpr (lt_of_lt_of_le (Nat.lt_pow_self hp₀.one_lt)
-        (Nat.pow_le_pow_right hp₀.pos (Nat.le_succ m))))
-  intro k; induction k with
+  obtain ⟨hp₀N, hp₀c⟩ := Nat.dvd_gcd_iff.mp hpg
+  suffices ∀ k, p₀ ^ k ∣ m from absurd (Nat.le_of_dvd hm_pos (this (m + 1)))
+    (not_le.mpr ((Nat.lt_pow_self hp₀.one_lt).trans_le
+      (Nat.pow_le_pow_right hp₀.pos (Nat.le_succ m))))
+  intro k
+  induction k with
   | zero => simp
   | succ k ih =>
     rw [hbc, pow_succ]
-    exact mul_dvd_mul
-      (Nat.dvd_gcd ih ((pow_dvd_pow_of_dvd hp₀N k).trans
-        (Nat.pow_dvd_pow N (le_trans (Nat.lt_pow_self hp₀.one_lt).le
-          (Nat.le_of_dvd hm_pos ih))))) hp₀c
+    exact mul_dvd_mul (Nat.dvd_gcd ih ((pow_dvd_pow_of_dvd hp₀N k).trans
+      (Nat.pow_dvd_pow N ((Nat.lt_pow_self hp₀.one_lt).le.trans
+        (Nat.le_of_dvd hm_pos ih))))) hp₀c
 
 /-- For the two-sided coprime rep `A'`, `gcd(A' 0 0, m) = 1` where `m = b * c`,
 `b = gcd(m, Nᵐ) ∣ Nᵐ`, using `gcd(A' 0 0, N) = 1` and `gcd(A' 0 0, c) = 1`. -/
@@ -192,7 +173,7 @@ private lemma coprime_rep_gcd_with_det (m N : ℕ) (c : ℕ) (b : ℕ)
     (hbc : m = b * c) (hb_dvd : b ∣ N ^ m) (A' : Matrix (Fin 2) (Fin 2) ℤ)
     (hA'Nco : Int.gcd (A' 0 0) N = 1) (hA'c : Int.gcd (A' 0 0) c = 1) :
     Int.gcd (A' 0 0) (m : ℤ) = 1 := by
-  rw [show (m : ℤ) = ↑b * ↑c from by exact_mod_cast hbc]
+  rw [show (m : ℤ) = ↑b * ↑c by exact_mod_cast hbc]
   exact Int.isCoprime_iff_gcd_eq_one.mp (IsCoprime.mul_right
     (IsCoprime.of_isCoprime_of_dvd_right
       ((Int.isCoprime_iff_gcd_eq_one.mpr hA'Nco).pow_right (n := m))
@@ -207,10 +188,12 @@ private lemma two_sided_conj_det (N : ℕ) [NeZero N]
     ((γL : GL (Fin 2) ℚ) * g.1 * (γR : GL (Fin 2) ℚ)).val.det = (m : ℚ) := by
   have hL : (γL.1 : GL (Fin 2) ℚ).val.det = 1 := by
     obtain ⟨σ, _, hσ⟩ := Subgroup.mem_map.mp γL.2
-    rw [← hσ]; simp [mapGL_coe_matrix, algebraMap_int_eq, det_intMat_cast, σ.prop]
+    rw [← hσ]
+    simp [mapGL_coe_matrix, algebraMap_int_eq, det_intMat_cast, σ.prop]
   have hR : (γR.1 : GL (Fin 2) ℚ).val.det = 1 := by
     obtain ⟨σ, _, hσ⟩ := Subgroup.mem_map.mp γR.2
-    rw [← hσ]; simp [mapGL_coe_matrix, algebraMap_int_eq, det_intMat_cast, σ.prop]
+    rw [← hσ]
+    simp [mapGL_coe_matrix, algebraMap_int_eq, det_intMat_cast, σ.prop]
   simp only [Units.val_mul, Matrix.det_mul, hL, hR, one_mul, mul_one, hdet_m]
 
 /-- The content `d = gcd` of the four matrix entries divides every entry of `A`. -/
@@ -218,24 +201,25 @@ private lemma content_gcd_dvd_entries (A : Matrix (Fin 2) (Fin 2) ℤ)
     (d : ℕ) (hd_def : d = Nat.gcd (Nat.gcd (A 0 0).natAbs (A 0 1).natAbs)
       (Nat.gcd (A 1 0).natAbs (A 1 1).natAbs)) :
     ∀ i j : Fin 2, (d : ℤ) ∣ A i j := by
-  intro i j; exact Int.natAbs_dvd_natAbs.mp (by
-    fin_cases i <;> fin_cases j <;> rw [hd_def] <;> (
-      exact Nat.dvd_trans (by first
-        | exact Nat.dvd_trans (Nat.gcd_dvd_left _ _) (Nat.gcd_dvd_left _ _)
-        | exact Nat.dvd_trans (Nat.gcd_dvd_right _ _) (Nat.gcd_dvd_left _ _)
-        | exact Nat.dvd_trans (Nat.gcd_dvd_left _ _) (Nat.gcd_dvd_right _ _)
-        | exact Nat.dvd_trans (Nat.gcd_dvd_right _ _) (Nat.gcd_dvd_right _ _))
-        (dvd_refl _)))
+  intro i j
+  apply Int.natAbs_dvd_natAbs.mp
+  fin_cases i <;> fin_cases j <;> (rw [hd_def]; first
+    | exact (Nat.gcd_dvd_left _ _).trans (Nat.gcd_dvd_left _ _)
+    | exact (Nat.gcd_dvd_right _ _).trans (Nat.gcd_dvd_left _ _)
+    | exact (Nat.gcd_dvd_left _ _).trans (Nat.gcd_dvd_right _ _)
+    | exact (Nat.gcd_dvd_right _ _).trans (Nat.gcd_dvd_right _ _))
 
 /-- The content `d` is positive: otherwise all entries of `A` vanish, forcing `det A = 0`,
 contradicting `det A > 0`. -/
 private lemma content_gcd_pos (A : Matrix (Fin 2) (Fin 2) ℤ) (d : ℕ)
     (hd_dvd : ∀ i j : Fin 2, (d : ℤ) ∣ A i j) (hA_det_pos : 0 < A.det) :
-    0 < d := Nat.pos_of_ne_zero (fun h ↦ by
-  have h00 := hd_dvd 0 0; have h01 := hd_dvd 0 1
-  have h10 := hd_dvd 1 0; have h11 := hd_dvd 1 1
+    0 < d := Nat.pos_of_ne_zero fun h ↦ by
+  have h00 := hd_dvd 0 0
+  have h01 := hd_dvd 0 1
+  have h10 := hd_dvd 1 0
+  have h11 := hd_dvd 1 1
   simp [h] at h00 h01 h10 h11
-  linarith [show A.det = 0 from by rw [Matrix.det_fin_two]; simp [h00, h01, h10, h11]])
+  linarith [show A.det = 0 by rw [Matrix.det_fin_two]; simp [h00, h01, h10, h11]]
 
 /-- Content-scaling double-coset membership: if `g₀` (matrix `A₀`) lies in the double
 coset of `diag(a₀)` via `γ₁, γ₂`, and `A = d • A₀`, `a = d • a₀`, then `g` (matrix `A`)
@@ -254,21 +238,26 @@ private lemma content_scaled_doubleCoset_mem (N : ℕ) [NeZero N]
       ((Gamma0_pair N).H : Set _) ((Gamma0_pair N).H : Set _) := by
   rw [DoubleCoset.mem_doubleCoset]
   refine ⟨γ₁, hγ₁, γ₂, hγ₂, ?_⟩
-  apply Units.ext; ext i j
+  apply Units.ext
+  ext i j
   have hg₀_ij : g₀.1.val i j = (γ₁ * diagMat 2 a₀ * γ₂).val i j :=
-    congr_fun₂ (show g₀.1.val = (γ₁ * diagMat 2 a₀ * γ₂).val from by rw [hg₀_eq]) i j
+    congr_fun₂ (show g₀.1.val = (γ₁ * diagMat 2 a₀ * γ₂).val by rw [hg₀_eq]) i j
   have hg_ij : g.1.val i j = (d : ℚ) * g₀.1.val i j := by
-    have h1 := congr_fun₂ hA i j; rw [hg₀_val]
+    have h1 := congr_fun₂ hA i j
+    rw [hg₀_val]
     simp only [Matrix.map_apply] at h1 ⊢
-    rw [h1]; push_cast [hA₀_eq i j]; ring
+    rw [h1]
+    push_cast [hA₀_eq i j]
+    ring
   have hd_kl : ∀ k l : Fin 2, (diagMat 2 a : GL _ ℚ).val k l =
-      (d : ℚ) * (diagMat 2 a₀ : GL _ ℚ).val k l := by
-    intro k l; rw [diagMat_val 2 a ha, diagMat_val 2 a₀ ha₀]
+      (d : ℚ) * (diagMat 2 a₀ : GL _ ℚ).val k l := fun k l ↦ by
+    rw [diagMat_val 2 a ha, diagMat_val 2 a₀ ha₀]
     simp only [Matrix.diagonal_apply, ha₀_def]
     split_ifs with heq <;> simp
-  show g.1.val i j = (γ₁ * (diagMat 2 a : GL _ ℚ) * γ₂).val i j
+  change g.1.val i j = (γ₁ * (diagMat 2 a : GL _ ℚ) * γ₂).val i j
   simp only [Units.val_mul, Matrix.mul_apply, Fin.sum_univ_two] at hg₀_ij ⊢
-  rw [hg_ij, hg₀_ij, hd_kl 0 0, hd_kl 0 1, hd_kl 1 0, hd_kl 1 1]; ring
+  rw [hg_ij, hg₀_ij, hd_kl 0 0, hd_kl 0 1, hd_kl 1 0, hd_kl 1 1]
+  ring
 
 /-- Extracting a common prime factor `p` from `A = d • A₀` strictly decreases `|det|`:
 since `p ∣ d`, `d ≥ 2`, so `|det A| = d² · |det A₀| ≥ 4·|det A₀| > |det A₀|`.
@@ -278,13 +267,15 @@ private lemma content_quotient_det_natAbs_lt (A A₀ : Matrix (Fin 2) (Fin 2) �
     (hA₀_eq : ∀ i j, A i j = ↑d * A₀ i j) (hA₀_det_pos : 0 < A₀.det) :
     A₀.det.natAbs < A.det.natAbs := by
   have hdet_eq : A.det = (d : ℤ) ^ 2 * A₀.det := by
-    simp only [Matrix.det_fin_two]; rw [hA₀_eq 0 0, hA₀_eq 0 1, hA₀_eq 1 0, hA₀_eq 1 1]; ring
+    simp only [Matrix.det_fin_two]
+    rw [hA₀_eq 0 0, hA₀_eq 0 1, hA₀_eq 1 0, hA₀_eq 1 1]
+    ring
   rw [hdet_eq, Int.natAbs_mul, Int.natAbs_pow, Int.natAbs_natCast]
-  have hA₀_na : 0 < A₀.det.natAbs := Int.natAbs_pos.mpr (ne_of_gt hA₀_det_pos)
-  calc A₀.det.natAbs < 2 * A₀.det.natAbs := by omega
+  have hA₀_na : 0 < A₀.det.natAbs := Int.natAbs_pos.mpr hA₀_det_pos.ne'
+  calc A₀.det.natAbs < 2 * A₀.det.natAbs := by lia
     _ ≤ d ^ 2 * A₀.det.natAbs := by
         apply Nat.mul_le_mul_right
-        nlinarith [le_trans hp.two_le (Nat.le_of_dvd hd_pos hp_dvd_d)]
+        nlinarith [hp.two_le.trans (Nat.le_of_dvd hd_pos hp_dvd_d)]
 
 /-- **Primitive case** of `Gamma0_exists_diag_rep`: when no prime divides all four
 entries of `A`, `⟦g⟧ = T_diag_Gamma0 N (![1, m])` with `m = |det A|`. If `gcd(A 0 0, m) = 1`
@@ -299,21 +290,24 @@ private lemma Gamma0_exists_diag_rep_primitive (N : ℕ) [NeZero N]
       (_ : a 0 ∣ a 1),
       (⟦g⟧ : HeckeCoset (Gamma0_pair N)) = T_diag_Gamma0 N a ha hgcd := by
   set m := A.det.natAbs
-  have hm_pos : 0 < m := Int.natAbs_pos.mpr (ne_of_gt hA_det_pos)
+  have hm_pos : 0 < m := Int.natAbs_pos.mpr hA_det_pos.ne'
   have hA_det_eq : A.det = (m : ℤ) :=
     (abs_of_pos hA_det_pos ▸ Int.natCast_natAbs A.det).symm
   have hdet_m : g.1.val.det = (m : ℚ) := by
-    rw [hA, det_intMat_cast]; exact_mod_cast hA_det_eq
+    rw [hA, det_intMat_cast]
+    exact_mod_cast hA_det_eq
   by_cases ham : Int.gcd (A 0 0) (m : ℤ) = 1
   · exact ⟨![1, m], fun i ↦ by fin_cases i <;> simp [hm_pos], by simp, ⟨m, by simp⟩,
       Gamma0_coset_eq_T_diag_of_coprime N g A hA hAN m hm_pos hdet_m ham⟩
   · set b := Nat.gcd m (N ^ m)
     set c := m / b
     have hbc : m = b * c := (Nat.mul_div_cancel' (Nat.gcd_dvd_left m _)).symm
-    have hc_pos : 0 < c := Nat.pos_of_ne_zero (by
-      intro hc0; rw [hc0, Nat.mul_zero] at hbc; omega)
+    have hc_pos : 0 < c := Nat.pos_of_ne_zero fun hc0 ↦ by
+      rw [hc0, Nat.mul_zero] at hbc
+      lia
     have hc_dvd : (c : ℤ) ∣ A.det := by
-      rw [hA_det_eq]; exact_mod_cast show c ∣ m from Dvd.intro_left b hbc.symm
+      rw [hA_det_eq]
+      exact_mod_cast show c ∣ m from Dvd.intro_left b hbc.symm
     have hc_cop : Nat.Coprime c N := cofactor_coprime_to_level m N hm_pos c hbc
     obtain ⟨γL, γR, A', hA', hA'N, hA'Nco, hA'c⟩ :=
       Gamma0_two_sided_coprime_rep_prim N g.1 g.2 A hA hAN hAco hprim c hc_pos hc_cop hc_dvd
@@ -356,12 +350,13 @@ private lemma Gamma0_diag_rep_scale_back (N : ℕ) [NeZero N]
   set a := fun i : Fin 2 ↦ d * a₀ i
   have ha : ∀ i, 0 < a i := fun i ↦ Nat.mul_pos hd_pos (ha₀ i)
   have hd_Nco : Int.gcd (d : ℤ) N = 1 := by
-    apply Nat.eq_one_of_dvd_one; rw [← hAco]
+    apply Nat.eq_one_of_dvd_one
+    rw [← hAco]
     exact Nat.dvd_gcd
       (Int.natAbs_dvd_natAbs.mpr ((Int.gcd_dvd_left (d : ℤ) N).trans (hd_dvd 0 0)))
       (Int.natAbs_dvd_natAbs.mpr (Int.gcd_dvd_right (d : ℤ) N))
   have hgcd_a : Int.gcd (↑(a 0)) ↑N = 1 := by
-    show Int.gcd (↑(d * a₀ 0)) ↑N = 1
+    change Int.gcd (↑(d * a₀ 0)) ↑N = 1
     simp only [Int.gcd_natCast_natCast]
     exact Nat.Coprime.mul_left
       (by rwa [Int.gcd_natCast_natCast] at hd_Nco)
@@ -384,26 +379,26 @@ Proof: extract content `d`, get primitive quotient `g₀`, clear `gcd(A₀ 0 0, 
 lemma Gamma0_exists_diag_rep (N : ℕ) [NeZero N]
     (g : (Gamma0_pair N).Δ) :
     ∃ (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i) (hgcd : Int.gcd (a 0) N = 1)
-      (hdiv : a 0 ∣ a 1),
+      (_ : a 0 ∣ a 1),
       (⟦g⟧ : HeckeCoset (Gamma0_pair N)) = T_diag_Gamma0 N a ha hgcd := by
-  obtain ⟨_, hdet_pos, A, hA, hAN, hAco⟩ := g.2
-  have hg_mem : g.1 ∈ (Gamma0_pair N).Δ := g.2
+  obtain ⟨_, _, A, hA, hAN, hAco⟩ := g.2
   have hA_det_pos : 0 < A.det := by
     rwa [← Int.cast_pos (R := ℚ), ← det_intMat_cast 2 A, ← hA]
   by_cases hprim : ∀ (p : ℕ), p.Prime →
       ¬((p : ℤ) ∣ A 0 0 ∧ (p : ℤ) ∣ A 0 1 ∧ (p : ℤ) ∣ A 1 0 ∧ (p : ℤ) ∣ A 1 1)
   · exact Gamma0_exists_diag_rep_primitive N g A hA hAN hAco hA_det_pos hprim
-  · push_neg at hprim
-    obtain ⟨p, hp, hpA00, hpA01, hpA10, hpA11⟩ := hprim
+  · push Not at hprim
+    obtain ⟨p, hp, _, _, _, _⟩ := hprim
     set d := Nat.gcd (Nat.gcd (A 0 0).natAbs (A 0 1).natAbs)
               (Nat.gcd (A 1 0).natAbs (A 1 1).natAbs) with hd_def
     have hd_dvd : ∀ i j : Fin 2, (d : ℤ) ∣ A i j :=
       content_gcd_dvd_entries A d hd_def
     have hd_pos : 0 < d := content_gcd_pos A d hd_dvd hA_det_pos
-    obtain ⟨A₀, hA₀_eq, hA₀_det_pos, hA₀N, hA₀co, hA₀_prim⟩ :=
+    obtain ⟨A₀, hA₀_eq, hA₀_det_pos, hA₀N, hA₀co, _⟩ :=
       Gamma0_content_quotient N A hA_det_pos hAN hAco d hd_pos hd_dvd hd_def
     have hA₀_det_ne : (A₀.map (Int.cast : ℤ → ℚ)).det ≠ 0 := by
-      rw [det_intMat_cast]; exact_mod_cast hA₀_det_pos.ne'
+      rw [det_intMat_cast]
+      exact_mod_cast hA₀_det_pos.ne'
     set g₀ : (Gamma0_pair N).Δ := ⟨GeneralLinearGroup.mkOfDetNeZero
       (A₀.map (Int.cast : ℤ → ℚ)) hA₀_det_ne,
       ⟨⟨A₀, rfl⟩, by simp [det_intMat_cast]; exact_mod_cast hA₀_det_pos,
@@ -414,14 +409,14 @@ lemma Gamma0_exists_diag_rep (N : ℕ) [NeZero N]
       a₀ ha₀ hgcd₀ hdiv₀ hrep₀
   termination_by (g.1.val.det.num.natAbs)
   decreasing_by
-    simp only [g₀, GeneralLinearGroup.mkOfDetNeZero]
+    simp only [GeneralLinearGroup.mkOfDetNeZero]
     rw [show (GeneralLinearGroup.mk' (A₀.map (Int.cast : ℤ → ℚ))
-          (invertibleOfNonzero hA₀_det_ne)).val.det = (A₀.det : ℚ) from by
+          (invertibleOfNonzero hA₀_det_ne)).val.det = (A₀.det : ℚ) by
       simp [det_intMat_cast]]
-    rw [show g.1.val.det = (A.det : ℚ) from by rw [hA, det_intMat_cast]]
-    rw [show (A₀.det : ℚ).num.natAbs = A₀.det.natAbs from by
+    rw [show g.1.val.det = (A.det : ℚ) by rw [hA, det_intMat_cast]]
+    rw [show (A₀.det : ℚ).num.natAbs = A₀.det.natAbs by
           simp [Rat.num_intCast],
-      show (A.det : ℚ).num.natAbs = A.det.natAbs from by
+      show (A.det : ℚ).num.natAbs = A.det.natAbs by
           simp [Rat.num_intCast]]
     have hp_dvd_na : ∀ i j : Fin 2, p ∣ (A i j).natAbs := fun i j ↦ by
       have h : (↑p : ℤ) ∣ A i j := by fin_cases i <;> fin_cases j <;> assumption
@@ -431,15 +426,15 @@ lemma Gamma0_exists_diag_rep (N : ℕ) [NeZero N]
       (Nat.dvd_gcd (hp_dvd_na 1 0) (hp_dvd_na 1 1))
     exact content_quotient_det_natAbs_lt A A₀ d p hp hd_pos hp_dvd_d hA₀_eq hA₀_det_pos
 
-/-! #### Stage C: Factorization and surjectivity -/
-
 /-- `cosetMap` preserves diagonal cosets: the GL₂ double coset of `diagMat(a)`
 viewed via Gamma0 inclusion equals `T_diag a`. -/
 lemma cosetMap_T_diag_Gamma0 (N : ℕ) [NeZero N]
     (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i) (hgcd : Int.gcd (a 0) N = 1) :
     cosetMap N (T_diag_Gamma0 N a ha hgcd) = T_diag a := by
   show ⟦Delta0_inclusion N ⟨diagMat 2 a, _⟩⟧ = ⟦diagMat_delta 2 a⟧
-  congr 1; ext; simp [Delta0_inclusion, diagMat_delta, ha]
+  congr 1
+  ext
+  simp [Delta0_inclusion, diagMat_delta, ha]
 
 /-- `cosetMap` commutes with `mulMap`: the GL coset of the Gamma0 mulMap output
 is the GL double coset of the same underlying product element. -/
@@ -471,19 +466,24 @@ private lemma product_mem_GL_DC_coprime_aux
   rw [DoubleCoset.mem_doubleCoset] at hgm hgn
   obtain ⟨L₁, ⟨σL₁, rfl⟩, R₁, ⟨σR₁, rfl⟩, hm_eq⟩ := hgm
   obtain ⟨L₂, ⟨σL₂, rfl⟩, R₂, ⟨σR₂, rfl⟩, hn_eq⟩ := hgn
-  obtain ⟨σp₁, rfl⟩ := hσ₁; obtain ⟨σp₂, rfl⟩ := hσ₂
+  obtain ⟨σp₁, rfl⟩ := hσ₁
+  obtain ⟨σp₂, rfl⟩ := hσ₂
   set τ := σR₁ * σp₂ * σL₂
   have hcore := doubleCoset_mul_coprime_mem 2 ![1, m] ![1, n]
     (fun i ↦ by fin_cases i <;> simp [hm_pos])
     (fun i ↦ by fin_cases i <;> simp [hn_pos])
     (fun i (hi : i + 1 < 2) ↦ by
-      have h0 : i = 0 := by linarith
-      show (![1, m]) ⟨i, _⟩ ∣ _; subst h0; simp)
+      have h0 : i = 0 := by lia
+      change (![1, m]) ⟨i, _⟩ ∣ _
+      subst h0
+      simp)
     (fun i (hi : i + 1 < 2) ↦ by
-      have h0 : i = 0 := by linarith
-      show (![1, n]) ⟨i, _⟩ ∣ _; subst h0; simp)
-    (by simp [Fin.prod_univ_two]; exact hcop) τ
-  rw [show (![1, m] : Fin 2 → ℕ) * ![1, n] = ![1, m * n] from by
+      have h0 : i = 0 := by lia
+      change (![1, n]) ⟨i, _⟩ ∣ _
+      subst h0
+      simp)
+    (by simpa [Fin.prod_univ_two] using hcop) τ
+  rw [show (![1, m] : Fin 2 → ℕ) * ![1, n] = ![1, m * n] by
     ext i; fin_cases i <;> simp] at hcore
   rw [DoubleCoset.mem_doubleCoset] at hcore ⊢
   obtain ⟨γ₁, hγ₁, γ₂, hγ₂, hcore_eq⟩ := hcore
@@ -509,19 +509,17 @@ private lemma product_mem_GL_DC_coprime_aux
 private lemma product_mem_GL_DC_coprime (N : ℕ) [NeZero N]
     (m n : ℕ) (hm_pos : 0 < m) (hn_pos : 0 < n) (hcop : Nat.Coprime m n)
     (p : HeckeRing.decompQuot (Gamma0_pair N) (HeckeCoset.rep (T_diag_Gamma0 N (![1, m])
-      (fun i ↦ by fin_cases i <;> simp [hm_pos]) (by simp [Int.gcd_one_left]))) ×
+      (fun i ↦ by fin_cases i <;> simp [hm_pos]) (by simp))) ×
       HeckeRing.decompQuot (Gamma0_pair N) (HeckeCoset.rep (T_diag_Gamma0 N (![1, n])
-      (fun i ↦ by fin_cases i <;> simp [hn_pos]) (by simp [Int.gcd_one_left])))) :
+      (fun i ↦ by fin_cases i <;> simp [hn_pos]) (by simp)))) :
     (p.1.out : GL (Fin 2) ℚ) *
       (HeckeCoset.rep (T_diag_Gamma0 N (![1, m])
-        (fun i ↦ by fin_cases i <;> simp [hm_pos]) (by simp [Int.gcd_one_left]))).1 *
+        (fun i ↦ by fin_cases i <;> simp [hm_pos]) (by simp))).1 *
       ((p.2.out : GL (Fin 2) ℚ) *
       (HeckeCoset.rep (T_diag_Gamma0 N (![1, n])
-        (fun i ↦ by fin_cases i <;> simp [hn_pos]) (by simp [Int.gcd_one_left]))).1) ∈
+        (fun i ↦ by fin_cases i <;> simp [hn_pos]) (by simp))).1) ∈
     DoubleCoset.doubleCoset (HeckeCoset.rep (T_diag (![1, m * n])) : GL (Fin 2) ℚ)
       ((GL_pair 2).H : Set _) ((GL_pair 2).H : Set _) := by
-  have hmn_pos : ∀ i : Fin 2, 0 < (![1, m * n]) i := fun i ↦ by
-    fin_cases i <;> simp [Nat.mul_pos hm_pos hn_pos]
   have h_dc_eq : DoubleCoset.doubleCoset
       (HeckeCoset.rep (T_diag (![1, m * n]) : HeckeCoset (GL_pair 2)) : GL _ ℚ)
       ((GL_pair 2).H : Set _) ((GL_pair 2).H : Set _) =
@@ -529,30 +527,21 @@ private lemma product_mem_GL_DC_coprime (N : ℕ) [NeZero N]
       ((GL_pair 2).H : Set _) ((GL_pair 2).H : Set _) := by
     have h1 := HeckeCoset.rep_mem (T_diag (![1, m * n]))
     rw [show T_diag (![1, m * n]) = ⟦diagMat_delta 2 (![1, m * n])⟧ from rfl,
-      HeckeCoset.toSet_mk, diagMat_delta_val 2 _ hmn_pos] at h1
+      HeckeCoset.toSet_mk,
+      diagMat_delta_val 2 _ (fun i ↦ by fin_cases i <;> simp [Nat.mul_pos hm_pos hn_pos])] at h1
     exact DoubleCoset.doubleCoset_eq_of_mem h1
   rw [h_dc_eq]
-  have hm_coset := congr_arg (cosetMap N) (HeckeCoset.mk_rep
-    (T_diag_Gamma0 N (![1, m]) (fun i ↦ by fin_cases i <;> simp [hm_pos])
-      (by simp [Int.gcd_one_left])))
-  simp only [cosetMap_T_diag_Gamma0] at hm_coset
-  have hm_gl := (HeckeCoset.eq_iff _ (diagMat_delta 2 (![1, m]))).mp hm_coset
-  have hn_coset := congr_arg (cosetMap N) (HeckeCoset.mk_rep
-    (T_diag_Gamma0 N (![1, n]) (fun i ↦ by fin_cases i <;> simp [hn_pos])
-      (by simp [Int.gcd_one_left])))
-  simp only [cosetMap_T_diag_Gamma0] at hn_coset
-  have hn_gl := (HeckeCoset.eq_iff _ (diagMat_delta 2 (![1, n]))).mp hn_coset
   apply product_mem_GL_DC_coprime_aux m n hm_pos hn_pos hcop
   · exact Gamma0_le_SLnZ N (SetLike.coe_mem p.1.out)
   · exact Gamma0_le_SLnZ N (SetLike.coe_mem p.2.out)
   · apply Gamma0_doubleCoset_subset_Gamma N
     have h := HeckeCoset.rep_mem (T_diag_Gamma0 N (![1, m])
-      (fun i ↦ by fin_cases i <;> simp [hm_pos]) (by simp [Int.gcd_one_left]))
-    simp only [T_diag_Gamma0, HeckeCoset.toSet_mk] at h; exact h
+      (fun i ↦ by fin_cases i <;> simp [hm_pos]) (by simp))
+    simpa only [T_diag_Gamma0, HeckeCoset.toSet_mk] using h
   · apply Gamma0_doubleCoset_subset_Gamma N
     have h := HeckeCoset.rep_mem (T_diag_Gamma0 N (![1, n])
-      (fun i ↦ by fin_cases i <;> simp [hn_pos]) (by simp [Int.gcd_one_left]))
-    simp only [T_diag_Gamma0, HeckeCoset.toSet_mk] at h; exact h
+      (fun i ↦ by fin_cases i <;> simp [hn_pos]) (by simp))
+    simpa only [T_diag_Gamma0, HeckeCoset.toSet_mk] using h
 
 /-- Every mulMap output for coprime `diag(1,m) × diag(1,n)` in the Gamma0 Hecke algebra
 equals `T_diag_Gamma0 N (![1, m*n])`. Uses the level-1 `doubleCoset_mul_coprime_mem`
@@ -561,33 +550,30 @@ to pin down the Gamma0 coset. -/
 lemma mulMap_Gamma0_coprime_eq (N : ℕ) [NeZero N]
     (m n : ℕ) (hm_pos : 0 < m) (hn_pos : 0 < n) (hcop : Nat.Coprime m n)
     (p : HeckeRing.decompQuot (Gamma0_pair N) (HeckeCoset.rep (T_diag_Gamma0 N (![1, m])
-      (fun i ↦ by fin_cases i <;> simp [hm_pos]) (by simp [Int.gcd_one_left]))) ×
+      (fun i ↦ by fin_cases i <;> simp [hm_pos]) (by simp))) ×
       HeckeRing.decompQuot (Gamma0_pair N) (HeckeCoset.rep (T_diag_Gamma0 N (![1, n])
-      (fun i ↦ by fin_cases i <;> simp [hn_pos]) (by simp [Int.gcd_one_left])))) :
+      (fun i ↦ by fin_cases i <;> simp [hn_pos]) (by simp)))) :
     HeckeRing.mulMap (Gamma0_pair N) _ _ p =
       T_diag_Gamma0 N (![1, m * n])
         (fun i ↦ by fin_cases i <;> simp [Nat.mul_pos hm_pos hn_pos])
-        (by simp [Int.gcd_one_left]) := by
+        (by simp) := by
   set D := HeckeRing.mulMap (Gamma0_pair N) _ _ p
-  have hD_mem : (HeckeRing.mulMap (Gamma0_pair N) _ _ p).out.1 ∈ (Gamma0_pair N).Δ :=
-    (HeckeCoset.rep (HeckeRing.mulMap (Gamma0_pair N) _ _ p)).2
-  obtain ⟨a, ha, hgcd_a, hdiv_a, hrep⟩ := Gamma0_exists_diag_rep N
-    (HeckeCoset.rep D)
-  have hrep' : D = T_diag_Gamma0 N a ha hgcd_a := by
-    rw [← hrep]; exact (HeckeCoset.mk_rep D).symm
-  have hGL : cosetMap N D = T_diag a := by
-    rw [hrep', cosetMap_T_diag_Gamma0]
+  obtain ⟨a, ha, hgcd_a, hdiv_a, hrep⟩ := Gamma0_exists_diag_rep N (HeckeCoset.rep D)
+  have hrep' : D = T_diag_Gamma0 N a ha hgcd_a := hrep ▸ (HeckeCoset.mk_rep D).symm
+  have hGL : cosetMap N D = T_diag a := by rw [hrep', cosetMap_T_diag_Gamma0]
   have hGL_mn : cosetMap N D = T_diag (![1, m * n]) :=
     cosetMap_mulMap_mem_GL_DC N _ _ p _ (product_mem_GL_DC_coprime N m n hm_pos hn_pos hcop p)
-  have hdiv_a' : DivChain 2 a := fun i hi ↦ (show i = 0 by omega) ▸ hdiv_a
+  have hdiv_a' : DivChain 2 a := fun i _ ↦ (show i = 0 by lia) ▸ hdiv_a
   have hdiv_mn : DivChain 2 (![1, m * n]) := fun i hi ↦ by
-    have h0 : (⟨i, by omega⟩ : Fin 2) = (0 : Fin 2) := Fin.ext (show i = 0 by omega)
-    have h1 : (⟨i + 1, hi⟩ : Fin 2) = (1 : Fin 2) := Fin.ext (show i + 1 = 1 by omega)
-    show (![1, m * n]) ⟨i, _⟩ ∣ (![1, m * n]) ⟨i + 1, hi⟩; rw [h0, h1]; simp
+    have h0 : (⟨i, by lia⟩ : Fin 2) = (0 : Fin 2) := Fin.ext (show i = 0 by lia)
+    have h1 : (⟨i + 1, hi⟩ : Fin 2) = (1 : Fin 2) := Fin.ext (show i + 1 = 1 by lia)
+    change (![1, m * n]) ⟨i, _⟩ ∣ (![1, m * n]) ⟨i + 1, hi⟩
+    simp [h0, h1]
   have ha_eq : a = ![1, m * n] := diagonal_representative_unique 2 a ![1, m * n]
     ha (fun i ↦ by fin_cases i <;> simp [Nat.mul_pos hm_pos hn_pos])
     hdiv_a' hdiv_mn (by rw [← hGL, hGL_mn])
-  subst ha_eq; exact hrep'
+  subst ha_eq
+  exact hrep'
 
 
 end HeckeRing.GLn
