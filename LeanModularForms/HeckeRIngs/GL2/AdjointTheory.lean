@@ -3,17 +3,17 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: LeanModularForms contributors
 -/
+import Mathlib.Analysis.Complex.Polynomial.Basic
+import Mathlib.Analysis.Complex.UpperHalfPlane.Metric
+import Mathlib.Analysis.InnerProductSpace.Semisimple
+import Mathlib.LinearAlgebra.Eigenspace.Pi
+import Mathlib.LinearAlgebra.Eigenspace.Semisimple
+import Mathlib.LinearAlgebra.Eigenspace.Triangularizable
+import Mathlib.MeasureTheory.Measure.Hausdorff
 import LeanModularForms.HeckeRIngs.GL2.FourierHecke
 import LeanModularForms.HeckeRIngs.GL2.HeckeT_p_Gamma1
 import LeanModularForms.Modularforms.PeterssonInner
 import LeanModularForms.Modularforms.PeterssonLevelN
-import Mathlib.Analysis.Complex.UpperHalfPlane.Metric
-import Mathlib.MeasureTheory.Measure.Hausdorff
-import Mathlib.LinearAlgebra.Eigenspace.Triangularizable
-import Mathlib.LinearAlgebra.Eigenspace.Pi
-import Mathlib.LinearAlgebra.Eigenspace.Semisimple
-import Mathlib.Analysis.Complex.Polynomial.Basic
-import Mathlib.Analysis.InnerProductSpace.Semisimple
 
 /-!
 # Hecke adjoint theory: core cusp/Hecke infrastructure
@@ -315,6 +315,8 @@ theorem heckeT_n_cusp_mul_apply (n₁ n₂ : ℕ) [NeZero n₁] [NeZero n₂]
   rw [h_eq]
   rfl
 
+/-- A representative `γ₀ ∈ Γ₀(N)` whose `(0,0)`-entry is `p`, used as the adjoint
+representative for `⟨d⟩` in the slash formulation. -/
 noncomputable def adjointGamma0Rep (p N : ℕ) (hpN : Nat.Coprime p N) :
     ↥(Gamma0 N) :=
   let m := Int.gcdA p N
@@ -327,6 +329,7 @@ noncomputable def adjointGamma0Rep (p N : ℕ) (hpN : Nat.Coprime p N) :
       rw [Gamma0_mem]
       simp⟩
 
+/-- The mod-`N` unit attached to `adjointGamma0Rep` is `(unitOfCoprime p)⁻¹`. -/
 lemma adjointGamma0Rep_units (p N : ℕ) (hpN : Nat.Coprime p N) [NeZero N] :
     Gamma0MapUnits (adjointGamma0Rep p N hpN) =
       (ZMod.unitOfCoprime p hpN)⁻¹ := by
@@ -345,6 +348,7 @@ lemma adjointGamma0Rep_units (p N : ℕ) (hpN : Nat.Coprime p N) [NeZero N] :
   simp only [MonoidHom.coe_mk, OneHom.coe_mk]
   exact hmod
 
+/-- `⟨p⟩ · f` agrees with `f ∣[k] γ₀⁻¹` for `γ₀ = adjointGamma0Rep p N hpN`. -/
 lemma coe_diamondOp_cusp_eq_slash_adjointGamma0Rep_inv
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
@@ -393,6 +397,7 @@ private lemma coe_diamondOp_inv_cusp_eq_slash_sigma_p_inv
       Gamma0 N)⁻¹ h_units]
   rfl
 
+/-- `⟨p⟩ · f` equals `f` slashed by `sigma_p_specific N p`. -/
 lemma coe_diamondOp_cusp_eq_slash_sigma_p
     (p : ℕ) (hp : 0 < p) (hpN : Nat.Coprime p N)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
@@ -406,6 +411,7 @@ lemma coe_diamondOp_cusp_eq_slash_sigma_p
     (Gamma0MapUnits_sigma_p_specific N p hp hpN)]
   rfl
 
+/-- Slashing `⟨p⟩⁻¹ · f` by `sigma_p_specific` recovers `f`. -/
 lemma slash_sigma_p_diamond_inv_cusp_eq
     (p : ℕ) (hp : 0 < p) (hpN : Nat.Coprime p N)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
@@ -437,6 +443,8 @@ private lemma slash_sigma_p_inv_diamond_cusp_eq
         (sigma_p_specific N p hp hpN))⁻¹ by rw [map_inv],
     ← SlashAction.slash_mul, mul_inv_cancel, SlashAction.slash_one]
 
+/-- A representative `γ₁ ∈ Γ₁(N)` paired with `adjointGamma0Rep` for the slash
+formulation of the adjoint identity. -/
 noncomputable def adjointGamma1Rep (p N : ℕ) (hpN : Nat.Coprime p N) :
     SL(2, ℤ) :=
   let a := Int.gcdA p N
@@ -447,6 +455,7 @@ noncomputable def adjointGamma1Rep (p N : ℕ) (hpN : Nat.Coprime p N) :
     simp only [Matrix.det_fin_two_of]
     linarith⟩
 
+/-- `adjointGamma1Rep p N hpN` belongs to `Γ₁(N)`. -/
 lemma adjointGamma1Rep_mem_Gamma1 (p N : ℕ) [NeZero N]
     (hpN : Nat.Coprime p N) :
     adjointGamma1Rep p N hpN ∈ Gamma1 N := by
@@ -552,6 +561,7 @@ private lemma adjointGamma0Rep_mul_sigma_p_mem_Gamma1
     adjointGamma0Rep_mul_sigma_p_entry_11 p N hp hpN,
     adjointGamma0Rep_mul_sigma_p_entry_10 p N hp hpN⟩
 
+/-- The element `γ₀ · σ_p ∈ Γ₁(N)` packaged with its membership proof. -/
 noncomputable def gamma1_of_gamma0_sigma_p
     (p N : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) :
     ↥(Gamma1 N) :=
@@ -565,6 +575,7 @@ private lemma gamma1_of_gamma0_sigma_p_coe
       ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) *
         sigma_p_specific N p hp hpN := rfl
 
+/-- `σ_p⁻¹` decomposes as `γ₁⁻¹ · γ₀` where `γ₀ ∈ Γ₀(N)` and `γ₁ ∈ Γ₁(N)`. -/
 lemma sigma_p_inv_eq_gamma1_inv_mul_gamma0
     (p N : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) :
     (sigma_p_specific N p hp hpN)⁻¹ =
@@ -600,24 +611,22 @@ noncomputable def peterssonAdj (α : GL (Fin 2) ℝ) : GL (Fin 2) ℝ :=
     rw [Matrix.det_adjugate]
     exact pow_ne_zero _ α.det_ne_zero)
 
-/-- `det(peterssonAdj α) = det(α)` for 2×2 matrices (since det(adjugate) = det^{n-1}). -/
-lemma peterssonAdj_det (α : GL (Fin 2) ℝ) :
-    (peterssonAdj α).det = α.det := by
-  have hcoe : (peterssonAdj α : Matrix (Fin 2) (Fin 2) ℝ) =
-      (α : Matrix (Fin 2) (Fin 2) ℝ).adjugate := by
-    simp [peterssonAdj]
-  ext
-  show (peterssonAdj α : Matrix (Fin 2) (Fin 2) ℝ).det =
-      (α : Matrix (Fin 2) (Fin 2) ℝ).det
-  rw [hcoe, Matrix.det_adjugate, Fintype.card_fin]
-  ring
-
 /-- Coercion: `peterssonAdj α` as a matrix equals the adjugate of `α`. -/
 lemma peterssonAdj_coe (α : GL (Fin 2) ℝ) :
     (peterssonAdj α : Matrix (Fin 2) (Fin 2) ℝ) =
       (α : Matrix (Fin 2) (Fin 2) ℝ).adjugate := by
   simp [peterssonAdj]
 
+/-- `det(peterssonAdj α) = det(α)` for 2×2 matrices (since det(adjugate) = det^{n-1}). -/
+lemma peterssonAdj_det (α : GL (Fin 2) ℝ) :
+    (peterssonAdj α).det = α.det := by
+  ext
+  show (peterssonAdj α : Matrix (Fin 2) (Fin 2) ℝ).det =
+      (α : Matrix (Fin 2) (Fin 2) ℝ).det
+  rw [peterssonAdj_coe, Matrix.det_adjugate, Fintype.card_fin]
+  ring
+
+/-- `peterssonAdj` reverses products: `(αβ)† = β† · α†`. -/
 lemma peterssonAdj_mul (α β : GL (Fin 2) ℝ) :
     peterssonAdj (α * β) = peterssonAdj β * peterssonAdj α := by
   apply Units.ext
@@ -663,15 +672,13 @@ lemma peterssonAdj_mapGL_SL_eq_inv (q : SL(2, ℤ)) :
   apply Units.ext
   rw [peterssonAdj_coe, Matrix.coe_units_inv]
   have hdet : (mapGL ℝ q : Matrix (Fin 2) (Fin 2) ℝ).det = 1 := by
-    have : (mapGL ℝ q : Matrix (Fin 2) (Fin 2) ℝ) =
+    have hmap : (mapGL ℝ q : Matrix (Fin 2) (Fin 2) ℝ) =
         ((Int.castRingHom ℝ).mapMatrix q.val) := by
-      ext i j
-      simp [mapGL_coe_matrix, Int.castRingHom]
-    rw [this, ← RingHom.map_det, q.property]
-    simp
-  rw [Matrix.inv_def, Ring.inverse_eq_inv', hdet]
-  simp
+      ext i j; simp [mapGL_coe_matrix, Int.castRingHom]
+    rw [hmap, ← RingHom.map_det, q.property]; simp
+  rw [Matrix.inv_def, Ring.inverse_eq_inv', hdet, inv_one, one_smul]
 
+/-- `(q†)⁻¹ = q` for `q : SL(2, ℤ)` cast to `GL(2, ℝ)`. -/
 lemma peterssonAdj_inv_mapGL_SL_eq_self (q : SL(2, ℤ)) :
     (peterssonAdj ((mapGL ℝ q : GL (Fin 2) ℝ)))⁻¹ = (mapGL ℝ q : GL (Fin 2) ℝ) := by
   rw [peterssonAdj_mapGL_SL_eq_inv, inv_inv]
@@ -688,14 +695,14 @@ private lemma GL_inv_entry (α : GL (Fin 2) ℝ) (i j : Fin 2) :
   rw [Matrix.coe_units_inv α, hinv, Matrix.smul_apply, smul_eq_mul,
     show A.det = α.det.val from rfl]
 
+/-- `α†` and `α⁻¹` induce the same Möbius action on the upper half-plane. -/
 lemma peterssonAdj_smul_eq (α : GL (Fin 2) ℝ) (τ : ℍ) :
     (peterssonAdj α) • τ = α⁻¹ • τ := by
   have hdet_ne : (α.det.val : ℂ) ≠ 0 :=
     Complex.ofReal_ne_zero.mpr (Units.ne_zero α.det)
   have hadj_entry : ∀ i j, (peterssonAdj α : Matrix _ _ ℝ) i j =
-      (α : Matrix (Fin 2) (Fin 2) ℝ).adjugate i j := by
-    intro i j
-    simp [peterssonAdj]
+      (α : Matrix (Fin 2) (Fin 2) ℝ).adjugate i j :=
+    fun i j ↦ congrFun (congrFun (peterssonAdj_coe α) i) j
   have hnum : num (peterssonAdj α) (τ : ℂ) = ↑α.det.val * num α⁻¹ (τ : ℂ) := by
     simp only [num, hadj_entry, GL_inv_entry]
     push_cast
@@ -719,9 +726,8 @@ private lemma peterssonAdj_denom (α : GL (Fin 2) ℝ) (τ : ℍ) :
     UpperHalfPlane.denom (peterssonAdj α) τ =
       ↑(α.det.val) * UpperHalfPlane.denom α⁻¹ τ := by
   have hadj_entry : ∀ i j, (peterssonAdj α : Matrix _ _ ℝ) i j =
-      (α : Matrix (Fin 2) (Fin 2) ℝ).adjugate i j := by
-    intro i j
-    simp [peterssonAdj]
+      (α : Matrix (Fin 2) (Fin 2) ℝ).adjugate i j :=
+    fun i j ↦ congrFun (congrFun (peterssonAdj_coe α) i) j
   simp only [denom, hadj_entry, GL_inv_entry]
   push_cast
   have hdet_ne : (α.det.val : ℂ) ≠ 0 :=
@@ -750,8 +756,8 @@ lemma slash_peterssonAdj_eq (α : GL (Fin 2) ℝ) (hα : 0 < α.det.val)
   have hcd : (↑d : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr (ne_of_gt hα)
   set G := σ α⁻¹ (g (α⁻¹ • τ))
   set D := denom α⁻¹ (↑τ)
-  suffices h : G * (↑d : ℂ) ^ (k - 1) * ((↑d : ℂ) ^ (-k) * D ^ (-k)) =
-      (↑d : ℂ) ^ (k - 2) * (G * (↑d : ℂ)⁻¹ ^ (k - 1) * D ^ (-k)) by exact h
+  change G * (↑d : ℂ) ^ (k - 1) * ((↑d : ℂ) ^ (-k) * D ^ (-k)) =
+      (↑d : ℂ) ^ (k - 2) * (G * (↑d : ℂ)⁻¹ ^ (k - 1) * D ^ (-k))
   rw [inv_zpow']
   have h1 : (k - 1 : ℤ) + (-k) = -1 := by lia
   have h2 : (k - 2 : ℤ) + (-(k - 1)) = -1 := by lia
@@ -838,6 +844,14 @@ theorem peterssonInner_LHS_distributed_summand_to_tile_form
           GL (Fin 2) ℝ) (⇑f : ℍ → ℂ)]
   exact peterssonInner_slash_adjoint_for_heckeRep_per_q q β hβ f g
 
+private lemma mapGL_SL_det_pos (γ : SL(2, ℤ)) :
+    0 < (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ : GL (Fin 2) ℝ)).det.val := by
+  show 0 < (((mapGL ℝ γ : GL (Fin 2) ℝ)) : Matrix (Fin 2) (Fin 2) ℝ).det
+  rw [show ((mapGL ℝ γ : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
+      ((Int.castRingHom ℝ).mapMatrix γ.val) by rw [mapGL_coe_matrix]; rfl,
+    ← RingHom.map_det, γ.property]
+  norm_num
+
 private lemma peterssonInner_mapGL_smul_eq_of_slash_invariant
     (D : Set ℍ) (γ : SL(2, ℤ)) (F G : ℍ → ℂ)
     (hF : F ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ : GL (Fin 2) ℝ) = F)
@@ -845,15 +859,8 @@ private lemma peterssonInner_mapGL_smul_eq_of_slash_invariant
     peterssonInner k
         (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ : GL (Fin 2) ℝ) • D) F G =
       peterssonInner k D F G := by
-  have hα : 0 <
-      (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ : GL (Fin 2) ℝ)).det.val := by
-    show 0 < (((mapGL ℝ γ : GL (Fin 2) ℝ)) : Matrix (Fin 2) (Fin 2) ℝ).det
-    rw [show ((mapGL ℝ γ : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
-        ((Int.castRingHom ℝ).mapMatrix γ.val) by rw [mapGL_coe_matrix]; rfl,
-      ← RingHom.map_det, γ.property]
-    norm_num
   have h := peterssonInner_slash_adjoint (k := k) D
-    (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ : GL (Fin 2) ℝ)) hα F
+    (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ : GL (Fin 2) ℝ)) (mapGL_SL_det_pos γ) F
     (G ∣[k] (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ : GL (Fin 2) ℝ)))
   rw [peterssonAdj_mapGL_SL_eq_inv γ,
     show ((G ∣[k] (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ : GL (Fin 2) ℝ)))
@@ -881,6 +888,7 @@ private lemma peterssonInner_mapGL_smul_eq_of_Gamma1
     exact slash_Gamma1_eq g γ hγ
   exact peterssonInner_mapGL_smul_eq_of_slash_invariant D γ ⇑f ⇑g hf hg
 
+/-- Translating both arguments by `γ ∈ SL(2, ℤ)` equals slashing both arguments by `γ`. -/
 lemma peterssonInner_mapGL_smul_eq_slash
     (D : Set ℍ) (γ : SL(2, ℤ)) (F G : ℍ → ℂ) :
     peterssonInner k
@@ -888,15 +896,8 @@ lemma peterssonInner_mapGL_smul_eq_slash
       peterssonInner k D
         (F ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ : GL (Fin 2) ℝ))
         (G ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ : GL (Fin 2) ℝ)) := by
-  have hα : 0 <
-      (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ : GL (Fin 2) ℝ)).det.val := by
-    show 0 < (((mapGL ℝ γ : GL (Fin 2) ℝ)) : Matrix (Fin 2) (Fin 2) ℝ).det
-    rw [show ((mapGL ℝ γ : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
-        ((Int.castRingHom ℝ).mapMatrix γ.val) by rw [mapGL_coe_matrix]; rfl,
-      ← RingHom.map_det, γ.property]
-    norm_num
   have h := peterssonInner_slash_adjoint (k := k) D
-    (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ : GL (Fin 2) ℝ)) hα F
+    (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ : GL (Fin 2) ℝ)) (mapGL_SL_det_pos γ) F
     (G ∣[k] (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ : GL (Fin 2) ℝ)))
   rw [peterssonAdj_mapGL_SL_eq_inv γ,
     show ((G ∣[k] (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ : GL (Fin 2) ℝ)))
