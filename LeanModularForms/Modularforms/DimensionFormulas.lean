@@ -458,8 +458,7 @@ lemma dim_modforms_lvl_one (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Even k) :
   by_cases HK : (3 : ℤ) ≤ (k : ℤ) - 12
   · refine dim_modforms_lvl_one_step k HK (ihn (k - 12) (by omega) (by omega) ?_)
     refine (Nat.even_sub (by omega)).mpr ?_
-    simp only [hk2, true_iff]
-    decide
+    simpa [hk2] using (by decide : Even 12)
   · exact dim_modforms_lvl_one_base k hk hk2 HK
 
 lemma ModularForm.dimension_level_one (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Even k) :
@@ -482,12 +481,11 @@ private lemma finiteDimensional_of_rank_lt_aleph0_aux (V : Type*) [AddCommGroup 
 lemma ModularForm.levelOne_eq_zero_of_odd_weight {k : ℤ} (hk : Odd k)
     (f : ModularForm Γ(1) k) : f = 0 := by
   ext z
-  have h' : f z = -f z := by
-    have h : f z = (-1 : ℂ) ^ k * f z := by
-      simpa [denom, show (-1 : SL(2, ℤ)) • z = z by simp] using
-        (SlashInvariantForm.slash_action_eqn_SL'' (f := f) (γ := (-1 : SL(2, ℤ)))
-          (hγ := CongruenceSubgroup.mem_Gamma_one (-1 : SL(2, ℤ))) z)
-    simpa [hk.neg_one_zpow, neg_one_mul] using h
+  have h : f z = (-1 : ℂ) ^ k * f z := by
+    simpa [denom, show (-1 : SL(2, ℤ)) • z = z by simp] using
+      (SlashInvariantForm.slash_action_eqn_SL'' (f := f) (γ := (-1 : SL(2, ℤ)))
+        (hγ := CongruenceSubgroup.mem_Gamma_one (-1 : SL(2, ℤ))) z)
+  have h' : f z = -f z := by simpa [hk.neg_one_zpow, neg_one_mul] using h
   simpa using (CharZero.eq_neg_self_iff (a := f z)).1 h'
 
 lemma finiteDimensional_modularForm_level_one (k : ℤ) :
@@ -528,9 +526,8 @@ lemma finiteDimensional_modularForm_level_one (k : ℤ) :
         finiteDimensional_of_rank_lt_aleph0_aux
           (V := ModularForm (CongruenceSubgroup.Gamma 1) (kN : ℤ)) hr'
       exact hkNat ▸ (show FiniteDimensional ℂ (ModularForm Γ(1) (kN : ℤ)) by infer_instance)
-  · have hz : ∀ f : ModularForm Γ(1) k, f = 0 := fun f ↦
-      ModularForm.levelOne_eq_zero_of_odd_weight (k := k) hk2 f
-    haveI : Subsingleton (ModularForm Γ(1) k) := subsingleton_of_forall_eq 0 hz
+  · haveI : Subsingleton (ModularForm Γ(1) k) :=
+      subsingleton_of_forall_eq 0 fun f ↦ ModularForm.levelOne_eq_zero_of_odd_weight (k := k) hk2 f
     exact finiteDimensional_of_subsingleton_aux (V := ModularForm Γ(1) k)
 
 lemma finiteDimensional_modularForm_congr {k : ℤ} {H K : Subgroup (GL (Fin 2) ℝ)}
