@@ -57,22 +57,15 @@ theorem heckeT_p_fun_slash_comm_charSpace (k : ℤ) (p : ℕ)
   set d := Gamma0MapUnits g
   set Tf := heckeT_p k p hp hpN f
   have hLHS : heckeT_p_fun k p hp hpN f ∣[k] mapGL ℝ (g : SL(2, ℤ)) =
-      ⇑(diamondOpAux k g Tf) := by
-    show (⇑Tf : ℍ → ℂ) ∣[k] mapGL ℝ (g : SL(2, ℤ)) = ⇑(diamondOpAux k g Tf)
-    rfl
-  rw [hLHS]
-  have hdia_aux : diamondOpAux k g Tf = diamondOp k d Tf :=
-    (diamondOp_eq_diamondOpAux k d g rfl).symm.symm ▸ rfl
-  rw [hdia_aux]
-  have h_comm := heckeT_p_comm_diamondOp (N := N) k p hp hpN d
+      ⇑(diamondOpAux k g Tf) := rfl
+  rw [hLHS, ← diamondOp_eq_diamondOpAux k d g rfl]
   have h_apply_f : diamondOp k d Tf = heckeT_p k p hp hpN (diamondOp k d f) := by
     show (diamondOp k d).comp (heckeT_p k p hp hpN) f =
       (heckeT_p k p hp hpN).comp (diamondOp k d) f
-    rw [h_comm]
+    rw [heckeT_p_comm_diamondOp (N := N) k p hp hpN d]
   rw [h_apply_f]
   have hdf : diamondOp k d f = (↑(χ d) : ℂ) • f := by
-    have := (mem_modFormCharSpace_iff k χ f).mp hf d
-    simpa using this
+    simpa using (mem_modFormCharSpace_iff k χ f).mp hf d
   rw [hdf, map_smul]
   rfl
 
@@ -91,7 +84,7 @@ theorem heckeSlash_gen_functional_equivariance_D_p_Gamma0_trivial
     intro h hh
     set f_g0 : ModularForm ((Gamma0 N).map (mapGL ℝ)) k :=
       modFormCharSpace_one_equiv_Gamma0 N k ⟨f, hf⟩
-    have hfg : (⇑f : ℍ → ℂ) = ⇑f_g0 := by rfl
+    have hfg : (⇑f : ℍ → ℂ) = ⇑f_g0 := rfl
     rw [hfg]
     exact Gamma0_pair_H_invariant_of_invariant N
       (fun γ hγ ↦ SlashInvariantFormClass.slash_action_eq f_g0 γ hγ) h hh
