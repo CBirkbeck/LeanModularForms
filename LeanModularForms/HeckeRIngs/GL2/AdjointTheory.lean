@@ -695,14 +695,16 @@ private lemma GL_inv_entry (α : GL (Fin 2) ℝ) (i j : Fin 2) :
   rw [Matrix.coe_units_inv α, hinv, Matrix.smul_apply, smul_eq_mul,
     show A.det = α.det.val from rfl]
 
+private lemma peterssonAdj_entry (α : GL (Fin 2) ℝ) (i j : Fin 2) :
+    (peterssonAdj α : Matrix _ _ ℝ) i j = (α : Matrix (Fin 2) (Fin 2) ℝ).adjugate i j :=
+  congrFun (congrFun (peterssonAdj_coe α) i) j
+
 /-- `α†` and `α⁻¹` induce the same Möbius action on the upper half-plane. -/
 lemma peterssonAdj_smul_eq (α : GL (Fin 2) ℝ) (τ : ℍ) :
     (peterssonAdj α) • τ = α⁻¹ • τ := by
   have hdet_ne : (α.det.val : ℂ) ≠ 0 :=
     Complex.ofReal_ne_zero.mpr (Units.ne_zero α.det)
-  have hadj_entry : ∀ i j, (peterssonAdj α : Matrix _ _ ℝ) i j =
-      (α : Matrix (Fin 2) (Fin 2) ℝ).adjugate i j :=
-    fun i j ↦ congrFun (congrFun (peterssonAdj_coe α) i) j
+  have hadj_entry := peterssonAdj_entry α
   have hnum : num (peterssonAdj α) (τ : ℂ) = ↑α.det.val * num α⁻¹ (τ : ℂ) := by
     simp only [num, hadj_entry, GL_inv_entry]
     push_cast
@@ -725,9 +727,7 @@ lemma peterssonAdj_smul_eq (α : GL (Fin 2) ℝ) (τ : ℍ) :
 private lemma peterssonAdj_denom (α : GL (Fin 2) ℝ) (τ : ℍ) :
     UpperHalfPlane.denom (peterssonAdj α) τ =
       ↑(α.det.val) * UpperHalfPlane.denom α⁻¹ τ := by
-  have hadj_entry : ∀ i j, (peterssonAdj α : Matrix _ _ ℝ) i j =
-      (α : Matrix (Fin 2) (Fin 2) ℝ).adjugate i j :=
-    fun i j ↦ congrFun (congrFun (peterssonAdj_coe α) i) j
+  have hadj_entry := peterssonAdj_entry α
   simp only [denom, hadj_entry, GL_inv_entry]
   push_cast
   have hdet_ne : (α.det.val : ℂ) ≠ 0 :=
