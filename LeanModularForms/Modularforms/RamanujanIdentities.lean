@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2026 Chris Birkbeck. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Chris Birkbeck
+-/
 module
 
 public import LeanModularForms.Modularforms.EisensteinAsymptotics
@@ -39,21 +44,11 @@ open scoped ModularForm MatrixGroups Manifold Interval Real NNReal ENNReal Topol
 
 noncomputable section
 
-/-! ## The Ramanujan Identities
-
-These are the main theorems. The primed versions are in terms of serre_D,
-the non-primed versions are in terms of D. -/
-
-/-- Determine scalar coefficient from limits: if `f = c * g` pointwise,
-`f → L` at i∞, and `g → 1` at i∞, then `c = L`.
-
-This captures the "uniqueness of limits" argument used in dimension-1 proofs. -/
-lemma scalar_eq_of_tendsto {f g : ℍ → ℂ} {c L : ℂ} (hfun : ∀ z, f z = c * g z)
+private lemma scalar_eq_of_tendsto {f g : ℍ → ℂ} {c L : ℂ} (hfun : ∀ z, f z = c * g z)
     (hf_lim : Filter.Tendsto f atImInfty (nhds L)) (hg_lim : Filter.Tendsto g atImInfty (nhds 1)) :
-    c = L := by
-  refine (tendsto_nhds_unique hf_lim ?_).symm
-  simpa [mul_one] using (show Filter.Tendsto f atImInfty (nhds (c * 1)) by
-    convert tendsto_const_nhds.mul hg_lim using 1; ext z; exact hfun z)
+    c = L :=
+  (tendsto_nhds_unique hf_lim (by
+    simpa using (tendsto_const_nhds.mul hg_lim).congr fun z ↦ (hfun z).symm)).symm
 
 /--
 Serre derivative of E₂: `serre_D 1 E₂ = - 12⁻¹ * E₄`.
@@ -122,10 +117,7 @@ theorem ramanujan_E₆' : serre_D 6 E₆.toFun = - 2⁻¹ * E₄.toFun * E₄.to
   ring_nf
   norm_num
 
-/-! ## Derived Ramanujan identities (D instead of serre_D) -/
-
-/-- Relationship between D and serre_D: `D f = serre_D k f + k/12 * E₂ * f`. -/
-lemma D_eq_serre_D_add (k : ℂ) (f : ℍ → ℂ) (z : ℍ) :
+private lemma D_eq_serre_D_add (k : ℂ) (f : ℍ → ℂ) (z : ℍ) :
     D f z = serre_D k f z + k * 12⁻¹ * E₂ z * f z := by
   simp only [serre_D_apply]; ring
 
