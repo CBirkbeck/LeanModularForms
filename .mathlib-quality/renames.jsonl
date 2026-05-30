@@ -1,2 +1,0 @@
-{"old": "Delta_E4_eqn", "new": "Delta_eq_Delta_E4_E6_aux", "scope": "public", "file": "LeanModularForms/Modularforms/DimensionFormulas.lean", "decl_line": 207, "reason": "forbidden abbreviation `eqn` (mathlib uses `_eq`)", "worker": "Delta_E4_eqn"}
-{"old": "floor_lem1", "new": "Nat_floor_div_sub", "scope": "public", "file": "LeanModularForms/Modularforms/DimensionFormulas.lean", "decl_line": 396, "reason": "abbreviated `lem1` carries no mathematical content; rename to describe the conclusion", "worker": "floor_lem1"}
