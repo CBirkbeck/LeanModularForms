@@ -1,20 +1,22 @@
- /-
-Copyright (c) 2026. All rights reserved.
+/-
+Copyright (c) 2026 Chris Birkbeck. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: LeanModularForms contributors
+Authors: Chris Birkbeck
 -/
-import LeanModularForms.HeckeRIngs.GL2.Unified.Core
-import LeanModularForms.HeckeRIngs.GL2.Unified.Gamma1CharSpace
-import LeanModularForms.HeckeRIngs.GL2.Unified.Gamma0Trivial
-import LeanModularForms.HeckeRIngs.GL2.Unified.NebentypusSpace
-import LeanModularForms.HeckeRIngs.GL2.Unified.CuspNebentypusSpace
-import LeanModularForms.HeckeRIngs.GL2.Unified.CoprimeCommutativity
-import LeanModularForms.HeckeRIngs.GL2.Unified.TwistedSlash
-import LeanModularForms.HeckeRIngs.GL2.Unified.TwistedHeckeRing
 import LeanModularForms.HeckeRIngs.GL2.Unified.Adjoint
+import LeanModularForms.HeckeRIngs.GL2.Unified.CoprimeCommutativity
+import LeanModularForms.HeckeRIngs.GL2.Unified.Core
+import LeanModularForms.HeckeRIngs.GL2.Unified.CuspNebentypusSpace
 import LeanModularForms.HeckeRIngs.GL2.Unified.Downstream
-import LeanModularForms.HeckeRIngs.GL2.Unified.PrimeHeckeRing
+import LeanModularForms.HeckeRIngs.GL2.Unified.EigenformFromRing
+import LeanModularForms.HeckeRIngs.GL2.Unified.Gamma0Trivial
+import LeanModularForms.HeckeRIngs.GL2.Unified.Gamma1CharSpace
 import LeanModularForms.HeckeRIngs.GL2.Unified.GoodHeckeRing
+import LeanModularForms.HeckeRIngs.GL2.Unified.NebentypusHeckeRingHom
+import LeanModularForms.HeckeRIngs.GL2.Unified.NebentypusSpace
+import LeanModularForms.HeckeRIngs.GL2.Unified.PrimeHeckeRing
+import LeanModularForms.HeckeRIngs.GL2.Unified.TwistedHeckeRing
+import LeanModularForms.HeckeRIngs.GL2.Unified.TwistedSlash
 
 /-!
 # Experimental unified Hecke-operator layer
