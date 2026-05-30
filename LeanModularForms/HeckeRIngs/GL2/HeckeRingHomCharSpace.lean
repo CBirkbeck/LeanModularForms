@@ -84,12 +84,11 @@ theorem heckeT_p_all_preserves_modFormCharSpace (k : ℤ) (p : ℕ) (hp : Nat.Pr
     heckeT_p_all k p hp f ∈ modFormCharSpace k χ := by
   rw [mem_modFormCharSpace_iff] at hf ⊢
   intro d
-  have h_comm := heckeT_p_all_comm_diamondOp k p hp d
   have h1 : diamondOpHom k d (heckeT_p_all k p hp f) =
       heckeT_p_all k p hp (diamondOpHom k d f) := by
     show (diamondOp k d).comp (heckeT_p_all k p hp) f =
       (heckeT_p_all k p hp).comp (diamondOp k d) f
-    rw [h_comm]
+    rw [heckeT_p_all_comm_diamondOp k p hp d]
   rw [h1, hf d, map_smul]
 
 /-- `heckeT_p_all k p hp` restricted to `modFormCharSpace k χ` as a `ℂ`-linear
@@ -137,9 +136,9 @@ theorem heckeT_p_all_charRestrict_commute_distinct (k : ℤ)
   intro f
   apply Subtype.ext
   simp only [Module.End.mul_apply, heckeT_p_all_charRestrict_coe]
-  have h := heckeT_p_all_comm_distinct (N := N) k hp hq hpq
-  have := congr_fun (congr_arg DFunLike.coe h) (f : ModularForm _ k)
-  simpa [Module.End.mul_apply] using this
+  simpa [Module.End.mul_apply] using
+    congr_fun (congr_arg DFunLike.coe (heckeT_p_all_comm_distinct (N := N) k hp hq hpq))
+      (f : ModularForm _ k)
 
 /-- `heckeT_n k n` (for `n` coprime to `N`) restricted to `modFormCharSpace k χ`
 as a `ℂ`-linear endomorphism. -/
@@ -184,9 +183,8 @@ theorem heckeT_n_charRestrict_commute (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
   intro f
   apply Subtype.ext
   simp only [Module.End.mul_apply, heckeT_n_charRestrict_coe]
-  have h := heckeT_n_comm (N := N) k m n
-  have := congr_fun (congr_arg DFunLike.coe h) (f : ModularForm _ k)
-  simpa [Module.End.mul_apply] using this
+  simpa [Module.End.mul_apply] using
+    congr_fun (congr_arg DFunLike.coe (heckeT_n_comm (N := N) k m n)) (f : ModularForm _ k)
 
 /-- For distinct primes `p ≠ q`, the operators `heckeT_p_all k p hp` and
 `heckeT_p_all k q hq` commute pointwise on the eigenspace `modFormCharSpace k χ`. -/
@@ -198,11 +196,10 @@ theorem heckeT_p_all_comm_on_charSpace_via_charRestrict (k : ℤ)
       (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) =
     heckeT_p_all k q hq (heckeT_p_all k p hp
       (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) := by
-  have hcomm := heckeT_p_all_charRestrict_commute_distinct k χ hp hq hpq
-  have h := congr_fun (congr_arg DFunLike.coe hcomm) f
+  have h := congr_fun (congr_arg DFunLike.coe
+    (heckeT_p_all_charRestrict_commute_distinct k χ hp hq hpq)) f
   simp only [Module.End.mul_apply] at h
-  have := congr_arg (Subtype.val (α := _) (p := _)) h
-  simpa using this
+  simpa using congr_arg (Subtype.val (α := _) (p := _)) h
 
 /-- For `m, n` coprime to `N` and any `χ`, the operators `heckeT_n k m` and
 `heckeT_n k n` commute pointwise on `modFormCharSpace k χ`. -/
@@ -214,10 +211,9 @@ theorem heckeT_n_comm_on_charSpace (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
       (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) =
     heckeT_n k n (heckeT_n k m
       (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) := by
-  have hcomm := heckeT_n_charRestrict_commute k χ m n hm hn
-  have h := congr_fun (congr_arg DFunLike.coe hcomm) f
+  have h := congr_fun (congr_arg DFunLike.coe
+    (heckeT_n_charRestrict_commute k χ m n hm hn)) f
   simp only [Module.End.mul_apply] at h
-  have := congr_arg (Subtype.val (α := _) (p := _)) h
-  simpa using this
+  simpa using congr_arg (Subtype.val (α := _) (p := _)) h
 
 end HeckeRing.GL2
