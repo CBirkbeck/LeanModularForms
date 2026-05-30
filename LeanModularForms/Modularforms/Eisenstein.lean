@@ -69,11 +69,11 @@ section Definitions
 /-- The normalised weight-`4` Eisenstein series for `SL₂(ℤ)`. The factor `1/2` matches the
 normalisation `1 + 240 ∑ σ₃(n) qⁿ` (the underlying sum is over coprime integers). -/
 def E₄ : ModularForm (CongruenceSubgroup.Gamma ↑1) 4 :=
-  (1/2 : ℂ) • eisensteinSeriesMF (by norm_num) standardcongruencecondition
+  (1/2 : ℂ) • eisensteinSeriesMF (by norm_num) standardCongruenceCondition
 
 /-- The normalised weight-`6` Eisenstein series for `SL₂(ℤ)`. -/
 def E₆ : ModularForm (CongruenceSubgroup.Gamma ↑1) 6 :=
-  (1/2 : ℂ) • eisensteinSeriesMF (by norm_num) standardcongruencecondition
+  (1/2 : ℂ) • eisensteinSeriesMF (by norm_num) standardCongruenceCondition
 
 lemma E4_eq : E₄ = E 4 (by norm_num) := rfl
 

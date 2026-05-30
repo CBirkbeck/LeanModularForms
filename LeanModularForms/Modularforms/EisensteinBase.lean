@@ -31,11 +31,11 @@ section Definitions
 
 /-- The normalized level-one Eisenstein series of weight `4` as a modular form. -/
 @[expose] public def E₄ : ModularForm (CongruenceSubgroup.Gamma ↑1) 4 :=
-  (1/2 : ℂ) • eisensteinSeriesMF (by decide) standardcongruencecondition -- normalization
+  (1/2 : ℂ) • eisensteinSeriesMF (by decide) standardCongruenceCondition -- normalization
 
 /-- The normalized level-one Eisenstein series of weight `6` as a modular form. -/
 @[expose] public def E₆ : ModularForm (CongruenceSubgroup.Gamma ↑1) 6 :=
-  (1/2 : ℂ) • eisensteinSeriesMF (by decide) standardcongruencecondition
+  (1/2 : ℂ) • eisensteinSeriesMF (by decide) standardCongruenceCondition
 
 /-- `E₄` is definitionally the Eisenstein series `E 4`. -/
 public lemma E4_eq : E₄ = E 4 (by decide) := rfl
