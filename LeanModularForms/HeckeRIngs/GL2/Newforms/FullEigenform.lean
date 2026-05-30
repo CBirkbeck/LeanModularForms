@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 Chris Birkbeck. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: LeanModularForms contributors
+Authors: Chris Birkbeck
 -/
 import LeanModularForms.SMOObligations.StrongMultiplicityOneFull
 
@@ -52,12 +52,6 @@ namespace HeckeRing.GL2
 
 variable {N : ℕ} [NeZero N] {k : ℤ}
 
-/-! ## General-`n` preservation of `modFormCharSpace`
-
-The existing `heckeT_n_preserves_charSpace` is restricted to `n` coprime to `N` because
-its proof uses `heckeT_n_comm_diamondOp`, which carries that hypothesis.  Here we
-generalise via direct induction on the `heckeT_n_aux` prime-power decomposition. -/
-
 /-- A power of the unconditional `heckeT_p_all` preserves `modFormCharSpace k χ`. -/
 private lemma heckeT_p_all_pow_preserves_modFormCharSpace
     (k : ℤ) (p : ℕ) (hp : Nat.Prime p) (χ : (ZMod N)ˣ →* ℂˣ) (r : ℕ) :
@@ -92,7 +86,7 @@ private lemma heckeT_n_aux_preserves_modFormCharSpace
     rw [heckeT_n_aux]
     split_ifs with hm
     · simpa using hf
-    · push_neg at hm
+    · push Not at hm
       dsimp only
       set p := m.minFac
       have hp : Nat.Prime p := Nat.minFac_prime (by omega)
@@ -122,8 +116,6 @@ lemma heckeT_n_cusp_preserves_cuspFormCharSpace_general
   exact heckeT_n_preserves_modFormCharSpace_general k n χ
     (Unified.cuspFormCharSpace_toModularForm'_mem hf)
 
-/-! ## Eigen-property of `T_n f` for `f` a `Newform` -/
-
 /-- **`T_n f` is a `T_q`-eigenform with the same eigenvalue as `f`, for every
 `q` coprime to `N`.**  Uses unconditional commutativity `T_n T_q = T_q T_n`
 (`heckeT_n_comm`) and linearity (`heckeT_n_cusp_smul`):
@@ -134,18 +126,15 @@ private lemma heckeT_n_cusp_of_newform_isEigen
     heckeT_n_cusp k q.val (heckeT_n_cusp k n f.toCuspForm) =
       f.eigenvalue q • heckeT_n_cusp k n f.toCuspForm := by
   haveI : NeZero q.val := ⟨q.pos.ne'⟩
-  have hcomm :
-      heckeT_n_cusp k q.val (heckeT_n_cusp k n f.toCuspForm) =
-        heckeT_n_cusp k n (heckeT_n_cusp k q.val f.toCuspForm) := by
+  have hcomm : heckeT_n_cusp k q.val (heckeT_n_cusp k n f.toCuspForm) =
+      heckeT_n_cusp k n (heckeT_n_cusp k q.val f.toCuspForm) := by
     ext z
-    show (heckeT_n k q.val (heckeT_n_cusp k n f.toCuspForm).toModularForm').toFun z =
+    change (heckeT_n k q.val (heckeT_n_cusp k n f.toCuspForm).toModularForm').toFun z =
       (heckeT_n k n (heckeT_n_cusp k q.val f.toCuspForm).toModularForm').toFun z
     rw [heckeT_n_cusp_toModularForm', heckeT_n_cusp_toModularForm']
-    have h := DFunLike.congr_fun (heckeT_n_comm (N := N) k q.val n) f.toCuspForm.toModularForm'
-    simpa [Module.End.mul_apply] using DFunLike.congr_fun h z
+    simpa [Module.End.mul_apply] using DFunLike.congr_fun
+      (DFunLike.congr_fun (heckeT_n_comm (N := N) k q.val n) f.toCuspForm.toModularForm') z
   rw [hcomm, f.isEigen q hq, heckeT_n_cusp_smul]
-
-/-! ## Bundling `T_n f` as an `Eigenform` and applying SMO -/
 
 /-- Bundle `heckeT_n_cusp k n f.toCuspForm` as an `Eigenform N k` with the same
 Nebentypus character and ring-eigenvalue family as `f`. -/
@@ -175,17 +164,12 @@ private lemma Newform.heckeT_n_cusp_asEigenform_eigenvalue
     (f.heckeT_n_cusp_asEigenform n hfχ).eigenvalue q = f.eigenvalue q := by
   haveI : NeZero q.val := ⟨q.pos.ne'⟩
   set g := f.heckeT_n_cusp_asEigenform n hfχ
-  have hg_eq : g.toCuspForm = heckeT_n_cusp k n f.toCuspForm := rfl
-  have h_g_isEigen : heckeT_n_cusp k q.val g.toCuspForm = g.eigenvalue q • g.toCuspForm :=
-    g.isEigen q hq
-  have h_f_isEigen :
-      heckeT_n_cusp k q.val (heckeT_n_cusp k n f.toCuspForm) =
-        f.eigenvalue q • heckeT_n_cusp k n f.toCuspForm :=
+  have h_f_isEigen : heckeT_n_cusp k q.val (heckeT_n_cusp k n f.toCuspForm) =
+      f.eigenvalue q • heckeT_n_cusp k n f.toCuspForm :=
     heckeT_n_cusp_of_newform_isEigen f n q hq
-  rw [hg_eq] at h_g_isEigen
-  rw [h_g_isEigen] at h_f_isEigen
-  have h_diff :
-      (g.eigenvalue q - f.eigenvalue q) • heckeT_n_cusp k n f.toCuspForm = 0 := by
+  rw [show heckeT_n_cusp k q.val (heckeT_n_cusp k n f.toCuspForm) =
+    g.eigenvalue q • heckeT_n_cusp k n f.toCuspForm from g.isEigen q hq] at h_f_isEigen
+  have h_diff : (g.eigenvalue q - f.eigenvalue q) • heckeT_n_cusp k n f.toCuspForm = 0 := by
     rw [sub_smul, h_f_isEigen, sub_self]
   exact sub_eq_zero.mp ((smul_eq_zero.mp h_diff).resolve_right hTn_ne)
 
@@ -228,12 +212,8 @@ theorem Newform.toCuspForm_isFullEigenform (f : Newform N k) :
     if hTn_ne : heckeT_n_cusp k n.val f.toCuspForm = 0 then (0 : ℂ)
     else f.smoConst n.val hfχ hTn_ne, fun n ↦ ?_⟩
   haveI : NeZero n.val := ⟨n.pos.ne'⟩
-  show heckeT_n_cusp k n.val f.toCuspForm =
-    (if hTn_ne : heckeT_n_cusp k n.val f.toCuspForm = 0 then (0 : ℂ)
-      else f.smoConst n.val hfχ hTn_ne) • f.toCuspForm
   by_cases hTn_ne : heckeT_n_cusp k n.val f.toCuspForm = 0
-  · rw [dif_pos hTn_ne, hTn_ne, zero_smul]
-  · rw [dif_neg hTn_ne]
-    exact f.smoConst_smul_eq n.val hfχ hTn_ne
+  · simp [hTn_ne]
+  · simpa [dif_neg hTn_ne] using f.smoConst_smul_eq n.val hfχ hTn_ne
 
 end HeckeRing.GL2
