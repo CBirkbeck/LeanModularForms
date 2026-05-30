@@ -5,10 +5,8 @@ Authors: Chris Birkbeck
 -/
 module
 
-public import Mathlib.LinearAlgebra.Matrix.SpecialLinearGroup
 public import Mathlib.Data.Fintype.Parity
-
-@[expose] public section
+public import Mathlib.LinearAlgebra.Matrix.SpecialLinearGroup
 
 /-!
 # `S² = -I` in `SL(2, ℤ)`
@@ -17,6 +15,9 @@ A small lemma about the standard generator `S` of `SL(2, ℤ)` satisfying `S * S
 Candidate for upstreaming to `Mathlib.LinearAlgebra.Matrix.SpecialLinearGroup`.
 -/
 
+@[expose] public section
+
 /-- The standard generator `S = ![![0, -1], ![1, 0]]` of `SL(2, ℤ)` satisfies `S * S = -I`. -/
 theorem ModularGroup.modular_S_sq : S * S = -1 := by
-  ext i j; fin_cases i <;> fin_cases j <;> simp [S]
+  ext i j
+  fin_cases i <;> fin_cases j <;> simp [S]
