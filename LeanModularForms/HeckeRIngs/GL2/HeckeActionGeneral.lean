@@ -3,10 +3,10 @@ Copyright (c) 2026 Chris Birkbeck. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import LeanModularForms.HeckeRIngs.GL2.HeckeModularForm
-import LeanModularForms.HeckeRIngs.GL2.Gamma1Pair
-import LeanModularForms.HeckeRIngs.GLn.CongruenceHecke
 import Mathlib.LinearAlgebra.Matrix.Adjugate
+import LeanModularForms.HeckeRIngs.GL2.Gamma1Pair
+import LeanModularForms.HeckeRIngs.GL2.HeckeModularForm
+import LeanModularForms.HeckeRIngs.GLn.CongruenceHecke
 
 /-!
 # Generalized Hecke Action for Arbitrary Hecke Pairs
@@ -46,33 +46,27 @@ open scoped Pointwise ModularForm MatrixGroups UpperHalfPlane
 
 namespace HeckeRing.GL2
 
-private lemma GL_det_ne_zero (g : GL (Fin 2) ℚ) : g.val.det ≠ 0 := by
-  intro h; have := congr_arg det g.val_inv; rw [det_mul, h, det_one] at this; simp at this
-
 /-- The adjugate of a `GL₂(ℚ)` element, as a `GL₂(ℚ)` element.
 For a 2×2 matrix `[[a,b],[c,d]]`, this is `[[d,-b],[-c,a]]`. -/
 noncomputable def GL_adjugate (g : GL (Fin 2) ℚ) : GL (Fin 2) ℚ :=
   GeneralLinearGroup.mkOfDetNeZero (Matrix.adjugate g.val) (by
-    rw [Matrix.det_adjugate, Fintype.card_fin]; simpa using GL_det_ne_zero g)
+    rw [Matrix.det_adjugate, Fintype.card_fin]; simpa using g.det_ne_zero)
 
 @[simp]
 lemma GL_adjugate_val (g : GL (Fin 2) ℚ) :
-    (GL_adjugate g).val = Matrix.adjugate g.val := by
-  simp [GL_adjugate, GeneralLinearGroup.mkOfDetNeZero, GeneralLinearGroup.mk']; rfl
+    (GL_adjugate g).val = Matrix.adjugate g.val := rfl
 
 /-- The adjugate is anti-multiplicative: `adj(g₁ g₂) = adj(g₂) adj(g₁)`. -/
 lemma GL_adjugate_mul (g₁ g₂ : GL (Fin 2) ℚ) :
     GL_adjugate (g₁ * g₂) = GL_adjugate g₂ * GL_adjugate g₁ := by
-  apply GeneralLinearGroup.ext; intro i j
+  ext
   simp [Units.val_mul, adjugate_mul_distrib]
 
 /-- The adjugate is involutive for 2×2 matrices: `adj(adj(g)) = g`. -/
 lemma GL_adjugate_involutive (g : GL (Fin 2) ℚ) :
     GL_adjugate (GL_adjugate g) = g := by
-  apply GeneralLinearGroup.ext; intro i j
-  simp only [GL_adjugate_val]
-  rw [adjugate_adjugate _ (by simp [Fintype.card_fin])]
-  simp [Fintype.card_fin]
+  ext
+  simp [adjugate_adjugate _ (by simp : Fintype.card (Fin 2) ≠ 1)]
 
 /-- `det(adj(g)) = det(g)` for 2×2 matrices. -/
 lemma GL_adjugate_det (g : GL (Fin 2) ℚ) :
@@ -83,23 +77,14 @@ lemma GL_adjugate_det (g : GL (Fin 2) ℚ) :
 lemma GL_adjugate_eq_inv_of_det_one (g : GL (Fin 2) ℚ) (hdet : g.val.det = 1) :
     GL_adjugate g = g⁻¹ := by
   apply Units.ext
-  show (GL_adjugate g).val = (g⁻¹).val
-  rw [GL_adjugate_val]
-  show adjugate g.val = g.inv
-  have h := adjugate_mul g.val
-  rw [hdet, one_smul] at h
-  calc adjugate g.val = adjugate g.val * 1 := (mul_one _).symm
-    _ = adjugate g.val * (g.val * g.inv) := by rw [g.val_inv]
-    _ = (adjugate g.val * g.val) * g.inv := (mul_assoc _ _ _).symm
-    _ = 1 * g.inv := by rw [h]
-    _ = g.inv := one_mul _
+  simp [GL_adjugate_val, Matrix.inv_def, hdet, Ring.inverse_one]
 
-/-- Elements of `SLnZ_subgroup` have determinant 1. -/
 private lemma SLnZ_det_one (g : GL (Fin 2) ℚ) (hg : g ∈ SLnZ_subgroup 2) :
     g.val.det = 1 := by
   rw [MonoidHom.mem_range] at hg
   obtain ⟨σ, rfl⟩ := hg
-  simp [mapGL_coe_matrix, algebraMap_int_eq]
+  simp only [mapGL_coe_matrix, algebraMap_int_eq, map_apply_coe,
+    RingHom.mapMatrix_apply, Int.coe_castRingHom]
   exact_mod_cast σ.prop
 
 /-- The adjugate preserves `SLnZ_subgroup 2`. -/
@@ -124,12 +109,10 @@ noncomputable instance : HeckePairAction (GL_pair 2) where
     exact Rat.cast_pos.mpr g.prop.2
   adjugate_mem_H h hh := GL_adjugate_mem_SLnZ hh
 
-/-- Det-positivity for Gamma1_pair (used independently of HeckePairAction). -/
+/-- Det-positivity for `Gamma1_pair`. -/
 theorem Gamma1_pair_det_pos (N : ℕ) [NeZero N] (g : (Gamma1_pair N).Δ) :
     0 < (glMap (g : GL _ ℚ)).det.val := by
-  have hg := g.prop
-  simp only [Gamma1_pair, Delta1_submonoid] at hg
-  obtain ⟨_, hdet, _⟩ := hg
+  obtain ⟨_, hdet, _⟩ : (g : GL _ ℚ) ∈ Delta1_submonoid N := g.prop
   rw [glMap_det_val_aux, GeneralLinearGroup.val_det_apply]
   exact Rat.cast_pos.mpr hdet
 
@@ -140,19 +123,14 @@ noncomputable instance (N : ℕ) [NeZero N] : HeckePairAction (Gamma1_pair N) wh
   det_pos := Gamma1_pair_det_pos N
   adjugate_mem_H h hh := by
     have h_SL : h ∈ SLnZ_subgroup 2 := by
-      have : (Gamma1_pair N).H ≤ SLnZ_subgroup 2 := by
-        change (Gamma1 N).map (mapGL ℚ) ≤ (mapGL ℚ).range
-        rw [MonoidHom.range_eq_map]
-        exact Subgroup.map_mono le_top
-      exact this hh
+      simpa [MonoidHom.range_eq_map] using Subgroup.map_mono (f := mapGL ℚ) le_top hh
     rw [GL_adjugate_eq_inv_of_det_one h (SLnZ_det_one h h_SL)]
     exact (Gamma1_pair N).H.inv_mem hh
 
 /-- Det-positivity for `Gamma0_pair N`. -/
 theorem Gamma0_pair_det_pos (N : ℕ) [NeZero N] (g : (HeckeRing.GLn.Gamma0_pair N).Δ) :
     0 < (glMap (g : GL _ ℚ)).det.val := by
-  have hg := g.prop
-  obtain ⟨_, hdet, _⟩ := hg
+  obtain ⟨_, hdet, _⟩ := g.prop
   rw [glMap_det_val_aux, GeneralLinearGroup.val_det_apply]
   exact Rat.cast_pos.mpr hdet
 
@@ -164,11 +142,7 @@ noncomputable instance (N : ℕ) [NeZero N] :
   det_pos := Gamma0_pair_det_pos N
   adjugate_mem_H h hh := by
     have h_SL : h ∈ SLnZ_subgroup 2 := by
-      have : (HeckeRing.GLn.Gamma0_pair N).H ≤ SLnZ_subgroup 2 := by
-        change (Gamma0 N).map (mapGL ℚ) ≤ (mapGL ℚ).range
-        rw [MonoidHom.range_eq_map]
-        exact Subgroup.map_mono le_top
-      exact this hh
+      simpa [MonoidHom.range_eq_map] using Subgroup.map_mono (f := mapGL ℚ) le_top hh
     rw [GL_adjugate_eq_inv_of_det_one h (SLnZ_det_one h h_SL)]
     exact (HeckeRing.GLn.Gamma0_pair N).H.inv_mem hh
 
@@ -179,9 +153,7 @@ variable {P : HeckePair (GL (Fin 2) ℚ)} [HeckePairAction P]
 private lemma glMap_adjugate_det_val_gen (g : GL (Fin 2) ℚ) :
     (glMap (GL_adjugate g)).det.val = (glMap g).det.val := by
   rw [glMap_det_val_aux, glMap_det_val_aux]
-  show (algebraMap ℚ ℝ) ((GL_adjugate g).det : ℚ) = _
   congr 1
-  show ((GL_adjugate g).det : ℚ) = (g.det : ℚ)
   rw [GeneralLinearGroup.val_det_apply, GeneralLinearGroup.val_det_apply,
     GL_adjugate_val, Matrix.det_adjugate, Fintype.card_fin, pow_one]
 
@@ -190,17 +162,12 @@ private lemma delta_det_pos_real_gen (g : P.Δ) :
   HeckePairAction.det_pos g
 
 private lemma H_det_pos_gen (σ : P.H) :
-    0 < (glMap (σ : GL (Fin 2) ℚ)).det.val := by
-  have hΔ : (σ : GL _ ℚ) ∈ P.Δ := P.h₀ σ.prop
-  exact delta_det_pos_real_gen ⟨σ, hΔ⟩
+    0 < (glMap (σ : GL (Fin 2) ℚ)).det.val :=
+  delta_det_pos_real_gen ⟨σ, P.h₀ σ.prop⟩
 
 private lemma cosetRep_delta_det_pos_gen (σ : P.H) (g : P.Δ) :
     0 < (glMap ((σ : GL (Fin 2) ℚ) * (g : GL (Fin 2) ℚ))).det.val := by
-  have hmul : (glMap ((σ : GL (Fin 2) ℚ) * ↑g)).det =
-      (glMap ↑σ).det * (glMap ↑g).det := by rw [map_mul, map_mul]
-  rw [show (glMap ((σ : GL (Fin 2) ℚ) * ↑g)).det.val =
-    ((glMap ↑σ).det * (glMap ↑g).det).val from congrArg Units.val hmul,
-    Units.val_mul]
+  rw [map_mul, map_mul, Units.val_mul]
   exact mul_pos (H_det_pos_gen σ) (delta_det_pos_real_gen g)
 
 private lemma cosetRep_delta_adjugate_det_pos_gen (σ : P.H) (g : P.Δ) :
@@ -248,22 +215,23 @@ variable {P : HeckePair (GL (Fin 2) ℚ)} [HeckePairAction P]
 /-- The generalized Hecke slash distributes over addition. -/
 lemma heckeSlash_gen_add (k : ℤ) (D : HeckeCoset P) (f g : ℍ → ℂ) :
     heckeSlash_gen P k D (f + g) = heckeSlash_gen P k D f + heckeSlash_gen P k D g := by
-  simp only [heckeSlash_gen, SlashAction.add_slash, Finset.sum_add_distrib]
+  simp [heckeSlash_gen, SlashAction.add_slash, Finset.sum_add_distrib]
 
 /-- The generalized Hecke slash sends zero to zero. -/
 @[simp] lemma heckeSlash_gen_zero (k : ℤ) (D : HeckeCoset P) :
     heckeSlash_gen P k D 0 = 0 := by
-  simp only [heckeSlash_gen, SlashAction.zero_slash, Finset.sum_const_zero]
+  simp [heckeSlash_gen, SlashAction.zero_slash, Finset.sum_const_zero]
 
 /-- The generalized Hecke slash commutes with scalar multiplication. -/
 lemma heckeSlash_gen_smul (k : ℤ) (D : HeckeCoset P) (c : ℂ) (f : ℍ → ℂ) :
     heckeSlash_gen P k D (c • f) = c • heckeSlash_gen P k D f := by
   simp only [heckeSlash_gen, Finset.smul_sum]
-  congr 1; ext i
+  congr 1
+  ext i
   change ((c • f) ∣[k] glMap _) _ = (c • (f ∣[k] glMap _)) _
-  have hA : 0 < (glMap (tRep_gen P D i)).det.val :=
-    cosetRep_delta_adjugate_det_pos_gen ⟨i.out, SetLike.coe_mem _⟩ (HeckeCoset.rep D)
-  rw [ModularForm.smul_slash, sigma_eq_id_of_pos_det_gen hA]; simp
+  rw [ModularForm.smul_slash, sigma_eq_id_of_pos_det_gen
+    (cosetRep_delta_adjugate_det_pos_gen ⟨i.out, SetLike.coe_mem _⟩ (HeckeCoset.rep D))]
+  simp
 
 /-- The extended Hecke slash on a single double coset recovers `heckeSlash_gen`. -/
 lemma heckeSlashExt_gen_single (k : ℤ) (D : HeckeCoset P) (f : ℍ → ℂ) :
@@ -273,19 +241,13 @@ lemma heckeSlashExt_gen_single (k : ℤ) (D : HeckeCoset P) (f : ℍ → ℂ) :
 /-- Negation distributes through the generalized Hecke slash. -/
 lemma heckeSlash_gen_neg (k : ℤ) (D : HeckeCoset P) (f : ℍ → ℂ) :
     heckeSlash_gen P k D (-f) = -heckeSlash_gen P k D f := by
-  simp only [heckeSlash_gen, SlashAction.neg_slash, Finset.sum_neg_distrib]
+  simp [heckeSlash_gen, SlashAction.neg_slash, Finset.sum_neg_distrib]
 
 end BasicLemmas
 
 section SlashInvariance
 
 variable {P : HeckePair (GL (Fin 2) ℚ)} [HeckePairAction P]
-
-omit [HeckePairAction P] in
-private lemma slash_H_eq_gen (k : ℤ) (f : ℍ → ℂ)
-    (hf : ∀ h, h ∈ P.H → f ∣[k] (glMap h) = f)
-    (h : GL (Fin 2) ℚ) (hh : h ∈ P.H) : f ∣[k] h = f :=
-  hf h hh
 
 private noncomputable def leftMulQuot_gen (D : HeckeCoset P) (σ : P.H) :
     decompQuot P (HeckeCoset.rep D) →
@@ -295,26 +257,27 @@ private noncomputable def leftMulQuot_gen (D : HeckeCoset P) (σ : P.H) :
 omit [HeckePairAction P] in
 private lemma leftMulQuot_gen_injective (D : HeckeCoset P) (σ : P.H) :
     Function.Injective (leftMulQuot_gen D σ) := by
-  intro i₁ i₂ h; simp only [leftMulQuot_gen] at h
+  intro i₁ i₂ h
+  simp only [leftMulQuot_gen] at h
   by_contra hne
   have h_K := QuotientGroup.leftRel_apply.mp (Quotient.exact h)
-  rw [Subgroup.mem_subgroupOf] at h_K
+  rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
+    ConjAct.smul_def] at h_K
+  simp only [ConjAct.ofConjAct_toConjAct, map_inv, inv_inv] at h_K
   have h_mem : (HeckeCoset.rep D : GL _ ℚ)⁻¹ *
       ((i₁.out : GL _ ℚ)⁻¹ * (i₂.out : GL _ ℚ)) *
       (HeckeCoset.rep D : GL _ ℚ) ∈ P.H := by
-    have := h_K
-    rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def] at this
-    simp only [ConjAct.ofConjAct_toConjAct, map_inv, inv_inv] at this
-    convert this using 1
-    simp only [Subgroup.coe_mul, Subgroup.coe_inv]; group
-  exact decompQuot_coset_diff P (HeckeCoset.rep D) i₁ i₂ hne
-    (leftCoset_eq_of_not_disjoint P.H _ _ (by
-      rw [Set.not_disjoint_iff]
-      refine ⟨(i₂.out : GL _ ℚ) * (HeckeCoset.rep D : GL _ ℚ), ?_, ?_⟩
-      · rw [smul_eq_singleton_mul]
-        exact ⟨_, rfl, _, h_mem, by group⟩
-      · rw [smul_eq_singleton_mul]
-        exact ⟨_, rfl, 1, P.H.one_mem, by group⟩))
+    convert h_K using 1
+    simp only [Subgroup.coe_mul, Subgroup.coe_inv]
+    group
+  refine decompQuot_coset_diff P (HeckeCoset.rep D) i₁ i₂ hne
+    (leftCoset_eq_of_not_disjoint P.H _ _ ?_)
+  rw [Set.not_disjoint_iff]
+  refine ⟨(i₂.out : GL _ ℚ) * (HeckeCoset.rep D : GL _ ℚ), ?_, ?_⟩
+  · rw [smul_eq_singleton_mul]
+    exact ⟨_, rfl, _, h_mem, by group⟩
+  · rw [smul_eq_singleton_mul]
+    exact ⟨_, rfl, 1, P.H.one_mem, by group⟩
 
 private noncomputable def leftMulEquiv_gen (D : HeckeCoset P) (σ : P.H) :
     decompQuot P (HeckeCoset.rep D) ≃
@@ -335,22 +298,21 @@ private lemma slash_left_H_adjugate_mul_gen (k : ℤ) (f : ℍ → ℂ)
     (hf : ∀ h, h ∈ P.H → f ∣[k] (glMap h) = f) (h : GL (Fin 2) ℚ)
     (hh : h ∈ P.H) (g : GL (Fin 2) ℚ) :
     f ∣[k] (GL_adjugate h * g) = f ∣[k] g := by
-  show f ∣[k] glMap (GL_adjugate h * g) =
-    f ∣[k] glMap g
-  rw [map_mul, SlashAction.slash_mul]; congr 1
+  change f ∣[k] glMap (GL_adjugate h * g) = f ∣[k] glMap g
+  rw [map_mul, SlashAction.slash_mul]
+  congr 1
   exact hf _ (HeckePairAction.adjugate_mem_H h hh)
 
 omit [HeckePairAction P] in
 private lemma h_coset_mem_H_gen (D : HeckeCoset P)
-    (q : decompQuot P (HeckeCoset.rep D)) (h₁ : GL (Fin 2) ℚ)
-    (hh₁ : h₁ ∈ P.H)
+    (q : decompQuot P (HeckeCoset.rep D)) (h₁ : GL (Fin 2) ℚ) (hh₁ : h₁ ∈ P.H)
     (h₂ : GL (Fin 2) ℚ) (hh₂ : h₂ ∈ P.H)
     (hq : (⟦q.out⟧ : decompQuot P (HeckeCoset.rep D)) = ⟦⟨h₁, hh₁⟩⟧) :
     ((HeckeCoset.rep D : GL _ ℚ)⁻¹ * ((q.out : GL _ ℚ)⁻¹ * h₁) *
       (HeckeCoset.rep D : GL _ ℚ) * h₂) ∈ P.H := by
   have h_K := QuotientGroup.leftRel_apply.mp (Quotient.exact hq)
-  rw [Subgroup.mem_subgroupOf] at h_K
-  rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def] at h_K
+  rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
+    ConjAct.smul_def] at h_K
   simp only [ConjAct.ofConjAct_toConjAct, map_inv, inv_inv] at h_K
   exact P.H.mul_mem (by convert h_K using 1) hh₂
 
@@ -369,12 +331,10 @@ private lemma adjugate_decomp_eq_gen (D : HeckeCoset P)
 
 /-- Slashing by the adjugate of `h₁ * delta * h₂` with `h₁, h₂ ∈ P.H` equals slashing
 by `tRep_gen D ⟦h₁⟧`, using P.H-invariance (generalized). -/
-lemma slash_tRep_gen_of_mem (k : ℤ) (D : HeckeCoset P)
-    (h₁ h₂ : GL (Fin 2) ℚ) (hh₁ : h₁ ∈ P.H)
-    (hh₂ : h₂ ∈ P.H) (f : ℍ → ℂ)
+lemma slash_tRep_gen_of_mem (k : ℤ) (D : HeckeCoset P) (h₁ h₂ : GL (Fin 2) ℚ)
+    (hh₁ : h₁ ∈ P.H) (hh₂ : h₂ ∈ P.H) (f : ℍ → ℂ)
     (hf : ∀ h, h ∈ P.H → f ∣[k] (glMap h) = f) :
-    f ∣[k] (GL_adjugate
-      (h₁ * (HeckeCoset.rep D : GL (Fin 2) ℚ) * h₂)) =
+    f ∣[k] (GL_adjugate (h₁ * (HeckeCoset.rep D : GL (Fin 2) ℚ) * h₂)) =
     f ∣[k] tRep_gen P D ⟦⟨h₁, hh₁⟩⟧ := by
   set q : decompQuot P (HeckeCoset.rep D) := ⟦⟨h₁, hh₁⟩⟧
   rw [adjugate_decomp_eq_gen D q h₁ h₂]
@@ -383,14 +343,11 @@ lemma slash_tRep_gen_of_mem (k : ℤ) (D : HeckeCoset P)
 
 omit [HeckePairAction P] in
 /-- Anti-homomorphism: `tRep_gen D₂ j * tRep_gen D₁ i = adj(σᵢδ₁ · σⱼδ₂)`. -/
-lemma tRep_gen_mul_anti (D₁ D₂ : HeckeCoset P)
-    (i : decompQuot P (HeckeCoset.rep D₁))
+lemma tRep_gen_mul_anti (D₁ D₂ : HeckeCoset P) (i : decompQuot P (HeckeCoset.rep D₁))
     (j : decompQuot P (HeckeCoset.rep D₂)) :
     tRep_gen P D₂ j * tRep_gen P D₁ i =
-    GL_adjugate
-      ((i.out : GL _ ℚ) * (HeckeCoset.rep D₁ : GL _ ℚ) *
-       ((j.out : GL _ ℚ) * (HeckeCoset.rep D₂ : GL _ ℚ))) := by
-  show GL_adjugate _ * GL_adjugate _ = _
+    GL_adjugate ((i.out : GL _ ℚ) * (HeckeCoset.rep D₁ : GL _ ℚ) *
+      ((j.out : GL _ ℚ) * (HeckeCoset.rep D₂ : GL _ ℚ))) := by
   rw [← GL_adjugate_mul]
 
 private lemma left_coset_disjoint_gen (D : HeckeCoset P)
@@ -409,58 +366,48 @@ private lemma left_coset_disjoint_gen (D : HeckeCoset P)
       ((i.out : GL (Fin 2) ℚ) * (HeckeCoset.rep D : GL (Fin 2) ℚ))
     change GL_adjugate (tRep_gen P D i) = _ at step
     rw [show tRep_gen P D i = h * tRep_gen P D j from heq.symm] at step
-    rw [← step, GL_adjugate_mul h (tRep_gen P D j),
-      GL_adjugate_involutive, mul_assoc]
-  have hT : GL_adjugate h ∈ P.H :=
-    HeckePairAction.adjugate_mem_H h hh
-  calc ({(i.out : GL (Fin 2) ℚ) * (HeckeCoset.rep D : GL _ ℚ)} : Set _) *
-          (P.H : Set _)
+    rw [← step, GL_adjugate_mul h (tRep_gen P D j), GL_adjugate_involutive, mul_assoc]
+  calc ({(i.out : GL (Fin 2) ℚ) * (HeckeCoset.rep D : GL _ ℚ)} : Set _) * (P.H : Set _)
       = ({((j.out : GL (Fin 2) ℚ) * (HeckeCoset.rep D : GL _ ℚ)) *
-          GL_adjugate h} : Set _) *
-          (P.H : Set _) := by rw [h_key]
+          GL_adjugate h} : Set _) * (P.H : Set _) := by rw [h_key]
     _ = ({(j.out : GL (Fin 2) ℚ) * (HeckeCoset.rep D : GL _ ℚ)} : Set _) *
-          (({GL_adjugate h} : Set _) *
-          (P.H : Set _)) := by
+          (({GL_adjugate h} : Set _) * (P.H : Set _)) := by
         rw [← Set.singleton_mul_singleton, mul_assoc]
-    _ = ({(j.out : GL (Fin 2) ℚ) * (HeckeCoset.rep D : GL _ ℚ)} : Set _) *
-          (P.H : Set _) := by
-        rw [Subgroup.singleton_mul_subgroup hT]
+    _ = ({(j.out : GL (Fin 2) ℚ) * (HeckeCoset.rep D : GL _ ℚ)} : Set _) * (P.H : Set _) := by
+        rw [Subgroup.singleton_mul_subgroup (HeckePairAction.adjugate_mem_H h hh)]
+
+private lemma slash_tRep_gen_mul_eq_perm (k : ℤ) (D : HeckeCoset P) (f : ℍ → ℂ)
+    (hf : ∀ h, h ∈ P.H → f ∣[k] (glMap h) = f) (σ_Q : GL (Fin 2) ℚ) (hσ : σ_Q ∈ P.H)
+    (i : decompQuot P (HeckeCoset.rep D)) :
+    (f ∣[k] tRep_gen P D i) ∣[k] σ_Q = f ∣[k] tRep_gen P D
+      (leftMulEquiv_gen D ⟨GL_adjugate σ_Q, HeckePairAction.adjugate_mem_H σ_Q hσ⟩ i) := by
+  set σ_QA : P.H := ⟨GL_adjugate σ_Q, HeckePairAction.adjugate_mem_H σ_Q hσ⟩
+  rw [(SlashAction.slash_mul k (tRep_gen P D i) σ_Q f).symm]
+  change f ∣[k] (tRep_gen P D i * σ_Q) = _
+  conv_lhs =>
+    rw [show tRep_gen P D i * σ_Q = GL_adjugate
+      (GL_adjugate σ_Q * (i.out : GL _ ℚ) * (HeckeCoset.rep D : GL _ ℚ)) from by
+      change GL_adjugate _ * σ_Q = _
+      conv_lhs =>
+        rw [show σ_Q = GL_adjugate (GL_adjugate σ_Q) from
+          (GL_adjugate_involutive σ_Q).symm, ← GL_adjugate_mul]
+        rfl
+      rw [show GL_adjugate σ_Q * (i.out : GL _ ℚ) * (HeckeCoset.rep D : GL _ ℚ) =
+        GL_adjugate σ_Q * ((i.out : GL _ ℚ) * (HeckeCoset.rep D : GL _ ℚ)) from by group]]
+  rw [show σ_QA.val * ↑i.out * (HeckeCoset.rep D : GL _ ℚ) =
+      σ_QA.val * ↑i.out * (HeckeCoset.rep D : GL _ ℚ) * 1 from (mul_one _).symm]
+  exact slash_tRep_gen_of_mem k D _ 1
+    (P.H.mul_mem σ_QA.prop (SetLike.coe_mem _)) P.H.one_mem f hf
 
 /-- The Hecke slash action preserves P.H-invariance (Shimura Prop 3.30, generalized). -/
 lemma heckeSlash_gen_slash_invariant (k : ℤ) (D : HeckeCoset P) (f : ℍ → ℂ)
     (hf : ∀ h, h ∈ P.H → f ∣[k] (glMap h) = f) (σ_Q : GL (Fin 2) ℚ)
     (hσ : σ_Q ∈ P.H) :
     (heckeSlash_gen P k D f) ∣[k] σ_Q = heckeSlash_gen P k D f := by
-  set σ_QA : P.H :=
-    ⟨GL_adjugate σ_Q, HeckePairAction.adjugate_mem_H σ_Q hσ⟩
+  set σ_QA : P.H := ⟨GL_adjugate σ_Q, HeckePairAction.adjugate_mem_H σ_Q hσ⟩
   set π := leftMulEquiv_gen D σ_QA
-  have h_perm : ∀ i, (f ∣[k] tRep_gen P D i) ∣[k] (σ_Q : GL _ ℚ) =
-      f ∣[k] tRep_gen P D (π i) := by
-    intro i
-    rw [(SlashAction.slash_mul k (tRep_gen P D i) σ_Q f).symm]
-    show f ∣[k] (tRep_gen P D i * σ_Q) = _
-    conv_lhs =>
-      rw [show tRep_gen P D i * σ_Q = GL_adjugate
-        (GL_adjugate σ_Q * (i.out : GL _ ℚ) *
-          (HeckeCoset.rep D : GL _ ℚ)) from by
-        show GL_adjugate _ * σ_Q = _
-        conv_lhs =>
-          rw [show σ_Q = GL_adjugate (GL_adjugate σ_Q) from
-            (GL_adjugate_involutive σ_Q).symm,
-            ← GL_adjugate_mul]
-          rfl
-        rw [show GL_adjugate σ_Q * (i.out : GL _ ℚ) *
-          (HeckeCoset.rep D : GL _ ℚ) =
-          GL_adjugate σ_Q *
-          ((i.out : GL _ ℚ) * (HeckeCoset.rep D : GL _ ℚ)) from by group]]
-    rw [show σ_QA.val * ↑i.out * (HeckeCoset.rep D : GL _ ℚ) =
-        σ_QA.val * ↑i.out * (HeckeCoset.rep D : GL _ ℚ) * 1 from
-        (mul_one _).symm]
-    exact slash_tRep_gen_of_mem k D _ 1
-      (P.H.mul_mem σ_QA.prop (SetLike.coe_mem _))
-      P.H.one_mem f hf
   rw [heckeSlash_gen_slash,
-    Finset.sum_congr rfl (fun i _ ↦ h_perm i),
+    Finset.sum_congr rfl (fun i _ ↦ slash_tRep_gen_mul_eq_perm k D f hf σ_Q hσ i),
     Fintype.sum_equiv π _ (fun i ↦ f ∣[k] tRep_gen P D i) (fun _ ↦ rfl)]
   rfl
 
@@ -485,23 +432,24 @@ private lemma slash_and_coset_of_mulMap_eq_gen (k : ℤ) (D₁ D₂ D : HeckeCos
       (P.H : Set (GL (Fin 2) ℚ)) := by
   have hmem : (p.1.out : GL (Fin 2) ℚ) * (HeckeCoset.rep D₁ : GL _ ℚ) *
       ((p.2.out : GL _ ℚ) * (HeckeCoset.rep D₂ : GL _ ℚ)) ∈ HeckeCoset.toSet D := by
-    have : HeckeCoset.toSet (mulMap P (HeckeCoset.rep D₁)
-        (HeckeCoset.rep D₂) (p.1, p.2)) = HeckeCoset.toSet D := by rw [hp]
-    rw [← this]
-    show _ ∈ HeckeCoset.toSet (⟦⟨_, _⟩⟧ : HeckeCoset P)
-    simp only [HeckeCoset.toSet_mk]; exact DoubleCoset.mem_doubleCoset_self _ _ _
+    rw [← hp]
+    change _ ∈ HeckeCoset.toSet (⟦⟨_, _⟩⟧ : HeckeCoset P)
+    simp only [HeckeCoset.toSet_mk]
+    exact DoubleCoset.mem_doubleCoset_self _ _ _
   rw [HeckeCoset.toSet_eq_rep, DoubleCoset.mem_doubleCoset] at hmem
   obtain ⟨h₁, hh₁, h₂, hh₂, heq⟩ := hmem
-  set q : decompQuot P (HeckeCoset.rep D) := ⟦⟨h₁, hh₁⟩⟧; refine ⟨q, ?_, ?_⟩
+  set q : decompQuot P (HeckeCoset.rep D) := ⟦⟨h₁, hh₁⟩⟧
+  refine ⟨q, ?_, ?_⟩
   · rw [tRep_gen_mul_anti D₁ D₂ p.1 p.2, heq]
     exact slash_tRep_gen_of_mem k D _ h₂ hh₁ hh₂ f hf
   · have h_K := QuotientGroup.leftRel_apply.mp (Quotient.exact (Quotient.out_eq q))
-    rw [Subgroup.mem_subgroupOf] at h_K
-    rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def] at h_K
+    rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
+      ConjAct.smul_def] at h_K
     simp only [ConjAct.ofConjAct_toConjAct, map_inv, inv_inv] at h_K
     set κ := (HeckeCoset.rep D : GL _ ℚ)⁻¹ * ((q.out : GL _ ℚ)⁻¹ * h₁) *
         (HeckeCoset.rep D : GL _ ℚ)
-    rw [Set.singleton_mul_singleton, heq]; apply leftCoset_eq_of_not_disjoint
+    rw [Set.singleton_mul_singleton, heq]
+    apply leftCoset_eq_of_not_disjoint
     rw [Set.not_disjoint_iff]
     exact ⟨h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂,
       ⟨1, P.H.one_mem, by simp [smul_eq_mul]⟩,
@@ -518,25 +466,22 @@ private lemma prod_mem_D_of_rightCoset_gen (D : HeckeCoset P) (g : GL (Fin 2) �
 
 omit [HeckePairAction P] in
 private lemma prod_mem_mulMap_gen (D₁ D₂ : HeckeCoset P)
-    (p : decompQuot P (HeckeCoset.rep D₁) ×
-         decompQuot P (HeckeCoset.rep D₂)) :
+    (p : decompQuot P (HeckeCoset.rep D₁) × decompQuot P (HeckeCoset.rep D₂)) :
     (p.1.out : GL _ ℚ) * (HeckeCoset.rep D₁ : GL _ ℚ) *
       ((p.2.out : GL _ ℚ) * (HeckeCoset.rep D₂ : GL _ ℚ)) ∈
-      HeckeCoset.toSet (mulMap P (HeckeCoset.rep D₁)
-        (HeckeCoset.rep D₂) (p.1, p.2)) := by
-  show _ ∈ HeckeCoset.toSet (⟦⟨_, _⟩⟧ : HeckeCoset P)
-  simp only [HeckeCoset.toSet_mk]; exact DoubleCoset.mem_doubleCoset_self _ _ _
+      HeckeCoset.toSet (mulMap P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) (p.1, p.2)) := by
+  change _ ∈ HeckeCoset.toSet (⟦⟨_, _⟩⟧ : HeckeCoset P)
+  simp only [HeckeCoset.toSet_mk]
+  exact DoubleCoset.mem_doubleCoset_self _ _ _
 
 omit [HeckePairAction P] in
 private lemma mulMap_eq_of_rightCoset_gen (D₁ D₂ D : HeckeCoset P)
-    (p : decompQuot P (HeckeCoset.rep D₁) ×
-         decompQuot P (HeckeCoset.rep D₂))
+    (p : decompQuot P (HeckeCoset.rep D₁) × decompQuot P (HeckeCoset.rep D₂))
     (q : decompQuot P (HeckeCoset.rep D))
     (hp_rc : ({(p.1.out : GL _ ℚ) * (HeckeCoset.rep D₁ : GL _ ℚ)} : Set _) *
       {(p.2.out : GL _ ℚ) * (HeckeCoset.rep D₂ : GL _ ℚ)} *
       (P.H : Set (GL (Fin 2) ℚ)) =
-      {(q.out : GL _ ℚ) * (HeckeCoset.rep D : GL _ ℚ)} *
-      (P.H : Set (GL (Fin 2) ℚ))) :
+      {(q.out : GL _ ℚ) * (HeckeCoset.rep D : GL _ ℚ)} * (P.H : Set (GL (Fin 2) ℚ))) :
     mulMap P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) (p.1, p.2) = D := by
   have h_in_rc : (p.1.out : GL _ ℚ) * (HeckeCoset.rep D₁ : GL _ ℚ) *
       ((p.2.out : GL _ ℚ) * (HeckeCoset.rep D₂ : GL _ ℚ)) ∈
@@ -545,17 +490,17 @@ private lemma mulMap_eq_of_rightCoset_gen (D₁ D₂ D : HeckeCoset P)
     rw [← hp_rc, Set.singleton_mul_singleton]
     exact ⟨_, rfl, 1, P.H.one_mem, by simp only [mul_one]⟩
   obtain ⟨_, hd_eq, h, hh, hprod⟩ := h_in_rc
-  rw [Set.mem_singleton_iff] at hd_eq; subst hd_eq
-  set M := mulMap P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) (p.1, p.2)
-  exact HeckeCoset_ext_toSet (P := P) (by
-    rw [HeckeCoset.toSet_eq_rep, HeckeCoset.toSet_eq_rep]
-    exact DoubleCoset.eq_of_not_disjoint (by
-      rw [Set.not_disjoint_iff]
-      have hm := prod_mem_mulMap_gen D₁ D₂ p
-      rw [HeckeCoset.toSet_eq_rep] at hm
-      have hd := prod_mem_D_of_rightCoset_gen D _ q h hh hprod.symm
-      rw [HeckeCoset.toSet_eq_rep] at hd
-      exact ⟨_, hm, hd⟩))
+  rw [Set.mem_singleton_iff] at hd_eq
+  subst hd_eq
+  refine HeckeCoset_ext_toSet (P := P) ?_
+  rw [HeckeCoset.toSet_eq_rep, HeckeCoset.toSet_eq_rep]
+  refine DoubleCoset.eq_of_not_disjoint ?_
+  rw [Set.not_disjoint_iff]
+  have hm := prod_mem_mulMap_gen D₁ D₂ p
+  rw [HeckeCoset.toSet_eq_rep] at hm
+  have hd := prod_mem_D_of_rightCoset_gen D _ q h hh hprod.symm
+  rw [HeckeCoset.toSet_eq_rep] at hd
+  exact ⟨_, hm, hd⟩
 
 open scoped Classical in
 omit [HeckePairAction P] in
@@ -625,7 +570,9 @@ private lemma heckeSlash_gen_fiber_sum [DecidableEq (HeckeCoset P)] (k : ℤ)
       mulMap P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) (p.1, p.2) = D →
       f ∣[k] (tRep_gen P D₂ p.2 * tRep_gen P D₁ p.1) =
         f ∣[k] tRep_gen P D (q_of p) := by
-    intro p hp; simp only [q_of, hp, dif_pos]; exact (h_main p hp).choose_spec.1
+    intro p hp
+    simp only [q_of, hp, dif_pos]
+    exact (h_main p hp).choose_spec.1
   set S := Finset.univ.filter (fun p : decompQuot P (HeckeCoset.rep D₁) ×
       decompQuot P (HeckeCoset.rep D₂) ↦
       mulMap P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) (p.1, p.2) = D)
@@ -634,16 +581,21 @@ private lemma heckeSlash_gen_fiber_sum [DecidableEq (HeckeCoset P)] (k : ℤ)
     exact h_slash_eq p hp)]
   rw [← Finset.sum_fiberwise (s := S) (g := q_of)]
   conv_lhs =>
-    arg 2; ext q
+    arg 2
+    ext q
     rw [Finset.sum_congr rfl (fun p hp ↦ by
-      simp only [Finset.mem_filter] at hp; rw [hp.2])]
+      simp only [Finset.mem_filter] at hp
+      rw [hp.2])]
     rw [Finset.sum_const]
   have h_fiber_eq := fiber_card_eq_gen D₁ D₂ D q_of S
     (fun p ↦ by simp only [S, Finset.mem_filter, Finset.mem_univ, true_and])
-    (fun p hp ↦ by simp only [q_of, hp, dif_pos]; exact (h_main p hp).choose_spec.2)
+    (fun p hp ↦ by
+      simp only [q_of, hp, dif_pos]
+      exact (h_main p hp).choose_spec.2)
     (fun p q hmap hp_rc ↦ by
       simp only [q_of, hmap, dif_pos]
-      set q' := (h_main p hmap).choose; by_contra hne
+      set q' := (h_main p hmap).choose
+      by_contra hne
       exact decompQuot_coset_diff P (HeckeCoset.rep D) q' q hne
         ((h_main p hmap).choose_spec.2.symm.trans hp_rc))
   simp_rw [h_fiber_eq,
@@ -665,6 +617,54 @@ section HeckeAlgebraAction
 
 variable {P : HeckePair (GL (Fin 2) ℚ)} [HeckePairAction P]
 
+omit [HeckePairAction P] in
+private lemma sum_slash_eq_swap (k : ℤ) (D₁ D₂ : HeckeCoset P) (f : ℍ → ℂ) :
+    (∑ i : decompQuot P (HeckeCoset.rep D₁),
+        (∑ j : decompQuot P (HeckeCoset.rep D₂), f ∣[k] tRep_gen P D₂ j)
+          ∣[k] tRep_gen P D₁ i) =
+      ∑ i, ∑ j, (f ∣[k] tRep_gen P D₂ j) ∣[k] tRep_gen P D₁ i := by
+  congr 1
+  ext i
+  induction Finset.univ (α := decompQuot P (HeckeCoset.rep D₂))
+      using Finset.cons_induction with
+  | empty => simp [SlashAction.zero_slash]
+  | cons a s has ih => simp [Finset.sum_cons, SlashAction.add_slash]
+
+omit [HeckePairAction P] in
+private lemma slash_tRep_gen_mul (k : ℤ) (D₁ D₂ : HeckeCoset P) (f : ℍ → ℂ)
+    (i : decompQuot P (HeckeCoset.rep D₁)) (j : decompQuot P (HeckeCoset.rep D₂)) :
+    (f ∣[k] tRep_gen P D₂ j) ∣[k] tRep_gen P D₁ i =
+      f ∣[k] (tRep_gen P D₂ j * tRep_gen P D₁ i) := by
+  change (f ∣[k] glMap (tRep_gen P D₂ j)) ∣[k] glMap (tRep_gen P D₁ i) =
+    f ∣[k] glMap (tRep_gen P D₂ j * tRep_gen P D₁ i)
+  rw [map_mul, ← SlashAction.slash_mul]
+
+private lemma heckeSlashExt_gen_mul_T_single (k : ℤ) (D₁ D₂ : HeckeCoset P)
+    (f : ℍ → ℂ) :
+    heckeSlashExt_gen P k (T_single P ℤ D₂ 1 * T_single P ℤ D₁ 1) f =
+      (m P (HeckeCoset.rep D₂) (HeckeCoset.rep D₁)).sum
+        (fun D c ↦ c • heckeSlash_gen P k D f) := by
+  unfold heckeSlashExt_gen
+  rw [mul_singleton_𝕋]
+  simp
+
+private lemma heckeSlash_gen_comp_sum_eq (k : ℤ) (D₁ D₂ : HeckeCoset P) (f : ℍ → ℂ)
+    (hf : ∀ h, h ∈ P.H → f ∣[k] (glMap h) = f) :
+    (∑ p : decompQuot P (HeckeCoset.rep D₁) × decompQuot P (HeckeCoset.rep D₂),
+        f ∣[k] (tRep_gen P D₂ p.2 * tRep_gen P D₁ p.1)) =
+      (m P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂)).sum
+        (fun D c ↦ c • heckeSlash_gen P k D f) := by
+  letI : DecidableEq (HeckeCoset P) := Classical.decEq _
+  rw [← Finset.sum_fiberwise_of_maps_to
+    (g := fun p ↦ mulMap P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) (p.1, p.2))
+    (fun p _ ↦ Finset.mem_image_of_mem _ (Finset.mem_univ _)),
+    show Finset.image (mulMap P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂)) Finset.univ =
+      mulSupport P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) from rfl,
+    Finsupp.sum,
+    show (m P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂)).support =
+      mulSupport P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) from rfl]
+  exact Finset.sum_congr rfl fun D hD ↦ heckeSlash_gen_fiber_sum k D₁ D₂ D hD f hf
+
 /-- Multiplicativity of the generalized Hecke slash for P.H-invariant functions:
 `T(D₁)(T(D₂)(f)) = (T(D₂) · T(D₁))(f)` (Shimura Proposition 3.30, generalized).
 Requires commutativity of the Hecke ring multiplication to swap the order. -/
@@ -674,48 +674,12 @@ theorem heckeSlash_gen_comp (k : ℤ) (D₁ D₂ : HeckeCoset P) (f : ℍ → �
       T_single P ℤ D₁ 1 * T_single P ℤ D₂ 1) :
     heckeSlash_gen P k D₁ (heckeSlash_gen P k D₂ f) =
     heckeSlashExt_gen P k (T_single P ℤ D₂ 1 * T_single P ℤ D₁ 1) f := by
-  rw [show heckeSlashExt_gen P k (T_single P ℤ D₂ 1 *
-      T_single P ℤ D₁ 1) f =
-      (m P (HeckeCoset.rep D₂) (HeckeCoset.rep D₁)).sum
-        (fun D c ↦ c • heckeSlash_gen P k D f) from by
-    unfold heckeSlashExt_gen; rw [mul_singleton_𝕋]; simp]
-  have h_comm : m P (HeckeCoset.rep D₂) (HeckeCoset.rep D₁) =
-      m P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) := by
-    simpa only [T_single_one_mul_T_single_one] using hcomm
-  rw [h_comm]; simp_rw [heckeSlash_gen]
-  rw [show (∑ i : decompQuot P (HeckeCoset.rep D₁),
-      (∑ j : decompQuot P (HeckeCoset.rep D₂),
-        f ∣[k] tRep_gen P D₂ j) ∣[k] tRep_gen P D₁ i) =
-      ∑ i, ∑ j, (f ∣[k] tRep_gen P D₂ j) ∣[k] tRep_gen P D₁ i from by
-    congr 1; ext i
-    induction Finset.univ (α := decompQuot P (HeckeCoset.rep D₂))
-        using Finset.cons_induction with
-    | empty => simp [SlashAction.zero_slash]
-    | cons a s has ih => simp [Finset.sum_cons, SlashAction.add_slash]]
-  have h_slash_mul :
-      ∀ (i : decompQuot P (HeckeCoset.rep D₁))
-        (j : decompQuot P (HeckeCoset.rep D₂)),
-      (f ∣[k] tRep_gen P D₂ j) ∣[k] tRep_gen P D₁ i =
-        f ∣[k] (tRep_gen P D₂ j * tRep_gen P D₁ i) := by
-    intro i j
-    show (f ∣[k] glMap (tRep_gen P D₂ j)) ∣[k] glMap (tRep_gen P D₁ i) =
-      f ∣[k] glMap (tRep_gen P D₂ j * tRep_gen P D₁ i)
-    rw [map_mul, ← SlashAction.slash_mul]
-  simp_rw [h_slash_mul]; rw [← Fintype.sum_prod_type']
-  change (∑ p : decompQuot P (HeckeCoset.rep D₁) ×
-      decompQuot P (HeckeCoset.rep D₂),
-      f ∣[k] (tRep_gen P D₂ p.2 * tRep_gen P D₁ p.1)) = _
-  letI : DecidableEq (HeckeCoset P) := Classical.decEq _
-  rw [← Finset.sum_fiberwise_of_maps_to
-    (g := fun p ↦ mulMap P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) (p.1, p.2))
-    (fun p _ ↦ Finset.mem_image_of_mem _ (Finset.mem_univ _)),
-    show Finset.image (mulMap P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂))
-      Finset.univ =
-      mulSupport P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) from rfl,
-    Finsupp.sum,
-    show (m P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂)).support =
-      mulSupport P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) from rfl]
-  exact Finset.sum_congr rfl fun D hD ↦ heckeSlash_gen_fiber_sum k D₁ D₂ D hD f hf
+  rw [heckeSlashExt_gen_mul_T_single, show m P (HeckeCoset.rep D₂) (HeckeCoset.rep D₁) =
+      m P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) by
+    simpa only [T_single_one_mul_T_single_one] using hcomm]
+  simp_rw [heckeSlash_gen, sum_slash_eq_swap, slash_tRep_gen_mul]
+  rw [← Fintype.sum_prod_type']
+  exact heckeSlash_gen_comp_sum_eq k D₁ D₂ f hf
 
 end HeckeAlgebraAction
 
