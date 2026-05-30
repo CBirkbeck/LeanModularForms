@@ -965,17 +965,16 @@ private lemma descent_slashSum_qExp_coeff_eq_Dp_g_low_coeff {N : ℕ} [NeZero N]
         (ModularFormClass.qExpansion (1 : ℝ) g_low).coeff m := by
   have hp_dvd_lN : p ∣ l' * N := dvd_mul_of_dvd_right hpN l'
   set Ψ_fun : UpperHalfPlane → ℂ := fun z ↦
-      ∑ v : Fin (descendCosetCount p (l' * N)),
-        (⇑f.toModularForm' ∣[k] descendCosetList p (l' * N) hp v) z with hΨ_fun_def
+    ∑ v : Fin (descendCosetCount p (l' * N)),
+      (⇑f.toModularForm' ∣[k] descendCosetList p (l' * N) hp v) z
   set Vp_slash_lifted_fun : UpperHalfPlane → ℂ := fun z ↦
     ∑ v : Fin (descendCosetCount p (l' * N)),
       (⇑(HeckeRing.GL2.modularFormLevelRaise ((l' * N) / p) p k
         g_low_cast.toModularForm') ∣[k] descendCosetList p (l' * N) hp v) z
-    with hVp_slash_lifted_fun_def
   set Dp_g_low : UpperHalfPlane → ℂ := fun z ↦
     (descendCosetCount p (l' * N) : ℂ) / (p : ℂ) * g_low z
   have h_Vp_slash_lifted : ∀ z : UpperHalfPlane, Vp_slash_lifted_fun z = Dp_g_low z := fun z ↦ by
-    simp_rw [hVp_slash_lifted_fun_def, fun v ↦ multipass_V_p_slash_descendCoset p hp hp_dvd_lN
+    simp_rw [Vp_slash_lifted_fun, fun v ↦ multipass_V_p_slash_descendCoset p hp hp_dvd_lN
       g_low_cast.toModularForm' v z]
     rw [Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul,
       show (g_low_cast.toModularForm' : UpperHalfPlane → ℂ) z = g_low z by

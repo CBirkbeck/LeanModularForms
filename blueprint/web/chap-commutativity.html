@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+  MathJax = { 
+    tex: {
+		    inlineMath: [['$','$'], ['\\(','\\)']]
+	} }
+</script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+<meta name="generator" content="plasTeX" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Commutativity via anti-involutions</title>
+<link rel="next" href="chap-gl2-operators.html" title="The GL2 Hecke operators" />
+<link rel="prev" href="chap-degree.html" title="The degree homomorphism" />
+<link rel="up" href="index.html" title="Hecke Rings and Strong Multiplicity One" />
+<link rel="stylesheet" href="styles/theme-white.css" />
+<link rel="stylesheet" href="styles/amsthm.css" />
+<link rel="stylesheet" href="styles/showmore.css" />
+<link rel="stylesheet" href="styles/blueprint.css" />
+<link rel="stylesheet" href="styles/extra_styles.css" />
+</head>
+
+<body>
+<header>
+<svg  id="toc-toggle" class="icon icon-list-numbered "><use xlink:href="symbol-defs.svg#icon-list-numbered"></use></svg>
+<h1 id="doc_title"><a href="index.html">Hecke Rings and Strong Multiplicity One</a></h1>
+</header>
+
+<div class="wrapper">
+<nav class="toc">
+<ul class="sub-toc-0">
+<li class="">
+  <a href="sect0001.html"><span class="toc_ref"></span> <span class="toc_entry">Introduction</span></a>
+ </li>
+<li class="">
+  <a href="chap-hecke-pairs.html"><span class="toc_ref">1</span> <span class="toc_entry">Hecke pairs and double cosets</span></a>
+ </li>
+<li class="">
+  <a href="chap-ring-structure.html"><span class="toc_ref">2</span> <span class="toc_entry">The Hecke ring structure</span></a>
+ </li>
+<li class="">
+  <a href="chap-degree.html"><span class="toc_ref">3</span> <span class="toc_entry">The degree homomorphism</span></a>
+ </li>
+<li class=" active current">
+  <a href="chap-commutativity.html"><span class="toc_ref">4</span> <span class="toc_entry">Commutativity via anti-involutions</span></a>
+ </li>
+<li class="">
+  <a href="chap-gl2-operators.html"><span class="toc_ref">5</span> <span class="toc_entry">The \(\mathrm{GL}_2\) Hecke operators</span></a>
+ </li>
+<li class="">
+  <a href="chap-multiplication-table.html"><span class="toc_ref">6</span> <span class="toc_entry">The multiplication table (Shimura 3.24)</span></a>
+ </li>
+<li class="">
+  <a href="chap-smo.html"><span class="toc_ref">7</span> <span class="toc_entry">Strong Multiplicity One</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-1">
+     <li class="">
+  <a href="chap-smo.html#a0000000003"><span class="toc_ref">7.1</span> <span class="toc_entry">Eigenforms, newforms, and the new/old decomposition</span></a>
+ </li>
+<li class="">
+  <a href="chap-smo.html#a0000000004"><span class="toc_ref">7.2</span> <span class="toc_entry">Coefficients, leading terms, and the eigenform splitting</span></a>
+ </li>
+<li class="">
+  <a href="chap-smo.html#a0000000005"><span class="toc_ref">7.3</span> <span class="toc_entry">The two halves of Theorem 4.6.12</span></a>
+ </li>
+<li class="">
+  <a href="chap-smo.html#a0000000006"><span class="toc_ref">7.4</span> <span class="toc_entry">Strong Multiplicity One</span></a>
+ </li>
+
+  </ul>
+ </li>
+<li ><a href="dep_graph_document.html">Dependency graph</a></li>
+</ul>
+</nav>
+
+<div class="content">
+<div class="content-wrapper">
+
+
+<div class="main-text">
+<h1 id="chap:commutativity">4 Commutativity via anti-involutions</h1>
+
+<p>A Hecke pair may carry an order-reversing symmetry that fixes each of its double cosets; when it does, the structure constants are symmetric and the Hecke ring is commutative. Applying this to the transpose on the arithmetic \(\mathrm{GL}_n\) pair shows that the \(\mathrm{GL}_n\) Hecke algebra is commutative. </p>
+<div class="definition_thmwrapper theorem-style-definition" id="def:anti-involution">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">22</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-commutativity.html#def:anti-involution">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-hecke-pairs.html#def:hecke-pair">Definition 1</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.AntiInvolution" class="lean_decl">HeckeRing.AntiInvolution</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>  Let \((G,H,\Delta )\) be a Hecke pair. An <em>anti-involution</em> of \((G,H,\Delta )\) is an anti-homomorphism \(g\mapsto \bar g\) of \(G\) that is involutive and preserves the pair. Explicitly, it satisfies </p>
+<div class="displaymath" id="a0000000025">
+  \[  \bar{\bar g}=g,\qquad \overline{ab}=\bar b\, \bar a,  \]
+</div>
+<p> and maps \(H\) into \(H\) and \(\Delta \) into \(\Delta \), that is, \(\bar g\in H\) whenever \(g\in H\) and \(\bar g\in \Delta \) whenever \(g\in \Delta \) [Sh, §3.1]. </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:onHeckeCoset">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">23</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-commutativity.html#def:onHeckeCoset">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-commutativity.html#def:anti-involution">Definition 22</a></li>
+          
+          <li><a href="chap-hecke-pairs.html#def:hecke-coset">Definition 2</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.AntiInvolution.onHeckeCoset" class="lean_decl">HeckeRing.AntiInvolution.onHeckeCoset</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>  Let \(g\mapsto \bar g\) be an anti-involution of the Hecke pair \((G,H,\Delta )\). It induces a map on the set \(H\backslash \Delta /H\) of double cosets, </p>
+<div class="displaymath" id="a0000000026">
+  \[  HgH \; \longmapsto \;  H\bar gH .  \]
+</div>
+<p> This is well defined: since the anti-involution reverses products and preserves \(H\), two representatives of the same double coset have barred images lying in a single double coset, so the assignment depends only on \(HgH\). The induced map is again involutive [Sh, §3.1]. </p>
+
+  </div>
+</div>
+<div class="theorem_thmwrapper theorem-style-plain" id="thm:mul-comm-of-ai">
+  <div class="theorem_thmheading">
+    <span class="theorem_thmcaption">
+    Theorem
+    </span>
+    <span class="theorem_thmlabel">24</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-commutativity.html#thm:mul-comm-of-ai">#</a>
+    
+    <a class="icon proof" href="chap-commutativity.html#a0000000027"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-commutativity.html#def:onHeckeCoset">Definition 23</a></li>
+          
+          <li><a href="chap-ring-structure.html#def:hecke-multiplicity">Definition 9</a></li>
+          
+          <li><a href="chap-ring-structure.html#thm:hecke-ring">Theorem 17</a></li>
+          
+          <li><a href="chap-commutativity.html#def:onHeckeCoset">Definition 23</a></li>
+          
+          <li><a href="chap-ring-structure.html#def:hecke-multiplicity">Definition 9</a></li>
+          
+          <li><a href="chap-ring-structure.html#thm:hecke-ring">Theorem 17</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.AntiInvolution.mul_comm_of_antiInvolution" class="lean_decl">HeckeRing.AntiInvolution.mul_comm_of_antiInvolution</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="theorem_thmcontent">
+  <p>  Let \(g\mapsto \bar g\) be an anti-involution of the Hecke pair \((G,H,\Delta )\) whose induced map on double cosets fixes every double coset, that is, \(H\bar gH=HgH\) for all \(g\in \Delta \). Then the Hecke ring \(\mathbb {T}\) is commutative: for all \(f,g\in \mathbb {T}\), </p>
+<div class="displaymath" id="a0000000028">
+  \[  f\cdot g \; =\;  g\cdot f .  \]
+</div>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000027">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> Since the product on \(\mathbb {T}\) is \(\mathbb {Z}\)-bilinear, it suffices to prove the identity on a pair of basis elements \([D_1]\) and \([D_2]\), where the product is governed by the structure constants \(\mu (D_1,D_2;d)\). The claim therefore reduces to the symmetry </p>
+<div class="displaymath" id="a0000000029">
+  \[  \mu (D_1,D_2;d)\; =\; \mu (D_2,D_1;d)  \]
+</div>
+<p> for every double coset \(d\). To see this, apply the anti-involution to a left-coset decomposition \(D_1D_2=\bigsqcup _i Hg_i\). Because \(g\mapsto \bar g\) reverses products, it carries this decomposition to one of \(D_2D_1\); because it fixes each double coset, the double coset of each \(g_i\) is preserved. Tracking the left coset of a fixed representative \(d\) under this correspondence gives a bijection between the pairs of representatives counted by \(\mu (D_1,D_2;d)\) and those counted by \(\mu (D_2,D_1;d)\), so the two multiplicities agree. Hence the products \([D_1]\cdot [D_2]\) and \([D_2]\cdot [D_1]\) coincide on every basis pair, and \(\mathbb {T}\) is commutative [Sh, §3.1, Prop.&#160;3.8]. </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:commring-of-ai">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">25</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-commutativity.html#def:commring-of-ai">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-commutativity.html#thm:mul-comm-of-ai">Theorem 24</a></li>
+          
+          <li><a href="chap-ring-structure.html#thm:hecke-ring">Theorem 17</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.instCommRing_of_antiInvolution" class="lean_decl">HeckeRing.instCommRing_of_antiInvolution</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>  Given an anti-involution of the Hecke pair \((G,H,\Delta )\) whose induced map fixes every double coset, the resulting commutativity of multiplication upgrades the ring structure on \(\mathbb {T}\) to a <em>commutative ring</em> structure, obtained from the ring structure on \(\mathbb {T}\) by supplying the symmetry \(f\cdot g=g\cdot f\) from Theorem&#160;<a href="chap-commutativity.html#thm:mul-comm-of-ai">24</a>. </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:gl-pair-ai">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">26</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-commutativity.html#def:gl-pair-ai">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-commutativity.html#def:anti-involution">Definition 22</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:GL-pair">Definition 29</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GLn.GL_pair_antiInvolution" class="lean_decl">HeckeRing.GLn.GL_pair_antiInvolution</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>  For the arithmetic \(\mathrm{GL}_n\) Hecke pair, the <em>transpose</em> \(g\mapsto {}^{t}g\) is an anti-involution. It reverses products, since \({}^{t}(ab)={}^{t}b\, {}^{t}a\), and is involutive, since \({}^{t}({}^{t}g)=g\). Moreover it preserves the pair: transposing a matrix in \(\mathrm{SL}_n(\mathbb {Z})\) stays in \(\mathrm{SL}_n(\mathbb {Z})\), and transposing a positive-determinant integral matrix preserves both integrality of the entries and the value of the determinant, so the positive-determinant integer monoid is preserved as well [Sh, §3.1]. </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:gl-pair-fix">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">27</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-commutativity.html#lem:gl-pair-fix">#</a>
+    
+    <a class="icon proof" href="chap-commutativity.html#a0000000030"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-commutativity.html#def:gl-pair-ai">Definition 26</a></li>
+          
+          <li><a href="chap-commutativity.html#def:onHeckeCoset">Definition 23</a></li>
+          
+          <li><a href="chap-commutativity.html#def:gl-pair-ai">Definition 26</a></li>
+          
+          <li><a href="chap-commutativity.html#def:onHeckeCoset">Definition 23</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GLn.GL_pair_onHeckeCoset_eq" class="lean_decl">HeckeRing.GLn.GL_pair_onHeckeCoset_eq</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>  The transpose fixes every double coset of the arithmetic \(\mathrm{GL}_n\) pair: for all \(g\), </p>
+<div class="displaymath" id="a0000000031">
+  \[  H\, {}^{t}gH \; =\;  HgH .  \]
+</div>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000030">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> Every double coset has a diagonal representative, given by the elementary divisors of \(g\) via the Smith normal form. A diagonal matrix is equal to its own transpose, so the transpose fixes this representative and therefore fixes the whole double coset. Equivalently, a matrix and its transpose share the same elementary divisors, hence lie in the same double coset [Sh, §3.1]. </p>
+
+  </div>
+</div>
+<div class="theorem_thmwrapper theorem-style-plain" id="thm:commring-hecke-algebra">
+  <div class="theorem_thmheading">
+    <span class="theorem_thmcaption">
+    Theorem
+    </span>
+    <span class="theorem_thmlabel">28</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-commutativity.html#thm:commring-hecke-algebra">#</a>
+    
+    <a class="icon proof" href="chap-commutativity.html#a0000000032"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-commutativity.html#def:commring-of-ai">Definition 25</a></li>
+          
+          <li><a href="chap-commutativity.html#def:gl-pair-ai">Definition 26</a></li>
+          
+          <li><a href="chap-commutativity.html#lem:gl-pair-fix">Lemma 27</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:hecke-algebra">Definition 30</a></li>
+          
+          <li><a href="chap-commutativity.html#def:commring-of-ai">Definition 25</a></li>
+          
+          <li><a href="chap-commutativity.html#def:gl-pair-ai">Definition 26</a></li>
+          
+          <li><a href="chap-commutativity.html#lem:gl-pair-fix">Lemma 27</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:hecke-algebra">Definition 30</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GLn.instCommRing_HeckeAlgebra" class="lean_decl">HeckeRing.GLn.instCommRing_HeckeAlgebra</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="theorem_thmcontent">
+  <p>  The \(\mathrm{GL}_n\) Hecke algebra \(\mathcal{H}_n\) is commutative. </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000032">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> The transpose is an anti-involution of the arithmetic \(\mathrm{GL}_n\) pair (Definition&#160;<a href="chap-commutativity.html#def:gl-pair-ai">26</a>) whose induced map fixes every double coset (Lemma&#160;<a href="chap-commutativity.html#lem:gl-pair-fix">27</a>). Applying the commutativity criterion of Definition&#160;<a href="chap-commutativity.html#def:commring-of-ai">25</a> to this anti-involution endows \(\mathcal{H}_n\) with a commutative ring structure [Sh, §3.1, Prop.&#160;3.8]. </p>
+
+  </div>
+</div>
+
+</div> <!--main-text -->
+</div> <!-- content-wrapper -->
+</div> <!-- content -->
+</div> <!-- wrapper -->
+
+<nav class="prev_up_next">
+  <svg  id="showmore-minus" class="icon icon-eye-minus showmore"><use xlink:href="symbol-defs.svg#icon-eye-minus"></use></svg>
+
+  <svg  id="showmore-plus" class="icon icon-eye-plus showmore"><use xlink:href="symbol-defs.svg#icon-eye-plus"></use></svg>
+
+  <a href="chap-degree.html" title="The degree homomorphism"><svg  class="icon icon-arrow-left "><use xlink:href="symbol-defs.svg#icon-arrow-left"></use></svg>
+</a>
+  <a href="index.html" title="Hecke Rings and Strong Multiplicity One"><svg  class="icon icon-arrow-up "><use xlink:href="symbol-defs.svg#icon-arrow-up"></use></svg>
+</a>
+  <a href="chap-gl2-operators.html" title="The \(\mathrm{GL}_2\) Hecke operators"><svg  class="icon icon-arrow-right "><use xlink:href="symbol-defs.svg#icon-arrow-right"></use></svg>
+</a>
+</nav>
+
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/plastex.js"></script>
+<script type="text/javascript" src="js/svgxuse.js"></script>
+<script type="text/javascript" src="js/js.cookie.min.js"></script>
+<script type="text/javascript" src="js/showmore.js"></script>
+</body>
+</html>

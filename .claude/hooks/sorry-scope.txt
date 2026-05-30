@@ -1,0 +1,2 @@
+# Shimura 3.35 sorry scope
+LeanModularForms/HeckeRIngs/GLn/CongruenceHecke.lean

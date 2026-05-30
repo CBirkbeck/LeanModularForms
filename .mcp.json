@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "mathlib-rag": {
+      "command": "python3",
+      "args": ["/Users/mcu22seu/.claude3/plugins/cache/mathlib-quality-plugins/mathlib-quality/0.2.0/mcp_server/mathlib_rag.py"]
+    }
+  }
+}

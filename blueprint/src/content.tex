@@ -1,0 +1,35 @@
+% In this file you should put the actual content of the blueprint.
+% It is used both by the web and the print version.
+% It should *not* include the \begin{document}.
+
+\chapter*{Introduction}
+
+This blueprint documents the abstract theory of Hecke rings developed in
+\texttt{LeanModularForms}, its specialisation to $\mathrm{GL}_2$, and the application to
+Strong Multiplicity One. The narrative runs as follows.
+
+A \emph{Hecke pair} $(G,H,\Delta)$ produces a free $\mathbb{Z}$-module on the double
+cosets $H\backslash\Delta/H$ (Chapter~\ref{chap:hecke-pairs}). A convolution product
+whose structure constants count coset overlaps makes this an associative unital ring
+(Chapter~\ref{chap:ring-structure}), carrying a degree homomorphism to $\mathbb{Z}$
+(Chapter~\ref{chap:degree}). An \emph{anti-involution} of the pair that fixes every
+double coset forces the ring to be commutative
+(Chapter~\ref{chap:commutativity}); for $\mathrm{GL}_n$ the transpose $g\mapsto {}^{t}g$
+is such an anti-involution, so the $\mathrm{GL}_n$ Hecke algebra is commutative.
+Specialising to $\mathrm{GL}_2$ gives the operators $T(a,d)$ and
+$T(m)=\sum_{a\mid m}T(a,m/a)$ (Chapter~\ref{chap:gl2-operators}), which obey Shimura's
+multiplication table, Theorem~3.24 (Chapter~\ref{chap:multiplication-table}). Finally,
+commutativity makes simultaneous diagonalisation possible, and the rigidity of the
+resulting eigenvalue systems yields Strong Multiplicity One, Miyake Theorem~4.6.12
+(Chapter~\ref{chap:smo}).
+
+Every declaration referenced below is fully formalised and \texttt{sorry}-free in the
+\texttt{LeanModularForms} project; the \texttt{\textbackslash leanok} marks reflect this.
+
+\input{01_hecke_pairs}
+\input{02_ring_structure}
+\input{03_degree}
+\input{04_commutativity}
+\input{05_gl2_operators}
+\input{06_multiplication_table}
+\input{07_strong_multiplicity_one}

@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+  MathJax = { 
+    tex: {
+		    inlineMath: [['$','$'], ['\\(','\\)']]
+	} }
+</script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+<meta name="generator" content="plasTeX" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hecke pairs and double cosets</title>
+<link rel="next" href="chap-ring-structure.html" title="The Hecke ring structure" />
+<link rel="prev" href="sect0001.html" title="Introduction" />
+<link rel="up" href="index.html" title="Hecke Rings and Strong Multiplicity One" />
+<link rel="stylesheet" href="styles/theme-white.css" />
+<link rel="stylesheet" href="styles/amsthm.css" />
+<link rel="stylesheet" href="styles/showmore.css" />
+<link rel="stylesheet" href="styles/blueprint.css" />
+<link rel="stylesheet" href="styles/extra_styles.css" />
+</head>
+
+<body>
+<header>
+<svg  id="toc-toggle" class="icon icon-list-numbered "><use xlink:href="symbol-defs.svg#icon-list-numbered"></use></svg>
+<h1 id="doc_title"><a href="index.html">Hecke Rings and Strong Multiplicity One</a></h1>
+</header>
+
+<div class="wrapper">
+<nav class="toc">
+<ul class="sub-toc-0">
+<li class="">
+  <a href="sect0001.html"><span class="toc_ref"></span> <span class="toc_entry">Introduction</span></a>
+ </li>
+<li class=" active current">
+  <a href="chap-hecke-pairs.html"><span class="toc_ref">1</span> <span class="toc_entry">Hecke pairs and double cosets</span></a>
+ </li>
+<li class="">
+  <a href="chap-ring-structure.html"><span class="toc_ref">2</span> <span class="toc_entry">The Hecke ring structure</span></a>
+ </li>
+<li class="">
+  <a href="chap-degree.html"><span class="toc_ref">3</span> <span class="toc_entry">The degree homomorphism</span></a>
+ </li>
+<li class="">
+  <a href="chap-commutativity.html"><span class="toc_ref">4</span> <span class="toc_entry">Commutativity via anti-involutions</span></a>
+ </li>
+<li class="">
+  <a href="chap-gl2-operators.html"><span class="toc_ref">5</span> <span class="toc_entry">The \(\mathrm{GL}_2\) Hecke operators</span></a>
+ </li>
+<li class="">
+  <a href="chap-multiplication-table.html"><span class="toc_ref">6</span> <span class="toc_entry">The multiplication table (Shimura 3.24)</span></a>
+ </li>
+<li class="">
+  <a href="chap-smo.html"><span class="toc_ref">7</span> <span class="toc_entry">Strong Multiplicity One</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-1">
+     <li class="">
+  <a href="chap-smo.html#a0000000003"><span class="toc_ref">7.1</span> <span class="toc_entry">Eigenforms, newforms, and the new/old decomposition</span></a>
+ </li>
+<li class="">
+  <a href="chap-smo.html#a0000000004"><span class="toc_ref">7.2</span> <span class="toc_entry">Coefficients, leading terms, and the eigenform splitting</span></a>
+ </li>
+<li class="">
+  <a href="chap-smo.html#a0000000005"><span class="toc_ref">7.3</span> <span class="toc_entry">The two halves of Theorem 4.6.12</span></a>
+ </li>
+<li class="">
+  <a href="chap-smo.html#a0000000006"><span class="toc_ref">7.4</span> <span class="toc_entry">Strong Multiplicity One</span></a>
+ </li>
+
+  </ul>
+ </li>
+<li ><a href="dep_graph_document.html">Dependency graph</a></li>
+</ul>
+</nav>
+
+<div class="content">
+<div class="content-wrapper">
+
+
+<div class="main-text">
+<h1 id="chap:hecke-pairs">1 Hecke pairs and double cosets</h1>
+
+<p>The basic combinatorial datum of Hecke theory is a <em>Hecke pair</em> \((G,H,\Delta )\), from which one builds two free \(\mathbb {Z}\)-modules: one on the double cosets \(H\backslash \Delta /H\), which will carry the Hecke ring structure, and one on the left cosets \(Hg\), on which that ring will act. This chapter records these definitions together with the structural fact, following [Sh, §3.1], that each double coset \(HgH\) is a finite disjoint union of left cosets. </p>
+<div class="definition_thmwrapper theorem-style-definition" id="def:hecke-pair">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">1</span>
+    <span class="definition_thmtitle">Hecke pair</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-hecke-pairs.html#def:hecke-pair">#</a>
+    
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.HeckePair" class="lean_decl">HeckeRing.HeckePair</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>  A <em>Hecke pair</em> \((G,H,\Delta )\) consists of a group \(G\), a subgroup \(H\) of \(G\), and a submonoid \(\Delta \) of \(G\) satisfying \(H\le \Delta \) and \(\Delta \le \operatorname {Comm}(H)\), where \(\operatorname {Comm}(H)\) is the commensurator of \(H\) in \(G\). Equivalently, every \(g\in \Delta \) is commensurable with the identity in the sense that \(H\cap gHg^{-1}\) has finite index in both \(H\) and \(gHg^{-1}\). </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:hecke-coset">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">2</span>
+    <span class="definition_thmtitle">Double cosets</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-hecke-pairs.html#def:hecke-coset">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-hecke-pairs.html#def:hecke-pair">Definition 1</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.HeckeCoset" class="lean_decl">HeckeRing.HeckeCoset</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>   For a Hecke pair \((G,H,\Delta )\), the set of <em>double cosets</em> \(H\backslash \Delta /H\) is the quotient of \(\Delta \) by the equivalence relation that identifies \(g\) and \(g'\) whenever \(HgH=Hg'H\), that is, whenever \(g'=h_1 g h_2\) for some \(h_1,h_2\in H\). We write a typical double coset as \(HgH\). </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:hecke-left-coset">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">3</span>
+    <span class="definition_thmtitle">Left cosets in \(\Delta \)</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-hecke-pairs.html#def:hecke-left-coset">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-hecke-pairs.html#def:hecke-pair">Definition 1</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.HeckeLeftCoset" class="lean_decl">HeckeRing.HeckeLeftCoset</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>   For a Hecke pair \((G,H,\Delta )\), the set of <em>left cosets</em> is the quotient of \(\Delta \) by the equivalence relation that identifies \(g\) and \(g'\) whenever \(Hg=Hg'\). We write a typical left coset as \(Hg\). </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:dc-eq-iUnion-lc">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">4</span>
+    <span class="lemma_thmtitle">Double coset as a union of left cosets</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-hecke-pairs.html#lem:dc-eq-iUnion-lc">#</a>
+    
+    <a class="icon proof" href="chap-hecke-pairs.html#a0000000007"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-hecke-pairs.html#def:hecke-pair">Definition 1</a></li>
+          
+          <li><a href="chap-hecke-pairs.html#def:hecke-pair">Definition 1</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.DoubleCoset.doubleCoset_eq_iUnion_leftCosets" class="lean_decl">HeckeRing.DoubleCoset.doubleCoset_eq_iUnion_leftCosets</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   Let \(g\in \Delta \). Then the double coset \(HgH\) is the union </p>
+<div class="displaymath" id="a0000000008">
+  \[  HgH \; =\;  \bigcup _{i\, \in \,  H/(H\cap gHg^{-1})} H\, (g_i\, g),  \]
+</div>
+<p> where \(i\) ranges over the coset space \(H/(H\cap gHg^{-1})\) and \(g_i\in H\) is a representative of \(i\). In particular \(HgH\) is a disjoint union of finitely many left cosets of \(H\). </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000007">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> Writing \(K=H\cap gHg^{-1}\), the subgroup \(H\) is the disjoint union of the left cosets \(g_i K\) as \(i\) ranges over \(H/K\). Multiplying this decomposition on the right by the set \(gHg^{-1}\) and using that \(K\) stabilises \(gHg^{-1}\) under left multiplication, one obtains \(H\, gHg^{-1}=\bigcup _i g_i\, gHg^{-1}\); cancelling \(g^{-1}\) on the right and translating by \(g\) turns the left-hand side into \(HgH\) and each summand into the left coset \(H(g_i g)\). Commensurability of \(g\) with the identity, which holds because \(\Delta \le \operatorname {Comm}(H)\), makes the index \([H:H\cap gHg^{-1}]\) finite, so the union is finite, and distinct cosets \(g_iK\) give distinct left cosets \(H(g_i g)\), whence the union is disjoint. </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:decomp-quot">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">5</span>
+    <span class="definition_thmtitle">Left-coset index of a double coset</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-hecke-pairs.html#def:decomp-quot">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-hecke-pairs.html#def:hecke-pair">Definition 1</a></li>
+          
+          <li><a href="chap-hecke-pairs.html#lem:dc-eq-iUnion-lc">Lemma 4</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.decompQuot" class="lean_decl">HeckeRing.decompQuot</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>   For \(g\in \Delta \), the <em>decomposition index set</em> of \(g\) is the coset space \(H/(H\cap gHg^{-1})\), which indexes the left cosets appearing in the decomposition \(HgH=\bigsqcup _i H(g_i g)\) of Lemma&#160;<a href="chap-hecke-pairs.html#lem:dc-eq-iUnion-lc">4</a>. Since \(\Delta \le \operatorname {Comm}(H)\), this index set is finite. </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:hecke-ring-carrier">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">6</span>
+    <span class="definition_thmtitle">Hecke ring, underlying module</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-hecke-pairs.html#def:hecke-ring-carrier">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-hecke-pairs.html#def:hecke-coset">Definition 2</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.𝕋" class="lean_decl">HeckeRing.𝕋</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>   Let \((G,H,\Delta )\) be a Hecke pair. The <em>Hecke ring</em> \(\mathbb {T}=\mathcal{H}(G,H,\Delta )\) is, as a \(\mathbb {Z}\)-module, the free \(\mathbb {Z}\)-module on the set of double cosets \(H\backslash \Delta /H\); that is, the \(\mathbb {Z}\)-valued functions on \(H\backslash \Delta /H\) of finite support. Its multiplication is introduced in Chapter&#160;<a href="chap-ring-structure.html">2</a>. </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:hecke-module">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">7</span>
+    <span class="definition_thmtitle">Hecke module</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-hecke-pairs.html#def:hecke-module">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-hecke-pairs.html#def:hecke-left-coset">Definition 3</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.HeckeModule" class="lean_decl">HeckeRing.HeckeModule</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>   Let \((G,H,\Delta )\) be a Hecke pair. The <em>Hecke module</em> is the free \(\mathbb {Z}\)-module on the set of left cosets \(Hg\); that is, the \(\mathbb {Z}\)-valued functions of finite support on the set of left cosets. This is the module on which the Hecke ring \(\mathbb {T}\) acts. </p>
+
+  </div>
+</div>
+
+</div> <!--main-text -->
+</div> <!-- content-wrapper -->
+</div> <!-- content -->
+</div> <!-- wrapper -->
+
+<nav class="prev_up_next">
+  <svg  id="showmore-minus" class="icon icon-eye-minus showmore"><use xlink:href="symbol-defs.svg#icon-eye-minus"></use></svg>
+
+  <svg  id="showmore-plus" class="icon icon-eye-plus showmore"><use xlink:href="symbol-defs.svg#icon-eye-plus"></use></svg>
+
+  <a href="sect0001.html" title="Introduction"><svg  class="icon icon-arrow-left "><use xlink:href="symbol-defs.svg#icon-arrow-left"></use></svg>
+</a>
+  <a href="index.html" title="Hecke Rings and Strong Multiplicity One"><svg  class="icon icon-arrow-up "><use xlink:href="symbol-defs.svg#icon-arrow-up"></use></svg>
+</a>
+  <a href="chap-ring-structure.html" title="The Hecke ring structure"><svg  class="icon icon-arrow-right "><use xlink:href="symbol-defs.svg#icon-arrow-right"></use></svg>
+</a>
+</nav>
+
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/plastex.js"></script>
+<script type="text/javascript" src="js/svgxuse.js"></script>
+<script type="text/javascript" src="js/js.cookie.min.js"></script>
+<script type="text/javascript" src="js/showmore.js"></script>
+</body>
+</html>

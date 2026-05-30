@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+  MathJax = { 
+    tex: {
+		    inlineMath: [['$','$'], ['\\(','\\)']]
+	} }
+</script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+<meta name="generator" content="plasTeX" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Strong Multiplicity One</title>
+<link rel="prev" href="chap-multiplication-table.html" title="The multiplication table (Shimura 3.24)" />
+<link rel="up" href="index.html" title="Hecke Rings and Strong Multiplicity One" />
+<link rel="stylesheet" href="styles/theme-white.css" />
+<link rel="stylesheet" href="styles/amsthm.css" />
+<link rel="stylesheet" href="styles/showmore.css" />
+<link rel="stylesheet" href="styles/blueprint.css" />
+<link rel="stylesheet" href="styles/extra_styles.css" />
+</head>
+
+<body>
+<header>
+<svg  id="toc-toggle" class="icon icon-list-numbered "><use xlink:href="symbol-defs.svg#icon-list-numbered"></use></svg>
+<h1 id="doc_title"><a href="index.html">Hecke Rings and Strong Multiplicity One</a></h1>
+</header>
+
+<div class="wrapper">
+<nav class="toc">
+<ul class="sub-toc-0">
+<li class="">
+  <a href="sect0001.html"><span class="toc_ref"></span> <span class="toc_entry">Introduction</span></a>
+ </li>
+<li class="">
+  <a href="chap-hecke-pairs.html"><span class="toc_ref">1</span> <span class="toc_entry">Hecke pairs and double cosets</span></a>
+ </li>
+<li class="">
+  <a href="chap-ring-structure.html"><span class="toc_ref">2</span> <span class="toc_entry">The Hecke ring structure</span></a>
+ </li>
+<li class="">
+  <a href="chap-degree.html"><span class="toc_ref">3</span> <span class="toc_entry">The degree homomorphism</span></a>
+ </li>
+<li class="">
+  <a href="chap-commutativity.html"><span class="toc_ref">4</span> <span class="toc_entry">Commutativity via anti-involutions</span></a>
+ </li>
+<li class="">
+  <a href="chap-gl2-operators.html"><span class="toc_ref">5</span> <span class="toc_entry">The \(\mathrm{GL}_2\) Hecke operators</span></a>
+ </li>
+<li class="">
+  <a href="chap-multiplication-table.html"><span class="toc_ref">6</span> <span class="toc_entry">The multiplication table (Shimura 3.24)</span></a>
+ </li>
+<li class=" active current">
+  <a href="chap-smo.html"><span class="toc_ref">7</span> <span class="toc_entry">Strong Multiplicity One</span></a>
+  <span class="expand-toc">▼</span>
+  <ul class="sub-toc-1 active">
+     <li class="">
+  <a href="chap-smo.html#a0000000003"><span class="toc_ref">7.1</span> <span class="toc_entry">Eigenforms, newforms, and the new/old decomposition</span></a>
+ </li>
+<li class="">
+  <a href="chap-smo.html#a0000000004"><span class="toc_ref">7.2</span> <span class="toc_entry">Coefficients, leading terms, and the eigenform splitting</span></a>
+ </li>
+<li class="">
+  <a href="chap-smo.html#a0000000005"><span class="toc_ref">7.3</span> <span class="toc_entry">The two halves of Theorem 4.6.12</span></a>
+ </li>
+<li class="">
+  <a href="chap-smo.html#a0000000006"><span class="toc_ref">7.4</span> <span class="toc_entry">Strong Multiplicity One</span></a>
+ </li>
+
+  </ul>
+ </li>
+<li ><a href="dep_graph_document.html">Dependency graph</a></li>
+</ul>
+</nav>
+
+<div class="content">
+<div class="content-wrapper">
+
+
+<div class="main-text">
+<h1 id="chap:smo">7 Strong Multiplicity One</h1>
+
+<p>This is the headline chapter. Strong Multiplicity One [Miy, Thm&#160;4.6.12] (equivalently [DS, Thm&#160;5.8.2]) says that a Hecke eigenform is rigidly determined by its eigenvalues at almost all primes: if a normalised newform \(f\) in \(S_k(N,\chi )\) and any cusp-form Hecke eigenfunction \(g\) in \(S_k(N,\chi )\) share the eigenvalues \(\lambda _n\) for all \(n\) with \((n,N)=1\) outside a finite set, then \(g=c\, f\) for a single constant \(c\in \mathbb {C}\). The result rests squarely on the commutativity of the \(\mathrm{GL}_2\) Hecke algebra established in the previous chapters (Theorem&#160;<a href="chap-commutativity.html#thm:commring-hecke-algebra">28</a>) together with its multiplication table (Theorem&#160;<a href="chap-multiplication-table.html#thm:T-sum-mul">44</a>): commutativity is what makes simultaneous diagonalisation possible, and the rigidity of the eigenvalue systems is read off from the structure of the \(T(n)\). The proof decomposes \(g\) along the Petersson-orthogonal new/old splitting, shows the new part is a multiple of \(f\), and shows the old part vanishes. </p>
+<h1 id="a0000000003">7.1 Eigenforms, newforms, and the new/old decomposition</h1>
+<div class="definition_thmwrapper theorem-style-definition" id="def:modFormCharSpace">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">47</span>
+    <span class="definition_thmtitle">Nebentypus space \(S_k(N,\chi )\)</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-smo.html#def:modFormCharSpace">#</a>
+    
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.modFormCharSpace" class="lean_decl">HeckeRing.GL2.modFormCharSpace</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>  For a positive integer \(N\), a weight \(k\), and a Dirichlet character \(\chi \) modulo \(N\), the <em>Nebentypus space</em> (modular-form version \(M_k(N,\chi )\), cusp version \(S_k(N,\chi )\)) is the common eigenspace </p>
+<div class="displaymath" id="a0000000053">
+  \[  M_k(N,\chi ) \; =\;  \bigcap _{d} \ker \bigl(\langle d\rangle - \chi (d)\bigr),  \]
+</div>
+<p> the intersection over all units \(d\) modulo \(N\) of the \(\chi (d)\)-eigenspaces of the diamond operators \(\langle d\rangle \). Equivalently, \(f\) lies in \(M_k(N,\chi )\) if and only if \(\langle d\rangle f=\chi (d)\, f\) for every \(d\) coprime to \(N\). </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:eigenform">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">48</span>
+    <span class="definition_thmtitle">Eigenform</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-smo.html#def:eigenform">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-smo.html#def:modFormCharSpace">Definition 47</a></li>
+          
+          <li><a href="chap-commutativity.html#thm:commring-hecke-algebra">Theorem 28</a></li>
+          
+          <li><a href="chap-multiplication-table.html#thm:T-sum-mul">Theorem 44</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.Eigenform" class="lean_decl">HeckeRing.GL2.Eigenform</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>   An <em>eigenform</em> of level \(\Gamma _1(N)\) and weight \(k\) is a cusp form \(f\) carrying a Nebentypus character \(\chi \), so that \(f\) lies in the eigenspace \(S_k(N,\chi )\), and which is a simultaneous eigenfunction of all the Hecke operators \(T(n)\) with \((n,N)=1\). Because the Hecke operators commute (Theorem&#160;<a href="chap-commutativity.html#thm:commring-hecke-algebra">28</a>, whose product law is the multiplication table Theorem&#160;<a href="chap-multiplication-table.html#thm:T-sum-mul">44</a>), such common eigenfunctions exist in abundance: a finite-dimensional space of cusp forms is simultaneously diagonalised by the commuting family \(\{ T(n)\} _{(n,N)=1}\). The eigenvalue is recorded as \(T(n)f=\lambda _n\, f\), where \(\lambda _n=\chi (n)\, \nu _n\) relates the classical Hecke eigenvalue \(\lambda _n\) to the underlying Hecke-ring eigenvalue \(\nu _n\) through the diamond factor \(\chi (n)\). </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:cuspFormsOld">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">49</span>
+    <span class="definition_thmtitle">Old subspace \(S_k^{\flat }(N)\)</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-smo.html#def:cuspFormsOld">#</a>
+    
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.cuspFormsOld" class="lean_decl">HeckeRing.GL2.cuspFormsOld</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>  The <em>old subspace</em> \(S_k^{\flat }(N)\) is the span of all level-raising images: for each proper divisor \(M\mid N\) (with \(M\neq N\)) and each divisor \(\ell \) of \(N/M\) with \(\ell {\gt}1\), the degeneracy map \(f\mapsto f(\ell z)\) carries the cusp space at level \(M\) into level \(N\), and \(S_k^{\flat }(N)\) is the subspace generated by all such images, </p>
+<div class="displaymath" id="a0000000054">
+  \[  S_k^{\flat }(N) \; =\;  \operatorname {span}\bigl\{ \,  f(\ell z) \  :\  f\in S_k(\Gamma _1(M)),\  M\mid N,\  M\neq N \, \bigr\} .  \]
+</div>
+<p> This is the [DS, (5.18)] definition of the forms “coming from lower level”. </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:cuspFormsNew">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">50</span>
+    <span class="definition_thmtitle">New subspace \(S_k^{\sharp }(N)\)</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-smo.html#def:cuspFormsNew">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-smo.html#def:cuspFormsOld">Definition 49</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.cuspFormsNew" class="lean_decl">HeckeRing.GL2.cuspFormsNew</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>   The <em>new subspace</em> \(S_k^{\sharp }(N)\) is the orthogonal complement of the old subspace \(S_k^{\flat }(N)\) inside \(S_k(\Gamma _1(N))\) with respect to the Petersson inner product, </p>
+<div class="displaymath" id="a0000000055">
+  \[  S_k^{\sharp }(N) \; =\;  \bigl(S_k^{\flat }(N)\bigr)^{\perp },  \]
+</div>
+<p> following [DS, (5.19)]. Concretely, a cusp form lies in \(S_k^{\sharp }(N)\) exactly when it is Petersson-orthogonal to every oldform. The Petersson form is positive definite on cusp forms, so \(S_k^{\sharp }(N)\cap S_k^{\flat }(N)=0\). </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:oldPart">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">51</span>
+    <span class="definition_thmtitle">Old part</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-smo.html#def:oldPart">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-smo.html#def:cuspFormsOld">Definition 49</a></li>
+          
+          <li><a href="chap-smo.html#def:cuspFormsNew">Definition 50</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.oldPart" class="lean_decl">HeckeRing.GL2.oldPart</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>   Since \(S_k(\Gamma _1(N))=S_k^{\flat }(N)\oplus S_k^{\sharp }(N)\) as an orthogonal direct sum, every cusp form \(f\) has a unique decomposition into an old and a new component. The <em>old part</em> of \(f\) is its image under the projection of \(S_k(\Gamma _1(N))\) onto \(S_k^{\flat }(N)\) along \(S_k^{\sharp }(N)\). </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:newPart">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">52</span>
+    <span class="definition_thmtitle">New part</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-smo.html#def:newPart">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-smo.html#def:cuspFormsOld">Definition 49</a></li>
+          
+          <li><a href="chap-smo.html#def:cuspFormsNew">Definition 50</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.newPart" class="lean_decl">HeckeRing.GL2.newPart</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>   The <em>new part</em> of a cusp form \(f\) is its image under the projection of \(S_k(\Gamma _1(N))\) onto the new subspace \(S_k^{\sharp }(N)\) along the old subspace \(S_k^{\flat }(N)\). Together with the old part it recovers \(f\): one has \(f=\operatorname {old}(f)+\operatorname {new}(f)\) with \(\operatorname {old}(f)\in S_k^{\flat }(N)\) and \(\operatorname {new}(f)\in S_k^{\sharp }(N)\). </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:newform">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">53</span>
+    <span class="definition_thmtitle">Newform</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-smo.html#def:newform">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-smo.html#def:eigenform">Definition 48</a></li>
+          
+          <li><a href="chap-smo.html#def:cuspFormsNew">Definition 50</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.Newform" class="lean_decl">HeckeRing.GL2.Newform</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>   A <em>newform</em> (normalised newform) of level \(\Gamma _1(N)\) and weight \(k\) is an eigenform \(f\) that lies in the new subspace \(S_k^{\sharp }(N)\) and is normalised so that its first Fourier coefficient is \(a_1=1\). By Atkin–Lehner uniqueness [DS, Thm&#160;5.8.2] a newform is determined by its Hecke eigenvalues away from the level; Theorem&#160;<a href="chap-smo.html#thm:smo-clean">60</a> below is exactly this rigidity in the present formalisation. </p>
+
+  </div>
+</div>
+<h1 id="a0000000004">7.2 Coefficients, leading terms, and the eigenform splitting</h1>
+<div class="theorem_thmwrapper theorem-style-plain" id="thm:coeff-eq-a1-lambda">
+  <div class="theorem_thmheading">
+    <span class="theorem_thmcaption">
+    Theorem
+    </span>
+    <span class="theorem_thmlabel">54</span>
+    <span class="theorem_thmtitle">Miyake 4.5.15(1): \(a_n=a_1\lambda _n\)</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-smo.html#thm:coeff-eq-a1-lambda">#</a>
+    
+    <a class="icon proof" href="chap-smo.html#a0000000056"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-smo.html#def:eigenform">Definition 48</a></li>
+          
+          <li><a href="chap-smo.html#def:modFormCharSpace">Definition 47</a></li>
+          
+          <li><a href="chap-smo.html#def:eigenform">Definition 48</a></li>
+          
+          <li><a href="chap-smo.html#def:modFormCharSpace">Definition 47</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.Eigenform.coeff_eq_coeff_one_mul_eigenvalue" class="lean_decl">HeckeRing.GL2.Eigenform.coeff_eq_coeff_one_mul_eigenvalue</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="theorem_thmcontent">
+  <p>   Let \(g\) be an eigenform lying in the Nebentypus space \(S_k(N,\chi )\), and let \(n\) be coprime to \(N\). Then the Fourier coefficients of \(g\) satisfy </p>
+<div class="displaymath" id="a0000000057">
+  \[  a_n(g) \; =\;  a_1(g)\, \lambda _n(g),  \]
+</div>
+<p> where \(\lambda _n(g)\) is the classical Hecke eigenvalue of \(g\) at \(n\). </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000056">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> This is [Miy, Lemma&#160;4.5.15(1)] in its un-normalised form. Apply the Hecke operator \(T(n)\) to \(g\). On the one hand the eigenform relation gives \(T(n)g=\lambda _n(g)\, g\), so the first Fourier coefficient of \(T(n)g\) is \(\lambda _n(g)\, a_1(g)\). On the other hand the explicit formula for the Fourier coefficients of \(T(n)g\) expresses \(a_m(T(n)g)\) as a sum over the common divisors of \(m\) and \(n\); taking \(m=1\) and using \((n,N)=1\) the sum collapses to its single \(d=1\) term, which is precisely \(a_n(g)\). Equating the two expressions for the first coefficient of \(T(n)g\) yields \(a_n(g)=a_1(g)\, \lambda _n(g)\). </p>
+
+  </div>
+</div>
+<div class="theorem_thmwrapper theorem-style-plain" id="thm:a1-ne-zero">
+  <div class="theorem_thmheading">
+    <span class="theorem_thmcaption">
+    Theorem
+    </span>
+    <span class="theorem_thmlabel">55</span>
+    <span class="theorem_thmtitle">Miyake 4.6.11: \(a_1\neq 0\) for new eigenforms</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-smo.html#thm:a1-ne-zero">#</a>
+    
+    <a class="icon proof" href="chap-smo.html#a0000000058"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-smo.html#def:eigenform">Definition 48</a></li>
+          
+          <li><a href="chap-smo.html#def:cuspFormsNew">Definition 50</a></li>
+          
+          <li><a href="chap-smo.html#thm:coeff-eq-a1-lambda">Theorem 54</a></li>
+          
+          <li><a href="chap-smo.html#def:eigenform">Definition 48</a></li>
+          
+          <li><a href="chap-smo.html#def:cuspFormsNew">Definition 50</a></li>
+          
+          <li><a href="chap-smo.html#thm:coeff-eq-a1-lambda">Theorem 54</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.coeff_one_ne_zero_of_mem_cuspFormsNew_of_eigen_unconditional" class="lean_decl">HeckeRing.GL2.coeff_one_ne_zero_of_mem_cuspFormsNew_of_eigen_unconditional</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="theorem_thmcontent">
+  <p>   Let \(g\) be a nonzero eigenform lying in \(S_k(N,\chi )\cap S_k^{\sharp }(N)\), that is, a nonzero common eigenfunction of the \(T(n)\), \((n,N)=1\), in the new subspace. Then its leading Fourier coefficient is nonzero, \(a_1(g)\neq 0\). </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000058">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> This is [Miy, Lemma&#160;4.6.11]. Argue by contraposition: suppose \(a_1(g)=0\). By Theorem&#160;<a href="chap-smo.html#thm:coeff-eq-a1-lambda">54</a> every coprime coefficient then vanishes, \(a_n(g)=a_1(g)\, \lambda _n(g)=0\) for all \((n,N)=1\), and the zeroth coefficient vanishes because \(g\) is cuspidal. A form whose Fourier coefficients all vanish away from the level necessarily lies in the old subspace (this is the content of [Miy, Thm&#160;4.6.8] in the per-character formulation), so \(g\in S_k^{\flat }(N)\). But \(g\) also lies in the new subspace \(S_k^{\sharp }(N)\), and the Petersson form is positive definite, so \(S_k^{\flat }(N)\cap S_k^{\sharp }(N)=0\) forces \(g=0\), contradicting the hypothesis. Hence \(a_1(g)\neq 0\). </p>
+
+  </div>
+</div>
+<div class="theorem_thmwrapper theorem-style-plain" id="thm:eigenform-decomp">
+  <div class="theorem_thmheading">
+    <span class="theorem_thmcaption">
+    Theorem
+    </span>
+    <span class="theorem_thmlabel">56</span>
+    <span class="theorem_thmtitle">Eigenform old/new splitting</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-smo.html#thm:eigenform-decomp">#</a>
+    
+    <a class="icon proof" href="chap-smo.html#a0000000059"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-smo.html#def:eigenform">Definition 48</a></li>
+          
+          <li><a href="chap-smo.html#def:cuspFormsNew">Definition 50</a></li>
+          
+          <li><a href="chap-smo.html#def:oldPart">Definition 51</a></li>
+          
+          <li><a href="chap-smo.html#def:newPart">Definition 52</a></li>
+          
+          <li><a href="chap-smo.html#def:eigenform">Definition 48</a></li>
+          
+          <li><a href="chap-smo.html#def:cuspFormsNew">Definition 50</a></li>
+          
+          <li><a href="chap-smo.html#def:oldPart">Definition 51</a></li>
+          
+          <li><a href="chap-smo.html#def:newPart">Definition 52</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.exists_eigenform_decomposition_mem_cuspFormsNew" class="lean_decl">HeckeRing.GL2.exists_eigenform_decomposition_mem_cuspFormsNew</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="theorem_thmcontent">
+  <p>   Let \(g\) be a cusp form in the new subspace \(S_k^{\sharp }(N)\) whose underlying modular form lies in the Nebentypus space \(S_k(N,\chi )\). Then \(g\) is a finite sum of common Hecke eigenforms, </p>
+<div class="displaymath" id="a0000000060">
+  \[  g \; =\;  \sum _{i} h_i,  \]
+</div>
+<p> each summand \(h_i\) again lying in \(S_k(N,\chi )\cap S_k^{\sharp }(N)\) and being a common eigenfunction of all \(T(n)\) with \((n,N)=1\). </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000059">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> The new subspace is stable under every Hecke operator \(T(n)\) with \((n,N)=1\) (DS Prop&#160;5.6.2), and so is the Nebentypus eigenspace \(S_k(N,\chi )\). Since the operators \(\{ T(n)\} _{(n,N)=1}\) form a commuting family of diagonalisable operators on the finite-dimensional space \(S_k(N,\chi )\) (Theorem&#160;<a href="chap-commutativity.html#thm:commring-hecke-algebra">28</a>), the simultaneous spectral decomposition of \(S_k(N,\chi )\) into joint eigenspaces restricts to the invariant subspace \(S_k^{\sharp }(N)\cap S_k(N,\chi )\). Writing \(g\) in this joint eigenbasis exhibits it as a finite sum of common eigenforms, each of which is itself new and of Nebentypus \(\chi \). </p>
+
+  </div>
+</div>
+<h1 id="a0000000005">7.3 The two halves of Theorem 4.6.12</h1>
+<div class="theorem_thmwrapper theorem-style-plain" id="thm:newPart-eq-smul">
+  <div class="theorem_thmheading">
+    <span class="theorem_thmcaption">
+    Theorem
+    </span>
+    <span class="theorem_thmlabel">57</span>
+    <span class="theorem_thmtitle">New part is a multiple of \(f\)</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-smo.html#thm:newPart-eq-smul">#</a>
+    
+    <a class="icon proof" href="chap-smo.html#a0000000061"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-smo.html#def:newform">Definition 53</a></li>
+          
+          <li><a href="chap-smo.html#def:newPart">Definition 52</a></li>
+          
+          <li><a href="chap-smo.html#thm:coeff-eq-a1-lambda">Theorem 54</a></li>
+          
+          <li><a href="chap-smo.html#thm:a1-ne-zero">Theorem 55</a></li>
+          
+          <li><a href="chap-smo.html#thm:eigenform-decomp">Theorem 56</a></li>
+          
+          <li><a href="chap-smo.html#def:newform">Definition 53</a></li>
+          
+          <li><a href="chap-smo.html#def:newPart">Definition 52</a></li>
+          
+          <li><a href="chap-smo.html#thm:coeff-eq-a1-lambda">Theorem 54</a></li>
+          
+          <li><a href="chap-smo.html#thm:a1-ne-zero">Theorem 55</a></li>
+          
+          <li><a href="chap-smo.html#thm:eigenform-decomp">Theorem 56</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.newPart_eq_smul_of_shared_eigenvalues" class="lean_decl">HeckeRing.GL2.newPart_eq_smul_of_shared_eigenvalues</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="theorem_thmcontent">
+  <p>   Let \(f\) be a normalised newform in \(S_k(N,\chi )\) and let \(g^{(1)}\) be a common Hecke eigenfunction in the new subspace lying in \(S_k(N,\chi )\) that shares \(f\)’s eigenvalues \(\lambda _n\) for all \((n,N)=1\) outside a finite set \(S\). Then </p>
+<div class="displaymath" id="a0000000062">
+  \[  g^{(1)} \; =\;  b_1\, f, \qquad b_1=a_1(g^{(1)}).  \]
+</div>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000061">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> This is the new-part half of [Miy, Thm&#160;4.6.12]. If \(g^{(1)}=0\) then \(b_1=0\) and the identity is trivial, so assume \(g^{(1)}\neq 0\); then \(b_1\neq 0\) by Theorem&#160;<a href="chap-smo.html#thm:a1-ne-zero">55</a>. Sharing eigenvalues off the finite set \(S\) in fact forces equality of <em>all</em> coprime eigenvalues (a nonzero coprime eigenvalue and the multiplicativity of the eigenvalue system propagate the agreement to every \((n,N)=1\)). Consider \(h=b_1^{-1}g^{(1)}-f\). For \((n,N)=1\) its \(n\)-th coefficient is \(b_1^{-1}a_n(g^{(1)})-a_n(f)=\lambda _n-\lambda _n=0\), using Theorem&#160;<a href="chap-smo.html#thm:coeff-eq-a1-lambda">54</a> together with the normalisation \(a_1(f)=1\) which gives \(a_n(f)=\lambda _n\). A form with vanishing coprime coefficients lies in the old subspace by [Miy, Thm&#160;4.6.8], so \(h\in S_k^{\flat }(N)\); but \(h\) is a difference of new forms, hence \(h\in S_k^{\sharp }(N)\). Orthogonality of the new and old subspaces forces \(h=0\), i.e. \(b_1^{-1}g^{(1)}=f\), which is the claim. </p>
+
+  </div>
+</div>
+<div class="theorem_thmwrapper theorem-style-plain" id="thm:oldPart-eq-zero">
+  <div class="theorem_thmheading">
+    <span class="theorem_thmcaption">
+    Theorem
+    </span>
+    <span class="theorem_thmlabel">58</span>
+    <span class="theorem_thmtitle">Old part vanishes</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-smo.html#thm:oldPart-eq-zero">#</a>
+    
+    <a class="icon proof" href="chap-smo.html#a0000000063"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-smo.html#def:newform">Definition 53</a></li>
+          
+          <li><a href="chap-smo.html#def:oldPart">Definition 51</a></li>
+          
+          <li><a href="chap-smo.html#thm:a1-ne-zero">Theorem 55</a></li>
+          
+          <li><a href="chap-smo.html#thm:eigenform-decomp">Theorem 56</a></li>
+          
+          <li><a href="chap-smo.html#def:newform">Definition 53</a></li>
+          
+          <li><a href="chap-smo.html#def:oldPart">Definition 51</a></li>
+          
+          <li><a href="chap-smo.html#thm:a1-ne-zero">Theorem 55</a></li>
+          
+          <li><a href="chap-smo.html#thm:eigenform-decomp">Theorem 56</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.oldPart_eq_zero_of_shared_eigenvalues" class="lean_decl">HeckeRing.GL2.oldPart_eq_zero_of_shared_eigenvalues</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="theorem_thmcontent">
+  <p>   Let \(f\) be a nonzero newform in \(S_k(N,\chi )\) and let \(g^{(2)}\) be a common Hecke eigenfunction in the (\(\chi \)-refined) old subspace, lying in \(S_k(N,\chi )\), that shares \(f\)’s eigenvalues \(\lambda _n\) for all \((n,N)=1\) outside a finite set \(S\). Then \(g^{(2)}=0\). </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000063">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> This is steps (i)–(ii) of [Miy, Thm&#160;4.6.12]. Suppose \(g^{(2)}\neq 0\). By the description of the old subspace [Miy, Lemma&#160;4.6.9] one may write \(g^{(2)}\) as a sum of level-raises \(h_v(\ell _v z)\) of newforms \(h_v\) at proper divisors \(M_v\) of \(N\); by Theorem&#160;<a href="chap-smo.html#thm:eigenform-decomp">56</a> the \(h_v\) may be taken to be common eigenforms, and by [Miy, Lemma&#160;4.6.2] their level-raises remain eigenforms with the same eigenvalues. Eigenfunctions with distinct eigenvalues are Petersson-orthogonal, hence linearly independent, so the components whose eigenvalues differ from those of \(f\) contribute nothing; removing them leaves a nonzero new eigenform \(h\) at a proper divisor \(M\) whose eigenvalues match \(f\)’s off \(S\). By Theorem&#160;<a href="chap-smo.html#thm:a1-ne-zero">55</a> its leading coefficient \(c_1'\) is nonzero. The difference \(h-c_1'f\) has vanishing coprime coefficients (Theorem&#160;<a href="chap-smo.html#thm:coeff-eq-a1-lambda">54</a> and \(a_1(f)=1\)), so it lies in the old subspace by [Miy, Thm&#160;4.6.8]; and \(h\) itself, being a form essentially of level \(M\neq N\), also lies in the old subspace. Therefore </p>
+<div class="displaymath" id="a0000000064">
+  \[  f \; =\;  c_1'^{-1}h - c_1'^{-1}(h-c_1'f)  \]
+</div>
+<p> exhibits \(f\) as an element of the old subspace. This contradicts \(f\) being a nonzero newform (the new and old subspaces meet only in \(0\)). Hence \(g^{(2)}=0\). </p>
+
+  </div>
+</div>
+<h1 id="a0000000006">7.4 Strong Multiplicity One</h1>
+<div class="theorem_thmwrapper theorem-style-plain" id="thm:smo-constMul">
+  <div class="theorem_thmheading">
+    <span class="theorem_thmcaption">
+    Theorem
+    </span>
+    <span class="theorem_thmlabel">59</span>
+    <span class="theorem_thmtitle">Strong Multiplicity One, Miyake 4.6.12</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-smo.html#thm:smo-constMul">#</a>
+    
+    <a class="icon proof" href="chap-smo.html#a0000000065"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-smo.html#def:newform">Definition 53</a></li>
+          
+          <li><a href="chap-smo.html#def:eigenform">Definition 48</a></li>
+          
+          <li><a href="chap-smo.html#def:oldPart">Definition 51</a></li>
+          
+          <li><a href="chap-smo.html#def:newPart">Definition 52</a></li>
+          
+          <li><a href="chap-smo.html#thm:newPart-eq-smul">Theorem 57</a></li>
+          
+          <li><a href="chap-smo.html#thm:oldPart-eq-zero">Theorem 58</a></li>
+          
+          <li><a href="chap-smo.html#def:newform">Definition 53</a></li>
+          
+          <li><a href="chap-smo.html#def:eigenform">Definition 48</a></li>
+          
+          <li><a href="chap-smo.html#def:oldPart">Definition 51</a></li>
+          
+          <li><a href="chap-smo.html#def:newPart">Definition 52</a></li>
+          
+          <li><a href="chap-smo.html#thm:newPart-eq-smul">Theorem 57</a></li>
+          
+          <li><a href="chap-smo.html#thm:oldPart-eq-zero">Theorem 58</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.strongMultiplicityOne_constMul" class="lean_decl">HeckeRing.GL2.strongMultiplicityOne_constMul</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="theorem_thmcontent">
+  <p>   Let \(f\) be a normalised newform in \(S_k(N,\chi )\), and let \(g\) be any cusp-form Hecke eigenfunction in \(S_k(N,\chi )\). If \(f\) and \(g\) are common eigenfunctions of \(T(n)\) with the same eigenvalue \(\lambda _n\) for every \(n\) with \((n,N)=1\) outside a finite set \(S\), then \(g\) is a constant multiple of \(f\): </p>
+<div class="displaymath" id="a0000000066">
+  \[  g \; =\;  c\, f \qquad \text{for some } c\in \mathbb {C}.  \]
+</div>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000065">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> This is [Miy, Thm&#160;4.6.12]. Normalise \(a_1(f)=1\), which is legitimate since \(a_1(f)\neq 0\) by [Miy, Lemma&#160;4.6.11], and split \(g\) along the orthogonal new/old decomposition, \(g=g^{(1)}+g^{(2)}\) with \(g^{(1)}\in S_k^{\sharp }(N)\) and \(g^{(2)}\in S_k^{\flat }(N)\). Because both the new subspace and the old subspace are stable under the Hecke operators (DS Prop&#160;5.6.2 / [Miy, Lemma&#160;4.6.10]), each of \(g^{(1)}\) and \(g^{(2)}\) is again a common eigenfunction of \(T(n)\) sharing \(f\)’s eigenvalue \(\lambda _n\) for \((n,N)=1\) outside \(S\). </p>
+<p>For the new part, Theorem&#160;<a href="chap-smo.html#thm:newPart-eq-smul">57</a> gives \(g^{(1)}=b_1\, f\) where \(b_1=a_1(g^{(1)})\): the difference \(b_1^{-1}g^{(1)}-f\) has vanishing coprime coefficients by [Miy, Lemma&#160;4.5.15(1)] and therefore lies in the old subspace by [Miy, Thm&#160;4.6.8], while being new, hence is \(0\). For the old part, Theorem&#160;<a href="chap-smo.html#thm:oldPart-eq-zero">58</a> gives \(g^{(2)}=0\): assuming otherwise, one descends \(g^{(2)}\) to a nonzero new eigenform \(h\) at a proper divisor sharing \(f\)’s eigenvalues ([Miy, Lemma&#160;4.6.9], [Miy, Lemma&#160;4.6.2], and linear independence of distinct-eigenvalue eigenforms), and then \(h-c_1'f\in S_k^{\flat }(N)\) together with \(h\in S_k^{\flat }(N)\) forces \(f\in S_k^{\flat }(N)\), contradicting that \(f\) is a nonzero newform. Combining the two halves, \(g=g^{(1)}+g^{(2)}=b_1\, f\), so \(g=c\, f\) with \(c=b_1=a_1(g)\). </p>
+
+  </div>
+</div>
+<div class="theorem_thmwrapper theorem-style-plain" id="thm:smo-clean">
+  <div class="theorem_thmheading">
+    <span class="theorem_thmcaption">
+    Theorem
+    </span>
+    <span class="theorem_thmlabel">60</span>
+    <span class="theorem_thmtitle">Multiplicity One for newforms, DS 5.8.2</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-smo.html#thm:smo-clean">#</a>
+    
+    <a class="icon proof" href="chap-smo.html#a0000000067"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-smo.html#thm:smo-constMul">Theorem 59</a></li>
+          
+          <li><a href="chap-smo.html#def:newform">Definition 53</a></li>
+          
+          <li><a href="chap-smo.html#thm:smo-constMul">Theorem 59</a></li>
+          
+          <li><a href="chap-smo.html#def:newform">Definition 53</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.strongMultiplicityOne_axiom_clean_unconditional" class="lean_decl">HeckeRing.GL2.strongMultiplicityOne_axiom_clean_unconditional</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="theorem_thmcontent">
+  <p>   Let \(f\) and \(g\) be normalised newforms in the same Nebentypus space \(S_k(N,\chi )\). If \(f\) and \(g\) have the same Hecke eigenvalue \(\lambda _n\) for every \(n\) with \((n,N)=1\) outside a finite set \(S\), then \(f=g\). </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000067">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> This is [DS, Thm&#160;5.8.2] and follows immediately from the headline Theorem&#160;<a href="chap-smo.html#thm:smo-constMul">59</a>. Applying it to the newform \(f\) and the eigenfunction \(g\) produces a constant \(c\) with \(g=c\, f\). Comparing first Fourier coefficients and using that both forms are normalised, \(1=a_1(g)=c\, a_1(f)=c\), so \(c=1\) and hence \(g=f\). </p>
+
+  </div>
+</div>
+
+</div> <!--main-text -->
+</div> <!-- content-wrapper -->
+</div> <!-- content -->
+</div> <!-- wrapper -->
+
+<nav class="prev_up_next">
+  <svg  id="showmore-minus" class="icon icon-eye-minus showmore"><use xlink:href="symbol-defs.svg#icon-eye-minus"></use></svg>
+
+  <svg  id="showmore-plus" class="icon icon-eye-plus showmore"><use xlink:href="symbol-defs.svg#icon-eye-plus"></use></svg>
+
+  <a href="chap-multiplication-table.html" title="The multiplication table (Shimura 3.24)"><svg  class="icon icon-arrow-left "><use xlink:href="symbol-defs.svg#icon-arrow-left"></use></svg>
+</a>
+  <a href="index.html" title="Hecke Rings and Strong Multiplicity One"><svg  class="icon icon-arrow-up "><use xlink:href="symbol-defs.svg#icon-arrow-up"></use></svg>
+</a>
+</nav>
+
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/plastex.js"></script>
+<script type="text/javascript" src="js/svgxuse.js"></script>
+<script type="text/javascript" src="js/js.cookie.min.js"></script>
+<script type="text/javascript" src="js/showmore.js"></script>
+</body>
+</html>

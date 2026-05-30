@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+  MathJax = { 
+    tex: {
+		    inlineMath: [['$','$'], ['\\(','\\)']]
+	} }
+</script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+<meta name="generator" content="plasTeX" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The degree homomorphism</title>
+<link rel="next" href="chap-commutativity.html" title="Commutativity via anti-involutions" />
+<link rel="prev" href="chap-ring-structure.html" title="The Hecke ring structure" />
+<link rel="up" href="index.html" title="Hecke Rings and Strong Multiplicity One" />
+<link rel="stylesheet" href="styles/theme-white.css" />
+<link rel="stylesheet" href="styles/amsthm.css" />
+<link rel="stylesheet" href="styles/showmore.css" />
+<link rel="stylesheet" href="styles/blueprint.css" />
+<link rel="stylesheet" href="styles/extra_styles.css" />
+</head>
+
+<body>
+<header>
+<svg  id="toc-toggle" class="icon icon-list-numbered "><use xlink:href="symbol-defs.svg#icon-list-numbered"></use></svg>
+<h1 id="doc_title"><a href="index.html">Hecke Rings and Strong Multiplicity One</a></h1>
+</header>
+
+<div class="wrapper">
+<nav class="toc">
+<ul class="sub-toc-0">
+<li class="">
+  <a href="sect0001.html"><span class="toc_ref"></span> <span class="toc_entry">Introduction</span></a>
+ </li>
+<li class="">
+  <a href="chap-hecke-pairs.html"><span class="toc_ref">1</span> <span class="toc_entry">Hecke pairs and double cosets</span></a>
+ </li>
+<li class="">
+  <a href="chap-ring-structure.html"><span class="toc_ref">2</span> <span class="toc_entry">The Hecke ring structure</span></a>
+ </li>
+<li class=" active current">
+  <a href="chap-degree.html"><span class="toc_ref">3</span> <span class="toc_entry">The degree homomorphism</span></a>
+ </li>
+<li class="">
+  <a href="chap-commutativity.html"><span class="toc_ref">4</span> <span class="toc_entry">Commutativity via anti-involutions</span></a>
+ </li>
+<li class="">
+  <a href="chap-gl2-operators.html"><span class="toc_ref">5</span> <span class="toc_entry">The \(\mathrm{GL}_2\) Hecke operators</span></a>
+ </li>
+<li class="">
+  <a href="chap-multiplication-table.html"><span class="toc_ref">6</span> <span class="toc_entry">The multiplication table (Shimura 3.24)</span></a>
+ </li>
+<li class="">
+  <a href="chap-smo.html"><span class="toc_ref">7</span> <span class="toc_entry">Strong Multiplicity One</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-1">
+     <li class="">
+  <a href="chap-smo.html#a0000000003"><span class="toc_ref">7.1</span> <span class="toc_entry">Eigenforms, newforms, and the new/old decomposition</span></a>
+ </li>
+<li class="">
+  <a href="chap-smo.html#a0000000004"><span class="toc_ref">7.2</span> <span class="toc_entry">Coefficients, leading terms, and the eigenform splitting</span></a>
+ </li>
+<li class="">
+  <a href="chap-smo.html#a0000000005"><span class="toc_ref">7.3</span> <span class="toc_entry">The two halves of Theorem 4.6.12</span></a>
+ </li>
+<li class="">
+  <a href="chap-smo.html#a0000000006"><span class="toc_ref">7.4</span> <span class="toc_entry">Strong Multiplicity One</span></a>
+ </li>
+
+  </ul>
+ </li>
+<li ><a href="dep_graph_document.html">Dependency graph</a></li>
+</ul>
+</nav>
+
+<div class="content">
+<div class="content-wrapper">
+
+
+<div class="main-text">
+<h1 id="chap:degree">3 The degree homomorphism</h1>
+
+<p>Each double coset splits into finitely many left cosets, and counting them defines a ring homomorphism from the Hecke ring to \(\mathbb {Z}\) that records the size of each operator. </p>
+<div class="definition_thmwrapper theorem-style-definition" id="def:hecke-coset-deg">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">18</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-degree.html#def:hecke-coset-deg">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-hecke-pairs.html#def:hecke-coset">Definition 2</a></li>
+          
+          <li><a href="chap-hecke-pairs.html#def:decomp-quot">Definition 5</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.HeckeCoset_deg" class="lean_decl">HeckeRing.HeckeCoset_deg</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>  Let \((G,H,\Delta )\) be a Hecke pair and let \(D=HgH\) be a double coset. Writing \(D=\bigsqcup _i Hg_i\) for its decomposition into finitely many left cosets, the <em>degree</em> of \(D\) is </p>
+<div class="displaymath" id="a0000000018">
+  \[  \deg D \; =\;  [\, H : H\cap gHg^{-1}\, ],  \]
+</div>
+<p> the number of left cosets \(Hg_i\) comprising \(D\). </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:smulOrbit-card">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">19</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-degree.html#lem:smulOrbit-card">#</a>
+    
+    <a class="icon proof" href="chap-degree.html#a0000000019"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-degree.html#def:hecke-coset-deg">Definition 18</a></li>
+          
+          <li><a href="chap-degree.html#def:hecke-coset-deg">Definition 18</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.smulOrbit_card" class="lean_decl">HeckeRing.smulOrbit_card</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>  Fix a double coset \(D=HgH\) with left-coset representatives \(g_i\), and let \(H\beta \) be any left coset with \(\beta \in \Delta \). Then the orbit </p>
+<div class="displaymath" id="a0000000020">
+  \[  \{ \, Hg_i\beta : i\, \}   \]
+</div>
+<p> has cardinality equal to \(\deg D\). </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000019">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> The map sending the \(i\)-th representative to the left coset \(H(\beta g_i g)\) is a surjection onto the orbit by construction, so it suffices to show it is injective. If two representatives produced the same coset, then after left-cancelling \(\beta \) the corresponding cosets \(Hg_i g\) and \(Hg_j g\) would meet, hence coincide; this contradicts the fact that distinct representatives index distinct left cosets in the decomposition of \(D\). Thus the orbit has exactly as many elements as there are left cosets in \(D\), namely \(\deg D\) [Sh, §3.1]. </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:deg">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">20</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-degree.html#def:deg">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-degree.html#def:hecke-coset-deg">Definition 18</a></li>
+          
+          <li><a href="chap-ring-structure.html#def:T-single">Definition 11</a></li>
+          
+          <li><a href="chap-ring-structure.html#thm:hecke-ring">Theorem 17</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.deg" class="lean_decl">HeckeRing.deg</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>  The <em>degree homomorphism</em> is the ring homomorphism </p>
+<div class="displaymath" id="a0000000021">
+  \[  \deg : \mathbb {T} \longrightarrow \mathbb {Z}  \]
+</div>
+<p> determined by sending each basis element \([D]\) to \(\deg D\) and extending \(\mathbb {Z}\)-linearly; that is, \(\deg \bigl(\sum _D a_D\, [D]\bigr)=\sum _D a_D\, \deg D\). It sends the identity to \(1\), is additive, and is multiplicative [Sh, §3.1, Prop.&#160;3.3]. </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:deg-mul">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">21</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-degree.html#lem:deg-mul">#</a>
+    
+    <a class="icon proof" href="chap-degree.html#a0000000022"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-degree.html#def:deg">Definition 20</a></li>
+          
+          <li><a href="chap-degree.html#lem:smulOrbit-card">Lemma 19</a></li>
+          
+          <li><a href="chap-ring-structure.html#def:hecke-multiplicity">Definition 9</a></li>
+          
+          <li><a href="chap-degree.html#def:deg">Definition 20</a></li>
+          
+          <li><a href="chap-degree.html#lem:smulOrbit-card">Lemma 19</a></li>
+          
+          <li><a href="chap-ring-structure.html#def:hecke-multiplicity">Definition 9</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.deg_mul" class="lean_decl">HeckeRing.deg_mul</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>  For all \(f,g\) in the Hecke ring, </p>
+<div class="displaymath" id="a0000000023">
+  \[  \deg (f\cdot g)=\deg (f)\, \deg (g).  \]
+</div>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000022">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> Since \(\deg \) is additive, it suffices to verify multiplicativity on a pair of basis elements \([D_1]\) and \([D_2]\). Expanding the product in the Hecke ring via the structure constants gives \([D_1]\cdot [D_2]=\sum _d \mu (D_1,D_2;d)\, [d]\), so by definition </p>
+<div class="displaymath" id="a0000000024">
+  \[  \deg \bigl([D_1]\cdot [D_2]\bigr)=\sum _d \mu (D_1,D_2;d)\, \deg d.  \]
+</div>
+<p> The right-hand side counts, with multiplicity, the left cosets occurring in the product double coset. Grouping these by the right action of \(D_2\) on the left cosets of \(D_1\) and applying the orbit-size identity, each orbit contributes exactly \(\deg D_2\) cosets, and there are \(\deg D_1\) orbits; hence the total is \(\deg D_1\, \deg D_2\) [Sh, §3.1]. </p>
+
+  </div>
+</div>
+
+</div> <!--main-text -->
+</div> <!-- content-wrapper -->
+</div> <!-- content -->
+</div> <!-- wrapper -->
+
+<nav class="prev_up_next">
+  <svg  id="showmore-minus" class="icon icon-eye-minus showmore"><use xlink:href="symbol-defs.svg#icon-eye-minus"></use></svg>
+
+  <svg  id="showmore-plus" class="icon icon-eye-plus showmore"><use xlink:href="symbol-defs.svg#icon-eye-plus"></use></svg>
+
+  <a href="chap-ring-structure.html" title="The Hecke ring structure"><svg  class="icon icon-arrow-left "><use xlink:href="symbol-defs.svg#icon-arrow-left"></use></svg>
+</a>
+  <a href="index.html" title="Hecke Rings and Strong Multiplicity One"><svg  class="icon icon-arrow-up "><use xlink:href="symbol-defs.svg#icon-arrow-up"></use></svg>
+</a>
+  <a href="chap-commutativity.html" title="Commutativity via anti-involutions"><svg  class="icon icon-arrow-right "><use xlink:href="symbol-defs.svg#icon-arrow-right"></use></svg>
+</a>
+</nav>
+
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/plastex.js"></script>
+<script type="text/javascript" src="js/svgxuse.js"></script>
+<script type="text/javascript" src="js/js.cookie.min.js"></script>
+<script type="text/javascript" src="js/showmore.js"></script>
+</body>
+</html>

@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+  MathJax = { 
+    tex: {
+		    inlineMath: [['$','$'], ['\\(','\\)']]
+	} }
+</script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+<meta name="generator" content="plasTeX" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The multiplication table (Shimura 3.24)</title>
+<link rel="next" href="chap-smo.html" title="Strong Multiplicity One" />
+<link rel="prev" href="chap-gl2-operators.html" title="The GL2 Hecke operators" />
+<link rel="up" href="index.html" title="Hecke Rings and Strong Multiplicity One" />
+<link rel="stylesheet" href="styles/theme-white.css" />
+<link rel="stylesheet" href="styles/amsthm.css" />
+<link rel="stylesheet" href="styles/showmore.css" />
+<link rel="stylesheet" href="styles/blueprint.css" />
+<link rel="stylesheet" href="styles/extra_styles.css" />
+</head>
+
+<body>
+<header>
+<svg  id="toc-toggle" class="icon icon-list-numbered "><use xlink:href="symbol-defs.svg#icon-list-numbered"></use></svg>
+<h1 id="doc_title"><a href="index.html">Hecke Rings and Strong Multiplicity One</a></h1>
+</header>
+
+<div class="wrapper">
+<nav class="toc">
+<ul class="sub-toc-0">
+<li class="">
+  <a href="sect0001.html"><span class="toc_ref"></span> <span class="toc_entry">Introduction</span></a>
+ </li>
+<li class="">
+  <a href="chap-hecke-pairs.html"><span class="toc_ref">1</span> <span class="toc_entry">Hecke pairs and double cosets</span></a>
+ </li>
+<li class="">
+  <a href="chap-ring-structure.html"><span class="toc_ref">2</span> <span class="toc_entry">The Hecke ring structure</span></a>
+ </li>
+<li class="">
+  <a href="chap-degree.html"><span class="toc_ref">3</span> <span class="toc_entry">The degree homomorphism</span></a>
+ </li>
+<li class="">
+  <a href="chap-commutativity.html"><span class="toc_ref">4</span> <span class="toc_entry">Commutativity via anti-involutions</span></a>
+ </li>
+<li class="">
+  <a href="chap-gl2-operators.html"><span class="toc_ref">5</span> <span class="toc_entry">The \(\mathrm{GL}_2\) Hecke operators</span></a>
+ </li>
+<li class=" active current">
+  <a href="chap-multiplication-table.html"><span class="toc_ref">6</span> <span class="toc_entry">The multiplication table (Shimura 3.24)</span></a>
+ </li>
+<li class="">
+  <a href="chap-smo.html"><span class="toc_ref">7</span> <span class="toc_entry">Strong Multiplicity One</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-1">
+     <li class="">
+  <a href="chap-smo.html#a0000000003"><span class="toc_ref">7.1</span> <span class="toc_entry">Eigenforms, newforms, and the new/old decomposition</span></a>
+ </li>
+<li class="">
+  <a href="chap-smo.html#a0000000004"><span class="toc_ref">7.2</span> <span class="toc_entry">Coefficients, leading terms, and the eigenform splitting</span></a>
+ </li>
+<li class="">
+  <a href="chap-smo.html#a0000000005"><span class="toc_ref">7.3</span> <span class="toc_entry">The two halves of Theorem 4.6.12</span></a>
+ </li>
+<li class="">
+  <a href="chap-smo.html#a0000000006"><span class="toc_ref">7.4</span> <span class="toc_entry">Strong Multiplicity One</span></a>
+ </li>
+
+  </ul>
+ </li>
+<li ><a href="dep_graph_document.html">Dependency graph</a></li>
+</ul>
+</nav>
+
+<div class="content">
+<div class="content-wrapper">
+
+
+<div class="main-text">
+<h1 id="chap:multiplication-table">6 The multiplication table (Shimura 3.24)</h1>
+
+<p>Because the \(\mathrm{GL}_2\) Hecke algebra \(\mathcal{H}_2\) is commutative (Theorem&#160;<a href="chap-commutativity.html#thm:commring-hecke-algebra">28</a>), its structure is completely pinned down by how the generators \(T(a,d)\) multiply. This chapter formalises Shimura’s Theorem&#160;3.24 [Sh, Thm&#160;3.24]: the identity \(T(1)=1\), the prime-power telescoping relation \(T(1,p^k)=T(p^k)-T(p,p)\, T(p^{k-2})\), the recurrence and product formula for the prime-power operators \(T(p^r)\), full multiplicativity \(T(m)\, T(n)=\sum _{d\mid (m,n)} d\, T(d,d)\, T(mn/d^2)\), and the degree formulas \(\deg T(p^k)=1+p+\dots +p^k\) and \(\deg T(m)=\sigma _1(m)\). The arguments are arithmetic and combinatorial: telescoping sums of diagonal classes, the central role of the scalar class \(T(p,p)\), coset-counting for the structure constants, and the Chinese Remainder Theorem for the coprime factorisation. </p>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:T-sum-one">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">38</span>
+    <span class="lemma_thmtitle">\(T(1)=1\)</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-multiplication-table.html#lem:T-sum-one">#</a>
+    
+    <a class="icon proof" href="chap-multiplication-table.html#a0000000037"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-gl2-operators.html#def:T-sum">Definition 35</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:T-ad">Definition 33</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:T-sum">Definition 35</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:T-ad">Definition 33</a></li>
+          
+          <li><a href="chap-gl2-operators.html#lem:T-ad-one-one">Lemma 36</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.T_sum_one" class="lean_decl">HeckeRing.GL2.T_sum_one</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   In \(\mathcal{H}_2\) one has \(T(1)=1\), the multiplicative identity of the Hecke algebra. </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000037">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> The only positive divisor of \(1\) is \(1\) itself, so the defining sum \(T(1)=\sum _{a\mid 1} T(a,1/a)\) collapses to the single term \(T(1,1)\). By Lemma&#160;<a href="chap-gl2-operators.html#lem:T-ad-one-one">36</a> this equals the identity of \(\mathcal{H}_2\). </p>
+
+  </div>
+</div>
+<div class="theorem_thmwrapper theorem-style-plain" id="thm:T-ad-one-ppow-eq">
+  <div class="theorem_thmheading">
+    <span class="theorem_thmcaption">
+    Theorem
+    </span>
+    <span class="theorem_thmlabel">39</span>
+    <span class="theorem_thmtitle">Shimura 3.24(2): telescoping relation</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-multiplication-table.html#thm:T-ad-one-ppow-eq">#</a>
+    
+    <a class="icon proof" href="chap-multiplication-table.html#a0000000038"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-gl2-operators.html#def:T-sum">Definition 35</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:T-ad">Definition 33</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:T-pp">Definition 34</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:T-sum">Definition 35</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:T-ad">Definition 33</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:T-pp">Definition 34</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.T_ad_one_ppow_eq" class="lean_decl">HeckeRing.GL2.T_ad_one_ppow_eq</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="theorem_thmcontent">
+  <p>   Let \(p\) be a prime and \(k\ge 2\). Then in \(\mathcal{H}_2\) </p>
+<div class="displaymath" id="a0000000039">
+  \[  T(1,p^k) \; =\;  T(p^k) \; -\;  T(p,p)\, T(p^{k-2}).  \]
+</div>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000038">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> Expand \(T(p^k)=\sum _{i=0}^{\lfloor k/2\rfloor } T(p^i,p^{k-i})\) over the diagonal classes whose elementary divisors are powers of \(p\). Multiplying the scalar class \(T(p,p)\) into a diagonal class shifts both elementary divisors up by one, \(T(p,p)\, T(p^j,p^{d})=T(p^{j+1},p^{d+1})\), so \(T(p,p)\, T(p^{k-2})=\sum _{j} T(p^{j+1},p^{k-1-j})\), which is exactly the expansion of \(T(p^k)\) with the leading \(i=0\) term \(T(1,p^k)\) removed. Subtracting the two expansions telescopes to the single surviving term \(T(1,p^k)\), giving the stated identity. (Equivalently, the displayed sum is proved by reindexing the shifted sum via \(i=j+1\) and peeling off the bottom term.) </p>
+
+  </div>
+</div>
+<div class="theorem_thmwrapper theorem-style-plain" id="thm:T-sum-prime-mul-T-ad">
+  <div class="theorem_thmheading">
+    <span class="theorem_thmcaption">
+    Theorem
+    </span>
+    <span class="theorem_thmlabel">40</span>
+    <span class="theorem_thmtitle">Key prime computation</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-multiplication-table.html#thm:T-sum-prime-mul-T-ad">#</a>
+    
+    <a class="icon proof" href="chap-multiplication-table.html#a0000000040"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-gl2-operators.html#lem:T-sum-prime">Lemma 37</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:T-ad">Definition 33</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:T-pp">Definition 34</a></li>
+          
+          <li><a href="chap-ring-structure.html#def:hecke-multiplicity">Definition 9</a></li>
+          
+          <li><a href="chap-gl2-operators.html#lem:T-sum-prime">Lemma 37</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:T-ad">Definition 33</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:T-pp">Definition 34</a></li>
+          
+          <li><a href="chap-ring-structure.html#def:hecke-multiplicity">Definition 9</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.T_sum_prime_mul_T_ad" class="lean_decl">HeckeRing.GL2.T_sum_prime_mul_T_ad</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="theorem_thmcontent">
+  <p>   Let \(p\) be a prime and \(k\ge 1\). Then </p>
+<div class="displaymath" id="a0000000041">
+  \[  T(p)\, T(1,p^k) \; =\;  T(1,p^{k+1}) \; +\;  c\, T(p,p^k), \qquad c \; =\;  \begin{cases}  p+1, &  k=1,\\ p, &  k\ge 2. \end{cases}  \]
+</div>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000040">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> Since \(T(p)=T(1,p)\) (Lemma&#160;<a href="chap-gl2-operators.html#lem:T-sum-prime">37</a>), the product is the convolution of the basis elements attached to \(\operatorname {diag}(1,p)\) and \(\operatorname {diag}(1,p^k)\). By the product formula for the Hecke ring, its coefficient at a double coset \(A\) is the structure constant \(\mu \) counting pairs of left-coset representatives whose product lands in a left coset of \(A\). A determinant computation forces every such \(A\) to have total elementary divisor product \(p^{k+1}\), and a divisibility analysis of the first elementary divisor (using that an integral matrix of determinant \(1\) has coprime first column) shows that the only double cosets that can occur are \(\operatorname {diag}(1,p^{k+1})\) and \(\operatorname {diag}(p,p^k)\). Counting the overlapping left cosets gives multiplicity \(1\) at \(\operatorname {diag}(1,p^{k+1})\) and multiplicity \(c\) at \(\operatorname {diag}(p,p^k)\), where the count splits according to whether \(k=1\) (the two contributing cosets coincide, giving \(p+1\)) or \(k\ge 2\) (giving \(p\)). All other coefficients vanish, which is the claimed identity. </p>
+
+  </div>
+</div>
+<div class="theorem_thmwrapper theorem-style-plain" id="thm:T-sum-ppow-recurrence">
+  <div class="theorem_thmheading">
+    <span class="theorem_thmcaption">
+    Theorem
+    </span>
+    <span class="theorem_thmlabel">41</span>
+    <span class="theorem_thmtitle">Prime-power recurrence</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-multiplication-table.html#thm:T-sum-ppow-recurrence">#</a>
+    
+    <a class="icon proof" href="chap-multiplication-table.html#a0000000042"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-multiplication-table.html#thm:T-ad-one-ppow-eq">Theorem 39</a></li>
+          
+          <li><a href="chap-multiplication-table.html#thm:T-sum-prime-mul-T-ad">Theorem 40</a></li>
+          
+          <li><a href="chap-gl2-operators.html#lem:T-sum-prime">Lemma 37</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:T-pp">Definition 34</a></li>
+          
+          <li><a href="chap-multiplication-table.html#thm:T-ad-one-ppow-eq">Theorem 39</a></li>
+          
+          <li><a href="chap-multiplication-table.html#thm:T-sum-prime-mul-T-ad">Theorem 40</a></li>
+          
+          <li><a href="chap-gl2-operators.html#lem:T-sum-prime">Lemma 37</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:T-pp">Definition 34</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.T_sum_ppow_recurrence" class="lean_decl">HeckeRing.GL2.T_sum_ppow_recurrence</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="theorem_thmcontent">
+  <p>   Let \(p\) be a prime and \(k\ge 1\). Then </p>
+<div class="displaymath" id="a0000000043">
+  \[  T(p^{k+1}) \; =\;  T(p)\, T(p^k) \; -\;  p\, \bigl(T(p,p)\, T(p^{k-1})\bigr).  \]
+</div>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000042">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> Apply the key computation Theorem&#160;<a href="chap-multiplication-table.html#thm:T-sum-prime-mul-T-ad">40</a> at exponent \(k\) and rewrite the two diagonal classes through the telescoping relation Theorem&#160;<a href="chap-multiplication-table.html#thm:T-ad-one-ppow-eq">39</a>, using \(T(p,p^k)=T(p,p)\, T(1,p^{k-1})\) to express both \(T(1,p^k)\), \(T(1,p^{k+1})\) and \(T(p,p^k)\) in terms of the \(T(p^\bullet )\). For \(k=1\) the coefficient \(c=p+1\) contributes an extra \(+T(p,p)\) which combines with the base values \(T(p^0)=1\) and \(T(1,p)=T(p)\); for \(k\ge 2\) one proceeds by strong induction, substituting the recurrence already known at the smaller index and using that \(T(p)\) and \(T(p,p)\) commute. Collecting the terms and isolating \(T(p^{k+1})\) yields the displayed three-term recurrence. </p>
+
+  </div>
+</div>
+<div class="theorem_thmwrapper theorem-style-plain" id="thm:T-sum-ppow-mul">
+  <div class="theorem_thmheading">
+    <span class="theorem_thmcaption">
+    Theorem
+    </span>
+    <span class="theorem_thmlabel">42</span>
+    <span class="theorem_thmtitle">Shimura 3.24(3): prime-power product</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-multiplication-table.html#thm:T-sum-ppow-mul">#</a>
+    
+    <a class="icon proof" href="chap-multiplication-table.html#a0000000044"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-multiplication-table.html#thm:T-sum-ppow-recurrence">Theorem 41</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:T-pp">Definition 34</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:T-sum">Definition 35</a></li>
+          
+          <li><a href="chap-multiplication-table.html#thm:T-sum-ppow-recurrence">Theorem 41</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:T-pp">Definition 34</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:T-sum">Definition 35</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.T_sum_ppow_mul" class="lean_decl">HeckeRing.GL2.T_sum_ppow_mul</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="theorem_thmcontent">
+  <p>   Let \(p\) be a prime and let \(r\le s\). Then </p>
+<div class="displaymath" id="a0000000045">
+  \[  T(p^r)\, T(p^s) \; =\;  \sum _{i=0}^{r} p^i\, T(p^i,p^i)\, T(p^{r+s-2i}).  \]
+</div>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000044">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> Strong induction on \(r\). For \(r=0\) the sum has the single term \(T(p^s)\), and for \(r=1\) the statement is precisely the recurrence Theorem&#160;<a href="chap-multiplication-table.html#thm:T-sum-ppow-recurrence">41</a> solved for \(T(p)\, T(p^s)\). For the inductive step write \(T(p^{r+2})=T(p)\, T(p^{r+1})-p\, T(p,p)\, T(p^r)\) from the recurrence and apply the induction hypothesis to \(T(p^{r+1})\, T(p^s)\) and \(T(p^r)\, T(p^s)\). Each \(T(p)\, T(p^{r+1+s-2i})\) splits, again by the recurrence, into a top term \(T(p^{r+2+s-2i})\) and a shifted term \(p\, T(p,p)\, T(p^{r+s-2i})\); the shifted terms cancel against the contribution of \(-p\, T(p,p)\, T(p^r)\) except at the two endpoints, where reindexing \(T(p,p)^{i}\cdot T(p,p)=T(p^{i+1},p^{i+1})\) reassembles the sum over \(i=0,\dots ,r+2\). This is the asserted product formula. </p>
+
+  </div>
+</div>
+<div class="theorem_thmwrapper theorem-style-plain" id="thm:T-sum-mul-coprime">
+  <div class="theorem_thmheading">
+    <span class="theorem_thmcaption">
+    Theorem
+    </span>
+    <span class="theorem_thmlabel">43</span>
+    <span class="theorem_thmtitle">Coprime multiplicativity</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-multiplication-table.html#thm:T-sum-mul-coprime">#</a>
+    
+    <a class="icon proof" href="chap-multiplication-table.html#a0000000046"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-gl2-operators.html#def:T-sum">Definition 35</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:T-ad">Definition 33</a></li>
+          
+          <li><a href="chap-commutativity.html#thm:commring-hecke-algebra">Theorem 28</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:T-sum">Definition 35</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:T-ad">Definition 33</a></li>
+          
+          <li><a href="chap-commutativity.html#thm:commring-hecke-algebra">Theorem 28</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.T_sum_mul_coprime" class="lean_decl">HeckeRing.GL2.T_sum_mul_coprime</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="theorem_thmcontent">
+  <p>   Let \(m,n\) be positive integers with \((m,n)=1\). Then \(T(m)\, T(n)=T(mn)\). </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000046">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> Expand both factors as sums over divisor pairs and multiply out: \(T(m)\, T(n)=\sum _{a\mid m}\sum _{b\mid n} T(a,m/a)\, T(b,n/b)\). Because \((m,n)=1\), the elementary divisors of the two diagonal classes are coprime, so the corresponding diagonal double cosets split as a single double coset under the Chinese Remainder Theorem, giving \(T(a,m/a)\, T(b,n/b)=T(ab,(m/a)(n/b))=T(ab,mn/(ab))\). The map \((a,b)\mapsto ab\) is a bijection from divisor pairs of \((m,n)\) onto divisors of \(mn\) (again by coprimality), so the double sum reindexes to \(\sum _{c\mid mn} T(c,mn/c)=T(mn)\). The terms where a divisibility constraint fails contribute \(0\) on both sides, matching up. </p>
+
+  </div>
+</div>
+<div class="theorem_thmwrapper theorem-style-plain" id="thm:T-sum-mul">
+  <div class="theorem_thmheading">
+    <span class="theorem_thmcaption">
+    Theorem
+    </span>
+    <span class="theorem_thmlabel">44</span>
+    <span class="theorem_thmtitle">Shimura 3.24: general product</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-multiplication-table.html#thm:T-sum-mul">#</a>
+    
+    <a class="icon proof" href="chap-multiplication-table.html#a0000000047"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-multiplication-table.html#thm:T-sum-ppow-mul">Theorem 42</a></li>
+          
+          <li><a href="chap-multiplication-table.html#thm:T-sum-mul-coprime">Theorem 43</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:T-pp">Definition 34</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:T-sum">Definition 35</a></li>
+          
+          <li><a href="chap-multiplication-table.html#thm:T-sum-ppow-mul">Theorem 42</a></li>
+          
+          <li><a href="chap-multiplication-table.html#thm:T-sum-mul-coprime">Theorem 43</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:T-pp">Definition 34</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:T-sum">Definition 35</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.T_sum_mul" class="lean_decl">HeckeRing.GL2.T_sum_mul</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="theorem_thmcontent">
+  <p>   For positive integers \(m,n\), </p>
+<div class="displaymath" id="a0000000048">
+  \[  T(m)\, T(n) \; =\;  \sum _{d\, \mid \, (m,n)} d\, T(d,d)\, T\! \left(\frac{mn}{d^2}\right),  \]
+</div>
+<p> the sum being over the positive divisors \(d\) of the greatest common divisor \((m,n)\). </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000047">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> Both sides are multiplicative in the coprime factorisation of \(m\) and \(n\), so by induction on the gcd it suffices to treat one prime at a time. Factor out a prime \(q\mid (m,n)\), writing \(m=q^a m'\) and \(n=q^b n'\) with \(q\nmid m'n'\). The coprime multiplicativity Theorem&#160;<a href="chap-multiplication-table.html#thm:T-sum-mul-coprime">43</a> reduces \(T(m)\, T(n)\) to \(T(q^a)\, T(q^b)\) times the \(q\)-free part \(T(m')\, T(n')\), to which the induction hypothesis applies. The prime-power factor is evaluated by Theorem&#160;<a href="chap-multiplication-table.html#thm:T-sum-ppow-mul">42</a>, whose terms \(q^i\, T(q^i,q^i)\, T(q^{a+b-2i})\) are exactly the \(d=q^i\) contributions to the divisor sum. Recombining the prime-power sum with the \(q\)-free divisor sum, using that divisors of \((m,n)\) factor uniquely as \(q^i\) times a divisor of \((m',n')\) and that \(T(d,d)\) is multiplicative on coprime \(d\), reproduces the single sum over all \(d\mid (m,n)\). </p>
+
+  </div>
+</div>
+<div class="theorem_thmwrapper theorem-style-plain" id="thm:deg-T-sum-prime-pow">
+  <div class="theorem_thmheading">
+    <span class="theorem_thmcaption">
+    Theorem
+    </span>
+    <span class="theorem_thmlabel">45</span>
+    <span class="theorem_thmtitle">Shimura 3.24(7): degree of \(T(p^k)\)</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-multiplication-table.html#thm:deg-T-sum-prime-pow">#</a>
+    
+    <a class="icon proof" href="chap-multiplication-table.html#a0000000049"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-degree.html#def:deg">Definition 20</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:T-sum">Definition 35</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:T-ad">Definition 33</a></li>
+          
+          <li><a href="chap-degree.html#def:deg">Definition 20</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:T-sum">Definition 35</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:T-ad">Definition 33</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.deg_T_sum_prime_pow" class="lean_decl">HeckeRing.GL2.deg_T_sum_prime_pow</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="theorem_thmcontent">
+  <p>   Let \(p\) be a prime and \(k\ge 0\). Then </p>
+<div class="displaymath" id="a0000000050">
+  \[  \deg T(p^k) \; =\;  \sum _{j=0}^{k} p^{j} \; =\;  1+p+p^2+\dots +p^k.  \]
+</div>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000049">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> The degree homomorphism sends a diagonal class to its number of left cosets: for \(2i{\lt}k\) one has \(\deg T(p^i,p^{k-i})=p^{k-2i-1}(p+1)\), while the scalar classes \(T(p^i,p^i)\) have degree \(1\). Applying \(\deg \) to the expansion \(T(p^k)=\sum _{i} T(p^i,p^{k-i})\) and proceeding by strong induction: for \(k\ge 2\) split off the \(i=0\) term, contributing \(p^{k-1}(p+1)\), and observe that each remaining term \(T(p^{i+1},p^{k-1-i})\) has the same diagonal ratio — hence the same degree — as the corresponding term of the \(T(p^{k-2})\) expansion. Thus the tail equals \(\deg T(p^{k-2})=1+p+\dots +p^{k-2}\) by the induction hypothesis, and \(p^{k-1}(p+1)+(1+\dots +p^{k-2})=1+p+\dots +p^k\), the geometric sum. </p>
+
+  </div>
+</div>
+<div class="theorem_thmwrapper theorem-style-plain" id="thm:deg-T-sum">
+  <div class="theorem_thmheading">
+    <span class="theorem_thmcaption">
+    Theorem
+    </span>
+    <span class="theorem_thmlabel">46</span>
+    <span class="theorem_thmtitle">Shimura 3.24(6): degree of \(T(m)\)</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-multiplication-table.html#thm:deg-T-sum">#</a>
+    
+    <a class="icon proof" href="chap-multiplication-table.html#a0000000051"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-degree.html#def:deg">Definition 20</a></li>
+          
+          <li><a href="chap-multiplication-table.html#thm:deg-T-sum-prime-pow">Theorem 45</a></li>
+          
+          <li><a href="chap-multiplication-table.html#thm:T-sum-mul-coprime">Theorem 43</a></li>
+          
+          <li><a href="chap-degree.html#lem:deg-mul">Lemma 21</a></li>
+          
+          <li><a href="chap-degree.html#def:deg">Definition 20</a></li>
+          
+          <li><a href="chap-multiplication-table.html#thm:deg-T-sum-prime-pow">Theorem 45</a></li>
+          
+          <li><a href="chap-multiplication-table.html#thm:T-sum-mul-coprime">Theorem 43</a></li>
+          
+          <li><a href="chap-degree.html#lem:deg-mul">Lemma 21</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.deg_T_sum" class="lean_decl">HeckeRing.GL2.deg_T_sum</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="theorem_thmcontent">
+  <p>   For a positive integer \(m\), </p>
+<div class="displaymath" id="a0000000052">
+  \[  \deg T(m) \; =\;  \sum _{d\, \mid \,  m} d \; =\;  \sigma _1(m),  \]
+</div>
+<p> the sum of the positive divisors of \(m\). </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000051">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> Both \(\deg T(\cdot )\) and \(\sigma _1\) are multiplicative arithmetic functions, so it suffices to match them on prime powers and to use multiplicativity on coprime factors. On a prime power Theorem&#160;<a href="chap-multiplication-table.html#thm:deg-T-sum-prime-pow">45</a> gives \(\deg T(p^k)=1+p+\dots +p^k=\sum _{d\mid p^k} d =\sigma _1(p^k)\). For coprime \(a,b\) the coprime multiplicativity \(T(ab)=T(a)\, T(b)\) (Theorem&#160;<a href="chap-multiplication-table.html#thm:T-sum-mul-coprime">43</a>) together with the ring-homomorphism property \(\deg (fg)=\deg f\, \deg g\) (Lemma&#160;<a href="chap-degree.html#lem:deg-mul">21</a>) yields \(\deg T(ab)=\deg T(a)\, \deg T(b)=\sigma _1(a)\, \sigma _1(b)=\sigma _1(ab)\). Induction on the prime factorisation of \(m\) then gives \(\deg T(m)=\sigma _1(m)\). </p>
+
+  </div>
+</div>
+
+</div> <!--main-text -->
+</div> <!-- content-wrapper -->
+</div> <!-- content -->
+</div> <!-- wrapper -->
+
+<nav class="prev_up_next">
+  <svg  id="showmore-minus" class="icon icon-eye-minus showmore"><use xlink:href="symbol-defs.svg#icon-eye-minus"></use></svg>
+
+  <svg  id="showmore-plus" class="icon icon-eye-plus showmore"><use xlink:href="symbol-defs.svg#icon-eye-plus"></use></svg>
+
+  <a href="chap-gl2-operators.html" title="The \(\mathrm{GL}_2\) Hecke operators"><svg  class="icon icon-arrow-left "><use xlink:href="symbol-defs.svg#icon-arrow-left"></use></svg>
+</a>
+  <a href="index.html" title="Hecke Rings and Strong Multiplicity One"><svg  class="icon icon-arrow-up "><use xlink:href="symbol-defs.svg#icon-arrow-up"></use></svg>
+</a>
+  <a href="chap-smo.html" title="Strong Multiplicity One"><svg  class="icon icon-arrow-right "><use xlink:href="symbol-defs.svg#icon-arrow-right"></use></svg>
+</a>
+</nav>
+
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/plastex.js"></script>
+<script type="text/javascript" src="js/svgxuse.js"></script>
+<script type="text/javascript" src="js/js.cookie.min.js"></script>
+<script type="text/javascript" src="js/showmore.js"></script>
+</body>
+</html>

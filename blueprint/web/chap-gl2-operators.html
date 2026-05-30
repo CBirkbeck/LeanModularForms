@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+  MathJax = { 
+    tex: {
+		    inlineMath: [['$','$'], ['\\(','\\)']]
+	} }
+</script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+<meta name="generator" content="plasTeX" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The \(\mathrm{GL}_2\) Hecke operators</title>
+<link rel="next" href="chap-multiplication-table.html" title="The multiplication table (Shimura 3.24)" />
+<link rel="prev" href="chap-commutativity.html" title="Commutativity via anti-involutions" />
+<link rel="up" href="index.html" title="Hecke Rings and Strong Multiplicity One" />
+<link rel="stylesheet" href="styles/theme-white.css" />
+<link rel="stylesheet" href="styles/amsthm.css" />
+<link rel="stylesheet" href="styles/showmore.css" />
+<link rel="stylesheet" href="styles/blueprint.css" />
+<link rel="stylesheet" href="styles/extra_styles.css" />
+</head>
+
+<body>
+<header>
+<svg  id="toc-toggle" class="icon icon-list-numbered "><use xlink:href="symbol-defs.svg#icon-list-numbered"></use></svg>
+<h1 id="doc_title"><a href="index.html">Hecke Rings and Strong Multiplicity One</a></h1>
+</header>
+
+<div class="wrapper">
+<nav class="toc">
+<ul class="sub-toc-0">
+<li class="">
+  <a href="sect0001.html"><span class="toc_ref"></span> <span class="toc_entry">Introduction</span></a>
+ </li>
+<li class="">
+  <a href="chap-hecke-pairs.html"><span class="toc_ref">1</span> <span class="toc_entry">Hecke pairs and double cosets</span></a>
+ </li>
+<li class="">
+  <a href="chap-ring-structure.html"><span class="toc_ref">2</span> <span class="toc_entry">The Hecke ring structure</span></a>
+ </li>
+<li class="">
+  <a href="chap-degree.html"><span class="toc_ref">3</span> <span class="toc_entry">The degree homomorphism</span></a>
+ </li>
+<li class="">
+  <a href="chap-commutativity.html"><span class="toc_ref">4</span> <span class="toc_entry">Commutativity via anti-involutions</span></a>
+ </li>
+<li class=" active current">
+  <a href="chap-gl2-operators.html"><span class="toc_ref">5</span> <span class="toc_entry">The \(\mathrm{GL}_2\) Hecke operators</span></a>
+ </li>
+<li class="">
+  <a href="chap-multiplication-table.html"><span class="toc_ref">6</span> <span class="toc_entry">The multiplication table (Shimura 3.24)</span></a>
+ </li>
+<li class="">
+  <a href="chap-smo.html"><span class="toc_ref">7</span> <span class="toc_entry">Strong Multiplicity One</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-1">
+     <li class="">
+  <a href="chap-smo.html#a0000000003"><span class="toc_ref">7.1</span> <span class="toc_entry">Eigenforms, newforms, and the new/old decomposition</span></a>
+ </li>
+<li class="">
+  <a href="chap-smo.html#a0000000004"><span class="toc_ref">7.2</span> <span class="toc_entry">Coefficients, leading terms, and the eigenform splitting</span></a>
+ </li>
+<li class="">
+  <a href="chap-smo.html#a0000000005"><span class="toc_ref">7.3</span> <span class="toc_entry">The two halves of Theorem 4.6.12</span></a>
+ </li>
+<li class="">
+  <a href="chap-smo.html#a0000000006"><span class="toc_ref">7.4</span> <span class="toc_entry">Strong Multiplicity One</span></a>
+ </li>
+
+  </ul>
+ </li>
+<li ><a href="dep_graph_document.html">Dependency graph</a></li>
+</ul>
+</nav>
+
+<div class="content">
+<div class="content-wrapper">
+
+
+<div class="main-text">
+<h1 id="chap:gl2-operators">5 The \(\mathrm{GL}_2\) Hecke operators</h1>
+
+<p>Specialising the abstract construction to the arithmetic pair attached to \(\mathrm{GL}_n\) produces the classical Hecke operators. This chapter sets up that pair, its Hecke ring, the diagonal double cosets that turn out to span it, and, for \(n=2\), the generators \(T(a,d)\) and \(T(m)\) of Shimura’s multiplication table [Sh, §3.1]. </p>
+<div class="definition_thmwrapper theorem-style-definition" id="def:GL-pair">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">29</span>
+    <span class="definition_thmtitle">The arithmetic Hecke pair</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-gl2-operators.html#def:GL-pair">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-hecke-pairs.html#def:hecke-pair">Definition 1</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GLn.GL_pair" class="lean_decl">HeckeRing.GLn.GL_pair</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>   For \(n\ge 1\) the <em>arithmetic Hecke pair</em> for \(\mathrm{GL}_n\) is the triple with group \(G=\mathrm{GL}_n(\mathbb {Q})\), subgroup \(H=SL_n(\mathbb {Z})\), and submonoid \(\Delta \) equal to the monoid of integer matrices with positive determinant, regarded inside \(\mathrm{GL}_n(\mathbb {Q})\). One has \(SL_n(\mathbb {Z})\le \Delta \), since elements of \(SL_n(\mathbb {Z})\) are integral with determinant \(1\), and \(\Delta \le \operatorname {Comm}(SL_n(\mathbb {Z}))\), the commensurator of \(SL_n(\mathbb {Z})\): an integer matrix \(\alpha \) of determinant \(d{\gt}0\) conjugates the principal congruence subgroup of level \(d\) into \(SL_n(\mathbb {Z})\), so \(SL_n(\mathbb {Z})\) and \(\alpha \, SL_n(\mathbb {Z})\, \alpha ^{-1}\) are commensurable [Sh, §3.1, Lemma&#160;3.10]. These two inclusions make the triple a Hecke pair. </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:hecke-algebra">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">30</span>
+    <span class="definition_thmtitle">The \(\mathrm{GL}_n\) Hecke algebra</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-gl2-operators.html#def:hecke-algebra">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-gl2-operators.html#def:GL-pair">Definition 29</a></li>
+          
+          <li><a href="chap-hecke-pairs.html#def:hecke-ring-carrier">Definition 6</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GLn.HeckeAlgebra" class="lean_decl">HeckeRing.GLn.HeckeAlgebra</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>   For \(n\ge 1\) the <em>\(\mathrm{GL}_n\) Hecke algebra</em> \(\mathcal{H}_n\) is the Hecke ring \(\mathbb {T}\) of the arithmetic Hecke pair of \(\mathrm{GL}_n\), that is, the free \(\mathbb {Z}\)-module on the double cosets \(SL_n(\mathbb {Z})\backslash \Delta /SL_n(\mathbb {Z})\) equipped with its convolution product. For \(n=2\) this is the ring whose structure is described by Shimura’s Theorem&#160;3.24. </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:T-diag">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">31</span>
+    <span class="definition_thmtitle">Diagonal double coset</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-gl2-operators.html#def:T-diag">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-gl2-operators.html#def:GL-pair">Definition 29</a></li>
+          
+          <li><a href="chap-hecke-pairs.html#def:hecke-coset">Definition 2</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GLn.T_diag" class="lean_decl">HeckeRing.GLn.T_diag</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>   Let \(a=(a_1,\dots ,a_n)\) be an \(n\)-tuple of positive integers. The associated <em>diagonal double coset</em> is the double coset </p>
+<div class="displaymath" id="a0000000033">
+  \[  SL_n(\mathbb {Z})\, \operatorname {diag}(a_1,\dots ,a_n)\, SL_n(\mathbb {Z})  \]
+</div>
+<p> of the diagonal matrix \(\operatorname {diag}(a_1,\dots ,a_n)\) in \(SL_n(\mathbb {Z})\backslash \Delta /SL_n(\mathbb {Z})\). Every double coset of the arithmetic pair admits such a diagonal representative, with elementary divisors \(a_1\mid a_2\mid \dots \mid a_n\), by the theory of Smith normal form [Sh, §3.1]. </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:T-elem">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">32</span>
+    <span class="definition_thmtitle">Diagonal basis element</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-gl2-operators.html#def:T-elem">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-gl2-operators.html#def:T-diag">Definition 31</a></li>
+          
+          <li><a href="chap-ring-structure.html#def:T-single">Definition 11</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:hecke-algebra">Definition 30</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GLn.T_elem" class="lean_decl">HeckeRing.GLn.T_elem</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>   For an \(n\)-tuple \(a=(a_1,\dots ,a_n)\) of positive integers, the <em>diagonal basis element</em> is the standard basis vector of \(\mathcal{H}_n\) attached to the diagonal double coset of \(\operatorname {diag}(a_1,\dots ,a_n)\); that is, the basis element with coefficient \(1\) at that double coset and \(0\) elsewhere. </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:T-ad">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">33</span>
+    <span class="definition_thmtitle">\(T(a,d)\)</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-gl2-operators.html#def:T-ad">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-gl2-operators.html#def:T-elem">Definition 32</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.T_ad" class="lean_decl">HeckeRing.GL2.T_ad</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>   Let \(n=2\). For positive integers \(a,d\) with \(a\mid d\), the operator \(T(a,d)\) is the diagonal basis element of \(\mathcal{H}_2\) attached to \(\operatorname {diag}(a,d)\). For all other pairs \((a,d)\) — when \(a\) or \(d\) vanishes, or when \(a\nmid d\) — one sets \(T(a,d)=0\); the divisibility constraint \(a\mid d\) records the elementary-divisor normalisation of the diagonal double coset. </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:T-pp">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">34</span>
+    <span class="definition_thmtitle">\(T(p,p)\)</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-gl2-operators.html#def:T-pp">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-gl2-operators.html#def:T-ad">Definition 33</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.T_pp" class="lean_decl">HeckeRing.GL2.T_pp</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>   For a positive integer \(p\), the operator \(T(p,p)\) is defined as \(T(p,p)=T(a,d)\) with \(a=d=p\). When \(p\) is prime this is the central, scalar double coset of \(pI\), the basis element attached to the scalar matrix \(\operatorname {diag}(p,p)\). </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:T-sum">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">35</span>
+    <span class="definition_thmtitle">\(T(m)\)</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-gl2-operators.html#def:T-sum">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-gl2-operators.html#def:T-ad">Definition 33</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.T_sum" class="lean_decl">HeckeRing.GL2.T_sum</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>   For a positive integer \(m\), Shimura’s operator \(T(m)\) is the sum </p>
+<div class="displaymath" id="a0000000034">
+  \[  T(m) \; =\;  \sum _{a\, \mid \,  m} T\! \left(a,\tfrac {m}{a}\right)  \]
+</div>
+<p> over all positive divisors \(a\) of \(m\), where each summand is the operator \(T\! \left(a,\tfrac {m}{a}\right)\) of \(\mathcal{H}_2\). Only the divisor pairs \((a,m/a)\) with \(a\mid m/a\) contribute, the remaining terms vanishing by definition of \(T(a,d)\). </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:T-ad-one-one">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">36</span>
+    <span class="lemma_thmtitle">\(T(1,1)\) is the identity</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-gl2-operators.html#lem:T-ad-one-one">#</a>
+    
+    <a class="icon proof" href="chap-gl2-operators.html#a0000000035"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-gl2-operators.html#def:T-ad">Definition 33</a></li>
+          
+          <li><a href="chap-ring-structure.html#lem:one-def">Lemma 16</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:T-ad">Definition 33</a></li>
+          
+          <li><a href="chap-ring-structure.html#lem:one-def">Lemma 16</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.T_ad_one_one" class="lean_decl">HeckeRing.GL2.T_ad_one_one</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   In \(\mathcal{H}_2\) one has \(T(1,1)=1\), the multiplicative identity of the Hecke algebra. </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000035">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> Since \(1\mid 1\) and both entries are positive, \(T(1,1)\) is the diagonal basis element of \(\operatorname {diag}(1,1)\), which is the identity matrix. Its diagonal double coset is therefore the trivial double coset \(SL_2(\mathbb {Z})\), and the basis element attached to the trivial double coset is exactly the identity of the Hecke ring. </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:T-sum-prime">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">37</span>
+    <span class="lemma_thmtitle">\(T(p)\) at a prime</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-gl2-operators.html#lem:T-sum-prime">#</a>
+    
+    <a class="icon proof" href="chap-gl2-operators.html#a0000000036"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-gl2-operators.html#def:T-sum">Definition 35</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:T-ad">Definition 33</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:T-sum">Definition 35</a></li>
+          
+          <li><a href="chap-gl2-operators.html#def:T-ad">Definition 33</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.T_sum_prime" class="lean_decl">HeckeRing.GL2.T_sum_prime</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   For a prime \(p\) one has \(T(p)=T(1,p)\). </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000036">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> The positive divisors of a prime \(p\) are \(1\) and \(p\), so the defining sum for \(T(p)\) has the two terms \(T(1,p)\) and \(T(p,1)\). The second vanishes: \(p\nmid 1\) since \(p{\gt}1\), so \(T(p,1)=0\) by definition. Hence \(T(p)=T(1,p)\). </p>
+
+  </div>
+</div>
+
+</div> <!--main-text -->
+</div> <!-- content-wrapper -->
+</div> <!-- content -->
+</div> <!-- wrapper -->
+
+<nav class="prev_up_next">
+  <svg  id="showmore-minus" class="icon icon-eye-minus showmore"><use xlink:href="symbol-defs.svg#icon-eye-minus"></use></svg>
+
+  <svg  id="showmore-plus" class="icon icon-eye-plus showmore"><use xlink:href="symbol-defs.svg#icon-eye-plus"></use></svg>
+
+  <a href="chap-commutativity.html" title="Commutativity via anti-involutions"><svg  class="icon icon-arrow-left "><use xlink:href="symbol-defs.svg#icon-arrow-left"></use></svg>
+</a>
+  <a href="index.html" title="Hecke Rings and Strong Multiplicity One"><svg  class="icon icon-arrow-up "><use xlink:href="symbol-defs.svg#icon-arrow-up"></use></svg>
+</a>
+  <a href="chap-multiplication-table.html" title="The multiplication table (Shimura 3.24)"><svg  class="icon icon-arrow-right "><use xlink:href="symbol-defs.svg#icon-arrow-right"></use></svg>
+</a>
+</nav>
+
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/plastex.js"></script>
+<script type="text/javascript" src="js/svgxuse.js"></script>
+<script type="text/javascript" src="js/js.cookie.min.js"></script>
+<script type="text/javascript" src="js/showmore.js"></script>
+</body>
+</html>

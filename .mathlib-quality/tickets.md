@@ -696,3 +696,93 @@ Inserted: CLEANUP-1 (after T001/T003/T011), CLEANUP-2 (after T002/T005/T006/T007
 CLEANUP-3 (after T009/T004/T010), CLEANUP-ALL-1 (pre-milestone), CLEANUP-FINAL (final) — and
 the final-per-file pass is folded into CLEANUP-3/CLEANUP-ALL-1 (same single file). 6 cleanup
 tickets total. ✅
+
+---
+
+### [T010-A] `levelInclude_cusp` lands in the lifted character space (diamond commutation)
+- **Status**: done (DONE 2026-05-27: `levelInclude_cusp_mem_cuspFormCharSpace_comp` + `diamondOpCusp_levelInclude_cusp_eq` proven, build green)
+- **File**: LeanModularForms/SMOObligations/StrongMultiplicityOneFull.lean
+- **Depends on**: (none new)
+- **Parent**: T010 (oldPart_eq_zero_of_shared_eigenvalues)
+- **Type**: lemma
+- **Statement**:
+  ```
+  private theorem levelInclude_cusp_mem_cuspFormCharSpace_comp
+      {M : ℕ} [NeZero M] {N : ℕ} [NeZero N] {k : ℤ} (hMN : M ∣ N) (ψ : (ZMod M)ˣ →* ℂˣ)
+      {g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k} (hg : g ∈ cuspFormCharSpace k ψ) :
+      levelInclude_cusp hMN k g ∈ cuspFormCharSpace k (ψ.comp (ZMod.unitsMap hMN))
+  ```
+- **Proof Sketch**:
+  1. `mem_cuspFormCharSpace_iff`; intro `a : (ZMod N)ˣ`.
+  2. `diamondOpCusp k a (levelInclude_cusp hMN g)` slashes `⇑g` by `mapGL ℝ (g_N : SL(2,ℤ))`,
+     where `g_N ∈ Γ₀(N)` represents `a` (`diamondOpCusp_eq` + `diamondOpCuspAux`); the
+     underlying function is unchanged because `levelInclude_cusp_coe : ⇑(levelInclude_cusp..) = ⇑g`.
+  3. Take a representative `g_N ∈ Γ₀(N)` of `a` (`Gamma0MapUnits_surjective`); then
+     `g_N ∈ Γ₀(M)` via `Gamma0_le_of_dvd hMN`, and at level M it represents `unitsMap a`
+     (`Gamma0MapUnits_unitsMap_of_Gamma0_mul` / `Gamma0MapUnits_val`).
+  4. `levelInclude_cusp (diamondOpCusp k (unitsMap a) g)` slashes `⇑g` by the SAME
+     `mapGL ℝ g_N`; conclude `diamondOpCusp k a (levelInclude_cusp g) =
+     levelInclude_cusp (diamondOpCusp k (unitsMap a) g)`.
+  5. `diamondOpCusp_apply_charSpace k ψ (unitsMap a) hg` rewrites to `ψ(unitsMap a) • g`;
+     push through `levelInclude_cusp` (linear, `map_smul`).
+- **Mathlib Lemmas**: `diamondOpCusp_eq`, `levelInclude_cusp_coe`, `Gamma0MapUnits_surjective`,
+  `Gamma0_le_of_dvd`, `Gamma0MapUnits_unitsMap_of_Gamma0_mul`, `diamondOpCusp_apply_charSpace`.
+- **Sources**: Miyake Lemma 4.6.9(2) (the trivial inclusion preserves Nebentypus).
+- **Generality**: minimal — match the T010 use site (M ∣ N, level-N character pullback).
+
+---
+
+### [T010-B] `h_chi_factor` descends along a character pullback (`χ = ψ∘unitsMap`, `M ∣ N`)
+- **Status**: blocked/INVALID — h_chi_factor provably does NOT descend (valuation counterexample N=p², M=p, conductor p). See T010-C.
+- **File**: LeanModularForms/SMOObligations/StrongMultiplicityOneFull.lean
+- **Depends on**: (none new)
+- **Parent**: T010 (oldPart_eq_zero_of_shared_eigenvalues)
+- **Type**: lemma
+- **Statement** (informal): if `χ = ψ.comp (ZMod.unitsMap hMN)` (`hMN : M ∣ N`) and `χ`
+  satisfies the level-`N` h_chi_factor (∀ prime `p ∣ N`, χ factors through `N/p`), then `ψ`
+  satisfies the level-`M` h_chi_factor (∀ prime `q ∣ M`, ψ factors through `M/q`).
+- **Proof Sketch** (conductor route):
+  1. `h_chi_factor` at `N` for χ ⟺ `(dirichletLift χ).conductor` is coprime to `N`
+     (a number dividing `N/p` for **every** prime `p ∣ N` is coprime to `N`, and conversely).
+  2. `dirichletLift χ = changeLevel hMN (dirichletLift ψ)` (since `χ = ψ∘unitsMap`,
+     `changeLevel_def`/`MulChar.ofUnitHom`).
+  3. `conductor (changeLevel hMN ρ) = conductor ρ` — both share `primitiveCharacter ρ`
+     (changeLevel preserves the primitive character: `changeLevel_trans` +
+     `changeLevel_primitiveCharacter` + `primitiveCharacter_isPrimitive`).
+  4. So `(dirichletLift ψ).conductor = (dirichletLift χ).conductor`, coprime to `N`, hence
+     coprime to `M` (`M ∣ N`), hence `∣ M/q` for each prime `q ∣ M`.
+  5. `ψ.conductor ∣ M/q` + `factorsThrough_iff_ker_unitsMap` ⟹ the `χ'` witness for ψ at `M/q`.
+- **Mathlib Lemmas**: `DirichletCharacter.changeLevel_def`, `changeLevel_trans`,
+  `changeLevel_primitiveCharacter`, `primitiveCharacter_isPrimitive`, `conductor_dvd_level`,
+  `factorsThrough_iff_ker_unitsMap`, `conductor_dvd_of_mem_conductorSet`,
+  `Nat.Coprime.coprime_dvd_right`, `Nat.coprime_of_dvd` style.
+- **Sources**: Miyake p.160 (the "(l, N/m_χ)" prime restriction is a conductor-coprimality).
+- **Generality**: minimal — match the T010 step (ii) use site.
+
+---
+
+### [T010-C] Unconditional Main Lemma (DS 5.7.1 / Miyake 4.6.8) — the genuine blocker for T010 step (ii)
+- **Status**: blocked (B3 — project's central sorried theorem; published-theorem scale)
+- **File**: LeanModularForms/HeckeRIngs/GL2/Newforms/MainLemma.lean (`Newforms.mainLemma`, line ~445, `:= by sorry`)
+- **Parent**: T010 (oldPart_eq_zero_of_shared_eigenvalues)
+- **Type**: theorem (zero-criterion / unconditional 4.6.8)
+- **Precise missing lemma**: the **zero-criterion** `∀ g ∈ cuspFormsNew N k, (∀ n coprime N,
+  aₙ(g)=0) → g = 0` (equivalently `Newforms.mainLemma` unconditional), with NO `h_chi_factor`.
+  Reduces (`mainLemma_of_newSubspace_coprime_vanishing_zero`, PROVEN) to showing a new eigenform
+  with vanishing coprime coeffs is Petersson-orthogonal to itself — i.e. `petN g (eigf) = 0` for
+  an eigenform `eigf` and a vanishing-coprime `g`. This is the Rankin–Selberg/unfolding content
+  of DS 5.7.1, NOT present in the project (confirmed: 3 `exact?`/decomposition attempts fail; no
+  lemma relates `petN` to q-coefficients).
+- **Why T010 needs it (and route-B 4.6.8 does NOT suffice)**: step (ii) extracts a nonzero new
+  eigenform `h` at a proper divisor level `M` (char ψ, conductor `m_χ`) and needs `a₁(h) ≠ 0`
+  (4.6.11). 4.6.11's proof needs 4.6.8-at-`M`. The PROVEN 4.6.8 (`mainLemma_charSpace_routeB`)
+  requires `ψ`'s level-`M` `h_chi_factor`, which provably FAILS for the matching summand:
+  with `N = p²`, χ of conductor `p` (χ's level-N h_chi_factor holds: `p ∣ N/p = p`), the old
+  space `S_k^♭(p²,χ)` is spanned by `B_p(S_k^♯(p, χ_p))` with `χ_p` the conductor-`p` (primitive)
+  character mod `p`; the matching summand sits at `M = p` with `ψ = χ_p`, and `ψ`'s level-`p`
+  h_chi_factor needs `p ∣ p/p = 1`, FALSE. So the unconditional 4.6.8 is unavoidable here.
+- **Available inputs** (per MEMORY: adjoint/spectral frontier CLOSED): `heckeT_n_adjoint`,
+  `exists_simultaneous_eigenform_basis`, `exists_eigenform_decomposition_of_invariant`,
+  `qSupportedOnDvd_mem_cuspFormsOld_of_char`, `mainLemma_charSpace_of_mem_iSup_qSupportedOnDvdSubmodule`
+  are all proven. The MISSING analytic bridge is `petN`↔`q`-coefficients (Rankin–Selberg), which
+  no current lemma supplies — this is the multi-week development by mathlib standards.

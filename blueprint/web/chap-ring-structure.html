@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+  MathJax = { 
+    tex: {
+		    inlineMath: [['$','$'], ['\\(','\\)']]
+	} }
+</script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+</script>
+<meta name="generator" content="plasTeX" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The Hecke ring structure</title>
+<link rel="next" href="chap-degree.html" title="The degree homomorphism" />
+<link rel="prev" href="chap-hecke-pairs.html" title="Hecke pairs and double cosets" />
+<link rel="up" href="index.html" title="Hecke Rings and Strong Multiplicity One" />
+<link rel="stylesheet" href="styles/theme-white.css" />
+<link rel="stylesheet" href="styles/amsthm.css" />
+<link rel="stylesheet" href="styles/showmore.css" />
+<link rel="stylesheet" href="styles/blueprint.css" />
+<link rel="stylesheet" href="styles/extra_styles.css" />
+</head>
+
+<body>
+<header>
+<svg  id="toc-toggle" class="icon icon-list-numbered "><use xlink:href="symbol-defs.svg#icon-list-numbered"></use></svg>
+<h1 id="doc_title"><a href="index.html">Hecke Rings and Strong Multiplicity One</a></h1>
+</header>
+
+<div class="wrapper">
+<nav class="toc">
+<ul class="sub-toc-0">
+<li class="">
+  <a href="sect0001.html"><span class="toc_ref"></span> <span class="toc_entry">Introduction</span></a>
+ </li>
+<li class="">
+  <a href="chap-hecke-pairs.html"><span class="toc_ref">1</span> <span class="toc_entry">Hecke pairs and double cosets</span></a>
+ </li>
+<li class=" active current">
+  <a href="chap-ring-structure.html"><span class="toc_ref">2</span> <span class="toc_entry">The Hecke ring structure</span></a>
+ </li>
+<li class="">
+  <a href="chap-degree.html"><span class="toc_ref">3</span> <span class="toc_entry">The degree homomorphism</span></a>
+ </li>
+<li class="">
+  <a href="chap-commutativity.html"><span class="toc_ref">4</span> <span class="toc_entry">Commutativity via anti-involutions</span></a>
+ </li>
+<li class="">
+  <a href="chap-gl2-operators.html"><span class="toc_ref">5</span> <span class="toc_entry">The \(\mathrm{GL}_2\) Hecke operators</span></a>
+ </li>
+<li class="">
+  <a href="chap-multiplication-table.html"><span class="toc_ref">6</span> <span class="toc_entry">The multiplication table (Shimura 3.24)</span></a>
+ </li>
+<li class="">
+  <a href="chap-smo.html"><span class="toc_ref">7</span> <span class="toc_entry">Strong Multiplicity One</span></a>
+  <span class="expand-toc">▶</span>
+  <ul class="sub-toc-1">
+     <li class="">
+  <a href="chap-smo.html#a0000000003"><span class="toc_ref">7.1</span> <span class="toc_entry">Eigenforms, newforms, and the new/old decomposition</span></a>
+ </li>
+<li class="">
+  <a href="chap-smo.html#a0000000004"><span class="toc_ref">7.2</span> <span class="toc_entry">Coefficients, leading terms, and the eigenform splitting</span></a>
+ </li>
+<li class="">
+  <a href="chap-smo.html#a0000000005"><span class="toc_ref">7.3</span> <span class="toc_entry">The two halves of Theorem 4.6.12</span></a>
+ </li>
+<li class="">
+  <a href="chap-smo.html#a0000000006"><span class="toc_ref">7.4</span> <span class="toc_entry">Strong Multiplicity One</span></a>
+ </li>
+
+  </ul>
+ </li>
+<li ><a href="dep_graph_document.html">Dependency graph</a></li>
+</ul>
+</nav>
+
+<div class="content">
+<div class="content-wrapper">
+
+
+<div class="main-text">
+<h1 id="chap:ring-structure">2 The Hecke ring structure</h1>
+
+<p>Fix a Hecke pair \((G,H,\Delta )\). This chapter equips the free \(\mathbb {Z}\)-module \(\mathbb {T}\) on the double cosets \(H\backslash \Delta /H\) with its convolution product, whose structure constants are Shimura’s coset-overlap multiplicities, and assembles the result into a unital associative ring [Sh, §3.1]. </p>
+<div class="definition_thmwrapper theorem-style-definition" id="def:mulMap">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">8</span>
+    <span class="definition_thmtitle">Product map on representatives</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-ring-structure.html#def:mulMap">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-hecke-pairs.html#def:decomp-quot">Definition 5</a></li>
+          
+          <li><a href="chap-hecke-pairs.html#def:hecke-coset">Definition 2</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.mulMap" class="lean_decl">HeckeRing.mulMap</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>   Let \(g,g'\in \Delta \), and choose left-coset representatives so that \(HgH=\bigsqcup _i Hg_i\) and \(Hg'H=\bigsqcup _j Hg'_j\). The <em>product map</em> sends a pair of representatives \((g_i,g'_j)\) to the double coset \(H(g_i\, g'_j)H\) of their product. </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:hecke-multiplicity">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">9</span>
+    <span class="definition_thmtitle">Shimura’s multiplicity</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-ring-structure.html#def:hecke-multiplicity">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-hecke-pairs.html#def:decomp-quot">Definition 5</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.heckeMultiplicity" class="lean_decl">HeckeRing.heckeMultiplicity</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>   For \(g,g',d\in \Delta \) define the <em>multiplicity</em> \(\mu (g,g';d)\) to be the number of pairs of left-coset representatives \((g_i,g'_j)\), drawn from the decompositions \(HgH=\bigsqcup _i Hg_i\) and \(Hg'H=\bigsqcup _j Hg'_j\), that satisfy \(g_i\, g'_j\, H=d\, H\). This is the structure constant of the Hecke ring [Sh, §3.1, Prop 3.2]. </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:m-finsupp">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">10</span>
+    <span class="definition_thmtitle">Structure-constant coefficients</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-ring-structure.html#def:m-finsupp">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-ring-structure.html#def:hecke-multiplicity">Definition 9</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.m" class="lean_decl">HeckeRing.m</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>   For \(g,g'\in \Delta \) let \(m(g,g')\) be the finitely-supported function on double cosets \(d\mapsto \mu (g,g';d)\). Only finitely many double cosets occur as \(H(g_i\, g'_j)H\), so this is well defined; it records the coefficients of the product of the two basis elements. </p>
+
+  </div>
+</div>
+<div class="definition_thmwrapper theorem-style-definition" id="def:T-single">
+  <div class="definition_thmheading">
+    <span class="definition_thmcaption">
+    Definition
+    </span>
+    <span class="definition_thmlabel">11</span>
+    <span class="definition_thmtitle">Basis element</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-ring-structure.html#def:T-single">#</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-hecke-pairs.html#def:hecke-ring-carrier">Definition 6</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.T_single" class="lean_decl">HeckeRing.T_single</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="definition_thmcontent">
+  <p>   For a double coset \(D=HgH\) and a coefficient \(b\), let \(T_D\) (also written \([D]\)) be the corresponding basis element of \(\mathbb {T}\): the function on double cosets taking the value \(b\) at \(D\) and \(0\) elsewhere. The elements \(T_D\) with \(b=1\) form a \(\mathbb {Z}\)-basis of \(\mathbb {T}\). </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:mul-def">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">12</span>
+    <span class="lemma_thmtitle">Convolution product</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-ring-structure.html#lem:mul-def">#</a>
+    
+    <a class="icon proof" href="chap-ring-structure.html#a0000000009"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-ring-structure.html#def:hecke-multiplicity">Definition 9</a></li>
+          
+          <li><a href="chap-ring-structure.html#def:T-single">Definition 11</a></li>
+          
+          <li><a href="chap-ring-structure.html#def:hecke-multiplicity">Definition 9</a></li>
+          
+          <li><a href="chap-ring-structure.html#def:T-single">Definition 11</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.mul_def" class="lean_decl">HeckeRing.mul_def</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   For \(f,g\in \mathbb {T}\) the product is the convolution </p>
+<div class="displaymath" id="a0000000010">
+  \[  f\cdot g \; =\;  \sum _{D_1}\sum _{D_2} f(D_1)\, g(D_2)\, \bigl(T_{D_1}\cdot T_{D_2}\bigr),  \]
+</div>
+<p> the sums running over the (finite) supports of \(f\) and \(g\), with each basis product \(T_{D_1}\cdot T_{D_2}\) expanded through the structure constants \(\mu (D_1,D_2;\, \cdot \, )\). </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000009">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> Both \(f\) and \(g\) are finite \(\mathbb {Z}\)-linear combinations of basis elements. The product is defined to be \(\mathbb {Z}\)-bilinear, so it distributes over these combinations, and the displayed double sum is exactly its unfolding on the supports. The inner term \(T_{D_1}\cdot T_{D_2}\) is, by definition, the coefficient function \(m(D_1,D_2)\) collecting the multiplicities \(\mu (D_1,D_2;d)\). Hence the identity holds by definition of the convolution. </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:T-single-mul">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">13</span>
+    <span class="lemma_thmtitle">Product of basis elements</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-ring-structure.html#lem:T-single-mul">#</a>
+    
+    <a class="icon proof" href="chap-ring-structure.html#a0000000011"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-ring-structure.html#def:T-single">Definition 11</a></li>
+          
+          <li><a href="chap-ring-structure.html#def:hecke-multiplicity">Definition 9</a></li>
+          
+          <li><a href="chap-ring-structure.html#def:m-finsupp">Definition 10</a></li>
+          
+          <li><a href="chap-ring-structure.html#def:T-single">Definition 11</a></li>
+          
+          <li><a href="chap-ring-structure.html#def:hecke-multiplicity">Definition 9</a></li>
+          
+          <li><a href="chap-ring-structure.html#def:m-finsupp">Definition 10</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.T_single_mul_T_single" class="lean_decl">HeckeRing.T_single_mul_T_single</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   For double cosets \(D_1,D_2\), </p>
+<div class="displaymath" id="a0000000012">
+  \[  [D_1]\cdot [D_2] \; =\;  \sum _{d} \mu (D_1,D_2;d)\, [d],  \]
+</div>
+<p> the sum running over double cosets \(d\), with at most finitely many nonzero terms. More generally, for coefficients \(a,b\) one has \(T_{D_1}\cdot T_{D_2}=a\, b\cdot m(D_1,D_2)\). </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000011">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> Apply the convolution formula of Lemma&#160;<a href="chap-ring-structure.html#lem:mul-def">12</a> to \(f=[D_1]\) and \(g=[D_2]\). Each is supported on a single double coset, so the double sum collapses to the single term \(a\, b\) times the coefficient function \(m(D_1,D_2)\). By definition of Definition&#160;<a href="chap-ring-structure.html#def:m-finsupp">10</a> the value of \(m(D_1,D_2)\) at \(d\) is the multiplicity \(\mu (D_1,D_2;d)\), giving the displayed expansion. </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:smul-eq-sum">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">14</span>
+    <span class="lemma_thmtitle">Module action as a coset sum</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-ring-structure.html#lem:smul-eq-sum">#</a>
+    
+    <a class="icon proof" href="chap-ring-structure.html#a0000000013"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-hecke-pairs.html#def:hecke-module">Definition 7</a></li>
+          
+          <li><a href="chap-hecke-pairs.html#def:decomp-quot">Definition 5</a></li>
+          
+          <li><a href="chap-hecke-pairs.html#def:hecke-module">Definition 7</a></li>
+          
+          <li><a href="chap-hecke-pairs.html#def:decomp-quot">Definition 5</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.smul_eq_sum" class="lean_decl">HeckeRing.smul_eq_sum</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   The Hecke ring \(\mathbb {T}\) acts on the left-coset module. For \(T\in \mathbb {T}\) and a formal sum \(\nu \) of left cosets, the action is the double sum </p>
+<div class="displaymath" id="a0000000014">
+  \[  T\cdot \nu \; =\;  \sum _{D_1}\sum _{\beta } T(D_1)\, \nu (\beta ) \sum _{i} \bigl[\, g_i\, \beta \, \bigr],  \]
+</div>
+<p> where \(D_1\) ranges over the support of \(T\), \(\beta \) over the support of \(\nu \), and \(g_i\) over left-coset representatives of \(D_1\), each summand \([\, g_i\, \beta \, ]\) being the left coset obtained by translating \(\beta \) by the representative \(g_i\). </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000013">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> This is the unfolding of the definition of the action. The action is \(\mathbb {Z}\)-bilinear in \(T\) and \(\nu \), so it distributes over their basis expansions; on a pair of basis elements it sends \(([D_1],[\beta ])\) to the sum of the left cosets \([\, g_i\, \beta \, ]\) over the representatives \(g_i\) of \(D_1\), which is precisely the displayed orbit sum. </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:mul-assoc">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">15</span>
+    <span class="lemma_thmtitle">Associativity</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-ring-structure.html#lem:mul-assoc">#</a>
+    
+    <a class="icon proof" href="chap-ring-structure.html#a0000000015"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-ring-structure.html#lem:T-single-mul">Lemma 13</a></li>
+          
+          <li><a href="chap-ring-structure.html#lem:smul-eq-sum">Lemma 14</a></li>
+          
+          <li><a href="chap-ring-structure.html#lem:T-single-mul">Lemma 13</a></li>
+          
+          <li><a href="chap-ring-structure.html#lem:smul-eq-sum">Lemma 14</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.mul_assoc_𝕋" class="lean_decl">HeckeRing.mul_assoc_𝕋</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   The product on \(\mathbb {T}\) is associative: \((f\cdot g)\cdot h=f\cdot (g\cdot h)\) for all \(f,g,h\in \mathbb {T}\). </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000015">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> Associativity is deduced from the action of \(\mathbb {T}\) on the left-coset module of Lemma&#160;<a href="chap-ring-structure.html#lem:smul-eq-sum">14</a>. That action is a faithful scalar tower: ring multiplication is compatible with the module action, so \(((f\cdot g)\cdot h)\cdot \nu \) and \((f\cdot (g\cdot h))\cdot \nu \) agree for every formal sum \(\nu \) of left cosets. The two agree because each amounts to acting successively by \(h\), then \(g\), then \(f\), a re-indexing of the triple coset sum that is manifestly independent of bracketing. By faithfulness of the action, the two ring elements are equal. Concretely on basis elements this is the double-coset counting identity behind Lemma&#160;<a href="chap-ring-structure.html#lem:T-single-mul">13</a>. </p>
+
+  </div>
+</div>
+<div class="lemma_thmwrapper theorem-style-plain" id="lem:one-def">
+  <div class="lemma_thmheading">
+    <span class="lemma_thmcaption">
+    Lemma
+    </span>
+    <span class="lemma_thmlabel">16</span>
+    <span class="lemma_thmtitle">Identity element</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-ring-structure.html#lem:one-def">#</a>
+    
+    <a class="icon proof" href="chap-ring-structure.html#a0000000016"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-ring-structure.html#def:T-single">Definition 11</a></li>
+          
+          <li><a href="chap-hecke-pairs.html#def:hecke-coset">Definition 2</a></li>
+          
+          <li><a href="chap-ring-structure.html#def:T-single">Definition 11</a></li>
+          
+          <li><a href="chap-hecke-pairs.html#def:hecke-coset">Definition 2</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.one_def" class="lean_decl">HeckeRing.one_def</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="lemma_thmcontent">
+  <p>   The multiplicative identity of \(\mathbb {T}\) is \([H]=T_{[H]}\), the basis element attached to the trivial double coset \(H=H\cdot 1\cdot H\) with coefficient \(1\). </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000016">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> The trivial double coset \(H\) has the single left coset \(H\) as its decomposition, so for any double coset \(D\) the multiplicities \(\mu (H,D;\, \cdot \, )\) and \(\mu (D,H;\, \cdot \, )\) are \(1\) at \(D\) and \(0\) elsewhere. By Lemma&#160;<a href="chap-ring-structure.html#lem:T-single-mul">13</a> this gives \([H]\cdot [D]=[D]=[D]\cdot [H]\), and bilinearity (Lemma&#160;<a href="chap-ring-structure.html#lem:mul-def">12</a>) extends the two-sided identity property from basis elements to all of \(\mathbb {T}\). </p>
+
+  </div>
+</div>
+<div class="theorem_thmwrapper theorem-style-plain" id="thm:hecke-ring">
+  <div class="theorem_thmheading">
+    <span class="theorem_thmcaption">
+    Theorem
+    </span>
+    <span class="theorem_thmlabel">17</span>
+    <span class="theorem_thmtitle">The Hecke ring</span>
+    <div class="thm_header_extras">
+
+    
+    ✓
+        </div>
+    <div class="thm_header_hidden_extras">
+
+    <a class="icon proof" href="chap-ring-structure.html#thm:hecke-ring">#</a>
+    
+    <a class="icon proof" href="chap-ring-structure.html#a0000000017"><svg  class="icon icon-cogs "><use xlink:href="symbol-defs.svg#icon-cogs"></use></svg>
+</a>
+    
+    
+    <button class="modal"><svg  class="icon icon-mindmap "><use xlink:href="symbol-defs.svg#icon-mindmap"></use></svg>
+</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Uses</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="chap-ring-structure.html#lem:mul-def">Lemma 12</a></li>
+          
+          <li><a href="chap-ring-structure.html#lem:mul-assoc">Lemma 15</a></li>
+          
+          <li><a href="chap-ring-structure.html#lem:one-def">Lemma 16</a></li>
+          
+          <li><a href="chap-ring-structure.html#lem:mul-def">Lemma 12</a></li>
+          
+          <li><a href="chap-ring-structure.html#lem:mul-assoc">Lemma 15</a></li>
+          
+          <li><a href="chap-ring-structure.html#lem:one-def">Lemma 16</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+    
+    <button class="modal lean">L∃∀N</button>
+        <div class="modal-container">
+      <div class="modal-content">
+        <header>
+          <h1>Lean declarations</h1>
+          <button class="closebtn"><svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        </header>
+        
+        <ul class="uses">
+          
+          <li><a href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.instRing" class="lean_decl">HeckeRing.instRing</a></li>
+          
+        </ul>
+    
+      </div>
+    </div>
+
+    
+        </div>
+  </div>
+  <div class="theorem_thmcontent">
+  <p>   With the convolution product and identity above, \(\mathbb {T}\) is a unital associative ring (indeed a \(\mathbb {Z}\)-algebra) [Sh, §3.1]. </p>
+
+  </div>
+</div>
+<div class="proof_wrapper" id="a0000000017">
+  <div class="proof_heading">
+    <span class="proof_caption">
+    Proof
+    </span>
+    <span class="expand-proof">▶</span>
+  </div>
+  <div class="proof_content">
+  <p> The underlying additive group is the free \(\mathbb {Z}\)-module on double cosets, hence an abelian group. The convolution product of Lemma&#160;<a href="chap-ring-structure.html#lem:mul-def">12</a> is \(\mathbb {Z}\)-bilinear by construction, so distributivity over addition and compatibility with integer scaling are immediate. Associativity is Lemma&#160;<a href="chap-ring-structure.html#lem:mul-assoc">15</a>, and Lemma&#160;<a href="chap-ring-structure.html#lem:one-def">16</a> provides a two-sided multiplicative identity. Together these are exactly the ring axioms. </p>
+
+  </div>
+</div>
+
+</div> <!--main-text -->
+</div> <!-- content-wrapper -->
+</div> <!-- content -->
+</div> <!-- wrapper -->
+
+<nav class="prev_up_next">
+  <svg  id="showmore-minus" class="icon icon-eye-minus showmore"><use xlink:href="symbol-defs.svg#icon-eye-minus"></use></svg>
+
+  <svg  id="showmore-plus" class="icon icon-eye-plus showmore"><use xlink:href="symbol-defs.svg#icon-eye-plus"></use></svg>
+
+  <a href="chap-hecke-pairs.html" title="Hecke pairs and double cosets"><svg  class="icon icon-arrow-left "><use xlink:href="symbol-defs.svg#icon-arrow-left"></use></svg>
+</a>
+  <a href="index.html" title="Hecke Rings and Strong Multiplicity One"><svg  class="icon icon-arrow-up "><use xlink:href="symbol-defs.svg#icon-arrow-up"></use></svg>
+</a>
+  <a href="chap-degree.html" title="The degree homomorphism"><svg  class="icon icon-arrow-right "><use xlink:href="symbol-defs.svg#icon-arrow-right"></use></svg>
+</a>
+</nav>
+
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/plastex.js"></script>
+<script type="text/javascript" src="js/svgxuse.js"></script>
+<script type="text/javascript" src="js/js.cookie.min.js"></script>
+<script type="text/javascript" src="js/showmore.js"></script>
+</body>
+</html>

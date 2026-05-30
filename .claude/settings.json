@@ -1,0 +1,6 @@
+{
+  "enabledPlugins": {
+    "mathlib-quality@mathlib-quality-plugins": true,
+    "lean4@lean4-skills": true
+  }
+}

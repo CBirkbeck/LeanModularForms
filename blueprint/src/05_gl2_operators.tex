@@ -1,0 +1,121 @@
+\chapter{The $\mathrm{GL}_2$ Hecke operators}\label{chap:gl2-operators}
+
+Specialising the abstract construction to the arithmetic pair attached to $\mathrm{GL}_n$
+produces the classical Hecke operators. This chapter sets up that pair, its Hecke ring, the
+diagonal double cosets that turn out to span it, and, for $n=2$, the generators $T(a,d)$ and
+$T(m)$ of Shimura's multiplication table [Sh, \S3.1].
+
+\begin{definition}[The arithmetic Hecke pair]\label{def:GL-pair}
+\lean{HeckeRing.GLn.GL_pair}
+\uses{def:hecke-pair}
+\leanok
+For $n\ge 1$ the \emph{arithmetic Hecke pair} for $\mathrm{GL}_n$ is the triple with group
+$G=\mathrm{GL}_n(\mathbb{Q})$, subgroup $H=SL_n(\mathbb{Z})$, and submonoid $\Delta$ equal
+to the monoid of integer matrices with positive determinant, regarded inside
+$\mathrm{GL}_n(\mathbb{Q})$. One has $SL_n(\mathbb{Z})\le\Delta$, since elements of
+$SL_n(\mathbb{Z})$ are integral with determinant $1$, and $\Delta\le\operatorname{Comm}(SL_n(\mathbb{Z}))$,
+the commensurator of $SL_n(\mathbb{Z})$: an integer matrix $\alpha$ of determinant $d>0$
+conjugates the principal congruence subgroup of level $d$ into $SL_n(\mathbb{Z})$, so
+$SL_n(\mathbb{Z})$ and $\alpha\,SL_n(\mathbb{Z})\,\alpha^{-1}$ are commensurable
+[Sh, \S3.1, Lemma~3.10]. These two inclusions make the triple a Hecke pair.
+\end{definition}
+
+\begin{definition}[The $\mathrm{GL}_n$ Hecke algebra]\label{def:hecke-algebra}
+\lean{HeckeRing.GLn.HeckeAlgebra}
+\uses{def:GL-pair, def:hecke-ring-carrier}
+\leanok
+For $n\ge 1$ the \emph{$\mathrm{GL}_n$ Hecke algebra} $\mathcal{H}_n$ is the Hecke ring
+$\mathbb{T}$ of the arithmetic Hecke pair of $\mathrm{GL}_n$, that is, the free
+$\mathbb{Z}$-module on the double cosets $SL_n(\mathbb{Z})\backslash\Delta/SL_n(\mathbb{Z})$
+equipped with its convolution product. For $n=2$ this is the ring whose structure is
+described by Shimura's Theorem~3.24.
+\end{definition}
+
+\begin{definition}[Diagonal double coset]\label{def:T-diag}
+\lean{HeckeRing.GLn.T_diag}
+\uses{def:GL-pair, def:hecke-coset}
+\leanok
+Let $a=(a_1,\dots,a_n)$ be an $n$-tuple of positive integers. The associated
+\emph{diagonal double coset} is the double coset
+\[
+  SL_n(\mathbb{Z})\,\operatorname{diag}(a_1,\dots,a_n)\,SL_n(\mathbb{Z})
+\]
+of the diagonal matrix $\operatorname{diag}(a_1,\dots,a_n)$ in
+$SL_n(\mathbb{Z})\backslash\Delta/SL_n(\mathbb{Z})$. Every double coset of the arithmetic
+pair admits such a diagonal representative, with elementary divisors $a_1\mid a_2\mid\dots\mid a_n$,
+by the theory of Smith normal form [Sh, \S3.1].
+\end{definition}
+
+\begin{definition}[Diagonal basis element]\label{def:T-elem}
+\lean{HeckeRing.GLn.T_elem}
+\uses{def:T-diag, def:T-single, def:hecke-algebra}
+\leanok
+For an $n$-tuple $a=(a_1,\dots,a_n)$ of positive integers, the \emph{diagonal basis element}
+is the standard basis vector of $\mathcal{H}_n$ attached to the diagonal double coset of
+$\operatorname{diag}(a_1,\dots,a_n)$; that is, the basis element with coefficient $1$ at that
+double coset and $0$ elsewhere.
+\end{definition}
+
+\begin{definition}[$T(a,d)$]\label{def:T-ad}
+\lean{HeckeRing.GL2.T_ad}
+\uses{def:T-elem}
+\leanok
+Let $n=2$. For positive integers $a,d$ with $a\mid d$, the operator $T(a,d)$ is the diagonal
+basis element of $\mathcal{H}_2$ attached to $\operatorname{diag}(a,d)$. For all other pairs
+$(a,d)$ — when $a$ or $d$ vanishes, or when $a\nmid d$ — one sets $T(a,d)=0$; the
+divisibility constraint $a\mid d$ records the elementary-divisor normalisation of the
+diagonal double coset.
+\end{definition}
+
+\begin{definition}[$T(p,p)$]\label{def:T-pp}
+\lean{HeckeRing.GL2.T_pp}
+\uses{def:T-ad}
+\leanok
+For a positive integer $p$, the operator $T(p,p)$ is defined as $T(p,p)=T(a,d)$ with $a=d=p$.
+When $p$ is prime this is the central, scalar double coset of $pI$, the basis element attached
+to the scalar matrix $\operatorname{diag}(p,p)$.
+\end{definition}
+
+\begin{definition}[$T(m)$]\label{def:T-sum}
+\lean{HeckeRing.GL2.T_sum}
+\uses{def:T-ad}
+\leanok
+For a positive integer $m$, Shimura's operator $T(m)$ is the sum
+\[
+  T(m) \;=\; \sum_{a\,\mid\, m} T\!\left(a,\tfrac{m}{a}\right)
+\]
+over all positive divisors $a$ of $m$, where each summand is the operator
+$T\!\left(a,\tfrac{m}{a}\right)$ of $\mathcal{H}_2$. Only the divisor pairs $(a,m/a)$ with
+$a\mid m/a$ contribute, the remaining terms vanishing by definition of $T(a,d)$.
+\end{definition}
+
+\begin{lemma}[$T(1,1)$ is the identity]\label{lem:T-ad-one-one}
+\lean{HeckeRing.GL2.T_ad_one_one}
+\uses{def:T-ad, lem:one-def}
+\leanok
+In $\mathcal{H}_2$ one has $T(1,1)=1$, the multiplicative identity of the Hecke algebra.
+\end{lemma}
+
+\begin{proof}
+\uses{def:T-ad, lem:one-def}
+\leanok
+Since $1\mid 1$ and both entries are positive, $T(1,1)$ is the diagonal basis element of
+$\operatorname{diag}(1,1)$, which is the identity matrix. Its diagonal double coset is
+therefore the trivial double coset $SL_2(\mathbb{Z})$, and the basis element attached to the
+trivial double coset is exactly the identity of the Hecke ring.
+\end{proof}
+
+\begin{lemma}[$T(p)$ at a prime]\label{lem:T-sum-prime}
+\lean{HeckeRing.GL2.T_sum_prime}
+\uses{def:T-sum, def:T-ad}
+\leanok
+For a prime $p$ one has $T(p)=T(1,p)$.
+\end{lemma}
+
+\begin{proof}
+\uses{def:T-sum, def:T-ad}
+\leanok
+The positive divisors of a prime $p$ are $1$ and $p$, so the defining sum for $T(p)$ has the
+two terms $T(1,p)$ and $T(p,1)$. The second vanishes: $p\nmid 1$ since $p>1$, so $T(p,1)=0$
+by definition. Hence $T(p)=T(1,p)$.
+\end{proof}

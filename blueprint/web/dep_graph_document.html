@@ -1,0 +1,2022 @@
+
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dependency graph</title>
+  <meta name="generator" content="plasTeX" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="styles/theme-white.css" />
+  <link rel="stylesheet" href="styles/dep_graph.css" />
+  
+  <script type="text/x-mathjax-config">
+  
+    MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}});
+  
+  </script>
+
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">  </script>
+
+
+<link rel="stylesheet" href="styles/extra_styles.css" />
+
+</head>
+
+<body>
+<header>
+  <a class="toc" href="index.html">Home</a>
+  <h1 id="doc_title">Dependencies</h1>
+</header>
+<div class="wrapper">
+<div class="content">
+  <div id="Legend">
+    <span id="legend_title" class="title">Legend
+    <div class="btn">
+       <div class="bar"></div>
+       <div class="bar"></div>
+       <div class="bar"></div>
+    </div></span> 
+    <dl class="legend">
+      
+      <dt>Boxes</dt><dd>definitions</dd>
+      
+      <dt>Ellipses</dt><dd>theorems and lemmas</dd>
+      
+      <dt>Blue border</dt><dd>the <em>statement</em> of this result is ready to be formalized; all prerequisites are done</dd>
+      
+      <dt>Orange border</dt><dd>the <em>statement</em> of this result is not ready to be formalized; the blueprint needs more work</dd>
+      
+      <dt>Blue background</dt><dd>the <em>proof</em> of this result is ready to be formalized; all prerequisites are done</dd>
+      
+      <dt>Green border</dt><dd>the <em>statement</em> of this result is formalized</dd>
+      
+      <dt>Green background</dt><dd>the <em>proof</em> of this result is formalized</dd>
+      
+      <dt>Dark green background</dt><dd>the <em>proof</em> of this result and all its ancestors are formalized</dd>
+      
+      <dt>Dark green border</dt><dd>this is in Mathlib</dd>
+      
+    </dl>
+  </div>
+    <div id="graph"></div>
+<div id="statements">
+
+    
+    <div class="dep-modal-container" id="def:anti-involution_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:anti-involution" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">22</span></div>
+    <div class="thm_thmcontent"><p>  Let \((G,H,\Delta )\) be a Hecke pair. An <em>anti-involution</em> of \((G,H,\Delta )\) is an anti-homomorphism \(g\mapsto \bar g\) of \(G\) that is involutive and preserves the pair. Explicitly, it satisfies </p>
+<div class="displaymath" id="a0000000025">
+  \[  \bar{\bar g}=g,\qquad \overline{ab}=\bar b\, \bar a,  \]
+</div>
+<p> and maps \(H\) into \(H\) and \(\Delta \) into \(\Delta \), that is, \(\bar g\in H\) whenever \(g\in H\) and \(\bar g\in \Delta \) whenever \(g\in \Delta \) [Sh, §3.1]. </p>
+</div>
+
+    <a class="latex_link" href="chap-commutativity.html#def:anti-involution">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.AntiInvolution">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:commring-of-ai_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:commring-of-ai" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">25</span></div>
+    <div class="thm_thmcontent"><p>  Given an anti-involution of the Hecke pair \((G,H,\Delta )\) whose induced map fixes every double coset, the resulting commutativity of multiplication upgrades the ring structure on \(\mathbb {T}\) to a <em>commutative ring</em> structure, obtained from the ring structure on \(\mathbb {T}\) by supplying the symmetry \(f\cdot g=g\cdot f\) from Theorem&#160;<a href="chap-commutativity.html#thm:mul-comm-of-ai">24</a>. </p>
+</div>
+
+    <a class="latex_link" href="chap-commutativity.html#def:commring-of-ai">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.instCommRing_of_antiInvolution">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:cuspFormsNew_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:cuspFormsNew" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">50</span><span class="definition_thmtitle">New subspace \(S_k^{\sharp }(N)\)</span></div>
+    <div class="thm_thmcontent"><p>   The <em>new subspace</em> \(S_k^{\sharp }(N)\) is the orthogonal complement of the old subspace \(S_k^{\flat }(N)\) inside \(S_k(\Gamma _1(N))\) with respect to the Petersson inner product, </p>
+<div class="displaymath" id="a0000000055">
+  \[  S_k^{\sharp }(N) \; =\;  \bigl(S_k^{\flat }(N)\bigr)^{\perp },  \]
+</div>
+<p> following [DS, (5.19)]. Concretely, a cusp form lies in \(S_k^{\sharp }(N)\) exactly when it is Petersson-orthogonal to every oldform. The Petersson form is positive definite on cusp forms, so \(S_k^{\sharp }(N)\cap S_k^{\flat }(N)=0\). </p>
+</div>
+
+    <a class="latex_link" href="chap-smo.html#def:cuspFormsNew">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.cuspFormsNew">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:cuspFormsOld_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:cuspFormsOld" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">49</span><span class="definition_thmtitle">Old subspace \(S_k^{\flat }(N)\)</span></div>
+    <div class="thm_thmcontent"><p>  The <em>old subspace</em> \(S_k^{\flat }(N)\) is the span of all level-raising images: for each proper divisor \(M\mid N\) (with \(M\neq N\)) and each divisor \(\ell \) of \(N/M\) with \(\ell {\gt}1\), the degeneracy map \(f\mapsto f(\ell z)\) carries the cusp space at level \(M\) into level \(N\), and \(S_k^{\flat }(N)\) is the subspace generated by all such images, </p>
+<div class="displaymath" id="a0000000054">
+  \[  S_k^{\flat }(N) \; =\;  \operatorname {span}\bigl\{ \,  f(\ell z) \  :\  f\in S_k(\Gamma _1(M)),\  M\mid N,\  M\neq N \, \bigr\} .  \]
+</div>
+<p> This is the [DS, (5.18)] definition of the forms “coming from lower level”. </p>
+</div>
+
+    <a class="latex_link" href="chap-smo.html#def:cuspFormsOld">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.cuspFormsOld">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:decomp-quot_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:decomp-quot" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">5</span><span class="definition_thmtitle">Left-coset index of a double coset</span></div>
+    <div class="thm_thmcontent"><p>   For \(g\in \Delta \), the <em>decomposition index set</em> of \(g\) is the coset space \(H/(H\cap gHg^{-1})\), which indexes the left cosets appearing in the decomposition \(HgH=\bigsqcup _i H(g_i g)\) of Lemma&#160;<a href="chap-hecke-pairs.html#lem:dc-eq-iUnion-lc">4</a>. Since \(\Delta \le \operatorname {Comm}(H)\), this index set is finite. </p>
+</div>
+
+    <a class="latex_link" href="chap-hecke-pairs.html#def:decomp-quot">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.decompQuot">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:deg_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:deg" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">20</span></div>
+    <div class="thm_thmcontent"><p>  The <em>degree homomorphism</em> is the ring homomorphism </p>
+<div class="displaymath" id="a0000000021">
+  \[  \deg : \mathbb {T} \longrightarrow \mathbb {Z}  \]
+</div>
+<p> determined by sending each basis element \([D]\) to \(\deg D\) and extending \(\mathbb {Z}\)-linearly; that is, \(\deg \bigl(\sum _D a_D\, [D]\bigr)=\sum _D a_D\, \deg D\). It sends the identity to \(1\), is additive, and is multiplicative [Sh, §3.1, Prop.&#160;3.3]. </p>
+</div>
+
+    <a class="latex_link" href="chap-degree.html#def:deg">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.deg">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:eigenform_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:eigenform" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">48</span><span class="definition_thmtitle">Eigenform</span></div>
+    <div class="thm_thmcontent"><p>   An <em>eigenform</em> of level \(\Gamma _1(N)\) and weight \(k\) is a cusp form \(f\) carrying a Nebentypus character \(\chi \), so that \(f\) lies in the eigenspace \(S_k(N,\chi )\), and which is a simultaneous eigenfunction of all the Hecke operators \(T(n)\) with \((n,N)=1\). Because the Hecke operators commute (Theorem&#160;<a href="chap-commutativity.html#thm:commring-hecke-algebra">28</a>, whose product law is the multiplication table Theorem&#160;<a href="chap-multiplication-table.html#thm:T-sum-mul">44</a>), such common eigenfunctions exist in abundance: a finite-dimensional space of cusp forms is simultaneously diagonalised by the commuting family \(\{ T(n)\} _{(n,N)=1}\). The eigenvalue is recorded as \(T(n)f=\lambda _n\, f\), where \(\lambda _n=\chi (n)\, \nu _n\) relates the classical Hecke eigenvalue \(\lambda _n\) to the underlying Hecke-ring eigenvalue \(\nu _n\) through the diamond factor \(\chi (n)\). </p>
+</div>
+
+    <a class="latex_link" href="chap-smo.html#def:eigenform">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.Eigenform">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:GL-pair_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:GL-pair" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">29</span><span class="definition_thmtitle">The arithmetic Hecke pair</span></div>
+    <div class="thm_thmcontent"><p>   For \(n\ge 1\) the <em>arithmetic Hecke pair</em> for \(\mathrm{GL}_n\) is the triple with group \(G=\mathrm{GL}_n(\mathbb {Q})\), subgroup \(H=SL_n(\mathbb {Z})\), and submonoid \(\Delta \) equal to the monoid of integer matrices with positive determinant, regarded inside \(\mathrm{GL}_n(\mathbb {Q})\). One has \(SL_n(\mathbb {Z})\le \Delta \), since elements of \(SL_n(\mathbb {Z})\) are integral with determinant \(1\), and \(\Delta \le \operatorname {Comm}(SL_n(\mathbb {Z}))\), the commensurator of \(SL_n(\mathbb {Z})\): an integer matrix \(\alpha \) of determinant \(d{\gt}0\) conjugates the principal congruence subgroup of level \(d\) into \(SL_n(\mathbb {Z})\), so \(SL_n(\mathbb {Z})\) and \(\alpha \, SL_n(\mathbb {Z})\, \alpha ^{-1}\) are commensurable [Sh, §3.1, Lemma&#160;3.10]. These two inclusions make the triple a Hecke pair. </p>
+</div>
+
+    <a class="latex_link" href="chap-gl2-operators.html#def:GL-pair">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GLn.GL_pair">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:gl-pair-ai_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:gl-pair-ai" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">26</span></div>
+    <div class="thm_thmcontent"><p>  For the arithmetic \(\mathrm{GL}_n\) Hecke pair, the <em>transpose</em> \(g\mapsto {}^{t}g\) is an anti-involution. It reverses products, since \({}^{t}(ab)={}^{t}b\, {}^{t}a\), and is involutive, since \({}^{t}({}^{t}g)=g\). Moreover it preserves the pair: transposing a matrix in \(\mathrm{SL}_n(\mathbb {Z})\) stays in \(\mathrm{SL}_n(\mathbb {Z})\), and transposing a positive-determinant integral matrix preserves both integrality of the entries and the value of the determinant, so the positive-determinant integer monoid is preserved as well [Sh, §3.1]. </p>
+</div>
+
+    <a class="latex_link" href="chap-commutativity.html#def:gl-pair-ai">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GLn.GL_pair_antiInvolution">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:hecke-algebra_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:hecke-algebra" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">30</span><span class="definition_thmtitle">The \(\mathrm{GL}_n\) Hecke algebra</span></div>
+    <div class="thm_thmcontent"><p>   For \(n\ge 1\) the <em>\(\mathrm{GL}_n\) Hecke algebra</em> \(\mathcal{H}_n\) is the Hecke ring \(\mathbb {T}\) of the arithmetic Hecke pair of \(\mathrm{GL}_n\), that is, the free \(\mathbb {Z}\)-module on the double cosets \(SL_n(\mathbb {Z})\backslash \Delta /SL_n(\mathbb {Z})\) equipped with its convolution product. For \(n=2\) this is the ring whose structure is described by Shimura’s Theorem&#160;3.24. </p>
+</div>
+
+    <a class="latex_link" href="chap-gl2-operators.html#def:hecke-algebra">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GLn.HeckeAlgebra">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:hecke-coset_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:hecke-coset" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">2</span><span class="definition_thmtitle">Double cosets</span></div>
+    <div class="thm_thmcontent"><p>   For a Hecke pair \((G,H,\Delta )\), the set of <em>double cosets</em> \(H\backslash \Delta /H\) is the quotient of \(\Delta \) by the equivalence relation that identifies \(g\) and \(g'\) whenever \(HgH=Hg'H\), that is, whenever \(g'=h_1 g h_2\) for some \(h_1,h_2\in H\). We write a typical double coset as \(HgH\). </p>
+</div>
+
+    <a class="latex_link" href="chap-hecke-pairs.html#def:hecke-coset">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.HeckeCoset">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:hecke-coset-deg_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:hecke-coset-deg" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">18</span></div>
+    <div class="thm_thmcontent"><p>  Let \((G,H,\Delta )\) be a Hecke pair and let \(D=HgH\) be a double coset. Writing \(D=\bigsqcup _i Hg_i\) for its decomposition into finitely many left cosets, the <em>degree</em> of \(D\) is </p>
+<div class="displaymath" id="a0000000018">
+  \[  \deg D \; =\;  [\, H : H\cap gHg^{-1}\, ],  \]
+</div>
+<p> the number of left cosets \(Hg_i\) comprising \(D\). </p>
+</div>
+
+    <a class="latex_link" href="chap-degree.html#def:hecke-coset-deg">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.HeckeCoset_deg">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:hecke-left-coset_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:hecke-left-coset" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">3</span><span class="definition_thmtitle">Left cosets in \(\Delta \)</span></div>
+    <div class="thm_thmcontent"><p>   For a Hecke pair \((G,H,\Delta )\), the set of <em>left cosets</em> is the quotient of \(\Delta \) by the equivalence relation that identifies \(g\) and \(g'\) whenever \(Hg=Hg'\). We write a typical left coset as \(Hg\). </p>
+</div>
+
+    <a class="latex_link" href="chap-hecke-pairs.html#def:hecke-left-coset">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.HeckeLeftCoset">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:hecke-module_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:hecke-module" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">7</span><span class="definition_thmtitle">Hecke module</span></div>
+    <div class="thm_thmcontent"><p>   Let \((G,H,\Delta )\) be a Hecke pair. The <em>Hecke module</em> is the free \(\mathbb {Z}\)-module on the set of left cosets \(Hg\); that is, the \(\mathbb {Z}\)-valued functions of finite support on the set of left cosets. This is the module on which the Hecke ring \(\mathbb {T}\) acts. </p>
+</div>
+
+    <a class="latex_link" href="chap-hecke-pairs.html#def:hecke-module">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.HeckeModule">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:hecke-multiplicity_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:hecke-multiplicity" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">9</span><span class="definition_thmtitle">Shimura’s multiplicity</span></div>
+    <div class="thm_thmcontent"><p>   For \(g,g',d\in \Delta \) define the <em>multiplicity</em> \(\mu (g,g';d)\) to be the number of pairs of left-coset representatives \((g_i,g'_j)\), drawn from the decompositions \(HgH=\bigsqcup _i Hg_i\) and \(Hg'H=\bigsqcup _j Hg'_j\), that satisfy \(g_i\, g'_j\, H=d\, H\). This is the structure constant of the Hecke ring [Sh, §3.1, Prop 3.2]. </p>
+</div>
+
+    <a class="latex_link" href="chap-ring-structure.html#def:hecke-multiplicity">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.heckeMultiplicity">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:hecke-pair_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:hecke-pair" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">1</span><span class="definition_thmtitle">Hecke pair</span></div>
+    <div class="thm_thmcontent"><p>  A <em>Hecke pair</em> \((G,H,\Delta )\) consists of a group \(G\), a subgroup \(H\) of \(G\), and a submonoid \(\Delta \) of \(G\) satisfying \(H\le \Delta \) and \(\Delta \le \operatorname {Comm}(H)\), where \(\operatorname {Comm}(H)\) is the commensurator of \(H\) in \(G\). Equivalently, every \(g\in \Delta \) is commensurable with the identity in the sense that \(H\cap gHg^{-1}\) has finite index in both \(H\) and \(gHg^{-1}\). </p>
+</div>
+
+    <a class="latex_link" href="chap-hecke-pairs.html#def:hecke-pair">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.HeckePair">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:hecke-ring-carrier_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:hecke-ring-carrier" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">6</span><span class="definition_thmtitle">Hecke ring, underlying module</span></div>
+    <div class="thm_thmcontent"><p>   Let \((G,H,\Delta )\) be a Hecke pair. The <em>Hecke ring</em> \(\mathbb {T}=\mathcal{H}(G,H,\Delta )\) is, as a \(\mathbb {Z}\)-module, the free \(\mathbb {Z}\)-module on the set of double cosets \(H\backslash \Delta /H\); that is, the \(\mathbb {Z}\)-valued functions on \(H\backslash \Delta /H\) of finite support. Its multiplication is introduced in Chapter&#160;<a href="chap-ring-structure.html">2</a>. </p>
+</div>
+
+    <a class="latex_link" href="chap-hecke-pairs.html#def:hecke-ring-carrier">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.𝕋">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:m-finsupp_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:m-finsupp" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">10</span><span class="definition_thmtitle">Structure-constant coefficients</span></div>
+    <div class="thm_thmcontent"><p>   For \(g,g'\in \Delta \) let \(m(g,g')\) be the finitely-supported function on double cosets \(d\mapsto \mu (g,g';d)\). Only finitely many double cosets occur as \(H(g_i\, g'_j)H\), so this is well defined; it records the coefficients of the product of the two basis elements. </p>
+</div>
+
+    <a class="latex_link" href="chap-ring-structure.html#def:m-finsupp">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.m">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:modFormCharSpace_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:modFormCharSpace" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">47</span><span class="definition_thmtitle">Nebentypus space \(S_k(N,\chi )\)</span></div>
+    <div class="thm_thmcontent"><p>  For a positive integer \(N\), a weight \(k\), and a Dirichlet character \(\chi \) modulo \(N\), the <em>Nebentypus space</em> (modular-form version \(M_k(N,\chi )\), cusp version \(S_k(N,\chi )\)) is the common eigenspace </p>
+<div class="displaymath" id="a0000000053">
+  \[  M_k(N,\chi ) \; =\;  \bigcap _{d} \ker \bigl(\langle d\rangle - \chi (d)\bigr),  \]
+</div>
+<p> the intersection over all units \(d\) modulo \(N\) of the \(\chi (d)\)-eigenspaces of the diamond operators \(\langle d\rangle \). Equivalently, \(f\) lies in \(M_k(N,\chi )\) if and only if \(\langle d\rangle f=\chi (d)\, f\) for every \(d\) coprime to \(N\). </p>
+</div>
+
+    <a class="latex_link" href="chap-smo.html#def:modFormCharSpace">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.modFormCharSpace">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:mulMap_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:mulMap" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">8</span><span class="definition_thmtitle">Product map on representatives</span></div>
+    <div class="thm_thmcontent"><p>   Let \(g,g'\in \Delta \), and choose left-coset representatives so that \(HgH=\bigsqcup _i Hg_i\) and \(Hg'H=\bigsqcup _j Hg'_j\). The <em>product map</em> sends a pair of representatives \((g_i,g'_j)\) to the double coset \(H(g_i\, g'_j)H\) of their product. </p>
+</div>
+
+    <a class="latex_link" href="chap-ring-structure.html#def:mulMap">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.mulMap">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:newform_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:newform" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">53</span><span class="definition_thmtitle">Newform</span></div>
+    <div class="thm_thmcontent"><p>   A <em>newform</em> (normalised newform) of level \(\Gamma _1(N)\) and weight \(k\) is an eigenform \(f\) that lies in the new subspace \(S_k^{\sharp }(N)\) and is normalised so that its first Fourier coefficient is \(a_1=1\). By Atkin–Lehner uniqueness [DS, Thm&#160;5.8.2] a newform is determined by its Hecke eigenvalues away from the level; Theorem&#160;<a href="chap-smo.html#thm:smo-clean">60</a> below is exactly this rigidity in the present formalisation. </p>
+</div>
+
+    <a class="latex_link" href="chap-smo.html#def:newform">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.Newform">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:newPart_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:newPart" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">52</span><span class="definition_thmtitle">New part</span></div>
+    <div class="thm_thmcontent"><p>   The <em>new part</em> of a cusp form \(f\) is its image under the projection of \(S_k(\Gamma _1(N))\) onto the new subspace \(S_k^{\sharp }(N)\) along the old subspace \(S_k^{\flat }(N)\). Together with the old part it recovers \(f\): one has \(f=\operatorname {old}(f)+\operatorname {new}(f)\) with \(\operatorname {old}(f)\in S_k^{\flat }(N)\) and \(\operatorname {new}(f)\in S_k^{\sharp }(N)\). </p>
+</div>
+
+    <a class="latex_link" href="chap-smo.html#def:newPart">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.newPart">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:oldPart_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:oldPart" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">51</span><span class="definition_thmtitle">Old part</span></div>
+    <div class="thm_thmcontent"><p>   Since \(S_k(\Gamma _1(N))=S_k^{\flat }(N)\oplus S_k^{\sharp }(N)\) as an orthogonal direct sum, every cusp form \(f\) has a unique decomposition into an old and a new component. The <em>old part</em> of \(f\) is its image under the projection of \(S_k(\Gamma _1(N))\) onto \(S_k^{\flat }(N)\) along \(S_k^{\sharp }(N)\). </p>
+</div>
+
+    <a class="latex_link" href="chap-smo.html#def:oldPart">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.oldPart">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:onHeckeCoset_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:onHeckeCoset" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">23</span></div>
+    <div class="thm_thmcontent"><p>  Let \(g\mapsto \bar g\) be an anti-involution of the Hecke pair \((G,H,\Delta )\). It induces a map on the set \(H\backslash \Delta /H\) of double cosets, </p>
+<div class="displaymath" id="a0000000026">
+  \[  HgH \; \longmapsto \;  H\bar gH .  \]
+</div>
+<p> This is well defined: since the anti-involution reverses products and preserves \(H\), two representatives of the same double coset have barred images lying in a single double coset, so the assignment depends only on \(HgH\). The induced map is again involutive [Sh, §3.1]. </p>
+</div>
+
+    <a class="latex_link" href="chap-commutativity.html#def:onHeckeCoset">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.AntiInvolution.onHeckeCoset">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:T-ad_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:T-ad" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">33</span><span class="definition_thmtitle">\(T(a,d)\)</span></div>
+    <div class="thm_thmcontent"><p>   Let \(n=2\). For positive integers \(a,d\) with \(a\mid d\), the operator \(T(a,d)\) is the diagonal basis element of \(\mathcal{H}_2\) attached to \(\operatorname {diag}(a,d)\). For all other pairs \((a,d)\) — when \(a\) or \(d\) vanishes, or when \(a\nmid d\) — one sets \(T(a,d)=0\); the divisibility constraint \(a\mid d\) records the elementary-divisor normalisation of the diagonal double coset. </p>
+</div>
+
+    <a class="latex_link" href="chap-gl2-operators.html#def:T-ad">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.T_ad">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:T-diag_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:T-diag" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">31</span><span class="definition_thmtitle">Diagonal double coset</span></div>
+    <div class="thm_thmcontent"><p>   Let \(a=(a_1,\dots ,a_n)\) be an \(n\)-tuple of positive integers. The associated <em>diagonal double coset</em> is the double coset </p>
+<div class="displaymath" id="a0000000033">
+  \[  SL_n(\mathbb {Z})\, \operatorname {diag}(a_1,\dots ,a_n)\, SL_n(\mathbb {Z})  \]
+</div>
+<p> of the diagonal matrix \(\operatorname {diag}(a_1,\dots ,a_n)\) in \(SL_n(\mathbb {Z})\backslash \Delta /SL_n(\mathbb {Z})\). Every double coset of the arithmetic pair admits such a diagonal representative, with elementary divisors \(a_1\mid a_2\mid \dots \mid a_n\), by the theory of Smith normal form [Sh, §3.1]. </p>
+</div>
+
+    <a class="latex_link" href="chap-gl2-operators.html#def:T-diag">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GLn.T_diag">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:T-elem_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:T-elem" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">32</span><span class="definition_thmtitle">Diagonal basis element</span></div>
+    <div class="thm_thmcontent"><p>   For an \(n\)-tuple \(a=(a_1,\dots ,a_n)\) of positive integers, the <em>diagonal basis element</em> is the standard basis vector of \(\mathcal{H}_n\) attached to the diagonal double coset of \(\operatorname {diag}(a_1,\dots ,a_n)\); that is, the basis element with coefficient \(1\) at that double coset and \(0\) elsewhere. </p>
+</div>
+
+    <a class="latex_link" href="chap-gl2-operators.html#def:T-elem">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GLn.T_elem">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:T-pp_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:T-pp" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">34</span><span class="definition_thmtitle">\(T(p,p)\)</span></div>
+    <div class="thm_thmcontent"><p>   For a positive integer \(p\), the operator \(T(p,p)\) is defined as \(T(p,p)=T(a,d)\) with \(a=d=p\). When \(p\) is prime this is the central, scalar double coset of \(pI\), the basis element attached to the scalar matrix \(\operatorname {diag}(p,p)\). </p>
+</div>
+
+    <a class="latex_link" href="chap-gl2-operators.html#def:T-pp">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.T_pp">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:T-single_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:T-single" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">11</span><span class="definition_thmtitle">Basis element</span></div>
+    <div class="thm_thmcontent"><p>   For a double coset \(D=HgH\) and a coefficient \(b\), let \(T_D\) (also written \([D]\)) be the corresponding basis element of \(\mathbb {T}\): the function on double cosets taking the value \(b\) at \(D\) and \(0\) elsewhere. The elements \(T_D\) with \(b=1\) form a \(\mathbb {Z}\)-basis of \(\mathbb {T}\). </p>
+</div>
+
+    <a class="latex_link" href="chap-ring-structure.html#def:T-single">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.T_single">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="def:T-sum_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="def:T-sum" style="display: none">
+    <div class="thm_thmheading">
+      <span class="definition_thmcaption">
+      Definition
+      </span>
+      <span class="definition_thmlabel">35</span><span class="definition_thmtitle">\(T(m)\)</span></div>
+    <div class="thm_thmcontent"><p>   For a positive integer \(m\), Shimura’s operator \(T(m)\) is the sum </p>
+<div class="displaymath" id="a0000000034">
+  \[  T(m) \; =\;  \sum _{a\, \mid \,  m} T\! \left(a,\tfrac {m}{a}\right)  \]
+</div>
+<p> over all positive divisors \(a\) of \(m\), where each summand is the operator \(T\! \left(a,\tfrac {m}{a}\right)\) of \(\mathcal{H}_2\). Only the divisor pairs \((a,m/a)\) with \(a\mid m/a\) contribute, the remaining terms vanishing by definition of \(T(a,d)\). </p>
+</div>
+
+    <a class="latex_link" href="chap-gl2-operators.html#def:T-sum">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.T_sum">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:dc-eq-iUnion-lc_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:dc-eq-iUnion-lc" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">4</span><span class="lemma_thmtitle">Double coset as a union of left cosets</span></div>
+    <div class="thm_thmcontent"><p>   Let \(g\in \Delta \). Then the double coset \(HgH\) is the union </p>
+<div class="displaymath" id="a0000000008">
+  \[  HgH \; =\;  \bigcup _{i\, \in \,  H/(H\cap gHg^{-1})} H\, (g_i\, g),  \]
+</div>
+<p> where \(i\) ranges over the coset space \(H/(H\cap gHg^{-1})\) and \(g_i\in H\) is a representative of \(i\). In particular \(HgH\) is a disjoint union of finitely many left cosets of \(H\). </p>
+</div>
+
+    <a class="latex_link" href="chap-hecke-pairs.html#lem:dc-eq-iUnion-lc">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.DoubleCoset.doubleCoset_eq_iUnion_leftCosets">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:deg-mul_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:deg-mul" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">21</span></div>
+    <div class="thm_thmcontent"><p>  For all \(f,g\) in the Hecke ring, </p>
+<div class="displaymath" id="a0000000023">
+  \[  \deg (f\cdot g)=\deg (f)\, \deg (g).  \]
+</div>
+</div>
+
+    <a class="latex_link" href="chap-degree.html#lem:deg-mul">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.deg_mul">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:gl-pair-fix_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:gl-pair-fix" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">27</span></div>
+    <div class="thm_thmcontent"><p>  The transpose fixes every double coset of the arithmetic \(\mathrm{GL}_n\) pair: for all \(g\), </p>
+<div class="displaymath" id="a0000000031">
+  \[  H\, {}^{t}gH \; =\;  HgH .  \]
+</div>
+</div>
+
+    <a class="latex_link" href="chap-commutativity.html#lem:gl-pair-fix">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GLn.GL_pair_onHeckeCoset_eq">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:mul-assoc_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:mul-assoc" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">15</span><span class="lemma_thmtitle">Associativity</span></div>
+    <div class="thm_thmcontent"><p>   The product on \(\mathbb {T}\) is associative: \((f\cdot g)\cdot h=f\cdot (g\cdot h)\) for all \(f,g,h\in \mathbb {T}\). </p>
+</div>
+
+    <a class="latex_link" href="chap-ring-structure.html#lem:mul-assoc">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.mul_assoc_𝕋">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:mul-def_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:mul-def" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">12</span><span class="lemma_thmtitle">Convolution product</span></div>
+    <div class="thm_thmcontent"><p>   For \(f,g\in \mathbb {T}\) the product is the convolution </p>
+<div class="displaymath" id="a0000000010">
+  \[  f\cdot g \; =\;  \sum _{D_1}\sum _{D_2} f(D_1)\, g(D_2)\, \bigl(T_{D_1}\cdot T_{D_2}\bigr),  \]
+</div>
+<p> the sums running over the (finite) supports of \(f\) and \(g\), with each basis product \(T_{D_1}\cdot T_{D_2}\) expanded through the structure constants \(\mu (D_1,D_2;\, \cdot \, )\). </p>
+</div>
+
+    <a class="latex_link" href="chap-ring-structure.html#lem:mul-def">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.mul_def">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:one-def_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:one-def" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">16</span><span class="lemma_thmtitle">Identity element</span></div>
+    <div class="thm_thmcontent"><p>   The multiplicative identity of \(\mathbb {T}\) is \([H]=T_{[H]}\), the basis element attached to the trivial double coset \(H=H\cdot 1\cdot H\) with coefficient \(1\). </p>
+</div>
+
+    <a class="latex_link" href="chap-ring-structure.html#lem:one-def">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.one_def">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:smul-eq-sum_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:smul-eq-sum" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">14</span><span class="lemma_thmtitle">Module action as a coset sum</span></div>
+    <div class="thm_thmcontent"><p>   The Hecke ring \(\mathbb {T}\) acts on the left-coset module. For \(T\in \mathbb {T}\) and a formal sum \(\nu \) of left cosets, the action is the double sum </p>
+<div class="displaymath" id="a0000000014">
+  \[  T\cdot \nu \; =\;  \sum _{D_1}\sum _{\beta } T(D_1)\, \nu (\beta ) \sum _{i} \bigl[\, g_i\, \beta \, \bigr],  \]
+</div>
+<p> where \(D_1\) ranges over the support of \(T\), \(\beta \) over the support of \(\nu \), and \(g_i\) over left-coset representatives of \(D_1\), each summand \([\, g_i\, \beta \, ]\) being the left coset obtained by translating \(\beta \) by the representative \(g_i\). </p>
+</div>
+
+    <a class="latex_link" href="chap-ring-structure.html#lem:smul-eq-sum">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.smul_eq_sum">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:smulOrbit-card_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:smulOrbit-card" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">19</span></div>
+    <div class="thm_thmcontent"><p>  Fix a double coset \(D=HgH\) with left-coset representatives \(g_i\), and let \(H\beta \) be any left coset with \(\beta \in \Delta \). Then the orbit </p>
+<div class="displaymath" id="a0000000020">
+  \[  \{ \, Hg_i\beta : i\, \}   \]
+</div>
+<p> has cardinality equal to \(\deg D\). </p>
+</div>
+
+    <a class="latex_link" href="chap-degree.html#lem:smulOrbit-card">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.smulOrbit_card">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:T-ad-one-one_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:T-ad-one-one" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">36</span><span class="lemma_thmtitle">\(T(1,1)\) is the identity</span></div>
+    <div class="thm_thmcontent"><p>   In \(\mathcal{H}_2\) one has \(T(1,1)=1\), the multiplicative identity of the Hecke algebra. </p>
+</div>
+
+    <a class="latex_link" href="chap-gl2-operators.html#lem:T-ad-one-one">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.T_ad_one_one">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:T-single-mul_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:T-single-mul" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">13</span><span class="lemma_thmtitle">Product of basis elements</span></div>
+    <div class="thm_thmcontent"><p>   For double cosets \(D_1,D_2\), </p>
+<div class="displaymath" id="a0000000012">
+  \[  [D_1]\cdot [D_2] \; =\;  \sum _{d} \mu (D_1,D_2;d)\, [d],  \]
+</div>
+<p> the sum running over double cosets \(d\), with at most finitely many nonzero terms. More generally, for coefficients \(a,b\) one has \(T_{D_1}\cdot T_{D_2}=a\, b\cdot m(D_1,D_2)\). </p>
+</div>
+
+    <a class="latex_link" href="chap-ring-structure.html#lem:T-single-mul">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.T_single_mul_T_single">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:T-sum-one_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:T-sum-one" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">38</span><span class="lemma_thmtitle">\(T(1)=1\)</span></div>
+    <div class="thm_thmcontent"><p>   In \(\mathcal{H}_2\) one has \(T(1)=1\), the multiplicative identity of the Hecke algebra. </p>
+</div>
+
+    <a class="latex_link" href="chap-multiplication-table.html#lem:T-sum-one">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.T_sum_one">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="lem:T-sum-prime_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="lem:T-sum-prime" style="display: none">
+    <div class="thm_thmheading">
+      <span class="lemma_thmcaption">
+      Lemma
+      </span>
+      <span class="lemma_thmlabel">37</span><span class="lemma_thmtitle">\(T(p)\) at a prime</span></div>
+    <div class="thm_thmcontent"><p>   For a prime \(p\) one has \(T(p)=T(1,p)\). </p>
+</div>
+
+    <a class="latex_link" href="chap-gl2-operators.html#lem:T-sum-prime">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.T_sum_prime">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="thm:a1-ne-zero_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="thm:a1-ne-zero" style="display: none">
+    <div class="thm_thmheading">
+      <span class="theorem_thmcaption">
+      Theorem
+      </span>
+      <span class="theorem_thmlabel">55</span><span class="theorem_thmtitle">Miyake 4.6.11: \(a_1\neq 0\) for new eigenforms</span></div>
+    <div class="thm_thmcontent"><p>   Let \(g\) be a nonzero eigenform lying in \(S_k(N,\chi )\cap S_k^{\sharp }(N)\), that is, a nonzero common eigenfunction of the \(T(n)\), \((n,N)=1\), in the new subspace. Then its leading Fourier coefficient is nonzero, \(a_1(g)\neq 0\). </p>
+</div>
+
+    <a class="latex_link" href="chap-smo.html#thm:a1-ne-zero">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.coeff_one_ne_zero_of_mem_cuspFormsNew_of_eigen_unconditional">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="thm:coeff-eq-a1-lambda_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="thm:coeff-eq-a1-lambda" style="display: none">
+    <div class="thm_thmheading">
+      <span class="theorem_thmcaption">
+      Theorem
+      </span>
+      <span class="theorem_thmlabel">54</span><span class="theorem_thmtitle">Miyake 4.5.15(1): \(a_n=a_1\lambda _n\)</span></div>
+    <div class="thm_thmcontent"><p>   Let \(g\) be an eigenform lying in the Nebentypus space \(S_k(N,\chi )\), and let \(n\) be coprime to \(N\). Then the Fourier coefficients of \(g\) satisfy </p>
+<div class="displaymath" id="a0000000057">
+  \[  a_n(g) \; =\;  a_1(g)\, \lambda _n(g),  \]
+</div>
+<p> where \(\lambda _n(g)\) is the classical Hecke eigenvalue of \(g\) at \(n\). </p>
+</div>
+
+    <a class="latex_link" href="chap-smo.html#thm:coeff-eq-a1-lambda">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.Eigenform.coeff_eq_coeff_one_mul_eigenvalue">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="thm:commring-hecke-algebra_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="thm:commring-hecke-algebra" style="display: none">
+    <div class="thm_thmheading">
+      <span class="theorem_thmcaption">
+      Theorem
+      </span>
+      <span class="theorem_thmlabel">28</span></div>
+    <div class="thm_thmcontent"><p>  The \(\mathrm{GL}_n\) Hecke algebra \(\mathcal{H}_n\) is commutative. </p>
+</div>
+
+    <a class="latex_link" href="chap-commutativity.html#thm:commring-hecke-algebra">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GLn.instCommRing_HeckeAlgebra">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="thm:deg-T-sum_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="thm:deg-T-sum" style="display: none">
+    <div class="thm_thmheading">
+      <span class="theorem_thmcaption">
+      Theorem
+      </span>
+      <span class="theorem_thmlabel">46</span><span class="theorem_thmtitle">Shimura 3.24(6): degree of \(T(m)\)</span></div>
+    <div class="thm_thmcontent"><p>   For a positive integer \(m\), </p>
+<div class="displaymath" id="a0000000052">
+  \[  \deg T(m) \; =\;  \sum _{d\, \mid \,  m} d \; =\;  \sigma _1(m),  \]
+</div>
+<p> the sum of the positive divisors of \(m\). </p>
+</div>
+
+    <a class="latex_link" href="chap-multiplication-table.html#thm:deg-T-sum">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.deg_T_sum">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="thm:deg-T-sum-prime-pow_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="thm:deg-T-sum-prime-pow" style="display: none">
+    <div class="thm_thmheading">
+      <span class="theorem_thmcaption">
+      Theorem
+      </span>
+      <span class="theorem_thmlabel">45</span><span class="theorem_thmtitle">Shimura 3.24(7): degree of \(T(p^k)\)</span></div>
+    <div class="thm_thmcontent"><p>   Let \(p\) be a prime and \(k\ge 0\). Then </p>
+<div class="displaymath" id="a0000000050">
+  \[  \deg T(p^k) \; =\;  \sum _{j=0}^{k} p^{j} \; =\;  1+p+p^2+\dots +p^k.  \]
+</div>
+</div>
+
+    <a class="latex_link" href="chap-multiplication-table.html#thm:deg-T-sum-prime-pow">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.deg_T_sum_prime_pow">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="thm:eigenform-decomp_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="thm:eigenform-decomp" style="display: none">
+    <div class="thm_thmheading">
+      <span class="theorem_thmcaption">
+      Theorem
+      </span>
+      <span class="theorem_thmlabel">56</span><span class="theorem_thmtitle">Eigenform old/new splitting</span></div>
+    <div class="thm_thmcontent"><p>   Let \(g\) be a cusp form in the new subspace \(S_k^{\sharp }(N)\) whose underlying modular form lies in the Nebentypus space \(S_k(N,\chi )\). Then \(g\) is a finite sum of common Hecke eigenforms, </p>
+<div class="displaymath" id="a0000000060">
+  \[  g \; =\;  \sum _{i} h_i,  \]
+</div>
+<p> each summand \(h_i\) again lying in \(S_k(N,\chi )\cap S_k^{\sharp }(N)\) and being a common eigenfunction of all \(T(n)\) with \((n,N)=1\). </p>
+</div>
+
+    <a class="latex_link" href="chap-smo.html#thm:eigenform-decomp">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.exists_eigenform_decomposition_mem_cuspFormsNew">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="thm:hecke-ring_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="thm:hecke-ring" style="display: none">
+    <div class="thm_thmheading">
+      <span class="theorem_thmcaption">
+      Theorem
+      </span>
+      <span class="theorem_thmlabel">17</span><span class="theorem_thmtitle">The Hecke ring</span></div>
+    <div class="thm_thmcontent"><p>   With the convolution product and identity above, \(\mathbb {T}\) is a unital associative ring (indeed a \(\mathbb {Z}\)-algebra) [Sh, §3.1]. </p>
+</div>
+
+    <a class="latex_link" href="chap-ring-structure.html#thm:hecke-ring">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.instRing">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="thm:mul-comm-of-ai_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="thm:mul-comm-of-ai" style="display: none">
+    <div class="thm_thmheading">
+      <span class="theorem_thmcaption">
+      Theorem
+      </span>
+      <span class="theorem_thmlabel">24</span></div>
+    <div class="thm_thmcontent"><p>  Let \(g\mapsto \bar g\) be an anti-involution of the Hecke pair \((G,H,\Delta )\) whose induced map on double cosets fixes every double coset, that is, \(H\bar gH=HgH\) for all \(g\in \Delta \). Then the Hecke ring \(\mathbb {T}\) is commutative: for all \(f,g\in \mathbb {T}\), </p>
+<div class="displaymath" id="a0000000028">
+  \[  f\cdot g \; =\;  g\cdot f .  \]
+</div>
+</div>
+
+    <a class="latex_link" href="chap-commutativity.html#thm:mul-comm-of-ai">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.AntiInvolution.mul_comm_of_antiInvolution">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="thm:newPart-eq-smul_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="thm:newPart-eq-smul" style="display: none">
+    <div class="thm_thmheading">
+      <span class="theorem_thmcaption">
+      Theorem
+      </span>
+      <span class="theorem_thmlabel">57</span><span class="theorem_thmtitle">New part is a multiple of \(f\)</span></div>
+    <div class="thm_thmcontent"><p>   Let \(f\) be a normalised newform in \(S_k(N,\chi )\) and let \(g^{(1)}\) be a common Hecke eigenfunction in the new subspace lying in \(S_k(N,\chi )\) that shares \(f\)’s eigenvalues \(\lambda _n\) for all \((n,N)=1\) outside a finite set \(S\). Then </p>
+<div class="displaymath" id="a0000000062">
+  \[  g^{(1)} \; =\;  b_1\, f, \qquad b_1=a_1(g^{(1)}).  \]
+</div>
+</div>
+
+    <a class="latex_link" href="chap-smo.html#thm:newPart-eq-smul">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.newPart_eq_smul_of_shared_eigenvalues">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="thm:oldPart-eq-zero_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="thm:oldPart-eq-zero" style="display: none">
+    <div class="thm_thmheading">
+      <span class="theorem_thmcaption">
+      Theorem
+      </span>
+      <span class="theorem_thmlabel">58</span><span class="theorem_thmtitle">Old part vanishes</span></div>
+    <div class="thm_thmcontent"><p>   Let \(f\) be a nonzero newform in \(S_k(N,\chi )\) and let \(g^{(2)}\) be a common Hecke eigenfunction in the (\(\chi \)-refined) old subspace, lying in \(S_k(N,\chi )\), that shares \(f\)’s eigenvalues \(\lambda _n\) for all \((n,N)=1\) outside a finite set \(S\). Then \(g^{(2)}=0\). </p>
+</div>
+
+    <a class="latex_link" href="chap-smo.html#thm:oldPart-eq-zero">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.oldPart_eq_zero_of_shared_eigenvalues">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="thm:smo-clean_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="thm:smo-clean" style="display: none">
+    <div class="thm_thmheading">
+      <span class="theorem_thmcaption">
+      Theorem
+      </span>
+      <span class="theorem_thmlabel">60</span><span class="theorem_thmtitle">Multiplicity One for newforms, DS 5.8.2</span></div>
+    <div class="thm_thmcontent"><p>   Let \(f\) and \(g\) be normalised newforms in the same Nebentypus space \(S_k(N,\chi )\). If \(f\) and \(g\) have the same Hecke eigenvalue \(\lambda _n\) for every \(n\) with \((n,N)=1\) outside a finite set \(S\), then \(f=g\). </p>
+</div>
+
+    <a class="latex_link" href="chap-smo.html#thm:smo-clean">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.strongMultiplicityOne_axiom_clean_unconditional">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="thm:smo-constMul_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="thm:smo-constMul" style="display: none">
+    <div class="thm_thmheading">
+      <span class="theorem_thmcaption">
+      Theorem
+      </span>
+      <span class="theorem_thmlabel">59</span><span class="theorem_thmtitle">Strong Multiplicity One, Miyake 4.6.12</span></div>
+    <div class="thm_thmcontent"><p>   Let \(f\) be a normalised newform in \(S_k(N,\chi )\), and let \(g\) be any cusp-form Hecke eigenfunction in \(S_k(N,\chi )\). If \(f\) and \(g\) are common eigenfunctions of \(T(n)\) with the same eigenvalue \(\lambda _n\) for every \(n\) with \((n,N)=1\) outside a finite set \(S\), then \(g\) is a constant multiple of \(f\): </p>
+<div class="displaymath" id="a0000000066">
+  \[  g \; =\;  c\, f \qquad \text{for some } c\in \mathbb {C}.  \]
+</div>
+</div>
+
+    <a class="latex_link" href="chap-smo.html#thm:smo-constMul">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.strongMultiplicityOne_constMul">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="thm:T-ad-one-ppow-eq_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="thm:T-ad-one-ppow-eq" style="display: none">
+    <div class="thm_thmheading">
+      <span class="theorem_thmcaption">
+      Theorem
+      </span>
+      <span class="theorem_thmlabel">39</span><span class="theorem_thmtitle">Shimura 3.24(2): telescoping relation</span></div>
+    <div class="thm_thmcontent"><p>   Let \(p\) be a prime and \(k\ge 2\). Then in \(\mathcal{H}_2\) </p>
+<div class="displaymath" id="a0000000039">
+  \[  T(1,p^k) \; =\;  T(p^k) \; -\;  T(p,p)\, T(p^{k-2}).  \]
+</div>
+</div>
+
+    <a class="latex_link" href="chap-multiplication-table.html#thm:T-ad-one-ppow-eq">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.T_ad_one_ppow_eq">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="thm:T-sum-mul_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="thm:T-sum-mul" style="display: none">
+    <div class="thm_thmheading">
+      <span class="theorem_thmcaption">
+      Theorem
+      </span>
+      <span class="theorem_thmlabel">44</span><span class="theorem_thmtitle">Shimura 3.24: general product</span></div>
+    <div class="thm_thmcontent"><p>   For positive integers \(m,n\), </p>
+<div class="displaymath" id="a0000000048">
+  \[  T(m)\, T(n) \; =\;  \sum _{d\, \mid \, (m,n)} d\, T(d,d)\, T\! \left(\frac{mn}{d^2}\right),  \]
+</div>
+<p> the sum being over the positive divisors \(d\) of the greatest common divisor \((m,n)\). </p>
+</div>
+
+    <a class="latex_link" href="chap-multiplication-table.html#thm:T-sum-mul">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.T_sum_mul">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="thm:T-sum-mul-coprime_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="thm:T-sum-mul-coprime" style="display: none">
+    <div class="thm_thmheading">
+      <span class="theorem_thmcaption">
+      Theorem
+      </span>
+      <span class="theorem_thmlabel">43</span><span class="theorem_thmtitle">Coprime multiplicativity</span></div>
+    <div class="thm_thmcontent"><p>   Let \(m,n\) be positive integers with \((m,n)=1\). Then \(T(m)\, T(n)=T(mn)\). </p>
+</div>
+
+    <a class="latex_link" href="chap-multiplication-table.html#thm:T-sum-mul-coprime">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.T_sum_mul_coprime">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="thm:T-sum-ppow-mul_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="thm:T-sum-ppow-mul" style="display: none">
+    <div class="thm_thmheading">
+      <span class="theorem_thmcaption">
+      Theorem
+      </span>
+      <span class="theorem_thmlabel">42</span><span class="theorem_thmtitle">Shimura 3.24(3): prime-power product</span></div>
+    <div class="thm_thmcontent"><p>   Let \(p\) be a prime and let \(r\le s\). Then </p>
+<div class="displaymath" id="a0000000045">
+  \[  T(p^r)\, T(p^s) \; =\;  \sum _{i=0}^{r} p^i\, T(p^i,p^i)\, T(p^{r+s-2i}).  \]
+</div>
+</div>
+
+    <a class="latex_link" href="chap-multiplication-table.html#thm:T-sum-ppow-mul">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.T_sum_ppow_mul">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="thm:T-sum-ppow-recurrence_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="thm:T-sum-ppow-recurrence" style="display: none">
+    <div class="thm_thmheading">
+      <span class="theorem_thmcaption">
+      Theorem
+      </span>
+      <span class="theorem_thmlabel">41</span><span class="theorem_thmtitle">Prime-power recurrence</span></div>
+    <div class="thm_thmcontent"><p>   Let \(p\) be a prime and \(k\ge 1\). Then </p>
+<div class="displaymath" id="a0000000043">
+  \[  T(p^{k+1}) \; =\;  T(p)\, T(p^k) \; -\;  p\, \bigl(T(p,p)\, T(p^{k-1})\bigr).  \]
+</div>
+</div>
+
+    <a class="latex_link" href="chap-multiplication-table.html#thm:T-sum-ppow-recurrence">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.T_sum_ppow_recurrence">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+
+
+    
+    <div class="dep-modal-container" id="thm:T-sum-prime-mul-T-ad_modal">
+      <div class="dep-modal-content">
+          <button class="dep-closebtn">
+<svg  class="icon icon-cross "><use xlink:href="symbol-defs.svg#icon-cross"></use></svg>
+</button>
+        
+  <div class="thm" id="thm:T-sum-prime-mul-T-ad" style="display: none">
+    <div class="thm_thmheading">
+      <span class="theorem_thmcaption">
+      Theorem
+      </span>
+      <span class="theorem_thmlabel">40</span><span class="theorem_thmtitle">Key prime computation</span></div>
+    <div class="thm_thmcontent"><p>   Let \(p\) be a prime and \(k\ge 1\). Then </p>
+<div class="displaymath" id="a0000000041">
+  \[  T(p)\, T(1,p^k) \; =\;  T(1,p^{k+1}) \; +\;  c\, T(p,p^k), \qquad c \; =\;  \begin{cases}  p+1, &  k=1,\\ p, &  k\ge 2. \end{cases}  \]
+</div>
+</div>
+
+    <a class="latex_link" href="chap-multiplication-table.html#thm:T-sum-prime-mul-T-ad">LaTeX</a>
+    
+    
+  <a class="lean_link lean_decl" href="https://CBirkbeck.github.io/LeanModularForms/docs/find/#doc/HeckeRing.GL2.T_sum_prime_mul_T_ad">Lean</a>
+    
+    
+  
+    
+  </div>
+    
+      </div>
+    </div>
+</div>
+</div> <!-- content -->
+</div> <!-- wrapper -->
+<script src="js/jquery.min.js" type="text/javascript"></script>
+
+<script src="js/d3.min.js"></script>
+<script src="js/hpcc.min.js"></script>
+<script src="js/d3-graphviz.js"></script>
+
+<script type="text/javascript">
+const graphContainer = d3.select("#graph");
+const width = graphContainer.node().clientWidth;
+const height = graphContainer.node().clientHeight;
+
+
+graphContainer.graphviz({useWorker: true})
+    .width(width)
+    .height(height)
+    .fit(true)
+    .renderDot(`strict digraph "" {	graph [bgcolor=transparent];	node [label="\N",		penwidth=1.8	];	edge [arrowhead=vee];	"def:hecke-coset"	[color=green,		fillcolor="#B0ECA3",		label="hecke-coset",		shape=box,		style=filled];	"def:hecke-coset-deg"	[color=green,		fillcolor="#B0ECA3",		label="hecke-coset-deg",		shape=box,		style=filled];	"def:hecke-coset" -> "def:hecke-coset-deg"	[style=dashed];	"def:onHeckeCoset"	[color=green,		fillcolor="#B0ECA3",		label=onHeckeCoset,		shape=box,		style=filled];	"def:hecke-coset" -> "def:onHeckeCoset"	[style=dashed];	"def:T-diag"	[color=green,		fillcolor="#B0ECA3",		label="T-diag",		shape=box,		style=filled];	"def:hecke-coset" -> "def:T-diag"	[style=dashed];	"def:hecke-ring-carrier"	[color=green,		fillcolor="#B0ECA3",		label="hecke-ring-carrier",		shape=box,		style=filled];	"def:hecke-coset" -> "def:hecke-ring-carrier"	[style=dashed];	"def:mulMap"	[color=green,		fillcolor="#B0ECA3",		label=mulMap,		shape=box,		style=filled];	"def:hecke-coset" -> "def:mulMap"	[style=dashed];	"lem:smulOrbit-card"	[color=green,		fillcolor="#1CAC78",		label="smulOrbit-card",		shape=ellipse,		style=filled];	"def:hecke-coset-deg" -> "lem:smulOrbit-card"	[style=dashed];	"def:deg"	[color=green,		fillcolor="#B0ECA3",		label=deg,		shape=box,		style=filled];	"def:hecke-coset-deg" -> "def:deg"	[style=dashed];	"thm:mul-comm-of-ai"	[color=green,		fillcolor="#1CAC78",		label="mul-comm-of-ai",		shape=ellipse,		style=filled];	"def:onHeckeCoset" -> "thm:mul-comm-of-ai"	[style=dashed];	"lem:gl-pair-fix"	[color=green,		fillcolor="#1CAC78",		label="gl-pair-fix",		shape=ellipse,		style=filled];	"def:onHeckeCoset" -> "lem:gl-pair-fix"	[style=dashed];	"def:T-elem"	[color=green,		fillcolor="#B0ECA3",		label="T-elem",		shape=box,		style=filled];	"def:T-diag" -> "def:T-elem"	[style=dashed];	"def:T-single"	[color=green,		fillcolor="#B0ECA3",		label="T-single",		shape=box,		style=filled];	"def:hecke-ring-carrier" -> "def:T-single"	[style=dashed];	"def:hecke-algebra"	[color=green,		fillcolor="#B0ECA3",		label="hecke-algebra",		shape=box,		style=filled];	"def:hecke-ring-carrier" -> "def:hecke-algebra"	[style=dashed];	"lem:one-def"	[color=green,		fillcolor="#1CAC78",		label="one-def",		shape=ellipse,		style=filled];	"lem:T-ad-one-one"	[color=green,		fillcolor="#1CAC78",		label="T-ad-one-one",		shape=ellipse,		style=filled];	"lem:one-def" -> "lem:T-ad-one-one"	[style=dashed];	"thm:hecke-ring"	[color=green,		fillcolor="#1CAC78",		label="hecke-ring",		shape=ellipse,		style=filled];	"lem:one-def" -> "thm:hecke-ring"	[style=dashed];	"lem:T-sum-one"	[color=green,		fillcolor="#1CAC78",		label="T-sum-one",		shape=ellipse,		style=filled];	"lem:T-ad-one-one" -> "lem:T-sum-one";	"thm:hecke-ring" -> "def:deg"	[style=dashed];	"thm:hecke-ring" -> "thm:mul-comm-of-ai"	[style=dashed];	"lem:deg-mul"	[color=green,		fillcolor="#1CAC78",		label="deg-mul",		shape=ellipse,		style=filled];	"lem:smulOrbit-card" -> "lem:deg-mul"	[style=dashed];	"def:deg" -> "lem:deg-mul"	[style=dashed];	"thm:deg-T-sum-prime-pow"	[color=green,		fillcolor="#1CAC78",		label="deg-T-sum-prime-pow",		shape=ellipse,		style=filled];	"def:deg" -> "thm:deg-T-sum-prime-pow"	[style=dashed];	"def:commring-of-ai"	[color=green,		fillcolor="#B0ECA3",		label="commring-of-ai",		shape=box,		style=filled];	"thm:mul-comm-of-ai" -> "def:commring-of-ai"	[style=dashed];	"thm:commring-hecke-algebra"	[color=green,		fillcolor="#1CAC78",		label="commring-hecke-algebra",		shape=ellipse,		style=filled];	"lem:gl-pair-fix" -> "thm:commring-hecke-algebra"	[style=dashed];	"def:T-ad"	[color=green,		fillcolor="#B0ECA3",		label="T-ad",		shape=box,		style=filled];	"def:T-elem" -> "def:T-ad"	[style=dashed];	"def:T-single" -> "lem:one-def"	[style=dashed];	"def:T-single" -> "def:T-elem"	[style=dashed];	"lem:mul-def"	[color=green,		fillcolor="#1CAC78",		label="mul-def",		shape=ellipse,		style=filled];	"def:T-single" -> "lem:mul-def"	[style=dashed];	"lem:T-single-mul"	[color=green,		fillcolor="#1CAC78",		label="T-single-mul",		shape=ellipse,		style=filled];	"def:T-single" -> "lem:T-single-mul"	[style=dashed];	"def:hecke-algebra" -> "def:T-elem"	[style=dashed];	"def:hecke-algebra" -> "thm:commring-hecke-algebra"	[style=dashed];	"def:hecke-module"	[color=green,		fillcolor="#B0ECA3",		label="hecke-module",		shape=box,		style=filled];	"lem:smul-eq-sum"	[color=green,		fillcolor="#1CAC78",		label="smul-eq-sum",		shape=ellipse,		style=filled];	"def:hecke-module" -> "lem:smul-eq-sum"	[style=dashed];	"lem:mul-assoc"	[color=green,		fillcolor="#1CAC78",		label="mul-assoc",		shape=ellipse,		style=filled];	"lem:smul-eq-sum" -> "lem:mul-assoc"	[style=dashed];	"lem:mul-assoc" -> "thm:hecke-ring"	[style=dashed];	"thm:deg-T-sum"	[color=green,		fillcolor="#1CAC78",		label="deg-T-sum",		shape=ellipse,		style=filled];	"lem:deg-mul" -> "thm:deg-T-sum"	[style=dashed];	"lem:mul-def" -> "thm:hecke-ring"	[style=dashed];	"lem:T-single-mul" -> "lem:mul-assoc"	[style=dashed];	"def:T-ad" -> "lem:T-ad-one-one"	[style=dashed];	"def:T-sum"	[color=green,		fillcolor="#B0ECA3",		label="T-sum",		shape=box,		style=filled];	"def:T-ad" -> "def:T-sum"	[style=dashed];	"def:T-pp"	[color=green,		fillcolor="#B0ECA3",		label="T-pp",		shape=box,		style=filled];	"def:T-ad" -> "def:T-pp"	[style=dashed];	"thm:deg-T-sum-prime-pow" -> "thm:deg-T-sum"	[style=dashed];	"def:T-sum" -> "lem:T-sum-one"	[style=dashed];	"def:T-sum" -> "thm:deg-T-sum-prime-pow"	[style=dashed];	"lem:T-sum-prime"	[color=green,		fillcolor="#1CAC78",		label="T-sum-prime",		shape=ellipse,		style=filled];	"def:T-sum" -> "lem:T-sum-prime"	[style=dashed];	"thm:T-ad-one-ppow-eq"	[color=green,		fillcolor="#1CAC78",		label="T-ad-one-ppow-eq",		shape=ellipse,		style=filled];	"def:T-sum" -> "thm:T-ad-one-ppow-eq"	[style=dashed];	"thm:T-sum-mul-coprime"	[color=green,		fillcolor="#1CAC78",		label="T-sum-mul-coprime",		shape=ellipse,		style=filled];	"def:T-sum" -> "thm:T-sum-mul-coprime"	[style=dashed];	"thm:T-sum-prime-mul-T-ad"	[color=green,		fillcolor="#1CAC78",		label="T-sum-prime-mul-T-ad",		shape=ellipse,		style=filled];	"def:T-pp" -> "thm:T-sum-prime-mul-T-ad"	[style=dashed];	"def:T-pp" -> "thm:T-ad-one-ppow-eq"	[style=dashed];	"lem:T-sum-prime" -> "thm:T-sum-prime-mul-T-ad"	[style=dashed];	"thm:T-sum-ppow-recurrence"	[color=green,		fillcolor="#1CAC78",		label="T-sum-ppow-recurrence",		shape=ellipse,		style=filled];	"thm:T-sum-prime-mul-T-ad" -> "thm:T-sum-ppow-recurrence"	[style=dashed];	"thm:T-ad-one-ppow-eq" -> "thm:T-sum-ppow-recurrence"	[style=dashed];	"thm:T-sum-ppow-mul"	[color=green,		fillcolor="#1CAC78",		label="T-sum-ppow-mul",		shape=ellipse,		style=filled];	"thm:T-sum-ppow-recurrence" -> "thm:T-sum-ppow-mul"	[style=dashed];	"thm:T-sum-mul-coprime" -> "thm:deg-T-sum"	[style=dashed];	"thm:T-sum-mul"	[color=green,		fillcolor="#1CAC78",		label="T-sum-mul",		shape=ellipse,		style=filled];	"thm:T-sum-mul-coprime" -> "thm:T-sum-mul"	[style=dashed];	"def:eigenform"	[color=green,		fillcolor="#B0ECA3",		label=eigenform,		shape=box,		style=filled];	"thm:T-sum-mul" -> "def:eigenform"	[style=dashed];	"def:cuspFormsNew"	[color=green,		fillcolor="#B0ECA3",		label=cuspFormsNew,		shape=box,		style=filled];	"def:newPart"	[color=green,		fillcolor="#B0ECA3",		label=newPart,		shape=box,		style=filled];	"def:cuspFormsNew" -> "def:newPart"	[style=dashed];	"thm:a1-ne-zero"	[color=green,		fillcolor="#1CAC78",		label="a1-ne-zero",		shape=ellipse,		style=filled];	"def:cuspFormsNew" -> "thm:a1-ne-zero"	[style=dashed];	"def:newform"	[color=green,		fillcolor="#B0ECA3",		label=newform,		shape=box,		style=filled];	"def:cuspFormsNew" -> "def:newform"	[style=dashed];	"def:oldPart"	[color=green,		fillcolor="#B0ECA3",		label=oldPart,		shape=box,		style=filled];	"def:cuspFormsNew" -> "def:oldPart"	[style=dashed];	"thm:eigenform-decomp"	[color=green,		fillcolor="#1CAC78",		label="eigenform-decomp",		shape=ellipse,		style=filled];	"def:newPart" -> "thm:eigenform-decomp"	[style=dashed];	"thm:newPart-eq-smul"	[color=green,		fillcolor="#1CAC78",		label="newPart-eq-smul",		shape=ellipse,		style=filled];	"thm:a1-ne-zero" -> "thm:newPart-eq-smul"	[style=dashed];	"thm:oldPart-eq-zero"	[color=green,		fillcolor="#1CAC78",		label="oldPart-eq-zero",		shape=ellipse,		style=filled];	"thm:a1-ne-zero" -> "thm:oldPart-eq-zero"	[style=dashed];	"def:newform" -> "thm:newPart-eq-smul"	[style=dashed];	"def:newform" -> "thm:oldPart-eq-zero"	[style=dashed];	"def:oldPart" -> "thm:eigenform-decomp"	[style=dashed];	"thm:eigenform-decomp" -> "thm:newPart-eq-smul"	[style=dashed];	"thm:eigenform-decomp" -> "thm:oldPart-eq-zero"	[style=dashed];	"thm:smo-constMul"	[color=green,		fillcolor="#1CAC78",		label="smo-constMul",		shape=ellipse,		style=filled];	"thm:newPart-eq-smul" -> "thm:smo-constMul"	[style=dashed];	"thm:oldPart-eq-zero" -> "thm:smo-constMul"	[style=dashed];	"thm:smo-clean"	[color=green,		fillcolor="#1CAC78",		label="smo-clean",		shape=ellipse,		style=filled];	"thm:smo-constMul" -> "thm:smo-clean"	[style=dashed];	"thm:T-sum-ppow-mul" -> "thm:T-sum-mul"	[style=dashed];	"thm:commring-hecke-algebra" -> "thm:T-sum-mul-coprime"	[style=dashed];	"def:eigenform" -> "def:newform"	[style=dashed];	"def:eigenform" -> "thm:eigenform-decomp"	[style=dashed];	"thm:coeff-eq-a1-lambda"	[color=green,		fillcolor="#1CAC78",		label="coeff-eq-a1-lambda",		shape=ellipse,		style=filled];	"def:eigenform" -> "thm:coeff-eq-a1-lambda"	[style=dashed];	"thm:coeff-eq-a1-lambda" -> "thm:a1-ne-zero"	[style=dashed];	"def:hecke-multiplicity"	[color=green,		fillcolor="#B0ECA3",		label="hecke-multiplicity",		shape=box,		style=filled];	"def:hecke-multiplicity" -> "lem:mul-def"	[style=dashed];	"def:hecke-multiplicity" -> "thm:T-sum-prime-mul-T-ad"	[style=dashed];	"def:m-finsupp"	[color=green,		fillcolor="#B0ECA3",		label="m-finsupp",		shape=box,		style=filled];	"def:hecke-multiplicity" -> "def:m-finsupp"	[style=dashed];	"def:m-finsupp" -> "lem:T-single-mul"	[style=dashed];	"def:commring-of-ai" -> "thm:commring-hecke-algebra"	[style=dashed];	"def:hecke-left-coset"	[color=green,		fillcolor="#B0ECA3",		label="hecke-left-coset",		shape=box,		style=filled];	"def:hecke-left-coset" -> "def:hecke-module"	[style=dashed];	"def:gl-pair-ai"	[color=green,		fillcolor="#B0ECA3",		label="gl-pair-ai",		shape=box,		style=filled];	"def:gl-pair-ai" -> "lem:gl-pair-fix"	[style=dashed];	"def:GL-pair"	[color=green,		fillcolor="#B0ECA3",		label="GL-pair",		shape=box,		style=filled];	"def:GL-pair" -> "def:T-diag"	[style=dashed];	"def:GL-pair" -> "def:hecke-algebra"	[style=dashed];	"def:GL-pair" -> "def:gl-pair-ai"	[style=dashed];	"def:decomp-quot"	[color=green,		fillcolor="#B0ECA3",		label="decomp-quot",		shape=box,		style=filled];	"def:decomp-quot" -> "def:hecke-coset-deg"	[style=dashed];	"def:decomp-quot" -> "def:mulMap"	[style=dashed];	"def:decomp-quot" -> "lem:smul-eq-sum"	[style=dashed];	"def:decomp-quot" -> "def:hecke-multiplicity"	[style=dashed];	"def:anti-involution"	[color=green,		fillcolor="#B0ECA3",		label="anti-involution",		shape=box,		style=filled];	"def:anti-involution" -> "def:onHeckeCoset"	[style=dashed];	"def:anti-involution" -> "def:gl-pair-ai"	[style=dashed];	"def:modFormCharSpace"	[color=green,		fillcolor="#B0ECA3",		label=modFormCharSpace,		shape=box,		style=filled];	"def:modFormCharSpace" -> "def:eigenform"	[style=dashed];	"def:cuspFormsOld"	[color=green,		fillcolor="#B0ECA3",		label=cuspFormsOld,		shape=box,		style=filled];	"def:cuspFormsOld" -> "def:cuspFormsNew"	[style=dashed];	"lem:dc-eq-iUnion-lc"	[color=green,		fillcolor="#1CAC78",		label="dc-eq-iUnion-lc",		shape=ellipse,		style=filled];	"lem:dc-eq-iUnion-lc" -> "def:decomp-quot"	[style=dashed];	"def:hecke-pair"	[color=green,		fillcolor="#B0ECA3",		label="hecke-pair",		shape=box,		style=filled];	"def:hecke-pair" -> "def:hecke-coset"	[style=dashed];	"def:hecke-pair" -> "def:hecke-left-coset"	[style=dashed];	"def:hecke-pair" -> "def:GL-pair"	[style=dashed];	"def:hecke-pair" -> "def:anti-involution"	[style=dashed];	"def:hecke-pair" -> "lem:dc-eq-iUnion-lc"	[style=dashed];}`)
+    .on("end", interactive);
+
+latexLabelEscaper = function(label) {
+  return label.replace(/\./g, '\\.').replace(/:/g, '\\:')
+}
+
+clickNode = function() {
+  $("#statements div").hide()
+  var node_id = $('text', this).text();
+  $('.thm').hide();
+  $('#'+latexLabelEscaper(node_id)).show().children().show();
+}
+function interactive() {
+    $("span#legend_title").on("click", function () {
+           $(this).siblings('dl').toggle();
+        })
+
+    d3.selectAll('.node')
+        .attr('pointer-events', 'fill')
+        .on('click', function () {
+           var title = d3.select(this).selectAll('title').text().trim();
+           $('#statements > div').hide()
+           $('.thm').hide();
+           $('#'+latexLabelEscaper(title)+'_modal').show().children().show().children().show();
+           $('#statements').show()
+        });
+
+    d3.selectAll('.dep-closebtn').on('click', function() {
+        var modal =
+            d3.select(this).node().parentNode.parentNode.parentNode ;
+        d3.select(modal).style('display', 'none');
+    });
+}
+
+</script>
+
+</body>
+</html>

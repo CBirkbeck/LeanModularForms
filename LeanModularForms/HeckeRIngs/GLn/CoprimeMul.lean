@@ -48,22 +48,10 @@ lemma DivChain_mul (a b : Fin n → ℕ) (ha : DivChain n a) (hb : DivChain n b)
 @[simp] lemma diagMat_mul (a b : Fin n → ℕ) (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 < b i) :
     diagMat n a * diagMat n b = diagMat n (a * b) := by
   apply Units.ext
-  simp only [Units.val_mul, diagMat_val _ _ ha, diagMat_val _ _ hb,
-    diagMat_val _ _ (pi_mul_pos n a b ha hb), Pi.mul_apply, Matrix.diagonal_mul_diagonal,
-    Nat.cast_mul]
+  simp [diagMat_val _ _ ha, diagMat_val _ _ hb, diagMat_val _ _ (pi_mul_pos n a b ha hb),
+    Pi.mul_apply, Matrix.diagonal_mul_diagonal, Nat.cast_mul]
 
 variable [NeZero n]
-
-lemma T_diag_eq_T_mk_mul (a b : Fin n → ℕ) (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 < b i)
-    (_hab : DivChain n (a * b)) :
-    T_diag (a * b) = (⟦⟨diagMat n a * diagMat n b,
-      (diagMat_mul n a b ha hb).symm ▸ diagMat_mem_posDetInt n (a * b)
-        (pi_mul_pos n a b ha hb)⟩⟧ : HeckeCoset (GL_pair n)) := by
-  simp only [T_diag]
-  rw [HeckeCoset.eq_iff]
-  simp only [diagMat_delta, dif_pos (pi_mul_pos n a b ha hb)]
-  congr 1
-  exact (diagMat_mul n a b ha hb).symm
 
 end DiagMul
 
@@ -81,47 +69,47 @@ private lemma doubleCoset_eq_of_mem' (g δ : GL (Fin n) ℚ)
 
 private lemma nonempty_decompQuot (D : HeckeCoset (GL_pair n)) :
     Nonempty (decompQuot (GL_pair n) (HeckeCoset.rep D)) :=
-  Fintype.card_pos_iff.mp (by
-    have := HeckeRing.HeckeCoset_deg_pos (GL_pair n) D
-    simp only [HeckeRing.HeckeCoset_deg] at this
-    lia)
+  Fintype.card_pos_iff.mp <| by
+    simpa [HeckeRing.HeckeCoset_deg] using HeckeRing.HeckeCoset_deg_pos (GL_pair n) D
 
 section Scalar
 open scoped Classical
 
 omit [NeZero n] in
+/-- A scalar diagonal `GL_n(ℚ)` matrix equals the scalar multiple of the identity. -/
 @[simp] lemma diagMat_scalar_eq (c : ℕ) (hc : 0 < c) :
     (↑(diagMat n (fun _ ↦ c)) : Matrix (Fin n) (Fin n) ℚ) = (c : ℚ) • 1 := by
-  simp only [diagMat_val _ _ (fun _ ↦ hc), ← Matrix.smul_one_eq_diagonal]
+  simp [diagMat_val _ _ (fun _ ↦ hc), ← Matrix.smul_one_eq_diagonal]
 
 omit [NeZero n] in
+/-- The scalar diagonal matrix commutes with every element of `GL_n(ℚ)`. -/
 lemma diagMat_scalar_comm (c : ℕ) (hc : 0 < c) (g : GL (Fin n) ℚ) :
     diagMat n (fun _ ↦ c) * g = g * diagMat n (fun _ ↦ c) := by
   apply Units.ext
-  simp only [Units.val_mul, diagMat_scalar_eq n c hc, smul_one_mul, mul_smul_one]
+  simp [Units.val_mul, diagMat_scalar_eq n c hc]
 
 omit [NeZero n] in
+/-- Conjugation by a scalar diagonal matrix is trivial. -/
 lemma diagMat_scalar_conj_eq (c : ℕ) (hc : 0 < c) (x : GL (Fin n) ℚ) :
     (diagMat n (fun _ ↦ c))⁻¹ * x * diagMat n (fun _ ↦ c) = x := by
   rw [mul_assoc, ← diagMat_scalar_comm n c hc x, ← mul_assoc, inv_mul_cancel, one_mul]
 
+/-- The conjugation action of a scalar diagonal matrix fixes `(GL_pair n).H`. -/
 lemma conjAct_scalar_smul_eq (c : ℕ) (hc : 0 < c) :
     ConjAct.toConjAct (diagMat n (fun _ ↦ c)) • (GL_pair n).H = (GL_pair n).H := by
   ext x
-  simp only [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def, map_inv,
-    ConjAct.ofConjAct_toConjAct, inv_inv, diagMat_scalar_conj_eq n c hc]
+  simp [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def,
+    diagMat_scalar_conj_eq n c hc]
 
 private lemma conjAct_mem_smul_eq (h : GL (Fin n) ℚ) (hh : h ∈ (GL_pair n).H) :
     ConjAct.toConjAct h • (GL_pair n).H = (GL_pair n).H := by
   ext x
   simp only [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def,
     map_inv, ConjAct.ofConjAct_toConjAct, inv_inv]
-  constructor
-  · intro hx
-    rw [show x = h * (h⁻¹ * x * h) * h⁻¹ by group]
-    exact (GL_pair n).H.mul_mem ((GL_pair n).H.mul_mem hh hx) ((GL_pair n).H.inv_mem hh)
-  · intro hx
-    exact (GL_pair n).H.mul_mem ((GL_pair n).H.mul_mem ((GL_pair n).H.inv_mem hh) hx) hh
+  refine ⟨fun hx ↦ ?_,
+    fun hx ↦ (GL_pair n).H.mul_mem ((GL_pair n).H.mul_mem ((GL_pair n).H.inv_mem hh) hx) hh⟩
+  rw [show x = h * (h⁻¹ * x * h) * h⁻¹ by group]
+  exact (GL_pair n).H.mul_mem ((GL_pair n).H.mul_mem hh hx) ((GL_pair n).H.inv_mem hh)
 
 /-- The degree of a scalar double coset `T(c,...,c)` is `1`. -/
 lemma HeckeCoset_deg_scalar (c : ℕ) (hc : 0 < c) :
@@ -138,10 +126,8 @@ lemma HeckeCoset_deg_scalar (c : ℕ) (hc : 0 < c) :
     simp
   have hδ_mem : (δ : GL (Fin n) ℚ) ∈
       DoubleCoset.doubleCoset (↑(diagMat_delta n (fun _ ↦ c))) H H := by
-    have h1 : HeckeCoset.toSet D =
-        DoubleCoset.doubleCoset (↑(diagMat_delta n (fun _ ↦ c))) H H := by
-      simp only [D, H, T_diag, HeckeCoset.toSet_mk]
-    rw [← h1]
+    rw [show DoubleCoset.doubleCoset (↑(diagMat_delta n (fun _ ↦ c))) H H = HeckeCoset.toSet D by
+      simp only [D, H, T_diag, HeckeCoset.toSet_mk]]
     exact HeckeCoset.rep_mem D
   rw [DoubleCoset.mem_doubleCoset] at hδ_mem
   obtain ⟨h₁, hh₁, h₂, hh₂, hδ_eq⟩ := hδ_mem
@@ -314,14 +300,9 @@ private lemma congMod_mul (d : ℕ) (a b : SpecialLinearGroup (Fin n) ℤ)
     (ha : congMod n d a) (hb : congMod n d b) : congMod n d (a * b) := by
   intro i j
   simp only [SpecialLinearGroup.coe_mul, Matrix.mul_apply]
-  have h1 : ∑ k : Fin n, (if i = k then (1 : ℤ) else 0) * b.1 k j = b.1 i j := by
-    simp [Finset.mem_univ]
   have h2 : ∑ k, (a.1 i k - if i = k then 1 else 0) * b.1 k j =
       (∑ k, a.1 i k * b.1 k j) - b.1 i j := by
-    rw [← h1, ← Finset.sum_sub_distrib]
-    congr 1
-    ext k
-    ring
+    simp [sub_mul, Finset.sum_sub_distrib, Finset.mem_univ]
   rw [show (∑ k, a.1 i k * b.1 k j) - (if i = j then 1 else 0) =
       (∑ k, (a.1 i k - if i = k then 1 else 0) * b.1 k j) +
       (b.1 i j - if i = j then 1 else 0) by linarith [h2]]
@@ -331,11 +312,9 @@ omit [NeZero n] in
 private lemma congMod_inv (d : ℕ) (a : SpecialLinearGroup (Fin n) ℤ)
     (ha : congMod n d a) : congMod n d a⁻¹ := by
   intro i j
-  have h_mul_inv : a.1 * (a⁻¹).1 = 1 := by
-    rw [← SpecialLinearGroup.coe_mul, ← SpecialLinearGroup.coe_one]
-    exact congr_arg Subtype.val (mul_inv_cancel a)
   have h_entry : ∑ k : Fin n, a.1 i k * (a⁻¹).1 k j = if i = j then 1 else 0 := by
-    simpa [Matrix.mul_apply, Matrix.one_apply] using congr_fun (congr_fun h_mul_inv i) j
+    have : a.1 * (a⁻¹).1 = 1 := by rw [← SpecialLinearGroup.coe_mul, mul_inv_cancel]; rfl
+    simpa [Matrix.mul_apply, Matrix.one_apply] using congr_fun (congr_fun this i) j
   have h_sum_eq : ∑ k : Fin n, (a.1 i k - if i = k then 1 else 0) * (a⁻¹).1 k j =
       (if i = j then 1 else 0) - (a⁻¹).1 i j := by
     trans (∑ k, a.1 i k * (a⁻¹).1 k j) -
@@ -360,22 +339,15 @@ private lemma congMod_conj (d : ℕ) (σ τ : SpecialLinearGroup (Fin n) ℤ)
   have h_inv : ∀ i' j', ∑ k : Fin n, (σ⁻¹).1 i' k * σ.1 k j' =
       if i' = j' then 1 else 0 := by
     intro i' j'
-    simpa [Matrix.mul_apply, Matrix.one_apply] using
-      congr_fun (congr_fun (show (σ⁻¹).1 * σ.1 = 1 by
-        rw [← SpecialLinearGroup.coe_mul, ← SpecialLinearGroup.coe_one]
-        exact congr_arg Subtype.val (inv_mul_cancel σ)) i') j'
+    have : (σ⁻¹).1 * σ.1 = 1 := by rw [← SpecialLinearGroup.coe_mul, inv_mul_cancel]; rfl
+    simpa [Matrix.mul_apply, Matrix.one_apply] using congr_fun (congr_fun this i') j'
   have h_inner : ∀ k, ∑ l : Fin n, τ.1 k l * σ.1 l j =
       (∑ l, (τ.1 k l - if k = l then 1 else 0) * σ.1 l j) + σ.1 k j := by
     intro k
-    have h1 : ∑ l : Fin n, (if k = l then (1 : ℤ) else 0) * σ.1 l j = σ.1 k j := by
-      simp [Finset.mem_univ]
     have h2 : ∑ l, (τ.1 k l - if k = l then 1 else 0) * σ.1 l j =
         (∑ l, τ.1 k l * σ.1 l j) - σ.1 k j := by
-      rw [← h1, ← Finset.sum_sub_distrib]
-      congr 1
-      ext l
-      ring
-    linarith [h2]
+      simp [sub_mul, Finset.sum_sub_distrib, Finset.mem_univ]
+    linarith
   rw [show (∑ k, (σ⁻¹).1 i k * ∑ l, τ.1 k l * σ.1 l j) - (if i = j then 1 else 0) =
       ∑ k, (σ⁻¹).1 i k * ∑ l, (τ.1 k l - if k = l then 1 else 0) * σ.1 l j by
     have h3 : (∑ k, (σ⁻¹).1 i k * ∑ l, τ.1 k l * σ.1 l j) =
@@ -410,22 +382,16 @@ private lemma one_in_CRTProd (d d' : ℕ) :
   ⟨1, 1, (one_mul 1).symm, congMod_one n d, congMod_one n d'⟩
 
 omit [NeZero n] in
-private lemma slTransvecG_eq_slTransvec (i j : Fin n) (hij : i ≠ j) (c : ℤ) :
-    slTransvecG i j hij c = slTransvec n i j hij c :=
-  Subtype.ext rfl
-
-omit [NeZero n] in
 private lemma isTransvec_in_CRTProd (d d' : ℕ) (hcop : Nat.Coprime d d')
     (E : SpecialLinearGroup (Fin n) ℤ) (hE : IsTransvec E) :
     ∃ p q : SpecialLinearGroup (Fin n) ℤ,
       E = p * q ∧ congMod n d p ∧ congMod n d' q := by
   obtain ⟨i, j, hij, c, rfl⟩ := hE
-  rw [slTransvecG_eq_slTransvec]
+  rw [show slTransvecG i j hij c = slTransvec n i j hij c from Subtype.ext rfl]
   exact slTransvec_CRT n d d' hcop i j hij c
 
 omit [NeZero n] in
-private lemma list_prod_in_CRTProd (d d' : ℕ) (_hcop : Nat.Coprime d d')
-    (L : List (SpecialLinearGroup (Fin n) ℤ))
+private lemma list_prod_in_CRTProd (d d' : ℕ) (L : List (SpecialLinearGroup (Fin n) ℤ))
     (hL : ∀ E ∈ L, ∃ p q : SpecialLinearGroup (Fin n) ℤ,
       E = p * q ∧ congMod n d p ∧ congMod n d' q) :
     ∃ p q : SpecialLinearGroup (Fin n) ℤ,
@@ -438,26 +404,19 @@ private lemma list_prod_in_CRTProd (d d' : ℕ) (_hcop : Nat.Coprime d d')
       (ihL fun F hF ↦ hL F (by simp [hF]))
 
 omit [NeZero n] in
-private lemma SLnZ_in_CRTProd (d d' : ℕ) (_hd : 0 < d) (_hd' : 0 < d')
-    (hcop : Nat.Coprime d d') (σ : SpecialLinearGroup (Fin n) ℤ) :
-    ∃ p q : SpecialLinearGroup (Fin n) ℤ,
-      σ = p * q ∧ congMod n d p ∧ congMod n d' q := by
-  obtain ⟨L, hL_transvec, hL_prod⟩ := SLnZ_transvec_gen n σ
-  rw [hL_prod]
-  exact list_prod_in_CRTProd n d d' hcop L
-    fun E hE ↦ isTransvec_in_CRTProd n d d' hcop E (hL_transvec E hE)
-
-omit [NeZero n] in
 /-- Chinese Remainder Theorem for `SL_n(ℤ)`: every element decomposes as a product of
 congruence classes when gcd(d, d') = 1. -/
-lemma SLnZ_CRT_decomposition (d d' : ℕ) (hd : 0 < d) (hd' : 0 < d') (hcop : Nat.Coprime d d')
+lemma SLnZ_CRT_decomposition (d d' : ℕ) (hcop : Nat.Coprime d d')
     (τ : SpecialLinearGroup (Fin n) ℤ) :
     ∃ (τ₁ τ₂ : SpecialLinearGroup (Fin n) ℤ), τ = τ₁ * τ₂ ∧
       (∀ i j, (d : ℤ) ∣ ((τ₁ : Matrix (Fin n) (Fin n) ℤ) i j -
         if i = j then 1 else 0)) ∧
       (∀ i j, (d' : ℤ) ∣ ((τ₂ : Matrix (Fin n) (Fin n) ℤ) i j -
-        if i = j then 1 else 0)) :=
-  SLnZ_in_CRTProd n d d' hd hd' hcop τ
+        if i = j then 1 else 0)) := by
+  obtain ⟨L, hL_transvec, hL_prod⟩ := SLnZ_transvec_gen n τ
+  rw [hL_prod]
+  exact list_prod_in_CRTProd n d d' L
+    fun E hE ↦ isTransvec_in_CRTProd n d d' hcop E (hL_transvec E hE)
 
 omit [NeZero n] in
 private lemma map_intCast_mul_aux (A B : Matrix (Fin n) (Fin n) ℤ) :
@@ -466,8 +425,8 @@ private lemma map_intCast_mul_aux (A B : Matrix (Fin n) (Fin n) ℤ) :
   simp [Matrix.mul_apply, Matrix.map_apply]
 
 omit [NeZero n] in
-/-- A congruent-to-identity element conjugated by `diag(a)` remains in `SL_n(ℤ)`. -/
-lemma conjugate_congruent_mem_SLnZ (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (_hdiv : DivChain n a)
+private lemma conjugate_congruent_mem_SLnZ (a : Fin n → ℕ) (ha : ∀ i, 0 < a i)
+    (_hdiv : DivChain n a)
     (τ : SpecialLinearGroup (Fin n) ℤ) (hcong : ∀ i j, (∏ k, (a k : ℤ)) ∣
       ((τ : Matrix (Fin n) (Fin n) ℤ) i j - if i = j then 1 else 0)) :
     ∃ σ : SpecialLinearGroup (Fin n) ℤ,
@@ -508,8 +467,7 @@ lemma conjugate_congruent_mem_SLnZ (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (_h
   exact eq_mul_inv_iff_mul_eq.mpr h_Q_eq.symm
 
 omit [NeZero n] in
-/-- A congruent-to-identity element conjugated by `diag(b)⁻¹` remains in `SL_n(ℤ)`. -/
-lemma inv_conjugate_congruent_mem_SLnZ (b : Fin n → ℕ) (hb : ∀ i, 0 < b i)
+private lemma inv_conjugate_congruent_mem_SLnZ (b : Fin n → ℕ) (hb : ∀ i, 0 < b i)
     (_hdiv : DivChain n b) (τ : SpecialLinearGroup (Fin n) ℤ)
     (hcong : ∀ i j, (∏ k, (b k : ℤ)) ∣
       ((τ : Matrix (Fin n) (Fin n) ℤ) i j - if i = j then 1 else 0)) :
@@ -551,10 +509,7 @@ lemma inv_conjugate_congruent_mem_SLnZ (b : Fin n → ℕ) (hb : ∀ i, 0 < b i)
     have h_diag_map : (Matrix.diagonal fun i ↦ (b i : ℤ)).map (Int.cast : ℤ → ℚ) =
         Matrix.diagonal fun i ↦ (b i : ℚ) := Matrix.diagonal_map (by simp)
     rw [← h_diag_map, ← map_intCast_mul_aux, ← map_intCast_mul_aux, h_int_eq]
-  calc mapGL ℚ ⟨N, hN_det⟩
-      = (diagMat n b)⁻¹ * (diagMat n b * mapGL ℚ ⟨N, hN_det⟩) := by rw [inv_mul_cancel_left]
-    _ = (diagMat n b)⁻¹ * ((τ : GL (Fin n) ℚ) * diagMat n b) := by rw [h_Q_eq]
-    _ = (diagMat n b)⁻¹ * (τ : GL (Fin n) ℚ) * diagMat n b := by rw [mul_assoc]
+  exact (eq_inv_mul_of_mul_eq h_Q_eq).trans (mul_assoc _ _ _).symm
 
 omit [NeZero n] in
 /-- Set-level coprime product (Shimura Proposition 3.16, key step). -/
@@ -566,31 +521,22 @@ lemma doubleCoset_mul_coprime_mem (a b : Fin n → ℕ)
       DoubleCoset.doubleCoset (diagMat n (a * b) : GL (Fin n) ℚ)
         (SLnZ_subgroup n) (SLnZ_subgroup n) := by
   obtain ⟨τ₁, τ₂, hτ, hτ₁, hτ₂⟩ :=
-    SLnZ_CRT_decomposition n (∏ i, a i) (∏ i, b i)
-      (Finset.prod_pos fun i _ ↦ ha_pos i) (Finset.prod_pos fun i _ ↦ hb_pos i) hcop τ
+    SLnZ_CRT_decomposition n (∏ i, a i) (∏ i, b i) hcop τ
   have hτ₁_cong : ∀ i j, (∏ k, (a k : ℤ)) ∣
-      ((τ₁ : Matrix (Fin n) (Fin n) ℤ) i j - if i = j then 1 else 0) := by
-    intro i j
-    convert hτ₁ i j using 1
-    simp
+      ((τ₁ : Matrix (Fin n) (Fin n) ℤ) i j - if i = j then 1 else 0) := fun i j ↦ by
+    rw [← Nat.cast_prod]; exact hτ₁ i j
   obtain ⟨σ₁, hσ₁⟩ := conjugate_congruent_mem_SLnZ n a ha_pos ha τ₁ hτ₁_cong
   have hτ₂_cong : ∀ i j, (∏ k, (b k : ℤ)) ∣
-      ((τ₂ : Matrix (Fin n) (Fin n) ℤ) i j - if i = j then 1 else 0) := by
-    intro i j
-    convert hτ₂ i j using 1
-    simp
+      ((τ₂ : Matrix (Fin n) (Fin n) ℤ) i j - if i = j then 1 else 0) := fun i j ↦ by
+    rw [← Nat.cast_prod]; exact hτ₂ i j
   obtain ⟨σ₂, hσ₂⟩ := inv_conjugate_congruent_mem_SLnZ n b hb_pos hb τ₂ hτ₂_cong
   rw [DoubleCoset.mem_doubleCoset]
   refine ⟨(σ₁ : GL (Fin n) ℚ), coe_mem_SLnZ n σ₁,
     (σ₂ : GL (Fin n) ℚ), coe_mem_SLnZ n σ₂, ?_⟩
   have hσ₁' : diagMat n a * (τ₁ : GL (Fin n) ℚ) =
-      (σ₁ : GL (Fin n) ℚ) * diagMat n a := by
-    rw [hσ₁]
-    group
+      (σ₁ : GL (Fin n) ℚ) * diagMat n a := by rw [hσ₁]; group
   have hσ₂' : (τ₂ : GL (Fin n) ℚ) * diagMat n b =
-      diagMat n b * (σ₂ : GL (Fin n) ℚ) := by
-    rw [hσ₂]
-    group
+      diagMat n b * (σ₂ : GL (Fin n) ℚ) := by rw [hσ₂]; group
   rw [hτ, map_mul (mapGL ℚ)]
   calc diagMat n a * ((τ₁ : GL (Fin n) ℚ) * (τ₂ : GL (Fin n) ℚ)) * diagMat n b
       = diagMat n a * (τ₁ : GL (Fin n) ℚ) *
@@ -604,8 +550,8 @@ lemma doubleCoset_mul_coprime_mem (a b : Fin n → ℕ)
     _ = (σ₁ : GL (Fin n) ℚ) * diagMat n (a * b) *
           (σ₂ : GL (Fin n) ℚ) := by rw [diagMat_mul n a b ha_pos hb_pos]
 
-lemma mulMap_coprime_eq (a b : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i) (hb_pos : ∀ i, 0 < b i)
-    (ha : DivChain n a) (hb : DivChain n b) (_hab : DivChain n (a * b))
+private lemma mulMap_coprime_eq (a b : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i)
+    (hb_pos : ∀ i, 0 < b i) (ha : DivChain n a) (hb : DivChain n b) (_hab : DivChain n (a * b))
     (hcop : Nat.Coprime (∏ i, a i) (∏ i, b i))
     (p : decompQuot (GL_pair n) (HeckeCoset.rep (T_diag a)) ×
       decompQuot (GL_pair n) (HeckeCoset.rep (T_diag b))) :
@@ -891,8 +837,6 @@ private lemma heckeMultiplicity_coprime_le_one (a b : Fin n → ℕ) (ha_pos : �
     obtain ⟨_, h_sing, κ, hκ, hκ_eq⟩ := hmem12
     rw [Set.mem_singleton_iff] at h_sing
     subst h_sing
-    have hκ_eq' : (i₂.out : GL (Fin n) ℚ) * δ_a' * ((j₂.out : GL (Fin n) ℚ) * δ_b') * κ =
-        (i₁.out : GL (Fin n) ℚ) * δ_a' * ((j₁.out : GL (Fin n) ℚ) * δ_b') := hκ_eq
     exact HeckeRing.leftCoset_eq_of_not_disjoint (H := (GL_pair n).H) _ _ (by
       rw [Set.not_disjoint_iff]
       exact ⟨(i₁.out : GL (Fin n) ℚ) * δ_a', ⟨1, H.one_mem, mul_one _⟩,
@@ -900,7 +844,7 @@ private lemma heckeMultiplicity_coprime_le_one (a b : Fin n → ℕ) (ha_pos : �
           out_conj_diagA_mem_H n a b ha_pos hb_pos ha hb hcop δ_a' δ_b' i₁.out i₂.out
             j₁.out j₂.out h₁a h₂a h₁b h₂b κ hh₂a hh₁b hh₂b
             (SetLike.coe_mem j₁.out) (SetLike.coe_mem j₂.out) hκ
-            (hδ_a_def.trans hδa_eq) (hδ_b_def.trans hδb_eq) σ' hσ' hκ_eq', by
+            (hδ_a_def.trans hδa_eq) (hδ_b_def.trans hδb_eq) σ' hσ' hκ_eq, by
             simp only [smul_eq_mul, ← hδ_a_def]
             group⟩⟩)
   subst hi

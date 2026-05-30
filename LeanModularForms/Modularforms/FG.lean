@@ -803,12 +803,11 @@ theorem D_F_div_F_tendsto :
     E₂E₄_sub_E₆_div_q_tendsto.congr fun z ↦ by simp only [hf_def, ModularForm.toFun_eq_coe]
   have hDf_div_q : Filter.Tendsto (fun z : ℍ ↦ D f z / cexp (2 * π * Complex.I * z))
       atImInfty (nhds (720 : ℂ)) := D_diff_div_q_tendsto
-  have h_720_ne : (720 : ℂ) ≠ 0 := by norm_num
   have hDf_div_f : Filter.Tendsto (fun z : ℍ ↦ D f z / f z) atImInfty (nhds 1) := by
     have h_eq : ∀ z : ℍ, D f z / f z = (D f z / cexp (2 * π * Complex.I * z)) /
         (f z / cexp (2 * π * Complex.I * z)) := fun z ↦ by field_simp [Complex.exp_ne_zero]
     simp_rw [h_eq, show (1 : ℂ) = 720 / 720 from by norm_num]
-    exact hDf_div_q.div hf_div_q h_720_ne
+    exact hDf_div_q.div hf_div_q (by norm_num : (720 : ℂ) ≠ 0)
   have h_F_ne := eventually_ne_zero_of_tendsto_div
     (by norm_num : (720^2 : ℂ) ≠ 0) F_vanishing_order
   simpa using (hDf_div_f.const_mul (2 : ℂ)).congr' (by
