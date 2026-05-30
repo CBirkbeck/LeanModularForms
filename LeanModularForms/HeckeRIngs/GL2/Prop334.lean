@@ -36,11 +36,7 @@ lemma adj_mul_mul_entry_11_eq (N : ℤ) (a b c d α β γ δ : ℤ) :
     ((Matrix.adjugate !![a, b; N * c, d] *
         !![α, β; N * γ, δ]) * !![a, b; N * c, d]) 1 1 =
       a * d * δ + N * (a * b * γ - b * c * α - c * d * β) := by
-  rw [Matrix.adjugate_fin_two]
-  simp only [Matrix.mul_apply, Fin.sum_univ_two, Matrix.cons_val',
-    Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.empty_val',
-    Fin.isValue, Matrix.of_apply]
-  ring
+  simp [Matrix.adjugate_fin_two, Matrix.mul_apply, Fin.sum_univ_two]; ring
 
 /-- For `g = !![a, b; N·c, d]` and `h = !![α, β; N·γ, δ]` in `M₂(ℤ)`,
 the (0,0) entry of `adj(g) · h · g` equals
@@ -49,11 +45,7 @@ lemma adj_mul_mul_entry_00_eq (N : ℤ) (a b c d α β γ δ : ℤ) :
     ((Matrix.adjugate !![a, b; N * c, d] *
         !![α, β; N * γ, δ]) * !![a, b; N * c, d]) 0 0 =
       a * d * α + N * (-(a * b * γ) + c * d * β - b * c * δ) := by
-  rw [Matrix.adjugate_fin_two]
-  simp only [Matrix.mul_apply, Fin.sum_univ_two, Matrix.cons_val',
-    Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.empty_val',
-    Fin.isValue, Matrix.of_apply]
-  ring
+  simp [Matrix.adjugate_fin_two, Matrix.mul_apply, Fin.sum_univ_two]; ring
 
 private lemma inv_mul_mul_entry_smul_det {K : Type*} [Field K]
     (g h : Matrix (Fin 2) (Fin 2) K) (hdet : g.det ≠ 0) (i j : Fin 2) :
@@ -67,34 +59,26 @@ private lemma inv_mul_mul_entry_smul_det {K : Type*} [Field K]
 /-- For `g = !![a, b; N·c, d]` with `det g ≠ 0` and `h = !![α, β; N·γ, δ]`
 (promoted to `M₂(ℚ)`), the (1,1) entry of the rational conjugate satisfies
 `(g⁻¹ · h · g)₁₁ · det g = a·d·δ + N · (a·b·γ - b·c·α - c·d·β)` over `ℚ`. -/
-lemma matrix_fin_two_conj_entry_11_mod_eq
-    (N : ℤ) (a b c d α β γ δ : ℤ)
+lemma matrix_fin_two_conj_entry_11_mod_eq (N : ℤ) (a b c d α β γ δ : ℤ)
     (hdet : (!![(a : ℚ), b; N * c, d]).det ≠ 0) :
     ((!![(a : ℚ), b; N * c, d])⁻¹ *
         !![(α : ℚ), β; N * γ, δ] * !![(a : ℚ), b; N * c, d]) 1 1 *
       (!![(a : ℚ), b; N * c, d]).det =
       (a : ℚ) * d * δ + N * (a * b * γ - b * c * α - c * d * β) := by
-  rw [inv_mul_mul_entry_smul_det _ _ hdet, Matrix.adjugate_fin_two]
-  simp only [Matrix.mul_apply, Fin.sum_univ_two, Matrix.cons_val',
-    Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.empty_val',
-    Fin.isValue, Matrix.of_apply]
-  ring
+  rw [inv_mul_mul_entry_smul_det _ _ hdet]
+  simp [Matrix.adjugate_fin_two, Matrix.mul_apply, Fin.sum_univ_two]; ring
 
 /-- For `g = !![a, b; N·c, d]` with `det g ≠ 0` and `h = !![α, β; N·γ, δ]`
 (promoted to `M₂(ℚ)`), the (0,0) entry of the rational conjugate satisfies
 `(g⁻¹ · h · g)₀₀ · det g = a·d·α + N · (-a·b·γ + c·d·β - b·c·δ)` over `ℚ`. -/
-lemma matrix_fin_two_conj_entry_00_mod_eq
-    (N : ℤ) (a b c d α β γ δ : ℤ)
+lemma matrix_fin_two_conj_entry_00_mod_eq (N : ℤ) (a b c d α β γ δ : ℤ)
     (hdet : (!![(a : ℚ), b; N * c, d]).det ≠ 0) :
     ((!![(a : ℚ), b; N * c, d])⁻¹ *
         !![(α : ℚ), β; N * γ, δ] * !![(a : ℚ), b; N * c, d]) 0 0 *
       (!![(a : ℚ), b; N * c, d]).det =
       (a : ℚ) * d * α + N * (-(a * b * γ) + c * d * β - b * c * δ) := by
-  rw [inv_mul_mul_entry_smul_det _ _ hdet, Matrix.adjugate_fin_two]
-  simp only [Matrix.mul_apply, Fin.sum_univ_two, Matrix.cons_val',
-    Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.empty_val',
-    Fin.isValue, Matrix.of_apply]
-  ring
+  rw [inv_mul_mul_entry_smul_det _ _ hdet]
+  simp [Matrix.adjugate_fin_two, Matrix.mul_apply, Fin.sum_univ_two]; ring
 
 /-- Divisibility corollary of `adj_mul_mul_entry_11_eq`: the difference between
 the (1,1) entry of `adj g * h * g` and `a·d·δ` is an `N`-multiple. -/
@@ -136,16 +120,13 @@ private lemma entry_11_mul_det_congr_mod
         (h'₁₁ : ℚ)) :
     ((h'₁₁ * (!![a, b; (N : ℤ) * c, d] : Matrix _ _ ℤ).det : ℤ) : ZMod N) =
       ((a * d * δ : ℤ) : ZMod N) := by
-  have hdet_int : (!![(a : ℚ), b; ((N : ℤ) : ℚ) * c, d]).det ≠ 0 := by
-    convert hdet using 2
+  have hdet_int : (!![(a : ℚ), b; ((N : ℤ) : ℚ) * c, d]).det ≠ 0 := mod_cast hdet
   have hQ := matrix_fin_two_conj_entry_11_mod_eq (N : ℤ) a b c d α β γ δ hdet_int
   have hcastN : ((N : ℤ) : ℚ) = (N : ℚ) := by push_cast; rfl
-  rw [hcastN] at hQ
-  rw [h_conj_11] at hQ
   have hdet_eq : (!![(a : ℚ), b; (N : ℚ) * c, d]).det =
       ((!![a, b; (N : ℤ) * c, d] : Matrix _ _ ℤ).det : ℚ) := by
     simp only [Matrix.det_fin_two_of]; push_cast; ring
-  rw [hdet_eq] at hQ
+  rw [hcastN, h_conj_11, hdet_eq] at hQ
   have hZ : h'₁₁ * (!![a, b; (N : ℤ) * c, d] : Matrix _ _ ℤ).det =
       a * d * δ + (N : ℤ) * (a * b * γ - b * c * α - c * d * β) := by
     exact_mod_cast hQ
@@ -165,11 +146,10 @@ private lemma conj_matrix_entry_11_eq_intCast
   have h_mat_eq : ((mapGL ℚ h'S) : Matrix (Fin 2) (Fin 2) ℚ) =
       ((gG⁻¹ : Matrix _ _ ℚ) *
         (mapGL ℚ hS : Matrix _ _ ℚ) * (gG : Matrix _ _ ℚ)) := by
-    have h := congr_arg (fun X : GL (Fin 2) ℚ ↦ (X : Matrix (Fin 2) (Fin 2) ℚ)) h'_conj
-    simpa [Matrix.GeneralLinearGroup.coe_mul] using h
+    simpa [Matrix.GeneralLinearGroup.coe_mul] using
+      congr_arg (fun X : GL (Fin 2) ℚ ↦ (X : Matrix (Fin 2) (Fin 2) ℚ)) h'_conj
   have h_entry := congr_fun (congr_fun h_mat_eq 1) 1
-  rw [hA_rat, hAh_rat] at h_entry
-  rw [mapGL_coe_matrix] at h_entry
+  rw [hA_rat, hAh_rat, mapGL_coe_matrix] at h_entry
   simp only [algebraMap_int_eq] at h_entry
   exact h_entry.symm
 
@@ -258,8 +238,8 @@ theorem Gamma0MapUnits_preserved_of_detCoprime {N : ℕ} [NeZero N]
     conj_entry_11_intCast_eq_mod a b c d α β γ δ h'₁₁ hdet_ne hdet_cop h_conj_11
   have hGamma0Map : Gamma0Map N h' = Gamma0Map N h := by
     simp only [Gamma0Map, MonoidHom.coe_mk, OneHom.coe_mk]
-    show ((h' : SL(2, ℤ)).val 1 1 : ZMod N) = ((h : SL(2, ℤ)).val 1 1 : ZMod N)
     rw [← hδ_eq]; exact h'₁₁_eq_δ
-  ext; rw [Gamma0MapUnits_val, Gamma0MapUnits_val, hGamma0Map]
+  ext
+  rw [Gamma0MapUnits_val, Gamma0MapUnits_val, hGamma0Map]
 
 end HeckeRing.GL2.Prop334
