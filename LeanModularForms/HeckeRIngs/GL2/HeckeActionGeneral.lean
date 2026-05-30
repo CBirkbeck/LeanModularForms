@@ -93,6 +93,14 @@ lemma GL_adjugate_mem_SLnZ {g : GL (Fin 2) ℚ} (hg : g ∈ SLnZ_subgroup 2) :
   rw [GL_adjugate_eq_inv_of_det_one g (SLnZ_det_one g hg)]
   exact (SLnZ_subgroup 2).inv_mem hg
 
+/-- For any subgroup `Γ` of `GL₂(ℚ)` contained in the image of `SL₂(ℤ)` under `mapGL ℚ`,
+the adjugate restricts to `Γ` (since `Γ ⊆ SL₂(ℤ)` implies det = 1, so adj = inv ∈ Γ). -/
+private lemma GL_adjugate_mem_of_le_SLnZ {Γ : Subgroup (GL (Fin 2) ℚ)}
+    (hΓ : Γ ≤ SLnZ_subgroup 2) {h : GL (Fin 2) ℚ} (hh : h ∈ Γ) :
+    GL_adjugate h ∈ Γ := by
+  rw [GL_adjugate_eq_inv_of_det_one h (SLnZ_det_one h (hΓ hh))]
+  exact Γ.inv_mem hh
+
 /-- A Hecke pair `P` inside `GL₂(ℚ)` whose `Δ`-elements have positive real determinant
 and whose `H` is closed under the adjugate anti-involution. -/
 class HeckePairAction (P : HeckePair (GL (Fin 2) ℚ)) where
@@ -121,11 +129,8 @@ because for elements of determinant 1, the adjugate equals the inverse, and
 `Γ₁(N)` is a subgroup (hence closed under inversion). -/
 noncomputable instance (N : ℕ) [NeZero N] : HeckePairAction (Gamma1_pair N) where
   det_pos := Gamma1_pair_det_pos N
-  adjugate_mem_H h hh := by
-    have h_SL : h ∈ SLnZ_subgroup 2 := by
-      simpa [MonoidHom.range_eq_map] using Subgroup.map_mono (f := mapGL ℚ) le_top hh
-    rw [GL_adjugate_eq_inv_of_det_one h (SLnZ_det_one h h_SL)]
-    exact (Gamma1_pair N).H.inv_mem hh
+  adjugate_mem_H _ hh := GL_adjugate_mem_of_le_SLnZ (by
+    simpa [MonoidHom.range_eq_map] using Subgroup.map_mono (f := mapGL ℚ) le_top) hh
 
 /-- Det-positivity for `Gamma0_pair N`. -/
 theorem Gamma0_pair_det_pos (N : ℕ) [NeZero N] (g : (HeckeRing.GLn.Gamma0_pair N).Δ) :
@@ -140,11 +145,8 @@ is a subgroup. -/
 noncomputable instance (N : ℕ) [NeZero N] :
     HeckePairAction (HeckeRing.GLn.Gamma0_pair N) where
   det_pos := Gamma0_pair_det_pos N
-  adjugate_mem_H h hh := by
-    have h_SL : h ∈ SLnZ_subgroup 2 := by
-      simpa [MonoidHom.range_eq_map] using Subgroup.map_mono (f := mapGL ℚ) le_top hh
-    rw [GL_adjugate_eq_inv_of_det_one h (SLnZ_det_one h h_SL)]
-    exact (HeckeRing.GLn.Gamma0_pair N).H.inv_mem hh
+  adjugate_mem_H _ hh := GL_adjugate_mem_of_le_SLnZ (by
+    simpa [MonoidHom.range_eq_map] using Subgroup.map_mono (f := mapGL ℚ) le_top) hh
 
 section DetPositivity
 
