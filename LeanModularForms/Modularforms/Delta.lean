@@ -5,6 +5,7 @@ Authors: Chris Birkbeck
 -/
 module
 
+public import Mathlib.Analysis.Normed.Group.Tannery
 public import Mathlib.NumberTheory.ModularForms.QExpansion
 public import LeanModularForms.Modularforms.ForMathlib_Cusps
 public import LeanModularForms.Modularforms.NormNumI
