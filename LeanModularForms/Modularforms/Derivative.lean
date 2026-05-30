@@ -130,8 +130,7 @@ theorem D_smul (c : ℂ) (F : ℍ → ℂ) (hF : MDiff F) :
   rw [h, smul_eq_mul, D]; ring
 
 @[simp]
-theorem D_neg (F : ℍ → ℂ) (hF : MDiff F) :
-    D (-F) = -D F := by
+theorem D_neg (F : ℍ → ℂ) (hF : MDiff F) : D (-F) = -D F := by
   have heq : -F = (-1 : ℂ) • F := by ext; simp
   rw [heq, D_smul _ _ hF]; ext; simp
 
@@ -342,15 +341,11 @@ theorem serre_D_sub (k : ℤ) (F G : ℍ → ℂ) (hF : MDiff F) (hG : MDiff G) 
 
 theorem serre_D_smul (k : ℤ) (c : ℂ) (F : ℍ → ℂ) (hF : MDiff F) :
     serre_D k (c • F) = c • (serre_D k F) := by
-  ext z
-  simp only [serre_D, Pi.smul_apply, smul_eq_mul, D_smul c F hF]
-  ring
+  ext z; simp only [serre_D, Pi.smul_apply, smul_eq_mul, D_smul c F hF]; ring
 
 theorem serre_D_mul (k₁ k₂ : ℤ) (F G : ℍ → ℂ) (hF : MDiff F) (hG : MDiff G) :
     serre_D (k₁ + k₂) (F * G) = (serre_D k₁ F) * G + F * (serre_D k₂ G) := by
-  ext z
-  simp only [serre_D, Pi.add_apply, Pi.mul_apply, D_mul F G hF hG]
-  ring
+  ext z; simp only [serre_D, Pi.add_apply, Pi.mul_apply, D_mul F G hF hG]; ring
 
 /-- The Serre derivative preserves MDifferentiability:
 if `F : ℍ → ℂ` is MDifferentiable, then `serre_D k F` is also MDifferentiable. -/
