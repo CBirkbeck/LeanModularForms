@@ -41,53 +41,38 @@ def qKerBelow
 
 lemma qKerBelow_antitone
     [DiscreteTopology Γ] [Γ.HasDetOne] (hh : 0 < h) (hΓ : h ∈ Γ.strictPeriods) :
-    Antitone (qKerBelow (Γ := Γ) (k := k) (h := h) hh hΓ) := by
-  intro A B hAB f hf n hn
-  exact hf n (lt_of_lt_of_le hn hAB)
+    Antitone (qKerBelow (Γ := Γ) (k := k) (h := h) hh hΓ) :=
+  fun _ _ hAB _ hf n hn ↦ hf n (hn.trans_le hAB)
 
 lemma qKerBelow_iInf_eq_bot
     [DiscreteTopology Γ] [Γ.HasDetOne]
     (hh : 0 < h) (hΓ : h ∈ Γ.strictPeriods) :
     (⨅ N : ℕ, qKerBelow (Γ := Γ) (k := k) (h := h) hh hΓ N) = ⊥ := by
   ext f
-  constructor
-  · intro hf
-    have hf' : ∀ N : ℕ, f ∈ qKerBelow (Γ := Γ) (k := k) (h := h) hh hΓ N :=
-      (Submodule.mem_iInf (p := fun N ↦ qKerBelow (Γ := Γ) (k := k) (h := h) hh hΓ N)).1 hf
-    refine (Submodule.mem_bot (R := ℂ) (x := f)).2 ?_
-    apply (qExpansion_eq_zero_iff (Γ := Γ) (h := h) hh hΓ f).1
-    ext n
-    exact hf' (n + 1) n (Nat.lt_succ_self _)
-  · intro hf
-    subst hf
-    simp
+  refine ⟨fun hf ↦ ?_, fun hf ↦ by subst hf; simp⟩
+  refine (Submodule.mem_bot (R := ℂ) (x := f)).2 ?_
+  refine (qExpansion_eq_zero_iff (Γ := Γ) (h := h) hh hΓ f).1 <| PowerSeries.ext fun n ↦ ?_
+  exact (Submodule.mem_iInf (p := fun N ↦ qKerBelow (Γ := Γ) (k := k) (h := h) hh hΓ N)).1 hf
+    (n + 1) n (Nat.lt_succ_self _)
 
 lemma exists_qKerBelow_eq_bot
     [DiscreteTopology Γ] [Γ.HasDetOne]
     (hh : 0 < h) (hΓ : h ∈ Γ.strictPeriods) [FiniteDimensional ℂ (ModularForm Γ k)] :
     ∃ N : ℕ, qKerBelow (Γ := Γ) (k := k) (h := h) hh hΓ N = ⊥ := by
-  haveI : IsArtinian ℂ (ModularForm Γ k) := by infer_instance
   let f : ℕ →o (Submodule ℂ (ModularForm Γ k))ᵒᵈ :=
     { toFun := fun N ↦ OrderDual.toDual (qKerBelow (Γ := Γ) (k := k) (h := h) hh hΓ N)
-      monotone' := by
-        intro A B hAB
-        exact qKerBelow_antitone (Γ := Γ) (k := k) (h := h) hh hΓ hAB }
+      monotone' := fun _ _ hAB ↦ qKerBelow_antitone (Γ := Γ) (k := k) (h := h) hh hΓ hAB }
   obtain ⟨N, hN⟩ := IsArtinian.monotone_stabilizes (R := ℂ) (M := ModularForm Γ k) f
   have hle : ∀ M : ℕ, qKerBelow (Γ := Γ) (k := k) (h := h) hh hΓ N ≤
-      qKerBelow (Γ := Γ) (k := k) (h := h) hh hΓ M := by
-    intro M
+      qKerBelow (Γ := Γ) (k := k) (h := h) hh hΓ M := fun M ↦ by
     by_cases hNM : N ≤ M
-    · have : qKerBelow (Γ := Γ) (k := k) (h := h) hh hΓ N =
-          qKerBelow (Γ := Γ) (k := k) (h := h) hh hΓ M := by
-        simpa using congrArg OrderDual.ofDual (hN M hNM)
-      simp [this]
+    · simp [show qKerBelow (Γ := Γ) (k := k) (h := h) hh hΓ N =
+        qKerBelow (Γ := Γ) (k := k) (h := h) hh hΓ M by
+        simpa using congrArg OrderDual.ofDual (hN M hNM)]
     · exact qKerBelow_antitone (Γ := Γ) (k := k) (h := h) hh hΓ (Nat.le_of_not_ge hNM)
-  have hiInf :
-      (⨅ M : ℕ, qKerBelow (Γ := Γ) (k := k) (h := h) hh hΓ M) =
-        qKerBelow (Γ := Γ) (k := k) (h := h) hh hΓ N := by
-    exact le_antisymm (iInf_le _ N) (le_iInf hle)
   refine ⟨N, ?_⟩
-  simpa [hiInf] using qKerBelow_iInf_eq_bot (Γ := Γ) (k := k) (h := h) hh hΓ
+  simpa [le_antisymm (iInf_le _ N) (le_iInf hle)] using
+    qKerBelow_iInf_eq_bot (Γ := Γ) (k := k) (h := h) hh hΓ
 
 /-- There exists `N` such that the first `N` `q`-coefficients determine a modular form. -/
 public lemma exists_qCoeff_injective
@@ -96,16 +81,13 @@ public lemma exists_qCoeff_injective
     ∃ N : ℕ, Function.Injective
       (fun f : ModularForm Γ k ↦ fun n : Fin N ↦ (qExpansion h f).coeff n) := by
   obtain ⟨N, hN⟩ := exists_qKerBelow_eq_bot (Γ := Γ) (k := k) (h := h) hh hΓ
-  refine ⟨N, ?_⟩
-  intro f g hfg
-  have hsub : f - g ∈ qKerBelow (Γ := Γ) (k := k) (h := h) hh hΓ N := by
-    intro n hn
+  refine ⟨N, fun f g hfg ↦ sub_eq_zero.mp ?_⟩
+  have hsub : f - g ∈ qKerBelow (Γ := Γ) (k := k) (h := h) hh hΓ N := fun n hn ↦ by
     have hcoeff : (qExpansion h f).coeff n = (qExpansion h g).coeff n := by
       simpa using congrArg (fun t ↦ t ⟨n, hn⟩) hfg
     simpa [hcoeff] using
       congrArg (fun ps : PowerSeries ℂ ↦ ps.coeff n) (qExpansion_sub (Γ := Γ) (h := h) hh hΓ f g)
-  have : f - g = 0 := by simpa [hN] using hsub
-  exact sub_eq_zero.mp this
+  simpa [hN] using hsub
 
 end Truncation
 
