@@ -34,26 +34,22 @@ private lemma slTransvecG_mul {m : ℕ} (i j : Fin m) (hij : i ≠ j) (a b : ℤ
 
 private lemma slTransvecG_zero {m : ℕ} (i j : Fin m) (hij : i ≠ j) :
     slTransvecG i j hij 0 = 1 :=
-  Subtype.ext (by simp [slTransvecG, Matrix.transvection_zero])
+  Subtype.ext (Matrix.transvection_zero i j)
 
 private lemma slTransvecG_mul_entry {m : ℕ} [NeZero m] (i j : Fin m) (hij : i ≠ j) (c : ℤ)
     (σ : Matrix.SpecialLinearGroup (Fin m) ℤ) (a b : Fin m) :
     (slTransvecG i j hij c * σ).1 a b =
     if a = i then σ.1 i b + c * σ.1 j b else σ.1 a b := by
-  have hcoe : (slTransvecG i j hij c * σ).1 = Matrix.transvection i j c * σ.1 := by
-    simp only [Matrix.SpecialLinearGroup.coe_mul, slTransvecG]
-  rw [hcoe]
+  simp only [Matrix.SpecialLinearGroup.coe_mul, slTransvecG]
   split_ifs with hai
   · subst hai; simp [Matrix.transvection, Matrix.add_mul]
   · simp [Matrix.transvection, Matrix.add_mul, hai]
 
-private lemma slTransvecG_mul_right_entry {m : ℕ}
-    [NeZero m] (i j : Fin m) (hij : i ≠ j) (c : ℤ) (σ : Matrix.SpecialLinearGroup (Fin m) ℤ)
-    (a b : Fin m) : (σ * slTransvecG i j hij c).1 a b =
+private lemma slTransvecG_mul_right_entry {m : ℕ} [NeZero m] (i j : Fin m) (hij : i ≠ j) (c : ℤ)
+    (σ : Matrix.SpecialLinearGroup (Fin m) ℤ) (a b : Fin m) :
+    (σ * slTransvecG i j hij c).1 a b =
     if b = j then σ.1 a j + c * σ.1 a i else σ.1 a b := by
-  have hcoe : (σ * slTransvecG i j hij c).1 = σ.1 * Matrix.transvection i j c := by
-    simp only [Matrix.SpecialLinearGroup.coe_mul, slTransvecG]
-  rw [hcoe]
+  simp only [Matrix.SpecialLinearGroup.coe_mul, slTransvecG]
   split_ifs with hbj
   · subst hbj; simp [Matrix.transvection, Matrix.mul_add, mul_comm]
   · simp [Matrix.transvection, Matrix.mul_add, hbj]
@@ -63,30 +59,12 @@ private lemma isTransvec_append {m : ℕ} (L₁ L₂ : List (Matrix.SpecialLinea
     ∀ E ∈ L₁ ++ L₂, IsTransvec E :=
   fun E hE ↦ (List.mem_append.mp hE).elim (h₁ E) (h₂ E)
 
-private def liftTransvec {m : ℕ} (i j : Fin m) (hij : i ≠ j) (c : ℤ) :
-    Matrix.SpecialLinearGroup (Fin (m + 1)) ℤ :=
-  slTransvecG i.castSucc j.castSucc (Fin.castSucc_injective m |>.ne hij) c
-
-private lemma liftTransvec_isTransvec {m : ℕ} (i j : Fin m) (hij : i ≠ j) (c : ℤ) :
-    IsTransvec (liftTransvec i j hij c) :=
-  ⟨i.castSucc, j.castSucc, Fin.castSucc_injective m |>.ne hij, c, rfl⟩
-
 private def col0Sum {m : ℕ} (σ : Matrix.SpecialLinearGroup (Fin (m+1)) ℤ) : ℕ :=
   ∑ i : Fin (m+1), (σ.1 i 0).natAbs
 
-private lemma slTransvecG_col0 {m : ℕ} (i j : Fin (m+1)) (hij : i ≠ j) (c : ℤ)
-    (σ : Matrix.SpecialLinearGroup (Fin (m+1)) ℤ) (a : Fin (m+1)) :
-    (slTransvecG i j hij c * σ).1 a 0 =
-    if a = i then σ.1 i 0 + c * σ.1 j 0 else σ.1 a 0 := by
-  have : (slTransvecG i j hij c * σ).1 = Matrix.transvection i j c * σ.1 := by
-    simp only [Matrix.SpecialLinearGroup.coe_mul, slTransvecG]
-  rw [this]; split_ifs with hai
-  · subst hai; simp [Matrix.transvection, Matrix.add_mul]
-  · simp [Matrix.transvection, Matrix.add_mul, hai]
-
 private lemma col0_ne_zero {m : ℕ} (σ : Matrix.SpecialLinearGroup (Fin (m+1)) ℤ) :
     ∃ i, σ.1 i 0 ≠ 0 := by
-  by_contra h; push_neg at h
+  by_contra h; push Not at h
   have : σ.1.det = 0 := Matrix.det_eq_zero_of_column_eq_zero 0 (fun i ↦ h i)
   linarith [σ.2]
 
@@ -102,58 +80,41 @@ private lemma exists_two_nz {m : ℕ} (σ : Matrix.SpecialLinearGroup (Fin (m+1)
   simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hi hj
   exact ⟨i, j, hij, hi, hj⟩
 
+private lemma col0_euclidean_step_aux {m : ℕ} (σ : Matrix.SpecialLinearGroup (Fin (m+1)) ℤ)
+    (i j : Fin (m+1)) (hij : i ≠ j) (hj : σ.1 j 0 ≠ 0)
+    (hle : (σ.1 j 0).natAbs ≤ (σ.1 i 0).natAbs) :
+    col0Sum (slTransvecG i j hij (-(σ.1 i 0 / σ.1 j 0)) * σ) < col0Sum σ := by
+  set q := σ.1 i 0 / σ.1 j 0
+  have h_new : (slTransvecG i j hij (-q) * σ).1 i 0 = σ.1 i 0 % σ.1 j 0 := by
+    rw [slTransvecG_mul_entry]; simp only [ite_true]
+    linarith [(Int.mul_ediv_add_emod (σ.1 i 0) (σ.1 j 0)).symm]
+  have h_oth : ∀ a, a ≠ i → (slTransvecG i j hij (-q) * σ).1 a 0 = σ.1 a 0 :=
+    fun a ha ↦ by rw [slTransvecG_mul_entry]; simp [ha]
+  have h_rem : (σ.1 i 0 % σ.1 j 0).natAbs < (σ.1 j 0).natAbs := by
+    have h1 := Int.emod_nonneg (σ.1 i 0) hj
+    have h2 : σ.1 i 0 % σ.1 j 0 < |σ.1 j 0| := by
+      rw [← Int.emod_abs]; exact Int.emod_lt_of_pos _ (abs_pos.mpr hj)
+    exact_mod_cast show ((σ.1 i 0 % σ.1 j 0).natAbs : ℤ) < (σ.1 j 0).natAbs from by
+      rw [Int.natAbs_of_nonneg h1, Int.natCast_natAbs]; exact h2
+  simp only [col0Sum]
+  rw [← Finset.add_sum_erase _ _ (Finset.mem_univ i),
+      ← Finset.add_sum_erase _ _ (Finset.mem_univ i)]
+  have h_rest : ∑ k ∈ Finset.univ.erase i,
+      ((slTransvecG i j hij (-q) * σ).1 k 0).natAbs =
+      ∑ k ∈ Finset.univ.erase i, (σ.1 k 0).natAbs :=
+    Finset.sum_congr rfl fun k hk ↦ by rw [h_oth k (Finset.mem_erase.mp hk).1]
+  rw [h_rest, h_new]; linarith [Nat.lt_of_lt_of_le h_rem hle]
+
 private lemma col0_euclidean_step {m : ℕ} (σ : Matrix.SpecialLinearGroup (Fin (m+1)) ℤ)
     (h : 2 ≤ nzCount σ) :
     ∃ (i j : Fin (m+1)) (hij : i ≠ j) (c : ℤ),
       col0Sum (slTransvecG i j hij c * σ) < col0Sum σ := by
   obtain ⟨i₀, j₀, hij₀, hi₀, hj₀⟩ := exists_two_nz σ h
   by_cases hge : (σ.1 j₀ 0).natAbs ≤ (σ.1 i₀ 0).natAbs
-  · refine ⟨i₀, j₀, hij₀, -(σ.1 i₀ 0 / σ.1 j₀ 0), ?_⟩
-    set q := σ.1 i₀ 0 / σ.1 j₀ 0
-    have h_new : (slTransvecG i₀ j₀ hij₀ (-q) * σ).1 i₀ 0 = σ.1 i₀ 0 % σ.1 j₀ 0 := by
-      rw [slTransvecG_col0]; simp only [ite_true]
-      linarith [(Int.mul_ediv_add_emod (σ.1 i₀ 0) (σ.1 j₀ 0)).symm]
-    have h_oth : ∀ a, a ≠ i₀ → (slTransvecG i₀ j₀ hij₀ (-q) * σ).1 a 0 = σ.1 a 0 :=
-      fun a ha ↦ by rw [slTransvecG_col0]; simp [ha]
-    have h_rem : (σ.1 i₀ 0 % σ.1 j₀ 0).natAbs < (σ.1 j₀ 0).natAbs := by
-      have h1 := Int.emod_nonneg (σ.1 i₀ 0) hj₀
-      have h2 : σ.1 i₀ 0 % σ.1 j₀ 0 < |σ.1 j₀ 0| := by
-        rw [← Int.emod_abs]; exact Int.emod_lt_of_pos _ (abs_pos.mpr hj₀)
-      exact_mod_cast show ((σ.1 i₀ 0 % σ.1 j₀ 0).natAbs : ℤ) < (σ.1 j₀ 0).natAbs from by
-        rw [Int.natAbs_of_nonneg h1, Int.natCast_natAbs]; exact h2
-    simp only [col0Sum]
-    rw [← Finset.add_sum_erase _ _ (Finset.mem_univ i₀),
-        ← Finset.add_sum_erase _ _ (Finset.mem_univ i₀)]
-    have h_rest : ∑ k ∈ Finset.univ.erase i₀,
-        ((slTransvecG i₀ j₀ hij₀ (-q) * σ).1 k 0).natAbs =
-        ∑ k ∈ Finset.univ.erase i₀, (σ.1 k 0).natAbs :=
-      Finset.sum_congr rfl fun k hk ↦ by rw [h_oth k (Finset.mem_erase.mp hk).1]
-    rw [h_rest, h_new]; linarith [Nat.lt_of_lt_of_le h_rem hge]
-  · push_neg at hge
-    refine ⟨j₀, i₀, Ne.symm hij₀, -(σ.1 j₀ 0 / σ.1 i₀ 0), ?_⟩
-    set q := σ.1 j₀ 0 / σ.1 i₀ 0
-    have h_new : (slTransvecG j₀ i₀ (Ne.symm hij₀) (-q) * σ).1 j₀ 0 =
-        σ.1 j₀ 0 % σ.1 i₀ 0 := by
-      rw [slTransvecG_col0]; simp only [ite_true]
-      linarith [(Int.mul_ediv_add_emod (σ.1 j₀ 0) (σ.1 i₀ 0)).symm]
-    have h_oth : ∀ a, a ≠ j₀ →
-        (slTransvecG j₀ i₀ (Ne.symm hij₀) (-q) * σ).1 a 0 =
-        σ.1 a 0 :=
-      fun a ha ↦ by rw [slTransvecG_col0]; simp [ha]
-    have h_rem : (σ.1 j₀ 0 % σ.1 i₀ 0).natAbs < (σ.1 i₀ 0).natAbs := by
-      have h1 := Int.emod_nonneg (σ.1 j₀ 0) hi₀
-      have h2 : σ.1 j₀ 0 % σ.1 i₀ 0 < |σ.1 i₀ 0| := by
-        rw [← Int.emod_abs]; exact Int.emod_lt_of_pos _ (abs_pos.mpr hi₀)
-      exact_mod_cast show ((σ.1 j₀ 0 % σ.1 i₀ 0).natAbs : ℤ) < (σ.1 i₀ 0).natAbs from by
-        rw [Int.natAbs_of_nonneg h1, Int.natCast_natAbs]; exact h2
-    simp only [col0Sum]
-    rw [← Finset.add_sum_erase _ _ (Finset.mem_univ j₀),
-        ← Finset.add_sum_erase _ _ (Finset.mem_univ j₀)]
-    have h_rest : ∑ k ∈ Finset.univ.erase j₀,
-        ((slTransvecG j₀ i₀ (Ne.symm hij₀) (-q) * σ).1 k 0).natAbs =
-        ∑ k ∈ Finset.univ.erase j₀, (σ.1 k 0).natAbs :=
-      Finset.sum_congr rfl fun k hk ↦ by rw [h_oth k (Finset.mem_erase.mp hk).1]
-    rw [h_rest, h_new]; linarith [Nat.lt_of_lt_of_le h_rem (Nat.le_of_lt hge)]
+  · exact ⟨i₀, j₀, hij₀, _, col0_euclidean_step_aux σ i₀ j₀ hij₀ hj₀ hge⟩
+  · push Not at hge
+    exact ⟨j₀, i₀, hij₀.symm, _,
+      col0_euclidean_step_aux σ j₀ i₀ hij₀.symm hi₀ hge.le⟩
 
 private lemma col0_reduce {m : ℕ} (σ : Matrix.SpecialLinearGroup (Fin (m+1)) ℤ) :
     ∃ (L : List (Matrix.SpecialLinearGroup (Fin (m+1)) ℤ)),
@@ -168,9 +129,9 @@ private lemma col0_reduce {m : ℕ} (σ : Matrix.SpecialLinearGroup (Fin (m+1)) 
   intro τ hk
   by_cases hn : nzCount τ ≤ 1
   · exact ⟨[], fun _ h ↦ absurd h (by simp), by simp; exact hn⟩
-  · push_neg at hn
+  · push Not at hn
     obtain ⟨i, j, hij, c, hlt⟩ := col0_euclidean_step τ hn
-    set τ' := slTransvecG i j hij c * τ with hτ'_def
+    set τ' := slTransvecG i j hij c * τ
     have hlt' : col0Sum τ' < k := Nat.lt_of_lt_of_le hlt hk
     obtain ⟨L, hL, hL_nz⟩ := ihk (col0Sum τ') hlt' τ' le_rfl
     exact ⟨L ++ [slTransvecG i j hij c], fun E hE ↦ by
@@ -227,9 +188,7 @@ private lemma blockLift_col0 {m : ℕ} (i j : Fin m) (hij : i ≠ j) (c : ℤ)
 private lemma det_lowerRight {m : ℕ} (τ : Matrix.SpecialLinearGroup (Fin (m + 1)) ℤ)
     (h00 : τ.1 0 0 = 1) (h0j : ∀ j : Fin (m + 1), j ≠ 0 → τ.1 0 j = 0) :
     (Matrix.of fun (i : Fin m) (j : Fin m) ↦ τ.1 i.succ j.succ).det = 1 := by
-  suffices h : (τ.1.submatrix Fin.succ Fin.succ).det = 1 by
-    rwa [show (Matrix.of fun i j ↦ τ.1 i.succ j.succ) = τ.1.submatrix Fin.succ Fin.succ from
-      by ext i j; rfl]
+  change (τ.1.submatrix Fin.succ Fin.succ).det = 1
   have hdet : τ.1.det = 1 := τ.2
   rw [Matrix.det_succ_row_zero, Finset.sum_eq_single (0 : Fin (m + 1))
     (fun j _ hj ↦ by simp [h0j j hj])
@@ -268,7 +227,7 @@ private lemma row0Sum_eq_zero_imp_cleared {m : ℕ} (σ : Matrix.SpecialLinearGr
     Finset.single_le_sum
       (f := fun (j : Fin (m + 1)) ↦ if (j : ℕ) = 0 then 0 else (σ.1 0 j).natAbs)
       (fun _ _ ↦ Nat.zero_le _) (Finset.mem_univ j)
-  simp only [hzero, show ¬(j : ℕ) = 0 from fun h₀ ↦ hj (Fin.ext h₀), ↓reduceIte] at h_le
+  simp only [hzero, Fin.val_eq_zero_iff.not.mpr hj, ↓reduceIte] at h_le
   exact Int.natAbs_eq_zero.mp (Nat.eq_zero_of_le_zero h_le)
 
 private lemma row0_clear_step {m : ℕ} (σ : Matrix.SpecialLinearGroup (Fin (m+1)) ℤ)
@@ -278,20 +237,19 @@ private lemma row0_clear_step {m : ℕ} (σ : Matrix.SpecialLinearGroup (Fin (m+
   haveI : NeZero (m + 1) := ⟨Nat.succ_ne_zero m⟩
   have ⟨j₀, hj₀_nz⟩ : ∃ j : Fin (m + 1),
       (if (j : ℕ) = 0 then 0 else (σ.1 0 j).natAbs) ≠ 0 := by
-    by_contra h; push_neg at h
+    by_contra h; push Not at h
     exact hzero (Finset.sum_eq_zero (fun j _ ↦ h j))
   have hj₀ : j₀ ≠ 0 := fun h ↦ by subst h; simp at hj₀_nz
-  have hj₀_entry : σ.1 0 j₀ ≠ 0 := fun h ↦ by
-    simp [h, show ¬(j₀ : ℕ) = 0 from fun h₀ ↦ hj₀ (Fin.ext h₀)] at hj₀_nz
-  set E := slTransvecG (0 : Fin (m+1)) j₀ (Ne.symm hj₀) (-σ.1 0 j₀) with hE_def
-  refine ⟨E, ⟨0, j₀, Ne.symm hj₀, _, rfl⟩, ?_, ?_, ?_⟩
-  · rw [hE_def, slTransvecG_mul_right_entry]; simp [hj₀.symm, hσ00]
-  · intro i hi
-    rw [hE_def, slTransvecG_mul_right_entry]; simp [hj₀.symm, hσi0 i hi]
+  have hj₀_val : (j₀ : ℕ) ≠ 0 := Fin.val_eq_zero_iff.not.mpr hj₀
+  have hj₀_entry : σ.1 0 j₀ ≠ 0 := fun h ↦ by simp [h, hj₀_val] at hj₀_nz
+  set E := slTransvecG (0 : Fin (m+1)) j₀ hj₀.symm (-σ.1 0 j₀)
+  refine ⟨E, ⟨0, j₀, hj₀.symm, _, rfl⟩, ?_, ?_, ?_⟩
+  · rw [slTransvecG_mul_right_entry]; simp [hj₀.symm, hσ00]
+  · intro i hi; rw [slTransvecG_mul_right_entry]; simp [hj₀.symm, hσi0 i hi]
   · have hclear : (σ * E).1 0 j₀ = 0 := by
-      rw [hE_def, slTransvecG_mul_right_entry]; simp [hσ00]
+      rw [slTransvecG_mul_right_entry]; simp [hσ00]
     have hother : ∀ k, k ≠ j₀ → (σ * E).1 0 k = σ.1 0 k := fun k hk ↦ by
-      rw [hE_def, slTransvecG_mul_right_entry]; simp [hk]
+      rw [slTransvecG_mul_right_entry]; simp [hk]
     simp only [row0Sum]
     rw [← Finset.add_sum_erase _ _ (Finset.mem_univ j₀),
         ← Finset.add_sum_erase _ _ (Finset.mem_univ j₀)]
@@ -301,7 +259,7 @@ private lemma row0_clear_step {m : ℕ} (σ : Matrix.SpecialLinearGroup (Fin (m+
       Finset.sum_congr rfl fun k hk ↦ by
         by_cases h0 : (k : ℕ) = 0 <;> simp [h0, hother k (Finset.mem_erase.mp hk).1]
     rw [h_rest, hclear, show (if (j₀ : ℕ) = 0 then 0 else (0 : ℤ).natAbs) = 0 from by simp]
-    simp only [show ¬(j₀ : ℕ) = 0 from fun h₀ ↦ hj₀ (Fin.ext h₀), ↓reduceIte, zero_add]
+    simp only [hj₀_val, ↓reduceIte, zero_add]
     omega
 
 private lemma row0_clear {m : ℕ} (τ : Matrix.SpecialLinearGroup (Fin (m+1)) ℤ)
@@ -329,7 +287,8 @@ private lemma row0_clear {m : ℕ} (τ : Matrix.SpecialLinearGroup (Fin (m+1)) �
   · obtain ⟨E, hE_tv, hσ'00, hσ'i0, hlt⟩ := row0_clear_step σ hσ00 hσi0 hzero
     obtain ⟨L', hL'_tv, hL'_00, hL'_0j, hL'_i0⟩ :=
       ihk (row0Sum (σ * E)) (by omega) (σ * E) hσ'00 hσ'i0 le_rfl
-    refine ⟨E :: L', fun F hF ↦ (List.mem_cons.mp hF).elim (· ▸ hE_tv) (hL'_tv F), ?_, ?_, ?_⟩
+    refine ⟨E :: L',
+      fun F hF ↦ (List.mem_cons.mp hF).elim (· ▸ hE_tv) (hL'_tv F), ?_, ?_, ?_⟩
     · simpa only [List.prod_cons, ← mul_assoc] using hL'_00
     · intro j hj; simpa only [List.prod_cons, ← mul_assoc] using hL'_0j j hj
     · intro i hi; simpa only [List.prod_cons, ← mul_assoc] using hL'_i0 i hi
@@ -339,31 +298,26 @@ private lemma nzCount_le_one_unique_nonzero {m : ℕ}
     (i₀ : Fin (m+1)) (hi₀ : τ.1 i₀ 0 ≠ 0) (h_nz : nzCount τ ≤ 1) :
     ∀ k, k ≠ i₀ → τ.1 k 0 = 0 := by
   intro k hk; by_contra hne
-  have : 2 ≤ nzCount τ := by
-    simp only [nzCount]
-    calc 2 = ({i₀, k} : Finset _).card := (Finset.card_pair hk.symm).symm
-      _ ≤ (Finset.univ.filter fun i ↦ τ.1 i 0 ≠ 0).card :=
-          Finset.card_le_card fun x hx ↦ by
-            simp only [Finset.mem_insert, Finset.mem_singleton] at hx
-            simp only [Finset.mem_filter, Finset.mem_univ, true_and]
-            exact hx.elim (· ▸ hi₀) (· ▸ hne)
-  linarith
+  have h2 : 2 ≤ nzCount τ := calc
+    2 = ({i₀, k} : Finset _).card := (Finset.card_pair hk.symm).symm
+    _ ≤ nzCount τ := Finset.card_le_card fun x hx ↦ by
+      simp only [Finset.mem_insert, Finset.mem_singleton] at hx
+      simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+      exact hx.elim (· ▸ hi₀) (· ▸ hne)
+  omega
 
 private lemma sole_nonzero_col0_is_unit {m : ℕ} (τ : Matrix.SpecialLinearGroup (Fin (m+1)) ℤ)
     (i₀ : Fin (m+1)) (h_others : ∀ k, k ≠ i₀ → τ.1 k 0 = 0) :
     τ.1 i₀ 0 = 1 ∨ τ.1 i₀ 0 = -1 := by
-  set M := τ.1 with hM_def
+  set M := τ.1
   have hdet : M.det = 1 := τ.2
   rw [← Int.isUnit_iff]; apply isUnit_of_dvd_one; rw [← hdet, Matrix.det_apply]
   apply Finset.dvd_sum; intro σ _
   show M i₀ 0 ∣ (↑(Equiv.Perm.sign σ) : ℤ) * ∏ i, M (σ i) i
-  have hp : ∏ i : Fin (m + 1), M (σ i) i =
-      M (σ 0) 0 * ∏ i : Fin m, M (σ i.succ) i.succ := Fin.prod_univ_succ _
+  rw [Fin.prod_univ_succ]
   by_cases hσ : σ 0 = i₀
-  · rw [hp, hσ, ← mul_assoc]
-    exact dvd_mul_of_dvd_left (dvd_mul_left _ _) _
-  · rw [hp, show M (σ 0) 0 = 0 from h_others (σ 0) hσ, zero_mul, mul_zero]
-    exact dvd_zero _
+  · rw [hσ, ← mul_assoc]; exact dvd_mul_of_dvd_left (dvd_mul_left _ _) _
+  · rw [h_others (σ 0) hσ, zero_mul, mul_zero]; exact dvd_zero _
 
 private lemma block_form_transvec_lift {m : ℕ} (M : Matrix.SpecialLinearGroup (Fin (m+1)) ℤ)
     (H00 : M.1 0 0 = 1) (H0j : ∀ j, j ≠ 0 → M.1 0 j = 0)
@@ -422,31 +376,20 @@ private lemma column_pivot_of_neg_one_at_zero {m' : ℕ}
   have h10 : (1 : Fin (m' + 2)) ≠ 0 := by simp
   have h01 : (0 : Fin (m' + 2)) ≠ 1 := h10.symm
   set σ₁ := slTransvecG (1 : Fin (m' + 2)) 0 h10 1 * τ
-  have hσ₁_00 : σ₁.1 0 0 = -1 := by
-    rw [show σ₁.1 0 0 = (slTransvecG 1 0 h10 1 * τ).1 0 0 from rfl,
-      slTransvecG_mul_entry]; simp [h01, h_neg1]
+  have hσ₁_00 : σ₁.1 0 0 = -1 := by rw [slTransvecG_mul_entry]; simp [h01, h_neg1]
   have hσ₁_10 : σ₁.1 1 0 = -1 := by
-    rw [show σ₁.1 1 0 = (slTransvecG 1 0 h10 1 * τ).1 1 0 from rfl,
-      slTransvecG_mul_entry]; simp [h_neg1, h_others 1 h10]
+    rw [slTransvecG_mul_entry]; simp [h_neg1, h_others 1 h10]
   have hσ₁_i0 : ∀ i, i ≠ 0 → i ≠ 1 → σ₁.1 i 0 = 0 := fun i hi0 hi1 ↦ by
-    rw [show σ₁.1 i 0 = (slTransvecG 1 0 h10 1 * τ).1 i 0 from rfl,
-      slTransvecG_mul_entry]; simp [hi1, h_others i hi0]
+    rw [slTransvecG_mul_entry]; simp [hi1, h_others i hi0]
   set σ₂ := slTransvecG (0 : Fin (m' + 2)) 1 h01 (-2) * σ₁
-  have hσ₂_00 : σ₂.1 0 0 = 1 := by
-    rw [show σ₂.1 0 0 = (slTransvecG 0 1 h01 (-2) * σ₁).1 0 0 from rfl,
-      slTransvecG_mul_entry]; simp [hσ₁_00, hσ₁_10]
-  have hσ₂_10 : σ₂.1 1 0 = -1 := by
-    rw [show σ₂.1 1 0 = (slTransvecG 0 1 h01 (-2) * σ₁).1 1 0 from rfl,
-      slTransvecG_mul_entry]; simp [h10, hσ₁_10]
+  have hσ₂_00 : σ₂.1 0 0 = 1 := by rw [slTransvecG_mul_entry]; simp [hσ₁_00, hσ₁_10]
+  have hσ₂_10 : σ₂.1 1 0 = -1 := by rw [slTransvecG_mul_entry]; simp [h10, hσ₁_10]
   have hσ₂_i0 : ∀ i, i ≠ 0 → i ≠ 1 → σ₂.1 i 0 = 0 := fun i hi0 hi1 ↦ by
-    rw [show σ₂.1 i 0 = (slTransvecG 0 1 h01 (-2) * σ₁).1 i 0 from rfl,
-      slTransvecG_mul_entry]; simp [hi0, hσ₁_i0 i hi0 hi1]
+    rw [slTransvecG_mul_entry]; simp [hi0, hσ₁_i0 i hi0 hi1]
   set σ₃ := slTransvecG (1 : Fin (m' + 2)) 0 h10 1 * σ₂
-  have hσ₃_00 : σ₃.1 0 0 = 1 := by
-    rw [show σ₃.1 0 0 = (slTransvecG 1 0 h10 1 * σ₂).1 0 0 from rfl,
-      slTransvecG_mul_entry]; simp [h01, hσ₂_00]
+  have hσ₃_00 : σ₃.1 0 0 = 1 := by rw [slTransvecG_mul_entry]; simp [h01, hσ₂_00]
   have hσ₃_i0 : ∀ i, i ≠ 0 → σ₃.1 i 0 = 0 := fun i hi ↦ by
-    rw [show σ₃.1 i 0 = (slTransvecG 1 0 h10 1 * σ₂).1 i 0 from rfl, slTransvecG_mul_entry]
+    rw [slTransvecG_mul_entry]
     rcases eq_or_ne i 1 with rfl | hi1
     · simp [hσ₂_00, hσ₂_10]
     · simp [hi1, hσ₂_i0 i hi hi1]
@@ -472,20 +415,15 @@ private lemma column_pivot_of_unit_off_diagonal {m : ℕ} [NeZero (m + 1)]
   have hv2 : v * v = 1 := by rcases h_unit with h | h <;> simp [v, h]
   set σ₁ := slTransvecG (0 : Fin (m+1)) i₀ hi₀0 v * τ
   have hσ₁_00 : σ₁.1 0 0 = 1 := by
-    rw [show σ₁.1 0 0 = (slTransvecG 0 i₀ hi₀0 v * τ).1 0 0 from rfl,
-      slTransvecG_mul_entry]; simp [h_others 0 hi₀0, ← hv_def, hv2]
+    rw [slTransvecG_mul_entry]; simp [h_others 0 hi₀0, ← hv_def, hv2]
   have hσ₁_i₀0 : σ₁.1 i₀ 0 = v := by
-    rw [show σ₁.1 i₀ 0 = (slTransvecG 0 i₀ hi₀0 v * τ).1 i₀ 0 from rfl,
-      slTransvecG_mul_entry]; simp [hi₀_zero, ← hv_def]
+    rw [slTransvecG_mul_entry]; simp [hi₀_zero, ← hv_def]
   have hσ₁_other : ∀ k, k ≠ 0 → k ≠ i₀ → σ₁.1 k 0 = 0 := fun k hk0 hki₀ ↦ by
-    rw [show σ₁.1 k 0 = (slTransvecG 0 i₀ hi₀0 v * τ).1 k 0 from rfl,
-      slTransvecG_mul_entry]; simp [hk0, h_others k hki₀]
+    rw [slTransvecG_mul_entry]; simp [hk0, h_others k hki₀]
   set σ₂ := slTransvecG i₀ (0 : Fin (m+1)) hi₀_zero (-v) * σ₁
-  have hσ₂_00 : σ₂.1 0 0 = 1 := by
-    rw [show σ₂.1 0 0 = (slTransvecG i₀ 0 hi₀_zero (-v) * σ₁).1 0 0 from rfl,
-      slTransvecG_mul_entry]; simp [hi₀0, hσ₁_00]
+  have hσ₂_00 : σ₂.1 0 0 = 1 := by rw [slTransvecG_mul_entry]; simp [hi₀0, hσ₁_00]
   have hσ₂_i0 : ∀ i, i ≠ 0 → σ₂.1 i 0 = 0 := fun i hi ↦ by
-    rw [show σ₂.1 i 0 = (slTransvecG i₀ 0 hi₀_zero (-v) * σ₁).1 i 0 from rfl, slTransvecG_mul_entry]
+    rw [slTransvecG_mul_entry]
     rcases eq_or_ne i i₀ with rfl | hne
     · simp [hσ₁_i₀0, hσ₁_00, add_neg_cancel]
     · simp [hne, hσ₁_other i hi hne]
@@ -514,9 +452,7 @@ private lemma to_block_form {m : ℕ} (τ : Matrix.SpecialLinearGroup (Fin (m+1)
     obtain ⟨L₁, hL₁, h₁_00, h₁_i0⟩ := h_col
     obtain ⟨L₂, hL₂, h₂_00, h₂_0j, h₂_i0⟩ :=
       row0_clear (L₁.prod * τ) h₁_00 h₁_i0
-    exact ⟨L₁, L₂, hL₁, hL₂, h₂_00,
-      fun j hj ↦ h₂_0j j hj,
-      fun i hi ↦ h₂_i0 i hi⟩
+    exact ⟨L₁, L₂, hL₁, hL₂, h₂_00, h₂_0j, h₂_i0⟩
   by_cases hi₀_zero : i₀ = 0
   · subst hi₀_zero
     rcases h_unit with h1 | h_neg1
@@ -538,8 +474,8 @@ theorem SLnZ_transvec_gen (m : ℕ) (σ : Matrix.SpecialLinearGroup (Fin m) ℤ)
     apply Subtype.ext; ext i; exact i.elim0
   | succ m ih =>
     obtain ⟨L_col, hL_col, h_nz⟩ := col0_reduce σ
-    set τ := L_col.prod * σ with hτ_def
-    have hσ_eq : σ = L_col.prod⁻¹ * τ := by rw [hτ_def]; simp
+    set τ := L_col.prod * σ
+    have hσ_eq : σ = L_col.prod⁻¹ * τ := by simp [τ]
     obtain ⟨L_inv, hL_inv_tv, hL_inv_eq⟩ := transvec_list_inv L_col hL_col
     obtain ⟨i₀, hi₀⟩ := col0_ne_zero τ
     have h_others := nzCount_le_one_unique_nonzero τ i₀ hi₀ h_nz
