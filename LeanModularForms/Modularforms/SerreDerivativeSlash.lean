@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2026 Chris Birkbeck. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Chris Birkbeck
+-/
 module
 
 public import LeanModularForms.Modularforms.Derivative
@@ -33,8 +38,6 @@ open scoped ModularForm MatrixGroups Manifold Interval Real NNReal ENNReal Topol
 
 noncomputable section
 
-/-! ## Helper lemmas for derivative of anomaly function D₂ -/
-
 /-- The D-derivative of the anomaly function D₂.
     D₂ γ z = 2πi · (γ₁₀ / denom γ z), so
     D(D₂ γ) = (2πi)⁻¹ · d/dz[2πi · c / denom] = -c² / denom² -/
@@ -51,18 +54,11 @@ lemma D_D₂ (γ : SL(2, ℤ)) (z : ℍ) :
       deriv_denom_zpow γ 1 z]
   simp only [Int.reduceNeg, Int.reduceSub, zpow_neg_one]; field_simp; ring
 
-/-! ## MDifferentiable infrastructure for D₂ -/
-
 /-- D₂ γ is MDifferentiable: it's a constant divided by a linear polynomial. -/
 lemma MDifferentiable_D₂ (γ : SL(2, ℤ)) : MDiff (D₂ γ) := fun z ↦ by
   have heq : D₂ γ = (fun w ↦ (2 * π * I * (γ 1 0 : ℂ)) / denom γ w) ∘ (↑) := by ext; rfl
   rw [heq]; exact DifferentiableAt_MDifferentiableAt <|
     .div (differentiableAt_const _) (differentiableAt_denom γ z) (denom_ne_zero γ z)
-
-/-! ## Slash invariance of serre_D 1 E₂
-
-This is the hard part: E₂ is NOT modular, so we cannot use `serre_D_slash_invariant`.
-We must prove directly that the non-modular terms cancel. -/
 
 /-- The Serre derivative of E₂ is weight-4 slash-invariant.
 This requires explicit computation since E₂ is not modular.
