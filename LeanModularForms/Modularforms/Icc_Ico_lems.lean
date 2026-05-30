@@ -31,7 +31,8 @@ lemma Icc_succ (n : ℕ) : Finset.Icc (-(n + 1) : ℤ) (n + 1) = Finset.Icc (-n 
   simp
   omega
 
-lemma trex (f : ℤ → ℂ) (N : ℕ) (hn : 1 ≤ N) : ∑ m ∈ Finset.Icc (-N : ℤ) N, f m =
+lemma Icc_sum_split_endpoints (f : ℤ → ℂ) (N : ℕ) (hn : 1 ≤ N) :
+    ∑ m ∈ Finset.Icc (-N : ℤ) N, f m =
     f N + f (-N : ℤ) + ∑ m ∈ Finset.Icc (-(N - 1) : ℤ) (N - 1), f m := by
   induction N with
   | zero => omega
@@ -65,11 +66,11 @@ lemma Icc_sum_even (f : ℤ → ℂ) (hf : ∀ n, f n = f (-n)) (N : ℕ) :
     · omega
     · simp [Finset.disjoint_insert_right, Finset.disjoint_singleton_right, Finset.mem_Icc]
 
-lemma verga2 : Tendsto (fun N : ℕ ↦ Finset.Icc (-N : ℤ) N) atTop atTop :=
+lemma tendsto_Icc_symm_atTop : Tendsto (fun N : ℕ ↦ Finset.Icc (-N : ℤ) N) atTop atTop :=
   tendsto_atTop_finset_of_monotone (fun _ _ _ ↦ Finset.Icc_subset_Icc (by gcongr) (by gcongr))
   (fun x ↦ ⟨x.natAbs, by simp [le_abs, neg_le]⟩)
 
-lemma verga : Tendsto (fun N : ℕ ↦ Finset.Ico (-N : ℤ) N) atTop atTop := by
+lemma tendsto_Ico_symm_atTop : Tendsto (fun N : ℕ ↦ Finset.Ico (-N : ℤ) N) atTop atTop := by
   apply tendsto_atTop_finset_of_monotone (fun _ _ _ ↦ Finset.Ico_subset_Ico (by omega) (by gcongr))
   intro x
   refine ⟨x.natAbs + 1, ?_⟩
@@ -79,7 +80,7 @@ lemma verga : Tendsto (fun N : ℕ ↦ Finset.Ico (-N : ℤ) N) atTop atTop := b
   have := neg_abs_le x
   omega
 
-lemma fsb (b : ℕ) : Finset.Ico (-(b+1) : ℤ) (b+1) = Finset.Ico (-(b : ℤ)) (b) ∪
+lemma Ico_succ_neg_split (b : ℕ) : Finset.Ico (-(b+1) : ℤ) (b+1) = Finset.Ico (-(b : ℤ)) (b) ∪
     {-((b+1) : ℤ), (b : ℤ)} := by
   ext n
   simp
