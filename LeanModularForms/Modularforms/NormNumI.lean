@@ -9,6 +9,17 @@ public import Mathlib.Data.Complex.Basic
 
 @[expose] public section
 
+/-!
+# `norm_numI`: a `norm_num`-style extension for complex numerals
+
+This file implements a `norm_num` extension and a `conv`-mode tactic `norm_numI`
+that reduce closed complex expressions built from `0`, `1`, `I`, scientific
+literals, `+`, `-`, `*`, `⁻¹`, `/`, conjugation, and natural-number powers to
+their normal form `⟨a, b⟩` with `a, b : ℝ`. The companion `norm_num` extensions
+decide equalities `(z : ℂ) = (w : ℂ)` and reduce `Complex.re z` / `Complex.im z`
+to the same normal form.
+-/
+
 open Lean Meta Elab Qq Tactic Complex Mathlib.Tactic
 open ComplexConjugate
 
@@ -23,9 +34,7 @@ theorem split_one : (1 : ℂ) = ⟨1, 0⟩ := rfl
 
 theorem split_add {z₁ z₂ : ℂ} {a₁ a₂ b₁ b₂ : ℝ}
     (h₁ : z₁ = ⟨a₁, b₁⟩) (h₂ : z₂ = ⟨a₂, b₂⟩) :
-    z₁ + z₂ = ⟨(a₁ + a₂), (b₁ + b₂)⟩ := by
-  substs h₁ h₂
-  rfl
+    z₁ + z₂ = ⟨(a₁ + a₂), (b₁ + b₂)⟩ := h₁ ▸ h₂ ▸ rfl
 
 theorem split_mul {z₁ z₂ : ℂ} {a₁ a₂ b₁ b₂ : ℝ} (h₁ : z₁ = ⟨a₁, b₁⟩) (h₂ : z₂ = ⟨a₂, b₂⟩) :
     z₁ * z₂ = ⟨(a₁ * a₂ - b₁ * b₂), (a₁ * b₂ + b₁ * a₂)⟩ :=
@@ -38,14 +47,10 @@ theorem split_inv {z : ℂ} {x y : ℝ} (h : z = ⟨x, y⟩) :
   exact Complex.ext (by simp [normSq_apply]; rfl) (by simp [normSq_apply, neg_div]; rfl)
 
 theorem split_neg {z : ℂ} {a b : ℝ} (h : z = ⟨a, b⟩) :
-    -z = ⟨-a, -b⟩ := by
-  subst h
-  rfl
+    -z = ⟨-a, -b⟩ := h ▸ rfl
 
 theorem split_conj {w : ℂ} {a b : ℝ} (hw : w = ⟨a, b⟩) :
-    conj w = ⟨a, -b⟩ := by
-  rw [hw]
-  rfl
+    conj w = ⟨a, -b⟩ := hw ▸ rfl
 
 theorem split_num (n : ℕ) [n.AtLeastTwo] :
     OfNat.ofNat (α := ℂ) n = ⟨OfNat.ofNat n, 0⟩ := rfl
@@ -55,8 +60,7 @@ theorem split_scientific (m exp : ℕ) (x : Bool) :
   rfl
 
 theorem eq_eq {z : ℂ} {a b a' b' : ℝ} (pf : z = ⟨a, b⟩)
-  (pf_a : a = a') (pf_b : b = b') :
-  z = ⟨a', b'⟩ := by simp_all
+    (pf_a : a = a') (pf_b : b = b') : z = ⟨a', b'⟩ := by simp_all
 
 theorem eq_of_eq_of_eq_of_eq {z w : ℂ} {az bz aw bw : ℝ} (hz : z = ⟨az, bz⟩) (hw : w = ⟨aw, bw⟩)
     (ha : az = aw) (hb : bz = bw) : z = w := by
@@ -123,9 +127,6 @@ meta partial def parse (z : Q(ℂ)) :
       return ⟨q(OfNat.ofNat $n), q(0), (q(split_num $n):)⟩
   | ~q(OfScientific.ofScientific $m $x $exp) =>
     return ⟨q(OfScientific.ofScientific $m $x $exp), q(0), q(split_scientific _ _ _)⟩
-  -- /- parse a constructor type -/
-  -- |~q(Complex.mk $a $b) =>
-  -- pure ⟨a, b, q(rfl)⟩
   | _ => throwError "found the atom {z} which is not a numeral"
 
 meta def normalize (z : Q(ℂ)) : MetaM (Σ a b : Q(ℝ), Q($z = ⟨$a, $b⟩)) := do
@@ -152,6 +153,7 @@ elab "norm_numI_parse" : conv => do
   Conv.applySimpResult { expr := q(Complex.mk $a $b), proof? := some pf }
 
 end NormNumI
+
 namespace NormNum
 
 /-- The `norm_num` extension which identifies expressions of the form `(z : ℂ) = (w : ℂ)`,
