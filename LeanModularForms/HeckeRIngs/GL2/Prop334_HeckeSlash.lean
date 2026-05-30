@@ -56,11 +56,10 @@ theorem heckeSlash_gen_invariant_Gamma1_of_slash_comm
   obtain ⟨σ, hσ_Gamma1, rfl⟩ := Subgroup.mem_map.mp hγ
   have hσ_Gamma0 : σ ∈ Gamma0 N := Gamma1_le_Gamma0 N hσ_Gamma1
   have h_units : Gamma0MapUnits (⟨σ, hσ_Gamma0⟩ : ↥(Gamma0 N)) = 1 := by
-    have h := (Gamma1_mem N σ).mp hσ_Gamma1
     ext
     simp only [Gamma0MapUnits_val, Gamma0Map, MonoidHom.coe_mk, OneHom.coe_mk,
       Units.val_one]
-    exact h.2.1
+    exact ((Gamma1_mem N σ).mp hσ_Gamma1).2.1
   have hc := hComm ⟨σ, hσ_Gamma0⟩
   rw [h_units, map_one, Units.val_one, one_smul] at hc
   exact hc
@@ -171,46 +170,34 @@ theorem heckeSlash_gen_mem_modFormCharSpace_of_slash_comm
   rw [heckeSlash_gen_asModularForm_of_slash_comm_coe]
   exact hComm g
 
-private lemma slash_mapGL_eq_of_H_invariant {k : ℤ}
-    (f : ℍ → ℂ)
-    (hf : ∀ h, h ∈ (Gamma0_pair N).H → f ∣[k] (glMap h) = f)
-    (g : ↥(Gamma0 N)) :
-    f ∣[k] mapGL ℝ (g : SL(2, ℤ)) = f := by
-  have hmem : (mapGL ℚ (g : SL(2, ℤ)) : GL (Fin 2) ℚ) ∈ (Gamma0_pair N).H :=
-    Subgroup.mem_map.mpr ⟨g, g.property, rfl⟩
-  have hgl : glMap (mapGL ℚ (g : SL(2, ℤ))) =
-      (mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) g := by
-    apply Units.ext; ext i j
-    simp only [glMap, GeneralLinearGroup.map]
-    exact (IsScalarTower.algebraMap_apply ℤ ℚ ℝ ((g : SL(2, ℤ)).val i j)).symm
-  have := hf _ hmem
-  rw [hgl] at this
-  exact this
+/-- `mapGL ℚ (g : SL(2, ℤ))` lies in `(Gamma0_pair N).H` for every `g ∈ Gamma0 N`. -/
+private lemma mapGL_Q_mem_H (g : ↥(Gamma0 N)) :
+    (mapGL ℚ (g : SL(2, ℤ)) : GL (Fin 2) ℚ) ∈ (Gamma0_pair N).H :=
+  Subgroup.mem_map.mpr ⟨g, g.property, rfl⟩
+
+/-- Compatibility of `glMap ∘ mapGL ℚ` with `mapGL ℝ` on `SL(2, ℤ)` elements. -/
+private lemma glMap_mapGL_Q_eq_mapGL_R (g : ↥(Gamma0 N)) :
+    glMap (mapGL ℚ (g : SL(2, ℤ))) = (mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) g := by
+  apply Units.ext; ext i j
+  simp only [glMap, GeneralLinearGroup.map]
+  exact (IsScalarTower.algebraMap_apply ℤ ℚ ℝ ((g : SL(2, ℤ)).val i j)).symm
 
 /-- For the trivial character `χ = 1`, the functional χ-equivariance of
 `heckeSlash_gen (Gamma0_pair N) k D` on `⇑f` follows directly from
 `heckeSlash_gen_slash_invariant` for any Γ₀(N)-invariant function. -/
 theorem heckeSlash_gen_slash_comm_one
-    (k : ℤ) (D : HeckeCoset (Gamma0_pair N))
-    (f : ℍ → ℂ)
+    (k : ℤ) (D : HeckeCoset (Gamma0_pair N)) (f : ℍ → ℂ)
     (hf : ∀ h, h ∈ (Gamma0_pair N).H → f ∣[k] (glMap h) = f)
     (g : ↥(Gamma0 N)) :
     (heckeSlash_gen (Gamma0_pair N) k D f) ∣[k] mapGL ℝ (g : SL(2, ℤ)) =
       (↑((1 : (ZMod N)ˣ →* ℂˣ) (Gamma0MapUnits g)) : ℂ) •
         heckeSlash_gen (Gamma0_pair N) k D f := by
-  have hmem : (mapGL ℚ (g : SL(2, ℤ)) : GL (Fin 2) ℚ) ∈ (Gamma0_pair N).H :=
-    Subgroup.mem_map.mpr ⟨g, g.property, rfl⟩
-  have hgl : glMap (mapGL ℚ (g : SL(2, ℤ))) =
-      (mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) g := by
-    apply Units.ext; ext i j
-    simp only [glMap, GeneralLinearGroup.map]
-    exact (IsScalarTower.algebraMap_apply ℤ ℚ ℝ ((g : SL(2, ℤ)).val i j)).symm
   have hinv := heckeSlash_gen_slash_invariant (P := Gamma0_pair N) k D f hf
-    (mapGL ℚ (g : SL(2, ℤ))) hmem
+    (mapGL ℚ (g : SL(2, ℤ))) (mapGL_Q_mem_H g)
   simp only [MonoidHom.one_apply, Units.val_one, one_smul]
   change (heckeSlash_gen (Gamma0_pair N) k D f) ∣[k]
     (mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) g = _
-  rw [← hgl]
+  rw [← glMap_mapGL_Q_eq_mapGL_R]
   exact hinv
 
 end HeckeRing.GL2
