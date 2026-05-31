@@ -174,38 +174,6 @@ private theorem mapGL_gamma0_mul_ds_family_eq_T_p_lower_mul_mapGL_factor
     exact mapGL_gamma0_mul_T_p_upper_eq_T_p_lower_mul_mapGL_delta N p hp hpN b.val
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-private theorem gamma0_smul_ds_family_eq_T_p_lower_smul_gamma_X
-    (p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N)
-    (i : Option (Fin p)) (D : Set ℍ) :
-    ((mapGL ℝ : SL(2, ℤ) →* _)
-        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) : GL (Fin 2) ℝ) •
-      ((match i with
-        | none => (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ)
-        | some b => (glMap (T_p_upper p hp b.val) : GL (Fin 2) ℝ)) • D) =
-    (glMap (T_p_lower p hp) : GL (Fin 2) ℝ) •
-      (((mapGL ℝ : SL(2, ℤ) →* _)
-        (ds_p_plus_one_family_Gamma1_factor N p hpN i) : GL (Fin 2) ℝ) • D) := by
-  rw [← mul_smul, ← mul_smul,
-    mapGL_gamma0_mul_ds_family_eq_T_p_lower_mul_mapGL_factor N p hp hpN i]
-
-open UpperHalfPlane ModularGroup MeasureTheory in
-private theorem gamma0_smul_Hecke_FD_eq_T_p_lower_smul_iUnion
-    (p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) (D : Set ℍ) :
-    ((mapGL ℝ : SL(2, ℤ) →* _)
-        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) : GL (Fin 2) ℝ) •
-      (⋃ i : Option (Fin p),
-        (match i with
-          | none => (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ)
-          | some b => (glMap (T_p_upper p hp b.val) : GL (Fin 2) ℝ)) • D) =
-    (glMap (T_p_lower p hp) : GL (Fin 2) ℝ) •
-      (⋃ i : Option (Fin p),
-        ((mapGL ℝ : SL(2, ℤ) →* _)
-          (ds_p_plus_one_family_Gamma1_factor N p hpN i) : GL (Fin 2) ℝ) • D) := by
-  rw [Set.smul_set_iUnion, Set.smul_set_iUnion]
-  refine Set.iUnion_congr fun i ↦ ?_
-  exact gamma0_smul_ds_family_eq_T_p_lower_smul_gamma_X (N := N) p hp hpN i D
-
-open UpperHalfPlane ModularGroup MeasureTheory in
 private lemma UpperHalfPlane_smul_eq_of_matrix_smul_eq
     (α β : GL (Fin 2) ℝ) (hα : 0 < α.det.val) (hβ : 0 < β.det.val)
     (c : ℝ) (hc : c ≠ 0)
