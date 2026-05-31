@@ -871,15 +871,6 @@ lemma Newform.frickeSlashModularForm_apply_apply
       Newform.frickeSquareScalar N k • f :=
   DFunLike.coe_injective <| Newform.slash_frickeMatrix_frickeMatrix _
 
-/-- `LinearMap`-level Fricke square (CuspForm version). -/
-lemma Newform.frickeSlashCuspForm_comp_self {N : ℕ} [NeZero N] {k : ℤ} :
-    (Newform.frickeSlashCuspForm (N := N) (k := k)).comp
-        Newform.frickeSlashCuspForm =
-      Newform.frickeSquareScalar N k • LinearMap.id :=
-  LinearMap.ext fun f ↦ by
-    rw [LinearMap.comp_apply, LinearMap.smul_apply, LinearMap.id_apply]
-    exact Newform.frickeSlashCuspForm_apply_apply f
-
 /-- `LinearMap`-level Fricke square (ModularForm version). -/
 lemma Newform.frickeSlashModularForm_comp_self {N : ℕ} [NeZero N] {k : ℤ} :
     (Newform.frickeSlashModularForm (N := N) (k := k)).comp
