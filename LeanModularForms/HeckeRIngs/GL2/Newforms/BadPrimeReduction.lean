@@ -1144,6 +1144,105 @@ theorem Newform.hasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBExpanded_of_qBSimp
   exact h_simp f g
 
 open UpperHalfPlane MeasureTheory ModularGroup in
+/-- The bad-prime reduction `HasBadPrimeFrickePetNAdjoint ⟹
+HasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBSimplified`, reducing both sides of
+`qBSimplified` to matching `petN`-level expressions. -/
+theorem Newform.hasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBSimplified_of_petNAdjoint
+    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
+    (hp : p.Prime) (hpN : ¬ Nat.Coprime p N)
+    (h_petN : Newform.HasBadPrimeFrickePetNAdjoint N k p) :
+    Newform.HasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBSimplified N k p hp hpN := by
+  intro f g
+  rw [Newform.sum_sum_peterssonInner_shifted_T_p_upper_eq_petN_heckeT_n_cusp hp hpN f g]
+  rw [Finset.sum_congr rfl fun q _ ↦ Finset.sum_congr rfl fun b _ ↦
+    Newform.peterssonInner_lowerOffset_smul_eq_neg_pow_fricke_T_p_upper_slash_qOut_inv
+      hp f g q b]
+  rw [sum_sum_const_mul_eq_const_mul_sum_sum,
+    Finset.sum_congr rfl fun q _ ↦
+      (Newform.peterssonInner_frickeSlash_heckeT_n_cusp_slash_qOut_inv_eq_bsum
+        hp hpN f g q).symm]
+  show petN (heckeT_n_cusp k p f) g =
+    (Newform.frickeSquareScalar N k)⁻¹ *
+      ((-1 : ℂ) ^ k *
+        petN (Newform.frickeSlashCuspForm f)
+          (heckeT_n_cusp k p (Newform.frickeSlashCuspForm g)))
+  exact Newform.petN_heckeT_n_cusp_eq_inv_frickeSquareScalar_neg_pow_petN_frickeSlash
+    f g (h_petN f g)
+
+open UpperHalfPlane MeasureTheory ModularGroup in
+/-- The bad-prime reduction `HasBadPrimeFrickePerCosetT152ShiftedFD ⟹
+HasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBSimplified`, via the aggregate
+b-sum chain and the petN-adjoint bridge. -/
+theorem Newform.hasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBSimplified_of_t152ShiftedFD
+    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
+    (hp : p.Prime) (hpN : ¬ Nat.Coprime p N)
+    (h_shifted :
+      Newform.HasBadPrimeFrickePerCosetT152ShiftedFD N k p hp hpN) :
+    Newform.HasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBSimplified N k p hp hpN :=
+  Newform.hasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBSimplified_of_petNAdjoint hp hpN
+    (Newform.hasBadPrimeFrickePetNAdjoint_of_perCosetAggregate
+      (Newform.hasBadPrimeFrickePerCosetAggregateRes_of_bsum_shiftedFD hp hpN
+        (Newform.hasBadPrimeFrickePerCosetBsumShiftedFD_of_t152ShiftedFD hp hpN h_shifted)))
+
+/-- The bad-prime reduction `HasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBSimplified
+⟹ HasBadPrimeAtkinLehnerDoubleCosetTileBridge`. -/
+theorem Newform.hasBadPrimeAtkinLehnerDoubleCosetTileBridge_of_qBSimplified
+    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
+    (hp : p.Prime) (hpN : ¬ Nat.Coprime p N)
+    (h_simp :
+      Newform.HasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBSimplified N k p hp hpN) :
+    Newform.HasBadPrimeAtkinLehnerDoubleCosetTileBridge N k p hp hpN :=
+  Newform.hasBadPrimeAtkinLehnerDoubleCosetTileBridge_of_qBExpanded hp hpN
+    (Newform.hasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBExpanded_of_qBSimplified
+      hp hpN h_simp)
+
+/-- The bad-prime reduction `HasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBSimplified
+⟹ HasBadPrimePetN_T_p_FrickeAdjoint_Intertwine`. -/
+theorem Newform.hasBadPrimePetN_T_p_FrickeAdjoint_Intertwine_of_qBSimplified
+    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
+    (hp : p.Prime) (hpN : ¬ Nat.Coprime p N)
+    (h_simp :
+      Newform.HasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBSimplified N k p hp hpN) :
+    Newform.HasBadPrimePetN_T_p_FrickeAdjoint_Intertwine N k p hp hpN :=
+  Newform.hasBadPrimePetN_T_p_FrickeAdjoint_Intertwine_of_doubleCosetTileBridge hp hpN
+    (Newform.hasBadPrimeAtkinLehnerDoubleCosetTileBridge_of_qBSimplified hp hpN h_simp)
+
+/-- The bad-prime reduction `HasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBSimplified
+⟹ HasBadPrimeFrickePetNAdjoint`. -/
+theorem Newform.hasBadPrimeFrickePetNAdjoint_of_qBSimplified
+    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
+    (hp : p.Prime) (hpN : ¬ Nat.Coprime p N)
+    (h_simp :
+      Newform.HasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBSimplified N k p hp hpN) :
+    Newform.HasBadPrimeFrickePetNAdjoint N k p :=
+  Newform.hasBadPrimeFrickePetNAdjoint_of_intertwine hp hpN
+    (Newform.hasBadPrimePetN_T_p_FrickeAdjoint_Intertwine_of_qBSimplified hp hpN h_simp)
+
+/-- The bad-prime reduction `HasBadPrimeFrickePerCosetT152ShiftedFD ⟹
+HasBadPrimePetN_T_p_FrickeAdjoint_Intertwine` via the `qBSimplified` route. -/
+theorem Newform.hasBadPrimePetN_T_p_FrickeAdjoint_Intertwine_of_t152ShiftedFD
+    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
+    (hp : p.Prime) (hpN : ¬ Nat.Coprime p N)
+    (h_shifted :
+      Newform.HasBadPrimeFrickePerCosetT152ShiftedFD N k p hp hpN) :
+    Newform.HasBadPrimePetN_T_p_FrickeAdjoint_Intertwine N k p hp hpN :=
+  Newform.hasBadPrimePetN_T_p_FrickeAdjoint_Intertwine_of_qBSimplified hp hpN
+    (Newform.hasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBSimplified_of_t152ShiftedFD
+      hp hpN h_shifted)
+
+/-- The top-level closure `HasBadPrimeFrickePerCosetT152ShiftedFD ⟹
+HasBadPrimeFrickePetNAdjoint` via the `qBSimplified` route. -/
+theorem Newform.hasBadPrimeFrickePetNAdjoint_of_t152ShiftedFD_via_qBSimplified
+    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
+    (hp : p.Prime) (hpN : ¬ Nat.Coprime p N)
+    (h_shifted :
+      Newform.HasBadPrimeFrickePerCosetT152ShiftedFD N k p hp hpN) :
+    Newform.HasBadPrimeFrickePetNAdjoint N k p :=
+  Newform.hasBadPrimeFrickePetNAdjoint_of_qBSimplified hp hpN
+    (Newform.hasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBSimplified_of_t152ShiftedFD
+      hp hpN h_shifted)
+
+open UpperHalfPlane MeasureTheory ModularGroup in
 /-- The domain-swap form of the bad-prime Atkin-Lehner double-coset reindex, with
 the `W_N`/`adj_M_b` slashes absorbed via T145 and scalars cancelled:
 ```
