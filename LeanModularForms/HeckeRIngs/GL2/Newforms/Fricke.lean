@@ -788,16 +788,6 @@ lemma Newform.slash_frickeMatrix_frickeMatrix
   rw [show (N : ℂ) ^ (2 * (k - 1)) * (N : ℂ) ^ (-k) = (N : ℂ) ^ (k - 2) by
     rw [← zpow_add₀ hN_ne]; congr 1; ring]
 
-/-- Operator-level Fricke square (CuspForm version):
-`frickeSlashCuspForm ∘ frickeSlashCuspForm` is scalar multiplication by
-`Newform.frickeSquareScalar N k`. -/
-lemma Newform.frickeSlashCuspForm_apply_apply
-    {N : ℕ} [NeZero N] {k : ℤ}
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    Newform.frickeSlashCuspForm (Newform.frickeSlashCuspForm f) =
-      Newform.frickeSquareScalar N k • f :=
-  DFunLike.coe_injective <| Newform.slash_frickeMatrix_frickeMatrix _
-
 /-- Operator-level Fricke square (ModularForm version). -/
 lemma Newform.frickeSlashModularForm_apply_apply
     {N : ℕ} [NeZero N] {k : ℤ}
