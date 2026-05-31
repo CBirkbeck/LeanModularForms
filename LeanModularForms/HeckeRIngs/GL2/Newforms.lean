@@ -287,38 +287,6 @@ theorem Newform.exists_nonzero_prime_eigenvalue_of_classicalInputs_of_full_diric
     (Newform.analyticContradiction_of_classicalInputs_of_full_dirichletZeroCertificate
       h_fricke h_pos h_stripping h_data) f χ hfχ S
 
-/-- Strong Multiplicity One from the classical Mellin/Fricke inputs
-`HasFrickeTwistAsCuspForm`, `HasEulerStrippingMultiplier`, the Dirichlet-zero
-data block bundled via `Newform.PerNewformFullDirichletData`, and `newform_unique`. -/
-theorem strongMultiplicityOne_of_classicalInputs_of_full_dirichletZeroCertificate_of_newformUnique
-    (h_unique : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
-      f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      (∀ n : ℕ+, Nat.Coprime n.val N → f.eigenvalue n = g.eigenvalue n) →
-      f.toCuspForm = g.toCuspForm)
-    (h_fricke : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k), Newform.HasFrickeTwistAsCuspForm f)
-    (h_pos : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (_f : Newform N k), 0 < (k : ℝ))
-    (h_stripping :
-      ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k), Newform.HasEulerStrippingMultiplier f)
-    (h_data : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
-      f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ → ∀ (S : Finset ℕ),
-        (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N), q ∉ S → f.lCoeff q = 0) →
-        Newform.PerNewformFullDirichletData f χ S)
-    {N : ℕ} [NeZero N] {k : ℤ} (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (hgχ : g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (S : Finset ℕ)
-    (h : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S →
-      f.eigenvalue n = g.eigenvalue n) :
-    f.toCuspForm = g.toCuspForm :=
-  strongMultiplicityOne_of_HeckeEntireExtension_of_full_dirichletZeroCertificate_of_newformUnique
-    h_unique
-    (Newform.HeckeEntireExtension_of_classicalInputs h_fricke h_pos h_stripping)
-    (fun _N _ _k f χ hfχ S h_bad ↦
-      Newform.full_pole_witness_data_of_PerNewformFullDirichletData f χ S
-        (h_data f χ hfχ S h_bad))
-    f g χ hfχ hgχ S h
-
 private lemma levelRaiseMatrix_inv_smul_vadd_one_eq
     {l : ℕ} [NeZero l] (τ : UpperHalfPlane) :
     ((levelRaiseMatrix l)⁻¹ • ((1 : ℝ) +ᵥ τ) : UpperHalfPlane) =
