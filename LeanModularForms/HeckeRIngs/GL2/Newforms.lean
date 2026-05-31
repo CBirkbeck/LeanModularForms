@@ -250,26 +250,6 @@ theorem Newform.analyticContradiction_of_classicalInputs_of_full_dirichletZeroCe
       Newform.full_pole_witness_data_of_PerNewformFullDirichletData f χ S
         (h_data f χ hfχ S h_bad))
 
-/-- A nonzero prime eigenvalue from the classical Mellin/Fricke inputs and the
-Dirichlet-zero data block bundled via `Newform.PerNewformFullDirichletData`. -/
-theorem Newform.exists_nonzero_prime_eigenvalue_of_classicalInputs_of_full_dirichletZeroCertificate
-    (h_fricke : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k), Newform.HasFrickeTwistAsCuspForm f)
-    (h_pos : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (_f : Newform N k), 0 < (k : ℝ))
-    (h_stripping :
-      ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k), Newform.HasEulerStrippingMultiplier f)
-    (h_data : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
-      f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ → ∀ (S : Finset ℕ),
-        (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N), q ∉ S → f.lCoeff q = 0) →
-        Newform.PerNewformFullDirichletData f χ S)
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (S : Finset ℕ) :
-    ∃ q : ℕ, ∃ hq : Nat.Prime q, Nat.Coprime q N ∧ q ∉ S ∧
-      f.eigenvalue ⟨q, hq.pos⟩ ≠ 0 :=
-  Newform.exists_nonzero_prime_eigenvalue_of_analyticContradiction
-    (Newform.analyticContradiction_of_classicalInputs_of_full_dirichletZeroCertificate
-      h_fricke h_pos h_stripping h_data) f χ hfχ S
-
 private lemma levelRaiseMatrix_inv_smul_vadd_one_eq
     {l : ℕ} [NeZero l] (τ : UpperHalfPlane) :
     ((levelRaiseMatrix l)⁻¹ • ((1 : ℝ) +ᵥ τ) : UpperHalfPlane) =
