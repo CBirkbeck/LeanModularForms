@@ -675,33 +675,6 @@ lemma peterssonInner_heckeT_p_LHS_per_q_to_union_tiles
   exact peterssonInner_M_infty_plus_upper_union_tile_per_q p hp hpN q f g
     (integrableOn_petersson_upper_union_uniform_gslot_per_q p hp hpN q f g)
 
-open UpperHalfPlane ModularGroup MeasureTheory in
-private lemma peterssonInner_heckeT_p_LHS_per_q_to_union_tiles_T_p_lower_form
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
-    (q : SL(2, ℤ)) (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    peterssonInner k ModularGroup.fd
-      (⇑(heckeT_p_cusp k p hp hpN f) ∣[k]
-        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ))
-      (⇑g ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ)) =
-    peterssonInner k
-      (((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ)) •
-        (ModularGroup.fd : Set UpperHalfPlane))
-      ⇑f (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) +
-    peterssonInner k
-      (⋃ b ∈ Finset.range p,
-        ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ)) •
-          (ModularGroup.fd : Set UpperHalfPlane))
-      ⇑f (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) := by
-  rw [peterssonInner_heckeT_p_LHS_per_q_to_union_tiles p hp hpN q f g,
-    show (⇑g ∣[k] (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
-        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-          ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))) =
-      ⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) from
-        (slash_T_p_lower_eq_T_p_upper_zero_slash_gamma0 p hp hpN g).symm,
-    ← mul_smul]
-
 /-! ### Named Prop bundles for tile-union hypotheses.
 
 The aggregate `petN_*_per_alpha_HeckeFD_form` theorems below reuse a handful of long
