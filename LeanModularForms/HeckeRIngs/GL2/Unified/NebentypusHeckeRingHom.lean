@@ -1054,16 +1054,6 @@ theorem heckeT_p_all_charRestrict_eq_scalar_heckeRingHom (p : ℕ) (hp : Nat.Pri
   rw [heckeRingHomCharSpace_D_p_eq_scalar_charRestrict p hp hpN, smul_smul,
     mul_inv_cancel₀ (Units.ne_zero _), one_smul]
 
-/-- For good primes `p, q` (both `∤ N`), the restricted concrete Hecke operators
-`heckeT_p_all_charRestrict` on `modFormCharSpace k χ` commute. -/
-theorem heckeT_p_all_charRestrict_commute_via_ring
-    {p q : ℕ} (hp : Nat.Prime p) (hq : Nat.Prime q)
-    (hpN : Nat.Coprime p N) (hqN : Nat.Coprime q N) :
-    Commute (heckeT_p_all_charRestrict k p hp χ) (heckeT_p_all_charRestrict k q hq χ) := by
-  rw [heckeT_p_all_charRestrict_eq_scalar_heckeRingHom p hp hpN,
-    heckeT_p_all_charRestrict_eq_scalar_heckeRingHom q hq hqN]
-  exact ((heckeRingHomCharSpace_commute (k := k) (χ := χ) _ _).smul_left _).smul_right _
-
 end OperatorCommutativityFromRing
 
 section CompositeBridge
