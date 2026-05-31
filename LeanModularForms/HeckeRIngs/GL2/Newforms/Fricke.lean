@@ -852,57 +852,6 @@ lemma Newform.slash_peterssonAdj_frickeMatrix
               show ((-1 : ℂ)⁻¹ : ℂ) = -1 by norm_num]]]
   ring
 
-/-- The Fricke matrix `W_N` as a `GL(2, ℝ)⁺` element, via its positive
-determinant. -/
-noncomputable def Newform.frickeMatrix_GLPos (N : ℕ) [NeZero N] : GL(2, ℝ)⁺ :=
-  ⟨Newform.frickeMatrix N, Newform.frickeMatrix_det_pos N⟩
-
-/-- The underlying matrix of `GLPos_to_SLR (frickeMatrix_GLPos N)` (via the GL
-coercion) equals `(sqrt N)⁻¹ • W_N.val`. -/
-lemma Newform.GLPos_to_SLR_frickeMatrix_GLPos_toGL_matrix (N : ℕ) [NeZero N] :
-    (((GLPos_to_SLR (Newform.frickeMatrix_GLPos N) : SL(2, ℝ)) : GL (Fin 2) ℝ) :
-        Matrix (Fin 2) (Fin 2) ℝ) =
-      (Real.sqrt (N : ℝ))⁻¹ •
-        ((Newform.frickeMatrix N : GL (Fin 2) ℝ) :
-          Matrix (Fin 2) (Fin 2) ℝ) := by
-  rw [Matrix.SpecialLinearGroup.coe_GL_coe_matrix]
-  unfold GLPos_to_SLR
-  change (Real.sqrt ((Newform.frickeMatrix_GLPos N : GL (Fin 2) ℝ).det.val))⁻¹ •
-      ((Newform.frickeMatrix_GLPos N : GL (Fin 2) ℝ) :
-        Matrix (Fin 2) (Fin 2) ℝ) =
-      (Real.sqrt (N : ℝ))⁻¹ •
-        ((Newform.frickeMatrix N : GL (Fin 2) ℝ) :
-          Matrix (Fin 2) (Fin 2) ℝ)
-  rw [show (Newform.frickeMatrix_GLPos N : GL (Fin 2) ℝ).det.val =
-      (N : ℝ) from Newform.frickeMatrix_det N]
-  rfl
-
-private lemma GLPos_to_SLR_frickeMatrix_GLPos_sq_eq_neg_scalar (N : ℕ) [NeZero N] :
-    ((GLPos_to_SLR (Newform.frickeMatrix_GLPos N) : SL(2, ℝ)) :
-        Matrix (Fin 2) (Fin 2) ℝ) *
-      ((GLPos_to_SLR (Newform.frickeMatrix_GLPos N) : SL(2, ℝ)) :
-        Matrix (Fin 2) (Fin 2) ℝ) =
-      Matrix.scalar (Fin 2) (-1) := by
-  rw [show ((GLPos_to_SLR (Newform.frickeMatrix_GLPos N) : SL(2, ℝ)) :
-        Matrix (Fin 2) (Fin 2) ℝ) =
-      (((GLPos_to_SLR (Newform.frickeMatrix_GLPos N) : SL(2, ℝ)) :
-          GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) from
-      (Matrix.SpecialLinearGroup.coe_GL_coe_matrix _).symm,
-    Newform.GLPos_to_SLR_frickeMatrix_GLPos_toGL_matrix,
-    Matrix.smul_mul, Matrix.mul_smul, smul_smul,
-    show ((Real.sqrt ((N : ℝ)))⁻¹ * (Real.sqrt (N : ℝ))⁻¹ : ℝ) = ((N : ℝ))⁻¹ by
-      rw [← mul_inv, Real.mul_self_sqrt (Nat.cast_nonneg N)],
-    show ((Newform.frickeMatrix N : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) *
-        ((Newform.frickeMatrix N : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
-        ((Newform.frickeMatrix N * Newform.frickeMatrix N : GL (Fin 2) ℝ) :
-          Matrix (Fin 2) (Fin 2) ℝ) from (Matrix.GeneralLinearGroup.coe_mul _ _).symm,
-    Newform.frickeMatrix_mul_self_val, smul_smul,
-    show ((N : ℝ))⁻¹ * (-(N : ℝ)) = -1 by
-      field_simp [Nat.cast_ne_zero.mpr (NeZero.ne N)]]
-  ext i j
-  fin_cases i <;> fin_cases j <;>
-    simp [Matrix.smul_apply, Matrix.scalar]
-
 end FrickeAdjoint
 
 private lemma frickeRootNumber_scalar_collapse {k : ℤ} {n x I fv : ℂ}
