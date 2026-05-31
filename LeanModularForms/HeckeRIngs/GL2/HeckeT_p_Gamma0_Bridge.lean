@@ -41,37 +41,31 @@ private lemma charSpaceOne_Gamma0_pair_H_invariant (k : ℤ)
     ∀ h, h ∈ (Gamma0_pair N).H →
       (⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) ∣[k] glMap h =
         ⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) := by
-  intro h hh
   set g : ModularForm ((Gamma0 N).map (mapGL ℝ)) k :=
     modFormCharSpace_one_equiv_Gamma0 N k f
-  have hfg : ⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) = ⇑g := by rfl
-  rw [hfg]
   exact Gamma0_pair_H_invariant_of_invariant N
-    (fun γ hγ ↦ SlashInvariantFormClass.slash_action_eq g γ hγ) h hh
+    (fun γ hγ ↦ SlashInvariantFormClass.slash_action_eq g γ hγ)
 
 private lemma diamondOp_trivial_of_charSpaceOne (k : ℤ)
-    (f : modFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ))
-    (d : (ZMod N)ˣ) :
+    (f : modFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ)) (d : (ZMod N)ˣ) :
     diamondOp k d (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) =
       (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) := by
-  have := (mem_modFormCharSpace_iff k (1 : (ZMod N)ˣ →* ℂˣ)
+  simpa using (mem_modFormCharSpace_iff k (1 : (ZMod N)ˣ →* ℂˣ)
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)).mp f.property d
-  simpa using this
 
 private lemma adj_diag_1p_eq_T_p_lower_bridge (p : ℕ) (hp : Nat.Prime p) :
     GL_adjugate (diagMat 2 ![1, p] : GL (Fin 2) ℚ) =
       (T_p_lower p hp.pos : GL (Fin 2) ℚ) := by
   apply Units.ext; ext i j
-  have hpos : ∀ k : Fin 2, 0 < (![1, p] : Fin 2 → Nat) k := fun k ↦ by
-    fin_cases k <;> simp [hp.pos]
-  simp only [GL_adjugate_val, diagMat_val _ _ hpos]
+  have hpos : ∀ k : Fin 2, 0 < (![1, p] : Fin 2 → Nat) k :=
+    fun k ↦ by fin_cases k <;> simp [hp.pos]
   have huniv : (Finset.univ : Finset (Fin 2)) = {0, 1} := by
     ext x; fin_cases x <;> simp
-  have he0 : ({0, 1} : Finset (Fin 2)).erase 0 = {1} := by decide
-  have he1 : ({0, 1} : Finset (Fin 2)).erase 1 = {0} := by decide
+  simp only [GL_adjugate_val, diagMat_val _ _ hpos]
   fin_cases i <;> fin_cases j <;>
-    simp [T_p_lower, GeneralLinearGroup.mkOfDetNeZero,
-      Matrix.of_apply, huniv, he0, he1, Finset.prod_singleton]
+    simp [T_p_lower, GeneralLinearGroup.mkOfDetNeZero, Matrix.of_apply, huniv,
+      show ({0, 1} : Finset (Fin 2)).erase 0 = {1} from by decide,
+      show ({0, 1} : Finset (Fin 2)).erase 1 = {0} from by decide, Finset.prod_singleton]
 
 private lemma adj_rep_mem_D_p_Gamma0_bridge (p : ℕ) (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) :
@@ -89,12 +83,11 @@ private lemma adj_rep_mem_D_p_Gamma0_bridge (p : ℕ) (hp : Nat.Prime p)
     (Gamma0_pair N).H.mul_mem (HeckePairAction.adjugate_mem_H c hc) hb₁,
     b₂ * GL_adjugate a,
     (Gamma0_pair N).H.mul_mem hb₂ (HeckePairAction.adjugate_mem_H a ha), ?_⟩
-  have h1 : GL_adjugate (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) =
-      GL_adjugate c * GL_adjugate (diagMat 2 ![1, p]) * GL_adjugate a := by
-    conv_lhs => rw [show (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) =
-      a * diagMat 2 ![1, p] * c from hrep_eq]
-    rw [GL_adjugate_mul, GL_adjugate_mul, mul_assoc]
-  rw [h1, adj_diag_1p_eq_T_p_lower_bridge p hp, hTl_eq]; group
+  conv_lhs => rw [show (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) =
+    a * diagMat 2 ![1, p] * c from hrep_eq]
+  rw [GL_adjugate_mul, GL_adjugate_mul, mul_assoc,
+    adj_diag_1p_eq_T_p_lower_bridge p hp, hTl_eq]
+  group
 
 private lemma GL_adjugate_mem_D_p_Gamma0_bridge (p : ℕ) (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) (g : GL (Fin 2) ℚ)
@@ -108,9 +101,9 @@ private lemma GL_adjugate_mem_D_p_Gamma0_bridge (p : ℕ) (hp : Nat.Prime p)
     (Gamma0_pair N).H.mul_mem (HeckePairAction.adjugate_mem_H c hc) hr₁,
     r₂ * GL_adjugate a,
     (Gamma0_pair N).H.mul_mem hr₂ (HeckePairAction.adjugate_mem_H a ha), ?_⟩
-  rw [heq, GL_adjugate_mul, GL_adjugate_mul]
-  rw [show GL_adjugate (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) =
-    r₁ * (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) * r₂ from hrep_eq]
+  rw [heq, GL_adjugate_mul, GL_adjugate_mul,
+    show GL_adjugate (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) =
+      r₁ * (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) * r₂ from hrep_eq]
   group
 
 private lemma adj_mem_dc_factorisation_Gamma0_bridge (p : ℕ) (hp : Nat.Prime p)
@@ -126,15 +119,11 @@ private lemma adj_mem_dc_factorisation_Gamma0_bridge (p : ℕ) (hp : Nat.Prime p
   exact ⟨h₁, hh₁, h₂, hh₂, heq⟩
 
 private lemma slash_eq_tRep_gen_of_adj_mem_Gamma0_bridge (k : ℤ) (f : ℍ → ℂ)
-    (hf : ∀ h, h ∈ (Gamma0_pair N).H → f ∣[k] glMap h = f)
-    (D : HeckeCoset (Gamma0_pair N))
-    (g : GL (Fin 2) ℚ) (h₁ h₂ : GL (Fin 2) ℚ)
-    (hh₁ : h₁ ∈ (Gamma0_pair N).H) (hh₂ : h₂ ∈ (Gamma0_pair N).H)
+    (hf : ∀ h, h ∈ (Gamma0_pair N).H → f ∣[k] glMap h = f) (D : HeckeCoset (Gamma0_pair N))
+    (g h₁ h₂ : GL (Fin 2) ℚ) (hh₁ : h₁ ∈ (Gamma0_pair N).H) (hh₂ : h₂ ∈ (Gamma0_pair N).H)
     (hadj : GL_adjugate g = h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂) :
     f ∣[k] g = f ∣[k] tRep_gen (Gamma0_pair N) D ⟦⟨h₁, hh₁⟩⟧ := by
-  have hg : g = GL_adjugate (h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂) := by
-    rw [← hadj, GL_adjugate_involutive]
-  rw [hg]
+  rw [← GL_adjugate_involutive (g := g), hadj]
   exact slash_tRep_gen_of_mem k D h₁ h₂ hh₁ hh₂ f hf
 
 private lemma adj_inv_mul_mem_H_of_factorisations_Gamma0_bridge
@@ -152,19 +141,15 @@ private lemma adj_inv_mul_mem_H_of_factorisations_Gamma0_bridge
   rw [e₁.choose_spec.choose_spec.choose_spec.choose_spec,
     e₂.choose_spec.choose_spec.choose_spec.choose_spec]
   have hrel := QuotientGroup.leftRel_apply.mp (Quotient.exact hquot)
-  rw [Subgroup.mem_subgroupOf] at hrel
-  rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem] at hrel
-  simp only [ConjAct.smul_def, ConjAct.ofConjAct_toConjAct, map_inv, inv_inv] at hrel
-  simp only [Subgroup.coe_mul, Subgroup.coe_inv] at hrel
+  rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem] at hrel
+  simp only [ConjAct.smul_def, ConjAct.ofConjAct_toConjAct, map_inv, inv_inv,
+    Subgroup.coe_mul, Subgroup.coe_inv] at hrel
   set a₁ := e₁.choose
   set c₁ := e₁.choose_spec.choose_spec.choose
   set a₂ := e₂.choose
   set c₂ := e₂.choose_spec.choose_spec.choose
-  have h_prod : (a₁ * ↑(HeckeCoset.rep D) * c₁)⁻¹ *
-      (a₂ * ↑(HeckeCoset.rep D) * c₂) =
-      c₁⁻¹ * ((↑(HeckeCoset.rep D))⁻¹ * (a₁⁻¹ * a₂) *
-        ↑(HeckeCoset.rep D)) * c₂ := by group
-  rw [h_prod]
+  rw [show (a₁ * ↑(HeckeCoset.rep D) * c₁)⁻¹ * (a₂ * ↑(HeckeCoset.rep D) * c₂) =
+    c₁⁻¹ * ((↑(HeckeCoset.rep D))⁻¹ * (a₁⁻¹ * a₂) * ↑(HeckeCoset.rep D)) * c₂ from by group]
   exact (Gamma0_pair N).H.mul_mem
     ((Gamma0_pair N).H.mul_mem
       ((Gamma0_pair N).H.inv_mem e₁.choose_spec.choose_spec.choose_spec.choose) hrel)
@@ -205,13 +190,12 @@ private lemma phiOfFactorisations_slash_eq_tRep_gen_Gamma0_bridge (k : ℤ) (p :
       (phiOfFactorisations_Gamma0_bridge p hp D h_upper_dc h_lower_dc j) := by
   simp only [phiOfFactorisations_Gamma0_bridge]
   split_ifs with h
+  · set e := h_upper_dc ⟨j.val, h⟩
+    exact slash_eq_tRep_gen_of_adj_mem_Gamma0_bridge k f hf D _ _ _ e.choose_spec.choose
+      e.choose_spec.choose_spec.choose_spec.choose
+      e.choose_spec.choose_spec.choose_spec.choose_spec
   · exact slash_eq_tRep_gen_of_adj_mem_Gamma0_bridge k f hf D _ _ _
-      (h_upper_dc ⟨j.val, h⟩).choose_spec.choose
-      (h_upper_dc ⟨j.val, h⟩).choose_spec.choose_spec.choose_spec.choose
-      (h_upper_dc ⟨j.val, h⟩).choose_spec.choose_spec.choose_spec.choose_spec
-  · exact slash_eq_tRep_gen_of_adj_mem_Gamma0_bridge k f hf D _ _ _
-      h_lower_dc.choose_spec.choose
-      h_lower_dc.choose_spec.choose_spec.choose_spec.choose
+      h_lower_dc.choose_spec.choose h_lower_dc.choose_spec.choose_spec.choose_spec.choose
       h_lower_dc.choose_spec.choose_spec.choose_spec.choose_spec
 
 private lemma phiOfFactorisations_injective_Gamma0_bridge (p : ℕ) (hp : Nat.Prime p)
@@ -232,22 +216,19 @@ private lemma phiOfFactorisations_injective_Gamma0_bridge (p : ℕ) (hp : Nat.Pr
   simp only [phiOfFactorisations_Gamma0_bridge] at heq
   by_cases h₁ : j₁.val < p <;> by_cases h₂ : j₂.val < p
   · simp only [h₁, h₂, dite_true] at heq
-    have hne_val : j₁.val ≠ j₂.val := fun h ↦ hne (Fin.ext h)
-    have hmem := adj_inv_mul_mem_H_of_factorisations_Gamma0_bridge D _ _
-      (h_upper_dc ⟨j₁.val, h₁⟩) (h_upper_dc ⟨j₂.val, h₂⟩) heq
-    exact HeckeRing.GL2.adj_upper_inv_mul_not_mem_H p hp j₁.val j₂.val h₁ h₂ hne_val
-      (Gamma0_pair_H_le_GL_pair_H N hmem)
+    exact HeckeRing.GL2.adj_upper_inv_mul_not_mem_H p hp j₁.val j₂.val h₁ h₂
+      (fun h ↦ hne (Fin.ext h))
+      (Gamma0_pair_H_le_GL_pair_H N (adj_inv_mul_mem_H_of_factorisations_Gamma0_bridge
+        D _ _ (h_upper_dc ⟨j₁.val, h₁⟩) (h_upper_dc ⟨j₂.val, h₂⟩) heq))
   · simp only [h₁, dite_true, h₂, dite_false] at heq
-    have hmem := adj_inv_mul_mem_H_of_factorisations_Gamma0_bridge D _ _
-      (h_upper_dc ⟨j₁.val, h₁⟩) h_lower_dc heq
     exact HeckeRing.GL2.adj_upper_inv_mul_lower_not_mem_H p hp j₁.val
-      (Gamma0_pair_H_le_GL_pair_H N hmem)
+      (Gamma0_pair_H_le_GL_pair_H N (adj_inv_mul_mem_H_of_factorisations_Gamma0_bridge
+        D _ _ (h_upper_dc ⟨j₁.val, h₁⟩) h_lower_dc heq))
   · simp only [h₁, dite_false, h₂, dite_true] at heq
-    have hmem := adj_inv_mul_mem_H_of_factorisations_Gamma0_bridge D _ _
-      h_lower_dc (h_upper_dc ⟨j₂.val, h₂⟩) heq
     exact HeckeRing.GL2.adj_lower_inv_mul_upper_not_mem_H p hp j₂.val
-      (Gamma0_pair_H_le_GL_pair_H N hmem)
-  · have := j₁.isLt; have := j₂.isLt; omega
+      (Gamma0_pair_H_le_GL_pair_H N (adj_inv_mul_mem_H_of_factorisations_Gamma0_bridge
+        D _ _ h_lower_dc (h_upper_dc ⟨j₂.val, h₂⟩) heq))
+  · omega
 
 /-- Γ₀(N)-level analogue of `tRep_gen_D_p_matches_T_p_reps`: for a `Γ₀(N)`-invariant
 function `f : ℍ → ℂ`, the abstract `heckeSlash_gen` sum equals the explicit `T_p`
@@ -259,7 +240,7 @@ theorem tRep_gen_D_p_Gamma0_matches_T_p_reps (k : ℤ) (p : ℕ) (hp : Nat.Prime
       f ∣[k] tRep_gen (Gamma0_pair N) (D_p_Gamma0 N p hp.pos) i =
     (∑ b ∈ Finset.range p, f ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ)) +
       f ∣[k] (T_p_lower p hp.pos : GL (Fin 2) ℚ) := by
-  set D := D_p_Gamma0 N p hp.pos with hD_def
+  set D := D_p_Gamma0 N p hp.pos
   have h_upper_dc : ∀ b : Fin p,
       ∃ (h₁ : GL _ ℚ) (_ : h₁ ∈ (Gamma0_pair N).H)
         (h₂ : GL _ ℚ) (_ : h₂ ∈ (Gamma0_pair N).H),
@@ -275,27 +256,25 @@ theorem tRep_gen_D_p_Gamma0_matches_T_p_reps (k : ℤ) (p : ℕ) (hp : Nat.Prime
     adj_mem_dc_factorisation_Gamma0_bridge p hp hpN _
       (T_p_lower_mem_D_p_Gamma0 N p hp hpN)
   set φ := phiOfFactorisations_Gamma0_bridge p hp D h_upper_dc h_lower_dc
-  have h_val := phiOfFactorisations_slash_eq_tRep_gen_Gamma0_bridge k p hp D f hf
-    h_upper_dc h_lower_dc
-  have h_card :
-      Fintype.card (decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) = p + 1 := by
+  have h_card : Fintype.card (decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) = p + 1 := by
     have h := HeckeCoset_deg_D_p_Gamma0 N p hp hpN
-    rw [Nat.card_eq_fintype_card] at h; exact h
-  have h_bij : Function.Bijective φ := by
-    rw [Fintype.bijective_iff_injective_and_card]
-    exact ⟨phiOfFactorisations_injective_Gamma0_bridge p hp D h_upper_dc h_lower_dc,
-      by rw [Fintype.card_fin, h_card]⟩
+    rwa [Nat.card_eq_fintype_card] at h
+  have h_bij : Function.Bijective φ :=
+    Fintype.bijective_iff_injective_and_card _ |>.mpr
+      ⟨phiOfFactorisations_injective_Gamma0_bridge p hp D h_upper_dc h_lower_dc,
+        by rw [Fintype.card_fin, h_card]⟩
   symm
-  rw [← Fin.sum_univ_eq_sum_range]
-  rw [show (∑ j : Fin p, f ∣[k] (T_p_upper p hp.pos j.val : GL _ ℚ)) +
-      f ∣[k] (T_p_lower p hp.pos : GL _ ℚ) =
-    ∑ j : Fin (p + 1),
-      if h : j.val < p then f ∣[k] (T_p_upper p hp.pos j.val : GL _ ℚ)
-      else f ∣[k] (T_p_lower p hp.pos : GL _ ℚ) from by
-    rw [Fin.sum_univ_castSucc]; congr 1
-    · congr 1; ext j; simp [j.isLt]
-    · simp]
-  exact Fintype.sum_bijective φ h_bij _ _ h_val
+  rw [← Fin.sum_univ_eq_sum_range,
+    show (∑ j : Fin p, f ∣[k] (T_p_upper p hp.pos j.val : GL _ ℚ)) +
+        f ∣[k] (T_p_lower p hp.pos : GL _ ℚ) =
+      ∑ j : Fin (p + 1),
+        if h : j.val < p then f ∣[k] (T_p_upper p hp.pos j.val : GL _ ℚ)
+        else f ∣[k] (T_p_lower p hp.pos : GL _ ℚ) from by
+      rw [Fin.sum_univ_castSucc]; congr 1
+      · congr 1; ext j; simp [j.isLt]
+      · simp]
+  exact Fintype.sum_bijective φ h_bij _ _
+    (phiOfFactorisations_slash_eq_tRep_gen_Gamma0_bridge k p hp D f hf h_upper_dc h_lower_dc)
 
 /-- On `modFormCharSpace k 1`, the Γ₁(N)-level Hecke operator `heckeT_p_fun` agrees
 as a function `ℍ → ℂ` with `heckeSlash_gen (Gamma0_pair N) k (D_p_Gamma0 N p hp.pos)`,
@@ -306,20 +285,12 @@ theorem heckeT_p_fun_eq_heckeSlash_gen_Gamma0_on_charSpace_one (k : ℤ) (p : �
     heckeT_p_fun k p hp hpN (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) =
     heckeSlash_gen (Gamma0_pair N) k (D_p_Gamma0 N p hp.pos)
       (⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) := by
-  rw [heckeT_p_fun_eq_coset_sum k hp hpN (f : ModularForm _ k)]
-  have hdiamond := diamondOp_trivial_of_charSpaceOne (N := N) k f
-    (ZMod.unitOfCoprime p hpN)
-  have hM_inf_eq :
-      (⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) ∣[k]
-        (M_infty N p hp.pos hpN : GL (Fin 2) ℚ) =
-      (⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) ∣[k]
-        (T_p_lower p hp.pos : GL (Fin 2) ℚ) := by
-    rw [slash_M_infty_eq_diamond_slash_T_p_lower k p hp.pos hpN
-      (f : ModularForm _ k)]
-    rw [show ⇑(diamondOp k (ZMod.unitOfCoprime p hpN)
-      (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) =
-      ⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) from by rw [hdiamond]]
-  rw [hM_inf_eq]
+  rw [heckeT_p_fun_eq_coset_sum k hp hpN (f : ModularForm _ k),
+    slash_M_infty_eq_diamond_slash_T_p_lower k p hp.pos hpN (f : ModularForm _ k),
+    show ⇑(diamondOp k (ZMod.unitOfCoprime p hpN)
+        (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) =
+      ⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) from by
+      rw [diamondOp_trivial_of_charSpaceOne (N := N) k f (ZMod.unitOfCoprime p hpN)]]
   unfold heckeSlash_gen
   rw [tRep_gen_D_p_Gamma0_matches_T_p_reps k p hp hpN _
     (charSpaceOne_Gamma0_pair_H_invariant k f)]
@@ -338,18 +309,10 @@ theorem heckeT_p_val_eq_heckeOperator_Gamma0_on_charSpace_one (k : ℤ) (p : ℕ
       (heckeOperator_Gamma0 N k (D_p_Gamma0 N p hp.pos)
         (modFormCharSpace_one_equiv_Gamma0 N k f)) :
         ModularForm ((Gamma1 N).map (mapGL ℝ)) k) := by
-  apply ModularForm.ext
-  intro z
-  show heckeT_p_fun k p hp hpN (f : ModularForm _ k) z =
-    (heckeOperator_Gamma0 N k (D_p_Gamma0 N p hp.pos)
-      (modFormCharSpace_one_equiv_Gamma0 N k f) : ℍ → ℂ) z
+  ext z
   change heckeT_p_fun k p hp hpN (f : ModularForm _ k) z =
     heckeSlash_gen (Gamma0_pair N) k (D_p_Gamma0 N p hp.pos)
-      (⇑(modFormCharSpace_one_equiv_Gamma0 N k f)) z
-  have h_coe : ⇑(modFormCharSpace_one_equiv_Gamma0 N k f) =
-      ⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) := by
-    funext w; rw [modFormCharSpace_one_equiv_Gamma0_apply]
-  rw [h_coe]
+      (⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) z
   exact congr_fun (heckeT_p_fun_eq_heckeSlash_gen_Gamma0_on_charSpace_one k p hp hpN f) z
 
 /-- Forward-direction variant: `heckeOperator_Gamma0 ∘ equiv = equiv ∘ heckeT_p`. -/
@@ -361,20 +324,10 @@ theorem heckeOperator_Gamma0_eq_equiv_heckeT_p_on_charSpace_one (k : ℤ) (p : �
     modFormCharSpace_one_equiv_Gamma0 N k
       ⟨heckeT_p k p hp hpN (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k),
         heckeT_p_preserves_modFormCharSpace k p hp hpN _ f.property⟩ := by
-  apply ModularForm.ext
-  intro z
-  show (heckeOperator_Gamma0 N k (D_p_Gamma0 N p hp.pos)
-      (modFormCharSpace_one_equiv_Gamma0 N k f) : ℍ → ℂ) z =
-    (modFormCharSpace_one_equiv_Gamma0 N k
-      ⟨heckeT_p k p hp hpN (f : ModularForm _ k),
-        heckeT_p_preserves_modFormCharSpace k p hp hpN _ f.property⟩ : ℍ → ℂ) z
+  ext z
   change heckeSlash_gen (Gamma0_pair N) k (D_p_Gamma0 N p hp.pos)
-      (⇑(modFormCharSpace_one_equiv_Gamma0 N k f)) z =
+      (⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) z =
     heckeT_p_fun k p hp hpN (f : ModularForm _ k) z
-  have h_coe : ⇑(modFormCharSpace_one_equiv_Gamma0 N k f) =
-      ⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) := by
-    funext w; rw [modFormCharSpace_one_equiv_Gamma0_apply]
-  rw [h_coe]
   exact (congr_fun (heckeT_p_fun_eq_heckeSlash_gen_Gamma0_on_charSpace_one k p hp hpN f)
     z).symm
 
