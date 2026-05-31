@@ -801,49 +801,6 @@ theorem peterssonInner_slash_adjoint
   exact (measurePreserving_smul α' μ_hyp).setIntegral_image_emb
     (measurableEmbedding_const_smul α') _ D
 
-/-- **Hecke-representative wrapper around `peterssonInner_slash_adjoint`**. -/
-theorem peterssonInner_slash_adjoint_for_heckeRep
-    (D : Set ℍ) (β : GL (Fin 2) ℝ) (hβ : 0 < β.det.val)
-    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    peterssonInner k D ((⇑f : ℍ → ℂ) ∣[k] β) ⇑g =
-      peterssonInner k (β • D) ⇑f ((⇑g : ℍ → ℂ) ∣[k] peterssonAdj β) :=
-  peterssonInner_slash_adjoint D β hβ ⇑f ⇑g
-
-/-- **Per-`q`-coset Hecke-rep wrapper** (companion to
-`peterssonInner_slash_adjoint_for_heckeRep`). -/
-theorem peterssonInner_slash_adjoint_for_heckeRep_per_q
-    (q : SL(2, ℤ) ⧸ Gamma1 N) (β : GL (Fin 2) ℝ) (hβ : 0 < β.det.val)
-    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    peterssonInner k fd
-        (((⇑f : ℍ → ℂ) ∣[k] β) ∣[k] ((q.out : SL(2, ℤ))⁻¹ : SL(2, ℤ)))
-        (⇑g ∣[k] ((q.out : SL(2, ℤ))⁻¹ : SL(2, ℤ))) =
-      peterssonInner k
-        (β • (((q.out : SL(2, ℤ))⁻¹ : SL(2, ℤ)) • (fd : Set ℍ)))
-        ⇑f
-        ((⇑g : ℍ → ℂ) ∣[k] peterssonAdj β) := by
-  rw [← peterssonInner_smul_set_eq_slash ((q.out : SL(2, ℤ))⁻¹) fd
-        ((⇑f : ℍ → ℂ) ∣[k] β) ⇑g]
-  exact peterssonInner_slash_adjoint_for_heckeRep _ β hβ f g
-
-/-- **LHS-distributed-summand → tile-form bridge** (consumer of
-`peterssonInner_slash_adjoint_for_heckeRep_per_q`). -/
-theorem peterssonInner_LHS_distributed_summand_to_tile_form
-    (q : SL(2, ℤ) ⧸ Gamma1 N) (β : GL (Fin 2) ℝ) (hβ : 0 < β.det.val)
-    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    peterssonInner k fd
-        ((⇑f : ℍ → ℂ) ∣[k] (β * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-          (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
-        (⇑g ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-          (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) =
-      peterssonInner k
-        (β • (((q.out : SL(2, ℤ))⁻¹ : SL(2, ℤ)) • (fd : Set ℍ)))
-        ⇑f
-        ((⇑g : ℍ → ℂ) ∣[k] peterssonAdj β) := by
-  rw [SlashAction.slash_mul k β
-        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (q.out : SL(2, ℤ))⁻¹ :
-          GL (Fin 2) ℝ) (⇑f : ℍ → ℂ)]
-  exact peterssonInner_slash_adjoint_for_heckeRep_per_q q β hβ f g
-
 private lemma mapGL_SL_det_pos (γ : SL(2, ℤ)) :
     0 < (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ : GL (Fin 2) ℝ)).det.val := by
   show 0 < (((mapGL ℝ γ : GL (Fin 2) ℝ)) : Matrix (Fin 2) (Fin 2) ℝ).det
