@@ -215,22 +215,6 @@ theorem Newform.HeckeEntireExtension_of_classicalInputs
   Newform.HeckeEntireExtension_of_CompletedFrickeData fun _N _ _k f ↦
     (Newform.completedFrickeData_of_classicalInputs f (h_fricke f) (h_pos f) (h_stripping f)).some
 
-/-- `Newform.AnalyticContradiction` from per-newform
-`Newform.CompletedFrickeData` and `PerNewformFullDirichletData`. -/
-theorem Newform.analyticContradiction_of_CompletedFrickeData_of_PerNewformFullDirichletData
-    (h_fricke : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k), Newform.CompletedFrickeData f)
-    (h_data : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
-      f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ → ∀ (S : Finset ℕ),
-        (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N), q ∉ S → f.lCoeff q = 0) →
-        Newform.PerNewformFullDirichletData f χ S) :
-    Newform.AnalyticContradiction :=
-  Newform.analyticContradiction_of_HeckeEntireExtension_of_NoEntireExtensionUnderBadPrime
-    (Newform.HeckeEntireExtension_of_CompletedFrickeData h_fricke)
-    (Newform.noEntireExtensionUnderBadPrime_of_full_dirichletZeroCertificate
-      fun _N _ _k f χ hfχ S h_bad ↦
-        Newform.full_pole_witness_data_of_PerNewformFullDirichletData f χ S
-          (h_data f χ hfχ S h_bad))
-
 /-- `Newform.AnalyticContradiction` from the classical Mellin/Fricke inputs
 `HasFrickeTwistAsCuspForm`, `HasEulerStrippingMultiplier`, and the Dirichlet-zero
 data block bundled via `Newform.PerNewformFullDirichletData`. -/
