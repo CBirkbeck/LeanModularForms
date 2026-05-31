@@ -923,41 +923,6 @@ lemma Newform.slash_peterssonAdj_frickeMatrix
               show ((-1 : ℂ)⁻¹ : ℂ) = -1 by norm_num]]]
   ring
 
-/-- Petersson adjoint identity for the Fricke slash on cusp forms:
-`petN (frickeSlashCuspForm f) g = (-1)^k * petN f (frickeSlashCuspForm g)`. The
-fundamental-domain and integrability hypotheses are passed as parameters. -/
-theorem Newform.frickeSlashCuspForm_petN_adjoint
-    {N : ℕ} [NeZero N] {k : ℤ}
-    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hα_norm : ∀ (γ : SL(2, ℤ)), γ ∈ Gamma1 N →
-      ∀ τ : UpperHalfPlane,
-        petersson k (⇑f) (⇑((-1 : ℂ) ^ k • Newform.frickeSlashCuspForm g))
-          (Newform.frickeMatrix N • ((γ : SL(2, ℤ)) • τ)) =
-        petersson k (⇑f) (⇑((-1 : ℂ) ^ k • Newform.frickeSlashCuspForm g))
-          (Newform.frickeMatrix N • τ))
-    (hα_fd : MeasureTheory.IsFundamentalDomain (imageGamma1_PSL N)
-      ((Newform.frickeMatrix N : GL (Fin 2) ℝ) •
-        (Gamma1_fundDomain_PSL N : Set UpperHalfPlane)) μ_hyp)
-    (h_int : MeasureTheory.IntegrableOn
-      (petersson k (⇑f) (⇑((-1 : ℂ) ^ k • Newform.frickeSlashCuspForm g)))
-      (Gamma1_fundDomain_PSL N) μ_hyp)
-    (h_α_int : MeasureTheory.IntegrableOn
-      (fun τ ↦ petersson k (⇑f) (⇑((-1 : ℂ) ^ k • Newform.frickeSlashCuspForm g))
-        ((Newform.frickeMatrix N : GL (Fin 2) ℝ) • τ))
-      (Gamma1_fundDomain_PSL N) μ_hyp) :
-    petN (Newform.frickeSlashCuspForm f) g =
-      (-1 : ℂ) ^ k * petN f (Newform.frickeSlashCuspForm g) := by
-  have hg_adj : ⇑((-1 : ℂ) ^ k • Newform.frickeSlashCuspForm g) =
-      ⇑g ∣[k] peterssonAdj (Newform.frickeMatrix N) := by
-    change ((-1 : ℂ) ^ k) • ⇑(Newform.frickeSlashCuspForm g) =
-      ⇑g ∣[k] peterssonAdj (Newform.frickeMatrix N)
-    rw [Newform.frickeSlashCuspForm_coe]
-    exact (Newform.slash_peterssonAdj_frickeMatrix _).symm
-  rw [petN_slash_adjoint_GL2 (k := k) (Newform.frickeMatrix N)
-    (Newform.frickeMatrix_det_pos N) f g (Newform.frickeSlashCuspForm f)
-    (Newform.frickeSlashCuspForm_coe f) ((-1 : ℂ) ^ k • Newform.frickeSlashCuspForm g)
-    hg_adj hα_norm hα_fd h_int h_α_int, petN_smul_right]
-
 /-- Petersson invariance under `W_N`-shifted `Γ₁(N)` translation:
 `petersson k ⇑f ⇑g₂ (W_N • γ • τ) = petersson k ⇑f ⇑g₂ (W_N • τ)` for `γ ∈ Γ₁(N)`.
 Discharges the `hα_norm` hypothesis of `petN_slash_adjoint_GL2` for `α := W_N`. -/
