@@ -675,37 +675,6 @@ theorem descendCosetList_action_extra
       (Subgroup.mul_mem _ (descendExtraGamma_spec hp hpN hp_sq).1 h_γ') ⟨0, hp.pos⟩
   exact ⟨target, α, hα_mem, by grind [descendCosetList]⟩
 
-/-- The Möbius-type map `m ↦ m · d mod p` on `Fin p` is injective for
-`γ' = [a, b; c·(N/p), d] ∈ Γ_0(N/p)`: from `det γ' = 1` we get
-`a·d − b·c·(N/p) = 1`, which forces `d` invertible mod `p`. -/
-theorem descendCosetList_moebius_inj
-    {N : ℕ} [NeZero N]
-    (p : ℕ) [NeZero p] (hp : p.Prime) (hp_sq : p ^ 2 ∣ N)
-    (γ' : Matrix.SpecialLinearGroup (Fin 2) ℤ) (h_γ' : γ' ∈ Gamma0 (N / p)) :
-    Function.Injective (fun m : Fin p ↦
-      ((m.val : ZMod p) * ((γ' : Matrix (Fin 2) (Fin 2) ℤ) 1 1 : ZMod p))) := by
-  have : Fact p.Prime := ⟨hp⟩
-  have hdet : (γ' : Matrix (Fin 2) (Fin 2) ℤ).det = 1 := γ'.property
-  rw [Matrix.det_fin_two] at hdet
-  have h_c_dvd : ((N / p : ℕ) : ℤ) ∣ (γ' : Matrix (Fin 2) (Fin 2) ℤ) 1 0 :=
-    (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp (CongruenceSubgroup.Gamma0_mem.mp h_γ')
-  have hp_dvd_Np : (p : ℤ) ∣ ((N / p : ℕ) : ℤ) := by
-    obtain ⟨k, hk⟩ := hp_sq
-    refine ⟨k, ?_⟩
-    exact_mod_cast by rw [hk, sq, mul_assoc, Nat.mul_div_cancel_left _ hp.pos]
-  have h_a_d_mod_p :
-      (((γ' : Matrix (Fin 2) (Fin 2) ℤ) 0 0 : ZMod p) *
-       ((γ' : Matrix (Fin 2) (Fin 2) ℤ) 1 1 : ZMod p)) = 1 := by
-    have := congr_arg (Int.cast : ℤ → ZMod p) hdet
-    push_cast at this
-    rwa [(ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr (dvd_trans hp_dvd_Np h_c_dvd),
-      mul_zero, sub_zero] at this
-  intro m₁ m₂ h_eq
-  simp only at h_eq
-  exact Fin.ext (ZMod.val_natCast_of_lt m₁.isLt ▸ ZMod.val_natCast_of_lt m₂.isLt ▸
-    congr_arg ZMod.val (mul_right_cancel₀
-      (IsUnit.ne_zero (IsUnit.of_mul_eq_one_right _ h_a_d_mod_p)) h_eq))
-
 /-- Value of `descendCosetList p N hp v` on the upper-triangular branch
 (`v.val < p`): the matrix `[1, v.val; 0, p]`. -/
 lemma descendCosetList_apply_lt {p N : ℕ} [NeZero p] [NeZero N] (hp : p.Prime)
