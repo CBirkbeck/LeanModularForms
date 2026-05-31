@@ -257,6 +257,61 @@ lemma exists_good_residue_mod_prime {a b c d : ℤ} {p : ℕ} [Fact p.Prime]
       (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr h_bd
     simpa [Int.cast_add, Int.cast_mul, Int.cast_natCast, ZMod.natCast_val, ZMod.cast_id] using this
 
+/-- **Per-prime non-divisibility for primitive quadruples.**  If
+`(a, b, c, d)` is primitive (nested `Nat.gcd` of `natAbs` is `1`), then no
+prime can simultaneously divide all four entries. -/
+private lemma not_all_dvd_of_primitive {a b c d : ℤ} {p : ℕ}
+    (hprim : Nat.gcd (Nat.gcd a.natAbs b.natAbs) (Nat.gcd c.natAbs d.natAbs) = 1)
+    (hp : p.Prime) :
+    ¬ ((p : ℤ) ∣ a ∧ (p : ℤ) ∣ b ∧ (p : ℤ) ∣ c ∧ (p : ℤ) ∣ d) := by
+  rintro ⟨h_a, h_b, h_c, h_d⟩
+  have h_all : p ∣ Nat.gcd (Nat.gcd a.natAbs b.natAbs) (Nat.gcd c.natAbs d.natAbs) :=
+    Nat.dvd_gcd
+      (Nat.dvd_gcd (Int.natAbs_dvd_natAbs.mpr h_a) (Int.natAbs_dvd_natAbs.mpr h_b))
+      (Nat.dvd_gcd (Int.natAbs_dvd_natAbs.mpr h_c) (Int.natAbs_dvd_natAbs.mpr h_d))
+  rw [hprim] at h_all
+  exact hp.one_lt.ne' (Nat.dvd_one.mp h_all)
+
+/-- **Row combination zero forces zero determinant.**  If
+`a + k·c = 0` and `b + k·d = 0`, then `a·d − b·c = 0`. -/
+private lemma det_eq_zero_of_row_combination_zero {a b c d k : ℤ}
+    (h1 : a + k * c = 0) (h2 : b + k * d = 0) :
+    a * d - b * c = 0 := by
+  have hcomb : (a + k * c) * d - (b + k * d) * c = 0 := by rw [h1, h2]; ring
+  linarith [hcomb,
+    show (a + k * c) * d - (b + k * d) * c = a * d - b * c from by ring]
+
+/-- **CRT contradiction core.**  Given `k_nat` from the CRT construction
+with the residue compatibility `hk_cong` against `r_nat` chosen to avoid
+joint divisibility by primes of `(a·d − b·c).natAbs`, and a prime `q`
+dividing both `a + k_nat·c` and `b + k_nat·d` (hence dividing the
+determinant), derive `False`. -/
+private lemma crt_contradiction_of_prime_div {a b c d : ℤ} {k_nat : ℕ} {r_nat : ℕ → ℕ}
+    {M : ℕ} (hM_def : M = (a * d - b * c).natAbs) (hM_ne : M ≠ 0)
+    (hr_good : ∀ p (_ : p ∈ M.primeFactors),
+      ¬ ((p : ℤ) ∣ a + (r_nat p : ℤ) * c ∧ (p : ℤ) ∣ b + (r_nat p : ℤ) * d))
+    (hk_cong : ∀ p ∈ M.primeFactors, k_nat ≡ r_nat p [MOD p])
+    {q : ℕ} (hq_prime : q.Prime)
+    (hq_dvd_ac : (q : ℤ) ∣ a + (k_nat : ℤ) * c)
+    (hq_dvd_bd : (q : ℤ) ∣ b + (k_nat : ℤ) * d) :
+    False := by
+  have hq_mem : q ∈ M.primeFactors := by
+    refine Nat.mem_primeFactors.mpr ⟨hq_prime, ?_, hM_ne⟩
+    rw [hM_def]
+    exact_mod_cast Int.natAbs_dvd_natAbs.mpr (dvd_det_of_dvd_row_combination hq_dvd_ac hq_dvd_bd)
+  have h_cong : k_nat ≡ r_nat q [MOD q] := hk_cong q hq_mem
+  have h_sub_dvd : (q : ℤ) ∣ (k_nat : ℤ) - (r_nat q : ℤ) := by
+    have := (Int.modEq_iff_dvd (a := (r_nat q : ℤ)) (b := (k_nat : ℤ))).mp
+      (Int.natCast_modEq_iff.mpr h_cong.symm)
+    simpa [sub_eq_neg_add, neg_sub] using this
+  refine hr_good q hq_mem ⟨?_, ?_⟩
+  · have h_eq : a + (k_nat : ℤ) * c - (a + (r_nat q : ℤ) * c) =
+        ((k_nat : ℤ) - (r_nat q : ℤ)) * c := by ring
+    exact (dvd_sub_right hq_dvd_ac).mp (h_eq ▸ h_sub_dvd.mul_right c)
+  · have h_eq : b + (k_nat : ℤ) * d - (b + (r_nat q : ℤ) * d) =
+        ((k_nat : ℤ) - (r_nat q : ℤ)) * d := by ring
+    exact (dvd_sub_right hq_dvd_bd).mp (h_eq ▸ h_sub_dvd.mul_right d)
+
 /-- **Primitive implies coprime linear row combination exists.**  For a
 primitive quadruple `(a, b, c, d) : ℤ⁴` with non-zero "determinant"
 `a·d − b·c ≠ 0`, there exists an integer `k` such that
@@ -279,21 +334,12 @@ lemma exists_k_coprime_of_primitive {a b c d : ℤ}
   have hM_ne : M ≠ 0 := Int.natAbs_ne_zero.mpr hdet
   have hP_prime : ∀ p ∈ M.primeFactors, p.Prime :=
     fun _ hp ↦ Nat.prime_of_mem_primeFactors hp
-  have hP_not_all_dvd : ∀ p ∈ M.primeFactors,
-      ¬ ((p : ℤ) ∣ a ∧ (p : ℤ) ∣ b ∧ (p : ℤ) ∣ c ∧ (p : ℤ) ∣ d) := by
-    intro p hp ⟨h_a, h_b, h_c, h_d⟩
-    have h_all : p ∣ Nat.gcd (Nat.gcd a.natAbs b.natAbs) (Nat.gcd c.natAbs d.natAbs) :=
-      Nat.dvd_gcd
-        (Nat.dvd_gcd (Int.natAbs_dvd_natAbs.mpr h_a) (Int.natAbs_dvd_natAbs.mpr h_b))
-        (Nat.dvd_gcd (Int.natAbs_dvd_natAbs.mpr h_c) (Int.natAbs_dvd_natAbs.mpr h_d))
-    rw [hprim] at h_all
-    exact (hP_prime p hp).one_lt.ne' (Nat.dvd_one.mp h_all)
   classical
   have hP_exists : ∀ p ∈ M.primeFactors, ∃ r : ℕ, r < p ∧
       ¬ ((p : ℤ) ∣ a + (r : ℤ) * c ∧ (p : ℤ) ∣ b + (r : ℤ) * d) := fun p hp ↦
     haveI : Fact p.Prime := ⟨hP_prime p hp⟩
     exists_good_residue_mod_prime (a := a) (b := b) (c := c) (d := d) (p := p)
-      (hP_not_all_dvd p hp)
+      (not_all_dvd_of_primitive hprim (hP_prime p hp))
   let r_nat : ℕ → ℕ := fun p ↦
     if h : p ∈ M.primeFactors then (hP_exists p h).choose else 0
   have hr_good : ∀ p (hp : p ∈ M.primeFactors),
@@ -315,35 +361,16 @@ lemma exists_k_coprime_of_primitive {a b c d : ℤ}
   set G := Int.gcd (a + (k_nat : ℤ) * c) (b + (k_nat : ℤ) * d) with hG_def
   rcases eq_or_ne G 0 with hG_zero | hG_ne
   · obtain ⟨h1, h2⟩ := Int.gcd_eq_zero_iff.mp (hG_def ▸ hG_zero)
-    refine hdet ?_
-    have : (a + (k_nat : ℤ) * c) * d - (b + (k_nat : ℤ) * d) * c = 0 := by
-      rw [h1, h2]; ring
-    linarith [this, show (a + (k_nat : ℤ) * c) * d - (b + (k_nat : ℤ) * d) * c =
-      a * d - b * c from by ring]
+    exact hdet (det_eq_zero_of_row_combination_zero h1 h2)
   have hG_gt_one : 1 < G := by
     rcases Nat.lt_or_ge G 1 with h_lt | _
     · interval_cases G; exact (hG_ne rfl).elim
     · omega
   obtain ⟨q, hq_prime, hq_dvd_G⟩ := Nat.exists_prime_and_dvd hG_gt_one.ne'
   have hq_dvd_G_int : (q : ℤ) ∣ (G : ℤ) := by exact_mod_cast hq_dvd_G
-  have hq_dvd_ac : (q : ℤ) ∣ a + (k_nat : ℤ) * c := hq_dvd_G_int.trans (Int.gcd_dvd_left _ _)
-  have hq_dvd_bd : (q : ℤ) ∣ b + (k_nat : ℤ) * d := hq_dvd_G_int.trans (Int.gcd_dvd_right _ _)
-  have hq_mem : q ∈ M.primeFactors := by
-    refine Nat.mem_primeFactors.mpr ⟨hq_prime, ?_, hM_ne⟩
-    rw [hM_def]
-    exact_mod_cast Int.natAbs_dvd_natAbs.mpr (dvd_det_of_dvd_row_combination hq_dvd_ac hq_dvd_bd)
-  have h_cong : k_nat ≡ r_nat q [MOD q] := hk_cong q hq_mem
-  have h_sub_dvd : (q : ℤ) ∣ (k_nat : ℤ) - (r_nat q : ℤ) := by
-    have := (Int.modEq_iff_dvd (a := (r_nat q : ℤ)) (b := (k_nat : ℤ))).mp
-      (Int.natCast_modEq_iff.mpr h_cong.symm)
-    simpa [sub_eq_neg_add, neg_sub] using this
-  refine hr_good q hq_mem ⟨?_, ?_⟩
-  · have h_eq : a + (k_nat : ℤ) * c - (a + (r_nat q : ℤ) * c) =
-        ((k_nat : ℤ) - (r_nat q : ℤ)) * c := by ring
-    exact (dvd_sub_right hq_dvd_ac).mp (h_eq ▸ h_sub_dvd.mul_right c)
-  · have h_eq : b + (k_nat : ℤ) * d - (b + (r_nat q : ℤ) * d) =
-        ((k_nat : ℤ) - (r_nat q : ℤ)) * d := by ring
-    exact (dvd_sub_right hq_dvd_bd).mp (h_eq ▸ h_sub_dvd.mul_right d)
+  exact crt_contradiction_of_prime_div hM_def hM_ne hr_good hk_cong hq_prime
+    (hq_dvd_G_int.trans (Int.gcd_dvd_left _ _))
+    (hq_dvd_G_int.trans (Int.gcd_dvd_right _ _))
 
 /-- **Smith decomposition, 2×2 primitive, positive determinant.**
 Given `A : Matrix (Fin 2) (Fin 2) ℤ` primitive (nested `Nat.gcd` of entries
