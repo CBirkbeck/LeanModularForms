@@ -297,8 +297,8 @@ theorem strongMultiplicityOne_of_CompletedFrickeData_of_PerNewformFullDirichletD
       h_fricke h_data) f g χ hfχ hgχ S h
 
 /-- `Newform.AnalyticContradiction` from the classical Mellin/Fricke inputs
-`HasFrickeTwistAsCuspForm`, `HasEulerStrippingMultiplier`, and the full
-Dirichlet-zero data block. -/
+`HasFrickeTwistAsCuspForm`, `HasEulerStrippingMultiplier`, and the Dirichlet-zero
+data block bundled via `Newform.PerNewformFullDirichletData`. -/
 theorem Newform.analyticContradiction_of_classicalInputs_of_full_dirichletZeroCertificate
     (h_fricke : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k), Newform.HasFrickeTwistAsCuspForm f)
     (h_pos : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (_f : Newform N k), 0 < (k : ℝ))
@@ -307,45 +307,16 @@ theorem Newform.analyticContradiction_of_classicalInputs_of_full_dirichletZeroCe
     (h_data : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
       f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ → ∀ (S : Finset ℕ),
         (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N), q ∉ S → f.lCoeff q = 0) →
-        ∃ (T : Finset Nat.Primes) (s₀ : ℂ),
-          AnalyticAt ℂ
-            (fun s ↦ DirichletCharacter.LFunction
-                (Newform.dirichletLift χ * Newform.dirichletLift χ : DirichletCharacter ℂ N)
-                (2 * (2 * s - k + 1)) *
-              ∏ p ∈ T, Newform.eulerFactor_stripped f χ S s p *
-                (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N) ((p : ℕ) : ZMod N) *
-                  ((p : ℕ) : ℂ) ^ (-(2 * s - k + 1)))⁻¹) s₀ ∧
-          AnalyticAt ℂ
-            (fun s ↦ DirichletCharacter.LFunction
-                (Newform.dirichletLift χ : DirichletCharacter ℂ N) (2 * s - k + 1) *
-              ∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-                : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-                ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀ ∧
-          (DirichletCharacter.LFunction
-              (Newform.dirichletLift χ * Newform.dirichletLift χ : DirichletCharacter ℂ N)
-              (2 * (2 * s₀ - k + 1)) *
-            (∏ p ∈ T, Newform.eulerFactor_stripped f χ S s₀ p *
-              (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N) ((p : ℕ) : ZMod N) *
-                ((p : ℕ) : ℂ) ^ (-(2 * s₀ - k + 1)))⁻¹)) ≠ 0 ∧
-          (DirichletCharacter.LFunction
-              (Newform.dirichletLift χ : DirichletCharacter ℂ N) (2 * s₀ - k + 1) *
-            (∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-              : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-              ((p : ℕ) : ℂ) ^ (-(2 * (2 * s₀ - k + 1))))⁻¹)) = 0 ∧
-          meromorphicOrderAt
-            (fun s ↦ DirichletCharacter.LFunction
-                (Newform.dirichletLift χ : DirichletCharacter ℂ N) (2 * s - k + 1) *
-              ∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-                : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-                ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀ ≠ ⊤ ∧
-          Newform.FullDirichletQuotientUniversalFClause f χ S T s₀) :
+        Newform.PerNewformFullDirichletData f χ S) :
     Newform.AnalyticContradiction :=
   Newform.analyticContradiction_of_HeckeEntireExtension_of_full_dirichletZeroCertificate
     (Newform.HeckeEntireExtension_of_classicalInputs h_fricke h_pos h_stripping)
-    h_data
+    (fun _N _ _k f χ hfχ S h_bad ↦
+      Newform.full_pole_witness_data_of_PerNewformFullDirichletData f χ S
+        (h_data f χ hfχ S h_bad))
 
 /-- A nonzero prime eigenvalue from the classical Mellin/Fricke inputs and the
-full Dirichlet-zero data block. -/
+Dirichlet-zero data block bundled via `Newform.PerNewformFullDirichletData`. -/
 theorem Newform.exists_nonzero_prime_eigenvalue_of_classicalInputs_of_full_dirichletZeroCertificate
     (h_fricke : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k), Newform.HasFrickeTwistAsCuspForm f)
     (h_pos : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (_f : Newform N k), 0 < (k : ℝ))
@@ -354,38 +325,7 @@ theorem Newform.exists_nonzero_prime_eigenvalue_of_classicalInputs_of_full_diric
     (h_data : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
       f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ → ∀ (S : Finset ℕ),
         (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N), q ∉ S → f.lCoeff q = 0) →
-        ∃ (T : Finset Nat.Primes) (s₀ : ℂ),
-          AnalyticAt ℂ
-            (fun s ↦ DirichletCharacter.LFunction
-                (Newform.dirichletLift χ * Newform.dirichletLift χ : DirichletCharacter ℂ N)
-                (2 * (2 * s - k + 1)) *
-              ∏ p ∈ T, Newform.eulerFactor_stripped f χ S s p *
-                (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N) ((p : ℕ) : ZMod N) *
-                  ((p : ℕ) : ℂ) ^ (-(2 * s - k + 1)))⁻¹) s₀ ∧
-          AnalyticAt ℂ
-            (fun s ↦ DirichletCharacter.LFunction
-                (Newform.dirichletLift χ : DirichletCharacter ℂ N) (2 * s - k + 1) *
-              ∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-                : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-                ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀ ∧
-          (DirichletCharacter.LFunction
-              (Newform.dirichletLift χ * Newform.dirichletLift χ : DirichletCharacter ℂ N)
-              (2 * (2 * s₀ - k + 1)) *
-            (∏ p ∈ T, Newform.eulerFactor_stripped f χ S s₀ p *
-              (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N) ((p : ℕ) : ZMod N) *
-                ((p : ℕ) : ℂ) ^ (-(2 * s₀ - k + 1)))⁻¹)) ≠ 0 ∧
-          (DirichletCharacter.LFunction
-              (Newform.dirichletLift χ : DirichletCharacter ℂ N) (2 * s₀ - k + 1) *
-            (∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-              : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-              ((p : ℕ) : ℂ) ^ (-(2 * (2 * s₀ - k + 1))))⁻¹)) = 0 ∧
-          meromorphicOrderAt
-            (fun s ↦ DirichletCharacter.LFunction
-                (Newform.dirichletLift χ : DirichletCharacter ℂ N) (2 * s - k + 1) *
-              ∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-                : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-                ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀ ≠ ⊤ ∧
-          Newform.FullDirichletQuotientUniversalFClause f χ S T s₀)
+        Newform.PerNewformFullDirichletData f χ S)
     {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
     (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
     (S : Finset ℕ) :
@@ -396,8 +336,8 @@ theorem Newform.exists_nonzero_prime_eigenvalue_of_classicalInputs_of_full_diric
       h_fricke h_pos h_stripping h_data) f χ hfχ S
 
 /-- Strong Multiplicity One from the classical Mellin/Fricke inputs
-`HasFrickeTwistAsCuspForm`, `HasEulerStrippingMultiplier`, the full
-Dirichlet-zero data block, and `newform_unique`. -/
+`HasFrickeTwistAsCuspForm`, `HasEulerStrippingMultiplier`, the Dirichlet-zero
+data block bundled via `Newform.PerNewformFullDirichletData`, and `newform_unique`. -/
 theorem strongMultiplicityOne_of_classicalInputs_of_full_dirichletZeroCertificate_of_newformUnique
     (h_unique : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
       f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
@@ -411,38 +351,7 @@ theorem strongMultiplicityOne_of_classicalInputs_of_full_dirichletZeroCertificat
     (h_data : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
       f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ → ∀ (S : Finset ℕ),
         (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N), q ∉ S → f.lCoeff q = 0) →
-        ∃ (T : Finset Nat.Primes) (s₀ : ℂ),
-          AnalyticAt ℂ
-            (fun s ↦ DirichletCharacter.LFunction
-                (Newform.dirichletLift χ * Newform.dirichletLift χ : DirichletCharacter ℂ N)
-                (2 * (2 * s - k + 1)) *
-              ∏ p ∈ T, Newform.eulerFactor_stripped f χ S s p *
-                (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N) ((p : ℕ) : ZMod N) *
-                  ((p : ℕ) : ℂ) ^ (-(2 * s - k + 1)))⁻¹) s₀ ∧
-          AnalyticAt ℂ
-            (fun s ↦ DirichletCharacter.LFunction
-                (Newform.dirichletLift χ : DirichletCharacter ℂ N) (2 * s - k + 1) *
-              ∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-                : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-                ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀ ∧
-          (DirichletCharacter.LFunction
-              (Newform.dirichletLift χ * Newform.dirichletLift χ : DirichletCharacter ℂ N)
-              (2 * (2 * s₀ - k + 1)) *
-            (∏ p ∈ T, Newform.eulerFactor_stripped f χ S s₀ p *
-              (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N) ((p : ℕ) : ZMod N) *
-                ((p : ℕ) : ℂ) ^ (-(2 * s₀ - k + 1)))⁻¹)) ≠ 0 ∧
-          (DirichletCharacter.LFunction
-              (Newform.dirichletLift χ : DirichletCharacter ℂ N) (2 * s₀ - k + 1) *
-            (∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-              : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-              ((p : ℕ) : ℂ) ^ (-(2 * (2 * s₀ - k + 1))))⁻¹)) = 0 ∧
-          meromorphicOrderAt
-            (fun s ↦ DirichletCharacter.LFunction
-                (Newform.dirichletLift χ : DirichletCharacter ℂ N) (2 * s - k + 1) *
-              ∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-                : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-                ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀ ≠ ⊤ ∧
-          Newform.FullDirichletQuotientUniversalFClause f χ S T s₀)
+        Newform.PerNewformFullDirichletData f χ S)
     {N : ℕ} [NeZero N] {k : ℤ} (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
     (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
     (hgχ : g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
@@ -453,7 +362,10 @@ theorem strongMultiplicityOne_of_classicalInputs_of_full_dirichletZeroCertificat
   strongMultiplicityOne_of_HeckeEntireExtension_of_full_dirichletZeroCertificate_of_newformUnique
     h_unique
     (Newform.HeckeEntireExtension_of_classicalInputs h_fricke h_pos h_stripping)
-    h_data f g χ hfχ hgχ S h
+    (fun _N _ _k f χ hfχ S h_bad ↦
+      Newform.full_pole_witness_data_of_PerNewformFullDirichletData f χ S
+        (h_data f χ hfχ S h_bad))
+    f g χ hfχ hgχ S h
 
 private lemma levelRaiseMatrix_inv_smul_vadd_one_eq
     {l : ℕ} [NeZero l] (τ : UpperHalfPlane) :
