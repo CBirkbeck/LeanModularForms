@@ -897,36 +897,6 @@ lemma Newform.frickeMatrix_SLR_toGL_mul_mapGL_eq
   rw [← Matrix.GeneralLinearGroup.coe_mul, ← Matrix.GeneralLinearGroup.coe_mul,
     Newform.frickeMatrix_mul_mapGL_eq_mapGL_frickeConj_mul_frickeMatrix γ hγ]
 
-/-- SL(2, ℝ)-level Fricke conjugation identity:
-`W_SL * map_SL γ = map_SL (frickeConj N γ) * W_SL` for `γ ∈ Γ₁(N)`, with
-`W_SL := GLPos_to_SLR (frickeMatrix_GLPos N)` and
-`map_SL := Matrix.SpecialLinearGroup.map (Int.castRingHom ℝ)`. -/
-lemma Newform.frickeMatrix_SL_R_mul_SLmap_eq
-    {N : ℕ} [NeZero N] (γ : SL(2, ℤ)) (hγ : γ ∈ Gamma1 N) :
-    GLPos_to_SLR (Newform.frickeMatrix_GLPos N) *
-        Matrix.SpecialLinearGroup.map (Int.castRingHom ℝ) γ =
-      Matrix.SpecialLinearGroup.map (Int.castRingHom ℝ)
-          (Newform.frickeConj N γ hγ) *
-        GLPos_to_SLR (Newform.frickeMatrix_GLPos N) := by
-  refine (Matrix.SpecialLinearGroup.toGL_injective (n := Fin 2) (R := ℝ)) ?_
-  rw [map_mul, map_mul]
-  change (((GLPos_to_SLR (Newform.frickeMatrix_GLPos N) :
-          SL(2, ℝ)) : GL (Fin 2) ℝ)) *
-        ((Matrix.SpecialLinearGroup.map (Int.castRingHom ℝ) γ :
-            SL(2, ℝ)) : GL (Fin 2) ℝ) =
-      ((Matrix.SpecialLinearGroup.map (Int.castRingHom ℝ)
-            (Newform.frickeConj N γ hγ) :
-            SL(2, ℝ)) : GL (Fin 2) ℝ) *
-        ((GLPos_to_SLR (Newform.frickeMatrix_GLPos N) :
-            SL(2, ℝ)) : GL (Fin 2) ℝ)
-  rw [show ((Matrix.SpecialLinearGroup.map (Int.castRingHom ℝ) γ : SL(2, ℝ)) :
-        GL (Fin 2) ℝ) = (mapGL ℝ γ : GL (Fin 2) ℝ) from rfl,
-    show ((Matrix.SpecialLinearGroup.map (Int.castRingHom ℝ)
-            (Newform.frickeConj N γ hγ) : SL(2, ℝ)) :
-        GL (Fin 2) ℝ) = (mapGL ℝ (Newform.frickeConj N γ hγ) :
-        GL (Fin 2) ℝ) from rfl]
-  exact Newform.frickeMatrix_SLR_toGL_mul_mapGL_eq γ hγ
-
 private lemma GLPos_to_SLR_frickeMatrix_GLPos_sq_eq_neg_scalar (N : ℕ) [NeZero N] :
     ((GLPos_to_SLR (Newform.frickeMatrix_GLPos N) : SL(2, ℝ)) :
         Matrix (Fin 2) (Fin 2) ℝ) *
