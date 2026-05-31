@@ -47,7 +47,7 @@ from Mathlib's Smith-normal-form data to the matrix-level factorisation
 required by Miyake 4.6.3.
 
 No custom axioms, no `native_decide`, no sorries.  Deliberately kept
-independent of the `HeckeRIngs` / `Newforms` / `BlockBijection` chain.
+independent of the `HeckeRIngs` / `Newforms` chain.
 -/
 
 namespace Matrix

@@ -3,21 +3,23 @@ Copyright (c) 2024 Chris Birkbeck. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import LeanModularForms.HeckeRIngs.GLn.DiagonalCosets
-import LeanModularForms.HeckeRIngs.GLn.DiagonalRepresentatives
-import LeanModularForms.HeckeRIngs.GLn.SLnTransvection
 import LeanModularForms.HeckeRIngs.AbstractHeckeRing.Multiplication
 
 /-!
-# Block Embedding Bijection: abstract `HeckePair` lemmas
+# Stabilizer invariance and conjugation equivalences on `decompQuot`
 
-Stabilizer invariance, conjugation equivalence on `decompQuot`s, and coset
-helpers for an abstract `HeckePair`. Foundation layer of the block-embedding
-bijection split (Shimura §3.2, Lemma 3.19).
+For an abstract `HeckePair P`:
+
+* Right multiplication by `h ∈ P.H` does not change the stabilizer subgroup
+  (`stabilizerSubgroup_mul_right_H`).
+* Left multiplication by `h ∈ P.H` conjugates the stabilizer
+  (`stab_mul_left_eq_map_conj`).
+* These combine to give `Equiv`s of decomposition quotients
+  (`decompQuot_mul_left_equiv`, `decompQuot_double_H_equiv`) used in the
+  `CongruenceHecke` degree-combinatorics computations.
 -/
 
-open Matrix Subgroup.Commensurable Pointwise HeckeRing DoubleCoset
-open Matrix.SpecialLinearGroup
+open Subgroup.Commensurable Pointwise HeckeRing DoubleCoset
 
 open scoped Pointwise
 
@@ -140,57 +142,5 @@ noncomputable def decompQuot_double_H_equiv (g : P.Δ) (h k : P.H)
   exact mul_assoc _ _ _
 
 end ConjugationEquiv
-
-section CosetHelpers
-
-variable {G : Type*} [Group G] (P : HeckePair G)
-
-/-- Right-multiplying by an H-element doesn't change the right coset `{a} * H`. -/
-lemma singleton_mul_H_absorb_right (a c : G) (hc : c ∈ P.H) :
-    ({a * c} : Set G) * (P.H : Set G) = ({a} : Set G) * (P.H : Set G) := by
-  ext x
-  refine ⟨?_, ?_⟩
-  · rintro ⟨_, rfl, k, hk, rfl⟩
-    exact ⟨_, rfl, c * k, P.H.mul_mem hc hk, by group⟩
-  · rintro ⟨_, rfl, k, hk, rfl⟩
-    exact ⟨_, rfl, c⁻¹ * k, P.H.mul_mem (P.H.inv_mem hc) hk, by group⟩
-
-/-- If two `H`-elements are in the same `decompQuot` class for `g`, they give the same
-left coset `{σ * g} * H`. -/
-lemma decompQuot_coset_indep' (g : P.Δ)
-    (x y : P.H) (hxy : (⟦x⟧ : decompQuot P g) = ⟦y⟧) :
-    ({(x : G) * (g : G)} : Set G) * (P.H : Set G) =
-    {(y : G) * (g : G)} * (P.H : Set G) := by
-  rw [Quotient.eq''] at hxy
-  change (QuotientGroup.leftRel _) x y at hxy
-  rw [QuotientGroup.leftRel_apply] at hxy
-  rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
-      ConjAct.smul_def] at hxy
-  simp only [map_inv, ConjAct.ofConjAct_toConjAct, Subgroup.coe_mul, Subgroup.coe_inv,
-    inv_inv] at hxy
-  have hxy' : (g : G)⁻¹ * (x : G)⁻¹ * (y : G) * (g : G) ∈ P.H := by
-    convert hxy using 1
-    group
-  ext z
-  simp only [Set.singleton_mul, Set.image_mul_left, Set.mem_preimage, SetLike.mem_coe]
-  refine ⟨fun hz ↦ ?_, fun hz ↦ ?_⟩
-  · show ((y : G) * (g : G))⁻¹ * z ∈ P.H
-    rw [show ((y : G) * (g : G))⁻¹ * z =
-      ((g : G)⁻¹ * (x : G)⁻¹ * (y : G) * (g : G))⁻¹ *
-        (((x : G) * (g : G))⁻¹ * z) by group]
-    exact P.H.mul_mem (P.H.inv_mem hxy') hz
-  · show ((x : G) * (g : G))⁻¹ * z ∈ P.H
-    rw [show ((x : G) * (g : G))⁻¹ * z =
-      ((g : G)⁻¹ * (x : G)⁻¹ * (y : G) * (g : G)) *
-        (((y : G) * (g : G))⁻¹ * z) by group]
-    exact P.H.mul_mem hxy' hz
-
-/-- The `out` representative of a quotient element gives the same coset as the original. -/
-lemma decompQuot_out_coset_eq' (g : P.Δ) (x : P.H) :
-    ({((⟦x⟧ : decompQuot P g).out : G) * (g : G)} : Set G) * (P.H : Set G) =
-    {(x : G) * (g : G)} * (P.H : Set G) :=
-  decompQuot_coset_indep' P g (⟦x⟧ : decompQuot P g).out x (Quotient.out_eq _)
-
-end CosetHelpers
 
 end HeckeRing
