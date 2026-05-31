@@ -609,35 +609,6 @@ theorem Newform.exists_nonzero_prime_eigenvalue_of_FrickeSlashData_of_PerNewform
     (Newform.analyticContradiction_of_FrickeSlashData_of_PerNewformFullDirichletData
       h_slash h_data) f χ hfχ S
 
-/-- Strong multiplicity one endpoint stated in terms of the classical Atkin-Lehner
-Fricke slash-equality input `Newform.FrickeSlashData`, plus
-`Newform.PerNewformFullDirichletData` and newform uniqueness. -/
-theorem strongMultiplicityOne_of_FrickeSlashData_of_PerNewformFullDirichletData_of_newformUnique
-    (h_unique : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
-      f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      (∀ n : ℕ+, Nat.Coprime n.val N → f.eigenvalue n = g.eigenvalue n) →
-      f.toCuspForm = g.toCuspForm)
-    (h_slash : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k),
-      Newform.FrickeSlashData f)
-    (h_data : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
-      f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      ∀ (S : Finset ℕ),
-        (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
-          q ∉ S → f.lCoeff q = 0) →
-        Newform.PerNewformFullDirichletData f χ S)
-    {N : ℕ} [NeZero N] {k : ℤ} (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (hgχ : g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (S : Finset ℕ)
-    (h : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S →
-      f.eigenvalue n = g.eigenvalue n) :
-    f.toCuspForm = g.toCuspForm :=
-  strongMultiplicityOne_of_ImAxisMellinData_of_PerNewformFullDirichletData_of_newformUnique
-    h_unique
-    (fun _N _ _k f ↦ Newform.ImAxisMellinData.ofFrickeSlashData f (h_slash f))
-    h_data f g χ hfχ hgχ S h
-
 /-- `Newform.analyticContradiction_of_HeckeEntireExtension_of_full_dirichletZeroCertificate`
 with its H1 input replaced by per-newform `Newform.FrickeSlashData` and the
 T111 Dirichlet-data block bundled via `Newform.PerNewformFullDirichletData`. -/
