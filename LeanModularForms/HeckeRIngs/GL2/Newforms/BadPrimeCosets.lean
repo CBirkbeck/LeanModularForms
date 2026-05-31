@@ -988,18 +988,6 @@ theorem Newform.hasBadPrimeFrickePetNAdjoint_of_perCosetAggregate
   unfold petN
   exact Finset.sum_congr rfl (fun q _ ↦ h_perCoset f g q)
 
-/-- `HasBadPrimeFrickePetNAdjoint` from the `frickeSquareScalar`-scaled
-aggregate identity, via `hasBadPrimeFrickePetNAdjoint_iff`. -/
-theorem Newform.hasBadPrimeFrickePetNAdjoint_of_fricke_upper_aggregate
-    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
-    (_hp : p.Prime) (_hpN : ¬ Nat.Coprime p N)
-    (h_aggregate : ∀ (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k),
-      Newform.frickeSquareScalar N k * petN (heckeT_n_cusp k p f) g =
-        petN f (Newform.frickeBadAdjointCandidate k p g)) :
-    Newform.HasBadPrimeFrickePetNAdjoint N k p :=
-  (Newform.hasBadPrimeFrickePetNAdjoint_iff
-    (Newform.frickeSquareScalar_ne_zero N k)).mpr h_aggregate
-
 open UpperHalfPlane MeasureTheory ModularGroup in
 /-- Expansion of the bad-prime `heckeT_n_cusp k p` LHS summand: for a prime
 `p ∣ N`, the `peterssonInner` first slot rewrites as the finite Hecke `b`-sum
