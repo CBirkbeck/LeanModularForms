@@ -118,7 +118,7 @@ private lemma natCast_mem_strictPeriods_Gamma1_map (N : ℕ) :
     strictPeriods_Gamma1]
   exact ⟨(N : ℤ), by simp⟩
 
-private lemma one_mem_strictPeriods_Gamma1_map (N : ℕ) :
+lemma one_mem_strictPeriods_Gamma1_map (N : ℕ) :
     (1 : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
   rw [show (Gamma1 N).map (mapGL ℝ) = (Gamma1 N : Subgroup (GL (Fin 2) ℝ)) from rfl,
     strictPeriods_Gamma1]

@@ -81,12 +81,6 @@ def QExpansionSupportedOnDvd (d : ℕ)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
   IsSupportedOnDvd d (qExpansion (1 : ℝ) f)
 
-omit [NeZero N] in
-private lemma h1_period_Gamma1 :
-    (1 : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
-  rw [show (Gamma1 N).map (mapGL ℝ) = (Gamma1 N : Subgroup (GL (Fin 2) ℝ)) from rfl,
-    strictPeriods_Gamma1]
-  exact ⟨1, by simp⟩
 
 /-- The submodule of cusp forms `f ∈ S_k(Γ₁(N))` whose canonical
 period-1 `q`-expansion is supported on multiples of `d`. -/
@@ -99,7 +93,7 @@ noncomputable def qSupportedOnDvdSubmodule (N : ℕ) [NeZero N] (k : ℤ) (d : �
     have h_eq : qExpansion (1 : ℝ) (⇑(f + g) : UpperHalfPlane → ℂ) =
         qExpansion (1 : ℝ) ⇑f + qExpansion (1 : ℝ) ⇑g := by
       convert qExpansion_add (Γ := (Gamma1 N).map (mapGL ℝ)) (h := 1) (a := k) (b := k)
-        one_pos h1_period_Gamma1 f g using 2
+        one_pos (one_mem_strictPeriods_Gamma1_map N) f g using 2
     show (PowerSeries.coeff n) (qExpansion (1 : ℝ) ⇑(f + g)) = 0
     rw [h_eq, map_add, hf n hn, hg n hn, zero_add]
   smul_mem' c f hf := by
@@ -107,7 +101,7 @@ noncomputable def qSupportedOnDvdSubmodule (N : ℕ) [NeZero N] (k : ℤ) (d : �
     have h_eq : qExpansion (1 : ℝ) (⇑(c • f) : UpperHalfPlane → ℂ) =
         c • qExpansion (1 : ℝ) ⇑f := by
       convert qExpansion_smul (Γ := (Gamma1 N).map (mapGL ℝ)) (k := k) (h := 1) one_pos
-        h1_period_Gamma1 c f using 2
+        (one_mem_strictPeriods_Gamma1_map N) c f using 2
     show (PowerSeries.coeff n) (qExpansion (1 : ℝ) ⇑(c • f)) = 0
     rw [h_eq, show (PowerSeries.coeff n) (c • qExpansion (1 : ℝ) ⇑f) =
       c * (PowerSeries.coeff n) (qExpansion (1 : ℝ) ⇑f) by simp [smul_eq_mul],

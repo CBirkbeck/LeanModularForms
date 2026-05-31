@@ -63,15 +63,6 @@ namespace HeckeRing.GL2
 variable {N : ℕ} [NeZero N] {k : ℤ}
 
 omit [NeZero N] in
-/-- Period-1 strict-period membership for `Γ₁(N)` (local copy of the building block used
-throughout the Fourier-coefficient API). -/
-private lemma one_mem_strictPeriods_Gamma1_map_local :
-    (1 : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
-  rw [show (Gamma1 N).map (mapGL ℝ) = (Gamma1 N : Subgroup (GL (Fin 2) ℝ)) from rfl,
-    strictPeriods_Gamma1]
-  exact ⟨1, by simp⟩
-
-omit [NeZero N] in
 /-- `a₁(c • f) = c · a₁(f)` for the canonical (period-1) `q`-expansion of a cusp form, with
 **no normalisation** assumption.  Un-normalised analogue of the `private`
 `qExpansion_one_coeff_one_smul_of_norm` of `Newforms/MainLemma.lean`. -/
@@ -83,7 +74,7 @@ private lemma qExpansion_one_coeff_one_smul_local
       c * (ModularFormClass.qExpansion (1 : ℝ) (⇑f)).coeff 1
   rw [show (⇑(c • f : CuspForm _ k) : UpperHalfPlane → ℂ) = c • ⇑f from rfl,
     show (⇑f : UpperHalfPlane → ℂ) = ⇑f.toModularForm' from rfl,
-    qExpansion_smul one_pos one_mem_strictPeriods_Gamma1_map_local, PowerSeries.coeff_smul,
+    qExpansion_smul one_pos (one_mem_strictPeriods_Gamma1_map N), PowerSeries.coeff_smul,
     smul_eq_mul]
 
 /-- **Miyake Lemma 4.5.15(1)** (un-normalised form, period 1).  For an `Eigenform g`
@@ -108,53 +99,10 @@ theorem Eigenform.coeff_eq_coeff_one_mul_eigenvalue
 /-- **Miyake Lemma 4.6.11** (`Eigenform`/`cuspFormsNew` form).  A nonzero common
 eigenfunction in the new subspace has nonvanishing leading Fourier coefficient.
 
-The `h_chi_factor` hypothesis encodes Miyake's character-conductor restriction (p. 160)
-and is required by the route-B Main Lemma (`mainLemma_charSpace_routeB`). -/
-theorem coeff_one_ne_zero_of_mem_cuspFormsNew_of_eigen
-    (g : Eigenform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (hgχ : g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (hg_new : g.toCuspForm ∈ cuspFormsNew N k)
-    (hg_ne : g.toCuspForm ≠ 0)
-    (L : ℕ)
-    (hNL : N ∣ L)
-    (h_chi_factor : ∀ (p : ℕ) (hp_in : p ∈ N.primeFactors),
-      haveI : NeZero (N / p) := ⟨by
-        have hp_prime : p.Prime := Nat.prime_of_mem_primeFactors hp_in
-        have hpN : p ∣ N := Nat.dvd_of_mem_primeFactors hp_in
-        have hN_pos : 0 < N := Nat.pos_of_ne_zero (NeZero.ne N)
-        exact (Nat.div_pos (Nat.le_of_dvd hN_pos hpN) hp_prime.pos).ne'⟩
-      ∃ (χ' : (ZMod (N / p))ˣ →* ℂˣ),
-        χ = χ'.comp (ZMod.unitsMap
-          (Nat.div_dvd_of_dvd (Nat.dvd_of_mem_primeFactors hp_in)))) :
-    (ModularFormClass.qExpansion (1 : ℝ) g.toCuspForm).coeff 1 ≠ 0 := by
-  intro h1
-  have hgχ_cusp : g.toCuspForm ∈ cuspFormCharSpace k χ :=
-    (cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace (k := k) χ
-      g.toCuspForm).mp (by convert hgχ using 1)
-  have h_vanish : ∀ n : ℕ, Nat.Coprime n N →
-      (ModularFormClass.qExpansion (1 : ℝ) g.toCuspForm).coeff n = 0 := by
-    intro n hn
-    by_cases hn0 : n = 0
-    · subst hn0
-      rw [ModularFormClass.qExpansion_coeff_zero _ one_pos
-            one_mem_strictPeriods_Gamma1_map_local,
-        (CuspFormClass.zero_at_infty g.toCuspForm).valueAtInfty_eq_zero]
-    · have hcoeff := Eigenform.coeff_eq_coeff_one_mul_eigenvalue g χ hgχ
-        ⟨n, Nat.pos_of_ne_zero hn0⟩ hn
-      rwa [h1, zero_mul] at hcoeff
-  exact hg_ne (Submodule.disjoint_def.mp cuspFormsOld_disjoint_cuspFormsNew _
-    (mainLemma_charSpace_routeB χ g.toCuspForm hgχ_cusp h_vanish h_chi_factor) hg_new)
-
-/-- **Miyake Lemma 4.6.11, unconditional `Eigenform`/`cuspFormsNew` form.**  As
-`coeff_one_ne_zero_of_mem_cuspFormsNew_of_eigen`, but with the `h_chi_factor`
-hypothesis **removed**: it relies on the per-character unconditional Main Lemma
-`mainLemma_charSpace_routeB_unconditional` (Deliverable 1).
-
-A nonzero common eigenfunction in the new subspace has nonvanishing leading Fourier
-coefficient.  Proof: if `a₁(g) = 0` then `aₙ(g) = 0` for all `(n,N)=1` (Lemma 4.5.15(1)),
+Proof: if `a₁(g) = 0` then `aₙ(g) = 0` for all `(n,N)=1` (Lemma 4.5.15(1)),
 so `g ∈ cuspFormsOld N k`; being also new and nonzero, this contradicts
 `cuspFormsOld_disjoint_cuspFormsNew`. -/
-theorem coeff_one_ne_zero_of_mem_cuspFormsNew_of_eigen_unconditional
+theorem coeff_one_ne_zero_of_mem_cuspFormsNew_of_eigen
     (g : Eigenform N k) (χ : (ZMod N)ˣ →* ℂˣ)
     (hgχ : g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
     (hg_new : g.toCuspForm ∈ cuspFormsNew N k)
@@ -167,13 +115,13 @@ theorem coeff_one_ne_zero_of_mem_cuspFormsNew_of_eigen_unconditional
     by_cases hn0 : n = 0
     · subst hn0
       rw [ModularFormClass.qExpansion_coeff_zero _ one_pos
-            one_mem_strictPeriods_Gamma1_map_local,
+            (one_mem_strictPeriods_Gamma1_map N),
         (CuspFormClass.zero_at_infty g.toCuspForm).valueAtInfty_eq_zero]
     · have hcoeff :=
         Eigenform.coeff_eq_coeff_one_mul_eigenvalue g χ hgχ ⟨n, Nat.pos_of_ne_zero hn0⟩ hn
       rwa [h1, zero_mul] at hcoeff
   exact hg_ne (Submodule.disjoint_def.mp cuspFormsOld_disjoint_cuspFormsNew _
-    (mainLemma_charSpace_routeB_unconditional χ g.toCuspForm
+    (mainLemma_charSpace_routeB χ g.toCuspForm
       ((cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace (k := k) χ
         g.toCuspForm).mp (by convert hgχ using 1)) h_vanish) hg_new)
 
@@ -772,7 +720,7 @@ private theorem coeff_smul_inv_eq_eigenvalue
           b₁⁻¹ • ⇑g_new.toCuspForm from rfl,
       show (⇑g_new.toCuspForm : UpperHalfPlane → ℂ) =
         ⇑g_new.toCuspForm.toModularForm' from rfl,
-      qExpansion_smul one_pos one_mem_strictPeriods_Gamma1_map_local, PowerSeries.coeff_smul,
+      qExpansion_smul one_pos (one_mem_strictPeriods_Gamma1_map N), PowerSeries.coeff_smul,
       smul_eq_mul]
   rw [h_smul_coeff, Eigenform.coeff_eq_coeff_one_mul_eigenvalue g_new χ hgχ n hn, ← hb₁_def,
     ← mul_assoc, inv_mul_cancel₀ hb₁_ne, one_mul]
@@ -1010,7 +958,7 @@ theorem newPart_eq_smul_of_shared_eigenvalues
         qExpansion_one_coeff_one_smul_local, zero_mul]
     rw [hg0, hb₁0, zero_smul]
   · have hb₁_ne : b₁ ≠ 0 :=
-      coeff_one_ne_zero_of_mem_cuspFormsNew_of_eigen_unconditional g_new χ hgχ hg_new hg0
+      coeff_one_ne_zero_of_mem_cuspFormsNew_of_eigen g_new χ hgχ hg_new hg0
     set g₁ : CuspForm ((Gamma1 N).map (mapGL ℝ)) k := b₁⁻¹ • g_new.toCuspForm with hg₁_def
     have h_eig_all : ∀ n : ℕ+, Nat.Coprime n.val N →
         f.eigenvalue n = g_new.eigenvalue n :=
@@ -1028,11 +976,11 @@ theorem newPart_eq_smul_of_shared_eigenvalues
       intro n hn
       show (ModularFormClass.qExpansion (1 : ℝ)
           (⇑g₁.toModularForm' - ⇑f.toCuspForm.toModularForm')).coeff n = 0
-      rw [qExpansion_sub one_pos one_mem_strictPeriods_Gamma1_map_local, map_sub, sub_eq_zero]
+      rw [qExpansion_sub one_pos (one_mem_strictPeriods_Gamma1_map N), map_sub, sub_eq_zero]
       by_cases hn0 : n = 0
       · subst hn0
-        rw [ModularFormClass.qExpansion_coeff_zero _ one_pos one_mem_strictPeriods_Gamma1_map_local,
-            ModularFormClass.qExpansion_coeff_zero _ one_pos one_mem_strictPeriods_Gamma1_map_local,
+        rw [ModularFormClass.qExpansion_coeff_zero _ one_pos (one_mem_strictPeriods_Gamma1_map N),
+            ModularFormClass.qExpansion_coeff_zero _ one_pos (one_mem_strictPeriods_Gamma1_map N),
             show (⇑g₁.toModularForm' : UpperHalfPlane → ℂ) = ⇑g₁ from rfl,
             show (⇑f.toCuspForm.toModularForm' : UpperHalfPlane → ℂ) = ⇑f.toCuspForm from rfl,
             (CuspFormClass.zero_at_infty g₁).valueAtInfty_eq_zero,
@@ -1046,7 +994,7 @@ theorem newPart_eq_smul_of_shared_eigenvalues
           (Newform.eigenvalue_eq_coeff f ⟨n, hn_pos⟩ hn χ hfχ).symm
         rw [hL, hR, h_eig_all ⟨n, hn_pos⟩ hn]
     have h_old : g₁ - f.toCuspForm ∈ cuspFormsOld N k :=
-      mainLemma_charSpace_routeB_unconditional χ (g₁ - f.toCuspForm) h_diff_char h_vanish
+      mainLemma_charSpace_routeB χ (g₁ - f.toCuspForm) h_diff_char h_vanish
     have h_new : g₁ - f.toCuspForm ∈ cuspFormsNew N k :=
       (cuspFormsNew N k).sub_mem ((cuspFormsNew N k).smul_mem b₁⁻¹ hg_new)
         (cuspFormsNewExtended_le_cuspFormsNew f.isNew)
@@ -1221,11 +1169,11 @@ private theorem oldPart_diff_qExpansion_coeff_eq_zero
   intro n hn
   show (ModularFormClass.qExpansion (1 : ℝ)
       (⇑ιh.toModularForm' - ⇑(c₁' • f.toCuspForm).toModularForm')).coeff n = 0
-  rw [qExpansion_sub one_pos one_mem_strictPeriods_Gamma1_map_local, map_sub, sub_eq_zero]
+  rw [qExpansion_sub one_pos (one_mem_strictPeriods_Gamma1_map N), map_sub, sub_eq_zero]
   by_cases hn0 : n = 0
   · subst hn0
-    rw [ModularFormClass.qExpansion_coeff_zero _ one_pos one_mem_strictPeriods_Gamma1_map_local,
-        ModularFormClass.qExpansion_coeff_zero _ one_pos one_mem_strictPeriods_Gamma1_map_local,
+    rw [ModularFormClass.qExpansion_coeff_zero _ one_pos (one_mem_strictPeriods_Gamma1_map N),
+        ModularFormClass.qExpansion_coeff_zero _ one_pos (one_mem_strictPeriods_Gamma1_map N),
         show (⇑ιh.toModularForm' : UpperHalfPlane → ℂ) = ⇑ιh from rfl,
         show (⇑(c₁' • f.toCuspForm).toModularForm' : UpperHalfPlane → ℂ) =
           ⇑(c₁' • f.toCuspForm) from rfl,
@@ -1252,7 +1200,7 @@ private theorem oldPart_diff_qExpansion_coeff_eq_zero
         (⇑(c₁' • f.toCuspForm).toModularForm')).coeff n = c₁' * f.eigenvalue np := by
       rw [show (⇑(c₁' • f.toCuspForm).toModularForm' : UpperHalfPlane → ℂ) =
             c₁' • ⇑f.toCuspForm.toModularForm' from rfl,
-        qExpansion_smul one_pos one_mem_strictPeriods_Gamma1_map_local, PowerSeries.coeff_smul,
+        qExpansion_smul one_pos (one_mem_strictPeriods_Gamma1_map N), PowerSeries.coeff_smul,
         smul_eq_mul, ← hnp_val, Newform.eigenvalue_eq_coeff f np hn χ hfχ]
       congr 1
     rw [hL, hR]
@@ -1273,7 +1221,7 @@ private theorem oldPart_f_mem_cuspFormsOldExtended
     f.toCuspForm ∈ cuspFormsOldExtended N k := by
   set ιh : CuspForm ((Gamma1 N).map (mapGL ℝ)) k := levelInclude_cusp hMN k h
   have h_diff_old : ιh - c₁' • f.toCuspForm ∈ cuspFormsOld N k :=
-    mainLemma_charSpace_routeB_unconditional χ (ιh - c₁' • f.toCuspForm) h_diff_char h_vanish
+    mainLemma_charSpace_routeB χ (ιh - c₁' • f.toCuspForm) h_diff_char h_vanish
   have h_diff_ext : ιh - c₁' • f.toCuspForm ∈ cuspFormsOldExtended N k :=
     cuspFormsOld_le_cuspFormsOldExtended h_diff_old
   have hιh_ext : ιh ∈ cuspFormsOldExtended N k :=
@@ -1307,7 +1255,7 @@ theorem oldPart_eq_zero_of_shared_eigenvalues
     (cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace (k := k) ψ h).mpr hh_char
   set c₁' := (ModularFormClass.qExpansion (1 : ℝ) h).coeff 1
   have hc₁'_ne : c₁' ≠ 0 :=
-    coeff_one_ne_zero_of_mem_cuspFormsNew_of_eigen_unconditional h_eig_b ψ hψ_mod' hh_new hh_ne
+    coeff_one_ne_zero_of_mem_cuspFormsNew_of_eigen h_eig_b ψ hψ_mod' hh_new hh_ne
   set ιh : CuspForm ((Gamma1 N).map (mapGL ℝ)) k := levelInclude_cusp hMN k h
   have hιh_char : ιh ∈ cuspFormCharSpace k χ := by
     have := levelInclude_cusp_mem_cuspFormCharSpace_comp hMN ψ hh_char
@@ -1360,14 +1308,13 @@ theorem strongMultiplicityOne_constMul
     newPart_eq_smul_of_shared_eigenvalues f g χ hfχ hgχ
       ((mem_cuspFormsNew_iff_oldPart_eq_zero g.toCuspForm).mpr h_old_zero) S h_eig⟩
 
-/-- **Strong Multiplicity One for both newforms (DS 5.8.2.1) — unconditional version.**
+/-- **Strong Multiplicity One for both newforms (DS 5.8.2.1).**
 Two `Newform`s at level `N` in the same Nebentypus eigenspace with equal eigenvalues outside a
-finite set `S` are equal.  Unlike the frozen `strongMultiplicityOne_axiom_clean`, this carries
-NO `h_chi_factor` hypothesis.
+finite set `S` are equal.
 
 Corollary of `strongMultiplicityOne_constMul` (T014): the constant multiple it returns is forced
 to be `1` since both newforms are normalised (`a₁ = 1`). -/
-theorem strongMultiplicityOne_axiom_clean_unconditional
+theorem strongMultiplicityOne_axiom_clean
     (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
     (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
     (hgχ : g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)

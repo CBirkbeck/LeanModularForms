@@ -205,13 +205,6 @@ theorem dirichletCharacter_conductor_dvd_newform_conductor
   exact χ.conductor_dvd_level
 
 omit [NeZero N] in
-private lemma h1_period_Gamma1_local :
-    (1 : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
-  rw [show (Gamma1 N).map (mapGL ℝ) = (Gamma1 N : Subgroup (GL (Fin 2) ℝ)) from rfl,
-    strictPeriods_Gamma1]
-  exact ⟨1, by simp⟩
-
-omit [NeZero N] in
 private lemma qExpansion_one_coeff_one_smul_of_norm
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (h_norm : (ModularFormClass.qExpansion (1 : ℝ) f.toModularForm').coeff 1 = 1)
@@ -220,7 +213,7 @@ private lemma qExpansion_one_coeff_one_smul_of_norm
   change (ModularFormClass.qExpansion (1 : ℝ) (⇑(c • f : CuspForm _ k))).coeff 1 = c
   rw [show (⇑(c • f : CuspForm _ k) : UpperHalfPlane → ℂ) = c • ⇑f from rfl,
     show (⇑f : UpperHalfPlane → ℂ) = ⇑f.toModularForm' from rfl,
-    qExpansion_smul one_pos h1_period_Gamma1_local, PowerSeries.coeff_smul,
+    qExpansion_smul one_pos (one_mem_strictPeriods_Gamma1_map N), PowerSeries.coeff_smul,
     smul_eq_mul, h_norm, mul_one]
 
 lemma qExpansion_one_coeff_one_heckeT_n_cusp_eq_coeff
@@ -322,7 +315,7 @@ theorem cuspFormsOld_coeff_eq_zero_of_coprime
         ModularFormClass.qExpansion (1 : ℝ) ⇑x +
           ModularFormClass.qExpansion (1 : ℝ) ⇑y := by
       have := qExpansion_add (Γ := (Gamma1 N).map (mapGL ℝ)) (h := 1) (a := k) (b := k)
-        one_pos h1_period_Gamma1_local x y
+        one_pos (one_mem_strictPeriods_Gamma1_map N) x y
       convert this using 2
     change (PowerSeries.coeff n) (ModularFormClass.qExpansion 1 ⇑(x + y)) = 0
     rw [h_eq, map_add, ihx, ihy, zero_add]
@@ -331,7 +324,7 @@ theorem cuspFormsOld_coeff_eq_zero_of_coprime
         (⇑(c • x) : UpperHalfPlane → ℂ) =
         c • ModularFormClass.qExpansion (1 : ℝ) ⇑x := by
       have := qExpansion_smul (Γ := (Gamma1 N).map (mapGL ℝ)) (k := k) (h := 1) one_pos
-        h1_period_Gamma1_local c x
+        (one_mem_strictPeriods_Gamma1_map N) c x
       convert this using 2
     change (PowerSeries.coeff n) (ModularFormClass.qExpansion 1 ⇑(c • x)) = 0
     rw [h_eq, show (PowerSeries.coeff n)
@@ -363,7 +356,7 @@ theorem newPart_coeff_eq_zero_of_coprime_of_vanish
       ModularFormClass.qExpansion (1 : ℝ) ⇑(oldPart f) +
         ModularFormClass.qExpansion (1 : ℝ) ⇑(newPart f) := by
     have := qExpansion_add (Γ := (Gamma1 N).map (mapGL ℝ)) (h := 1) (a := k) (b := k)
-      one_pos h1_period_Gamma1_local (oldPart f) (newPart f)
+      one_pos (one_mem_strictPeriods_Gamma1_map N) (oldPart f) (newPart f)
     convert this using 2
   rw [oldPart_add_newPart f] at h_eq
   have h_coeff := congrArg (fun ps : PowerSeries ℂ ↦ ps.coeff n) h_eq
@@ -417,7 +410,7 @@ private lemma newform_diff_coprime_coeff_eq_zero
     (n : ℕ) (hn : Nat.Coprime n N) :
     (ModularFormClass.qExpansion (1 : ℝ) (f.toCuspForm - g.toCuspForm)).coeff n = 0 := by
   have h1_pos : (0 : ℝ) < 1 := one_pos
-  have h1_period := h1_period_Gamma1_local (N := N)
+  have h1_period := (one_mem_strictPeriods_Gamma1_map N)
   conv_lhs =>
     rw [show (⇑f.toCuspForm - ⇑g.toCuspForm) =
         (⇑f.toCuspForm.toModularForm' - ⇑g.toCuspForm.toModularForm') from rfl]

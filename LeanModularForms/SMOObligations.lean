@@ -40,12 +40,6 @@ namespace HeckeRing.GL2
 
 variable {N : ℕ} [NeZero N] {k : ℤ}
 
-private theorem neZero_div_of_mem_primeFactors {N p : ℕ} [NeZero N]
-    (hp_in : p ∈ N.primeFactors) : NeZero (N / p) :=
-  ⟨(Nat.div_pos (Nat.le_of_dvd (Nat.pos_of_ne_zero (NeZero.ne N))
-    (Nat.dvd_of_mem_primeFactors hp_in))
-    (Nat.prime_of_mem_primeFactors hp_in).pos).ne'⟩
-
 private theorem coprime_prod_primeFactors_iff_coprime {N : ℕ} [NeZero N] (n : ℕ) :
     Nat.Coprime n (N.primeFactors.prod id) ↔ Nat.Coprime n N := by
   refine ⟨fun h ↦ ?_, fun h ↦ h.coprime_dvd_right (Nat.prod_primeFactors_dvd N)⟩
@@ -59,36 +53,11 @@ private theorem coprime_prod_primeFactors_iff_coprime {N : ℕ} [NeZero N] (n : 
       ⟨hq_prime, hq_dvd.trans (Nat.gcd_dvd_right _ _), hN0⟩)).symm
     (hq_dvd.trans (Nat.gcd_dvd_left _ _))
 
-/-- **Miyake Theorem 4.6.8 (Main Lemma), CuspForm form.** A cusp form `f ∈ S_k(Γ_1(N), χ)`
-whose `q`-expansion vanishes on indices coprime to `N` decomposes as
-`f = ∑_{p ∈ N.primeFactors} f_p` with each `f_p` supported on `q^p`-multiples
-and lying in the same character space. -/
-theorem miyake_4_6_8_main_lemma_cuspForm
-    {N : ℕ} [NeZero N] {k : ℤ}
-    (χ : DirichletCharacter ℂ N)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hfχ : f ∈ cuspFormCharSpace k χ.toUnitHom)
-    (h_vanish : ∀ n : ℕ, Nat.Coprime n N →
-      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0)
-    (h_chi_factor : ∀ (p : ℕ) (hp_in : p ∈ N.primeFactors),
-      haveI : NeZero (N / p) := neZero_div_of_mem_primeFactors hp_in
-      ∃ (χ' : (ZMod (N / p))ˣ →* ℂˣ),
-        χ.toUnitHom = χ'.comp (ZMod.unitsMap
-          (Nat.div_dvd_of_dvd (Nat.dvd_of_mem_primeFactors hp_in)))) :
-    ∃ f_p : ℕ → CuspForm ((Gamma1 N).map (mapGL ℝ)) k,
-      f = ∑ p ∈ N.primeFactors, f_p p ∧
-      (∀ p ∈ N.primeFactors,
-        f_p p ∈ HeckeRing.GL2.AtkinLehner.qSupportedOnDvdSubmodule N k p) ∧
-      (∀ p ∈ N.primeFactors,
-        f_p p ∈ cuspFormCharSpace k χ.toUnitHom) :=
-  miyake_4_6_8_subset_helper χ.toUnitHom N.primeFactors subset_rfl f hfχ
-    (fun n hn ↦ h_vanish n ((coprime_prod_primeFactors_iff_coprime n).mp hn)) h_chi_factor
-
 /-- **Miyake Theorem 4.6.8 (Main Lemma), unconditional CuspForm form.**  As
 `miyake_4_6_8_main_lemma_cuspForm`, but with the `h_chi_factor` hypothesis removed:
 the per-prime factorisation is produced internally by the 4.6.4 dichotomy
-(`miyake_4_6_8_subset_helper_unconditional`). -/
-theorem miyake_4_6_8_main_lemma_cuspForm_unconditional
+(`miyake_4_6_8_subset_helper`). -/
+theorem miyake_4_6_8_main_lemma_cuspForm
     {N : ℕ} [NeZero N] {k : ℤ}
     (χ : (ZMod N)ˣ →* ℂˣ)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
@@ -101,7 +70,7 @@ theorem miyake_4_6_8_main_lemma_cuspForm_unconditional
         f_p p ∈ HeckeRing.GL2.AtkinLehner.qSupportedOnDvdSubmodule N k p) ∧
       (∀ p ∈ N.primeFactors,
         f_p p ∈ cuspFormCharSpace k χ) :=
-  miyake_4_6_8_subset_helper_unconditional χ N.primeFactors subset_rfl f hfχ
+  miyake_4_6_8_subset_helper χ N.primeFactors subset_rfl f hfχ
     fun n hn ↦ h_vanish n ((coprime_prod_primeFactors_iff_coprime n).mp hn)
 
 /-- Embed a per-prime decomposition into a per-nontrivial-divisor decomposition by
@@ -136,37 +105,10 @@ private theorem extend_primeFactors_to_divisor_decomposition
     · simpa only [h_prime, if_true] using h_char d h_prime
     · simpa only [h_prime, if_false] using Submodule.zero_mem _
 
-theorem coprimeSieve_admits_squarefree_decomposition_in_charSpace
-    (χ : (ZMod N)ˣ →* ℂˣ)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hfχ : f ∈ cuspFormCharSpace k χ)
-    (h_vanish : ∀ n : ℕ, Nat.Coprime n N →
-      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0)
-    -- encoding the Miyake "primes of `(l, N/m_χ)`" restriction, p. 160).
-    (h_chi_factor : ∀ (p : ℕ) (hp_in : p ∈ N.primeFactors),
-      haveI : NeZero (N / p) := neZero_div_of_mem_primeFactors hp_in
-      ∃ (χ' : (ZMod (N / p))ˣ →* ℂˣ),
-        χ = χ'.comp (ZMod.unitsMap
-          (Nat.div_dvd_of_dvd (Nat.dvd_of_mem_primeFactors hp_in)))) :
-    ∃ f_d : ℕ → CuspForm ((Gamma1 N).map (mapGL ℝ)) k,
-      f = ∑ d ∈ N.divisors.filter (1 < ·), f_d d ∧
-      (∀ d ∈ N.divisors.filter (1 < ·),
-        f_d d ∈ HeckeRing.GL2.AtkinLehner.qSupportedOnDvdSubmodule N k d) ∧
-      (∀ d ∈ N.divisors.filter (1 < ·),
-        f_d d ∈ cuspFormCharSpace k χ) := by
-  set χ_dir : DirichletCharacter ℂ N := Newform.dirichletLift χ
-  have h_round : χ_dir.toUnitHom = χ :=
-    MulChar.equivToUnitHom.apply_symm_apply χ
-  obtain ⟨f_p, h_sum, h_supp, h_char⟩ :=
-    miyake_4_6_8_main_lemma_cuspForm χ_dir f (h_round ▸ hfχ) h_vanish
-      fun p hp_in ↦ let ⟨χ', hχ_eq⟩ := h_chi_factor p hp_in; ⟨χ', h_round ▸ hχ_eq⟩
-  exact extend_primeFactors_to_divisor_decomposition χ f f_p h_sum h_supp
-    fun p hp ↦ h_round ▸ h_char p hp
-
 /-- Unconditional analogue of `coprimeSieve_admits_squarefree_decomposition_in_charSpace`:
 the `h_chi_factor` hypothesis is dropped, the decomposition coming from
-`miyake_4_6_8_main_lemma_cuspForm_unconditional`. -/
-theorem coprimeSieve_admits_squarefree_decomposition_in_charSpace_unconditional
+`miyake_4_6_8_main_lemma_cuspForm`. -/
+theorem coprimeSieve_admits_squarefree_decomposition_in_charSpace
     (χ : (ZMod N)ˣ →* ℂˣ)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (hfχ : f ∈ cuspFormCharSpace k χ)
@@ -179,7 +121,7 @@ theorem coprimeSieve_admits_squarefree_decomposition_in_charSpace_unconditional
       (∀ d ∈ N.divisors.filter (1 < ·),
         f_d d ∈ cuspFormCharSpace k χ) :=
   let ⟨f_p, h_sum, h_supp, h_char⟩ :=
-    miyake_4_6_8_main_lemma_cuspForm_unconditional χ f hfχ h_vanish
+    miyake_4_6_8_main_lemma_cuspForm χ f hfχ h_vanish
   extend_primeFactors_to_divisor_decomposition χ f f_p h_sum h_supp h_char
 
 private theorem heckeT_n_prime_sq_eq_heckeT_p_sq_sub_diamond
@@ -257,30 +199,13 @@ private theorem cuspFormsOld_of_sameLevel_decomposition
     MulChar.equivToUnitHom.apply_symm_apply χ]
   exact h_char d hd
 
-theorem mainLemma_charSpace_routeB
-    (χ : (ZMod N)ˣ →* ℂˣ)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hfχ : f ∈ cuspFormCharSpace k χ)
-    (h_vanish : ∀ n : ℕ, Nat.Coprime n N →
-      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0)
-    -- encoding the Miyake "primes of `(l, N/m_χ)`" restriction, p. 160).
-    (h_chi_factor : ∀ (p : ℕ) (hp_in : p ∈ N.primeFactors),
-      haveI : NeZero (N / p) := neZero_div_of_mem_primeFactors hp_in
-      ∃ (χ' : (ZMod (N / p))ˣ →* ℂˣ),
-        χ = χ'.comp (ZMod.unitsMap
-          (Nat.div_dvd_of_dvd (Nat.dvd_of_mem_primeFactors hp_in)))) :
-    f ∈ cuspFormsOld N k :=
-  let ⟨f_d, h_sum, h_supp, h_char⟩ :=
-    coprimeSieve_admits_squarefree_decomposition_in_charSpace χ f hfχ h_vanish h_chi_factor
-  cuspFormsOld_of_sameLevel_decomposition χ f f_d h_sum h_supp h_char
-
 /-- **Per-character unconditional Miyake 4.6.8 (route B).**  A cusp form
 `f ∈ S_k(Γ_1(N), χ)` whose period-1 `q`-expansion vanishes at every index coprime to
 `N` is an oldform.  This is `mainLemma_charSpace_routeB` with the `h_chi_factor`
 hypothesis **removed**: the per-prime character factorisation needed by the
 same-level divisor decomposition is supplied internally by Miyake's dichotomy 4.6.4
-(`coprimeSieve_admits_squarefree_decomposition_in_charSpace_unconditional`). -/
-theorem mainLemma_charSpace_routeB_unconditional
+(`coprimeSieve_admits_squarefree_decomposition_in_charSpace`). -/
+theorem mainLemma_charSpace_routeB
     (χ : (ZMod N)ˣ →* ℂˣ)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (hfχ : f ∈ cuspFormCharSpace k χ)
@@ -288,53 +213,8 @@ theorem mainLemma_charSpace_routeB_unconditional
       (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0) :
     f ∈ cuspFormsOld N k :=
   let ⟨f_d, h_sum, h_supp, h_char⟩ :=
-    coprimeSieve_admits_squarefree_decomposition_in_charSpace_unconditional χ f hfχ h_vanish
+    coprimeSieve_admits_squarefree_decomposition_in_charSpace χ f hfχ h_vanish
   cuspFormsOld_of_sameLevel_decomposition χ f f_d h_sum h_supp h_char
-
-theorem newform_unique_routeB
-    {N : ℕ} [NeZero N] {k : ℤ}
-    (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (hgχ : g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (h : ∀ n : ℕ+, Nat.Coprime n.val N → f.eigenvalue n = g.eigenvalue n)
-    -- encoding the Miyake "primes of `(l, N/m_χ)`" restriction, p. 160).
-    (h_chi_factor : ∀ (p : ℕ) (hp_in : p ∈ N.primeFactors),
-      haveI : NeZero (N / p) := neZero_div_of_mem_primeFactors hp_in
-      ∃ (χ' : (ZMod (N / p))ˣ →* ℂˣ),
-        χ = χ'.comp (ZMod.unitsMap
-          (Nat.div_dvd_of_dvd (Nat.dvd_of_mem_primeFactors hp_in)))) :
-    f.toCuspForm = g.toCuspForm := by
-  suffices hfg : f.toCuspForm - g.toCuspForm = 0 from sub_eq_zero.mp hfg
-  have h1_period : (1 : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
-    rw [show (Gamma1 N).map (mapGL ℝ) = (Gamma1 N : Subgroup (GL (Fin 2) ℝ)) from rfl,
-      strictPeriods_Gamma1]
-    exact ⟨1, by simp⟩
-  have h_vanish : ∀ n : ℕ, Nat.Coprime n N →
-      (ModularFormClass.qExpansion (1 : ℝ) (f.toCuspForm - g.toCuspForm)).coeff n = 0 := by
-    intro n hn
-    show (ModularFormClass.qExpansion (1 : ℝ)
-        (⇑f.toCuspForm.toModularForm' - ⇑g.toCuspForm.toModularForm')).coeff n = 0
-    rw [qExpansion_sub one_pos h1_period, map_sub, sub_eq_zero]
-    rcases eq_or_ne n 0 with rfl | hn0
-    · simp [Nat.Coprime, Nat.gcd_zero_left] at hn
-      subst hn
-      rw [ModularFormClass.qExpansion_coeff_zero _ one_pos h1_period,
-          ModularFormClass.qExpansion_coeff_zero _ one_pos h1_period,
-          show (⇑f.toModularForm' : UpperHalfPlane → ℂ) = ⇑f.toCuspForm from rfl,
-          show (⇑g.toModularForm' : UpperHalfPlane → ℂ) = ⇑g.toCuspForm from rfl,
-          (CuspFormClass.zero_at_infty f.toCuspForm).valueAtInfty_eq_zero,
-          (CuspFormClass.zero_at_infty g.toCuspForm).valueAtInfty_eq_zero]
-    · have hn_pos : 0 < n := Nat.pos_of_ne_zero hn0
-      simpa only [Newform.eigenvalue_eq_coeff f ⟨n, hn_pos⟩ hn χ hfχ,
-        Newform.eigenvalue_eq_coeff g ⟨n, hn_pos⟩ hn χ hgχ] using h ⟨n, hn_pos⟩ hn
-  exact Submodule.disjoint_def.mp cuspFormsOld_disjoint_cuspFormsNew _
-    (mainLemma_charSpace_routeB χ (f.toCuspForm - g.toCuspForm) ((cuspFormCharSpace k χ).sub_mem
-      ((cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace (k := k) χ
-        f.toCuspForm).mp (by convert hfχ using 1))
-      ((cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace (k := k) χ
-        g.toCuspForm).mp (by convert hgχ using 1))) h_vanish h_chi_factor)
-    ((cuspFormsNew N k).sub_mem (cuspFormsNewExtended_le_cuspFormsNew f.isNew)
-      (cuspFormsNewExtended_le_cuspFormsNew g.isNew))
 
 theorem exists_prime_coprime_avoiding_finset
     {N : ℕ} [NeZero N] (n : ℕ+) (S : Finset ℕ) :
@@ -414,23 +294,5 @@ theorem eigenvalues_eq_all_coprime_of_eq_off_finite
         (hyp ⟨n.val * q, Nat.mul_pos n.pos hq_prime.pos⟩
           (Nat.Coprime.mul_left hn hq_N) hnq_notin_S)
   · exact hyp n hn hn_S
-
-theorem strongMultiplicityOne_axiom_clean
-    {N : ℕ} [NeZero N] {k : ℤ}
-    (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (hgχ : g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (S : Finset ℕ)
-    (h : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S →
-      f.eigenvalue n = g.eigenvalue n)
-    -- encoding the Miyake "primes of `(l, N/m_χ)`" restriction, p. 160).
-    (h_chi_factor : ∀ (p : ℕ) (hp_in : p ∈ N.primeFactors),
-      haveI : NeZero (N / p) := neZero_div_of_mem_primeFactors hp_in
-      ∃ (χ' : (ZMod (N / p))ˣ →* ℂˣ),
-        χ = χ'.comp (ZMod.unitsMap
-          (Nat.div_dvd_of_dvd (Nat.dvd_of_mem_primeFactors hp_in)))) :
-    f.toCuspForm = g.toCuspForm :=
-  newform_unique_routeB f g χ hfχ hgχ
-    (eigenvalues_eq_all_coprime_of_eq_off_finite f g χ hfχ hgχ S h) h_chi_factor
 
 end HeckeRing.GL2

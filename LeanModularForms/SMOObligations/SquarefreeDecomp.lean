@@ -117,12 +117,6 @@ private lemma m7_mem_l'_of_ne_q {l l' q q' : ℕ}
     (hq' : q' ∈ l.primeFactors) (hq'_ne : q' ≠ q) : q' ∈ l'.primeFactors :=
   (Finset.mem_insert.mp (h_pf_eq ▸ hq')).resolve_left hq'_ne
 
-private lemma m7_one_mem_strictPeriods_Gamma1_map (M : ℕ) :
-    (1 : ℝ) ∈ ((Gamma1 M).map (mapGL ℝ)).strictPeriods := by
-  rw [show (Gamma1 M).map (mapGL ℝ) =
-      (Gamma1 M : Subgroup (GL (Fin 2) ℝ)) from rfl,
-    strictPeriods_Gamma1]
-  exact ⟨1, by simp⟩
 
 private lemma m7_qExp_split_f_eq_f'_plus_hform {ϕ_f ϕ_f' ϕ_h : PowerSeries ℂ} {q : ℕ}
     (hf'_qexp : ∀ n : ℕ,
@@ -346,7 +340,7 @@ private lemma Miyake467Decomp_of_prime {N : ℕ} [NeZero N] {k : ℤ}
       (N * l ^ 2) k q := fun n hn ↦
     h_vanish n (hl_eq_q ▸ (hq_prime.coprime_iff_not_dvd.mpr hn).symm)
   have h_period_one : (1 : ℝ) ∈ ((Gamma1 (N * l ^ 2)).map (mapGL ℝ)).strictPeriods :=
-    m7_one_mem_strictPeriods_Gamma1_map _
+    one_mem_strictPeriods_Gamma1_map _
   obtain ⟨φ, h_eq, h_period⟩ :=
     HeckeRing.GL2.exists_levelRaise_preimage_of_coeff_support_multiples
       hq_prime.one_lt hq_dvd_Nl2 f_res (fun n hn ↦ hf_res_supp n hn)
@@ -570,10 +564,10 @@ private lemma Miyake467Decomp_inductive_auxiliary_form {N : ℕ} [NeZero N] {k :
     cuspForm_restrictSubgroup_mem_cuspFormCharSpace χ hNNq2 hfχ
   refine ⟨f_at_Nq2 - h_form, Submodule.sub_mem _ hf_at_Nq2_char h_form_char,
     qExpansion_one_sub_coeff_coprime f_at_Nq2 h_form
-      (m7_one_mem_strictPeriods_Gamma1_map _) h_form_qexp, ?_⟩
+      (one_mem_strictPeriods_Gamma1_map _) h_form_qexp, ?_⟩
   intro n hn_cop_l'
   rw [qExpansion_one_sub_coeff_coprime f_at_Nq2 h_form
-    (m7_one_mem_strictPeriods_Gamma1_map _) h_form_qexp n]
+    (one_mem_strictPeriods_Gamma1_map _) h_form_qexp n]
   split_ifs with hcop_q
   · exact h_vanish n (hq_dvd_l' ▸ Nat.Coprime.mul_right hcop_q hn_cop_l')
   · rfl
@@ -1380,7 +1374,7 @@ lemma function_identity_Δ_eq_sum_V_q_F
          UpperHalfPlane → ℂ) z) := by
   haveI hLl2_NeZero : NeZero (L * l ^ 2) :=
     ⟨Nat.mul_ne_zero (NeZero.ne L) (pow_ne_zero 2 (NeZero.ne l))⟩
-  have h1_period_Ll2 := m7_one_mem_strictPeriods_Gamma1_map (L * l ^ 2)
+  have h1_period_Ll2 := one_mem_strictPeriods_Gamma1_map (L * l ^ 2)
   let φ : (q : l.primeFactors) → ModularForm ((Gamma1 (L * l ^ 2)).map (mapGL ℝ)) k :=
     fun q ↦
       haveI : NeZero ((L * l ^ 2) / q.val) := h_q_NeZero q.val q.property

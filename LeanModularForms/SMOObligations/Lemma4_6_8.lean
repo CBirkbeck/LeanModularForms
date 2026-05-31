@@ -19,12 +19,6 @@ namespace HeckeRing.GL2
 
 variable {N : ℕ} [NeZero N] {k : ℤ}
 
-private lemma one_mem_strictPeriods_Gamma1_map (M : ℕ) :
-    (1 : ℝ) ∈ ((Gamma1 M).map (mapGL ℝ)).strictPeriods := by
-  rw [show (Gamma1 M).map (mapGL ℝ) = (Gamma1 M : Subgroup (GL (Fin 2) ℝ)) from rfl,
-    strictPeriods_Gamma1]
-  exact ⟨1, by simp⟩
-
 private theorem miyake_descent_witness_exists
     (χ : (ZMod N)ˣ →* ℂˣ)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
@@ -201,7 +195,7 @@ theorem miyake_4_6_8_inductive_step
       hpN k ⟨f_lower, rfl⟩,
     castLevelRaise_mem_cuspFormCharSpace hpN χ χ' hχ_eq f_lower hf_lower_char,
     fun n hn ↦ ?_⟩
-  have h1_period := one_mem_strictPeriods_Gamma1_map (M := N)
+  have h1_period := one_mem_strictPeriods_Gamma1_map N
   have h_sub : ModularFormClass.qExpansion (1 : ℝ) (f - f_p) =
       ModularFormClass.qExpansion (1 : ℝ) f -
       ModularFormClass.qExpansion (1 : ℝ) f_p := by
@@ -227,68 +221,6 @@ private theorem sum_ite_eq_add_sum_erase {M : Type*} [AddCommMonoid M]
   congr 1
   · simp
   · exact Finset.sum_congr rfl fun q hq ↦ by simp [Finset.ne_of_mem_erase hq]
-
-/-- **M9: The subset-indexed inductive helper for Miyake 4.6.8.**
-
-For `f ∈ S_k(Γ_1(N), χ)` with coprime-vanishing wrt `S.prod id`
-(where `S ⊆ N.primeFactors`):
-there is a decomposition `f = ∑_{p ∈ S} f_p` with each `f_p` in
-`qSupportedOnDvdSubmodule N k p ∩ cuspFormCharSpace`.
-
-Proven by induction on `S.card` using M8 at each step. -/
-theorem miyake_4_6_8_subset_helper
-    (χ : (ZMod N)ˣ →* ℂˣ)
-    (S : Finset ℕ) (hS : S ⊆ N.primeFactors)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hfχ : f ∈ cuspFormCharSpace k χ)
-    (h_vanish : ∀ n : ℕ, Nat.Coprime n (S.prod id) →
-      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0)
-    (h_chi_factor : ∀ (p : ℕ) (hp_in : p ∈ N.primeFactors),
-      haveI : NeZero (N / p) := ⟨(Nat.div_pos (Nat.le_of_dvd (Nat.pos_of_ne_zero (NeZero.ne N))
-        (Nat.dvd_of_mem_primeFactors hp_in)) (Nat.prime_of_mem_primeFactors hp_in).pos).ne'⟩
-      ∃ χ' : (ZMod (N / p))ˣ →* ℂˣ,
-        χ = χ'.comp (ZMod.unitsMap
-          (Nat.div_dvd_of_dvd (Nat.dvd_of_mem_primeFactors hp_in)))) :
-    ∃ f_p : ℕ → CuspForm ((Gamma1 N).map (mapGL ℝ)) k,
-      f = ∑ p ∈ S, f_p p ∧
-      (∀ p ∈ S, f_p p ∈ HeckeRing.GL2.AtkinLehner.qSupportedOnDvdSubmodule N k p) ∧
-      (∀ p ∈ S, f_p p ∈ cuspFormCharSpace k χ) := by
-  induction hSc : S.card generalizing f S with
-  | zero =>
-    obtain rfl : S = ∅ := Finset.card_eq_zero.mp hSc
-    refine ⟨fun _ ↦ 0, ?_, ?_, ?_⟩
-    · rw [cuspForm_eq_zero_of_qExpansion_coeff_eq_zero f fun n ↦
-        h_vanish n (by simp [Nat.Coprime, Finset.prod_empty]), Finset.sum_empty]
-    · exact fun p hp ↦ absurd hp (Finset.notMem_empty p)
-    · exact fun p hp ↦ absurd hp (Finset.notMem_empty p)
-  | succ n ih =>
-    obtain ⟨p, hp_in⟩ : S.Nonempty := Finset.card_pos.mp (hSc ▸ Nat.succ_pos n)
-    have hp_prime : p.Prime := Nat.prime_of_mem_primeFactors (hS hp_in)
-    have hpN : p ∣ N := Nat.dvd_of_mem_primeFactors (hS hp_in)
-    haveI : NeZero (N / p) := ⟨(Nat.div_pos
-      (Nat.le_of_dvd (Nat.pos_of_ne_zero (NeZero.ne N)) hpN) hp_prime.pos).ne'⟩
-    obtain ⟨χ', hχ_eq⟩ := h_chi_factor p (hS hp_in)
-    obtain ⟨f_p, h_supp, h_char, h_diff_vanish⟩ :=
-      miyake_4_6_8_inductive_step χ S hS f hfχ h_vanish hp_in χ' hχ_eq
-    have h_erase_sub : S.erase p ⊆ N.primeFactors := fun q hq ↦
-      hS (Finset.mem_of_mem_erase hq)
-    have h_erase_card : (S.erase p).card = n := by
-      rw [Finset.card_erase_of_mem hp_in, hSc]; lia
-    obtain ⟨f_q, h_sum, h_supp_q, h_char_q⟩ :=
-      ih (S.erase p) h_erase_sub (f - f_p) (Submodule.sub_mem _ hfχ h_char) h_diff_vanish
-        h_erase_card
-    refine ⟨fun q ↦ if q = p then f_p else f_q q, ?_, ?_, ?_⟩
-    · rw [sum_ite_eq_add_sum_erase hp_in f_p f_q, ← h_sum]; abel
-    · intro q hq
-      by_cases hqp : q = p
-      · subst hqp; simpa only [if_true] using h_supp
-      · simp only [hqp, if_false]
-        exact h_supp_q q (Finset.mem_erase.mpr ⟨hqp, hq⟩)
-    · intro q hq
-      by_cases hqp : q = p
-      · subst hqp; simpa only [if_true] using h_char
-      · simp only [hqp, if_false]
-        exact h_char_q q (Finset.mem_erase.mpr ⟨hqp, hq⟩)
 
 private lemma factorsThrough_of_conductor_dvd {n : ℕ} (χ : DirichletCharacter ℂ n)
     {d : ℕ} (hcd : χ.conductor ∣ d) (hdn : d ∣ n) :
@@ -380,7 +312,7 @@ vanishing on indices coprime to `S.prod id` (`S ⊆ N.primeFactors`), there is a
 decomposition `f = ∑_{p ∈ S} f_p` with each `f_p` `p`-supported and in the character
 space.  No `h_chi_factor` is needed: the per-prime factorisation is produced by
 `miyake_4_6_8_factor_dichotomy`. -/
-theorem miyake_4_6_8_subset_helper_unconditional
+theorem miyake_4_6_8_subset_helper
     (χ : (ZMod N)ˣ →* ℂˣ)
     (S : Finset ℕ) (hS : S ⊆ N.primeFactors)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)

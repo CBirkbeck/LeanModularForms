@@ -496,10 +496,6 @@ private lemma miyake_4_6_14_delta_slash_sum_coeff_zero
           (funext (hΦ_q_fun q)))]
     exact h_per_q_zero q
 
-private lemma one_mem_strictPeriods_Gamma1_map (M : ℕ) :
-    (1 : ℝ) ∈ ((Gamma1 M).map (mapGL ℝ)).strictPeriods := by
-  simp [strictPeriods_Gamma1]
-
 noncomputable def descendSlashSumCuspForm {N : ℕ} [NeZero N] {k : ℤ} (χ : (ZMod N)ˣ →* ℂˣ)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (p : ℕ) [NeZero p] (hp : p.Prime) (hpN : p ∣ N)
     [NeZero (N / p)] (χ' : (ZMod (N / p))ˣ →* ℂˣ)
