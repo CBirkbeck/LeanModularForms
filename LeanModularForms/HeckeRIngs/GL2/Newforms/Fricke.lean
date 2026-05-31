@@ -923,30 +923,6 @@ lemma Newform.slash_peterssonAdj_frickeMatrix
               show ((-1 : ℂ)⁻¹ : ℂ) = -1 by norm_num]]]
   ring
 
-/-- Petersson invariance under `W_N`-shifted `Γ₁(N)` translation:
-`petersson k ⇑f ⇑g₂ (W_N • γ • τ) = petersson k ⇑f ⇑g₂ (W_N • τ)` for `γ ∈ Γ₁(N)`.
-Discharges the `hα_norm` hypothesis of `petN_slash_adjoint_GL2` for `α := W_N`. -/
-lemma Newform.frickeMatrix_smul_petersson_invariant
-    {N : ℕ} [NeZero N] {k : ℤ}
-    (f g₂ : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (γ : SL(2, ℤ)) (hγ : γ ∈ Gamma1 N) (τ : UpperHalfPlane) :
-    petersson k (⇑f) (⇑g₂)
-        (Newform.frickeMatrix N • ((γ : SL(2, ℤ)) • τ)) =
-      petersson k (⇑f) (⇑g₂) (Newform.frickeMatrix N • τ) := by
-  rw [show ((γ : SL(2, ℤ)) • τ : UpperHalfPlane) = (mapGL ℝ γ : GL (Fin 2) ℝ) • τ from rfl,
-    show (Newform.frickeMatrix N • ((mapGL ℝ γ : GL (Fin 2) ℝ) • τ) : UpperHalfPlane) =
-      (Newform.frickeMatrix N * (mapGL ℝ γ : GL (Fin 2) ℝ)) • τ from (mul_smul _ _ τ).symm,
-    Newform.frickeMatrix_mul_mapGL_eq_mapGL_frickeConj_mul_frickeMatrix γ hγ,
-    show (mapGL ℝ (Newform.frickeConj N γ hγ) * Newform.frickeMatrix N) • τ =
-      (mapGL ℝ (Newform.frickeConj N γ hγ) : GL (Fin 2) ℝ) •
-        (Newform.frickeMatrix N • τ) from mul_smul _ _ _,
-    show (mapGL ℝ (Newform.frickeConj N γ hγ) : GL (Fin 2) ℝ) •
-        (Newform.frickeMatrix N • τ) =
-      ((Newform.frickeConj N γ hγ : SL(2, ℤ)) : SL(2, ℤ)) •
-        (Newform.frickeMatrix N • τ) from rfl]
-  exact petersson_Gamma1_invariant f g₂ (Newform.frickeConj N γ hγ)
-    (Newform.frickeConj_mem_Gamma1 N γ hγ) _
-
 /-- Integrability of `τ ↦ petersson k f g₂ (W_N • τ)` on `Gamma1_fundDomain_PSL N`.
 Discharges the `h_α_int` hypothesis of `petN_slash_adjoint_GL2`. -/
 lemma Newform.integrableOn_petersson_smul_frickeMatrix_fundDomain_PSL
