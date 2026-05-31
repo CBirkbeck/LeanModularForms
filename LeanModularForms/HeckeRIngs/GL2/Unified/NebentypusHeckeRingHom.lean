@@ -1080,17 +1080,6 @@ theorem heckeRingHomCharSpace_table_transports_ppow_recurrence
     ← map_sub Φ]
   exact congrArg Φ (T_sum_ppow_recurrence p hp j hj)
 
-/-- Obtaining `φ` from Shimura 3.35, the level-1 coprime identity transports to an operator
-identity on `modFormCharSpace k χ`: there is a ring hom `Φ` from the level-1 Hecke algebra to
-the χ-space endomorphisms with `Φ(T(m)) ∘ Φ(T(n)) = Φ(T(mn))` for all coprime `m, n`. -/
-theorem heckeRingHomCharSpace_table_transports_coprime_via_shimura
-    (m n : ℕ+) (hcop : Nat.Coprime m n) :
-    ∃ Φ : 𝕋 (GL_pair 2) ℤ →+* Module.End ℂ (modFormCharSpace k χ),
-      Φ (T_sum m) * Φ (T_sum n) = Φ (T_sum ⟨m * n, Nat.mul_pos m.pos n.pos⟩) := by
-  obtain ⟨φ, -⟩ := shimura_thm_3_35 N
-  refine ⟨(heckeRingHomCharSpace (N := N) (k := k) (χ := χ)).comp φ, ?_⟩
-  exact heckeRingHomCharSpace_table_transports_coprime (k := k) (χ := χ) φ m n hcop
-
 end TableTransport
 
 section OperatorCommutativityFromRing
