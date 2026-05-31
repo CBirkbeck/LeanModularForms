@@ -872,7 +872,8 @@ theorem strongMultiplicityOne_of_FrickeSlashData_of_PerNewformFullDirichletData_
     h_data f g χ hfχ hgχ S h
 
 /-- `Newform.analyticContradiction_of_HeckeEntireExtension_of_full_dirichletZeroCertificate`
-with its H1 input replaced by per-newform `Newform.FrickeSlashData`. -/
+with its H1 input replaced by per-newform `Newform.FrickeSlashData` and the
+T111 Dirichlet-data block bundled via `Newform.PerNewformFullDirichletData`. -/
 theorem Newform.analyticContradiction_of_FrickeSlashData_of_full_dirichletZeroCertificate
     (h_slash : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k),
       Newform.FrickeSlashData f)
@@ -881,49 +882,13 @@ theorem Newform.analyticContradiction_of_FrickeSlashData_of_full_dirichletZeroCe
       ∀ (S : Finset ℕ),
         (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
           q ∉ S → f.lCoeff q = 0) →
-        ∃ (T : Finset Nat.Primes) (s₀ : ℂ),
-          AnalyticAt ℂ
-            (fun s ↦
-              DirichletCharacter.LFunction
-                (Newform.dirichletLift χ * Newform.dirichletLift χ
-                  : DirichletCharacter ℂ N) (2 * (2 * s - k + 1)) *
-              ∏ p ∈ T, Newform.eulerFactor_stripped f χ S s p *
-                (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-                    ((p : ℕ) : ZMod N) *
-                  ((p : ℕ) : ℂ) ^ (-(2 * s - k + 1)))⁻¹) s₀ ∧
-          AnalyticAt ℂ
-            (fun s ↦
-              DirichletCharacter.LFunction
-                (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-                (2 * s - k + 1) *
-              ∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-                : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-                ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀ ∧
-          (DirichletCharacter.LFunction
-            (Newform.dirichletLift χ * Newform.dirichletLift χ
-              : DirichletCharacter ℂ N) (2 * (2 * s₀ - k + 1)) *
-            (∏ p ∈ T, Newform.eulerFactor_stripped f χ S s₀ p *
-              (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-                  ((p : ℕ) : ZMod N) *
-                ((p : ℕ) : ℂ) ^ (-(2 * s₀ - k + 1)))⁻¹)) ≠ 0 ∧
-          (DirichletCharacter.LFunction
-            (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-            (2 * s₀ - k + 1) *
-            (∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-              : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-              ((p : ℕ) : ℂ) ^ (-(2 * (2 * s₀ - k + 1))))⁻¹)) = 0 ∧
-          meromorphicOrderAt
-            (fun s ↦
-              DirichletCharacter.LFunction
-                (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-                (2 * s - k + 1) *
-              ∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-                : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-                ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀ ≠ ⊤ ∧
-          Newform.FullDirichletQuotientUniversalFClause f χ S T s₀) :
+        Newform.PerNewformFullDirichletData f χ S) :
     Newform.AnalyticContradiction :=
   Newform.analyticContradiction_of_HeckeEntireExtension_of_full_dirichletZeroCertificate
-    (Newform.HeckeEntireExtension_of_FrickeSlashData h_slash) h_data
+    (Newform.HeckeEntireExtension_of_FrickeSlashData h_slash)
+    (fun _N _ _k f χ hfχ S h_bad ↦
+      Newform.full_pole_witness_data_of_PerNewformFullDirichletData f χ S
+        (h_data f χ hfχ S h_bad))
 
 /-- Specialises
 `Newform.analyticContradiction_of_FrickeSlashData_of_full_dirichletZeroCertificate`
@@ -936,46 +901,7 @@ theorem Newform.exists_nonzero_prime_eigenvalue_of_FrickeSlashData_of_full_diric
       ∀ (S : Finset ℕ),
         (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
           q ∉ S → f.lCoeff q = 0) →
-        ∃ (T : Finset Nat.Primes) (s₀ : ℂ),
-          AnalyticAt ℂ
-            (fun s ↦
-              DirichletCharacter.LFunction
-                (Newform.dirichletLift χ * Newform.dirichletLift χ
-                  : DirichletCharacter ℂ N) (2 * (2 * s - k + 1)) *
-              ∏ p ∈ T, Newform.eulerFactor_stripped f χ S s p *
-                (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-                    ((p : ℕ) : ZMod N) *
-                  ((p : ℕ) : ℂ) ^ (-(2 * s - k + 1)))⁻¹) s₀ ∧
-          AnalyticAt ℂ
-            (fun s ↦
-              DirichletCharacter.LFunction
-                (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-                (2 * s - k + 1) *
-              ∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-                : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-                ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀ ∧
-          (DirichletCharacter.LFunction
-            (Newform.dirichletLift χ * Newform.dirichletLift χ
-              : DirichletCharacter ℂ N) (2 * (2 * s₀ - k + 1)) *
-            (∏ p ∈ T, Newform.eulerFactor_stripped f χ S s₀ p *
-              (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-                  ((p : ℕ) : ZMod N) *
-                ((p : ℕ) : ℂ) ^ (-(2 * s₀ - k + 1)))⁻¹)) ≠ 0 ∧
-          (DirichletCharacter.LFunction
-            (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-            (2 * s₀ - k + 1) *
-            (∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-              : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-              ((p : ℕ) : ℂ) ^ (-(2 * (2 * s₀ - k + 1))))⁻¹)) = 0 ∧
-          meromorphicOrderAt
-            (fun s ↦
-              DirichletCharacter.LFunction
-                (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-                (2 * s - k + 1) *
-              ∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-                : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-                ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀ ≠ ⊤ ∧
-          Newform.FullDirichletQuotientUniversalFClause f χ S T s₀)
+        Newform.PerNewformFullDirichletData f χ S)
     {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
     (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
     (S : Finset ℕ) :
