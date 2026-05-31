@@ -325,17 +325,6 @@ theorem peterssonAdj_glMap_M_infty_eq
   rw [peterssonAdj_mul, peterssonAdj_glMap_T_p_lower_eq_glMap_T_p_upper_zero,
     glMap_mapGL_Q_eq_mapGL_R, peterssonAdj_mapGL_SL_eq_inv, ← map_inv]
 
-private theorem peterssonAdj_glMap_M_infty_eq_via_gamma1
-    (p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) :
-    peterssonAdj (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ) =
-      (glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) *
-        ((mapGL ℝ : SL(2, ℤ) →* _)
-          ((gamma1_of_gamma0_sigma_p p N hp hpN : Gamma1 N) : SL(2, ℤ))⁻¹) *
-        ((mapGL ℝ : SL(2, ℤ) →* _)
-          ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))) := by
-  rw [peterssonAdj_glMap_M_infty_eq N p hp hpN,
-    sigma_p_inv_eq_gamma1_inv_mul_gamma0 p N hp hpN, map_mul, ← mul_assoc]
-
 def shiftSL_loc (m : ℤ) : SL(2, ℤ) :=
   ⟨!![1, m; 0, 1], by simp [Matrix.det_fin_two]⟩
 
@@ -377,34 +366,6 @@ lemma peterssonAdj_T_p_upper_eq_shift_mul_lower
     ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (shiftSL_loc (-(b : ℤ))) *
       glMap (T_p_lower p hp) : GL (Fin 2) ℝ).val i j
   rw [peterssonAdj_glMap_T_p_upper p hp b, h_rhs]
-
-lemma slash_peterssonAdj_T_p_upper_eq_T_p_lower
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (b : ℕ)
-    (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    ⇑g ∣[k] peterssonAdj (glMap (T_p_upper p hp.pos b)) =
-      ⇑g ∣[k] glMap (T_p_lower p hp.pos) := by
-  rw [peterssonAdj_T_p_upper_eq_shift_mul_lower p hp.pos b, SlashAction.slash_mul,
-    show (⇑g ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-      (shiftSL_loc (-(b : ℤ))) : GL (Fin 2) ℝ)) = ⇑g from
-        SlashInvariantFormClass.slash_action_eq g _
-          ⟨shiftSL_loc (-(b : ℤ)), shiftSL_loc_mem_Gamma1 _, rfl⟩]
-
-lemma slash_peterssonAdj_T_p_lower_eq_T_p_upper_0
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
-    (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    ⇑g ∣[k] peterssonAdj (glMap (T_p_lower p hp.pos)) =
-      ⇑g ∣[k] glMap (T_p_upper p hp.pos 0) := by
-  congr 1
-  apply Units.ext
-  ext i j
-  have h2 : (glMap (T_p_upper p hp.pos 0) : Matrix (Fin 2) (Fin 2) ℝ) =
-      !![(1 : ℝ), 0; 0, (p : ℝ)] := by
-    ext i j
-    fin_cases i <;> fin_cases j <;> simp [glMap, T_p_upper]
-  rw [show (peterssonAdj (glMap (T_p_lower p hp.pos)) : Matrix _ _ ℝ) i j =
-      (!![(1 : ℝ), 0; 0, (p : ℝ)]) i j by rw [peterssonAdj_glMap_T_p_lower p hp.pos],
-    show (glMap (T_p_upper p hp.pos 0) : Matrix _ _ ℝ) i j =
-      (!![(1 : ℝ), 0; 0, (p : ℝ)]) i j by rw [h2]]
 
 private lemma T_p_lower_triple_product_matrix (p N : ℕ) [NeZero N] (hp : 0 < p)
     (hpN : Nat.Coprime p N) :
@@ -528,26 +489,6 @@ private lemma slash_diamond_inv_M_infty_eq_slash_T_p_lower
   rw [show ⇑(diamondOp k u (diamondOp k u⁻¹ f)) = ⇑f from
     congr_arg DFunLike.coe h_cancel]
 
-open UpperHalfPlane ModularGroup MeasureTheory in
-private lemma peterssonInner_diamond_inv_M_infty_eq_T_p_lower
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
-    (D : Set ℍ) (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (G : ℍ → ℂ) :
-    peterssonInner k D
-        (⇑(diamondOp k (ZMod.unitOfCoprime p hpN)⁻¹ f) ∣[k]
-          (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)) G =
-      peterssonInner k D
-        (⇑f ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) G := by
-  rw [slash_diamond_inv_M_infty_eq_slash_T_p_lower p hp hpN f]
-
-lemma slash_diamond_inv_M_infty_eq_slash_T_p_lower_cusp
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    ⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f) ∣[k]
-        (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) =
-      ⇑f ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) :=
-  slash_diamond_inv_M_infty_eq_slash_T_p_lower p hp hpN f.toModularForm'
-
 lemma slash_M_infty_eq_diamond_slash_T_p_lower_cusp_g
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
@@ -557,35 +498,6 @@ lemma slash_M_infty_eq_diamond_slash_T_p_lower_cusp_g
   rw [show ⇑g ∣[k] (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) =
         ⇑g ∣[k] (M_infty N p hp.pos hpN : GL (Fin 2) ℚ) from rfl]
   exact slash_M_infty_eq_diamond_slash_T_p_lower k p hp.pos hpN g.toModularForm'
-
-open UpperHalfPlane ModularGroup MeasureTheory in
-private lemma peterssonInner_slash_M_infty_eq_diamond_T_p_lower_cusp_g
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
-    (D : Set ℍ) (F : ℍ → ℂ)
-    (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    peterssonInner k D F
-        (⇑g ∣[k] (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)) =
-      peterssonInner k D F
-        (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) g) ∣[k]
-          (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) := by
-  rw [slash_M_infty_eq_diamond_slash_T_p_lower_cusp_g p hp hpN g]
-
-/-- `(⟨u⟩ f) ∣ T_p_upper(0) ∣ γ₀` equals `f ∣ M_∞`. -/
-theorem slash_diamond_T_p_upper_zero_slash_adjointGamma0Rep_eq_slash_M_infty
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
-    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    (⇑(diamondOp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
-      (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
-      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))) =
-    ⇑f ∣[k] (M_infty N p hp.pos hpN : GL (Fin 2) ℚ) := by
-  rw [← slash_T_p_lower_eq_T_p_upper_zero_slash_gamma0_ModularForm p hp hpN
-      (diamondOp k (ZMod.unitOfCoprime p hpN) f),
-    show ⇑(diamondOp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
-        (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) =
-      ⇑(diamondOp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
-        (T_p_lower p hp.pos : GL (Fin 2) ℚ) from rfl,
-    ← slash_M_infty_eq_diamond_slash_T_p_lower k p hp.pos hpN f]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
 lemma peterssonInner_slash_adjoint_coset
@@ -619,15 +531,6 @@ lemma peterssonInner_slash_adjoint_coset
   exact peterssonInner_slash_adjoint (k := k)
     (D := fd) (α := β * (mapGL ℝ q⁻¹ : GL (Fin 2) ℝ)) hdet_pos
     f (g ∣[k] (mapGL ℝ q⁻¹ : GL (Fin 2) ℝ))
-
-open UpperHalfPlane ModularGroup MeasureTheory in
-lemma peterssonInner_slash_adjoint_right (D : Set ℍ) (α : GL (Fin 2) ℝ)
-    (hα : 0 < α.det.val) (f g : ℍ → ℂ) :
-    peterssonInner k D f (g ∣[k] α) =
-      peterssonInner k (α • D) (f ∣[k] peterssonAdj α) g := by
-  rw [← peterssonInner_conj_symm k D f (g ∣[k] α),
-    peterssonInner_slash_adjoint (k := k) D α hα g f,
-    peterssonInner_conj_symm k (α • D) (f ∣[k] peterssonAdj α) g]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
 lemma peterssonInner_slash_adj_T_p_upper_q_summand_eq
