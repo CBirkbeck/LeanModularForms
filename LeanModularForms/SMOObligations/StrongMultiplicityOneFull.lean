@@ -153,29 +153,6 @@ def cuspFormsOldChar (N : ℕ) [NeZero N] (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
         (g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k),
       g ∈ cuspFormsNew M k ∧ heq ▸ levelRaise M l k g = f}
 
-/-- **Miyake Lemma 4.6.9(2)**: the new space at a proper divisor level `M` (multiple of
-the conductor) embeds into the old space at level `N` via `V_l`. -/
-theorem levelRaise_cuspFormsNew_le_cuspFormsOldChar
-    (χ : (ZMod N)ˣ →* ℂˣ) (m_χ : ℕ)
-    {M : ℕ} [NeZero M] {l : ℕ} [NeZero l]
-    (hcond : m_χ ∣ M) (hML : M ≠ N) (heq : l * M = N)
-    (g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k)
-    (hg_new : g ∈ cuspFormsNew M k) :
-    (heq ▸ levelRaise M l k g) ∈ cuspFormsOldChar N k χ m_χ :=
-  Submodule.subset_span
-    ⟨M, l, ‹NeZero M›, ‹NeZero l›, hcond, hML, heq, g, hg_new, rfl⟩
-
-/-- **Miyake Lemma 4.6.9(1)**: if `χ` is primitive of conductor `N` (`m_χ = N`), then the
-old space is trivial, equivalently the whole χ-space is new.  (The new∩old decomposition
-then forces `S_k^♭(N,χ) = 0`.) -/
-theorem cuspFormsOldChar_eq_bot_of_conductor_eq
-    (χ : DirichletCharacter ℂ N)
-    (hcond : χ.conductor = N) :
-    cuspFormsOldChar N k χ.toUnitHom χ.conductor = ⊥ := by
-  rw [hcond, cuspFormsOldChar, Submodule.span_eq_bot]
-  rintro f ⟨M, l, _, _, hMdvd, hMne, heq, g, -, rfl⟩
-  exact absurd (Nat.dvd_antisymm hMdvd ⟨l, by rw [← heq, Nat.mul_comm]⟩).symm hMne
-
 /-- **New eigenbasis decomposition.**  A new cusp form `g ∈ S_k^♯(N)` whose underlying
 modular form lies in the Nebentypus space `M_k(Γ₁(N),χ)` is a finite sum of common Hecke
 eigenforms, each of which is again **new** (lies in `S_k^♯(N)`).
@@ -694,15 +671,6 @@ theorem newPart_heckeT_n_cusp_comm
     newPart_of_mem_cuspFormsNew
       (heckeT_n_preserves_cuspFormsNew n hn _ (newPart_mem_cuspFormsNew x)),
     zero_add]
-
-theorem newPart_isEigen_of_eigenform
-    (g : Eigenform N k) (n : ℕ+) (hn : Nat.Coprime n.val N) :
-    haveI : NeZero n.val := ⟨n.pos.ne'⟩
-    heckeT_n_cusp k n.val (newPart g.toCuspForm) =
-      g.eigenvalue n • newPart g.toCuspForm := by
-  haveI : NeZero n.val := ⟨n.pos.ne'⟩
-  rw [← newPart_heckeT_n_cusp_comm n.val hn g.toCuspForm, g.isEigen n hn]
-  exact map_smul _ _ _
 
 private theorem coeff_smul_inv_eq_eigenvalue
     (g_new : Eigenform N k) (χ : (ZMod N)ˣ →* ℂˣ)
