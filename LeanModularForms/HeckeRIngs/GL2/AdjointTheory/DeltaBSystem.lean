@@ -357,91 +357,6 @@ private theorem T_p_lower_smul_Hecke_FD_eq_iUnion_tile
     exact T_p_lower_mul_T_p_upper_smul_set_eq_shift_smul p hp b.val S
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-private theorem mapGL_tile_mul_peterssonAdj_Hecke_rep_eq_glMap_T_p_lower
-    (p : ℕ) [NeZero N] (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
-    (i : Option (Fin p)) :
-    ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-      (T_p_lower_tile_family N p hpN i) : GL (Fin 2) ℝ) *
-      peterssonAdj (Hecke_rep_family N p hp.pos hpN i) =
-    (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) := by
-  match i with
-  | none =>
-    show ((mapGL ℝ : SL(2, ℤ) →* _) (M_infty_Gamma1_factor N p hpN 0)
-      : GL (Fin 2) ℝ) *
-      peterssonAdj (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) =
-      (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)
-    rw [show (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) =
-        (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ) *
-        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (M_infty_Gamma1_factor N p hpN 0)) by
-      rw [← glMap_T_p_upper_inv_mul_M_infty_eq_mapGL_Gamma1 N p hp.pos hpN 0,
-        mul_inv_cancel_left]]
-    rw [peterssonAdj_mul, peterssonAdj_mapGL_SL_eq_inv,
-      peterssonAdj_glMap_T_p_upper_zero_eq_glMap_T_p_lower]
-    rw [show ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (M_infty_Gamma1_factor N p hpN 0)) *
-        (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (M_infty_Gamma1_factor N p hpN 0))⁻¹ *
-          (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) =
-        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (M_infty_Gamma1_factor N p hpN 0) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (M_infty_Gamma1_factor N p hpN 0))⁻¹) *
-          (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) by group]
-    rw [mul_inv_cancel, one_mul]
-  | some b =>
-    show ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (shiftSL_loc (b.val : ℤ))
-      : GL (Fin 2) ℝ) *
-      peterssonAdj (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ) =
-      (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)
-    rw [peterssonAdj_T_p_upper_eq_shift_mul_lower p hp.pos b.val]
-    rw [show ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (shiftSL_loc (b.val : ℤ))) *
-        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (shiftSL_loc (-(b.val : ℤ))) *
-          (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) =
-        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (shiftSL_loc (b.val : ℤ)) *
-          (mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (shiftSL_loc (-(b.val : ℤ)))) *
-          (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) by group]
-    rw [← map_mul]
-    rw [show shiftSL_loc (b.val : ℤ) * shiftSL_loc (-(b.val : ℤ)) =
-        (1 : SL(2, ℤ)) by
-      apply Subtype.ext; ext i j
-      fin_cases i <;> fin_cases j <;>
-        simp [shiftSL_loc, Matrix.mul_apply, Fin.sum_univ_two, Matrix.of_apply]]
-    rw [map_one, one_mul]
-
-open UpperHalfPlane ModularGroup MeasureTheory in
-private theorem peterssonInner_swap_via_uniform_adj
-    (p : ℕ) [NeZero N] (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
-    (F G : ℍ → ℂ) (i : Option (Fin p)) :
-    peterssonInner k (fd : Set ℍ)
-      (F ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-        (T_p_lower_tile_family N p hpN i) : GL (Fin 2) ℝ))
-      (G ∣[k] (Hecke_rep_family N p hp.pos hpN i)) =
-    peterssonInner k (Hecke_rep_family N p hp.pos hpN i • (fd : Set ℍ))
-      (F ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) G := by
-  have hα : 0 < (Hecke_rep_family N p hp.pos hpN i).det.val := by
-    match i with
-    | none =>
-      exact glMap_M_infty_det_pos N p hp.pos hpN
-    | some b =>
-      show 0 < ((glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ) :
-        Matrix (Fin 2) (Fin 2) ℝ).det
-      rw [show ((glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ) :
-          Matrix (Fin 2) (Fin 2) ℝ) =
-          ((T_p_upper p hp.pos b.val : GL (Fin 2) ℚ).val).map (algebraMap ℚ ℝ) from rfl]
-      rw [show (((T_p_upper p hp.pos b.val : GL (Fin 2) ℚ).val).map (algebraMap ℚ ℝ)).det =
-          (algebraMap ℚ ℝ) (((T_p_upper p hp.pos b.val : GL (Fin 2) ℚ).val).det) from
-            (RingHom.map_det _ _).symm]
-      rw [show ((T_p_upper p hp.pos b.val : GL (Fin 2) ℚ).val).det = (p : ℚ) by
-        simp [T_p_upper, Matrix.GeneralLinearGroup.mkOfDetNeZero,
-          Matrix.det_fin_two, Matrix.of_apply]]
-      show 0 < (algebraMap ℚ ℝ) ((p : ℚ))
-      rw [show (algebraMap ℚ ℝ) ((p : ℚ)) = ((p : ℚ) : ℝ) from rfl]
-      exact_mod_cast hp.pos
-  rw [peterssonInner_slash_adjoint_right _ _ hα]
-  rw [show (F ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-        (T_p_lower_tile_family N p hpN i) : GL (Fin 2) ℝ)) ∣[k]
-        peterssonAdj (Hecke_rep_family N p hp.pos hpN i) =
-        F ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) by
-    rw [← SlashAction.slash_mul,
-      mapGL_tile_mul_peterssonAdj_Hecke_rep_eq_glMap_T_p_lower (N := N) p hp hpN i]]
-
-open UpperHalfPlane ModularGroup MeasureTheory in
 lemma peterssonInner_slash_adj_M_infty_q_summand_eq
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (q : SL(2, ℤ)) (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
@@ -1313,27 +1228,6 @@ private lemma glMap_M_infty_mul_mapGL_inv_eq_gamma0_inv_mul_shifted
   rw [h_inv_rewrite, map_mul,
     ← mul_assoc (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ), ← h_core]
   group
-
-private lemma peterssonInner_LHS_M_infty_tile_g_slot_to_peterssonAdj
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
-    (q : SL(2, ℤ)) (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    UpperHalfPlane.peterssonInner k
-      ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
-        (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ) •
-          (ModularGroup.fd : Set UpperHalfPlane)))
-      ⇑f
-      ((⇑g ∣[k] (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
-        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-          ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)))) =
-    UpperHalfPlane.peterssonInner k
-      ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
-        (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ) •
-          (ModularGroup.fd : Set UpperHalfPlane)))
-      ⇑f
-      (⇑g ∣[k]
-        peterssonAdj (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)) := by
-  rw [← slash_peterssonAdj_glMap_M_infty_eq_slash_T_p_upper_zero_slash_gamma0
-      p hp hpN g]
 
 private lemma glMap_T_p_upper_mul_mapGL_inv_eq_gamma0_inv_mul_shifted
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (b : ℕ) (q : SL(2, ℤ)) :
