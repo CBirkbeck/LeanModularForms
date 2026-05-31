@@ -1011,22 +1011,6 @@ theorem NewformExtended.heckeT_n_cusp_mem_cuspFormsNew_of_coprime
   heckeT_n_preserves_cuspFormsNew p hp_cop f.toCuspForm
     (cuspFormsNewExtended_le_cuspFormsNew f.isNew)
 
-/-- A `True`-valued declaration whose proof type-checks the SMO downstream
-consumer theorems for accessibility; it records that the bad-prime newspace
-chain reduces to the single dependency `Newform.HasBadPrimeFrickePetNAdjoint`. -/
-theorem T179_dependency_audit_after_T177 : True := by
-  let _ := @Newform.HasBadPrimeFrickePetNAdjoint
-  let _ := @Newform.HasHeckeT_n_cusp_at_divN_PreservesCuspFormsOldExtended_unconditional
-  let _ := @Newform.hasFrickeSlashCuspFormPreservesCuspFormsOldExtended
-  let _ := @Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_T170
-  let _ := @heckeT_n_cusp_preserves_cuspFormsNew_of_NewformExtended_at_divN_of_T170
-  let _ := @heckeT_n_cusp_preserves_cuspFormsNew_of_NewformExtended_of_T170_unified
-  let _ := @NewformExtended.heckeT_n_cusp_mem_cuspFormsNew_of_T170
-  let _ := @NewformExtended.heckeT_n_cusp_mem_cuspFormsNew_of_coprime
-  let _ := @Newform.frickeBadAdjointCandidate_preserves_cuspFormsOldExtended_unconditional
-  let _ := @Newform.frickeBadAdjointCandidateNormalized_preserves_cuspFormsOldExtended_unconditional
-  trivial
-
 /-- Coprime arbitrary-`n` consumer for `NewformExtended`, by delegation to the
 classical `heckeT_n_preserves_cuspFormsNew`. No petN-adjoint hypothesis needed. -/
 theorem NewformExtended.heckeT_n_cusp_mem_cuspFormsNew_of_coprime_arbitrary_n
@@ -1178,16 +1162,6 @@ theorem NewformExtended.heckeT_n_cusp_mem_cuspFormsNew_of_bad_only_T170
   cuspFormsNewExtended_le_cuspFormsNew
     (NewformExtended.heckeT_n_cusp_mem_cuspFormsNewExtended_of_bad_only_T170
       n h_bad_only h_adj_at_each f.toCuspForm f.isNew)
-
-/-- A `True`-valued declaration whose proof type-checks the arbitrary-`n`
-`NewformExtended` Hecke consumers for accessibility. -/
-theorem T180_dependency_audit_after_T179 : True := by
-  let _ := @NewformExtended.heckeT_n_cusp_mem_cuspFormsNew_of_coprime_arbitrary_n
-  let _ := @NewformExtended.heckeT_pp_cusp_mem_cuspFormsNewExtended_at_bad_of_T170
-  let _ := @NewformExtended.heckeT_n_cusp_mem_cuspFormsNewExtended_of_bad_only_T170
-  let _ := @NewformExtended.heckeT_n_cusp_mem_cuspFormsNew_of_bad_only_T170
-  let _ := @heckeT_n_mul_coprime
-  trivial
 
 /-- For the bad-prime upper-triangular coset rep `β_b := T_p_upper p hp b`
 embedded via `glMap`, the double-conjugation `W_N · β_b · W_N` equals the scalar
