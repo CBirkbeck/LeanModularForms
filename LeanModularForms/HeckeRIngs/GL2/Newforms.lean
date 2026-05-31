@@ -215,25 +215,6 @@ theorem Newform.HeckeEntireExtension_of_classicalInputs
   Newform.HeckeEntireExtension_of_CompletedFrickeData fun _N _ _k f ↦
     (Newform.completedFrickeData_of_classicalInputs f (h_fricke f) (h_pos f) (h_stripping f)).some
 
-/-- `Newform.AnalyticContradiction` from the classical Mellin/Fricke inputs
-`HasFrickeTwistAsCuspForm`, `HasEulerStrippingMultiplier`, and the Dirichlet-zero
-data block bundled via `Newform.PerNewformFullDirichletData`. -/
-theorem Newform.analyticContradiction_of_classicalInputs_of_full_dirichletZeroCertificate
-    (h_fricke : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k), Newform.HasFrickeTwistAsCuspForm f)
-    (h_pos : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (_f : Newform N k), 0 < (k : ℝ))
-    (h_stripping :
-      ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k), Newform.HasEulerStrippingMultiplier f)
-    (h_data : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
-      f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ → ∀ (S : Finset ℕ),
-        (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N), q ∉ S → f.lCoeff q = 0) →
-        Newform.PerNewformFullDirichletData f χ S) :
-    Newform.AnalyticContradiction :=
-  Newform.analyticContradiction_of_HeckeEntireExtension_of_full_dirichletZeroCertificate
-    (Newform.HeckeEntireExtension_of_classicalInputs h_fricke h_pos h_stripping)
-    (fun _N _ _k f χ hfχ S h_bad ↦
-      Newform.full_pole_witness_data_of_PerNewformFullDirichletData f χ S
-        (h_data f χ hfχ S h_bad))
-
 private lemma levelRaiseMatrix_inv_smul_vadd_one_eq
     {l : ℕ} [NeZero l] (τ : UpperHalfPlane) :
     ((levelRaiseMatrix l)⁻¹ • ((1 : ℝ) +ᵥ τ) : UpperHalfPlane) =
