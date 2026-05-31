@@ -835,35 +835,6 @@ theorem miyake_4_6_7_squarefree_decomp_with_lower_level
     · exact Miyake467Decomp_inductive_step n ih χ f hfχ l hl_card hl_sqfree hl_gt q hq_in
         hl'_gt1 h_vanish
 
-/-- **Miyake Lemma 4.6.7, p. 159**: squarefree decomposition of cusp forms.
-
-For `l > 1` squarefree and `f ∈ G_k(N, χ)` a cusp form with `aₙ(f) = 0` for all `n`
-coprime to `l`, there exist cusp forms `g_p ∈ G_k(Nl², χ)` for each prime `p ∣ l` such
-that `aₙ(f) = Σ_{p ∣ l} aₙ/p(g_p)` (equivalently `f(z) = Σ_{p ∣ l} g_p(p·z)`). -/
-theorem miyake_4_6_7_squarefree_decomp
-    {N : ℕ} [NeZero N] {k : ℤ}
-    (χ : (ZMod N)ˣ →* ℂˣ)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hfχ : f ∈ cuspFormCharSpace k χ)
-    (l : ℕ) (hl_gt : 1 < l) (hl_sqfree : Squarefree l)
-    (h_vanish : ∀ n : ℕ, Nat.Coprime n l →
-      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0) :
-    haveI hM_NeZero : NeZero (N * l ^ 2) := ⟨by
-      have hl_ne : l ≠ 0 := by lia
-      exact Nat.mul_ne_zero (NeZero.ne N) (pow_ne_zero 2 hl_ne)⟩
-    have hNM : N ∣ N * l ^ 2 := Nat.dvd_mul_right N (l ^ 2)
-    ∃ g : ℕ → CuspForm ((Gamma1 (N * l ^ 2)).map (mapGL ℝ)) k,
-      (∀ q ∈ l.primeFactors,
-        g q ∈ cuspFormCharSpace k (χ.comp (ZMod.unitsMap hNM))) ∧
-      ∀ n : ℕ,
-        (ModularFormClass.qExpansion (1 : ℝ) f).coeff n =
-        ∑ q ∈ l.primeFactors,
-          if q ∣ n then (ModularFormClass.qExpansion (1 : ℝ) (g q)).coeff (n / q)
-          else 0 := by
-  obtain ⟨g, _F, _χ_F, h_g_char, _, _, _, h_qexp⟩ :=
-    miyake_4_6_7_squarefree_decomp_with_lower_level χ f hfχ l hl_gt hl_sqfree h_vanish
-  exact ⟨g, h_g_char, h_qexp⟩
-
 private lemma qExpansion_one_coe_zero_coeff (f : UpperHalfPlane → ℂ) (hf : f = 0) (n : ℕ) :
     (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0 := by
   subst hf
@@ -891,62 +862,6 @@ private lemma qExpansion_one_levelRaise_coeff {M : ℕ} [NeZero M] {k : ℤ} (p 
         ⇑(HeckeRing.GL2.levelRaise M p k g_p)).coeff n =
       if p ∣ n then (ModularFormClass.qExpansion (1 : ℝ) ⇑g_p).coeff (n / p) else 0 :=
   HeckeRing.GL2.qExpansion_one_modularFormLevelRaise_coeff g_p.toModularForm' n
-
-/-- **M7: The `q`-expansion identity** (Miyake Eq. 4.6.12). For `f ∈ S_k(Γ_1(N), χ)`
-with coprime-vanishing wrt `p · l'`, there exists a cusp form `g_low` at level
-`Γ_1(l' · (N/p))` with `a_n(f) = a_{n/p}(g_low)` for every `n` with `p ∣ n` and
-`Coprime n l'`. -/
-theorem miyake_V_p_descend_identity
-    {N : ℕ} [NeZero N] {k : ℤ}
-    (χ : (ZMod N)ˣ →* ℂˣ)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hfχ : f ∈ cuspFormCharSpace k χ)
-    (p : ℕ) [NeZero p] (hp : p.Prime) (hpN : p ∣ N) [NeZero (N / p)]
-    (l' : ℕ) (hl'_pos : 0 < l') (hl'_sqfree : Squarefree l')
-    (_hpl' : Nat.Coprime p l')
-    (hl'_dvd : ∀ q ∈ l'.primeFactors, q ∈ N.primeFactors)
-    (_hp_not_in : p ∉ l'.primeFactors)
-    (h_vanish : ∀ n : ℕ, Nat.Coprime n (p * l') →
-      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0) :
-    haveI : NeZero (l' * (N / p)) := ⟨Nat.mul_ne_zero
-      (Nat.pos_iff_ne_zero.mp hl'_pos) (NeZero.ne _)⟩
-    ∃ g_low : CuspForm ((Gamma1 (l' * (N / p))).map (mapGL ℝ)) k,
-      ∀ n : ℕ, p ∣ n → Nat.Coprime n l' →
-        (ModularFormClass.qExpansion (1 : ℝ) f).coeff n =
-        (ModularFormClass.qExpansion (1 : ℝ) g_low).coeff (n / p) := by
-  haveI : NeZero (l' * (N / p)) := ⟨Nat.mul_ne_zero
-    (Nat.pos_iff_ne_zero.mp hl'_pos) (NeZero.ne _)⟩
-  obtain ⟨g, hg_char, hg_supp, hg_qexp⟩ :=
-    miyake_g_p_supported χ f hfχ p hp l' hl'_pos hl'_sqfree hl'_dvd h_vanish
-  haveI : NeZero (l' * N) :=
-    ⟨Nat.mul_ne_zero (Nat.pos_iff_ne_zero.mp hl'_pos) (NeZero.ne N)⟩
-  have hpM : p ∣ l' * N := dvd_mul_of_dvd_right hpN l'
-  have h_Mp_eq : (l' * N) / p = l' * (N / p) := Nat.mul_div_assoc l' hpN
-  haveI : NeZero ((l' * N) / p) := h_Mp_eq ▸ inferInstance
-  let χ_M : DirichletCharacter ℂ (l' * N) :=
-    MulChar.ofUnitHom (χ.comp (ZMod.unitsMap (Nat.dvd_mul_left N l')))
-  have hg_χM : g ∈ cuspFormCharSpace k χ_M.toUnitHom := by
-    rw [show χ_M.toUnitHom = χ.comp (ZMod.unitsMap (Nat.dvd_mul_left N l')) from
-      MulChar.equivToUnitHom.apply_symm_apply _]
-    exact hg_char
-  rcases miyake_4_6_4_dichotomy χ_M p hp hpM g hg_χM hg_supp with hg_zero | ⟨g_p, hg_p_eq⟩
-  · refine ⟨0, fun n _ hn_cop_l' ↦ ?_⟩
-    have h_g_zero : (⇑g : UpperHalfPlane → ℂ) = 0 := by rw [hg_zero]; rfl
-    have := hg_qexp n
-    rw [if_pos hn_cop_l', qExpansion_one_coe_zero_coeff _ h_g_zero n] at this
-    rw [← this, qExpansion_one_coe_zero_coeff
-      (⇑(0 : CuspForm ((Gamma1 (l' * (N / p))).map (mapGL ℝ)) k)) rfl (n / p)]
-  · refine ⟨h_Mp_eq ▸ g_p, fun n hpn hn_cop_l' ↦ ?_⟩
-    have h_qExp_Vp_eq_g :
-        ModularFormClass.qExpansion (1 : ℝ)
-          ⇑(HeckeRing.GL2.levelRaise ((l' * N) / p) p k g_p) =
-        ModularFormClass.qExpansion (1 : ℝ) ⇑g :=
-      qExpansion_ext2 _ _ hg_p_eq
-    have h_an_g_eq_f : (ModularFormClass.qExpansion (1 : ℝ) ⇑g).coeff n =
-        (ModularFormClass.qExpansion (1 : ℝ) ⇑f).coeff n := by
-      simpa [if_pos hn_cop_l'] using hg_qexp n
-    rw [qExpansion_one_cuspForm_cast_coeff h_Mp_eq g_p (n / p), ← h_an_g_eq_f,
-      ← h_qExp_Vp_eq_g, qExpansion_one_levelRaise_coeff p g_p n, if_pos hpn]
 
 /-- The degenerate `V_p`-descent: if `f` has vanishing `q`-coefficients at every index coprime to
 `l'`, the zero form at the lower level (with trivial character) witnesses the descent identity. -/
