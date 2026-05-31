@@ -38,11 +38,6 @@ character space and bridges it to the concrete Hecke operators.
 * `heckeRingHomCharSpace_commute` and `heckeT_p_all_comm_on_charSpace_via_ring` :
   commutativity of the operators on `modFormCharSpace k χ` as a corollary of the
   commutativity of the source ring, with no coset combinatorics.
-* `heckeRingHomCharSpace_table_transports_coprime` and
-  `heckeRingHomCharSpace_table_transports_ppow_recurrence` : the level-1 multiplication
-  identities push forward to operator identities on the χ-space through the Shimura
-  surjection `𝕋(GL₂) →+* 𝕋(Γ₀(N))` composed with `heckeRingHomCharSpace`.
-
 ## References
 
 * [G. Shimura, *Introduction to the Arithmetic Theory of Automorphic Functions*][shimura1971],
@@ -1038,49 +1033,6 @@ lemma adj_T_p_upper_not_mem_Delta0_of_dvd (p : ℕ) (hp : Nat.Prime p)
   exact hpN (by rwa [Int.gcd_natCast_natCast] at hAco)
 
 end Bridge
-
-section TableTransport
-
-open HeckeRing.GL2
-
-variable {k : ℤ} {χ : (ZMod N)ˣ →* ℂˣ}
-
-/-- For coprime `m, n`, the level-1 identity `T(m) · T(n) = T(mn)` becomes the operator
-identity `Φ(T(m)) ∘ Φ(T(n)) = Φ(T(mn))` on `modFormCharSpace k χ`, where
-`Φ = heckeRingHomCharSpace ∘ φ`. -/
-theorem heckeRingHomCharSpace_table_transports_coprime
-    (φ : 𝕋 (GL_pair 2) ℤ →+* 𝕋 (Gamma0_pair N) ℤ)
-    (m n : ℕ+) (hcop : Nat.Coprime m n) :
-    ((heckeRingHomCharSpace (N := N) (k := k) (χ := χ)).comp φ) (T_sum m) *
-        ((heckeRingHomCharSpace (N := N) (k := k) (χ := χ)).comp φ) (T_sum n) =
-      ((heckeRingHomCharSpace (N := N) (k := k) (χ := χ)).comp φ)
-        (T_sum ⟨m * n, Nat.mul_pos m.pos n.pos⟩) := by
-  set Φ := (heckeRingHomCharSpace (N := N) (k := k) (χ := χ)).comp φ with hΦ
-  rw [← map_mul Φ (T_sum m) (T_sum n)]
-  exact congrArg Φ (T_sum_mul_coprime m n hcop)
-
-/-- For a prime `p` and `j ≥ 1`, the level-1 recurrence
-`T(p^{j+1}) = T(p)·T(p^j) − p·T(p,p)·T(p^{j-1})` becomes the operator identity
-`Φ(T(p^{j+1})) = Φ(T(p)) ∘ Φ(T(p^j)) − p · (Φ(T(p,p)) ∘ Φ(T(p^{j-1})))`. -/
-theorem heckeRingHomCharSpace_table_transports_ppow_recurrence
-    (φ : 𝕋 (GL_pair 2) ℤ →+* 𝕋 (Gamma0_pair N) ℤ)
-    (p : ℕ) (hp : p.Prime) (j : ℕ) (hj : 0 < j) :
-    ((heckeRingHomCharSpace (N := N) (k := k) (χ := χ)).comp φ)
-        (T_sum ⟨p ^ (j + 1), pow_pos hp.pos (j + 1)⟩) =
-      ((heckeRingHomCharSpace (N := N) (k := k) (χ := χ)).comp φ) (T_sum ⟨p, hp.pos⟩) *
-          ((heckeRingHomCharSpace (N := N) (k := k) (χ := χ)).comp φ)
-            (T_sum ⟨p ^ j, pow_pos hp.pos j⟩) -
-        (p : ℤ) • (((heckeRingHomCharSpace (N := N) (k := k) (χ := χ)).comp φ) (T_pp p) *
-          ((heckeRingHomCharSpace (N := N) (k := k) (χ := χ)).comp φ)
-            (T_sum ⟨p ^ (j - 1), pow_pos hp.pos (j - 1)⟩)) := by
-  set Φ := (heckeRingHomCharSpace (N := N) (k := k) (χ := χ)).comp φ with hΦ
-  rw [← map_mul Φ (T_sum ⟨p, hp.pos⟩) (T_sum ⟨p ^ j, pow_pos hp.pos j⟩),
-    ← map_mul Φ (T_pp p) (T_sum ⟨p ^ (j - 1), pow_pos hp.pos (j - 1)⟩),
-    ← map_zsmul Φ (p : ℤ) (T_pp p * T_sum ⟨p ^ (j - 1), pow_pos hp.pos (j - 1)⟩),
-    ← map_sub Φ]
-  exact congrArg Φ (T_sum_ppow_recurrence p hp j hj)
-
-end TableTransport
 
 section OperatorCommutativityFromRing
 
