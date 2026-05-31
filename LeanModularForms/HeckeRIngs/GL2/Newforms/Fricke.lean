@@ -1024,25 +1024,6 @@ lemma Newform.frickeMatrix_PSL_R_inv (N : ℕ) [NeZero N] :
     (Newform.frickeMatrix_PSL_R N)⁻¹ = Newform.frickeMatrix_PSL_R N :=
   (mul_eq_one_iff_eq_inv.mp (Newform.frickeMatrix_PSL_R_mul_self N)).symm
 
-/-- Conjugating any `h ∈ imageGamma1_PSL_R N` by `frickeMatrix_PSL_R N` keeps the
-result in `imageGamma1_PSL_R N`. -/
-lemma Newform.frickeMatrix_PSL_R_conj_mem_imageGamma1_PSL_R
-    {N : ℕ} [NeZero N] {h : PSL(2, ℝ)}
-    (hh : h ∈ imageGamma1_PSL_R N) :
-    Newform.frickeMatrix_PSL_R N * h * (Newform.frickeMatrix_PSL_R N)⁻¹ ∈
-      imageGamma1_PSL_R N := by
-  rw [← map_SL2Z_to_PSL2R_eq_imageGamma1_PSL_R] at hh
-  obtain ⟨γ, hγ, hγeq⟩ := hh
-  rw [← hγeq,
-    show Newform.frickeMatrix_PSL_R N * SL2Z_to_PSL2R γ *
-        (Newform.frickeMatrix_PSL_R N)⁻¹ =
-      SL2Z_to_PSL2R (Newform.frickeConj N γ hγ) by
-      rw [Newform.frickeMatrix_PSL_R_mul_SL2Z_to_PSL2R_eq γ hγ,
-          mul_assoc, mul_inv_cancel, mul_one],
-    ← map_SL2Z_to_PSL2R_eq_imageGamma1_PSL_R]
-  exact ⟨_, Newform.frickeConj_mem_Gamma1 N γ hγ, rfl⟩
-
-
 end FrickeAdjoint
 
 private lemma frickeRootNumber_scalar_collapse {k : ℤ} {n x I fv : ℂ}
