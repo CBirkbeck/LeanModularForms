@@ -821,13 +821,6 @@ def IsInNewSubspaceExtended (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop
   ∀ g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k,
     g ∈ cuspFormsOldExtended N k → petN f g = 0
 
-/-- `IsInNewSubspaceExtended → IsInNewSubspace`: orthogonality to the *extended*
-oldspace implies orthogonality to the (smaller) classical oldspace. -/
-lemma IsInNewSubspaceExtended.isInNewSubspace
-    {f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k} (h : IsInNewSubspaceExtended f) :
-    IsInNewSubspace f :=
-  fun g hg ↦ h g (cuspFormsOld_le_cuspFormsOldExtended hg)
-
 /-- The intersection of `cuspFormsOldExtended` and `cuspFormsNewExtended` is
 trivial. Mirrors `cuspFormsOld_disjoint_cuspFormsNew`. -/
 theorem cuspFormsOldExtended_disjoint_cuspFormsNewExtended
