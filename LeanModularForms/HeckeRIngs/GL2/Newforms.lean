@@ -248,30 +248,6 @@ theorem Newform.exists_nonzero_prime_eigenvalue_of_CompletedFrickeData_of_PerNew
     (Newform.analyticContradiction_of_CompletedFrickeData_of_PerNewformFullDirichletData
       h_fricke h_data) f χ hfχ S
 
-/-- Strong Multiplicity One from per-newform `CompletedFrickeData`,
-`PerNewformFullDirichletData`, and `newform_unique`. -/
-theorem strongMultiplicityOne_of_CompletedFrickeData_of_PerNewformFullDirichletData_of_newformUnique
-    (h_unique : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
-      f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      (∀ n : ℕ+, Nat.Coprime n.val N → f.eigenvalue n = g.eigenvalue n) →
-      f.toCuspForm = g.toCuspForm)
-    (h_fricke : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k), Newform.CompletedFrickeData f)
-    (h_data : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
-      f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ → ∀ (S : Finset ℕ),
-        (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N), q ∉ S → f.lCoeff q = 0) →
-        Newform.PerNewformFullDirichletData f χ S)
-    {N : ℕ} [NeZero N] {k : ℤ} (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (hgχ : g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (S : Finset ℕ)
-    (h : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S →
-      f.eigenvalue n = g.eigenvalue n) :
-    f.toCuspForm = g.toCuspForm :=
-  strongMultiplicityOne_of_analyticContradiction_of_newformUnique h_unique
-    (Newform.analyticContradiction_of_CompletedFrickeData_of_PerNewformFullDirichletData
-      h_fricke h_data) f g χ hfχ hgχ S h
-
 /-- `Newform.AnalyticContradiction` from the classical Mellin/Fricke inputs
 `HasFrickeTwistAsCuspForm`, `HasEulerStrippingMultiplier`, and the Dirichlet-zero
 data block bundled via `Newform.PerNewformFullDirichletData`. -/
