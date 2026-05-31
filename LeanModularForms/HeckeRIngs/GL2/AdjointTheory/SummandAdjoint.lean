@@ -473,24 +473,6 @@ lemma peterssonInner_slash_adjoint_coset
     f (g ∣[k] (mapGL ℝ q⁻¹ : GL (Fin 2) ℝ))
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-lemma peterssonInner_slash_adj_T_p_upper_q_summand_eq
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (b : ℕ)
-    (q : SL(2, ℤ)) (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    peterssonInner k ModularGroup.fd
-        (⇑f ∣[k] ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-          (mapGL ℝ q⁻¹ : GL (Fin 2) ℝ)))
-        (⇑g ∣[k] (mapGL ℝ q⁻¹ : GL (Fin 2) ℝ)) =
-    peterssonInner k ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) •
-        ((mapGL ℝ q⁻¹ : GL (Fin 2) ℝ) • (ModularGroup.fd : Set UpperHalfPlane)))
-      ⇑f
-      ((⇑g ∣[k] (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
-        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-          ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)))) := by
-  rw [peterssonInner_slash_adjoint_coset (glMap (T_p_upper p hp.pos b))
-        (glMap_T_p_upper_det_pos p hp.pos b) q ⇑f ⇑g]
-  rw [slash_peterssonAdj_T_p_upper_eq_slash_T_p_upper_zero_slash_gamma0 p hp hpN b g]
-
-open UpperHalfPlane ModularGroup MeasureTheory in
 private lemma peterssonInner_add_left (D : Set ℍ) (f₁ f₂ g : ℍ → ℂ)
     (hf₁ : IntegrableOn (fun τ ↦ petersson k g f₁ τ) D μ_hyp)
     (hf₂ : IntegrableOn (fun τ ↦ petersson k g f₂ τ) D μ_hyp) :
@@ -874,56 +856,6 @@ theorem aedisjoint_glMap_T_p_upper_pair
     (shiftSL_loc ((b₂ : ℤ) - (b₁ : ℤ))) (shiftSL_loc_mem_Gamma1 _)
     (shiftSL_loc_psl_ne_one hne)
     (glMap_T_p_upper_inv_mul_eq_mapGL_shift hp b₁ b₂)
-
-open UpperHalfPlane ModularGroup MeasureTheory in
-/-- For fixed `q : SL(2, ℤ)` and `b₁ ≠ b₂`, the tiles
-`(glMap T_p_upper(p, b) * mapGL q⁻¹) • fd` are pairwise AE-disjoint. -/
-theorem aedisjoint_glMap_T_p_upper_pair_fd_per_q
-    {p : ℕ} (hp : 0 < p) (q : SL(2, ℤ)) {b₁ b₂ : ℕ}
-    (hne : (b₂ : ℤ) - (b₁ : ℤ) ≠ 0) :
-    AEDisjoint μ_hyp
-      (((glMap (T_p_upper p hp b₁) : GL (Fin 2) ℝ) *
-        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ)) •
-          (ModularGroup.fd : Set UpperHalfPlane))
-      (((glMap (T_p_upper p hp b₂) : GL (Fin 2) ℝ) *
-        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ)) •
-          (ModularGroup.fd : Set UpperHalfPlane)) := by
-  set α₁ : GL (Fin 2) ℝ :=
-    (glMap (T_p_upper p hp b₁) : GL (Fin 2) ℝ) *
-      ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ)
-  set α₂ : GL (Fin 2) ℝ :=
-    (glMap (T_p_upper p hp b₂) : GL (Fin 2) ℝ) *
-      ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ)
-  have h_inv_mul : α₁⁻¹ * α₂ =
-      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-        (q * shiftSL_loc ((b₂ : ℤ) - (b₁ : ℤ)) * q⁻¹) : GL (Fin 2) ℝ) := by
-    show (((glMap (T_p_upper p hp b₁) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ))⁻¹ *
-        ((glMap (T_p_upper p hp b₂) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ))) = _
-    rw [mul_inv_rev,
-      show (((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ))⁻¹ =
-          ((mapGL ℝ : SL(2, ℤ) →* _) q : GL (Fin 2) ℝ) by rw [← map_inv]; simp,
-      mul_assoc ((mapGL ℝ : SL(2, ℤ) →* _) q : GL (Fin 2) ℝ)
-          (glMap (T_p_upper p hp b₁) : GL (Fin 2) ℝ)⁻¹,
-      ← mul_assoc ((glMap (T_p_upper p hp b₁) : GL (Fin 2) ℝ)⁻¹)
-          (glMap (T_p_upper p hp b₂) : GL (Fin 2) ℝ)
-          ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ),
-      glMap_T_p_upper_inv_mul_eq_mapGL_shift hp b₁ b₂,
-      ← mul_assoc, ← map_mul, ← map_mul]
-  exact aedisjoint_glMap_smul_fd_of_mul_inv_eq_mapGL_PSL_ne α₁ α₂
-    (measurePreserving_glPos_smul _
-      (det_val_inv_pos (glMap_T_p_upper_mul_mapGL_det_pos p hp b₁ q)))
-    (q * shiftSL_loc ((b₂ : ℤ) - (b₁ : ℤ)) * q⁻¹)
-    (psl_mk_conj_ne_one q _ (shiftSL_loc_psl_ne_one hne)) h_inv_mul
-
-open UpperHalfPlane ModularGroup MeasureTheory in
-private lemma nullMeasurableSet_fd_aux :
-    NullMeasurableSet (ModularGroup.fd : Set ℍ) μ_hyp :=
-  ((isClosed_le continuous_const
-      (Complex.continuous_normSq.comp UpperHalfPlane.continuous_coe)).inter
-    (isClosed_le (continuous_abs.comp UpperHalfPlane.continuous_re)
-      continuous_const)).measurableSet.nullMeasurableSet
 
 open UpperHalfPlane ModularGroup MeasureTheory in
 /-- `μ_hyp` is invariant under positive-determinant `GL (Fin 2) ℝ` translates. -/
