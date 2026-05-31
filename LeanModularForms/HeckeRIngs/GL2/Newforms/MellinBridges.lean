@@ -510,34 +510,6 @@ theorem Newform.analyticContradiction_of_ImAxisMellinData_of_PerNewformFullDiric
   Newform.analyticContradiction_of_HeckeFEData_of_PerNewformFullDirichletData
     (fun _N _ _k f ↦ Newform.HeckeFEData.ofImAxisData (h_imAxis f)) h_data
 
-/-- Strong multiplicity one endpoint via the imAxis-side `Newform.ImAxisMellinData`
-interface, plus `Newform.PerNewformFullDirichletData` and newform uniqueness. -/
-theorem strongMultiplicityOne_of_ImAxisMellinData_of_PerNewformFullDirichletData_of_newformUnique
-    (h_unique : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
-      f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      (∀ n : ℕ+, Nat.Coprime n.val N → f.eigenvalue n = g.eigenvalue n) →
-      f.toCuspForm = g.toCuspForm)
-    (h_imAxis : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k),
-      Newform.ImAxisMellinData f)
-    (h_data : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
-      f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      ∀ (S : Finset ℕ),
-        (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
-          q ∉ S → f.lCoeff q = 0) →
-        Newform.PerNewformFullDirichletData f χ S)
-    {N : ℕ} [NeZero N] {k : ℤ} (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (hgχ : g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (S : Finset ℕ)
-    (h : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S →
-      f.eigenvalue n = g.eigenvalue n) :
-    f.toCuspForm = g.toCuspForm :=
-  strongMultiplicityOne_of_HeckeFEData_of_PerNewformFullDirichletData_of_newformUnique
-    h_unique
-    (fun _N _ _k f ↦ Newform.HeckeFEData.ofImAxisData (h_imAxis f))
-    h_data f g χ hfχ hgχ S h
-
 /-- The classical Atkin-Lehner input as a single named structure: a CuspForm `twist`
 whose imaginary axis represents the Fricke slash image, plus the Mellin-Dirichlet
 bridge. -/
