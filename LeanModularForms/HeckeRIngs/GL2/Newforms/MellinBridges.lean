@@ -411,33 +411,6 @@ theorem strongMultiplicityOne_of_HeckeEntireExtension_of_dirichletZero_of_newfor
         (h_dirZero f χ hfχ S h_bad))
     f g χ hfχ hgχ S h
 
-/-- Strong multiplicity one replacing the global `Newform.HeckeEntireExtension`
-hypothesis with per-newform structured `Newform.HeckeFEData` and the Dirichlet-zero
-data block bundled via `Newform.PerNewformFullDirichletData`. -/
-theorem strongMultiplicityOne_of_HeckeFEData_of_dirichletZero_of_newformUnique
-    (h_unique : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
-      f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      (∀ n : ℕ+, Nat.Coprime n.val N → f.eigenvalue n = g.eigenvalue n) →
-      f.toCuspForm = g.toCuspForm)
-    (h_FE : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k), Newform.HeckeFEData f)
-    (h_dirZero : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
-      f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      ∀ (S : Finset ℕ),
-        (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
-          q ∉ S → f.lCoeff q = 0) →
-        Newform.PerNewformFullDirichletData f χ S)
-    {N : ℕ} [NeZero N] {k : ℤ} (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (hgχ : g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (S : Finset ℕ)
-    (h : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S →
-      f.eigenvalue n = g.eigenvalue n) :
-    f.toCuspForm = g.toCuspForm :=
-  strongMultiplicityOne_of_HeckeEntireExtension_of_dirichletZero_of_newformUnique
-    h_unique (Newform.HeckeEntireExtension_of_HeckeFEData h_FE) h_dirZero
-    f g χ hfχ hgχ S h
-
 /-- Strong multiplicity one from per-newform `Newform.HeckeFEData` and
 `Newform.PerNewformFullDirichletData` plus newform uniqueness: the SMO-facing
 endpoint that consumers should target. -/
