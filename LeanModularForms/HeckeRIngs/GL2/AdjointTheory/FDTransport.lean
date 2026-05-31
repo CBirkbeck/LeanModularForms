@@ -1425,6 +1425,59 @@ theorem setIntegral_Gamma_p_α_fundDomain_PSL_petersson_eq_traceSlash_SL_outer_q
     (N := N) α F G hF_slash h_int_trace
 
 open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory Classical in
+/-- Fiber-transport for `slLeftMul_Gamma_p_α`: left-multiplication by
+`q₂'.out · q₁'.out⁻¹` carries the `slGamma_p_αToGamma1`-fiber over `q₁'` into the
+fiber over `q₂'`. Used in `traceSlash_Gamma_p_α_indep` and
+`traceSlash_Gamma_p_α_slash_Gamma1` to reindex the inner trace sum across base cosets. -/
+private lemma slGamma_p_αToGamma1_slLeftMul_fiber
+    (α : GL (Fin 2) ℚ) (q₁' q₂' : SL(2, ℤ) ⧸ Gamma1 N)
+    {q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α}
+    (hq : slGamma_p_αToGamma1 (N := N) α q = q₁') :
+    slGamma_p_αToGamma1 (N := N) α
+        (slLeftMul_Gamma_p_α (N := N) α
+          ((q₂'.out : SL(2, ℤ)) * (q₁'.out : SL(2, ℤ))⁻¹) q) = q₂' := by
+  set h := (q₂'.out : SL(2, ℤ)) * (q₁'.out : SL(2, ℤ))⁻¹ with hh_def
+  induction q using QuotientGroup.induction_on with | _ g => ?_
+  show slGamma_p_αToGamma1 (N := N) α (QuotientGroup.mk (h * g)) = q₂'
+  rw [slGamma_p_αToGamma1_mk]
+  have h_g : (QuotientGroup.mk g : SL(2, ℤ) ⧸ Gamma1 N) = q₁' := by
+    rwa [← slGamma_p_αToGamma1_mk (N := N) α g]
+  have h_gm : g⁻¹ * q₁'.out ∈ Gamma1 N :=
+    QuotientGroup.eq.mp (h_g.trans q₁'.out_eq.symm)
+  rw [← q₂'.out_eq, hh_def, QuotientGroup.eq]
+  have hrw :
+      ((q₂'.out : SL(2, ℤ)) * (q₁'.out : SL(2, ℤ))⁻¹ * g)⁻¹ * q₂'.out =
+        g⁻¹ * q₁'.out := by group
+  rwa [hrw]
+
+open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory Classical in
+/-- Summand equality used by `traceSlash_Gamma_p_α_indep`: shifting `q` by
+`h = q₂'.out · q₁'.out⁻¹` differs from the connector by a left `Γ_p(α)`-factor that
+`G` absorbs via `hG_slash`. -/
+private lemma traceSlash_Gamma_p_α_indep_summand
+    (α : GL (Fin 2) ℚ) (G : ℍ → ℂ)
+    (hG_slash : ∀ γ ∈ Gamma_p_α (N := N) α, G ∣[k] γ = G)
+    (q₁' q₂' : SL(2, ℤ) ⧸ Gamma1 N)
+    (q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α) :
+    G ∣[k] ((q.out : SL(2, ℤ))⁻¹ * q₁'.out) =
+      G ∣[k] ((slLeftMul_Gamma_p_α (N := N) α
+        ((q₂'.out : SL(2, ℤ)) * (q₁'.out : SL(2, ℤ))⁻¹) q).out⁻¹ * q₂'.out) := by
+  set h := (q₂'.out : SL(2, ℤ)) * (q₁'.out : SL(2, ℤ))⁻¹ with hh_def
+  set qt := slLeftMul_Gamma_p_α (N := N) α h q with hqt_def
+  have hqt_mk : qt = QuotientGroup.mk (h * q.out) := by
+    rw [hqt_def]
+    conv_lhs => rw [← q.out_eq]
+    rfl
+  have hγp : qt.out⁻¹ * (h * q.out) ∈ Gamma_p_α (N := N) α :=
+    QuotientGroup.eq.mp (qt.out_eq.trans hqt_mk)
+  set γp := qt.out⁻¹ * (h * q.out) with hγp_def
+  have h_rewrite : (qt.out : SL(2, ℤ))⁻¹ * q₂'.out =
+      γp * ((q.out : SL(2, ℤ))⁻¹ * q₁'.out) := by
+    rw [hγp_def, hh_def]; group
+  rw [h_rewrite]
+  conv_rhs => rw [SlashAction.slash_mul, hG_slash γp hγp]
+
+open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory Classical in
 /-- **Well-definedness of the DS trace (DS 5.4.4: `tr g ∈ S_k(Γ)`).** When `G` is
 `Γ_p(α)`-slash-invariant, the partial trace `traceSlash_Gamma_p_α α G q'` is
 *independent of the base coset `q'`*: it is the genuine global trace `tr G`. The proof
@@ -1451,48 +1504,73 @@ theorem traceSlash_Gamma_p_α_indep
       show slLeftMul_Gamma_p_α (N := N) α h
         (slLeftMul_Gamma_p_α (N := N) α h⁻¹ q) = q
       rw [slLeftMul_Gamma_p_α_comp, mul_inv_cancel, slLeftMul_Gamma_p_α_one])
-    (fun q hq ↦ ?_)
-  · -- membership: slLeftMul h q (source fiber q₁') lands in fiber(q₂')
+    (fun q _ ↦ traceSlash_Gamma_p_α_indep_summand α G hG_slash q₁' q₂' q)
+  · -- forward fiber transport: q ∈ fiber(q₁') ⇒ slLeftMul h q ∈ fiber(q₂')
     simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hq ⊢
-    induction q using QuotientGroup.induction_on with | _ g => ?_
-    show slGamma_p_αToGamma1 (N := N) α (QuotientGroup.mk (h * g)) = q₂'
-    rw [slGamma_p_αToGamma1_mk]
-    have h_g : (QuotientGroup.mk g : SL(2, ℤ) ⧸ Gamma1 N) = q₁' := by
-      rwa [← slGamma_p_αToGamma1_mk (N := N) α g]
-    have h_gm : g⁻¹ * q₁'.out ∈ Gamma1 N :=
-      QuotientGroup.eq.mp (h_g.trans q₁'.out_eq.symm)
-    rw [← q₂'.out_eq, hh_def, QuotientGroup.eq]
-    have : (q₂'.out * q₁'.out⁻¹ * g)⁻¹ * q₂'.out = g⁻¹ * q₁'.out := by group
-    rwa [this]
-  · -- membership: slLeftMul h⁻¹ q (source fiber q₂') lands in fiber(q₁')
+    exact slGamma_p_αToGamma1_slLeftMul_fiber α q₁' q₂' hq
+  · -- backward fiber transport: q ∈ fiber(q₂') ⇒ slLeftMul h⁻¹ q ∈ fiber(q₁')
     simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hq ⊢
-    induction q using QuotientGroup.induction_on with | _ g => ?_
-    show slGamma_p_αToGamma1 (N := N) α (QuotientGroup.mk (h⁻¹ * g)) = q₁'
-    rw [slGamma_p_αToGamma1_mk]
-    have h_g : (QuotientGroup.mk g : SL(2, ℤ) ⧸ Gamma1 N) = q₂' := by
-      rwa [← slGamma_p_αToGamma1_mk (N := N) α g]
-    have h_gm : g⁻¹ * q₂'.out ∈ Gamma1 N :=
-      QuotientGroup.eq.mp (h_g.trans q₂'.out_eq.symm)
-    rw [← q₁'.out_eq, hh_def, mul_inv_rev, inv_inv, QuotientGroup.eq]
-    have : (q₁'.out * q₂'.out⁻¹ * g)⁻¹ * q₁'.out = g⁻¹ * q₂'.out := by group
-    rwa [this]
-  · -- summand equality: the two connecting elements differ by a left `Γ_p(α)`-factor
-    -- absorbed by `G`.
-    show G ∣[k] ((q.out : SL(2, ℤ))⁻¹ * q₁'.out) =
-      G ∣[k] ((slLeftMul_Gamma_p_α (N := N) α h q).out⁻¹ * q₂'.out)
-    set qt := slLeftMul_Gamma_p_α (N := N) α h q with hqt_def
-    have hqt_mk : qt = QuotientGroup.mk (h * q.out) := by
-      rw [hqt_def]
-      conv_lhs => rw [← q.out_eq]
-      rfl
-    have hγp : qt.out⁻¹ * (h * q.out) ∈ Gamma_p_α (N := N) α :=
-      QuotientGroup.eq.mp (qt.out_eq.trans hqt_mk)
-    set γp := qt.out⁻¹ * (h * q.out) with hγp_def
-    have h_rewrite : (qt.out : SL(2, ℤ))⁻¹ * q₂'.out =
-        γp * ((q.out : SL(2, ℤ))⁻¹ * q₁'.out) := by
-      rw [hγp_def, hh_def]; group
-    rw [h_rewrite]
-    conv_rhs => rw [SlashAction.slash_mul, hG_slash γp hγp]
+    rw [show (h⁻¹ : SL(2, ℤ)) = (q₁'.out : SL(2, ℤ)) * (q₂'.out : SL(2, ℤ))⁻¹ by
+      rw [hh_def, mul_inv_rev, inv_inv]]
+    exact slGamma_p_αToGamma1_slLeftMul_fiber α q₂' q₁' hq
+
+open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory Classical in
+/-- Self-fiber stability under `slLeftMul_Gamma_p_α` by a `q'`-conjugate of a `Γ₁(N)`
+element: the fiber of `slGamma_p_αToGamma1 α` over `q'` is closed under left
+multiplication by `q'.out · δ · q'.out⁻¹` for any `δ ∈ Γ₁(N)`. Used in
+`traceSlash_Gamma_p_α_slash_Gamma1` to reindex the inner trace by the two conjugates
+`q'.out · γ · q'.out⁻¹` and `q'.out · γ⁻¹ · q'.out⁻¹`. -/
+private lemma slGamma_p_αToGamma1_slLeftMul_conj_self
+    (α : GL (Fin 2) ℚ) (q' : SL(2, ℤ) ⧸ Gamma1 N)
+    {δ : SL(2, ℤ)} (hδ : δ ∈ Gamma1 N)
+    {q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α}
+    (hq : slGamma_p_αToGamma1 (N := N) α q = q') :
+    slGamma_p_αToGamma1 (N := N) α
+        (slLeftMul_Gamma_p_α (N := N) α
+          ((q'.out : SL(2, ℤ)) * δ * (q'.out : SL(2, ℤ))⁻¹) q) = q' := by
+  set s := (q'.out : SL(2, ℤ)) * δ * (q'.out : SL(2, ℤ))⁻¹ with hs_def
+  induction q using QuotientGroup.induction_on with | _ g => ?_
+  show slGamma_p_αToGamma1 (N := N) α (QuotientGroup.mk (s * g)) = q'
+  rw [slGamma_p_αToGamma1_mk]
+  have h_g : (QuotientGroup.mk g : SL(2, ℤ) ⧸ Gamma1 N) = q' := by
+    rwa [← slGamma_p_αToGamma1_mk (N := N) α g]
+  have h_gm : g⁻¹ * q'.out ∈ Gamma1 N :=
+    QuotientGroup.eq.mp (h_g.trans q'.out_eq.symm)
+  rw [← q'.out_eq, hs_def, QuotientGroup.eq]
+  have hrw :
+      ((q'.out : SL(2, ℤ)) * δ * (q'.out : SL(2, ℤ))⁻¹ * g)⁻¹ * q'.out =
+        (g⁻¹ * q'.out) * δ⁻¹ := by group
+  rw [hrw]
+  exact mul_mem h_gm (inv_mem hδ)
+
+open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory Classical in
+/-- Summand equality used by `traceSlash_Gamma_p_α_slash_Gamma1`: after reindexing the
+fiber by left-multiplication by `hr⁻¹` where `hr = q'.out · γ⁻¹ · q'.out⁻¹`, the connector
+`(slLeftMul hr⁻¹ q).out⁻¹ · q'.out · γ` differs from the original connector
+`q.out⁻¹ · q'.out` by a left `Γ_p(α)`-factor that `G` absorbs via `hG_slash`. -/
+private lemma traceSlash_Gamma_p_α_slash_Gamma1_summand
+    (α : GL (Fin 2) ℚ) (G : ℍ → ℂ)
+    (hG_slash : ∀ γ ∈ Gamma_p_α (N := N) α, G ∣[k] γ = G)
+    (q' : SL(2, ℤ) ⧸ Gamma1 N) (γ : SL(2, ℤ))
+    (q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α) :
+    G ∣[k] ((q.out : SL(2, ℤ))⁻¹ * q'.out) =
+      G ∣[k] ((slLeftMul_Gamma_p_α (N := N) α
+        ((q'.out : SL(2, ℤ)) * (γ : SL(2, ℤ))⁻¹ * (q'.out : SL(2, ℤ))⁻¹)⁻¹ q).out⁻¹
+          * q'.out * γ) := by
+  set hr := (q'.out : SL(2, ℤ)) * (γ : SL(2, ℤ))⁻¹ * (q'.out : SL(2, ℤ))⁻¹ with hr_def
+  set qt := slLeftMul_Gamma_p_α (N := N) α hr⁻¹ q with hqt_def
+  have hqt_mk : qt = QuotientGroup.mk (hr⁻¹ * q.out) := by
+    rw [hqt_def]
+    conv_lhs => rw [← q.out_eq]
+    rfl
+  have hγp : qt.out⁻¹ * (hr⁻¹ * q.out) ∈ Gamma_p_α (N := N) α :=
+    QuotientGroup.eq.mp (qt.out_eq.trans hqt_mk)
+  set γp := qt.out⁻¹ * (hr⁻¹ * q.out) with hγp_def
+  have h_rewrite : (qt.out : SL(2, ℤ))⁻¹ * q'.out * γ =
+      γp * ((q.out : SL(2, ℤ))⁻¹ * q'.out) := by
+    rw [hγp_def, hr_def]; group
+  rw [h_rewrite]
+  conv_rhs => rw [SlashAction.slash_mul, hG_slash γp hγp]
 
 open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory Classical in
 /-- **The DS trace is a `Γ₁(N)`-form (DS 5.4.4: `tr g ∈ S_k(Γ)`, slash-invariance).**
@@ -1533,51 +1611,17 @@ theorem traceSlash_Gamma_p_α_slash_Gamma1
       show slLeftMul_Gamma_p_α (N := N) α hr⁻¹
         (slLeftMul_Gamma_p_α (N := N) α hr q) = q
       rw [slLeftMul_Gamma_p_α_comp, inv_mul_cancel, slLeftMul_Gamma_p_α_one])
-    (fun q hq ↦ ?_)).symm
-  · -- membership: slLeftMul hr⁻¹ q (plain fiber q') lands in fiber(q')
+    (fun q _ ↦ traceSlash_Gamma_p_α_slash_Gamma1_summand α G hG_slash q' γ q)).symm
+  · -- bullet 1: slLeftMul hr⁻¹ q stays in fiber(q'), using δ = γ
     simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hq ⊢
-    induction q using QuotientGroup.induction_on with | _ g => ?_
-    rw [slLeftMul_Gamma_p_α_mk, slGamma_p_αToGamma1_mk]
-    have h_g : (QuotientGroup.mk g : SL(2, ℤ) ⧸ Gamma1 N) = q' := by
-      rwa [← slGamma_p_αToGamma1_mk (N := N) α g]
-    have h_gm : g⁻¹ * q'.out ∈ Gamma1 N :=
-      QuotientGroup.eq.mp (h_g.trans q'.out_eq.symm)
-    rw [← q'.out_eq, hr_def, QuotientGroup.eq]
-    -- (hr⁻¹·g)⁻¹·q'.out = g⁻¹·q'.out·γ⁻¹  ∈ Γ₁
-    have hrw : (((q'.out : SL(2, ℤ)) * (γ : SL(2, ℤ))⁻¹ * (q'.out : SL(2, ℤ))⁻¹)⁻¹ * g)⁻¹
-        * q'.out = (g⁻¹ * q'.out) * (γ : SL(2, ℤ))⁻¹ := by group
-    rw [hrw]
-    exact mul_mem h_gm (inv_mem hγ)
-  · -- membership: slLeftMul hr q (γ-fiber q') lands in fiber(q')
+    rw [show (hr⁻¹ : SL(2, ℤ)) =
+        (q'.out : SL(2, ℤ)) * γ * (q'.out : SL(2, ℤ))⁻¹ by rw [hr_def]; group]
+    exact slGamma_p_αToGamma1_slLeftMul_conj_self α q' hγ hq
+  · -- bullet 2: slLeftMul hr q stays in fiber(q'), using δ = γ⁻¹
     simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hq ⊢
-    induction q using QuotientGroup.induction_on with | _ g => ?_
-    rw [slLeftMul_Gamma_p_α_mk, slGamma_p_αToGamma1_mk]
-    have h_g : (QuotientGroup.mk g : SL(2, ℤ) ⧸ Gamma1 N) = q' := by
-      rwa [← slGamma_p_αToGamma1_mk (N := N) α g]
-    have h_gm : g⁻¹ * q'.out ∈ Gamma1 N :=
-      QuotientGroup.eq.mp (h_g.trans q'.out_eq.symm)
-    rw [← q'.out_eq, hr_def, QuotientGroup.eq]
-    -- (hr·g)⁻¹·q'.out = g⁻¹·q'.out·γ  ∈ Γ₁
-    have hrw : ((q'.out : SL(2, ℤ)) * (γ : SL(2, ℤ))⁻¹ * (q'.out : SL(2, ℤ))⁻¹ * g)⁻¹
-        * q'.out = (g⁻¹ * q'.out) * γ := by group
-    rw [hrw]
-    exact mul_mem h_gm hγ
-  · -- summand equality: connecting elements differ by a left `Γ_p(α)`-factor
-    -- target (after `.symm`): G|(q.out⁻¹·q'.out) = G|((slLeftMul hr⁻¹ q).out⁻¹·q'.out·γ)
-    set qt := slLeftMul_Gamma_p_α (N := N) α hr⁻¹ q with hqt_def
-    have hqt_mk : qt = QuotientGroup.mk (hr⁻¹ * q.out) := by
-      rw [hqt_def]
-      conv_lhs => rw [← q.out_eq]
-      rfl
-    have hγp : qt.out⁻¹ * (hr⁻¹ * q.out) ∈ Gamma_p_α (N := N) α :=
-      QuotientGroup.eq.mp (qt.out_eq.trans hqt_mk)
-    set γp := qt.out⁻¹ * (hr⁻¹ * q.out) with hγp_def
-    -- (qt.out⁻¹·q'.out·γ) = γp·(q.out⁻¹·q'.out): hr·q'.out·γ = q'.out
-    have h_rewrite : (qt.out : SL(2, ℤ))⁻¹ * q'.out * γ =
-        γp * ((q.out : SL(2, ℤ))⁻¹ * q'.out) := by
-      rw [hγp_def, hr_def]; group
-    rw [h_rewrite]
-    conv_rhs => rw [SlashAction.slash_mul, hG_slash γp hγp]
+    rw [show (hr : SL(2, ℤ)) =
+        (q'.out : SL(2, ℤ)) * γ⁻¹ * (q'.out : SL(2, ℤ))⁻¹ by rw [hr_def]]
+    exact slGamma_p_αToGamma1_slLeftMul_conj_self α q' (inv_mem hγ) hq
 
 open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory Classical in
 /-- **DS 5.4.4 — clean `Γ_p(α)`-FD ↔ `Γ₁(N)`-FD transfer corollary (the step-(a)
@@ -1669,6 +1713,109 @@ lemma conj_T_p_lower_real_val (p : ℕ) (hp : 0 < p) (γ : SL(2, ℤ)) :
   fin_cases i <;> fin_cases j <;> simp <;> field_simp
 
 open CongruenceSubgroup Pointwise ConjAct in
+/-- Forward direction of `mem_Gamma_p_α_T_p_lower`: if `γ` lies in the conjugate
+intersection `conjGL Γ₁(N) (mapGL A)` (with `A = diag(p,1)`), the resulting integral
+preimage `y` has `(1,0)`-entry `γ₁₀ / p`, forcing `p ∣ γ₁₀`. -/
+private lemma mem_Gamma_p_α_T_p_lower_mp
+    (p : ℕ) (hp : 0 < p) {γ : SL(2, ℤ)}
+    (h : γ ∈ conjGL (Gamma1 N) ((T_p_lower p hp).map (Rat.castHom ℝ))) :
+    (p : ℤ) ∣ γ.val 1 0 := by
+  have hp_ne : (p : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr hp.ne'
+  obtain ⟨y, _, hy_eq⟩ := mem_conjGL.mp h
+  -- The `(1,0)` entry of `mapGL y = A·γ·A⁻¹` is the integer `y₁₀ = c/p`, so `p ∣ c`.
+  have hentry : ((y.val 1 0 : ℤ) : ℝ) = ((γ.val 1 0 : ℤ) : ℝ) / (p : ℝ) := by
+    have h1 : ((toGL ((Matrix.SpecialLinearGroup.map (Int.castRingHom ℝ)) y)) :
+        Matrix (Fin 2) (Fin 2) ℝ) =
+        !![((γ.val 0 0 : ℤ) : ℝ), (p : ℝ) * ((γ.val 0 1 : ℤ) : ℝ);
+           ((γ.val 1 0 : ℤ) : ℝ) / (p : ℝ), ((γ.val 1 1 : ℤ) : ℝ)] := by
+      rw [hy_eq, Matrix.GeneralLinearGroup.coe_mul, Matrix.GeneralLinearGroup.coe_mul,
+        conj_T_p_lower_real_val p hp γ]
+    have h10 := congrFun (congrFun h1 1) 0
+    simpa [Matrix.SpecialLinearGroup.map_apply_coe, RingHom.mapMatrix_apply,
+      Matrix.map_apply] using h10
+  have : ((γ.val 1 0 : ℤ) : ℝ) = ((y.val 1 0 : ℤ) : ℝ) * (p : ℝ) := by
+    rw [hentry]; field_simp
+  have hcast : (γ.val 1 0 : ℤ) = (y.val 1 0 : ℤ) * (p : ℤ) := by exact_mod_cast this
+  exact ⟨y.val 1 0, by rw [hcast]; ring⟩
+
+open CongruenceSubgroup Pointwise ConjAct in
+/-- Helper: the explicit integral matrix `y = [[a, p·b], [k, d]]` (with `d·a - p·b·k = 1`
+guaranteed by the `Γ₁(N)`-side data of `γ` and `γ₁₀ = p·k`) used to witness conjugacy
+in the reverse direction of `mem_Gamma_p_α_T_p_lower`. The determinant is `1` because
+`γ.val.det = 1` and `(p·γ₀₁·k) = γ₀₁·γ₁₀`. -/
+private lemma mem_Gamma_p_α_T_p_lower_mpr_det
+    (p : ℕ) {γ : SL(2, ℤ)} {k : ℤ} (hk : γ.val 1 0 = p * k) :
+    (!![γ.val 0 0, (p : ℤ) * γ.val 0 1; k, γ.val 1 1] :
+      Matrix (Fin 2) (Fin 2) ℤ).det = 1 := by
+  rw [Matrix.det_fin_two_of]
+  have hγdet : γ.val 0 0 * γ.val 1 1 - γ.val 0 1 * γ.val 1 0 = 1 := by
+    have := γ.property
+    rw [Matrix.det_fin_two] at this
+    linarith [this]
+  have : (p : ℤ) * γ.val 0 1 * k = γ.val 0 1 * γ.val 1 0 := by
+    rw [hk]; ring
+  linarith [hγdet, this]
+
+open CongruenceSubgroup Pointwise ConjAct in
+/-- Helper: the `(1,0)` entry `k` of the witness `y` reduces to `0 mod N`. This is the
+key Γ₁(N) membership ingredient on the reverse side, deduced from
+`hc : γ₁₀ ≡ 0 mod N`, `hk : γ₁₀ = p·k`, and `gcd(p, N) = 1`. -/
+private lemma mem_Gamma_p_α_T_p_lower_mpr_k_mod_N
+    (p : ℕ) (hpN : Nat.Coprime p N) {γ : SL(2, ℤ)} {k : ℤ}
+    (hc : (γ.val 1 0 : ZMod N) = 0) (hk : γ.val 1 0 = p * k) :
+    (k : ZMod N) = 0 := by
+  have hN_dvd : (N : ℤ) ∣ γ.val 1 0 := by
+    rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]; exact_mod_cast hc
+  have hN_dvd_pk : (N : ℤ) ∣ (p : ℤ) * k := hk ▸ hN_dvd
+  have hco : IsCoprime (N : ℤ) (p : ℤ) :=
+    Int.isCoprime_iff_gcd_eq_one.mpr (by exact_mod_cast hpN.symm)
+  have hN_dvd_k : (N : ℤ) ∣ k := hco.dvd_of_dvd_mul_left hN_dvd_pk
+  rw [← ZMod.intCast_zmod_eq_zero_iff_dvd] at hN_dvd_k; exact_mod_cast hN_dvd_k
+
+open CongruenceSubgroup Pointwise ConjAct in
+/-- Reverse direction of `mem_Gamma_p_α_T_p_lower`: given `γ ∈ Γ₁(N)` with `p ∣ γ₁₀`,
+the integral matrix `y = [[a, p·b], [k, d]]` (with `k = γ₁₀/p`) lies in `Γ₁(N)` and
+satisfies `mapGL y = A · mapGL γ · A⁻¹`, witnessing membership in
+`conjGL Γ₁(N) (mapGL A)` (and hence in `Γ_p(T_p_lower)` after intersecting with
+`Γ₁(N)`). -/
+private lemma mem_Gamma_p_α_T_p_lower_mpr
+    (p : ℕ) (hp : 0 < p) (hpN : Nat.Coprime p N) {γ : SL(2, ℤ)}
+    (hγ₁ : γ ∈ Gamma1 N) (hdvd : (p : ℤ) ∣ γ.val 1 0) :
+    γ ∈ conjGL (Gamma1 N) ((T_p_lower p hp).map (Rat.castHom ℝ)) := by
+  have hp_ne : (p : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr hp.ne'
+  rw [mem_conjGL]
+  obtain ⟨k, hk⟩ := hdvd
+  obtain ⟨ha, hd, hc⟩ := (Gamma1_mem N γ).mp hγ₁
+  have hdet := mem_Gamma_p_α_T_p_lower_mpr_det p hk
+  set y : SL(2, ℤ) := ⟨!![γ.val 0 0, (p : ℤ) * γ.val 0 1; k, γ.val 1 1], hdet⟩ with hy_def
+  have hk_N : (k : ZMod N) = 0 := mem_Gamma_p_α_T_p_lower_mpr_k_mod_N (N := N) p hpN hc hk
+  have hy_mem : y ∈ Gamma1 N := by
+    rw [Gamma1_mem]
+    refine ⟨?_, ?_, ?_⟩
+    · show ((y.val 0 0 : ℤ) : ZMod N) = 1
+      simp only [hy_def, Matrix.SpecialLinearGroup.coe_mk, Matrix.cons_val', Matrix.of_apply,
+        Matrix.cons_val_zero, Matrix.empty_val', Matrix.cons_val_fin_one]
+      exact ha
+    · show ((y.val 1 1 : ℤ) : ZMod N) = 1
+      simp only [hy_def, Matrix.SpecialLinearGroup.coe_mk, Matrix.cons_val', Matrix.of_apply,
+        Matrix.cons_val_one, Matrix.empty_val', Matrix.cons_val_fin_one]
+      exact hd
+    · show ((y.val 1 0 : ℤ) : ZMod N) = 0
+      simp only [hy_def, Matrix.SpecialLinearGroup.coe_mk, Matrix.cons_val', Matrix.of_apply,
+        Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.empty_val',
+        Matrix.cons_val_fin_one]
+      exact hk_N
+  refine ⟨y, hy_mem, ?_⟩
+  apply Units.ext
+  rw [Matrix.GeneralLinearGroup.coe_mul, Matrix.GeneralLinearGroup.coe_mul,
+    conj_T_p_lower_real_val p hp γ]
+  ext i j
+  fin_cases i <;> fin_cases j <;>
+    simp [hy_def, Matrix.SpecialLinearGroup.map_apply_coe, RingHom.mapMatrix_apply,
+      Matrix.map_apply, hk] <;>
+    field_simp
+
+open CongruenceSubgroup Pointwise ConjAct in
 /-- **Membership characterization of `Γ_p(T_p_lower)`.** For `A = diag(p,1)`, conjugation
 `A·γ·A⁻¹ = [[a, p·b], [c/p, d]]` is integral (and lands in `Γ₁(N)`) iff `p ∣ c`. Hence
 `Γ_p(A) = {γ ∈ Γ₁(N) : p ∣ γ₁₀}` (the `Γ₀(p)`-type lower-left condition). -/
@@ -1676,74 +1823,9 @@ lemma mem_Gamma_p_α_T_p_lower (p : ℕ) (hp : 0 < p) (hpN : Nat.Coprime p N)
     {γ : SL(2, ℤ)} :
     γ ∈ Gamma_p_α (N := N) (T_p_lower p hp) ↔
       γ ∈ Gamma1 N ∧ (p : ℤ) ∣ γ.val 1 0 := by
-  have hp_ne : (p : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr hp.ne'
-  rw [Gamma_p_α, Subgroup.mem_inf, mem_conjGL]
-  constructor
-  · rintro ⟨⟨y, hy_mem, hy_eq⟩, hγ₁⟩
-    refine ⟨hγ₁, ?_⟩
-    -- The `(1,0)` entry of `mapGL y = A·γ·A⁻¹` is the integer `y₁₀ = c/p`, so `p ∣ c`.
-    have hentry : ((y.val 1 0 : ℤ) : ℝ) = ((γ.val 1 0 : ℤ) : ℝ) / (p : ℝ) := by
-      have h1 : ((toGL ((Matrix.SpecialLinearGroup.map (Int.castRingHom ℝ)) y)) :
-          Matrix (Fin 2) (Fin 2) ℝ) =
-          !![((γ.val 0 0 : ℤ) : ℝ), (p : ℝ) * ((γ.val 0 1 : ℤ) : ℝ);
-             ((γ.val 1 0 : ℤ) : ℝ) / (p : ℝ), ((γ.val 1 1 : ℤ) : ℝ)] := by
-        rw [hy_eq, Matrix.GeneralLinearGroup.coe_mul, Matrix.GeneralLinearGroup.coe_mul,
-          conj_T_p_lower_real_val p hp γ]
-      have h10 := congrFun (congrFun h1 1) 0
-      simpa [Matrix.SpecialLinearGroup.map_apply_coe, RingHom.mapMatrix_apply,
-        Matrix.map_apply] using h10
-    have : ((γ.val 1 0 : ℤ) : ℝ) = ((y.val 1 0 : ℤ) : ℝ) * (p : ℝ) := by
-      rw [hentry]; field_simp
-    have hcast : (γ.val 1 0 : ℤ) = (y.val 1 0 : ℤ) * (p : ℤ) := by exact_mod_cast this
-    exact ⟨y.val 1 0, by rw [hcast]; ring⟩
-  · rintro ⟨hγ₁, k, hk⟩
-    refine ⟨?_, hγ₁⟩
-    -- Build `y = [[a, p·b], [k, d]]`; `mapGL y = A·γ·A⁻¹`, det 1, and `y ∈ Γ₁`.
-    obtain ⟨ha, hd, hc⟩ := (Gamma1_mem N γ).mp hγ₁
-    have hdet : (!![γ.val 0 0, (p : ℤ) * γ.val 0 1; k, γ.val 1 1] :
-        Matrix (Fin 2) (Fin 2) ℤ).det = 1 := by
-      rw [Matrix.det_fin_two_of]
-      have hγdet : γ.val 0 0 * γ.val 1 1 - γ.val 0 1 * γ.val 1 0 = 1 := by
-        have := γ.property
-        rw [Matrix.det_fin_two] at this
-        linarith [this]
-      have : (p : ℤ) * γ.val 0 1 * k = γ.val 0 1 * γ.val 1 0 := by
-        rw [hk]; ring
-      linarith [hγdet, this]
-    set y : SL(2, ℤ) := ⟨!![γ.val 0 0, (p : ℤ) * γ.val 0 1; k, γ.val 1 1], hdet⟩ with hy_def
-    have hk_N : (k : ZMod N) = 0 := by
-      have hN_dvd : (N : ℤ) ∣ γ.val 1 0 := by
-        rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]; exact_mod_cast hc
-      have hN_dvd_pk : (N : ℤ) ∣ (p : ℤ) * k := hk ▸ hN_dvd
-      have hco : IsCoprime (N : ℤ) (p : ℤ) :=
-        Int.isCoprime_iff_gcd_eq_one.mpr (by exact_mod_cast hpN.symm)
-      have hN_dvd_k : (N : ℤ) ∣ k := hco.dvd_of_dvd_mul_left hN_dvd_pk
-      rw [← ZMod.intCast_zmod_eq_zero_iff_dvd] at hN_dvd_k; exact_mod_cast hN_dvd_k
-    have hy_mem : y ∈ Gamma1 N := by
-      rw [Gamma1_mem]
-      refine ⟨?_, ?_, ?_⟩
-      · show ((y.val 0 0 : ℤ) : ZMod N) = 1
-        simp only [hy_def, Matrix.SpecialLinearGroup.coe_mk, Matrix.cons_val', Matrix.of_apply,
-          Matrix.cons_val_zero, Matrix.empty_val', Matrix.cons_val_fin_one]
-        exact ha
-      · show ((y.val 1 1 : ℤ) : ZMod N) = 1
-        simp only [hy_def, Matrix.SpecialLinearGroup.coe_mk, Matrix.cons_val', Matrix.of_apply,
-          Matrix.cons_val_one, Matrix.empty_val', Matrix.cons_val_fin_one]
-        exact hd
-      · show ((y.val 1 0 : ℤ) : ZMod N) = 0
-        simp only [hy_def, Matrix.SpecialLinearGroup.coe_mk, Matrix.cons_val', Matrix.of_apply,
-          Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.empty_val',
-          Matrix.cons_val_fin_one]
-        exact hk_N
-    refine ⟨y, hy_mem, ?_⟩
-    apply Units.ext
-    rw [Matrix.GeneralLinearGroup.coe_mul, Matrix.GeneralLinearGroup.coe_mul,
-      conj_T_p_lower_real_val p hp γ]
-    ext i j
-    fin_cases i <;> fin_cases j <;>
-      simp [hy_def, Matrix.SpecialLinearGroup.map_apply_coe, RingHom.mapMatrix_apply,
-        Matrix.map_apply, hk] <;>
-      field_simp
+  rw [Gamma_p_α, Subgroup.mem_inf]
+  refine ⟨fun ⟨h, hγ₁⟩ ↦ ⟨hγ₁, mem_Gamma_p_α_T_p_lower_mp p hp h⟩, fun ⟨hγ₁, hdvd⟩ ↦ ?_⟩
+  exact ⟨mem_Gamma_p_α_T_p_lower_mpr p hp hpN hγ₁ hdvd, hγ₁⟩
 
 open CongruenceSubgroup Pointwise ConjAct in
 /-- `Γ_p(T_p_lower) = Γ₁(N) ⊓ Γ₀(p)`. -/
