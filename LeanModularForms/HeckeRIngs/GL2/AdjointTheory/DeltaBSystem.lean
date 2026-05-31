@@ -375,84 +375,6 @@ lemma peterssonInner_slash_adj_M_infty_q_summand_eq
   rw [slash_peterssonAdj_glMap_M_infty_eq_slash_T_p_upper_zero_slash_gamma0
     p hp hpN g]
 
-open UpperHalfPlane ModularGroup MeasureTheory in
-private lemma peterssonInner_ds_p_plus_one_family_union_collapse_per_q_split
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
-    (q : SL(2, ℤ)) (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    peterssonInner k ModularGroup.fd
-        (⇑f ∣[k] ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ)))
-        (⇑g ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹)) +
-      ∑ b ∈ Finset.range p,
-        peterssonInner k ModularGroup.fd
-          (⇑f ∣[k] ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ)))
-          (⇑g ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹)) =
-    peterssonInner k
-        ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
-          (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ) •
-            (ModularGroup.fd : Set UpperHalfPlane)))
-        ⇑f
-        ((⇑g ∣[k] (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)))) +
-      ∑ b ∈ Finset.range p,
-        peterssonInner k
-          ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) •
-            (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ) •
-              (ModularGroup.fd : Set UpperHalfPlane)))
-          ⇑f
-          ((⇑g ∣[k] (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
-            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-              ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)))) := by
-  rw [peterssonInner_slash_adj_M_infty_q_summand_eq p hp hpN q f g]
-  congr 1
-  exact sum_peterssonInner_upper_family_per_b_rewrite p hp hpN q f g
-
-open UpperHalfPlane ModularGroup MeasureTheory in
-private lemma slash_glQ_then_mapGL_SL_eq_combinedGL
-    (F : UpperHalfPlane → ℂ) (α : GL (Fin 2) ℚ) (δ : SL(2, ℤ)) :
-    ((F ∣[k] ((α.map (Rat.castHom ℝ)) : GL (Fin 2) ℝ)) ∣[k]
-      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) δ)) =
-    F ∣[k] ((glMap α : GL (Fin 2) ℝ) *
-      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) δ)) := by
-  rw [← SlashAction.slash_mul]
-  rfl
-
-open UpperHalfPlane ModularGroup MeasureTheory in
-private lemma slash_glQ_mapGLSL_to_combinedGL
-    (F : UpperHalfPlane → ℂ) (α : GL (Fin 2) ℚ) (δ : SL(2, ℤ)) :
-    ((F ∣[k] (α : GL (Fin 2) ℚ)) ∣[k]
-      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) δ)) =
-    F ∣[k] ((glMap α : GL (Fin 2) ℝ) *
-      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) δ)) := by
-  change ((F ∣[k] (glMap α : GL (Fin 2) ℝ)) ∣[k]
-      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) δ)) =
-    F ∣[k] ((glMap α : GL (Fin 2) ℝ) *
-      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) δ))
-  rw [← SlashAction.slash_mul]
-
-open UpperHalfPlane ModularGroup MeasureTheory in
-/-- Integrability over `fd` of the per-tile combined-`GL` Petersson integrand
-`petersson (f' ∣[k] q⁻¹) (g' ∣[k] (glMap α · q⁻¹))` arising in the per-`q`
-coset-sum distribution; the combined slash is unfolded back to a `GL(2,ℚ)`
-slash followed by the `q⁻¹` twist, which `integrableOn_petersson_cuspform_mixed_slash_on_fd`
-discharges. -/
-private lemma integrableOn_petersson_combinedGL_tile_on_fd
-    (f' g' : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (α : GL (Fin 2) ℚ)
-    (q : SL(2, ℤ)) :
-    IntegrableOn (fun τ ↦ petersson k
-        (⇑f' ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ))
-        (⇑g' ∣[k] ((glMap α : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ))) τ)
-      (ModularGroup.fd : Set ℍ) μ_hyp := by
-  rw [show (⇑g' ∣[k] ((glMap α : GL (Fin 2) ℝ) *
-        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ))) =
-      (⇑g' ∣[k] ((α.map (Rat.castHom ℝ)) : GL (Fin 2) ℝ)) ∣[k]
-        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹) from
-    (slash_glQ_then_mapGL_SL_eq_combinedGL (k := k) ⇑g' α q⁻¹).symm]
-  exact integrableOn_petersson_cuspform_mixed_slash_on_fd f' g' α q⁻¹
-
 open UpperHalfPlane in
 /-- Pointwise AM-GM bound for the Petersson integrand: the off-diagonal product
 is controlled by the average of the two diagonal products. -/
@@ -462,16 +384,6 @@ private lemma norm_petersson_le_half_add_diag (a b : ℍ → ℂ) (τ : ℍ) :
   have h_im_nn : (0 : ℝ) ≤ ‖((τ.im : ℂ) ^ k)‖ := norm_nonneg _
   nlinarith [mul_nonneg (sq_nonneg (‖a τ‖ - ‖b τ‖)) h_im_nn,
     sq_nonneg (‖a τ‖ - ‖b τ‖), norm_nonneg (a τ), norm_nonneg (b τ), h_im_nn]
-
-open UpperHalfPlane MeasureTheory in
-/-- The fundamental domain `fd` is null-measurable for the hyperbolic measure
-(it is closed, being an intersection of two closed half-spaces). -/
-private lemma nullMeasurableSet_modularGroup_fd :
-    NullMeasurableSet (ModularGroup.fd : Set ℍ) μ_hyp :=
-  ((isClosed_le continuous_const
-      (Complex.continuous_normSq.comp UpperHalfPlane.continuous_coe)).inter
-    (isClosed_le (continuous_abs.comp UpperHalfPlane.continuous_re)
-      continuous_const)).measurableSet.nullMeasurableSet
 
 open UpperHalfPlane MeasureTheory ConjAct Pointwise in
 /-- Integrability of `petersson f (g ∣[k] glMap σ)` over any finite-measure set.
