@@ -1257,38 +1257,6 @@ lemma Newform.frickeMatrix_smul_isFundDomain_imageGamma1_PSL
     (isFundamentalDomain_Gamma1_PSL_R.smul_of_mem_normalizer
       (Newform.frickeMatrix_PSL_R_mem_normalizer N))
 
-open UpperHalfPlane MeasureTheory ModularGroup in
-/-- `W_N`-shifted `Σ_q` FD-tiling for `petN`: summing `peterssonInner` over
-`W_N`-shifted SL-coset tiles equals `petN f g`, because `W_N` normalises `Γ₁(N)`
-and `petersson k ⇑f ⇑g` is `Γ₁(N)`-invariant. -/
-theorem Newform.sum_peterssonInner_frickeMatrix_smul_q_out_inv_fd_eq_petN
-    {N : ℕ} [NeZero N] {k : ℤ}
-    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-      peterssonInner k
-        ((Newform.frickeMatrix N : GL (Fin 2) ℝ) •
-          ((q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane)))
-        ⇑f ⇑g =
-    petN f g := by
-  have h_petN_eq : (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-      ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane),
-        petersson k ⇑f ⇑g τ ∂μ_hyp) = petN f g := by
-    refine Finset.sum_congr rfl (fun q _ ↦ ?_)
-    change ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane),
-        petersson k ⇑f ⇑g τ ∂μ_hyp =
-      peterssonInner k fd (⇑f ∣[k] (q.out)⁻¹) (⇑g ∣[k] (q.out)⁻¹)
-    rw [peterssonInner_fd_slash_SL_eq_setIntegral_shifted_fd ⇑f ⇑g (q.out)]
-  exact (sum_setIntegral_GL2_shift (N := N)
-    (α := Newform.frickeMatrix_GLPos N) (h := petersson k ⇑f ⇑g)
-    (h_inv := fun γ hγ τ ↦ petersson_Gamma1_invariant f g γ hγ τ)
-    (hα_h_inv := fun γ hγ τ ↦
-      Newform.frickeMatrix_smul_petersson_invariant f g γ hγ τ)
-    (hα_fd := Newform.frickeMatrix_smul_isFundDomain_imageGamma1_PSL N)
-    (h_int := integrableOn_petersson_Gamma1_fundDomain_PSL f g)
-    (h_α_int :=
-      Newform.integrableOn_petersson_smul_frickeMatrix_fundDomain_PSL f g)).trans
-    h_petN_eq
-
 end FrickeAdjoint
 
 private lemma frickeRootNumber_scalar_collapse {k : ℤ} {n x I fv : ℂ}
