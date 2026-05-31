@@ -780,73 +780,12 @@ theorem peterssonInner_sum_slash_adjoint_constantRHS
   exact Finset.sum_congr rfl fun i hi ↦ by rw [hadj i hi]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- AE-disjointness of `Gamma1_fundDomain_PSL N` translates via a PSL-coset
-`mul_inv_mem` hypothesis. -/
-theorem aedisjoint_imageGamma1_PSL_smul_Gamma1_fundDomain
-    {N : ℕ} [NeZero N] {q₁ q₂ : PSL(2, ℤ)}
-    (h_mem : q₁⁻¹ * q₂ ∈ imageGamma1_PSL N) (h_ne : q₁⁻¹ * q₂ ≠ 1) :
-    AEDisjoint μ_hyp (q₁ • (Gamma1_fundDomain_PSL N : Set ℍ))
-      (q₂ • (Gamma1_fundDomain_PSL N : Set ℍ)) :=
-  isFundamentalDomain_Gamma1_coset_tiling.aedisjoint_smul_of_mul_inv_mem
-    h_mem h_ne
-
 open UpperHalfPlane ModularGroup MeasureTheory in
 /-- Positive-determinant `GL (Fin 2) ℝ` elements act measure-preservingly on `ℍ`
 with respect to `μ_hyp`. -/
 theorem measurePreserving_glPos_smul (α : GL (Fin 2) ℝ) (hα : 0 < α.det.val) :
     MeasurePreserving ((α • ·) : ℍ → ℍ) μ_hyp μ_hyp :=
   measurePreserving_smul (⟨α, hα⟩ : GL(2, ℝ)⁺) μ_hyp
-
-open UpperHalfPlane ModularGroup MeasureTheory in
-private lemma integrableOn_petersson_slash_of_adj_image
-    (D : Set ℍ) (α : GL (Fin 2) ℝ) (hα : 0 < α.det.val)
-    (f g g' : ℍ → ℂ)
-    (hadj : g ∣[k] peterssonAdj α = g')
-    (hfi : IntegrableOn (fun τ ↦ petersson k f g' τ) (α • D) μ_hyp) :
-    IntegrableOn (fun τ ↦ petersson k g (f ∣[k] α) τ) D μ_hyp := by
-  have hg_decomp : g = (g ∣[k] α⁻¹) ∣[k] α := by
-    rw [← SlashAction.slash_mul, inv_mul_cancel, SlashAction.slash_one]
-  set g_inv := g ∣[k] α⁻¹ with hg_inv_def
-  have h_pointwise : ∀ τ, petersson k g (f ∣[k] α) τ =
-      petersson k g' f (α • τ) := by
-    intro τ
-    rw [petersson_symm k (f ∣[k] α) g]
-    conv_lhs => rw [show g = g_inv ∣[k] α from hg_decomp]
-    rw [petersson_slash, show σ α = RingHom.id ℂ from if_pos hα, RingHom.id_apply]
-    have h_scalar : (↑|α.det.val| ^ (k - 2) : ℂ) * petersson k f g_inv (α • τ) =
-        petersson k f ((↑(|α.det.val| ^ (k - 2)) : ℂ) • g_inv) (α • τ) := by
-      simp [petersson, Pi.smul_apply, smul_eq_mul]
-      ring
-    rw [h_scalar]
-    rw [show ((↑(|α.det.val| ^ (k - 2)) : ℂ) • g_inv) = g' by
-      rw [← hadj, hg_inv_def, slash_peterssonAdj_eq α hα]]
-    exact (petersson_symm k f g' (α • τ)).symm
-  rw [funext h_pointwise]
-  set α' : GL(2, ℝ)⁺ := ⟨α, hα⟩
-  have h_α_eq : (α : GL (Fin 2) ℝ) • D = (fun τ ↦ α' • τ) '' D := by
-    rw [Set.image_smul]
-    rfl
-  rw [show (fun τ ↦ petersson k g' f (α • τ)) =
-      petersson k g' f ∘ (fun τ ↦ α' • τ) from rfl]
-  rw [← (measurePreserving_smul α' μ_hyp).integrableOn_image
-      (measurableEmbedding_const_smul α')]
-  rw [h_α_eq] at hfi
-  have h_symm_fn : (petersson k g' f : ℍ → ℂ) =
-      fun τ ↦ starRingEnd ℂ (petersson k f g' τ) :=
-    funext fun τ ↦ petersson_symm k f g' τ
-  rw [h_symm_fn]
-  refine ⟨?_, ?_⟩
-  · exact Complex.continuous_conj.comp_aestronglyMeasurable hfi.aestronglyMeasurable
-  · have h_finite := hfi.2
-    show HasFiniteIntegral _ _
-    unfold HasFiniteIntegral at h_finite ⊢
-    refine lt_of_le_of_lt (le_of_eq ?_) h_finite
-    apply lintegral_congr_ae
-    filter_upwards with τ
-    show ‖(starRingEnd ℂ) (petersson k f g' τ)‖ₑ = ‖petersson k f g' τ‖ₑ
-    rw [enorm_eq_nnnorm, enorm_eq_nnnorm]
-    congr 1
-    exact Subtype.ext (Complex.norm_conj _)
 
 open UpperHalfPlane ModularGroup MeasureTheory in
 private lemma aedisjoint_fd_smul_fd_of_psl_ne_one {q : PSL(2, ℤ)} (hq_ne : q ≠ 1) :
@@ -1145,15 +1084,6 @@ theorem measure_glPos_smul_Gamma1_fundDomain_lt_top
   exact hyperbolicMeasure_Gamma1_fundDomain_PSL_lt_top
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- A finite family is pairwise AE-disjoint, from per-pair hypotheses. -/
-theorem aedisjoint_pairwise_family_of_pair_ae_disjoint
-    {ι : Type*} {D : Set ℍ} (s : Finset ι) (α : ι → GL (Fin 2) ℝ)
-    (h_pair : ∀ i ∈ s, ∀ j ∈ s, i ≠ j →
-      AEDisjoint μ_hyp (α i • D) (α j • D)) :
-    (↑s : Set ι).Pairwise (fun i j ↦ AEDisjoint μ_hyp (α i • D) (α j • D)) :=
-  fun i hi j hj hij ↦ h_pair i (Finset.mem_coe.mp hi) j (Finset.mem_coe.mp hj) hij
-
-open UpperHalfPlane ModularGroup MeasureTheory in
 /-- The explicit `Γ₁(N)` factor arising from `T_p_upper(b)⁻¹ · M_∞`: the
 `SL(2, ℤ)` element with matrix `!![ap − bNm, 1 − b; Nm, 1]`
 (where `a = aInvOfCoprime`, `m = mIdxOfCoprime`, so `ap − Nm = 1` by Bézout). -/
@@ -1343,59 +1273,6 @@ theorem peterssonInner_T_p_family_sum_slashes_eq_aggregate_of_integrable
         ⇑f g' :=
   peterssonInner_sum_slash_adjoint_constantRHS s α hα
     (Gamma1_fundDomain_PSL N) ⇑f ⇑g g' hadj h_int_per hm hd hfi
-
-open UpperHalfPlane ModularGroup MeasureTheory in
-lemma peterssonInner_slash_adjoint_coset_right
-    (β : GL (Fin 2) ℝ) (hβ : 0 < β.det.val) (q : SL(2, ℤ)) (f g : ℍ → ℂ) :
-    peterssonInner k fd
-        (f ∣[k] (mapGL ℝ q⁻¹ : GL (Fin 2) ℝ))
-        (g ∣[k] (β * (mapGL ℝ q⁻¹ : GL (Fin 2) ℝ))) =
-      peterssonInner k
-        (β • ((mapGL ℝ q⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ)))
-        (f ∣[k] peterssonAdj β)
-        g := by
-  rw [← peterssonInner_conj_symm k fd (f ∣[k] (mapGL ℝ q⁻¹ : GL (Fin 2) ℝ))
-      (g ∣[k] (β * (mapGL ℝ q⁻¹ : GL (Fin 2) ℝ))),
-    peterssonInner_slash_adjoint_coset (k := k) β hβ q g f,
-    peterssonInner_conj_symm k (β • ((mapGL ℝ q⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ)))
-      (f ∣[k] peterssonAdj β) g]
-
-open UpperHalfPlane ModularGroup MeasureTheory in
-/-- Aggregate per-`α` slash-adjoint at the `Γ₁(N)`-fundamental-domain level. -/
-theorem peterssonInner_sum_slash_adjoint_coset_aggregate
-    (β : GL (Fin 2) ℝ) (hβ : 0 < β.det.val)
-    (F G : UpperHalfPlane → ℂ)
-    (hd : Pairwise (fun (q₁ q₂ : SL(2, ℤ) ⧸ Gamma1 N) ↦ AEDisjoint μ_hyp
-        ((β * (mapGL ℝ (q₁.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ))
-        ((β * (mapGL ℝ (q₂.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • fd)))
-    (hm : ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
-      NullMeasurableSet
-        ((β * (mapGL ℝ (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp)
-    (hint : IntegrableOn (fun τ ↦ petersson k F (G ∣[k] peterssonAdj β) τ)
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        (β * (mapGL ℝ (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp) :
-    (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-      peterssonInner k ModularGroup.fd
-        (F ∣[k] (β * (mapGL ℝ (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
-        (G ∣[k] (mapGL ℝ (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ))) =
-    peterssonInner k
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        (β * (mapGL ℝ (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ))
-      F (G ∣[k] peterssonAdj β) := by
-  rw [show (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-        peterssonInner k ModularGroup.fd
-          (F ∣[k] (β * (mapGL ℝ (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
-          (G ∣[k] (mapGL ℝ (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ))) =
-      ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-        peterssonInner k
-          ((β * (mapGL ℝ (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ))
-          F (G ∣[k] peterssonAdj β) by
-    refine Finset.sum_congr rfl fun q _ ↦ ?_
-    rw [peterssonInner_slash_adjoint_coset (k := k) β hβ
-      (q.out : SL(2, ℤ)) F G, ← mul_smul]]
-  exact (peterssonInner_iUnion_finite_aedisjoint
-    (fun q : SL(2, ℤ) ⧸ Gamma1 N ↦ (β * (mapGL ℝ (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ))
-    hm hd F (G ∣[k] peterssonAdj β) hint).symm
 
 open UpperHalfPlane ModularGroup MeasureTheory in
 /-- `glMap M_∞` has positive determinant `p` in `GL (Fin 2) ℝ`. -/
