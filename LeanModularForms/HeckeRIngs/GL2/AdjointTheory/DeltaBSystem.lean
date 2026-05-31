@@ -1609,17 +1609,6 @@ private lemma petN_symm_residual_sum_eq_standard_shifted_tiles
     rfl] at h
   exact h
 
-private lemma petN_diamond_heckeT_p_eq_canonical_RHS
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
-    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    petN (diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)
-        (heckeT_p_cusp k p hp hpN g) =
-      petN f (heckeT_p_cusp k p hp hpN
-        (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ g)) := by
-  rw [petN_diamond_heckeT_p_symm_RHS_sum_shifted_tile_residual p hp hpN f g,
-      petN_symm_residual_sum_eq_standard_shifted_tiles p hp hpN f g,
-      ← petN_f_heckeT_p_RHS_sum_shifted_tiles p hp hpN f g]
-
 private lemma heckeT_p_cusp_comm_diamondOp_private
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (d : (ZMod N)ˣ)
     (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
