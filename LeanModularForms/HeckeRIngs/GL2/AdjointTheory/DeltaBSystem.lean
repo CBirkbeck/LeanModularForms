@@ -1391,39 +1391,6 @@ def AlphaIntegrableUnion (α : GL (Fin 2) ℝ) (h : ℍ → ℂ) : Prop :=
         (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- Per-`q` pairwise-AE-disjoint hypothesis for the `T_p_upper(b)`-tiles, `b ∈ range p`,
-on a fixed `q`. -/
-def TpUpperPerQTilePairwiseAEDisjoint (p : ℕ) (hp : Nat.Prime p) : Prop :=
-  ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
-    ((Finset.range p : Finset ℕ) : Set ℕ).Pairwise (fun b₁ b₂ ↦ AEDisjoint μ_hyp
-        (((glMap (T_p_upper p hp.pos b₁) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (q.out : SL(2, ℤ))⁻¹ :
-            GL (Fin 2) ℝ)) • (ModularGroup.fd : Set ℍ))
-        (((glMap (T_p_upper p hp.pos b₂) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (q.out : SL(2, ℤ))⁻¹ :
-            GL (Fin 2) ℝ)) • (ModularGroup.fd : Set ℍ)))
-
-open UpperHalfPlane ModularGroup MeasureTheory in
-/-- Per-`q` null-measurability hypothesis for each `T_p_upper(b)`-tile, `b ∈ range p`,
-on a fixed `q`. -/
-def TpUpperPerQTileNullMeasurable (p : ℕ) (hp : Nat.Prime p) : Prop :=
-  ∀ q : SL(2, ℤ) ⧸ Gamma1 N, ∀ b ∈ Finset.range p,
-    NullMeasurableSet
-      (((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (q.out : SL(2, ℤ))⁻¹ :
-          GL (Fin 2) ℝ)) • (ModularGroup.fd : Set ℍ)) μ_hyp
-
-open UpperHalfPlane ModularGroup MeasureTheory in
-/-- Per-`q` integrability of `h` on the `T_p_upper`-tile biUnion over `b ∈ range p`. -/
-def TpUpperPerQIntegrableBUnion (p : ℕ) (hp : Nat.Prime p) (h : ℍ → ℂ) : Prop :=
-  ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
-    IntegrableOn h
-    (⋃ b ∈ Finset.range p,
-      ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (q.out : SL(2, ℤ))⁻¹ :
-          GL (Fin 2) ℝ)) • (ModularGroup.fd : Set ℍ)) μ_hyp
-
-open UpperHalfPlane ModularGroup MeasureTheory in
 /-- Per-`q` pairwise-AE-disjoint hypothesis for an α-family `α : ℕ → GL` of tiles,
 indexed by `b ∈ Finset.range p`, on a fixed `q`. -/
 def AlphaFamilyPerQTilePairwiseAEDisjoint (p : ℕ) (α : ℕ → GL (Fin 2) ℝ) : Prop :=
@@ -1496,9 +1463,12 @@ private theorem petN_T_p_upper_tiles_sum_q_eq_sum_b
       AlphaIntegrableUnion (N := N) (glMap (T_p_upper p hp.pos b))
         (fun τ ↦ petersson k ⇑f
           (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) τ))
-    (h_upper_per_q_disj : TpUpperPerQTilePairwiseAEDisjoint (N := N) p hp)
-    (h_upper_per_q_meas : TpUpperPerQTileNullMeasurable (N := N) p hp)
-    (h_upper_per_q_int : TpUpperPerQIntegrableBUnion (N := N) p hp
+    (h_upper_per_q_disj : AlphaFamilyPerQTilePairwiseAEDisjoint (N := N) p
+      (fun b ↦ glMap (T_p_upper p hp.pos b)))
+    (h_upper_per_q_meas : AlphaFamilyPerQTileNullMeasurable (N := N) p
+      (fun b ↦ glMap (T_p_upper p hp.pos b)))
+    (h_upper_per_q_int : AlphaFamilyPerQIntegrableBUnion (N := N) p
+      (fun b ↦ glMap (T_p_upper p hp.pos b))
       (fun τ ↦ petersson k ⇑f
         (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) τ)) :
     ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
@@ -1545,9 +1515,12 @@ theorem petN_heckeT_p_eq_per_alpha_HeckeFD_form
       AlphaIntegrableUnion (N := N) (glMap (T_p_upper p hp.pos b))
         (fun τ ↦ petersson k ⇑f
           (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) τ))
-    (h_upper_per_q_disj : TpUpperPerQTilePairwiseAEDisjoint (N := N) p hp)
-    (h_upper_per_q_meas : TpUpperPerQTileNullMeasurable (N := N) p hp)
-    (h_upper_per_q_int : TpUpperPerQIntegrableBUnion (N := N) p hp
+    (h_upper_per_q_disj : AlphaFamilyPerQTilePairwiseAEDisjoint (N := N) p
+      (fun b ↦ glMap (T_p_upper p hp.pos b)))
+    (h_upper_per_q_meas : AlphaFamilyPerQTileNullMeasurable (N := N) p
+      (fun b ↦ glMap (T_p_upper p hp.pos b)))
+    (h_upper_per_q_int : AlphaFamilyPerQIntegrableBUnion (N := N) p
+      (fun b ↦ glMap (T_p_upper p hp.pos b))
       (fun τ ↦ petersson k ⇑f
         (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) τ)) :
     petN (heckeT_p_cusp k p hp hpN f) g =
@@ -1595,9 +1568,12 @@ theorem petN_diamond_heckeT_p_eq_per_alpha_HeckeFD_form
         (fun τ ↦ petersson k ⇑g
           (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
             (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) τ))
-    (h_upper_per_q_disj : TpUpperPerQTilePairwiseAEDisjoint (N := N) p hp)
-    (h_upper_per_q_meas : TpUpperPerQTileNullMeasurable (N := N) p hp)
-    (h_upper_per_q_int : TpUpperPerQIntegrableBUnion (N := N) p hp
+    (h_upper_per_q_disj : AlphaFamilyPerQTilePairwiseAEDisjoint (N := N) p
+      (fun b ↦ glMap (T_p_upper p hp.pos b)))
+    (h_upper_per_q_meas : AlphaFamilyPerQTileNullMeasurable (N := N) p
+      (fun b ↦ glMap (T_p_upper p hp.pos b)))
+    (h_upper_per_q_int : AlphaFamilyPerQIntegrableBUnion (N := N) p
+      (fun b ↦ glMap (T_p_upper p hp.pos b))
       (fun τ ↦ petersson k ⇑g
         (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) ∣[k]
           (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) τ)) :
