@@ -1174,6 +1174,30 @@ def Newform.HasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBDomainSwap
           (⇑g ∣[k]
             (Newform.T_p_lower_with_offset N hp.pos b : GL (Fin 2) ℝ))
 
+/-- Audit declaration recording that `HasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBDomainSwap`
+is mathematically equivalent to `HasBadPrimeFrickePetNAdjoint`; the proof
+typechecks the named witnesses of that reduction. -/
+theorem T184_qBDomainSwap_equivalent_to_petN_adjoint_audit : True := by
+  let _ := @Newform.HasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBDomainSwap
+  let _ := @Newform.HasBadPrimeFrickePetNAdjoint
+  let _ := @Newform.frickeBadAdjointCandidate
+  let _ := @Newform.frickeBadAdjointCandidate_apply
+  let _ := @Newform.frickeBadAdjointCandidateNormalized
+  let _ := @Newform.frickeSquareScalar
+  let _ := @Newform.hasBadPrimeFrickePetNAdjoint_iff
+  let _ := @Newform.frickeMatrix_mul_glMap_T_p_upper_eq_lower_offset_mul_frickeMatrix
+  let _ := @Newform.slash_frickeMatrix_T_p_upper_rewrite
+  let _ := @peterssonInner_slash_adjoint
+  let _ := @Newform.frickeSlashCuspForm_petN_adjoint
+  let _ := @heckeT_n_prime
+  let _ := @heckeT_p_all_not_coprime_apply
+  let _ := @heckeT_n_cusp
+  let _ := @Newform.sum_peterssonInner_frickeMatrix_smul_q_out_inv_fd_eq_petN
+  let _ := @sum_setIntegral_GL2_shift
+  let _ := @peterssonInner_fd_slash_SL_eq_setIntegral_shifted_fd
+  let _ := @UpperHalfPlane.peterssonInner_conj_symm
+  trivial
+
 open UpperHalfPlane MeasureTheory ModularGroup in
 private theorem Newform.peterssonInner_shifted_T_p_upper_eq_peterssonAdj_domainSwap
     {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ}
