@@ -876,13 +876,6 @@ structure NewformExtended (N : ℕ) [NeZero N] (k : ℤ)
   coefficient is `1`. -/
   isNorm : (ModularFormClass.qExpansion (1 : ℝ) toCuspForm).coeff 1 = 1
 
-/-- A `NewformExtended` satisfies `IsNewformExtended`. -/
-theorem NewformExtended.isNewformExtended (f : NewformExtended N k) :
-    IsNewformExtended f.toCuspForm where
-  isEigen := f.toEigenform.isEigenform
-  isNew := f.isNew
-  isNorm := f.isNorm
-
 /-- Every `NewformExtended` gives a (classical) `Newform`. -/
 def NewformExtended.toNewform (f : NewformExtended N k) : Newform N k where
   toEigenform := f.toEigenform
