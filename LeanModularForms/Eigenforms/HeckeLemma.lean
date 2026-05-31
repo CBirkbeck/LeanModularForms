@@ -746,6 +746,52 @@ lemma coe_diagGL_Q_lower_smul (m : ℤ) (hm : 0 < m) (τ : UpperHalfPlane) :
   push_cast
   ring
 
+/-- Pointwise q-series for `g = f ∣[k] diag(m, 1)` (Hecke lemma helper).  At each
+upper-half-plane point `τ`, the value `g τ` is a `HasSum` over `j` with coefficients
+`m^(k-1) * (qExpansion f).coeff (j/m)` on multiples of `m`, zero otherwise.  This is
+the per-point Dirichlet rearrangement powering the lower-diagonal `q`-expansion
+formula. -/
+private theorem hasSum_qExpansion_diagGL_Q_lower_slash
+    {N : ℕ} [NeZero N] {k : ℤ} {m : ℕ} (hm : 0 < m)
+    (hN_period : (N : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods)
+    (f g : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (h_eq : (⇑g : UpperHalfPlane → ℂ) =
+      ⇑f ∣[k] (diagGL_Q_lower (m : ℤ) (by exact_mod_cast hm) : GL (Fin 2) ℚ))
+    (τ : UpperHalfPlane) :
+    HasSum (fun j : ℕ ↦
+      (if m ∣ j then (m : ℂ) ^ (k - 1) * (qExpansion (N : ℝ) f).coeff (j / m)
+        else 0) •
+        Function.Periodic.qParam (N : ℝ) (τ : ℂ) ^ j) (g τ) := by
+  have hm_int : (0 : ℤ) < (m : ℤ) := by exact_mod_cast hm
+  have hN_pos_R : (0 : ℝ) < (N : ℝ) := Nat.cast_pos.mpr (Nat.pos_of_neZero N)
+  set γ : GL (Fin 2) ℚ := diagGL_Q_lower (m : ℤ) hm_int with hγ_def
+  have hfsum := hasSum_qExpansion f hN_pos_R hN_period (glMap γ • τ : UpperHalfPlane)
+  have hqeq :
+      Function.Periodic.qParam (N : ℝ) ((glMap γ • τ : UpperHalfPlane) : ℂ) =
+        (Function.Periodic.qParam (N : ℝ) (τ : ℂ)) ^ m := by
+    rw [coe_diagGL_Q_lower_smul (m : ℤ) hm_int τ]
+    exact qParam_mul_nat (N : ℝ) m (τ : ℂ)
+  rw [hqeq] at hfsum
+  have hslash : g τ = (m : ℂ) ^ (k - 1) * f (glMap γ • τ) := by
+    show (⇑g : UpperHalfPlane → ℂ) τ = _
+    rw [h_eq, hγ_def]
+    exact slash_diagGL_Q_lower_apply k (m : ℤ) hm_int (⇑f) τ
+  rw [hslash]
+  have hscaled : HasSum (fun n : ℕ ↦
+        ((m : ℂ) ^ (k - 1) * (qExpansion (N : ℝ) f).coeff n) •
+          ((Function.Periodic.qParam (N : ℝ) (τ : ℂ)) ^ m) ^ n)
+        ((m : ℂ) ^ (k - 1) * f (glMap γ • τ)) := by
+    convert hfsum.mul_left ((m : ℂ) ^ (k - 1)) using 1
+    funext n
+    simp [smul_eq_mul]
+    ring
+  have hreidx := hasSum_pow_mul_reindex hm hscaled
+  convert hreidx using 1
+  funext n
+  split_ifs with hdvd
+  · rfl
+  · simp
+
 /-- **q-expansion coefficient formula for the lower-diagonal slash.**
 
 For `f g : ModularForm ((Gamma1 N).map (mapGL ℝ)) k` with `⇑g = ⇑f ∣[k]
@@ -780,43 +826,10 @@ theorem qExpansion_of_diagGL_Q_lower_slash
     ∀ n : ℕ, (qExpansion (N : ℝ) g).coeff n =
       (if m ∣ n then (m : ℂ) ^ (k - 1) * (qExpansion (N : ℝ) f).coeff (n / m)
         else 0) := by
-  have hm_int : (0 : ℤ) < (m : ℤ) := by exact_mod_cast hm
   have hN_pos_R : (0 : ℝ) < (N : ℝ) := Nat.cast_pos.mpr (Nat.pos_of_neZero N)
-  have h_sum_g : ∀ τ : UpperHalfPlane,
-      HasSum (fun j : ℕ ↦
-        (if m ∣ j then (m : ℂ) ^ (k - 1) * (qExpansion (N : ℝ) f).coeff (j / m)
-          else 0) •
-          Function.Periodic.qParam (N : ℝ) (τ : ℂ) ^ j) (g τ) := by
-    intro τ
-    set γ : GL (Fin 2) ℚ := diagGL_Q_lower (m : ℤ) hm_int with hγ_def
-    have hfsum := hasSum_qExpansion f hN_pos_R hN_period (glMap γ • τ : UpperHalfPlane)
-    have hqeq :
-        Function.Periodic.qParam (N : ℝ) ((glMap γ • τ : UpperHalfPlane) : ℂ) =
-          (Function.Periodic.qParam (N : ℝ) (τ : ℂ)) ^ m := by
-      rw [coe_diagGL_Q_lower_smul (m : ℤ) hm_int τ]
-      exact qParam_mul_nat (N : ℝ) m (τ : ℂ)
-    rw [hqeq] at hfsum
-    have hslash : g τ = (m : ℂ) ^ (k - 1) * f (glMap γ • τ) := by
-      show (⇑g : UpperHalfPlane → ℂ) τ = _
-      rw [h_eq, hγ_def]
-      exact slash_diagGL_Q_lower_apply k (m : ℤ) hm_int (⇑f) τ
-    rw [hslash]
-    have hscaled : HasSum (fun n : ℕ ↦
-          ((m : ℂ) ^ (k - 1) * (qExpansion (N : ℝ) f).coeff n) •
-            ((Function.Periodic.qParam (N : ℝ) (τ : ℂ)) ^ m) ^ n)
-          ((m : ℂ) ^ (k - 1) * f (glMap γ • τ)) := by
-      convert hfsum.mul_left ((m : ℂ) ^ (k - 1)) using 1
-      funext n
-      simp [smul_eq_mul]
-      ring
-    have hreidx := hasSum_pow_mul_reindex hm hscaled
-    convert hreidx using 1
-    funext n
-    split_ifs with hdvd
-    · rfl
-    · simp
   intro n
-  exact (qExpansion_coeff_unique hN_pos_R hN_period h_sum_g n).symm
+  exact (qExpansion_coeff_unique hN_pos_R hN_period
+    (hasSum_qExpansion_diagGL_Q_lower_slash hm hN_period f g h_eq) n).symm
 
 /-- **Combined prime-case coefficient formula.**
 Package the T049 upper-diagonal support constraint with the T052
