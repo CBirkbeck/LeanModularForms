@@ -356,25 +356,6 @@ private theorem T_p_lower_smul_Hecke_FD_eq_iUnion_tile
     rw [← mul_smul]
     exact T_p_lower_mul_T_p_upper_smul_set_eq_shift_smul p hp b.val S
 
-open UpperHalfPlane ModularGroup MeasureTheory in
-lemma peterssonInner_slash_adj_M_infty_q_summand_eq
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
-    (q : SL(2, ℤ)) (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    peterssonInner k ModularGroup.fd
-        (⇑f ∣[k] ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
-          (mapGL ℝ q⁻¹ : GL (Fin 2) ℝ)))
-        (⇑g ∣[k] (mapGL ℝ q⁻¹ : GL (Fin 2) ℝ)) =
-    peterssonInner k ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
-        ((mapGL ℝ q⁻¹ : GL (Fin 2) ℝ) • (ModularGroup.fd : Set UpperHalfPlane)))
-      ⇑f
-      ((⇑g ∣[k] (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
-        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-          ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)))) := by
-  rw [peterssonInner_slash_adjoint_coset (glMap (M_infty N p hp.pos hpN))
-        (glMap_M_infty_det_pos N p hp.pos hpN) q ⇑f ⇑g]
-  rw [slash_peterssonAdj_glMap_M_infty_eq_slash_T_p_upper_zero_slash_gamma0
-    p hp hpN g]
-
 open UpperHalfPlane in
 /-- Pointwise AM-GM bound for the Petersson integrand: the off-diagonal product
 is controlled by the average of the two diagonal products. -/
