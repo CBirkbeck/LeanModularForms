@@ -857,11 +857,6 @@ determinant. -/
 noncomputable def Newform.frickeMatrix_GLPos (N : ℕ) [NeZero N] : GL(2, ℝ)⁺ :=
   ⟨Newform.frickeMatrix N, Newform.frickeMatrix_det_pos N⟩
 
-/-- The `PSL(2, ℝ)`-representative of the Fricke matrix `W_N`, via
-`GLPos_to_PSL_R_term`. -/
-noncomputable def Newform.frickeMatrix_PSL_R (N : ℕ) [NeZero N] : PSL(2, ℝ) :=
-  GLPos_to_PSL_R_term (Newform.frickeMatrix_GLPos N)
-
 /-- The underlying matrix of `GLPos_to_SLR (frickeMatrix_GLPos N)` (via the GL
 coercion) equals `(sqrt N)⁻¹ • W_N.val`. -/
 lemma Newform.GLPos_to_SLR_frickeMatrix_GLPos_toGL_matrix (N : ℕ) [NeZero N] :
