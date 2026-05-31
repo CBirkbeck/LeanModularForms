@@ -490,40 +490,6 @@ theorem Newform.HeckeEntireExtension_of_FrickeSlashData
   Newform.HeckeEntireExtension_of_ImAxisMellinData
     (fun _N _ _k f ↦ Newform.ImAxisMellinData.ofFrickeSlashData f (h f))
 
-/-- `Newform.AnalyticContradiction` from per-newform `Newform.FrickeSlashData` and
-`Newform.PerNewformFullDirichletData`. -/
-theorem Newform.analyticContradiction_of_FrickeSlashData_of_PerNewformFullDirichletData
-    (h_slash : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k),
-      Newform.FrickeSlashData f)
-    (h_data : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
-      f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      ∀ (S : Finset ℕ),
-        (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
-          q ∉ S → f.lCoeff q = 0) →
-        Newform.PerNewformFullDirichletData f χ S) :
-    Newform.AnalyticContradiction :=
-  Newform.analyticContradiction_of_ImAxisMellinData_of_PerNewformFullDirichletData
-    (fun _N _ _k f ↦ Newform.ImAxisMellinData.ofFrickeSlashData f (h_slash f)) h_data
-
-/-- `Newform.analyticContradiction_of_HeckeEntireExtension_of_full_dirichletZeroCertificate`
-with its H1 input replaced by per-newform `Newform.FrickeSlashData` and the
-T111 Dirichlet-data block bundled via `Newform.PerNewformFullDirichletData`. -/
-theorem Newform.analyticContradiction_of_FrickeSlashData_of_full_dirichletZeroCertificate
-    (h_slash : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k),
-      Newform.FrickeSlashData f)
-    (h_data : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
-      f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      ∀ (S : Finset ℕ),
-        (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
-          q ∉ S → f.lCoeff q = 0) →
-        Newform.PerNewformFullDirichletData f χ S) :
-    Newform.AnalyticContradiction :=
-  Newform.analyticContradiction_of_HeckeEntireExtension_of_full_dirichletZeroCertificate
-    (Newform.HeckeEntireExtension_of_FrickeSlashData h_slash)
-    (fun _N _ _k f χ hfχ S h_bad ↦
-      Newform.full_pole_witness_data_of_PerNewformFullDirichletData f χ S
-        (h_data f χ hfχ S h_bad))
-
 /-- The classical Hecke 1936 identity
 `mellin (Newform.imAxis f) s = (2π)^{-s} · Γ(s) · LSeries f.lCoeff s` on
 `Re s > k/2 + 1`, specialising `ModularForms.HasCompletedMellinIdentity`. -/
