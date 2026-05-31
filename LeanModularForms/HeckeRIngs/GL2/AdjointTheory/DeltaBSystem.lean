@@ -596,52 +596,6 @@ private theorem peterssonInner_M_infty_iUnion_eq_sigma_p_slash
   exact peterssonInner_mapGL_smul_eq_slash _ _ F G
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-theorem peterssonInner_LHS_M_infty_residual_after_sigma_p
-    (p : ℕ) (hp : 0 < p) (hpN : Nat.Coprime p N)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (G : ℍ → ℂ) :
-    peterssonInner k
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ) •
-          (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
-            (ModularGroup.fd : Set ℍ)))
-      ⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f) G =
-    peterssonInner k
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        (glMap (T_p_lower p hp) : GL (Fin 2) ℝ) •
-          (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
-            (ModularGroup.fd : Set ℍ)))
-      ⇑f
-      (G ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-        (sigma_p_specific N p hp hpN) : GL (Fin 2) ℝ)) := by
-  rw [peterssonInner_M_infty_iUnion_eq_sigma_p_slash (N := N) p hp hpN,
-    slash_sigma_p_diamond_inv_cusp_eq p hp hpN f]
-
-open UpperHalfPlane ModularGroup MeasureTheory in
-theorem peterssonInner_RHS_M_infty_residual_after_sigma_p
-    (p : ℕ) (hp : 0 < p) (hpN : Nat.Coprime p N)
-    (F : ℍ → ℂ) (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    peterssonInner k
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ) •
-          (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
-            (ModularGroup.fd : Set ℍ)))
-      F ⇑g =
-    peterssonInner k
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        (glMap (T_p_lower p hp) : GL (Fin 2) ℝ) •
-          (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
-            (ModularGroup.fd : Set ℍ)))
-      (F ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-        (sigma_p_specific N p hp hpN) : GL (Fin 2) ℝ))
-      ⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) g) := by
-  rw [peterssonInner_M_infty_iUnion_eq_sigma_p_slash (N := N) p hp hpN,
-    ← coe_diamondOp_cusp_eq_slash_sigma_p p hp hpN g]
-
-open UpperHalfPlane ModularGroup MeasureTheory in
 private theorem T_p_lower_iUnion_eq_mapGL_sigma_p_inv_smul_M_infty_iUnion
     (p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) :
     (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
