@@ -1292,13 +1292,4 @@ noncomputable def twistedHeckeRingHomFunction (k : ℤ) (χ : (ZMod N)ˣ →* �
       (c : ℂ) • twistedHeckeOperatorFunction (N := N) k χ D :=
   twistedHeckeSumFunction_T_single (N := N) k χ D c
 
-/-- The image of the twisted `Γ₀(N),χ` Hecke-ring action is commutative because
-the source `𝕋 (Gamma0_pair N) ℤ` is commutative. -/
-theorem twistedHeckeRingHomFunction_commute (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
-    (T₁ T₂ : 𝕋 (Gamma0_pair N) ℤ) :
-    Commute (twistedHeckeRingHomFunction (N := N) k χ T₁)
-      (twistedHeckeRingHomFunction (N := N) k χ T₂) := by
-  unfold Commute SemiconjBy
-  rw [← map_mul, ← map_mul, Gamma0_pair_HeckeAlgebra_mul_comm]
-
 end HeckeRing.GL2.Unified
