@@ -988,27 +988,6 @@ private lemma GLPos_to_SLR_frickeMatrix_GLPos_sq_eq_neg_scalar (N : ℕ) [NeZero
   fin_cases i <;> fin_cases j <;>
     simp [Matrix.smul_apply, Matrix.scalar]
 
-/-- `frickeMatrix_PSL_R N` is self-inverse in `PSL(2, ℝ)`:
-`frickeMatrix_PSL_R N * frickeMatrix_PSL_R N = 1` (since `W_N²` is the central
-element `-1 : SL(2, ℝ)`). -/
-lemma Newform.frickeMatrix_PSL_R_mul_self (N : ℕ) [NeZero N] :
-    Newform.frickeMatrix_PSL_R N * Newform.frickeMatrix_PSL_R N = 1 := by
-  change (GLPos_to_SLR (Newform.frickeMatrix_GLPos N) : PSL(2, ℝ)) *
-        (GLPos_to_SLR (Newform.frickeMatrix_GLPos N) : PSL(2, ℝ)) = 1
-  rw [show (GLPos_to_SLR (Newform.frickeMatrix_GLPos N) : PSL(2, ℝ)) *
-        (GLPos_to_SLR (Newform.frickeMatrix_GLPos N) : PSL(2, ℝ)) =
-      (((GLPos_to_SLR (Newform.frickeMatrix_GLPos N) *
-          GLPos_to_SLR (Newform.frickeMatrix_GLPos N) :
-          SL(2, ℝ))) : PSL(2, ℝ)) from (QuotientGroup.mk_mul _ _ _).symm,
-    QuotientGroup.eq_one_iff, Matrix.SpecialLinearGroup.mem_center_iff]
-  refine ⟨-1, ?_, ?_⟩
-  · simp [Fintype.card_fin]
-  · change Matrix.scalar (Fin 2) (-1) =
-      ((GLPos_to_SLR (Newform.frickeMatrix_GLPos N) *
-        GLPos_to_SLR (Newform.frickeMatrix_GLPos N) : SL(2, ℝ)) :
-        Matrix (Fin 2) (Fin 2) ℝ)
-    exact (GLPos_to_SLR_frickeMatrix_GLPos_sq_eq_neg_scalar N).symm
-
 end FrickeAdjoint
 
 private lemma frickeRootNumber_scalar_collapse {k : ℤ} {n x I fv : ℂ}
