@@ -1499,57 +1499,6 @@ private theorem petN_T_p_upper_tiles_sum_q_eq_sum_b
     (h_upper_int b hb)).symm
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-theorem petN_heckeT_p_eq_per_alpha_HeckeFD_form
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
-    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (h_M_infty_disj : AlphaTilePairwiseAEDisjoint (N := N) (glMap (M_infty N p hp.pos hpN)))
-    (h_M_infty_meas : AlphaTileNullMeasurable (N := N) (glMap (M_infty N p hp.pos hpN)))
-    (h_M_infty_int : AlphaIntegrableUnion (N := N) (glMap (M_infty N p hp.pos hpN))
-      (fun τ ↦ petersson k ⇑f
-        (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) τ))
-    (h_upper_disj : ∀ b ∈ Finset.range p,
-      AlphaTilePairwiseAEDisjoint (N := N) (glMap (T_p_upper p hp.pos b)))
-    (h_upper_meas : ∀ b ∈ Finset.range p,
-      AlphaTileNullMeasurable (N := N) (glMap (T_p_upper p hp.pos b)))
-    (h_upper_int : ∀ b ∈ Finset.range p,
-      AlphaIntegrableUnion (N := N) (glMap (T_p_upper p hp.pos b))
-        (fun τ ↦ petersson k ⇑f
-          (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) τ))
-    (h_upper_per_q_disj : AlphaFamilyPerQTilePairwiseAEDisjoint (N := N) p
-      (fun b ↦ glMap (T_p_upper p hp.pos b)))
-    (h_upper_per_q_meas : AlphaFamilyPerQTileNullMeasurable (N := N) p
-      (fun b ↦ glMap (T_p_upper p hp.pos b)))
-    (h_upper_per_q_int : AlphaFamilyPerQIntegrableBUnion (N := N) p
-      (fun b ↦ glMap (T_p_upper p hp.pos b))
-      (fun τ ↦ petersson k ⇑f
-        (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) τ)) :
-    petN (heckeT_p_cusp k p hp hpN f) g =
-    peterssonInner k
-      (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (q.out : SL(2, ℤ))⁻¹ :
-            GL (Fin 2) ℝ)) • (ModularGroup.fd : Set ℍ))
-      ⇑f (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) +
-    ∑ b ∈ Finset.range p,
-      peterssonInner k
-        (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-          ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (q.out : SL(2, ℤ))⁻¹ :
-              GL (Fin 2) ℝ)) • (ModularGroup.fd : Set ℍ))
-        ⇑f (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) := by
-  rw [petN_heckeT_p_eq_per_q_T_p_lower_form p hp hpN f g, Finset.sum_add_distrib]
-  congr 1
-  ·
-    exact (peterssonInner_iUnion_finite_aedisjoint
-      (fun q : SL(2, ℤ) ⧸ Gamma1 N ↦ ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (q.out : SL(2, ℤ))⁻¹ :
-            GL (Fin 2) ℝ)) • (ModularGroup.fd : Set ℍ))
-      h_M_infty_meas h_M_infty_disj ⇑f
-      (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) h_M_infty_int).symm
-  · exact petN_T_p_upper_tiles_sum_q_eq_sum_b p hp f g h_upper_disj h_upper_meas
-      h_upper_int h_upper_per_q_disj h_upper_per_q_meas h_upper_per_q_int
-
-open UpperHalfPlane ModularGroup MeasureTheory in
 private lemma peterssonInner_heckeT_p_RHS_per_q_distribute
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (q : SL(2, ℤ)) (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
