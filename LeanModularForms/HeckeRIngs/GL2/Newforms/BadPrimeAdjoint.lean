@@ -876,12 +876,6 @@ structure NewformExtended (N : ℕ) [NeZero N] (k : ℤ)
   coefficient is `1`. -/
   isNorm : (ModularFormClass.qExpansion (1 : ℝ) toCuspForm).coeff 1 = 1
 
-/-- Every `NewformExtended` gives a (classical) `Newform`. -/
-def NewformExtended.toNewform (f : NewformExtended N k) : Newform N k where
-  toEigenform := f.toEigenform
-  isNew := f.isNew
-  isNorm := f.isNorm
-
 /-- For `f ∈ cuspFormsNewExtended` and `p ∣ N`, the bad-prime Hecke operator
 `heckeT_n_cusp k p f` lies in the classical `cuspFormsNew N k`, given the
 petN-adjoint identity `h_adj` and extended-oldspace preservation `h_T_p_old`. -/
