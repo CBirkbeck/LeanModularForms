@@ -1263,7 +1263,7 @@ membership of `f` follows: the difference is old via the main lemma, `ιh` is ol
 explicit level raise, so `c₁' • f` is old, and inverting `c₁' ≠ 0` produces `f ∈ old`. -/
 private theorem oldPart_f_mem_cuspFormsOldExtended
     (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    {M : ℕ} (hMN : M ∣ N) (hMne : M ≠ N)
+    {M : ℕ} [NeZero M] (hMN : M ∣ N) (hMne : M ≠ N)
     (h : CuspForm ((Gamma1 M).map (mapGL ℝ)) k)
     (c₁' : ℂ) (hc₁'_ne : c₁' ≠ 0)
     (h_diff_char : levelInclude_cusp hMN k h - c₁' • f.toCuspForm ∈ cuspFormCharSpace k χ)
