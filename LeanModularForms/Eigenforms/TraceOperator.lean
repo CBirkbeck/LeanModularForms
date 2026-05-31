@@ -38,9 +38,8 @@ T121) into a same-level `p`-supported projection
   (`(qExpansion 1 (traceGamma1 f)).coeff n = ?`) is not supplied by
   this file.  The trace averages over all cosets of `Γ₁(N) ⧸ Γ₁(M)`,
   and the coefficient at ∞ depends on which cosets stabilise that
-  cusp — a distinct cusp-stabilizer calculation.  See the
-  `pSupportedProjection` docstring in `AtkinLehner.lean` for the
-  expected form with index normalisation.
+  cusp — a distinct cusp-stabilizer calculation that requires an
+  index-normalised form.
 * The **Nebentypus character transport** (relating a χ mod `M`-character
   of `f` to a χ mod `N`-character of `traceGamma1 f`) requires either
   a normality argument for `Γ₁(M)` in `Γ_0(N)` or a direct
