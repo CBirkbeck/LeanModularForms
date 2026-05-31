@@ -2487,17 +2487,6 @@ lemma petN_T_p_heckeT_p_LHS_sum_diamond_distributed
             (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) by
       rw [h_diamond_g, ← SlashAction.slash_mul]]
 
-lemma petN_diamond_heckeT_p_eq_unsymm_RHS
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
-    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    petN (diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)
-        (heckeT_p_cusp k p hp hpN g) =
-      petN f (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹
-        (heckeT_p_cusp k p hp hpN g)) := by
-  rw [petN_diamond_heckeT_p_eq_canonical_RHS p hp hpN f g,
-      heckeT_p_cusp_comm_diamondOp_private p hp hpN
-        (ZMod.unitOfCoprime p hpN)⁻¹ g]
-
 /-! ### W5a-2 `hFD` — the Hecke-tile fundamental-domain identification
 
 The `p+1` det-`p` Hecke tiles `β_i • Γ₁-FD` (`β_none = M_∞`, `β_(some b) = T_p_upper(b)`)
