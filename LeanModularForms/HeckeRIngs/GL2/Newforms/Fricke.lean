@@ -659,32 +659,6 @@ lemma Newform.frickeMatrix_smul_isCusp_Gamma1
   exact ⟨_, rfl⟩
 
 /-- Slash by `W_N` as a `ℂ`-linear endomorphism of
-`ModularForm ((Gamma1 N).map (mapGL ℝ)) k`. -/
-noncomputable def Newform.frickeSlashModularForm
-    {N : ℕ} [NeZero N] {k : ℤ} :
-    ModularForm ((Gamma1 N).map (mapGL ℝ)) k →ₗ[ℂ]
-      ModularForm ((Gamma1 N).map (mapGL ℝ)) k where
-  toFun f :=
-    { toSlashInvariantForm :=
-        Newform.frickeSlashSIF f.toSlashInvariantForm
-      holo' := f.holo'.slash k (Newform.frickeMatrix N)
-      bdd_at_cusps' := fun {c} hc ↦
-        OnePoint.IsBoundedAt.smul_iff.mp
-          (f.bdd_at_cusps' (Newform.frickeMatrix_smul_isCusp_Gamma1 hc)) }
-  map_add' f g := by
-    apply DFunLike.coe_injective
-    change ((f : UpperHalfPlane → ℂ) + (g : UpperHalfPlane → ℂ)) ∣[k]
-        Newform.frickeMatrix N =
-      (f : UpperHalfPlane → ℂ) ∣[k] Newform.frickeMatrix N +
-        (g : UpperHalfPlane → ℂ) ∣[k] Newform.frickeMatrix N
-    exact SlashAction.add_slash _ _ _ _
-  map_smul' c f := by
-    apply DFunLike.coe_injective
-    change (c • (f : UpperHalfPlane → ℂ)) ∣[k] Newform.frickeMatrix N =
-      c • ((f : UpperHalfPlane → ℂ) ∣[k] Newform.frickeMatrix N)
-    rw [ModularForm.smul_slash, Newform.frickeMatrix_σ, RingHom.id_apply]
-
-/-- Slash by `W_N` as a `ℂ`-linear endomorphism of
 `CuspForm ((Gamma1 N).map (mapGL ℝ)) k`. -/
 noncomputable def Newform.frickeSlashCuspForm
     {N : ℕ} [NeZero N] {k : ℤ} :
