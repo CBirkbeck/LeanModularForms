@@ -1045,19 +1045,6 @@ open HeckeRing.GL2
 
 variable {k : ℤ} {χ : (ZMod N)ˣ →* ℂˣ}
 
-/-- The composite of the Shimura 3.35 surjection `φ` with `heckeRingHomCharSpace` is a ring
-homomorphism `Φ` from the level-1 Hecke algebra to the χ-space endomorphisms; hence any ring
-identity `a = b` becomes `Φ a = Φ b`, and products go to compositions. -/
-theorem heckeRingHomCharSpace_table_transport_schematic
-    (φ : 𝕋 (GL_pair 2) ℤ →+* 𝕋 (Gamma0_pair N) ℤ) :
-    let Φ : 𝕋 (GL_pair 2) ℤ →+* Module.End ℂ (modFormCharSpace k χ) :=
-      (heckeRingHomCharSpace (N := N) (k := k) (χ := χ)).comp φ
-    (∀ a b : 𝕋 (GL_pair 2) ℤ, a = b → Φ a = Φ b) ∧
-      (∀ a b : 𝕋 (GL_pair 2) ℤ, Φ (a * b) = Φ a * Φ b) ∧
-      (∀ a b : 𝕋 (GL_pair 2) ℤ, Φ (a + b) = Φ a + Φ b) := by
-  intro Φ
-  exact ⟨fun a b h ↦ congrArg Φ h, fun a b ↦ map_mul Φ a b, fun a b ↦ map_add Φ a b⟩
-
 /-- For coprime `m, n`, the level-1 identity `T(m) · T(n) = T(mn)` becomes the operator
 identity `Φ(T(m)) ∘ Φ(T(n)) = Φ(T(mn))` on `modFormCharSpace k χ`, where
 `Φ = heckeRingHomCharSpace ∘ φ`. -/
