@@ -524,27 +524,6 @@ theorem Newform.analyticContradiction_of_FrickeSlashData_of_PerNewformFullDirich
   Newform.analyticContradiction_of_ImAxisMellinData_of_PerNewformFullDirichletData
     (fun _N _ _k f ↦ Newform.ImAxisMellinData.ofFrickeSlashData f (h_slash f)) h_data
 
-/-- Specialises
-`Newform.analyticContradiction_of_FrickeSlashData_of_PerNewformFullDirichletData`
-through `Newform.exists_nonzero_prime_eigenvalue_of_analyticContradiction`. -/
-theorem Newform.exists_nonzero_prime_eigenvalue_of_FrickeSlashData_of_PerNewformFullDirichletData
-    (h_slash : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k),
-      Newform.FrickeSlashData f)
-    (h_data : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
-      f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      ∀ (S : Finset ℕ),
-        (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
-          q ∉ S → f.lCoeff q = 0) →
-        Newform.PerNewformFullDirichletData f χ S)
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (S : Finset ℕ) :
-    ∃ q : ℕ, ∃ hq : Nat.Prime q, Nat.Coprime q N ∧ q ∉ S ∧
-      f.eigenvalue ⟨q, hq.pos⟩ ≠ 0 :=
-  Newform.exists_nonzero_prime_eigenvalue_of_analyticContradiction
-    (Newform.analyticContradiction_of_FrickeSlashData_of_PerNewformFullDirichletData
-      h_slash h_data) f χ hfχ S
-
 /-- `Newform.analyticContradiction_of_HeckeEntireExtension_of_full_dirichletZeroCertificate`
 with its H1 input replaced by per-newform `Newform.FrickeSlashData` and the
 T111 Dirichlet-data block bundled via `Newform.PerNewformFullDirichletData`. -/
