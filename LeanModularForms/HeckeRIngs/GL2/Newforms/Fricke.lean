@@ -556,33 +556,6 @@ lemma Newform.frickeConj_mem_Gamma1 (N : ℕ) [NeZero N] (γ : SL(2, ℤ))
     push_cast
     simp
 
-/-- Involution property of `Newform.frickeConj` on `Γ₁(N)`: applying it twice
-returns `γ`. -/
-lemma Newform.frickeConj_frickeConj (N : ℕ) [NeZero N] (γ : SL(2, ℤ))
-    (hγN : γ ∈ Gamma1 N) :
-    Newform.frickeConj N (Newform.frickeConj N γ hγN)
-        (Newform.frickeConj_mem_Gamma1 N γ hγN) = γ := by
-  apply Subtype.ext
-  change Newform.frickeConjMat N (Newform.frickeConj N γ hγN) = γ.val
-  have h_div : γ.val 1 0 / (N : ℤ) * (N : ℤ) = γ.val 1 0 :=
-    Int.ediv_mul_cancel ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp
-      ((Gamma1_mem N γ).mp hγN).2.2)
-  ext i j
-  simp only [Newform.frickeConjMat, Newform.frickeConj,
-    Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val',
-    Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply]
-  fin_cases i
-  · fin_cases j
-    · rfl
-    · change -(-(N : ℤ) * γ.val 0 1 / (N : ℤ)) = γ.val 0 1
-      rw [Int.neg_mul, Int.neg_ediv_of_dvd ⟨γ.val 0 1, rfl⟩,
-          Int.mul_ediv_cancel_left _ (Nat.cast_ne_zero.mpr (NeZero.ne N))]
-      ring
-  · fin_cases j
-    · change -(N : ℤ) * -(γ.val 1 0 / (N : ℤ)) = γ.val 1 0
-      linear_combination h_div
-    · rfl
-
 /-- Fricke conjugation/normalisation identity at the integer-matrix level:
 `W_N · γ = δ · W_N` with `δ := frickeConjMat N γ`, showing `W_N` normalises
 `Γ₁(N)` (Diamond–Shurman §5.5 / Miyake §4.6.5). -/
