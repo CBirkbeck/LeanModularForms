@@ -1042,26 +1042,6 @@ lemma Newform.frickeMatrix_PSL_R_conj_mem_imageGamma1_PSL_R
     ← map_SL2Z_to_PSL2R_eq_imageGamma1_PSL_R]
   exact ⟨_, Newform.frickeConj_mem_Gamma1 N γ hγ, rfl⟩
 
-/-- `frickeMatrix_PSL_R N` lies in the normalizer of `imageGamma1_PSL_R N`. -/
-lemma Newform.frickeMatrix_PSL_R_mem_normalizer (N : ℕ) [NeZero N] :
-    Newform.frickeMatrix_PSL_R N ∈ (imageGamma1_PSL_R N).normalizer := by
-  rw [Subgroup.mem_normalizer_iff]
-  intro h
-  refine ⟨Newform.frickeMatrix_PSL_R_conj_mem_imageGamma1_PSL_R, fun h_conj_mem ↦ ?_⟩
-  have h_simplify :
-      Newform.frickeMatrix_PSL_R N *
-          (Newform.frickeMatrix_PSL_R N * h *
-            (Newform.frickeMatrix_PSL_R N)⁻¹) *
-          (Newform.frickeMatrix_PSL_R N)⁻¹ = h := by
-    rw [Newform.frickeMatrix_PSL_R_inv N,
-      show Newform.frickeMatrix_PSL_R N *
-          (Newform.frickeMatrix_PSL_R N * h * Newform.frickeMatrix_PSL_R N) *
-          Newform.frickeMatrix_PSL_R N =
-        (Newform.frickeMatrix_PSL_R N * Newform.frickeMatrix_PSL_R N) * h *
-          (Newform.frickeMatrix_PSL_R N * Newform.frickeMatrix_PSL_R N) by group,
-      Newform.frickeMatrix_PSL_R_mul_self N, one_mul, mul_one]
-  rw [← h_simplify]
-  exact Newform.frickeMatrix_PSL_R_conj_mem_imageGamma1_PSL_R h_conj_mem
 
 end FrickeAdjoint
 
