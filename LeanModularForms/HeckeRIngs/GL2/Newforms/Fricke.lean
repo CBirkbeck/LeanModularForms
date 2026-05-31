@@ -583,17 +583,6 @@ lemma Newform.frickeConj_frickeConj (N : ℕ) [NeZero N] (γ : SL(2, ℤ))
       linear_combination h_div
     · rfl
 
-/-- The involution on `{γ : SL(2, ℤ) // γ ∈ Gamma1 N}` induced by `frickeConj`,
-bundled as an `Equiv` (self-inverse via `frickeConj_frickeConj`). -/
-noncomputable def Newform.frickeConjEquivGamma1 (N : ℕ) [NeZero N] :
-    {γ : SL(2, ℤ) // γ ∈ Gamma1 N} ≃ {γ : SL(2, ℤ) // γ ∈ Gamma1 N} where
-  toFun γ := ⟨Newform.frickeConj N γ.val γ.property,
-              Newform.frickeConj_mem_Gamma1 N γ.val γ.property⟩
-  invFun γ := ⟨Newform.frickeConj N γ.val γ.property,
-               Newform.frickeConj_mem_Gamma1 N γ.val γ.property⟩
-  left_inv γ := Subtype.ext <| Newform.frickeConj_frickeConj N γ.val γ.property
-  right_inv γ := Subtype.ext <| Newform.frickeConj_frickeConj N γ.val γ.property
-
 /-- Fricke conjugation/normalisation identity at the integer-matrix level:
 `W_N · γ = δ · W_N` with `δ := frickeConjMat N γ`, showing `W_N` normalises
 `Γ₁(N)` (Diamond–Shurman §5.5 / Miyake §4.6.5). -/
