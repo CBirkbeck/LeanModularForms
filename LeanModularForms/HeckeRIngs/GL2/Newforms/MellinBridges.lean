@@ -912,7 +912,8 @@ theorem Newform.exists_nonzero_prime_eigenvalue_of_FrickeSlashData_of_full_diric
       h_slash h_data) f χ hfχ S
 
 /-- Strong multiplicity one endpoint pairing per-newform `Newform.FrickeSlashData`
-with the full T111 Dirichlet-zero data block and newform uniqueness. -/
+with the full T111 Dirichlet-zero data block (bundled via
+`Newform.PerNewformFullDirichletData`) and newform uniqueness. -/
 theorem strongMultiplicityOne_of_FrickeSlashData_of_full_dirichletZeroCertificate_of_newformUnique
     (h_unique : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
       f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
@@ -926,46 +927,7 @@ theorem strongMultiplicityOne_of_FrickeSlashData_of_full_dirichletZeroCertificat
       ∀ (S : Finset ℕ),
         (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
           q ∉ S → f.lCoeff q = 0) →
-        ∃ (T : Finset Nat.Primes) (s₀ : ℂ),
-          AnalyticAt ℂ
-            (fun s ↦
-              DirichletCharacter.LFunction
-                (Newform.dirichletLift χ * Newform.dirichletLift χ
-                  : DirichletCharacter ℂ N) (2 * (2 * s - k + 1)) *
-              ∏ p ∈ T, Newform.eulerFactor_stripped f χ S s p *
-                (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-                    ((p : ℕ) : ZMod N) *
-                  ((p : ℕ) : ℂ) ^ (-(2 * s - k + 1)))⁻¹) s₀ ∧
-          AnalyticAt ℂ
-            (fun s ↦
-              DirichletCharacter.LFunction
-                (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-                (2 * s - k + 1) *
-              ∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-                : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-                ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀ ∧
-          (DirichletCharacter.LFunction
-            (Newform.dirichletLift χ * Newform.dirichletLift χ
-              : DirichletCharacter ℂ N) (2 * (2 * s₀ - k + 1)) *
-            (∏ p ∈ T, Newform.eulerFactor_stripped f χ S s₀ p *
-              (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-                  ((p : ℕ) : ZMod N) *
-                ((p : ℕ) : ℂ) ^ (-(2 * s₀ - k + 1)))⁻¹)) ≠ 0 ∧
-          (DirichletCharacter.LFunction
-            (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-            (2 * s₀ - k + 1) *
-            (∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-              : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-              ((p : ℕ) : ℂ) ^ (-(2 * (2 * s₀ - k + 1))))⁻¹)) = 0 ∧
-          meromorphicOrderAt
-            (fun s ↦
-              DirichletCharacter.LFunction
-                (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-                (2 * s - k + 1) *
-              ∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-                : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-                ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀ ≠ ⊤ ∧
-          Newform.FullDirichletQuotientUniversalFClause f χ S T s₀)
+        Newform.PerNewformFullDirichletData f χ S)
     {N : ℕ} [NeZero N] {k : ℤ} (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
     (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
     (hgχ : g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
@@ -974,7 +936,10 @@ theorem strongMultiplicityOne_of_FrickeSlashData_of_full_dirichletZeroCertificat
       f.eigenvalue n = g.eigenvalue n) :
     f.toCuspForm = g.toCuspForm :=
   strongMultiplicityOne_of_HeckeEntireExtension_of_full_dirichletZeroCertificate_of_newformUnique
-    h_unique (Newform.HeckeEntireExtension_of_FrickeSlashData h_slash) h_data
+    h_unique (Newform.HeckeEntireExtension_of_FrickeSlashData h_slash)
+    (fun _N _ _k f χ hfχ S h_bad ↦
+      Newform.full_pole_witness_data_of_PerNewformFullDirichletData f χ S
+        (h_data f χ hfχ S h_bad))
     f g χ hfχ hgχ S h
 
 /-- The smaller Dirichlet-zero variant of
