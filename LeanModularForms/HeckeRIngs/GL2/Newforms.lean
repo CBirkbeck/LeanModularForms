@@ -79,30 +79,6 @@ open scoped MatrixGroups ModularForm Pointwise DirectSum
 
 variable {N : ℕ} [NeZero N] {k : ℤ}
 
-open UpperHalfPlane MeasureTheory ModularGroup in
-/-- The strictly-lower bridge `qBBijection ⟹ BSum`, obtained by composing the
-double-coset tile chain. -/
-theorem Newform.hasBadPrimePetN_T_p_FrickeAdjoint_BSum_of_qBBijection
-    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p] (hp : p.Prime) (hpN : ¬ Nat.Coprime p N)
-    (h_bij : Newform.HasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBBijection N k p hp hpN) :
-    Newform.HasBadPrimePetN_T_p_FrickeAdjoint_BSum N k p hp hpN :=
-  Newform.hasBadPrimePetN_T_p_FrickeAdjoint_BSum_of_intertwine hp hpN
-    (Newform.hasBadPrimePetN_T_p_FrickeAdjoint_Intertwine_of_doubleCosetTileBridge hp hpN
-      (Newform.hasBadPrimeAtkinLehnerDoubleCosetTileBridge_of_qBExpanded hp hpN
-        (Newform.hasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBExpanded_of_qBSimplified hp hpN
-          (Newform.hasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBSimplified_of_qBDomainSwap hp hpN
-            (Newform.hasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBDomainSwap_of_qBBijection hp hpN
-              h_bij)))))
-
-open UpperHalfPlane MeasureTheory ModularGroup in
-/-- The bridge `qBBijection ⟹ HasBadPrimeFrickePetNAdjoint`. -/
-theorem Newform.hasBadPrimeFrickePetNAdjoint_of_qBBijection
-    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p] (hp : p.Prime) (hpN : ¬ Nat.Coprime p N)
-    (h_bij : Newform.HasBadPrimeAtkinLehnerDoubleCosetTileBridge_qBBijection N k p hp hpN) :
-    Newform.HasBadPrimeFrickePetNAdjoint N k p :=
-  Newform.hasBadPrimeFrickePetNAdjoint_of_qBDoubleSumIdentity hp hpN
-    (Newform.hasBadPrimePetN_T_p_FrickeAdjoint_BSum_of_qBBijection hp hpN h_bij)
-
 /-- The full Newform Euler product on `Re s > k/2 + 1`, given full coprime
 multiplicativity of the Fourier coefficient sequence `f.lCoeff`. -/
 theorem Newform.lSeries_full_hasProd_of_full_coprime_mul
