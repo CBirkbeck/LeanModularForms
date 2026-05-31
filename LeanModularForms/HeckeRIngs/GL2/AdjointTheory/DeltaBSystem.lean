@@ -250,28 +250,6 @@ private theorem peterssonInner_gamma0_smul_Hecke_FD_eq_T_p_lower_smul
   rw [gamma0_smul_Hecke_FD_eq_T_p_lower_smul_iUnion (N := N) p hp hpN D]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-private theorem peterssonInner_T_p_lower_smul_eq_gamma0_slash
-    (p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N)
-    (D : Set ℍ) (F G : ℍ → ℂ) :
-    peterssonInner k
-      ((glMap (T_p_lower p hp) : GL (Fin 2) ℝ) •
-        (⋃ i : Option (Fin p),
-          ((mapGL ℝ : SL(2, ℤ) →* _)
-            (ds_p_plus_one_family_Gamma1_factor N p hpN i) : GL (Fin 2) ℝ) • D))
-      F G =
-    peterssonInner k
-      (⋃ i : Option (Fin p),
-        (match i with
-          | none => (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ)
-          | some b => (glMap (T_p_upper p hp b.val) : GL (Fin 2) ℝ)) • D)
-      (F ∣[k] ((mapGL ℝ : SL(2, ℤ) →* _)
-        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) : GL (Fin 2) ℝ))
-      (G ∣[k] ((mapGL ℝ : SL(2, ℤ) →* _)
-        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) : GL (Fin 2) ℝ)) := by
-  rw [← peterssonInner_gamma0_smul_Hecke_FD_eq_T_p_lower_smul (N := N) p hp hpN D]
-  exact peterssonInner_gamma0_smul_Hecke_FD_eq_slash (N := N) p hp hpN D F G
-
-open UpperHalfPlane ModularGroup MeasureTheory in
 private theorem peterssonInner_Hecke_FD_T_p_lower_slot2_slash_adjoint
     (p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N)
     (D : Set ℍ) (F G : ℍ → ℂ) :
@@ -352,41 +330,6 @@ private theorem peterssonInner_Hecke_FD_T_p_lower_slot1_slash_adjoint
     (glMap (T_p_lower p hp) : GL (Fin 2) ℝ) hα F G
   rw [peterssonAdj_glMap_T_p_lower_eq_glMap_T_p_upper_zero] at h
   exact h
-
-open UpperHalfPlane ModularGroup MeasureTheory in
-private theorem peterssonInner_Hecke_FD_T_p_lower_residual_iff
-    (p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N)
-    (D : Set ℍ) (f g : ℍ → ℂ) (g' : ℍ → ℂ) :
-    peterssonInner k
-      (⋃ i : Option (Fin p),
-        (match i with
-          | none => (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ)
-          | some b => (glMap (T_p_upper p hp b.val) : GL (Fin 2) ℝ)) • D)
-      f (g ∣[k] (glMap (T_p_lower p hp) : GL (Fin 2) ℝ)) =
-    peterssonInner k
-      (⋃ i : Option (Fin p),
-        (match i with
-          | none => (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ)
-          | some b => (glMap (T_p_upper p hp b.val) : GL (Fin 2) ℝ)) • D)
-      (g' ∣[k] (glMap (T_p_lower p hp) : GL (Fin 2) ℝ)) g ↔
-    peterssonInner k
-      ((glMap (T_p_lower p hp) : GL (Fin 2) ℝ) •
-        (⋃ i : Option (Fin p),
-          (match i with
-            | none => (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ)
-            | some b => (glMap (T_p_upper p hp b.val) : GL (Fin 2) ℝ)) • D))
-      (f ∣[k] (glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ)) g =
-    peterssonInner k
-      ((glMap (T_p_lower p hp) : GL (Fin 2) ℝ) •
-        (⋃ i : Option (Fin p),
-          (match i with
-            | none => (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ)
-            | some b => (glMap (T_p_upper p hp b.val) : GL (Fin 2) ℝ)) • D))
-      g' (g ∣[k] (glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ)) := by
-  rw [peterssonInner_Hecke_FD_T_p_lower_slot2_slash_adjoint
-        (N := N) p hp hpN D f g,
-      peterssonInner_Hecke_FD_T_p_lower_slot1_slash_adjoint
-        (N := N) p hp hpN D g' g]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
 private lemma UpperHalfPlane_smul_eq_of_matrix_smul_eq
