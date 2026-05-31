@@ -491,17 +491,6 @@ lemma Newform.frickeMatrix_smul (N : ℕ) [NeZero N] (τ : UpperHalfPlane) :
   rw [UpperHalfPlane.coe_smul_of_det_pos (Newform.frickeMatrix_det_pos N),
     Newform.frickeMatrix_num, Newform.frickeMatrix_denom]
 
-/-- Fricke matrix involution identity at the matrix level:
-`W_N · W_N = -N · I`. -/
-lemma Newform.frickeMatrix_sq_matrix (N : ℕ) [NeZero N] :
-    ((Newform.frickeMatrix N : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) *
-        ((Newform.frickeMatrix N : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
-      (-(N : ℝ)) • (1 : Matrix (Fin 2) (Fin 2) ℝ) := by
-  rw [Newform.frickeMatrix_coe]
-  ext i j
-  fin_cases i <;> fin_cases j <;>
-    simp [Matrix.mul_apply, Fin.sum_univ_two]
-
 /-- The integer Fricke conjugate matrix `δ = !![d, -(c/N); -N·b, a]` of
 `γ = !![a, b; c, d] ∈ Γ₁(N)` (integer-valued since `N ∣ c`), satisfying
 `W_N · γ = δ · W_N` at the matrix level. -/
