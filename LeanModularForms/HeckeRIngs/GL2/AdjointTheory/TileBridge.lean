@@ -17,10 +17,11 @@ four protected headlines (`heckeT_p_adjoint`,
 
 This file now contains only:
 
-* `glMap_T_p_upper_det_pos` — positivity of the `T_p_upper b` GL determinant
-  (needed by `ConcreteFamily`, `SummandAdjoint`, and `Newforms.BadPrimeReduction`).
 * `peterssonAdj_mul_self_smul_set` — set-level triviality of
   `(peterssonAdj β · β) • S = S` (needed by `Newforms.BadPrimeReduction`).
+
+The lemma `glMap_T_p_upper_det_pos` (positivity of the `T_p_upper b` GL
+determinant) is provided by `SummandAdjoint` and re-exported transitively.
 -/
 
 noncomputable section
@@ -35,23 +36,6 @@ namespace HeckeRing.GL2
 open CuspForm
 
 variable {N : ℕ} [NeZero N]
-
-theorem glMap_T_p_upper_det_pos (p : ℕ) (hp : 0 < p) (b : ℕ) :
-    0 < (glMap (T_p_upper p hp b) : GL (Fin 2) ℝ).det.val := by
-  show 0 < ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) :
-    Matrix (Fin 2) (Fin 2) ℝ).det
-  rw [show ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) :
-      Matrix (Fin 2) (Fin 2) ℝ) =
-      ((T_p_upper p hp b : GL (Fin 2) ℚ).val).map (algebraMap ℚ ℝ) from rfl]
-  rw [show (((T_p_upper p hp b : GL (Fin 2) ℚ).val).map (algebraMap ℚ ℝ)).det =
-      (algebraMap ℚ ℝ) (((T_p_upper p hp b : GL (Fin 2) ℚ).val).det) from
-        (RingHom.map_det _ _).symm]
-  rw [show ((T_p_upper p hp b : GL (Fin 2) ℚ).val).det = (p : ℚ) by
-    simp [T_p_upper, Matrix.GeneralLinearGroup.mkOfDetNeZero,
-      Matrix.det_fin_two, Matrix.of_apply]]
-  show 0 < (algebraMap ℚ ℝ) ((p : ℚ))
-  rw [show (algebraMap ℚ ℝ) ((p : ℚ)) = ((p : ℚ) : ℝ) from rfl]
-  exact_mod_cast hp
 
 open UpperHalfPlane in
 private lemma peterssonAdj_mul_self_smul

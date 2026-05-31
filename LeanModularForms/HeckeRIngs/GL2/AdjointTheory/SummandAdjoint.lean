@@ -41,7 +41,7 @@ private lemma mapGL_det_matrix_eq_one (σ : SL(2, ℤ)) :
   rw [← RingHom.map_det, (σ : SL(2, ℤ)).property]
   simp
 
-private lemma glMap_T_p_upper_det_pos (p : ℕ) (hp : 0 < p) (b : ℕ) :
+theorem glMap_T_p_upper_det_pos (p : ℕ) (hp : 0 < p) (b : ℕ) :
     0 < (glMap (T_p_upper p hp b) : GL (Fin 2) ℝ).det.val := by
   show 0 < ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) :
     Matrix (Fin 2) (Fin 2) ℝ).det
