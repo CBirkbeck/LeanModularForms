@@ -606,32 +606,6 @@ theorem Newform.noEntireExtensionUnderBadPrime_of_HasDirichletZeroCertificate
     Newform.NoEntireExtensionUnderBadPrime :=
   Newform.noEntireExtensionUnderBadPrime_of_dirichletZeroCertificate h_cert
 
-/-- `strongMultiplicityOne_of_HeckeEntireExtension_of_dirichletZeroCertificate_of_newformUnique`
-with the per-newform certificate hypothesis written as
-`Newform.HasDirichletZeroCertificate`. -/
-theorem strongMultiplicityOne_of_HeckeEntireExtension_of_HasDirichletZeroCertificate_of_newformUnique
-    (h_unique : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
-      f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      (∀ n : ℕ+, Nat.Coprime n.val N → f.eigenvalue n = g.eigenvalue n) →
-      f.toCuspForm = g.toCuspForm)
-    (h_hecke : Newform.HeckeEntireExtension)
-    (h_cert : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
-      f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      ∀ (S : Finset ℕ),
-        (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
-          q ∉ S → f.lCoeff q = 0) →
-        Newform.HasDirichletZeroCertificate f χ)
-    {N : ℕ} [NeZero N] {k : ℤ} (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (hgχ : g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (S : Finset ℕ)
-    (h : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S →
-      f.eigenvalue n = g.eigenvalue n) :
-    f.toCuspForm = g.toCuspForm :=
-  strongMultiplicityOne_of_HeckeEntireExtension_of_dirichletZeroCertificate_of_newformUnique
-    h_unique h_hecke h_cert f g χ hfχ hgχ S h
-
 /-- Build `Newform.HasDirichletZeroCertificate f χ` directly from the explicit
 pole point, character non-trivialities, Dirichlet zero, non-cancellation, and
 universal-F clause. -/
