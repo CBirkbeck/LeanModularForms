@@ -923,15 +923,6 @@ lemma Newform.slash_peterssonAdj_frickeMatrix
               show ((-1 : ℂ)⁻¹ : ℂ) = -1 by norm_num]]]
   ring
 
-/-- The Fricke `W_N`-shifted `Γ₁(N)` fundamental-domain claim:
-`W_N • Gamma1_fundDomain_PSL N` is a fundamental domain for `imageGamma1_PSL N`.
-This holds because `W_N` normalises `Γ₁(N)` (see
-`Newform.frickeMatrix_smul_isFundDomain_imageGamma1_PSL`). -/
-def Newform.HasFrickeFundDomainTransport (N : ℕ) [NeZero N] : Prop :=
-  MeasureTheory.IsFundamentalDomain (imageGamma1_PSL N)
-    ((Newform.frickeMatrix N : GL (Fin 2) ℝ) •
-      (Gamma1_fundDomain_PSL N : Set UpperHalfPlane)) μ_hyp
-
 /-- The Fricke matrix `W_N` as a `GL(2, ℝ)⁺` element, via its positive
 determinant. -/
 noncomputable def Newform.frickeMatrix_GLPos (N : ℕ) [NeZero N] : GL(2, ℝ)⁺ :=
