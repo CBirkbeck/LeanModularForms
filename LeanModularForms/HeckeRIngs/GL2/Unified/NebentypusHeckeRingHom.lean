@@ -32,9 +32,9 @@ character space and bridges it to the concrete Hecke operators.
   `heckeT_p_all`, identifying the abstract action with the textbook Hecke operator.
 * `heckeRingHomCharSpace_T_pp_eq_scalar` : at the scalar coset `T(p,p)` (good prime),
   the action is the scalar `χ(p)⁻¹ · p^(k-2)`.
-* `heckeRingHomCharSpace_commute` and `heckeT_p_all_comm_on_charSpace_via_ring` :
-  commutativity of the operators on `modFormCharSpace k χ` as a corollary of the
-  commutativity of the source ring, with no coset combinatorics.
+* `heckeRingHomCharSpace_commute` : commutativity of the operators on
+  `modFormCharSpace k χ` as a corollary of the commutativity of the source ring,
+  with no coset combinatorics.
 ## References
 
 * [G. Shimura, *Introduction to the Arithmetic Theory of Automorphic Functions*][shimura1971],
@@ -1063,19 +1063,6 @@ theorem heckeT_p_all_charRestrict_commute_via_ring
   rw [heckeT_p_all_charRestrict_eq_scalar_heckeRingHom p hp hpN,
     heckeT_p_all_charRestrict_eq_scalar_heckeRingHom q hq hqN]
   exact ((heckeRingHomCharSpace_commute (k := k) (χ := χ) _ _).smul_left _).smul_right _
-
-/-- For good primes `p, q` (both `∤ N`) and `f ∈ modFormCharSpace k χ`, the concrete operators
-`heckeT_p_all` and `heckeT_q_all` commute on `f`. -/
-theorem heckeT_p_all_comm_on_charSpace_via_ring
-    {p q : ℕ} (hp : Nat.Prime p) (hq : Nat.Prime q)
-    (hpN : Nat.Coprime p N) (hqN : Nat.Coprime q N)
-    (f : modFormCharSpace k χ) :
-    heckeT_p_all k p hp (heckeT_p_all k q hq (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) =
-      heckeT_p_all k q hq (heckeT_p_all k p hp
-        (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) := by
-  exact congrArg Subtype.val
-    (congrArg (fun (T : Module.End ℂ (modFormCharSpace k χ)) ↦ T f)
-      (heckeT_p_all_charRestrict_commute_via_ring (k := k) (χ := χ) hp hq hpN hqN))
 
 end OperatorCommutativityFromRing
 
