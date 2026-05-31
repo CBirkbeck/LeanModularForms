@@ -862,16 +862,6 @@ noncomputable def Newform.frickeMatrix_GLPos (N : ℕ) [NeZero N] : GL(2, ℝ)�
 noncomputable def Newform.frickeMatrix_PSL_R (N : ℕ) [NeZero N] : PSL(2, ℝ) :=
   GLPos_to_PSL_R_term (Newform.frickeMatrix_GLPos N)
 
-/-- `frickeMatrix_PSL_R N` acts on `ℍ` exactly as `frickeMatrix N` does. -/
-@[simp]
-lemma Newform.frickeMatrix_PSL_R_smul (N : ℕ) [NeZero N] (τ : UpperHalfPlane) :
-    Newform.frickeMatrix_PSL_R N • τ =
-      (Newform.frickeMatrix N : GL (Fin 2) ℝ) • τ := by
-  change GLPos_to_PSL_R_term (Newform.frickeMatrix_GLPos N) • τ =
-    (Newform.frickeMatrix N : GL (Fin 2) ℝ) • τ
-  rw [GLPos_to_PSL_R_term_smul]
-  rfl
-
 /-- The underlying matrix of `GLPos_to_SLR (frickeMatrix_GLPos N)` (via the GL
 coercion) equals `(sqrt N)⁻¹ • W_N.val`. -/
 lemma Newform.GLPos_to_SLR_frickeMatrix_GLPos_toGL_matrix (N : ℕ) [NeZero N] :
