@@ -700,46 +700,7 @@ theorem Newform.analyticContradiction_of_FrickeSlashData_of_full_dirichletZeroCe
       ∀ (S : Finset ℕ),
         (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
           q ∉ S → f.lCoeff q = 0) →
-        ∃ (T : Finset Nat.Primes) (s₀ : ℂ),
-          AnalyticAt ℂ
-            (fun s ↦
-              DirichletCharacter.LFunction
-                (Newform.dirichletLift χ * Newform.dirichletLift χ
-                  : DirichletCharacter ℂ N) (2 * (2 * s - k + 1)) *
-              ∏ p ∈ T, Newform.eulerFactor_stripped f χ S s p *
-                (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-                    ((p : ℕ) : ZMod N) *
-                  ((p : ℕ) : ℂ) ^ (-(2 * s - k + 1)))⁻¹) s₀ ∧
-          AnalyticAt ℂ
-            (fun s ↦
-              DirichletCharacter.LFunction
-                (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-                (2 * s - k + 1) *
-              ∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-                : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-                ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀ ∧
-          (DirichletCharacter.LFunction
-            (Newform.dirichletLift χ * Newform.dirichletLift χ
-              : DirichletCharacter ℂ N) (2 * (2 * s₀ - k + 1)) *
-            (∏ p ∈ T, Newform.eulerFactor_stripped f χ S s₀ p *
-              (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-                  ((p : ℕ) : ZMod N) *
-                ((p : ℕ) : ℂ) ^ (-(2 * s₀ - k + 1)))⁻¹)) ≠ 0 ∧
-          (DirichletCharacter.LFunction
-            (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-            (2 * s₀ - k + 1) *
-            (∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-              : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-              ((p : ℕ) : ℂ) ^ (-(2 * (2 * s₀ - k + 1))))⁻¹)) = 0 ∧
-          meromorphicOrderAt
-            (fun s ↦
-              DirichletCharacter.LFunction
-                (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-                (2 * s - k + 1) *
-              ∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-                : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-                ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀ ≠ ⊤ ∧
-          Newform.FullDirichletQuotientUniversalFClause f χ S T s₀) :
+        Newform.PerNewformFullDirichletData f χ S) :
     Newform.AnalyticContradiction :=
   Newform.analyticContradiction_of_HeckeEntireExtension_of_full_dirichletZeroCertificate
     (Newform.HeckeEntireExtension_of_FrickeSlashData h_slash) h_data

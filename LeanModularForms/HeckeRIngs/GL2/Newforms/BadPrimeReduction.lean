@@ -43,27 +43,6 @@ open scoped MatrixGroups ModularForm Pointwise DirectSum
 
 variable {N : ℕ} [NeZero N] {k : ℤ}
 
-open UpperHalfPlane MeasureTheory ModularGroup in
-/-- Per-`q` `Fin p`-indexed pairwise AE-disjointness for the bad-prime
-upper-coset tile family `{β_b · q.out⁻¹·fd}_{b ∈ Fin p}`. -/
-theorem Newform.aedisjoint_pairwise_T_p_upper_smul_qOut_inv_fd
-    {N : ℕ} [NeZero N] {p : ℕ} (hp : 0 < p) (q : SL(2, ℤ) ⧸ Gamma1 N) :
-    Pairwise (fun b₁ b₂ : Fin p ↦
-      AEDisjoint μ_hyp
-        ((glMap (T_p_upper p hp b₁.val) : GL (Fin 2) ℝ) •
-          ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
-            (fd : Set UpperHalfPlane)))
-        ((glMap (T_p_upper p hp b₂.val) : GL (Fin 2) ℝ) •
-          ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
-            (fd : Set UpperHalfPlane)))) := by
-  intro b₁ b₂ hne
-  have h_int_ne : (b₂.val : ℤ) - (b₁.val : ℤ) ≠ 0 := by
-    intro heq
-    have h_int_eq : (b₂.val : ℤ) = (b₁.val : ℤ) := by linarith
-    exact hne (Fin.ext (Nat.cast_inj.mp h_int_eq).symm)
-  rw [← mul_smul, ← mul_smul]
-  exact aedisjoint_glMap_T_p_upper_pair_fd_per_q hp q.out h_int_ne
-
 private theorem neg_one_zpow_mul_self (k : ℤ) :
     ((-1 : ℂ) ^ k) * ((-1 : ℂ) ^ k) = 1 := by
   rw [← mul_zpow]; norm_num
@@ -74,14 +53,6 @@ private theorem mapGL_SL_det_eq_one (γ : SL(2, ℤ)) :
       ((Int.castRingHom ℝ).mapMatrix γ.val) by rw [mapGL_coe_matrix]; rfl]
   rw [← RingHom.map_det, γ.property]
   simp
-
-open MeasureTheory ModularGroup in
-private theorem nullMeasurableSet_modularGroup_fd :
-    NullMeasurableSet (ModularGroup.fd : Set UpperHalfPlane) μ_hyp :=
-  ((isClosed_le continuous_const
-      (Complex.continuous_normSq.comp UpperHalfPlane.continuous_coe)).inter
-    (isClosed_le (continuous_abs.comp UpperHalfPlane.continuous_re)
-      continuous_const)).measurableSet.nullMeasurableSet
 
 private theorem glMap_T_p_upper_mul_mapGL_SL_inv_det_pos
     {p : ℕ} (hp : 0 < p) (b : ℕ) (γ : SL(2, ℤ)) :
