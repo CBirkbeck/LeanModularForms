@@ -543,28 +543,6 @@ theorem Newform.analyticContradiction_of_FrickeSlashData_of_full_dirichletZeroCe
       Newform.full_pole_witness_data_of_PerNewformFullDirichletData f χ S
         (h_data f χ hfχ S h_bad))
 
-/-- Specialises
-`Newform.analyticContradiction_of_FrickeSlashData_of_full_dirichletZeroCertificate`
-through `Newform.exists_nonzero_prime_eigenvalue_of_analyticContradiction`. -/
-theorem Newform.exists_nonzero_prime_eigenvalue_of_FrickeSlashData_of_full_dirichletZeroCertificate
-    (h_slash : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k),
-      Newform.FrickeSlashData f)
-    (h_data : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
-      f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      ∀ (S : Finset ℕ),
-        (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
-          q ∉ S → f.lCoeff q = 0) →
-        Newform.PerNewformFullDirichletData f χ S)
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (S : Finset ℕ) :
-    ∃ q : ℕ, ∃ hq : Nat.Prime q, Nat.Coprime q N ∧ q ∉ S ∧
-      f.eigenvalue ⟨q, hq.pos⟩ ≠ 0 :=
-  Newform.exists_nonzero_prime_eigenvalue_of_analyticContradiction
-    (Newform.analyticContradiction_of_FrickeSlashData_of_full_dirichletZeroCertificate
-      h_slash h_data) f χ hfχ S
-
-
 /-- The classical Hecke 1936 identity
 `mellin (Newform.imAxis f) s = (2π)^{-s} · Γ(s) · LSeries f.lCoeff s` on
 `Re s > k/2 + 1`, specialising `ModularForms.HasCompletedMellinIdentity`. -/
