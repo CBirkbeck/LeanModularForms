@@ -872,15 +872,6 @@ lemma Newform.frickeMatrix_PSL_R_smul (N : ℕ) [NeZero N] (τ : UpperHalfPlane)
   rw [GLPos_to_PSL_R_term_smul]
   rfl
 
-/-- Set-level analogue of `Newform.frickeMatrix_PSL_R_smul`. -/
-@[simp]
-lemma Newform.frickeMatrix_PSL_R_smul_set (N : ℕ) [NeZero N]
-    (S : Set UpperHalfPlane) :
-    (Newform.frickeMatrix_PSL_R N • S : Set UpperHalfPlane) =
-      (Newform.frickeMatrix N : GL (Fin 2) ℝ) • S := by
-  ext τ
-  simp only [Set.mem_smul_set, Newform.frickeMatrix_PSL_R_smul]
-
 /-- The underlying matrix of `GLPos_to_SLR (frickeMatrix_GLPos N)` (via the GL
 coercion) equals `(sqrt N)⁻¹ • W_N.val`. -/
 lemma Newform.GLPos_to_SLR_frickeMatrix_GLPos_toGL_matrix (N : ℕ) [NeZero N] :
