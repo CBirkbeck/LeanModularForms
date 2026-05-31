@@ -20,57 +20,6 @@ namespace HeckeRing.GL2
 
 variable {N : ℕ} [NeZero N] {k : ℤ}
 
-/-- The form `h(z) := Σ_{(n, l') ≠ 1} aₙ qⁿ` (Miyake Eq. 4.6.10): for
-`f ∈ S_k(Γ_1(N), χ)` and `l' ∣ N` squarefree, `f − g` has `q`-expansion
-supported on `(n, l') ≠ 1`. -/
-theorem miyake_h_form
-    {N : ℕ} [NeZero N] {k : ℤ}
-    (χ : (ZMod N)ˣ →* ℂˣ)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hfχ : f ∈ cuspFormCharSpace k χ)
-    (l' : ℕ) (hl'_pos : 0 < l') (hl'_sqfree : Squarefree l')
-    (hl'_dvd : ∀ q ∈ l'.primeFactors, q ∈ N.primeFactors) :
-    let M := l' * N
-    haveI : NeZero M := ⟨Nat.mul_ne_zero (Nat.pos_iff_ne_zero.mp hl'_pos) (NeZero.ne N)⟩
-    have hNM : N ∣ M := Nat.dvd_mul_left N l'
-    ∃ h_form : CuspForm ((Gamma1 M).map (mapGL ℝ)) k,
-      h_form ∈ cuspFormCharSpace k (χ.comp (ZMod.unitsMap hNM)) ∧
-      ∀ n : ℕ, (ModularFormClass.qExpansion (1 : ℝ) h_form).coeff n =
-        if ¬ Nat.Coprime n l' then
-          (ModularFormClass.qExpansion (1 : ℝ) f).coeff n
-        else 0 := by
-  have hM_NeZero : NeZero (l' * N) :=
-    ⟨Nat.mul_ne_zero (Nat.pos_iff_ne_zero.mp hl'_pos) (NeZero.ne N)⟩
-  have hNM : N ∣ l' * N := Nat.dvd_mul_left N l'
-  obtain ⟨g, hg_char, hg_qexp⟩ :=
-    miyake_4_6_5_iterated_L χ f hfχ l' hl'_pos hl'_sqfree hl'_dvd
-  let f_at_M : CuspForm ((Gamma1 (l' * N)).map (mapGL ℝ)) k :=
-    CuspForm.restrictSubgroup
-      (HeckeRing.GL2.MainLemma.Gamma1_mapGL_le_of_dvd hNM) f
-  refine ⟨f_at_M - g,
-    Submodule.sub_mem _ (cuspForm_restrictSubgroup_mem_cuspFormCharSpace χ hNM hfχ) hg_char, ?_⟩
-  intro n
-  have h1_period : (1 : ℝ) ∈ ((Gamma1 (l' * N)).map (mapGL ℝ)).strictPeriods := by
-    rw [show (Gamma1 (l' * N)).map (mapGL ℝ) =
-        (Gamma1 (l' * N) : Subgroup (GL (Fin 2) ℝ)) from rfl, strictPeriods_Gamma1]
-    exact ⟨1, by simp⟩
-  have h_sub :
-      ModularFormClass.qExpansion (1 : ℝ) (f_at_M - g) =
-        ModularFormClass.qExpansion (1 : ℝ) f_at_M -
-        ModularFormClass.qExpansion (1 : ℝ) g := by
-    rw [sub_eq_add_neg, sub_eq_add_neg, ← qExpansion_neg one_pos h1_period g]
-    exact qExpansion_add (Γ := (Gamma1 (l' * N)).map (mapGL ℝ))
-      (h := (1 : ℝ)) (a := k) (b := k) one_pos h1_period f_at_M (- g)
-  rw [show ModularFormClass.qExpansion (1 : ℝ) (⇑(f_at_M - g) : UpperHalfPlane → ℂ) =
-        ModularFormClass.qExpansion (1 : ℝ) (f_at_M - g) from rfl, h_sub, map_sub,
-      show ModularFormClass.qExpansion (1 : ℝ) f_at_M =
-        ModularFormClass.qExpansion (1 : ℝ) f from rfl, hg_qexp n]
-  by_cases hcop : Nat.Coprime n l'
-  · rw [if_pos hcop, if_neg (not_not_intro hcop)]
-    ring
-  · rw [if_neg hcop, if_pos hcop]
-    ring
-
 /-- The form `g := f − h` is `p`-supported when `f` satisfies the
 coprime-vanishing hypothesis for `l = p · l'` (Miyake Eq. 4.6.11): `g` is the
 coprime-to-`l'` filter of `f`, so `aₙ(g) = 0` whenever `(n, p) = 1`. -/
