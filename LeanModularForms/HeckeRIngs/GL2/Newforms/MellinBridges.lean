@@ -459,42 +459,6 @@ theorem Newform.HeckeEntireExtension_of_MellinPairData
   Newform.HeckeEntireExtension_of_HeckeFEData
     (fun _N _ _k f ↦ Newform.HeckeFEData.ofMellinData (h f))
 
-/-- Specialization of
-`Newform.analyticContradiction_of_HeckeFEData_of_PerNewformFullDirichletData`
-consuming `Newform.MellinPairData` instead of `Newform.HeckeFEData`. -/
-theorem Newform.analyticContradiction_of_MellinPairData_of_PerNewformFullDirichletData
-    (h_mellin : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k),
-      Newform.MellinPairData f)
-    (h_data : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
-      f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      ∀ (S : Finset ℕ),
-        (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
-          q ∉ S → f.lCoeff q = 0) →
-        Newform.PerNewformFullDirichletData f χ S) :
-    Newform.AnalyticContradiction :=
-  Newform.analyticContradiction_of_HeckeFEData_of_PerNewformFullDirichletData
-    (fun _N _ _k f ↦ Newform.HeckeFEData.ofMellinData (h_mellin f)) h_data
-
-/-- Composes `Newform.analyticContradiction_of_MellinPairData_of_PerNewformFullDirichletData`
-through `Newform.exists_nonzero_prime_eigenvalue_of_analyticContradiction`. -/
-theorem Newform.exists_nonzero_prime_eigenvalue_of_MellinPairData_of_PerNewformFullDirichletData
-    (h_mellin : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k),
-      Newform.MellinPairData f)
-    (h_data : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
-      f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      ∀ (S : Finset ℕ),
-        (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
-          q ∉ S → f.lCoeff q = 0) →
-        Newform.PerNewformFullDirichletData f χ S)
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (S : Finset ℕ) :
-    ∃ q : ℕ, ∃ hq : Nat.Prime q, Nat.Coprime q N ∧ q ∉ S ∧
-      f.eigenvalue ⟨q, hq.pos⟩ ≠ 0 :=
-  Newform.exists_nonzero_prime_eigenvalue_of_HeckeFEData_of_PerNewformFullDirichletData
-    (fun _N _ _k f ↦ Newform.HeckeFEData.ofMellinData (h_mellin f)) h_data
-    f χ hfχ S
-
 /-- Direct bridge `Newform.ImAxisMellinData` + `Newform.PerNewformFullDirichletData`
 ⇒ `Newform.AnalyticContradiction`, without going through newform uniqueness / SMO. -/
 theorem Newform.analyticContradiction_of_ImAxisMellinData_of_PerNewformFullDirichletData
