@@ -23,24 +23,25 @@ import LeanModularForms.Modularforms.PeterssonLevelN
 import LeanModularForms.Modularforms.SlashActionAuxil
 
 /-!
-# Newforms: Atkin-Lehner / Fricke twist as a structured hypothesis
+# Newforms: Dirichlet-quotient pole-witness chain and full T111 certificate
 
-The Atkin-Lehner / Fricke twist packaged as the structured hypothesis
-`Newform.FrickeTwistData` and the downstream Dirichlet-quotient pole-witness
-chain up to the per-newform full Dirichlet-zero data feeding Strong
-Multiplicity One.
+The downstream Dirichlet-quotient pole-witness chain up to the per-newform full
+Dirichlet-zero data (`Newform.PerNewformFullDirichletData_pre`) feeding the
+Strong Multiplicity One bridge.
 
 This module is part of the split of `Newforms.lean`; see that file's header
 for the overall design.  Declarations are kept in their original order.
 
 ## Main definitions
 
-* `Newform.FrickeTwistData`: bundled Atkin-Lehner / Fricke twist hypothesis.
 * `Newform.NoEntireExtensionUnderBadPrime`: bad-prime-zero ⇒ no entire extension.
 * `Newform.DirichletQuotientHasPoleUnderBadPrime`: per-newform Dirichlet pole witness.
 * `Newform.HasDirichletZeroCertificate`: per-newform Dirichlet-zero certificate.
 * `Newform.DirichletQuotientUniversalFClause`, `Newform.FullDirichletQuotientUniversalFClause`:
   analytic-continuation universal-`F` clauses (simplified / full T111 quotient).
+* `Newform.PerNewformFullDirichletData_pre`: bundled per-newform full T111
+  Dirichlet-zero ingredients (import-cycle-avoiding twin of the canonical
+  `Newform.PerNewformFullDirichletData` in `MellinBridges.lean`).
 
 ## Main results
 
@@ -60,42 +61,6 @@ open HeckeRing.GL2.Unified
 open scoped MatrixGroups ModularForm Pointwise DirectSum
 
 variable {N : ℕ} [NeZero N] {k : ℤ}
-
-/-- **Atkin-Lehner / Fricke twist data for a Newform.**
-
-Bundle of the classical Atkin-Lehner / Fricke twist data needed to
-discharge the `h_feq` (functional equation) and `h_bridge`
-(Mellin–Dirichlet) fields of `Newform.ImAxisMellinData`. -/
-@[ext]
-structure Newform.FrickeTwistData
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) where
-  /-- Atkin-Lehner / Fricke image of `f` as a CuspForm on `Γ₁(N)`. -/
-  twist : CuspForm ((Gamma1 N).map (mapGL ℝ)) k
-  /-- Root number (eigenvalue of the Atkin-Lehner involution). -/
-  ε : ℂ
-  /-- Cusp-form weight is positive (cast to ℝ from `(k : ℤ)`). -/
-  hk_pos : 0 < (k : ℝ)
-  /-- Root number is nonzero. -/
-  hε_ne : ε ≠ 0
-  /-- **Functional equation on the imaginary axis.**  The classical
-  Atkin-Lehner FE relates `f(i/x)` and the twist evaluated on the
-  imaginary axis modulo a root-number/weight scalar. -/
-  h_feq : ∀ x ∈ Set.Ioi (0 : ℝ),
-    (Newform.imAxis f) (1 / x) =
-      (ε * ((x ^ (k : ℝ) : ℝ) : ℂ)) • _root_.ModularForms.imAxis twist x
-  /-- **Mellin–Dirichlet bridge.** -/
-  h_bridge : ∀ {s : ℂ},
-    LSeries.abscissaOfAbsConv f.lCoeff_stripped < s.re →
-    mellin (Newform.imAxis f) s = LSeries f.lCoeff_stripped s
-
-/-- Build `Newform.ImAxisMellinData f` from the structured Atkin-Lehner /
-Fricke twist hypothesis `Newform.FrickeTwistData f`. -/
-noncomputable def Newform.ImAxisMellinData.ofFrickeTwistData
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k)
-    (data : Newform.FrickeTwistData f) :
-    Newform.ImAxisMellinData f :=
-  Newform.ImAxisMellinData.ofData_withTwist f data.twist data.ε
-    data.hk_pos data.hε_ne data.h_feq data.h_bridge
 
 private lemma imAxis_div_const_isBigO_rpow {N : ℕ} [NeZero N] {k : ℤ}
     (twist : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) {c : ℝ} (hc : 0 < c) (r : ℝ) :
