@@ -6,7 +6,6 @@ Authors: LeanModularForms contributors
 import Mathlib.NumberTheory.ArithmeticFunction.Moebius
 import Mathlib.NumberTheory.DirichletCharacter.Basic
 import Mathlib.NumberTheory.ModularForms.QExpansion
-import LeanModularForms.Eigenforms.MainLemma.CoprimeSieve
 import LeanModularForms.HeckeRIngs.GL2.Gamma1Pair
 import LeanModularForms.HeckeRIngs.GL2.HeckeT_n
 import LeanModularForms.HeckeRIngs.GL2.LevelRaise
