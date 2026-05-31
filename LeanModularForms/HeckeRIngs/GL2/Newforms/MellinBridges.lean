@@ -144,6 +144,24 @@ theorem Newform.full_pole_witness_data_of_PerNewformFullDirichletData
     D.h_zero D.h_num_LF_ne D.h_factors_ne D.h_num_an D.h_den_an
     D.h_den_finite D.h_clause
 
+/-- Convert `Newform.PerNewformFullDirichletData_pre` (defined in FrickeTwist for
+import-cycle reasons) into the canonical `Newform.PerNewformFullDirichletData`.
+The two structures are field-by-field identical. -/
+@[simps]
+noncomputable def Newform.PerNewformFullDirichletData.ofPre
+    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
+    (S : Finset ℕ) (D : Newform.PerNewformFullDirichletData_pre f χ S) :
+    Newform.PerNewformFullDirichletData f χ S where
+  T := D.T
+  s₀ := D.s₀
+  h_zero := D.h_zero
+  h_num_LF_ne := D.h_num_LF_ne
+  h_factors_ne := D.h_factors_ne
+  h_num_an := D.h_num_an
+  h_den_an := D.h_den_an
+  h_den_finite := D.h_den_finite
+  h_clause := D.h_clause
+
 /-- The `T = ∅` specialization of `Newform.PerNewformFullDirichletData`, built from
 the irreducible classical inputs (character non-trivialities, the Dirichlet zero,
 the squared-character L-value non-cancellation, and the universal-F clause). -/
