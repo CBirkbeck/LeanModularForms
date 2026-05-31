@@ -1152,16 +1152,6 @@ lemma Newform.frickeMatrix_PSL_R_mem_normalizer (N : ℕ) [NeZero N] :
   rw [← h_simplify]
   exact Newform.frickeMatrix_PSL_R_conj_mem_imageGamma1_PSL_R h_conj_mem
 
-/-- The Fricke FD-transport claim `HasFrickeFundDomainTransport N` holds, via the
-PSL(2, ℝ) normalizer fact and the canonical PSL_R fundamental domain. -/
-lemma Newform.frickeMatrix_smul_isFundDomain_imageGamma1_PSL
-    (N : ℕ) [NeZero N] :
-    Newform.HasFrickeFundDomainTransport N := by
-  rw [Newform.HasFrickeFundDomainTransport, ← Newform.frickeMatrix_PSL_R_smul_set]
-  exact isFundamentalDomain_imageGamma1_PSL_of_PSL_R
-    (isFundamentalDomain_Gamma1_PSL_R.smul_of_mem_normalizer
-      (Newform.frickeMatrix_PSL_R_mem_normalizer N))
-
 end FrickeAdjoint
 
 private lemma frickeRootNumber_scalar_collapse {k : ℤ} {n x I fv : ℂ}
