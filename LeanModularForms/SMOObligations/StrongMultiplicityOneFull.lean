@@ -1156,6 +1156,134 @@ private theorem exists_matching_summand
       _ = 0 := Finset.sum_eq_zero horth
   exact hg_old_ne (petN_definite g_old hpet0)
 
+/-- Cross-level eigenvalue identification (Miyake 4.6.12 helper).  In the setting of
+`oldPart_eq_zero_of_shared_eigenvalues`, the Hecke eigenvalues of the descended new
+form `h` at level `M` coincide with those of `f` at every level-`N`-coprime index. -/
+private theorem oldPart_lam_eq_eigenvalue_aux
+    (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
+    (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
+    {M : ℕ} [NeZero M] (hMN : M ∣ N) (ψ : (ZMod M)ˣ →* ℂˣ)
+    (hψχ : ψ.comp (ZMod.unitsMap hMN) = χ)
+    (h : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) (hh_char : h ∈ cuspFormCharSpace k ψ)
+    (lam : ℕ+ → ℂ)
+    (hh_eig : ∀ n : ℕ+, Nat.Coprime n.val M →
+      haveI : NeZero n.val := ⟨n.pos.ne'⟩
+      heckeT_n_cusp k n.val h = lam n • h)
+    (hh_ne : h ≠ 0)
+    (hc₁'_ne : (ModularFormClass.qExpansion (1 : ℝ) h).coeff 1 ≠ 0)
+    (S : Finset ℕ)
+    (hh_lam : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S → lam n = f.eigenvalue n) :
+    ∀ n : ℕ+, Nat.Coprime n.val N → lam n = f.eigenvalue n := by
+  set h_eig_b : Eigenform M k := eigenformOfIsEigenform ψ h hh_char ⟨lam, hh_eig⟩
+  have hψ_mod' : h_eig_b.toCuspForm.toModularForm' ∈ modFormCharSpace k ψ :=
+    (cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace (k := k) ψ h).mpr hh_char
+  have h_off : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S →
+      f.eigenvalue n = h_eig_b.eigenvalue n := fun n hn hnS ↦ by
+    rw [eigenformOfIsEigenform_eigenvalue ψ h hh_char lam hh_eig hh_ne n
+      (hn.coprime_dvd_right hMN)]
+    exact (hh_lam n hn hnS).symm
+  intro n hn
+  have := (eigenvalues_eq_all_coprime_cross_level f h_eig_b χ hfχ ψ hψ_mod'
+    hc₁'_ne hMN hψχ S h_off n hn).symm
+  rwa [eigenformOfIsEigenform_eigenvalue ψ h hh_char lam hh_eig hh_ne n
+    (hn.coprime_dvd_right hMN)] at this
+
+/-- Coefficient vanishing for the difference `ιh - c₁' • f` (Miyake 4.6.12 helper).  At
+each index coprime to `N`, both sides of the difference share the value
+`c₁' * f.eigenvalue n`, so the coefficient cancels.  At `n = 0` both forms are cusp forms,
+so the constant term vanishes. -/
+private theorem oldPart_diff_qExpansion_coeff_eq_zero
+    (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
+    (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
+    {M : ℕ} [NeZero M] (hMN : M ∣ N) (ψ : (ZMod M)ˣ →* ℂˣ)
+    (hψχ : ψ.comp (ZMod.unitsMap hMN) = χ)
+    (h : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) (hh_char : h ∈ cuspFormCharSpace k ψ)
+    (lam : ℕ+ → ℂ)
+    (hh_eig : ∀ n : ℕ+, Nat.Coprime n.val M →
+      haveI : NeZero n.val := ⟨n.pos.ne'⟩
+      heckeT_n_cusp k n.val h = lam n • h)
+    (hh_ne : h ≠ 0)
+    (hc₁'_ne : (ModularFormClass.qExpansion (1 : ℝ) h).coeff 1 ≠ 0)
+    (S : Finset ℕ)
+    (hh_lam : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S → lam n = f.eigenvalue n) :
+    ∀ n : ℕ, Nat.Coprime n N →
+      (ModularFormClass.qExpansion (1 : ℝ)
+        (levelInclude_cusp hMN k h -
+          (ModularFormClass.qExpansion (1 : ℝ) h).coeff 1 • f.toCuspForm)).coeff n = 0 := by
+  set h_eig_b : Eigenform M k := eigenformOfIsEigenform ψ h hh_char ⟨lam, hh_eig⟩
+  have hh_eig_b_cusp : h_eig_b.toCuspForm = h := rfl
+  have hψ_mod' : h_eig_b.toCuspForm.toModularForm' ∈ modFormCharSpace k ψ :=
+    (cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace (k := k) ψ h).mpr hh_char
+  set c₁' := (ModularFormClass.qExpansion (1 : ℝ) h).coeff 1
+  set ιh : CuspForm ((Gamma1 N).map (mapGL ℝ)) k := levelInclude_cusp hMN k h with hιh_def
+  have h_lam_eq : ∀ n : ℕ+, Nat.Coprime n.val N → lam n = f.eigenvalue n :=
+    oldPart_lam_eq_eigenvalue_aux f χ hfχ hMN ψ hψχ h hh_char lam hh_eig hh_ne hc₁'_ne S hh_lam
+  intro n hn
+  show (ModularFormClass.qExpansion (1 : ℝ)
+      (⇑ιh.toModularForm' - ⇑(c₁' • f.toCuspForm).toModularForm')).coeff n = 0
+  rw [qExpansion_sub one_pos one_mem_strictPeriods_Gamma1_map_local, map_sub, sub_eq_zero]
+  by_cases hn0 : n = 0
+  · subst hn0
+    rw [ModularFormClass.qExpansion_coeff_zero _ one_pos one_mem_strictPeriods_Gamma1_map_local,
+        ModularFormClass.qExpansion_coeff_zero _ one_pos one_mem_strictPeriods_Gamma1_map_local,
+        show (⇑ιh.toModularForm' : UpperHalfPlane → ℂ) = ⇑ιh from rfl,
+        show (⇑(c₁' • f.toCuspForm).toModularForm' : UpperHalfPlane → ℂ) =
+          ⇑(c₁' • f.toCuspForm) from rfl,
+        (CuspFormClass.zero_at_infty ιh).valueAtInfty_eq_zero,
+        (CuspFormClass.zero_at_infty (c₁' • f.toCuspForm)).valueAtInfty_eq_zero]
+  · have hn_pos : 0 < n := Nat.pos_of_ne_zero hn0
+    set np : ℕ+ := ⟨n, hn_pos⟩
+    have hnp_val : (np : ℕ) = n := rfl
+    have hnM : Nat.Coprime np.val M := hn.coprime_dvd_right hMN
+    have hfun : (⇑ιh.toModularForm' : UpperHalfPlane → ℂ) =
+        ⇑h_eig_b.toCuspForm.toModularForm' := by
+      rw [show (⇑ιh.toModularForm' : UpperHalfPlane → ℂ) = ⇑ιh from rfl,
+        show (⇑h_eig_b.toCuspForm.toModularForm' : UpperHalfPlane → ℂ) = ⇑h_eig_b.toCuspForm
+          from rfl, hh_eig_b_cusp, hιh_def, levelInclude_cusp_coe]
+    have hL : (ModularFormClass.qExpansion (1 : ℝ) (⇑ιh.toModularForm')).coeff n =
+        c₁' * f.eigenvalue np := by
+      rw [qExpansion_ext2 ιh.toModularForm' h_eig_b.toCuspForm.toModularForm' hfun, ← hnp_val,
+        show (⇑h_eig_b.toCuspForm.toModularForm' : UpperHalfPlane → ℂ) =
+          ⇑h_eig_b.toCuspForm from rfl,
+        Eigenform.coeff_eq_coeff_one_mul_eigenvalue h_eig_b ψ hψ_mod' np hnM,
+        eigenformOfIsEigenform_eigenvalue ψ h hh_char lam hh_eig hh_ne np hnM,
+        h_lam_eq np hn, hh_eig_b_cusp]
+    have hR : (ModularFormClass.qExpansion (1 : ℝ)
+        (⇑(c₁' • f.toCuspForm).toModularForm')).coeff n = c₁' * f.eigenvalue np := by
+      rw [show (⇑(c₁' • f.toCuspForm).toModularForm' : UpperHalfPlane → ℂ) =
+            c₁' • ⇑f.toCuspForm.toModularForm' from rfl,
+        qExpansion_smul one_pos one_mem_strictPeriods_Gamma1_map_local, PowerSeries.coeff_smul,
+        smul_eq_mul, ← hnp_val, Newform.eigenvalue_eq_coeff f np hn χ hfχ]
+      congr 1
+    rw [hL, hR]
+
+/-- Final descent step (Miyake 4.6.12, p. 164).  Given the difference `ιh - c₁' • f`
+lying in the χ-character space with vanishing coprime coefficients, the extended old
+membership of `f` follows: the difference is old via the main lemma, `ιh` is old as an
+explicit level raise, so `c₁' • f` is old, and inverting `c₁' ≠ 0` produces `f ∈ old`. -/
+private theorem oldPart_f_mem_cuspFormsOldExtended
+    (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
+    {M : ℕ} (hMN : M ∣ N) (hMne : M ≠ N)
+    (h : CuspForm ((Gamma1 M).map (mapGL ℝ)) k)
+    (c₁' : ℂ) (hc₁'_ne : c₁' ≠ 0)
+    (h_diff_char : levelInclude_cusp hMN k h - c₁' • f.toCuspForm ∈ cuspFormCharSpace k χ)
+    (h_vanish : ∀ n : ℕ, Nat.Coprime n N →
+      (ModularFormClass.qExpansion (1 : ℝ)
+        (levelInclude_cusp hMN k h - c₁' • f.toCuspForm)).coeff n = 0) :
+    f.toCuspForm ∈ cuspFormsOldExtended N k := by
+  set ιh : CuspForm ((Gamma1 N).map (mapGL ℝ)) k := levelInclude_cusp hMN k h
+  have h_diff_old : ιh - c₁' • f.toCuspForm ∈ cuspFormsOld N k :=
+    mainLemma_charSpace_routeB_unconditional χ (ιh - c₁' • f.toCuspForm) h_diff_char h_vanish
+  have h_diff_ext : ιh - c₁' • f.toCuspForm ∈ cuspFormsOldExtended N k :=
+    cuspFormsOld_le_cuspFormsOldExtended h_diff_old
+  have hιh_ext : ιh ∈ cuspFormsOldExtended N k :=
+    levelInclude_cusp_mem_cuspFormsOldExtended hMN
+      (lt_of_le_of_ne (Nat.le_of_dvd (Nat.pos_of_ne_zero (NeZero.ne N)) hMN) hMne) h
+  have hcf_ext : c₁' • f.toCuspForm ∈ cuspFormsOldExtended N k := by
+    simpa using (cuspFormsOldExtended N k).sub_mem hιh_ext h_diff_ext
+  have := (cuspFormsOldExtended N k).smul_mem c₁'⁻¹ hcf_ext
+  rwa [smul_smul, inv_mul_cancel₀ hc₁'_ne, one_smul] at this
+
 /-- **Old-part vanishing** (Miyake 4.6.12, steps (i)+(ii), p. 164).  If `f` is a
 nonzero newform at level `N` and `g_old` is a common `T(n)`-eigenform in the χ-refined
 old space sharing `f`'s eigenvalues off a finite set `S`, then `g_old = 0`. -/
@@ -1174,85 +1302,24 @@ theorem oldPart_eq_zero_of_shared_eigenvalues
   obtain ⟨M, hM_NeZero, _hcond, hMne, hMN, ψ, h, lam, hh_new, hh_char, hψχ, hh_ne,
     hh_eig, hh_lam⟩ :=
     exists_matching_summand f χ m_χ g_old hg_old hg_old_char hg0 S h_eig
-  have hh_char_cusp : h ∈ cuspFormCharSpace k ψ := hh_char
-  set h_eig_b : Eigenform M k := eigenformOfIsEigenform ψ h hh_char_cusp ⟨lam, hh_eig⟩
-  have hh_eig_b_cusp : h_eig_b.toCuspForm = h := rfl
+  set h_eig_b : Eigenform M k := eigenformOfIsEigenform ψ h hh_char ⟨lam, hh_eig⟩
   have hψ_mod' : h_eig_b.toCuspForm.toModularForm' ∈ modFormCharSpace k ψ :=
     (cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace (k := k) ψ h).mpr hh_char
-  set c₁' := (ModularFormClass.qExpansion (1 : ℝ) h).coeff 1 with hc₁'_def
+  set c₁' := (ModularFormClass.qExpansion (1 : ℝ) h).coeff 1
   have hc₁'_ne : c₁' ≠ 0 :=
     coeff_one_ne_zero_of_mem_cuspFormsNew_of_eigen_unconditional h_eig_b ψ hψ_mod' hh_new hh_ne
-  set ιh : CuspForm ((Gamma1 N).map (mapGL ℝ)) k := levelInclude_cusp hMN k h with hιh_def
+  set ιh : CuspForm ((Gamma1 N).map (mapGL ℝ)) k := levelInclude_cusp hMN k h
   have hιh_char : ιh ∈ cuspFormCharSpace k χ := by
-    have := levelInclude_cusp_mem_cuspFormCharSpace_comp hMN ψ hh_char_cusp
+    have := levelInclude_cusp_mem_cuspFormCharSpace_comp hMN ψ hh_char
     rwa [hψχ] at this
-  have h_lam_eq : ∀ n : ℕ+, Nat.Coprime n.val N → lam n = f.eigenvalue n := by
-    have h_off : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S →
-        f.eigenvalue n = h_eig_b.eigenvalue n := fun n hn hnS ↦ by
-      rw [eigenformOfIsEigenform_eigenvalue ψ h hh_char_cusp lam hh_eig hh_ne n
-          (hn.coprime_dvd_right hMN)]
-      exact (hh_lam n hn hnS).symm
-    intro n hn
-    have := (eigenvalues_eq_all_coprime_cross_level f h_eig_b χ hfχ ψ hψ_mod'
-      hc₁'_ne hMN hψχ S h_off n hn).symm
-    rwa [eigenformOfIsEigenform_eigenvalue ψ h hh_char_cusp lam hh_eig hh_ne n
-      (hn.coprime_dvd_right hMN)] at this
   have h_diff_char : ιh - c₁' • f.toCuspForm ∈ cuspFormCharSpace k χ :=
     (cuspFormCharSpace k χ).sub_mem hιh_char ((cuspFormCharSpace k χ).smul_mem c₁'
       ((cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace (k := k) χ
         f.toCuspForm).mp (by convert hfχ using 1)))
-  have h_vanish : ∀ n : ℕ, Nat.Coprime n N →
-      (ModularFormClass.qExpansion (1 : ℝ) (ιh - c₁' • f.toCuspForm)).coeff n = 0 := by
-    intro n hn
-    show (ModularFormClass.qExpansion (1 : ℝ)
-        (⇑ιh.toModularForm' - ⇑(c₁' • f.toCuspForm).toModularForm')).coeff n = 0
-    rw [qExpansion_sub one_pos one_mem_strictPeriods_Gamma1_map_local, map_sub, sub_eq_zero]
-    by_cases hn0 : n = 0
-    · subst hn0
-      rw [ModularFormClass.qExpansion_coeff_zero _ one_pos one_mem_strictPeriods_Gamma1_map_local,
-          ModularFormClass.qExpansion_coeff_zero _ one_pos one_mem_strictPeriods_Gamma1_map_local,
-          show (⇑ιh.toModularForm' : UpperHalfPlane → ℂ) = ⇑ιh from rfl,
-          show (⇑(c₁' • f.toCuspForm).toModularForm' : UpperHalfPlane → ℂ) =
-            ⇑(c₁' • f.toCuspForm) from rfl,
-          (CuspFormClass.zero_at_infty ιh).valueAtInfty_eq_zero,
-          (CuspFormClass.zero_at_infty (c₁' • f.toCuspForm)).valueAtInfty_eq_zero]
-    · have hn_pos : 0 < n := Nat.pos_of_ne_zero hn0
-      set np : ℕ+ := ⟨n, hn_pos⟩
-      have hnp_val : (np : ℕ) = n := rfl
-      have hnM : Nat.Coprime np.val M := hn.coprime_dvd_right hMN
-      have hfun : (⇑ιh.toModularForm' : UpperHalfPlane → ℂ) =
-          ⇑h_eig_b.toCuspForm.toModularForm' := by
-        rw [show (⇑ιh.toModularForm' : UpperHalfPlane → ℂ) = ⇑ιh from rfl,
-          show (⇑h_eig_b.toCuspForm.toModularForm' : UpperHalfPlane → ℂ) = ⇑h_eig_b.toCuspForm
-            from rfl, hh_eig_b_cusp, hιh_def, levelInclude_cusp_coe]
-      have hL : (ModularFormClass.qExpansion (1 : ℝ) (⇑ιh.toModularForm')).coeff n =
-          c₁' * f.eigenvalue np := by
-        rw [qExpansion_ext2 ιh.toModularForm' h_eig_b.toCuspForm.toModularForm' hfun, ← hnp_val,
-          show (⇑h_eig_b.toCuspForm.toModularForm' : UpperHalfPlane → ℂ) =
-            ⇑h_eig_b.toCuspForm from rfl,
-          Eigenform.coeff_eq_coeff_one_mul_eigenvalue h_eig_b ψ hψ_mod' np hnM,
-          eigenformOfIsEigenform_eigenvalue ψ h hh_char_cusp lam hh_eig hh_ne np hnM,
-          h_lam_eq np hn, hh_eig_b_cusp]
-      have hR : (ModularFormClass.qExpansion (1 : ℝ)
-          (⇑(c₁' • f.toCuspForm).toModularForm')).coeff n = c₁' * f.eigenvalue np := by
-        rw [show (⇑(c₁' • f.toCuspForm).toModularForm' : UpperHalfPlane → ℂ) =
-              c₁' • ⇑f.toCuspForm.toModularForm' from rfl,
-          qExpansion_smul one_pos one_mem_strictPeriods_Gamma1_map_local, PowerSeries.coeff_smul,
-          smul_eq_mul, ← hnp_val, Newform.eigenvalue_eq_coeff f np hn χ hfχ]
-        congr 1
-      rw [hL, hR]
-  have h_diff_old : ιh - c₁' • f.toCuspForm ∈ cuspFormsOld N k :=
-    mainLemma_charSpace_routeB_unconditional χ (ιh - c₁' • f.toCuspForm) h_diff_char h_vanish
-  have h_diff_ext : ιh - c₁' • f.toCuspForm ∈ cuspFormsOldExtended N k :=
-    cuspFormsOld_le_cuspFormsOldExtended h_diff_old
-  have hιh_ext : ιh ∈ cuspFormsOldExtended N k :=
-    levelInclude_cusp_mem_cuspFormsOldExtended hMN
-      (lt_of_le_of_ne (Nat.le_of_dvd (Nat.pos_of_ne_zero (NeZero.ne N)) hMN) hMne) h
-  have hcf_ext : c₁' • f.toCuspForm ∈ cuspFormsOldExtended N k := by
-    simpa using (cuspFormsOldExtended N k).sub_mem hιh_ext h_diff_ext
-  have hf_ext : f.toCuspForm ∈ cuspFormsOldExtended N k := by
-    have := (cuspFormsOldExtended N k).smul_mem c₁'⁻¹ hcf_ext
-    rwa [smul_smul, inv_mul_cancel₀ hc₁'_ne, one_smul] at this
+  have h_vanish := oldPart_diff_qExpansion_coeff_eq_zero f χ hfχ hMN ψ hψχ h hh_char lam
+    hh_eig hh_ne hc₁'_ne S hh_lam
+  have hf_ext : f.toCuspForm ∈ cuspFormsOldExtended N k :=
+    oldPart_f_mem_cuspFormsOldExtended f χ hMN hMne h c₁' hc₁'_ne h_diff_char h_vanish
   refine newform_notMem_cuspFormsOldExtended f (fun hf0 ↦ ?_) hf_ext
   have h1 : (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm).coeff 1 = 1 := f.isNorm
   rw [hf0, show (⇑(0 : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : UpperHalfPlane → ℂ) =
