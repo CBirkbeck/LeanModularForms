@@ -357,45 +357,6 @@ private theorem T_p_lower_smul_Hecke_FD_eq_iUnion_tile
     exact T_p_lower_mul_T_p_upper_smul_set_eq_shift_smul p hp b.val S
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-private theorem peterssonInner_T_p_lower_tile_eq_slash
-    (p : ℕ) [NeZero N] (hpN : Nat.Coprime p N) (S : Set ℍ) (F G : ℍ → ℂ)
-    (i : Option (Fin p)) :
-    peterssonInner k
-      (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-        (T_p_lower_tile_family N p hpN i) : GL (Fin 2) ℝ) • S) F G =
-    peterssonInner k S
-      (F ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-        (T_p_lower_tile_family N p hpN i) : GL (Fin 2) ℝ))
-      (G ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-        (T_p_lower_tile_family N p hpN i) : GL (Fin 2) ℝ)) :=
-  peterssonInner_mapGL_smul_eq_slash _ (T_p_lower_tile_family N p hpN i) F G
-
-open UpperHalfPlane ModularGroup MeasureTheory in
-private theorem peterssonInner_T_p_lower_iUnion_tile_eq_sum
-    (p : ℕ) [NeZero N] (hpN : Nat.Coprime p N) (S : Set ℍ) (F G : ℍ → ℂ)
-    (hm : ∀ i : Option (Fin p), NullMeasurableSet
-      (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-        (T_p_lower_tile_family N p hpN i) : GL (Fin 2) ℝ) • S) μ_hyp)
-    (hd : Pairwise (fun i j : Option (Fin p) ↦ AEDisjoint μ_hyp
-      (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-        (T_p_lower_tile_family N p hpN i) : GL (Fin 2) ℝ) • S)
-      (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-        (T_p_lower_tile_family N p hpN j) : GL (Fin 2) ℝ) • S)))
-    (hfi : IntegrableOn (fun τ ↦ petersson k F G τ)
-      (⋃ i : Option (Fin p),
-        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-          (T_p_lower_tile_family N p hpN i) : GL (Fin 2) ℝ) • S) μ_hyp) :
-    peterssonInner k
-      (⋃ i : Option (Fin p),
-        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-          (T_p_lower_tile_family N p hpN i) : GL (Fin 2) ℝ) • S) F G =
-    ∑ i : Option (Fin p), peterssonInner k
-      (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-        (T_p_lower_tile_family N p hpN i) : GL (Fin 2) ℝ) • S) F G :=
-  peterssonInner_iUnion_finite_aedisjoint _ hm hd F G hfi
-
-
-open UpperHalfPlane ModularGroup MeasureTheory in
 private theorem mapGL_tile_mul_peterssonAdj_Hecke_rep_eq_glMap_T_p_lower
     (p : ℕ) [NeZero N] (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (i : Option (Fin p)) :
@@ -479,20 +440,6 @@ private theorem peterssonInner_swap_via_uniform_adj
         F ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) by
     rw [← SlashAction.slash_mul,
       mapGL_tile_mul_peterssonAdj_Hecke_rep_eq_glMap_T_p_lower (N := N) p hp hpN i]]
-
-open UpperHalfPlane ModularGroup MeasureTheory in
-private theorem peterssonInner_swap_via_uniform_adj_slot1
-    (p : ℕ) [NeZero N] (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
-    (F G : ℍ → ℂ) (i : Option (Fin p)) :
-    peterssonInner k (fd : Set ℍ)
-      (G ∣[k] (Hecke_rep_family N p hp.pos hpN i))
-      (F ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-        (T_p_lower_tile_family N p hpN i) : GL (Fin 2) ℝ)) =
-    peterssonInner k (Hecke_rep_family N p hp.pos hpN i • (fd : Set ℍ)) G
-      (F ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) := by
-  rw [← peterssonInner_conj_symm,
-      peterssonInner_swap_via_uniform_adj (N := N) p hp hpN F G i,
-      peterssonInner_conj_symm]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
 lemma peterssonInner_slash_adj_M_infty_q_summand_eq
