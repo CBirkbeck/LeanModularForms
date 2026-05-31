@@ -517,54 +517,6 @@ theorem strongMultiplicityOne_of_analyticContradiction_of_newformUnique
     exact mul_right_cancel₀ hq_ne hcomb
   · exact h n hn hn_S
 
-/-- Combines `Newform.HeckeEntireExtension`, the pointwise Dirichlet-zero
-certificate family, and the explicit `h_unique` hypothesis to produce Strong
-Multiplicity One. -/
-theorem strongMultiplicityOne_of_HeckeEntireExtension_of_dirichletZeroCertificate_of_newformUnique
-    (h_unique : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
-      f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      (∀ n : ℕ+, Nat.Coprime n.val N → f.eigenvalue n = g.eigenvalue n) →
-      f.toCuspForm = g.toCuspForm)
-    (h_hecke : Newform.HeckeEntireExtension)
-    (h_cert : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
-      f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      ∀ (S : Finset ℕ),
-        (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
-          q ∉ S → f.lCoeff q = 0) →
-        ∃ (s₀ : ℂ),
-          (Newform.dirichletLift χ : DirichletCharacter ℂ N) ≠ 1 ∧
-          (Newform.dirichletLift χ * Newform.dirichletLift χ
-            : DirichletCharacter ℂ N) ≠ 1 ∧
-          DirichletCharacter.LFunction
-            (Newform.dirichletLift χ : DirichletCharacter ℂ N) (2 * s₀ - k + 1) = 0 ∧
-          DirichletCharacter.LFunction
-            (Newform.dirichletLift χ * Newform.dirichletLift χ
-              : DirichletCharacter ℂ N)
-            (2 * (2 * s₀ - k + 1)) ≠ 0 ∧
-          ∀ F : ℂ → ℂ, Differentiable ℂ F →
-            (∀ {s : ℂ}, LSeries.abscissaOfAbsConv f.lCoeff_stripped < s.re →
-              F s = LSeries f.lCoeff_stripped s) →
-            F =ᶠ[nhdsWithin s₀ {s₀}ᶜ]
-              ((fun s ↦ DirichletCharacter.LFunction
-                (Newform.dirichletLift χ * Newform.dirichletLift χ
-                  : DirichletCharacter ℂ N)
-                (2 * (2 * s - k + 1))) /
-              (fun s ↦ DirichletCharacter.LFunction
-                (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-                (2 * s - k + 1))))
-    {N : ℕ} [NeZero N] {k : ℤ} (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (hgχ : g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (S : Finset ℕ)
-    (h : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S →
-      f.eigenvalue n = g.eigenvalue n) :
-    f.toCuspForm = g.toCuspForm :=
-  strongMultiplicityOne_of_analyticContradiction_of_newformUnique h_unique
-    (Newform.analyticContradiction_of_HeckeEntireExtension_of_NoEntireExtensionUnderBadPrime
-      h_hecke (Newform.noEntireExtensionUnderBadPrime_of_dirichletZeroCertificate h_cert))
-    f g χ hfχ hgχ S h
-
 /-- The per-newform analytic certificate consumed by the SMO chain: an explicit
 pole point `s₀`, the character non-trivialities `χ̃ ≠ 1` and `χ̃² ≠ 1`, the
 Dirichlet zero `LFunction χ̃ (2 s₀ - k + 1) = 0`, the non-cancellation
