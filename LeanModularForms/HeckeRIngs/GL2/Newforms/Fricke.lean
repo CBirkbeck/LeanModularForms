@@ -1009,24 +1009,6 @@ def Newform.HasFrickeFundDomainTransport (N : ℕ) [NeZero N] : Prop :=
     ((Newform.frickeMatrix N : GL (Fin 2) ℝ) •
       (Gamma1_fundDomain_PSL N : Set UpperHalfPlane)) μ_hyp
 
-/-- Fricke Petersson-adjoint identity conditional only on the single FD-transport
-hypothesis `Newform.HasFrickeFundDomainTransport N`; the remaining invariance and
-integrability hypotheses are discharged internally. -/
-theorem Newform.frickeSlashCuspForm_petN_adjoint_of_isFundDomain
-    {N : ℕ} [NeZero N] {k : ℤ}
-    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (h_FD : Newform.HasFrickeFundDomainTransport N) :
-    petN (Newform.frickeSlashCuspForm f) g =
-      (-1 : ℂ) ^ k * petN f (Newform.frickeSlashCuspForm g) := by
-  refine Newform.frickeSlashCuspForm_petN_adjoint f g
-    (fun γ hγ τ ↦ Newform.frickeMatrix_smul_petersson_invariant f
-      ((-1 : ℂ) ^ k • Newform.frickeSlashCuspForm g) γ hγ τ)
-    h_FD
-    (integrableOn_petersson_Gamma1_fundDomain_PSL f
-      ((-1 : ℂ) ^ k • Newform.frickeSlashCuspForm g))
-    (Newform.integrableOn_petersson_smul_frickeMatrix_fundDomain_PSL f
-      ((-1 : ℂ) ^ k • Newform.frickeSlashCuspForm g))
-
 /-- The Fricke matrix `W_N` as a `GL(2, ℝ)⁺` element, via its positive
 determinant. -/
 noncomputable def Newform.frickeMatrix_GLPos (N : ℕ) [NeZero N] : GL(2, ℝ)⁺ :=
