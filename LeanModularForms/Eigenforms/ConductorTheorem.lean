@@ -560,36 +560,6 @@ theorem bdd_at_cusps_of_levelRaiseFun_eq (l N : ℕ) [NeZero l] [NeZero N] (h_dv
   rw [ModularForm.SL_slash]
   exact isBoundedAtImInfty_slash_mapGL_of_levelRaiseFun_eq l N k f g hg_eq γ
 
-/-- Case A lowered modular form bundle: under the Case A hypotheses, the
-candidate function `f` bundles into a `ModularForm` at the lowered level
-`(Gamma1 (N/l)).map (mapGL ℝ)`. -/
-noncomputable def conductorTheoremCaseA_modularForm (l N : ℕ) [NeZero l] [NeZero N]
-    (h_dvd : l ∣ N) (k : ℤ) (χ : DirichletCharacter ℂ N)
-    (h_fac : χ.FactorsThrough (N / l)) (f : UpperHalfPlane → ℂ)
-    (g : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hg_char : g ∈ modFormCharSpace k χ.toUnitHom) (hg_eq : ⇑g = levelRaiseFun l k f)
-    (hf_period : f ∣[k] (mapGL ℝ ModularGroup.T : GL (Fin 2) ℝ) = f) :
-    ModularForm ((Gamma1 (N / l)).map (mapGL ℝ)) k where
-  toFun := f
-  slash_action_eq' γ hγ_mem := by
-    obtain ⟨δ, hδ_mem, hδ_eq⟩ := Subgroup.mem_map.mp hγ_mem
-    rw [← hδ_eq]
-    exact conductor_slash_eq_self_of_mem_Gamma1_div l N h_dvd k χ h_fac f g hg_char hg_eq
-      hf_period δ hδ_mem
-  holo' := mdifferentiable_of_modularForm_levelRaiseFun_eq l k f g hg_eq
-  bdd_at_cusps' hc := bdd_at_cusps_of_levelRaiseFun_eq l N h_dvd k f g hg_eq hc
-
-/-- The bundled `conductorTheoremCaseA_modularForm` has underlying function `f`. -/
-@[simp]
-lemma conductorTheoremCaseA_modularForm_apply (l N : ℕ) [NeZero l] [NeZero N]
-    (h_dvd : l ∣ N) (k : ℤ) (χ : DirichletCharacter ℂ N)
-    (h_fac : χ.FactorsThrough (N / l)) (f : UpperHalfPlane → ℂ)
-    (g : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hg_char : g ∈ modFormCharSpace k χ.toUnitHom) (hg_eq : ⇑g = levelRaiseFun l k f)
-    (hf_period : f ∣[k] (mapGL ℝ ModularGroup.T : GL (Fin 2) ℝ) = f) :
-    ⇑(conductorTheoremCaseA_modularForm l N h_dvd k χ h_fac f g hg_char hg_eq hf_period) = f :=
-  rfl
-
 /-- Inverse zero-at-`i∞` transfer: if `g = levelRaiseFun l k f` and `g` is
 zero at `i∞`, then so is `f`. -/
 lemma isZeroAtImInfty_of_levelRaiseFun_eq (l : ℕ) [NeZero l] (k : ℤ)
@@ -1135,42 +1105,6 @@ theorem conductorTheoremCaseB_vanishing (l N : ℕ) [NeZero l] [NeZero N] (h_dvd
   exact fun_eq_zero_of_two_multipliers k f _
     (fun h ↦ hu'_chi.symm (Units.ext h)) h_slash h_slash_alt
 
-/-- Miyake 4.6.4 Conductor theorem, modular form flavor: under the generic
-Case A/B hypotheses, either `χ` factors through level `N/l` and `f` bundles
-into a `ModularForm` at the lowered level, or `f = 0`. -/
-theorem conductor_theorem_dichotomy (l N : ℕ) [NeZero l] [NeZero N] (h_dvd : l ∣ N)
-    (k : ℤ) (χ : DirichletCharacter ℂ N) (f : UpperHalfPlane → ℂ)
-    (g : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hg_char : g ∈ modFormCharSpace k χ.toUnitHom) (hg_eq : ⇑g = levelRaiseFun l k f)
-    (hf_period : f ∣[k] (mapGL ℝ ModularGroup.T : GL (Fin 2) ℝ) = f) :
-    (∃ _ : χ.FactorsThrough (N / l),
-      ∃ F : ModularForm ((Gamma1 (N / l)).map (mapGL ℝ)) k, ⇑F = f) ∨ f = 0 := by
-  classical
-  by_cases h_fac : χ.FactorsThrough (N / l)
-  · exact .inl ⟨h_fac, conductorTheoremCaseA_modularForm l N h_dvd k χ h_fac f g
-      hg_char hg_eq hf_period,
-      conductorTheoremCaseA_modularForm_apply l N h_dvd k χ h_fac f g hg_char hg_eq hf_period⟩
-  · exact .inr (conductorTheoremCaseB_vanishing l N h_dvd k χ h_fac f g hg_char hg_eq hf_period)
-
-/-- Miyake 4.6.4 Conductor theorem, cusp form flavor: under the generic
-Case A/B hypotheses with `g : CuspForm`, either `χ` factors through level
-`N/l` and `f` bundles into a `CuspForm` at the lowered level, or `f = 0`. -/
-theorem conductor_theorem_dichotomy_cuspForm (l N : ℕ) [NeZero l] [NeZero N]
-    (h_dvd : l ∣ N) (k : ℤ) (χ : DirichletCharacter ℂ N) (f : UpperHalfPlane → ℂ)
-    (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hg_char : g ∈ cuspFormCharSpace k χ.toUnitHom) (hg_eq : ⇑g = levelRaiseFun l k f)
-    (hf_period : f ∣[k] (mapGL ℝ ModularGroup.T : GL (Fin 2) ℝ) = f) :
-    (∃ _ : χ.FactorsThrough (N / l),
-      ∃ F : CuspForm ((Gamma1 (N / l)).map (mapGL ℝ)) k, ⇑F = f) ∨ f = 0 := by
-  classical
-  by_cases h_fac : χ.FactorsThrough (N / l)
-  · exact .inl ⟨h_fac, conductorTheoremCaseA_cuspForm l N h_dvd k χ h_fac f g
-      hg_char hg_eq hf_period,
-      conductorTheoremCaseA_cuspForm_apply l N h_dvd k χ h_fac f g hg_char hg_eq hf_period⟩
-  · exact .inr (conductorTheoremCaseB_vanishing l N h_dvd k χ h_fac f (cuspFormToModularForm g)
-      ((cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace
-        k χ.toUnitHom g).mpr hg_char) hg_eq hf_period)
-
 private lemma unitsMap_Gamma0MapUnits_lift_eq_of_diag (l N : ℕ) [NeZero N] [NeZero (N / l)]
     (h_dvd : l ∣ N) (γ : SL(2, ℤ)) (hγ : γ ∈ Gamma0 N) (γ'_pkg : ↥(Gamma0 (N / l)))
     (j : ℤ) (hdiag : γ.val 1 1 =
@@ -1195,28 +1129,6 @@ private lemma unitsMap_Gamma0MapUnits_lift_eq_of_diag (l N : ℕ) [NeZero N] [Ne
   rw [h10_zero]
   ring
 
-/-- Lowered character space membership for the modular-form Case A bundle: the
-bundle `conductorTheoremCaseA_modularForm` lies in
-`modFormCharSpace k (loweredCharacter h_fac).toUnitHom`. -/
-theorem conductorTheoremCaseA_modularForm_mem_modFormCharSpace (l N : ℕ) [NeZero l] [NeZero N]
-    [NeZero (N / l)] (h_dvd : l ∣ N) (k : ℤ) (χ : DirichletCharacter ℂ N)
-    (h_fac : χ.FactorsThrough (N / l)) (f : UpperHalfPlane → ℂ)
-    (g : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hg_char : g ∈ modFormCharSpace k χ.toUnitHom) (hg_eq : ⇑g = levelRaiseFun l k f)
-    (hf_period : f ∣[k] (mapGL ℝ ModularGroup.T : GL (Fin 2) ℝ) = f) :
-    conductorTheoremCaseA_modularForm l N h_dvd k χ h_fac f g hg_char hg_eq hf_period ∈
-      modFormCharSpace k (loweredCharacter h_fac).toUnitHom := by
-  rw [modFormCharSpace_iff_nebentypus]
-  intro γ'_pkg
-  rw [conductorTheoremCaseA_modularForm_apply]
-  obtain ⟨i, j, γ, hγ, hfact, hdiag⟩ :=
-    exists_T_levelRaiseConj_T_factor l N h_dvd γ'_pkg.val γ'_pkg.property
-  rw [hfact, conductor_slash_T_conj_eq l N h_dvd k χ f g hg_char hg_eq hf_period i j γ hγ]
-  congr 2
-  rw [toUnitHom_loweredCharacter h_fac, MonoidHom.comp_apply]
-  congr 1
-  exact unitsMap_Gamma0MapUnits_lift_eq_of_diag l N h_dvd γ hγ γ'_pkg j hdiag
-
 /-- Lowered character space membership for the cusp-form Case A bundle: the
 bundle `conductorTheoremCaseA_cuspForm` lies in
 `cuspFormCharSpace k (loweredCharacter h_fac).toUnitHom`. -/
@@ -1240,26 +1152,6 @@ theorem conductorTheoremCaseA_cuspForm_mem_cuspFormCharSpace (l N : ℕ) [NeZero
   rw [toUnitHom_loweredCharacter h_fac, MonoidHom.comp_apply]
   congr 1
   exact unitsMap_Gamma0MapUnits_lift_eq_of_diag l N h_dvd γ hγ γ'_pkg j hdiag
-
-/-- Strengthened modular-form dichotomy: same as `conductor_theorem_dichotomy`
-but the Case A branch also asserts that the lowered bundle lies in the lowered
-Nebentypus character space. -/
-theorem conductor_theorem_dichotomy_strong (l N : ℕ) [NeZero l] [NeZero N] [NeZero (N / l)]
-    (h_dvd : l ∣ N) (k : ℤ) (χ : DirichletCharacter ℂ N) (f : UpperHalfPlane → ℂ)
-    (g : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hg_char : g ∈ modFormCharSpace k χ.toUnitHom) (hg_eq : ⇑g = levelRaiseFun l k f)
-    (hf_period : f ∣[k] (mapGL ℝ ModularGroup.T : GL (Fin 2) ℝ) = f) :
-    (∃ h_fac : χ.FactorsThrough (N / l),
-      ∃ F : ModularForm ((Gamma1 (N / l)).map (mapGL ℝ)) k,
-        F ∈ modFormCharSpace k (loweredCharacter h_fac).toUnitHom ∧ ⇑F = f) ∨ f = 0 := by
-  classical
-  by_cases h_fac : χ.FactorsThrough (N / l)
-  · exact .inl ⟨h_fac, conductorTheoremCaseA_modularForm l N h_dvd k χ h_fac f g
-      hg_char hg_eq hf_period,
-      conductorTheoremCaseA_modularForm_mem_modFormCharSpace l N h_dvd k χ
-        h_fac f g hg_char hg_eq hf_period,
-      conductorTheoremCaseA_modularForm_apply l N h_dvd k χ h_fac f g hg_char hg_eq hf_period⟩
-  · exact .inr (conductorTheoremCaseB_vanishing l N h_dvd k χ h_fac f g hg_char hg_eq hf_period)
 
 /-- Strengthened cusp-form dichotomy: the cusp-form analogue of
 `conductor_theorem_dichotomy_strong`. -/
