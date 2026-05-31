@@ -357,10 +357,7 @@ theorem strongMultiplicityOne_of_HeckeFEData_of_PerNewformFullDirichletData_of_n
   strongMultiplicityOne_of_analyticContradiction_of_newformUnique h_unique
     (Newform.analyticContradiction_of_HeckeEntireExtension_of_NoEntireExtensionUnderBadPrime
       (Newform.HeckeEntireExtension_of_HeckeFEData h_FE)
-      (Newform.noEntireExtensionUnderBadPrime_of_full_dirichletZeroCertificate
-        fun _ _ _ f χ hfχ S h_bad ↦
-          Newform.full_pole_witness_data_of_PerNewformFullDirichletData f χ S
-            (h_data f χ hfχ S h_bad)))
+      (Newform.noEntireExtensionUnderBadPrime_of_full_dirichletZeroCertificate h_data))
     f g χ hfχ hgχ S h
 
 /-- Strong multiplicity one endpoint that drops the explicit
@@ -450,10 +447,7 @@ theorem Newform.analyticContradiction_of_HeckeFEData_of_PerNewformFullDirichletD
     Newform.AnalyticContradiction :=
   Newform.analyticContradiction_of_HeckeEntireExtension_of_NoEntireExtensionUnderBadPrime
     (Newform.HeckeEntireExtension_of_HeckeFEData h_FE)
-    (Newform.noEntireExtensionUnderBadPrime_of_full_dirichletZeroCertificate
-      fun _ _ _ f χ hfχ S h_bad ↦
-        Newform.full_pole_witness_data_of_PerNewformFullDirichletData f χ S
-          (h_data f χ hfχ S h_bad))
+    (Newform.noEntireExtensionUnderBadPrime_of_full_dirichletZeroCertificate h_data)
 
 /-- Composes `Newform.analyticContradiction_of_HeckeFEData_of_PerNewformFullDirichletData`
 through `Newform.exists_nonzero_prime_eigenvalue_of_analyticContradiction`. -/
