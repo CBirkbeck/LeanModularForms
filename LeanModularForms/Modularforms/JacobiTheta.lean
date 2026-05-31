@@ -625,6 +625,74 @@ lemma jacobi_f_SIF_MDifferentiable : MDiff jacobi_f_SIF := jacobi_f_MDifferentia
 
 end JacobiIdentity
 
+/-- **`jacobiTheta₂` half-mul Tannery summable bound.** -/
+private lemma jacobiTheta₂_half_mul_summable_bound :
+    Summable (fun n : ℤ ↦ rexp (π / 4) * rexp (-π * ((n : ℝ) + 1 / 2) ^ 2)) := by
+  apply summable_ofReal.mp
+  have h_aux (n : ℤ) := jacobiTheta₂_rel_aux n 1
+  simp_rw [mul_one] at h_aux
+  simp_rw [ofReal_mul, h_aux, ← smul_eq_mul]
+  apply Summable.const_smul
+  apply Summable.const_smul
+  rw [summable_jacobiTheta₂_term_iff]
+  simp
+
+/-- **`jacobiTheta₂` half-mul Tannery pointwise convergence.** -/
+private lemma jacobiTheta₂_half_mul_pointwise_tendsto (n : ℤ) :
+    Tendsto (fun z : ℍ ↦ cexp (2 * π * I * n * (z / 2) + π * I * n ^ 2 * z))
+      atImInfty (𝓝 (Set.indicator {-1, 0} 1 n)) := by
+  have : n = -1 ∨ n = 0 ∨ n ∉ ({-1, 0} : Set ℤ) := by
+    rw [Set.mem_insert_iff, Set.mem_singleton_iff]
+    tauto
+  rcases this with (rfl | rfl | hn) <;> ring_nf
+  · simp
+  · simp
+  · simp only [hn, not_false_eq_true, Set.indicator_of_notMem]
+    apply tendsto_zero_iff_norm_tendsto_zero.mpr
+    have h₁ (n : ℤ) (z : ℂ) : (π * I * n * z + π * I * n ^ 2 * z) = π * (n + n ^ 2) * z * I := by
+      ring_nf
+    have h_base' : rexp (-π) ^ ((n : ℝ) + n ^ 2) < 1 := by
+      apply Real.rpow_lt_one
+      · positivity
+      · apply Real.exp_lt_one_iff.mpr (by simp; positivity)
+      convert_to 0 < ((n * (n + 1) : ℤ) : ℝ)
+      · push_cast
+        ring_nf
+      · apply Int.cast_pos.mpr
+        by_cases hn' : 0 < n
+        · apply mul_pos hn' (by omega)
+        · rw [Set.mem_insert_iff, Set.mem_singleton_iff] at hn
+          exact mul_pos_of_neg_of_neg (by omega) (by omega)
+    simp_rw [h₁, norm_exp_mul_I, mul_assoc, im_ofReal_mul, ← Int.cast_pow, ← Int.cast_add,
+      ← ofReal_intCast, im_ofReal_mul, ← mul_assoc, Int.cast_add, Int.cast_pow, ← neg_mul,
+      Real.exp_mul, coe_im]
+    refine (tendsto_rpow_atTop_of_base_lt_one _ ?_ h_base').comp tendsto_im_atImInfty
+    exact neg_one_lt_zero.trans (by positivity)
+
+/-- **`jacobiTheta₂` half-mul Tannery eventual norm bound.** -/
+private lemma jacobiTheta₂_half_mul_eventual_norm_bound :
+    ∀ᶠ z : ℍ in atImInfty, ∀ k : ℤ,
+      ‖cexp (2 * π * I * k * (z / 2) + π * I * k ^ 2 * z)‖ ≤
+        rexp (π / 4) * rexp (-π * ((k : ℝ) + 1 / 2) ^ 2) := by
+  rw [eventually_atImInfty]
+  use 1
+  intro z hz k
+  simp_rw [← Real.exp_add]
+  ring_nf
+  trans ‖cexp (((π * k + π * k ^ 2 : ℝ) * z) * I)‖
+  · apply le_of_eq
+    simpa [add_mul] using by ring_nf
+  · rw [norm_exp_mul_I, im_ofReal_mul]
+    have (n : ℤ) : 0 ≤ (n : ℝ) ^ 2 + n := by
+      nth_rw 2 [← mul_one n]
+      rw [sq, Int.cast_mul, Int.cast_one, ← mul_add]
+      rcases lt_trichotomy (-1) n with (hn | rfl | hn)
+      · apply mul_nonneg <;> norm_cast; omega
+      · norm_num
+      · apply mul_nonneg_of_nonpos_of_nonpos <;> norm_cast <;> omega
+    simpa using le_mul_of_one_le_right
+      (by rw [← mul_add, add_comm]; exact mul_nonneg Real.pi_nonneg (this k)) hz
+
 theorem jacobiTheta₂_half_mul_apply_tendsto_atImInfty :
     Tendsto (fun x : ℍ ↦ jacobiTheta₂ (x / 2) x) atImInfty (𝓝 2) := by
   simp_rw [jacobiTheta₂, jacobiTheta₂_term]
@@ -632,62 +700,11 @@ theorem jacobiTheta₂_half_mul_apply_tendsto_atImInfty :
     (f := fun z (n : ℤ) ↦ cexp (2 * π * I * n * (z / 2) + π * I * n ^ 2 * z))
     (𝓕 := atImInfty)
     (g := Set.indicator {-1, 0} 1)
-    (bound := fun n : ℤ ↦ rexp (π / 4) * rexp (-π * ((n : ℝ) + 1 / 2) ^ 2)) ?_ ?_ ?_
-  · simp [← tsum_subtype]
-  · apply summable_ofReal.mp
-    have h_aux (n : ℤ) := jacobiTheta₂_rel_aux n 1
-    simp_rw [mul_one] at h_aux
-    simp_rw [ofReal_mul, h_aux, ← smul_eq_mul]
-    apply Summable.const_smul
-    apply Summable.const_smul
-    rw [summable_jacobiTheta₂_term_iff]
-    simp
-  · intro n
-    have : n = -1 ∨ n = 0 ∨ n ∉ ({-1, 0} : Set ℤ) := by
-      rw [Set.mem_insert_iff, Set.mem_singleton_iff]
-      tauto
-    rcases this with (rfl | rfl | hn) <;> ring_nf
-    · simp
-    · simp
-    · simp only [hn, not_false_eq_true, Set.indicator_of_notMem]
-      apply tendsto_zero_iff_norm_tendsto_zero.mpr
-      have h₁ (n : ℤ) (z : ℂ) : (π * I * n * z + π * I * n ^ 2 * z) = π * (n + n ^ 2) * z * I := by
-        ring_nf
-      have h_base' : rexp (-π) ^ ((n : ℝ) + n ^ 2) < 1 := by
-        apply Real.rpow_lt_one
-        · positivity
-        · apply Real.exp_lt_one_iff.mpr (by simp; positivity)
-        convert_to 0 < ((n * (n + 1) : ℤ) : ℝ)
-        · push_cast
-          ring_nf
-        · apply Int.cast_pos.mpr
-          by_cases hn' : 0 < n
-          · apply mul_pos hn' (by omega)
-          · rw [Set.mem_insert_iff, Set.mem_singleton_iff] at hn
-            exact mul_pos_of_neg_of_neg (by omega) (by omega)
-      simp_rw [h₁, norm_exp_mul_I, mul_assoc, im_ofReal_mul, ← Int.cast_pow, ← Int.cast_add,
-        ← ofReal_intCast, im_ofReal_mul, ← mul_assoc, Int.cast_add, Int.cast_pow, ← neg_mul,
-        Real.exp_mul, coe_im]
-      refine (tendsto_rpow_atTop_of_base_lt_one _ ?_ h_base').comp tendsto_im_atImInfty
-      exact neg_one_lt_zero.trans (by positivity)
-  · rw [eventually_atImInfty]
-    use 1
-    intro z hz k
-    simp_rw [← Real.exp_add]
-    ring_nf
-    trans ‖cexp (((π * k + π * k ^ 2 : ℝ) * z) * I)‖
-    · apply le_of_eq
-      simpa [add_mul] using by ring_nf
-    · rw [norm_exp_mul_I, im_ofReal_mul]
-      have (n : ℤ) : 0 ≤ (n : ℝ) ^ 2 + n := by
-        nth_rw 2 [← mul_one n]
-        rw [sq, Int.cast_mul, Int.cast_one, ← mul_add]
-        rcases lt_trichotomy (-1) n with (hn | rfl | hn)
-        · apply mul_nonneg <;> norm_cast; omega
-        · norm_num
-        · apply mul_nonneg_of_nonpos_of_nonpos <;> norm_cast <;> omega
-      simpa using le_mul_of_one_le_right
-        (by rw [← mul_add, add_comm]; exact mul_nonneg Real.pi_nonneg (this k)) hz
+    (bound := fun n : ℤ ↦ rexp (π / 4) * rexp (-π * ((n : ℝ) + 1 / 2) ^ 2))
+    jacobiTheta₂_half_mul_summable_bound
+    jacobiTheta₂_half_mul_pointwise_tendsto
+    jacobiTheta₂_half_mul_eventual_norm_bound
+  simp [← tsum_subtype]
 
 theorem jacobiTheta₂_zero_apply_tendsto_atImInfty :
     Tendsto (fun x : ℍ ↦ jacobiTheta₂ 0 x) atImInfty (𝓝 1) := by
