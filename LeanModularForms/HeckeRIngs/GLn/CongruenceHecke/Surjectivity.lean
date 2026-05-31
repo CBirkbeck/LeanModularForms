@@ -183,37 +183,6 @@ open HeckeRing.GLn.Inj
   (T_gen_pow_support_qpower T_gen_pow_entries_qpower support_mul_exists
    det_SLnZ_eq_one det_doubleCoset_eq prod_rep_T_diag det_mulMap_eq)
 
-private theorem shimura_prop_3_31_surjective (N : ℕ) [NeZero N]
-    (D : HeckeCoset (GL_pair 2))
-    (hD_coprime : Int.gcd
-      ((↑((HeckeCoset.rep D : (GL_pair 2).Δ) : GL (Fin 2) ℚ) :
-        Matrix (Fin 2) (Fin 2) ℚ).det.num) N = 1) :
-    ∃ (D' : HeckeCoset (Gamma0_pair N)), cosetMap N D' = D := by
-  obtain ⟨a, ha_pos, _ha_div, ha_eq⟩ := exists_diagonal_representative 2 (HeckeCoset.rep D)
-  have hD_eq : D = T_diag a := by
-    rw [show D = (⟦HeckeCoset.rep D⟧ : HeckeCoset (GL_pair 2)) from
-      (HeckeCoset.mk_rep D).symm, ha_eq]
-  have hrep_eq : (HeckeCoset.rep D : (GL_pair 2).Δ) =
-      (HeckeCoset.rep (T_diag a) : (GL_pair 2).Δ) := by
-    rw [hD_eq]
-  rw [hrep_eq] at hD_coprime
-  rw [prod_rep_T_diag a ha_pos] at hD_coprime
-  simp only [Fin.prod_univ_two] at hD_coprime
-  have ha0_gcd : Int.gcd (a 0 : ℤ) N = 1 := by
-    have h_num : (((a 0 : ℚ) * (a 1 : ℚ)).num) = (a 0 * a 1 : ℤ) := by
-      have : ((a 0 : ℚ) * (a 1 : ℚ)) = ((a 0 * a 1 : ℕ) : ℚ) := by push_cast; ring
-      rw [this]; exact_mod_cast Rat.num_natCast _
-    rw [h_num] at hD_coprime
-    have hNat : Nat.Coprime (a 0 * a 1) N := by
-      show (a 0 * a 1).gcd N = 1
-      have h_push : (↑(a 0 * a 1 : ℕ) : ℤ).gcd ↑N = (a 0 * a 1).gcd N :=
-        Int.gcd_natCast_natCast _ _
-      rw [← h_push]; push_cast; exact hD_coprime
-    have : (a 0).gcd N = 1 := Nat.Coprime.coprime_dvd_left ⟨a 1, rfl⟩ hNat
-    exact_mod_cast this
-  refine ⟨T_diag_Gamma0 N a ha_pos ha0_gcd, ?_⟩
-  rw [cosetMap_T_diag_Gamma0, ← hD_eq]
-
 private lemma support_det_mul (f g : HeckeAlgebra 2) (d₁ d₂ : ℚ)
     (hf : ∀ D, f D ≠ 0 →
       (↑(↑(HeckeCoset.rep D) : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ).det = d₁)
