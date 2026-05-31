@@ -196,57 +196,6 @@ private theorem peterssonInner_T_p_reps_sum_slashes_eq_aggregate_HeckeFD
   rw [← hset_eq]
   exact hmain
 
-open UpperHalfPlane ModularGroup MeasureTheory in
-private theorem peterssonInner_T_p_reps_sum_slashes_eq_aggregate_HeckeFD_PSL_R
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
-    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hm : ∀ i ∈ (Finset.univ : Finset (Option (Fin p))),
-      NullMeasurableSet
-        (α_T_p_PSL_R p hp hpN i • (Gamma1_fundDomain_PSL N : Set ℍ)) μ_hyp)
-    (h_int_per : ∀ i ∈ (Finset.univ : Finset (Option (Fin p))),
-      IntegrableOn (fun τ ↦ petersson k ⇑g
-        (⇑f ∣[k] (match i with
-          | none => (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)
-          | some b => (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ))) τ)
-        (Gamma1_fundDomain_PSL N) μ_hyp)
-    (hfi : IntegrableOn (fun τ ↦ petersson k ⇑f
-        (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) τ)
-      (⋃ i ∈ (Finset.univ : Finset (Option (Fin p))),
-        α_T_p_PSL_R p hp hpN i • (Gamma1_fundDomain_PSL N : Set ℍ)) μ_hyp) :
-    peterssonInner k (Gamma1_fundDomain_PSL N)
-      (∑ i ∈ (Finset.univ : Finset (Option (Fin p))),
-        ⇑f ∣[k] (match i with
-          | none => (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)
-          | some b => (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ))) ⇑g =
-    peterssonInner k
-      (⋃ i ∈ (Finset.univ : Finset (Option (Fin p))),
-        α_T_p_PSL_R p hp hpN i • (Gamma1_fundDomain_PSL N : Set ℍ))
-      ⇑f
-      (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) := by
-  have h_biUnion := α_T_p_PSL_R_biUnion_eq_match_GL_biUnion (N := N) p hp hpN
-    (Gamma1_fundDomain_PSL N : Set ℍ)
-  have hm_GL : ∀ i ∈ (Finset.univ : Finset (Option (Fin p))),
-      NullMeasurableSet ((match i with
-        | none => (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)
-        | some b => (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)) •
-          (Gamma1_fundDomain_PSL N : Set ℍ)) μ_hyp := by
-    intro i hi
-    have h_per := α_T_p_PSL_R_smul_set_eq_match_GL p hp hpN i
-      (Gamma1_fundDomain_PSL N : Set ℍ)
-    rw [← h_per]
-    exact hm i hi
-  have hfi_GL : IntegrableOn (fun τ ↦ petersson k ⇑f
-        (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) τ)
-      (⋃ i ∈ (Finset.univ : Finset (Option (Fin p))),
-        ((match i with
-          | none => (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)
-          | some b => (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)) •
-          (Gamma1_fundDomain_PSL N : Set ℍ))) μ_hyp := by
-    rw [← h_biUnion]; exact hfi
-  rw [h_biUnion]
-  exact peterssonInner_T_p_reps_sum_slashes_eq_aggregate_HeckeFD
-    p hp hpN f g hm_GL h_int_per hfi_GL
-
 open CongruenceSubgroup Pointwise ConjAct UpperHalfPlane MeasureTheory in
 /-- **Phase G specialized — projective shifted FD-decomposition for the
 T_p Hecke family.** -/
@@ -404,7 +353,7 @@ private lemma measure_α_T_p_family_aggregate_lt_top
 
 open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **CORRECTED leaf 3** — the family-aggregate measure hypotheses for invoking the proven
-`peterssonInner_T_p_reps_sum_slashes_eq_aggregate_HeckeFD_PSL_R` (line 202): per-`i`
+`peterssonInner_T_p_reps_sum_slashes_eq_aggregate_HeckeFD`: per-`i`
 `NullMeasurableSet` of each `β_i•Γ₁-FD`, per-`i` `IntegrableOn` of the swapped kernel on
 `Γ₁-FD`, and `IntegrableOn` of the forward kernel on the family `iUnion`.
 Route (BUILD, bounded): `nullMeasurableSet`/`integrableOn` engines already used at

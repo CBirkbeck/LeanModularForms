@@ -1242,41 +1242,6 @@ theorem measure_glPos_smul_Gamma1_fundDomain_lt_top
   exact hyperbolicMeasure_Gamma1_fundDomain_PSL_lt_top
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- The Petersson integrand is integrable on a single `glMap`-translate of
-`Gamma1_fundDomain_PSL N`. -/
-theorem integrableOn_petersson_glMap_smul_Gamma1_fundDomain
-    {N : ℕ} [NeZero N] (α : GL (Fin 2) ℝ) (hα : 0 < α.det.val)
-    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    IntegrableOn (fun τ ↦ petersson k ⇑f ⇑g τ)
-      (α • (Gamma1_fundDomain_PSL N : Set ℍ)) μ_hyp := by
-  obtain ⟨C, hC⟩ := CuspFormClass.petersson_bounded_left k
-    ((Gamma1 N).map (mapGL ℝ)) f g
-  exact IntegrableOn.of_bound (measure_glPos_smul_Gamma1_fundDomain_lt_top α hα)
-    ((petersson_continuous k (ModularFormClass.continuous f)
-      (ModularFormClass.continuous g)).aestronglyMeasurable.restrict)
-    C (ae_of_all _ fun τ ↦ hC τ)
-
-open UpperHalfPlane ModularGroup MeasureTheory in
-/-- The Petersson integrand is integrable on a `Finset`-biUnion of
-positive-determinant `glMap`-translates. -/
-theorem integrableOn_petersson_biUnion_glMap_smul
-    {N : ℕ} [NeZero N] {ι : Type*} (s : Finset ι) (α : ι → GL (Fin 2) ℝ)
-    (hα : ∀ i ∈ s, 0 < (α i).det.val)
-    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-  IntegrableOn (fun τ ↦ petersson k ⇑f ⇑g τ)
-      (⋃ i ∈ s, α i • (Gamma1_fundDomain_PSL N : Set ℍ)) μ_hyp := by
-  obtain ⟨C, hC⟩ := CuspFormClass.petersson_bounded_left k
-    ((Gamma1 N).map (mapGL ℝ)) f g
-  have h_finite : μ_hyp (⋃ i ∈ s, α i • (Gamma1_fundDomain_PSL N : Set ℍ)) < ⊤ := by
-    refine lt_of_le_of_lt (measure_biUnion_finset_le s _) ?_
-    refine ENNReal.sum_lt_top.mpr fun i hi ↦ ?_
-    exact measure_glPos_smul_Gamma1_fundDomain_lt_top (α i) (hα i hi)
-  exact IntegrableOn.of_bound h_finite
-    ((petersson_continuous k (ModularFormClass.continuous f)
-      (ModularFormClass.continuous g)).aestronglyMeasurable.restrict)
-    C (ae_of_all _ fun τ ↦ hC τ)
-
-open UpperHalfPlane ModularGroup MeasureTheory in
 /-- A finite family is pairwise AE-disjoint, from per-pair hypotheses. -/
 theorem aedisjoint_pairwise_family_of_pair_ae_disjoint
     {ι : Type*} {D : Set ℍ} (s : Finset ι) (α : ι → GL (Fin 2) ℝ)
@@ -1450,34 +1415,8 @@ theorem aedisjoint_pairwise_T_p_family
     exact congr_arg some (Fin.ext h_val)
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- Petersson sum-of-slashes equals the aggregate Hecke-FD biUnion, for a finite
-family of `GL(2,ℝ)⁺` representatives with a common adjoint cusp form. -/
-theorem peterssonInner_T_p_family_sum_slashes_eq_aggregate
-    {N : ℕ} [NeZero N] {ι : Type*} [DecidableEq ι] (s : Finset ι)
-    (α : ι → GL (Fin 2) ℝ) (hα : ∀ i ∈ s, 0 < (α i).det.val)
-    (f g g' : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hadj : ∀ i ∈ s, ⇑g ∣[k] peterssonAdj (α i) = ⇑g')
-    (hm : ∀ i ∈ s,
-      NullMeasurableSet (α i • (Gamma1_fundDomain_PSL N : Set ℍ)) μ_hyp)
-    (hd : (↑s : Set ι).Pairwise
-      (fun i j ↦ AEDisjoint μ_hyp
-        (α i • (Gamma1_fundDomain_PSL N : Set ℍ))
-        (α j • (Gamma1_fundDomain_PSL N : Set ℍ))))
-    (h_int_per : ∀ i ∈ s,
-      IntegrableOn (fun τ ↦ petersson k ⇑g (⇑f ∣[k] α i) τ)
-        (Gamma1_fundDomain_PSL N) μ_hyp) :
-    peterssonInner k (Gamma1_fundDomain_PSL N) (∑ i ∈ s, ⇑f ∣[k] α i) ⇑g =
-      peterssonInner k
-        (⋃ i ∈ s, α i • (Gamma1_fundDomain_PSL N : Set ℍ))
-        ⇑f ⇑g' :=
-  peterssonInner_sum_slash_adjoint_constantRHS s α hα
-    (Gamma1_fundDomain_PSL N) ⇑f ⇑g ⇑g' hadj h_int_per hm hd
-    (integrableOn_petersson_biUnion_glMap_smul s α hα f g')
-
-open UpperHalfPlane ModularGroup MeasureTheory in
 /-- Petersson sum-of-slashes equals the aggregate Hecke-FD biUnion, with an
-explicit union-integrability hypothesis (companion to
-`peterssonInner_T_p_family_sum_slashes_eq_aggregate`). -/
+explicit union-integrability hypothesis. -/
 theorem peterssonInner_T_p_family_sum_slashes_eq_aggregate_of_integrable
     {N : ℕ} [NeZero N] {ι : Type*} [DecidableEq ι] (s : Finset ι)
     (α : ι → GL (Fin 2) ℝ) (hα : ∀ i ∈ s, 0 < (α i).det.val)
