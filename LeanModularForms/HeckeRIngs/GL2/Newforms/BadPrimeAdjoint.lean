@@ -1011,22 +1011,6 @@ theorem NewformExtended.heckeT_n_cusp_mem_cuspFormsNew_of_coprime
   heckeT_n_preserves_cuspFormsNew p hp_cop f.toCuspForm
     (cuspFormsNewExtended_le_cuspFormsNew f.isNew)
 
-/-- A `True`-valued declaration whose proof type-checks the SMO downstream
-consumer theorems for accessibility; it records that the bad-prime newspace
-chain reduces to the single dependency `Newform.HasBadPrimeFrickePetNAdjoint`. -/
-theorem T179_dependency_audit_after_T177 : True := by
-  let _ := @Newform.HasBadPrimeFrickePetNAdjoint
-  let _ := @Newform.HasHeckeT_n_cusp_at_divN_PreservesCuspFormsOldExtended_unconditional
-  let _ := @Newform.hasFrickeSlashCuspFormPreservesCuspFormsOldExtended
-  let _ := @Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_T170
-  let _ := @heckeT_n_cusp_preserves_cuspFormsNew_of_NewformExtended_at_divN_of_T170
-  let _ := @heckeT_n_cusp_preserves_cuspFormsNew_of_NewformExtended_of_T170_unified
-  let _ := @NewformExtended.heckeT_n_cusp_mem_cuspFormsNew_of_T170
-  let _ := @NewformExtended.heckeT_n_cusp_mem_cuspFormsNew_of_coprime
-  let _ := @Newform.frickeBadAdjointCandidate_preserves_cuspFormsOldExtended_unconditional
-  let _ := @Newform.frickeBadAdjointCandidateNormalized_preserves_cuspFormsOldExtended_unconditional
-  trivial
-
 /-- Coprime arbitrary-`n` consumer for `NewformExtended`, by delegation to the
 classical `heckeT_n_preserves_cuspFormsNew`. No petN-adjoint hypothesis needed. -/
 theorem NewformExtended.heckeT_n_cusp_mem_cuspFormsNew_of_coprime_arbitrary_n
@@ -1178,88 +1162,6 @@ theorem NewformExtended.heckeT_n_cusp_mem_cuspFormsNew_of_bad_only_T170
   cuspFormsNewExtended_le_cuspFormsNew
     (NewformExtended.heckeT_n_cusp_mem_cuspFormsNewExtended_of_bad_only_T170
       n h_bad_only h_adj_at_each f.toCuspForm f.isNew)
-
-/-- A `True`-valued declaration whose proof type-checks the arbitrary-`n`
-`NewformExtended` Hecke consumers for accessibility. -/
-theorem T180_dependency_audit_after_T179 : True := by
-  let _ := @NewformExtended.heckeT_n_cusp_mem_cuspFormsNew_of_coprime_arbitrary_n
-  let _ := @NewformExtended.heckeT_pp_cusp_mem_cuspFormsNewExtended_at_bad_of_T170
-  let _ := @NewformExtended.heckeT_n_cusp_mem_cuspFormsNewExtended_of_bad_only_T170
-  let _ := @NewformExtended.heckeT_n_cusp_mem_cuspFormsNew_of_bad_only_T170
-  let _ := @heckeT_n_mul_coprime
-  trivial
-
-/-- For the bad-prime upper-triangular coset rep `β_b := T_p_upper p hp b`
-embedded via `glMap`, the double-conjugation `W_N · β_b · W_N` equals the scalar
-matrix `(-N) • !![p, 0; -N·b, 1]`. -/
-lemma Newform.frickeMatrix_mul_glMap_T_p_upper_mul_frickeMatrix_val
-    (N : ℕ) [NeZero N] {p : ℕ} (hp : 0 < p) (b : ℕ) :
-    ((Newform.frickeMatrix N : GL (Fin 2) ℝ) :
-        Matrix (Fin 2) (Fin 2) ℝ) *
-        ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) :
-          Matrix (Fin 2) (Fin 2) ℝ) *
-        ((Newform.frickeMatrix N : GL (Fin 2) ℝ) :
-          Matrix (Fin 2) (Fin 2) ℝ) =
-      (-(N : ℝ)) •
-        (!![(p : ℝ), 0; -((N : ℝ) * b), 1] : Matrix (Fin 2) (Fin 2) ℝ) := by
-  rw [Newform.frickeMatrix_coe,
-    show ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
-        !![(1 : ℝ), (b : ℝ); 0, (p : ℝ)] by
-      show (T_p_upper p hp b : Matrix (Fin 2) (Fin 2) ℚ).map (algebraMap ℚ ℝ) =
-          !![(1 : ℝ), (b : ℝ); 0, (p : ℝ)]
-      rw [T_p_upper_coe]
-      ext i j
-      fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply]]
-  ext i j
-  fin_cases i <;> fin_cases j <;>
-    simp [Matrix.mul_apply, Fin.sum_univ_two, Matrix.smul_apply,
-      Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val',
-      Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply] <;>
-    ring
-
-private lemma frickeMatrix_mul_glMap_T_p_upper_eq_mul_frickeMatrix
-    (N : ℕ) [NeZero N] {p : ℕ} (hp : 0 < p) (b : ℕ) :
-    ((Newform.frickeMatrix N : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) *
-        ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
-      (!![(p : ℝ), 0; -((N : ℝ) * b), 1] : Matrix (Fin 2) (Fin 2) ℝ) *
-        ((Newform.frickeMatrix N : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) := by
-  rw [Newform.frickeMatrix_coe,
-    show ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
-        !![(1 : ℝ), (b : ℝ); 0, (p : ℝ)] by
-      show (T_p_upper p hp b : Matrix (Fin 2) (Fin 2) ℚ).map (algebraMap ℚ ℝ) =
-          !![(1 : ℝ), (b : ℝ); 0, (p : ℝ)]
-      rw [T_p_upper_coe]
-      ext i j
-      fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply]]
-  ext i j
-  fin_cases i <;> fin_cases j <;>
-    simp [Matrix.mul_apply, Fin.sum_univ_two,
-      Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val',
-      Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply]
-
-/-- The classical Atkin-Lehner inverse-conjugation `W_N · β_b · W_N⁻¹` of the
-bad-prime upper-triangular coset rep `β_b := T_p_upper p hp b` equals
-`!![p, 0; -N·b, 1]` (the `(-N)` factor cancelling against `W_N⁻¹`). -/
-lemma Newform.frickeMatrix_mul_glMap_T_p_upper_mul_frickeMatrix_inv_val
-    (N : ℕ) [NeZero N] {p : ℕ} (hp : 0 < p) (b : ℕ) :
-    ((Newform.frickeMatrix N : GL (Fin 2) ℝ) :
-        Matrix (Fin 2) (Fin 2) ℝ) *
-        ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) :
-          Matrix (Fin 2) (Fin 2) ℝ) *
-        (((Newform.frickeMatrix N)⁻¹ : GL (Fin 2) ℝ) :
-          Matrix (Fin 2) (Fin 2) ℝ) =
-      (!![(p : ℝ), 0; -((N : ℝ) * b), 1] : Matrix (Fin 2) (Fin 2) ℝ) := by
-  have hW_inv_mul : ((Newform.frickeMatrix N : GL (Fin 2) ℝ) :
-          Matrix (Fin 2) (Fin 2) ℝ) *
-        ((Newform.frickeMatrix N : GL (Fin 2) ℝ) :
-          Matrix (Fin 2) (Fin 2) ℝ)⁻¹ = 1 := by
-    rw [Matrix.mul_nonsing_inv]
-    rw [show ((Newform.frickeMatrix N : GL (Fin 2) ℝ) :
-        Matrix (Fin 2) (Fin 2) ℝ).det = (N : ℝ) from Newform.frickeMatrix_det N]
-    exact isUnit_iff_ne_zero.mpr (Nat.cast_ne_zero.mpr (NeZero.ne N))
-  rw [Matrix.coe_units_inv (Newform.frickeMatrix N),
-    frickeMatrix_mul_glMap_T_p_upper_eq_mul_frickeMatrix, Matrix.mul_assoc,
-    hW_inv_mul, Matrix.mul_one]
 
 
 end HeckeRing.GL2
