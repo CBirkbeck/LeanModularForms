@@ -2277,36 +2277,6 @@ private lemma heckeT_p_cusp_comm_diamondOp_private
   exact congr_arg (fun m : ModularForm ((Gamma1 N).map (mapGL ℝ)) k ↦ m.toFun τ)
     h.symm
 
-open UpperHalfPlane ModularGroup MeasureTheory in
-lemma petN_T_p_heckeT_p_LHS_sum_distributed
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
-    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    petN (heckeT_p_cusp k p hp hpN f) g =
-    ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-      (peterssonInner k ModularGroup.fd
-          (⇑f ∣[k] ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) *
-            ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-              (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
-          (⇑g ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            (q.out : SL(2, ℤ))⁻¹)) +
-        ∑ b ∈ Finset.range p,
-          peterssonInner k ModularGroup.fd
-            (⇑f ∣[k] ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-              ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-                (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)))
-            (⇑g ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-              (q.out : SL(2, ℤ))⁻¹))) := by
-  show ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-      peterssonInner k ModularGroup.fd
-        (⇑(heckeT_p_cusp k p hp hpN f) ∣[k]
-          ((q.out : SL(2, ℤ))⁻¹))
-        (⇑g ∣[k]
-          ((q.out : SL(2, ℤ))⁻¹)) = _
-  refine Finset.sum_congr rfl fun q _ ↦ ?_
-  rw [peterssonInner_SL_inv_eq_mapGL_inv]
-  exact peterssonInner_heckeT_p_LHS_per_q_distribute p hp hpN
-    (q.out : SL(2, ℤ)) f g
-
 /-! ### W5a-2 `hFD` — the Hecke-tile fundamental-domain identification
 
 The `p+1` det-`p` Hecke tiles `β_i • Γ₁-FD` (`β_none = M_∞`, `β_(some b) = T_p_upper(b)`)
