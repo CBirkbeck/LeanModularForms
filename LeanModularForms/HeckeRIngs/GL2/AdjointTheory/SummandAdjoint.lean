@@ -1404,35 +1404,6 @@ theorem slash_heckeT_p_cusp_Gamma1QuotEquiv_out_inv_eq
       (heckeT_p_cusp k p hp hpN g) q,
     diamondOp_cusp_heckeT_p_cusp_comm_coe p hp hpN γ g]
 
-open UpperHalfPlane ModularGroup MeasureTheory in
-/-- `petN (T_p f) g = petN (T_p (⟨Gamma0MapUnits γ⟩ f)) (⟨Gamma0MapUnits γ⟩ g)`
-for any `γ ∈ Γ₀(N)` and `Γ₁(N)`-cusp forms `f, g`. -/
-theorem petN_heckeT_p_Gamma1QuotEquiv_reindex
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
-    (γ : ↥(Gamma0 N)) (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    petN (heckeT_p_cusp k p hp hpN f) g =
-      petN (heckeT_p_cusp k p hp hpN
-              (diamondOp_cusp k (Gamma0MapUnits γ) f))
-           (diamondOp_cusp k (Gamma0MapUnits γ) g) := by
-  show ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-        peterssonInner k ModularGroup.fd
-          (⇑(heckeT_p_cusp k p hp hpN f) ∣[k] (q.out : SL(2, ℤ))⁻¹)
-          (⇑g ∣[k] (q.out : SL(2, ℤ))⁻¹) =
-      ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-        peterssonInner k ModularGroup.fd
-          (⇑(heckeT_p_cusp k p hp hpN
-             (diamondOp_cusp k (Gamma0MapUnits γ) f)) ∣[k]
-            (q.out : SL(2, ℤ))⁻¹)
-          (⇑(diamondOp_cusp k (Gamma0MapUnits γ) g) ∣[k]
-            (q.out : SL(2, ℤ))⁻¹)
-  rw [← Equiv.sum_comp (Gamma1QuotEquivOfGamma0 (γ : SL(2, ℤ)) γ.property)
-    (fun q : SL(2, ℤ) ⧸ Gamma1 N ↦ peterssonInner k ModularGroup.fd
-        (⇑(heckeT_p_cusp k p hp hpN f) ∣[k] (q.out : SL(2, ℤ))⁻¹)
-        (⇑g ∣[k] (q.out : SL(2, ℤ))⁻¹))]
-  refine Finset.sum_congr rfl fun q _ ↦ ?_
-  rw [slash_heckeT_p_cusp_Gamma1QuotEquiv_out_inv_eq p hp hpN γ f q,
-    slash_Gamma1QuotEquiv_out_inv_eq_diamond_slash_out_inv γ g q]
-
 lemma peterssonAdj_glMap_T_p_upper_zero_eq_glMap_T_p_lower
     (p : ℕ) (hp : 0 < p) :
     peterssonAdj (glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) =
