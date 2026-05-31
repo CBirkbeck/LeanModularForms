@@ -404,20 +404,6 @@ theorem setIntegral_Gamma1_fundDomain_PSL_eq_SL_outer_q_sum
     _ = (slToPslQuot_fiberCard N) • ∫ τ in Gamma1_fundDomain_PSL N, h τ ∂μ_hyp := by
         rw [← setIntegral_Gamma1_fundDomain_PSL_eq_sum h h_int]
 
-open CongruenceSubgroup UpperHalfPlane ModularGroup MeasureTheory in
-/-- Petersson-integrand specialization of the generic SL outer-quotient bridge. -/
-theorem peterssonInner_Gamma1_fundDomain_PSL_eq_SL_outer_q_sum
-    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-      ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ),
-        petersson k ⇑f ⇑g τ ∂μ_hyp =
-    (slToPslQuot_fiberCard N) •
-      ∫ τ in Gamma1_fundDomain_PSL N, petersson k ⇑f ⇑g τ ∂μ_hyp :=
-  setIntegral_Gamma1_fundDomain_PSL_eq_SL_outer_q_sum
-    (petersson k ⇑f ⇑g)
-    (fun γ hγ τ ↦ petersson_Gamma1_invariant f g γ hγ τ)
-    (integrableOn_petersson_Gamma1_fundDomain_PSL f g)
-
 open UpperHalfPlane ModularGroup MeasureTheory in
 /-- Generic per-`q` SL slash-domain reducer. -/
 theorem peterssonInner_fd_slash_q_eq_setIntegral_shifted_fd
@@ -430,21 +416,6 @@ theorem peterssonInner_fd_slash_q_eq_setIntegral_shifted_fd
   rw [← Set.image_smul,
     ← (measurePreserving_smul (q.out : SL(2, ℤ))⁻¹ μ_hyp).setIntegral_image_emb
       (measurableEmbedding_const_smul _)]
-
-open UpperHalfPlane ModularGroup MeasureTheory in
-/-- Per-`q` slash-compose plus slash-domain reducer. -/
-theorem peterssonInner_slash_compose_q_eq_setIntegral_shifted_fd
-    (A B : GL (Fin 2) ℝ) (q : SL(2, ℤ) ⧸ Gamma1 N) (F G : ℍ → ℂ) :
-    peterssonInner k fd
-      (F ∣[k] (A * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-        (q.out : SL(2, ℤ))⁻¹)))
-      (G ∣[k] (B * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-        (q.out : SL(2, ℤ))⁻¹))) =
-    ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ),
-      petersson k (F ∣[k] A) (G ∣[k] B) τ ∂μ_hyp := by
-  rw [SlashAction.slash_mul, SlashAction.slash_mul]
-  exact peterssonInner_fd_slash_q_eq_setIntegral_shifted_fd
-    (F ∣[k] A) (G ∣[k] B) q
 
 open CongruenceSubgroup ModularGroup MeasureTheory in
 /-- The image of `Γ_p(α)` in `PSL(2, ℤ) = SL(2, ℤ) / {±I}`. -/
@@ -979,22 +950,6 @@ theorem integrableOn_petersson_Gamma_p_α_fundDomain_PSL_canonical
       (ModularFormClass.continuous g)).aestronglyMeasurable.restrict)
     C (ae_of_all _ fun τ ↦ hC τ)
 
-open CongruenceSubgroup UpperHalfPlane ModularGroup MeasureTheory in
-/-- α-uniform Petersson specialization of the `Γ_p(α)` outer-SL bridge. -/
-theorem peterssonInner_petersson_Gamma_p_α_fundDomain_PSL_eq_SL_outer_q_sum
-    (α : GL (Fin 2) ℚ) (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    ∑ q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α,
-      ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (ModularGroup.fd : Set ℍ),
-        petersson k ⇑f ⇑g τ ∂μ_hyp =
-    (slToPslQuot_fiberCard_Gamma_p_α (N := N) α) •
-      ∫ τ in Gamma_p_α_fundDomain_PSL (N := N) α,
-        petersson k ⇑f ⇑g τ ∂μ_hyp :=
-  setIntegral_Gamma_p_α_fundDomain_PSL_eq_SL_outer_q_sum
-    (N := N) α
-    (petersson k ⇑f ⇑g)
-    (fun γ hγ_mem τ ↦ petersson_Gamma1_invariant f g γ ((Gamma_p_α_le_Gamma1 α) hγ_mem) τ)
-    (integrableOn_petersson_Gamma_p_α_fundDomain_PSL_canonical (N := N) α f g)
-
 open CongruenceSubgroup in
 /-- The natural quotient map `SL ⧸ Γ_p(α) → SL ⧸ Γ₁(N)`, sending each
 `Γ_p(α)`-coset `[g]` to its `Γ₁(N)`-coset `[g]`. -/
@@ -1241,23 +1196,6 @@ theorem peterssonInner_slash_adjoint_over_Gamma_p_α
         f (g ∣[k] peterssonAdj ((α.map (Rat.castHom ℝ)) : GL (Fin 2) ℝ)) :=
   peterssonInner_slash_adjoint (k := k) (Gamma_p_α_fundDomain_PSL (N := N) α)
     ((α.map (Rat.castHom ℝ)) : GL (Fin 2) ℝ) hα f g
-
-open CongruenceSubgroup Pointwise ConjAct UpperHalfPlane MeasureTheory in
-/-- **Cusp-form wrapper for the `Γ_p(α)` adjoint exchange** (companion to
-`peterssonInner_slash_adjoint_over_Gamma_p_α`, the form consumed downstream by the
-family-summation step). The RHS domain `α • Gamma_p_α_fundDomain_PSL α` is a
-fundamental domain for the conjugate group `Γ₁ ∩ αΓ₁α⁻¹`, recorded separately by
-`smul_Gamma_p_α_fundDomain_PSL_ae_isFundamentalDomain`. -/
-theorem peterssonInner_slash_adjoint_over_Gamma_p_α_for_heckeRep
-    (α : GL (Fin 2) ℚ)
-    (hα : 0 < ((α.map (Rat.castHom ℝ)) : GL (Fin 2) ℝ).det.val)
-    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    peterssonInner k (Gamma_p_α_fundDomain_PSL (N := N) α)
-        ((⇑f : ℍ → ℂ) ∣[k] ((α.map (Rat.castHom ℝ)) : GL (Fin 2) ℝ)) ⇑g =
-      peterssonInner k
-        (((α.map (Rat.castHom ℝ)) : GL (Fin 2) ℝ) • Gamma_p_α_fundDomain_PSL (N := N) α)
-        ⇑f ((⇑g : ℍ → ℂ) ∣[k] peterssonAdj ((α.map (Rat.castHom ℝ)) : GL (Fin 2) ℝ)) :=
-  peterssonInner_slash_adjoint_over_Gamma_p_α (N := N) α hα ⇑f ⇑g
 
 open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory in
 /-- **Per-tile slash-reindex (DS 5.4.4 leaf).** A single `SL/Γ_p(α)`-coset tile
