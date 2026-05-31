@@ -298,19 +298,6 @@ theorem glMap_mapGL_Q_eq_mapGL_R (γ : SL(2, ℤ)) :
   simp [glMap, Matrix.GeneralLinearGroup.map, mapGL_coe_matrix,
     Matrix.SpecialLinearGroup.map, algebraMap_int_eq, Matrix.map_apply]
 
-lemma glMap_M_infty_eq_mapGL_sigma_p_mul_glMap_T_p_lower
-    (N p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) :
-    (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ) =
-      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-          (sigma_p_specific N p hp hpN) : GL (Fin 2) ℝ) *
-        (glMap (T_p_lower p hp) : GL (Fin 2) ℝ) := by
-  rw [show (glMap (M_infty N p hp hpN) : GL (Fin 2) ℝ) =
-      (glMap ((mapGL ℚ : SL(2, ℤ) →* _) (sigma_p_specific N p hp hpN)) *
-        glMap (T_p_lower p hp) : GL (Fin 2) ℝ) by
-    rw [← map_mul]; exact congr_arg _
-      (M_infty_eq_sigma_mul_T_p_lower N p hp hpN)]
-  rw [glMap_mapGL_Q_eq_mapGL_R]
-
 def shiftSL_loc (m : ℤ) : SL(2, ℤ) :=
   ⟨!![1, m; 0, 1], by simp [Matrix.det_fin_two]⟩
 
