@@ -595,22 +595,6 @@ private lemma T_p_upper_mul (p q : ℕ) (hp : 0 < p) (hq : 0 < q) (b c : ℕ)
     simp [T_p_upper, GeneralLinearGroup.mkOfDetNeZero, Matrix.mul_apply,
       Fin.sum_univ_two]; ring
 
-private lemma T_p_lower_mul_upper (p q : ℕ) (hp : 0 < p) (hq : 0 < q) (c : ℕ) :
-    (T_p_lower p hp : GL (Fin 2) ℚ) * T_p_upper q hq c =
-    GeneralLinearGroup.mkOfDetNeZero !![(p : ℚ), (↑p * ↑c : ℚ); 0, (q : ℚ)]
-      (by simp [det_fin_two]; exact ⟨by omega, by omega⟩) := by
-  apply Units.ext; ext i j; fin_cases i <;> fin_cases j <;>
-    simp [T_p_lower, T_p_upper, GeneralLinearGroup.mkOfDetNeZero, Matrix.mul_apply,
-      Fin.sum_univ_two]
-
-private lemma T_p_upper_mul_lower (p q : ℕ) (hp : 0 < p) (hq : 0 < q) (b : ℕ) :
-    (T_p_upper p hp b : GL (Fin 2) ℚ) * T_p_lower q hq =
-    GeneralLinearGroup.mkOfDetNeZero !![(q : ℚ), (b : ℚ); 0, (p : ℚ)]
-      (by simp [det_fin_two]; exact ⟨by omega, by omega⟩) := by
-  apply Units.ext; ext i j; fin_cases i <;> fin_cases j <;>
-    simp [T_p_lower, T_p_upper, GeneralLinearGroup.mkOfDetNeZero, Matrix.mul_apply,
-      Fin.sum_univ_two]
-
 private lemma T_p_lower_mul_lower (p q : ℕ) (hp : 0 < p) (hq : 0 < q)
     (hpq : 0 < p * q) :
     (T_p_lower p hp : GL (Fin 2) ℚ) * T_p_lower q hq =
@@ -648,13 +632,6 @@ private lemma crt_sum_eq {α : Type*} [AddCommMonoid α]
     show j % p + j / p * p = j
     rw [mul_comm]; exact Nat.mod_add_div j p
   · intro _ _; rfl
-
-private lemma crt_sum_swap {α : Type*} [AddCommMonoid α]
-    {p q : ℕ} (hp : 0 < p) (hq : 0 < q)
-    (f : ℕ → α) :
-    ∑ b ∈ Finset.range p, ∑ c ∈ Finset.range q, f (b + c * p) =
-    ∑ c ∈ Finset.range q, ∑ b ∈ Finset.range p, f (c + b * q) := by
-  rw [crt_sum_eq hp, mul_comm p q, ← crt_sum_eq hq]
 
 private lemma heckeT_p_ut_comm (k : ℤ) {p q : ℕ}
     (hp : Nat.Prime p) (hq : Nat.Prime q) (hpq : p ≠ q)
