@@ -32,9 +32,6 @@ character space and bridges it to the concrete Hecke operators.
   `heckeT_p_all`, identifying the abstract action with the textbook Hecke operator.
 * `heckeRingHomCharSpace_T_pp_eq_scalar` : at the scalar coset `T(p,p)` (good prime),
   the action is the scalar `χ(p)⁻¹ · p^(k-2)`.
-* `adj_T_p_upper_not_mem_Delta0_of_dvd` : the bad-prime obstruction.  For `p ∣ N` the
-  adjugate of the upper-triangular representative escapes `Δ₀(N)`, so the good-prime
-  bridge cannot transfer; the discrepancy is the Atkin–Lehner involution.
 * `heckeRingHomCharSpace_commute` and `heckeT_p_all_comm_on_charSpace_via_ring` :
   commutativity of the operators on `modFormCharSpace k χ` as a corollary of the
   commutativity of the source ring, with no coset combinatorics.
@@ -1013,24 +1010,6 @@ theorem heckeRingHomCharSpace_T_pp_eq_scalar (p : ℕ) (hp : Nat.Prime p)
     h₁ hh₁ h₂ hh₂ (hD ▸ hfact)
   rw [← hD] at hwgt
   rw [hwgt, slash_diag_scalar k p hp.pos (⇑f0), smul_smul]
-
-omit [NeZero N] in
-/-- For `p ∣ N`, the adjugate of the upper-triangular representative `T_p_upper p b` does not
-lie in `Δ₀(N)` (its top-left entry `p` is not coprime to `N`), so the adjugation-stability
-argument underlying the good-prime bridge `twisted_matches_T_p` cannot hold for `p ∣ N`. -/
-lemma adj_T_p_upper_not_mem_Delta0_of_dvd (p : ℕ) (hp : Nat.Prime p)
-    (hpN : ¬ Nat.Coprime p N) (b : ℕ) :
-    GL_adjugate (T_p_upper p hp.pos b : GL (Fin 2) ℚ) ∉ Delta0_submonoid N := by
-  intro hmem
-  obtain ⟨_, _, A, hA, _, hAco⟩ := hmem
-  have hA00 : A 0 0 = (p : ℤ) := by
-    have hcast : ((A 0 0 : ℤ) : ℚ) = (p : ℚ) := by
-      have := congrFun (congrFun hA 0) 0
-      rw [GL_adjugate_val, T_p_upper_coe, Matrix.adjugate_fin_two] at this
-      simpa [Matrix.map_apply] using this.symm
-    exact_mod_cast hcast
-  rw [hA00] at hAco
-  exact hpN (by rwa [Int.gcd_natCast_natCast] at hAco)
 
 end Bridge
 
