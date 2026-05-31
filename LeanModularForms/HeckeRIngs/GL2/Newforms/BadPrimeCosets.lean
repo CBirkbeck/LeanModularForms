@@ -961,46 +961,6 @@ lemma Newform.frickeSquareScalar_ne_zero (N : ℕ) [NeZero N] (k : ℤ) :
     (zpow_ne_zero _ (Nat.cast_ne_zero.mpr (NeZero.ne N)))
 
 open UpperHalfPlane MeasureTheory ModularGroup in
-/-- Per-`Γ₁(N)`-coset aggregation residual for the bad-prime Fricke `petN`
-adjoint: the per-`q` summand equality obtained after unfolding `petN` to its
-`q : SL(2, ℤ) ⧸ Γ₁(N)`-summands. -/
-def Newform.HasBadPrimeFrickePerCosetAggregateRes
-    (N : ℕ) [NeZero N] (k : ℤ) (p : ℕ) [NeZero p] : Prop :=
-  ∀ (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (q : SL(2, ℤ) ⧸ Gamma1 N),
-    peterssonInner k fd
-      (⇑(heckeT_n_cusp k p f) ∣[k] (q.out : SL(2, ℤ))⁻¹)
-      (⇑g ∣[k] (q.out : SL(2, ℤ))⁻¹) =
-    peterssonInner k fd
-      (⇑f ∣[k] (q.out : SL(2, ℤ))⁻¹)
-      (⇑(Newform.frickeBadAdjointCandidateNormalized k p g) ∣[k]
-        (q.out : SL(2, ℤ))⁻¹)
-
-/-- `HasBadPrimeFrickePetNAdjoint` follows from the per-coset aggregation
-residual `HasBadPrimeFrickePerCosetAggregateRes` by `petN`-summation. -/
-theorem Newform.hasBadPrimeFrickePetNAdjoint_of_perCosetAggregate
-    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
-    (h_perCoset : Newform.HasBadPrimeFrickePerCosetAggregateRes N k p) :
-    Newform.HasBadPrimeFrickePetNAdjoint N k p := by
-  intro f g
-  change petN (heckeT_n_cusp k p f) g =
-    petN f (Newform.frickeBadAdjointCandidateNormalized k p g)
-  unfold petN
-  exact Finset.sum_congr rfl (fun q _ ↦ h_perCoset f g q)
-
-/-- `HasBadPrimeFrickePetNAdjoint` from the `frickeSquareScalar`-scaled
-aggregate identity, via `hasBadPrimeFrickePetNAdjoint_iff`. -/
-theorem Newform.hasBadPrimeFrickePetNAdjoint_of_fricke_upper_aggregate
-    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
-    (_hp : p.Prime) (_hpN : ¬ Nat.Coprime p N)
-    (h_aggregate : ∀ (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k),
-      Newform.frickeSquareScalar N k * petN (heckeT_n_cusp k p f) g =
-        petN f (Newform.frickeBadAdjointCandidate k p g)) :
-    Newform.HasBadPrimeFrickePetNAdjoint N k p :=
-  (Newform.hasBadPrimeFrickePetNAdjoint_iff
-    (Newform.frickeSquareScalar_ne_zero N k)).mpr h_aggregate
-
-open UpperHalfPlane MeasureTheory ModularGroup in
 /-- Expansion of the bad-prime `heckeT_n_cusp k p` LHS summand: for a prime
 `p ∣ N`, the `peterssonInner` first slot rewrites as the finite Hecke `b`-sum
 `∑ b ∈ Finset.range p, (⇑f ∣[k] β_b)` slashed by `q.out⁻¹`. -/
@@ -1026,39 +986,6 @@ lemma Newform.peterssonInner_heckeT_n_cusp_at_divN_slash_qOut_inv_eq_bsum
     rfl
   rw [h_unfold]
   rfl
-
-open UpperHalfPlane MeasureTheory ModularGroup in
-/-- Per-`(q, b)` bad-prime Fricke aggregation residual: the content of
-`HasBadPrimeFrickePerCosetAggregateRes` after the `b`-sum exposure, equating
-the upper-triangular `b`-sum `peterssonInner` with the corresponding
-`frickeBadAdjointCandidateNormalized k p g`-slot expansion. -/
-def Newform.HasBadPrimeFrickePerCosetBsumShiftedFD
-    (N : ℕ) [NeZero N] (k : ℤ) (p : ℕ) [NeZero p]
-    (hp : p.Prime) (_hpN : ¬ Nat.Coprime p N) : Prop :=
-  ∀ (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (q : SL(2, ℤ) ⧸ Gamma1 N),
-    peterssonInner k fd
-        ((∑ b ∈ Finset.range p,
-            ⇑f ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ)) ∣[k]
-            (q.out : SL(2, ℤ))⁻¹)
-        (⇑g ∣[k] (q.out : SL(2, ℤ))⁻¹) =
-    peterssonInner k fd
-      (⇑f ∣[k] (q.out : SL(2, ℤ))⁻¹)
-      (⇑(Newform.frickeBadAdjointCandidateNormalized k p g) ∣[k]
-        (q.out : SL(2, ℤ))⁻¹)
-
-open UpperHalfPlane MeasureTheory ModularGroup in
-/-- `HasBadPrimeFrickePerCosetAggregateRes` from the `b`-sum residual
-`HasBadPrimeFrickePerCosetBsumShiftedFD`, via the `b`-sum LHS expansion. -/
-theorem Newform.hasBadPrimeFrickePerCosetAggregateRes_of_bsum_shiftedFD
-    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
-    (hp : p.Prime) (hpN : ¬ Nat.Coprime p N)
-    (h_bsum_shifted :
-      Newform.HasBadPrimeFrickePerCosetBsumShiftedFD N k p hp hpN) :
-    Newform.HasBadPrimeFrickePerCosetAggregateRes N k p := by
-  intro f g q
-  rw [Newform.peterssonInner_heckeT_n_cusp_at_divN_slash_qOut_inv_eq_bsum hp hpN f g q]
-  exact h_bsum_shifted f g q
 
 open UpperHalfPlane MeasureTheory ModularGroup in
 /-- Combined per-`(b, D)` Fricke bad-prime `peterssonInner` identity in
