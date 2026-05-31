@@ -199,6 +199,40 @@ private lemma delta_slash_sum_coeff_zero_sq_case {L : ℕ} [NeZero L] {k : ℤ}
     miyake_descent_upper_tri_qExpansion p hp hpL Δ_form.toModularForm' m]
   exact h_apm_zero
 
+/-- Recast-and-apply step for `delta_slash_sum_per_q_inner_fun_coeff_zero` (Miyake 4.6.14
+helper).  Given the eigenform data at the deep level `M_q` with the required
+divisibility and factorisation hypotheses, rewriting the descend-coset slash-sum at the
+oversized level `L = q * M_q` to its standard form lets us invoke
+`per_q_slash_sum_at_deep_qexp_zero` directly. -/
+private lemma delta_slash_sum_per_q_recast_and_apply
+    {M_q : ℕ} [NeZero M_q] {k : ℤ}
+    (p : ℕ) [NeZero p] (hp : p.Prime) (hp_dvd_Mq : p ∣ M_q) [NeZero (M_q / p)]
+    (q : ℕ) [NeZero q] (hpq : Nat.Coprime p q) (hq_dvd_Mq_div_p : q ∣ M_q / p)
+    (χ_F : (ZMod M_q)ˣ →* ℂˣ) (χ_F_low : (ZMod (M_q / p))ˣ →* ℂˣ)
+    (h_χ_F_factor : χ_F = χ_F_low.comp (ZMod.unitsMap (Nat.div_dvd_of_dvd hp_dvd_Mq)))
+    (F_q : CuspForm ((Gamma1 M_q).map (mapGL ℝ)) k)
+    (hF_q_char : F_q ∈ cuspFormCharSpace k χ_F)
+    (m : ℕ) (hq_not_m : ¬ q ∣ m)
+    {L : ℕ} [NeZero L] (h_L_eq : L = q * M_q) :
+    (ModularFormClass.qExpansion (1 : ℝ)
+      (fun z : UpperHalfPlane ↦
+        ∑ v : Fin (descendCosetCount p L),
+          ((⇑(HeckeRing.GL2.modularFormLevelRaise M_q q k F_q.toModularForm') :
+            UpperHalfPlane → ℂ) ∣[k]
+            descendCosetList p L hp v) z)).coeff m = 0 := by
+  haveI : NeZero (q * M_q) := ⟨Nat.mul_ne_zero (NeZero.ne q) (NeZero.ne M_q)⟩
+  rw [show (fun z : UpperHalfPlane ↦
+        ∑ v : Fin (descendCosetCount p L),
+          ((⇑(HeckeRing.GL2.modularFormLevelRaise M_q q k F_q.toModularForm') :
+            UpperHalfPlane → ℂ) ∣[k] descendCosetList p L hp v) z) =
+      (fun z : UpperHalfPlane ↦
+        ∑ v : Fin (descendCosetCount p (q * M_q)),
+          ((⇑(HeckeRing.GL2.modularFormLevelRaise M_q q k F_q.toModularForm') :
+            UpperHalfPlane → ℂ) ∣[k] descendCosetList p (q * M_q) hp v) z) from
+    slash_sum_descendCoset_level_recast p hp h_L_eq _]
+  exact per_q_slash_sum_at_deep_qexp_zero p hp hp_dvd_Mq q hpq
+    hq_dvd_Mq_div_p χ_F χ_F_low h_χ_F_factor F_q hF_q_char m hq_not_m
+
 private lemma delta_slash_sum_per_q_inner_fun_coeff_zero {N : ℕ} [NeZero N] {k : ℤ}
     (p : ℕ) [NeZero p] (hp : p.Prime) (hpN : p ∣ N) {l' : ℕ}
     (hp_not_in : p ∉ l'.primeFactors) [NeZero l'] [NeZero (l' * N)] [NeZero (l' * N / p)]
@@ -258,26 +292,12 @@ private lemma delta_slash_sum_per_q_inner_fun_coeff_zero {N : ℕ} [NeZero N] {k
   have hq_not_m : ¬ q.val ∣ m := fun hqm ↦
     hq_prime.one_lt.ne' (Nat.dvd_one.mp
       (hm_cop ▸ Nat.dvd_gcd hqm (Nat.dvd_of_mem_primeFactors q.property)))
-  have h_q_M_q_eq : q.val * (((l' * N) * l' ^ 2) / q.val) = (l' * N) * l' ^ 2 :=
-    Nat.mul_div_cancel' (h_q_dvd_Ll2_aux q.val q.property)
-  haveI : NeZero (q.val * (((l' * N) * l' ^ 2) / q.val)) := by
-    rw [h_q_M_q_eq]; infer_instance
-  rw [show (fun z : UpperHalfPlane ↦
-        ∑ v : Fin (descendCosetCount p ((l' * N) * l' ^ 2)),
-          ((⇑(HeckeRing.GL2.modularFormLevelRaise ((l' * N * l' ^ 2) / q.val) q.val k
-            (F_q_fam q.val q.property).toModularForm') : UpperHalfPlane → ℂ) ∣[k]
-            descendCosetList p ((l' * N) * l' ^ 2) hp v) z) =
-      (fun z : UpperHalfPlane ↦
-        ∑ v : Fin (descendCosetCount p (q.val * (((l' * N) * l' ^ 2) / q.val))),
-          ((⇑(HeckeRing.GL2.modularFormLevelRaise (((l' * N) * l' ^ 2) / q.val) q.val k
-              (F_q_fam q.val q.property).toModularForm') :
-            UpperHalfPlane → ℂ) ∣[k]
-            descendCosetList p (q.val * (((l' * N) * l' ^ 2) / q.val)) hp v) z) from
-    slash_sum_descendCoset_level_recast p hp h_q_M_q_eq.symm _]
-  exact per_q_slash_sum_at_deep_qexp_zero
-    (M_q := ((l' * N) * l' ^ 2) / q.val) (k := k) p hp hp_dvd_Mq q.val hpq_cop
-    hq_dvd_Mq_div_p (χ_F_fam q.val q.property) χ_F_low_q h_χ_F_factor
-    (F_q_fam q.val q.property) (hF_q_char q.val q.property) m hq_not_m
+  have h_q_M_q_eq : (l' * N) * l' ^ 2 = q.val * (((l' * N) * l' ^ 2) / q.val) :=
+    (Nat.mul_div_cancel' (h_q_dvd_Ll2_aux q.val q.property)).symm
+  exact delta_slash_sum_per_q_recast_and_apply (M_q := ((l' * N) * l' ^ 2) / q.val)
+    p hp hp_dvd_Mq q.val hpq_cop hq_dvd_Mq_div_p (χ_F_fam q.val q.property) χ_F_low_q
+    h_χ_F_factor (F_q_fam q.val q.property) (hF_q_char q.val q.property) m hq_not_m
+    h_q_M_q_eq
 
 private lemma miyake_4_6_14_delta_slash_sum_coeff_zero
     {N : ℕ} [NeZero N] {k : ℤ}
