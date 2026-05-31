@@ -57,34 +57,11 @@ theorem glMap_T_p_upper_det_pos (p : ℕ) (hp : 0 < p) (b : ℕ) :
   change 0 < ((p : ℚ) : ℝ)
   exact_mod_cast hp
 
-private lemma glMap_T_p_upper_mul_mapGL_det_pos
-    (p : ℕ) (hp : 0 < p) (b : ℕ) (q : SL(2, ℤ)) :
-    0 < ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) *
-      ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ)).det.val := by
-  show 0 < (((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) *
-      ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ)) :
-        Matrix (Fin 2) (Fin 2) ℝ).det
-  rw [Matrix.det_mul, mapGL_det_matrix_eq_one, mul_one]
-  exact glMap_T_p_upper_det_pos p hp b
-
 private lemma det_val_inv_pos {α : GL (Fin 2) ℝ} (hα : 0 < α.det.val) :
     0 < (α⁻¹ : GL (Fin 2) ℝ).det.val := by
   change 0 < (((α⁻¹).det : ℝˣ) : ℝ)
   rw [map_inv, Units.val_inv_eq_inv_val]
   exact inv_pos.mpr hα
-
-private lemma psl_mk_conj_ne_one (q x : SL(2, ℤ))
-    (hx : (QuotientGroup.mk x : PSL(2, ℤ)) ≠ 1) :
-    (QuotientGroup.mk (q * x * q⁻¹) : PSL(2, ℤ)) ≠ 1 := by
-  intro heq
-  apply hx
-  have hconj : (QuotientGroup.mk q : PSL(2, ℤ)) *
-          (QuotientGroup.mk x : PSL(2, ℤ)) *
-          (QuotientGroup.mk q : PSL(2, ℤ))⁻¹ = 1 := by
-    rw [← QuotientGroup.mk_inv, ← QuotientGroup.mk_mul, ← QuotientGroup.mk_mul]
-    exact heq
-  rw [mul_inv_eq_one] at hconj
-  exact mul_left_cancel (hconj.trans (mul_one _).symm)
 
 /-- Diamond operators are unitary for the **level-N Petersson inner product** `petN`:
 `⟨⟨d⟩f, ⟨d⟩g⟩_N = ⟨f, g⟩_N`. -/
@@ -428,17 +405,6 @@ private lemma slash_peterssonAdj_T_p_upper_adjointGamma0Rep_inv_eq_T_p_upper_zer
       SlashInvariantFormClass.slash_action_eq f _
         (Subgroup.mem_map.mpr ⟨_, adjointGamma1Rep_mem_Gamma1 p N hpN, rfl⟩)]
 
-lemma slash_peterssonAdj_T_p_upper_eq_slash_T_p_upper_zero_slash_gamma0
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (b : ℕ)
-    (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    ⇑g ∣[k] peterssonAdj (glMap (T_p_upper p hp.pos b)) =
-    (⇑g ∣[k] (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
-      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))) := by
-  rw [← slash_peterssonAdj_T_p_upper_adjointGamma0Rep_inv_eq_T_p_upper_zero
-        p hp hpN b g,
-      ← SlashAction.slash_mul, inv_mul_cancel, SlashAction.slash_one]
-
 open UpperHalfPlane ModularGroup MeasureTheory in
 lemma peterssonInner_slash_adjoint_coset
     (β : GL (Fin 2) ℝ) (hβ : 0 < β.det.val) (q : SL(2, ℤ)) (f g : ℍ → ℂ) :
@@ -715,44 +681,6 @@ private lemma aedisjoint_fd_smul_fd_of_psl_ne_one {q : PSL(2, ℤ)} (hq_ne : q �
       rw [Set.diff_eq_empty.mpr h_fdo_sub_fd]
       exact measure_empty
   exact h_fdo_aedisjoint.congr fd_ae_eq_fdo h_q_smul_aeeq
-
-open UpperHalfPlane ModularGroup MeasureTheory in
-/-- A `GL`-pair is AE-disjoint on the `SL(2, ℤ)`-fundamental domain
-`ModularGroup.fd` when its inverse product factors through `mapGL ℝ σ`. -/
-theorem aedisjoint_glMap_smul_fd_of_mul_inv_eq_mapGL_PSL_ne
-    (α₁ α₂ : GL (Fin 2) ℝ)
-    (h_mp_inv : MeasurePreserving ((α₁⁻¹ • ·) : ℍ → ℍ) μ_hyp μ_hyp)
-    (σ : SL(2, ℤ)) (hσ_ne : (QuotientGroup.mk σ : PSL(2, ℤ)) ≠ 1)
-    (h_inv_mul : α₁⁻¹ * α₂ =
-      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) σ : GL (Fin 2) ℝ)) :
-    AEDisjoint μ_hyp (α₁ • (ModularGroup.fd : Set UpperHalfPlane))
-      (α₂ • (ModularGroup.fd : Set UpperHalfPlane)) := by
-  set q : PSL(2, ℤ) := QuotientGroup.mk σ with hq_def
-  have h_pre_α₁ : ((α₁⁻¹ • ·) ⁻¹' (ModularGroup.fd : Set UpperHalfPlane) : Set ℍ) =
-      α₁ • (ModularGroup.fd : Set UpperHalfPlane) := by
-    ext τ
-    simp only [Set.mem_preimage, Set.mem_smul_set_iff_inv_smul_mem]
-  have h_pre_α₂ : ((α₁⁻¹ • ·) ⁻¹' (q • (ModularGroup.fd : Set UpperHalfPlane)) : Set ℍ) =
-      α₂ • (ModularGroup.fd : Set UpperHalfPlane) := by
-    ext τ
-    simp only [Set.mem_preimage, Set.mem_smul_set_iff_inv_smul_mem]
-    have hq_smul : ∀ z : ℍ, (q⁻¹ • z : ℍ) =
-        (((mapGL ℝ : SL(2, ℤ) →* _) σ)⁻¹ : GL (Fin 2) ℝ) • z := by
-      intro z
-      rw [hq_def, ← QuotientGroup.mk_inv, PSL_smul_coe,
-        sl_moeb, show ((σ⁻¹ : SL(2, ℤ)) : GL (Fin 2) ℝ) =
-          ((mapGL ℝ : SL(2, ℤ) →* _) σ)⁻¹ by rw [← map_inv]; rfl]
-    rw [hq_smul (α₁⁻¹ • τ)]
-    have h_eq : ((mapGL ℝ : SL(2, ℤ) →* _) σ)⁻¹ = α₂⁻¹ * α₁ := by
-      rw [← h_inv_mul, mul_inv_rev, inv_inv]
-    rw [h_eq, mul_smul, show (α₁ • α₁⁻¹ • τ : ℍ) = τ by
-      rw [← mul_smul, mul_inv_cancel, one_smul]]
-  have h_pre_aedisjoint : AEDisjoint μ_hyp
-      ((α₁⁻¹ • ·) ⁻¹' (ModularGroup.fd : Set UpperHalfPlane))
-      ((α₁⁻¹ • ·) ⁻¹' (q • (ModularGroup.fd : Set UpperHalfPlane))) :=
-    (aedisjoint_fd_smul_fd_of_psl_ne_one hσ_ne).preimage h_mp_inv.quasiMeasurePreserving
-  rw [h_pre_α₁, h_pre_α₂] at h_pre_aedisjoint
-  exact h_pre_aedisjoint
 
 open UpperHalfPlane ModularGroup MeasureTheory in
 /-- For `α₁, α₂ : GL (Fin 2) ℝ` with `α₁⁻¹` measure-preserving on ℍ, if
