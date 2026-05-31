@@ -652,26 +652,6 @@ noncomputable def Newform.frickeSlashSIF
     obtain ⟨γ, hγ, rfl⟩ := hg
     exact Newform.slash_frickeMatrix_slash_mapGL_of_mem_Gamma1 f γ hγ
 
-/-- `Newform.frickeSlashSIF` as a `ℂ`-linear endomorphism on slash-invariant
-forms. -/
-noncomputable def Newform.frickeSlashSIFLin
-    {N : ℕ} [NeZero N] {k : ℤ} :
-    SlashInvariantForm ((Gamma1 N).map (mapGL ℝ)) k →ₗ[ℂ]
-      SlashInvariantForm ((Gamma1 N).map (mapGL ℝ)) k where
-  toFun := Newform.frickeSlashSIF
-  map_add' f g := by
-    apply DFunLike.coe_injective
-    change ((f : UpperHalfPlane → ℂ) + (g : UpperHalfPlane → ℂ)) ∣[k]
-        Newform.frickeMatrix N =
-      (f : UpperHalfPlane → ℂ) ∣[k] Newform.frickeMatrix N +
-        (g : UpperHalfPlane → ℂ) ∣[k] Newform.frickeMatrix N
-    exact SlashAction.add_slash _ _ _ _
-  map_smul' c f := by
-    apply DFunLike.coe_injective
-    change (c • (f : UpperHalfPlane → ℂ)) ∣[k] Newform.frickeMatrix N =
-      c • ((f : UpperHalfPlane → ℂ) ∣[k] Newform.frickeMatrix N)
-    rw [ModularForm.smul_slash, Newform.frickeMatrix_σ, RingHom.id_apply]
-
 /-- The rational Fricke matrix `!![0, -1; (N : ℚ), 0]` as an element of
 `GL (Fin 2) ℚ`. -/
 noncomputable def Newform.frickeMatrixRat (N : ℕ) [NeZero N] : GL (Fin 2) ℚ :=
