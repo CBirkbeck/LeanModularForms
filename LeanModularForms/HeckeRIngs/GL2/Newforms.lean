@@ -231,23 +231,6 @@ theorem Newform.analyticContradiction_of_CompletedFrickeData_of_PerNewformFullDi
         Newform.full_pole_witness_data_of_PerNewformFullDirichletData f χ S
           (h_data f χ hfχ S h_bad))
 
-/-- Existence of a nonzero prime eigenvalue from per-newform
-`CompletedFrickeData` and `PerNewformFullDirichletData`. -/
-theorem Newform.exists_nonzero_prime_eigenvalue_of_CompletedFrickeData_of_PerNewformFullDirichletData
-    (h_fricke : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k), Newform.CompletedFrickeData f)
-    (h_data : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
-      f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ → ∀ (S : Finset ℕ),
-        (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N), q ∉ S → f.lCoeff q = 0) →
-        Newform.PerNewformFullDirichletData f χ S)
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (S : Finset ℕ) :
-    ∃ q : ℕ, ∃ hq : Nat.Prime q, Nat.Coprime q N ∧ q ∉ S ∧
-      f.eigenvalue ⟨q, hq.pos⟩ ≠ 0 :=
-  Newform.exists_nonzero_prime_eigenvalue_of_analyticContradiction
-    (Newform.analyticContradiction_of_CompletedFrickeData_of_PerNewformFullDirichletData
-      h_fricke h_data) f χ hfχ S
-
 /-- `Newform.AnalyticContradiction` from the classical Mellin/Fricke inputs
 `HasFrickeTwistAsCuspForm`, `HasEulerStrippingMultiplier`, and the Dirichlet-zero
 data block bundled via `Newform.PerNewformFullDirichletData`. -/
