@@ -877,26 +877,6 @@ lemma Newform.GLPos_to_SLR_frickeMatrix_GLPos_toGL_matrix (N : ℕ) [NeZero N] :
       (N : ℝ) from Newform.frickeMatrix_det N]
   rfl
 
-/-- GL-level Fricke conjugation identity for the SL_R representative
-`W_SL := GLPos_to_SLR (frickeMatrix_GLPos N)`:
-`(W_SL : GL) * mapGL ℝ γ = mapGL ℝ (frickeConj N γ) * (W_SL : GL)` for
-`γ ∈ Γ₁(N)`. -/
-lemma Newform.frickeMatrix_SLR_toGL_mul_mapGL_eq
-    {N : ℕ} [NeZero N] (γ : SL(2, ℤ)) (hγ : γ ∈ Gamma1 N) :
-    ((GLPos_to_SLR (Newform.frickeMatrix_GLPos N) : SL(2, ℝ)) :
-        GL (Fin 2) ℝ) *
-        (mapGL ℝ γ : GL (Fin 2) ℝ) =
-      (mapGL ℝ (Newform.frickeConj N γ hγ) : GL (Fin 2) ℝ) *
-        ((GLPos_to_SLR (Newform.frickeMatrix_GLPos N) : SL(2, ℝ)) :
-          GL (Fin 2) ℝ) := by
-  apply Units.ext
-  rw [Matrix.GeneralLinearGroup.coe_mul, Matrix.GeneralLinearGroup.coe_mul,
-    Newform.GLPos_to_SLR_frickeMatrix_GLPos_toGL_matrix, Matrix.smul_mul,
-    Matrix.mul_smul]
-  congr 1
-  rw [← Matrix.GeneralLinearGroup.coe_mul, ← Matrix.GeneralLinearGroup.coe_mul,
-    Newform.frickeMatrix_mul_mapGL_eq_mapGL_frickeConj_mul_frickeMatrix γ hγ]
-
 private lemma GLPos_to_SLR_frickeMatrix_GLPos_sq_eq_neg_scalar (N : ℕ) [NeZero N] :
     ((GLPos_to_SLR (Newform.frickeMatrix_GLPos N) : SL(2, ℝ)) :
         Matrix (Fin 2) (Fin 2) ℝ) *
