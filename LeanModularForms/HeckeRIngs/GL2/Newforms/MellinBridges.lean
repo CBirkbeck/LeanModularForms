@@ -381,36 +381,6 @@ noncomputable def Newform.PerNewformFullDirichletData_of_classicalInputs_T111
       (fun p hp ↦ (h_factors_ne p hp).2)
       h_den_factors_ne)
 
-/-- Strong multiplicity one via per-newform Dirichlet-zero data
-(bundled as `Newform.PerNewformFullDirichletData`), Hecke continuation,
-and newform uniqueness. -/
-theorem strongMultiplicityOne_of_HeckeEntireExtension_of_dirichletZero_of_newformUnique
-    (h_unique : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
-      f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      (∀ n : ℕ+, Nat.Coprime n.val N → f.eigenvalue n = g.eigenvalue n) →
-      f.toCuspForm = g.toCuspForm)
-    (h_hecke : Newform.HeckeEntireExtension)
-    (h_dirZero : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
-      f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      ∀ (S : Finset ℕ),
-        (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
-          q ∉ S → f.lCoeff q = 0) →
-        Newform.PerNewformFullDirichletData f χ S)
-    {N : ℕ} [NeZero N] {k : ℤ} (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (hgχ : g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (S : Finset ℕ)
-    (h : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S →
-      f.eigenvalue n = g.eigenvalue n) :
-    f.toCuspForm = g.toCuspForm :=
-  strongMultiplicityOne_of_HeckeEntireExtension_of_full_dirichletZeroCertificate_of_newformUnique
-    h_unique h_hecke
-    (fun _N _ _k f χ hfχ S h_bad ↦
-      Newform.full_pole_witness_data_of_PerNewformFullDirichletData f χ S
-        (h_dirZero f χ hfχ S h_bad))
-    f g χ hfχ hgχ S h
-
 /-- Strong multiplicity one from per-newform `Newform.HeckeFEData` and
 `Newform.PerNewformFullDirichletData` plus newform uniqueness: the SMO-facing
 endpoint that consumers should target. -/
