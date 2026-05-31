@@ -652,15 +652,6 @@ noncomputable def Newform.frickeSlashSIF
     obtain ⟨γ, hγ, rfl⟩ := hg
     exact Newform.slash_frickeMatrix_slash_mapGL_of_mem_Gamma1 f γ hγ
 
-/-- Underlying function of `Newform.frickeSlashSIF`. -/
-@[simp]
-lemma Newform.frickeSlashSIF_coe
-    {N : ℕ} [NeZero N] {k : ℤ}
-    (f : SlashInvariantForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    (Newform.frickeSlashSIF f : UpperHalfPlane → ℂ) =
-      (f : UpperHalfPlane → ℂ) ∣[k] Newform.frickeMatrix N :=
-  rfl
-
 /-- `Newform.frickeSlashSIF` as a `ℂ`-linear endomorphism on slash-invariant
 forms. -/
 noncomputable def Newform.frickeSlashSIFLin
