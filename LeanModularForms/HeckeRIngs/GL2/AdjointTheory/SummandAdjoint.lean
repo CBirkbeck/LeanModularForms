@@ -491,24 +491,6 @@ lemma peterssonInner_slash_adj_T_p_upper_q_summand_eq
   rw [slash_peterssonAdj_T_p_upper_eq_slash_T_p_upper_zero_slash_gamma0 p hp hpN b g]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-lemma sum_peterssonInner_upper_family_per_b_rewrite
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
-    (q : SL(2, ℤ)) (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    ∑ b ∈ Finset.range p,
-      peterssonInner k ModularGroup.fd
-        (⇑f ∣[k] ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-          (mapGL ℝ q⁻¹ : GL (Fin 2) ℝ)))
-        (⇑g ∣[k] (mapGL ℝ q⁻¹ : GL (Fin 2) ℝ)) =
-    ∑ b ∈ Finset.range p,
-      peterssonInner k ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) •
-          ((mapGL ℝ q⁻¹ : GL (Fin 2) ℝ) • (ModularGroup.fd : Set UpperHalfPlane)))
-        ⇑f
-        ((⇑g ∣[k] (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)))) :=
-  Finset.sum_congr rfl fun b _ ↦ peterssonInner_slash_adj_T_p_upper_q_summand_eq p hp hpN b q f g
-
-open UpperHalfPlane ModularGroup MeasureTheory in
 private lemma peterssonInner_add_left (D : Set ℍ) (f₁ f₂ g : ℍ → ℂ)
     (hf₁ : IntegrableOn (fun τ ↦ petersson k g f₁ τ) D μ_hyp)
     (hf₂ : IntegrableOn (fun τ ↦ petersson k g f₂ τ) D μ_hyp) :
@@ -942,66 +924,6 @@ private lemma nullMeasurableSet_fd_aux :
       (Complex.continuous_normSq.comp UpperHalfPlane.continuous_coe)).inter
     (isClosed_le (continuous_abs.comp UpperHalfPlane.continuous_re)
       continuous_const)).measurableSet.nullMeasurableSet
-
-open UpperHalfPlane ModularGroup MeasureTheory in
-/-- Per-`q` upper-family union-collapse (`peterssonInner` form). -/
-theorem peterssonInner_T_p_upper_family_union_collapse_per_q
-    {p : ℕ} [NeZero N] (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
-    (q : SL(2, ℤ)) (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hfi : IntegrableOn
-      (fun τ ↦ petersson k ⇑f
-        ((⇑g ∣[k] (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)))) τ)
-      (⋃ b ∈ Finset.range p,
-        ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ)) •
-            (ModularGroup.fd : Set UpperHalfPlane)) μ_hyp) :
-    ∑ b ∈ Finset.range p,
-      peterssonInner k
-        (((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ)) •
-            (ModularGroup.fd : Set UpperHalfPlane))
-        ⇑f
-        ((⇑g ∣[k] (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-            ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)))) =
-    peterssonInner k
-      (⋃ b ∈ Finset.range p,
-        ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) q⁻¹ : GL (Fin 2) ℝ)) •
-            (ModularGroup.fd : Set UpperHalfPlane))
-      ⇑f
-      ((⇑g ∣[k] (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) ∣[k]
-        ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-          ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)))) := by
-  have hm : ∀ b ∈ Finset.range p, NullMeasurableSet
-      (((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-        ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ)) •
-          (ModularGroup.fd : Set UpperHalfPlane)) μ_hyp := fun b _ ↦ by
-    have h_eq : (((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ)) •
-            (ModularGroup.fd : Set UpperHalfPlane)) =
-        (((((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) *
-            ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ))⁻¹ • ·) :
-              ℍ → ℍ) ⁻¹' (ModularGroup.fd : Set UpperHalfPlane)) := by
-      ext τ
-      simp [Set.mem_preimage, Set.mem_smul_set_iff_inv_smul_mem]
-    rw [h_eq]
-    exact nullMeasurableSet_fd_aux.preimage (measurePreserving_glPos_smul _
-      (det_val_inv_pos (glMap_T_p_upper_mul_mapGL_det_pos p hp.pos b q))).quasiMeasurePreserving
-  have hd : (↑(Finset.range p) : Set ℕ).Pairwise fun b₁ b₂ ↦ AEDisjoint μ_hyp
-        (((glMap (T_p_upper p hp.pos b₁) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ)) •
-            (ModularGroup.fd : Set UpperHalfPlane))
-        (((glMap (T_p_upper p hp.pos b₂) : GL (Fin 2) ℝ) *
-          ((mapGL ℝ : SL(2, ℤ) →* _) q⁻¹ : GL (Fin 2) ℝ)) •
-            (ModularGroup.fd : Set UpperHalfPlane)) := fun b₁ _ b₂ _ hne ↦ by
-    apply aedisjoint_glMap_T_p_upper_pair_fd_per_q hp.pos q
-    intro h
-    apply hne
-    exact_mod_cast (sub_eq_zero.mp h).symm
-  exact (peterssonInner_biUnion_finset_ae (Finset.range p) hm hd ⇑f _ hfi).symm
 
 open UpperHalfPlane ModularGroup MeasureTheory in
 /-- `μ_hyp` is invariant under positive-determinant `GL (Fin 2) ℝ` translates. -/
