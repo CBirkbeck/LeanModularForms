@@ -47,31 +47,6 @@ variable {N : ℕ} {k : ℤ}
 lemma ModularGroup_T_mem_Gamma1 (N : ℕ) : ModularGroup.T ∈ Gamma1 N := by
   simp [Gamma1_mem, ModularGroup.coe_T]
 
-/-- The integer power `T^n = [[1, n], [0, 1]]` lies in `Γ₁(N)` for every `n : ℤ`
-and every level `N`. -/
-lemma ModularGroup_T_zpow_mem_Gamma1 (N : ℕ) (n : ℤ) :
-    ModularGroup.T ^ n ∈ Gamma1 N := by
-  simp [Gamma1_mem, ModularGroup.coe_T_zpow]
-
-/-- A `Γ₁(N)`-cusp form is invariant under the slash action by `T`:
-`f ∣[k] T = f`. This is the basic "period-1 at `i∞`" statement of
-Miyake §4.6.4. -/
-lemma cuspForm_T_slash_eq_self [NeZero N]
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    ⇑f ∣[k] (ModularGroup.T : SL(2, ℤ)) = ⇑f := by
-  rw [ModularForm.SL_slash]
-  exact SlashInvariantFormClass.slash_action_eq f _
-    ⟨ModularGroup.T, ModularGroup_T_mem_Gamma1 N, rfl⟩
-
-/-- A `Γ₁(N)`-cusp form is invariant under the slash action by every integer
-power of `T`: `f ∣[k] T^n = f`. -/
-lemma cuspForm_T_zpow_slash_eq_self [NeZero N] (n : ℤ)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    ⇑f ∣[k] ((ModularGroup.T ^ n : SL(2, ℤ))) = ⇑f := by
-  rw [ModularForm.SL_slash]
-  exact SlashInvariantFormClass.slash_action_eq f _
-    ⟨ModularGroup.T ^ n, ModularGroup_T_zpow_mem_Gamma1 N n, rfl⟩
-
 private lemma dvd_lower_left_of_dvd_of_mem_Gamma0
     {l N : ℕ} (h_dvd : l ∣ N) {γ : SL(2, ℤ)} (hγ : γ ∈ Gamma0 N) :
     (l : ℤ) ∣ γ.val 1 0 :=
@@ -160,14 +135,6 @@ lemma mdifferentiable_of_levelRaiseFun_eq (l : ℕ) [NeZero l] (k : ℤ)
   exact hg_diff.comp
     (UpperHalfPlane.mdifferentiable_smul (levelRaiseMatrix_inv_det_pos l))
 
-/-- Holomorphy of `f` from a `ModularForm` `g`: specialisation of
-`mdifferentiable_of_levelRaiseFun_eq` where holomorphy of `g` is automatic. -/
-lemma mdifferentiable_of_modularForm_levelRaiseFun_eq {Γ : Subgroup (GL (Fin 2) ℝ)}
-    (l : ℕ) [NeZero l] (k : ℤ) (f : UpperHalfPlane → ℂ) (g : ModularForm Γ k)
-    (hg_eq : ⇑g = levelRaiseFun l k f) :
-    MDifferentiable 𝓘(ℂ) 𝓘(ℂ) f :=
-  mdifferentiable_of_levelRaiseFun_eq l k f ⇑g (ModularFormClass.holo g) hg_eq
-
 /-- The Case A lowered character: when `χ` factors through level `N/l`,
 this is the unique `χ_low : DirichletCharacter ℂ (N/l)` with
 `χ = changeLevel _ χ_low`. -/
@@ -249,24 +216,6 @@ lemma conductor_slash_T_conj_eq (l N : ℕ) [NeZero l] [NeZero N] (h_dvd : l ∣
   rw [ModularForm.smul_slash, hσ_T, RingHom.id_apply,
     slash_T_zpow_eq_self_of_slash_T_eq k f hf_period j]
 
-/-- Lowered slash field for `Γ₀(N/l)`: under the Case A hypotheses, for every
-`γ' ∈ Γ₀(N/l)` the slash action of `mapGL ℝ γ'` on `f` yields a Nebentypus
-character value times `f`, with character coordinate read off a `Γ₀(N)`-lift
-of `γ'`. -/
-lemma conductor_slash_eq_of_mem_Gamma0_div (l N : ℕ) [NeZero l] [NeZero N] (h_dvd : l ∣ N)
-    (k : ℤ) (χ : DirichletCharacter ℂ N) (f : UpperHalfPlane → ℂ)
-    (g : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hg_char : g ∈ modFormCharSpace k χ.toUnitHom) (hg_eq : ⇑g = levelRaiseFun l k f)
-    (hf_period : f ∣[k] (mapGL ℝ ModularGroup.T : GL (Fin 2) ℝ) = f)
-    (γ' : SL(2, ℤ)) (hγ' : γ' ∈ Gamma0 (N / l)) :
-    ∃ (γ : SL(2, ℤ)) (hγ : γ ∈ Gamma0 N),
-      f ∣[k] (mapGL ℝ γ' : GL (Fin 2) ℝ) =
-        (χ.toUnitHom (Gamma0MapUnits ⟨γ, hγ⟩) : ℂ) • f := by
-  obtain ⟨i, j, γ, hγ, hfact, _⟩ := exists_T_levelRaiseConj_T_factor l N h_dvd γ' hγ'
-  refine ⟨γ, hγ, ?_⟩
-  rw [hfact]
-  exact conductor_slash_T_conj_eq l N h_dvd k χ f g hg_char hg_eq hf_period i j γ hγ
-
 /-- Slash invariance of `f` under `Γ₁(N/l)`: under the Case A hypotheses
 including `χ.FactorsThrough (N/l)`, the function `f` transforms trivially
 under the slash action of `mapGL ℝ δ` for every `δ ∈ Γ₁(N/l)`. -/
@@ -312,20 +261,6 @@ lemma im_levelRaiseMatrix_inv_smul (l : ℕ) [NeZero l] (z : UpperHalfPlane) :
   rw [coe_levelRaiseMatrix_inv_smul,
     show (l : ℂ) = ((l : ℝ) : ℂ) by push_cast; rfl, Complex.div_ofReal_im]
   rfl
-
-/-- Boundedness at `i∞` transfer: if `g = levelRaiseFun l k f` and `g` is
-bounded at `i∞`, then so is `f`. -/
-lemma isBoundedAtImInfty_of_levelRaiseFun_eq (l : ℕ) [NeZero l] (k : ℤ)
-    (f g : UpperHalfPlane → ℂ) (hg_bdd : UpperHalfPlane.IsBoundedAtImInfty g)
-    (hg_eq : g = levelRaiseFun l k f) :
-    UpperHalfPlane.IsBoundedAtImInfty f := by
-  rw [UpperHalfPlane.isBoundedAtImInfty_iff] at *
-  obtain ⟨M, A, hbound⟩ := hg_bdd
-  refine ⟨M, A * (l : ℝ), fun z' hz' ↦ ?_⟩
-  rw [fun_eq_apply_levelRaiseMatrix_inv_smul l k f g hg_eq z']
-  apply hbound
-  rw [im_levelRaiseMatrix_inv_smul]
-  rwa [le_div_iff₀ (Nat.cast_pos.mpr (Nat.pos_of_neZero l))]
 
 /-- The conjugation factor `σ` for `(levelRaiseMatrix l)⁻¹` is the
 identity (positive determinant `1/l`). -/
@@ -543,37 +478,6 @@ lemma isBoundedAtImInfty_slash_mapGL_of_levelRaiseFun_eq (l N : ℕ) [NeZero l] 
   rw [isBoundedAtImInfty_slash_iff_levelRaiseFun_eq l k f ⇑g hg_eq A]
   exact isBoundedAtImInfty_slash_levelRaiseMatrix_inv_mul_mapGL l N k g A
 
-open OnePoint in
-/-- All-cusp boundedness theorem: the candidate lower-level form `f` is
-bounded at every cusp of `(Gamma1 (N/l)).map (mapGL ℝ)`. -/
-theorem bdd_at_cusps_of_levelRaiseFun_eq (l N : ℕ) [NeZero l] [NeZero N] (h_dvd : l ∣ N)
-    (k : ℤ) (f : UpperHalfPlane → ℂ) (g : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hg_eq : ⇑g = levelRaiseFun l k f) {c : OnePoint ℝ}
-    (hc : IsCusp c ((Gamma1 (N / l)).map (mapGL ℝ))) :
-    OnePoint.IsBoundedAt c f k := by
-  haveI : NeZero (N / l) := ⟨(Nat.div_pos (Nat.le_of_dvd (Nat.pos_of_neZero N) h_dvd)
-    (Nat.pos_of_neZero l)).ne'⟩
-  have hc_SL : IsCusp c 𝒮ℒ := (Subgroup.IsArithmetic.isCusp_iff_isCusp_SL2Z _).mp hc
-  rw [OnePoint.isBoundedAt_iff_exists_SL2Z hc_SL]
-  obtain ⟨γ, hγ⟩ := isCusp_SL2Z_iff'.mp hc_SL
-  refine ⟨γ, hγ.symm, ?_⟩
-  rw [ModularForm.SL_slash]
-  exact isBoundedAtImInfty_slash_mapGL_of_levelRaiseFun_eq l N k f g hg_eq γ
-
-/-- Inverse zero-at-`i∞` transfer: if `g = levelRaiseFun l k f` and `g` is
-zero at `i∞`, then so is `f`. -/
-lemma isZeroAtImInfty_of_levelRaiseFun_eq (l : ℕ) [NeZero l] (k : ℤ)
-    (f g : UpperHalfPlane → ℂ) (hg_zero : UpperHalfPlane.IsZeroAtImInfty g)
-    (hg_eq : g = levelRaiseFun l k f) :
-    UpperHalfPlane.IsZeroAtImInfty f := by
-  rw [UpperHalfPlane.isZeroAtImInfty_iff] at *
-  intro ε hε
-  obtain ⟨A, hbound⟩ := hg_zero ε hε
-  refine ⟨A * (l : ℝ), fun z' hz' ↦ ?_⟩
-  rw [fun_eq_apply_levelRaiseMatrix_inv_smul l k f g hg_eq z']
-  apply hbound
-  rw [im_levelRaiseMatrix_inv_smul]
-  rwa [le_div_iff₀ (Nat.cast_pos.mpr (Nat.pos_of_neZero l))]
 
 /-- Slash zero-at-`i∞` reduction: for any `A : SL(2, ℤ)`, the zero-at-`i∞` of
 `f ∣[k] mapGL ℝ A` is equivalent to the zero-at-`i∞` of
@@ -797,24 +701,6 @@ lemma fun_eq_zero_of_two_multipliers (k : ℤ) (f : UpperHalfPlane → ℂ) (M :
   have h_diff : (c₁ - c₂) • f = 0 := by rw [sub_smul, h₁.symm.trans h₂, sub_self]
   exact (smul_eq_zero.mp h_diff).resolve_left (sub_ne_zero.mpr hne)
 
-/-- Case B vanishing, conditional form: under `¬ χ.FactorsThrough (N/l)`, the
-function `f` vanishes provided a hypothesis `h_second_mult` produces a second
-scalar `c' ≠ c` such that `f ∣[k] mapGL ℝ δ = c' • f` for the witness `δ`. -/
-theorem case_B_vanishing_of_two_multipliers (l N : ℕ) [NeZero l] [NeZero N]
-    (h_dvd : l ∣ N) (k : ℤ) (χ : DirichletCharacter ℂ N)
-    (h_not_fac : ¬ χ.FactorsThrough (N / l)) (f : UpperHalfPlane → ℂ)
-    (g : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hg_char : g ∈ modFormCharSpace k χ.toUnitHom) (hg_eq : ⇑g = levelRaiseFun l k f)
-    (h_second_mult : ∀ (δ : SL(2, ℤ)) (_ : δ ∈ Gamma1 (N / l)) (c : ℂ),
-      c ≠ 1 → f ∣[k] (mapGL ℝ δ : GL (Fin 2) ℝ) = c • f →
-      ∃ c' : ℂ, c' ≠ c ∧ f ∣[k] (mapGL ℝ δ : GL (Fin 2) ℝ) = c' • f) :
-    f = 0 := by
-  obtain ⟨δ, hδ_mem, c, hc_ne, hc_eq⟩ :=
-    case_B_slash_relation l N h_dvd k χ h_not_fac f g hg_char hg_eq
-  obtain ⟨c', hc'_ne, hc'_eq⟩ := h_second_mult δ hδ_mem c hc_ne hc_eq
-  exact fun_eq_zero_of_two_multipliers k f ((mapGL ℝ δ : GL (Fin 2) ℝ))
-    hc'_ne.symm hc_eq hc'_eq
-
 /-- Controlled `Γ₀(N)` lift of `u : (ZMod N)ˣ`: the Bezout-style matrix
 `!![a, b; N, e]` with `a = (u⁻¹ : ZMod N).val`, `e = (u : ZMod N).val`, and
 `b = (a*e - 1) / N`. -/
@@ -897,20 +783,6 @@ lemma case_B_slash_relation_with_controlled_lift (l N : ℕ) [NeZero l] [NeZero 
       (gamma0LiftLowerLeftN N u).property⟩ = u from
     gamma0LiftLowerLeftN_Gamma0MapUnits N u] at h_slash
 
-/-- Algebraic restatement of the `(i, j)`-shift divisibility constraint:
-`l ∣ -j*(a₀ - i*(N/l)) + l*b₀ - i*e₀ ↔ l ∣ i*e₀ + j*a₀ - i*j*(N/l)`. -/
-lemma T_shift_divisibility_eq_iff (l N : ℕ) (i j : ℤ) (a₀ b₀ e₀ : ℤ) :
-    (l : ℤ) ∣ (-j * (a₀ - i * ((N / l : ℕ) : ℤ)) + l * b₀ - i * e₀) ↔
-      (l : ℤ) ∣ (i * e₀ + j * a₀ - i * j * ((N / l : ℕ) : ℤ)) := by
-  refine ⟨fun h ↦ ?_, fun h ↦ ?_⟩
-  · have h1 := dvd_neg.mpr h
-    rw [show (-(- j * (a₀ - i * ((N / l : ℕ) : ℤ)) + l * b₀ - i * e₀)) =
-      (i * e₀ + j * a₀ - i * j * ((N / l : ℕ) : ℤ)) - l * b₀ by ring] at h1
-    simpa using dvd_add h1 ⟨b₀, rfl⟩
-  · have h1 := dvd_neg.mpr (dvd_sub h ⟨b₀, rfl⟩)
-    rwa [show -((i * e₀ + j * a₀ - i * j * ((N / l : ℕ) : ℤ)) - l * b₀) =
-      (- j * (a₀ - i * ((N / l : ℕ) : ℤ)) + l * b₀ - i * e₀) by ring] at h1
-
 /-- Multiplicative character separation in the kernel: given `u : (ZMod N)ˣ`
 and `χ` not factoring through level `d`, there is a kernel element `v` (with
 `ZMod.unitsMap hd v = 1`) such that `χ.toUnitHom (u * v) ≠ χ.toUnitHom u`. -/
@@ -920,25 +792,6 @@ lemma exists_kernel_unit_with_char_shift {N : ℕ} [NeZero N] {d : ℕ} (hd : d 
   obtain ⟨v, hv_ker, hv_chi⟩ := exists_unit_of_not_factorsThrough hd h_not_fac
   refine ⟨v, hv_ker, fun h ↦ hv_chi <| mul_left_cancel <|
     show χ.toUnitHom u * χ.toUnitHom v = χ.toUnitHom u * 1 by rw [← map_mul, h, mul_one]⟩
-
-/-- Integer-`j`-shift bridge: for `v : (ZMod N)ˣ` in the kernel of
-`(ZMod N)ˣ → (ZMod (N/l))ˣ`, the integer representative `v.val` satisfies
-`(N/l) ∣ (v.val - 1)` in `ℤ`. -/
-lemma natCast_val_sub_one_dvd_of_mem_ker {N l : ℕ} [NeZero N] [NeZero l] (h_dvd : l ∣ N)
-    (v : (ZMod N)ˣ)
-    (hv_ker : ZMod.unitsMap ⟨l, (Nat.div_mul_cancel h_dvd).symm⟩ v = 1) :
-    ((N / l : ℕ) : ℤ) ∣ (((v : ZMod N).val : ℤ) - 1) := by
-  have h_cast_one : ZMod.castHom ⟨l, (Nat.div_mul_cancel h_dvd).symm⟩
-      (ZMod (N / l)) (v : ZMod N) = 1 := by
-    have hh := congr_arg Units.val hv_ker
-    rwa [ZMod.unitsMap_val, Units.val_one] at hh
-  rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
-  push_cast
-  rw [ZMod.natCast_val (v : ZMod N),
-    show (ZMod.cast ((v : ZMod N) : ZMod N) : ZMod (N / l)) =
-      ZMod.castHom ⟨l, (Nat.div_mul_cancel h_dvd).symm⟩ (ZMod (N / l)) (v : ZMod N) from rfl,
-    h_cast_one]
-  ring
 
 /-- Coset character separation: under `¬ χ.FactorsThrough d`, for any
 `u : (ZMod N)ˣ` there exists `u' : (ZMod N)ˣ` in the same `ZMod.unitsMap hd`-coset
