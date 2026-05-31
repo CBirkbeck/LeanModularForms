@@ -43,39 +43,6 @@ open scoped MatrixGroups ModularForm Pointwise DirectSum
 
 variable {N : ℕ} [NeZero N] {k : ℤ}
 
-open UpperHalfPlane MeasureTheory ModularGroup in
-/-- The aggregate `(q, b)`-shifted-domain identity with RHS `petN (T_p f) g`,
-obtained by summing the per-`q` `hasBadPrimeFrickePerCosetSumTransport`. -/
-theorem Newform.aggregate_q_b_shifted_eq_inv_c_petN_T_p_f_g
-    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
-    (hp : p.Prime) (hpN : ¬ Nat.Coprime p N)
-    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    (Newform.frickeSquareScalar N k)⁻¹ *
-      (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ∑ b ∈ Finset.range p,
-          peterssonInner k
-            ((Newform.T_p_lower_with_offset N hp.pos b : GL (Fin 2) ℝ) •
-              ((Newform.frickeMatrix N : GL (Fin 2) ℝ) •
-                ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
-                  (fd : Set UpperHalfPlane))))
-            (⇑f ∣[k] (Newform.frickeMatrix N : GL (Fin 2) ℝ))
-            (((-1 : ℂ) ^ k) •
-              ((⇑g ∣[k] (Newform.frickeMatrix N : GL (Fin 2) ℝ)) ∣[k]
-                (Newform.T_p_lower_with_offset_adjugate N hp.pos b :
-                  GL (Fin 2) ℝ)))) =
-    petN (heckeT_n_cusp k p f) g := by
-  show _ =
-    ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-      peterssonInner k (fd : Set UpperHalfPlane)
-        (⇑(heckeT_n_cusp k p f) ∣[k] (q.out : SL(2, ℤ))⁻¹)
-        (⇑g ∣[k] (q.out : SL(2, ℤ))⁻¹)
-  rw [Finset.sum_congr rfl fun q _ ↦
-    Newform.peterssonInner_heckeT_n_cusp_at_divN_slash_qOut_inv_eq_bsum
-      hp hpN f g q]
-  rw [Finset.sum_congr rfl fun q _ ↦
-    Newform.hasBadPrimeFrickePerCosetSumTransport hp hpN f g q]
-  rw [← Finset.mul_sum]
-
 open scoped Pointwise in
 /-- The set equality `W_N · β_b · S = M_b · W_N · S` for any `S ⊆ ℍ`, lifting the
 matrix relation `W_N · β_b = M_b · W_N` to the `GL(2, ℝ)`-action on `Set ℍ`. -/
@@ -87,36 +54,6 @@ lemma Newform.frickeMatrix_smul_T_p_upper_smul_set_eq_T_p_lower_with_offset_smul
         ((Newform.frickeMatrix N : GL (Fin 2) ℝ) • S) := by
   rw [← mul_smul, ← mul_smul,
     Newform.frickeMatrix_mul_glMap_T_p_upper_eq_lower_offset_mul_frickeMatrix]
-
-open UpperHalfPlane MeasureTheory ModularGroup in
-/-- The Fricke-conjugated aggregate `(q, b)`-shifted-domain identity with RHS
-`petN (T_p f) g`: the previous aggregate with the per-`(q, b)` integration domain
-rewritten from `M_b · W_N · q.out⁻¹·fd` to `W_N · β_b · q.out⁻¹·fd`. -/
-theorem Newform.aggregate_q_b_W_N_β_b_shifted_eq_inv_c_petN_T_p_f_g
-    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
-    (hp : p.Prime) (hpN : ¬ Nat.Coprime p N)
-    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    (Newform.frickeSquareScalar N k)⁻¹ *
-      (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ∑ b ∈ Finset.range p,
-          peterssonInner k
-            ((Newform.frickeMatrix N : GL (Fin 2) ℝ) •
-              ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) •
-                ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
-                  (fd : Set UpperHalfPlane))))
-            (⇑f ∣[k] (Newform.frickeMatrix N : GL (Fin 2) ℝ))
-            (((-1 : ℂ) ^ k) •
-              ((⇑g ∣[k] (Newform.frickeMatrix N : GL (Fin 2) ℝ)) ∣[k]
-                (Newform.T_p_lower_with_offset_adjugate N hp.pos b :
-                  GL (Fin 2) ℝ)))) =
-    petN (heckeT_n_cusp k p f) g := by
-  rw [← Newform.aggregate_q_b_shifted_eq_inv_c_petN_T_p_f_g hp hpN f g]
-  congr 1
-  refine Finset.sum_congr rfl fun q _ ↦ ?_
-  refine Finset.sum_congr rfl fun b _ ↦ ?_
-  congr 1
-  exact Newform.frickeMatrix_smul_T_p_upper_smul_set_eq_T_p_lower_with_offset_smul_frickeMatrix_smul_set
-    N hp.pos b _
 
 open UpperHalfPlane MeasureTheory ModularGroup in
 /-- Per-`q` `Fin p`-indexed pairwise AE-disjointness for the bad-prime
@@ -369,70 +306,6 @@ theorem Newform.peterssonInner_W_N_β_b_qOut_inv_fd_adj_eq_peterssonInner_W_N_qO
       (Newform.T_p_lower_with_offset N hp b)
       (Newform.T_p_lower_with_offset_det_pos N hp b)]
 
-open UpperHalfPlane MeasureTheory ModularGroup in
-/-- The common-domain `(q, b)`-aggregate identity for the bad-prime W_N-conjugated
-tile family with RHS `petN (T_p f) g`: every per-`(q, b)` summand uses the
-`b`-independent domain `W_N · q.out⁻¹·fd`, with the `b`-dependence isolated as
-`(f|W_N)|M_b` in the f-slot. -/
-theorem Newform.aggregate_q_b_common_W_N_qOut_inv_fd_eq_inv_c_petN_T_p_f_g
-    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
-    (hp : p.Prime) (hpN : ¬ Nat.Coprime p N)
-    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    (Newform.frickeSquareScalar N k)⁻¹ *
-      (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ∑ b ∈ Finset.range p,
-          ((-1 : ℂ) ^ k *
-            peterssonInner k
-              ((Newform.frickeMatrix N : GL (Fin 2) ℝ) •
-                ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
-                  (fd : Set UpperHalfPlane)))
-              ((⇑f ∣[k] (Newform.frickeMatrix N : GL (Fin 2) ℝ)) ∣[k]
-                (Newform.T_p_lower_with_offset N hp.pos b : GL (Fin 2) ℝ))
-              (⇑g ∣[k] (Newform.frickeMatrix N : GL (Fin 2) ℝ)))) =
-    petN (heckeT_n_cusp k p f) g := by
-  rw [← Newform.aggregate_q_b_W_N_β_b_shifted_eq_inv_c_petN_T_p_f_g hp hpN f g]
-  congr 1
-  refine Finset.sum_congr rfl fun q _ ↦ ?_
-  refine Finset.sum_congr rfl fun b _ ↦ ?_
-  rw [peterssonInner_smul_right,
-    Newform.peterssonInner_W_N_β_b_qOut_inv_fd_adj_eq_peterssonInner_W_N_qOut_inv_fd_M_b_slash
-      N hp.pos q b]
-
-open UpperHalfPlane MeasureTheory ModularGroup in
-/-- The common-domain b-sum collapse for the bad-prime W_N-conjugated aggregate
-with RHS `petN (T_p f) g`: the per-`q` b-sum is folded into the f-slot of a single
-`peterssonInner` over the common domain, concentrating the `b`-dependence in
-`Σ_b ((f|W_N)|M_b)`. Conditional on per-`(q, b)` integrability. -/
-theorem Newform.aggregate_q_b_collapsed_W_N_qOut_inv_fd_eq_inv_c_petN_T_p_f_g
-    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
-    (hp : p.Prime) (hpN : ¬ Nat.Coprime p N)
-    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (h_int : ∀ q : SL(2, ℤ) ⧸ Gamma1 N, ∀ b ∈ Finset.range p,
-      IntegrableOn
-        (fun τ ↦ petersson k
-          (⇑g ∣[k] (Newform.frickeMatrix N : GL (Fin 2) ℝ))
-          ((⇑f ∣[k] (Newform.frickeMatrix N : GL (Fin 2) ℝ)) ∣[k]
-            (Newform.T_p_lower_with_offset N hp.pos b : GL (Fin 2) ℝ)) τ)
-        ((Newform.frickeMatrix N : GL (Fin 2) ℝ) •
-          ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
-            (fd : Set UpperHalfPlane))) μ_hyp) :
-    (Newform.frickeSquareScalar N k)⁻¹ *
-      (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ((-1 : ℂ) ^ k *
-          peterssonInner k
-            ((Newform.frickeMatrix N : GL (Fin 2) ℝ) •
-              ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
-                (fd : Set UpperHalfPlane)))
-            (∑ b ∈ Finset.range p,
-              ((⇑f ∣[k] (Newform.frickeMatrix N : GL (Fin 2) ℝ)) ∣[k]
-                (Newform.T_p_lower_with_offset N hp.pos b :
-                  GL (Fin 2) ℝ)))
-            (⇑g ∣[k] (Newform.frickeMatrix N : GL (Fin 2) ℝ)))) =
-    petN (heckeT_n_cusp k p f) g := by
-  rw [← Newform.aggregate_q_b_common_W_N_qOut_inv_fd_eq_inv_c_petN_T_p_f_g hp hpN f g]
-  congr 1
-  refine Finset.sum_congr rfl fun q _ ↦ ?_
-  rw [peterssonInner_sum_left _ _ _ _ (h_int q), Finset.mul_sum]
 
 /-- The rational lift of `Newform.T_p_lower_with_offset` in `GL (Fin 2) ℚ`, with
 entries `!![p, 0; -N·b, 1]`. -/
@@ -567,31 +440,6 @@ theorem Newform.integrableOn_petersson_fricke_qOut_fd_lowerOffset
       Matrix (Fin 2) (Fin 2) ℝ).det
     rw [mapGL_SL_det_eq_one ((q.out : SL(2, ℤ))⁻¹)]; exact one_pos
 
-open UpperHalfPlane MeasureTheory ModularGroup in
-/-- The unconditional collapsed common-domain aggregate identity for
-`petN (T_p f) g`, discharging the per-`(q, b)` integrability hypothesis via
-`Newform.integrableOn_petersson_fricke_qOut_fd_lowerOffset`. -/
-theorem Newform.aggregate_q_b_collapsed_W_N_qOut_inv_fd_eq_inv_c_petN_T_p_f_g_unconditional
-    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
-    (hp : p.Prime) (hpN : ¬ Nat.Coprime p N)
-    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    (Newform.frickeSquareScalar N k)⁻¹ *
-      (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-        ((-1 : ℂ) ^ k *
-          peterssonInner k
-            ((Newform.frickeMatrix N : GL (Fin 2) ℝ) •
-              ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
-                (fd : Set UpperHalfPlane)))
-            (∑ b ∈ Finset.range p,
-              ((⇑f ∣[k] (Newform.frickeMatrix N : GL (Fin 2) ℝ)) ∣[k]
-                (Newform.T_p_lower_with_offset N hp.pos b :
-                  GL (Fin 2) ℝ)))
-            (⇑g ∣[k] (Newform.frickeMatrix N : GL (Fin 2) ℝ)))) =
-    petN (heckeT_n_cusp k p f) g :=
-  Newform.aggregate_q_b_collapsed_W_N_qOut_inv_fd_eq_inv_c_petN_T_p_f_g
-    hp hpN f g
-    (fun q b _ ↦
-      Newform.integrableOn_petersson_fricke_qOut_fd_lowerOffset hp.pos f g q b)
 
 private theorem Newform.conj_frickeSquareScalar (N : ℕ) (k : ℤ) :
     (starRingEnd ℂ) (Newform.frickeSquareScalar N k) =
