@@ -943,69 +943,102 @@ theorem Newform.dirichletQuotient_pole_witness_of_dirichletZero_full
     meromorphicOrderAt_lt_of_ne_zero_of_zero h_num_an h_den_an h_num_ne_zero h_den_zero
       h_den_finite, h_full_clause⟩
 
+/-- Per-newform classical inputs needed by
+`Newform.full_pole_witness_data_of_dirichletZero`, packaged as a single named
+structure with explicit fields.
+
+This `_pre` variant lives in `FrickeTwist.lean` so that the FrickeTwist consumers
+of the full-quotient ∃-clause shape can accept the bundled form without
+upward-importing `MellinBridges.lean`. The canonical
+`Newform.PerNewformFullDirichletData` (in `MellinBridges.lean`) is field-by-field
+identical and converts via
+`Newform.PerNewformFullDirichletData.ofPre`. -/
+@[ext]
+structure Newform.PerNewformFullDirichletData_pre
+    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
+    (S : Finset ℕ) where
+  /-- Exceptional primes finset (coprime to `N`). -/
+  T : Finset Nat.Primes
+  /-- Pole point — a Dirichlet zero of `LFunction χ̃` in the critical strip. -/
+  s₀ : ℂ
+  /-- The Dirichlet zero (the single irreducible classical input). -/
+  h_zero : DirichletCharacter.LFunction
+    (Newform.dirichletLift χ : DirichletCharacter ℂ N) (2 * s₀ - k + 1) = 0
+  /-- Squared-character L-value non-cancellation at the doubled image point. -/
+  h_num_LF_ne : DirichletCharacter.LFunction
+    (Newform.dirichletLift χ * Newform.dirichletLift χ
+      : DirichletCharacter ℂ N) (2 * (2 * s₀ - k + 1)) ≠ 0
+  /-- Per-prime non-vanishing of finite Euler-factor numerator entries. -/
+  h_factors_ne : ∀ p ∈ T,
+    Newform.eulerFactor_stripped f χ S s₀ p ≠ 0 ∧
+    (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
+        ((p : ℕ) : ZMod N) *
+      ((p : ℕ) : ℂ) ^ (-(2 * s₀ - k + 1))) ≠ 0
+  /-- Analyticity of the full T111 numerator at `s₀`. -/
+  h_num_an : AnalyticAt ℂ
+    (fun s ↦
+      DirichletCharacter.LFunction
+        (Newform.dirichletLift χ * Newform.dirichletLift χ
+          : DirichletCharacter ℂ N) (2 * (2 * s - k + 1)) *
+      ∏ p ∈ T, Newform.eulerFactor_stripped f χ S s p *
+        (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
+            ((p : ℕ) : ZMod N) *
+          ((p : ℕ) : ℂ) ^ (-(2 * s - k + 1)))⁻¹) s₀
+  /-- Analyticity of the full T111 denominator at `s₀`. -/
+  h_den_an : AnalyticAt ℂ
+    (fun s ↦
+      DirichletCharacter.LFunction
+        (Newform.dirichletLift χ : DirichletCharacter ℂ N)
+        (2 * s - k + 1) *
+      ∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
+        : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
+        ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀
+  /-- Finite analytic order of full T111 denominator at `s₀`. -/
+  h_den_finite : meromorphicOrderAt
+    (fun s ↦
+      DirichletCharacter.LFunction
+        (Newform.dirichletLift χ : DirichletCharacter ℂ N)
+        (2 * s - k + 1) *
+      ∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
+        : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
+        ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀ ≠ ⊤
+  /-- Universal-F clause from T111 + extension uniqueness. -/
+  h_clause : Newform.FullDirichletQuotientUniversalFClause f χ S T s₀
+
 /-- The full-quotient analogue of
 `Newform.noEntireExtensionUnderBadPrime_of_dirichletZeroCertificate`: per-newform
 full T111 numerator/denominator data plus the full universal-F clause imply
-`Newform.NoEntireExtensionUnderBadPrime`. -/
+`Newform.NoEntireExtensionUnderBadPrime`.
+
+Takes the bundled `Newform.PerNewformFullDirichletData_pre`; downstream callers
+holding the canonical `Newform.PerNewformFullDirichletData` can supply
+`D.toPre` (defined in `MellinBridges.lean`). -/
 theorem Newform.noEntireExtensionUnderBadPrime_of_full_dirichletZeroCertificate
     (h_data : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
       f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
       ∀ (S : Finset ℕ),
         (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
           q ∉ S → f.lCoeff q = 0) →
-        ∃ (T : Finset Nat.Primes) (s₀ : ℂ),
-          AnalyticAt ℂ
-            (fun s ↦
-              DirichletCharacter.LFunction
-                (Newform.dirichletLift χ * Newform.dirichletLift χ
-                  : DirichletCharacter ℂ N) (2 * (2 * s - k + 1)) *
-              ∏ p ∈ T, Newform.eulerFactor_stripped f χ S s p *
-                (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-                    ((p : ℕ) : ZMod N) *
-                  ((p : ℕ) : ℂ) ^ (-(2 * s - k + 1)))⁻¹) s₀ ∧
-          AnalyticAt ℂ
-            (fun s ↦
-              DirichletCharacter.LFunction
-                (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-                (2 * s - k + 1) *
-              ∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-                : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-                ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀ ∧
-          (DirichletCharacter.LFunction
-            (Newform.dirichletLift χ * Newform.dirichletLift χ
-              : DirichletCharacter ℂ N) (2 * (2 * s₀ - k + 1)) *
-            (∏ p ∈ T, Newform.eulerFactor_stripped f χ S s₀ p *
-              (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-                  ((p : ℕ) : ZMod N) *
-                ((p : ℕ) : ℂ) ^ (-(2 * s₀ - k + 1)))⁻¹)) ≠ 0 ∧
-          (DirichletCharacter.LFunction
-            (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-            (2 * s₀ - k + 1) *
-            (∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-              : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-              ((p : ℕ) : ℂ) ^ (-(2 * (2 * s₀ - k + 1))))⁻¹)) = 0 ∧
-          meromorphicOrderAt
-            (fun s ↦
-              DirichletCharacter.LFunction
-                (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-                (2 * s - k + 1) *
-              ∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-                : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-                ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀ ≠ ⊤ ∧
-          Newform.FullDirichletQuotientUniversalFClause f χ S T s₀) :
+        Newform.PerNewformFullDirichletData_pre f χ S) :
     Newform.NoEntireExtensionUnderBadPrime := by
   apply Newform.noEntireExtensionUnderBadPrime_of_dirichletQuotientHasPole
   intro N _ k f χ hfχ S h_bad
-  obtain ⟨T, s₀, h_num_an, h_den_an, h_num_ne, h_den_zero, h_den_finite, h_clause⟩ :=
-    h_data f χ hfχ S h_bad
-  exact Newform.dirichletQuotient_pole_witness_of_dirichletZero_full
-    f χ S T s₀ h_num_an h_den_an h_num_ne h_den_zero h_den_finite h_clause
+  let D := h_data f χ hfχ S h_bad
+  refine Newform.dirichletQuotient_pole_witness_of_dirichletZero_full
+    f χ S D.T D.s₀ D.h_num_an D.h_den_an ?_ ?_ D.h_den_finite D.h_clause
+  · exact mul_ne_zero D.h_num_LF_ne <| Finset.prod_ne_zero_iff.mpr fun p hp ↦
+      mul_ne_zero (D.h_factors_ne p hp).1 (inv_ne_zero (D.h_factors_ne p hp).2)
+  · rw [D.h_zero, zero_mul]
 
 /-- **Direct full-quotient bridge to `Newform.AnalyticContradiction` (T132 step).**
 
 Composes the full T111 chain into a direct
 `HeckeEntireExtension + full-data ⇒ AnalyticContradiction` consumer,
-sparing callers the intermediate `NoEntireExtensionUnderBadPrime` step. -/
+sparing callers the intermediate `NoEntireExtensionUnderBadPrime` step.
+
+Takes the bundled `Newform.PerNewformFullDirichletData_pre`; downstream callers
+holding the canonical `Newform.PerNewformFullDirichletData` can supply
+`D.toPre` (defined in `MellinBridges.lean`). -/
 theorem Newform.analyticContradiction_of_HeckeEntireExtension_of_full_dirichletZeroCertificate
     (h_hecke : Newform.HeckeEntireExtension)
     (h_data : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
@@ -1013,46 +1046,7 @@ theorem Newform.analyticContradiction_of_HeckeEntireExtension_of_full_dirichletZ
       ∀ (S : Finset ℕ),
         (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
           q ∉ S → f.lCoeff q = 0) →
-        ∃ (T : Finset Nat.Primes) (s₀ : ℂ),
-          AnalyticAt ℂ
-            (fun s ↦
-              DirichletCharacter.LFunction
-                (Newform.dirichletLift χ * Newform.dirichletLift χ
-                  : DirichletCharacter ℂ N) (2 * (2 * s - k + 1)) *
-              ∏ p ∈ T, Newform.eulerFactor_stripped f χ S s p *
-                (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-                    ((p : ℕ) : ZMod N) *
-                  ((p : ℕ) : ℂ) ^ (-(2 * s - k + 1)))⁻¹) s₀ ∧
-          AnalyticAt ℂ
-            (fun s ↦
-              DirichletCharacter.LFunction
-                (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-                (2 * s - k + 1) *
-              ∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-                : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-                ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀ ∧
-          (DirichletCharacter.LFunction
-            (Newform.dirichletLift χ * Newform.dirichletLift χ
-              : DirichletCharacter ℂ N) (2 * (2 * s₀ - k + 1)) *
-            (∏ p ∈ T, Newform.eulerFactor_stripped f χ S s₀ p *
-              (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-                  ((p : ℕ) : ZMod N) *
-                ((p : ℕ) : ℂ) ^ (-(2 * s₀ - k + 1)))⁻¹)) ≠ 0 ∧
-          (DirichletCharacter.LFunction
-            (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-            (2 * s₀ - k + 1) *
-            (∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-              : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-              ((p : ℕ) : ℂ) ^ (-(2 * (2 * s₀ - k + 1))))⁻¹)) = 0 ∧
-          meromorphicOrderAt
-            (fun s ↦
-              DirichletCharacter.LFunction
-                (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-                (2 * s - k + 1) *
-              ∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-                : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-                ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀ ≠ ⊤ ∧
-          Newform.FullDirichletQuotientUniversalFClause f χ S T s₀) :
+        Newform.PerNewformFullDirichletData_pre f χ S) :
     Newform.AnalyticContradiction :=
   Newform.analyticContradiction_of_HeckeEntireExtension_of_NoEntireExtensionUnderBadPrime
     h_hecke (Newform.noEntireExtensionUnderBadPrime_of_full_dirichletZeroCertificate h_data)
@@ -1060,7 +1054,11 @@ theorem Newform.analyticContradiction_of_HeckeEntireExtension_of_full_dirichletZ
 /-- The `Newform.HeckeFEData` analogue of
 `Newform.analyticContradiction_of_HeckeEntireExtension_of_full_dirichletZeroCertificate`,
 taking a per-newform `Newform.HeckeFEData` instead of the global
-`HeckeEntireExtension` Prop. -/
+`HeckeEntireExtension` Prop.
+
+Takes the bundled `Newform.PerNewformFullDirichletData_pre`; downstream callers
+holding the canonical `Newform.PerNewformFullDirichletData` can supply
+`D.toPre` (defined in `MellinBridges.lean`). -/
 theorem Newform.analyticContradiction_of_HeckeFEData_of_full_dirichletZeroCertificate
     (h_FE : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k), Newform.HeckeFEData f)
     (h_data : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
@@ -1068,46 +1066,7 @@ theorem Newform.analyticContradiction_of_HeckeFEData_of_full_dirichletZeroCertif
       ∀ (S : Finset ℕ),
         (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
           q ∉ S → f.lCoeff q = 0) →
-        ∃ (T : Finset Nat.Primes) (s₀ : ℂ),
-          AnalyticAt ℂ
-            (fun s ↦
-              DirichletCharacter.LFunction
-                (Newform.dirichletLift χ * Newform.dirichletLift χ
-                  : DirichletCharacter ℂ N) (2 * (2 * s - k + 1)) *
-              ∏ p ∈ T, Newform.eulerFactor_stripped f χ S s p *
-                (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-                    ((p : ℕ) : ZMod N) *
-                  ((p : ℕ) : ℂ) ^ (-(2 * s - k + 1)))⁻¹) s₀ ∧
-          AnalyticAt ℂ
-            (fun s ↦
-              DirichletCharacter.LFunction
-                (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-                (2 * s - k + 1) *
-              ∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-                : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-                ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀ ∧
-          (DirichletCharacter.LFunction
-            (Newform.dirichletLift χ * Newform.dirichletLift χ
-              : DirichletCharacter ℂ N) (2 * (2 * s₀ - k + 1)) *
-            (∏ p ∈ T, Newform.eulerFactor_stripped f χ S s₀ p *
-              (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-                  ((p : ℕ) : ZMod N) *
-                ((p : ℕ) : ℂ) ^ (-(2 * s₀ - k + 1)))⁻¹)) ≠ 0 ∧
-          (DirichletCharacter.LFunction
-            (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-            (2 * s₀ - k + 1) *
-            (∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-              : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-              ((p : ℕ) : ℂ) ^ (-(2 * (2 * s₀ - k + 1))))⁻¹)) = 0 ∧
-          meromorphicOrderAt
-            (fun s ↦
-              DirichletCharacter.LFunction
-                (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-                (2 * s - k + 1) *
-              ∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-                : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-                ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀ ≠ ⊤ ∧
-          Newform.FullDirichletQuotientUniversalFClause f χ S T s₀) :
+        Newform.PerNewformFullDirichletData_pre f χ S) :
     Newform.AnalyticContradiction :=
   Newform.analyticContradiction_of_HeckeEntireExtension_of_full_dirichletZeroCertificate
     (Newform.HeckeEntireExtension_of_HeckeFEData h_FE) h_data
@@ -1200,118 +1159,6 @@ theorem Newform.full_pole_witness_data_of_dirichletZero
   · exact mul_ne_zero h_num_LF_ne <| Finset.prod_ne_zero_iff.mpr fun p hp ↦
       mul_ne_zero (h_num_factors_ne p hp).1 (inv_ne_zero (h_num_factors_ne p hp).2)
   · rw [h_zero, zero_mul]
-
-/-- Per-newform classical inputs needed by
-`Newform.full_pole_witness_data_of_dirichletZero`, packaged as a single named
-structure with explicit fields.
-
-This `_pre` variant lives in `FrickeTwist.lean` so that the FrickeTwist consumers
-of the full-quotient ∃-clause shape can accept the bundled form without
-upward-importing `MellinBridges.lean`. The canonical
-`Newform.PerNewformFullDirichletData` (in `MellinBridges.lean`) is field-by-field
-identical and converts via
-`Newform.PerNewformFullDirichletData.ofPre`. -/
-@[ext]
-structure Newform.PerNewformFullDirichletData_pre
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (S : Finset ℕ) where
-  /-- Exceptional primes finset (coprime to `N`). -/
-  T : Finset Nat.Primes
-  /-- Pole point — a Dirichlet zero of `LFunction χ̃` in the critical strip. -/
-  s₀ : ℂ
-  /-- The Dirichlet zero (the single irreducible classical input). -/
-  h_zero : DirichletCharacter.LFunction
-    (Newform.dirichletLift χ : DirichletCharacter ℂ N) (2 * s₀ - k + 1) = 0
-  /-- Squared-character L-value non-cancellation at the doubled image point. -/
-  h_num_LF_ne : DirichletCharacter.LFunction
-    (Newform.dirichletLift χ * Newform.dirichletLift χ
-      : DirichletCharacter ℂ N) (2 * (2 * s₀ - k + 1)) ≠ 0
-  /-- Per-prime non-vanishing of finite Euler-factor numerator entries. -/
-  h_factors_ne : ∀ p ∈ T,
-    Newform.eulerFactor_stripped f χ S s₀ p ≠ 0 ∧
-    (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-        ((p : ℕ) : ZMod N) *
-      ((p : ℕ) : ℂ) ^ (-(2 * s₀ - k + 1))) ≠ 0
-  /-- Analyticity of the full T111 numerator at `s₀`. -/
-  h_num_an : AnalyticAt ℂ
-    (fun s ↦
-      DirichletCharacter.LFunction
-        (Newform.dirichletLift χ * Newform.dirichletLift χ
-          : DirichletCharacter ℂ N) (2 * (2 * s - k + 1)) *
-      ∏ p ∈ T, Newform.eulerFactor_stripped f χ S s p *
-        (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-            ((p : ℕ) : ZMod N) *
-          ((p : ℕ) : ℂ) ^ (-(2 * s - k + 1)))⁻¹) s₀
-  /-- Analyticity of the full T111 denominator at `s₀`. -/
-  h_den_an : AnalyticAt ℂ
-    (fun s ↦
-      DirichletCharacter.LFunction
-        (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-        (2 * s - k + 1) *
-      ∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-        : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-        ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀
-  /-- Finite analytic order of full T111 denominator at `s₀`. -/
-  h_den_finite : meromorphicOrderAt
-    (fun s ↦
-      DirichletCharacter.LFunction
-        (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-        (2 * s - k + 1) *
-      ∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-        : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-        ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀ ≠ ⊤
-  /-- Universal-F clause from T111 + extension uniqueness. -/
-  h_clause : Newform.FullDirichletQuotientUniversalFClause f χ S T s₀
-
-/-- Packages `Newform.PerNewformFullDirichletData_pre f χ S` into the
-existential-data shape consumed by
-`Newform.noEntireExtensionUnderBadPrime_of_full_dirichletZeroCertificate`. -/
-theorem Newform.full_pole_witness_data_of_PerNewformFullDirichletData_pre
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (S : Finset ℕ) (D : Newform.PerNewformFullDirichletData_pre f χ S) :
-    ∃ (T : Finset Nat.Primes) (s₀ : ℂ),
-      AnalyticAt ℂ
-        (fun s ↦
-          DirichletCharacter.LFunction
-            (Newform.dirichletLift χ * Newform.dirichletLift χ
-              : DirichletCharacter ℂ N) (2 * (2 * s - k + 1)) *
-          ∏ p ∈ T, Newform.eulerFactor_stripped f χ S s p *
-            (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-                ((p : ℕ) : ZMod N) *
-              ((p : ℕ) : ℂ) ^ (-(2 * s - k + 1)))⁻¹) s₀ ∧
-      AnalyticAt ℂ
-        (fun s ↦
-          DirichletCharacter.LFunction
-            (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-            (2 * s - k + 1) *
-          ∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-            : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-            ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀ ∧
-      (DirichletCharacter.LFunction
-        (Newform.dirichletLift χ * Newform.dirichletLift χ
-          : DirichletCharacter ℂ N) (2 * (2 * s₀ - k + 1)) *
-        (∏ p ∈ T, Newform.eulerFactor_stripped f χ S s₀ p *
-          (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-              ((p : ℕ) : ZMod N) *
-            ((p : ℕ) : ℂ) ^ (-(2 * s₀ - k + 1)))⁻¹)) ≠ 0 ∧
-      (DirichletCharacter.LFunction
-        (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-        (2 * s₀ - k + 1) *
-        (∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-          : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-          ((p : ℕ) : ℂ) ^ (-(2 * (2 * s₀ - k + 1))))⁻¹)) = 0 ∧
-      meromorphicOrderAt
-        (fun s ↦
-          DirichletCharacter.LFunction
-            (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-            (2 * s - k + 1) *
-          ∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-            : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-            ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀ ≠ ⊤ ∧
-      Newform.FullDirichletQuotientUniversalFClause f χ S T s₀ :=
-  Newform.full_pole_witness_data_of_dirichletZero f χ S D.T D.s₀
-    D.h_zero D.h_num_LF_ne D.h_factors_ne D.h_num_an D.h_den_an
-    D.h_den_finite D.h_clause
 
 
 end HeckeRing.GL2
