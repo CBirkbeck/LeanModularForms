@@ -72,41 +72,7 @@ theorem α_T_p_PSL_R_smul_set_eq_match_GL (i : Option (Fin p)) (S : Set ℍ) :
   rw [α_T_p_PSL_R_smul_set, α_T_p_GLPos_smul_set_val]
   cases i <;> rfl
 
-open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **Phase E4 — pairwise AE-disjointness for the projective T_p family.** -/
-theorem aedisjoint_pairwise_T_p_family_PSL_R :
-    (↑(Finset.univ : Finset (Option (Fin p))) : Set (Option (Fin p))).Pairwise
-      (fun i j ↦ AEDisjoint μ_hyp
-          (α_T_p_PSL_R p hp hpN i • (Gamma1_fundDomain_PSL N : Set ℍ))
-          (α_T_p_PSL_R p hp hpN j • (Gamma1_fundDomain_PSL N : Set ℍ))) := by
-  intro i hi j hj hij
-  rw [α_T_p_PSL_R_smul_set_eq_match_GL,
-      α_T_p_PSL_R_smul_set_eq_match_GL]
-  exact aedisjoint_pairwise_T_p_family p hp hpN hi hj hij
-
-open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **Phase E4 — biUnion bridge: projective T_p tiles ↔ GL-tile match form.** -/
-theorem α_T_p_PSL_R_biUnion_eq_match_GL_biUnion (S : Set ℍ) :
-    (⋃ i ∈ (Finset.univ : Finset (Option (Fin p))),
-      α_T_p_PSL_R p hp hpN i • S) =
-    (⋃ i ∈ (Finset.univ : Finset (Option (Fin p))),
-      ((match i with
-        | none => (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)
-        | some b => (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)) •
-            S : Set ℍ)) := by
-  refine Set.iUnion_congr ?_
-  intro i
-  refine Set.iUnion_congr ?_
-  intro _
-  rw [α_T_p_PSL_R_smul_set, α_T_p_GLPos_smul_set_val]
-  cases i <;> rfl
-
 end ProjectiveTpFamily
-
-/-- The determinant of the real `GL₂` image of `T_p_lower` is positive. -/
-private theorem glMap_T_p_lower_det_pos (p : ℕ) (hp : Nat.Prime p) :
-    0 < (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ).det.val :=
-  glMap_det_pos_of_rat_det_pos _ (T_p_lower_det_pos p hp.pos)
 
 section TpHecke
 
@@ -193,79 +159,6 @@ private theorem peterssonInner_T_p_reps_sum_slashes_eq_aggregate_HeckeFD
   exact hmain
 
 include hp hpN in
-open CongruenceSubgroup Pointwise ConjAct UpperHalfPlane MeasureTheory in
-/-- **Phase G specialized — projective shifted FD-decomposition for the
-T_p Hecke family.** -/
-theorem T_p_PSL_R_FD_finite_index_decomp_shifted (i : Option (Fin p)) :
-    IsFundamentalDomain
-      ((ConjAct.toConjAct (α_T_p_PSL_R p hp hpN i) •
-        ((Gamma_p_α (N := N) (α_T_p_Q p hp hpN i)).map SL2Z_to_PSL2R)) :
-          Subgroup PSL(2, ℝ))
-      (⋃ q : ((Gamma1 N).map SL2Z_to_PSL2R) ⧸
-              (((Gamma_p_α (N := N) (α_T_p_Q p hp hpN i)).map SL2Z_to_PSL2R).subgroupOf
-                ((Gamma1 N).map SL2Z_to_PSL2R)),
-        (α_T_p_PSL_R p hp hpN i *
-          ((q.out : ((Gamma1 N).map SL2Z_to_PSL2R)) : PSL(2, ℝ))⁻¹) •
-            (Gamma1_fundDomain_PSL N : Set ℍ))
-      μ_hyp :=
-  Gamma_p_α_PSL_R_FD_finite_index_decomp_shifted (α_T_p_Q p hp hpN i)
-    (α_T_p_GLPos p hp hpN i)
-
-include hp hpN in
-open CongruenceSubgroup Pointwise UpperHalfPlane MeasureTheory in
-/-- **Phase H — T_p specialized: shifted FD set as `α_T_p_PSL_R i • Γ_p(α_i)-FD`.** -/
-theorem T_p_PSL_R_FD_finite_index_decomp_shifted_eq_smul (i : Option (Fin p)) :
-    (⋃ q : ((Gamma1 N).map SL2Z_to_PSL2R) ⧸
-            (((Gamma_p_α (N := N) (α_T_p_Q p hp hpN i)).map SL2Z_to_PSL2R).subgroupOf
-              ((Gamma1 N).map SL2Z_to_PSL2R)),
-      (α_T_p_PSL_R p hp hpN i *
-        ((q.out : ((Gamma1 N).map SL2Z_to_PSL2R)) : PSL(2, ℝ))⁻¹) •
-          (Gamma1_fundDomain_PSL N : Set ℍ)) =
-    α_T_p_PSL_R p hp hpN i •
-      Gamma_p_α_fundDomain_PSL (N := N) (α_T_p_Q p hp hpN i) :=
-  Gamma_p_α_PSL_R_FD_finite_index_decomp_shifted_eq_smul
-    (α_T_p_Q p hp hpN i) (α_T_p_GLPos p hp hpN i)
-
-include hp hpN in
-open CongruenceSubgroup Pointwise UpperHalfPlane MeasureTheory in
-/-- **Phase I — per-`i` aggregate Petersson identity over the projective
-shifted Γ_p(α_i)-FD.** -/
-theorem peterssonInner_T_p_PSL_R_shifted_eq_sum_per_q
-    (i : Option (Fin p)) (f g : ℍ → ℂ)
-    (hm : ∀ q : ((Gamma1 N).map SL2Z_to_PSL2R) ⧸
-              (((Gamma_p_α (N := N) (α_T_p_Q p hp hpN i)).map SL2Z_to_PSL2R).subgroupOf
-                ((Gamma1 N).map SL2Z_to_PSL2R)),
-      NullMeasurableSet ((α_T_p_PSL_R p hp hpN i *
-        ((q.out : ((Gamma1 N).map SL2Z_to_PSL2R)) : PSL(2, ℝ))⁻¹) •
-          (Gamma1_fundDomain_PSL N : Set ℍ)) μ_hyp)
-    (hd : Pairwise (fun q₁ q₂ : ((Gamma1 N).map SL2Z_to_PSL2R) ⧸
-              (((Gamma_p_α (N := N) (α_T_p_Q p hp hpN i)).map SL2Z_to_PSL2R).subgroupOf
-                ((Gamma1 N).map SL2Z_to_PSL2R)) =>
-      AEDisjoint μ_hyp
-        ((α_T_p_PSL_R p hp hpN i *
-          ((q₁.out : ((Gamma1 N).map SL2Z_to_PSL2R)) : PSL(2, ℝ))⁻¹) •
-            (Gamma1_fundDomain_PSL N : Set ℍ))
-        ((α_T_p_PSL_R p hp hpN i *
-          ((q₂.out : ((Gamma1 N).map SL2Z_to_PSL2R)) : PSL(2, ℝ))⁻¹) •
-            (Gamma1_fundDomain_PSL N : Set ℍ))))
-    (hint : IntegrableOn (fun τ ↦ petersson k f g τ)
-      (α_T_p_PSL_R p hp hpN i •
-        Gamma_p_α_fundDomain_PSL (N := N) (α_T_p_Q p hp hpN i)) μ_hyp) :
-    peterssonInner k
-      (α_T_p_PSL_R p hp hpN i •
-        Gamma_p_α_fundDomain_PSL (N := N) (α_T_p_Q p hp hpN i))
-      f g =
-    ∑ q : ((Gamma1 N).map SL2Z_to_PSL2R) ⧸
-              (((Gamma_p_α (N := N) (α_T_p_Q p hp hpN i)).map SL2Z_to_PSL2R).subgroupOf
-                ((Gamma1 N).map SL2Z_to_PSL2R)),
-      peterssonInner k
-        ((α_T_p_PSL_R p hp hpN i *
-          ((q.out : ((Gamma1 N).map SL2Z_to_PSL2R)) : PSL(2, ℝ))⁻¹) •
-            (Gamma1_fundDomain_PSL N : Set ℍ))
-        f g := by
-  rw [← T_p_PSL_R_FD_finite_index_decomp_shifted_eq_smul] at hint ⊢
-  exact peterssonInner_iUnion_finite_aedisjoint _ hm hd f g hint
-
 include hp hpN in
 open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **CORRECTED leaf 1** — LHS to the proven global aggregate's LHS.
@@ -392,48 +285,6 @@ private theorem aggregate_HeckeFD_measure_hyps :
         (hyperbolicMeasure_Gamma1_fundDomain_PSL_lt_top (N := N))
   · exact integrableOn_petersson_cuspform_slash_glMap_of_finiteMeasure f g
       (T_p_lower p hp.pos) (measure_α_T_p_family_aggregate_lt_top p hp hpN)
-
-include hp hpN in
-open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **RHS aggregate expansion (Hermitian mirror of leaf 1).** Expands the *right*-hand
-side `petN(⟨p⟩f, T_p g)` of the symmetric form onto the SAME single-tile aggregate domain
-`⋃_i β_i • Γ₁-FD` as the proven LHS aggregate, with the slots arranged as
-`((⟨p⟩f)∣T_p_lower)` against `g`.
-
-Route (PROVEN wiring, NO double-coset content): conjugate-Hermitian symmetry
-`petN_conj_symm` turns `petN(⟨p⟩f, T_p g)` into `conj(petN(T_p g, ⟨p⟩f))`; the proven
-leaf 1 (`petN_heckeT_p_LHS_eq_aggregate`) + the proven aggregate
-(`peterssonInner_T_p_reps_sum_slashes_eq_aggregate_HeckeFD`, fed
-`aggregate_HeckeFD_measure_hyps`), applied with `f := g`, `g := ⟨p⟩f`, rewrites this to
-`conj(c_N • ⟨⋃_i β_i•Γ₁-FD⟩ g ((⟨p⟩f)∣T_p_lower))`; finally `conj` distributes over the
-ℕ-scalar (`map_nsmul`) and swaps the two `peterssonInner` slots (`peterssonInner_conj_symm`).
-This is purely the Hermitian-symmetric mirror of leaf 1. -/
-private theorem petN_heckeT_p_RHS_eq_aggregate :
-    petN (diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) (heckeT_p_cusp k p hp hpN g) =
-    slToPslQuot_fiberCard N • peterssonInner k
-      (⋃ i ∈ (Finset.univ : Finset (Option (Fin p))),
-        (match i with
-          | none => (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)
-          | some b => (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)) •
-          (Gamma1_fundDomain_PSL N : Set ℍ))
-      ((⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f)) ∣[k]
-        (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ))
-      ⇑g := by
-  set Df := diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f with hDf
-  obtain ⟨hm, h_int_per, hfi⟩ := aggregate_HeckeFD_measure_hyps p hp hpN g Df
-  have h_LHS_swapped :
-      petN (heckeT_p_cusp k p hp hpN g) Df =
-      slToPslQuot_fiberCard N • peterssonInner k
-        (⋃ i ∈ (Finset.univ : Finset (Option (Fin p))),
-          (match i with
-            | none => (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)
-            | some b => (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)) •
-            (Gamma1_fundDomain_PSL N : Set ℍ))
-        ⇑g (⇑Df ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) := by
-    rw [petN_heckeT_p_LHS_eq_aggregate p hp hpN g Df,
-      peterssonInner_T_p_reps_sum_slashes_eq_aggregate_HeckeFD p hp hpN g Df hm h_int_per hfi]
-  rw [← petN_conj_symm Df (heckeT_p_cusp k p hp hpN g), h_LHS_swapped, map_nsmul,
-    peterssonInner_conj_symm]
 
 /-- `glMap (T_p_lower p hp) = (T_p_lower p hp).map (Rat.castHom ℝ)` (the `glMap`/`.map`
 identification connecting the residual's slash matrix `A = diag(p,1)` to the `Γ_p(α)` API,
