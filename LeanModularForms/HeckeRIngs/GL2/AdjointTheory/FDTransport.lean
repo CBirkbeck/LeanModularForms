@@ -1790,37 +1790,6 @@ private lemma Gamma1_S_corrector_mem (N p : ℕ) [NeZero N] (hpN : Nat.Coprime p
     push_cast; exact aInvOfCoprime_mul_eq_one N p hpN
   · change ((N : ℤ) : ZMod N) = 0; push_cast; rw [ZMod.natCast_self]
 
-/-- `Γ₀(p) ⊔ Γ₁(N) = ⊤` when `gcd(p, N) = 1`.  Both generators `S, T` of `SL₂(ℤ)` lie in
-the join: `T ∈ Γ₀(p)`, and `S = (S·k⁻¹)·k` with `k ∈ Γ₁(N)` (`Gamma1_S_corrector`) and
-`S·k⁻¹ ∈ Γ₀(p)` (its lower-left is `k₁₁ = a⁻¹p ≡ 0 mod p`). -/
-theorem Gamma0_sup_Gamma1_eq_top (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
-    Gamma0 p ⊔ Gamma1 N = ⊤ := by
-  haveI : NeZero p := ⟨hp.ne_zero⟩
-  rw [eq_top_iff, ← SpecialLinearGroup.SL2Z_generators, Subgroup.closure_le]
-  rintro x (rfl | rfl)
-  · -- `S = (S · k⁻¹) · k`, with `k ∈ Γ₁(N)` and `S·k⁻¹ ∈ Γ₀(p)`.
-    set k := Gamma1_S_corrector N p hpN with hk_def
-    have hk_mem : k ∈ Gamma1 N := Gamma1_S_corrector_mem N p hpN
-    have hSk_mem : ModularGroup.S * k⁻¹ ∈ Gamma0 p := by
-      rw [Gamma0_mem]
-      have h10 : ((ModularGroup.S * k⁻¹).1 1 0 : ℤ) = (aInvOfCoprime N p hpN : ℤ) * p := by
-        rw [show ((ModularGroup.S * k⁻¹).1 1 0 : ℤ) =
-            ((ModularGroup.S).1 1 0) * ((k⁻¹).1 0 0) + ((ModularGroup.S).1 1 1) * ((k⁻¹).1 1 0)
-          from by rw [Matrix.SpecialLinearGroup.coe_mul, Matrix.mul_apply, Fin.sum_univ_two]]
-        simp only [ModularGroup.coe_S, Matrix.SpecialLinearGroup.coe_inv,
-          Matrix.adjugate_fin_two_of, hk_def, Gamma1_S_corrector,
-          Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
-          Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply]
-        ring
-      rw [h10]; push_cast; rw [ZMod.natCast_self, mul_zero]
-    have : ModularGroup.S = (ModularGroup.S * k⁻¹) * k := by group
-    rw [this]
-    exact Subgroup.mul_mem _ (Subgroup.mem_sup_left hSk_mem) (Subgroup.mem_sup_right hk_mem)
-  · -- `T ∈ Γ₀(p)`.
-    refine Subgroup.mem_sup_left ?_
-    rw [Gamma0_mem]
-    simp [ModularGroup.coe_T]
-
 /-- The lower-unipotent `[[1,0],[m,1]] ∈ SL₂(ℤ)`. -/
 private def lowerUni (m : ℤ) : SL(2, ℤ) :=
   ⟨!![1, 0; m, 1], by rw [Matrix.det_fin_two_of]; ring⟩
@@ -2030,35 +1999,6 @@ private lemma Gamma1_S_corrector_up_mem (N p : ℕ) [NeZero N] (hpN : Nat.Coprim
   · change ((1 : ℤ) : ZMod N) = 1; push_cast; rfl
   · change ((-(N : ℤ) * mIdxOfCoprime N p hpN : ℤ) : ZMod N) = 0
     push_cast; rw [ZMod.natCast_self]; ring
-
-open CongruenceSubgroup in
-/-- `Γ⁰(p) ⊔ Γ₁(N) = ⊤` when `gcd(p, N) = 1`.  Both generators `S, T` of `SL₂(ℤ)` lie in
-the join: `T ∈ Γ₁(N)`, and `S = (S·kᵤ⁻¹)·kᵤ` with `kᵤ ∈ Γ₁(N)` (`Gamma1_S_corrector_up`)
-and `S·kᵤ⁻¹ ∈ Γ⁰(p)` (its upper-right is `(kᵤ)₀₀ = a⁻¹p ≡ 0 mod p`). -/
-theorem Gamma_up_sup_Gamma1_eq_top (p : ℕ) (_hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
-    Gamma_up p ⊔ Gamma1 N = ⊤ := by
-  rw [eq_top_iff, ← SpecialLinearGroup.SL2Z_generators, Subgroup.closure_le]
-  rintro x (rfl | rfl)
-  · -- `S = (S · kᵤ⁻¹) · kᵤ`, with `kᵤ ∈ Γ₁(N)` and `S·kᵤ⁻¹ ∈ Γ⁰(p)`.
-    set k := Gamma1_S_corrector_up N p hpN with hk_def
-    have hk_mem : k ∈ Gamma1 N := Gamma1_S_corrector_up_mem N p hpN
-    have hSk_mem : ModularGroup.S * k⁻¹ ∈ Gamma_up p := by
-      rw [Gamma_up_mem]
-      have h01 : ((ModularGroup.S * k⁻¹).1 0 1 : ℤ) = -((aInvOfCoprime N p hpN : ℤ) * p) := by
-        rw [show ((ModularGroup.S * k⁻¹).1 0 1 : ℤ) =
-            ((ModularGroup.S).1 0 0) * ((k⁻¹).1 0 1) + ((ModularGroup.S).1 0 1) * ((k⁻¹).1 1 1)
-          from by rw [Matrix.SpecialLinearGroup.coe_mul, Matrix.mul_apply, Fin.sum_univ_two]]
-        simp only [ModularGroup.coe_S, Matrix.SpecialLinearGroup.coe_inv,
-          Matrix.adjugate_fin_two_of, hk_def, Gamma1_S_corrector_up,
-          Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
-          Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply]
-        ring
-      rw [h01]; push_cast; rw [ZMod.natCast_self, mul_zero, neg_zero]
-    have : ModularGroup.S = (ModularGroup.S * k⁻¹) * k := by group
-    rw [this]
-    exact Subgroup.mul_mem _ (Subgroup.mem_sup_left hSk_mem) (Subgroup.mem_sup_right hk_mem)
-  · -- `T ∈ Γ₁(N)`.
-    exact Subgroup.mem_sup_right (ModularGroup_T_mem_Gamma1 (N := N))
 
 open CongruenceSubgroup in
 /-- **Set-product surjectivity (the upper analog).** For `gcd(p, N) = 1`, every `g ∈ SL₂(ℤ)`
