@@ -264,12 +264,6 @@ lemma twistedHeckeSlashExt_gen_add (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     ext z
     simp [add_smul]
 
-lemma twistedHeckeSlashExt_gen_single (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
-    (D : HeckeCoset (Gamma0_pair N)) (f : ℍ → ℂ) :
-    twistedHeckeSlashExt_gen (N := N) k χ (Finsupp.single D 1) f =
-      twistedHeckeSlash_gen (N := N) k χ D f := by
-  simp [twistedHeckeSlashExt_gen, Finsupp.sum_single_index]
-
 @[simp] lemma twistedHeckeSlashExt_gen_one_char (k : ℤ) (T : 𝕋 (Gamma0_pair N) ℤ) (f : ℍ → ℂ) :
     twistedHeckeSlashExt_gen (N := N) k (1 : (ZMod N)ˣ →* ℂˣ) T f =
       heckeSlashExt_gen (Gamma0_pair N) k T f := by
