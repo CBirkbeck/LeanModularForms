@@ -1019,11 +1019,6 @@ lemma Newform.frickeMatrix_PSL_R_mul_self (N : ℕ) [NeZero N] :
         Matrix (Fin 2) (Fin 2) ℝ)
     exact (GLPos_to_SLR_frickeMatrix_GLPos_sq_eq_neg_scalar N).symm
 
-/-- Inverse of `frickeMatrix_PSL_R N` is itself. -/
-lemma Newform.frickeMatrix_PSL_R_inv (N : ℕ) [NeZero N] :
-    (Newform.frickeMatrix_PSL_R N)⁻¹ = Newform.frickeMatrix_PSL_R N :=
-  (mul_eq_one_iff_eq_inv.mp (Newform.frickeMatrix_PSL_R_mul_self N)).symm
-
 end FrickeAdjoint
 
 private lemma frickeRootNumber_scalar_collapse {k : ℤ} {n x I fv : ℂ}
