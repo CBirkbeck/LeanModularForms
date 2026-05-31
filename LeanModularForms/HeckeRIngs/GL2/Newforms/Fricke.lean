@@ -1257,17 +1257,6 @@ lemma Newform.frickeMatrix_smul_isFundDomain_imageGamma1_PSL
     (isFundamentalDomain_Gamma1_PSL_R.smul_of_mem_normalizer
       (Newform.frickeMatrix_PSL_R_mem_normalizer N))
 
-/-- Unconditional Fricke Petersson-adjoint identity:
-`petN (frickeSlashCuspForm f) g = (-1)^k * petN f (frickeSlashCuspForm g)` for any
-cusp forms `f, g` of level `Γ₁(N)` and weight `k`. -/
-theorem Newform.frickeSlashCuspForm_petN_adjoint_unconditional
-    {N : ℕ} [NeZero N] {k : ℤ}
-    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    petN (Newform.frickeSlashCuspForm f) g =
-      (-1 : ℂ) ^ k * petN f (Newform.frickeSlashCuspForm g) :=
-  Newform.frickeSlashCuspForm_petN_adjoint_of_isFundDomain f g
-    (Newform.frickeMatrix_smul_isFundDomain_imageGamma1_PSL N)
-
 open UpperHalfPlane MeasureTheory ModularGroup in
 /-- `W_N`-shifted `Σ_q` FD-tiling for `petN`: summing `peterssonInner` over
 `W_N`-shifted SL-coset tiles equals `petN f g`, because `W_N` normalises `Γ₁(N)`
