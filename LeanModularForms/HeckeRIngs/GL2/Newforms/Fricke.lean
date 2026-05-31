@@ -923,24 +923,6 @@ lemma Newform.slash_peterssonAdj_frickeMatrix
               show ((-1 : ℂ)⁻¹ : ℂ) = -1 by norm_num]]]
   ring
 
-/-- Integrability of `τ ↦ petersson k f g₂ (W_N • τ)` on `Gamma1_fundDomain_PSL N`.
-Discharges the `h_α_int` hypothesis of `petN_slash_adjoint_GL2`. -/
-lemma Newform.integrableOn_petersson_smul_frickeMatrix_fundDomain_PSL
-    {N : ℕ} [NeZero N] {k : ℤ}
-    (f g₂ : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    MeasureTheory.IntegrableOn
-      (fun τ ↦ petersson k (⇑f) (⇑g₂) (Newform.frickeMatrix N • τ))
-      (Gamma1_fundDomain_PSL N) μ_hyp := by
-  obtain ⟨C, hC⟩ := CuspFormClass.petersson_bounded_left k
-    ((Gamma1 N).map (mapGL ℝ)) f g₂
-  exact MeasureTheory.IntegrableOn.of_bound
-    hyperbolicMeasure_Gamma1_fundDomain_PSL_lt_top
-    (((petersson_continuous k (ModularFormClass.continuous f)
-      (ModularFormClass.continuous g₂)).comp
-      (continuous_const_smul (Newform.frickeMatrix N : GL (Fin 2) ℝ)))
-        |>.aestronglyMeasurable.restrict) C
-    (Filter.Eventually.of_forall fun τ ↦ hC _)
-
 /-- The Fricke `W_N`-shifted `Γ₁(N)` fundamental-domain claim:
 `W_N • Gamma1_fundDomain_PSL N` is a fundamental domain for `imageGamma1_PSL N`.
 This holds because `W_N` normalises `Γ₁(N)` (see
