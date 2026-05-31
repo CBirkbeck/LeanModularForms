@@ -740,15 +740,6 @@ noncomputable def Newform.frickeSlashModularForm
       c • ((f : UpperHalfPlane → ℂ) ∣[k] Newform.frickeMatrix N)
     rw [ModularForm.smul_slash, Newform.frickeMatrix_σ, RingHom.id_apply]
 
-/-- Underlying function of the ModularForm Fricke operator. -/
-@[simp]
-lemma Newform.frickeSlashModularForm_coe
-    {N : ℕ} [NeZero N] {k : ℤ}
-    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    (Newform.frickeSlashModularForm f : UpperHalfPlane → ℂ) =
-      (f : UpperHalfPlane → ℂ) ∣[k] Newform.frickeMatrix N :=
-  rfl
-
 /-- Slash by `W_N` as a `ℂ`-linear endomorphism of
 `CuspForm ((Gamma1 N).map (mapGL ℝ)) k`. -/
 noncomputable def Newform.frickeSlashCuspForm
