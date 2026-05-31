@@ -384,27 +384,6 @@ lemma slash_T_p_lower_eq_T_p_upper_zero_slash_gamma0
           ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))) :=
   slash_T_p_lower_eq_T_p_upper_zero_slash_gamma0_ModularForm p hp hpN f.toModularForm'
 
-private lemma slash_peterssonAdj_T_p_upper_adjointGamma0Rep_inv_eq_T_p_upper_zero
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (b : ℕ)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    (⇑f ∣[k] peterssonAdj (glMap (T_p_upper p hp.pos b))) ∣[k]
-      (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)))⁻¹ :
-          GL (Fin 2) ℝ) =
-    ⇑f ∣[k] (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ) := by
-  rw [peterssonAdj_T_p_upper_eq_shift_mul_lower p hp.pos b,
-    T_p_lower_triple_product_matrix p N hp.pos hpN,
-    SlashAction.slash_mul, SlashAction.slash_mul, SlashAction.slash_mul,
-    ← SlashAction.slash_mul, mul_inv_cancel, SlashAction.slash_one,
-    show (⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-        (shiftSL_loc (-(b : ℤ)))) : UpperHalfPlane → ℂ) = ⇑f from
-      SlashInvariantFormClass.slash_action_eq f _
-        (Subgroup.mem_map.mpr ⟨_, shiftSL_loc_mem_Gamma1 _, rfl⟩),
-    show (⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-        (adjointGamma1Rep p N hpN)) : UpperHalfPlane → ℂ) = ⇑f from
-      SlashInvariantFormClass.slash_action_eq f _
-        (Subgroup.mem_map.mpr ⟨_, adjointGamma1Rep_mem_Gamma1 p N hpN, rfl⟩)]
-
 open UpperHalfPlane ModularGroup MeasureTheory in
 lemma peterssonInner_slash_adjoint_coset
     (β : GL (Fin 2) ℝ) (hβ : 0 < β.det.val) (q : SL(2, ℤ)) (f g : ℍ → ℂ) :
@@ -656,31 +635,6 @@ with respect to `μ_hyp`. -/
 theorem measurePreserving_glPos_smul (α : GL (Fin 2) ℝ) (hα : 0 < α.det.val) :
     MeasurePreserving ((α • ·) : ℍ → ℍ) μ_hyp μ_hyp :=
   measurePreserving_smul (⟨α, hα⟩ : GL(2, ℝ)⁺) μ_hyp
-
-open UpperHalfPlane ModularGroup MeasureTheory in
-private lemma aedisjoint_fd_smul_fd_of_psl_ne_one {q : PSL(2, ℤ)} (hq_ne : q ≠ 1) :
-    AEDisjoint μ_hyp (ModularGroup.fd : Set UpperHalfPlane)
-      (q • (ModularGroup.fd : Set UpperHalfPlane)) := by
-  have h_fdo_aedisjoint : AEDisjoint μ_hyp (fdo : Set ℍ) (q • (fdo : Set ℍ)) := by
-    have h_gen := isFundamentalDomain_fdo_PSL.aedisjoint fun h ↦ hq_ne h.symm
-    simp only [Function.onFun, one_smul] at h_gen
-    exact h_gen
-  have h_q_smul_aeeq :
-      (q • (ModularGroup.fd : Set UpperHalfPlane) : Set ℍ) =ᵐ[μ_hyp] (q • (fdo : Set ℍ)) := by
-    refine ae_eq_set.mpr ⟨?_, ?_⟩
-    · have h_sdiff : (q • (ModularGroup.fd : Set UpperHalfPlane) \ q • (fdo : Set ℍ) : Set ℍ) =
-          q • ((ModularGroup.fd : Set UpperHalfPlane) \ fdo) := by
-        ext x
-        simp only [Set.mem_diff, Set.mem_smul_set_iff_inv_smul_mem]
-      rw [h_sdiff, measure_smul]
-      exact hyperbolicMeasure_fd_boundary
-    · have h_fdo_sub_fd : q • (fdo : Set ℍ) ⊆ q • (ModularGroup.fd : Set UpperHalfPlane) := by
-        intro x hx
-        rcases hx with ⟨y, hy, rfl⟩
-        exact ⟨y, fdo_subset_fd hy, rfl⟩
-      rw [Set.diff_eq_empty.mpr h_fdo_sub_fd]
-      exact measure_empty
-  exact h_fdo_aedisjoint.congr fd_ae_eq_fdo h_q_smul_aeeq
 
 open UpperHalfPlane ModularGroup MeasureTheory in
 /-- For `α₁, α₂ : GL (Fin 2) ℝ` with `α₁⁻¹` measure-preserving on ℍ, if
