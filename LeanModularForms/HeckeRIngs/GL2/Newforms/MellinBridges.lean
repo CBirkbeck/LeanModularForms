@@ -293,16 +293,57 @@ theorem strongMultiplicityOne_of_HeckeEntireExtension_of_dirichletZero_of_newfor
       ∀ (S : Finset ℕ),
         (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
           q ∉ S → f.lCoeff q = 0) →
-        Newform.PerNewformFullDirichletData f χ S)
+        ∃ (T : Finset Nat.Primes) (s₀ : ℂ),
+          DirichletCharacter.LFunction
+            (Newform.dirichletLift χ : DirichletCharacter ℂ N) (2 * s₀ - k + 1) = 0 ∧
+          DirichletCharacter.LFunction
+            (Newform.dirichletLift χ * Newform.dirichletLift χ
+              : DirichletCharacter ℂ N) (2 * (2 * s₀ - k + 1)) ≠ 0 ∧
+          (∀ p ∈ T,
+            Newform.eulerFactor_stripped f χ S s₀ p ≠ 0 ∧
+            (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
+                ((p : ℕ) : ZMod N) *
+              ((p : ℕ) : ℂ) ^ (-(2 * s₀ - k + 1))) ≠ 0) ∧
+          AnalyticAt ℂ
+            (fun s ↦
+              DirichletCharacter.LFunction
+                (Newform.dirichletLift χ * Newform.dirichletLift χ
+                  : DirichletCharacter ℂ N) (2 * (2 * s - k + 1)) *
+              ∏ p ∈ T, Newform.eulerFactor_stripped f χ S s p *
+                (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
+                    ((p : ℕ) : ZMod N) *
+                  ((p : ℕ) : ℂ) ^ (-(2 * s - k + 1)))⁻¹) s₀ ∧
+          AnalyticAt ℂ
+            (fun s ↦
+              DirichletCharacter.LFunction
+                (Newform.dirichletLift χ : DirichletCharacter ℂ N)
+                (2 * s - k + 1) *
+              ∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
+                : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
+                ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀ ∧
+          meromorphicOrderAt
+            (fun s ↦
+              DirichletCharacter.LFunction
+                (Newform.dirichletLift χ : DirichletCharacter ℂ N)
+                (2 * s - k + 1) *
+              ∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
+                : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
+                ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀ ≠ ⊤ ∧
+          Newform.FullDirichletQuotientUniversalFClause f χ S T s₀)
     {N : ℕ} [NeZero N] {k : ℤ} (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
     (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
     (hgχ : g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
     (S : Finset ℕ)
     (h : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S →
       f.eigenvalue n = g.eigenvalue n) :
-    f.toCuspForm = g.toCuspForm :=
-  strongMultiplicityOne_of_HeckeEntireExtension_of_full_dirichletZeroCertificate_of_newformUnique
-    h_unique h_hecke h_dirZero f g χ hfχ hgχ S h
+    f.toCuspForm = g.toCuspForm := by
+  refine strongMultiplicityOne_of_HeckeEntireExtension_of_full_dirichletZeroCertificate_of_newformUnique
+    h_unique h_hecke ?_ f g χ hfχ hgχ S h
+  intro N _ k f χ hfχ S h_bad
+  obtain ⟨T, s₀, h_zero, h_num_LF_ne, h_factors, h_num_an, h_den_an, h_den_finite, h_clause⟩ :=
+    h_dirZero f χ hfχ S h_bad
+  exact Newform.full_pole_witness_data_of_dirichletZero f χ S T s₀
+    h_zero h_num_LF_ne h_factors h_num_an h_den_an h_den_finite h_clause
 
 /-- Strong multiplicity one replacing the global `Newform.HeckeEntireExtension`
 hypothesis with per-newform structured `Newform.HeckeFEData`, chaining through

@@ -44,6 +44,81 @@ open scoped MatrixGroups ModularForm Pointwise DirectSum
 variable {N : ℕ} [NeZero N] {k : ℤ}
 
 open UpperHalfPlane MeasureTheory ModularGroup in
+/-- The aggregate `(q, b)`-shifted-domain identity with RHS `petN (T_p f) g`,
+obtained by summing the per-`q` `hasBadPrimeFrickePerCosetSumTransport`. -/
+theorem Newform.aggregate_q_b_shifted_eq_inv_c_petN_T_p_f_g
+    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
+    (hp : p.Prime) (hpN : ¬ Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    (Newform.frickeSquareScalar N k)⁻¹ *
+      (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+        ∑ b ∈ Finset.range p,
+          peterssonInner k
+            ((Newform.T_p_lower_with_offset N hp.pos b : GL (Fin 2) ℝ) •
+              ((Newform.frickeMatrix N : GL (Fin 2) ℝ) •
+                ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+                  (fd : Set UpperHalfPlane))))
+            (⇑f ∣[k] (Newform.frickeMatrix N : GL (Fin 2) ℝ))
+            (((-1 : ℂ) ^ k) •
+              ((⇑g ∣[k] (Newform.frickeMatrix N : GL (Fin 2) ℝ)) ∣[k]
+                (Newform.T_p_lower_with_offset_adjugate N hp.pos b :
+                  GL (Fin 2) ℝ)))) =
+    petN (heckeT_n_cusp k p f) g := by
+  show _ =
+    ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+      peterssonInner k (fd : Set UpperHalfPlane)
+        (⇑(heckeT_n_cusp k p f) ∣[k] (q.out : SL(2, ℤ))⁻¹)
+        (⇑g ∣[k] (q.out : SL(2, ℤ))⁻¹)
+  rw [Finset.sum_congr rfl fun q _ ↦
+    Newform.peterssonInner_heckeT_n_cusp_at_divN_slash_qOut_inv_eq_bsum
+      hp hpN f g q]
+  rw [Finset.sum_congr rfl fun q _ ↦
+    Newform.hasBadPrimeFrickePerCosetSumTransport hp hpN f g q]
+  rw [← Finset.mul_sum]
+
+open scoped Pointwise in
+/-- The set equality `W_N · β_b · S = M_b · W_N · S` for any `S ⊆ ℍ`, lifting the
+matrix relation `W_N · β_b = M_b · W_N` to the `GL(2, ℝ)`-action on `Set ℍ`. -/
+lemma Newform.frickeMatrix_smul_T_p_upper_smul_set_eq_T_p_lower_with_offset_smul_frickeMatrix_smul_set
+    (N : ℕ) [NeZero N] {p : ℕ} (hp : 0 < p) (b : ℕ) (S : Set UpperHalfPlane) :
+    (Newform.frickeMatrix N : GL (Fin 2) ℝ) •
+        ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) • S) =
+      (Newform.T_p_lower_with_offset N hp b : GL (Fin 2) ℝ) •
+        ((Newform.frickeMatrix N : GL (Fin 2) ℝ) • S) := by
+  rw [← mul_smul, ← mul_smul,
+    Newform.frickeMatrix_mul_glMap_T_p_upper_eq_lower_offset_mul_frickeMatrix]
+
+open UpperHalfPlane MeasureTheory ModularGroup in
+/-- The Fricke-conjugated aggregate `(q, b)`-shifted-domain identity with RHS
+`petN (T_p f) g`: the previous aggregate with the per-`(q, b)` integration domain
+rewritten from `M_b · W_N · q.out⁻¹·fd` to `W_N · β_b · q.out⁻¹·fd`. -/
+theorem Newform.aggregate_q_b_W_N_β_b_shifted_eq_inv_c_petN_T_p_f_g
+    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
+    (hp : p.Prime) (hpN : ¬ Nat.Coprime p N)
+    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
+    (Newform.frickeSquareScalar N k)⁻¹ *
+      (∑ q : SL(2, ℤ) ⧸ Gamma1 N,
+        ∑ b ∈ Finset.range p,
+          peterssonInner k
+            ((Newform.frickeMatrix N : GL (Fin 2) ℝ) •
+              ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) •
+                ((mapGL ℝ ((q.out : SL(2, ℤ))⁻¹) : GL (Fin 2) ℝ) •
+                  (fd : Set UpperHalfPlane))))
+            (⇑f ∣[k] (Newform.frickeMatrix N : GL (Fin 2) ℝ))
+            (((-1 : ℂ) ^ k) •
+              ((⇑g ∣[k] (Newform.frickeMatrix N : GL (Fin 2) ℝ)) ∣[k]
+                (Newform.T_p_lower_with_offset_adjugate N hp.pos b :
+                  GL (Fin 2) ℝ)))) =
+    petN (heckeT_n_cusp k p f) g := by
+  rw [← Newform.aggregate_q_b_shifted_eq_inv_c_petN_T_p_f_g hp hpN f g]
+  congr 1
+  refine Finset.sum_congr rfl fun q _ ↦ ?_
+  refine Finset.sum_congr rfl fun b _ ↦ ?_
+  congr 1
+  exact Newform.frickeMatrix_smul_T_p_upper_smul_set_eq_T_p_lower_with_offset_smul_frickeMatrix_smul_set
+    N hp.pos b _
+
+open UpperHalfPlane MeasureTheory ModularGroup in
 /-- Per-`q` `Fin p`-indexed pairwise AE-disjointness for the bad-prime
 upper-coset tile family `{β_b · q.out⁻¹·fd}_{b ∈ Fin p}`. -/
 theorem Newform.aedisjoint_pairwise_T_p_upper_smul_qOut_inv_fd
