@@ -465,48 +465,6 @@ theorem Newform.noEntireExtensionUnderBadPrime_of_dirichletZeroCertificate
   exact Newform.dirichletQuotient_pole_witness_of_dirichletZero f χ s₀
     h_χ_ne h_χ_sq_ne h_den_zero h_num_ne h_univ
 
-/-- Combines `Newform.HeckeEntireExtension` and the pointwise Dirichlet-zero
-certificate family into Strong Multiplicity One. -/
-theorem strongMultiplicityOne_of_HeckeEntireExtension_of_dirichletZeroCertificate
-    (h_hecke : Newform.HeckeEntireExtension)
-    (h_cert : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
-      f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      ∀ (S : Finset ℕ),
-        (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
-          q ∉ S → f.lCoeff q = 0) →
-        ∃ (s₀ : ℂ),
-          (Newform.dirichletLift χ : DirichletCharacter ℂ N) ≠ 1 ∧
-          (Newform.dirichletLift χ * Newform.dirichletLift χ
-            : DirichletCharacter ℂ N) ≠ 1 ∧
-          DirichletCharacter.LFunction
-            (Newform.dirichletLift χ : DirichletCharacter ℂ N) (2 * s₀ - k + 1) = 0 ∧
-          DirichletCharacter.LFunction
-            (Newform.dirichletLift χ * Newform.dirichletLift χ
-              : DirichletCharacter ℂ N)
-            (2 * (2 * s₀ - k + 1)) ≠ 0 ∧
-          ∀ F : ℂ → ℂ, Differentiable ℂ F →
-            (∀ {s : ℂ}, LSeries.abscissaOfAbsConv f.lCoeff_stripped < s.re →
-              F s = LSeries f.lCoeff_stripped s) →
-            F =ᶠ[nhdsWithin s₀ {s₀}ᶜ]
-              ((fun s ↦ DirichletCharacter.LFunction
-                (Newform.dirichletLift χ * Newform.dirichletLift χ
-                  : DirichletCharacter ℂ N)
-                (2 * (2 * s - k + 1))) /
-              (fun s ↦ DirichletCharacter.LFunction
-                (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-                (2 * s - k + 1))))
-    {N : ℕ} [NeZero N] {k : ℤ} (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (hgχ : g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (S : Finset ℕ)
-    (h : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S →
-      f.eigenvalue n = g.eigenvalue n) :
-    f.toCuspForm = g.toCuspForm :=
-  strongMultiplicityOne_of_analyticContradiction
-    (Newform.analyticContradiction_of_HeckeEntireExtension_of_NoEntireExtensionUnderBadPrime
-      h_hecke (Newform.noEntireExtensionUnderBadPrime_of_dirichletZeroCertificate h_cert))
-    f g χ hfχ hgχ S h
-
 /-- Mirrors `strongMultiplicityOne_of_analyticContradiction` but takes the
 uniqueness content as an explicit hypothesis `h_unique`, isolating the analytic
 chain from the upstream `newform_unique`. -/
