@@ -708,39 +708,7 @@ theorem Newform.exists_nonzero_prime_eigenvalue_of_FrickeSlashData_of_full_diric
     (Newform.analyticContradiction_of_FrickeSlashData_of_full_dirichletZeroCertificate
       h_slash h_data) f χ hfχ S
 
-/-- Strong multiplicity one endpoint pairing per-newform `Newform.FrickeSlashData`
-with the full T111 Dirichlet-zero data block (bundled via
-`Newform.PerNewformFullDirichletData`) and newform uniqueness. -/
-theorem strongMultiplicityOne_of_FrickeSlashData_of_full_dirichletZeroCertificate_of_newformUnique
-    (h_unique : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
-      f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      (∀ n : ℕ+, Nat.Coprime n.val N → f.eigenvalue n = g.eigenvalue n) →
-      f.toCuspForm = g.toCuspForm)
-    (h_slash : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k),
-      Newform.FrickeSlashData f)
-    (h_data : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
-      f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      ∀ (S : Finset ℕ),
-        (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
-          q ∉ S → f.lCoeff q = 0) →
-        Newform.PerNewformFullDirichletData f χ S)
-    {N : ℕ} [NeZero N] {k : ℤ} (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (hgχ : g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (S : Finset ℕ)
-    (h : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S →
-      f.eigenvalue n = g.eigenvalue n) :
-    f.toCuspForm = g.toCuspForm :=
-  strongMultiplicityOne_of_HeckeEntireExtension_of_full_dirichletZeroCertificate_of_newformUnique
-    h_unique (Newform.HeckeEntireExtension_of_FrickeSlashData h_slash)
-    (fun _N _ _k f χ hfχ S h_bad ↦
-      Newform.full_pole_witness_data_of_PerNewformFullDirichletData f χ S
-        (h_data f χ hfχ S h_bad))
-    f g χ hfχ hgχ S h
-
-/-- The smaller Dirichlet-zero variant of
-`strongMultiplicityOne_of_FrickeSlashData_of_full_dirichletZeroCertificate_of_newformUnique`,
+/-- The smaller Dirichlet-zero variant for a `Newform.FrickeSlashData` input,
 with the Dirichlet-zero data block bundled via `Newform.PerNewformFullDirichletData`. -/
 theorem strongMultiplicityOne_of_FrickeSlashData_of_dirichletZero_of_newformUnique
     (h_unique : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
