@@ -1042,18 +1042,6 @@ theorem heckeRingHomCharSpace_D_p_eq_scalar_charRestrict (p : ℕ) (hp : Nat.Pri
   rw [heckeRingHomCharSpace_D_p_eq_heckeT_p_all p hp hpN f]
   rfl
 
-/-- The restricted concrete operator `heckeT_p_all_charRestrict` written as `χ(p)` times
-the canonical operator at `D_p` (inverse of `heckeRingHomCharSpace_D_p_eq_scalar_charRestrict`,
-with the invertible scalar `χ(p)` cancelled). -/
-theorem heckeT_p_all_charRestrict_eq_scalar_heckeRingHom (p : ℕ) (hp : Nat.Prime p)
-    (hpN : Nat.Coprime p N) :
-    heckeT_p_all_charRestrict k p hp χ =
-      (↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ) •
-        heckeRingHomCharSpace (k := k) (χ := χ)
-          (T_single (Gamma0_pair N) ℤ (D_p_Gamma0 N p hp.pos) 1) := by
-  rw [heckeRingHomCharSpace_D_p_eq_scalar_charRestrict p hp hpN, smul_smul,
-    mul_inv_cancel₀ (Units.ne_zero _), one_smul]
-
 end OperatorCommutativityFromRing
 
 section CompositeBridge
