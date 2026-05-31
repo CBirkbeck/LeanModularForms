@@ -1301,13 +1301,4 @@ theorem twistedHeckeRingHomFunction_commute (k : ℤ) (χ : (ZMod N)ˣ →* ℂ�
   unfold Commute SemiconjBy
   rw [← map_mul, ← map_mul, Gamma0_pair_HeckeAlgebra_mul_comm]
 
-/-- The individual twisted double-coset operators commute as images of
-`T_single` generators under the twisted Hecke-ring homomorphism. -/
-theorem twistedHeckeOperatorFunction_commute (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
-    (D₁ D₂ : HeckeCoset (Gamma0_pair N)) :
-    Commute (twistedHeckeOperatorFunction (N := N) k χ D₁)
-      (twistedHeckeOperatorFunction (N := N) k χ D₂) := by
-  simpa using twistedHeckeRingHomFunction_commute (N := N) k χ
-    (T_single (Gamma0_pair N) ℤ D₁ 1) (T_single (Gamma0_pair N) ℤ D₂ 1)
-
 end HeckeRing.GL2.Unified
