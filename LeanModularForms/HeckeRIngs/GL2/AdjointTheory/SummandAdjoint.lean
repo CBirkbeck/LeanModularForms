@@ -466,39 +466,6 @@ lemma slash_peterssonAdj_T_p_upper_eq_slash_T_p_upper_zero_slash_gamma0
         p hp hpN b g,
       ← SlashAction.slash_mul, inv_mul_cancel, SlashAction.slash_one]
 
-private lemma slash_diamond_inv_M_infty_eq_slash_T_p_lower
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
-    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    ⇑(diamondOp k (ZMod.unitOfCoprime p hpN)⁻¹ f) ∣[k]
-        (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) =
-      ⇑f ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) := by
-  set u := ZMod.unitOfCoprime p hpN
-  rw [show ⇑(diamondOp k u⁻¹ f) ∣[k]
-        (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) =
-      ⇑(diamondOp k u⁻¹ f) ∣[k]
-        (M_infty N p hp.pos hpN : GL (Fin 2) ℚ) from rfl,
-    slash_M_infty_eq_diamond_slash_T_p_lower k p hp.pos hpN (diamondOp k u⁻¹ f),
-    show ⇑(diamondOp k u (diamondOp k u⁻¹ f)) ∣[k]
-        (T_p_lower p hp.pos : GL (Fin 2) ℚ) =
-      ⇑(diamondOp k u (diamondOp k u⁻¹ f)) ∣[k]
-        (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) from rfl]
-  have h_cancel : diamondOp k u (diamondOp k u⁻¹ f) = f := by
-    show ((diamondOp k u).comp (diamondOp k u⁻¹)) f = f
-    rw [← diamondOp_mul, mul_inv_cancel, diamondOp_one]
-    rfl
-  rw [show ⇑(diamondOp k u (diamondOp k u⁻¹ f)) = ⇑f from
-    congr_arg DFunLike.coe h_cancel]
-
-lemma slash_M_infty_eq_diamond_slash_T_p_lower_cusp_g
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
-    (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    ⇑g ∣[k] (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) =
-      ⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) g) ∣[k]
-        (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) := by
-  rw [show ⇑g ∣[k] (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) =
-        ⇑g ∣[k] (M_infty N p hp.pos hpN : GL (Fin 2) ℚ) from rfl]
-  exact slash_M_infty_eq_diamond_slash_T_p_lower k p hp.pos hpN g.toModularForm'
-
 open UpperHalfPlane ModularGroup MeasureTheory in
 lemma peterssonInner_slash_adjoint_coset
     (β : GL (Fin 2) ℝ) (hβ : 0 < β.det.val) (q : SL(2, ℤ)) (f g : ℍ → ℂ) :
