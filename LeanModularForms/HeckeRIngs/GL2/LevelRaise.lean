@@ -78,8 +78,7 @@ lemma abs_levelRaiseMatrix_det_val (l : ℕ) [NeZero l] :
 (positive determinant). -/
 lemma σ_levelRaiseMatrix (l : ℕ) [NeZero l] :
     UpperHalfPlane.σ (levelRaiseMatrix l) = RingHom.id ℂ := by
-  unfold UpperHalfPlane.σ
-  rw [if_pos (levelRaiseMatrix_det_pos l)]
+  unfold UpperHalfPlane.σ; rw [if_pos (levelRaiseMatrix_det_pos l)]
 
 /-- For γ ∈ Γ₁(d*M), the entry `γ.val 1 0` is divisible by `d`. -/
 lemma Gamma1_dmul_lower_left_dvd (d M : ℕ) (γ : SL(2, ℤ)) (hγ : γ ∈ Gamma1 (d * M)) :
@@ -293,10 +292,8 @@ lemma slash_mapGL_levelRaiseFun (l : ℕ) [NeZero l] (k : ℤ) (γ : SL(2, ℤ))
         (f ∣[k] (mapGL ℝ (levelRaiseConjOfDvd l γ hdvd) : GL (Fin 2) ℝ)) := by
   have hσγ : UpperHalfPlane.σ (mapGL ℝ γ : GL (Fin 2) ℝ) = RingHom.id ℂ := by
     unfold UpperHalfPlane.σ
-    rw [if_pos]
-    change (0 : ℝ) < (Matrix.GeneralLinearGroup.det (mapGL ℝ γ)).val
-    rw [Matrix.SpecialLinearGroup.det_mapGL]
-    norm_num
+    rw [if_pos (show (0 : ℝ) < (Matrix.GeneralLinearGroup.det (mapGL ℝ γ)).val by
+      rw [Matrix.SpecialLinearGroup.det_mapGL]; norm_num)]
   change ((l : ℂ) ^ (1 - k) • (f ∣[k] levelRaiseMatrix l)) ∣[k]
       (mapGL ℝ γ : GL (Fin 2) ℝ) = _
   rw [ModularForm.smul_slash, hσγ, RingHom.id_apply, ← SlashAction.slash_mul,
@@ -510,9 +507,7 @@ lemma exists_T_levelRaiseConj_T_factor (l N : ℕ) [NeZero l] [NeZero N] (h_dvd 
   set c := γ'.val 1 0
   set d := γ'.val 1 1
   have hdet : a * d - b * c = 1 := by
-    have hp := γ'.property
-    rw [Matrix.det_fin_two] at hp
-    simpa using hp
+    have hp := γ'.property; rw [Matrix.det_fin_two] at hp; simpa using hp
   set i := primeProductCoprime a l
   set α := a - i * c
   set β := b - i * d
