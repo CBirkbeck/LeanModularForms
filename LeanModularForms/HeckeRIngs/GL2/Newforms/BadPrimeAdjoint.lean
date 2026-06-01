@@ -845,14 +845,6 @@ structure IsNewformExtended (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop
   isNew : f ∈ cuspFormsNewExtended N k
   isNorm : (ModularFormClass.qExpansion (1 : ℝ) f).coeff 1 = 1
 
-/-- An extended newform is in particular a (classical) newform. -/
-theorem IsNewformExtended.isNewform
-    {f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k}
-    (h : IsNewformExtended f) : IsNewform f where
-  isEigen := h.isEigen
-  isNew := h.isNew
-  isNorm := h.isNorm
-
 /-- Bundled extended newform: an `Eigenform` together with extended-newspace
 membership and normalisation. Strictly stronger than `Newform N k`. -/
 @[ext]
