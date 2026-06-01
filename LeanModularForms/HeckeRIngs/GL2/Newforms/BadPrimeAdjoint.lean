@@ -816,13 +816,6 @@ theorem cuspFormsOldExtended_disjoint_cuspFormsNewExtended
   intro f hf_old hf_new
   exact petN_definite f (hf_new f hf_old)
 
-/-- The classical `cuspFormsNew_disjoint`-style result follows for free at the
-extended level too: extended new is disjoint from the larger extended old. -/
-theorem cuspFormsOldExtended_disjoint_cuspFormsNew
-    {N : ℕ} [NeZero N] {k : ℤ} :
-    Disjoint (cuspFormsOldExtended N k) (cuspFormsNewExtended N k) :=
-  cuspFormsOldExtended_disjoint_cuspFormsNewExtended
-
 /-- Bundled extended newform: an `Eigenform` together with extended-newspace
 membership and normalisation. Strictly stronger than `Newform N k`. -/
 @[ext]
