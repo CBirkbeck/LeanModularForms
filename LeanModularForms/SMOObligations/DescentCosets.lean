@@ -86,10 +86,7 @@ private lemma matrix_int_cast_factor_aux {n : Type*} {a m : ℕ} (hm : a ∣ m)
     (M : Matrix n n ℤ) :
     M.map (Int.cast : ℤ → ZMod a) =
       (M.map (Int.cast : ℤ → ZMod m)).map (ZMod.castHom hm (ZMod a)) := by
-  rw [Matrix.map_map]
-  congr 1
-  ext x
-  simp
+  rw [Matrix.map_map]; congr 1; ext x; simp
 
 private lemma descend_rotation_mat_det_map_eq_one
     {N : ℕ} {u v a b : ℤ} (h_bez : u * a + v * b = 1) (h_ab : a * b = (N : ℤ)) :
@@ -134,9 +131,7 @@ theorem descendExtraGamma_exists
   let γ_mat : Matrix (Fin 2) (Fin 2) ℤ := !![u * a, -(v * b); v * b, u * a]
   have h_ua_p : ((u * a : ℤ) : ZMod p) = 0 := by simp [a]
   have h_vb_p : ((v * b : ℤ) : ZMod p) = 1 := by
-    have h' : ((u * a + v * b : ℤ) : ZMod p) = 1 := by
-      rw [h_bez]
-      simp
+    have h' : ((u * a + v * b : ℤ) : ZMod p) = 1 := by rw [h_bez]; simp
     rwa [Int.cast_add, h_ua_p, zero_add] at h'
   have h_vb_Np : ((v * b : ℤ) : ZMod (N / p)) = 0 := by
     have hb : ((b : ℤ) : ZMod (N / p)) = 0 := by
@@ -144,16 +139,12 @@ theorem descendExtraGamma_exists
       exact_mod_cast ZMod.natCast_self (N / p)
     rw [Int.cast_mul, hb, mul_zero]
   have h_ua_Np : ((u * a : ℤ) : ZMod (N / p)) = 1 := by
-    have h' : ((u * a + v * b : ℤ) : ZMod (N / p)) = 1 := by
-      rw [h_bez]
-      simp
+    have h' : ((u * a + v * b : ℤ) : ZMod (N / p)) = 1 := by rw [h_bez]; simp
     rwa [Int.cast_add, h_vb_Np, add_zero] at h'
   have h_mat_p : γ_mat.map (Int.cast : ℤ → ZMod p) = !![(0 : ZMod p), -1; 1, 0] := by
-    ext i j
-    fin_cases i <;> fin_cases j <;> simp [γ_mat, h_vb_p, h_ua_p]
+    ext i j; fin_cases i <;> fin_cases j <;> simp [γ_mat, h_vb_p, h_ua_p]
   have h_mat_Np : γ_mat.map (Int.cast : ℤ → ZMod (N / p)) = 1 := by
-    ext i j
-    fin_cases i <;> fin_cases j <;> simp [γ_mat, h_vb_Np, h_ua_Np]
+    ext i j; fin_cases i <;> fin_cases j <;> simp [γ_mat, h_vb_Np, h_ua_Np]
   obtain ⟨γ, hγ⟩ := SL2Reduction.SL2_reduction_surjective N
     ⟨γ_mat.map (Int.cast : ℤ → ZMod N), descend_rotation_mat_det_map_eq_one h_bez h_ab⟩
   have h_γ_mat_N : (γ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod N) =
@@ -164,10 +155,8 @@ theorem descendExtraGamma_exists
   have h_mod_Np : (γ : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ZMod (N / p)) = 1 := by
     rw [matrix_int_cast_factor_aux (Nat.div_dvd_of_dvd hpN), h_γ_mat_N,
         ← matrix_int_cast_factor_aux (Nat.div_dvd_of_dvd hpN), h_mat_Np]
-  have h_mem : γ ∈ Gamma0 (N / p) := by
-    rw [Gamma0_mem]
-    simpa using congr_fun (congr_fun h_mod_Np 1) 0
-  exact ⟨γ, h_mem, h_mod_p, h_mod_Np⟩
+  refine ⟨γ, ?_, h_mod_p, h_mod_Np⟩
+  rw [Gamma0_mem]; simpa using congr_fun (congr_fun h_mod_Np 1) 0
 
 /-- Number of coset representatives for the Hecke descent operator: `p` when `p² ∣ N`,
 `p + 1` when `p² ∤ N` (Miyake's `d + 1`). -/
@@ -256,8 +245,7 @@ theorem descendCosetList_det (p N : ℕ) [NeZero p] [NeZero N] (hp : p.Prime) :
 private lemma descend_aux_lit_real_eq_map_int (p v : ℕ) :
     (!![(1 : ℝ), (v : ℝ); 0, (p : ℝ)] : Matrix (Fin 2) (Fin 2) ℝ) =
       (!![(1 : ℤ), (v : ℤ); 0, (p : ℤ)] : Matrix (Fin 2) (Fin 2) ℤ).map (algebraMap ℤ ℝ) := by
-  ext i j
-  fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply]
+  ext i j; fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply]
 
 private lemma descend_aux_α_mat_in_Gamma0
     {p N : ℕ} [NeZero N] (hpN : p ∣ N) {α : Matrix.SpecialLinearGroup (Fin 2) ℤ}
@@ -282,10 +270,9 @@ private lemma descend_aux_lift_int_eq_to_GL
         (by simp [Matrix.det_fin_two]; exact_mod_cast hp.ne_zero)
       : GL (Fin 2) ℝ) * mapGL ℝ γ' = mapGL ℝ α * X := by
   apply Units.ext
-  show (!![(1 : ℝ), (m : ℝ); 0, (p : ℝ)] *
+  change (!![(1 : ℝ), (m : ℝ); 0, (p : ℝ)] *
       (γ' : Matrix _ _ ℤ).map (algebraMap ℤ ℝ) : Matrix _ _ ℝ) =
-      ((α : Matrix _ _ ℤ).map (algebraMap ℤ ℝ) *
-        (X : Matrix _ _ ℝ) : Matrix _ _ ℝ)
+      ((α : Matrix _ _ ℤ).map (algebraMap ℤ ℝ) * (X : Matrix _ _ ℝ) : Matrix _ _ ℝ)
   rw [hX, descend_aux_lit_real_eq_map_int p m, ← Matrix.map_mul, ← Matrix.map_mul]
   exact congr_arg (·.map (algebraMap ℤ ℝ)) h_int
 
@@ -294,8 +281,7 @@ private lemma descend_exists_fin_isUnit_mul_eq {p : ℕ} [NeZero p]
     ∃ m : Fin p, a * (m.val : ZMod p) = b := by
   obtain ⟨u, rfl⟩ := ha
   refine ⟨⟨((u⁻¹ : (ZMod p)ˣ).val * b).val, ZMod.val_lt _⟩, ?_⟩
-  rw [ZMod.natCast_zmod_val, ← mul_assoc, ← Units.val_mul, mul_inv_cancel, Units.val_one,
-    one_mul]
+  rw [ZMod.natCast_zmod_val, ← mul_assoc, ← Units.val_mul, mul_inv_cancel, Units.val_one, one_mul]
 
 private lemma descend_upper_tri_target_witness
     {N : ℕ} [NeZero N] {p : ℕ} [NeZero p] (hp : p.Prime) (hpN : p ∣ N)
@@ -386,7 +372,7 @@ theorem descendCosetList_action_upper_tri_clean
     push_cast [h_C_mod_p] at h
     simpa using h
   have h_A_unit : IsUnit ((A : ZMod p)) :=
-    ⟨⟨(A : ZMod p), (D : ZMod p), h_AD_mod_p, by rw [mul_comm]; exact h_AD_mod_p⟩, rfl⟩
+    ⟨⟨_, _, h_AD_mod_p, by rw [mul_comm]; exact h_AD_mod_p⟩, rfl⟩
   obtain ⟨m', h_moebius⟩ :=
     descend_exists_fin_isUnit_mul_eq h_A_unit ((B : ZMod p) + (m.val : ZMod p) * (D : ZMod p))
   obtain ⟨α, h_α_in_Γ0, h_GL⟩ := descend_upper_tri_target_witness hp hpN h_C_dvd_Np m m'
@@ -495,9 +481,7 @@ private lemma descend_extra_target_witness
   obtain ⟨α01_int, hα01⟩ : (p : ℤ) ∣
       aint * (Bint + (m.val : ℤ) * Dint) - bint * (Aint + (m.val : ℤ) * Cint) := by
     rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
-    push_cast
-    rw [h_a_p, h_b_p]
-    linear_combination h_A_ext_zero
+    push_cast; rw [h_a_p, h_b_p]; linear_combination h_A_ext_zero
   have hα01' : (p : ℤ) * α01_int =
       aint * (Bint + (m.val : ℤ) * Dint) - bint * (Aint + (m.val : ℤ) * Cint) := by lia
   let α_mat : Matrix (Fin 2) (Fin 2) ℤ :=
@@ -570,7 +554,7 @@ private lemma descendCosetList_action_upper_tri_extra_zero_aux
   have h_p_lt_dccn : p < descendCosetCount p N := by simp [descendCosetCount, hp_sq]
   refine ⟨⟨p, h_p_lt_dccn⟩, α, h_α_in_Γ0,
     ⟨fun h_lt ↦ (lt_irrefl _ h_lt).elim, fun _ ↦ h_A_ext_zero⟩, ?_⟩
-  rwa [show descendCosetList p N hp ⟨p, h_p_lt_dccn⟩ = _ from dif_neg (lt_irrefl p)]
+  rwa [show descendCosetList p N hp ⟨p, h_p_lt_dccn⟩ = _ from dif_neg (lt_irrefl _)]
 
 /-- Miyake Lemma 4.5.11 (p. 144, `p² ∤ N` case): given `γ' ∈ Γ_0(N/p)` and
 `m : Fin p`, produces a target index in `Fin (descendCosetCount p N)` and
@@ -626,8 +610,7 @@ theorem descendCosetList_action_upper_tri
   by_cases hp_sq : p ^ 2 ∣ N
   · obtain ⟨m', α, h_mem, _h_canonical, h_eq⟩ :=
       descendCosetList_action_upper_tri_clean p hp hpN hp_sq γ' h_γ' m
-    have h_count : descendCosetCount p N = p := by
-      simp [descendCosetCount, hp_sq]
+    have h_count : descendCosetCount p N = p := by simp [descendCosetCount, hp_sq]
     have h_lt : m'.val < descendCosetCount p N := by lia
     refine ⟨⟨m'.val, h_lt⟩, α, h_mem, ?_⟩
     rw [h_eq]
@@ -682,7 +665,7 @@ private lemma descendCosetList_lt_matrix {p N : ℕ} [NeZero p] [NeZero N] (hp :
     {v : Fin (descendCosetCount p N)} (hv : v.val < p) :
     (descendCosetList p N hp v : Matrix (Fin 2) (Fin 2) ℝ) =
       !![(1 : ℝ), (v.val : ℝ); 0, (p : ℝ)] := by
-  rw [descendCosetList_apply_lt hp hv, Matrix.GeneralLinearGroup.val_mkOfDetNeZero]
+  rw [descendCosetList_apply_lt hp hv]; rfl
 
 private lemma descendCosetCount_val_eq_p {p N : ℕ}
     (v : Fin (descendCosetCount p N)) (hv : ¬ v.val < p) : v.val = p := by
@@ -721,10 +704,9 @@ private lemma descend_diamond_compat_upper_target
         (β : Matrix (Fin 2) (Fin 2) ℤ) 1 1 * (p : ℤ)) :
     ((β : Matrix (Fin 2) (Fin 2) ℤ) 1 1 : ZMod (N / p)) =
       ((γ' : Matrix (Fin 2) (Fin 2) ℤ) 1 1 : ZMod (N / p)) := by
-  have h_β_10_dvd_N : (N : ℤ) ∣ (β : Matrix (Fin 2) (Fin 2) ℤ) 1 0 :=
+  obtain ⟨k, hk⟩ : (N : ℤ) ∣ (β : Matrix (Fin 2) (Fin 2) ℤ) 1 0 :=
     (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp
       (by exact_mod_cast CongruenceSubgroup.Gamma0_mem.mp hβ)
-  obtain ⟨k, hk⟩ := h_β_10_dvd_N
   have hpNp : (p : ℤ) * ((N / p : ℕ) : ℤ) = (N : ℤ) := by exact_mod_cast Nat.mul_div_cancel' hpN
   have hβ11_sub : (β : Matrix (Fin 2) (Fin 2) ℤ) 1 1 -
       (γ' : Matrix (Fin 2) (Fin 2) ℤ) 1 1 = -((N / p : ℕ) : ℤ) * k * (t : ℤ) := by
@@ -748,19 +730,16 @@ private lemma beta_10_zmod_eq_zero
     {N p : ℕ} [NeZero N] (hpN : p ∣ N)
     {β : Matrix.SpecialLinearGroup (Fin 2) ℤ} (hβ : β ∈ Gamma0 N) :
     ((β : Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ZMod (N / p)) = 0 := by
-  have h_N_dvd : (N : ℤ) ∣ (β : Matrix (Fin 2) (Fin 2) ℤ) 1 0 :=
-    (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp
-      (by exact_mod_cast CongruenceSubgroup.Gamma0_mem.mp hβ)
-  refine (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr ?_
-  exact_mod_cast dvd_trans
-    (by exact_mod_cast Nat.div_dvd_of_dvd hpN : ((N / p : ℕ) : ℤ) ∣ N) h_N_dvd
+  refine (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr (dvd_trans ?_
+    ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp
+      (by exact_mod_cast CongruenceSubgroup.Gamma0_mem.mp hβ)))
+  exact_mod_cast Nat.div_dvd_of_dvd hpN
 
 private lemma mapGL_coe_matrix_apply (α : Matrix.SpecialLinearGroup (Fin 2) ℤ) (i j : Fin 2) :
     ((mapGL ℝ α : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) i j =
       ((α : Matrix (Fin 2) (Fin 2) ℤ) i j : ℝ) := by
-  simp only [Matrix.SpecialLinearGroup.mapGL_coe_matrix,
-    Matrix.SpecialLinearGroup.map_apply_coe, RingHom.mapMatrix_apply,
-    Matrix.map_apply, algebraMap_int_eq, eq_intCast]
+  simp [Matrix.SpecialLinearGroup.mapGL_coe_matrix, Matrix.SpecialLinearGroup.map_apply_coe,
+    RingHom.mapMatrix_apply, Matrix.map_apply]
 
 private lemma descendCosetList_extra_matrix_entry
     {p N : ℕ} [NeZero p] [NeZero N] (hp : p.Prime)
@@ -769,8 +748,7 @@ private lemma descendCosetList_extra_matrix_entry
       (!![(1 : ℝ), 0; 0, (p : ℝ)] *
         ((descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ).map (Int.cast : ℤ → ℝ))) i j := by
   rw [descendCosetList_apply_extra hp hv]
-  simp [Matrix.GeneralLinearGroup.val_mkOfDetNeZero, mapGL, toGL, map_apply_coe,
-    RingHom.mapMatrix_apply]
+  simp [Matrix.GeneralLinearGroup.val_mkOfDetNeZero, mapGL, toGL, map_apply_coe]
 
 private lemma descend_diamond_reg_lhs_reg_target
     {N : ℕ} [NeZero N] {p : ℕ} [NeZero p] (hp : p.Prime) (hpN : p ∣ N)
@@ -846,8 +824,7 @@ private lemma descend_diamond_extra_lhs_reg_target
     simpa [Matrix.map_apply] using congr_fun (congr_fun h_γ_p_spec 1) 1
   have hdcl_t11 : (descendCosetList p N hp t : Matrix (Fin 2) (Fin 2) ℝ) 1 1 = p := by
     rw [descendCosetList_lt_matrix hp ht]; simp
-  have hdcl_t01 : (descendCosetList p N hp t : Matrix (Fin 2) (Fin 2) ℝ) 0 1 =
-      (t.val : ℝ) := by
+  have hdcl_t01 : (descendCosetList p N hp t : Matrix (Fin 2) (Fin 2) ℝ) 0 1 = (t.val : ℝ) := by
     rw [descendCosetList_lt_matrix hp ht]; simp
   have h_ℝ := congr_arg Units.val h_main
   simp only [Units.val_mul, Matrix.GeneralLinearGroup.val_mkOfDetNeZero,
@@ -964,8 +941,7 @@ private lemma descendCosetList_cross_regular_extra_aux
     simpa [Matrix.map_apply] using
       congr_fun (congr_fun (descendExtraGamma_spec hp hpN hp_sq).2.1 0) 0
   have hLHS_00 : (descendCosetList p N hp va : Matrix (Fin 2) (Fin 2) ℝ) 0 0 = 1 := by
-    rw [descendCosetList_lt_matrix hp hva]
-    simp
+    rw [descendCosetList_lt_matrix hp hva]; simp
   have hdcl_extra_00 : (descendCosetList p N hp ⟨p, hpExtra⟩ : Matrix (Fin 2) (Fin 2) ℝ) 0 0 =
       ((descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 0 0 : ℝ) := by
     rw [descendCosetList_extra_matrix_entry hp (lt_irrefl p) 0 0]
@@ -988,8 +964,7 @@ private lemma descendCosetList_cross_regular_extra_aux
         ((α : Matrix (Fin 2) (Fin 2) ℤ) 0 0 : ℝ) *
           ((descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 0 0 : ℝ) +
         ((α : Matrix (Fin 2) (Fin 2) ℤ) 0 1 : ℝ) *
-          ((p : ℝ) * ((descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ℝ)) := by
-      linarith
+          ((p : ℝ) * ((descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ℝ)) := by linarith
     exact_mod_cast this
   have h_γp_00_dvd : (p : ℤ) ∣ (descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 0 0 :=
     (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp (by exact_mod_cast h_γp_00)
@@ -1130,9 +1105,8 @@ theorem descendCosetList_action
     fun v ↦ (per_v v).choose_spec.choose_spec.choose_spec.1
   have h_inj : Function.Injective σ_fn :=
     descendCosetList_sigma_aux_injective p hp hpN γ' α_fn σ_fn h_eq_fn
-  let σ : Equiv.Perm (Fin (descendCosetCount p N)) :=
-    Equiv.ofBijective σ_fn ⟨h_inj, Finite.injective_iff_surjective.mp h_inj⟩
-  refine ⟨σ, α_fn, fun v ↦ (per_v v).choose_spec.choose_spec.choose, h_eq_fn, fun v ↦ ?_⟩
+  refine ⟨Equiv.ofBijective σ_fn ⟨h_inj, Finite.injective_iff_surjective.mp h_inj⟩, α_fn,
+    fun v ↦ (per_v v).choose_spec.choose_spec.choose, h_eq_fn, fun v ↦ ?_⟩
   apply Units.ext
   simp only [ZMod.unitsMap_val, Gamma0MapUnits_val, Gamma0Map, MonoidHom.coe_mk, OneHom.coe_mk]
   rw [ZMod.cast_intCast (Nat.div_dvd_of_dvd hpN)]
