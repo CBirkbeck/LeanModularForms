@@ -699,10 +699,7 @@ private lemma diagSandwich_scaling (b : Fin n → ℕ) (hb : ∀ i, 0 < b i)
   simp_rw [Finset.mul_sum, mul_assoc]
   refine ⟨∑ p, ∑ q, (F.val i p) * (h_D_scale p q).choose * (E.val q j), ?_⟩
   push_cast
-  apply Finset.sum_congr rfl
-  intro p _
-  apply Finset.sum_congr rfl
-  intro q _
+  refine Finset.sum_congr rfl fun p _ ↦ Finset.sum_congr rfl fun q _ ↦ ?_
   have hDpq := (h_D_scale p q).choose_spec
   simp only [F_GL, E_GL, mapGL_coe_matrix, map_apply_coe, RingHom.mapMatrix_apply,
     Int.coe_castRingHom, algebraMap_int_eq, Matrix.map_apply]
