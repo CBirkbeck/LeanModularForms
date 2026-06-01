@@ -450,23 +450,17 @@ private lemma rep_mem_H_of_smulOrbit_eq (g₂ β₀ : P.Δ) (i₀ : decompQuot P
       delta_mul_mem P.H P.Δ i₀.out β₀ g₂ P.h₀⟩⟧ : HeckeLeftCoset P) = j) :
     (g₂ : G)⁻¹ * (i₀.out : G)⁻¹ * (β₀ : G)⁻¹ * (HeckeLeftCoset.rep j : G) ∈ P.H := by
   set β := (HeckeLeftCoset.rep j : G)
-  have h_j_set : HeckeLeftCoset.toSet j =
+  have h_coset : ({β} : Set G) * ↑P.H =
       ({(β₀ : G) * (i₀.out : G) * (g₂ : G)} : Set G) * ↑P.H := by
-    rw [← hj_eq]
-    rfl
-  have hβ : β ∈ ({(β₀ : G) * (i₀.out : G) * (g₂ : G)} : Set G) * ↑P.H := by
-    have h_coset : ({β} : Set G) * ↑P.H =
-        ({(β₀ : G) * (i₀.out : G) * (g₂ : G)} : Set G) * ↑P.H := by
-      have h1 : HeckeLeftCoset.toSet j = ({β} : Set G) * ↑P.H := by
-        rw [← Quotient.out_eq (s := lcSetoid P) j]
-        rfl
-      rw [← h1, h_j_set]
-    exact h_coset ▸ (⟨_, rfl, 1, P.H.one_mem, mul_one _⟩ : β ∈ ({β} : Set G) * ↑P.H)
+    have h1 : HeckeLeftCoset.toSet j = ({β} : Set G) * ↑P.H := by
+      rw [← Quotient.out_eq (s := lcSetoid P) j]; rfl
+    rw [← h1, ← hj_eq]; rfl
+  have hβ : β ∈ ({(β₀ : G) * (i₀.out : G) * (g₂ : G)} : Set G) * ↑P.H :=
+    h_coset ▸ (⟨_, rfl, 1, P.H.one_mem, mul_one _⟩ : β ∈ ({β} : Set G) * ↑P.H)
   simp only [Set.singleton_mul, Set.mem_image] at hβ
   obtain ⟨h, hh, hβ_eq⟩ := hβ
   have hβ' : (g₂ : G)⁻¹ * (i₀.out : G)⁻¹ * (β₀ : G)⁻¹ * β = h := by
-    rw [hβ_eq.symm]
-    group
+    rw [hβ_eq.symm]; group
   exact hβ' ▸ hh
 
 /-- The HeckeLeftCoset class `⟦β·k₀·g₁'⟧` equals `⟦α·i₀·g₂'·k'·g₁'⟧` provided
