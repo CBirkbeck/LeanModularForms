@@ -130,17 +130,6 @@ private lemma sum_reindex_mul_mod {α : Type*} [AddCommMonoid α] (d p : ℕ)
       (by rw [Finset.card_image_of_injOn h_inj])
   exact Finset.mem_image.mp (by rw [h_img]; exact hb)
 
-private lemma smul_slash_levelRaise (k : ℤ) (d : ℕ) [NeZero d] (c : ℂ)
-    (f : UpperHalfPlane → ℂ) :
-    (c • f) ∣[k] levelRaiseMatrix d = c • (f ∣[k] levelRaiseMatrix d) := by
-  have hσ : UpperHalfPlane.σ (levelRaiseMatrix d) = RingHom.id ℂ := by
-    unfold UpperHalfPlane.σ; rw [if_pos]
-    show (0 : ℝ) < (Matrix.GeneralLinearGroup.det (levelRaiseMatrix d) : ℝ)
-    rw [Matrix.GeneralLinearGroup.val_det_apply]
-    simp [levelRaiseMatrix, Matrix.GeneralLinearGroup.mkOfDetNeZero, Matrix.det_fin_two,
-      Nat.cast_pos.mpr (Nat.pos_of_neZero d)]
-  ext z; rw [ModularForm.smul_slash, hσ, RingHom.id_apply]
-
 private lemma sum_slash_R (k : ℤ) {ι : Type*} (s : Finset ι)
     (φ : ι → (UpperHalfPlane → ℂ)) (g : GL (Fin 2) ℝ) :
     (∑ b ∈ s, φ b) ∣[k] g = ∑ b ∈ s, (φ b ∣[k] g) := by
