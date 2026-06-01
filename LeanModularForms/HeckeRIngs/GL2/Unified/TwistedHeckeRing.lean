@@ -260,12 +260,6 @@ lemma twistedHeckeSlashExt_gen_add (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     ext z
     simp [add_smul]
 
-@[simp] lemma twistedHeckeSlashExt_gen_one_char (k : ℤ) (T : 𝕋 (Gamma0_pair N) ℤ) (f : ℍ → ℂ) :
-    twistedHeckeSlashExt_gen (N := N) k (1 : (ZMod N)ˣ →* ℂˣ) T f =
-      heckeSlashExt_gen (Gamma0_pair N) k T f := by
-  ext z
-  simp [twistedHeckeSlashExt_gen, heckeSlashExt_gen]
-
 /-- The raw function-space `Γ₀(N),χ` condition for the existing Hecke pair. -/
 def IsGamma0TwistedInvariant (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (f : ℍ → ℂ) : Prop :=
   ∀ h : GL (Fin 2) ℚ, ∀ hh : h ∈ (Gamma0_pair N).H,
