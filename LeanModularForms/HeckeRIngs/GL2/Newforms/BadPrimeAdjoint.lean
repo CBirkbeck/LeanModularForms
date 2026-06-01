@@ -126,9 +126,7 @@ theorem Newform.hasFrickeSlashCuspFormPreservesCuspFormsOld_iff_on_generators
     refine Submodule.span_induction
       (p := fun (x : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) _ ↦
         Newform.frickeSlashCuspForm x ∈ cuspFormsOld N k)
-      ?_ ?_ ?_ ?_ hf
-    · intro f₀ h_f₀_gen
-      exact h_gen f₀ h_f₀_gen
+      h_gen ?_ ?_ ?_ hf
     · change Newform.frickeSlashCuspForm
         (0 : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) ∈ cuspFormsOld N k
       rw [map_zero]; exact Submodule.zero_mem _
@@ -158,9 +156,7 @@ theorem Newform.frickeSlashCuspForm_preserves_cuspFormsOldExtended_iff_on_genera
     refine Submodule.span_induction
       (p := fun (x : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) _ ↦
         Newform.frickeSlashCuspForm x ∈ cuspFormsOldExtended N k)
-      ?_ ?_ ?_ ?_ hg
-    · intro f₀ h_f₀_gen
-      exact h_gen f₀ h_f₀_gen
+      h_gen ?_ ?_ ?_ hg
     · change Newform.frickeSlashCuspForm
           (0 : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) ∈ cuspFormsOldExtended N k
       rw [map_zero]; exact Submodule.zero_mem _
@@ -357,7 +353,7 @@ def Newform.HasFrickeSlashCuspFormPreservesCuspFormsOldExtended
 theorem Newform.hasFrickeSlashCuspFormPreservesCuspFormsOldExtended
     (N : ℕ) [NeZero N] (k : ℤ) :
     Newform.HasFrickeSlashCuspFormPreservesCuspFormsOldExtended N k :=
-  fun g hg ↦ Newform.frickeSlashCuspForm_preserves_cuspFormsOldExtended g hg
+  Newform.frickeSlashCuspForm_preserves_cuspFormsOldExtended
 
 /-- For the bad-prime case `p ∣ N`, the Hecke operator `heckeT_n_cusp k p`
 preserves `cuspFormsOld N k`. Stated as a named Prop for downstream discharge. -/
@@ -456,9 +452,8 @@ theorem Newform.heckeT_n_cusp_preserves_cuspFormsNew_at_divN_of_classicalInputs
     hp hpN h_adj
     (fun g hg ↦
       Newform.frickeBadAdjointCandidateNormalized_preserves_cuspFormsOld
-        (fun g' hg' ↦
-          Newform.frickeBadAdjointCandidate_preserves_cuspFormsOld
-            (hp := hp) (hpN := hpN) h_fricke_old h_T_p_old g' hg')
+        (Newform.frickeBadAdjointCandidate_preserves_cuspFormsOld
+          (hp := hp) (hpN := hpN) h_fricke_old h_T_p_old)
         g hg)
     f hf
 
@@ -761,9 +756,8 @@ theorem Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_classica
     hp hpN h_adj
     (fun g hg ↦
       Newform.frickeBadAdjointCandidateNormalized_preserves_cuspFormsOldExtended
-        (fun g' hg' ↦
-          Newform.frickeBadAdjointCandidate_preserves_cuspFormsOldExtended
-            (hp := hp) (hpN := hpN) h_fricke_old h_T_p_old g' hg')
+        (Newform.frickeBadAdjointCandidate_preserves_cuspFormsOldExtended
+          (hp := hp) (hpN := hpN) h_fricke_old h_T_p_old)
         g hg)
     f hf
 
@@ -888,9 +882,8 @@ lemma Newform.frickeBadAdjointCandidateNormalized_preserves_cuspFormsOldExtended
     Newform.frickeBadAdjointCandidateNormalized k p g ∈
         cuspFormsOldExtended N k :=
   Newform.frickeBadAdjointCandidateNormalized_preserves_cuspFormsOldExtended
-    (fun g' hg' ↦
-      Newform.frickeBadAdjointCandidate_preserves_cuspFormsOldExtended_unconditional
-        hp hpN g' hg')
+    (Newform.frickeBadAdjointCandidate_preserves_cuspFormsOldExtended_unconditional
+      hp hpN)
     g hg
 
 /-- For `f ∈ cuspFormsNewExtended` and every prime `p`, the Hecke operator
