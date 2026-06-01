@@ -524,9 +524,7 @@ theorem T_sum_prime_mul_T_ad (k : ℕ) (hk : 0 < k) :
 lemma T_sum_one : T_sum 1 = (1 : HeckeAlgebra 2) := by
   show ∑ a ∈ Nat.divisors 1, T_ad a (1 / a) = 1
   simp only [Nat.divisors_one, Finset.sum_singleton, Nat.div_self one_pos]
-  unfold T_ad
-  rw [dif_pos ⟨one_pos, one_pos, dvd_refl 1⟩]
-  exact T_ad_one_one
+  rw [T_ad, dif_pos ⟨one_pos, one_pos, dvd_refl 1⟩]; exact T_ad_one_one
 
 include hp in
 /-- `T_ad(p, p^k) = T_pp * T_ad(1, p^{k-1})` for `k ≥ 1`.
@@ -545,8 +543,7 @@ private lemma T_pp_comm_T_ad_one_p : T_pp p * T_ad 1 p = T_ad 1 p * T_pp p := by
     (fun i hi ↦ by (have : i = 0 := by omega); subst this; simp)
 
 /-- `T_sum(p^0) = 1`. -/
-private lemma T_sum_ppow_zero : T_sum ⟨p ^ 0, pow_pos hp.pos 0⟩ = 1 :=
-  T_sum_one
+private lemma T_sum_ppow_zero : T_sum ⟨p ^ 0, pow_pos hp.pos 0⟩ = 1 := T_sum_one
 
 /-- `T_ad(1, p^0) = 1`. -/
 private lemma T_ad_one_ppow_zero : T_ad 1 (p ^ 0) = 1 := by simp [T_ad_one_one]
