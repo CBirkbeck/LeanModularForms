@@ -300,19 +300,6 @@ lemma Newform.lSeriesSummable (f : Newform N k) {s : ℂ}
   exact ModularForms.lSeriesSummable_of_cuspForm
     (Γ := (Gamma1 N).map (mapGL ℝ)) (k := k) (F := CuspForm _ k) f.toCuspForm hs
 
-/-- **L-series non-vanishing** for a newform: since `f.lCoeff 1 = 1 ≠ 0`,
-the Dirichlet series `LSeries f.lCoeff` is not identically zero. -/
-lemma Newform.lSeries_ne_zero (f : Newform N k) :
-    LSeries f.lCoeff ≠ 0 := by
-  rw [Newform.lCoeff_eq_modularForms_lCoeff_funext]
-  apply ModularForms.lSeries_ne_zero_of_lCoeff_ne_zero
-    (Γ := (Gamma1 N).map (mapGL ℝ)) (k := k) (F := CuspForm _ k)
-    (f := f.toCuspForm)
-  intro habs
-  have h1 : ModularForms.lCoeff f.toCuspForm 1 = 0 := by rw [habs]; rfl
-  rw [← Newform.lCoeff_eq_modularForms_lCoeff f 1, Newform.lCoeff_one] at h1
-  exact one_ne_zero h1
-
 /-- **Stripped Newform Fourier sequence.**  `n ↦ f.lCoeff n` if `n` is
 coprime to `N`, else `0`.  Unlike `f.lCoeff` this is fully multiplicative
 on coprime arguments, as required by the Mathlib Euler-product machinery. -/
