@@ -409,29 +409,6 @@ def Newform.HasBadPrimeFrickePetNAdjoint
     petN (heckeT_n_cusp k p f) g =
       petN f (Newform.frickeBadAdjointCandidateNormalized k p g)
 
-/-- The `petN` adjoint Prop for the normalized candidate is equivalent to a
-`frickeSquareScalar N k`-scaled identity for the unnormalized
-`frickeBadAdjointCandidate`. -/
-lemma Newform.hasBadPrimeFrickePetNAdjoint_iff
-    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
-    (h_c_ne : Newform.frickeSquareScalar N k ≠ 0) :
-    Newform.HasBadPrimeFrickePetNAdjoint N k p ↔
-      ∀ (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k),
-        Newform.frickeSquareScalar N k * petN (heckeT_n_cusp k p f) g =
-          petN f (Newform.frickeBadAdjointCandidate k p g) := by
-  unfold Newform.HasBadPrimeFrickePetNAdjoint
-  refine ⟨fun h f g ↦ ?_, fun h f g ↦ ?_⟩
-  · rw [h f g, Newform.frickeBadAdjointCandidateNormalized_apply,
-      petN_smul_right]
-    field_simp
-  · rw [Newform.frickeBadAdjointCandidateNormalized_apply, petN_smul_right,
-      show (Newform.frickeSquareScalar N k)⁻¹ *
-          petN f (Newform.frickeBadAdjointCandidate k p g) =
-        (Newform.frickeSquareScalar N k)⁻¹ *
-          (Newform.frickeSquareScalar N k * petN (heckeT_n_cusp k p f) g) by
-      rw [h f g]]
-    field_simp
-
 /-- For `p` prime with `p ∣ N`, the bad-prime Hecke operator `heckeT_n_cusp k p`
 preserves `cuspFormsNew N k`, given the normalized petN-adjoint Prop `h_adj` and
 oldspace preservation `h_old` of the normalized candidate. -/
