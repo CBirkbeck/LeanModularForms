@@ -234,13 +234,6 @@ private lemma smul_slash_tRep_gen (k : ℤ) (D : HeckeCoset (Gamma0_pair N))
   rw [smul_slash_tRep_gen (N := N) k D i c f]
   simp [Pi.smul_apply, smul_eq_mul, mul_left_comm]
 
-@[simp] lemma twistedHeckeSlash_gen_one (k : ℤ) (D : HeckeCoset (Gamma0_pair N)) (f : ℍ → ℂ) :
-    twistedHeckeSlash_gen (N := N) k (1 : (ZMod N)ˣ →* ℂˣ) D f =
-      heckeSlash_gen (Gamma0_pair N) k D f := by
-  ext z
-  simp [twistedHeckeSlash_gen, heckeSlash_gen, delta0NebentypusWeight,
-    delta0NebentypusDeltaChar]
-
 /-- The weighted Hecke slash action extended by `ℤ`-linearity to the existing
 Hecke ring `𝕋 (Gamma0_pair N) ℤ`. -/
 noncomputable def twistedHeckeSlashExt_gen (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
