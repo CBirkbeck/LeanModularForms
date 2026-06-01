@@ -505,8 +505,7 @@ lemma Newform.frickeConjMat_det (N : ℕ) [NeZero N] (γ : SL(2, ℤ))
     Int.ediv_mul_cancel ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp ((Gamma1_mem N γ).mp hγN).2.2)
   have h_det_γ : γ 0 0 * γ 1 1 - γ 0 1 * γ 1 0 = 1 := by
     have hγ_det : γ.val.det = 1 := γ.2
-    rw [Matrix.det_fin_two] at hγ_det
-    convert hγ_det using 1
+    rwa [Matrix.det_fin_two] at hγ_det
   rw [Newform.frickeConjMat, Matrix.det_fin_two_of]
   linear_combination h_det_γ - (γ 0 1 : ℤ) * h_div
 
