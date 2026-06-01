@@ -368,20 +368,6 @@ lemma Newform.lSeriesSummable_stripped (f : Newform N k) {s : ℂ}
   intro n
   exact LSeries.norm_term_le s (f.norm_lCoeff_stripped_le n)
 
-/-- **Cusp-form abscissa bound for the stripped coefficient sequence.**
-The abscissa of absolute convergence of `f.lCoeff_stripped` is at most
-`(k : ℝ) / 2 + 1`, the standard Hecke / cusp-form bound (Diamond–Shurman
-§5.9 / Miyake §4.3.5). -/
-lemma Newform.abscissaOfAbsConv_lCoeff_stripped_le_cuspForm
-    (f : Newform N k) :
-    LSeries.abscissaOfAbsConv f.lCoeff_stripped ≤ (((k : ℝ) / 2 + 1 : ℝ) : EReal) := by
-  refine LSeries.abscissaOfAbsConv_le_of_forall_lt_LSeriesSummable' ?_
-  intro y hy
-  refine f.lSeriesSummable_stripped ?_
-  have hy_real : (k : ℝ) / 2 + 1 < y := by exact_mod_cast hy
-  show (k : ℝ) / 2 + 1 < ((y : ℝ) : ℂ).re
-  simpa using hy_real
-
 /-- **Per-prime local Euler factor at a vanishing prime.**  For a `Newform`
 `f` in `modFormCharSpace k χ` and a prime `q` coprime to the level with
 `f.lCoeff q = 0`, the local Euler factor collapses to a quadratic reciprocal
