@@ -122,12 +122,8 @@ private theorem peterssonInner_T_p_reps_sum_slashes_eq_aggregate_HeckeFD
         (match i with
           | none => (glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ)
           | some b => (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)) •
-          (Gamma1_fundDomain_PSL N : Set ℍ)) := by
-    refine Set.iUnion_congr ?_
-    intro i
-    refine Set.iUnion_congr ?_
-    intro _
-    cases i <;> rfl
+          (Gamma1_fundDomain_PSL N : Set ℍ)) :=
+    Set.iUnion_congr fun i ↦ Set.iUnion_congr fun _ ↦ by cases i <;> rfl
   have hfi_compact : IntegrableOn (fun τ ↦ petersson k ⇑f
         (⇑g ∣[k] (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ)) τ)
       (⋃ i ∈ (Finset.univ : Finset (Option (Fin p))),
@@ -158,7 +154,6 @@ private theorem peterssonInner_T_p_reps_sum_slashes_eq_aggregate_HeckeFD
   rw [← hset_eq]
   exact hmain
 
-include hp hpN in
 include hp hpN in
 open UpperHalfPlane ModularGroup MeasureTheory in
 /-- **CORRECTED leaf 1** — LHS to the proven global aggregate's LHS.
@@ -228,14 +223,10 @@ private lemma measure_α_T_p_family_aggregate_lt_top :
   simp only [Finset.mem_univ, Set.iUnion_true]
   refine (measure_iUnion_le _).trans_lt ?_
   rw [tsum_fintype]
-  refine ENNReal.sum_lt_top.mpr fun i _ ↦ ?_
+  refine ENNReal.sum_lt_top.mpr fun i _ ↦ measure_glPos_smul_Gamma1_fundDomain_lt_top _ ?_
   cases i with
-  | none =>
-    exact measure_glPos_smul_Gamma1_fundDomain_lt_top _
-      (glMap_M_infty_det_pos N p hp.pos hpN)
-  | some b =>
-    exact measure_glPos_smul_Gamma1_fundDomain_lt_top _
-      (glMap_T_p_upper_det_pos p hp.pos b.val)
+  | none => exact glMap_M_infty_det_pos N p hp.pos hpN
+  | some b => exact glMap_T_p_upper_det_pos p hp.pos b.val
 
 include hp hpN in
 open UpperHalfPlane ModularGroup MeasureTheory in
@@ -265,14 +256,10 @@ private theorem aggregate_HeckeFD_measure_hyps :
           | some b => (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)) •
           (Gamma1_fundDomain_PSL N : Set ℍ)) μ_hyp := by
   refine ⟨?_, ?_, ?_⟩
-  · intro i _
+  · refine fun i _ ↦ nullMeasurableSet_glPos_smul_Gamma1_fundDomain_PSL ?_
     cases i with
-    | none =>
-      exact nullMeasurableSet_glPos_smul_Gamma1_fundDomain_PSL
-        (glMap_M_infty_det_pos N p hp.pos hpN)
-    | some b =>
-      exact nullMeasurableSet_glPos_smul_Gamma1_fundDomain_PSL
-        (glMap_T_p_upper_det_pos p hp.pos b.val)
+    | none => exact glMap_M_infty_det_pos N p hp.pos hpN
+    | some b => exact glMap_T_p_upper_det_pos p hp.pos b.val
   · intro i _
     cases i with
     | none =>
@@ -433,12 +420,10 @@ private theorem Gamma1_coset_iff_Gamma_p_α_coset_of_center_fiber
     g₁⁻¹ * g₂ ∈ Gamma1 N ↔ g₁⁻¹ * g₂ ∈ Gamma_p_α (N := N) (T_p_lower p hp.pos) := by
   have hzc : z₁ * z₂⁻¹ ∈ Subgroup.center SL(2, ℤ) :=
     (Subgroup.center SL(2, ℤ)).mul_mem hz₁ ((Subgroup.center SL(2, ℤ)).inv_mem hz₂)
-  have hz₁i : z₁⁻¹ ∈ Subgroup.center SL(2, ℤ) := (Subgroup.center SL(2, ℤ)).inv_mem hz₁
-  have hz₂i : z₂⁻¹ ∈ Subgroup.center SL(2, ℤ) := (Subgroup.center SL(2, ℤ)).inv_mem hz₂
-  have hcz₁ : ∀ x : SL(2, ℤ), z₁⁻¹ * x = x * z₁⁻¹ :=
-    fun x ↦ (Subgroup.mem_center_iff.mp hz₁i x).symm
-  have hcz₂ : ∀ x : SL(2, ℤ), z₂⁻¹ * x = x * z₂⁻¹ :=
-    fun x ↦ (Subgroup.mem_center_iff.mp hz₂i x).symm
+  have hcz₁ : ∀ x : SL(2, ℤ), z₁⁻¹ * x = x * z₁⁻¹ := fun x ↦
+    (Subgroup.mem_center_iff.mp ((Subgroup.center SL(2, ℤ)).inv_mem hz₁) x).symm
+  have hcz₂ : ∀ x : SL(2, ℤ), z₂⁻¹ * x = x * z₂⁻¹ := fun x ↦
+    (Subgroup.mem_center_iff.mp ((Subgroup.center SL(2, ℤ)).inv_mem hz₂) x).symm
   have hsplit : g₁⁻¹ * g₂ = (g₁ * z₁)⁻¹ * ((z₁ * z₂⁻¹) * (g₂ * z₂)) := by
     rw [mul_inv_rev]
     symm
@@ -531,9 +516,9 @@ private theorem slGamma_p_αToGamma1_surjective_onto_Gamma1_fiber
     refine (pslQuot_eq_one_iff_exists_center_mem _ z⁻¹).mpr ⟨z, hz, ?_⟩
     rw [inv_mul_cancel]
     exact (Gamma_p_α (N := N) (T_p_lower p hp.pos)).one_mem
-  · rw [slGamma_p_αToGamma1_mk, QuotientGroup.eq]
-    have hcomm : z * g = g * z := (Subgroup.mem_center_iff.mp hz g).symm
-    rw [inv_inv, hcomm]; exact hgz
+  · rw [slGamma_p_αToGamma1_mk, QuotientGroup.eq, inv_inv,
+      (Subgroup.mem_center_iff.mp hz g).symm]
+    exact hgz
 
 include hp hpN in
 open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory in
