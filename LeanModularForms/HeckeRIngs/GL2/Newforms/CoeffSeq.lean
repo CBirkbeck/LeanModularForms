@@ -300,17 +300,6 @@ lemma Newform.lSeriesSummable (f : Newform N k) {s : ℂ}
   exact ModularForms.lSeriesSummable_of_cuspForm
     (Γ := (Gamma1 N).map (mapGL ℝ)) (k := k) (F := CuspForm _ k) f.toCuspForm hs
 
-/-- **L-series injectivity for newforms.**  Two newforms have the same
-Dirichlet L-series iff their `lCoeff` sequences agree at every positive
-index. -/
-lemma Newform.lSeries_eq_iff (f g : Newform N k) :
-    LSeries f.lCoeff = LSeries g.lCoeff ↔ ∀ n ≠ 0, f.lCoeff n = g.lCoeff n := by
-  rw [Newform.lCoeff_eq_modularForms_lCoeff_funext f,
-      Newform.lCoeff_eq_modularForms_lCoeff_funext g]
-  exact ModularForms.lSeries_eq_iff_cuspForm
-    (Γ := (Gamma1 N).map (mapGL ℝ)) (k := k)
-    (F := CuspForm _ k) (F' := CuspForm _ k) f.toCuspForm g.toCuspForm
-
 /-- **L-series non-vanishing** for a newform: since `f.lCoeff 1 = 1 ≠ 0`,
 the Dirichlet series `LSeries f.lCoeff` is not identically zero. -/
 lemma Newform.lSeries_ne_zero (f : Newform N k) :
