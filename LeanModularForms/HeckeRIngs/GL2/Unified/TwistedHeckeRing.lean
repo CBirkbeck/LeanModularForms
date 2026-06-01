@@ -247,10 +247,6 @@ noncomputable def twistedHeckeSlashExt_gen (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ
     (T : 𝕋 (Gamma0_pair N) ℤ) (f : ℍ → ℂ) : ℍ → ℂ :=
   T.sum (fun D c ↦ c • twistedHeckeSlash_gen (N := N) k χ D f)
 
-@[simp] lemma twistedHeckeSlashExt_gen_zero (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (f : ℍ → ℂ) :
-    twistedHeckeSlashExt_gen (N := N) k χ 0 f = 0 := by
-  simp [twistedHeckeSlashExt_gen]
-
 lemma twistedHeckeSlashExt_gen_add (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (T₁ T₂ : 𝕋 (Gamma0_pair N) ℤ) (f : ℍ → ℂ) :
     twistedHeckeSlashExt_gen (N := N) k χ (T₁ + T₂) f =
