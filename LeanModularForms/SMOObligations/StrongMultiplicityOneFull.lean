@@ -656,22 +656,6 @@ theorem oldPart_isEigen_of_eigenform
   rw [← oldPart_heckeT_n_cusp_comm n.val hn g.toCuspForm, g.isEigen n hn]
   exact map_smul _ _ _
 
-/-- The new projection commutes with `T(n)` for `(n,N)=1` (Miyake 4.6.10). -/
-theorem newPart_heckeT_n_cusp_comm
-    (n : ℕ) [NeZero n] (hn : Nat.Coprime n N)
-    (x : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    newPart (heckeT_n_cusp k n x) = heckeT_n_cusp k n (newPart x) := by
-  conv_lhs => rw [← oldPart_add_newPart x, heckeT_n_cusp_add]
-  have hlin : newPart (heckeT_n_cusp k n (oldPart x) + heckeT_n_cusp k n (newPart x)) =
-      newPart (heckeT_n_cusp k n (oldPart x)) + newPart (heckeT_n_cusp k n (newPart x)) :=
-    map_add _ _ _
-  rw [hlin,
-    newPart_of_mem_cuspFormsOld
-      (heckeT_n_preserves_cuspFormsOld n hn _ (oldPart_mem_cuspFormsOld x)),
-    newPart_of_mem_cuspFormsNew
-      (heckeT_n_preserves_cuspFormsNew n hn _ (newPart_mem_cuspFormsNew x)),
-    zero_add]
-
 private theorem coeff_smul_inv_eq_eigenvalue
     (g_new : Eigenform N k) (χ : (ZMod N)ˣ →* ℂˣ)
     (hgχ : g_new.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
