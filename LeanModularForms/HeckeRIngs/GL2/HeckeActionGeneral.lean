@@ -142,8 +142,7 @@ theorem Gamma0_pair_det_pos (N : ℕ) [NeZero N] (g : (HeckeRing.GLn.Gamma0_pair
 /-- `Gamma0_pair N` satisfies `HeckePairAction`: `Γ₀(N) ⊆ SL₂(ℤ)` and `adj` on
 `SL₂(ℤ)` equals inversion (since `det = 1`), so `adj(γ) ∈ Γ₀(N)` because `Γ₀(N)`
 is a subgroup. -/
-noncomputable instance (N : ℕ) [NeZero N] :
-    HeckePairAction (HeckeRing.GLn.Gamma0_pair N) where
+noncomputable instance (N : ℕ) [NeZero N] : HeckePairAction (HeckeRing.GLn.Gamma0_pair N) where
   det_pos := Gamma0_pair_det_pos N
   adjugate_mem_H _ hh := GL_adjugate_mem_of_le_SLnZ (by
     simpa [MonoidHom.range_eq_map] using Subgroup.map_mono (f := mapGL ℚ) le_top) hh
@@ -699,9 +698,7 @@ theorem heckeSlash_gen_comm (k : ℤ) (D₁ D₂ : HeckeCoset P) (f : ℍ → �
     heckeSlash_gen P k D₁ (heckeSlash_gen P k D₂ f) =
     heckeSlash_gen P k D₂ (heckeSlash_gen P k D₁ f) := by
   rw [heckeSlash_gen_comp k D₁ D₂ f hf (hcomm D₂ D₁),
-      heckeSlash_gen_comp k D₂ D₁ f hf (hcomm D₁ D₂)]
-  congr 1
-  exact hcomm D₂ D₁
+      heckeSlash_gen_comp k D₂ D₁ f hf (hcomm D₁ D₂), hcomm D₂ D₁]
 
 end Commutativity
 
