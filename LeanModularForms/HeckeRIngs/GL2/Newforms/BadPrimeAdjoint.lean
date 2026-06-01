@@ -179,7 +179,7 @@ private lemma frickeSlashCuspForm_levelInclude_cusp_eq_smul_levelRaise
   intro τ
   have h_zpow_cancel : ((d : ℂ) ^ (k - 1)) * ((d : ℂ) ^ (1 - k)) = 1 := by
     rw [← zpow_add₀ (Nat.cast_ne_zero.mpr (NeZero.ne d)),
-      show (k - 1) + (1 - k) = (0 : ℤ) from by ring, zpow_zero]
+      show (k - 1) + (1 - k) = (0 : ℤ) by ring, zpow_zero]
   show (⇑(Newform.frickeSlashCuspForm
       (levelInclude_cusp hMN k g)) : UpperHalfPlane → ℂ) τ =
       (⇑((d : ℂ) ^ (k - 1) • levelRaise M d k Y) : UpperHalfPlane → ℂ) τ
@@ -205,7 +205,7 @@ private lemma frickeSlashCuspForm_levelInclude_cusp_eq_smul_levelRaise
             (HeckeRing.GL2.levelRaiseMatrix d : GL (Fin 2) ℝ)) τ)) =
       (((d : ℂ) ^ (k - 1)) * ((d : ℂ) ^ (1 - k))) *
         (((⇑g ∣[k] (Newform.frickeMatrix M : GL (Fin 2) ℝ)) ∣[k]
-          (HeckeRing.GL2.levelRaiseMatrix d : GL (Fin 2) ℝ)) τ) from by ring,
+          (HeckeRing.GL2.levelRaiseMatrix d : GL (Fin 2) ℝ)) τ) by ring,
     h_zpow_cancel, one_mul]
 
 /-- For a proper divisor `M < N`, the Fricke slash of a trivially-included
@@ -252,17 +252,17 @@ private lemma levelRaise_frickeSlash_scalar_eq
     {d M : ℕ} {k : ℤ} (hd : (d : ℂ) ≠ 0) (X τ : ℂ) :
     X * ((↑(d * M) : ℝ) : ℂ) ^ (k - 1) * (((d * M : ℕ) : ℂ) * τ) ^ (-k) =
       (d : ℂ)⁻¹ * (X * ((M : ℝ) : ℂ) ^ (k - 1) * ((M : ℂ) * τ) ^ (-k)) := by
-  rw [show (((d * M : ℕ) : ℝ) : ℂ) = (d : ℂ) * (M : ℂ) from by push_cast; ring,
-    show (((d * M : ℕ) : ℂ) * τ) = (d : ℂ) * (M : ℂ) * τ from by push_cast; ring,
+  rw [show (((d * M : ℕ) : ℝ) : ℂ) = (d : ℂ) * (M : ℂ) by push_cast; ring,
+    show (((d * M : ℕ) : ℂ) * τ) = (d : ℂ) * (M : ℂ) * τ by push_cast; ring,
     mul_zpow, mul_zpow ((d : ℂ) * (M : ℂ)) τ (-k), mul_zpow (d : ℂ) (M : ℂ) (-k),
-    show (((M : ℝ) : ℂ) ^ (k - 1) : ℂ) = (M : ℂ) ^ (k - 1) from by push_cast; rfl,
+    show (((M : ℝ) : ℂ) ^ (k - 1) : ℂ) = (M : ℂ) ^ (k - 1) by push_cast; rfl,
     mul_zpow (M : ℂ) τ (-k)]
   have h_d_combine : (d : ℂ) ^ (k - 1) * (d : ℂ) ^ (-k) = (d : ℂ)⁻¹ := by
-    rw [← zpow_add₀ hd, show (k - 1) + (-k) = (-1 : ℤ) from by ring, zpow_neg_one]
+    rw [← zpow_add₀ hd, show (k - 1) + (-k) = (-1 : ℤ) by ring, zpow_neg_one]
   rw [show X * ((d : ℂ) ^ (k - 1) * (M : ℂ) ^ (k - 1)) *
         ((d : ℂ) ^ (-k) * (M : ℂ) ^ (-k) * τ ^ (-k)) =
       ((d : ℂ) ^ (k - 1) * (d : ℂ) ^ (-k)) *
-        (X * (M : ℂ) ^ (k - 1) * ((M : ℂ) ^ (-k) * τ ^ (-k))) from by ring]
+        (X * (M : ℂ) ^ (k - 1) * ((M : ℂ) ^ (-k) * τ ^ (-k))) by ring]
   rw [h_d_combine]
 
 private lemma frickeSlashCuspForm_levelRaise_eq_smul_levelInclude_cusp
@@ -626,7 +626,7 @@ private lemma diamondOp_slash_T_p_lower_apply
       (p : ℂ) ^ (k - 1) *
         ⇑(diamondOp k (ZMod.unitOfCoprime p hpcop) g.toModularForm')
           (levelRaiseMatrix p • z)
-  rw [show ((p : ℝ) ^ (k - 1) : ℂ) = (p : ℂ) ^ (k - 1) from by push_cast; rfl]
+  rw [show ((p : ℝ) ^ (k - 1) : ℂ) = (p : ℂ) ^ (k - 1) by push_cast; rfl]
   ring
 
 private lemma heckeT_n_cusp_levelInclude_cusp_eq_sub_smul_levelRaise_diamond
