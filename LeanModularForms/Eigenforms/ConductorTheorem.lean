@@ -647,34 +647,6 @@ lemma levelRaiseConjOfDvd_mem_Gamma1_div_of_mem_ker (l N : ℕ) [NeZero l] [NeZe
       Int.mul_ediv_cancel_left _ (Nat.cast_ne_zero.mpr (NeZero.ne l))]
     exact ⟨m, rfl⟩
 
-/-- Case B slash relation: under `¬ χ.FactorsThrough (N/l)`, there exist
-`δ ∈ Γ₁(N/l)` and `c : ℂ` with `c ≠ 1` such that `f ∣[k] mapGL ℝ δ = c • f`. -/
-theorem case_B_slash_relation (l N : ℕ) [NeZero l] [NeZero N] (h_dvd : l ∣ N) (k : ℤ)
-    (χ : DirichletCharacter ℂ N) (h_not_fac : ¬ χ.FactorsThrough (N / l))
-    (f : UpperHalfPlane → ℂ) (g : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hg_char : g ∈ modFormCharSpace k χ.toUnitHom) (hg_eq : ⇑g = levelRaiseFun l k f) :
-    ∃ (δ : SL(2, ℤ)) (_ : δ ∈ Gamma1 (N / l)) (c : ℂ),
-      c ≠ 1 ∧ f ∣[k] (mapGL ℝ δ : GL (Fin 2) ℝ) = c • f := by
-  have hNl_dvd_N : (N / l) ∣ N := ⟨l, (Nat.div_mul_cancel h_dvd).symm⟩
-  obtain ⟨u, hu_ker, hu_chi⟩ := exists_unit_of_not_factorsThrough hNl_dvd_N h_not_fac
-  obtain ⟨gu, hgu_eq⟩ := Gamma0MapUnits_surjective u
-  set γ_u : SL(2, ℤ) := (gu : SL(2, ℤ))
-  have hγu_mem : γ_u ∈ Gamma0 N := gu.property
-  have hγu_ker : ((γ_u.val 1 1 : ℤ) : ZMod (N / l)) = 1 := by
-    have h_val_eq : ((γ_u.val 1 1 : ℤ) : ZMod N) = (u : ZMod N) := by
-      have h1 : Gamma0Map N gu = ((γ_u.val 1 1 : ℤ) : ZMod N) := rfl
-      rw [← h1, ← Gamma0MapUnits_val gu, hgu_eq]
-    have h_u_red : (ZMod.cast (u : ZMod N) : ZMod (N / l)) = 1 := by
-      simpa [ZMod.unitsMap_val] using congr_arg Units.val hu_ker
-    rw [← ZMod.cast_intCast hNl_dvd_N (γ_u.val 1 1) (R := ZMod (N / l)), h_val_eq, h_u_red]
-  refine ⟨levelRaiseConjOfDvd l γ_u (dvd_lower_left_of_dvd_of_mem_Gamma0 h_dvd hγu_mem),
-    levelRaiseConjOfDvd_mem_Gamma1_div_of_mem_ker l N h_dvd hγu_mem hγu_ker,
-    (χ.toUnitHom (Gamma0MapUnits ⟨γ_u, hγu_mem⟩) : ℂ), ?_, ?_⟩
-  · intro h_eq
-    rw [hgu_eq] at h_eq
-    exact hu_chi (Units.ext h_eq)
-  · exact conductor_slash_eq l N h_dvd k χ f g hg_char hg_eq γ_u hγu_mem
-
 /-- Algebraic two-multiplier contradiction: if `f ∣[k] M` is both `c₁ • f` and
 `c₂ • f` for two distinct scalars, then `f = 0`. -/
 lemma fun_eq_zero_of_two_multipliers (k : ℤ) (f : UpperHalfPlane → ℂ) (M : GL (Fin 2) ℝ)
@@ -737,9 +709,9 @@ lemma gamma0LiftLowerLeftN_Gamma0MapUnits (N : ℕ) [NeZero N] (u : (ZMod N)ˣ) 
   push_cast
   rw [ZMod.natCast_zmod_val]
 
-/-- Refined Case B slash relation using the controlled lift
-`gamma0LiftLowerLeftN`: same conclusion as `case_B_slash_relation` but with an
-explicit `Γ₀(N)` lift `γ_u` satisfying `γ_u.val 1 0 = N`. -/
+/-- Case B slash relation with controlled lift: under `¬ χ.FactorsThrough (N/l)`,
+there exist `u : (ZMod N)ˣ` (lifted via `gamma0LiftLowerLeftN` with `γ_u.val 1 0 = N`),
+`δ ∈ Γ₁(N/l)` and `c : ℂ` with `c ≠ 1` such that `f ∣[k] mapGL ℝ δ = c • f`. -/
 lemma case_B_slash_relation_with_controlled_lift (l N : ℕ) [NeZero l] [NeZero N]
     (h_dvd : l ∣ N) (k : ℤ) (χ : DirichletCharacter ℂ N)
     (h_not_fac : ¬ χ.FactorsThrough (N / l)) (f : UpperHalfPlane → ℂ)
