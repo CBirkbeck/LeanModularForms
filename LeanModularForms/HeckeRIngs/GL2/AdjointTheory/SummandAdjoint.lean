@@ -59,7 +59,6 @@ theorem glMap_T_p_upper_det_pos (p : ℕ) (hp : 0 < p) (b : ℕ) :
 
 private lemma det_val_inv_pos {α : GL (Fin 2) ℝ} (hα : 0 < α.det.val) :
     0 < (α⁻¹ : GL (Fin 2) ℝ).det.val := by
-  change 0 < (((α⁻¹).det : ℝˣ) : ℝ)
   rw [map_inv, Units.val_inv_eq_inv_val]
   exact inv_pos.mpr hα
 
@@ -629,7 +628,6 @@ theorem peterssonInner_sum_slash_adjoint_constantRHS
   exact Finset.sum_congr rfl fun i hi ↦ by rw [hadj i hi]
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-open UpperHalfPlane ModularGroup MeasureTheory in
 /-- Positive-determinant `GL (Fin 2) ℝ` elements act measure-preservingly on `ℍ`
 with respect to `μ_hyp`. -/
 theorem measurePreserving_glPos_smul (α : GL (Fin 2) ℝ) (hα : 0 < α.det.val) :
@@ -654,11 +652,8 @@ theorem aedisjoint_glMap_smul_of_mul_inv_eq_mapGL_Gamma1
     have h_mem : (1 : PSL(2, ℤ))⁻¹ * q ∈ imageGamma1_PSL N := by
       rw [inv_one, one_mul, hq_def]
       exact Subgroup.mem_map.mpr ⟨γ, hγ_Γ1, rfl⟩
-    have h_ne : (1 : PSL(2, ℤ))⁻¹ * q ≠ 1 := by
-      rw [inv_one, one_mul]
-      exact hγ_ne
     have h_gen := isFundamentalDomain_Gamma1_coset_tiling (N := N)
-      |>.aedisjoint_smul_of_mul_inv_mem h_mem h_ne
+      |>.aedisjoint_smul_of_mul_inv_mem h_mem (by rw [inv_one, one_mul]; exact hγ_ne)
     rwa [one_smul] at h_gen
   have h_pre_α₁ : ((α₁⁻¹ • ·) ⁻¹' D : Set ℍ) = α₁ • D := by
     ext τ
@@ -680,8 +675,7 @@ theorem aedisjoint_glMap_smul_of_mul_inv_eq_mapGL_Gamma1
   have h_pre_aedisjoint : AEDisjoint μ_hyp
       ((α₁⁻¹ • ·) ⁻¹' D) ((α₁⁻¹ • ·) ⁻¹' (q • D)) :=
     h_inner.preimage h_mp_inv.quasiMeasurePreserving
-  rw [h_pre_α₁, h_pre_α₂] at h_pre_aedisjoint
-  exact h_pre_aedisjoint
+  rwa [h_pre_α₁, h_pre_α₂] at h_pre_aedisjoint
 
 open UpperHalfPlane ModularGroup MeasureTheory in
 /-- `(glMap T_p_upper(b₁))⁻¹ * (glMap T_p_upper(b₂)) = mapGL ℝ (shiftSL_loc (b₂ - b₁))`
@@ -731,8 +725,8 @@ theorem aedisjoint_glMap_T_p_upper_pair
       ((glMap (T_p_upper p hp b₁) : GL (Fin 2) ℝ) •
         (Gamma1_fundDomain_PSL N : Set ℍ))
       ((glMap (T_p_upper p hp b₂) : GL (Fin 2) ℝ) •
-        (Gamma1_fundDomain_PSL N : Set ℍ)) := by
-  exact aedisjoint_glMap_smul_of_mul_inv_eq_mapGL_Gamma1
+        (Gamma1_fundDomain_PSL N : Set ℍ)) :=
+  aedisjoint_glMap_smul_of_mul_inv_eq_mapGL_Gamma1
     (glMap (T_p_upper p hp b₁)) (glMap (T_p_upper p hp b₂))
     (measurePreserving_glPos_smul _ (det_val_inv_pos (glMap_T_p_upper_det_pos p hp b₁)))
     (shiftSL_loc ((b₂ : ℤ) - (b₁ : ℤ))) (shiftSL_loc_mem_Gamma1 _)
@@ -884,8 +878,8 @@ theorem aedisjoint_glMap_M_infty_T_p_upper
       ((glMap (T_p_upper p hp.pos b) : GL (Fin 2) ℝ) •
         (Gamma1_fundDomain_PSL N : Set ℍ))
       ((glMap (M_infty N p hp.pos hpN) : GL (Fin 2) ℝ) •
-        (Gamma1_fundDomain_PSL N : Set ℍ)) := by
-  exact aedisjoint_glMap_smul_of_mul_inv_eq_mapGL_Gamma1
+        (Gamma1_fundDomain_PSL N : Set ℍ)) :=
+  aedisjoint_glMap_smul_of_mul_inv_eq_mapGL_Gamma1
     (glMap (T_p_upper p hp.pos b)) (glMap (M_infty N p hp.pos hpN))
     (measurePreserving_glPos_smul _ (det_val_inv_pos (glMap_T_p_upper_det_pos p hp.pos b)))
     (M_infty_Gamma1_factor N p hpN b)
