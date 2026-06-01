@@ -23,8 +23,7 @@ variable {N : ℕ} [NeZero N] {k : ℤ}
 
 private lemma m7_N_dvd_div_prime {N l q : ℕ} (hq_prime : q.Prime) (hq_dvd_l : q ∣ l) :
     N ∣ N * l ^ 2 / q := by
-  have hq_dvd_l2 : q ∣ l ^ 2 := hq_dvd_l.trans (dvd_pow_self l two_ne_zero)
-  rcases hq_dvd_l2 with ⟨c, hc⟩
+  obtain ⟨c, hc⟩ : q ∣ l ^ 2 := hq_dvd_l.trans (dvd_pow_self l two_ne_zero)
   refine ⟨c, ?_⟩
   rw [show N * l ^ 2 = N * (q * c) by rw [hc],
     show N * (q * c) = q * (N * c) by ring,
@@ -97,7 +96,7 @@ private lemma m7_qExp_coeff_levelRaise_case_A {M q : ℕ} [NeZero M] [NeZero q] 
 private lemma m7_qExp_coeff_of_fun_eq_zero {Γ : Subgroup (GL (Fin 2) ℝ)} {k : ℤ}
     {g : CuspForm Γ k} (hg : (⇑g : UpperHalfPlane → ℂ) = 0) (n : ℕ) :
     (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑g) = 0 := by
-  simp [hg, qExpansion_zero (1 : ℝ)]
+  simp [hg, qExpansion_zero]
 
 private lemma m7_qExp_zero_branch {Γ : Subgroup (GL (Fin 2) ℝ)} {k : ℤ}
     (q n : ℕ) :
@@ -105,7 +104,7 @@ private lemma m7_qExp_zero_branch {Γ : Subgroup (GL (Fin 2) ℝ)} {k : ℤ}
         (PowerSeries.coeff (n / q))
           (ModularFormClass.qExpansion (1 : ℝ) (⇑(0 : CuspForm Γ k)))
       else (0 : ℂ)) = 0 := by
-  simp [qExpansion_zero (1 : ℝ)]
+  simp [qExpansion_zero]
 
 private lemma m7_eq_q_of_mem_factors_one_eq_l {l l' q q' : ℕ} (hl'_eq1 : 1 = l')
     (h_pf_eq : l.primeFactors = insert q l'.primeFactors)
@@ -837,24 +836,21 @@ theorem miyake_4_6_7_squarefree_decomp_with_lower_level
 
 private lemma qExpansion_one_coe_zero_coeff (f : UpperHalfPlane → ℂ) (hf : f = 0) (n : ℕ) :
     (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0 := by
-  subst hf
-  simp [qExpansion_zero]
+  subst hf; simp [qExpansion_zero]
 
 private lemma qExpansion_one_cuspForm_cast_coeff {A B : ℕ} {k : ℤ} (h : A = B)
     (x : CuspForm ((Gamma1 A).map (mapGL ℝ)) k) (n : ℕ) :
     (ModularFormClass.qExpansion (1 : ℝ)
         ⇑(h ▸ x : CuspForm ((Gamma1 B).map (mapGL ℝ)) k)).coeff n =
       (ModularFormClass.qExpansion (1 : ℝ) ⇑x).coeff n := by
-  cases h
-  rfl
+  cases h; rfl
 
 private lemma cuspFormCharSpace_mem_cast {A B : ℕ} [NeZero A] [NeZero B] {k : ℤ}
     (h : A = B) (χ₀ : (ZMod A)ˣ →* ℂˣ) (x : CuspForm ((Gamma1 A).map (mapGL ℝ)) k)
     (hx : x ∈ cuspFormCharSpace k χ₀) :
     (h ▸ x : CuspForm ((Gamma1 B).map (mapGL ℝ)) k) ∈
       cuspFormCharSpace k (h ▸ χ₀ : (ZMod B)ˣ →* ℂˣ) := by
-  cases h
-  exact hx
+  cases h; exact hx
 
 private lemma qExpansion_one_levelRaise_coeff {M : ℕ} [NeZero M] {k : ℤ} (p : ℕ) [NeZero p]
     (g_p : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) (n : ℕ) :
@@ -1164,8 +1160,8 @@ lemma slash_sum_at_M_eq_of_function_eq
     (fun z : UpperHalfPlane ↦ ∑ v : Fin (descendCosetCount p M),
       (f ∣[k] descendCosetList p M hp v) z) =
     (fun z : UpperHalfPlane ↦ ∑ v : Fin (descendCosetCount p M),
-      (g ∣[k] descendCosetList p M hp v) z) := by
-  subst hfg; rfl
+      (g ∣[k] descendCosetList p M hp v) z) :=
+  hfg ▸ rfl
 
 lemma slash_sum_linear_over_Finset_sum
     {α : Type*}
@@ -1194,16 +1190,14 @@ lemma slash_sum_linear_over_Finset_sum
 private lemma modularForm_cast_level_apply {A B : ℕ} [NeZero A] [NeZero B] {k : ℤ}
     (h : A = B) (f₀ : ModularForm ((Gamma1 A).map (mapGL ℝ)) k) (z₀ : UpperHalfPlane) :
     ((h ▸ f₀ : ModularForm ((Gamma1 B).map (mapGL ℝ)) k) : UpperHalfPlane → ℂ) z₀ =
-      (f₀ : UpperHalfPlane → ℂ) z₀ := by
-  subst h; rfl
+      (f₀ : UpperHalfPlane → ℂ) z₀ := by subst h; rfl
 
 /-- The `q`-expansion of a level-cast modular form agrees with that of the original. -/
 private lemma qExpansion_one_modularForm_cast_level {A B : ℕ} [NeZero A] [NeZero B] {k : ℤ}
     (h : A = B) (f₀ : ModularForm ((Gamma1 A).map (mapGL ℝ)) k) :
     ModularFormClass.qExpansion (1 : ℝ)
         (h ▸ f₀ : ModularForm ((Gamma1 B).map (mapGL ℝ)) k) =
-      ModularFormClass.qExpansion (1 : ℝ) f₀ := by
-  subst h; rfl
+      ModularFormClass.qExpansion (1 : ℝ) f₀ := by subst h; rfl
 
 /-- The coercion of a `Finset` sum of modular forms, evaluated at a point, equals the sum of
 the pointwise evaluations. -/
@@ -1212,9 +1206,8 @@ private lemma coe_finset_sum_modularForm_apply {ι : Type*} [DecidableEq ι]
     (s : Finset ι) (F : ι → ModularForm ((Gamma1 M).map (mapGL ℝ)) k) (z : UpperHalfPlane) :
     ((∑ q ∈ s, F q : ModularForm ((Gamma1 M).map (mapGL ℝ)) k) : UpperHalfPlane → ℂ) z =
       ∑ q ∈ s, (⇑(F q) : UpperHalfPlane → ℂ) z := by
-  refine Finset.induction_on s ?_ fun q s hqs ih ↦ ?_
-  · simp
-  · rw [Finset.sum_insert hqs, Finset.sum_insert hqs, ModularForm.coe_add, Pi.add_apply, ih]
+  refine Finset.induction_on s (by simp) fun q s hqs ih ↦ ?_
+  rw [Finset.sum_insert hqs, Finset.sum_insert hqs, ModularForm.coe_add, Pi.add_apply, ih]
 
 /-- A modular form whose `q`-expansion coefficients are, term by term, the sum of the
 `q`-expansion coefficients of a finite family equals (as a function on `ℍ`) the pointwise sum
