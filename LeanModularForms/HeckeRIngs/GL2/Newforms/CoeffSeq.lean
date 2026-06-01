@@ -595,24 +595,6 @@ lemma Newform.eulerFactor_dirichlet_quotient_form (x : ℂ)
   field_simp
   ring
 
-/-- **Stripped L-series non-vanishing.**  The Dirichlet series for
-`f.lCoeff_stripped` is not identically zero, since
-`f.lCoeff_stripped 1 = 1 ≠ 0`. -/
-lemma Newform.lSeries_stripped_ne_zero (f : Newform N k) :
-    LSeries f.lCoeff_stripped ≠ 0 := by
-  have h_lCoeff_ne : f.lCoeff_stripped ≠ 0 := fun habs ↦ by
-    have h1 : f.lCoeff_stripped 1 = 0 := by rw [habs]; rfl
-    rw [f.lCoeff_stripped_one] at h1
-    exact one_ne_zero h1
-  have h_abscissa_lt_top : LSeries.abscissaOfAbsConv f.lCoeff_stripped < ⊤ := by
-    have h_summ : LSeriesSummable f.lCoeff_stripped (((k : ℝ) / 2 + 2 : ℝ) : ℂ) :=
-      f.lSeriesSummable_stripped (by simp)
-    exact lt_of_le_of_lt (LSeriesSummable.abscissaOfAbsConv_le h_summ) (EReal.coe_lt_top _)
-  intro habs
-  rcases (LSeries_eq_zero_iff f.lCoeff_stripped_zero).mp habs with h | h
-  · exact h_lCoeff_ne h
-  · exact h_abscissa_lt_top.ne h
-
 /-- **Local good-prime Euler factor as a Dirichlet quotient.**  For a
 prime `q` coprime to `N` with `f.lCoeff q = 0`, the local Euler factor
 `(1 + χ(q) · q^{k-1} · (q^{-s})²)⁻¹` coincides with the Dirichlet-quotient
