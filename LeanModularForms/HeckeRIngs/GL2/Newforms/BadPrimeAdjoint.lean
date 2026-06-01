@@ -1143,29 +1143,4 @@ private lemma frickeMatrix_mul_glMap_T_p_upper_eq_mul_frickeMatrix
       Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val',
       Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply]
 
-/-- The classical Atkin-Lehner inverse-conjugation `W_N · β_b · W_N⁻¹` of the
-bad-prime upper-triangular coset rep `β_b := T_p_upper p hp b` equals
-`!![p, 0; -N·b, 1]` (the `(-N)` factor cancelling against `W_N⁻¹`). -/
-lemma Newform.frickeMatrix_mul_glMap_T_p_upper_mul_frickeMatrix_inv_val
-    (N : ℕ) [NeZero N] {p : ℕ} (hp : 0 < p) (b : ℕ) :
-    ((Newform.frickeMatrix N : GL (Fin 2) ℝ) :
-        Matrix (Fin 2) (Fin 2) ℝ) *
-        ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) :
-          Matrix (Fin 2) (Fin 2) ℝ) *
-        (((Newform.frickeMatrix N)⁻¹ : GL (Fin 2) ℝ) :
-          Matrix (Fin 2) (Fin 2) ℝ) =
-      (!![(p : ℝ), 0; -((N : ℝ) * b), 1] : Matrix (Fin 2) (Fin 2) ℝ) := by
-  have hW_inv_mul : ((Newform.frickeMatrix N : GL (Fin 2) ℝ) :
-          Matrix (Fin 2) (Fin 2) ℝ) *
-        ((Newform.frickeMatrix N : GL (Fin 2) ℝ) :
-          Matrix (Fin 2) (Fin 2) ℝ)⁻¹ = 1 := by
-    rw [Matrix.mul_nonsing_inv]
-    rw [show ((Newform.frickeMatrix N : GL (Fin 2) ℝ) :
-        Matrix (Fin 2) (Fin 2) ℝ).det = (N : ℝ) from Newform.frickeMatrix_det N]
-    exact isUnit_iff_ne_zero.mpr (Nat.cast_ne_zero.mpr (NeZero.ne N))
-  rw [Matrix.coe_units_inv (Newform.frickeMatrix N),
-    frickeMatrix_mul_glMap_T_p_upper_eq_mul_frickeMatrix, Matrix.mul_assoc,
-    hW_inv_mul, Matrix.mul_one]
-
-
 end HeckeRing.GL2
