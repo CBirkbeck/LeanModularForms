@@ -904,5 +904,4 @@ theorem Gamma0_pair_HeckeAlgebra_mul_comm (N : ℕ) [NeZero N]
     (T₁ T₂ : HeckeRing.𝕋 (Gamma0_pair N) ℤ) : T₁ * T₂ = T₂ * T₁ :=
   mul_comm T₁ T₂
 
-
 end HeckeRing.GLn
