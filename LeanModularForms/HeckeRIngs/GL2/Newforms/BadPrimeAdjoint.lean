@@ -1123,34 +1123,6 @@ theorem NewformExtended.heckeT_n_cusp_mem_cuspFormsNew_of_bad_only_T170
     (NewformExtended.heckeT_n_cusp_mem_cuspFormsNewExtended_of_bad_only_T170
       n h_bad_only h_adj_at_each f.toCuspForm f.isNew)
 
-/-- For the bad-prime upper-triangular coset rep `β_b := T_p_upper p hp b`
-embedded via `glMap`, the double-conjugation `W_N · β_b · W_N` equals the scalar
-matrix `(-N) • !![p, 0; -N·b, 1]`. -/
-lemma Newform.frickeMatrix_mul_glMap_T_p_upper_mul_frickeMatrix_val
-    (N : ℕ) [NeZero N] {p : ℕ} (hp : 0 < p) (b : ℕ) :
-    ((Newform.frickeMatrix N : GL (Fin 2) ℝ) :
-        Matrix (Fin 2) (Fin 2) ℝ) *
-        ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) :
-          Matrix (Fin 2) (Fin 2) ℝ) *
-        ((Newform.frickeMatrix N : GL (Fin 2) ℝ) :
-          Matrix (Fin 2) (Fin 2) ℝ) =
-      (-(N : ℝ)) •
-        (!![(p : ℝ), 0; -((N : ℝ) * b), 1] : Matrix (Fin 2) (Fin 2) ℝ) := by
-  rw [Newform.frickeMatrix_coe,
-    show ((glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
-        !![(1 : ℝ), (b : ℝ); 0, (p : ℝ)] by
-      show (T_p_upper p hp b : Matrix (Fin 2) (Fin 2) ℚ).map (algebraMap ℚ ℝ) =
-          !![(1 : ℝ), (b : ℝ); 0, (p : ℝ)]
-      rw [T_p_upper_coe]
-      ext i j
-      fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply]]
-  ext i j
-  fin_cases i <;> fin_cases j <;>
-    simp [Matrix.mul_apply, Fin.sum_univ_two, Matrix.smul_apply,
-      Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val',
-      Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply] <;>
-    ring
-
 private lemma frickeMatrix_mul_glMap_T_p_upper_eq_mul_frickeMatrix
     (N : ℕ) [NeZero N] {p : ℕ} (hp : 0 < p) (b : ℕ) :
     ((Newform.frickeMatrix N : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) *
