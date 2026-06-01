@@ -254,14 +254,6 @@ lemma coe_levelRaiseMatrix_inv_smul (l : ℕ) [NeZero l] (z : UpperHalfPlane) :
   rw [coe_levelRaiseMatrix_smul] at h_coe_eq
   rwa [eq_div_iff (Nat.cast_ne_zero.mpr (NeZero.ne l) : (l : ℂ) ≠ 0), mul_comm]
 
-/-- The imaginary part of `(α_l⁻¹ • z)` is `z.im / l`. -/
-lemma im_levelRaiseMatrix_inv_smul (l : ℕ) [NeZero l] (z : UpperHalfPlane) :
-    ((levelRaiseMatrix l)⁻¹ • z : UpperHalfPlane).im = z.im / (l : ℝ) := by
-  change (((levelRaiseMatrix l)⁻¹ • z : UpperHalfPlane) : ℂ).im = z.im / (l : ℝ)
-  rw [coe_levelRaiseMatrix_inv_smul,
-    show (l : ℂ) = ((l : ℝ) : ℂ) by push_cast; rfl, Complex.div_ofReal_im]
-  rfl
-
 /-- The conjugation factor `σ` for `(levelRaiseMatrix l)⁻¹` is the
 identity (positive determinant `1/l`). -/
 lemma σ_levelRaiseMatrix_inv (l : ℕ) [NeZero l] :
