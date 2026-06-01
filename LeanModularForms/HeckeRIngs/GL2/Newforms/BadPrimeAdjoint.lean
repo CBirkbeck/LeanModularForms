@@ -823,14 +823,6 @@ theorem cuspFormsOldExtended_disjoint_cuspFormsNew
     Disjoint (cuspFormsOldExtended N k) (cuspFormsNewExtended N k) :=
   cuspFormsOldExtended_disjoint_cuspFormsNewExtended
 
-/-- A cusp form is an *extended newform* if it is a Hecke eigenform, lies in the
-extended new subspace `cuspFormsNewExtended`, and is normalised (`a₁ = 1`).
-Strictly stronger than `IsNewform`. -/
-structure IsNewformExtended (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop where
-  isEigen : IsEigenform f
-  isNew : f ∈ cuspFormsNewExtended N k
-  isNorm : (ModularFormClass.qExpansion (1 : ℝ) f).coeff 1 = 1
-
 /-- Bundled extended newform: an `Eigenform` together with extended-newspace
 membership and normalisation. Strictly stronger than `Newform N k`. -/
 @[ext]
