@@ -432,12 +432,6 @@ lemma cuspFormsNewExtended_le_cuspFormsNew {N : ℕ} [NeZero N] {k : ℤ} :
     cuspFormsNewExtended N k ≤ cuspFormsNew N k :=
   fun _ hf g hg ↦ hf g (cuspFormsOld_le_cuspFormsOldExtended hg)
 
-/-- The hypothesis that the Lean `cuspFormsOld N k` equals the classical
-`cuspFormsOldExtended N k`; equivalently, every trivial-inclusion oldform
-generator lies in the level-raise span. -/
-def Newform.HasCuspFormsOldEqualsExtended (N : ℕ) [NeZero N] (k : ℤ) : Prop :=
-  cuspFormsOld N k = cuspFormsOldExtended N k
-
 /-- For the `p ∣ d` bad-prime case, `heckeT_p_divN (LR_d g)` lies in
 `cuspFormsOldExtended N k`. -/
 def Newform.HasHeckeT_p_divN_LRpd_in_cuspFormsOldExtended
