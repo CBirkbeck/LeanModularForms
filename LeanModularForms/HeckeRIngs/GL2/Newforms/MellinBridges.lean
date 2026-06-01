@@ -180,7 +180,7 @@ noncomputable def Newform.PerNewformFullDirichletData_T_empty_of_classicalInputs
         simp [s', Complex.add_re, Complex.sub_re, Complex.mul_re,
           Complex.intCast_re, Complex.intCast_im]
         ring
-      rw [h_re]; norm_num
+      linarith
     have h_order_s'_ne_top : analyticOrderAt den_fn s' ≠ ⊤ := by
       rw [(h_an_univ s' (Set.mem_univ _)).analyticOrderAt_eq_zero.mpr <| by
         simp only [den_fn, Finset.prod_empty, mul_one]
