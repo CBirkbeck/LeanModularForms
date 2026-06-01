@@ -59,9 +59,9 @@ lemma Gamma_p_α_le_Gamma1 (α : GL (Fin 2) ℚ) :
 open CongruenceSubgroup Pointwise ConjAct in
 /-- `Γ_p(α)` has finite index in `Γ₁(N)`. -/
 theorem Gamma_p_α_finiteIndex_in_Gamma1 (α : GL (Fin 2) ℚ) :
-    ((Gamma_p_α (N := N) α).subgroupOf (Gamma1 N)).FiniteIndex := by
+    ((Gamma_p_α (N := N) α).subgroupOf (Gamma1 N)).FiniteIndex :=
   have : (Gamma_p_α (N := N) α).FiniteIndex := Gamma_p_α_finiteIndex α
-  exact Subgroup.instFiniteIndex_subgroupOf _ _
+  Subgroup.instFiniteIndex_subgroupOf _ _
 
 open CongruenceSubgroup Pointwise ConjAct in
 /-- `Γ_p(α)` conjugation embedding. -/
@@ -71,10 +71,8 @@ lemma Gamma_p_α_conj_mem_Gamma1 (α : GL (Fin 2) ℚ)
       ((mapGL ℝ δ : GL (Fin 2) ℝ)) =
         (α.map (Rat.castHom ℝ) : GL (Fin 2) ℝ) *
           (mapGL ℝ γ : GL (Fin 2) ℝ) *
-          ((α.map (Rat.castHom ℝ) : GL (Fin 2) ℝ))⁻¹ := by
-  rcases hγ with ⟨h_conj, _⟩
-  rcases mem_conjGL.mp h_conj with ⟨δ, hδ_mem, hδ_eq⟩
-  exact ⟨δ, hδ_mem, hδ_eq⟩
+          ((α.map (Rat.castHom ℝ) : GL (Fin 2) ℝ))⁻¹ :=
+  mem_conjGL.mp hγ.1
 
 open CongruenceSubgroup Pointwise ConjAct in
 /-- `conjGL` ↔ `ConjAct.toConjAct` GL-level identity. -/
@@ -123,9 +121,8 @@ lemma Gamma_p_α_conjBy_injective (α : GL (Fin 2) ℚ) :
     have h_step1 : (α.map (Rat.castHom ℝ) : GL (Fin 2) ℝ) *
         (mapGL ℝ ((γ₁ : SL(2, ℤ))) : GL (Fin 2) ℝ) =
         (α.map (Rat.castHom ℝ) : GL (Fin 2) ℝ) * mapGL ℝ ((γ₂ : SL(2, ℤ))) := by
-      have hh1 := congrArg (· * (α.map (Rat.castHom ℝ) : GL (Fin 2) ℝ)) h_mapGL
-      simp only [inv_mul_cancel_right] at hh1
-      exact hh1
+      simpa only [inv_mul_cancel_right]
+        using congrArg (· * (α.map (Rat.castHom ℝ) : GL (Fin 2) ℝ)) h_mapGL
     exact mul_left_cancel h_step1
   exact mapGL_injective h_γ
 
@@ -169,7 +166,7 @@ lemma slash_α_Gamma_p_α_invariant_at_FD_decomp_witness
       ((⇑f) ∣[k] ((α.map (Rat.castHom ℝ) : GL (Fin 2) ℝ))) ∣[k]
         ((mapGL ℝ γ : GL (Fin 2) ℝ)) =
       (⇑f) ∣[k] ((α.map (Rat.castHom ℝ) : GL (Fin 2) ℝ)) :=
-  fun hγ ↦ slash_α_Gamma_p_α_invariant_cuspForm α f hγ
+  slash_α_Gamma_p_α_invariant_cuspForm α f
 
 open CongruenceSubgroup Pointwise ConjAct UpperHalfPlane MeasureTheory in
 /-- FD-shift adapter (generic `GL(2, ℝ)⁺` form). -/
@@ -270,10 +267,9 @@ theorem Gamma_p_α_PSL_R_FD_finite_index_decomp
                 ((Gamma1 N).map SL2Z_to_PSL2R)),
         ((q.out : ((Gamma1 N).map SL2Z_to_PSL2R)) : PSL(2, ℝ))⁻¹ •
           Gamma1_fundDomain_PSL N)
-      μ_hyp := by
-  apply Gamma_p_α_FD_finite_index_decomp α SL2Z_to_PSL2R
-  rw [map_SL2Z_to_PSL2R_eq_imageGamma1_PSL_R]
-  exact isFundamentalDomain_Gamma1_PSL_R
+      μ_hyp :=
+  Gamma_p_α_FD_finite_index_decomp α SL2Z_to_PSL2R <| by
+    rw [map_SL2Z_to_PSL2R_eq_imageGamma1_PSL_R]; exact isFundamentalDomain_Gamma1_PSL_R
 
 open CongruenceSubgroup Pointwise UpperHalfPlane MeasureTheory in
 /-- `_auto` wrapper for the `PSL(2, ℝ)` FD decomposition. -/
@@ -426,13 +422,10 @@ open CongruenceSubgroup in
 /-- `image_Gamma_p_α_PSL α` has finite index in `PSL(2, ℤ)`. -/
 instance image_Gamma_p_α_PSL_finiteIndex (α : GL (Fin 2) ℚ) :
     (image_Gamma_p_α_PSL (N := N) α).FiniteIndex := by
-  have : (Gamma_p_α (N := N) α).FiniteIndex :=
-    Gamma_p_α_finiteIndex (N := N) α
+  have : (Gamma_p_α (N := N) α).FiniteIndex := Gamma_p_α_finiteIndex (N := N) α
   refine ⟨fun h ↦ ?_⟩
-  have h_dvd : (image_Gamma_p_α_PSL (N := N) α).index ∣
-      (Gamma_p_α (N := N) α).index := by
-    apply Subgroup.index_map_dvd
-    exact QuotientGroup.mk_surjective
+  have h_dvd : (image_Gamma_p_α_PSL (N := N) α).index ∣ (Gamma_p_α (N := N) α).index := by
+    apply Subgroup.index_map_dvd; exact QuotientGroup.mk_surjective
   rw [h] at h_dvd
   exact Subgroup.FiniteIndex.index_ne_zero (Nat.eq_zero_of_zero_dvd h_dvd)
 
@@ -493,12 +486,10 @@ theorem slToPslQuot_Gamma_p_α_mk (α : GL (Fin 2) ℚ) (g : SL(2, ℤ)) :
   rfl
 
 theorem slToPslQuot_Gamma_p_α_surjective (α : GL (Fin 2) ℚ) :
-    Function.Surjective (slToPslQuot_Gamma_p_α (N := N) α) := by
-  intro q'
+    Function.Surjective (slToPslQuot_Gamma_p_α (N := N) α) := fun q' ↦ by
   obtain ⟨g_psl, hg_psl⟩ := QuotientGroup.mk_surjective q'
   obtain ⟨g_sl, hg_sl⟩ := QuotientGroup.mk_surjective g_psl
-  refine ⟨QuotientGroup.mk g_sl, ?_⟩
-  rw [slToPslQuot_Gamma_p_α_mk, hg_sl, hg_psl]
+  exact ⟨QuotientGroup.mk g_sl, by rw [slToPslQuot_Gamma_p_α_mk, hg_sl, hg_psl]⟩
 
 open CongruenceSubgroup in
 /-- Left-multiplication action on `SL ⧸ Γ_p(α)`. -/
@@ -598,9 +589,8 @@ theorem slToPslQuot_fiberCard_Gamma_p_α_eq (α : GL (Fin 2) ℚ)
     haveI : DecidableEq (PSL(2, ℤ) ⧸ image_Gamma_p_α_PSL (N := N) α) := Classical.decEq _
     (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α ↦
       slToPslQuot_Gamma_p_α (N := N) α q = q')).card =
-    slToPslQuot_fiberCard_Gamma_p_α (N := N) α := by
-  rw [slToPslQuot_fiberCard_Gamma_p_α]
-  exact slToPslQuot_Gamma_p_α_fiber_card_uniform (N := N) α q' _
+    slToPslQuot_fiberCard_Gamma_p_α (N := N) α :=
+  slToPslQuot_Gamma_p_α_fiber_card_uniform (N := N) α q' _
 
 open CongruenceSubgroup UpperHalfPlane MeasureTheory in
 /-- Fiber-invariance of the SL-tile integral at `H = Γ_p(α)`. -/
@@ -875,9 +865,8 @@ theorem inv_under_Gamma_p_α_PSL_R_of_inv_under_Gamma_p_α
     h (g • τ) = h τ := by
   obtain ⟨γ, hγ_mem, hγ_eq⟩ := g.property
   have h_smul : (g : PSL(2, ℝ)) • τ = γ • τ := by
-    rw [← hγ_eq, SL2Z_to_PSL2R_smul]
-    rfl
-  show h ((g : PSL(2, ℝ)) • τ) = h τ
+    rw [← hγ_eq, SL2Z_to_PSL2R_smul]; rfl
+  change h ((g : PSL(2, ℝ)) • τ) = h τ
   rw [h_smul]
   exact h_inv γ hγ_mem τ
 
@@ -887,15 +876,11 @@ instance Gamma_p_α_PSL_R_countable
     (α : GL (Fin 2) ℚ) :
     Countable ((Gamma_p_α (N := N) α).map SL2Z_to_PSL2R) := by
   classical
-  let F : Gamma_p_α (N := N) α →
-      ((Gamma_p_α (N := N) α).map SL2Z_to_PSL2R) :=
-    fun γ ↦ ⟨SL2Z_to_PSL2R (γ : SL(2, ℤ)),
-      ⟨(γ : SL(2, ℤ)), γ.property, rfl⟩⟩
-  exact Function.Surjective.countable (f := F) (by
-    intro g
+  let F : Gamma_p_α (N := N) α → ((Gamma_p_α (N := N) α).map SL2Z_to_PSL2R) :=
+    fun γ ↦ ⟨SL2Z_to_PSL2R (γ : SL(2, ℤ)), ⟨(γ : SL(2, ℤ)), γ.property, rfl⟩⟩
+  exact Function.Surjective.countable (f := F) fun g ↦ by
     rcases g.property with ⟨γ, hγ, hγ_eq⟩
-    refine ⟨⟨γ, hγ⟩, ?_⟩
-    exact Subtype.ext hγ_eq)
+    exact ⟨⟨γ, hγ⟩, Subtype.ext hγ_eq⟩
 
 open CongruenceSubgroup Pointwise UpperHalfPlane MeasureTheory in
 /-- Integral equality between `Gamma_p_α_fundDomain_PSL` and the canonical FD
@@ -921,8 +906,7 @@ theorem setIntegral_Gamma_p_α_fundDomain_PSL_eq_SL_outer_q_sum
     (slToPslQuot_fiberCard_Gamma_p_α (N := N) α) •
       ∫ τ in Gamma_p_α_fundDomain_PSL (N := N) α, h τ ∂μ_hyp := by
   rw [setIntegral_Gamma_p_α_fundDomain_PSL_eq_canonical (N := N) α h h_inv]
-  exact setIntegral_Gamma_p_α_fundDomain_PSL_canonical_eq_SL_outer_q_sum
-    (N := N) α h h_inv h_int
+  exact setIntegral_Gamma_p_α_fundDomain_PSL_canonical_eq_SL_outer_q_sum (N := N) α h h_inv h_int
 
 open CongruenceSubgroup UpperHalfPlane ModularGroup MeasureTheory in
 /-- `Gamma_p_α_fundDomain_PSL_canonical α` has finite measure. -/
@@ -962,8 +946,7 @@ noncomputable def slGamma_p_αToGamma1 (α : GL (Fin 2) ℚ) :
       intro a b hab
       change (QuotientGroup.leftRel _).r _ _ at hab
       rw [QuotientGroup.leftRel_apply] at hab
-      apply (QuotientGroup.eq).mpr
-      exact (Gamma_p_α_le_Gamma1 α) hab)
+      exact QuotientGroup.eq.mpr (Gamma_p_α_le_Gamma1 α hab))
 
 @[simp]
 theorem slGamma_p_αToGamma1_mk (α : GL (Fin 2) ℚ) (g : SL(2, ℤ)) :
@@ -972,11 +955,9 @@ theorem slGamma_p_αToGamma1_mk (α : GL (Fin 2) ℚ) (g : SL(2, ℤ)) :
       QuotientGroup.mk g := rfl
 
 theorem slGamma_p_αToGamma1_surjective (α : GL (Fin 2) ℚ) :
-    Function.Surjective (slGamma_p_αToGamma1 (N := N) α) := by
-  intro q'
+    Function.Surjective (slGamma_p_αToGamma1 (N := N) α) := fun q' ↦ by
   obtain ⟨g, hg⟩ := QuotientGroup.mk_surjective q'
-  refine ⟨QuotientGroup.mk g, ?_⟩
-  rw [slGamma_p_αToGamma1_mk, hg]
+  exact ⟨QuotientGroup.mk g, by rw [slGamma_p_αToGamma1_mk, hg]⟩
 
 open CongruenceSubgroup Classical in
 /-- Uniform fiber cardinality of `slGamma_p_αToGamma1`. -/
@@ -1045,9 +1026,8 @@ theorem slGamma_p_αToGamma1_fiberCard_eq (α : GL (Fin 2) ℚ)
     haveI : DecidableEq (SL(2, ℤ) ⧸ Gamma1 N) := Classical.decEq _
     (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α ↦
       slGamma_p_αToGamma1 (N := N) α q = q')).card =
-    slGamma_p_αToGamma1_fiberCard (N := N) α := by
-  rw [slGamma_p_αToGamma1_fiberCard]
-  exact slGamma_p_αToGamma1_fiber_card_uniform (N := N) α q' _
+    slGamma_p_αToGamma1_fiberCard (N := N) α :=
+  slGamma_p_αToGamma1_fiber_card_uniform (N := N) α q' _
 
 open CongruenceSubgroup UpperHalfPlane MeasureTheory in
 /-- Fiber-invariance of the SL-tile integral at `H = Γ₁(N)`, `Γ_p(α)`-quotient. -/
@@ -1130,8 +1110,7 @@ theorem sum_SL_Gamma_p_α_setIntegral_fd_petersson_eq_relIndex_mul_petN
       ∫ τ in (q'.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ),
         petersson k ⇑f ⇑g τ ∂μ_hyp = petN f g
   unfold petN
-  refine Finset.sum_congr rfl fun q' _ ↦ ?_
-  exact (petN_summand_eq_setIntegral f g q').symm
+  exact Finset.sum_congr rfl fun q' _ ↦ (petN_summand_eq_setIntegral f g q').symm
 
 open UpperHalfPlane ModularGroup MeasureTheory in
 /-- Generic SL-element Petersson-fd-slash setIntegral identity. -/
