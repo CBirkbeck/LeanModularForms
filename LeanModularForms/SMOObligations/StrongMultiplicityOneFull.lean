@@ -369,7 +369,7 @@ theorem cuspFormsOldChar_le_cuspFormsOld
     rcases Nat.lt_or_ge 1 l with h | h
     · exact h
     · interval_cases l
-      · exact absurd heq.symm (by simpa using (NeZero.ne N))
+      · exact absurd heq.symm (by simpa using NeZero.ne N)
       · exact absurd (by simpa using heq) hMne
   exact Submodule.subset_span ⟨M, l, hM, hl, hl1, heq, g, rfl⟩
 
@@ -984,7 +984,7 @@ private theorem eigenformOfIsEigenform_eigenvalue {M : ℕ} [NeZero M] {k : ℤ}
   have hEig : heckeT_n_cusp k n.val h = ev • h :=
     (eigenformOfIsEigenform ψ h hψ ⟨lam, hlam⟩).isEigen n hn
   have h4 : (ev - lam n) • h = 0 := by rw [sub_smul, ← hEig, hlam n hn, sub_self]
-  exact sub_eq_zero.mp ((smul_eq_zero.mp h4).resolve_right hh_ne)
+  exact sub_eq_zero.mp <| (smul_eq_zero.mp h4).resolve_right hh_ne
 
 private theorem petN_sum_right {ι : Type*} (s : Finset ι)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
@@ -992,7 +992,7 @@ private theorem petN_sum_right {ι : Type*} (s : Finset ι)
     petN f (∑ i ∈ s, x i) = ∑ i ∈ s, petN f (x i) := by
   induction s using Finset.cons_induction with
   | empty => simp [petN_zero_right]
-  | cons a s has ih => rw [Finset.sum_cons, petN_add_right, ih, Finset.sum_cons]
+  | cons _ _ _ ih => rw [Finset.sum_cons, petN_add_right, ih, Finset.sum_cons]
 
 private theorem exists_matching_summand
     (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ) (m_χ : ℕ)
