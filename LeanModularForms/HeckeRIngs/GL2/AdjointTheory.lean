@@ -621,17 +621,12 @@ lemma peterssonAdj_coe (α : GL (Fin 2) ℝ) :
 lemma peterssonAdj_det (α : GL (Fin 2) ℝ) :
     (peterssonAdj α).det = α.det := by
   ext
-  show (peterssonAdj α : Matrix (Fin 2) (Fin 2) ℝ).det =
-      (α : Matrix (Fin 2) (Fin 2) ℝ).det
-  rw [peterssonAdj_coe, Matrix.det_adjugate, Fintype.card_fin]
-  ring
+  simp [peterssonAdj_coe, Matrix.det_adjugate]
 
 /-- `peterssonAdj` reverses products: `(αβ)† = β† · α†`. -/
 lemma peterssonAdj_mul (α β : GL (Fin 2) ℝ) :
     peterssonAdj (α * β) = peterssonAdj β * peterssonAdj α := by
   apply Units.ext
-  show (peterssonAdj (α * β) : Matrix (Fin 2) (Fin 2) ℝ) =
-    (peterssonAdj β * peterssonAdj α : GL (Fin 2) ℝ).val
   rw [Units.val_mul, peterssonAdj_coe, peterssonAdj_coe, peterssonAdj_coe,
     Units.val_mul, Matrix.adjugate_mul_distrib]
 
