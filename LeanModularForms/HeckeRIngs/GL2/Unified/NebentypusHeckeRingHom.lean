@@ -95,8 +95,7 @@ theorem coe_mem_twistedInvariant
   set g : ↥(Gamma0 N) := ⟨σ, hσ⟩ with hg
   have hgl : glMap h = (mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (g : SL(2, ℤ)) := by
     rw [← hσh]
-    apply Units.ext
-    ext i j
+    apply Units.ext; ext i j
     simp only [glMap, GeneralLinearGroup.map]
     exact (IsScalarTower.algebraMap_apply ℤ ℚ ℝ ((g : SL(2, ℤ)).1 i j)).symm
   rw [hgl, (modFormCharSpace_iff_nebentypus k χ f).mp hf g]
@@ -115,8 +114,7 @@ theorem twistedInvariant_nebentypus
     Subgroup.mem_map.mpr ⟨(g : SL(2, ℤ)), g.2, rfl⟩
   have hgl : glMap (mapGL ℚ (g : SL(2, ℤ))) =
       (mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (g : SL(2, ℤ)) := by
-    apply Units.ext
-    ext i j
+    apply Units.ext; ext i j
     simp only [glMap, GeneralLinearGroup.map]
     exact (IsScalarTower.algebraMap_apply ℤ ℚ ℝ ((g : SL(2, ℤ)).1 i j)).symm
   have hinv := hF (mapGL ℚ (g : SL(2, ℤ))) hmem
@@ -256,15 +254,11 @@ noncomputable def nebentypusHeckeOpLinear
     modFormCharSpace k χ →ₗ[ℂ] modFormCharSpace k χ where
   toFun f := nebentypusHeckeOp D f
   map_add' f g := by
-    apply Subtype.ext
-    apply ModularForm.ext
-    intro z
+    refine Subtype.ext (ModularForm.ext fun z ↦ ?_)
     simp only [nebentypusHeckeOp_coe_coe, Submodule.coe_add, ModularForm.add_apply,
       ModularForm.coe_add, twistedHeckeSlash_gen_add, Pi.add_apply]
   map_smul' c f := by
-    apply Subtype.ext
-    apply ModularForm.ext
-    intro z
+    refine Subtype.ext (ModularForm.ext fun z ↦ ?_)
     rw [nebentypusHeckeOp_coe_coe, Submodule.coe_smul,
       show (⇑(c • (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k))) =
         c • ⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) from rfl,
@@ -468,9 +462,8 @@ private lemma adj_factorisation (p : ℕ) (hp : Nat.Prime p)
 private lemma delta0Char_congr (χ : (ZMod N)ˣ →* ℂˣ)
     (g₁ g₂ : (Gamma0_pair N).Δ) (h : (g₁ : GL (Fin 2) ℚ) = (g₂ : GL (Fin 2) ℚ)) :
     delta0NebentypusDeltaChar (N := N) χ g₁ =
-      delta0NebentypusDeltaChar (N := N) χ g₂ := by
-  apply congrArg (delta0NebentypusDeltaChar (N := N) χ)
-  exact Subtype.ext h
+      delta0NebentypusDeltaChar (N := N) χ g₂ :=
+  congrArg (delta0NebentypusDeltaChar (N := N) χ) (Subtype.ext h)
 
 private lemma weighted_value_eq (p : ℕ) (hp : Nat.Prime p)
     {f : ℍ → ℂ} (hf : IsGamma0TwistedInvariant (N := N) k χ f)
@@ -884,11 +877,9 @@ private lemma subsingleton_decompQuot_scalar (c : ℕ) (hc : 0 < c)
 private lemma adj_diag_scalar (c : ℕ) (hc : 0 < c) :
     GL_adjugate (diagMat 2 (fun _ : Fin 2 ↦ c) : GL (Fin 2) ℚ) =
       (diagMat 2 (fun _ : Fin 2 ↦ c) : GL (Fin 2) ℚ) := by
-  apply Units.ext
-  ext i j
+  apply Units.ext; ext i j
   rw [GL_adjugate_val, diagMat_val _ _ (fun _ ↦ hc), Matrix.adjugate_fin_two]
-  fin_cases i <;> fin_cases j <;>
-    simp [Matrix.diagonal, Matrix.of_apply]
+  fin_cases i <;> fin_cases j <;> simp [Matrix.diagonal, Matrix.of_apply]
 
 omit [NeZero N] in
 private lemma diag_scalar_mem_Delta0 (c : ℕ) (hc : 0 < c)
@@ -1415,8 +1406,7 @@ theorem cuspFormCharSpace_of_toModularForm'_mem
   rw [mem_cuspFormCharSpace_iff]
   intro d
   show diamondOpCusp k d f = (↑(χ d) : ℂ) • f
-  apply DFunLike.ext
-  intro τ
+  refine DFunLike.ext _ _ fun τ ↦ ?_
   simpa using
     DFunLike.congr_fun (((mem_modFormCharSpace_iff k χ f.toModularForm').mp hf) d) τ
 
