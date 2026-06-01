@@ -39,11 +39,8 @@ private lemma doubleCoset_eq_of_Gamma0_eq (N : ℕ) [NeZero N]
     rw [hab]; exact DoubleCoset.mem_doubleCoset_self _ _ _
   rw [DoubleCoset.mem_doubleCoset] at hb_mem
   obtain ⟨γ₁, hγ₁, γ₂, hγ₂, hb_eq⟩ := hb_mem
-  have hb_big : (b : GL (Fin 2) ℚ) ∈ DoubleCoset.doubleCoset (a : GL (Fin 2) ℚ)
-      (SLnZ_subgroup 2 : Set _) (SLnZ_subgroup 2 : Set _) := by
-    rw [DoubleCoset.mem_doubleCoset]
-    exact ⟨γ₁, Gamma0_le_SLnZ N hγ₁, γ₂, Gamma0_le_SLnZ N hγ₂, hb_eq⟩
-  exact (DoubleCoset.doubleCoset_eq_of_mem hb_big).symm
+  exact (DoubleCoset.doubleCoset_eq_of_mem (DoubleCoset.mem_doubleCoset.mpr
+    ⟨γ₁, Gamma0_le_SLnZ N hγ₁, γ₂, Gamma0_le_SLnZ N hγ₂, hb_eq⟩)).symm
 
 /-- The coset map `HeckeCoset (Gamma0_pair N) → HeckeCoset (GL_pair 2)`:
     sends `Γ₀(N)αΓ₀(N)` to `ΓαΓ`. -/
@@ -92,8 +89,7 @@ theorem shimura_prop_3_31 (N : ℕ) [NeZero N]
       (SLnZ_subgroup 2) ∩ ↑(Delta0_submonoid N) =
     DoubleCoset.doubleCoset (↑b : GL (Fin 2) ℚ) (SLnZ_subgroup 2)
       (SLnZ_subgroup 2) ∩ ↑(Delta0_submonoid N) := by rw [h']
-  rw [eq_a, eq_b] at h_inter
-  exact h_inter
+  rwa [eq_a, eq_b] at h_inter
 
 private instance instCountableM2 : Countable (Matrix (Fin 2) (Fin 2) ℚ) :=
   show Countable (Fin 2 → Fin 2 → ℚ) from inferInstance
@@ -106,8 +102,7 @@ private noncomputable instance instCountableGL2 : Countable (GL (Fin 2) ℚ) := 
 
 private lemma divChain_one_succ (k : ℕ) : DivChain 2 (![1, k + 1]) := by
   intro i hi
-  have hi0 : i = 0 := by omega
-  subst hi0
+  obtain rfl : i = 0 := by omega
   simp
 
 private noncomputable instance instInfiniteGLCoset : Infinite (HeckeCoset (GL_pair 2)) :=
@@ -160,7 +155,6 @@ private noncomputable instance instInfiniteGamma0Coset (N : ℕ) [NeZero N] :
       simp [Matrix.cons_val_one] at h1
       omega)
 
-
 /-- `diagMat 2 a ∈ Δ₀(N)` when all entries are positive and `gcd(a 0, N) = 1`. -/
 lemma diagMat_mem_Delta0_of_gcd (N : ℕ) (a : Fin 2 → ℕ)
     (ha : ∀ i, 0 < a i) (hgcd : Int.gcd (a 0) N = 1) :
@@ -185,10 +179,6 @@ private lemma exists_mod_clearing (a c : ℤ) (p : ℕ)
   have bez := Int.gcd_eq_gcd_ab a p
   rw [hap] at bez
   linear_combination c * bez
-
-private lemma coprime_of_dvd_Npow (a : ℤ) (N : ℕ) (haN : Int.gcd a N = 1)
-    (m : ℕ) (k : ℕ) (hm : m ∣ N ^ k) : Int.gcd a m = 1 :=
-  Nat.Coprime.coprime_dvd_right hm (Nat.Coprime.pow_right k haN)
 
 private lemma dvd_lowerRight_witness (A : Matrix (Fin 2) (Fin 2) ℤ) (N m : ℕ) (c₀ r : ℤ)
     (hc₀ : A 1 0 = (N : ℤ) * c₀) (hdet : A.det = m) (ham : Int.gcd (A 0 0) m = 1)
@@ -262,6 +252,10 @@ private noncomputable def lunip_inject (N : ℕ) [NeZero N] (k_exp : ℕ)
       rw [CongruenceSubgroup.Gamma0_mem]
       simp [Matrix.of_apply, Matrix.cons_val_one])⟩⟧
 
+private lemma coprime_of_gcd_one_dvd_pow (a : ℤ) (N : ℕ) (k : ℕ) (hk : ℕ)
+    (haN : Int.gcd a N = 1) (hk_dvd : k ∣ N ^ hk) : Int.gcd a k = 1 :=
+  Nat.Coprime.coprime_dvd_right hk_dvd (Nat.Coprime.pow_right hk haN)
+
 /-- **Generalized Shimura 3.33**: all `β ∈ Δ₀(N)` with `det = m` and
 `gcd(A 0 0, m) = 1` are in `DC(diag(1, m), Γ₀, Γ₀)`. -/
 lemma shimura_prop_3_33_gen (N : ℕ) [NeZero N]
@@ -332,11 +326,7 @@ lemma shimura_prop_3_33 (N : ℕ) [NeZero N]
       ((Gamma0_pair N).H : Set _) ((Gamma0_pair N).H : Set _) := by
   obtain ⟨_, _, A, hA, hAN, hAco⟩ := id hβ
   exact shimura_prop_3_33_gen N m hm_pos β hβ A hA hAN hdet
-    (coprime_of_dvd_Npow (A 0 0) N hAco m k hm_dvd)
-
-private lemma coprime_of_gcd_one_dvd_pow (a : ℤ) (N : ℕ) (k : ℕ) (hk : ℕ)
-    (haN : Int.gcd a N = 1) (hk_dvd : k ∣ N ^ hk) : Int.gcd a k = 1 :=
-  Nat.Coprime.coprime_dvd_right hk_dvd (Nat.Coprime.pow_right hk haN)
+    (coprime_of_gcd_one_dvd_pow (A 0 0) N m k hAco hm_dvd)
 
 private lemma sl2_conj_lunip_10 (σ : SpecialLinearGroup (Fin 2) ℤ) (c : ℤ) :
     ((σ⁻¹ : SpecialLinearGroup (Fin 2) ℤ).1 *
@@ -357,11 +347,9 @@ private lemma exists_clearing_mod (a c' : ℤ) (k : ℕ) (hk_pos : 0 < k)
   refine ⟨(u_bez * c') % k, Int.emod_nonneg _ (by omega), Int.emod_lt_of_pos _ (by omega), ?_⟩
   have h2 : (k : ℤ) ∣ ((u_bez * c') - (u_bez * c') % k) :=
     ⟨(u_bez * c') / k, by have := Int.mul_ediv_add_emod (u_bez * c') (k : ℤ); omega⟩
-  have hd : (k : ℤ) ∣ (a * ((u_bez * c') % k) - c') := by
-    have e : a * ((u_bez * c') % k) - c' =
-        (a * (u_bez * c') - c') - a * ((u_bez * c') - (u_bez * c') % k) := by ring
-    rw [e]; exact dvd_sub hr₀_mod (dvd_mul_of_dvd_right h2 _)
-  exact hd
+  have e : a * ((u_bez * c') % k) - c' =
+      (a * (u_bez * c') - c') - a * ((u_bez * c') - (u_bez * c') % k) := by ring
+  exact e ▸ dvd_sub hr₀_mod (dvd_mul_of_dvd_right h2 _)
 
 private lemma lunip_conj_diag_eq (N : ℕ) [NeZero N] (k_exp : ℕ)
     (ha : ∀ i : Fin 2, 0 < (![1, k_exp] : Fin 2 → ℕ) i)
@@ -406,9 +394,9 @@ private lemma lunip_inject_surjective (N : ℕ) [NeZero N]
   rw [CongruenceSubgroup.Gamma0_mem] at hτ'_mem
   obtain ⟨c', hc'⟩ := (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp hτ'_mem
   have hτ'_det := τ'.prop; rw [Matrix.det_fin_two] at hτ'_det
-  have hτ'_a_N : Int.gcd (τ'.1 0 0) ↑N = 1 := by
-    rw [← Int.isCoprime_iff_gcd_eq_one]
-    exact ⟨τ'.1 1 1, -(τ'.1 0 1) * c', by rw [hc'] at hτ'_det; nlinarith⟩
+  have hτ'_a_N : Int.gcd (τ'.1 0 0) ↑N = 1 :=
+    Int.isCoprime_iff_gcd_eq_one.mp ⟨τ'.1 1 1, -(τ'.1 0 1) * c',
+      by rw [hc'] at hτ'_det; nlinarith⟩
   obtain ⟨r_int, hr_nn, hr_lt, c'', hc''⟩ := exists_clearing_mod (τ'.1 0 0) c' k_exp hk_pos
     (coprime_of_gcd_one_dvd_pow _ N k_exp hk hτ'_a_N hk_dvd)
   refine ⟨⟨r_int.toNat, by omega⟩, ?_⟩
@@ -559,8 +547,8 @@ private lemma lunip_inject_injective (N : ℕ) [NeZero N]
   simp only [ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct, inv_inv] at h_mem
   rw [hg_eq] at h_mem
   suffices h_dvd : (k_exp : ℤ) ∣ ((↑↑r₂ : ℤ) - ↑↑r₁) by
-    have hr₁ := r₁.isLt; have hr₂ := r₂.isLt
-    have h0 := Int.eq_zero_of_dvd_of_natAbs_lt_natAbs h_dvd (by omega)
+    have h0 := Int.eq_zero_of_dvd_of_natAbs_lt_natAbs h_dvd
+      (by have := r₁.isLt; have := r₂.isLt; omega)
     exact Fin.ext (by omega)
   set D := diagMat 2 (![1, k_exp] : Fin 2 → ℕ)
   have h_conj := (Gamma0_pair N).H.mul_mem ((Gamma0_pair N).H.mul_mem hγ₂ h_mem)
@@ -603,9 +591,9 @@ private lemma decompQuot_Npow_natcard (N : ℕ) [NeZero N]
     (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp hσ₁_mem
   obtain ⟨q₁, hq₁⟩ := hN_c
   have hdet₁ := σ₁.prop; rw [Matrix.det_fin_two] at hdet₁
-  have ha₁N : Int.gcd (σ₁.1 0 0) ↑N = 1 := by
-    rw [← Int.isCoprime_iff_gcd_eq_one]
-    exact ⟨σ₁.1 1 1, -(σ₁.1 0 1) * q₁, by rw [hq₁] at hdet₁; nlinarith⟩
+  have ha₁N : Int.gcd (σ₁.1 0 0) ↑N = 1 :=
+    Int.isCoprime_iff_gcd_eq_one.mp ⟨σ₁.1 1 1, -(σ₁.1 0 1) * q₁,
+      by rw [hq₁] at hdet₁; nlinarith⟩
   have ha₁k : Int.gcd (σ₁.1 0 0) ↑k_exp = 1 :=
     coprime_of_gcd_one_dvd_pow (σ₁.1 0 0) N k_exp hk ha₁N hk_dvd
   rw [show k_exp = Fintype.card (Fin k_exp) from (Fintype.card_fin k_exp).symm,
@@ -750,8 +738,7 @@ theorem T_bad_mul (N : ℕ) [NeZero N]
         (HeckeRing.m (Gamma0_pair N) D₁.rep D₂.rep) = μ * (↑m * ↑n) := by
       rw [h_m_eq]; simp [HeckeRing.deg_T_single, h_deg_mn]
     rw [HeckeRing.T_single_one_mul_T_single_one] at h_deg_prod
-    have hmn_pos : (0 : ℤ) < ↑m * ↑n := by positivity
-    have hmn_ne : (↑m * ↑n : ℤ) ≠ 0 := ne_of_gt hmn_pos
+    have hmn_ne : (↑m * ↑n : ℤ) ≠ 0 := by positivity
     exact mul_right_cancel₀ hmn_ne (by linarith [h_deg_prod, h_deg_m_eq])
   · exact fun A hA ↦ HeckeRing.heckeMultiplicity_eq_zero_of_mulMap_unique (Gamma0_pair N)
       (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) D_out A hA h_mulMap
