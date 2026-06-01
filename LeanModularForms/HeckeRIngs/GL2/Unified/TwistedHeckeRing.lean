@@ -295,12 +295,6 @@ noncomputable def gamma0TwistedInvariantFunctionSubmodule (k : ℤ) (χ : (ZMod 
     ext z
     simp [Pi.smul_apply, smul_eq_mul, mul_left_comm]
 
-@[simp] lemma mem_gamma0TwistedInvariantFunctionSubmodule_iff (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
-    (f : ℍ → ℂ) :
-    f ∈ gamma0TwistedInvariantFunctionSubmodule (N := N) k χ ↔
-      IsGamma0TwistedInvariant (N := N) k χ f :=
-  Iff.rfl
-
 /-- The `H`-correction element attached to replacing `h₁` by its quotient
 representative in a right-coset decomposition. -/
 noncomputable def gamma0Correction (D : HeckeCoset (Gamma0_pair N))
