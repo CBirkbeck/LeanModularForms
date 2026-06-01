@@ -93,13 +93,12 @@ private theorem unitOfCoprime_mul {N d₁ d₂ : ℕ} (h₁ : d₁.Coprime N) (h
     (h₁₂ : (d₁ * d₂).Coprime N) (χ : (ZMod N)ˣ →* ℂˣ) :
     (↑(χ (ZMod.unitOfCoprime (d₁ * d₂) h₁₂)) : ℂ) =
       ↑(χ (ZMod.unitOfCoprime d₁ h₁)) * ↑(χ (ZMod.unitOfCoprime d₂ h₂)) := by
-  have : χ (ZMod.unitOfCoprime (d₁ * d₂) h₁₂) =
-      χ (ZMod.unitOfCoprime d₁ h₁) * χ (ZMod.unitOfCoprime d₂ h₂) := by
+  rw [show χ (ZMod.unitOfCoprime (d₁ * d₂) h₁₂) =
+      χ (ZMod.unitOfCoprime d₁ h₁) * χ (ZMod.unitOfCoprime d₂ h₂) by
     rw [← map_mul]
     congr 1
     ext
-    simp [ZMod.coe_unitOfCoprime]
-  rw [this]
+    simp [ZMod.coe_unitOfCoprime]]
   push_cast
   ring
 
@@ -110,7 +109,7 @@ private lemma unitOfCoprime_one_eq_one {N : ℕ} :
 
 private lemma chi_unitOfCoprime_one_eq_one {N : ℕ} (χ : (ZMod N)ˣ →* ℂˣ) (h : Nat.Coprime 1 N) :
     (↑(χ (ZMod.unitOfCoprime 1 h)) : ℂ) = 1 := by
-  rw [unitOfCoprime_one_eq_one, map_one, Units.val_one]
+  simp [unitOfCoprime_one_eq_one]
 
 private lemma natCast_mem_strictPeriods_Gamma1_map (N : ℕ) :
     (N : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
@@ -159,8 +158,7 @@ private theorem divisorSum_coprime_summand {N : ℕ} [NeZero N] (k : ℤ) (χ : 
     else 0 := by
   by_cases h₁ : d₁.Coprime N
   · rw [dif_pos h₁, h_inner, Finset.mul_sum]
-    apply Finset.sum_congr rfl
-    intro d₂ _
+    refine Finset.sum_congr rfl fun d₂ _ ↦ ?_
     by_cases h₂ : d₂.Coprime N
     · have h₁₂ : (d₁ * d₂).Coprime N := h₁.mul_left h₂
       rw [dif_pos h₁₂, dif_pos h₂, show (↑(d₁ * d₂) : ℂ) = (↑d₁ : ℂ) * ↑d₂ by push_cast; ring,
@@ -169,8 +167,7 @@ private theorem divisorSum_coprime_summand {N : ℕ} [NeZero N] (k : ℤ) (χ : 
     · rw [dif_neg fun h ↦ h₂ (h.coprime_dvd_left (dvd_mul_left d₂ d₁)), dif_neg h₂]
       simp
   · rw [dif_neg h₁]
-    apply Finset.sum_eq_zero
-    intro d₂ _
+    refine Finset.sum_eq_zero fun d₂ _ ↦ ?_
     simp [show ¬(d₁ * d₂).Coprime N from
       fun h ↦ h₁ (h.coprime_dvd_left (dvd_mul_right d₁ d₂))]
 
