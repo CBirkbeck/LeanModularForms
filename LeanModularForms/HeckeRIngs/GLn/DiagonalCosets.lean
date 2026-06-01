@@ -341,7 +341,7 @@ theorem exists_diagonal_of_posdet (A : Matrix (Fin n) (Fin n) ℤ) (hdet : 0 < A
   set Q_mat : Matrix (Fin n) (Fin n) ℤ := Matrix.of (fun k j ↦ r j k) with hQ_def
   have hmat_eq : A * Q_mat = P_mat * Matrix.diagonal a := by
     ext k j; simp only [Matrix.mul_apply, hQ_def, hP_def, Matrix.of_apply, Matrix.diagonal_apply]
-    conv_lhs => rw [show ∑ l, A k l * r j l = (A *ᵥ r j) k from by simp [mulVec, dotProduct]]
+    conv_lhs => rw [show ∑ l, A k l * r j l = (A *ᵥ r j) k by simp [mulVec, dotProduct]]
     rw [hkey j]; simp only [Pi.smul_apply, smul_eq_mul]
     simp [Finset.sum_ite_eq', Finset.mem_univ, mul_comm]
   have hP_eq : P_mat = e.toMatrix b' := by
@@ -402,7 +402,7 @@ private lemma gcd_2x2_det_L (a b : ℤ) (ha : 0 < a) :
   simp [det_fin_two]
   have hg_pos : (0 : ℤ) < ↑(a.gcd b) := by positivity
   suffices h : (a.gcdA b * (a / ↑(a.gcd b)) + a.gcdB b * (b / ↑(a.gcd b))) * ↑(a.gcd b) =
-      1 * ↑(a.gcd b) by exact mul_right_cancel₀ (ne_of_gt hg_pos) h
+      1 * ↑(a.gcd b) from mul_right_cancel₀ (ne_of_gt hg_pos) h
   rw [one_mul]
   calc (a.gcdA b * (a / ↑(a.gcd b)) + a.gcdB b * (b / ↑(a.gcd b))) * ↑(a.gcd b)
       = a.gcdA b * (a / ↑(a.gcd b) * ↑(a.gcd b)) +
@@ -657,7 +657,7 @@ private lemma gcd_step_general (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : ∀ i, 
 private lemma dvd_diag_of_SL_transform (m : ℕ) (d d' : Fin m → ℤ) (c : ℤ) (hc : ∀ i, c ∣ d i)
     (L R : Matrix (Fin m) (Fin m) ℤ) (heq : L * Matrix.diagonal d * R = Matrix.diagonal d') :
     ∀ i, c ∣ d' i := by
-  intro i; rw [show d' i = (Matrix.diagonal d') i i from by simp, ← heq, mul_apply]
+  intro i; rw [show d' i = (Matrix.diagonal d') i i by simp, ← heq, mul_apply]
   apply Finset.dvd_sum; intro k _; rw [mul_apply]; apply dvd_mul_of_dvd_left
   apply Finset.dvd_sum; intro l _; simp only [diagonal_apply]; split_ifs with h
   · subst h; exact dvd_mul_of_dvd_right (hc l) _
@@ -955,7 +955,7 @@ private lemma partialProd_dvd_of_SLnZ_equiv {c d : Fin n → ℕ} (hc_pos : ∀ 
       (P : GL (Fin n) ℚ) * diagMat n c * (Q : GL (Fin n) ℚ)) (k : ℕ) (hk : k ≤ n) :
     (∏ j : Fin k, c ⟨j.val, by omega⟩) ∣ (∏ j : Fin k, d ⟨j.val, by omega⟩) := by
   suffices hint : (∏ j : Fin k, (c ⟨j.val, by omega⟩ : ℤ)) ∣
-      (∏ j : Fin k, (d ⟨j.val, by omega⟩ : ℤ)) by exact_mod_cast hint
+      (∏ j : Fin k, (d ⟨j.val, by omega⟩ : ℤ)) from mod_cast hint
   set e : Fin k → Fin n := fun j ↦ ⟨j.val, by omega⟩ with he_def
   set P_ℤ := (↑P : Matrix (Fin n) (Fin n) ℤ)
   set Q_ℤ := (↑Q : Matrix (Fin n) (Fin n) ℤ)
