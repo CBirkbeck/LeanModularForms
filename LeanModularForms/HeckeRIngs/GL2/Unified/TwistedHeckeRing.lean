@@ -1276,14 +1276,4 @@ noncomputable def twistedHeckeRingHomFunction (k : ℤ) (χ : (ZMod N)ˣ →* �
   map_add' := twistedHeckeSumFunction_add (N := N) k χ
   map_mul' := twistedHeckeSumFunction_mul (N := N) k χ
 
-@[simp] lemma twistedHeckeRingHomFunction_apply (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
-    (T : 𝕋 (Gamma0_pair N) ℤ) :
-    twistedHeckeRingHomFunction (N := N) k χ T = twistedHeckeSumFunction (N := N) k χ T := rfl
-
-@[simp] lemma twistedHeckeRingHomFunction_T_single (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
-    (D : HeckeCoset (Gamma0_pair N)) (c : ℤ) :
-    twistedHeckeRingHomFunction (N := N) k χ (T_single (Gamma0_pair N) ℤ D c) =
-      (c : ℂ) • twistedHeckeOperatorFunction (N := N) k χ D :=
-  twistedHeckeSumFunction_T_single (N := N) k χ D c
-
 end HeckeRing.GL2.Unified
