@@ -461,16 +461,6 @@ lemma isBoundedAtImInfty_slash_levelRaiseMatrix_inv_mul_mapGL (l N : ℕ) [NeZer
   ModularFormClass.bdd_at_cusps g
     (isCusp_levelRaiseMatrix_inv_mul_mapGL_smul_infty l A ((Gamma1 N).map (mapGL ℝ))) _ rfl
 
-/-- All-cusp boundedness for `f`: `IsBoundedAtImInfty (f ∣[k] mapGL ℝ A)` for
-every `A : SL(2, ℤ)`. -/
-lemma isBoundedAtImInfty_slash_mapGL_of_levelRaiseFun_eq (l N : ℕ) [NeZero l] [NeZero N]
-    (k : ℤ) (f : UpperHalfPlane → ℂ) (g : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hg_eq : ⇑g = levelRaiseFun l k f) (A : SL(2, ℤ)) :
-    UpperHalfPlane.IsBoundedAtImInfty (f ∣[k] (mapGL ℝ A : GL (Fin 2) ℝ)) := by
-  rw [isBoundedAtImInfty_slash_iff_levelRaiseFun_eq l k f ⇑g hg_eq A]
-  exact isBoundedAtImInfty_slash_levelRaiseMatrix_inv_mul_mapGL l N k g A
-
-
 /-- Slash zero-at-`i∞` reduction: for any `A : SL(2, ℤ)`, the zero-at-`i∞` of
 `f ∣[k] mapGL ℝ A` is equivalent to the zero-at-`i∞` of
 `g ∣[k] (α_l⁻¹ * mapGL ℝ A)`. -/
