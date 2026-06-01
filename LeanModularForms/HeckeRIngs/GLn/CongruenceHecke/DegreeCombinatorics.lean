@@ -44,16 +44,12 @@ private lemma card_quotient_inf_of_set_mul {G : Type*} [Group G]
     rintro ⟨a, b⟩; refine Quotient.inductionOn₂ a b (fun α β ↦ ?_)
     obtain ⟨k₁, hk₁, k₂, hk₂, h_eq⟩ := h_prod (α⁻¹ * β)
     refine ⟨QuotientGroup.mk (α * k₁), Prod.ext ?_ ?_⟩
-    · apply QuotientGroup.eq.mpr
-      show (α * k₁)⁻¹ * α ∈ K₁
-      have : (α * k₁)⁻¹ * α = k₁⁻¹ := by group
-      rw [this]; exact Subgroup.inv_mem _ hk₁
-    · apply QuotientGroup.eq.mpr
-      show (α * k₁)⁻¹ * β ∈ K₂
-      have step1 : (α * k₁)⁻¹ * β = k₁⁻¹ * (α⁻¹ * β) := by group
-      rw [step1, h_eq]
-      have step2 : k₁⁻¹ * (k₁ * k₂) = k₂ := by group
-      rw [step2]; exact hk₂
+    · refine QuotientGroup.eq.mpr (?_ : (α * k₁)⁻¹ * α ∈ K₁)
+      rw [show (α * k₁)⁻¹ * α = k₁⁻¹ from by group]; exact Subgroup.inv_mem _ hk₁
+    · refine QuotientGroup.eq.mpr (?_ : (α * k₁)⁻¹ * β ∈ K₂)
+      rw [show (α * k₁)⁻¹ * β = k₁⁻¹ * (α⁻¹ * β) from by group, h_eq,
+        show k₁⁻¹ * (k₁ * k₂) = k₂ from by group]
+      exact hk₂
   rw [← Nat.card_prod]
   exact Nat.card_eq_of_bijective _ ⟨hf_inj, hf_surj⟩
 
@@ -504,13 +500,10 @@ private lemma Gamma0_relIndex_eq_Gamma_index_of_coprime (N : ℕ) [NeZero N]
   have h_bridge_mN := HeckeCoset_deg_Gamma0_one_k_eq_relIndex 1 (m * N)
     (Nat.mul_pos hm_pos hN_pos)
   have hGamma0_one : CongruenceSubgroup.Gamma0 1 = (⊤ : Subgroup SL(2, ℤ)) := by
-    ext g
-    simp only [CongruenceSubgroup.Gamma0_mem, Subgroup.mem_top, iff_true]
-    exact Subsingleton.elim _ _
+    ext g; simpa [CongruenceSubgroup.Gamma0_mem] using Subsingleton.elim _ _
   have h_relIndex_to_index : ∀ (k : ℕ),
       (CongruenceSubgroup.Gamma0 (k * 1)).relIndex (CongruenceSubgroup.Gamma0 1) =
-      (CongruenceSubgroup.Gamma0 k).index := by
-    intro k
+      (CongruenceSubgroup.Gamma0 k).index := fun k ↦ by
     rw [Nat.mul_one, hGamma0_one, Subgroup.relIndex_top_right]
   rw [h_relIndex_to_index m] at h_bridge_m
   rw [h_relIndex_to_index N] at h_bridge_N
@@ -588,8 +581,7 @@ lemma HeckeCoset_deg_Gamma0_p_ppow (N : ℕ) [NeZero N]
   by_cases hk1 : k = 1
   · subst hk1
     have h_α_diag_one : α_diag = (1 : GL (Fin 2) ℚ) := by
-      simp only [α_diag, show (1 : ℕ) - 1 = 0 from rfl, pow_zero]
-      exact diagMat_two_one_one_eq_one
+      simpa [α_diag, show (1 : ℕ) - 1 = 0 from rfl] using diagMat_two_one_one_eq_one
     rw [if_pos rfl, h_α_diag_one, ConjAct.toConjAct_one, one_smul, Subgroup.relIndex_self]
     simp
   · set D' := T_diag_Gamma0 N (![1, p ^ (k-1)])
