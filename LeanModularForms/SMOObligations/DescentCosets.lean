@@ -52,26 +52,10 @@ theorem miyake_g_p_supported
     exact h_vanish n (Nat.Coprime.mul_right (hp.coprime_iff_not_dvd.mpr hn_no_p).symm hcop_l')
   · rw [hg_qexp n, if_neg hcop_l']
 
-/-- Miyake 4.6.4 dichotomy: for `g ∈ qSupportedOnDvdSubmodule M k p ∩
+/-- Strengthened Miyake 4.6.4 dichotomy: for `g ∈ qSupportedOnDvdSubmodule M k p ∩
 cuspFormCharSpace`, with `p ∣ M` and `NeZero (M / p)`, either `g = 0`, or there
-is `g_p` at level `Γ_1(M/p)` in the lifted character space with
-`V_p g_p = g` as functions on `ℍ`. -/
-theorem miyake_4_6_4_dichotomy
-    {M : ℕ} [NeZero M] {k : ℤ}
-    (χ_M : DirichletCharacter ℂ M)
-    (p : ℕ) [NeZero p] [NeZero (M / p)]
-    (hp : p.Prime) (hpM : p ∣ M)
-    (g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k)
-    (hgχ : g ∈ cuspFormCharSpace k χ_M.toUnitHom)
-    (hg_supp : g ∈ HeckeRing.GL2.AtkinLehner.qSupportedOnDvdSubmodule M k p) :
-    g = 0 ∨ ∃ g_p : CuspForm ((Gamma1 (M / p)).map (mapGL ℝ)) k,
-      (⇑(HeckeRing.GL2.levelRaise (M / p) p k g_p) : UpperHalfPlane → ℂ) = ⇑g :=
-  HeckeRing.GL2.AtkinLehner.qSupportedOnDvd_eq_zero_or_exists_levelRaise_preimage_of_char
-    hp.one_lt hpM χ_M g hgχ hg_supp
-
-/-- Strengthened Miyake 4.6.4 dichotomy: like `miyake_4_6_4_dichotomy`, but in
-the non-zero case also exposes that `χ_M` factors through `(ZMod (M/p))ˣ` and
-that `g_p ∈ cuspFormCharSpace k (loweredCharacter h_fac).toUnitHom`. -/
+is `g_p` at level `Γ_1(M/p)` in the character space of the factored Dirichlet
+character `χ_M`, with `V_p g_p = g` as functions on `ℍ`. -/
 theorem miyake_4_6_4_dichotomy_strong
     {M : ℕ} [NeZero M] {k : ℤ}
     (χ_M : DirichletCharacter ℂ M)
