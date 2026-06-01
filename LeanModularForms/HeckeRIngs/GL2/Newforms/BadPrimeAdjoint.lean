@@ -51,13 +51,6 @@ noncomputable def Newform.heckeT_n_cusp_lin
   map_add' := heckeT_n_cusp_add n
   map_smul' c f := heckeT_n_cusp_smul n c f
 
-@[simp]
-lemma Newform.heckeT_n_cusp_lin_apply
-    {N : ℕ} [NeZero N] (k : ℤ) (n : ℕ) [NeZero n]
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    Newform.heckeT_n_cusp_lin k n f = heckeT_n_cusp k n f :=
-  rfl
-
 /-- Bad-prime Fricke-conjugated adjoint candidate
 `frickeSlashCuspForm ∘ heckeT_n_cusp_lin k p ∘ frickeSlashCuspForm`, the
 `W_N · T_p · W_N`-style conjugate operator. -/
