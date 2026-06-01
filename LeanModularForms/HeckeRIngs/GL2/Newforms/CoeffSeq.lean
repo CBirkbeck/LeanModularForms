@@ -998,63 +998,6 @@ lemma Newform.one_sub_ne_zero_of_norm_lt_one {x : ℂ} (hx : ‖x‖ < 1) :
   rw [show x = 1 by linear_combination -h] at hx
   simp at hx
 
-/-- **Value identity specialised at the special point `s₀ = k/2 + 2`.**
-Discharges the real-part and geometric / pole non-vanishing side
-conditions of `Newform.lSeries_stripped_eq_dirichlet_quotient_value`,
-leaving only `h_bad` and the finset characterisation `hT_iff` as consumer
-obligations.  A single-point identity does not close the full contradiction
-(which requires Hecke's analytic continuation, not yet in Mathlib). -/
-theorem Newform.lSeries_stripped_eq_dirichlet_quotient_value_at_special_point
-    (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (S : Finset ℕ)
-    (h_bad : ∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
-      q ∉ S → f.lCoeff q = 0)
-    (T : Finset Nat.Primes)
-    (hT_iff : ∀ p : Nat.Primes, p ∈ T ↔
-      (p : ℕ) ∈ S ∧ Nat.Coprime (p : ℕ) N) :
-    LSeries f.lCoeff_stripped (Newform.specialPoint k) =
-      (LSeries (fun n ↦ ((Newform.dirichletLift χ * Newform.dirichletLift χ :
-          DirichletCharacter ℂ N)) n)
-          (2 * (2 * Newform.specialPoint k - (k : ℂ) + 1)) *
-       (∏ p ∈ T,
-          Newform.eulerFactor_stripped f χ S (Newform.specialPoint k) p *
-            (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-                ((p : ℕ) : ZMod N) *
-              ((p : ℕ) : ℂ) ^ (-(2 * Newform.specialPoint k - (k : ℂ) + 1)))⁻¹)) /
-      (LSeries (fun n ↦ (Newform.dirichletLift χ : DirichletCharacter ℂ N) n)
-          (2 * Newform.specialPoint k - (k : ℂ) + 1) *
-       (∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ :
-          DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-          ((p : ℕ) : ℂ) ^ (-(2 * (2 * Newform.specialPoint k - (k : ℂ) + 1))))⁻¹)) := by
-  have hs : (k : ℝ) / 2 + 1 < (Newform.specialPoint k).re := by
-    rw [Newform.specialPoint_re]; linarith
-  have hs' : 1 < (2 * Newform.specialPoint k - (k : ℂ) + 1).re := by
-    rw [Newform.two_specialPoint_sub_k_add_one_re]; norm_num
-  have hs'' : 1 < (2 * (2 * Newform.specialPoint k - (k : ℂ) + 1)).re := by
-    rw [Newform.two_two_specialPoint_sub_k_add_one_re]; norm_num
-  have h_geom : ∀ q : ℕ, ∀ (hq : Nat.Prime q) (hqN : Nat.Coprime q N),
-      q ∉ S →
-      ‖((χ (ZMod.unitOfCoprime q hqN) : ℂ) * (q : ℂ) ^ (k - 1)) *
-        ((q : ℂ) ^ (-Newform.specialPoint k)) ^ 2‖ < 1 := fun q hq hqN _ ↦
-    Newform.norm_eulerFactor_argument_lt_one χ k hq.two_le hqN _ <| by
-      rw [Newform.specialPoint_re]; linarith
-  have h_pos_neg : ∀ q : ℕ, ∀ (hq : Nat.Prime q) (hqN : Nat.Coprime q N),
-      q ∉ S →
-      (1 : ℂ) + (χ (ZMod.unitOfCoprime q hqN) : ℂ) *
-        (q : ℂ) ^ (-(2 * Newform.specialPoint k - (k : ℂ) + 1)) ≠ 0 ∧
-      (1 : ℂ) - (χ (ZMod.unitOfCoprime q hqN) : ℂ) *
-        (q : ℂ) ^ (-(2 * Newform.specialPoint k - (k : ℂ) + 1)) ≠ 0 := fun q hq hqN _ ↦
-    have h_norm_lt :
-        ‖(χ (ZMod.unitOfCoprime q hqN) : ℂ) *
-          (q : ℂ) ^ (-(2 * Newform.specialPoint k - (k : ℂ) + 1))‖ < 1 :=
-      Newform.norm_chi_q_cpow_neg_lt_one_of_re_pos χ hq.two_le hqN <| by
-        rw [Newform.two_specialPoint_sub_k_add_one_re]; norm_num
-    ⟨Newform.one_add_ne_zero_of_norm_lt_one h_norm_lt,
-     Newform.one_sub_ne_zero_of_norm_lt_one h_norm_lt⟩
-  exact f.lSeries_stripped_eq_dirichlet_quotient_value χ hfχ S h_bad
-    hs hs' hs'' h_geom T hT_iff h_pos_neg
-
 /-- **Newform prime-nonvanishing** (Miyake Thm 4.5.16, Diamond–Shurman §5.9).
 For a `Newform f` lying in the character eigenspace
 `modFormCharSpace k χ` and any finite exceptional set `S : Finset ℕ`,
