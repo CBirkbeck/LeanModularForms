@@ -539,12 +539,6 @@ noncomputable def Newform.dirichletLift (χ : (ZMod N)ˣ →* ℂˣ) :
     DirichletCharacter ℂ N := MulChar.ofUnitHom χ
 
 omit [NeZero N] in
-@[simp]
-lemma Newform.dirichletLift_apply_unit (χ : (ZMod N)ˣ →* ℂˣ) (a : (ZMod N)ˣ) :
-    (Newform.dirichletLift χ) (a : ZMod N) = (χ a : ℂ) :=
-  MulChar.ofUnitHom_coe χ a
-
-omit [NeZero N] in
 /-- **Norm of a character value at a unit equals 1**: the image `χ a : ℂˣ`
 is a finite-order unit in ℂ, hence a root of unity. -/
 lemma Newform.norm_chi_unit_eq_one [NeZero N] (χ : (ZMod N)ˣ →* ℂˣ)
