@@ -294,13 +294,11 @@ private lemma differentiable_prod_linearFactor {N : ℕ} [NeZero N]
     (hg : Differentiable ℂ g) :
     Differentiable ℂ (fun s : ℂ ↦
       ∏ p ∈ T, (1 - ψ ((p : ℕ) : ZMod N) * ((p : ℕ) : ℂ) ^ (-(g s)))) := by
-  have hg_an : ∀ s, AnalyticAt ℂ g s := fun s ↦
-    Complex.analyticOnNhd_univ_iff_differentiable.mpr hg s (Set.mem_univ _)
-  refine Differentiable.fun_finset_prod (fun p _ ↦ ?_)
-  have h_pow : Differentiable ℂ (fun s : ℂ ↦ ((p : ℕ) : ℂ) ^ (-(g s))) := fun s ↦
-    (AnalyticAt.cpow analyticAt_const (hg_an s).neg
-      (Complex.natCast_mem_slitPlane.mpr p.prop.pos.ne')).differentiableAt
-  exact (differentiable_const _).sub (h_pow.const_mul _)
+  refine Differentiable.fun_finset_prod fun p _ ↦
+    (differentiable_const _).sub <| Differentiable.const_mul (fun s ↦
+      (AnalyticAt.cpow analyticAt_const
+          (Complex.analyticOnNhd_univ_iff_differentiable.mpr hg s (Set.mem_univ _)).neg
+        (Complex.natCast_mem_slitPlane.mpr p.prop.pos.ne')).differentiableAt) _
 
 private lemma prod_linearFactor_eventually_ne_zero {N : ℕ} [NeZero N]
     (ψ : DirichletCharacter ℂ N) (T : Finset Nat.Primes) {g : ℂ → ℂ}
@@ -476,10 +474,8 @@ theorem strongMultiplicityOne_of_analyticContradiction_of_newformUnique
       Newform.eigenvalue_coprime_mul f n q_pnat hn hq_N hn_coprime_q χ hfχ
     have hmul_g : g.eigenvalue nq_pnat = g.eigenvalue n * g.eigenvalue q_pnat :=
       Newform.eigenvalue_coprime_mul g n q_pnat hn hq_N hn_coprime_q χ hgχ
-    have hcomb :
-        f.eigenvalue n * f.eigenvalue q_pnat = g.eigenvalue n * f.eigenvalue q_pnat := by
-      rw [← hmul_f, hnq_eq, hmul_g, h q_pnat hq_N hq_notin_S]
-    exact mul_right_cancel₀ hq_ne hcomb
+    refine mul_right_cancel₀ hq_ne ?_
+    rw [← hmul_f, hnq_eq, hmul_g, h q_pnat hq_N hq_notin_S]
   · exact h n hn hn_S
 
 /-- The per-newform analytic certificate consumed by the SMO chain: an explicit
@@ -988,11 +984,11 @@ theorem Newform.noEntireExtensionUnderBadPrime_of_full_dirichletZeroCertificate
   apply Newform.noEntireExtensionUnderBadPrime_of_dirichletQuotientHasPole
   intro N _ k f χ hfχ S h_bad
   let D := h_data f χ hfχ S h_bad
-  refine Newform.dirichletQuotient_pole_witness_of_dirichletZero_full
-    f χ S D.T D.s₀ D.h_num_an D.h_den_an ?_ ?_ D.h_den_finite D.h_clause
-  · exact mul_ne_zero D.h_num_LF_ne <| Finset.prod_ne_zero_iff.mpr fun p hp ↦
-      mul_ne_zero (D.h_factors_ne p hp).1 (inv_ne_zero (D.h_factors_ne p hp).2)
-  · rw [D.h_zero, zero_mul]
+  exact Newform.dirichletQuotient_pole_witness_of_dirichletZero_full f χ S D.T D.s₀
+    D.h_num_an D.h_den_an
+    (mul_ne_zero D.h_num_LF_ne <| Finset.prod_ne_zero_iff.mpr fun p hp ↦
+      mul_ne_zero (D.h_factors_ne p hp).1 (inv_ne_zero (D.h_factors_ne p hp).2))
+    (by rw [D.h_zero, zero_mul]) D.h_den_finite D.h_clause
 
 /-- **Direct full-quotient bridge to `Newform.AnalyticContradiction` (T132 step).**
 
