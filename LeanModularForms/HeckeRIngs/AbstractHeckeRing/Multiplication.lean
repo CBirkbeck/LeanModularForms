@@ -97,14 +97,13 @@ lemma leftCoset_eq_of_not_disjoint (f g : G)
     (h : ¬ Disjoint (g • (H : Set G)) (f • H)) :
     {g} * (H : Set G) = {f} * H := by
   simp_rw [← Set.singleton_smul] at *
-  rw [@not_disjoint_iff] at h
+  rw [not_disjoint_iff] at h
   obtain ⟨a, ha, ha2⟩ := h
   simp only [smul_eq_mul, singleton_mul, image_mul_left, mem_preimage,
     SetLike.mem_coe] at ha ha2
-  refine Set.ext ?intro.intro.h
-  intro Y
+  ext Y
   simp only [singleton_mul, image_mul_left, mem_preimage, SetLike.mem_coe]
-  simp_rw [← @QuotientGroup.eq] at *
+  simp_rw [← QuotientGroup.eq] at *
   rw [← ha] at ha2
   rw [ha2]
 
@@ -208,19 +207,13 @@ every set-form witness is a `mulMap`-form witness via `doubleCoset_eq_of_rightCo
 lemma heckeMultiplicity_le_heckeMultiplicityMulMap (g₁ g₂ d : P.Δ) :
     heckeMultiplicity P g₁ g₂ d ≤ heckeMultiplicityMulMap P g₁ g₂ d := by
   unfold heckeMultiplicity heckeMultiplicityMulMap
-  have h_sub : {p : decompQuot P g₁ × decompQuot P g₂ |
-        ({(p.1.out : G) * (g₁ : G)} : Set G) * {(p.2.out : G) * (g₂ : G)} * P.H =
-        {(d : G)} * (P.H : Set G)} ⊆
-      {p : decompQuot P g₁ × decompQuot P g₂ |
-        mulMap P g₁ g₂ p = (⟦d⟧ : HeckeCoset P)} := by
-    intro p hp
-    exact doubleCoset_eq_of_rightCoset_eq P g₁ g₂ d p hp
   have h_card : Nat.card {p : decompQuot P g₁ × decompQuot P g₂ |
         ({(p.1.out : G) * (g₁ : G)} : Set G) * {(p.2.out : G) * (g₂ : G)} * P.H =
         {(d : G)} * (P.H : Set G)} ≤
       Nat.card {p : decompQuot P g₁ × decompQuot P g₂ |
         mulMap P g₁ g₂ p = (⟦d⟧ : HeckeCoset P)} :=
-    Nat.card_le_card_of_injective (fun ⟨p, hp⟩ ↦ ⟨p, h_sub hp⟩)
+    Nat.card_le_card_of_injective
+      (fun ⟨p, hp⟩ ↦ ⟨p, doubleCoset_eq_of_rightCoset_eq P g₁ g₂ d p hp⟩)
       (fun ⟨_, _⟩ ⟨_, _⟩ heq ↦ Subtype.ext (Subtype.mk.inj heq))
   exact_mod_cast h_card
 
@@ -238,20 +231,13 @@ private lemma mulMap_T_one_eq (g₁ : P.Δ) (i : decompQuot P g₁)
 /-- Left multiplication by a singleton set is cancellative. -/
 lemma set_singleton_mul_left_cancel (a : G) {S T : Set G}
     (h : ({a} : Set G) * S = ({a} : Set G) * T) : S = T := by
-  ext x
-  constructor
-  · intro hx
-    have hax : a * x ∈ ({a} : Set G) * T :=
-      h ▸ Set.mul_mem_mul (Set.mem_singleton a) hx
-    obtain ⟨b, hb, y, hy, heq⟩ := hax
+  have aux : ∀ {U V : Set G}, ({a} : Set G) * U = ({a} : Set G) * V → U ⊆ V := by
+    intro U V huv x hx
+    obtain ⟨b, hb, y, hy, heq⟩ : a * x ∈ ({a} : Set G) * V :=
+      huv ▸ Set.mul_mem_mul (Set.mem_singleton a) hx
     rw [Set.mem_singleton_iff.mp hb] at heq
     exact mul_left_cancel heq ▸ hy
-  · intro hx
-    have hax : a * x ∈ ({a} : Set G) * S :=
-      h ▸ Set.mul_mem_mul (Set.mem_singleton a) hx
-    obtain ⟨b, hb, y, hy, heq⟩ := hax
-    rw [Set.mem_singleton_iff.mp hb] at heq
-    exact mul_left_cancel heq ▸ hy
+  exact Set.Subset.antisymm (aux h) (aux h.symm)
 
 /-- When the first-component representatives agree, the second-component
 representatives must also agree (by left-cancellation on the common prefix). -/
@@ -746,9 +732,7 @@ noncomputable instance instNonUnitalNonAssocSemiring :
       simp only [sum_add, coe_add, Pi.add_apply, sum_apply, coe_smul, Pi.smul_apply, smul_eq_mul]
       rw [add_apply]
       simp only [sum_apply, coe_smul, Pi.smul_apply, smul_eq_mul]
-    zero_mul := fun f ↦ by
-      simp only [mul_def]
-      exact Finsupp.sum_zero_index
+    zero_mul := fun _ ↦ by simp only [mul_def]; exact Finsupp.sum_zero_index
     mul_zero := fun f ↦ by
       simp only [mul_def]
-      exact Eq.trans (congr_arg (sum f) (funext₂ fun a₁ b₁ ↦ sum_zero_index)) (sum_fun_zero f) }
+      exact Eq.trans (congr_arg (sum f) (funext₂ fun _ _ ↦ sum_zero_index)) (sum_fun_zero f) }
