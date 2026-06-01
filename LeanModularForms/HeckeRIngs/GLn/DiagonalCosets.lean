@@ -181,31 +181,6 @@ lemma T_diag_eq_iff (a b : Fin n → ℕ) (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 <
 
 end TDiag
 
-section Transvections
-
-private lemma transvection_det_ne_zero {i j : Fin n} (hij : i ≠ j) (c : ℤ) :
-    ((Matrix.TransvectionStruct.mk i j hij c).toMatrix.map (Int.cast : ℤ → ℚ)).det ≠ 0 := by
-  rw [det_intMat_cast, (Matrix.TransvectionStruct.mk i j hij c).det]; exact one_ne_zero
-
-/-- An elementary transvection `I + c * E_{ij}` as an element of `GL_n(ℚ)`. -/
-noncomputable def transvectionGL {i j : Fin n} (hij : i ≠ j) (c : ℤ) : GL (Fin n) ℚ :=
-  GeneralLinearGroup.mkOfDetNeZero
-    ((Matrix.TransvectionStruct.mk i j hij c).toMatrix.map (Int.cast : ℤ → ℚ))
-    (transvection_det_ne_zero n hij c)
-
-lemma transvectionGL_hasIntEntries {i j : Fin n} (hij : i ≠ j) (c : ℤ) :
-    HasIntEntries n (transvectionGL n hij c) :=
-  ⟨(Matrix.TransvectionStruct.mk i j hij c).toMatrix, rfl⟩
-
-lemma transvectionGL_mem_SLnZ {i j : Fin n} (hij : i ≠ j) (c : ℤ) :
-    transvectionGL n hij c ∈ SLnZ_subgroup n := by
-  rw [MonoidHom.mem_range]
-  refine ⟨⟨(Matrix.TransvectionStruct.mk i j hij c).toMatrix,
-    (Matrix.TransvectionStruct.mk i j hij c).det⟩, ?_⟩; apply Units.ext
-  simp [mapGL_coe_matrix, algebraMap_int_eq, transvectionGL]
-
-end Transvections
-
 section SmithNormalForm
 
 private lemma mulVecLin_injective_of_det_ne_zero (A : Matrix (Fin n) (Fin n) ℤ)
