@@ -151,9 +151,9 @@ private lemma intCast_zmod_eq_zero_of_mul (p : ℕ) (hp : Nat.Prime p) {a b : �
 private lemma fin_val_eq_of_intCast_sub_dvd {p : ℕ} (hp : Nat.Prime p) (x y : Fin p)
     (h : (p : ℤ) ∣ ((x.val : ℤ) - y.val)) : x.val = y.val := by
   obtain ⟨c, hc⟩ := h
-  have h1 : (x.val : ℤ) < p := by exact_mod_cast x.prop
-  have h2 : (y.val : ℤ) < p := by exact_mod_cast y.prop
-  have h5 : (0 : ℤ) < p := by exact_mod_cast hp.pos
+  have hxp : (x.val : ℤ) < p := by exact_mod_cast x.prop
+  have hyp : (y.val : ℤ) < p := by exact_mod_cast y.prop
+  have hpp : (0 : ℤ) < p := by exact_mod_cast hp.pos
   have hc0 : c = 0 := by nlinarith
   subst hc0
   omega
@@ -1021,8 +1021,7 @@ theorem heckeT_p_preserves_cuspFormCharSpace [NeZero N] (k : ℤ) (p : ℕ)
     (_hp : Nat.Prime p) (_hpN : Nat.Coprime p N)
     (χ : (ZMod N)ˣ →* ℂˣ) {_f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k}
     (_hf : _f ∈ cuspFormCharSpace k χ) :
-    True := by
-  trivial
+    True := trivial
 
 /-- `diag(1,p)` lies in `Δ₁(N)` for any `N` and `p > 0`. -/
 lemma diag_1p_mem_Delta1 (N p : ℕ) [NeZero N] (hp : 0 < p) :
