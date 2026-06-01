@@ -807,13 +807,6 @@ theorem Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_T170_T17
     (Newform.hasFrickeSlashCuspFormPreservesCuspFormsOldExtended N k)
     h_T_p_old f hf
 
-/-- A cusp form is in the **extended new subspace** if it is `petN`-orthogonal to
-every form in `cuspFormsOldExtended N k`. Strictly stronger than
-`IsInNewSubspace`. -/
-def IsInNewSubspaceExtended (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
-  ∀ g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k,
-    g ∈ cuspFormsOldExtended N k → petN f g = 0
-
 /-- The intersection of `cuspFormsOldExtended` and `cuspFormsNewExtended` is
 trivial. Mirrors `cuspFormsOld_disjoint_cuspFormsNew`. -/
 theorem cuspFormsOldExtended_disjoint_cuspFormsNewExtended
