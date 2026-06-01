@@ -124,20 +124,21 @@ noncomputable def evalHom : MvPolynomial (Fin n) ℤ →+* HeckeAlgebra n :=
 /-- `T(1,...,1)` is the multiplicative identity in the Hecke algebra, for any `n`. -/
 lemma T_elem_ones_eq_one : T_elem (fun _ : Fin n ↦ 1) = 1 := by
   show HeckeRing.T_single (GL_pair n) ℤ (T_diag (fun _ : Fin n ↦ 1)) 1 = 1
-  rw [T_diag_ones]; exact (HeckeRing.one_def (GL_pair n) (Z := ℤ)).symm
+  rw [T_diag_ones]
+  exact (HeckeRing.one_def (GL_pair n) (Z := ℤ)).symm
 
 /-- `T(c,...,c)^k = T(c^k,...,c^k)`: scalar diagonal elements are closed under powers. -/
 lemma T_scalar_pow (c : ℕ) (hc : 0 < c) (k : ℕ) :
     T_elem (fun _ : Fin n ↦ c) ^ k = T_elem (fun _ : Fin n ↦ c ^ k) := by
   induction k with
   | zero =>
-    simp only [pow_zero]; symm
+    simp only [pow_zero]
+    symm
     exact (T_elem_congr_diag n (funext fun _ ↦ by simp)).trans (T_elem_ones_eq_one n)
   | succ k ih =>
-    rw [pow_succ', ih, T_diag_scalar_mul n c hc (fun _ ↦ c ^ k)
-      (fun _ ↦ pow_pos hc k) (divChain_const n _)]
-    exact T_elem_congr_diag n (funext fun _ ↦ by
-      simp only [Pi.mul_apply]; ring)
+    rw [pow_succ', ih, T_diag_scalar_mul n c hc (fun _ ↦ c ^ k) (fun _ ↦ pow_pos hc k)
+      (divChain_const n _)]
+    exact T_elem_congr_diag n (funext fun _ ↦ by simp only [Pi.mul_apply]; ring)
 
 /-- Each `T_gen k` lies in the range of `evalHom`. -/
 lemma T_gen_mem_evalHom_range (k : Fin n) :
@@ -153,16 +154,14 @@ namespace HeckeRing.GLn.Surj
 open HeckeRing.GLn HeckeRing.GL2
 
 /-- `T_gen 2 p 0 = T_ad 1 p`: the first generator is `T(1,p)`. -/
-lemma T_gen_zero_eq_T_ad (p : ℕ) (hp : p.Prime) :
-    T_gen 2 p (0 : Fin 2) = T_ad 1 p := by
+lemma T_gen_zero_eq_T_ad (p : ℕ) (hp : p.Prime) : T_gen 2 p (0 : Fin 2) = T_ad 1 p := by
   show T_elem (T_gen_diag 2 p 0) = _
   have h : T_gen_diag 2 p (0 : Fin 2) = ![1, p] := by
     funext i; simp only [T_gen_diag_val]; fin_cases i <;> simp
   rw [h, T_ad_of_pos 1 p Nat.one_pos hp.pos (one_dvd _)]
 
 /-- `T_gen 2 p 1 = T_pp p`: the second generator is the diamond operator. -/
-lemma T_gen_one_eq_T_pp (p : ℕ) (hp : p.Prime) :
-    T_gen 2 p (1 : Fin 2) = T_pp p := by
+lemma T_gen_one_eq_T_pp (p : ℕ) (hp : p.Prime) : T_gen 2 p (1 : Fin 2) = T_pp p := by
   show T_elem (T_gen_diag 2 p 1) = _
   have h : T_gen_diag 2 p (1 : Fin 2) = ![p, p] := by
     funext i; simp only [T_gen_diag_val]; fin_cases i <;> simp
@@ -193,8 +192,7 @@ lemma T_sum_ppow_in_range (p : ℕ) (hp : p.Prime) (k : ℕ) :
   | ind k ih =>
   match k with
   | 0 =>
-    rw [show T_sum ⟨p ^ 0, pow_pos hp.pos 0⟩ = T_sum 1 from by congr 1,
-        T_sum_one]
+    rw [show T_sum ⟨p ^ 0, pow_pos hp.pos 0⟩ = T_sum 1 from by congr 1, T_sum_one]
     exact (evalHom 2 p).range.one_mem
   | 1 =>
     have h1 : T_sum ⟨p ^ 1, pow_pos hp.pos 1⟩ = T_sum ⟨p, hp.pos⟩ := by
@@ -214,19 +212,14 @@ lemma T_ad_one_ppow_in_range (p : ℕ) (hp : p.Prime) (k : ℕ) :
     T_ad 1 (p ^ k) ∈ (evalHom 2 p).range := by
   match k with
   | 0 => simp only [pow_zero, T_ad_one_one]; exact (evalHom 2 p).range.one_mem
-  | 1 =>
-    rw [pow_one, ← T_gen_zero_eq_T_ad p hp]; exact X_zero_mem_range p
+  | 1 => rw [pow_one, ← T_gen_zero_eq_T_ad p hp]; exact X_zero_mem_range p
   | k + 2 =>
-    rw [T_ad_one_ppow_eq p hp (k + 2) (by omega),
-        show k + 2 - 2 = k from by omega]
-    exact (evalHom 2 p).range.sub_mem
-      (T_sum_ppow_in_range p hp (k + 2))
-      ((evalHom 2 p).range.mul_mem (T_pp_mem_range p hp)
-        (T_sum_ppow_in_range p hp k))
+    rw [T_ad_one_ppow_eq p hp (k + 2) (by omega), show k + 2 - 2 = k from by omega]
+    exact (evalHom 2 p).range.sub_mem (T_sum_ppow_in_range p hp (k + 2))
+      ((evalHom 2 p).range.mul_mem (T_pp_mem_range p hp) (T_sum_ppow_in_range p hp k))
 
 /-- `T_elem (ppowDiag 2 p e)` is in the evalHom range when `e` is monotone. -/
-lemma T_elem_ppow_in_range (p : ℕ) (hp : p.Prime)
-    (e : Fin 2 → ℕ) (hmono : Monotone e) :
+lemma T_elem_ppow_in_range (p : ℕ) (hp : p.Prime) (e : Fin 2 → ℕ) (hmono : Monotone e) :
     T_elem (ppowDiag 2 p e) ∈ (evalHom 2 p).range := by
   by_cases he0 : e 0 = 0
   · have h_eq : ppowDiag 2 p e = ![1, p ^ (e 1)] := by
@@ -235,28 +228,25 @@ lemma T_elem_ppow_in_range (p : ℕ) (hp : p.Prime)
       ← T_ad_of_pos 1 (p ^ (e 1)) Nat.one_pos (pow_pos hp.pos _) (one_dvd _)]
     exact T_ad_one_ppow_in_range p hp (e 1)
   · have h_le : e 0 ≤ e 1 := hmono (Fin.zero_le _)
-    have h_eq : ppowDiag 2 p e =
-        (fun _ ↦ p ^ (e 0)) * ppowDiag 2 p ![0, e 1 - e 0] := by
-      funext i; simp only [ppowDiag, Pi.mul_apply]
+    have h_eq : ppowDiag 2 p e = (fun _ ↦ p ^ (e 0)) * ppowDiag 2 p ![0, e 1 - e 0] := by
+      funext i
+      simp only [ppowDiag, Pi.mul_apply]
       fin_cases i
       · simp
       · show p ^ e 1 = p ^ e 0 * p ^ (e 1 - e 0)
         rw [← pow_add, Nat.add_sub_cancel' h_le]
     rw [T_elem_congr_diag (n := 2) h_eq,
-      ← T_diag_scalar_mul 2 (p ^ (e 0)) (pow_pos hp.pos _)
-        (ppowDiag 2 p ![0, e 1 - e 0])
+      ← T_diag_scalar_mul 2 (p ^ (e 0)) (pow_pos hp.pos _) (ppowDiag 2 p ![0, e 1 - e 0])
         (ppowDiag_pos 2 p hp _)
         (divChain_ppow 2 p _ (by
-          intro i j hij
-          fin_cases i <;> fin_cases j <;> simp_all [Fin.le_def]))]
+          intro i j hij; fin_cases i <;> fin_cases j <;> simp_all [Fin.le_def]))]
     apply (evalHom 2 p).range.mul_mem
     · rw [← T_pp_pow p hp (e 0), ← T_gen_one_eq_T_pp p hp]
       exact (evalHom 2 p).range.pow_mem (X_one_mem_range p) _
     · have h2 : ppowDiag 2 p ![0, e 1 - e 0] = ![1, p ^ (e 1 - e 0)] := by
         funext i; simp only [ppowDiag]; fin_cases i <;> simp
       rw [T_elem_congr_diag (n := 2) h2,
-        ← T_ad_of_pos 1 (p ^ (e 1 - e 0)) Nat.one_pos
-          (pow_pos hp.pos _) (one_dvd _)]
+        ← T_ad_of_pos 1 (p ^ (e 1 - e 0)) Nat.one_pos (pow_pos hp.pos _) (one_dvd _)]
       exact T_ad_one_ppow_in_range p hp (e 1 - e 0)
 
 /-- Surjectivity of `evalHom` at n=2: every element of `R_p 2 p` is in the range
@@ -276,8 +266,7 @@ namespace HeckeRing.GLn.SurjOne
 open HeckeRing.GLn
 
 /-- For n=1, `T_gen_diag 1 p 0 = fun _ => p`. -/
-private lemma T_gen_diag_one_eq (p : ℕ) :
-    T_gen_diag 1 p (0 : Fin 1) = fun _ ↦ p := by
+private lemma T_gen_diag_one_eq (p : ℕ) : T_gen_diag 1 p (0 : Fin 1) = fun _ ↦ p := by
   funext i; simp [T_gen_diag_val]
 
 /-- n=1 surjectivity: every element of R_p is in the range of evalHom. -/
@@ -289,9 +278,9 @@ theorem T_gen_generates_R_p_one (p : ℕ) (hp : p.Prime) :
   obtain ⟨e, _hmono, rfl⟩ := hx
   have he : ppowDiag 1 p e = fun _ ↦ p ^ (e 0) := by
     funext i; simp [ppowDiag]; congr 1; exact congr_arg e (Subsingleton.elim i 0)
-  rw [T_elem_congr_diag 1 he, ← T_scalar_pow 1 p hp.pos (e 0)]
-  rw [show T_elem (fun _ : Fin 1 ↦ p) = T_gen 1 p (0 : Fin 1) from by
-    unfold T_gen; exact (T_elem_congr_diag 1 (T_gen_diag_one_eq p)).symm]
+  rw [T_elem_congr_diag 1 he, ← T_scalar_pow 1 p hp.pos (e 0),
+    show T_elem (fun _ : Fin 1 ↦ p) = T_gen 1 p (0 : Fin 1) from by
+      unfold T_gen; exact (T_elem_congr_diag 1 (T_gen_diag_one_eq p)).symm]
   exact (evalHom 1 p).range.pow_mem (T_gen_mem_evalHom_range 1 p 0) _
 
 end HeckeRing.GLn.SurjOne
@@ -301,8 +290,8 @@ namespace HeckeRing.GLn.Inj
 open HeckeRing.GLn HeckeRing.GL2
 
 /-- Every element in the image of `evalHom` belongs to `R_p`. -/
-lemma evalHom_mem_R_p (n : ℕ) [NeZero n] (p : ℕ) (hp : p.Prime)
-    (P : MvPolynomial (Fin n) ℤ) : evalHom n p P ∈ R_p n p hp := by
+lemma evalHom_mem_R_p (n : ℕ) [NeZero n] (p : ℕ) (hp : p.Prime) (P : MvPolynomial (Fin n) ℤ) :
+    evalHom n p P ∈ R_p n p hp := by
   apply MvPolynomial.induction_on P
   · intro a
     show evalHom n p (MvPolynomial.C a) ∈ R_p n p hp
@@ -338,10 +327,9 @@ private lemma T_gen_pow_one (p : ℕ) (hp : p.Prime) (k : ℕ) :
 `T_diag a` with that coefficient. -/
 private lemma intCast_mul_T_elem_eq_single {n : ℕ} [NeZero n] (a : Fin n → ℕ) (c : ℤ) :
     (Int.castRingHom (HeckeAlgebra n)) c * T_elem a =
-    (Finsupp.single (T_diag a) c : HeckeAlgebra n) := by
+      (Finsupp.single (T_diag a) c : HeckeAlgebra n) := by
   rw [show (Int.castRingHom (HeckeAlgebra n)) c = c • (1 : HeckeAlgebra n) from by
-      rw [zsmul_eq_mul, mul_one]; rfl,
-    smul_mul_assoc, one_mul]
+      rw [zsmul_eq_mul, mul_one]; rfl, smul_mul_assoc, one_mul]
   show c • (Finsupp.single (T_diag a) (1 : ℤ) : HeckeAlgebra n) = _
   rw [Finsupp.smul_single, smul_eq_mul, mul_one]
 
@@ -358,10 +346,10 @@ private lemma T_diag_one_ppow_inj (p : ℕ) (hp : p.Prime) {b s : Fin 1 →₀ �
 
 /-- n=1: evalHom is injective. Different monomials map to distinct basis elements,
     so the images are ℤ-linearly independent. -/
-theorem evalHom_injective_one (p : ℕ) (hp : p.Prime) :
-    Function.Injective (evalHom 1 p) := by
+theorem evalHom_injective_one (p : ℕ) (hp : p.Prime) : Function.Injective (evalHom 1 p) := by
   intro P Q hPQ
-  rw [← sub_eq_zero]; set R := P - Q
+  rw [← sub_eq_zero]
+  set R := P - Q
   have hR : evalHom 1 p R = 0 := by simp [R, map_sub, hPQ]
   by_contra hne
   obtain ⟨s, hs⟩ := MvPolynomial.support_nonempty.mpr hne
@@ -376,8 +364,8 @@ theorem evalHom_injective_one (p : ℕ) (hp : p.Prime) :
     T_gen_pow_one p hp]
   rw [Finset.sum_congr rfl (fun x _ ↦ intCast_mul_T_elem_eq_single (fun _ ↦ p ^ x 0) (R.coeff x))]
   show ((∑ x ∈ R.support,
-      (Finsupp.single (T_diag (n := 1) (fun _ ↦ p ^ x 0))
-        (MvPolynomial.coeff x R) : HeckeCoset (GL_pair 1) →₀ ℤ))) D = MvPolynomial.coeff s R
+    (Finsupp.single (T_diag (n := 1) (fun _ ↦ p ^ x 0))
+      (MvPolynomial.coeff x R) : HeckeCoset (GL_pair 1) →₀ ℤ))) D = MvPolynomial.coeff s R
   rw [Finsupp.finset_sum_apply]
   simp only [Finsupp.single_apply, D]
   rw [Finset.sum_eq_single s (fun b _ hbs ↦ if_neg (fun hb ↦ hbs
@@ -401,7 +389,7 @@ lemma det_SLnZ_eq_one {g : GL (Fin 2) ℚ} (hg : g ∈ SLnZ_subgroup 2) :
 lemma det_doubleCoset_eq {g₁ g₂ : (GL_pair 2).Δ}
     (h : (⟦g₁⟧ : HeckeCoset (GL_pair 2)) = ⟦g₂⟧) :
     (↑(↑g₁ : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ).det =
-    (↑(↑g₂ : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ).det := by
+      (↑(↑g₂ : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ).det := by
   rw [HeckeCoset.eq_iff] at h
   have hg₁_mem : (g₁ : GL (Fin 2) ℚ) ∈
       DoubleCoset.doubleCoset (g₂ : GL (Fin 2) ℚ) (GL_pair 2).H (GL_pair 2).H := by
@@ -409,14 +397,14 @@ lemma det_doubleCoset_eq {g₁ g₂ : (GL_pair 2).Δ}
   obtain ⟨h₁, hh₁, h₂, hh₂, heq⟩ := DoubleCoset.mem_doubleCoset.mp hg₁_mem
   have : (↑(↑g₁ : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ).det =
       (h₁ * (↑g₂ : GL (Fin 2) ℚ) * h₂).1.det := by rw [heq]
-  simp only [GeneralLinearGroup.coe_mul, Matrix.det_mul,
-    det_SLnZ_eq_one hh₁, det_SLnZ_eq_one hh₂, one_mul, mul_one] at this
+  simp only [GeneralLinearGroup.coe_mul, Matrix.det_mul, det_SLnZ_eq_one hh₁,
+    det_SLnZ_eq_one hh₂, one_mul, mul_one] at this
   exact this
 
 /-- The diagonal product of rep(T_diag a) equals ∏ a. -/
 lemma prod_rep_T_diag (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i) :
     (↑(↑(HeckeCoset.rep (T_diag a)) : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ).det =
-    ∏ i, (a i : ℚ) := by
+      ∏ i, (a i : ℚ) := by
   have h_eq : (⟦HeckeCoset.rep (T_diag a)⟧ : HeckeCoset (GL_pair 2)) = T_diag a :=
     Quotient.out_eq _
   rw [show T_diag a = (⟦diagMat_delta 2 a⟧ : HeckeCoset (GL_pair 2)) from rfl] at h_eq
@@ -426,15 +414,15 @@ lemma prod_rep_T_diag (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i) :
 lemma det_mulMap_eq (g₁ g₂ : (GL_pair 2).Δ)
     (p : HeckeRing.decompQuot (GL_pair 2) g₁ × HeckeRing.decompQuot (GL_pair 2) g₂) :
     (↑(↑(HeckeCoset.rep (HeckeRing.mulMap (GL_pair 2) g₁ g₂ p)) : GL (Fin 2) ℚ) :
-      Matrix (Fin 2) (Fin 2) ℚ).det =
-    (↑(↑g₁ : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ).det *
-    (↑(↑g₂ : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ).det := by
+        Matrix (Fin 2) (Fin 2) ℚ).det =
+      (↑(↑g₁ : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ).det *
+        (↑(↑g₂ : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ).det := by
   have h_eq : (⟦HeckeCoset.rep (HeckeRing.mulMap (GL_pair 2) g₁ g₂ p)⟧ :
       HeckeCoset (GL_pair 2)) = HeckeRing.mulMap (GL_pair 2) g₁ g₂ p := Quotient.out_eq _
   rw [det_doubleCoset_eq h_eq]
   show (((p.1.out : GL (Fin 2) ℚ) * (g₁ : GL (Fin 2) ℚ) *
-      ((p.2.out : GL (Fin 2) ℚ) * (g₂ : GL (Fin 2) ℚ)) :
-      GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ).det = _
+    ((p.2.out : GL (Fin 2) ℚ) * (g₂ : GL (Fin 2) ℚ)) : GL (Fin 2) ℚ) :
+    Matrix (Fin 2) (Fin 2) ℚ).det = _
   simp only [GeneralLinearGroup.coe_mul, Matrix.det_mul]
   have h1 := det_SLnZ_eq_one (p.1.out.2)
   have h2 := det_SLnZ_eq_one (p.2.out.2)
@@ -445,10 +433,11 @@ representative is the product of the determinants of `rep D₁` and `rep D₂`. 
 private lemma det_rep_eq_mul_of_m_ne_zero (D₁ D₂ D' : HeckeCoset (GL_pair 2))
     (hm : (HeckeRing.m (GL_pair 2) (HeckeCoset.rep D₁) (HeckeCoset.rep D₂)) D' ≠ 0) :
     (↑(↑(HeckeCoset.rep D') : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ).det =
-    (↑(↑(HeckeCoset.rep D₁) : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ).det *
-    (↑(↑(HeckeCoset.rep D₂) : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ).det := by
+      (↑(↑(HeckeCoset.rep D₁) : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ).det *
+        (↑(↑(HeckeCoset.rep D₂) : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ).det := by
   rw [HeckeRing.m_apply] at hm
-  have hD'_mem : D' ∈ HeckeRing.mulSupport (GL_pair 2) (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) := by
+  have hD'_mem :
+      D' ∈ HeckeRing.mulSupport (GL_pair 2) (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) := by
     rw [← HeckeRing.m_support]; exact Finsupp.mem_support_iff.mpr hm
   rw [HeckeRing.mulSupport, Finset.mem_image] at hD'_mem
   obtain ⟨p, _, hD'_eq⟩ := hD'_mem
@@ -492,8 +481,8 @@ private lemma det_rep_T_gen_zero_pow_mul (q : {p : ℕ // p.Prime}) (a₀ b₀ :
       ih f D₂ hf_det (Finsupp.mem_support_iff.mp hD₂_mem)]
     push_cast; ring
 
-lemma T_gen_pow_support_qpower (q : {p : ℕ // p.Prime})
-    (e : Fin 2 → ℕ) (D : HeckeCoset (GL_pair 2))
+lemma T_gen_pow_support_qpower (q : {p : ℕ // p.Prime}) (e : Fin 2 → ℕ)
+    (D : HeckeCoset (GL_pair 2))
     (hD : (T_gen 2 q.1 0 ^ (e 0) * T_gen 2 q.1 1 ^ (e 1)) D ≠ 0) :
     ∃ a : Fin 2 → ℕ, D = T_diag a ∧ (∀ i, 0 < a i) ∧ DivChain 2 a ∧
       (∏ i, a i) = q.1 ^ (e 0 + 2 * e 1) := by
@@ -502,7 +491,7 @@ lemma T_gen_pow_support_qpower (q : {p : ℕ // p.Prime})
   refine ⟨a, hD_eq, ha_pos, ha_div, ?_⟩
   have hf_det : ∀ D'', (T_gen 2 q.1 1 ^ (e 1)) D'' ≠ 0 →
       (↑(↑(HeckeCoset.rep D'') : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ).det =
-      ↑(q.1 ^ (2 * e 1) : ℕ) := by
+        ↑(q.1 ^ (2 * e 1) : ℕ) := by
     intro D'' hD''
     rw [HeckeRing.GLn.Surj.T_gen_one_eq_T_pp q.1 q.2, HeckeRing.GL2.T_pp_pow q.1 q.2 (e 1)] at hD''
     have h_eq : T_diag (fun _ : Fin 2 ↦ q.1 ^ (e 1)) = D'' := by
@@ -514,7 +503,7 @@ lemma T_gen_pow_support_qpower (q : {p : ℕ // p.Prime})
     push_cast [Fin.prod_univ_two, ← pow_add]; ring_nf
   have h_result := det_rep_T_gen_zero_pow_mul q (2 * e 1) (e 0) _ D hf_det hD
   rw [hD_eq, prod_rep_T_diag a ha_pos] at h_result
-  exact_mod_cast h_result
+  exact mod_cast h_result
 
 /-- Every coset in the support of `T_gen(q,0)^a * T_gen(q,1)^b` has entries
 that are powers of `q` (immediate from `T_gen_pow_support_qpower`). -/
@@ -568,36 +557,33 @@ lemma T_single_diag_mul_T_scalar (c : ℕ) (hc : 0 < c)
 
 /-- Scalar shift identity: for any `f : HeckeAlgebra 2`, scalar `c > 0`, and positive
 divisibility-chain `b`, evaluating `f * T_elem(c,c)` at `T_diag(b * c)` equals `f(T_diag b)`. -/
-lemma T_mul_T_scalar_eval_shifted (c : ℕ) (hc : 0 < c)
-    (f : HeckeAlgebra 2) (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0 < b i) (hb_div : DivChain 2 b) :
+lemma T_mul_T_scalar_eval_shifted (c : ℕ) (hc : 0 < c) (f : HeckeAlgebra 2) (b : Fin 2 → ℕ)
+    (hb_pos : ∀ i, 0 < b i) (hb_div : DivChain 2 b) :
     (f * T_elem (fun _ : Fin 2 ↦ c)) (T_diag (b * (fun _ : Fin 2 ↦ c))) = f (T_diag b) := by
   induction f using Finsupp.induction_linear with
   | zero =>
     show ((0 : HeckeAlgebra 2) * T_elem (fun _ : Fin 2 ↦ c)) (T_diag (b * fun _ ↦ c)) =
-         (0 : HeckeAlgebra 2) (T_diag b)
+      (0 : HeckeAlgebra 2) (T_diag b)
     rw [zero_mul]; rfl
   | add g h ihg ihh => rw [add_mul, Finsupp.add_apply, Finsupp.add_apply, ihg, ihh]
   | single D α =>
     obtain ⟨a, ha_pos, ha_div, ha_eq⟩ := exists_diagonal_representative 2 (HeckeCoset.rep D)
     have hD_eq : D = T_diag a := by rw [← Quotient.out_eq D]; exact ha_eq
     change (HeckeRing.T_single (GL_pair 2) ℤ D α * T_elem (fun _ : Fin 2 ↦ c))
-             (T_diag (b * fun _ : Fin 2 ↦ c)) =
-           HeckeRing.T_single (GL_pair 2) ℤ D α (T_diag b)
+        (T_diag (b * fun _ : Fin 2 ↦ c)) =
+      HeckeRing.T_single (GL_pair 2) ℤ D α (T_diag b)
     rw [hD_eq, T_single_diag_mul_T_scalar c hc a ha_pos ha_div α]
     show Finsupp.single (T_diag (a * fun _ : Fin 2 ↦ c)) α (T_diag (b * fun _ : Fin 2 ↦ c)) =
-         Finsupp.single (T_diag a) α (T_diag b)
+      Finsupp.single (T_diag a) α (T_diag b)
     rw [Finsupp.single_apply, Finsupp.single_apply]
     by_cases hab : a = b
     · subst hab; rw [if_pos rfl, if_pos rfl]
     · have h_ne_1 : T_diag (a * fun _ : Fin 2 ↦ c) ≠ T_diag (b * fun _ : Fin 2 ↦ c) := by
         intro heq
         have h1_eq : a * (fun _ : Fin 2 ↦ c) = b * (fun _ : Fin 2 ↦ c) :=
-          diagonal_representative_unique 2 _ _
-            (fun i ↦ Nat.mul_pos (ha_pos i) hc)
-            (fun i ↦ Nat.mul_pos (hb_pos i) hc)
-            (DivChain_mul 2 a _ ha_div (divChain_const 2 c))
-            (DivChain_mul 2 b _ hb_div (divChain_const 2 c))
-            heq
+          diagonal_representative_unique 2 _ _ (fun i ↦ Nat.mul_pos (ha_pos i) hc)
+            (fun i ↦ Nat.mul_pos (hb_pos i) hc) (DivChain_mul 2 a _ ha_div (divChain_const 2 c))
+            (DivChain_mul 2 b _ hb_div (divChain_const 2 c)) heq
         apply hab
         funext i
         have := congr_fun h1_eq i
@@ -608,9 +594,8 @@ lemma T_mul_T_scalar_eval_shifted (c : ℕ) (hc : 0 < c)
       rw [if_neg h_ne_1, if_neg h_ne_2]
 
 /-- If `c ∤ d i` for some `i`, the evaluation of `f * T_elem(c,c)` at `T_diag d` is zero. -/
-lemma T_mul_T_scalar_eval_zero_of_not_dvd (c : ℕ) (hc : 0 < c)
-    (f : HeckeAlgebra 2) (d : Fin 2 → ℕ) (hd_pos : ∀ i, 0 < d i) (hd_div : DivChain 2 d)
-    (i₀ : Fin 2) (hi₀ : ¬ c ∣ d i₀) :
+lemma T_mul_T_scalar_eval_zero_of_not_dvd (c : ℕ) (hc : 0 < c) (f : HeckeAlgebra 2) (d : Fin 2 → ℕ)
+    (hd_pos : ∀ i, 0 < d i) (hd_div : DivChain 2 d) (i₀ : Fin 2) (hi₀ : ¬ c ∣ d i₀) :
     (f * T_elem (fun _ : Fin 2 ↦ c)) (T_diag d) = 0 := by
   induction f using Finsupp.induction_linear with
   | zero =>
@@ -627,10 +612,8 @@ lemma T_mul_T_scalar_eval_zero_of_not_dvd (c : ℕ) (hc : 0 < c)
     have h_ne : T_diag (a * fun _ : Fin 2 ↦ c) ≠ T_diag d := by
       intro heq
       have h_eq : a * (fun _ : Fin 2 ↦ c) = d :=
-        diagonal_representative_unique 2 _ d
-          (fun i ↦ Nat.mul_pos (ha_pos i) hc) hd_pos
-          (DivChain_mul 2 a _ ha_div (divChain_const 2 c))
-          hd_div heq
+        diagonal_representative_unique 2 _ d (fun i ↦ Nat.mul_pos (ha_pos i) hc) hd_pos
+          (DivChain_mul 2 a _ ha_div (divChain_const 2 c)) hd_div heq
       apply hi₀
       have := congr_fun h_eq i₀
       simp only [Pi.mul_apply] at this
