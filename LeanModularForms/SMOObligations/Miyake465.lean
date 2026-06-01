@@ -192,26 +192,6 @@ private theorem miyake_4_6_5_single_prime_dvd_N
         (heckeT_n_cusp_preserves_cuspFormCharSpace_divN hp hpN χ hfχ)),
     qExpansion_restrict_sub_levelRaise_heckeT_coeff hp hpN f⟩
 
-/-- The single-prime case of Miyake 4.6.5: for a prime `p ∣ N` and
-`f ∈ S_k(Γ_1(N), χ)`, the coprime-to-`p` filter `f − V_p(U_p f)` lives at
-level `Γ_1(p·N)` with `q`-expansion `aₙ(f) · [p ∤ n]`. -/
-theorem miyake_4_6_5_coprime_filter_cuspForm
-    {N : ℕ} [NeZero N] {k : ℤ}
-    (χ : (ZMod N)ˣ →* ℂˣ)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hfχ : f ∈ cuspFormCharSpace k χ)
-    (p : ℕ) [NeZero p] (hp : p.Prime) (hpN : ¬ Nat.Coprime p N) :
-    let M := p * N
-    haveI : NeZero M := ⟨Nat.mul_ne_zero hp.ne_zero (NeZero.ne N)⟩
-    have hNM : N ∣ M := Nat.dvd_mul_left N p
-    ∃ g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k,
-      g ∈ cuspFormCharSpace k (χ.comp (ZMod.unitsMap hNM)) ∧
-      ∀ n : ℕ, (ModularFormClass.qExpansion (1 : ℝ) g).coeff n =
-        if ¬ p ∣ n then
-          (ModularFormClass.qExpansion (1 : ℝ) f).coeff n
-        else 0 :=
-  miyake_4_6_5_single_prime_dvd_N χ f hfχ p hp hpN
-
 private theorem miyake_4_6_5_iterated_helper
     (n_iter : ℕ) :
     ∀ {M : ℕ} [NeZero M] {k : ℤ}
