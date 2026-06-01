@@ -248,10 +248,9 @@ theorem descendCosetList_det (p N : ℕ) [NeZero p] [NeZero N] (hp : p.Prime) :
         Matrix.GeneralLinearGroup.val_mkOfDetNeZero,
         Matrix.SpecialLinearGroup.mapGL_coe_matrix,
         Matrix.SpecialLinearGroup.map_apply_coe,
-        RingHom.mapMatrix_apply]
-    have h_det : ((descendExtraGamma p N).val.map (algebraMap ℤ ℝ)).det = 1 := by
-      simp [← Int.cast_det, (descendExtraGamma p N).property]
-    rw [h_det]
+        RingHom.mapMatrix_apply,
+        show ((descendExtraGamma p N).val.map (algebraMap ℤ ℝ)).det = 1 from by
+          simp [← Int.cast_det, (descendExtraGamma p N).property]]
     simp [Matrix.det_fin_two]
 
 private lemma descend_aux_lit_real_eq_map_int (p v : ℕ) :
@@ -267,8 +266,7 @@ private lemma descend_aux_α_mat_in_Gamma0
   rw [CongruenceSubgroup.Gamma0_mem, hα_10]
   refine (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr ?_
   obtain ⟨y, hy⟩ := hx
-  have hpNp : (p : ℤ) * ((N / p : ℕ) : ℤ) = (N : ℤ) := by
-    exact_mod_cast Nat.mul_div_cancel' hpN
+  have hpNp : (p : ℤ) * ((N / p : ℕ) : ℤ) = (N : ℤ) := by exact_mod_cast Nat.mul_div_cancel' hpN
   exact ⟨y, by linear_combination (p : ℤ) * hy + y * hpNp⟩
 
 private lemma descend_aux_lift_int_eq_to_GL
@@ -727,8 +725,7 @@ private lemma descend_diamond_compat_upper_target
     (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp
       (by exact_mod_cast CongruenceSubgroup.Gamma0_mem.mp hβ)
   obtain ⟨k, hk⟩ := h_β_10_dvd_N
-  have hpNp : (p : ℤ) * ((N / p : ℕ) : ℤ) = (N : ℤ) := by
-    exact_mod_cast Nat.mul_div_cancel' hpN
+  have hpNp : (p : ℤ) * ((N / p : ℕ) : ℤ) = (N : ℤ) := by exact_mod_cast Nat.mul_div_cancel' hpN
   have hβ11_sub : (β : Matrix (Fin 2) (Fin 2) ℤ) 1 1 -
       (γ' : Matrix (Fin 2) (Fin 2) ℤ) 1 1 = -((N / p : ℕ) : ℤ) * k * (t : ℤ) := by
     apply mul_left_cancel₀ (by exact_mod_cast hp.ne_zero : (p : ℤ) ≠ 0)
@@ -996,9 +993,8 @@ private lemma descendCosetList_cross_regular_extra_aux
     exact_mod_cast this
   have h_γp_00_dvd : (p : ℤ) ∣ (descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 0 0 :=
     (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp (by exact_mod_cast h_γp_00)
-  have hp_dvd_one : (p : ℤ) ∣ 1 := by
-    rw [h1_int]
-    exact dvd_add (dvd_mul_of_dvd_right h_γp_00_dvd _)
+  have hp_dvd_one : (p : ℤ) ∣ 1 := h1_int ▸
+    dvd_add (dvd_mul_of_dvd_right h_γp_00_dvd _)
       ⟨(α : Matrix (Fin 2) (Fin 2) ℤ) 0 1 *
         (descendExtraGamma p N : Matrix (Fin 2) (Fin 2) ℤ) 1 0, by ring⟩
   linarith [Int.le_of_dvd one_pos hp_dvd_one, show (2 : ℤ) ≤ p by exact_mod_cast hp.two_le]
@@ -1049,11 +1045,9 @@ private lemma descendCosetList_cross_extra_regular_aux
     exact (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp (by exact_mod_cast h_γp_00)
   have hdet : (α : Matrix (Fin 2) (Fin 2) ℤ) 0 0 * (α : Matrix (Fin 2) (Fin 2) ℤ) 1 1 -
       (α : Matrix (Fin 2) (Fin 2) ℤ) 0 1 * (α : Matrix (Fin 2) (Fin 2) ℤ) 1 0 = 1 := by
-    rw [← Matrix.det_fin_two]
-    exact α.property
-  have hp_dvd_one : (p : ℤ) ∣ 1 := by
-    rw [← hdet]
-    exact dvd_sub (dvd_mul_of_dvd_left hα00_dvd _) (dvd_mul_of_dvd_right ⟨_, hα10_eq.symm⟩ _)
+    rw [← Matrix.det_fin_two]; exact α.property
+  have hp_dvd_one : (p : ℤ) ∣ 1 := hdet ▸
+    dvd_sub (dvd_mul_of_dvd_left hα00_dvd _) (dvd_mul_of_dvd_right ⟨_, hα10_eq.symm⟩ _)
   linarith [Int.le_of_dvd one_pos hp_dvd_one, show (2 : ℤ) ≤ p by exact_mod_cast hp.two_le]
 
 private lemma descendCosetList_sigma_aux_injective
