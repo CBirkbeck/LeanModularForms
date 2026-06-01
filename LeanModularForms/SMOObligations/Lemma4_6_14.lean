@@ -139,11 +139,9 @@ private lemma cuspForm_finsetSum_toModularForm' {α : Type*} [DecidableEq α]
     {Γ : Subgroup (GL (Fin 2) ℝ)} {k : ℤ} (s : Finset α) (F : α → CuspForm Γ k) :
     (∑ q ∈ s, F q : CuspForm Γ k).toModularForm' = ∑ q ∈ s, (F q).toModularForm' := by
   refine Finset.induction_on s ?_ ?_
-  · simp [Finset.sum_empty]
-    rfl
+  · simp [Finset.sum_empty]; rfl
   · intro q s hqs ih
-    rw [Finset.sum_insert hqs, Finset.sum_insert hqs, ← ih]
-    rfl
+    rw [Finset.sum_insert hqs, Finset.sum_insert hqs, ← ih]; rfl
 
 /-- A `descendCosetList` slash-sum at a level divisible by `p ^ 2` (so that the coset
 count is `p`) collapses to the slash-sum over the upper-triangular representatives
