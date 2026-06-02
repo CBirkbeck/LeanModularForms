@@ -30,27 +30,4 @@ namespace HeckeRing.GL2
 
 variable {N : ℕ} [NeZero N]
 
-/-- **χ-equivariance of `heckeT_p`**: for `f ∈ modFormCharSpace k χ` and
-`g ∈ Γ₀(N)`,
-`heckeT_p_fun f ∣[k] mapGL ℝ g = χ(Gamma0MapUnits g) • heckeT_p_fun f`. This is
-the explicit `T_p`-level version of `hComm`, derived from
-`heckeT_p_comm_diamondOp` combined with the χ-eigenspace property. -/
-theorem heckeT_p_fun_slash_comm_charSpace (k : ℤ) (p : ℕ)
-    (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
-    (χ : (ZMod N)ˣ →* ℂˣ)
-    {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
-    (hf : f ∈ modFormCharSpace k χ)
-    (g : ↥(Gamma0 N)) :
-    heckeT_p_fun k p hp hpN f ∣[k] mapGL ℝ (g : SL(2, ℤ)) =
-    (↑(χ (Gamma0MapUnits g)) : ℂ) • heckeT_p_fun k p hp hpN f := by
-  set d := Gamma0MapUnits g
-  set Tf := heckeT_p k p hp hpN f
-  show ⇑(diamondOpAux k g Tf) = _
-  rw [← diamondOp_eq_diamondOpAux k d g rfl,
-    show diamondOp k d Tf = heckeT_p k p hp hpN (diamondOp k d f) from
-      LinearMap.congr_fun (heckeT_p_comm_diamondOp (N := N) k p hp hpN d) f]
-  have hdf : diamondOp k d f = (↑(χ d) : ℂ) • f :=
-    (mem_modFormCharSpace_iff k χ f).mp hf d
-  rw [hdf, map_smul]; rfl
-
 end HeckeRing.GL2
