@@ -52,12 +52,6 @@ noncomputable def cosetMap (N : ℕ) [NeZero N] :
       rw [HeckeCoset.eq_iff]
       exact doubleCoset_eq_of_Gamma0_eq N a b hab)
 
-/-- **Shimura Proposition 3.30**: If `Γ' ⊂ Γ` and `Δ' ⊂ Δ`, the correspondence
-    `Γ'αΓ' ↦ ΓαΓ` defines an additive homomorphism `R(Γ', Δ') → R(Γ, Δ)`. -/
-theorem shimura_prop_3_30 (N : ℕ) [NeZero N] :
-    ∃ _ : HeckeRing.𝕋 (Gamma0_pair N) ℤ →+ HeckeRing.𝕋 (GL_pair 2) ℤ, True :=
-  ⟨Finsupp.mapDomain.addMonoidHom (cosetMap N), trivial⟩
-
 /-- An element `g ∈ Δ₀(N)` has **coprime determinant** if `gcd(det(A), N) = 1`
     where `A` is the integer matrix representing `g`. -/
 def CoprimeDet (N : ℕ) [NeZero N] (g : (Gamma0_pair N).Δ) : Prop :=
