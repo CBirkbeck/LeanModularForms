@@ -623,36 +623,6 @@ theorem Newform.DirichletQuotientUniversalFClause_of_halfPlane_identity
   rw [eq_div_iff h_den_s_ne]
   exact h_F_den_eq_num s
 
-/-- Discharge the half-plane identity of
-`Newform.DirichletQuotientUniversalFClause_of_halfPlane_identity` from the
-pointwise T111 theorem `Newform.lSeries_stripped_eq_dirichlet_quotient_value` at
-`T = ∅`. -/
-theorem Newform.DirichletQuotientUniversalFClause_of_T111_T_empty
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (S : Finset ℕ)
-    (h_bad : ∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
-      q ∉ S → f.lCoeff q = 0)
-    (h_T_empty : ∀ p : Nat.Primes, ¬ ((p : ℕ) ∈ S ∧ Nat.Coprime (p : ℕ) N))
-    (s₀ : ℂ)
-    (h_χ_ne_one : (Newform.dirichletLift χ : DirichletCharacter ℂ N) ≠ 1)
-    (h_chi_sq_ne_one : (Newform.dirichletLift χ * Newform.dirichletLift χ
-      : DirichletCharacter ℂ N) ≠ 1)
-    (h_abscissa_lt : LSeries.abscissaOfAbsConv f.lCoeff_stripped <
-      (((k : ℝ) / 2 + 1 : ℝ) : EReal)) :
-    Newform.DirichletQuotientUniversalFClause f χ s₀ := by
-  refine Newform.DirichletQuotientUniversalFClause_of_halfPlane_identity f χ s₀
-    h_χ_ne_one h_chi_sq_ne_one ((k : ℝ) / 2 + 1) h_abscissa_lt ?_
-  intro s hs_re
-  obtain ⟨hs', hs''⟩ := t111_re_conditions hs_re
-  have h_T111 := f.lSeries_stripped_eq_dirichlet_quotient_value χ hfχ S h_bad
-    hs_re hs' hs'' (fun q hq hqN _ ↦ t111_geom_bound χ hs_re hq hqN) ∅
-    (fun p ↦ iff_of_false (Finset.notMem_empty p) (h_T_empty p))
-    (fun q hq hqN _ ↦ t111_one_pm_ne χ hs_re hq hqN)
-  simp only [Finset.prod_empty, mul_one] at h_T111
-  rw [DirichletCharacter.LFunction_eq_LSeries _ hs',
-    DirichletCharacter.LFunction_eq_LSeries _ hs'']
-  rwa [eq_div_iff (DirichletCharacter.LSeries_ne_zero_of_one_lt_re _ hs')] at h_T111
 
 /-- Reduce `Newform.FullDirichletQuotientUniversalFClause f χ S T s₀` to a
 half-plane multiplicative entire identity (inverses cleared by
