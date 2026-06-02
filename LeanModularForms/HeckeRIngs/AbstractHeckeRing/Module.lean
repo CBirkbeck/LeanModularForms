@@ -38,7 +38,7 @@ noncomputable def smulOrbit (g : P.Δ) (β : P.Δ) :
 
 /-- The smul orbit of any left coset under any double coset is nonempty. -/
 lemma smulOrbit_nonempty (g : P.Δ) (β : P.Δ) :
-    (smulOrbit P g β).Nonempty := by rw [smulOrbit]; simp
+    (smulOrbit P g β).Nonempty := by simp [smulOrbit]
 
 /-- The orbit is invariant under left coset equivalence: if `β₁H = β₂H`, then
     `smulOrbit g β₁ = smulOrbit g β₂`. This is the key API lemma that lets us
@@ -57,8 +57,8 @@ lemma smulOrbit_lcRel (g : P.Δ) {β₁ β₂ : P.Δ} (h : lcRel P β₁ β₂) 
     · obtain ⟨j, hj⟩ := hsuff β₁ β₂ h i; exact ⟨j, hi ▸ hj.symm⟩
     · obtain ⟨j, hj⟩ := hsuff β₂ β₁ h.symm i; exact ⟨j, hi ▸ hj.symm⟩
   intro β β' hlc i
-  have hβ'_mem : (β' : G) ∈ ({(β : G)} : Set G) * (P.H : Set G) := by
-    rw [hlc]; exact ⟨β', rfl, 1, P.H.one_mem, mul_one _⟩
+  have hβ'_mem : (β' : G) ∈ ({(β : G)} : Set G) * (P.H : Set G) :=
+    hlc ▸ ⟨β', rfl, 1, P.H.one_mem, mul_one _⟩
   obtain ⟨_, hβ_eq, k, hk, hβ'_eq⟩ := hβ'_mem
   rw [Set.mem_singleton_iff] at hβ_eq
   subst hβ_eq
@@ -111,7 +111,7 @@ lemma single_smul_single (t : HeckeCoset P) (m : HeckeLeftCoset P) (a b : Z) :
     (∑ i ∈ smulOrbit P (HeckeCoset.rep t) (HeckeLeftCoset.rep m),
       Finsupp.single i (a * b : Z) : (HeckeLeftCoset P) →₀ Z) := by
   rw [smul_eq_sum]
-  simp [mul_zero, single_zero, Finset.sum_const_zero, sum_single_index, zero_mul]
+  simp
 
 /-- Every finsupp is a sum of its basis elements. -/
 lemma single_basis {α : Type*} (t : Finsupp α Z) :
@@ -133,10 +133,10 @@ lemma smul_add_left (T₁ T₂ : 𝕋 P Z) (m : HeckeModule P Z) :
   simp only [smul_eq_sum]
   rw [Finsupp.sum_add_index]
   · intro D1 _
-    simp only [zero_mul, Finsupp.single_zero, Finset.sum_const_zero, Finsupp.sum_fun_zero]
+    simp
   · intro D1 _ y b₂
     simp only [Finsupp.sum, ← Finset.sum_add_distrib]
-    apply Finset.sum_congr rfl; intro m _
+    refine Finset.sum_congr rfl fun m _ ↦ ?_
     simp_rw [add_mul, Finsupp.single_add]
 
 /-- The zero element of the Hecke ring acts as zero on the module. -/
@@ -163,7 +163,7 @@ lemma smul_add_right (T : 𝕋 P Z) (m₁ m₂ : HeckeModule P Z) :
           Finsupp.single i (b * c)) := by
     intro D b
     rw [Finsupp.sum_add_index']
-    · intro m; simp [mul_zero, Finsupp.single_zero, Finset.sum_const_zero]
+    · intro m; simp
     · intro m c₁ c₂
       simp only [← Finset.sum_add_distrib, mul_add, Finsupp.single_add]
   simp_rw [inner_split]
@@ -174,9 +174,7 @@ lemma smulOrbit_disjoint_of_ne (g₁ g₂ : P.Δ) (β : P.Δ) (hne : (⟦g₁⟧
     Disjoint (smulOrbit P g₁ β) (smulOrbit P g₂ β) := by
   rw [Finset.disjoint_left]
   intro x hx₁ hx₂
-  apply hne
-  apply Quotient.sound
-  show dcRel P _ _
+  refine hne <| Quotient.sound (show dcRel P _ _ from ?_)
   simp only [smulOrbit, Finset.mem_image] at hx₁ hx₂
   obtain ⟨i₁, _, hi₁⟩ := hx₁
   obtain ⟨i₂, _, hi₂⟩ := hx₂
@@ -227,31 +225,29 @@ private lemma smul_one_eval (T : 𝕋 P Z) (D : HeckeCoset P) (m : HeckeLeftCose
   · rw [Finset.sum_eq_single_of_mem m hm (fun b _ hb ↦ if_neg hb), if_pos rfl]
   · intro D' _ hne
     exact Finset.sum_eq_zero fun i hi ↦
-      if_neg (fun heq ↦ absurd (heq ▸ hi)
+      if_neg fun heq ↦ absurd (heq ▸ hi)
         (Finset.disjoint_left.mp
           (smulOrbit_disjoint_of_ne P (HeckeCoset.rep D) (HeckeCoset.rep D')
             (HeckeLeftCoset.rep (HeckeLeftCoset.one P))
-            (by simp only [HeckeCoset.rep, Quotient.out_eq]; exact Ne.symm hne)) hm))
+            (by simp only [HeckeCoset.rep, Quotient.out_eq]; exact hne.symm)) hm)
   · intro hns
-    exact Finset.sum_eq_zero fun x _ ↦ by
-      have h0 : T.toFun D = 0 := Finsupp.notMem_support_iff.mp hns
-      simp [h0]
+    have h0 : T.toFun D = 0 := Finsupp.notMem_support_iff.mp hns
+    exact Finset.sum_eq_zero fun x _ ↦ by simp [h0]
 
 /-- Faithfulness of the module action: if two Hecke ring elements act identically on all
 module elements, they are equal. -/
 lemma eq_of_smul_eq_smul_𝕋 (T1 T2 : (𝕋 P Z))
-    (h : ∀ (a : HeckeModule P Z), T1 • a = T2 • a) :
-    T1 = T2 :=
-  Finsupp.ext fun D ↦ by
-    obtain ⟨m, hm⟩ := smulOrbit_nonempty P (HeckeCoset.rep D)
-      (HeckeLeftCoset.rep (HeckeLeftCoset.one P))
-    have h1 := congrFun (congrArg Finsupp.toFun (h 1)) m
-    rwa [smul_one_eval P Z T1 D m hm, smul_one_eval P Z T2 D m hm] at h1
+    (h : ∀ (a : HeckeModule P Z), T1 • a = T2 • a) : T1 = T2 := by
+  refine Finsupp.ext fun D ↦ ?_
+  obtain ⟨m, hm⟩ := smulOrbit_nonempty P (HeckeCoset.rep D)
+    (HeckeLeftCoset.rep (HeckeLeftCoset.one P))
+  have h1 := congrFun (congrArg Finsupp.toFun (h 1)) m
+  rwa [smul_one_eval P Z T1 D m hm, smul_one_eval P Z T2 D m hm] at h1
 
 /-- The module action of `𝕋 P ℤ` on `HeckeModule P ℤ` is faithful. -/
 noncomputable instance instFaithfulSMulHeckeModule :
     FaithfulSMul (𝕋 P ℤ) (HeckeModule P ℤ) where
-  eq_of_smul_eq_smul {t1 t2} h := eq_of_smul_eq_smul_𝕋 P ℤ t1 t2 h
+  eq_of_smul_eq_smul := eq_of_smul_eq_smul_𝕋 P ℤ _ _
 
 /-- The scalar multiplication on `𝕋` is defined as reverse multiplication. -/
 lemma smul_def (f g : 𝕋 P ℤ) : f • g = g * f := rfl
