@@ -805,35 +805,6 @@ theorem isFundamentalDomain_Gamma_p_α_fundDomain_PSL_at_PSL_R
     (fun _ _ ↦ rfl)
   simpa using h_image
 
-open CongruenceSubgroup Pointwise ConjAct UpperHalfPlane MeasureTheory in
-/-- **DS Lemma 5.5.1(a) FD-image identification.** Transporting the fundamental
-domain `Gamma_p_α_fundDomain_PSL α` of the conjugate-intersection group
-`Γ_p(α) = α⁻¹Γ₁α ∩ Γ₁` by the `GL₂⁺(ℝ)` element `α` (a measure-preserving
-action on `ℍ`) yields a fundamental domain for the conjugate group
-`toConjAct (proj α) • (Γ_p(α)).map SL2Z_to_PSL2R`, which is the projective
-image of `α(α⁻¹Γ₁α ∩ Γ₁)α⁻¹ = Γ₁ ∩ αΓ₁α⁻¹`. Here `proj α = GLPos_to_PSL_R_term`
-of the positive-determinant lift of `α.map (Rat.castHom ℝ)`. -/
-theorem smul_Gamma_p_α_fundDomain_PSL_ae_isFundamentalDomain
-    (α : GL (Fin 2) ℚ)
-    (hα : 0 < ((α.map (Rat.castHom ℝ)) : GL (Fin 2) ℝ).det.val) :
-    IsFundamentalDomain
-      ((ConjAct.toConjAct
-          (GLPos_to_PSL_R_term ⟨(α.map (Rat.castHom ℝ) : GL (Fin 2) ℝ), hα⟩) •
-        ((Gamma_p_α (N := N) α).map SL2Z_to_PSL2R)) : Subgroup PSL(2, ℝ))
-      (((α.map (Rat.castHom ℝ)) : GL (Fin 2) ℝ) • Gamma_p_α_fundDomain_PSL (N := N) α)
-      μ_hyp := by
-  set α' : GL(2, ℝ)⁺ := ⟨(α.map (Rat.castHom ℝ) : GL (Fin 2) ℝ), hα⟩ with hα'_def
-  have h_transport :=
-    Gamma_p_α_PSL_R_lift_FD_smul_conjAct (N := N) α α'
-      (isFundamentalDomain_Gamma_p_α_fundDomain_PSL_at_PSL_R (N := N) α)
-  have h_set_eq :
-      GLPos_to_PSL_R_term α' • Gamma_p_α_fundDomain_PSL (N := N) α =
-        ((α.map (Rat.castHom ℝ)) : GL (Fin 2) ℝ) • Gamma_p_α_fundDomain_PSL (N := N) α := by
-    rw [GLPos_to_PSL_R_term_smul_set]
-    rfl
-  rw [h_set_eq] at h_transport
-  exact h_transport
-
 open CongruenceSubgroup Pointwise UpperHalfPlane MeasureTheory in
 /-- `Γ_p(α)`-invariance lifts to `(Γ_p(α)).map SL2Z_to_PSL2R`-invariance. -/
 theorem inv_under_Gamma_p_α_PSL_R_of_inv_under_Gamma_p_α
