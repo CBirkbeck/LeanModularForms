@@ -126,18 +126,6 @@ theorem Gamma0_normalizes_Gamma1 (g : ↥(Gamma0 N))
   rw [Gamma1_mem]
   rwa [Gamma1_to_Gamma0_mem] at hconj
 
-/-- `Gamma1(N)` is invariant under conjugation by `Gamma0(N)` as a subgroup
-of `SL₂(ℤ)`. -/
-theorem Gamma1_conjAct_eq (g : ↥(Gamma0 N)) :
-    ConjAct.toConjAct (g : SL(2, ℤ)) • Gamma1 N = Gamma1 N := by
-  ext h; constructor
-  · rintro ⟨x, hx, rfl⟩; exact Gamma0_normalizes_Gamma1 g x hx
-  · intro hh
-    refine ⟨(g : SL(2, ℤ))⁻¹ * h * (g : SL(2, ℤ)), ?_, ?_⟩
-    · simpa [inv_inv] using Gamma0_normalizes_Gamma1
-        ⟨(g : SL(2, ℤ))⁻¹, (Gamma0 N).inv_mem g.property⟩ h hh
-    · simp [ConjAct.smul_def, mul_assoc]
-
 /-- `Gamma1(N).map(mapGL ℝ)` is invariant under conjugation by `Gamma0(N)` elements
 in `GL₂(ℝ)`. -/
 theorem Gamma1_map_conjAct_eq (g : ↥(Gamma0 N)) :
@@ -453,40 +441,6 @@ theorem isNebentypus_iff (k : ℤ) (χ : ↥(Gamma0 N) →* ℂˣ) (f : UpperHal
   · rw [show f ∣[k] mapGL ℝ (g : SL(2, ℤ)) = (↑(χ g) : ℂ) • f from h g,
         smul_smul, inv_mul_cancel₀ (χ g).ne_zero, one_smul]
 
-/-- The twisted slash is multiplicative on `Gamma1`-invariant functions. -/
-theorem twistedSlash_mul {k : ℤ} {χ : ↥(Gamma0 N) →* ℂˣ}
-    {f : UpperHalfPlane → ℂ}
-    (hf : ∀ γ ∈ (Gamma1 N).map (mapGL ℝ), f ∣[k] γ = f)
-    (g₁ g₂ : ↥(Gamma0 N)) :
-    twistedSlash k χ (g₁ * g₂) f = twistedSlash k χ g₁ (twistedSlash k χ g₂ f) := by
-  simp only [twistedSlash, map_mul, Units.val_mul]
-  rw [ModularForm.smul_slash, σ_mapGL_real_eq_id, RingHom.id_apply, smul_smul,
-    show (↑(χ g₁) * ↑(χ g₂) : ℂ)⁻¹ = (↑(χ g₁) : ℂ)⁻¹ * (↑(χ g₂) : ℂ)⁻¹ by
-      rw [_root_.mul_inv_rev, mul_comm]]
-  congr 1
-  set c₀ := g₁ * g₂ * g₁⁻¹ * g₂⁻¹
-  have hc₀_units : Gamma0MapUnits c₀ = 1 := by
-    show Gamma0MapUnits (g₁ * g₂ * g₁⁻¹ * g₂⁻¹) = 1
-    simp [map_mul, map_inv]
-  have hc₀_gamma1 : (c₀ : SL(2, ℤ)) ∈ Gamma1 N := by
-    rw [Gamma1_mem]
-    exact (Gamma1_to_Gamma0_mem c₀).mp
-      (Gamma1_mem'.mpr (by rw [← Gamma0MapUnits_val, hc₀_units, Units.val_one]))
-  rw [show ((g₁ * g₂ : ↥(Gamma0 N)) : SL(2, ℤ)) =
-      (c₀ : SL(2, ℤ)) * ((g₂ : SL(2, ℤ)) * (g₁ : SL(2, ℤ))) from by
-    show (↑g₁ : SL(2, ℤ)) * ↑g₂ =
-      (↑g₁ * ↑g₂ * (↑g₁)⁻¹ * (↑g₂)⁻¹ : SL(2, ℤ)) * (↑g₂ * ↑g₁)
-    group, map_mul, SlashAction.slash_mul,
-    hf _ (Subgroup.mem_map.mpr ⟨_, hc₀_gamma1, rfl⟩),
-    map_mul, SlashAction.slash_mul]
-
-/-- For the trivial character, `twistedSlash` reduces to the ordinary slash action. -/
-theorem twistedSlash_trivial (k : ℤ) (g : ↥(Gamma0 N))
-    (f : UpperHalfPlane → ℂ) :
-    twistedSlash k (1 : ↥(Gamma0 N) →* ℂˣ) g f =
-    f ∣[k] mapGL ℝ (g : SL(2, ℤ)) := by
-  simp [twistedSlash, MonoidHom.one_apply, Units.val_one]
-
 /-- **Bridge**: for a `Gamma1`-invariant modular form `f`, membership in the
 diamond-eigenspace `modFormCharSpace k χ₀` is equivalent to twisted-slash
 invariance under `χ₀ ∘ Gamma0MapUnits`. -/
@@ -526,23 +480,5 @@ theorem cuspFormCharSpace_iff_nebentypus [NeZero N] (k : ℤ) (χ₀ : (ZMod N)�
     show diamondOpCusp k d f = (↑(χ₀ d) : ℂ) • f
     rw [diamondOpCusp_eq k d g hg, ← hg]
     exact CuspForm.ext (congr_fun (h g))
-
-/-- Membership in `M_k(Γ₁(N), 1)` (trivial character) is equivalent to ordinary
-`Γ₀(N)` slash-invariance on the underlying function. -/
-theorem mem_modFormCharSpace_trivial_iff [NeZero N] (k : ℤ)
-    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    f ∈ modFormCharSpace k 1 ↔
-    ∀ g : ↥(Gamma0 N), (⇑f) ∣[k] mapGL ℝ (g : SL(2, ℤ)) = ⇑f := by
-  rw [modFormCharSpace_iff_nebentypus]
-  simp [MonoidHom.one_apply, Units.val_one]
-
-/-- Membership in `S_k(Γ₁(N), 1)` (trivial character) is equivalent to ordinary
-`Γ₀(N)` slash-invariance on the underlying function. -/
-theorem mem_cuspFormCharSpace_trivial_iff [NeZero N] (k : ℤ)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    f ∈ cuspFormCharSpace k 1 ↔
-    ∀ g : ↥(Gamma0 N), (⇑f) ∣[k] mapGL ℝ (g : SL(2, ℤ)) = ⇑f := by
-  rw [cuspFormCharSpace_iff_nebentypus]
-  simp [MonoidHom.one_apply, Units.val_one]
 
 end HeckeRing.GL2
