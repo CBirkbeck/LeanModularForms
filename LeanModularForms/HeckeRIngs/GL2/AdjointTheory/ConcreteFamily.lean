@@ -3,7 +3,7 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: LeanModularForms contributors
 -/
-import LeanModularForms.HeckeRIngs.GL2.AdjointTheory.TileBridge
+import LeanModularForms.HeckeRIngs.GL2.AdjointTheory.DeltaBSystem
 
 /-!
 # Hecke adjoint theory: concrete `Option (Fin p)` projective T_p tile family.
