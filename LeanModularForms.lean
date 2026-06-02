@@ -1,4 +1,3 @@
-import LeanModularForms.HeckeRIngs.AbstractHeckeRing
 import LeanModularForms.Modularforms.AtImInfty
 import LeanModularForms.Modularforms.BigO
 import LeanModularForms.Modularforms.Cauchylems
