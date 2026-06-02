@@ -58,9 +58,9 @@ theorem heckeT_p_all_eq_gamma0_on_charSpace_one (k : ℤ) (p : ℕ) (hp : Nat.Pr
     ((modFormCharSpace_one_equiv_Gamma0 N k).symm
       (heckeOperator_Gamma0 N k (D_p_Gamma0 N p hp.pos)
         (modFormCharSpace_one_equiv_Gamma0 N k f)) :
-        ModularForm ((Gamma1 N).map (mapGL ℝ)) k) := by
-  rw [heckeT_p_all_coprime k hp hpN]
-  exact heckeT_p_val_eq_heckeOperator_Gamma0_on_charSpace_one k p hp hpN f
+        ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :=
+  heckeT_p_all_coprime k hp hpN ▸
+    heckeT_p_val_eq_heckeOperator_Gamma0_on_charSpace_one k p hp hpN f
 
 /-- `heckeT_p_all k p hp`, restricted to the trivial-character eigenspace, preserves
 the eigenspace. For `p` coprime to `N`, this specialises
@@ -68,9 +68,8 @@ the eigenspace. For `p` coprime to `N`, this specialises
 lemma heckeT_p_all_preserves_charSpace_one_coprime (k : ℤ) (p : ℕ) (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
     (hf : f ∈ modFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ)) :
-    heckeT_p_all k p hp f ∈ modFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ) := by
-  rw [heckeT_p_all_coprime k hp hpN]
-  exact heckeT_p_preserves_modFormCharSpace k p hp hpN _ hf
+    heckeT_p_all k p hp f ∈ modFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ) :=
+  heckeT_p_all_coprime k hp hpN ▸ heckeT_p_preserves_modFormCharSpace k p hp hpN _ hf
 
 /-- The two Γ₀(N)-Hecke operators `heckeOperator_Gamma0` for primes `p, q` commute
 pointwise on `g`. This is the analytic shadow of commutativity of the abstract Hecke
@@ -185,12 +184,12 @@ noncomputable def conjEndRingHomCharSpaceOne (k : ℤ) :
     Module.End ℂ (ModularForm ((Gamma0 N).map (mapGL ℝ)) k) →+*
       Module.End ℂ (modFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ)) where
   toFun := conjEndCharSpaceOne k
-  map_one' := LinearMap.ext fun f ↦ by
+  map_one' := LinearMap.ext fun _ ↦ by
     simp [conjEndCharSpaceOne, (modFormCharSpace_one_equiv_Gamma0 N k).symm_apply_apply]
-  map_mul' T₁ T₂ := LinearMap.ext fun f ↦ by
+  map_mul' _ _ := LinearMap.ext fun _ ↦ by
     simp [conjEndCharSpaceOne, Module.End.mul_apply]
-  map_zero' := LinearMap.ext fun f ↦ by simp [conjEndCharSpaceOne]
-  map_add' T₁ T₂ := LinearMap.ext fun f ↦ by
+  map_zero' := LinearMap.ext fun _ ↦ by simp [conjEndCharSpaceOne]
+  map_add' _ _ := LinearMap.ext fun _ ↦ by
     simp [conjEndCharSpaceOne, LinearMap.add_apply, map_add]
 
 /-- The Hecke ring hom `𝕋(Gamma0_pair N) ℤ →+* End(modFormCharSpace k 1)` obtained
