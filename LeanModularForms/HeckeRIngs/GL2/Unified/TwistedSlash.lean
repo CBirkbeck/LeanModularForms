@@ -80,26 +80,6 @@ noncomputable def gamma0TwistedSlashModFixedSubmodule (k : ℤ) (χ : (ZMod N)ˣ
       ∀ g : ↥(Gamma0 N), gamma0TwistedSlashModHom (N := N) k χ g f = f := by
   simp [gamma0TwistedSlashModFixedSubmodule, Submodule.mem_iInf]
 
-theorem gamma0TwistedSlashModFixedSubmodule_eq_modFormCharSpace (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
-    gamma0TwistedSlashModFixedSubmodule (N := N) k χ = modFormCharSpace k χ := by
-  ext f
-  rw [mem_gamma0TwistedSlashModFixedSubmodule_iff, mem_modFormCharSpace_iff]
-  constructor
-  · intro hf d
-    obtain ⟨g, hg⟩ := Gamma0MapUnits_surjective (N := N) d
-    have hgfix := hf g
-    change (↑(gamma0NebentypusChar (N := N) χ g) : ℂ)⁻¹ •
-        diamondOpHom (N := N) k (Gamma0MapUnits g) f = f at hgfix
-    have hgfix' := congrArg (fun x ↦ (↑(gamma0NebentypusChar (N := N) χ g) : ℂ) • x) hgfix
-    simp [gamma0NebentypusChar, hg] at hgfix'
-    simpa [gamma0NebentypusChar, hg] using hgfix'
-  · intro hf g
-    have hfg := hf (Gamma0MapUnits g)
-    change (↑(gamma0NebentypusChar (N := N) χ g) : ℂ)⁻¹ •
-        diamondOpHom (N := N) k (Gamma0MapUnits g) f = f
-    rw [hfg]
-    simp [gamma0NebentypusChar]
-
 /-- The fixed submodule of the twisted `Γ₀(N)` action on the ambient cusp-form
 space. -/
 noncomputable def gamma0TwistedSlashCuspFixedSubmodule (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
@@ -111,25 +91,5 @@ noncomputable def gamma0TwistedSlashCuspFixedSubmodule (k : ℤ) (χ : (ZMod N)�
     f ∈ gamma0TwistedSlashCuspFixedSubmodule (N := N) k χ ↔
       ∀ g : ↥(Gamma0 N), gamma0TwistedSlashCuspHom (N := N) k χ g f = f := by
   simp [gamma0TwistedSlashCuspFixedSubmodule, Submodule.mem_iInf]
-
-theorem gamma0TwistedSlashCuspFixedSubmodule_eq_cuspFormCharSpace (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
-    gamma0TwistedSlashCuspFixedSubmodule (N := N) k χ = cuspFormCharSpace k χ := by
-  ext f
-  rw [mem_gamma0TwistedSlashCuspFixedSubmodule_iff, mem_cuspFormCharSpace_iff]
-  constructor
-  · intro hf d
-    obtain ⟨g, hg⟩ := Gamma0MapUnits_surjective (N := N) d
-    have hgfix := hf g
-    change (↑(gamma0NebentypusChar (N := N) χ g) : ℂ)⁻¹ •
-        diamondOpCuspHom (N := N) k (Gamma0MapUnits g) f = f at hgfix
-    have hgfix' := congrArg (fun x ↦ (↑(gamma0NebentypusChar (N := N) χ g) : ℂ) • x) hgfix
-    simp [gamma0NebentypusChar, hg] at hgfix'
-    simpa [gamma0NebentypusChar, hg] using hgfix'
-  · intro hf g
-    have hfg := hf (Gamma0MapUnits g)
-    change (↑(gamma0NebentypusChar (N := N) χ g) : ℂ)⁻¹ •
-        diamondOpCuspHom (N := N) k (Gamma0MapUnits g) f = f
-    rw [hfg]
-    simp [gamma0NebentypusChar]
 
 end HeckeRing.GL2.Unified
