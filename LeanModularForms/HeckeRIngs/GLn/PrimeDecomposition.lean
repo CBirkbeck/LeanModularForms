@@ -99,7 +99,7 @@ section Coprimality
 /-- The determinant of a p-power diagonal is a power of `p`. -/
 lemma prod_ppow (p : ℕ) (e : Fin n → ℕ) :
     ∏ i, (ppowDiag n p e) i = p ^ (∑ i, e i) := by
-  simp only [ppowDiag, Finset.prod_pow_eq_pow_sum]
+  simp [ppowDiag, Finset.prod_pow_eq_pow_sum]
 
 /-- The p-part and p-free part determinants are coprime. -/
 lemma prod_ppow_remove_coprime (p : ℕ) (hp : p.Prime)
@@ -116,8 +116,7 @@ variable [NeZero n]
 section Splitting
 
 /-- T_elem is determined by its diagonal, independent of the positivity/DivChain proofs. -/
-lemma T_elem_congr_diag {a b : Fin n → ℕ} (h : a = b) :
-    T_elem a = T_elem b := h ▸ rfl
+lemma T_elem_congr_diag {a b : Fin n → ℕ} (h : a = b) : T_elem a = T_elem b := h ▸ rfl
 
 /-- Binary prime splitting: `T(a) = T(p-part) · T(p-free part)`.
     Every diagonal Hecke element factors into its p-power component
@@ -149,9 +148,9 @@ lemma T_elem_ppow_mem_R_p (p : ℕ) (hp : p.Prime) (e : Fin n → ℕ) (hmono : 
 
 /-- The identity `T(1,...,1)` is in every R_p (as the zero-exponent element). -/
 lemma one_mem_R_p (p : ℕ) (hp : p.Prime) :
-    T_elem (fun _ : Fin n ↦ 1) ∈ R_p n p hp := by
-  have h : T_elem (fun _ : Fin n ↦ 1) = T_elem (ppowDiag n p (fun _ ↦ 0)) := by congr
-  exact h ▸ T_elem_ppow_mem_R_p n p hp (fun _ ↦ 0) monotone_const
+    T_elem (fun _ : Fin n ↦ 1) ∈ R_p n p hp :=
+  (show T_elem (fun _ : Fin n ↦ 1) = T_elem (ppowDiag n p (fun _ ↦ 0)) by congr) ▸
+    T_elem_ppow_mem_R_p n p hp (fun _ ↦ 0) monotone_const
 
 end RpSubring
 
@@ -172,9 +171,8 @@ private lemma eq_one_of_prod_factorization_support_card_zero (a : Fin n → ℕ)
     a = fun _ ↦ 1 := by
   have h_det : ∏ i, a i = 1 := by
     have := Nat.factorization_prod_pow_eq_self (prod_pos_of_pos n a ha_pos).ne'
-    rw [Finsupp.prod, Finset.card_eq_zero.mp (Nat.le_zero.mp hcard),
-      Finset.prod_empty] at this
-    exact this.symm
+    rwa [Finsupp.prod, Finset.card_eq_zero.mp (Nat.le_zero.mp hcard),
+      Finset.prod_empty, eq_comm] at this
   funext i
   exact Nat.eq_one_of_dvd_one (h_det ▸ Finset.dvd_prod_of_mem _ (Finset.mem_univ i))
 
@@ -186,20 +184,18 @@ private lemma removePrime_prod_factorization_support_ssubset (a : Fin n → ℕ)
     (hp_mem : p ∈ (∏ i, a i).factorization.support) :
     (∏ i, (removePrime n p a) i).factorization.support ⊂
       (∏ i, a i).factorization.support := by
-  constructor
-  · intro q hq
-    rw [Finsupp.mem_support_iff] at hq ⊢
+  refine ⟨fun q hq ↦ ?_, fun h_sup ↦ ?_⟩
+  · rw [Finsupp.mem_support_iff] at hq ⊢
     intro h_zero
-    apply hq
+    refine hq ?_
     have h_le := (Nat.factorization_le_iff_dvd
       (prod_pos_of_pos n _ (removePrime_pos n p a ha_pos)).ne'
       (prod_pos_of_pos n a ha_pos).ne').mpr
       (Finset.prod_dvd_prod_of_dvd _ _ fun i _ ↦ Nat.ordCompl_dvd (a i) p) q
     omega
-  · intro h_sup
-    have hp_in : p ∈ (∏ i, (removePrime n p a) i).factorization.support := h_sup hp_mem
+  · have hp_in : p ∈ (∏ i, (removePrime n p a) i).factorization.support := h_sup hp_mem
     rw [Finsupp.mem_support_iff] at hp_in
-    apply hp_in
+    refine hp_in ?_
     rw [Nat.factorization_prod (fun i _ ↦ (removePrime_pos n p a ha_pos i).ne'),
       Finset.sum_apply']
     refine Finset.sum_eq_zero fun i _ ↦ ?_
@@ -229,13 +225,12 @@ theorem T_elem_mem_closure_ppow (a : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i) (h
     have hp : p.Prime :=
       Nat.prime_of_mem_primeFactors (Nat.support_factorization _ ▸ hp_mem)
     rw [T_elem_split_prime n a ha_pos ha p hp]
-    apply Subring.mul_mem
-    · exact Subring.subset_closure
-        ⟨p, hp, pComponent n p a, pComponent_monotone n a ha_pos ha p, rfl⟩
-    · refine ih _ (removePrime_pos n p a ha_pos) (removePrime_divChain n p a ha) ?_
-      have := Finset.card_lt_card
-        (removePrime_prod_factorization_support_ssubset n a ha_pos p hp_mem)
-      omega
+    refine Subring.mul_mem _ (Subring.subset_closure
+      ⟨p, hp, pComponent n p a, pComponent_monotone n a ha_pos ha p, rfl⟩) ?_
+    refine ih _ (removePrime_pos n p a ha_pos) (removePrime_divChain n p a ha) ?_
+    have := Finset.card_lt_card
+      (removePrime_prod_factorization_support_ssubset n a ha_pos p hp_mem)
+    omega
 
 end FullFactorization
 
