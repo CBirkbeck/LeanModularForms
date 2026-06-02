@@ -45,15 +45,8 @@ def bar (g : G) : G := (ι.toFun g).unop
 /-- The anti-involution reverses multiplication: `bar(ab) = bar(b) * bar(a)`. -/
 lemma bar_mul (a b : G) : ι.bar (a * b) = ι.bar b * ι.bar a := by simp [bar]
 
-/-- The anti-involution fixes the identity. -/
-lemma bar_one : ι.bar 1 = 1 := by simp [bar]
-
 /-- The anti-involution commutes with inversion. -/
 lemma bar_inv (g : G) : ι.bar g⁻¹ = (ι.bar g)⁻¹ := by simp [bar]
-
-/-- The anti-involution is injective. -/
-lemma bar_injective : Function.Injective ι.bar :=
-  Function.LeftInverse.injective ι.bar_bar
 
 /-- The anti-involution preserves membership in `H`. -/
 lemma bar_mem_H {g : G} (hg : g ∈ P.H) : ι.bar g ∈ P.H :=
@@ -96,10 +89,6 @@ lemma onHeckeCoset_toSet (D : HeckeCoset P) :
     DoubleCoset.doubleCoset (ι.bar (HeckeCoset.rep D : G)) P.H P.H := by
   conv_lhs => rw [show D = ⟦HeckeCoset.rep D⟧ from (Quotient.out_eq D).symm]
   simp [onHeckeCoset_mk]
-
-/-- The action on double cosets is involutive: `onHeckeCoset(onHeckeCoset(D)) = D`. -/
-lemma onHeckeCoset_involutive : Function.Involutive ι.onHeckeCoset :=
-  HeckeCoset.ind fun g ↦ by simp only [onHeckeCoset_mk]; rw [HeckeCoset.eq_iff]; simp [bar_bar]
 
 private lemma bar_mem_doubleCoset (h_fix : ∀ D : HeckeCoset P, ι.onHeckeCoset D = D)
     (D₀ : HeckeCoset P) (x : G) (hx : x ∈ HeckeCoset.toSet D₀) :
