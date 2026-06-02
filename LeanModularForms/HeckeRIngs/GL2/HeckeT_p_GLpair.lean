@@ -43,18 +43,16 @@ noncomputable def D_p (p : ℕ) (hp : 0 < p) : HeckeRing.HeckeCoset (GL_pair 2) 
 /-- `T_p_upper(b)` has det p > 0 and integer entries, hence lies in Δ. -/
 lemma T_p_upper_mem_Delta (p : ℕ) (hp : 0 < p) (b : ℕ) :
     (T_p_upper p hp b : GL (Fin 2) ℚ) ∈ (GL_pair 2).Δ := by
-  refine ⟨⟨!![1, (b : ℤ); 0, (p : ℤ)], ?_⟩, ?_⟩
-  · ext i j; fin_cases i <;> fin_cases j <;>
-      simp [T_p_upper, GeneralLinearGroup.mkOfDetNeZero, Matrix.map_apply]
-  · rw [T_p_upper_det]; exact_mod_cast hp
+  refine ⟨⟨!![1, (b : ℤ); 0, (p : ℤ)], ?_⟩, by rw [T_p_upper_det]; exact_mod_cast hp⟩
+  ext i j; fin_cases i <;> fin_cases j <;>
+    simp [T_p_upper, GeneralLinearGroup.mkOfDetNeZero, Matrix.map_apply]
 
 /-- `T_p_lower` has det p > 0 and integer entries, hence lies in Δ. -/
 lemma T_p_lower_mem_Delta (p : ℕ) (hp : 0 < p) :
     (T_p_lower p hp : GL (Fin 2) ℚ) ∈ (GL_pair 2).Δ := by
-  refine ⟨⟨!![(p : ℤ), 0; 0, 1], ?_⟩, ?_⟩
-  · ext i j; fin_cases i <;> fin_cases j <;>
-      simp [T_p_lower, GeneralLinearGroup.mkOfDetNeZero, Matrix.map_apply]
-  · rw [T_p_lower_det]; exact_mod_cast hp
+  refine ⟨⟨!![(p : ℤ), 0; 0, 1], ?_⟩, by rw [T_p_lower_det]; exact_mod_cast hp⟩
+  ext i j; fin_cases i <;> fin_cases j <;>
+    simp [T_p_lower, GeneralLinearGroup.mkOfDetNeZero, Matrix.map_apply]
 
 /-- `T_p_upper(b)` lies in the double coset `D_p` for `b < p`.
 Both `diag(1,p)` and `T_p_upper(b) = [[1,b],[0,p]]` have determinant `p`, and
@@ -122,9 +120,8 @@ lemma T_p_lower_mem_D_p (p : ℕ) (hp : Nat.Prime p) :
 
 private lemma SL_invariant_to_H_invariant {k : ℤ} {f : ℍ → ℂ}
     (hf_SL : ∀ γ ∈ 𝒮ℒ, f ∣[k] γ = f) :
-    ∀ h, h ∈ (GL_pair 2).H → f ∣[k] (glMap h) = f := by
-  intro h hh; obtain ⟨s, hs⟩ := hh; rw [← hs]
-  exact hf_SL (glMap (mapGL ℚ s)) ⟨s, (glMap_mapGL_eq s).symm⟩
+    ∀ h, h ∈ (GL_pair 2).H → f ∣[k] (glMap h) = f := fun _ ⟨s, hs⟩ ↦ hs ▸
+  hf_SL (glMap (mapGL ℚ s)) ⟨s, (glMap_mapGL_eq s).symm⟩
 
 /-- `T_p_lower = w * diag(1,p) * w⁻¹` where `w = [[0,-1],[1,0]] ∈ SL₂(ℤ)`.
 For SL₂(ℤ)-invariant `f`, the left `w` factor is absorbed:
@@ -156,15 +153,12 @@ lemma slash_T_p_lower_factor (k : ℤ) (p : ℕ) (hp : Nat.Prime p)
   exact SL_invariant_to_H_invariant hf _ ⟨w, rfl⟩
 
 private lemma slash_eq_tRep_gen_of_adj_mem (k : ℤ) (f : ℍ → ℂ)
-    (hf : ∀ γ ∈ 𝒮ℒ, f ∣[k] γ = f)
-    (D : HeckeCoset (GL_pair 2))
-    (g : GL (Fin 2) ℚ) (h₁ h₂ : GL (Fin 2) ℚ)
+    (hf : ∀ γ ∈ 𝒮ℒ, f ∣[k] γ = f) (D : HeckeCoset (GL_pair 2)) (g h₁ h₂ : GL (Fin 2) ℚ)
     (hh₁ : h₁ ∈ (GL_pair 2).H) (hh₂ : h₂ ∈ (GL_pair 2).H)
     (hadj : GL_adjugate g = h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂) :
     f ∣[k] g = f ∣[k] tRep_gen (GL_pair 2) D ⟦⟨h₁, hh₁⟩⟧ := by
-  have hg : g = GL_adjugate (h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂) := by
-    rw [← hadj, GL_adjugate_involutive]
-  rw [hg]
+  rw [show g = GL_adjugate (h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂) from by
+    rw [← hadj, GL_adjugate_involutive]]
   exact slash_tRep_gen_of_mem k D h₁ h₂ hh₁ hh₂ f (SL_invariant_to_H_invariant hf)
 
 private lemma GL_adjugate_mem_D (D : HeckeCoset (GL_pair 2))
@@ -178,9 +172,9 @@ private lemma GL_adjugate_mem_D (D : HeckeCoset (GL_pair 2))
     (GL_pair 2).H.mul_mem (HeckePairAction.adjugate_mem_H c hc) hr₁,
     r₂ * GL_adjugate a,
     (GL_pair 2).H.mul_mem hr₂ (HeckePairAction.adjugate_mem_H a ha), ?_⟩
-  rw [heq, GL_adjugate_mul, GL_adjugate_mul]
-  rw [show GL_adjugate (HeckeCoset.rep D : GL _ ℚ) = r₁ * (HeckeCoset.rep D : GL _ ℚ) * r₂
-    from hrep_eq]
+  rw [heq, GL_adjugate_mul, GL_adjugate_mul,
+    show GL_adjugate (HeckeCoset.rep D : GL _ ℚ) = r₁ * (HeckeCoset.rep D : GL _ ℚ) * r₂
+      from hrep_eq]
   group
 
 private lemma adj_rep_mem_D_p (p : ℕ) (hp : Nat.Prime p) :
@@ -219,18 +213,18 @@ private lemma adj_rep_mem_D_p (p : ℕ) (hp : Nat.Prime p) :
   rw [h1, hadj_diag, hTl_eq]; group
 
 private lemma SLnZ_entry_is_int (g : GL (Fin 2) ℚ) (hg : g ∈ SLnZ_subgroup 2)
-    (i j : Fin 2) : ∃ n : ℤ, g.val i j = (n : ℚ) := by
-  obtain ⟨s, rfl⟩ := hg
-  exact ⟨s.val i j, by simp [mapGL_coe_matrix, algebraMap_int_eq]⟩
+    (i j : Fin 2) : ∃ n : ℤ, g.val i j = (n : ℚ) :=
+  let ⟨s, hs⟩ := hg
+  ⟨s.val i j, by rw [← hs]; simp [mapGL_coe_matrix, algebraMap_int_eq]⟩
 
 private lemma adj_mem_dc (D : HeckeCoset (GL_pair 2))
     (g : GL (Fin 2) ℚ) (hg : g ∈ HeckeCoset.toSet D)
     (hadj_rep : GL_adjugate (HeckeCoset.rep D : GL _ ℚ) ∈ HeckeCoset.toSet D) :
     ∃ (h₁ : GL _ ℚ) (_ : h₁ ∈ (GL_pair 2).H) (h₂ : GL _ ℚ) (_ : h₂ ∈ (GL_pair 2).H),
       GL_adjugate g = h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂ := by
-  have := GL_adjugate_mem_D D g hg hadj_rep
-  rw [HeckeCoset.toSet_eq_rep, DoubleCoset.mem_doubleCoset] at this
-  obtain ⟨a, ha, b, hb, heq⟩ := this
+  have h := GL_adjugate_mem_D D g hg hadj_rep
+  rw [HeckeCoset.toSet_eq_rep, DoubleCoset.mem_doubleCoset] at h
+  obtain ⟨a, ha, b, hb, heq⟩ := h
   exact ⟨a, ha, b, hb, heq⟩
 
 private lemma card_decompQuot_D_p (p : ℕ) (hp : Nat.Prime p) :
@@ -239,10 +233,12 @@ private lemma card_decompQuot_D_p (p : ℕ) (hp : Nat.Prime p) :
     change ⟦⟨diagMat 2 ![1, p], _⟩⟧ = ⟦diagMat_delta 2 ![1, p]⟧
     unfold diagMat_delta; simp [dif_pos hp.pos]
   have h2 : HeckeCoset_deg (GL_pair 2) (D_p p hp.pos) = ↑(p + 1) := by
-    rw [h1]; convert deg_T_diag_ppow p hp 0 1 (by lia) using 2
+    rw [h1]
+    convert deg_T_diag_ppow p hp 0 1 (by lia) using 2
     · congr 1; ext i; fin_cases i <;> simp
     · simp
-  simp only [HeckeCoset_deg] at h2; exact_mod_cast h2
+  simp only [HeckeCoset_deg] at h2
+  exact_mod_cast h2
 
 /-- `adj(T_p_upper(b₁))⁻¹ · adj(T_p_upper(b₂)) ∉ SL₂(ℤ)` for distinct `b₁, b₂ < p`.
 The product has `(0,1)`-entry `(b₁ - b₂)/p ∉ ℤ`. -/
@@ -493,16 +489,14 @@ theorem heckeT_p_fun_comm_of_GL_pair {N : ℕ} [NeZero N] (k : ℤ)
     fun r hr hrN γ hγ ↦ by
       rw [heckeT_p_fun_eq_heckeSlash_gen k r hr hrN f hf_SL]
       exact heckeSlash_gen_SL_invariant (D_p r hr.pos) hf_SL γ hγ
-  have hTqf_SL := heckeT_p_fun_SL q hq hqN
-  have hTpf_SL := heckeT_p_fun_SL p hp hpN
   set Tqf : ModularForm _ k :=
     ⟨⟨heckeT_p_fun k q hq hqN f, (heckeT_p k q hq hqN f).slash_action_eq'⟩,
      (heckeT_p k q hq hqN f).holo', (heckeT_p k q hq hqN f).bdd_at_cusps'⟩
   set Tpf : ModularForm _ k :=
     ⟨⟨heckeT_p_fun k p hp hpN f, (heckeT_p k p hp hpN f).slash_action_eq'⟩,
      (heckeT_p k p hp hpN f).holo', (heckeT_p k p hp hpN f).bdd_at_cusps'⟩
-  rw [heckeT_p_fun_eq_heckeSlash_gen k p hp hpN Tqf hTqf_SL,
-      heckeT_p_fun_eq_heckeSlash_gen k q hq hqN Tpf hTpf_SL]
+  rw [heckeT_p_fun_eq_heckeSlash_gen k p hp hpN Tqf (heckeT_p_fun_SL q hq hqN),
+      heckeT_p_fun_eq_heckeSlash_gen k q hq hqN Tpf (heckeT_p_fun_SL p hp hpN)]
   change heckeSlash_gen (GL_pair 2) k (D_p p hp.pos) (heckeT_p_fun k q hq hqN f) =
     heckeSlash_gen (GL_pair 2) k (D_p q hq.pos) (heckeT_p_fun k p hp hpN f)
   conv_lhs => rw [heckeT_p_fun_eq_heckeSlash_gen k q hq hqN f hf_SL]
