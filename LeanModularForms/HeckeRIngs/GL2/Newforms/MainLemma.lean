@@ -84,18 +84,6 @@ theorem cuspFormsNew_iSupIndep_inf_charSpace (k : ℤ) :
       (fun χ : (ZMod N)ˣ →* ℂˣ ↦ cuspFormsNew N k ⊓ cuspFormCharSpace k χ) :=
   cuspFormCharSpace_iSupIndep_inf k (cuspFormsNew N k)
 
-/-- **Finsupp-indexed character decomposition of an oldform.**  Every
-`f ∈ cuspFormsOld N k` is a finitely-supported sum of Nebentypus components,
-each landing simultaneously in `cuspFormsOld N k` and in its character
-subspace. -/
-theorem exists_finsupp_charSpace_of_cuspFormsOld (k : ℤ)
-    {f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k} (hf : f ∈ cuspFormsOld N k) :
-    ∃ g : ((ZMod N)ˣ →* ℂˣ) →₀ CuspForm ((Gamma1 N).map (mapGL ℝ)) k,
-      (∀ χ : (ZMod N)ˣ →* ℂˣ, g χ ∈ cuspFormsOld N k ⊓ cuspFormCharSpace k χ) ∧
-      (g.sum fun _ y ↦ y) = f :=
-  exists_finsupp_charSpace_of_diamondOpCuspHom_invariant k (cuspFormsOld N k)
-    diamondOpCuspHom_preserves_cuspFormsOld hf
-
 /-- **Finsupp-indexed character decomposition of a newform subspace element.**
 Every `f ∈ cuspFormsNew N k` is a finitely-supported sum of Nebentypus
 components, each simultaneously in `cuspFormsNew N k` and in its character
@@ -107,46 +95,6 @@ theorem exists_finsupp_charSpace_of_cuspFormsNew (k : ℤ)
       (g.sum fun _ y ↦ y) = f :=
   exists_finsupp_charSpace_of_diamondOpCuspHom_invariant k (cuspFormsNew N k)
     diamondOpCuspHom_preserves_cuspFormsNew hf
-
-/-- **Range of the χ-component direct-sum map onto `cuspFormsOld N k`.**  The
-natural linear map
-`⨁ χ, (cuspFormsOld N k ⊓ cuspFormCharSpace k χ) →ₗ[ℂ] CuspForm (Γ₁(N)) k`
-has image equal to `cuspFormsOld N k`. -/
-theorem range_cuspFormsOld_charSpace_coeLinearMap
-    [DecidableEq ((ZMod N)ˣ →* ℂˣ)] (k : ℤ) :
-    LinearMap.range
-      (DirectSum.coeLinearMap
-        (fun χ : (ZMod N)ˣ →* ℂˣ ↦ cuspFormsOld N k ⊓ cuspFormCharSpace k χ)) =
-      cuspFormsOld N k :=
-  DirectSum.range_coeLinearMap.trans (cuspFormsOld_iSup_inf_charSpace k)
-
-/-- **Range of the χ-component direct-sum map onto `cuspFormsNew N k`.** -/
-theorem range_cuspFormsNew_charSpace_coeLinearMap
-    [DecidableEq ((ZMod N)ˣ →* ℂˣ)] (k : ℤ) :
-    LinearMap.range
-      (DirectSum.coeLinearMap
-        (fun χ : (ZMod N)ˣ →* ℂˣ ↦ cuspFormsNew N k ⊓ cuspFormCharSpace k χ)) =
-      cuspFormsNew N k :=
-  DirectSum.range_coeLinearMap.trans (cuspFormsNew_iSup_inf_charSpace k)
-
-/-- **Injectivity of the χ-component direct-sum map at `cuspFormsOld N k`.**  The
-natural linear map
-`⨁ χ, (cuspFormsOld N k ⊓ cuspFormCharSpace k χ) →ₗ[ℂ] CuspForm (Γ₁(N)) k` is
-injective; consequently each oldform has at most one Nebentypus decomposition. -/
-theorem injective_cuspFormsOld_charSpace_coeLinearMap
-    [DecidableEq ((ZMod N)ˣ →* ℂˣ)] (k : ℤ) :
-    Function.Injective
-      (DirectSum.coeLinearMap
-        (fun χ : (ZMod N)ˣ →* ℂˣ ↦ cuspFormsOld N k ⊓ cuspFormCharSpace k χ)) :=
-  (cuspFormsOld_iSupIndep_inf_charSpace k).dfinsupp_lsum_injective
-
-/-- **Injectivity of the χ-component direct-sum map at `cuspFormsNew N k`.** -/
-theorem injective_cuspFormsNew_charSpace_coeLinearMap
-    [DecidableEq ((ZMod N)ˣ →* ℂˣ)] (k : ℤ) :
-    Function.Injective
-      (DirectSum.coeLinearMap
-        (fun χ : (ZMod N)ˣ →* ℂˣ ↦ cuspFormsNew N k ⊓ cuspFormCharSpace k χ)) :=
-  (cuspFormsNew_iSupIndep_inf_charSpace k).dfinsupp_lsum_injective
 
 end CharSpaceDecomposition
 
@@ -192,18 +140,6 @@ theorem Newform.isPrimitive (f : Newform N k) : f.IsPrimitive := f.isNew
 arises as a `Newform`; for a bundled `Newform N k` this is `N` itself. -/
 noncomputable def Newform.conductor (_f : Newform N k) : ℕ := N
 
-/-- The conductor of a bundled `Newform N k` equals `N`. -/
-@[simp] theorem Newform.conductor_eq_level (f : Newform N k) : f.conductor = N := rfl
-
-/-- The Mathlib conductor of a Dirichlet character `χ` carrying a
-`Newform`'s Nebentypus divides the newform's conductor (which equals `N`). -/
-theorem dirichletCharacter_conductor_dvd_newform_conductor
-    (f : Newform N k) (χ : DirichletCharacter ℂ N)
-    (_hf_char : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ.toUnitHom) :
-    χ.conductor ∣ f.conductor := by
-  rw [Newform.conductor_eq_level]; exact χ.conductor_dvd_level
-
-omit [NeZero N] in
 private lemma qExpansion_one_coeff_one_smul_of_norm
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (h_norm : (ModularFormClass.qExpansion (1 : ℝ) f.toModularForm').coeff 1 = 1)
