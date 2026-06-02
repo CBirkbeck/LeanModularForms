@@ -41,12 +41,10 @@ theorem Gamma1_le_of_dvd {M N : ℕ} (h : M ∣ N) :
     Gamma1 N ≤ Gamma1 M := by
   intro A hA
   rw [Gamma1_mem] at hA ⊢
-  obtain ⟨ha, hd, hc⟩ := hA
   set φ := ZMod.castHom h (ZMod M)
-  refine ⟨?_, ?_, ?_⟩
-  · simpa [map_intCast, map_one] using congr_arg φ ha
-  · simpa [map_intCast, map_one] using congr_arg φ hd
-  · simpa [map_intCast, map_zero] using congr_arg φ hc
+  exact ⟨by simpa [map_intCast, map_one] using congr_arg φ hA.1,
+    by simpa [map_intCast, map_one] using congr_arg φ hA.2.1,
+    by simpa [map_intCast, map_zero] using congr_arg φ hA.2.2⟩
 
 /-- `Gamma0(N) ≤ Gamma0(M)` when `M ∣ N`: if `N ∣ c` then `M ∣ c`. -/
 theorem Gamma0_le_of_dvd {M N : ℕ} (h : M ∣ N) :
