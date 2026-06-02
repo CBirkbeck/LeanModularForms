@@ -215,32 +215,6 @@ theorem qSupportedOnDvd_eq_zero_or_exists_levelRaise_preimage_of_char
     show (⇑f : UpperHalfPlane → ℂ) = 0
     rw [h_eq, h_zero]; simp [levelRaiseFun]
 
-/-- Reverse Atkin-Lehner character-space iff: for a cusp form
-`f ∈ cuspFormCharSpace k χ.toUnitHom` at level `Γ₁(N)` and a proper divisor `d ∣ N`
-(`1 < d`), `f` is supported on multiples of `d` iff `f = 0` or `f` equals (as a
-function on `ℍ`) the level-raise of some cusp form at level `Γ₁(N/d)`. -/
-theorem qSupportedOnDvdSubmodule_mem_iff_eq_zero_or_exists_levelRaise_preimage_of_char
-    {N d : ℕ} [NeZero N] [NeZero d] [NeZero (N / d)]
-    (hd : 1 < d) (hdN : d ∣ N) {k : ℤ}
-    (χ : DirichletCharacter ℂ N)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hfχ : f ∈ cuspFormCharSpace k χ.toUnitHom) :
-    f ∈ qSupportedOnDvdSubmodule N k d ↔
-      f = 0 ∨ ∃ (g : CuspForm ((Gamma1 (N / d)).map (mapGL ℝ)) k),
-        (⇑(levelRaise (N / d) d k g) : UpperHalfPlane → ℂ) = ⇑f := by
-  refine ⟨fun hfsupp ↦
-    qSupportedOnDvd_eq_zero_or_exists_levelRaise_preimage_of_char
-      hd hdN χ f hfχ hfsupp, ?_⟩
-  rintro (rfl | ⟨g, hg⟩)
-  · exact Submodule.zero_mem _
-  · have heq : d * (N / d) = N := Nat.mul_div_cancel' hdN
-    rw [show f = heq ▸ levelRaise (N / d) d k g from by
-      apply DFunLike.coe_injective
-      show (⇑f : UpperHalfPlane → ℂ) =
-        ⇑(heq ▸ levelRaise (N / d) d k g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-      rw [cuspForm_coe_eq_of_cast heq]; exact hg.symm]
-    exact levelRaise_mem_qSupportedOnDvdSubmodule heq g
-
 /-- Submodule-level forward bridge: the `heq`-cast of every level-raise image lies in
 `qSupportedOnDvdSubmodule N k d`. -/
 theorem cast_levelRaise_mem_qSupportedOnDvdSubmodule
