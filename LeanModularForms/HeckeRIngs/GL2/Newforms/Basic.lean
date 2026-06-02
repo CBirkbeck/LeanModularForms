@@ -365,11 +365,6 @@ theorem oldPart_add_newPart (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
       cuspFormsOld_isCompl_cuspFormsNew).apply_symm_apply f
   rwa [Submodule.prodEquivOfIsCompl_symm_apply, Submodule.coe_prodEquivOfIsCompl'] at h
 
-/-- Alternative reconstruction form: `newPart f = f - oldPart f`. -/
-theorem newPart_eq_sub_oldPart (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    newPart f = f - oldPart f := by
-  rw [eq_sub_iff_add_eq, add_comm, oldPart_add_newPart]
-
 /-- If `f ∈ cuspFormsOld N k`, then `oldPart f = f`. -/
 @[simp] theorem oldPart_of_mem_cuspFormsOld
     {f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k} (hf : f ∈ cuspFormsOld N k) :
@@ -411,17 +406,6 @@ theorem mem_cuspFormsNew_iff_oldPart_eq_zero (f : CuspForm ((Gamma1 N).map (mapG
     f ∈ cuspFormsNew N k ↔ oldPart f = 0 :=
   ⟨oldPart_of_mem_cuspFormsNew, fun h ↦ by
     rw [← oldPart_add_newPart f, h, zero_add]; exact newPart_mem_cuspFormsNew f⟩
-
-/-- **Uniqueness of the old/new decomposition.**  If `f = fo + fn` with
-`fo ∈ cuspFormsOld N k` and `fn ∈ cuspFormsNew N k`, then `fo = oldPart f`
-and `fn = newPart f`. -/
-theorem oldPart_newPart_unique {f fo fn : CuspForm ((Gamma1 N).map (mapGL ℝ)) k}
-    (hfo : fo ∈ cuspFormsOld N k) (hfn : fn ∈ cuspFormsNew N k) (heq : f = fo + fn) :
-    oldPart f = fo ∧ newPart f = fn :=
-  ⟨by rw [heq, show oldPart (fo + fn) = oldPart fo + oldPart fn from map_add _ _ _,
-       oldPart_of_mem_cuspFormsOld hfo, oldPart_of_mem_cuspFormsNew hfn, add_zero],
-   by rw [heq, show newPart (fo + fn) = newPart fo + newPart fn from map_add _ _ _,
-       newPart_of_mem_cuspFormsOld hfo, newPart_of_mem_cuspFormsNew hfn, zero_add]⟩
 
 /-- Conditional `mainLemma` consumer: under the coprime-to-`N` Fourier vanishing hypothesis,
 if additionally `newPart f = 0` then `f ∈ cuspFormsOld N k`.  The `_h_vanish` hypothesis
