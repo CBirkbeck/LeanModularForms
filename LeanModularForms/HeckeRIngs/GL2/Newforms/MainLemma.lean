@@ -188,52 +188,6 @@ private lemma qExpansion_one_levelRaise_coeff_eq_zero_of_not_dvd
         qExpansion_ext2 _ _ h_fun_eq,
     qExpansion_one_modularFormLevelRaise_coeff, if_neg hn]
 
-/-- **Oldforms have zero Fourier coefficients at indices coprime to the level.**
-This is the **reverse (easy) direction** of
-`Newforms.mainLemma` (DS Theorem 5.7.1): every `f ∈ S_k(Γ₁(N))^old`
-satisfies `a_n(f) = 0` whenever `(n, N) = 1`.
-
-Together with `Newforms.mainLemma` (the hard converse), this
-characterises oldforms by their Fourier support at coprime-to-`N`
-indices. -/
-theorem cuspFormsOld_coeff_eq_zero_of_coprime
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hf : f ∈ cuspFormsOld N k)
-    (n : ℕ) (hn : Nat.Coprime n N) :
-    (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0 := by
-  refine Submodule.span_induction
-    (p := fun (x : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) _ ↦
-      (ModularFormClass.qExpansion (1 : ℝ) x).coeff n = 0)
-    ?_ ?_ ?_ ?_ hf
-  · rintro f₀ ⟨M, d, _, _, hd_lt, heq, g, rfl⟩
-    subst heq
-    have h_coprime_d : Nat.Coprime n d := hn.coprime_dvd_right ⟨M, rfl⟩
-    refine qExpansion_one_levelRaise_coeff_eq_zero_of_not_dvd g n fun h_dvd ↦ ?_
-    rw [Nat.Coprime, Nat.gcd_eq_right h_dvd] at h_coprime_d; lia
-  · simp [qExpansion_zero]
-  · intro x y _ _ ihx ihy
-    have h_eq : ModularFormClass.qExpansion (1 : ℝ)
-        (⇑(x + y) : UpperHalfPlane → ℂ) =
-        ModularFormClass.qExpansion (1 : ℝ) ⇑x +
-          ModularFormClass.qExpansion (1 : ℝ) ⇑y := by
-      have := qExpansion_add (Γ := (Gamma1 N).map (mapGL ℝ)) (h := 1) (a := k) (b := k)
-        one_pos (one_mem_strictPeriods_Gamma1_map N) x y
-      convert this using 2
-    change (PowerSeries.coeff n) (ModularFormClass.qExpansion 1 ⇑(x + y)) = 0
-    rw [h_eq, map_add, ihx, ihy, zero_add]
-  · intro c x _ ihx
-    have h_eq : ModularFormClass.qExpansion (1 : ℝ)
-        (⇑(c • x) : UpperHalfPlane → ℂ) =
-        c • ModularFormClass.qExpansion (1 : ℝ) ⇑x := by
-      have := qExpansion_smul (Γ := (Gamma1 N).map (mapGL ℝ)) (k := k) (h := 1) one_pos
-        (one_mem_strictPeriods_Gamma1_map N) c x
-      convert this using 2
-    change (PowerSeries.coeff n) (ModularFormClass.qExpansion 1 ⇑(c • x)) = 0
-    rw [h_eq, show (PowerSeries.coeff n)
-      (c • ModularFormClass.qExpansion (1 : ℝ) ⇑x) =
-      c * (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑x) from
-        by simp [smul_eq_mul], ihx, mul_zero]
-
 /-- **The Main Lemma** (DS Theorem 5.7.1, Atkin-Lehner [AL70]):
 If `f ∈ S_k(Γ₁(N))` has Fourier expansion `f(τ) = Σ aₙ qⁿ` with `aₙ = 0`
 whenever `(n, N) = 1`, then `f` is an oldform.
