@@ -646,6 +646,290 @@ theorem cauchy_triangle_zero
   exact cauchy_integral_zero_pwc1 hU_open hU_ne hf (triangleContour a b c hab hbc hca)
     (IsNullHomologous.of_convex_open _ hU_open hU_convex h_image) h_a_in_U
 
+/-! ## Decomposition into three segment integrals
+
+The contour integral along `triangleContour a b c` decomposes as
+`(a → b) + (b → c) + (c → a)`, each parameterised over `[0, 1]`. -/
+
+/-- `HasDerivAt` of `(trianglePath a b c).extend` on the open first piece. -/
+private lemma trianglePath_extend_hasDerivAt_seg1 (a b c : ℂ) {t : ℝ}
+    (ht : t ∈ Ioo (0 : ℝ) (1/3)) :
+    HasDerivAt (trianglePath a b c).extend (3 * (b - a)) t :=
+  (triSeg1_hasDerivAt a b t).congr_of_eventuallyEq
+    (Filter.eventually_of_mem (Ioo_mem_nhds ht.1 ht.2) fun _ hs =>
+      trianglePath_extend_eq_seg1_on_Icc a b c (Ioo_subset_Icc_self hs))
+
+/-- `HasDerivAt` of `(trianglePath a b c).extend` on the open second piece. -/
+private lemma trianglePath_extend_hasDerivAt_seg2 (a b c : ℂ) {t : ℝ}
+    (ht : t ∈ Ioo (1/3 : ℝ) (2/3)) :
+    HasDerivAt (trianglePath a b c).extend (3 * (c - b)) t :=
+  (triSeg2_hasDerivAt b c t).congr_of_eventuallyEq
+    (Filter.eventually_of_mem (Ioo_mem_nhds ht.1 ht.2) fun _ hs =>
+      trianglePath_extend_eq_seg2_on_Icc a b c (Ioo_subset_Icc_self hs))
+
+/-- `HasDerivAt` of `(trianglePath a b c).extend` on the open third piece. -/
+private lemma trianglePath_extend_hasDerivAt_seg3 (a b c : ℂ) {t : ℝ}
+    (ht : t ∈ Ioo (2/3 : ℝ) 1) :
+    HasDerivAt (trianglePath a b c).extend (3 * (a - c)) t :=
+  (triSeg3_hasDerivAt a c t).congr_of_eventuallyEq
+    (Filter.eventually_of_mem (Ioo_mem_nhds ht.1 ht.2) fun _ hs =>
+      trianglePath_extend_eq_seg3_on_Icc a b c (Ioo_subset_Icc_self hs))
+
+/-- The derivative of `(trianglePath a b c).extend` on the open first piece. -/
+private lemma trianglePath_extend_deriv_seg1 (a b c : ℂ) {t : ℝ}
+    (ht : t ∈ Ioo (0 : ℝ) (1/3)) :
+    deriv (trianglePath a b c).extend t = 3 * (b - a) :=
+  (trianglePath_extend_hasDerivAt_seg1 a b c ht).deriv
+
+/-- The derivative of `(trianglePath a b c).extend` on the open second piece. -/
+private lemma trianglePath_extend_deriv_seg2 (a b c : ℂ) {t : ℝ}
+    (ht : t ∈ Ioo (1/3 : ℝ) (2/3)) :
+    deriv (trianglePath a b c).extend t = 3 * (c - b) :=
+  (trianglePath_extend_hasDerivAt_seg2 a b c ht).deriv
+
+/-- The derivative of `(trianglePath a b c).extend` on the open third piece. -/
+private lemma trianglePath_extend_deriv_seg3 (a b c : ℂ) {t : ℝ}
+    (ht : t ∈ Ioo (2/3 : ℝ) 1) :
+    deriv (trianglePath a b c).extend t = 3 * (a - c) :=
+  (trianglePath_extend_hasDerivAt_seg3 a b c ht).deriv
+
+/-- On the open first piece `Ioo 0 (1/3)`, the contour integrand of `f` along
+`triangleContour` equals `f (triSeg1 a b t) * (3 * (b - a))`. -/
+private lemma triangleContour_integrand_seg1_ae (a b c : ℂ) (f : ℂ → ℂ) :
+    ∀ᵐ t, t ∈ Ι (0 : ℝ) (1/3) →
+      f ((trianglePath a b c).extend t) * deriv (trianglePath a b c).extend t
+        = f (triSeg1 a b t) * (3 * (b - a)) := by
+  filter_upwards [MeasureTheory.Measure.ae_ne volume (1/3 : ℝ)] with t ht hI
+  rw [show Ι (0 : ℝ) (1/3) = Ioc 0 (1/3) from uIoc_of_le (by norm_num)] at hI
+  have ht' : t ∈ Ioo (0 : ℝ) (1/3) := ⟨hI.1, lt_of_le_of_ne hI.2 ht⟩
+  rw [trianglePath_extend_deriv_seg1 a b c ht',
+      trianglePath_extend_eq_seg1_on_Icc a b c (Ioo_subset_Icc_self ht')]
+
+/-- On the open second piece `Ioo (1/3) (2/3)`, the contour integrand of `f` along
+`triangleContour` equals `f (triSeg2 b c t) * (3 * (c - b))`. -/
+private lemma triangleContour_integrand_seg2_ae (a b c : ℂ) (f : ℂ → ℂ) :
+    ∀ᵐ t, t ∈ Ι (1/3 : ℝ) (2/3) →
+      f ((trianglePath a b c).extend t) * deriv (trianglePath a b c).extend t
+        = f (triSeg2 b c t) * (3 * (c - b)) := by
+  filter_upwards [MeasureTheory.Measure.ae_ne volume (2/3 : ℝ)] with t ht hI
+  rw [show Ι (1/3 : ℝ) (2/3) = Ioc (1/3) (2/3) from uIoc_of_le (by norm_num)] at hI
+  have ht' : t ∈ Ioo (1/3 : ℝ) (2/3) := ⟨hI.1, lt_of_le_of_ne hI.2 ht⟩
+  rw [trianglePath_extend_deriv_seg2 a b c ht',
+      trianglePath_extend_eq_seg2_on_Icc a b c (Ioo_subset_Icc_self ht')]
+
+/-- On the open third piece `Ioo (2/3) 1`, the contour integrand of `f` along
+`triangleContour` equals `f (triSeg3 a c t) * (3 * (a - c))`. -/
+private lemma triangleContour_integrand_seg3_ae (a b c : ℂ) (f : ℂ → ℂ) :
+    ∀ᵐ t, t ∈ Ι (2/3 : ℝ) 1 →
+      f ((trianglePath a b c).extend t) * deriv (trianglePath a b c).extend t
+        = f (triSeg3 a c t) * (3 * (a - c)) := by
+  filter_upwards [MeasureTheory.Measure.ae_ne volume (1 : ℝ)] with t ht hI
+  rw [show Ι (2/3 : ℝ) 1 = Ioc (2/3) 1 from uIoc_of_le (by norm_num)] at hI
+  have ht' : t ∈ Ioo (2/3 : ℝ) 1 := ⟨hI.1, lt_of_le_of_ne hI.2 ht⟩
+  rw [trianglePath_extend_deriv_seg3 a b c ht',
+      trianglePath_extend_eq_seg3_on_Icc a b c (Ioo_subset_Icc_self ht')]
+
+/-! ### Continuity helpers for the segment integrands
+
+If `f` is continuous on the image of the triangle path, then the
+"segment integrand" `t ↦ f (triSeg_i ...) * (3 * v_i)` (where `v_i` is the
+segment velocity) is continuous on the corresponding closed sub-interval. -/
+
+/-- The image of `triSeg1 a b` on `Icc 0 (1/3)` lies inside the image of the
+triangle path on `Icc 0 1`. -/
+private lemma triSeg1_image_subset_path_image (a b c : ℂ) :
+    triSeg1 a b '' Icc (0 : ℝ) (1/3)
+      ⊆ (trianglePath a b c).extend '' Icc (0 : ℝ) 1 := by
+  rintro _ ⟨t, ht, rfl⟩
+  exact ⟨t, ⟨ht.1, le_trans ht.2 (by norm_num)⟩,
+    trianglePath_extend_eq_seg1_on_Icc a b c ht⟩
+
+/-- The image of `triSeg2 b c` on `Icc (1/3) (2/3)` lies inside the image of the
+triangle path on `Icc 0 1`. -/
+private lemma triSeg2_image_subset_path_image (a b c : ℂ) :
+    triSeg2 b c '' Icc (1/3 : ℝ) (2/3)
+      ⊆ (trianglePath a b c).extend '' Icc (0 : ℝ) 1 := by
+  rintro _ ⟨t, ht, rfl⟩
+  exact ⟨t, ⟨le_trans (by norm_num) ht.1, le_trans ht.2 (by norm_num)⟩,
+    trianglePath_extend_eq_seg2_on_Icc a b c ht⟩
+
+/-- The image of `triSeg3 a c` on `Icc (2/3) 1` lies inside the image of the
+triangle path on `Icc 0 1`. -/
+private lemma triSeg3_image_subset_path_image (a b c : ℂ) :
+    triSeg3 a c '' Icc (2/3 : ℝ) 1
+      ⊆ (trianglePath a b c).extend '' Icc (0 : ℝ) 1 := by
+  rintro _ ⟨t, ht, rfl⟩
+  exact ⟨t, ⟨le_trans (by norm_num) ht.1, ht.2⟩,
+    trianglePath_extend_eq_seg3_on_Icc a b c ht⟩
+
+/-- If `f` is continuous on the image of the triangle path on `Icc 0 1`, then
+`fun t ↦ f (triSeg1 a b t) * (3 * (b - a))` is continuous on `Icc 0 (1/3)`. -/
+private lemma seg1_integrand_continuousOn (a b c : ℂ) {f : ℂ → ℂ}
+    (hf : ContinuousOn f ((trianglePath a b c).extend '' Icc (0 : ℝ) 1)) :
+    ContinuousOn (fun t : ℝ => f (triSeg1 a b t) * (3 * (b - a))) (Icc (0 : ℝ) (1/3)) :=
+  ((hf.comp (triSeg1_continuous a b).continuousOn
+    (fun _ ht => triSeg1_image_subset_path_image a b c (mem_image_of_mem _ ht))).mul
+    continuousOn_const)
+
+/-- If `f` is continuous on the image of the triangle path on `Icc 0 1`, then
+`fun t ↦ f (triSeg2 b c t) * (3 * (c - b))` is continuous on `Icc (1/3) (2/3)`. -/
+private lemma seg2_integrand_continuousOn (a b c : ℂ) {f : ℂ → ℂ}
+    (hf : ContinuousOn f ((trianglePath a b c).extend '' Icc (0 : ℝ) 1)) :
+    ContinuousOn (fun t : ℝ => f (triSeg2 b c t) * (3 * (c - b))) (Icc (1/3 : ℝ) (2/3)) :=
+  ((hf.comp (triSeg2_continuous b c).continuousOn
+    (fun _ ht => triSeg2_image_subset_path_image a b c (mem_image_of_mem _ ht))).mul
+    continuousOn_const)
+
+/-- If `f` is continuous on the image of the triangle path on `Icc 0 1`, then
+`fun t ↦ f (triSeg3 a c t) * (3 * (a - c))` is continuous on `Icc (2/3) 1`. -/
+private lemma seg3_integrand_continuousOn (a b c : ℂ) {f : ℂ → ℂ}
+    (hf : ContinuousOn f ((trianglePath a b c).extend '' Icc (0 : ℝ) 1)) :
+    ContinuousOn (fun t : ℝ => f (triSeg3 a c t) * (3 * (a - c))) (Icc (2/3 : ℝ) 1) :=
+  ((hf.comp (triSeg3_continuous a c).continuousOn
+    (fun _ ht => triSeg3_image_subset_path_image a b c (mem_image_of_mem _ ht))).mul
+    continuousOn_const)
+
+/-! ### Integrability of the original integrand on each sub-interval -/
+
+private lemma triangleContour_integrand_intervalIntegrable_seg1 (a b c : ℂ) {f : ℂ → ℂ}
+    (hf : ContinuousOn f ((trianglePath a b c).extend '' Icc (0 : ℝ) 1)) :
+    IntervalIntegrable
+      (fun t => f ((trianglePath a b c).extend t) * deriv (trianglePath a b c).extend t)
+      volume 0 (1/3) := by
+  have hg_cont : ContinuousOn (fun t : ℝ => f (triSeg1 a b t) * (3 * (b - a)))
+      (uIcc (0 : ℝ) (1/3)) := by
+    rw [uIcc_of_le (by norm_num : (0:ℝ) ≤ 1/3)]
+    exact seg1_integrand_continuousOn a b c hf
+  have hg_int : IntervalIntegrable
+      (fun t : ℝ => f (triSeg1 a b t) * (3 * (b - a))) volume 0 (1/3) :=
+    hg_cont.intervalIntegrable
+  rw [intervalIntegrable_congr_ae
+    ((ae_restrict_iff' measurableSet_uIoc).mpr (triangleContour_integrand_seg1_ae a b c f))]
+  exact hg_int
+
+private lemma triangleContour_integrand_intervalIntegrable_seg2 (a b c : ℂ) {f : ℂ → ℂ}
+    (hf : ContinuousOn f ((trianglePath a b c).extend '' Icc (0 : ℝ) 1)) :
+    IntervalIntegrable
+      (fun t => f ((trianglePath a b c).extend t) * deriv (trianglePath a b c).extend t)
+      volume (1/3) (2/3) := by
+  have hg_cont : ContinuousOn (fun t : ℝ => f (triSeg2 b c t) * (3 * (c - b)))
+      (uIcc (1/3 : ℝ) (2/3)) := by
+    rw [uIcc_of_le (by norm_num : (1/3:ℝ) ≤ 2/3)]
+    exact seg2_integrand_continuousOn a b c hf
+  have hg_int : IntervalIntegrable
+      (fun t : ℝ => f (triSeg2 b c t) * (3 * (c - b))) volume (1/3) (2/3) :=
+    hg_cont.intervalIntegrable
+  rw [intervalIntegrable_congr_ae
+    ((ae_restrict_iff' measurableSet_uIoc).mpr (triangleContour_integrand_seg2_ae a b c f))]
+  exact hg_int
+
+private lemma triangleContour_integrand_intervalIntegrable_seg3 (a b c : ℂ) {f : ℂ → ℂ}
+    (hf : ContinuousOn f ((trianglePath a b c).extend '' Icc (0 : ℝ) 1)) :
+    IntervalIntegrable
+      (fun t => f ((trianglePath a b c).extend t) * deriv (trianglePath a b c).extend t)
+      volume (2/3) 1 := by
+  have hg_cont : ContinuousOn (fun t : ℝ => f (triSeg3 a c t) * (3 * (a - c)))
+      (uIcc (2/3 : ℝ) 1) := by
+    rw [uIcc_of_le (by norm_num : (2/3:ℝ) ≤ 1)]
+    exact seg3_integrand_continuousOn a b c hf
+  have hg_int : IntervalIntegrable
+      (fun t : ℝ => f (triSeg3 a c t) * (3 * (a - c))) volume (2/3) 1 :=
+    hg_cont.intervalIntegrable
+  rw [intervalIntegrable_congr_ae
+    ((ae_restrict_iff' measurableSet_uIoc).mpr (triangleContour_integrand_seg3_ae a b c f))]
+  exact hg_int
+
+/-! ### Each segment integral equals the corresponding "standard form" integral
+
+After an affine change of variables `t = (k + s)/3`, the integral on the `k`-th
+sub-interval becomes `∫₀¹ f(v + s • Δ) * Δ ds`, where `v` is the starting
+vertex and `Δ` is the segment direction. -/
+
+private lemma triangleContour_seg1_integral_eq (a b c : ℂ) (f : ℂ → ℂ) :
+    (∫ t in (0 : ℝ)..(1/3),
+        f ((trianglePath a b c).extend t) * deriv (trianglePath a b c).extend t)
+      = ∫ s in (0 : ℝ)..1, f (a + s • (b - a)) * (b - a) := by
+  -- Step 1: rewrite the integrand using a.e. equality to a "smooth" form.
+  rw [intervalIntegral.integral_congr_ae (triangleContour_integrand_seg1_ae a b c f)]
+  -- Step 2: change of variable `t = s/3`, mapping `[0, 1]` to `[0, 1/3]`.
+  have h_cov := intervalIntegral.smul_integral_comp_mul_left (a := (0 : ℝ)) (b := 1)
+    (f := fun y => f (triSeg1 a b y) * (3 * (b - a))) (1/3 : ℝ)
+  simp only [mul_zero, mul_one] at h_cov
+  rw [← h_cov, ← intervalIntegral.integral_smul]
+  apply intervalIntegral.integral_congr
+  intro x _hx
+  show (1/3 : ℝ) • (f (triSeg1 a b ((1/3) * x)) * (3 * (b - a)))
+    = f (a + x • (b - a)) * (b - a)
+  rw [Complex.real_smul, Complex.real_smul]
+  simp only [triSeg1]
+  push_cast
+  ring_nf
+
+private lemma triangleContour_seg2_integral_eq (a b c : ℂ) (f : ℂ → ℂ) :
+    (∫ t in (1/3 : ℝ)..(2/3),
+        f ((trianglePath a b c).extend t) * deriv (trianglePath a b c).extend t)
+      = ∫ s in (0 : ℝ)..1, f (b + s • (c - b)) * (c - b) := by
+  rw [intervalIntegral.integral_congr_ae (triangleContour_integrand_seg2_ae a b c f)]
+  have h_cov := intervalIntegral.smul_integral_comp_mul_add (a := (0 : ℝ)) (b := 1)
+    (f := fun y => f (triSeg2 b c y) * (3 * (c - b))) (1/3 : ℝ) (1/3 : ℝ)
+  simp only [mul_zero, mul_one, zero_add, show (1/3 : ℝ) + 1/3 = 2/3 by norm_num] at h_cov
+  rw [← h_cov, ← intervalIntegral.integral_smul]
+  apply intervalIntegral.integral_congr
+  intro x _hx
+  show (1/3 : ℝ) • (f (triSeg2 b c ((1/3) * x + 1/3)) * (3 * (c - b)))
+    = f (b + x • (c - b)) * (c - b)
+  rw [Complex.real_smul, Complex.real_smul]
+  simp only [triSeg2]
+  push_cast
+  ring_nf
+
+private lemma triangleContour_seg3_integral_eq (a b c : ℂ) (f : ℂ → ℂ) :
+    (∫ t in (2/3 : ℝ)..1,
+        f ((trianglePath a b c).extend t) * deriv (trianglePath a b c).extend t)
+      = ∫ s in (0 : ℝ)..1, f (c + s • (a - c)) * (a - c) := by
+  rw [intervalIntegral.integral_congr_ae (triangleContour_integrand_seg3_ae a b c f)]
+  have h_cov := intervalIntegral.smul_integral_comp_mul_add (a := (0 : ℝ)) (b := 1)
+    (f := fun y => f (triSeg3 a c y) * (3 * (a - c))) (1/3 : ℝ) (2/3 : ℝ)
+  simp only [mul_zero, mul_one, zero_add, show (1/3 : ℝ) + 2/3 = 1 by norm_num] at h_cov
+  rw [← h_cov, ← intervalIntegral.integral_smul]
+  apply intervalIntegral.integral_congr
+  intro x _hx
+  show (1/3 : ℝ) • (f (triSeg3 a c ((1/3) * x + 2/3)) * (3 * (a - c)))
+    = f (c + x • (a - c)) * (a - c)
+  rw [Complex.real_smul, Complex.real_smul]
+  simp only [triSeg3]
+  push_cast
+  ring_nf
+
+/-- **Decomposition of the contour integral over the triangle into three segment
+integrals.** For a function `f` continuous on the image of the triangular contour,
+the contour integral of `f` along the boundary of `triangleContour a b c hab hbc hca`
+equals the sum of the three segment integrals `(a → b) + (b → c) + (c → a)`, each
+parameterised on `[0, 1]` via `(p, q) ↦ ∫ s in 0..1, f (p + s • (q - p)) * (q - p)`. -/
+theorem contourIntegral_triangleContour_eq
+    {a b c : ℂ} (hab : a ≠ b) (hbc : b ≠ c) (hca : c ≠ a)
+    {f : ℂ → ℂ}
+    (hf : ContinuousOn f
+      ((triangleContour a b c hab hbc hca).toPwC1Immersion.toPiecewiseC1Path '' Icc (0:ℝ) 1)) :
+    (triangleContour a b c hab hbc hca).toPwC1Immersion.toPiecewiseC1Path.contourIntegral f
+      = (∫ s in (0:ℝ)..1, f (a + s • (b - a)) * (b - a))
+      + (∫ s in (0:ℝ)..1, f (b + s • (c - b)) * (c - b))
+      + (∫ s in (0:ℝ)..1, f (c + s • (a - c)) * (a - c)) := by
+  -- Unfold the contour integral. The triangle's path is `(trianglePath a b c).extend`.
+  show ∫ t in (0:ℝ)..1, f ((trianglePath a b c).extend t) * deriv (trianglePath a b c).extend t
+    = _
+  -- `hf` becomes `ContinuousOn f ((trianglePath a b c).extend '' Icc 0 1)`.
+  have hf' : ContinuousOn f ((trianglePath a b c).extend '' Icc (0 : ℝ) 1) := hf
+  -- Split the integral at `1/3` and `2/3`.
+  have h_int1 := triangleContour_integrand_intervalIntegrable_seg1 a b c hf'
+  have h_int2 := triangleContour_integrand_intervalIntegrable_seg2 a b c hf'
+  have h_int3 := triangleContour_integrand_intervalIntegrable_seg3 a b c hf'
+  rw [← intervalIntegral.integral_add_adjacent_intervals h_int1 (h_int2.trans h_int3),
+      ← intervalIntegral.integral_add_adjacent_intervals h_int2 h_int3,
+      triangleContour_seg1_integral_eq a b c f,
+      triangleContour_seg2_integral_eq a b c f,
+      triangleContour_seg3_integral_eq a b c f, ← add_assoc]
+
 end LeanModularForms
 
 end
