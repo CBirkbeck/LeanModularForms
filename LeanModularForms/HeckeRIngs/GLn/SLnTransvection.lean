@@ -64,9 +64,8 @@ private def col0Sum {m : ℕ} (σ : Matrix.SpecialLinearGroup (Fin (m+1)) ℤ) :
 
 private lemma col0_ne_zero {m : ℕ} (σ : Matrix.SpecialLinearGroup (Fin (m+1)) ℤ) :
     ∃ i, σ.1 i 0 ≠ 0 := by
-  by_contra h; push Not at h
-  have : σ.1.det = 0 := Matrix.det_eq_zero_of_column_eq_zero 0 (fun i ↦ h i)
-  linarith [σ.2]
+  by_contra! h
+  exact absurd (Matrix.det_eq_zero_of_column_eq_zero 0 (fun i ↦ h i)) (by rw [σ.2]; norm_num)
 
 private def nzCount {m : ℕ} (σ : Matrix.SpecialLinearGroup (Fin (m+1)) ℤ) : ℕ :=
   (Finset.univ.filter fun i : Fin (m+1) ↦ σ.1 i 0 ≠ 0).card
@@ -75,7 +74,7 @@ private lemma exists_two_nz {m : ℕ} (σ : Matrix.SpecialLinearGroup (Fin (m+1)
     (h : 2 ≤ nzCount σ) :
     ∃ (i j : Fin (m+1)), i ≠ j ∧ σ.1 i 0 ≠ 0 ∧ σ.1 j 0 ≠ 0 := by
   simp only [nzCount] at h
-  have h1 : 1 < (Finset.univ.filter fun i : Fin (m+1) ↦ σ.1 i 0 ≠ 0).card := by omega
+  have h1 : 1 < (Finset.univ.filter fun i : Fin (m+1) ↦ σ.1 i 0 ≠ 0).card := by lia
   obtain ⟨i, hi, j, hj, hij⟩ := Finset.one_lt_card.mp h1
   simp only [Finset.mem_filter, Finset.mem_univ, true_and] at hi hj
   exact ⟨i, j, hij, hi, hj⟩
@@ -113,8 +112,7 @@ private lemma col0_euclidean_step {m : ℕ} (σ : Matrix.SpecialLinearGroup (Fin
   by_cases hge : (σ.1 j₀ 0).natAbs ≤ (σ.1 i₀ 0).natAbs
   · exact ⟨i₀, j₀, hij₀, _, col0_euclidean_step_aux σ i₀ j₀ hij₀ hj₀ hge⟩
   · push Not at hge
-    exact ⟨j₀, i₀, hij₀.symm, _,
-      col0_euclidean_step_aux σ j₀ i₀ hij₀.symm hi₀ hge.le⟩
+    exact ⟨j₀, i₀, hij₀.symm, _, col0_euclidean_step_aux σ j₀ i₀ hij₀.symm hi₀ hge.le⟩
 
 private lemma col0_reduce {m : ℕ} (σ : Matrix.SpecialLinearGroup (Fin (m+1)) ℤ) :
     ∃ (L : List (Matrix.SpecialLinearGroup (Fin (m+1)) ℤ)),
@@ -140,13 +138,14 @@ private lemma col0_reduce {m : ℕ} (σ : Matrix.SpecialLinearGroup (Fin (m+1)) 
       by rw [List.prod_append, List.prod_cons, List.prod_nil, mul_one, mul_assoc]; exact hL_nz⟩
 
 private lemma slTransvecG_inv {m : ℕ} (i j : Fin m) (hij : i ≠ j) (c : ℤ) :
-    (slTransvecG i j hij c)⁻¹ = slTransvecG i j hij (-c) := by
-  apply mul_left_cancel (a := slTransvecG i j hij c)
-  rw [mul_inv_cancel, slTransvecG_mul, add_neg_cancel, slTransvecG_zero]
+    (slTransvecG i j hij c)⁻¹ = slTransvecG i j hij (-c) :=
+  mul_left_cancel (a := slTransvecG i j hij c) <| by
+    rw [mul_inv_cancel, slTransvecG_mul, add_neg_cancel, slTransvecG_zero]
 
 private lemma isTransvec_inv {m : ℕ} {E : Matrix.SpecialLinearGroup (Fin m) ℤ}
     (hE : IsTransvec E) : IsTransvec E⁻¹ := by
-  obtain ⟨i, j, hij, c, rfl⟩ := hE; rw [slTransvecG_inv]; exact ⟨i, j, hij, -c, rfl⟩
+  obtain ⟨i, j, hij, c, rfl⟩ := hE
+  rw [slTransvecG_inv]; exact ⟨i, j, hij, -c, rfl⟩
 
 private lemma transvec_list_inv {m : ℕ} (L : List (Matrix.SpecialLinearGroup (Fin m) ℤ))
     (hL : ∀ E ∈ L, IsTransvec E) :
@@ -260,7 +259,7 @@ private lemma row0_clear_step {m : ℕ} (σ : Matrix.SpecialLinearGroup (Fin (m+
         by_cases h0 : (k : ℕ) = 0 <;> simp [h0, hother k (Finset.mem_erase.mp hk).1]
     rw [h_rest, hclear, show (if (j₀ : ℕ) = 0 then 0 else (0 : ℤ).natAbs) = 0 from by simp]
     simp only [hj₀_val, ↓reduceIte, zero_add]
-    omega
+    lia
 
 private lemma row0_clear {m : ℕ} (τ : Matrix.SpecialLinearGroup (Fin (m+1)) ℤ)
     (h00 : τ.1 0 0 = 1) (hi0 : ∀ i : Fin (m+1), i ≠ 0 → τ.1 i 0 = 0) :
@@ -286,7 +285,7 @@ private lemma row0_clear {m : ℕ} (τ : Matrix.SpecialLinearGroup (Fin (m+1)) �
       fun i hi ↦ by simp [hσi0 i hi]⟩
   · obtain ⟨E, hE_tv, hσ'00, hσ'i0, hlt⟩ := row0_clear_step σ hσ00 hσi0 hzero
     obtain ⟨L', hL'_tv, hL'_00, hL'_0j, hL'_i0⟩ :=
-      ihk (row0Sum (σ * E)) (by omega) (σ * E) hσ'00 hσ'i0 le_rfl
+      ihk (row0Sum (σ * E)) (by lia) (σ * E) hσ'00 hσ'i0 le_rfl
     refine ⟨E :: L',
       fun F hF ↦ (List.mem_cons.mp hF).elim (· ▸ hE_tv) (hL'_tv F), ?_, ?_, ?_⟩
     · simpa only [List.prod_cons, ← mul_assoc] using hL'_00
@@ -304,7 +303,7 @@ private lemma nzCount_le_one_unique_nonzero {m : ℕ}
       simp only [Finset.mem_insert, Finset.mem_singleton] at hx
       simp only [Finset.mem_filter, Finset.mem_univ, true_and]
       exact hx.elim (· ▸ hi₀) (· ▸ hne)
-  omega
+  lia
 
 private lemma sole_nonzero_col0_is_unit {m : ℕ} (τ : Matrix.SpecialLinearGroup (Fin (m+1)) ℤ)
     (i₀ : Fin (m+1)) (h_others : ∀ k, k ≠ i₀ → τ.1 k 0 = 0) :
@@ -458,10 +457,10 @@ private lemma to_block_form {m : ℕ} (τ : Matrix.SpecialLinearGroup (Fin (m+1)
     rcases h_unit with h1 | h_neg1
     · exact ⟨[], fun _ h ↦ absurd h (by simp), by simp [h1],
         fun i hi ↦ by simp [h_others i hi]⟩
-    · rcases m with _ | m'
-      · exact absurd (show τ.1.det = -1 by simp [Matrix.det_unique, h_neg1])
-          (by rw [τ.2]; norm_num)
-      · exact column_pivot_of_neg_one_at_zero τ h_neg1 h_others
+    rcases m with _ | m'
+    · exact absurd (show τ.1.det = -1 by simp [Matrix.det_unique, h_neg1])
+        (by rw [τ.2]; norm_num)
+    · exact column_pivot_of_neg_one_at_zero τ h_neg1 h_others
   · exact column_pivot_of_unit_off_diagonal τ i₀ hi₀_zero h_others h_unit
 
 /-- Every element of `SL_m(ℤ)` is a product of transvections. -/
