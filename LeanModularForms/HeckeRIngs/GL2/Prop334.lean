@@ -67,34 +67,6 @@ lemma matrix_fin_two_conj_entry_11_mod_eq (N : ℤ) (a b c d α β γ δ : ℤ)
   rw [inv_mul_mul_entry_smul_det _ _ hdet]
   simp [Matrix.adjugate_fin_two, Matrix.mul_apply, Fin.sum_univ_two]; ring
 
-/-- For `g = !![a, b; N·c, d]` with `det g ≠ 0` and `h = !![α, β; N·γ, δ]`
-(promoted to `M₂(ℚ)`), the (0,0) entry of the rational conjugate satisfies
-`(g⁻¹ · h · g)₀₀ · det g = a·d·α + N · (-a·b·γ + c·d·β - b·c·δ)` over `ℚ`. -/
-lemma matrix_fin_two_conj_entry_00_mod_eq (N : ℤ) (a b c d α β γ δ : ℤ)
-    (hdet : (!![(a : ℚ), b; N * c, d]).det ≠ 0) :
-    ((!![(a : ℚ), b; N * c, d])⁻¹ *
-        !![(α : ℚ), β; N * γ, δ] * !![(a : ℚ), b; N * c, d]) 0 0 *
-      (!![(a : ℚ), b; N * c, d]).det =
-      (a : ℚ) * d * α + N * (-(a * b * γ) + c * d * β - b * c * δ) := by
-  rw [inv_mul_mul_entry_smul_det _ _ hdet]
-  simp [Matrix.adjugate_fin_two, Matrix.mul_apply, Fin.sum_univ_two]; ring
-
-/-- Divisibility corollary of `adj_mul_mul_entry_11_eq`: the difference between
-the (1,1) entry of `adj g * h * g` and `a·d·δ` is an `N`-multiple. -/
-lemma N_dvd_adj_mul_mul_entry_11_sub (N : ℤ) (a b c d α β γ δ : ℤ) :
-    N ∣ ((Matrix.adjugate !![a, b; N * c, d] *
-        !![α, β; N * γ, δ]) * !![a, b; N * c, d]) 1 1 - a * d * δ := by
-  rw [adj_mul_mul_entry_11_eq]
-  exact ⟨a * b * γ - b * c * α - c * d * β, by ring⟩
-
-/-- Divisibility corollary of `adj_mul_mul_entry_00_eq`: the difference between
-the (0,0) entry of `adj g * h * g` and `a·d·α` is an `N`-multiple. -/
-lemma N_dvd_adj_mul_mul_entry_00_sub (N : ℤ) (a b c d α β γ δ : ℤ) :
-    N ∣ ((Matrix.adjugate !![a, b; N * c, d] *
-        !![α, β; N * γ, δ]) * !![a, b; N * c, d]) 0 0 - a * d * α := by
-  rw [adj_mul_mul_entry_00_eq]
-  exact ⟨-(a * b * γ) + c * d * β - b * c * δ, by ring⟩
-
 private lemma isUnit_ad_of_det_coprime {N : ℕ} (a b c d : ℤ)
     (hdet : Int.gcd (!![a, b; (N : ℤ) * c, d] : Matrix _ _ ℤ).det N = 1) :
     IsUnit ((a * d : ℤ) : ZMod N) := by
