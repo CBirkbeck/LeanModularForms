@@ -1015,14 +1015,6 @@ theorem heckeT_p_preserves_modFormCharSpace [NeZero N] (k : ℤ) (p : ℕ)
     congr_fun (congr_arg DFunLike.coe (heckeT_p_comm_diamondOp k p hp hpN d)) f
   rw [h1, hf d, map_smul]
 
-/-- `T_p` preserves the cusp form character space `S_k(Γ₁(N), χ)`.
-(Requires defining T_p on cusp forms; stated here for completeness.) -/
-theorem heckeT_p_preserves_cuspFormCharSpace [NeZero N] (k : ℤ) (p : ℕ)
-    (_hp : Nat.Prime p) (_hpN : Nat.Coprime p N)
-    (χ : (ZMod N)ˣ →* ℂˣ) {_f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k}
-    (_hf : _f ∈ cuspFormCharSpace k χ) :
-    True := trivial
-
 /-- `diag(1,p)` lies in `Δ₁(N)` for any `N` and `p > 0`. -/
 lemma diag_1p_mem_Delta1 (N p : ℕ) [NeZero N] (hp : 0 < p) :
     diagMat 2 ![1, p] ∈ Delta1_submonoid N := by
