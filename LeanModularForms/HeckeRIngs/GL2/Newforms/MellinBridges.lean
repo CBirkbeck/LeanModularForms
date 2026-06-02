@@ -368,36 +368,6 @@ noncomputable def Newform.PerNewformFullDirichletData_of_classicalInputs_T111
       (fun p hp ↦ (h_factors_ne p hp).2)
       h_den_factors_ne)
 
-/-- Strong multiplicity one from per-newform `Newform.HeckeFEData` and
-`Newform.PerNewformFullDirichletData` plus newform uniqueness: the SMO-facing
-endpoint that consumers should target. -/
-theorem strongMultiplicityOne_of_HeckeFEData_of_PerNewformFullDirichletData_of_newformUnique
-    (h_unique : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
-      f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      (∀ n : ℕ+, Nat.Coprime n.val N → f.eigenvalue n = g.eigenvalue n) →
-      f.toCuspForm = g.toCuspForm)
-    (h_FE : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k), Newform.HeckeFEData f)
-    (h_data : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
-      f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      ∀ (S : Finset ℕ),
-        (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
-          q ∉ S → f.lCoeff q = 0) →
-        Newform.PerNewformFullDirichletData f χ S)
-    {N : ℕ} [NeZero N] {k : ℤ} (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (hgχ : g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (S : Finset ℕ)
-    (h : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S →
-      f.eigenvalue n = g.eigenvalue n) :
-    f.toCuspForm = g.toCuspForm :=
-  strongMultiplicityOne_of_analyticContradiction_of_newformUnique h_unique
-    (Newform.analyticContradiction_of_HeckeEntireExtension_of_NoEntireExtensionUnderBadPrime
-      (Newform.HeckeEntireExtension_of_HeckeFEData h_FE)
-      (Newform.noEntireExtensionUnderBadPrime_of_full_dirichletZeroCertificate
-        fun _ _ _ f χ hfχ S h_bad ↦ (h_data f χ hfχ S h_bad).toPre))
-    f g χ hfχ hgχ S h
-
 /-- Direct bridge `Newform.HeckeFEData` + `Newform.PerNewformFullDirichletData` ⇒
 `Newform.AnalyticContradiction`, without going through newform uniqueness / SMO. -/
 theorem Newform.analyticContradiction_of_HeckeFEData_of_PerNewformFullDirichletData
