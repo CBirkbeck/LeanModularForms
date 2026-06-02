@@ -56,34 +56,6 @@ lemma diamondOpCuspHom_preserves_cuspFormsNew
     diamondOpCuspHom k d f ∈ cuspFormsNew N k :=
   diamondOp_preserves_cuspFormsNew d f hf
 
-/-- **Character decomposition of `cuspFormsOld N k`**: the oldform subspace
-equals the supremum of its intersections with the Nebentypus character
-subspaces. -/
-theorem cuspFormsOld_iSup_inf_charSpace (k : ℤ) :
-    (⨆ χ : (ZMod N)ˣ →* ℂˣ, cuspFormsOld N k ⊓ cuspFormCharSpace k χ) =
-      cuspFormsOld N k :=
-  cuspFormCharSpace_iSup_inf_of_diamondOpCuspHom_invariant k (cuspFormsOld N k)
-    diamondOpCuspHom_preserves_cuspFormsOld
-
-/-- **Character decomposition of `cuspFormsNew N k`**. -/
-theorem cuspFormsNew_iSup_inf_charSpace (k : ℤ) :
-    (⨆ χ : (ZMod N)ˣ →* ℂˣ, cuspFormsNew N k ⊓ cuspFormCharSpace k χ) =
-      cuspFormsNew N k :=
-  cuspFormCharSpace_iSup_inf_of_diamondOpCuspHom_invariant k (cuspFormsNew N k)
-    diamondOpCuspHom_preserves_cuspFormsNew
-
-/-- **Independence of the character-wise pieces of `cuspFormsOld N k`.** -/
-theorem cuspFormsOld_iSupIndep_inf_charSpace (k : ℤ) :
-    iSupIndep
-      (fun χ : (ZMod N)ˣ →* ℂˣ ↦ cuspFormsOld N k ⊓ cuspFormCharSpace k χ) :=
-  cuspFormCharSpace_iSupIndep_inf k (cuspFormsOld N k)
-
-/-- **Independence of the character-wise pieces of `cuspFormsNew N k`.** -/
-theorem cuspFormsNew_iSupIndep_inf_charSpace (k : ℤ) :
-    iSupIndep
-      (fun χ : (ZMod N)ˣ →* ℂˣ ↦ cuspFormsNew N k ⊓ cuspFormCharSpace k χ) :=
-  cuspFormCharSpace_iSupIndep_inf k (cuspFormsNew N k)
-
 /-- **Finsupp-indexed character decomposition of a newform subspace element.**
 Every `f ∈ cuspFormsNew N k` is a finitely-supported sum of Nebentypus
 components, each simultaneously in `cuspFormsNew N k` and in its character
@@ -377,27 +349,5 @@ theorem newform_unique
     Submodule.disjoint_def.mp cuspFormsOld_disjoint_cuspFormsNew _ ?_
       (newform_diff_mem_cuspFormsNew f g)
   exact mainLemma _ (newform_diff_coprime_coeff_eq_zero f g χ hfχ hgχ h)
-
-/-- **Conditional Atkin–Lehner uniqueness via the explicit `cuspFormsNew`
-zero criterion.**  The conditional twin of `newform_unique` in which the
-upstream spectral/adjoint zero criterion — "any `g ∈ cuspFormsNew N k` whose
-period-1 Fourier coefficients vanish on indices coprime to `N` is zero" — is
-taken as an explicit hypothesis `h_zero` rather than invoked through `mainLemma`. -/
-theorem newform_unique_of_newSubspace_coprime_vanishing_zero
-    (h_zero : ∀ g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k,
-      g ∈ cuspFormsNew N k →
-      (∀ n : ℕ, Nat.Coprime n N →
-        (ModularFormClass.qExpansion (1 : ℝ) g).coeff n = 0) →
-      g = 0)
-    (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (hgχ : g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (h : ∀ n : ℕ+, Nat.Coprime n.val N → f.eigenvalue n = g.eigenvalue n) :
-    f.toCuspForm = g.toCuspForm := by
-  refine sub_eq_zero.mp <|
-    Submodule.disjoint_def.mp cuspFormsOld_disjoint_cuspFormsNew _ ?_
-      (newform_diff_mem_cuspFormsNew f g)
-  exact mainLemma_of_newSubspace_coprime_vanishing_zero h_zero _
-    (newform_diff_coprime_coeff_eq_zero f g χ hfχ hgχ h)
 
 end HeckeRing.GL2
