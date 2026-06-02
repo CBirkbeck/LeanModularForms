@@ -100,14 +100,6 @@ theorem gamma0TwistedSlashModFixedSubmodule_eq_modFormCharSpace (k : ℤ) (χ : 
     rw [hfg]
     simp [gamma0NebentypusChar]
 
-theorem gamma0TwistedSlashModFixedSubmodule_eq_gamma0NebentypusSubmodule
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
-    gamma0TwistedSlashModFixedSubmodule (N := N) k χ =
-      gamma0NebentypusSubmodule (N := N) k χ := by
-  rw [gamma0TwistedSlashModFixedSubmodule_eq_modFormCharSpace]
-  ext f
-  simp [mem_modFormCharSpace_iff_mem_gamma0NebentypusSubmodule]
-
 /-- The fixed submodule of the twisted `Γ₀(N)` action on the ambient cusp-form
 space. -/
 noncomputable def gamma0TwistedSlashCuspFixedSubmodule (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
@@ -139,13 +131,5 @@ theorem gamma0TwistedSlashCuspFixedSubmodule_eq_cuspFormCharSpace (k : ℤ) (χ 
         diamondOpCuspHom (N := N) k (Gamma0MapUnits g) f = f
     rw [hfg]
     simp [gamma0NebentypusChar]
-
-theorem gamma0TwistedSlashCuspFixedSubmodule_eq_cuspGamma0NebentypusSubmodule
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
-    gamma0TwistedSlashCuspFixedSubmodule (N := N) k χ =
-      cuspGamma0NebentypusSubmodule (N := N) k χ := by
-  rw [gamma0TwistedSlashCuspFixedSubmodule_eq_cuspFormCharSpace]
-  ext f
-  simp [mem_cuspFormCharSpace_iff_mem_cuspGamma0NebentypusSubmodule]
 
 end HeckeRing.GL2.Unified
