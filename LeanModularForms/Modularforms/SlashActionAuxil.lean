@@ -36,8 +36,6 @@ theorem α_eq_T_sq : α = ⟨T ^ 2, by simp [sq, T]; decide⟩ := by ext; simp [
 theorem β_eq_negI_mul_S_mul_α_inv_mul_S : β = negI * S * α⁻¹ * S := by
   ext; simp [β, S, α, negI]
 
-theorem ModularGroup.modular_negI_sq : negI ^ 2 = 1 := by
-  ext i j; fin_cases i <;> fin_cases j <;> rfl
 
 theorem ModularGroup.modular_negI_inv : negI⁻¹ = negI := by ext i j; simp [negI]
 
