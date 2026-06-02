@@ -100,64 +100,6 @@ private lemma sum_SL_tile_setIntegral_eq_fiberCard_smul (φ : ℍ → ℂ)
     _ = (slToPslQuot_fiberCard N) • ∫ τ in Gamma1_fundDomain_PSL N, φ τ ∂μ_hyp := by
         rw [← setIntegral_Gamma1_fundDomain_PSL_eq_sum φ φ_int]
 
-open UpperHalfPlane ModularGroup MeasureTheory in
-/-- **Fundamental domain tiling identity** for `GL₂⁺(ℝ)` shifts. -/
-theorem sum_setIntegral_GL2_shift
-    (α : GL(2, ℝ)⁺) (h : UpperHalfPlane → ℂ)
-    (h_inv : ∀ (γ : SL(2, ℤ)), γ ∈ Gamma1 N →
-      ∀ τ : UpperHalfPlane, h (γ • τ) = h τ)
-    (hα_h_inv : ∀ (γ : SL(2, ℤ)), γ ∈ Gamma1 N →
-      ∀ τ : UpperHalfPlane,
-        h ((α : GL (Fin 2) ℝ) • ((γ : SL(2, ℤ)) • τ)) =
-        h ((α : GL (Fin 2) ℝ) • τ))
-    (hα_fd : IsFundamentalDomain (imageGamma1_PSL N)
-      ((α : GL (Fin 2) ℝ) • (Gamma1_fundDomain_PSL N : Set ℍ)) μ_hyp)
-    (h_int : IntegrableOn h (Gamma1_fundDomain_PSL N) μ_hyp)
-    (h_α_int : IntegrableOn (fun τ ↦ h ((α : GL (Fin 2) ℝ) • τ))
-      (Gamma1_fundDomain_PSL N) μ_hyp) :
-    ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-      ∫ τ in (↑α : GL (Fin 2) ℝ) •
-          ((q.out : SL(2, ℤ))⁻¹ • (ModularGroup.fd : Set UpperHalfPlane)),
-        h τ ∂hyperbolicMeasure =
-    ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-      ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (ModularGroup.fd : Set UpperHalfPlane),
-        h τ ∂hyperbolicMeasure := by
-  set h_α : ℍ → ℂ := fun τ ↦ h ((α : GL (Fin 2) ℝ) • τ) with h_α_def
-  have h_LHS_cov : ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
-      ∫ τ in (↑α : GL (Fin 2) ℝ) •
-          ((q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane)),
-        h τ ∂μ_hyp =
-      ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane), h_α τ ∂μ_hyp := by
-    intro q
-    rw [show ((↑α : GL (Fin 2) ℝ) • ((q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane)) :
-          Set UpperHalfPlane) =
-        (fun τ ↦ (α : GL(2, ℝ)⁺) • τ) ''
-          ((q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane)) by
-        rw [Set.image_smul]; rfl]
-    exact (measurePreserving_smul α μ_hyp).setIntegral_image_emb
-      (measurableEmbedding_const_smul α) _ _
-  simp_rw [h_LHS_cov]
-  rw [sum_SL_tile_setIntegral_eq_fiberCard_smul h_α hα_h_inv h_α_int,
-      sum_SL_tile_setIntegral_eq_fiberCard_smul h h_inv h_int]
-  congr 1
-  rw [show ∫ τ in Gamma1_fundDomain_PSL N, h_α τ ∂μ_hyp =
-        ∫ τ in ((↑α : GL (Fin 2) ℝ) • (Gamma1_fundDomain_PSL N : Set ℍ) : Set ℍ),
-          h τ ∂μ_hyp by
-    rw [show ((↑α : GL (Fin 2) ℝ) • (Gamma1_fundDomain_PSL N : Set ℍ) : Set ℍ) =
-        (fun τ ↦ (α : GL(2, ℝ)⁺) • τ) '' (Gamma1_fundDomain_PSL N : Set ℍ) by
-        rw [Set.image_smul]; rfl]
-    exact ((measurePreserving_smul α μ_hyp).setIntegral_image_emb
-      (measurableEmbedding_const_smul α) _ _).symm]
-  refine hα_fd.setIntegral_eq isFundamentalDomain_Gamma1_PSL ?_
-  intro g τ
-  obtain ⟨γ, hγ_mem, hγ_eq⟩ := Subgroup.mem_map.mp g.property
-  have h_act_eq : ((g : imageGamma1_PSL N) : PSL(2, ℤ)) • τ = γ • τ := by
-    rw [← hγ_eq]
-    exact PSL_smul_coe γ τ
-  show h (((g : imageGamma1_PSL N) : PSL(2, ℤ)) • τ) = h τ
-  rw [h_act_eq]
-  exact h_inv γ hγ_mem τ
-
 private lemma peterssonAdj_glMap_T_p_upper (p : ℕ) (hp : 0 < p) (b : ℕ) :
     (peterssonAdj (glMap (T_p_upper p hp b)) : Matrix (Fin 2) (Fin 2) ℝ) =
       !![(p : ℝ), -(b : ℝ); 0, 1] := by
@@ -338,27 +280,6 @@ theorem peterssonInner_sum_left
       rw [funext (petersson_sum_right t g F)]
       exact MeasureTheory.integrable_finset_sum _ h_t
     rw [peterssonInner_add_left D (F i) (∑ j ∈ t, F j) g
-        (h_int i (Finset.mem_insert_self i t)) h_sum_int,
-      ih h_t, Finset.sum_insert hi]
-
-open UpperHalfPlane ModularGroup MeasureTheory in
-/-- Finset additivity of `peterssonInner` in the second argument
-(the slot-2 analogue of `peterssonInner_sum_left`). -/
-lemma peterssonInner_sum_right
-    {ι : Type*} [DecidableEq ι] (s : Finset ι)
-    (f : ℍ → ℂ) (G : ι → ℍ → ℂ) (D : Set ℍ)
-    (h_int : ∀ i ∈ s, IntegrableOn (fun τ ↦ petersson k f (G i) τ) D μ_hyp) :
-    peterssonInner k D f (∑ i ∈ s, G i) = ∑ i ∈ s, peterssonInner k D f (G i) := by
-  induction s using Finset.induction_on with
-  | empty => simp [peterssonInner_zero_right]
-  | insert i t hi ih =>
-    rw [Finset.sum_insert hi]
-    have h_t := fun j hj ↦ h_int j (Finset.mem_insert_of_mem hj)
-    have h_sum_int :
-        IntegrableOn (fun τ ↦ petersson k f (∑ j ∈ t, G j) τ) D μ_hyp := by
-      rw [funext (petersson_sum_right t f G)]
-      exact MeasureTheory.integrable_finset_sum _ h_t
-    rw [peterssonInner_add_right k D f (G i) (∑ j ∈ t, G j)
         (h_int i (Finset.mem_insert_self i t)) h_sum_int,
       ih h_t, Finset.sum_insert hi]
 
