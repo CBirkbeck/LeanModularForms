@@ -76,11 +76,6 @@ end ModularFormConstructor
 
 section LinearMap
 
-/-- Hecke slash of negation. -/
-lemma heckeSlash_neg (k : ℤ) (D : HeckeCoset (GL_pair 2)) (f : ℍ → ℂ) :
-    heckeSlash k D (-f) = -heckeSlash k D f := by
-  simp only [heckeSlash, SlashAction.neg_slash, Finset.sum_neg_distrib]
-
 /-- The Hecke operator `T(D)` as a `ℂ`-linear map on modular forms. -/
 noncomputable def heckeOperatorLinear (k : ℤ) (D : HeckeCoset (GL_pair 2)) :
     ModularForm 𝒮ℒ k →ₗ[ℂ] ModularForm 𝒮ℒ k where
@@ -307,11 +302,6 @@ section HeckeAlgebraAction
     `heckeSlashExt k T f = T.sum (fun D c => c • heckeSlash k D f)`. -/
 noncomputable def heckeSlashExt (k : ℤ) (T : HeckeAlgebra 2) (f : ℍ → ℂ) : ℍ → ℂ :=
   T.sum (fun D c ↦ c • heckeSlash k D f)
-
-/-- The extended action on a single double coset recovers `heckeSlash`. -/
-lemma heckeSlashExt_single (k : ℤ) (D : HeckeCoset (GL_pair 2)) (f : ℍ → ℂ) :
-    heckeSlashExt k (Finsupp.single D 1) f = heckeSlash k D f := by
-  simp [heckeSlashExt, Finsupp.sum_single_index]
 
 /-- Multiplicativity of the Hecke slash for Γ-invariant functions:
     `T(D₁)(T(D₂)(f)) = (T(D₂) * T(D₁))(f)` where `f` is any Γ-invariant function.
