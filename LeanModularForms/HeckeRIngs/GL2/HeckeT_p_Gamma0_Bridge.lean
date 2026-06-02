@@ -310,16 +310,4 @@ theorem heckeT_p_val_eq_heckeOperator_Gamma0_on_charSpace_one (k : ℤ) (p : ℕ
   ext z
   exact congr_fun (heckeT_p_fun_eq_heckeSlash_gen_Gamma0_on_charSpace_one k p hp hpN f) z
 
-/-- Forward-direction variant: `heckeOperator_Gamma0 ∘ equiv = equiv ∘ heckeT_p`. -/
-theorem heckeOperator_Gamma0_eq_equiv_heckeT_p_on_charSpace_one (k : ℤ) (p : ℕ)
-    (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
-    (f : modFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ)) :
-    heckeOperator_Gamma0 N k (D_p_Gamma0 N p hp.pos)
-      (modFormCharSpace_one_equiv_Gamma0 N k f) =
-    modFormCharSpace_one_equiv_Gamma0 N k
-      ⟨heckeT_p k p hp hpN (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k),
-        heckeT_p_preserves_modFormCharSpace k p hp hpN _ f.property⟩ := by
-  ext z
-  exact (congr_fun (heckeT_p_fun_eq_heckeSlash_gen_Gamma0_on_charSpace_one k p hp hpN f) z).symm
-
 end HeckeRing.GL2
