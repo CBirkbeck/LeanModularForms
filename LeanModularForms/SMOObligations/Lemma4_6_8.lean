@@ -176,9 +176,8 @@ theorem miyake_4_6_8_inductive_step
     rw [hl'_def, ← Finset.mul_prod_erase S id hp_in]; simp
   have hp_prime : p.Prime := Nat.prime_of_mem_primeFactors (hS hp_in)
   have hpN : p ∣ N := Nat.dvd_of_mem_primeFactors (hS hp_in)
-  have h_vanish' : ∀ n : ℕ, Nat.Coprime n (p * l') →
-      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0 :=
-    fun n hn ↦ h_vanish n (h_prod_eq ▸ hn)
+  have h_vanish' (n : ℕ) (hn : Nat.Coprime n (p * l')) :
+      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0 := h_vanish n (h_prod_eq ▸ hn)
   haveI : NeZero p := ⟨hp_prime.ne_zero⟩
   obtain ⟨hl'_pos, hpl', hl'_sqfree, hl'_dvd, hp_not_in_l'⟩ :=
     erase_prod_descent_properties S hS hp_prime
@@ -187,9 +186,9 @@ theorem miyake_4_6_8_inductive_step
       hl'_sqfree hpl' hl'_dvd hp_not_in_l' h_vanish'
   set f_p : CuspForm ((Gamma1 N).map (mapGL ℝ)) k :=
     HeckeRing.GL2.AtkinLehner.castLevelRaise N p hpN k f_lower
-  have h_qexp_eq : ∀ n : ℕ, Nat.Coprime n l' →
+  have h_qexp_eq (n : ℕ) (hn : Nat.Coprime n l') :
       (ModularFormClass.qExpansion (1 : ℝ) f_p).coeff n =
-        (ModularFormClass.qExpansion (1 : ℝ) f).coeff n := fun n hn ↦
+        (ModularFormClass.qExpansion (1 : ℝ) f).coeff n :=
     castLevelRaise_qExpansion_coeff_eq hp_prime hpN f f_lower hf_lower_qexp h_vanish' hn
   refine ⟨f_p, HeckeRing.GL2.AtkinLehner.range_castLevelRaise_le_qSupportedOnDvdSubmodule
       hpN k ⟨f_lower, rfl⟩,
