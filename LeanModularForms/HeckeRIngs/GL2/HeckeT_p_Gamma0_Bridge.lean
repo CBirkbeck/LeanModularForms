@@ -57,10 +57,8 @@ private lemma adj_diag_1p_eq_T_p_lower_bridge (p : ℕ) (hp : Nat.Prime p) :
     GL_adjugate (diagMat 2 ![1, p] : GL (Fin 2) ℚ) =
       (T_p_lower p hp.pos : GL (Fin 2) ℚ) := by
   apply Units.ext; ext i j
-  have hpos : ∀ k : Fin 2, 0 < (![1, p] : Fin 2 → Nat) k :=
-    fun k ↦ by fin_cases k <;> simp [hp.pos]
-  have huniv : (Finset.univ : Finset (Fin 2)) = {0, 1} := by
-    ext x; fin_cases x <;> simp
+  have hpos (k : Fin 2) : 0 < (![1, p] : Fin 2 → Nat) k := by fin_cases k <;> simp [hp.pos]
+  have huniv : (Finset.univ : Finset (Fin 2)) = {0, 1} := by ext x; fin_cases x <;> simp
   simp only [GL_adjugate_val, diagMat_val _ _ hpos]
   fin_cases i <;> fin_cases j <;>
     simp [T_p_lower, GeneralLinearGroup.mkOfDetNeZero, Matrix.of_apply, huniv,
@@ -310,9 +308,6 @@ theorem heckeT_p_val_eq_heckeOperator_Gamma0_on_charSpace_one (k : ℤ) (p : ℕ
         (modFormCharSpace_one_equiv_Gamma0 N k f)) :
         ModularForm ((Gamma1 N).map (mapGL ℝ)) k) := by
   ext z
-  change heckeT_p_fun k p hp hpN (f : ModularForm _ k) z =
-    heckeSlash_gen (Gamma0_pair N) k (D_p_Gamma0 N p hp.pos)
-      (⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) z
   exact congr_fun (heckeT_p_fun_eq_heckeSlash_gen_Gamma0_on_charSpace_one k p hp hpN f) z
 
 /-- Forward-direction variant: `heckeOperator_Gamma0 ∘ equiv = equiv ∘ heckeT_p`. -/
@@ -325,10 +320,6 @@ theorem heckeOperator_Gamma0_eq_equiv_heckeT_p_on_charSpace_one (k : ℤ) (p : �
       ⟨heckeT_p k p hp hpN (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k),
         heckeT_p_preserves_modFormCharSpace k p hp hpN _ f.property⟩ := by
   ext z
-  change heckeSlash_gen (Gamma0_pair N) k (D_p_Gamma0 N p hp.pos)
-      (⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) z =
-    heckeT_p_fun k p hp hpN (f : ModularForm _ k) z
-  exact (congr_fun (heckeT_p_fun_eq_heckeSlash_gen_Gamma0_on_charSpace_one k p hp hpN f)
-    z).symm
+  exact (congr_fun (heckeT_p_fun_eq_heckeSlash_gen_Gamma0_on_charSpace_one k p hp hpN f) z).symm
 
 end HeckeRing.GL2
