@@ -505,15 +505,6 @@ theorem cuspFormCharSpace_iSup_inf_of_diamondOpCuspHom_invariant
     rw [← hχ₀, jointDiamondCuspEigenspace_eq_cuspFormCharSpace]
     exact le_iSup (fun ψ : (ZMod N)ˣ →* ℂˣ ↦ p ⊓ cuspFormCharSpace k ψ) χ₀
 
-/-- **`iSupIndep` for the character decomposition of a diamond-invariant
-submodule of `CuspForm (Γ₁(N)) k`.**  As in the ModularForm case, the
-family `(p ⊓ cuspFormCharSpace k χ)_χ` is `iSup`-independent from the
-ambient independence; diamond-invariance is not required. -/
-theorem cuspFormCharSpace_iSupIndep_inf
-    (k : ℤ) (p : Submodule ℂ (CuspForm ((Gamma1 N).map (mapGL ℝ)) k)) :
-    iSupIndep (fun χ : (ZMod N)ˣ →* ℂˣ ↦ p ⊓ cuspFormCharSpace k χ) :=
-  (CuspForm_Gamma1_iSupIndep_charSpace (N := N) k).mono (fun _ ↦ inf_le_right)
-
 /-- **Finsupp-indexed character decomposition of a modular form in a
 diamond-invariant submodule.**  Consumer-facing corollary of
 `modFormCharSpace_iSup_inf_of_diamondOpHom_invariant`: any element of a
