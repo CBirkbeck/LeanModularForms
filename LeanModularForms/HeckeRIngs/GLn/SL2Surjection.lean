@@ -54,11 +54,11 @@ namespace SL2Reduction
 private lemma natAbs_emod_lt (a c : ℤ) (hc : c ≠ 0) : (a % c).natAbs < c.natAbs := by
   rw [Int.natAbs_emod a hc]
   split
-  case isTrue => exact Nat.mod_lt _ (Int.natAbs_pos.mpr hc)
-  case isFalse h =>
+  · exact Nat.mod_lt _ (Int.natAbs_pos.mpr hc)
+  · rename_i h
     push Not at h
-    have : a.natAbs % c.natAbs ≠ 0 := fun heq ↦
-      h.2 (Int.natAbs_dvd_natAbs.mp (Nat.dvd_of_mod_eq_zero heq))
+    have : a.natAbs % c.natAbs ≠ 0 :=
+      fun heq ↦ h.2 (Int.natAbs_dvd_natAbs.mp (Nat.dvd_of_mod_eq_zero heq))
     omega
 
 private lemma isCoprime_emod {d : ℕ} [NeZero d] {a₁ c₁ : ℤ}
@@ -129,12 +129,10 @@ theorem SL2_eq_upperUniTri {R : Type*} [CommRing R] (h : SpecialLinearGroup (Fin
 theorem upperUniTri_mem_range (d : ℕ) [NeZero d] (t : ZMod d) :
     ∃ σ : SpecialLinearGroup (Fin 2) ℤ,
       SpecialLinearGroup.map (Int.castRingHom (ZMod d)) σ =
-      (⟨!![1, t; 0, 1], by
-        rw [det_fin_two]; simp [cons_val_zero, cons_val_one]⟩ :
+      (⟨!![1, t; 0, 1], by rw [det_fin_two]; simp [cons_val_zero, cons_val_one]⟩ :
         SpecialLinearGroup (Fin 2) (ZMod d)) := by
   obtain ⟨t₀, rfl⟩ := ZMod.intCast_surjective t
-  refine ⟨⟨!![1, t₀; 0, 1], by
-    rw [det_fin_two]; simp [cons_val_zero, cons_val_one]⟩, ?_⟩
+  refine ⟨⟨!![1, t₀; 0, 1], by rw [det_fin_two]; simp [cons_val_zero, cons_val_one]⟩, ?_⟩
   ext i j
   simp [map_apply_coe, RingHom.mapMatrix_apply, map_apply]
   fin_cases i <;> fin_cases j <;> simp
@@ -181,17 +179,14 @@ theorem SL2_reduction_surjective (d : ℕ) [NeZero d] :
       IsCoprime.lift_to_int (isCoprime_of_det_eq_one hdet)
     obtain ⟨σ, hσ0, hσ1⟩ := hcop.exists_SL2_col (0 : Fin 2)
     set M := SpecialLinearGroup.map (Int.castRingHom (ZMod d)) σ
-    have hM0 : M 0 0 = a := by
-      simp [M, map_apply_coe, RingHom.mapMatrix_apply, map_apply, hσ0, ha₀]
-    have hM1 : M 1 0 = c := by
-      simp [M, map_apply_coe, RingHom.mapMatrix_apply, map_apply, hσ1, hc₀]
     have hdet' : (!![a, b; c, dd] : Matrix (Fin 2) (Fin 2) (ZMod d)).det = 1 := by
       rw [det_fin_two]; change a * dd - b * c = 1; exact hdet
     set g₀ : SpecialLinearGroup (Fin 2) (ZMod d) := ⟨!![a, b; c, dd], hdet'⟩
-    have hg0_col0 : g₀ 0 0 = a := by simp [g₀, cons_val_zero]
-    have hg0_col1 : g₀ 1 0 = c := by simp [g₀, cons_val_zero, cons_val_one]
-    have hcol0 : M 0 0 = g₀ 0 0 := by rw [hM0, hg0_col0]
-    have hcol1 : M 1 0 = g₀ 1 0 := by rw [hM1, hg0_col1]
+    have hcol0 : M 0 0 = g₀ 0 0 := by
+      simp [M, g₀, map_apply_coe, RingHom.mapMatrix_apply, map_apply, hσ0, ha₀]
+    have hcol1 : M 1 0 = g₀ 1 0 := by
+      simp [M, g₀, map_apply_coe, RingHom.mapMatrix_apply, map_apply, hσ1, hc₀,
+        cons_val_one]
     set t := (M⁻¹ * g₀) 0 1
     have hQ : M⁻¹ * g₀ = ⟨!![1, t; 0, 1], by
         rw [det_fin_two]; simp [cons_val_zero, cons_val_one]⟩ :=
