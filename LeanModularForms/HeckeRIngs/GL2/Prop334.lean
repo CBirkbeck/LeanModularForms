@@ -29,24 +29,6 @@ open Matrix CongruenceSubgroup HeckeRing.GLn Matrix.SpecialLinearGroup HeckeRing
 
 open scoped MatrixGroups
 
-/-- For `g = !![a, b; N·c, d]` and `h = !![α, β; N·γ, δ]` in `M₂(ℤ)`,
-the (1,1) entry of `adj(g) · h · g` equals
-`a·d·δ + N · (a·b·γ - b·c·α - c·d·β)`. -/
-lemma adj_mul_mul_entry_11_eq (N : ℤ) (a b c d α β γ δ : ℤ) :
-    ((Matrix.adjugate !![a, b; N * c, d] *
-        !![α, β; N * γ, δ]) * !![a, b; N * c, d]) 1 1 =
-      a * d * δ + N * (a * b * γ - b * c * α - c * d * β) := by
-  simp [Matrix.adjugate_fin_two, Matrix.mul_apply, Fin.sum_univ_two]; ring
-
-/-- For `g = !![a, b; N·c, d]` and `h = !![α, β; N·γ, δ]` in `M₂(ℤ)`,
-the (0,0) entry of `adj(g) · h · g` equals
-`a·d·α + N · (-a·b·γ + c·d·β - b·c·δ)`. -/
-lemma adj_mul_mul_entry_00_eq (N : ℤ) (a b c d α β γ δ : ℤ) :
-    ((Matrix.adjugate !![a, b; N * c, d] *
-        !![α, β; N * γ, δ]) * !![a, b; N * c, d]) 0 0 =
-      a * d * α + N * (-(a * b * γ) + c * d * β - b * c * δ) := by
-  simp [Matrix.adjugate_fin_two, Matrix.mul_apply, Fin.sum_univ_two]; ring
-
 private lemma inv_mul_mul_entry_smul_det {K : Type*} [Field K]
     (g h : Matrix (Fin 2) (Fin 2) K) (hdet : g.det ≠ 0) (i j : Fin 2) :
     (g⁻¹ * h * g) i j * g.det = (Matrix.adjugate g * h * g) i j := by
