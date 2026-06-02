@@ -33,12 +33,8 @@ noncomputable def gamma0TwistedSlashModHom (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ
   toFun g :=
     (↑(gamma0NebentypusChar (N := N) χ g) : ℂ)⁻¹ •
       diamondOpHom (N := N) k (Gamma0MapUnits g)
-  map_one' := by
-    ext f z
-    simp [gamma0NebentypusChar]
-  map_mul' g₁ g₂ := by
-    ext f z
-    simp [gamma0NebentypusChar, map_mul, Module.End.mul_apply, smul_smul, mul_comm, mul_assoc]
+  map_one' := by simp [gamma0NebentypusChar]
+  map_mul' g₁ g₂ := by simp [gamma0NebentypusChar, map_mul, smul_smul, mul_comm]
 
 @[simp] lemma gamma0TwistedSlashModHom_apply (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (g : ↥(Gamma0 N))
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
@@ -58,12 +54,8 @@ noncomputable def gamma0TwistedSlashCuspHom (k : ℤ) (χ : (ZMod N)ˣ →* ℂ�
   toFun g :=
     (↑(gamma0NebentypusChar (N := N) χ g) : ℂ)⁻¹ •
       diamondOpCuspHom (N := N) k (Gamma0MapUnits g)
-  map_one' := by
-    ext f z
-    simp [gamma0NebentypusChar]
-  map_mul' g₁ g₂ := by
-    ext f z
-    simp [gamma0NebentypusChar, map_mul, Module.End.mul_apply, smul_smul, mul_comm, mul_assoc]
+  map_one' := by simp [gamma0NebentypusChar]
+  map_mul' g₁ g₂ := by simp [gamma0NebentypusChar, map_mul, smul_smul, mul_comm]
 
 @[simp] lemma gamma0TwistedSlashCuspHom_apply (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (g : ↥(Gamma0 N))
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
