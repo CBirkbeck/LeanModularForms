@@ -265,26 +265,6 @@ theorem newPart_coeff_eq_zero_of_coprime_of_vanish
   rw [h_vanish n hn, oldPart_coeff_eq_zero_of_coprime f n hn, zero_add] at h_coeff
   exact h_coeff.symm
 
-/-- **`mainLemma` from a zero-criterion on `cuspFormsNew N k`.**  If every cusp
-form in `cuspFormsNew N k` whose period-1 Fourier coefficients vanish on all
-indices coprime to `N` is zero, then `Newforms.mainLemma` follows: any `f` with
-the coprime-vanishing hypothesis is an oldform.  This isolates the genuinely
-upstream content of the classical Atkin–Lehner reduction as the zero-criterion
-hypothesis. -/
-theorem mainLemma_of_newSubspace_coprime_vanishing_zero
-    (h_new_zero : ∀ g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k,
-      g ∈ cuspFormsNew N k →
-      (∀ n : ℕ, Nat.Coprime n N →
-        (ModularFormClass.qExpansion (1 : ℝ) g).coeff n = 0) →
-      g = 0)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (h_vanish : ∀ n : ℕ, Nat.Coprime n N →
-      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0) :
-    f ∈ cuspFormsOld N k :=
-  mainLemma_of_newPart_eq_zero f h_vanish <|
-    h_new_zero (newPart f) (newPart_mem_cuspFormsNew f)
-      (newPart_coeff_eq_zero_of_coprime_of_vanish f h_vanish)
-
 /-- **The Main Lemma** (DS Theorem 5.7.1, Atkin-Lehner [AL70]):
 If `f ∈ S_k(Γ₁(N))` has Fourier expansion `f(τ) = Σ aₙ qⁿ` with `aₙ = 0`
 whenever `(n, N) = 1`, then `f` is an oldform.
