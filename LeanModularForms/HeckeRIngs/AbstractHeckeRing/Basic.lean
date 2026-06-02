@@ -204,11 +204,6 @@ lemma DoubleCoset.doubleCoset_mul_right_eq_self (P : HeckePair G)
   simp_rw [DoubleCoset.doubleCoset, ← Set.singleton_mul_singleton, ← mul_assoc]
   conv => enter [1]; rw [mul_assoc, Subgroup.singleton_mul_subgroup h.2]
 
-/-- Associativity of group multiplication lifts to double coset representatives. -/
-lemma DoubleCoset.doubleCoset_mul_assoc (f g h : G) :
-    DoubleCoset.doubleCoset ((f * g) * h) H H =
-    DoubleCoset.doubleCoset (f * (g * h)) H H := by
-  simp_rw [DoubleCoset.doubleCoset, ← Set.singleton_mul_singleton, ← mul_assoc]
 
 /-- Scalar multiplication by a group element is the same as singleton set multiplication. -/
 lemma smul_eq_singleton_mul (s : Set G) (g : G) : g • s = {g} * s :=
