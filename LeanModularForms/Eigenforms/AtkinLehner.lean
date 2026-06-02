@@ -188,33 +188,6 @@ theorem qSupportedOnDvd_mem_cuspFormsOld_of_char
     show (⇑f : UpperHalfPlane → ℂ) = 0
     rw [h_eq, h_zero]; simp [levelRaiseFun]
 
-/-- Reverse Atkin-Lehner explicit preimage (character-space): for a cusp form
-`f ∈ cuspFormCharSpace k χ.toUnitHom` at level `Γ₁(N)` whose period-1 `q`-expansion is
-supported on multiples of a proper divisor `d ∣ N` (`1 < d`), either `f` is the zero
-form or `f` equals (as a function on `ℍ`) the level-raise of some cusp form at level
-`Γ₁(N/d)`. -/
-theorem qSupportedOnDvd_eq_zero_or_exists_levelRaise_preimage_of_char
-    {N d : ℕ} [NeZero N] [NeZero d] [NeZero (N / d)]
-    (hd : 1 < d) (hdN : d ∣ N) {k : ℤ}
-    (χ : DirichletCharacter ℂ N)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hfχ : f ∈ cuspFormCharSpace k χ.toUnitHom)
-    (hfsupp : f ∈ qSupportedOnDvdSubmodule N k d) :
-    f = 0 ∨ ∃ (g : CuspForm ((Gamma1 (N / d)).map (mapGL ℝ)) k),
-      (⇑(levelRaise (N / d) d k g) : UpperHalfPlane → ℂ) = ⇑f := by
-  obtain ⟨φ, h_eq, h_period⟩ :=
-    HeckeRing.GL2.exists_levelRaise_preimage_of_coeff_support_multiples
-      hd hdN f (fun n hn ↦ hfsupp n hn)
-  rcases HeckeRing.GL2.conductor_theorem_dichotomy_cuspForm_strong
-      d N hdN k χ φ f hfχ h_eq h_period with
-    ⟨_h_fac, F, _hF_char, hF_eq⟩ | h_zero
-  · refine Or.inr ⟨F, ?_⟩
-    show levelRaiseFun d k ⇑F = ⇑f
-    rw [hF_eq, ← h_eq]
-  · refine Or.inl (DFunLike.coe_injective ?_)
-    show (⇑f : UpperHalfPlane → ℂ) = 0
-    rw [h_eq, h_zero]; simp [levelRaiseFun]
-
 /-- Submodule-level forward bridge: the `heq`-cast of every level-raise image lies in
 `qSupportedOnDvdSubmodule N k d`. -/
 theorem cast_levelRaise_mem_qSupportedOnDvdSubmodule
