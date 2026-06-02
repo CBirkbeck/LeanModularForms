@@ -46,18 +46,6 @@ lemma Gamma0MapUnits_unitsMap_of_Gamma0_mul (N k : ℕ) [NeZero N] [NeZero (k * 
   rw [Gamma0MapUnits_val, ZMod.unitsMap_val, Gamma0MapUnits_val]
   exact (ZMod.cast_intCast (Nat.dvd_mul_left N k) (γ.val 1 1)).symm
 
-/-- **Diamond lift across a level inclusion.**  For any nebentypus value
-`d : (ZMod N)ˣ` at level `N`, there exists `β ∈ Γ₀(k · N)` whose `Γ₀(N)`-nebentypus
-value is `d` (equivalently, its `Γ₀(k · N)`-value projects onto `d` along `ZMod.unitsMap`). -/
-theorem exists_Gamma0_mul_lift_unitsMap
-    (N k : ℕ) [NeZero N] [NeZero (k * N)] (d : (ZMod N)ˣ) :
-    ∃ β : ↥(Gamma0 (k * N)),
-      ZMod.unitsMap (Nat.dvd_mul_left N k) (Gamma0MapUnits β) = d := by
-  obtain ⟨d', hd'⟩ :=
-    ZMod.unitsMap_surjective (m := k * N) (n := N) (Nat.dvd_mul_left N k) d
-  obtain ⟨β, hβ⟩ := Gamma0MapUnits_surjective (N := k * N) d'
-  exact ⟨β, hβ ▸ hd'⟩
-
 /-- **Gamma0MapUnits is surjective on the diagonal stabilizer**.
 
 For `g = diag(1, k) ∈ Δ₀(N)` with `gcd(k, N) = 1`, and any `d ∈ (ZMod N)ˣ`,
