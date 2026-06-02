@@ -428,56 +428,6 @@ theorem Newform.noEntireExtensionUnderBadPrime_of_dirichletZeroCertificate
   exact Newform.dirichletQuotient_pole_witness_of_dirichletZero f χ s₀
     h_χ_ne h_χ_sq_ne h_den_zero h_num_ne h_univ
 
-/-- Mirrors `strongMultiplicityOne_of_analyticContradiction` but takes the
-uniqueness content as an explicit hypothesis `h_unique`, isolating the analytic
-chain from the upstream `newform_unique`. -/
-theorem strongMultiplicityOne_of_analyticContradiction_of_newformUnique
-    (h_unique : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
-      f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      (∀ n : ℕ+, Nat.Coprime n.val N → f.eigenvalue n = g.eigenvalue n) →
-      f.toCuspForm = g.toCuspForm)
-    (h_ana : Newform.AnalyticContradiction)
-    {N : ℕ} [NeZero N] {k : ℤ} (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (hgχ : g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (S : Finset ℕ)
-    (h : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S →
-      f.eigenvalue n = g.eigenvalue n) :
-    f.toCuspForm = g.toCuspForm := by
-  refine h_unique f g χ hfχ hgχ ?_
-  intro n hn
-  by_cases hn_S : n.val ∈ S
-  · have hn_pos : 0 < n.val := n.pos
-    let bad : Finset ℕ := S ∪ S.image (· / n.val) ∪ n.val.primeFactors
-    obtain ⟨q, hq_prime, hq_N, hq_notin, hq_ne⟩ :=
-      Newform.exists_nonzero_prime_eigenvalue_of_analyticContradiction
-        h_ana f χ hfχ bad
-    have hq_pos : 0 < q := hq_prime.pos
-    have hq_notin_S : q ∉ S := fun hqS ↦ hq_notin <| by
-      simp only [bad, Finset.mem_union]; exact Or.inl (Or.inl hqS)
-    have hq_notin_img : q ∉ S.image (· / n.val) := fun h' ↦ hq_notin <| by
-      simp only [bad, Finset.mem_union]; exact Or.inl (Or.inr h')
-    have hq_nd_n : ¬ q ∣ n.val := fun hqn ↦ hq_notin <| by
-      simp only [bad, Finset.mem_union, Nat.mem_primeFactors]
-      exact Or.inr ⟨hq_prime, hqn, hn_pos.ne'⟩
-    have hn_coprime_q : Nat.Coprime n.val q :=
-      ((hq_prime.coprime_iff_not_dvd).mpr hq_nd_n).symm
-    have hnq_notin_S : n.val * q ∉ S := fun hnqS ↦ hq_notin_img <| by
-      refine Finset.mem_image.mpr ⟨n.val * q, hnqS, ?_⟩
-      exact Nat.mul_div_cancel_left _ hn_pos
-    let q_pnat : ℕ+ := ⟨q, hq_pos⟩
-    let nq_pnat : ℕ+ := ⟨n.val * q, Nat.mul_pos hn_pos hq_pos⟩
-    have hnq_eq : f.eigenvalue nq_pnat = g.eigenvalue nq_pnat :=
-      h nq_pnat (hn.mul_left hq_N) hnq_notin_S
-    have hmul_f : f.eigenvalue nq_pnat = f.eigenvalue n * f.eigenvalue q_pnat :=
-      Newform.eigenvalue_coprime_mul f n q_pnat hn hq_N hn_coprime_q χ hfχ
-    have hmul_g : g.eigenvalue nq_pnat = g.eigenvalue n * g.eigenvalue q_pnat :=
-      Newform.eigenvalue_coprime_mul g n q_pnat hn hq_N hn_coprime_q χ hgχ
-    refine mul_right_cancel₀ hq_ne ?_
-    rw [← hmul_f, hnq_eq, hmul_g, h q_pnat hq_N hq_notin_S]
-  · exact h n hn hn_S
-
 /-- The per-newform analytic certificate consumed by the SMO chain: an explicit
 pole point `s₀`, the character non-trivialities `χ̃ ≠ 1` and `χ̃² ≠ 1`, the
 Dirichlet zero `LFunction χ̃ (2 s₀ - k + 1) = 0`, the non-cancellation
