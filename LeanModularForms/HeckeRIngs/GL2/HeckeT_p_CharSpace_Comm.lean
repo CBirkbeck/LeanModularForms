@@ -207,11 +207,4 @@ noncomputable def heckeRingHomCharSpaceOne (k : ℤ) :
     heckeRingHomCharSpaceOne (N := N) k T =
     conjEndCharSpaceOne (N := N) k (heckeRingHom_Gamma0 N k T) := rfl
 
-/-- The image of `heckeRingHomCharSpaceOne` is commutative, because the source ring
-`𝕋 (Gamma0_pair N) ℤ` is commutative. -/
-lemma heckeRingHomCharSpaceOne_commute (k : ℤ) (T₁ T₂ : 𝕋 (Gamma0_pair N) ℤ) :
-    Commute (heckeRingHomCharSpaceOne (N := N) k T₁) (heckeRingHomCharSpaceOne k T₂) := by
-  show _ * _ = _ * _
-  rw [← map_mul, ← map_mul, Gamma0_pair_HeckeAlgebra_mul_comm]
-
 end HeckeRing.GL2
