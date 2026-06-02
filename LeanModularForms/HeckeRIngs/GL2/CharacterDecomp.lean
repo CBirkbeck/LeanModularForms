@@ -207,14 +207,6 @@ noncomputable def jointDiamondEigenspace (k : ℤ) (χ : (ZMod N)ˣ → ℂ) :
     Submodule ℂ (ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :=
   ⨅ d : (ZMod N)ˣ, (diamondOpHom k d).eigenspace (χ d)
 
-/-- Membership in `jointDiamondEigenspace` unfolded as a joint eigenvalue
-condition on each diamond operator. -/
-lemma mem_jointDiamondEigenspace_iff (χ : (ZMod N)ˣ → ℂ)
-    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    f ∈ jointDiamondEigenspace k χ ↔
-    ∀ d : (ZMod N)ˣ, diamondOpHom k d f = χ d • f := by
-  simp only [jointDiamondEigenspace, Submodule.mem_iInf, Module.End.mem_eigenspace_iff]
-
 /-- `jointDiamondEigenspace` at the underlying function of a character agrees
 with `modFormCharSpace`. -/
 lemma jointDiamondEigenspace_eq_modFormCharSpace (χ₀ : (ZMod N)ˣ →* ℂˣ) :
@@ -316,14 +308,6 @@ character group at the statement level (`∑ χ : …`). -/
 noncomputable instance fintype_charHom : Fintype ((ZMod N)ˣ →* ℂˣ) :=
   Fintype.ofFinite _
 
-/-- **Dimension formula**: `dim_ℂ M_k(Γ₁(N)) = ∑_χ dim_ℂ M_k(Γ₁(N), χ)`. -/
-theorem ModularForm_Gamma1_finrank_eq_sum_charSpace (k : ℤ) :
-    Module.finrank ℂ (ModularForm ((Gamma1 N).map (mapGL ℝ)) k) =
-    ∑ χ : (ZMod N)ˣ →* ℂˣ, Module.finrank ℂ (modFormCharSpace k χ) := by
-  classical
-  rw [← LinearEquiv.finrank_eq (ModularForm_Gamma1_charSpace_linearEquiv k)]
-  simp [Module.finrank_directSum]
-
 private noncomputable def cuspFormToModularFormLin_local :
     CuspForm ((Gamma1 N).map (mapGL ℝ)) k →ₗ[ℂ]
       ModularForm ((Gamma1 N).map (mapGL ℝ)) k where
@@ -379,15 +363,6 @@ lemma diamondOpCusp_iSup_eigenspace_eq_top (d : (ZMod N)ˣ) :
 noncomputable def jointDiamondCuspEigenspace (k : ℤ) (χ : (ZMod N)ˣ → ℂ) :
     Submodule ℂ (CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :=
   ⨅ d : (ZMod N)ˣ, (diamondOpCuspHom k d).eigenspace (χ d)
-
-/-- Membership in `jointDiamondCuspEigenspace` unfolded as a joint eigenvalue
-condition on each cusp-form diamond operator. -/
-lemma mem_jointDiamondCuspEigenspace_iff (χ : (ZMod N)ˣ → ℂ)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    f ∈ jointDiamondCuspEigenspace k χ ↔
-    ∀ d : (ZMod N)ˣ, diamondOpCuspHom k d f = χ d • f := by
-  simp only [jointDiamondCuspEigenspace, Submodule.mem_iInf,
-    Module.End.mem_eigenspace_iff]
 
 /-- `jointDiamondCuspEigenspace` at the underlying function of a character
 agrees with `cuspFormCharSpace`. -/
@@ -479,15 +454,6 @@ instance cuspFormCharSpace_finiteDimensional
     (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
     FiniteDimensional ℂ (cuspFormCharSpace k χ) := inferInstance
 
-/-- **Dimension formula (cusp forms)**:
-`dim_ℂ S_k(Γ₁(N)) = ∑_χ dim_ℂ S_k(Γ₁(N), χ)`. -/
-theorem CuspForm_Gamma1_finrank_eq_sum_charSpace (k : ℤ) :
-    Module.finrank ℂ (CuspForm ((Gamma1 N).map (mapGL ℝ)) k) =
-    ∑ χ : (ZMod N)ˣ →* ℂˣ, Module.finrank ℂ (cuspFormCharSpace k χ) := by
-  classical
-  rw [← LinearEquiv.finrank_eq (CuspForm_Gamma1_charSpace_linearEquiv k)]
-  simp [Module.finrank_directSum]
-
 section InvariantSubmoduleCharDecomp
 
 /-- **Character decomposition of a diamond-invariant submodule of
@@ -515,17 +481,6 @@ theorem modFormCharSpace_iSup_inf_of_diamondOpHom_invariant
       (fun h_bot ↦ hχ (by rw [h_bot, inf_bot_eq]))
     rw [← hχ₀, jointDiamondEigenspace_eq_modFormCharSpace]
     exact le_iSup (fun ψ : (ZMod N)ˣ →* ℂˣ ↦ p ⊓ modFormCharSpace k ψ) χ₀
-
-/-- **`iSupIndep` for the character decomposition of a diamond-invariant
-submodule of `ModularForm (Γ₁(N)) k`.**  The family of intersections
-`(p ⊓ modFormCharSpace k χ)_χ` is `iSup`-independent for any submodule
-`p` (the diamond-invariance hypothesis is not needed for independence —
-it is inherited from the ambient independence
-`ModularForm_Gamma1_iSupIndep_charSpace`). -/
-theorem modFormCharSpace_iSupIndep_inf
-    (k : ℤ) (p : Submodule ℂ (ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) :
-    iSupIndep (fun χ : (ZMod N)ˣ →* ℂˣ ↦ p ⊓ modFormCharSpace k χ) :=
-  (ModularForm_Gamma1_iSupIndep_charSpace (N := N) k).mono (fun _ ↦ inf_le_right)
 
 /-- **Character decomposition of a diamond-invariant submodule of
 `CuspForm (Γ₁(N)) k`.**  The cusp-form analogue of
