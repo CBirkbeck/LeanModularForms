@@ -82,9 +82,8 @@ lemma heckeSlash_gen_Gamma0_bdd_at_cusps (k : ℤ) (D : HeckeCoset (Gamma0_pair 
     {c : OnePoint ℝ} (hc : IsCusp c ((Gamma0 N).map (mapGL ℝ))) :
     c.IsBoundedAt (heckeSlash_gen (Gamma0_pair N) k D f) k := by
   simp only [heckeSlash_gen]
-  apply Finset.sum_induction _ (fun g ↦ c.IsBoundedAt g k) (fun _ _ ha hb ↦ ha.add hb)
-    ((0 : ModularForm ((Gamma0 N).map (mapGL ℝ)) k).bdd_at_cusps' hc)
-  intro i _
+  refine Finset.sum_induction _ (fun g ↦ c.IsBoundedAt g k) (fun _ _ ha hb ↦ ha.add hb)
+    ((0 : ModularForm ((Gamma0 N).map (mapGL ℝ)) k).bdd_at_cusps' hc) fun _ _ ↦ ?_
   exact OnePoint.IsBoundedAt.smul_iff.mp (f.bdd_at_cusps' (glMap_smul_isCusp_Gamma0 N _ hc))
 
 /-- The `SlashInvariantForm` obtained by applying a Hecke operator at level `Γ₀(N)`. -/
@@ -99,8 +98,8 @@ noncomputable def heckeSlashInvariant_Gamma0 (k : ℤ) (D : HeckeCoset (Gamma0_p
     rw [← glMap_mapGL_rat_eq_mapGL_real]
     exact heckeSlash_gen_slash_invariant (P := Gamma0_pair N) k D (f : ℍ → ℂ)
       (fun h hh ↦ Gamma0_pair_H_invariant_of_invariant N
-        (fun γ' hγ' ↦ f.slash_action_eq' γ' hγ') h hh) (mapGL ℚ σ)
-      (Subgroup.mem_map.mpr ⟨σ, hσ, rfl⟩)
+        (fun γ' hγ' ↦ f.slash_action_eq' γ' hγ') h hh)
+      (mapGL ℚ σ) (Subgroup.mem_map.mpr ⟨σ, hσ, rfl⟩)
 
 /-- The Hecke operator `T(D)` on `ModularForm ((Gamma0 N).map (mapGL ℝ)) k`,
 preserving slash-invariance, holomorphicity, and boundedness at cusps. -/
@@ -135,11 +134,11 @@ theorem heckeOperator_Gamma0_comp (k : ℤ) (D₁ D₂ : HeckeCoset (Gamma0_pair
     (f : ModularForm ((Gamma0 N).map (mapGL ℝ)) k) :
     (heckeOperator_Gamma0 N k D₁ (heckeOperator_Gamma0 N k D₂ f) : ℍ → ℂ) =
     heckeSlashExt_gen (Gamma0_pair N) k
-      (T_single (Gamma0_pair N) ℤ D₂ 1 * T_single (Gamma0_pair N) ℤ D₁ 1) f := by
-  apply heckeSlash_gen_comp (P := Gamma0_pair N) k D₁ D₂ (f : ℍ → ℂ)
+      (T_single (Gamma0_pair N) ℤ D₂ 1 * T_single (Gamma0_pair N) ℤ D₁ 1) f :=
+  heckeSlash_gen_comp (P := Gamma0_pair N) k D₁ D₂ (f : ℍ → ℂ)
     (fun h hh ↦ Gamma0_pair_H_invariant_of_invariant N
       (fun γ hγ ↦ SlashInvariantFormClass.slash_action_eq f γ hγ) h hh)
-  exact Gamma0_pair_HeckeAlgebra_mul_comm N _ _
+    (Gamma0_pair_HeckeAlgebra_mul_comm N _ _)
 
 /-- The `ℂ`-linear endomorphism of `ModularForm ((Gamma0 N).map (mapGL ℝ)) k`
 attached to a Hecke algebra element `T : 𝕋 (Gamma0_pair N) ℤ`, obtained by
@@ -160,8 +159,7 @@ noncomputable def heckeSum_Gamma0 (k : ℤ) (T : 𝕋 (Gamma0_pair N) ℤ) :
 lemma heckeSum_Gamma0_add (k : ℤ) (T₁ T₂ : 𝕋 (Gamma0_pair N) ℤ) :
     heckeSum_Gamma0 N k (T₁ + T₂) =
       heckeSum_Gamma0 N k T₁ + heckeSum_Gamma0 N k T₂ :=
-  Finsupp.sum_add_index' (h_zero := fun _ ↦ by simp)
-    (h_add := fun _ c₁ c₂ ↦ by rw [add_zsmul])
+  Finsupp.sum_add_index' (h_zero := fun _ ↦ by simp) (h_add := fun _ _ _ ↦ add_zsmul ..)
 
 /-- Pointwise agreement of `heckeSum_Gamma0 N k T f` and the underlying
 generalized slash sum `heckeSlashExt_gen (Gamma0_pair N) k T f`. -/
@@ -192,9 +190,7 @@ private lemma heckeSlashExt_gen_Gamma0_zsmul (k : ℤ) (n : ℤ) (T : 𝕋 (Gamm
   rw [Finsupp.sum_smul_index (g := T) (b := n)
     (h := fun D c ↦ c • heckeSlash_gen (Gamma0_pair N) k D f) (by simp),
     Finsupp.smul_sum]
-  refine Finsupp.sum_congr ?_
-  intro D _
-  exact SemigroupAction.mul_smul _ _ _
+  exact Finsupp.sum_congr fun D _ ↦ SemigroupAction.mul_smul ..
 
 /-- `heckeSum_Gamma0` is multiplicative on generators `T_single * T_single`. -/
 private lemma heckeSum_Gamma0_mul_T_single (k : ℤ) (D₁ D₂ : HeckeCoset (Gamma0_pair N))
@@ -253,8 +249,6 @@ private lemma heckeSlash_gen_Gamma0_one (k : ℤ) (f : ℍ → ℂ)
       (HeckeCoset.rep (HeckeCoset.one (Gamma0_pair N)))) := uniqueOfSubsingleton default
   unfold heckeSlash_gen
   rw [Finset.univ_unique, Finset.sum_singleton]
-  -- The unique element is `tRep_gen ⟦1⟧ = adj(q.out · rep(1))`; since q.out ∈ H and
-  -- rep(one) ∈ H, their product is in H, and adj preserves H.
   exact hf _ <| HeckePairAction.adjugate_mem_H _ <|
     (Gamma0_pair N).H.mul_mem (SetLike.coe_mem _) (HeckeCoset.one_rep_mem_H _)
 
@@ -263,8 +257,8 @@ private lemma heckeSlash_gen_Gamma0_one (k : ℤ) (f : ℍ → ℂ)
     (f : ModularForm ((Gamma0 N).map (mapGL ℝ)) k) :
     heckeOperator_Gamma0 N k (HeckeCoset.one (Gamma0_pair N)) f = f :=
   ModularForm.ext fun _ ↦ congrFun (heckeSlash_gen_Gamma0_one N k (f : ℍ → ℂ)
-    (fun h hh ↦ Gamma0_pair_H_invariant_of_invariant N
-      (fun γ hγ ↦ SlashInvariantFormClass.slash_action_eq f γ hγ) h hh)) _
+    fun h hh ↦ Gamma0_pair_H_invariant_of_invariant N
+      (fun γ hγ ↦ SlashInvariantFormClass.slash_action_eq f γ hγ) h hh) _
 
 @[simp] lemma heckeOperatorLinear_Gamma0_one (k : ℤ) :
     heckeOperatorLinear_Gamma0 N k (HeckeCoset.one (Gamma0_pair N)) = 1 :=
