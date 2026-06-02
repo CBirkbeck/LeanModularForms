@@ -298,23 +298,6 @@ theorem heckeT_n_mul_ppow_quot [NeZero N] (m : ℕ) [NeZero m] (hm : 1 < m)
     ((Nat.minFac_prime (by lia : m ≠ 1)).factorization_pos_of_dvd (by lia)
       (Nat.minFac_dvd m))).symm
 
-/-- `heckeT_n_cusp` decomposes as composition at each point:
-`(T_n f)(z) = (T_{n₁}(T_{n₂} f))(z)` when `heckeT_n k n = heckeT_n k n₁ * heckeT_n k n₂`
-at the Module.End level. -/
-theorem heckeT_n_cusp_mul_apply (n₁ n₂ : ℕ) [NeZero n₁] [NeZero n₂]
-    (h_eq : haveI : NeZero (n₁ * n₂) := ⟨Nat.mul_pos (NeZero.pos n₁) (NeZero.pos n₂) |>.ne'⟩
-            heckeT_n (N := N) k (n₁ * n₂) = heckeT_n k n₁ * heckeT_n k n₂)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (z : UpperHalfPlane) :
-    haveI : NeZero (n₁ * n₂) := ⟨Nat.mul_pos (NeZero.pos n₁) (NeZero.pos n₂) |>.ne'⟩
-    (heckeT_n_cusp k (n₁ * n₂) f) z =
-      (heckeT_n_cusp k n₁ (heckeT_n_cusp k n₂ f)) z := by
-  haveI : NeZero (n₁ * n₂) := ⟨Nat.mul_pos (NeZero.pos n₁) (NeZero.pos n₂) |>.ne'⟩
-  show (heckeT_n k (n₁ * n₂) f.toModularForm').toFun z =
-    (heckeT_n k n₁ (heckeT_n k n₂ f.toModularForm')).toFun z
-  rw [h_eq]
-  rfl
-
 /-- A representative `γ₀ ∈ Γ₀(N)` whose `(0,0)`-entry is `p`, used as the adjoint
 representative for `⟨d⟩` in the slash formulation. -/
 noncomputable def adjointGamma0Rep (p N : ℕ) (hpN : Nat.Coprime p N) :
@@ -347,23 +330,6 @@ lemma adjointGamma0Rep_units (p N : ℕ) (hpN : Nat.Coprime p N) [NeZero N] :
   unfold adjointGamma0Rep Gamma0Map
   simp only [MonoidHom.coe_mk, OneHom.coe_mk]
   exact hmod
-
-/-- `⟨p⟩ · f` agrees with `f ∣[k] γ₀⁻¹` for `γ₀ = adjointGamma0Rep p N hpN`. -/
-lemma coe_diamondOp_cusp_eq_slash_adjointGamma0Rep_inv
-    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) :
-        UpperHalfPlane → ℂ) =
-      ⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-        (((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ))⁻¹) :
-          GL (Fin 2) ℝ) := by
-  have h_units : Gamma0MapUnits ((adjointGamma0Rep p N hpN)⁻¹ : Gamma0 N) =
-      ZMod.unitOfCoprime p hpN := by
-    rw [map_inv, adjointGamma0Rep_units, inv_inv]
-  show (diamondOpCusp k (ZMod.unitOfCoprime p hpN) f : UpperHalfPlane → ℂ) = _
-  rw [diamondOpCusp_eq k (ZMod.unitOfCoprime p hpN)
-    ((adjointGamma0Rep p N hpN)⁻¹ : Gamma0 N) h_units]
-  rfl
 
 private lemma coe_diamondOp_inv_cusp_eq_slash_adjointGamma0Rep
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
@@ -409,24 +375,6 @@ lemma coe_diamondOp_cusp_eq_slash_sigma_p
   rw [diamondOpCusp_eq k (ZMod.unitOfCoprime p hpN)
     ⟨sigma_p_specific N p hp hpN, sigma_p_specific_mem_Gamma0 N p hp hpN⟩
     (Gamma0MapUnits_sigma_p_specific N p hp hpN)]
-  rfl
-
-/-- Slashing `⟨p⟩⁻¹ · f` by `sigma_p_specific` recovers `f`. -/
-lemma slash_sigma_p_diamond_inv_cusp_eq
-    (p : ℕ) (hp : 0 < p) (hpN : Nat.Coprime p N)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f) :
-        UpperHalfPlane → ℂ) ∣[k]
-      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-        (sigma_p_specific N p hp hpN) : GL (Fin 2) ℝ) = ⇑f := by
-  rw [← coe_diamondOp_cusp_eq_slash_sigma_p p hp hpN
-    (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)]
-  show ⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN)
-      (diamondOp_cusp k (ZMod.unitOfCoprime p hpN)⁻¹ f)) = ⇑f
-  show (((diamondOpCusp k (ZMod.unitOfCoprime p hpN)).comp
-      (diamondOpCusp k (ZMod.unitOfCoprime p hpN)⁻¹) f) :
-        UpperHalfPlane → ℂ) = ⇑f
-  rw [← diamondOpCusp_mul, mul_inv_cancel, diamondOpCusp_one]
   rfl
 
 private lemma slash_sigma_p_inv_diamond_cusp_eq
@@ -575,14 +523,6 @@ private lemma gamma1_of_gamma0_sigma_p_coe
       ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) *
         sigma_p_specific N p hp hpN := rfl
 
-/-- `σ_p⁻¹` decomposes as `γ₁⁻¹ · γ₀` where `γ₀ ∈ Γ₀(N)` and `γ₁ ∈ Γ₁(N)`. -/
-lemma sigma_p_inv_eq_gamma1_inv_mul_gamma0
-    (p N : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) :
-    (sigma_p_specific N p hp hpN)⁻¹ =
-      ((gamma1_of_gamma0_sigma_p p N hp hpN : Gamma1 N) : SL(2, ℤ))⁻¹ *
-        ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) := by
-  rw [gamma1_of_gamma0_sigma_p_coe, mul_inv_rev, inv_mul_cancel_right]
-
 private lemma adjointGamma0Rep_mul_M_infty_eq_gamma1_mul_T_p_lower
     (p N : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) :
     ((mapGL ℚ : SL(2, ℤ) →* GL (Fin 2) ℚ)
@@ -649,17 +589,6 @@ private lemma sum_Gamma1Quot_mul_right_inv_eq
   rw [Gamma1Quot_mk_mul_right_inv_eq _ γ hγ]
   exact congrArg F (Quotient.out_eq q)
 
-/-- **Double-adjoint identity**: `peterssonAdj (peterssonAdj α) = α` for
-any `α : GL (Fin 2) ℝ`. -/
-lemma peterssonAdj_peterssonAdj (α : GL (Fin 2) ℝ) :
-    peterssonAdj (peterssonAdj α) = α := by
-  apply Units.ext
-  ext i j
-  change ((peterssonAdj α : Matrix (Fin 2) (Fin 2) ℝ).adjugate) i j =
-      (α : Matrix (Fin 2) (Fin 2) ℝ) i j
-  rw [peterssonAdj_coe α, Matrix.adjugate_fin_two, Matrix.adjugate_fin_two]
-  fin_cases i <;> fin_cases j <;> simp [Matrix.of_apply]
-
 /-- For an SL(2, ℤ) element cast to GL(2, ℝ), the `peterssonAdj` equals the group inverse.
 Since SL elements have determinant 1, their adjugate equals their inverse. -/
 lemma peterssonAdj_mapGL_SL_eq_inv (q : SL(2, ℤ)) :
@@ -672,11 +601,6 @@ lemma peterssonAdj_mapGL_SL_eq_inv (q : SL(2, ℤ)) :
       ext i j; simp [mapGL_coe_matrix, Int.castRingHom]
     rw [hmap, ← RingHom.map_det, q.property]; simp
   rw [Matrix.inv_def, Ring.inverse_eq_inv', hdet, inv_one, one_smul]
-
-/-- `(q†)⁻¹ = q` for `q : SL(2, ℤ)` cast to `GL(2, ℝ)`. -/
-lemma peterssonAdj_inv_mapGL_SL_eq_self (q : SL(2, ℤ)) :
-    (peterssonAdj ((mapGL ℝ q : GL (Fin 2) ℝ)))⁻¹ = (mapGL ℝ q : GL (Fin 2) ℝ) := by
-  rw [peterssonAdj_mapGL_SL_eq_inv, inv_inv]
 
 private lemma GL_inv_entry (α : GL (Fin 2) ℝ) (i j : Fin 2) :
     (α⁻¹ : GL (Fin 2) ℝ) i j =
@@ -839,24 +763,6 @@ private lemma peterssonInner_mapGL_smul_eq_of_Gamma1
           ((γ : SL(2, ℤ)) : GL (Fin 2) ℝ) from rfl, ← ModularForm.SL_slash]
     exact slash_Gamma1_eq g γ hγ
   exact peterssonInner_mapGL_smul_eq_of_slash_invariant D γ ⇑f ⇑g hf hg
-
-/-- Translating both arguments by `γ ∈ SL(2, ℤ)` equals slashing both arguments by `γ`. -/
-lemma peterssonInner_mapGL_smul_eq_slash
-    (D : Set ℍ) (γ : SL(2, ℤ)) (F G : ℍ → ℂ) :
-    peterssonInner k
-        (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ : GL (Fin 2) ℝ) • D) F G =
-      peterssonInner k D
-        (F ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ : GL (Fin 2) ℝ))
-        (G ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ : GL (Fin 2) ℝ)) := by
-  have h := peterssonInner_slash_adjoint (k := k) D
-    (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ : GL (Fin 2) ℝ)) (mapGL_SL_det_pos γ) F
-    (G ∣[k] (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ : GL (Fin 2) ℝ)))
-  rw [peterssonAdj_mapGL_SL_eq_inv γ,
-    show ((G ∣[k] (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ : GL (Fin 2) ℝ)))
-          ∣[k] (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ : GL (Fin 2) ℝ))⁻¹) =
-        G by
-      rw [← SlashAction.slash_mul, mul_inv_cancel, SlashAction.slash_one]] at h
-  exact h.symm
 
 end PeterssonAdjoint
 
