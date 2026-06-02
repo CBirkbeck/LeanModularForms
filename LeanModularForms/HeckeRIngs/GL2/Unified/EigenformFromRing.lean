@@ -72,8 +72,7 @@ theorem Eigenform.isRingEigenvector (f : Eigenform N k)
   rw [heckeRingHomCharSpace_heckeRingD_n (k := k) (χ := χ) n.val hn]
   simp only [LinearMap.smul_apply, SetLike.val_smul, heckeT_n_charRestrict_coe]
   have heig : (heckeT_n_cusp k n.val f.toCuspForm).toModularForm' =
-      f.eigenvalue n • f.toCuspForm.toModularForm' := by
-    rw [f.isEigen n hn]; rfl
+      f.eigenvalue n • f.toCuspForm.toModularForm' := by rw [f.isEigen n hn]; rfl
   rw [heckeT_n_cusp_toModularForm' n.val f.toCuspForm] at heig
   rw [heig, smul_smul]
 
