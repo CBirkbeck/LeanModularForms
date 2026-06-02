@@ -72,17 +72,17 @@ private lemma smulOrbit_map_inj (g : P.Δ) (β : P.Δ) :
   have hset : ({(β : G) * (i₁.out : G) * (g : G)} : Set G) * (P.H : Set G) =
       {(β : G) * (i₂.out : G) * (g : G)} * P.H := Quotient.exact heq
   have hmem : (β : G) * (i₁.out : G) * (g : G) ∈
-      ({(β : G) * (i₂.out : G) * (g : G)} : Set G) * (P.H : Set G) := by
-    rw [← hset]; exact ⟨_, rfl, 1, P.H.one_mem, mul_one _⟩
+      ({(β : G) * (i₂.out : G) * (g : G)} : Set G) * (P.H : Set G) :=
+    hset ▸ ⟨_, rfl, 1, P.H.one_mem, mul_one _⟩
   obtain ⟨_, ha, k, hk, hkk⟩ := hmem
   rw [Set.mem_singleton_iff] at ha; subst ha
   have cancel : (i₂.out : G) * (g : G) * k = (i₁.out : G) * (g : G) := by
-    apply mul_left_cancel (a := (β : G))
+    refine mul_left_cancel (a := (β : G)) ?_
     have := hkk; group at this ⊢; exact this
-  exact decompQuot_coset_diff P g i₁ i₂ hne
-    (leftCoset_eq_of_not_disjoint (H := P.H) _ _ (by
-      rw [@not_disjoint_iff]
-      exact ⟨(i₁.out : G) * (g : G), ⟨1, P.H.one_mem, mul_one _⟩, ⟨k, hk, cancel⟩⟩))
+  refine decompQuot_coset_diff P g i₁ i₂ hne
+    (leftCoset_eq_of_not_disjoint (H := P.H) _ _ ?_)
+  rw [not_disjoint_iff]
+  exact ⟨(i₁.out : G) * (g : G), ⟨1, P.H.one_mem, mul_one _⟩, ⟨k, hk, cancel⟩⟩
 
 /-- The cardinality of a smul orbit equals the degree of the acting double coset. -/
 lemma smulOrbit_card (g : P.Δ) (β : P.Δ) :
@@ -127,7 +127,8 @@ lemma coeffSum_single_smul_single (D : HeckeCoset P) (m₀ : HeckeLeftCoset P) (
     a * HeckeCoset_deg P D * b := by
   rw [T_single_smul_HeckeLeftCoset_single, coeffSum_finset_sum]
   simp only [coeffSum_single, Finset.sum_const, Int.nsmul_eq_mul,
-    smulOrbit_card_intCast P D (HeckeLeftCoset.rep m₀)]; ring
+    smulOrbit_card_intCast P D (HeckeLeftCoset.rep m₀)]
+  ring
 
 end CoeffSum
 
@@ -151,7 +152,7 @@ lemma deg_fun_add (f g : 𝕋 P ℤ) :
 
 /-- The degree function of the identity is 1. -/
 @[simp] lemma deg_fun_one : deg_fun P (1 : 𝕋 P ℤ) = 1 := by
-  rw [one_def, deg_fun_T_single, HeckeCoset_deg_T_one, mul_one]
+  simp [one_def]
 
 /-- The degree equals the coefficient sum of the action on the identity module element. -/
 lemma deg_fun_eq_coeffSum_smul_one (f : 𝕋 P ℤ) :
@@ -159,24 +160,21 @@ lemma deg_fun_eq_coeffSum_smul_one (f : 𝕋 P ℤ) :
   induction f using Finsupp.induction_linear with
   | zero => simp [zero_smul_HeckeModule]
   | add f g ihf ihg => rw [deg_fun_add, ihf, ihg, smul_add_left, coeffSum_add]
-  | single D a =>
-    rw [deg_fun_T_single, one_eq_HeckeLeftCoset_single, coeffSum_single_smul_single, mul_one]
+  | single D a => rw [deg_fun_T_single, one_eq_HeckeLeftCoset_single,
+      coeffSum_single_smul_single, mul_one]
 
 /-- The coefficient sum of a smul product factors as `deg(f) * coeffSum(m)`. -/
 lemma coeffSum_smul_eq (f : 𝕋 P ℤ) (m : HeckeModule P ℤ) :
     coeffSum P (f • m) = deg_fun P f * coeffSum P m := by
   induction f using Finsupp.induction_linear with
   | zero => simp [zero_smul_HeckeModule]
-  | add f₁ f₂ ih₁ ih₂ =>
-    rw [smul_add_left, coeffSum_add, ih₁, ih₂, deg_fun_add]; ring
+  | add f₁ f₂ ih₁ ih₂ => rw [smul_add_left, coeffSum_add, ih₁, ih₂, deg_fun_add]; ring
   | single D a =>
     induction m using Finsupp.induction_linear with
     | zero => simp [smul_zero_HeckeModule]
     | add m₁ m₂ ih₁ ih₂ =>
-      rw [smul_add_right, coeffSum_add, ih₁, ih₂, coeffSum_add,
-        deg_fun_T_single]; ring
-    | single m₀ b =>
-      rw [coeffSum_single_smul_single, coeffSum_single, deg_fun_T_single]
+      rw [smul_add_right, coeffSum_add, ih₁, ih₂, coeffSum_add, deg_fun_T_single]; ring
+    | single m₀ b => rw [coeffSum_single_smul_single, coeffSum_single, deg_fun_T_single]
 
 /-- The degree function is multiplicative. -/
 lemma deg_fun_mul (f g : 𝕋 P ℤ) :
@@ -239,14 +237,13 @@ lemma heckeMultiplicity_deg_sum_eq (D1 D2 D_out1 D_out2 : HeckeCoset P)
     open scoped Classical in
     simp only [deg, RingHom.coe_mk, MonoidHom.coe_mk, OneHom.coe_mk, deg_fun]
     have hsub : (m P (HeckeCoset.rep D1) (HeckeCoset.rep D2)).support ⊆
-        ({D_out1, D_out2} : Finset _) := by
-      intro A hA; simp only [Finset.mem_insert, Finset.mem_singleton]
+        ({D_out1, D_out2} : Finset _) := fun A hA ↦ by
+      simp only [Finset.mem_insert, Finset.mem_singleton]
       rw [Finsupp.mem_support_iff] at hA
-      exact (or_iff_not_imp_left.mpr fun h1 ↦
-        (Classical.em (A = D_out2)).elim id fun h2 ↦ absurd (h_zero A h1 h2) hA)
-    exact Finset.sum_subset hsub (by
-      intro A _ hA; rw [Finsupp.notMem_support_iff.mp hA]; simp) |>.trans
-      (Finset.sum_pair h_ne)
+      exact or_iff_not_imp_left.mpr fun h1 ↦
+        (Classical.em (A = D_out2)).elim id fun h2 ↦ absurd (h_zero A h1 h2) hA
+    exact (Finset.sum_subset hsub fun A _ hA ↦ by
+        rw [Finsupp.notMem_support_iff.mp hA]; simp).trans (Finset.sum_pair h_ne)
   linarith
 
 end API
