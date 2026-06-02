@@ -53,9 +53,7 @@ lemma diag_1p_mem_Delta0 (N p : ℕ) [NeZero N] (hp : 0 < p) :
     rw [hcoe]; ext i j; fin_cases i <;> fin_cases j <;>
       simp [A, Matrix.diagonal, Matrix.map_apply, Int.cast_natCast]
   refine ⟨⟨A, hA_eq⟩, by rw [hcoe, Matrix.det_diagonal]; simp; exact_mod_cast hp,
-    A, hA_eq, ?_, ?_⟩
-  · simp [A, Matrix.diagonal]
-  · simp [A, Matrix.diagonal]
+    A, hA_eq, by simp [A, Matrix.diagonal], by simp [A, Matrix.diagonal]⟩
 
 /-- `diag(1,p)` as an element of `(Gamma0_pair N).Δ`. -/
 noncomputable def diag_1p_delta_Gamma0 (N p : ℕ) [NeZero N] (hp : 0 < p) :
@@ -77,10 +75,8 @@ lemma T_p_upper_mem_Delta0 (N : ℕ) [NeZero N] (p : ℕ) (hp : 0 < p) (b : ℕ)
   have hA_eq : (↑(T_p_upper p hp b) : Matrix _ _ ℚ) = A.map (Int.cast : ℤ → ℚ) := by
     ext i j; fin_cases i <;> fin_cases j <;>
       simp [T_p_upper, GeneralLinearGroup.mkOfDetNeZero, A, Matrix.map_apply]
-  refine ⟨⟨A, hA_eq⟩, ?_, A, hA_eq, ?_, ?_⟩
-  · rw [T_p_upper_det]; exact_mod_cast hp
-  · simp [A]
-  · simp [A]
+  exact ⟨⟨A, hA_eq⟩, by rw [T_p_upper_det]; exact_mod_cast hp,
+    A, hA_eq, by simp [A], by simp [A]⟩
 
 /-- Membership of `T_p_lower p` in `Δ₀(N)` requires `gcd(p, N) = 1` because the
 top-left entry is `p`. -/
@@ -91,11 +87,8 @@ lemma T_p_lower_mem_Delta0 (N : ℕ) [NeZero N] (p : ℕ) (hp : 0 < p)
   have hA_eq : (↑(T_p_lower p hp) : Matrix _ _ ℚ) = A.map (Int.cast : ℤ → ℚ) := by
     ext i j; fin_cases i <;> fin_cases j <;>
       simp [T_p_lower, GeneralLinearGroup.mkOfDetNeZero, A, Matrix.map_apply]
-  refine ⟨⟨A, hA_eq⟩, ?_, A, hA_eq, ?_, ?_⟩
-  · rw [T_p_lower_det]; exact_mod_cast hp
-  · simp [A]
-  · simp only [A]
-    exact_mod_cast hpN
+  exact ⟨⟨A, hA_eq⟩, by rw [T_p_lower_det]; exact_mod_cast hp,
+    A, hA_eq, by simp [A], by simp only [A]; exact_mod_cast hpN⟩
 
 /-- `T_p_upper(b)` as an element of `(Gamma0_pair N).Δ`. -/
 noncomputable def T_p_upper_delta_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : 0 < p) (b : ℕ) :
@@ -122,7 +115,7 @@ lemma HeckeCoset_deg_D_p_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.Prime p
     (hpN : Nat.Coprime p N) :
     Nat.card (HeckeRing.decompQuot (Gamma0_pair N)
         (HeckeRing.HeckeCoset.rep (D_p_Gamma0 N p hp.pos))) = p + 1 := by
-  have h_deg := HeckeCoset_deg_Gamma0_one_ppow N p hp hpN 1 (by omega)
+  have h_deg := HeckeCoset_deg_Gamma0_one_ppow N p hp hpN 1 (by lia)
   have hpp : (![1, p] : Fin 2 → ℕ) = ![1, p^1] := by ext i; fin_cases i <;> simp
   have h_eq : (D_p_Gamma0 N p hp.pos : HeckeRing.HeckeCoset (Gamma0_pair N)) =
       T_diag_Gamma0 N (![1, p^1])
@@ -152,15 +145,15 @@ private lemma mem_D_p_Gamma0_of_factor_through_diag (N : ℕ) [NeZero N] (p : �
   refine ⟨s * a⁻¹, (Gamma0_pair N).H.mul_mem hs ((Gamma0_pair N).H.inv_mem ha),
     c⁻¹ * t, (Gamma0_pair N).H.mul_mem ((Gamma0_pair N).H.inv_mem hc) ht, ?_⟩
   rw [hfact, show (diag_1p_delta_Gamma0 N p hp : GL (Fin 2) ℚ) =
-      a⁻¹ * (HeckeRing.HeckeCoset.rep (D_p_Gamma0 N p hp) : GL (Fin 2) ℚ) * c⁻¹ by
-    unfold D_p_Gamma0; rw [habc]; group]
+    a⁻¹ * (HeckeRing.HeckeCoset.rep (D_p_Gamma0 N p hp) : GL (Fin 2) ℚ) * c⁻¹ by
+      unfold D_p_Gamma0; rw [habc]; group]
   group
 
 private lemma bezout_int_of_coprime (p N : ℕ) (hpN : Nat.Coprime p N) :
     ∃ u v : ℤ, u * (p : ℤ) - v * (N : ℤ) = 1 := by
   refine ⟨Int.gcdA (p : ℤ) (N : ℤ), -Int.gcdB (p : ℤ) (N : ℤ), ?_⟩
   have h := Int.gcd_eq_gcd_ab (p : ℤ) (N : ℤ)
-  rw [show Int.gcd (p : ℤ) (N : ℤ) = 1 by rw [Int.gcd_natCast_natCast]; exact hpN] at h
+  rw [show Int.gcd (p : ℤ) (N : ℤ) = 1 from by rw [Int.gcd_natCast_natCast]; exact hpN] at h
   push_cast at h; linarith
 
 private lemma T_p_lower_factor_through_diag_1p (N : ℕ) [NeZero N] (p : ℕ)
@@ -275,12 +268,12 @@ lemma T_p_upper_distinct_cosets_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.
       field_simp at hn ⊢; exact_mod_cast hn
     exact_mod_cast h_rat
   have hlt : |(b₁ : ℤ) - b₂| < p := by
-    rw [abs_lt]; constructor <;> [push_cast; push_cast] <;> omega
+    rw [abs_lt]; constructor <;> [push_cast; push_cast] <;> lia
   rw [h_int] at hlt; simp [abs_mul, Nat.abs_cast] at hlt
   have hn0 : n = 0 := by
     by_contra h
-    exact absurd hlt (not_lt.mpr (le_mul_of_one_le_left (by omega) (Int.one_le_abs h)))
-  simp [hn0] at h_int; omega
+    exact absurd hlt (not_lt.mpr (le_mul_of_one_le_left (by lia) (Int.one_le_abs h)))
+  rw [hn0, zero_mul] at h_int; lia
 
 /-- The representative `T_p_upper(b)` does not lie in the same left `Γ₀(N)`-coset as
 `T_p_lower(p)`: `T_p_upper(b) ≠ γ * T_p_lower(p)` for any `γ ∈ (Gamma0_pair N).H`,
@@ -341,12 +334,10 @@ private lemma adj_rep_mem_D_p_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.Pr
     b₂ * GL_adjugate a,
     (HeckeRing.GLn.Gamma0_pair N).H.mul_mem hb₂
       (HeckePairAction.adjugate_mem_H a ha), ?_⟩
-  have h1 : GL_adjugate (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) =
-      GL_adjugate c * GL_adjugate (diagMat 2 ![1, p]) * GL_adjugate a := by
-    conv_lhs => rw [show (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) =
-      a * diagMat 2 ![1, p] * c from hrep_eq]
-    rw [GL_adjugate_mul, GL_adjugate_mul, mul_assoc]
-  rw [h1, adj_diag_1p_eq_T_p_lower p hp, hTl_eq]; group
+  conv_lhs => rw [show (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) =
+    a * diagMat 2 ![1, p] * c from hrep_eq]
+  rw [GL_adjugate_mul, GL_adjugate_mul, mul_assoc, adj_diag_1p_eq_T_p_lower p hp, hTl_eq]
+  group
 
 private lemma GL_adjugate_mem_toSet_Gamma0 (N : ℕ) [NeZero N]
     (D : HeckeCoset (HeckeRing.GLn.Gamma0_pair N))
@@ -356,11 +347,9 @@ private lemma GL_adjugate_mem_toSet_Gamma0 (N : ℕ) [NeZero N]
   rw [HeckeCoset.toSet_eq_rep, DoubleCoset.mem_doubleCoset] at hg hadj_rep ⊢
   obtain ⟨a, ha, c, hc, heq⟩ := hg
   obtain ⟨r₁, hr₁, r₂, hr₂, hrep_eq⟩ := hadj_rep
-  refine ⟨GL_adjugate c * r₁,
-    (HeckeRing.GLn.Gamma0_pair N).H.mul_mem
+  refine ⟨GL_adjugate c * r₁, (HeckeRing.GLn.Gamma0_pair N).H.mul_mem
       (HeckePairAction.adjugate_mem_H c hc) hr₁,
-    r₂ * GL_adjugate a,
-    (HeckeRing.GLn.Gamma0_pair N).H.mul_mem hr₂
+    r₂ * GL_adjugate a, (HeckeRing.GLn.Gamma0_pair N).H.mul_mem hr₂
       (HeckePairAction.adjugate_mem_H a ha), ?_⟩
   rw [heq, GL_adjugate_mul, GL_adjugate_mul,
     show GL_adjugate (HeckeCoset.rep D : GL _ ℚ) =
@@ -374,10 +363,10 @@ private noncomputable def adj_mem_dc_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp :
       (h₂ : GL _ ℚ) (_ : h₂ ∈ (HeckeRing.GLn.Gamma0_pair N).H),
       GL_adjugate g =
         h₁ * (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) * h₂ := by
-  have := GL_adjugate_mem_toSet_Gamma0 N (D_p_Gamma0 N p hp.pos) g hg
+  have h := GL_adjugate_mem_toSet_Gamma0 N (D_p_Gamma0 N p hp.pos) g hg
     (adj_rep_mem_D_p_Gamma0 N p hp hpN)
-  rw [HeckeCoset.toSet_eq_rep, DoubleCoset.mem_doubleCoset] at this
-  obtain ⟨a, ha, b, hb, heq⟩ := this
+  rw [HeckeCoset.toSet_eq_rep, DoubleCoset.mem_doubleCoset] at h
+  obtain ⟨a, ha, b, hb, heq⟩ := h
   exact ⟨a, ha, b, hb, heq⟩
 
 private lemma h_quot_imp_adj_mem_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.Prime p)
@@ -496,7 +485,7 @@ private lemma T_p_coset_reps_map_injective (N : ℕ) [NeZero N] (p : ℕ) (hp : 
   · simp only [h₁, dite_false, h₂, dite_true] at heq
     exact adj_lower_inv_mul_upper_not_mem_Gamma0 N p hp j₂.val
       (adj_inv_mul_mem_of_quot_eq N p hp _ _ _ _ heq)
-  · have := j₁.isLt; have := j₂.isLt; omega
+  · have := j₁.isLt; have := j₂.isLt; lia
 
 /-- The `p+1` classical representatives `T_p_upper(b)` (for `b = 0, …, p-1`) and
 `T_p_lower(p)` give a bijection `Fin (p+1) ≃ decompQuot (Gamma0_pair N)
@@ -505,11 +494,10 @@ noncomputable def T_p_coset_reps_Gamma0_equiv (N : ℕ) [NeZero N] (p : ℕ)
     (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
     Fin (p + 1) ≃ decompQuot (HeckeRing.GLn.Gamma0_pair N)
       (HeckeCoset.rep (D_p_Gamma0 N p hp.pos)) := by
-  have h_card : Fintype.card (decompQuot (HeckeRing.GLn.Gamma0_pair N)
-      (HeckeCoset.rep (D_p_Gamma0 N p hp.pos))) = p + 1 := by
-    rw [← Nat.card_eq_fintype_card]; exact HeckeCoset_deg_D_p_Gamma0 N p hp hpN
   refine Equiv.ofBijective (T_p_coset_reps_map N p hp hpN) ?_
   rw [Fintype.bijective_iff_injective_and_card]
-  exact ⟨T_p_coset_reps_map_injective N p hp hpN, by rw [Fintype.card_fin, h_card]⟩
+  refine ⟨T_p_coset_reps_map_injective N p hp hpN, ?_⟩
+  rw [Fintype.card_fin, ← Nat.card_eq_fintype_card]
+  exact (HeckeCoset_deg_D_p_Gamma0 N p hp hpN).symm
 
 end HeckeRing.GL2
