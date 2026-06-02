@@ -40,20 +40,6 @@ This is the HeckeCoset of the diagonal matrix `diag(1,p)`. -/
 noncomputable def D_p (p : ℕ) (hp : 0 < p) : HeckeRing.HeckeCoset (GL_pair 2) :=
   ⟦⟨diagMat 2 ![1, p], diagMat_mem_posDetInt 2 _ (fun i ↦ by fin_cases i <;> simp [hp])⟩⟧
 
-/-- `T_p_upper(b)` has det p > 0 and integer entries, hence lies in Δ. -/
-lemma T_p_upper_mem_Delta (p : ℕ) (hp : 0 < p) (b : ℕ) :
-    (T_p_upper p hp b : GL (Fin 2) ℚ) ∈ (GL_pair 2).Δ := by
-  refine ⟨⟨!![1, (b : ℤ); 0, (p : ℤ)], ?_⟩, by rw [T_p_upper_det]; exact_mod_cast hp⟩
-  ext i j; fin_cases i <;> fin_cases j <;>
-    simp [T_p_upper, GeneralLinearGroup.mkOfDetNeZero, Matrix.map_apply]
-
-/-- `T_p_lower` has det p > 0 and integer entries, hence lies in Δ. -/
-lemma T_p_lower_mem_Delta (p : ℕ) (hp : 0 < p) :
-    (T_p_lower p hp : GL (Fin 2) ℚ) ∈ (GL_pair 2).Δ := by
-  refine ⟨⟨!![(p : ℤ), 0; 0, 1], ?_⟩, by rw [T_p_lower_det]; exact_mod_cast hp⟩
-  ext i j; fin_cases i <;> fin_cases j <;>
-    simp [T_p_lower, GeneralLinearGroup.mkOfDetNeZero, Matrix.map_apply]
-
 /-- `T_p_upper(b)` lies in the double coset `D_p` for `b < p`.
 Both `diag(1,p)` and `T_p_upper(b) = [[1,b],[0,p]]` have determinant `p`, and
 their ratio lies in `SL₂(ℤ)` on both sides. -/
@@ -122,35 +108,6 @@ private lemma SL_invariant_to_H_invariant {k : ℤ} {f : ℍ → ℂ}
     (hf_SL : ∀ γ ∈ 𝒮ℒ, f ∣[k] γ = f) :
     ∀ h, h ∈ (GL_pair 2).H → f ∣[k] (glMap h) = f := fun _ ⟨s, hs⟩ ↦ hs ▸
   hf_SL (glMap (mapGL ℚ s)) ⟨s, (glMap_mapGL_eq s).symm⟩
-
-/-- `T_p_lower = w * diag(1,p) * w⁻¹` where `w = [[0,-1],[1,0]] ∈ SL₂(ℤ)`.
-For SL₂(ℤ)-invariant `f`, the left `w` factor is absorbed:
-`f ∣[k] T_p_lower = (f ∣[k] diag(1,p)) ∣[k] w⁻¹`. -/
-lemma slash_T_p_lower_factor (k : ℤ) (p : ℕ) (hp : Nat.Prime p)
-    (f : ℍ → ℂ) (hf : ∀ γ ∈ 𝒮ℒ, f ∣[k] γ = f) :
-    f ∣[k] (T_p_lower p hp.pos : GL (Fin 2) ℚ) =
-    (f ∣[k] (diagMat 2 ![1, p] : GL (Fin 2) ℚ)) ∣[k]
-      (mapGL ℚ ⟨!![(0 : ℤ), 1; -1, 0],
-        by simp [det_fin_two]⟩ : GL (Fin 2) ℚ) := by
-  have hw_det : (!![(0 : ℤ), -1; 1, 0] : Matrix (Fin 2) (Fin 2) ℤ).det = 1 := by
-    simp [det_fin_two]
-  set w : SL(2, ℤ) := ⟨!![(0 : ℤ), -1; 1, 0], hw_det⟩
-  have hwinv_det : (!![(0 : ℤ), 1; -1, 0] : Matrix (Fin 2) (Fin 2) ℤ).det = 1 := by
-    simp [det_fin_two]
-  set winv : SL(2, ℤ) := ⟨!![(0 : ℤ), 1; -1, 0], hwinv_det⟩
-  have hfact : (T_p_lower p hp.pos : GL (Fin 2) ℚ) =
-      mapGL ℚ w * diagMat 2 ![1, p] * mapGL ℚ winv := by
-    apply Units.ext; ext i j
-    have hpos : ∀ k : Fin 2, 0 < (![1, p] : Fin 2 → Nat) k := fun k ↦ by
-      fin_cases k <;> simp [hp.pos]
-    simp only [diagMat_val _ _ hpos, Units.val_mul, Matrix.mul_apply, Fin.sum_univ_two,
-      Matrix.diagonal_apply]
-    fin_cases i <;> fin_cases j <;>
-      simp [T_p_lower, GeneralLinearGroup.mkOfDetNeZero, w, winv,
-        mapGL_coe_matrix, algebraMap_int_eq]
-  rw [hfact, SlashAction.slash_mul, SlashAction.slash_mul]
-  congr 2
-  exact SL_invariant_to_H_invariant hf _ ⟨w, rfl⟩
 
 private lemma slash_eq_tRep_gen_of_adj_mem (k : ℤ) (f : ℍ → ℂ)
     (hf : ∀ γ ∈ 𝒮ℒ, f ∣[k] γ = f) (D : HeckeCoset (GL_pair 2)) (g h₁ h₂ : GL (Fin 2) ℚ)
