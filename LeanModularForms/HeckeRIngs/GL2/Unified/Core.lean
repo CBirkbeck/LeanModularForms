@@ -87,24 +87,22 @@ noncomputable def conjEnd (e : V ≃ₗ[ℂ] W) (T : Module.End ℂ V) : Module.
     conjEnd e T w = e (T (e.symm w)) := rfl
 
 @[simp] lemma conjEnd_one (e : V ≃ₗ[ℂ] W) : conjEnd e (1 : Module.End ℂ V) = 1 := by
-  ext w
-  simp [conjEnd]
+  ext w; simp [conjEnd]
 
 @[simp] lemma conjEnd_mul (e : V ≃ₗ[ℂ] W) (T S : Module.End ℂ V) :
     conjEnd e (T * S) = conjEnd e T * conjEnd e S := by
-  ext w
-  simp [conjEnd, Module.End.mul_apply]
+  ext w; simp [conjEnd]
 
 /-- Transport a good Hecke family across a linear equivalence. -/
 noncomputable def transport (e : V ≃ₗ[ℂ] W) (F : GoodHeckeFamily N V) :
     GoodHeckeFamily N W where
   op n := conjEnd e (F.op n)
-  map_one' := by rw [F.map_one, conjEnd_one]
+  map_one' := by simp
   map_mul_of_coprime' m n hmn := by
-    show conjEnd e (F.op (m * n)) = conjEnd e (F.op m) * conjEnd e (F.op n)
+    show conjEnd e _ = _ * _
     rw [F.map_mul_of_coprime m n hmn, conjEnd_mul]
   commute' m n := by
-    show conjEnd e (F.op m) * conjEnd e (F.op n) = conjEnd e (F.op n) * conjEnd e (F.op m)
+    show conjEnd e _ * conjEnd e _ = conjEnd e _ * conjEnd e _
     rw [← conjEnd_mul, ← conjEnd_mul, (F.commute m n).eq]
 
 @[simp] lemma transport_apply (e : V ≃ₗ[ℂ] W) (F : GoodHeckeFamily N V) (n : GoodIndex N)
