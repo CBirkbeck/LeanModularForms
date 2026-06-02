@@ -54,21 +54,6 @@ lemma map_mul_of_coprime (F : GoodHeckeFamily N V) (m n : GoodIndex N)
 lemma commute (F : GoodHeckeFamily N V) (m n : GoodIndex N) : Commute (F.op m) (F.op n) :=
   F.commute' m n
 
-/-- Pointwise commutativity extracted from `Commute` at the `Module.End` level. -/
-lemma commute_apply (F : GoodHeckeFamily N V) (m n : GoodIndex N) (v : V) :
-    F.op m (F.op n v) = F.op n (F.op m v) :=
-  LinearMap.congr_fun (F.commute m n).eq v
-
-/-- Coprime multiplicativity already forces commutativity on coprime indices.
-This is the ring-theoretic route used in the experimental layer when the proof
-source is `T_{mn} = T_m T_n`, rather than an independently packaged
-commutativity theorem. -/
-lemma commute_of_coprime_from_mul (F : GoodHeckeFamily N V) (m n : GoodIndex N)
-    (hmn : Nat.Coprime (m : ℕ) (n : ℕ)) : Commute (F.op m) (F.op n) := by
-  show F.op m * F.op n = F.op n * F.op m
-  rw [← F.map_mul_of_coprime m n hmn, ← F.map_mul_of_coprime n m hmn.symm,
-    show (m * n : GoodIndex N) = n * m from Subtype.ext (Nat.mul_comm _ _)]
-
 /-- Conjugate an endomorphism along a linear equivalence. -/
 noncomputable def conjEnd (e : V ≃ₗ[ℂ] W) (T : Module.End ℂ V) : Module.End ℂ W :=
   e.toLinearMap ∘ₗ T ∘ₗ e.symm.toLinearMap
