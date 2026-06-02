@@ -54,11 +54,11 @@ def gaussianBinom (q : ℕ) (m k : ℕ) : ℕ :=
     (Finset.range k).prod fun i ↦ (q ^ (m - i) - 1) / (q ^ (k - i) - 1)
   else 0
 
-lemma gaussianBinom_zero_right (q m : ℕ) : gaussianBinom q m 0 = 1 := by
-  simp [gaussianBinom]
+lemma gaussianBinom_zero_right (q m : ℕ) : gaussianBinom q m 0 = 1 := by simp [gaussianBinom]
 
 lemma gaussianBinom_gt (q m k : ℕ) (h : m < k) : gaussianBinom q m k = 0 := by
   simp [gaussianBinom, h.not_ge]
+
 
 private lemma conjAct_smul_eq_of_mem {G : Type*} [Group G] (H : Subgroup G)
     {h : G} (hh : h ∈ H) : ConjAct.toConjAct h • H = H :=
@@ -90,14 +90,13 @@ private def invTransposeEquiv : SL(n, ℤ) ≃* SL(n, ℤ) where
   toFun σ := σ.transpose⁻¹
   invFun σ := σ⁻¹.transpose
   left_inv σ := by
-    show (σ.transpose⁻¹)⁻¹.transpose = σ
+    change (σ.transpose⁻¹)⁻¹.transpose = σ
     simp only [inv_inv]; ext i j; simp [coe_transpose]
   right_inv σ := by
-    show (σ⁻¹.transpose).transpose⁻¹ = σ
+    change (σ⁻¹.transpose).transpose⁻¹ = σ
     rw [show (σ⁻¹.transpose).transpose = σ⁻¹ from Subtype.ext (by ext; simp [coe_transpose]),
       inv_inv]
   map_mul' σ τ := by
-    show (σ * τ).transpose⁻¹ = σ.transpose⁻¹ * τ.transpose⁻¹
     rw [show (σ * τ).transpose = τ.transpose * σ.transpose from
       Subtype.ext (by simp [Matrix.transpose_mul]), _root_.mul_inv_rev]
 
@@ -151,9 +150,7 @@ private lemma transpose_mem_conj_inv_of_mem_conj
     ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct] at hσ
   simp only [inv_inv] at hσ
   obtain ⟨ρ, hρ⟩ := MonoidHom.mem_range.mp (show _ ∈ SLnZ_subgroup n from hσ)
-  have h_eq : (σ : GL (Fin n) ℚ) * diagMat n a =
-      diagMat n a * (ρ : GL (Fin n) ℚ) := by rw [hρ]; group
-  have h_trans := transpose_mul_diagMat n a ha σ ρ h_eq
+  have h_trans := transpose_mul_diagMat n a ha σ ρ (by rw [hρ]; group)
   rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def,
     ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct, inv_inv]
   suffices h : diagMat n a * (σ.transpose : GL (Fin n) ℚ) *
@@ -169,9 +166,7 @@ private lemma transpose_mem_conj_of_mem_conj_inv
   rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def,
     ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct, inv_inv] at hτ
   obtain ⟨ρ, hρ⟩ := MonoidHom.mem_range.mp (show _ ∈ SLnZ_subgroup n from hτ)
-  have h_eq : (ρ : GL (Fin n) ℚ) * diagMat n a =
-      diagMat n a * (τ : GL (Fin n) ℚ) := by rw [hρ]; group
-  have h_trans := transpose_mul_diagMat n a ha ρ τ h_eq
+  have h_trans := transpose_mul_diagMat n a ha ρ τ (by rw [hρ]; group)
   rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def,
     ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct, inv_inv]
   suffices h : (diagMat n a)⁻¹ * (τ.transpose : GL (Fin n) ℚ) *
@@ -281,7 +276,8 @@ private lemma upperTriRep_card_le_relIndex (a : Fin n → ℕ) (ha : ∀ i, 0 < 
         simp only [Subgroup.relIndex, Subgroup.index, ← Nat.card_eq_fintype_card]
 
 /-- The number of upper-triangular representatives is a lower bound on the degree. -/
-theorem upperTriRep_card_le_HeckeCoset_deg (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (hdiv : DivChain n a) :
+theorem upperTriRep_card_le_HeckeCoset_deg (a : Fin n → ℕ) (ha : ∀ i, 0 < a i)
+    (hdiv : DivChain n a) :
     (Fintype.card (UpperTriRep n a hdiv) : ℤ) ≤
     HeckeCoset_deg (GL_pair n) (T_diag a) := by
   set H := (GL_pair n).H
@@ -289,7 +285,8 @@ theorem upperTriRep_card_le_HeckeCoset_deg (a : Fin n → ℕ) (ha : ∀ i, 0 < 
   set δ := (HeckeCoset.rep D : GL (Fin n) ℚ)
   set α := (diagMat n a : GL (Fin n) ℚ) with hα_def
   have h_α_inv_comm : α⁻¹ ∈ Subgroup.Commensurable.commensurator H :=
-    (Subgroup.Commensurable.commensurator H).inv_mem ((GL_pair n).h₁ (diagMat_mem_posDetInt n a ha))
+    (Subgroup.Commensurable.commensurator H).inv_mem
+      ((GL_pair n).h₁ (diagMat_mem_posDetInt n a ha))
   have h_rel_ne : (ConjAct.toConjAct α⁻¹ • H).relIndex H ≠ 0 :=
     ((Subgroup.Commensurable.commensurator_mem_iff H α⁻¹).mp h_α_inv_comm).1
   have h_card_le : Fintype.card (UpperTriRep n a hdiv) ≤
@@ -302,11 +299,9 @@ theorem upperTriRep_card_le_HeckeCoset_deg (a : Fin n → ℕ) (ha : ∀ i, 0 < 
   rw [h_D_set, DoubleCoset.mem_doubleCoset] at h_in_set
   obtain ⟨σ₁, hσ₁, σ₂, hσ₂, hδ_eq⟩ := h_in_set
   have h_smul_σ₁ : ConjAct.toConjAct σ₁ • H = H := conjAct_smul_eq_of_mem H hσ₁
-  have h_smul_σ₂ : ConjAct.toConjAct σ₂ • H = H := conjAct_smul_eq_of_mem H hσ₂
   have h_δ_smul : ConjAct.toConjAct δ • H =
       ConjAct.toConjAct σ₁ • (ConjAct.toConjAct α • H) := by
-    rw [hδ_eq, map_mul, map_mul, ← smul_smul,
-      ← smul_smul, h_smul_σ₂]
+    rw [hδ_eq, map_mul, map_mul, ← smul_smul, ← smul_smul, conjAct_smul_eq_of_mem H hσ₂]
   have h_S1 : (ConjAct.toConjAct α • H).relIndex H =
       (ConjAct.toConjAct δ • H).relIndex H := by
     rw [h_δ_smul]
@@ -427,7 +422,7 @@ theorem HeckeCoset_deg_T_diag_two_prime (p : ℕ) (hp : Nat.Prime p) (a : Fin 2 
   set δ := (HeckeCoset.rep D : GL (Fin 2) ℚ)
   set α := (diagMat 2 a : GL (Fin 2) ℚ) with hα_def
   set H := (GL_pair 2).H
-  have h_dvd_a : a 0 ∣ a 1 := hdiv 0 (by omega)
+  have h_dvd_a : a 0 ∣ a 1 := hdiv 0 (by lia)
   have h_in_set : δ ∈ HeckeCoset.toSet D := HeckeCoset.rep_mem D
   have h_D_set : HeckeCoset.toSet D = DoubleCoset.doubleCoset α ↑H ↑H := by
     simp only [D, T_diag, HeckeCoset.toSet_mk, hα_def]; congr 1; exact diagMat_delta_val 2 a ha
@@ -436,8 +431,7 @@ theorem HeckeCoset_deg_T_diag_two_prime (p : ℕ) (hp : Nat.Prime p) (a : Fin 2 
   have h_smul_σ₁ : ConjAct.toConjAct σ₁ • H = H := conjAct_smul_eq_of_mem H hσ₁
   have h_δ_smul : ConjAct.toConjAct δ • H =
       ConjAct.toConjAct σ₁ • (ConjAct.toConjAct α • H) := by
-    rw [hδ_eq, map_mul, map_mul, ← smul_smul,
-      ← smul_smul, conjAct_smul_eq_of_mem H hσ₂]
+    rw [hδ_eq, map_mul, map_mul, ← smul_smul, ← smul_smul, conjAct_smul_eq_of_mem H hσ₂]
   have h_S1 : (ConjAct.toConjAct α • H).relIndex H =
       (ConjAct.toConjAct δ • H).relIndex H := by
     rw [h_δ_smul]
@@ -482,10 +476,9 @@ theorem HeckeCoset_deg_T_diag_two_scalar (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a 
     rw [h_def, hsmul, Subgroup.relIndex_self]; simp
   have hδ_mem : (δ : GL (Fin 2) ℚ) ∈
       DoubleCoset.doubleCoset (↑(diagMat_delta 2 a)) H H := by
-    have h1 : HeckeCoset.toSet D =
-        DoubleCoset.doubleCoset (↑(diagMat_delta 2 a)) H H := by
-      simp only [D, H, T_diag, HeckeCoset.toSet_mk]
-    rw [← h1]; exact HeckeCoset.rep_mem D
+    rw [show DoubleCoset.doubleCoset (↑(diagMat_delta 2 a)) H H = HeckeCoset.toSet D from by
+      simp only [D, H, T_diag, HeckeCoset.toSet_mk]]
+    exact HeckeCoset.rep_mem D
   rw [DoubleCoset.mem_doubleCoset] at hδ_mem; obtain ⟨h₁, hh₁, h₂, hh₂, hδ_eq⟩ := hδ_mem
   have h_comm : diagMat 2 a * h₂ = h₂ * diagMat 2 a :=
     diagMat_comm_of_const 2 a ha h_const h₂
