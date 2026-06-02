@@ -292,11 +292,6 @@ lemma DoubleCoset.doubleCoset_eq_iUnion_leftCosets (g : G) :
   convert Set.iUnion_congr h1
   rw [Set.iUnion_mul]
 
-/-- The double coset `HhH` is a constant union indexed by the trivial quotient. -/
-lemma DoubleCoset.doubleCoset_one_mul (h : G) :
-    DoubleCoset.doubleCoset h (H : Set G) H =
-    ⋃ (_ : H ⧸ (ConjAct.toConjAct h • H).subgroupOf H),
-      DoubleCoset.doubleCoset h H H := by simp [Set.iUnion_const]
 
 /-- The Hecke ring type: formal `Z`-linear combinations of double cosets `HeckeCoset P`. -/
 def 𝕋 (P : HeckePair G) (Z : Type*) [CommRing Z] := Finsupp (HeckeCoset P) Z
