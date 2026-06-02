@@ -99,10 +99,6 @@ lemma upperTriGL_val (a : Fin n → ℕ) (hpos : ∀ i, 0 < a i) (hdiv : DivChai
     (B : UpperTriRep n a hdiv) : (↑(upperTriGL n a hpos hdiv B) : Matrix (Fin n) (Fin n) ℚ) =
     (upperTriMat n a hdiv B).map (Int.cast : ℤ → ℚ) := rfl
 
-lemma upperTriGL_hasIntEntries (a : Fin n → ℕ) (hpos : ∀ i, 0 < a i) (hdiv : DivChain n a)
-    (B : UpperTriRep n a hdiv) : HasIntEntries n (upperTriGL n a hpos hdiv B) :=
-  ⟨upperTriMat n a hdiv B, rfl⟩
-
 /-- The unipotent upper-triangular matrix with `1` on the diagonal and `B_{ij}` above. -/
 def unipMat (a : Fin n → ℕ) (hdiv : DivChain n a) (B : UpperTriRep n a hdiv) :
     Matrix (Fin n) (Fin n) ℤ :=
