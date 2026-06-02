@@ -58,10 +58,8 @@ lemma T_p_upper_mem_Delta1 (N : ℕ) [NeZero N] (p : ℕ) (hp : 0 < p) (b : ℕ)
   have hA_eq : (↑(T_p_upper p hp b) : Matrix _ _ ℚ) = A.map (Int.cast : ℤ → ℚ) := by
     ext i j; fin_cases i <;> fin_cases j <;>
       simp [T_p_upper, GeneralLinearGroup.mkOfDetNeZero, A, Matrix.map_apply]
-  refine ⟨⟨A, hA_eq⟩, ?_, A, hA_eq, ?_, ?_⟩
-  · rw [T_p_upper_det]; exact_mod_cast hp
-  · simp [A]
-  · simp [A]
+  exact ⟨⟨A, hA_eq⟩, by rw [T_p_upper_det]; exact_mod_cast hp,
+    A, hA_eq, by simp [A], by simp [A]⟩
 
 /-- `T_p_upper(b)` lies in the double coset `D_p_Gamma1`. The factorisation
 `T_p_upper(b) = diag(1,p) · σ_b` with `σ_b = [[1,b],[0,1]] ∈ Γ₁(N)` puts it in
@@ -77,8 +75,7 @@ lemma T_p_upper_mem_D_p_Gamma1 (N : ℕ) [NeZero N] (p : ℕ) (hp : 0 < p) (b : 
     simp [det_fin_two]
   set σ_b : SL(2, ℤ) := ⟨!![1, (b : ℤ); 0, 1], hσ_det⟩
   have hσ_in_Gamma1 : σ_b ∈ Gamma1 N := by
-    rw [Gamma1_mem]
-    refine ⟨?_, ?_, ?_⟩ <;> simp [σ_b]
+    rw [Gamma1_mem]; refine ⟨?_, ?_, ?_⟩ <;> simp [σ_b]
   have hσ_mem : (mapGL ℚ σ_b : GL (Fin 2) ℚ) ∈ (Gamma1_pair N).H :=
     Subgroup.mem_map.mpr ⟨σ_b, hσ_in_Gamma1, rfl⟩
   have hfact : (T_p_upper p hp b : GL (Fin 2) ℚ) =
@@ -120,8 +117,7 @@ noncomputable def mIdxOfCoprime (N p : ℕ) [NeZero N] (hpN : Nat.Coprime p N) :
 /-- Bezout identity: `N · mIdxOfCoprime = aInvOfCoprime · p - 1`. -/
 lemma N_mul_mIdx_eq (N p : ℕ) [NeZero N] (hpN : Nat.Coprime p N) :
     (N : ℤ) * mIdxOfCoprime N p hpN = (aInvOfCoprime N p hpN : ℤ) * p - 1 := by
-  unfold mIdxOfCoprime
-  rw [mul_comm (N : ℤ)]
+  unfold mIdxOfCoprime; rw [mul_comm (N : ℤ)]
   exact Int.ediv_mul_cancel (N_dvd_aInv_mul_p_sub_one N p hpN)
 
 /-- `σ_p_specific = [[a, 1], [N·m, p]]` where `a · p − N · m = 1`, so the determinant
@@ -294,9 +290,9 @@ lemma heckeT_p_fun_eq_coset_sum {N : ℕ} [NeZero N] (k : ℤ) {p : ℕ}
   rw [slash_M_infty_eq_diamond_slash_T_p_lower k p hp.pos hpN f]
 
 private lemma Gamma1_pair_H_entry_is_int {N : ℕ} [NeZero N] (g : GL (Fin 2) ℚ)
-    (hg : g ∈ (Gamma1_pair N).H) (i j : Fin 2) : ∃ n : ℤ, g.val i j = (n : ℚ) := by
-  obtain ⟨s, _, hs⟩ := Subgroup.mem_map.mp hg
-  exact ⟨s.val i j, by rw [← hs]; simp [mapGL_coe_matrix, algebraMap_int_eq]⟩
+    (hg : g ∈ (Gamma1_pair N).H) (i j : Fin 2) : ∃ n : ℤ, g.val i j = (n : ℚ) :=
+  let ⟨s, _, hs⟩ := Subgroup.mem_map.mp hg
+  ⟨s.val i j, by rw [← hs]; simp [mapGL_coe_matrix, algebraMap_int_eq]⟩
 
 private lemma adj_T_p_upper_val (p : ℕ) (hp : 0 < p) (b : ℕ) :
     (GL_adjugate (T_p_upper p hp b : GL (Fin 2) ℚ)).val =
@@ -338,19 +334,17 @@ lemma adj_upper_inv_mul_upper_not_mem_Gamma1 (N : ℕ) [NeZero N] (p : ℕ)
   rw [div_eq_iff hp_ne] at hn
   have h_int : (b₁ : ℤ) - (b₂ : ℤ) = n * (p : ℤ) := by exact_mod_cast hn
   have hlt : |(b₁ : ℤ) - b₂| < p := by
-    rw [abs_lt]; constructor <;> [push_cast; push_cast] <;> omega
+    rw [abs_lt]; constructor <;> [push_cast; push_cast] <;> lia
   rw [h_int] at hlt; simp [abs_mul, Nat.abs_cast] at hlt
   have hn0 : n = 0 := by
     by_contra h
-    exact absurd hlt (not_lt.mpr (le_mul_of_one_le_left (by omega) (Int.one_le_abs h)))
-  simp [hn0] at h_int; omega
+    exact absurd hlt (not_lt.mpr (le_mul_of_one_le_left (by lia) (Int.one_le_abs h)))
+  rw [hn0, zero_mul] at h_int; lia
 
 /-- `(Gamma1_pair N).H ≤ (GL_pair 2).H` (i.e., Γ₁(N) image is in SL₂(ℤ) image). -/
 lemma Gamma1_pair_H_le_GL_pair_H (N : ℕ) [NeZero N] :
-    (Gamma1_pair N).H ≤ (GL_pair 2).H := by
-  intro g hg
-  obtain ⟨s, _, hs⟩ := Subgroup.mem_map.mp hg
-  exact ⟨s, hs⟩
+    (Gamma1_pair N).H ≤ (GL_pair 2).H := fun _ hg ↦
+  let ⟨s, _, hs⟩ := Subgroup.mem_map.mp hg; ⟨s, hs⟩
 
 /-- `adj(M_∞)⁻¹ · adj(T_p_upper(b)) ∉ Γ₁(N).H`, the distinctness of `M_∞` against the
 upper-triangular reps, reduced via `Γ₁(N).H ≤ (GL_pair 2).H` to the level-1 lemma
@@ -378,15 +372,11 @@ lemma adj_M_infty_inv_mul_upper_not_mem_Gamma1 (N : ℕ) [NeZero N] (p : ℕ)
   have hσ_mem : (mapGL ℚ (sigma_p_specific N p hp.pos hpN) : GL (Fin 2) ℚ) ∈
       (GL_pair 2).H :=
     ⟨sigma_p_specific N p hp.pos hpN, rfl⟩
-  have h_full : (mapGL ℚ (sigma_p_specific N p hp.pos hpN) *
-      ((GL_adjugate (T_p_lower p hp.pos : GL _ ℚ))⁻¹ *
-        GL_adjugate (T_p_upper p hp.pos b : GL _ ℚ))) ∈ (GL_pair 2).H :=
-    Gamma1_pair_H_le_GL_pair_H N hmem
   have h_X : ((GL_adjugate (T_p_lower p hp.pos : GL _ ℚ))⁻¹ *
       GL_adjugate (T_p_upper p hp.pos b : GL _ ℚ)) ∈ (GL_pair 2).H := by
-    have := (GL_pair 2).H.mul_mem ((GL_pair 2).H.inv_mem hσ_mem) h_full
-    rw [← mul_assoc, inv_mul_cancel, one_mul] at this
-    exact this
+    have h := (GL_pair 2).H.mul_mem ((GL_pair 2).H.inv_mem hσ_mem)
+      (Gamma1_pair_H_le_GL_pair_H N hmem)
+    rwa [← mul_assoc, inv_mul_cancel, one_mul] at h
   exact HeckeRing.GL2.adj_lower_inv_mul_upper_not_mem_H p hp b h_X
 
 private lemma diagMat_1p_val (p : ℕ) (hp : 0 < p) :
@@ -451,17 +441,15 @@ lemma conj_diag_mem_Gamma1_of_mem_GL_pair (N p : ℕ) [NeZero N] (hp : 0 < p)
     exact_mod_cast this
   obtain ⟨hs_00, hs_11, hs_10⟩ := (Gamma1_mem N s).mp hs_in
   rw [Gamma1_mem]
-  refine ⟨?_, ?_, ?_⟩
-  · rw [ht_eq_00]; exact hs_00
-  · rw [ht_eq_11]; exact hs_11
-  · have hs_10_dvd : (N : ℤ) ∣ s.val 1 0 := by
-      rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]; exact_mod_cast hs_10
-    have h_co : IsCoprime (N : ℤ) (p : ℤ) :=
-      Int.isCoprime_iff_gcd_eq_one.mpr (by exact_mod_cast hpN.symm)
-    have h_N_dvd_t : (N : ℤ) ∣ t.val 1 0 :=
-      h_co.dvd_of_dvd_mul_right (ht_eq_10 ▸ hs_10_dvd)
-    rw [← ZMod.intCast_zmod_eq_zero_iff_dvd] at h_N_dvd_t
-    exact_mod_cast h_N_dvd_t
+  refine ⟨ht_eq_00 ▸ hs_00, ht_eq_11 ▸ hs_11, ?_⟩
+  have hs_10_dvd : (N : ℤ) ∣ s.val 1 0 := by
+    rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]; exact_mod_cast hs_10
+  have h_co : IsCoprime (N : ℤ) (p : ℤ) :=
+    Int.isCoprime_iff_gcd_eq_one.mpr (by exact_mod_cast hpN.symm)
+  have h_N_dvd_t : (N : ℤ) ∣ t.val 1 0 :=
+    h_co.dvd_of_dvd_mul_right (ht_eq_10 ▸ hs_10_dvd)
+  rw [← ZMod.intCast_zmod_eq_zero_iff_dvd] at h_N_dvd_t
+  exact_mod_cast h_N_dvd_t
 
 private lemma h_quot_imp_adj_mem_Gamma1 (N p : ℕ) [NeZero N] (hp : 0 < p)
     (a₁ : GL (Fin 2) ℚ) (ha₁ : a₁ ∈ (Gamma1_pair N).H)
