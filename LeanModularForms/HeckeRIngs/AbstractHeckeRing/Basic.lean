@@ -51,15 +51,6 @@ lemma conjAct_smul_elt_eq (h : H) : ConjAct.toConjAct (h : G) • H = H := by
       Subgroup.subgroup_mul_singleton (by simp)]
   rw [← Subgroup.coe_pointwise_smul] at this; norm_cast at *
 
-/-- A left coset contained in another left coset is equal to it. -/
-lemma leftCoset_eq_of_subset (a b : G) (h : {a} * (H : Set G) ⊆ {b} * H) :
-    {a} * (H : Set G) = {b} * H := by
-  obtain ⟨b', hb', y, hy, hb_eq⟩ :=
-    Set.mem_mul.mp (h (by rw [Set.mem_mul]; use a; simp : a ∈ {a} * (H : Set G)))
-  simp only [Set.mem_singleton_iff] at hb'
-  rw [← hb_eq, hb', ← Set.singleton_mul_singleton, mul_assoc,
-    Subgroup.singleton_mul_subgroup hy]
-
 /-- An arithmetic group pair `(H, Δ)` consisting of a subgroup `H` and a submonoid `Δ`
 of a group `G`, satisfying `H ≤ Δ ≤ commensurator(H)`. -/
 @[ext]
@@ -122,16 +113,6 @@ lemma eq_iff (g h : P.Δ) : (⟦g⟧ : HeckeCoset P) = ⟦h⟧ ↔
 /-- The carrier set of `⟦g⟧` is definitionally `HgH`. -/
 @[simp] lemma toSet_mk (g : P.Δ) :
     HeckeCoset.toSet (⟦g⟧ : HeckeCoset P) = DoubleCoset.doubleCoset (g : G) P.H P.H := rfl
-
-/-- Membership in `toSet ⟦g⟧` is membership in the double coset `HgH`. -/
-lemma mem_toSet_mk (g : P.Δ) (x : G) :
-    x ∈ HeckeCoset.toSet (⟦g⟧ : HeckeCoset P) ↔ x ∈ DoubleCoset.doubleCoset (g : G) P.H P.H :=
-  Iff.rfl
-
-/-- If two `HeckeCoset`s have the same `toSet`, they are equal. -/
-lemma ext_toSet {D₁ D₂ : HeckeCoset P} (h : HeckeCoset.toSet D₁ = HeckeCoset.toSet D₂) :
-    D₁ = D₂ :=
-  Quotient.ind₂ (fun _ _ h ↦ Quotient.sound h) D₁ D₂ h
 
 /-- The carrier set equals the double coset of the representative. -/
 lemma toSet_eq_rep (D : HeckeCoset P) :
@@ -311,14 +292,6 @@ lemma DoubleCoset.doubleCoset_eq_iUnion_leftCosets (g : G) :
   convert Set.iUnion_congr h1
   rw [Set.iUnion_mul]
 
-/-- The product of two double cosets simplifies using `H * H = H` on the left. -/
-lemma doubleCoset_mul_doubleCoset_left (g h : G) :
-    DoubleCoset.doubleCoset g H H * DoubleCoset.doubleCoset h H H =
-    DoubleCoset.doubleCoset g H H * {h} * H := by
-  simp_rw [DoubleCoset.doubleCoset,
-    show (H : Set G) * {g} * (H : Set G) * (H * {h} * H) =
-      H * {g} * (H * H) * {h} * H by simp_rw [← mul_assoc], coe_mul_coe H]
-
 /-- The product of two double cosets simplifies using `H * H = H` on the right. -/
 lemma doubleCoset_mul_doubleCoset_right (g h : G) :
     DoubleCoset.doubleCoset g H H * DoubleCoset.doubleCoset h H H =
@@ -327,21 +300,6 @@ lemma doubleCoset_mul_doubleCoset_right (g h : G) :
     show (H : Set G) * {g} * (H : Set G) * (H * {h} * H) =
       H * {g} * (H * H) * {h} * H by simp_rw [← mul_assoc],
     coe_mul_coe H, ← mul_assoc]
-
-/-- The set-theoretic product of two double cosets is a union of double cosets. -/
-lemma doubleCoset_mul_eq_iUnion_doubleCoset (g h : G) :
-    DoubleCoset.doubleCoset g (H : Set G) H *
-      DoubleCoset.doubleCoset h (H : Set G) H =
-    ⋃ (i : H ⧸ (ConjAct.toConjAct h • H).subgroupOf H),
-      DoubleCoset.doubleCoset (g * i.out * h : G) H H := by
-  rw [doubleCoset_mul_doubleCoset_right, DoubleCoset.doubleCoset_eq_iUnion_leftCosets,
-    Set.mul_iUnion]
-  simp_rw [DoubleCoset.doubleCoset]
-  refine Set.iUnion_congr fun i ↦ ?_
-  rw [smul_eq_singleton_mul,
-    show (H : Set G) * {g} * ({↑(Quotient.out i) * h} * ↑H) =
-      H * {g} * {↑(Quotient.out i) * h} * ↑H by simp_rw [← mul_assoc]]
-  simp_rw [← Set.singleton_mul_singleton, ← mul_assoc]
 
 /-- The double coset `HhH` is a constant union indexed by the trivial quotient. -/
 lemma DoubleCoset.doubleCoset_one_mul (h : G) :
