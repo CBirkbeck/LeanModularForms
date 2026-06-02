@@ -32,21 +32,15 @@ noncomputable def ambientCuspHeckeOfGoodIndex (k : ℤ) (n : GoodIndex N) :
   letI : NeZero (n : ℕ) := ⟨Nat.pos_iff_ne_zero.mp n.property.1⟩
   refine
     { toFun := heckeT_n_cusp (N := N) k (n : ℕ)
-      map_add' := ?_
-      map_smul' := ?_ }
-  · intro f g
-    ext z
-    change (heckeT_n k (n : ℕ) (f + g).toModularForm').toFun z =
+      map_add' := fun f g ↦ CuspForm.ext fun z ↦ ?_
+      map_smul' := fun c f ↦ CuspForm.ext fun z ↦ ?_ }
+  · change (heckeT_n k (n : ℕ) (f.toModularForm' + g.toModularForm')).toFun z =
       ((heckeT_n k (n : ℕ) f.toModularForm').toFun z +
         (heckeT_n k (n : ℕ) g.toModularForm').toFun z)
-    rw [show (f + g).toModularForm' = f.toModularForm' + g.toModularForm' from rfl, map_add]
-    rfl
-  · intro c f
-    ext z
-    change (heckeT_n k (n : ℕ) (c • f).toModularForm').toFun z =
+    rw [map_add]; rfl
+  · change (heckeT_n k (n : ℕ) (c • f.toModularForm')).toFun z =
       c • (heckeT_n k (n : ℕ) f.toModularForm').toFun z
-    rw [show (c • f).toModularForm' = c • f.toModularForm' from rfl, map_smul]
-    rfl
+    rw [map_smul]; rfl
 
 /-- The ambient good-index cusp operators commute by reducing to the ambient
 modular multiplication-table proof source. -/
@@ -89,33 +83,22 @@ noncomputable def cuspFormCharSpaceFamily
     (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
     GoodHeckeFamily N (cuspFormCharSpace k χ) where
   op := cuspCharHeckeOfGoodIndex (N := N) k χ
-  map_one' := by
-    apply LinearMap.ext
-    intro f
-    apply Subtype.ext
-    apply CuspForm.ext
-    intro z
+  map_one' := LinearMap.ext fun f ↦ Subtype.ext <| CuspForm.ext fun z ↦ by
     change (heckeT_n k 1 (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k).toModularForm').toFun z =
       (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) z
-    rw [heckeT_n_one]
-    rfl
+    rw [heckeT_n_one]; rfl
   map_mul_of_coprime' m n hmn := by
     letI : NeZero (m : ℕ) := ⟨Nat.pos_iff_ne_zero.mp m.property.1⟩
     letI : NeZero (n : ℕ) := ⟨Nat.pos_iff_ne_zero.mp n.property.1⟩
     letI : NeZero ((m : ℕ) * n) :=
       ⟨Nat.mul_ne_zero (NeZero.ne (m : ℕ)) (NeZero.ne (n : ℕ))⟩
-    apply LinearMap.ext
-    intro f
-    apply Subtype.ext
-    apply CuspForm.ext
-    intro z
+    refine LinearMap.ext fun f ↦ Subtype.ext <| CuspForm.ext fun z ↦ ?_
     change (heckeT_n k ((m : ℕ) * n)
         (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k).toModularForm').toFun z =
       ((heckeT_n k (m : ℕ))
         ((heckeT_n k (n : ℕ))
           (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k).toModularForm')).toFun z
-    rw [heckeT_n_mul_coprime k (m : ℕ) (n : ℕ) hmn]
-    rfl
+    rw [heckeT_n_mul_coprime k (m : ℕ) (n : ℕ) hmn]; rfl
   commute' := heckeT_n_cusp_charRestrict_commute_from_mulFormula (N := N) k χ
 
 /-- The restricted cusp `Γ₁(N), χ` good-index operators commute by restricting
