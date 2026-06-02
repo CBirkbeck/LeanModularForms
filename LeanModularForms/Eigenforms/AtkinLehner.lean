@@ -293,24 +293,6 @@ theorem cast_levelRaise_mem_qSupportedOnDvdSubmodule
       qSupportedOnDvdSubmodule N k d :=
   levelRaise_mem_qSupportedOnDvdSubmodule (Nat.mul_div_cancel' hdN) g
 
-/-- Submodule-level intersection bridge: under the character hypothesis `hfχ`, `f` sits
-in `qSupportedOnDvdSubmodule N k d ⊓ cuspFormCharSpace k χ.toUnitHom` iff `f` is the cast
-of a level-raise of some `g : CuspForm ((Gamma1 (N / d)).map (mapGL ℝ)) k`. -/
-theorem mem_qSupportedOnDvdSubmodule_inf_cuspFormCharSpace_iff_exists_cuspForm_levelRaise_preimage_of_char
-    {N d : ℕ} [NeZero N] [NeZero d] [NeZero (N / d)]
-    (hd : 1 < d) (hdN : d ∣ N) {k : ℤ}
-    (χ : DirichletCharacter ℂ N)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hfχ : f ∈ cuspFormCharSpace k χ.toUnitHom) :
-    f ∈ qSupportedOnDvdSubmodule N k d ⊓ cuspFormCharSpace k χ.toUnitHom ↔
-      ∃ (g : CuspForm ((Gamma1 (N / d)).map (mapGL ℝ)) k),
-        f = (Nat.mul_div_cancel' hdN) ▸ levelRaise (N / d) d k g := by
-  rw [Submodule.mem_inf]
-  refine ⟨fun ⟨hsup, _⟩ ↦
-    (qSupportedOnDvdSubmodule_mem_iff_exists_cuspForm_levelRaise_preimage_of_char
-      hd hdN χ f hfχ).mp hsup, fun h ↦ ⟨(qSupportedOnDvdSubmodule_mem_iff_exists_cuspForm_levelRaise_preimage_of_char
-    hd hdN χ f hfχ).mpr h, hfχ⟩⟩
-
 /-- For `h : M = N` a type-level equality of levels, the identity cast `(h ▸ ·)` is a
 `ℂ`-linear equivalence between the two CuspForm spaces. -/
 def castCuspFormLinearEquiv {M N : ℕ} (h : M = N) (k : ℤ) :
@@ -354,31 +336,6 @@ theorem range_castLevelRaise_le_qSupportedOnDvdSubmodule
   rintro _ ⟨g, rfl⟩
   rw [castLevelRaise_apply]
   exact cast_levelRaise_mem_qSupportedOnDvdSubmodule hdN g
-
-/-- Composite-level mainLemma from a prime-supported decomposition: if
-`f : CuspForm Γ₁(N) k` decomposes as `f = ∑ p ∈ S, f_p p` with `S ⊆ N.primeFactors` and
-each `f_p p` simultaneously in `cuspFormCharSpace k χ` and `qSupportedOnDvdSubmodule N k p`,
-then `f ∈ cuspFormsOld N k`. -/
-theorem mainLemma_charSpace_of_prime_decomposition
-    {N : ℕ} [NeZero N] {k : ℤ}
-    (χ : DirichletCharacter ℂ N)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (S : Finset ℕ) (hS : S ⊆ N.primeFactors)
-    (f_p : ℕ → CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (h_decomp : f = ∑ p ∈ S, f_p p)
-    (h_char : ∀ p ∈ S, f_p p ∈ cuspFormCharSpace k χ.toUnitHom)
-    (h_supp : ∀ p ∈ S, f_p p ∈ qSupportedOnDvdSubmodule N k p) :
-    f ∈ cuspFormsOld N k := by
-  rw [h_decomp]
-  refine Submodule.sum_mem _ fun p hp ↦ ?_
-  have hp_pf := hS hp
-  have hp_prime : p.Prime := Nat.prime_of_mem_primeFactors hp_pf
-  have hpN : p ∣ N := Nat.dvd_of_mem_primeFactors hp_pf
-  haveI : NeZero p := ⟨hp_prime.ne_zero⟩
-  haveI : NeZero (N / p) :=
-    ⟨(Nat.div_pos (Nat.le_of_dvd (Nat.pos_of_neZero N) hpN) hp_prime.pos).ne'⟩
-  exact qSupportedOnDvd_mem_cuspFormsOld_of_char hp_prime.one_lt hpN χ
-    (f_p p) (h_char p hp) (h_supp p hp)
 
 /-- **Higher-level `p`-supported projection.**  The composition
 `V_p ∘ U_p` at modular-form level, mapping
