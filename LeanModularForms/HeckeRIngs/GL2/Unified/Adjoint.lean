@@ -69,9 +69,7 @@ lemma adjoint (A : GoodHeckeFamilyScalarAdjoint (N := N) F) (n : GoodIndex N) (f
 /-- Since the abstract adjoint is a scalar multiple of the original operator,
 it commutes with it. This is the normality package needed downstream. -/
 lemma normal (A : GoodHeckeFamilyScalarAdjoint (N := N) F) (n : GoodIndex N) :
-    Commute (F.op n) (A.adjointOp n) := by
-  ext f
-  simp [adjointOp, Module.End.mul_apply]
+    Commute (F.op n) (A.adjointOp n) := (Commute.refl _).smul_right _
 
 end GoodHeckeFamilyScalarAdjoint
 
@@ -104,8 +102,7 @@ private lemma petN_heckeT_n_cusp_adjoint_scalar (k : ℤ) (χ : (ZMod N)ˣ →* 
   rw [show diamondOpCusp k (ZMod.unitOfCoprime n hn)⁻¹ (heckeT_n_cusp k n g) =
         (↑(χ (ZMod.unitOfCoprime n hn)⁻¹) : ℂ) • heckeT_n_cusp k n g from
       diamondOpCusp_apply_charSpace (N := N) k χ (ZMod.unitOfCoprime n hn)⁻¹ hTg]
-  simp only [map_inv, Units.val_inv_eq_inv_val]
-  exact petN_smul_right _ _ _
+  simpa [map_inv, Units.val_inv_eq_inv_val] using petN_smul_right _ _ _
 
 /-- On `cuspFormCharSpace k χ`, the Petersson adjoint of the good Hecke operator
 indexed by `n` is the scalar `χ(n)⁻¹` times the operator itself. -/
