@@ -46,11 +46,8 @@ noncomputable def Delta1_submonoid (N : ℕ) : Submonoid (GL (Fin 2) ℚ) where
     ∃ A : Matrix (Fin 2) (Fin 2) ℤ,
       (↑g : Matrix (Fin 2) (Fin 2) ℚ) = A.map (Int.cast : ℤ → ℚ) ∧
       (N : ℤ) ∣ A 1 0 ∧ (A 0 0 : ZMod N) = 1}
-  one_mem' := by
-    refine ⟨hasIntEntries_one 2, by simp, 1, ?_, ?_, ?_⟩
-    · ext i j; simp [map_apply, one_apply]
-    · simp
-    · simp
+  one_mem' :=
+    ⟨hasIntEntries_one 2, by simp, 1, by ext i j; simp [map_apply, one_apply], by simp, by simp⟩
   mul_mem' := by
     intro a b ⟨ha, hda, A, hA, hAN, hAone⟩ ⟨hb, hdb, B, hB, hBN, hBone⟩
     refine ⟨HasIntEntries.mul (n := 2) ha hb,
@@ -74,7 +71,8 @@ lemma Gamma1_le_Delta1 (N : ℕ) [NeZero N] :
   refine ⟨SLnZ_subgroup_hasIntEntries 2 (MonoidHom.mem_range.mpr ⟨σ, rfl⟩), ?_,
     (σ : Matrix (Fin 2) (Fin 2) ℤ), rfl,
     (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp hc, ha⟩
-  have hdet := σ.prop; rw [det_fin_two] at hdet
+  have hdet := σ.prop
+  rw [det_fin_two] at hdet
   simp only [det_fin_two, mapGL_coe_matrix, RingHom.mapMatrix_apply,
     map_apply_coe, algebraMap_int_eq, Int.coe_castRingHom, map_apply]
   exact_mod_cast hdet ▸ one_pos
@@ -85,14 +83,11 @@ private lemma Delta1_le_posDetInt (N : ℕ) :
 
 private lemma Gamma1_map_commensurable_SLnZ (N : ℕ) [NeZero N] :
     Subgroup.Commensurable ((Gamma1 N).map (mapGL ℚ))
-      (Subgroup.map (mapGL ℚ : SpecialLinearGroup (Fin 2) ℤ →* GL (Fin 2) ℚ) ⊤) := by
-  constructor
-  · rw [Subgroup.relIndex_map_map_of_injective _ _ mapGL_injective,
-        Subgroup.relIndex_top_right]
-    exact Subgroup.FiniteIndex.index_ne_zero
-  · rw [Subgroup.relIndex_map_map_of_injective _ _ mapGL_injective,
-        Subgroup.relIndex_top_left]
-    exact one_ne_zero
+      (Subgroup.map (mapGL ℚ : SpecialLinearGroup (Fin 2) ℤ →* GL (Fin 2) ℚ) ⊤) :=
+  ⟨by rw [Subgroup.relIndex_map_map_of_injective _ _ mapGL_injective,
+        Subgroup.relIndex_top_right]; exact Subgroup.FiniteIndex.index_ne_zero,
+   by rw [Subgroup.relIndex_map_map_of_injective _ _ mapGL_injective,
+        Subgroup.relIndex_top_left]; exact one_ne_zero⟩
 
 /-- `Δ₁(N) ≤ commensurator(Γ₁(N))`. The proof chains:
 `Δ₁(N) ≤ posDetInt ≤ commensurator(SL₂(ℤ)) = commensurator(Γ₁(N))`,
@@ -125,8 +120,7 @@ theorem Gamma0_normalizes_Gamma1 (g : ↥(Gamma0 N))
     (h : SL(2, ℤ)) (hh : h ∈ Gamma1 N) :
     (g : SL(2, ℤ)) * h * (g : SL(2, ℤ))⁻¹ ∈ Gamma1 N := by
   set h₀ : ↥(Gamma0 N) := ⟨h, Gamma1_in_Gamma0 N hh⟩
-  have hh1 : h₀ ∈ Gamma1' N := by
-    rw [Gamma1_to_Gamma0_mem]; rwa [Gamma1_mem] at hh
+  have hh1 : h₀ ∈ Gamma1' N := by rw [Gamma1_to_Gamma0_mem]; rwa [Gamma1_mem] at hh
   have hconj : g * h₀ * g⁻¹ ∈ Gamma1' N :=
     (Gamma0Map N).normal_ker.conj_mem h₀ hh1 g
   rw [Gamma1_mem]
@@ -178,13 +172,12 @@ lemma slash_mapGL_invariant_of_Gamma1_invariant {k : ℤ} (g : ↥(Gamma0 N))
     (hf : ∀ γ ∈ (Gamma1 N).map (mapGL ℝ), f ∣[k] γ = f)
     {γ : GL (Fin 2) ℝ} (hγ : γ ∈ (Gamma1 N).map (mapGL ℝ)) :
     (f ∣[k] mapGL ℝ (g : SL(2, ℤ))) ∣[k] γ = f ∣[k] mapGL ℝ (g : SL(2, ℤ)) := by
-  rw [← SlashAction.slash_mul]
   obtain ⟨σ, hσ, rfl⟩ := Subgroup.mem_map.mp hγ
-  rw [← map_mul, show (g : SL(2, ℤ)) * σ =
-    ((g : SL(2, ℤ)) * σ * (g : SL(2, ℤ))⁻¹) * (g : SL(2, ℤ)) from by group,
-    map_mul, SlashAction.slash_mul]
-  exact congr_arg (· ∣[k] mapGL ℝ (g : SL(2, ℤ)))
-    (hf _ (Subgroup.mem_map.mpr ⟨_, Gamma0_normalizes_Gamma1 g σ hσ, rfl⟩))
+  rw [← SlashAction.slash_mul, ← map_mul,
+    show (g : SL(2, ℤ)) * σ =
+      ((g : SL(2, ℤ)) * σ * (g : SL(2, ℤ))⁻¹) * (g : SL(2, ℤ)) from by group,
+    map_mul, SlashAction.slash_mul,
+    hf _ (Subgroup.mem_map.mpr ⟨_, Gamma0_normalizes_Gamma1 g σ hσ, rfl⟩)]
 
 /-- For `g ∈ Γ₀(N)` and `γ ∈ GL₂(ℝ)` with `γ • ∞ = c`, a cusp `c` for `Γ₁(N).map(mapGL ℝ)`
 transports along the conjugation by `mapGL ℝ g` to a cusp at `(mapGL ℝ g · γ) • ∞`. -/
@@ -248,9 +241,9 @@ lemma mul_inv_mem_Gamma1_of_Gamma0Map_eq (g₁ g₂ : ↥(Gamma0 N))
   have hker : g₁ * g₂⁻¹ ∈ Gamma1' N := by
     show Gamma0Map N (g₁ * g₂⁻¹) = 1
     have heq_u : Gamma0MapUnits g₁ = Gamma0MapUnits g₂ := by ext; simp [heq]
-    have h : Gamma0MapUnits (g₁ * g₂⁻¹) = 1 := by
-      simp [map_mul, map_inv, heq_u, mul_inv_cancel]
-    simpa only [Gamma0MapUnits_val, Units.val_one] using congr_arg Units.val h
+    simpa only [Gamma0MapUnits_val, Units.val_one] using congr_arg Units.val
+      (by simp [map_mul, map_inv, heq_u, mul_inv_cancel] :
+        Gamma0MapUnits (g₁ * g₂⁻¹) = 1)
   rw [Gamma1_mem]; rwa [Gamma1_to_Gamma0_mem] at hker
 
 /-- Slash-transport for `Γ₁(N)`-invariant functions: if `f` is invariant under
@@ -259,8 +252,8 @@ lemma slash_eq_of_Gamma0Map_eq {k : ℤ} {f : UpperHalfPlane → ℂ}
     (hf : ∀ γ ∈ (Gamma1 N).map (mapGL ℝ), f ∣[k] γ = f)
     (g₁ g₂ : ↥(Gamma0 N)) (heq : Gamma0Map N g₁ = Gamma0Map N g₂) :
     f ∣[k] mapGL ℝ (g₁ : SL(2, ℤ)) = f ∣[k] mapGL ℝ (g₂ : SL(2, ℤ)) := by
-  rw [show (g₁ : SL(2, ℤ)) = ((g₁ : SL(2, ℤ)) * (g₂ : SL(2, ℤ))⁻¹) *
-    (g₂ : SL(2, ℤ)) from by group, map_mul, SlashAction.slash_mul,
+  rw [show (g₁ : SL(2, ℤ)) = ((g₁ : SL(2, ℤ)) * (g₂ : SL(2, ℤ))⁻¹) * (g₂ : SL(2, ℤ)) from by
+      group, map_mul, SlashAction.slash_mul,
     hf _ (Subgroup.mem_map.mpr ⟨_, mul_inv_mem_Gamma1_of_Gamma0Map_eq g₁ g₂ heq, rfl⟩)]
 
 /-- The diamond operator depends only on the `Gamma0Map` value: if two `Gamma0(N)`
@@ -276,8 +269,7 @@ theorem diamondOpAux_eq_of_Gamma0Map_eq (k : ℤ) (g₁ g₂ : ↥(Gamma0 N))
 /-- `Gamma0MapUnits` is surjective: every unit `d ∈ (ZMod N)ˣ` is realized as the
 bottom-right entry of some `g ∈ Gamma0(N)`. -/
 theorem Gamma0MapUnits_surjective [NeZero N] :
-    Function.Surjective (Gamma0MapUnits (N := N)) := by
-  intro d
+    Function.Surjective (Gamma0MapUnits (N := N)) := fun d ↦ by
   set target : SpecialLinearGroup (Fin 2) (ZMod N) :=
     ⟨!![↑d⁻¹, 0; 0, ↑d], by simp [Matrix.det_fin_two]⟩
   obtain ⟨g, hg⟩ := SL2Reduction.SL2_reduction_surjective N target
@@ -453,14 +445,12 @@ theorem isNebentypus_iff (k : ℤ) (χ : ↥(Gamma0 N) →* ℂˣ) (f : UpperHal
     IsNebentypus k χ f ↔
     ∀ g : ↥(Gamma0 N), f ∣[k] mapGL ℝ (g : SL(2, ℤ)) = (↑(χ g) : ℂ) • f := by
   simp only [IsNebentypus, twistedSlash]
-  constructor
-  · intro h g
-    calc f ∣[k] mapGL ℝ (g : SL(2, ℤ)) = (↑(χ g) : ℂ) • ((↑(χ g) : ℂ)⁻¹ •
+  refine ⟨fun h g ↦ ?_, fun h g ↦ ?_⟩
+  · calc f ∣[k] mapGL ℝ (g : SL(2, ℤ)) = (↑(χ g) : ℂ) • ((↑(χ g) : ℂ)⁻¹ •
         (f ∣[k] mapGL ℝ (g : SL(2, ℤ)))) := by
           rw [smul_smul, mul_inv_cancel₀ (χ g).ne_zero, one_smul]
       _ = _ := by rw [h g]
-  · intro h g
-    rw [show f ∣[k] mapGL ℝ (g : SL(2, ℤ)) = (↑(χ g) : ℂ) • f from h g,
+  · rw [show f ∣[k] mapGL ℝ (g : SL(2, ℤ)) = (↑(χ g) : ℂ) • f from h g,
         smul_smul, inv_mul_cancel₀ (χ g).ne_zero, one_smul]
 
 /-- The twisted slash is multiplicative on `Gamma1`-invariant functions. -/
@@ -470,10 +460,9 @@ theorem twistedSlash_mul {k : ℤ} {χ : ↥(Gamma0 N) →* ℂˣ}
     (g₁ g₂ : ↥(Gamma0 N)) :
     twistedSlash k χ (g₁ * g₂) f = twistedSlash k χ g₁ (twistedSlash k χ g₂ f) := by
   simp only [twistedSlash, map_mul, Units.val_mul]
-  rw [ModularForm.smul_slash, σ_mapGL_real_eq_id, RingHom.id_apply, smul_smul]
-  have hscalar : (↑(χ g₁) * ↑(χ g₂) : ℂ)⁻¹ = (↑(χ g₁) : ℂ)⁻¹ * (↑(χ g₂) : ℂ)⁻¹ := by
-    rw [_root_.mul_inv_rev, mul_comm]
-  rw [hscalar]
+  rw [ModularForm.smul_slash, σ_mapGL_real_eq_id, RingHom.id_apply, smul_smul,
+    show (↑(χ g₁) * ↑(χ g₂) : ℂ)⁻¹ = (↑(χ g₁) : ℂ)⁻¹ * (↑(χ g₂) : ℂ)⁻¹ by
+      rw [_root_.mul_inv_rev, mul_comm]]
   congr 1
   set c₀ := g₁ * g₂ * g₁⁻¹ * g₂⁻¹
   have hc₀_units : Gamma0MapUnits c₀ = 1 := by
@@ -483,12 +472,11 @@ theorem twistedSlash_mul {k : ℤ} {χ : ↥(Gamma0 N) →* ℂˣ}
     rw [Gamma1_mem]
     exact (Gamma1_to_Gamma0_mem c₀).mp
       (Gamma1_mem'.mpr (by rw [← Gamma0MapUnits_val, hc₀_units, Units.val_one]))
-  have hfact : ((g₁ * g₂ : ↥(Gamma0 N)) : SL(2, ℤ)) =
-      (c₀ : SL(2, ℤ)) * ((g₂ : SL(2, ℤ)) * (g₁ : SL(2, ℤ))) := by
+  rw [show ((g₁ * g₂ : ↥(Gamma0 N)) : SL(2, ℤ)) =
+      (c₀ : SL(2, ℤ)) * ((g₂ : SL(2, ℤ)) * (g₁ : SL(2, ℤ))) from by
     show (↑g₁ : SL(2, ℤ)) * ↑g₂ =
       (↑g₁ * ↑g₂ * (↑g₁)⁻¹ * (↑g₂)⁻¹ : SL(2, ℤ)) * (↑g₂ * ↑g₁)
-    group
-  rw [hfact, map_mul, SlashAction.slash_mul,
+    group, map_mul, SlashAction.slash_mul,
     hf _ (Subgroup.mem_map.mpr ⟨_, hc₀_gamma1, rfl⟩),
     map_mul, SlashAction.slash_mul]
 
@@ -508,15 +496,13 @@ theorem modFormCharSpace_iff_nebentypus [NeZero N] (k : ℤ) (χ₀ : (ZMod N)ˣ
     ∀ g : ↥(Gamma0 N), (⇑f) ∣[k] mapGL ℝ (g : SL(2, ℤ)) =
       (↑(χ₀ (Gamma0MapUnits g)) : ℂ) • ⇑f := by
   rw [mem_modFormCharSpace_iff]
-  constructor
-  · intro h g
-    have hd := h (Gamma0MapUnits g)
+  refine ⟨fun h g ↦ ?_, fun h d ↦ ?_⟩
+  · have hd := h (Gamma0MapUnits g)
     show (⇑f) ∣[k] mapGL ℝ (g : SL(2, ℤ)) = (↑(χ₀ (Gamma0MapUnits g)) : ℂ) • ⇑f
     rw [show diamondOpHom k (Gamma0MapUnits g) = diamondOp k (Gamma0MapUnits g) from rfl,
         diamondOp_eq_diamondOpAux k _ g rfl] at hd
     exact congr_arg (⇑· : ModularForm _ k → _) hd
-  · intro h d
-    obtain ⟨g, hg⟩ := Gamma0MapUnits_surjective (N := N) d
+  · obtain ⟨g, hg⟩ := Gamma0MapUnits_surjective (N := N) d
     show diamondOp k d f = (↑(χ₀ d) : ℂ) • f
     rw [diamondOp_eq_diamondOpAux k d g hg, ← hg]
     exact ModularForm.ext (congr_fun (h g))
@@ -530,15 +516,13 @@ theorem cuspFormCharSpace_iff_nebentypus [NeZero N] (k : ℤ) (χ₀ : (ZMod N)�
     ∀ g : ↥(Gamma0 N), (⇑f) ∣[k] mapGL ℝ (g : SL(2, ℤ)) =
       (↑(χ₀ (Gamma0MapUnits g)) : ℂ) • ⇑f := by
   rw [mem_cuspFormCharSpace_iff]
-  constructor
-  · intro h g
-    have hd := h (Gamma0MapUnits g)
+  refine ⟨fun h g ↦ ?_, fun h d ↦ ?_⟩
+  · have hd := h (Gamma0MapUnits g)
     show (⇑f) ∣[k] mapGL ℝ (g : SL(2, ℤ)) = (↑(χ₀ (Gamma0MapUnits g)) : ℂ) • ⇑f
     rw [show diamondOpCuspHom k (Gamma0MapUnits g) = diamondOpCusp k (Gamma0MapUnits g) from rfl,
         diamondOpCusp_eq k _ g rfl] at hd
     exact congr_arg (⇑· : CuspForm _ k → _) hd
-  · intro h d
-    obtain ⟨g, hg⟩ := Gamma0MapUnits_surjective (N := N) d
+  · obtain ⟨g, hg⟩ := Gamma0MapUnits_surjective (N := N) d
     show diamondOpCusp k d f = (↑(χ₀ d) : ℂ) • f
     rw [diamondOpCusp_eq k d g hg, ← hg]
     exact CuspForm.ext (congr_fun (h g))
