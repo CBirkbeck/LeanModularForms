@@ -50,9 +50,6 @@ lemma T_pp_of_pos (p : ℕ) (hp : p.Prime) : T_pp p = T_elem (fun _ : Fin 2 ↦ 
   rw [T_pp, T_ad_of_pos p p hp.pos hp.pos (dvd_refl _)]
   exact T_elem_congr_diag 2 (funext fun i ↦ by fin_cases i <;> rfl)
 
-/-- `T(p,p)` is definitionally equal to `T_ad p p`. -/
-lemma T_pp_eq_T_ad (p : ℕ) : T_pp p = T_ad p p := rfl
-
 /-- The all-ones diagonal element is the identity in the Hecke algebra. -/
 lemma T_elem_ones_eq : T_elem (fun _ : Fin 2 ↦ 1) = 1 := by
   change T_single (GL_pair 2) ℤ (T_diag (fun _ : Fin 2 ↦ 1)) 1 = 1
