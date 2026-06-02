@@ -58,17 +58,6 @@ theorem exists_Gamma0_mul_lift_unitsMap
   obtain ⟨β, hβ⟩ := Gamma0MapUnits_surjective (N := k * N) d'
   exact ⟨β, hβ ▸ hd'⟩
 
-/-- **Diamond lift across a level inclusion, `N ∣ M` form.**  Variant of
-`exists_Gamma0_mul_lift_unitsMap` stated in terms of a divisibility `N ∣ M`
-rather than an explicit product `k · N`. -/
-theorem exists_Gamma0_lift_of_dvd
-    {M N : ℕ} [NeZero M] (h : N ∣ M) (d : (ZMod N)ˣ) :
-    ∃ β : ↥(Gamma0 M),
-      ZMod.unitsMap h (Gamma0MapUnits β) = d := by
-  obtain ⟨d', hd'⟩ := ZMod.unitsMap_surjective (m := M) (n := N) h d
-  obtain ⟨β, hβ⟩ := Gamma0MapUnits_surjective (N := M) d'
-  exact ⟨β, hβ ▸ hd'⟩
-
 /-- **Gamma0MapUnits is surjective on the diagonal stabilizer**.
 
 For `g = diag(1, k) ∈ Δ₀(N)` with `gcd(k, N) = 1`, and any `d ∈ (ZMod N)ˣ`,
