@@ -26,15 +26,13 @@ open Finsupp
 /-- Associativity of multiplication in the Hecke ring, deduced from `IsScalarTower`
 and faithfulness of the module action. -/
 lemma mul_assoc_𝕋 (f g h : 𝕋 P ℤ) : (f * g) * h = f * (g * h) := by
-  apply (instFaithfulSMulHeckeModule P).eq_of_smul_eq_smul (M := 𝕋 P ℤ)
-  intro a
+  refine (instFaithfulSMulHeckeModule P).eq_of_smul_eq_smul (M := 𝕋 P ℤ) fun a ↦ ?_
   have e1 := (instIsScalarTower P).smul_assoc g f a
   have e2 := (instIsScalarTower P).smul_assoc h g (f • a)
-  have e3 := (instIsScalarTower P).smul_assoc (g * h) f a
   have e4 := (instIsScalarTower P).smul_assoc h (f * g) a
-  simp only [smul_def] at e1 e2 e3 e4
-  rw [e1, ← e2] at e4
-  rwa [← e3] at e4
+  simp only [smul_def] at e1 e2 e4
+  rw [e1, ← e2, ← (instIsScalarTower P).smul_assoc (g * h) f a, smul_def] at e4
+  exact e4
 
 /-- The Hecke ring is a non-unital semiring (associativity + distributivity). -/
 noncomputable instance instNonUnitalSemiring : NonUnitalSemiring (𝕋 P ℤ) :=
@@ -55,16 +53,14 @@ noncomputable instance instNonAssocSemiring : NonAssocSemiring (𝕋 P ℤ) :=
     natCast_succ := fun _ ↦ by
       simp only [Nat.cast_add, Nat.cast_one, single_add, add_right_inj]; rfl
     one_mul := fun f ↦ by
-      simp only [one_def, mul_def]
-      rw [T_single]
+      simp only [one_def, mul_def, T_single]
       simp
       nth_rw 2 [← Finsupp.sum_single f]
       congr
       ext D z v
       have := one_mul_singleton_𝕋 P D z
       simp_rw [T_single] at *
-      rw [← this, mul_singleton_𝕋]
-      simp only [one_smul]
+      rw [← this, mul_singleton_𝕋, one_smul]
     mul_one := fun f ↦ by
       simp only [one_def, mul_def, zero_smul, smul_zero, sum_single_index, one_smul]
       nth_rw 2 [← Finsupp.sum_single f]
@@ -72,8 +68,7 @@ noncomputable instance instNonAssocSemiring : NonAssocSemiring (𝕋 P ℤ) :=
       ext D z v
       have := singleton_one_mul_𝕋 P D z
       simp_rw [T_single] at this
-      rw [← this, mul_singleton_𝕋]
-      simp only [one_smul] }
+      rw [← this, mul_singleton_𝕋, one_smul] }
 
 /-- The Hecke ring is a semiring. -/
 noncomputable instance instSemiring : Semiring (𝕋 P ℤ) :=
@@ -87,8 +82,7 @@ noncomputable instance instNonAssocRing : NonAssocRing (𝕋 P ℤ) :=
     intCast := fun n ↦ T_single P ℤ (HeckeCoset.one P) n
     intCast_ofNat := fun _ ↦ rfl
     intCast_negSucc := fun _ ↦ by
-      simp only [T_single, Int.negSucc_eq, Finsupp.single_neg]
-      congr 1 }
+      simp only [T_single, Int.negSucc_eq, Finsupp.single_neg]; congr 1 }
 
 /-- The Hecke ring `𝕋 P ℤ` is a ring. -/
 noncomputable instance instRing : Ring (𝕋 P ℤ) :=
