@@ -75,15 +75,6 @@ lemma Gamma_p_α_conj_mem_Gamma1 (α : GL (Fin 2) ℚ)
   mem_conjGL.mp hγ.1
 
 open CongruenceSubgroup Pointwise ConjAct in
-/-- `conjGL` ↔ `ConjAct.toConjAct` GL-level identity. -/
-lemma conjGL_map_eq_conjAct_inv_smul_inter
-    (Γ : Subgroup SL(2, ℤ)) (g : GL (Fin 2) ℝ) :
-    (conjGL Γ g).map (mapGL ℝ) =
-      (ConjAct.toConjAct g⁻¹ • (Γ.map (mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ))) ⊓
-        (mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ).range := by
-  rw [conjGL, Subgroup.map_comap_eq, inf_comm]
-
-open CongruenceSubgroup Pointwise ConjAct in
 /-- Conjugation-by-α function `Γ_p(α) → Γ₁(N)`. -/
 noncomputable def Gamma_p_α_conjBy (α : GL (Fin 2) ℚ)
     (γ : Gamma_p_α (N := N) α) : Gamma1 N :=
@@ -399,19 +390,6 @@ theorem setIntegral_Gamma1_fundDomain_PSL_eq_SL_outer_q_sum
         congr
     _ = (slToPslQuot_fiberCard N) • ∫ τ in Gamma1_fundDomain_PSL N, h τ ∂μ_hyp := by
         rw [← setIntegral_Gamma1_fundDomain_PSL_eq_sum h h_int]
-
-open UpperHalfPlane ModularGroup MeasureTheory in
-/-- Generic per-`q` SL slash-domain reducer. -/
-theorem peterssonInner_fd_slash_q_eq_setIntegral_shifted_fd
-    (F G : ℍ → ℂ) (q : SL(2, ℤ) ⧸ Gamma1 N) :
-    peterssonInner k fd (F ∣[k] (q.out : SL(2, ℤ))⁻¹) (G ∣[k] (q.out : SL(2, ℤ))⁻¹) =
-    ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ),
-      petersson k F G τ ∂μ_hyp := by
-  simp only [peterssonInner]
-  simp_rw [petersson_slash_SL]
-  rw [← Set.image_smul,
-    ← (measurePreserving_smul (q.out : SL(2, ℤ))⁻¹ μ_hyp).setIntegral_image_emb
-      (measurableEmbedding_const_smul _)]
 
 open CongruenceSubgroup ModularGroup MeasureTheory in
 /-- The image of `Γ_p(α)` in `PSL(2, ℤ) = SL(2, ℤ) / {±I}`. -/
@@ -920,20 +898,6 @@ theorem hyperbolicMeasure_Gamma_p_α_fundDomain_PSL_canonical_lt_top
   rw [(isFundamentalDomain_fdo_PSL.smul _).measure_eq isFundamentalDomain_fdo_PSL]
   exact lt_of_le_of_lt (measure_mono fdo_subset_fd) hyperbolicMeasure_fd_lt_top
 
-open CongruenceSubgroup UpperHalfPlane ModularGroup MeasureTheory in
-/-- The Petersson kernel is integrable on the canonical `Γ_p(α)` FD. -/
-theorem integrableOn_petersson_Gamma_p_α_fundDomain_PSL_canonical
-    (α : GL (Fin 2) ℚ) (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    IntegrableOn (fun τ ↦ petersson k ⇑f ⇑g τ)
-      (Gamma_p_α_fundDomain_PSL_canonical (N := N) α) μ_hyp := by
-  obtain ⟨C, hC⟩ := CuspFormClass.petersson_bounded_left k
-    ((Gamma1 N).map (mapGL ℝ)) f g
-  exact IntegrableOn.of_bound
-    (hyperbolicMeasure_Gamma_p_α_fundDomain_PSL_canonical_lt_top (N := N) α)
-    ((petersson_continuous k (ModularFormClass.continuous f)
-      (ModularFormClass.continuous g)).aestronglyMeasurable.restrict)
-    C (ae_of_all _ fun τ ↦ hC τ)
-
 open CongruenceSubgroup in
 /-- The natural quotient map `SL ⧸ Γ_p(α) → SL ⧸ Γ₁(N)`, sending each
 `Γ_p(α)`-coset `[g]` to its `Γ₁(N)`-coset `[g]`. -/
@@ -1143,38 +1107,6 @@ theorem sum_SL_Gamma_p_α_petN_summand_eq_relIndex_mul_petN
           petersson k ⇑f ⇑g τ ∂μ_hyp from
     Finset.sum_congr rfl fun q _ ↦ peterssonInner_fd_slash_SL_eq_setIntegral_shifted_fd ⇑f ⇑g q.out]
   exact sum_SL_Gamma_p_α_setIntegral_fd_petersson_eq_relIndex_mul_petN α f g
-
-open CongruenceSubgroup Pointwise ConjAct UpperHalfPlane MeasureTheory in
-/-- **DS Proposition 5.5.2(a), instantiated over the conjugate-intersection group
-`Γ_p(α) = α⁻¹Γ₁α ∩ Γ₁`.** For `α : GL₂(ℚ)` with `det(α.map (ℚ ↪ ℝ)) > 0`, the
-weight-`k` slash by `α` can be moved to the other factor at the cost of replacing
-`α` by its Petersson adjoint `α' = peterssonAdj α = det(α)·α⁻¹ = adjugate(α)` (DS's
-`α′ = det(α)α⁻¹`, recorded by `peterssonAdj` — see `AdjointTheory.peterssonAdj` and
-`peterssonAdj_det` for `det α′ = det α`), simultaneously transporting the domain by
-`α`:
-```
-peterssonInner k (Γ_p(α)-FD)            (f ∣[k] α)  g
-  = peterssonInner k (α • Γ_p(α)-FD)     f          (g ∣[k] α′).
-```
-This is the per-representative change-of-variables exchange. The LHS domain
-`Gamma_p_α_fundDomain_PSL α` is a fundamental domain for `Γ_p(α)`; the RHS domain
-`α • Gamma_p_α_fundDomain_PSL α` is — by
-`smul_Gamma_p_α_fundDomain_PSL_ae_isFundamentalDomain` (DS Lemma 5.5.1(a),(b)) — a
-fundamental domain for the conjugate group `Γ₁ ∩ αΓ₁α⁻¹`. Proven by direct
-application of the domain-agnostic substrate `peterssonInner_slash_adjoint`
-(which supplies its own measure-preservation via `measurePreserving_smul`, so no
-measurability/integrability side-conditions are required here). -/
-theorem peterssonInner_slash_adjoint_over_Gamma_p_α
-    (α : GL (Fin 2) ℚ)
-    (hα : 0 < ((α.map (Rat.castHom ℝ)) : GL (Fin 2) ℝ).det.val)
-    (f g : ℍ → ℂ) :
-    peterssonInner k (Gamma_p_α_fundDomain_PSL (N := N) α)
-        (f ∣[k] ((α.map (Rat.castHom ℝ)) : GL (Fin 2) ℝ)) g =
-      peterssonInner k
-        (((α.map (Rat.castHom ℝ)) : GL (Fin 2) ℝ) • Gamma_p_α_fundDomain_PSL (N := N) α)
-        f (g ∣[k] peterssonAdj ((α.map (Rat.castHom ℝ)) : GL (Fin 2) ℝ)) :=
-  peterssonInner_slash_adjoint (k := k) (Gamma_p_α_fundDomain_PSL (N := N) α)
-    ((α.map (Rat.castHom ℝ)) : GL (Fin 2) ℝ) hα f g
 
 open CongruenceSubgroup Pointwise UpperHalfPlane ModularGroup MeasureTheory in
 /-- **Per-tile slash-reindex (DS 5.4.4 leaf).** A single `SL/Γ_p(α)`-coset tile
