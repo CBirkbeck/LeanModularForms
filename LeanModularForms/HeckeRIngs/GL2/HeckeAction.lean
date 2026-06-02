@@ -139,14 +139,14 @@ lemma glMap_mapGL_eq (s : SL(2, ℤ)) :
   exact (IsScalarTower.algebraMap_apply ℤ ℚ ℝ (s.1 i j)).symm
 
 private lemma glMap_mem_SL (σ : (GL_pair 2).H) :
-    glMap (σ : GL (Fin 2) ℚ) ∈ 𝒮ℒ := by
-  obtain ⟨s, hs⟩ := σ.prop
-  exact MonoidHom.mem_range.mpr ⟨s, by rw [← glMap_mapGL_eq, hs]⟩
+    glMap (σ : GL (Fin 2) ℚ) ∈ 𝒮ℒ :=
+  let ⟨s, hs⟩ := σ.prop
+  MonoidHom.mem_range.mpr ⟨s, by rw [← glMap_mapGL_eq, hs]⟩
 
 private lemma mem_SL_exists_H {γ : GL (Fin 2) ℝ} (hγ : γ ∈ 𝒮ℒ) :
-    ∃ σ ∈ (GL_pair 2).H, glMap σ = γ := by
-  obtain ⟨s, rfl⟩ := MonoidHom.mem_range.mp hγ
-  exact ⟨mapGL ℚ s, ⟨s, rfl⟩, glMap_mapGL_eq s⟩
+    ∃ σ ∈ (GL_pair 2).H, glMap σ = γ :=
+  let ⟨s, hs⟩ := MonoidHom.mem_range.mp hγ
+  ⟨mapGL ℚ s, ⟨s, rfl⟩, hs ▸ glMap_mapGL_eq s⟩
 
 /-- Left multiplication by an H-element on `decompQuot`. This is well-defined since
     the stabilizer `K = δHδ⁻¹ ∩ H` is invariant under left multiplication by H-elements
@@ -266,8 +266,7 @@ lemma heckeSlash_slash_invariant (k : ℤ) (D : HeckeCoset (GL_pair 2)) (f : ℍ
   set σ_QT : (GL_pair 2).H :=
     ⟨(GL_transposeEquiv 2 σ_Q).unop, GL_transpose_mem_SLnZ 2 hσ_Q⟩
   set π := leftMulEquiv D σ_QT
-  have h_perm : ∀ i, (f ∣[k] tRep D i) ∣[k] (σ_Q : GL _ ℚ) =
-      f ∣[k] tRep D (π i) := fun i ↦ by
+  have h_perm (i) : (f ∣[k] tRep D i) ∣[k] (σ_Q : GL _ ℚ) = f ∣[k] tRep D (π i) := by
     rw [(SlashAction.slash_mul k (tRep D i) σ_Q f).symm, tRep_mul_eq_transpose,
       show σ_QT.val * ↑i.out * (HeckeCoset.rep D : GL _ ℚ) =
         σ_QT.val * ↑i.out * (HeckeCoset.rep D : GL _ ℚ) * 1 from (mul_one _).symm,
