@@ -83,11 +83,6 @@ lemma smulOrbit_lcRel (g : P.Δ) {β₁ β₂ : P.Δ} (h : lcRel P β₁ β₂) 
       ← Set.singleton_mul_singleton, mul_assoc]
   rw [Subgroup.singleton_mul_subgroup hn_conj]
 
-/-- Corollary: `smulOrbit g (HeckeLeftCoset.rep ⟦β⟧) = smulOrbit g β`. -/
-lemma smulOrbit_rep_mk (g β : P.Δ) :
-    smulOrbit P g (HeckeLeftCoset.rep ⟦β⟧) = smulOrbit P g β :=
-  smulOrbit_lcRel P g (Quotient.exact (Quotient.out_eq (⟦β⟧ : HeckeLeftCoset P)))
-
 /-- The module action of the Hecke ring on formal sums of left cosets. -/
 noncomputable instance instSMulHeckeModule : SMul (𝕋 P Z) (HeckeModule P Z) where
   smul t mm := Finsupp.sum t fun D1 b₁ ↦ mm.sum fun m b₂ ↦
