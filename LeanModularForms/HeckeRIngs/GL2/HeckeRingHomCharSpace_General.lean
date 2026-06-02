@@ -69,49 +69,6 @@ theorem heckeT_n_charRestrict_mul_coprime (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
       ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
   rw [heckeT_n_mul_coprime k m n hmn]; rfl
 
-/-- Applying `heckeT_n_charRestrict k n hn χ * heckeT_n_charRestrict k m hm χ` and
-coercing back to the ambient `ModularForm` space gives `heckeT_n k n (heckeT_n k m ...)`. -/
-lemma heckeT_n_charRestrict_mul_coe (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
-    (m n : ℕ) [NeZero m] [NeZero n]
-    (hm : Nat.Coprime m N) (hn : Nat.Coprime n N)
-    (f : modFormCharSpace k χ) :
-    ((heckeT_n_charRestrict k m hm χ * heckeT_n_charRestrict k n hn χ) f :
-        modFormCharSpace k χ) =
-      ⟨heckeT_n k m (heckeT_n k n (f : ModularForm _ k)),
-        heckeT_n_preserves_charSpace k m hm χ
-          (heckeT_n_preserves_charSpace k n hn χ f.property)⟩ :=
-  Subtype.ext <| by simp [Module.End.mul_apply, heckeT_n_charRestrict_coe]
-
-/-- Pointwise commutativity: `T_m T_n f = T_n T_m f` on `modFormCharSpace k χ`. -/
-theorem heckeT_n_charRestrict_commute_apply (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
-    (m n : ℕ) [NeZero m] [NeZero n]
-    (hm : Nat.Coprime m N) (hn : Nat.Coprime n N)
-    (f : modFormCharSpace k χ) :
-    heckeT_n_charRestrict k m hm χ (heckeT_n_charRestrict k n hn χ f) =
-    heckeT_n_charRestrict k n hn χ (heckeT_n_charRestrict k m hm χ f) := by
-  simpa [Module.End.mul_apply] using
-    congr_fun (congr_arg DFunLike.coe (heckeT_n_charRestrict_commute k χ m n hm hn)) f
-
-/-- Three-way coprime multiplicativity:
-`T_{mnr}|_χ = T_m|_χ · T_n|_χ · T_r|_χ` for pairwise coprime `m, n, r` all coprime to `N`. -/
-theorem heckeT_n_charRestrict_mul_coprime_three (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
-    {m n r : ℕ} [NeZero m] [NeZero n] [NeZero r]
-    (hm : Nat.Coprime m N) (hn : Nat.Coprime n N) (hr : Nat.Coprime r N)
-    (hmn : Nat.Coprime m n) (hmr : Nat.Coprime m r) (hnr : Nat.Coprime n r) :
-    haveI : NeZero (n * r) := ⟨Nat.mul_ne_zero (NeZero.ne n) (NeZero.ne r)⟩
-    haveI : NeZero (m * (n * r)) :=
-      ⟨Nat.mul_ne_zero (NeZero.ne m)
-        (Nat.mul_ne_zero (NeZero.ne n) (NeZero.ne r))⟩
-    heckeT_n_charRestrict k (m * (n * r))
-        (Nat.Coprime.mul_left hm (Nat.Coprime.mul_left hn hr)) χ =
-      heckeT_n_charRestrict k m hm χ *
-        (heckeT_n_charRestrict k n hn χ *
-          heckeT_n_charRestrict k r hr χ) := by
-  haveI : NeZero (n * r) := ⟨Nat.mul_ne_zero (NeZero.ne n) (NeZero.ne r)⟩
-  rw [heckeT_n_charRestrict_mul_coprime k χ hm (Nat.Coprime.mul_left hn hr)
-      (Nat.Coprime.mul_right hmn hmr),
-    heckeT_n_charRestrict_mul_coprime k χ hn hr hnr]
-
 /-- The submonoid of ℕ of positive naturals coprime to `N`.
 Closed under multiplication because `Nat.Coprime.mul_left`. -/
 def coprimeToN (N : ℕ) : Submonoid ℕ where
@@ -146,14 +103,5 @@ theorem heckeT_coprimeRestrict_mul_coprime (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ
   haveI : NeZero ((m : ℕ) * n) :=
     ⟨Nat.mul_ne_zero (NeZero.ne (m : ℕ)) (NeZero.ne (n : ℕ))⟩
   exact heckeT_n_charRestrict_mul_coprime k χ m.property.2 n.property.2 hmn
-
-/-- Commutativity: `T_m · T_n = T_n · T_m` on `modFormCharSpace k χ`
-for any `m, n ∈ coprimeToN N`. -/
-theorem heckeT_coprimeRestrict_commute (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
-    (m n : coprimeToN N) :
-    Commute (heckeT_coprimeRestrict k χ m) (heckeT_coprimeRestrict k χ n) := by
-  haveI : NeZero (m : ℕ) := ⟨Nat.pos_iff_ne_zero.mp m.property.1⟩
-  haveI : NeZero (n : ℕ) := ⟨Nat.pos_iff_ne_zero.mp n.property.1⟩
-  exact heckeT_n_charRestrict_commute k χ _ _ _ _
 
 end HeckeRing.GL2
