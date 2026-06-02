@@ -68,11 +68,6 @@ lemma GL_adjugate_involutive (g : GL (Fin 2) ℚ) :
   ext
   simp [adjugate_adjugate _ (by simp : Fintype.card (Fin 2) ≠ 1)]
 
-/-- `det(adj(g)) = det(g)` for 2×2 matrices. -/
-lemma GL_adjugate_det (g : GL (Fin 2) ℚ) :
-    (GL_adjugate g).val.det = g.val.det := by
-  rw [GL_adjugate_val, det_adjugate, Fintype.card_fin, pow_one]
-
 /-- For a `GL₂` element with `det = 1`, the adjugate equals the inverse. -/
 lemma GL_adjugate_eq_inv_of_det_one (g : GL (Fin 2) ℚ) (hdet : g.val.det = 1) :
     GL_adjugate g = g⁻¹ := by
@@ -233,16 +228,6 @@ lemma heckeSlash_gen_smul (k : ℤ) (D : HeckeCoset P) (c : ℂ) (f : ℍ → �
   rw [ModularForm.smul_slash, sigma_eq_id_of_pos_det_gen
     (cosetRep_delta_adjugate_det_pos_gen ⟨i.out, SetLike.coe_mem _⟩ (HeckeCoset.rep D))]
   simp
-
-/-- The extended Hecke slash on a single double coset recovers `heckeSlash_gen`. -/
-lemma heckeSlashExt_gen_single (k : ℤ) (D : HeckeCoset P) (f : ℍ → ℂ) :
-    heckeSlashExt_gen P k (Finsupp.single D 1) f = heckeSlash_gen P k D f := by
-  simp [heckeSlashExt_gen, Finsupp.sum_single_index]
-
-/-- Negation distributes through the generalized Hecke slash. -/
-lemma heckeSlash_gen_neg (k : ℤ) (D : HeckeCoset P) (f : ℍ → ℂ) :
-    heckeSlash_gen P k D (-f) = -heckeSlash_gen P k D f := by
-  simp [heckeSlash_gen, SlashAction.neg_slash, Finset.sum_neg_distrib]
 
 end BasicLemmas
 
