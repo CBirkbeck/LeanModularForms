@@ -68,52 +68,6 @@ theorem Newform.exists_nonzero_prime_eigenvalue_of_analyticContradiction
     rw [Newform.eigenvalue_eq_coeff f ⟨q, hq.pos⟩ hqN χ hfχ]; rfl
   exact h_eq.symm.trans (h_none q hq hqN hqS)
 
-/-- Under `Newform.AnalyticContradiction`, Strong Multiplicity One holds: a
-newform is uniquely determined by its Hecke eigenvalues on any cofinite set
-of primes coprime to `N`. -/
-theorem strongMultiplicityOne_of_analyticContradiction
-    (h_ana : Newform.AnalyticContradiction)
-    (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (hgχ : g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (S : Finset ℕ)
-    (h : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S →
-      f.eigenvalue n = g.eigenvalue n) :
-    f.toCuspForm = g.toCuspForm := by
-  refine newform_unique f g χ hfχ hgχ ?_
-  intro n hn
-  by_cases hn_S : n.val ∈ S
-  · have hn_pos : 0 < n.val := n.pos
-    let bad : Finset ℕ := S ∪ S.image (· / n.val) ∪ n.val.primeFactors
-    obtain ⟨q, hq_prime, hq_N, hq_notin, hq_ne⟩ :=
-      Newform.exists_nonzero_prime_eigenvalue_of_analyticContradiction
-        h_ana f χ hfχ bad
-    have hq_pos : 0 < q := hq_prime.pos
-    have hq_notin_S : q ∉ S := fun hqS ↦ hq_notin <| by
-      simp only [bad, Finset.mem_union]; exact .inl (.inl hqS)
-    have hq_notin_img : q ∉ S.image (· / n.val) := fun h' ↦ hq_notin <| by
-      simp only [bad, Finset.mem_union]; exact .inl (.inr h')
-    have hq_nd_n : ¬ q ∣ n.val := fun hqn ↦ hq_notin <| by
-      simp only [bad, Finset.mem_union, Nat.mem_primeFactors]
-      exact .inr ⟨hq_prime, hqn, hn_pos.ne'⟩
-    have hn_coprime_q : Nat.Coprime n.val q :=
-      ((hq_prime.coprime_iff_not_dvd).mpr hq_nd_n).symm
-    have hnq_notin_S : n.val * q ∉ S := fun hnqS ↦ hq_notin_img <| by
-      refine Finset.mem_image.mpr ⟨n.val * q, hnqS, ?_⟩
-      exact Nat.mul_div_cancel_left _ hn_pos
-    let q_pnat : ℕ+ := ⟨q, hq_pos⟩
-    let nq_pnat : ℕ+ := ⟨n.val * q, Nat.mul_pos hn_pos hq_pos⟩
-    have hmul_f : f.eigenvalue nq_pnat = f.eigenvalue n * f.eigenvalue q_pnat :=
-      Newform.eigenvalue_coprime_mul f n q_pnat hn hq_N hn_coprime_q χ hfχ
-    have hmul_g : g.eigenvalue nq_pnat = g.eigenvalue n * g.eigenvalue q_pnat :=
-      Newform.eigenvalue_coprime_mul g n q_pnat hn hq_N hn_coprime_q χ hgχ
-    have hcomb :
-        f.eigenvalue n * f.eigenvalue q_pnat = g.eigenvalue n * f.eigenvalue q_pnat := by
-      rw [← hmul_f, h nq_pnat (hn.mul_left hq_N) hnq_notin_S, hmul_g,
-        h q_pnat hq_N hq_notin_S]
-    exact mul_right_cancel₀ hq_ne hcomb
-  · exact h n hn hn_S
-
 /-- Hecke's analytic continuation hypothesis: for every newform `f`, the
 Dirichlet series `LSeries f.lCoeff_stripped` admits an entire extension to `ℂ`
 (Hecke 1936; Diamond–Shurman §5.9, Miyake §4.3.5 / Theorem 4.5.16). -/
