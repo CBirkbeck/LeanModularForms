@@ -1,6 +1,5 @@
 import LeanModularForms.Modularforms.AtImInfty
 import LeanModularForms.Modularforms.BigO
-import LeanModularForms.Modularforms.Cauchylems
 import LeanModularForms.Modularforms.clog_arg_lems
 import LeanModularForms.Modularforms.csqrt
 import LeanModularForms.Modularforms.Delta
