@@ -90,8 +90,7 @@ theorem bad_prime_lower_mem_doubleCoset_upper_via_frickeMatrix
         ((Subgroup.zpowers (Newform.frickeMatrix N : GL (Fin 2) ℝ)) :
           Set (GL (Fin 2) ℝ)) := by
   rw [mem_doubleCoset]
-  refine ⟨(Newform.frickeMatrix N : GL (Fin 2) ℝ),
-    Subgroup.mem_zpowers _,
+  exact ⟨(Newform.frickeMatrix N : GL (Fin 2) ℝ), Subgroup.mem_zpowers _,
     ((Newform.frickeMatrix N : GL (Fin 2) ℝ))⁻¹,
     Subgroup.inv_mem _ (Subgroup.mem_zpowers _),
     bad_prime_lower_eq_frickeMatrix_conj_upper hp b⟩
@@ -126,7 +125,7 @@ def shiftFin (b : ℤ) : SL(2, ℤ) :=
 
 /-- The shift matrix lies in `Γ₁(N)` for every level `N`. -/
 lemma shiftFin_mem_Gamma1 (N : ℕ) (b : ℤ) : shiftFin b ∈ Gamma1 N := by
-  rw [Gamma1_mem]; refine ⟨?_, ?_, ?_⟩ <;> simp [shiftFin]
+  simp [Gamma1_mem, shiftFin]
 
 /-- **Upper-family factorization in `GL(2, ℝ)`.**
 
@@ -141,7 +140,7 @@ lemma glMap_T_p_upper_eq_α_p_mul_mapGL_shiftFin {p : ℕ} (hp : 0 < p) (b : ℕ
     (glMap (T_p_upper p hp b) : GL (Fin 2) ℝ) =
       (glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) *
         (mapGL ℝ (shiftFin (b : ℤ)) : GL (Fin 2) ℝ) := by
-  apply Units.ext
+  refine Units.ext ?_
   ext i j
   change ((T_p_upper p hp b : Matrix (Fin 2) (Fin 2) ℚ).map (algebraMap ℚ ℝ)) i j =
       ((((T_p_upper p hp 0 : Matrix (Fin 2) (Fin 2) ℚ).map (algebraMap ℚ ℝ)) *
@@ -175,10 +174,8 @@ theorem T_p_upper_mem_doubleCoset_α_p_Gamma1
         (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) :
           Set (GL (Fin 2) ℝ)) := by
   rw [mem_doubleCoset]
-  refine ⟨1, Subgroup.one_mem _,
-    (mapGL ℝ (shiftFin (b : ℤ)) : GL (Fin 2) ℝ),
-    Subgroup.mem_map.mpr
-      ⟨shiftFin (b : ℤ), shiftFin_mem_Gamma1 N _, rfl⟩, ?_⟩
+  refine ⟨1, Subgroup.one_mem _, (mapGL ℝ (shiftFin (b : ℤ)) : GL (Fin 2) ℝ),
+    Subgroup.mem_map.mpr ⟨shiftFin (b : ℤ), shiftFin_mem_Gamma1 N _, rfl⟩, ?_⟩
   rw [one_mul, glMap_T_p_upper_eq_α_p_mul_mapGL_shiftFin hp b]
 
 /-- **Lower-offset bad-prime family double-coset membership in the
@@ -210,13 +207,13 @@ theorem T_p_lower_with_offset_mem_doubleCoset_α_p_atkinLehnerGamma1
   refine ⟨(Newform.frickeMatrix N : GL (Fin 2) ℝ),
     frickeMatrix_mem_atkinLehnerGamma1Subgroup N,
     (mapGL ℝ (shiftFin (b : ℤ)) : GL (Fin 2) ℝ) *
-      ((Newform.frickeMatrix N : GL (Fin 2) ℝ))⁻¹, ?_, ?_⟩
-  · exact Subgroup.mul_mem _
+      ((Newform.frickeMatrix N : GL (Fin 2) ℝ))⁻¹,
+    Subgroup.mul_mem _
       (map_Gamma1_le_atkinLehnerGamma1Subgroup N
         (Subgroup.mem_map.mpr ⟨shiftFin (b : ℤ), shiftFin_mem_Gamma1 N _, rfl⟩))
-      (Subgroup.inv_mem _ (frickeMatrix_mem_atkinLehnerGamma1Subgroup N))
-  · rw [bad_prime_lower_eq_frickeMatrix_conj_upper hp b,
-      glMap_T_p_upper_eq_α_p_mul_mapGL_shiftFin hp b]
-    simp only [mul_assoc]
+      (Subgroup.inv_mem _ (frickeMatrix_mem_atkinLehnerGamma1Subgroup N)), ?_⟩
+  rw [bad_prime_lower_eq_frickeMatrix_conj_upper hp b,
+    glMap_T_p_upper_eq_α_p_mul_mapGL_shiftFin hp b]
+  simp only [mul_assoc]
 
 end HeckeRing.GL2.Newform
