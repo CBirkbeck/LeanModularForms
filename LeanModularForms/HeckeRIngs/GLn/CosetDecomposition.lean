@@ -103,12 +103,6 @@ lemma upperTriGL_hasIntEntries (a : Fin n → ℕ) (hpos : ∀ i, 0 < a i) (hdiv
     (B : UpperTriRep n a hdiv) : HasIntEntries n (upperTriGL n a hpos hdiv B) :=
   ⟨upperTriMat n a hdiv B, rfl⟩
 
-lemma upperTriGL_mem_posDetInt (a : Fin n → ℕ) (hpos : ∀ i, 0 < a i) (hdiv : DivChain n a)
-    (B : UpperTriRep n a hdiv) : upperTriGL n a hpos hdiv B ∈ posDetInt_submonoid n :=
-  ⟨upperTriGL_hasIntEntries n a hpos hdiv B, by
-    change 0 < ((upperTriMat n a hdiv B).map (Int.cast : ℤ → ℚ)).det
-    simpa [det_intMat_cast] using upperTriMat_det_pos n a hpos hdiv B⟩
-
 /-- The unipotent upper-triangular matrix with `1` on the diagonal and `B_{ij}` above. -/
 def unipMat (a : Fin n → ℕ) (hdiv : DivChain n a) (B : UpperTriRep n a hdiv) :
     Matrix (Fin n) (Fin n) ℤ :=
@@ -263,11 +257,5 @@ theorem upperTriMat_distinct_cosets (a : Fin n → ℕ) (hpos : ∀ i, 0 < a i) 
     · exact ih j hlt i
     · exact coset_col_entry_eq n (hpos := hpos) (B₁ := B₁) (B₂ := B₂) hmat
         (fun k hk ↦ ih k (hjeq ▸ hk)) i
-
-/-- The number of upper-triangular representatives equals `∏_{i<j} (a_j / a_i)`. -/
-lemma upperTriRep_card (a : Fin n → ℕ) (hdiv : DivChain n a) :
-    Fintype.card (UpperTriRep n a hdiv) =
-    ∏ p : { ij : Fin n × Fin n // ij.1 < ij.2 }, (a p.val.2 / a p.val.1) := by
-  simp [UpperTriRep, Fintype.card_pi]
 
 end HeckeRing.GLn
