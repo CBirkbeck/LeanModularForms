@@ -63,8 +63,7 @@ private lemma heckeT_n_cusp_preserves_cuspFormCharSpace_divN
   intro d
   have hfχ_mod : f.toModularForm' ∈ modFormCharSpace k χ := by
     rw [mem_modFormCharSpace_iff]
-    intro d'
-    refine ModularForm.ext fun τ ↦ ?_
+    refine fun d' ↦ ModularForm.ext fun τ ↦ ?_
     show ((diamondOp k d') f.toModularForm').toFun τ = ↑(χ d') • f.toModularForm'.toFun τ
     exact congr_arg (fun (g : CuspForm _ k) ↦ g.toFun τ) (hf d')
   have h_diamond := ((mem_modFormCharSpace_iff k χ _).mp
@@ -98,12 +97,10 @@ private lemma qExpansion_restrict_sub_levelRaise_heckeT_coeff
     show (HeckeRing.GL2.modularFormLevelRaise N₀ p k
         (heckeT_n k p f₀.toModularForm')).toFun = _
     rw [show heckeT_n k p = HeckeRing.GL2.heckeT_p_divN k p hp hpN by
-      rw [heckeT_n_prime k hp]; exact dif_neg hpN]
-    rfl
+      rw [heckeT_n_prime k hp]; exact dif_neg hpN]; rfl
   have h_coe_sub : (⇑(f_res - V_p_U_p_f) : UpperHalfPlane → ℂ) =
       ⇑f₀ - ⇑(HeckeRing.GL2.AtkinLehner.pSupportedRaise k p hp hpN f₀.toModularForm') := by
-    show (⇑f_res - ⇑V_p_U_p_f : UpperHalfPlane → ℂ) = _
-    rw [h_VUp_fun]; rfl
+    show (⇑f_res - ⇑V_p_U_p_f : UpperHalfPlane → ℂ) = _; rw [h_VUp_fun]; rfl
   show (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ)
     (⇑(f_res - V_p_U_p_f))) = _
   rw [h_coe_sub]
@@ -141,7 +138,7 @@ private lemma dvd_conditions_mul_left_of_dvd
   refine ⟨fun h ↦ hr_not fun hrN ↦ h (hrN.mul_left q), fun h ↦ ?_⟩
   have hr_dvd_N : r ∣ N :=
     (hr.dvd_mul.mp h).resolve_left fun h' ↦
-      absurd ((Nat.prime_dvd_prime_iff_eq hr hq).mp h') hr_ne_q
+      hr_ne_q ((Nat.prime_dvd_prime_iff_eq hr hq).mp h')
   rw [show M / (q * N) = M / N / q by rw [mul_comm q N, Nat.div_div_eq_div_mul]]
   obtain ⟨c, hc⟩ := ((Nat.coprime_primes hr hq).mpr hr_ne_q).mul_dvd_of_dvd_of_dvd
     (hr_dvd hr_dvd_N) hq_div
@@ -157,11 +154,10 @@ private lemma dvd_conditions_mul_right_sq_of_not_dvd
   refine ⟨fun h ↦ hr_not fun hrN ↦ h (hrN.mul_right (q ^ 2)), fun h ↦ ?_⟩
   have hr_dvd_N : r ∣ N :=
     (hr.dvd_mul.mp h).resolve_right fun h' ↦
-      absurd ((Nat.prime_dvd_prime_iff_eq hr hq).mp (hr.dvd_of_dvd_pow h')) hr_ne_q
+      hr_ne_q ((Nat.prime_dvd_prime_iff_eq hr hq).mp (hr.dvd_of_dvd_pow h'))
   have hq2_dvd_MN : q ^ 2 ∣ M / N := by
     rw [(Nat.mul_div_cancel' hNM).symm] at hq2_dvd_M
-    exact Nat.Coprime.dvd_of_dvd_mul_left
-      ((hq.coprime_iff_not_dvd.mpr hqN).pow_left 2) hq2_dvd_M
+    exact ((hq.coprime_iff_not_dvd.mpr hqN).pow_left 2).dvd_of_dvd_mul_left hq2_dvd_M
   rw [show M / (N * q ^ 2) = M / N / q ^ 2 by rw [Nat.div_div_eq_div_mul]]
   obtain ⟨c, hc⟩ := (((Nat.coprime_primes hr hq).mpr hr_ne_q).pow_right 2).mul_dvd_of_dvd_of_dvd
     (hr_dvd hr_dvd_N) hq2_dvd_MN
@@ -184,10 +180,9 @@ private theorem miyake_4_6_5_single_prime_dvd_N
           (ModularFormClass.qExpansion (1 : ℝ) f).coeff n
         else 0 := by
   haveI : NeZero (p * N) := ⟨Nat.mul_ne_zero hp.ne_zero (NeZero.ne N)⟩
-  have hNM : N ∣ p * N := Nat.dvd_mul_left N p
-  exact ⟨CuspForm.restrictSubgroup (Gamma1_map_le_Gamma1_map_of_dvd hNM) f -
+  exact ⟨CuspForm.restrictSubgroup (Gamma1_map_le_Gamma1_map_of_dvd (Nat.dvd_mul_left N p)) f -
       HeckeRing.GL2.levelRaise N p k (heckeT_n_cusp k p f),
-    Submodule.sub_mem _ (cuspForm_restrictSubgroup_mem_cuspFormCharSpace χ hNM hfχ)
+    Submodule.sub_mem _ (cuspForm_restrictSubgroup_mem_cuspFormCharSpace χ _ hfχ)
       (cuspForm_levelRaise_mem_cuspFormCharSpace N p k χ
         (heckeT_n_cusp_preserves_cuspFormCharSpace_divN hp hpN χ hfχ)),
     qExpansion_restrict_sub_levelRaise_heckeT_coeff hp hpN f⟩
@@ -213,9 +208,8 @@ private theorem miyake_4_6_5_iterated_helper
   | zero =>
     intro M _ k χ_M g hgχ S hS_sub hS_card _
     obtain rfl := Finset.card_eq_zero.mp hS_card
-    refine ⟨M, ‹NeZero M›, dvd_refl M, by simp, g, ?_, fun _ ↦ by
-      simp [Nat.Coprime, Finset.prod_empty]⟩
-    simpa [ZMod.unitsMap] using hgχ
+    exact ⟨M, ‹NeZero M›, dvd_refl M, by simp, g,
+      by simpa [ZMod.unitsMap] using hgχ, fun _ ↦ by simp [Nat.Coprime, Finset.prod_empty]⟩
   | succ k ih =>
     intro M _ k_int χ_M g hgχ S hS_sub hS_card hS_sqfree
     obtain ⟨q, hq_in⟩ := Finset.card_pos.mp (by lia : 0 < S.card)
@@ -228,8 +222,7 @@ private theorem miyake_4_6_5_iterated_helper
           (Nat.dvd_of_mem_primeFactors hq_prime_factor))
     haveI : NeZero (q * M) := ⟨Nat.mul_ne_zero (NeZero.ne q) (NeZero.ne M)⟩
     have hM_dvd_qM : M ∣ q * M := Nat.dvd_mul_left M q
-    have hS_erase_sub : S.erase q ⊆ (q * M).primeFactors := by
-      intro r hr
+    have hS_erase_sub : S.erase q ⊆ (q * M).primeFactors := fun r hr ↦ by
       have hr_in_M : r ∈ M.primeFactors := hS_sub (Finset.mem_of_mem_erase hr)
       rw [Nat.mem_primeFactors] at hr_in_M ⊢
       exact ⟨hr_in_M.1, hr_in_M.2.1.mul_left q, NeZero.ne _⟩
@@ -245,7 +238,7 @@ private theorem miyake_4_6_5_iterated_helper
           rw [hg'_qexp n, hg_step_qexp n, h_prod_eq]
           exact ite_coprime_filter_compose hq_prime n _ _⟩
     rw [show χ_M.comp (ZMod.unitsMap (dvd_trans hM_dvd_qM hqM_dvd_M')) =
-        (χ_M.comp (ZMod.unitsMap hM_dvd_qM)).comp (ZMod.unitsMap hqM_dvd_M') by
+        (χ_M.comp (ZMod.unitsMap hM_dvd_qM)).comp (ZMod.unitsMap hqM_dvd_M') from by
       rw [MonoidHom.comp_assoc, ZMod.unitsMap_comp]]
     exact hg'_χ
 
@@ -300,15 +293,15 @@ private theorem miyake_4_6_5_single_prime_coprime_to_N
   have hN_dvd_pN : N ∣ p * N := Nat.dvd_mul_left N p
   haveI : NeZero (p * N) := ⟨Nat.mul_ne_zero hp.ne_zero (NeZero.ne N)⟩
   have hM_eq' : p * (p * N) = N * p ^ 2 := by ring
-  haveI : NeZero (p * (p * N)) := ⟨by rw [hM_eq']; exact hM_NeZero.ne⟩
-  have hN_dvd_ppN : N ∣ p * (p * N) := by rw [hM_eq']; exact Nat.dvd_mul_right N (p ^ 2)
+  haveI : NeZero (p * (p * N)) := ⟨hM_eq' ▸ hM_NeZero.ne⟩
+  have hN_dvd_ppN : N ∣ p * (p * N) := hM_eq' ▸ Nat.dvd_mul_right N (p ^ 2)
   obtain ⟨g_ppN, h_g_ppN_χ, h_g_ppN_qexp⟩ :=
     miyake_4_6_5_single_prime_dvd_N (χ.comp (ZMod.unitsMap hN_dvd_pN))
       (CuspForm.restrictSubgroup (Gamma1_map_le_Gamma1_map_of_dvd hN_dvd_pN) f)
       (cuspForm_restrictSubgroup_mem_cuspFormCharSpace χ hN_dvd_pN hfχ) p hp
       (fun h ↦ hp.coprime_iff_not_dvd.mp h (Nat.dvd_mul_right p N))
   rw [show (χ.comp (ZMod.unitsMap hN_dvd_pN)).comp
-        (ZMod.unitsMap (Nat.dvd_mul_left (p * N) p)) = χ.comp (ZMod.unitsMap hN_dvd_ppN) by
+        (ZMod.unitsMap (Nat.dvd_mul_left (p * N) p)) = χ.comp (ZMod.unitsMap hN_dvd_ppN) from by
       rw [MonoidHom.comp_assoc, ZMod.unitsMap_comp]] at h_g_ppN_χ
   have key : ∀ (inst : NeZero (p * (p * N))) (h : N ∣ p * (p * N)),
       ∃ g : CuspForm (Subgroup.map (mapGL ℝ) (Gamma1 (p * (p * N)))) k,
@@ -369,7 +362,7 @@ private theorem finish_peel_step
     rw [hg'_qexp n, hg_int_qexp n, h_S_prod_split]
     exact ite_coprime_filter_compose hq_prime n _ _⟩
   rw [show χ.comp (ZMod.unitsMap hNM) =
-      (χ.comp (ZMod.unitsMap hNN')).comp (ZMod.unitsMap hN'M) by
+      (χ.comp (ZMod.unitsMap hNN')).comp (ZMod.unitsMap hN'M) from by
     rw [MonoidHom.comp_assoc, ZMod.unitsMap_comp]]
   exact hg'_χ
 
@@ -410,7 +403,7 @@ private theorem peel_step_of_dvd_N
     miyake_4_6_5_single_prime_dvd_N χ f hfχ q hq_prime
       (fun h ↦ hq_prime.coprime_iff_not_dvd.mp h hqN)
   haveI : NeZero (q * N) := ⟨Nat.mul_ne_zero hq_prime.ne_zero (NeZero.ne N)⟩
-  have hqN_dvd_M : q * N ∣ M := by
+  have hqN_dvd_M : q * N ∣ M :=
     calc q * N = N * q := by ring
       _ ∣ N * (M / N) := Nat.mul_dvd_mul_left N (hq_pf_dvd hqN)
       _ = M := Nat.mul_div_cancel' hNM
@@ -457,10 +450,9 @@ private theorem peel_step_of_not_dvd_N
     miyake_4_6_5_single_prime_coprime_to_N χ f hfχ q hq_prime
   haveI : NeZero (N * q ^ 2) :=
     ⟨Nat.mul_ne_zero (NeZero.ne N) (pow_ne_zero 2 hq_prime.ne_zero)⟩
-  have hNq2_dvd_M : N * q ^ 2 ∣ M :=
-    ((hq_prime.coprime_iff_not_dvd.mpr hqN).symm.pow_right 2).mul_dvd_of_dvd_of_dvd hNM
-      (hq_pf_not_dvd hqN)
-  exact finish_peel_step hq_prime χ f hNM (Nat.dvd_mul_right N (q ^ 2)) hNq2_dvd_M S
+  exact finish_peel_step hq_prime χ f hNM (Nat.dvd_mul_right N (q ^ 2))
+    (((hq_prime.coprime_iff_not_dvd.mpr hqN).symm.pow_right 2).mul_dvd_of_dvd_of_dvd hNM
+      (hq_pf_not_dvd hqN)) S
     h_S_prod_split hS_erase_prime hS_erase_card hS_erase_sqfree h_S_erase_prod_dvd_M g_int
     hg_int_χ hg_int_qexp (fun r hr ↦ dvd_conditions_mul_right_sq_of_not_dvd hq_prime
       (hS_prime r (Finset.mem_of_mem_erase hr)) (Finset.ne_of_mem_erase hr) hqN hNM
@@ -532,7 +524,7 @@ private theorem miyake_4_6_5_iterated_L_general
     simp [Nat.prod_primeFactors_of_squarefree hL_sqfree]
   obtain ⟨g, hg_χ, hg_qexp⟩ :=
     miyake_4_6_5_iterated_helper_general L.primeFactors.card χ f hfχ
-      L.primeFactors (fun _ hp ↦ Nat.prime_of_mem_primeFactors hp) rfl
+      L.primeFactors (fun _ ↦ Nat.prime_of_mem_primeFactors) rfl
       (hS_prod.symm ▸ hL_sqfree) ‹NeZero M› hNM (hS_prod.symm ▸ hLM) h_pf_dvd
   exact ⟨g, hg_χ, fun n ↦ by simpa only [hS_prod] using hg_qexp n⟩
 
@@ -561,8 +553,7 @@ theorem miyake_h_form_general
   have hl'M : l' ∣ N * l' ^ 2 := dvd_mul_of_dvd_right (dvd_pow_self l' two_ne_zero) N
   have h_pf_dvd : ∀ p ∈ l'.primeFactors,
       (¬ p ∣ N → p ^ 2 ∣ (N * l' ^ 2)) ∧
-      (p ∣ N → p ∣ (N * l' ^ 2) / N) := by
-    intro p hp_in
+      (p ∣ N → p ∣ (N * l' ^ 2) / N) := fun p hp_in ↦ by
     have hp_dvd_l' : p ∣ l' := Nat.dvd_of_mem_primeFactors hp_in
     refine ⟨fun _ ↦ dvd_mul_of_dvd_right (pow_dvd_pow_of_dvd hp_dvd_l' 2) N, fun _ ↦ ?_⟩
     rw [Nat.mul_div_cancel_left _ (Nat.pos_of_ne_zero (NeZero.ne N))]
