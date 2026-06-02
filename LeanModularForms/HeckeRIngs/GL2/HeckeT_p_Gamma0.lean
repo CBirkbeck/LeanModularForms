@@ -100,15 +100,6 @@ noncomputable def T_p_lower_delta_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : 0 
     (hpN : Nat.Coprime p N) : (Gamma0_pair N).Δ :=
   ⟨T_p_lower p hp, T_p_lower_mem_Delta0 N p hp hpN⟩
 
-/-- The cosets `T_diag_Gamma0 N ![1, p]` and `D_p_Gamma0 N p` agree because they are
-represented by the same underlying matrix `diag(1, p)`. -/
-lemma D_p_Gamma0_eq_T_diag (N : ℕ) [NeZero N] (p : ℕ) (hp : 0 < p)
-    (_hpN : Nat.Coprime p N) :
-    D_p_Gamma0 N p hp =
-      T_diag_Gamma0 N (![1, p]) (fun i ↦ by fin_cases i <;> simp [hp])
-        (by show Int.gcd ((![1, p] : Fin 2 → ℕ) 0 : ℤ) N = 1; simp) :=
-  rfl
-
 /-- The Γ₀(N)-double coset degree of `diag(1,p)` is `p + 1` for `p` prime
 coprime to `N`: the `decompQuot` has exactly `p + 1` elements. -/
 lemma HeckeCoset_deg_D_p_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.Prime p)
@@ -247,53 +238,6 @@ private lemma T_p_upper_mul_lower_inv_eq (p : ℕ) (hp : Nat.Prime p) (b : ℕ) 
   simp only [Units.val_mul, Matrix.mul_apply, Fin.sum_univ_two]
   fin_cases i <;> fin_cases j <;>
     (simp [T_p_upper, T_p_lower, GeneralLinearGroup.mkOfDetNeZero]; try field_simp; try ring)
-
-/-- For distinct `b₁, b₂ < p`, the representatives `T_p_upper(b₁)` and `T_p_upper(b₂)`
-lie in distinct left `Γ₀(N)`-cosets: `T_p_upper(b₁) ≠ γ * T_p_upper(b₂)` for any
-`γ ∈ (Gamma0_pair N).H`, since `T_p_upper(b₁) · T_p_upper(b₂)⁻¹` has the non-integer
-`(0,1)`-entry `(b₁-b₂)/p`. -/
-lemma T_p_upper_distinct_cosets_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.Prime p)
-    (b₁ b₂ : ℕ) (hb₁ : b₁ < p) (hb₂ : b₂ < p) (hne : b₁ ≠ b₂) :
-    ∀ γ ∈ (Gamma0_pair N).H,
-      (T_p_upper p hp.pos b₁ : GL (Fin 2) ℚ) ≠ γ * T_p_upper p hp.pos b₂ := by
-  intro γ hγ heq
-  have hγ_eq : γ = (T_p_upper p hp.pos b₁ : GL (Fin 2) ℚ) *
-      (T_p_upper p hp.pos b₂ : GL (Fin 2) ℚ)⁻¹ := by rw [heq]; group
-  rw [hγ_eq, T_p_upper_mul_upper_inv_eq p hp b₁ b₂] at hγ
-  obtain ⟨n, hn⟩ := Gamma0_pair_H_entry_is_int _ hγ 0 1
-  simp [GeneralLinearGroup.mkOfDetNeZero] at hn
-  have hp_ne : (p : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr hp.ne_zero
-  have h_int : (b₁ : ℤ) - (b₂ : ℤ) = n * (p : ℤ) := by
-    have h_rat : ((b₁ : ℤ) - (b₂ : ℤ) : ℚ) = (n : ℚ) * (p : ℚ) := by
-      field_simp at hn ⊢; exact_mod_cast hn
-    exact_mod_cast h_rat
-  have hlt : |(b₁ : ℤ) - b₂| < p := by
-    rw [abs_lt]; constructor <;> [push_cast; push_cast] <;> lia
-  rw [h_int] at hlt; simp [abs_mul, Nat.abs_cast] at hlt
-  have hn0 : n = 0 := by
-    by_contra h
-    exact absurd hlt (not_lt.mpr (le_mul_of_one_le_left (by lia) (Int.one_le_abs h)))
-  rw [hn0, zero_mul] at h_int; lia
-
-/-- The representative `T_p_upper(b)` does not lie in the same left `Γ₀(N)`-coset as
-`T_p_lower(p)`: `T_p_upper(b) ≠ γ * T_p_lower(p)` for any `γ ∈ (Gamma0_pair N).H`,
-since `T_p_upper(b) · T_p_lower(p)⁻¹` has the non-integer `(0,0)`-entry `1/p`. -/
-lemma T_p_upper_ne_lower_cosets_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.Prime p)
-    (b : ℕ) :
-    ∀ γ ∈ (Gamma0_pair N).H,
-      (T_p_upper p hp.pos b : GL (Fin 2) ℚ) ≠ γ * T_p_lower p hp.pos := by
-  intro γ hγ heq
-  have hγ_eq : γ = (T_p_upper p hp.pos b : GL (Fin 2) ℚ) *
-      (T_p_lower p hp.pos : GL (Fin 2) ℚ)⁻¹ := by rw [heq]; group
-  rw [hγ_eq, T_p_upper_mul_lower_inv_eq p hp b] at hγ
-  obtain ⟨n, hn⟩ := Gamma0_pair_H_entry_is_int _ hγ 0 0
-  simp [GeneralLinearGroup.mkOfDetNeZero] at hn
-  have hp_ne : (p : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr hp.ne_zero
-  have h_int : n * (p : ℤ) = 1 := by
-    have h_np : (n : ℚ) * p = 1 := by rw [← hn]; field_simp
-    exact_mod_cast h_np
-  have hp_dvd : (p : ℤ) ∣ 1 := ⟨n, by linarith⟩
-  linarith [Int.le_of_dvd one_pos hp_dvd, show (1 : ℤ) < ↑p from Int.ofNat_lt.mpr hp.one_lt]
 
 /-- Inclusion `(Gamma0_pair N).H ≤ (GL_pair 2).H = SLnZ_subgroup 2`. Γ₀(N) is the
 image of the inclusion `Γ₀(N) ↪ SL₂(ℤ)` under `mapGL`. -/
