@@ -54,12 +54,6 @@ def gaussianBinom (q : ℕ) (m k : ℕ) : ℕ :=
     (Finset.range k).prod fun i ↦ (q ^ (m - i) - 1) / (q ^ (k - i) - 1)
   else 0
 
-lemma gaussianBinom_zero_right (q m : ℕ) : gaussianBinom q m 0 = 1 := by simp [gaussianBinom]
-
-lemma gaussianBinom_gt (q m k : ℕ) (h : m < k) : gaussianBinom q m k = 0 := by
-  simp [gaussianBinom, h.not_ge]
-
-
 private lemma conjAct_smul_eq_of_mem {G : Type*} [Group G] (H : Subgroup G)
     {h : G} (hh : h ∈ H) : ConjAct.toConjAct h • H = H :=
   Subgroup.conjAct_pointwise_smul_eq_self (Subgroup.le_normalizer hh)
