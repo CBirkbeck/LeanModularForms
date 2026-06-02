@@ -88,7 +88,7 @@ theorem heckeT_p_all_preserves_modFormCharSpace (k : ℤ) (p : ℕ) (hp : Nat.Pr
       heckeT_p_all k p hp (diamondOpHom k d f) := by
     show (diamondOp k d).comp (heckeT_p_all k p hp) f =
       (heckeT_p_all k p hp).comp (diamondOp k d) f
-    rw [heckeT_p_all_comm_diamondOp k p hp d]
+    rw [heckeT_p_all_comm_diamondOp]
   rw [h1, hf d, map_smul]
 
 /-- `heckeT_p_all k p hp` restricted to `modFormCharSpace k χ` as a `ℂ`-linear
@@ -99,23 +99,8 @@ noncomputable def heckeT_p_all_charRestrict (k : ℤ) (p : ℕ) (hp : Nat.Prime 
   toFun f :=
     ⟨heckeT_p_all k p hp (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k),
       heckeT_p_all_preserves_modFormCharSpace k p hp χ f.property⟩
-  map_add' f₁ f₂ := by
-    apply Subtype.ext
-    show heckeT_p_all k p hp ((f₁ + f₂ :
-        modFormCharSpace k χ) : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) =
-      heckeT_p_all k p hp (f₁ : ModularForm _ k) +
-        heckeT_p_all k p hp (f₂ : ModularForm _ k)
-    rw [show ((f₁ + f₂ : modFormCharSpace k χ) :
-        ModularForm ((Gamma1 N).map (mapGL ℝ)) k) =
-      (f₁ : ModularForm _ k) + (f₂ : ModularForm _ k) from rfl, map_add]
-  map_smul' c f := by
-    apply Subtype.ext
-    show heckeT_p_all k p hp
-        ((c • f : modFormCharSpace k χ) : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) =
-      c • heckeT_p_all k p hp (f : ModularForm _ k)
-    rw [show ((c • f : modFormCharSpace k χ) :
-        ModularForm ((Gamma1 N).map (mapGL ℝ)) k) =
-      c • (f : ModularForm _ k) from rfl, map_smul]
+  map_add' _ _ := Subtype.ext (map_add (heckeT_p_all k p hp) _ _)
+  map_smul' c _ := Subtype.ext (map_smul (heckeT_p_all k p hp) c _)
 
 @[simp] lemma heckeT_p_all_charRestrict_coe (k : ℤ) (p : ℕ) (hp : Nat.Prime p)
     (χ : (ZMod N)ˣ →* ℂˣ) (f : modFormCharSpace k χ) :
@@ -132,9 +117,7 @@ theorem heckeT_p_all_charRestrict_commute_distinct (k : ℤ)
       (heckeT_p_all_charRestrict k q hq χ) := by
   show heckeT_p_all_charRestrict k p hp χ * heckeT_p_all_charRestrict k q hq χ =
     heckeT_p_all_charRestrict k q hq χ * heckeT_p_all_charRestrict k p hp χ
-  apply LinearMap.ext
-  intro f
-  apply Subtype.ext
+  refine LinearMap.ext fun f ↦ Subtype.ext ?_
   simp only [Module.End.mul_apply, heckeT_p_all_charRestrict_coe]
   simpa [Module.End.mul_apply] using
     congr_fun (congr_arg DFunLike.coe (heckeT_p_all_comm_distinct (N := N) k hp hq hpq))
@@ -148,22 +131,8 @@ noncomputable def heckeT_n_charRestrict (k : ℤ) (n : ℕ) [NeZero n]
   toFun f :=
     ⟨heckeT_n k n (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k),
       heckeT_n_preserves_charSpace k n hn χ f.property⟩
-  map_add' f₁ f₂ := by
-    apply Subtype.ext
-    show heckeT_n k n ((f₁ + f₂ :
-        modFormCharSpace k χ) : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) =
-      heckeT_n k n (f₁ : ModularForm _ k) + heckeT_n k n (f₂ : ModularForm _ k)
-    rw [show ((f₁ + f₂ : modFormCharSpace k χ) :
-        ModularForm ((Gamma1 N).map (mapGL ℝ)) k) =
-      (f₁ : ModularForm _ k) + (f₂ : ModularForm _ k) from rfl, map_add]
-  map_smul' c f := by
-    apply Subtype.ext
-    show heckeT_n k n
-        ((c • f : modFormCharSpace k χ) : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) =
-      c • heckeT_n k n (f : ModularForm _ k)
-    rw [show ((c • f : modFormCharSpace k χ) :
-        ModularForm ((Gamma1 N).map (mapGL ℝ)) k) =
-      c • (f : ModularForm _ k) from rfl, map_smul]
+  map_add' _ _ := Subtype.ext (map_add (heckeT_n k n) _ _)
+  map_smul' c _ := Subtype.ext (map_smul (heckeT_n k n) c _)
 
 @[simp] lemma heckeT_n_charRestrict_coe (k : ℤ) (n : ℕ) [NeZero n]
     (hn : Nat.Coprime n N) (χ : (ZMod N)ˣ →* ℂˣ) (f : modFormCharSpace k χ) :
@@ -179,9 +148,7 @@ theorem heckeT_n_charRestrict_commute (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     Commute (heckeT_n_charRestrict k m hm χ) (heckeT_n_charRestrict k n hn χ) := by
   show heckeT_n_charRestrict k m hm χ * heckeT_n_charRestrict k n hn χ =
     heckeT_n_charRestrict k n hn χ * heckeT_n_charRestrict k m hm χ
-  apply LinearMap.ext
-  intro f
-  apply Subtype.ext
+  refine LinearMap.ext fun f ↦ Subtype.ext ?_
   simp only [Module.End.mul_apply, heckeT_n_charRestrict_coe]
   simpa [Module.End.mul_apply] using
     congr_fun (congr_arg DFunLike.coe (heckeT_n_comm (N := N) k m n)) (f : ModularForm _ k)
