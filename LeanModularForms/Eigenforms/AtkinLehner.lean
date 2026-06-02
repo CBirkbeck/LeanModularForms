@@ -241,25 +241,6 @@ theorem qSupportedOnDvdSubmodule_mem_iff_eq_zero_or_exists_levelRaise_preimage_o
       rw [cuspForm_coe_eq_of_cast heq]; exact hg.symm]
     exact levelRaise_mem_qSupportedOnDvdSubmodule heq g
 
-/-- Reverse Atkin-Lehner character-space iff, single existential: under the
-character-space/proper-divisor hypotheses, `f` is supported on multiples of `d` iff `f`
-equals (as a function on `ℍ`) the level-raise of some cusp form at level `Γ₁(N/d)`. -/
-theorem qSupportedOnDvdSubmodule_mem_iff_exists_levelRaise_preimage_of_char
-    {N d : ℕ} [NeZero N] [NeZero d] [NeZero (N / d)]
-    (hd : 1 < d) (hdN : d ∣ N) {k : ℤ}
-    (χ : DirichletCharacter ℂ N)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hfχ : f ∈ cuspFormCharSpace k χ.toUnitHom) :
-    f ∈ qSupportedOnDvdSubmodule N k d ↔
-      ∃ (g : CuspForm ((Gamma1 (N / d)).map (mapGL ℝ)) k),
-        (⇑(levelRaise (N / d) d k g) : UpperHalfPlane → ℂ) = ⇑f := by
-  rw [qSupportedOnDvdSubmodule_mem_iff_eq_zero_or_exists_levelRaise_preimage_of_char
-      hd hdN χ f hfχ]
-  refine ⟨?_, fun ⟨g, hg⟩ ↦ Or.inr ⟨g, hg⟩⟩
-  rintro (rfl | ⟨g, hg⟩)
-  · exact ⟨0, by simp⟩
-  · exact ⟨g, hg⟩
-
 /-- Submodule-level forward bridge: the `heq`-cast of every level-raise image lies in
 `qSupportedOnDvdSubmodule N k d`. -/
 theorem cast_levelRaise_mem_qSupportedOnDvdSubmodule
