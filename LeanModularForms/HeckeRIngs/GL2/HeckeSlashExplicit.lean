@@ -132,9 +132,8 @@ lemma M_infty_mem_D_p_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) :
     M_infty N p hp.pos hpN ∈ HeckeCoset.toSet (D_p_Gamma0 N p hp.pos) := by
   have hTl := T_p_lower_mem_D_p_Gamma0 N p hp hpN
-  rw [HeckeCoset.toSet_eq_rep, DoubleCoset.mem_doubleCoset] at hTl
+  rw [HeckeCoset.toSet_eq_rep, DoubleCoset.mem_doubleCoset] at hTl ⊢
   obtain ⟨h₁, hh₁, h₂, hh₂, hTl_eq⟩ := hTl
-  rw [HeckeCoset.toSet_eq_rep, DoubleCoset.mem_doubleCoset]
   refine ⟨mapGL ℚ (sigma_p_specific N p hp.pos hpN) * h₁,
     (Gamma0_pair N).H.mul_mem (Subgroup.mem_map.mpr
       ⟨_, sigma_p_specific_mem_Gamma0 N p hp.pos hpN, rfl⟩) hh₁, h₂, hh₂, ?_⟩
