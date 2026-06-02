@@ -60,12 +60,10 @@ lemma neg {d : ℕ} {P : PowerSeries ℂ} (hP : IsSupportedOnDvd d P) :
 
 lemma sub {d : ℕ} {P Q : PowerSeries ℂ}
     (hP : IsSupportedOnDvd d P) (hQ : IsSupportedOnDvd d Q) :
-    IsSupportedOnDvd d (P - Q) := by
-  rw [sub_eq_add_neg]; exact hP.add hQ.neg
+    IsSupportedOnDvd d (P - Q) := sub_eq_add_neg P Q ▸ hP.add hQ.neg
 
 /-- The constant power series `1 : PowerSeries ℂ` is supported on multiples of any `d`. -/
-lemma one (d : ℕ) : IsSupportedOnDvd d (1 : PowerSeries ℂ) := by
-  intro n hn
+lemma one (d : ℕ) : IsSupportedOnDvd d (1 : PowerSeries ℂ) := fun n hn ↦ by
   rcases Nat.eq_zero_or_pos n with rfl | hpos
   · exact absurd (dvd_zero d) hn
   · rw [PowerSeries.coeff_one, if_neg hpos.ne']
@@ -87,17 +85,15 @@ period-1 `q`-expansion is supported on multiples of `d`. -/
 noncomputable def qSupportedOnDvdSubmodule (N : ℕ) [NeZero N] (k : ℤ) (d : ℕ) :
     Submodule ℂ (CuspForm ((Gamma1 N).map (mapGL ℝ)) k) where
   carrier := {f | QExpansionSupportedOnDvd d f}
-  zero_mem' := by intro n _; simp [qExpansion_zero]
-  add_mem' {f g} hf hg := by
-    intro n hn
+  zero_mem' n _ := by simp [qExpansion_zero]
+  add_mem' {f g} hf hg n hn := by
     have h_eq : qExpansion (1 : ℝ) (⇑(f + g) : UpperHalfPlane → ℂ) =
         qExpansion (1 : ℝ) ⇑f + qExpansion (1 : ℝ) ⇑g := by
       convert qExpansion_add (Γ := (Gamma1 N).map (mapGL ℝ)) (h := 1) (a := k) (b := k)
         one_pos (one_mem_strictPeriods_Gamma1_map N) f g using 2
     show (PowerSeries.coeff n) (qExpansion (1 : ℝ) ⇑(f + g)) = 0
     rw [h_eq, map_add, hf n hn, hg n hn, zero_add]
-  smul_mem' c f hf := by
-    intro n hn
+  smul_mem' c f hf n hn := by
     have h_eq : qExpansion (1 : ℝ) (⇑(c • f) : UpperHalfPlane → ℂ) =
         c • qExpansion (1 : ℝ) ⇑f := by
       convert qExpansion_smul (Γ := (Gamma1 N).map (mapGL ℝ)) (k := k) (h := 1) one_pos
@@ -118,9 +114,8 @@ has period-1 `q`-expansion supported on multiples of `d`. -/
 lemma qExpansion_modularFormLevelRaise_isSupportedOnDvd
     {M : ℕ} [NeZero M] {d : ℕ} [NeZero d] {k : ℤ}
     (g : ModularForm ((Gamma1 M).map (mapGL ℝ)) k) :
-    IsSupportedOnDvd d (qExpansion (1 : ℝ) (modularFormLevelRaise M d k g)) := by
-  intro n hn
-  rw [qExpansion_one_modularFormLevelRaise_coeff g n, if_neg hn]
+    IsSupportedOnDvd d (qExpansion (1 : ℝ) (modularFormLevelRaise M d k g)) :=
+  fun n hn ↦ by rw [qExpansion_one_modularFormLevelRaise_coeff g n, if_neg hn]
 
 /-- Level-raise q-expansion forward direction (cusp form): for any cusp form
 `g : CuspForm Γ₁(M) k`, the level-raise `levelRaise M d k g` has period-1
@@ -128,20 +123,14 @@ lemma qExpansion_modularFormLevelRaise_isSupportedOnDvd
 lemma qExpansion_levelRaise_isSupportedOnDvd
     {M : ℕ} [NeZero M] {d : ℕ} [NeZero d] {k : ℤ}
     (g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) :
-    IsSupportedOnDvd d (qExpansion (1 : ℝ) (levelRaise M d k g)) := by
-  intro n hn
+    IsSupportedOnDvd d (qExpansion (1 : ℝ) (levelRaise M d k g)) := fun n hn ↦ by
   let g_mf : ModularForm ((Gamma1 M).map (mapGL ℝ)) k :=
     { toSlashInvariantForm := g.toSlashInvariantForm
       holo' := g.holo'
       bdd_at_cusps' := fun {c} hc γ hγ ↦ (g.zero_at_cusps' hc γ hγ).isBoundedAtImInfty }
-  have h_fun_eq :
-      (⇑(levelRaise M d k g) : UpperHalfPlane → ℂ) =
-        ⇑(modularFormLevelRaise M d k g_mf) := by
-    rw [coe_modularFormLevelRaise]
-    rfl
   rw [show (qExpansion (1 : ℝ) (levelRaise M d k g)) =
       qExpansion (1 : ℝ) (modularFormLevelRaise M d k g_mf) from
-    qExpansion_ext2 _ _ h_fun_eq]
+    qExpansion_ext2 _ _ (by rw [coe_modularFormLevelRaise]; rfl)]
   exact qExpansion_modularFormLevelRaise_isSupportedOnDvd _ n hn
 
 /-- Forward Atkin–Lehner correspondence (submodule form): any cusp form obtained by
@@ -191,16 +180,13 @@ theorem qSupportedOnDvd_mem_cuspFormsOld_of_char
   rcases HeckeRing.GL2.conductor_theorem_dichotomy_cuspForm_strong
       d N hdN k χ φ f hfχ h_eq h_period with
     ⟨_h_fac, F, _hF_char, hF_eq⟩ | h_zero
-  · apply Submodule.subset_span
-    have h_funeq : (⇑(levelRaise (N / d) d k F) : UpperHalfPlane → ℂ) = ⇑f := by
-      show levelRaiseFun d k ⇑F = ⇑f
-      rw [hF_eq, ← h_eq]
-    exact isOldformGenerator_of_funeq hd hdN F f h_funeq
-  · have h_f_zero : f = 0 := by
-      apply DFunLike.coe_injective
-      show (⇑f : UpperHalfPlane → ℂ) = 0
-      rw [h_eq, h_zero]; simp [levelRaiseFun]
-    exact h_f_zero ▸ Submodule.zero_mem _
+  · refine Submodule.subset_span (isOldformGenerator_of_funeq hd hdN F f ?_)
+    show levelRaiseFun d k ⇑F = ⇑f
+    rw [hF_eq, ← h_eq]
+  · refine (?_ : f = 0) ▸ Submodule.zero_mem _
+    apply DFunLike.coe_injective
+    show (⇑f : UpperHalfPlane → ℂ) = 0
+    rw [h_eq, h_zero]; simp [levelRaiseFun]
 
 /-- Reverse Atkin-Lehner explicit preimage (character-space): for a cusp form
 `f ∈ cuspFormCharSpace k χ.toUnitHom` at level `Γ₁(N)` whose period-1 `q`-expansion is
@@ -222,12 +208,10 @@ theorem qSupportedOnDvd_eq_zero_or_exists_levelRaise_preimage_of_char
   rcases HeckeRing.GL2.conductor_theorem_dichotomy_cuspForm_strong
       d N hdN k χ φ f hfχ h_eq h_period with
     ⟨_h_fac, F, _hF_char, hF_eq⟩ | h_zero
-  · right
-    refine ⟨F, ?_⟩
+  · refine Or.inr ⟨F, ?_⟩
     show levelRaiseFun d k ⇑F = ⇑f
     rw [hF_eq, ← h_eq]
-  · left
-    apply DFunLike.coe_injective
+  · refine Or.inl (DFunLike.coe_injective ?_)
     show (⇑f : UpperHalfPlane → ℂ) = 0
     rw [h_eq, h_zero]; simp [levelRaiseFun]
 
@@ -250,13 +234,11 @@ theorem qSupportedOnDvdSubmodule_mem_iff_eq_zero_or_exists_levelRaise_preimage_o
   rintro (rfl | ⟨g, hg⟩)
   · exact Submodule.zero_mem _
   · have heq : d * (N / d) = N := Nat.mul_div_cancel' hdN
-    have h_f_eq : f = heq ▸ levelRaise (N / d) d k g := by
+    rw [show f = heq ▸ levelRaise (N / d) d k g from by
       apply DFunLike.coe_injective
       show (⇑f : UpperHalfPlane → ℂ) =
         ⇑(heq ▸ levelRaise (N / d) d k g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-      rw [cuspForm_coe_eq_of_cast heq]
-      exact hg.symm
-    rw [h_f_eq]
+      rw [cuspForm_coe_eq_of_cast heq]; exact hg.symm]
     exact levelRaise_mem_qSupportedOnDvdSubmodule heq g
 
 /-- Reverse Atkin-Lehner character-space iff, single existential: under the
@@ -294,17 +276,11 @@ theorem qSupportedOnDvdSubmodule_mem_iff_exists_cuspForm_levelRaise_preimage_of_
   rw [qSupportedOnDvdSubmodule_mem_iff_exists_levelRaise_preimage_of_char
       hd hdN χ f hfχ]
   have heq : d * (N / d) = N := Nat.mul_div_cancel' hdN
-  constructor
-  · rintro ⟨g, hg⟩
-    refine ⟨g, ?_⟩
-    apply DFunLike.coe_injective
-    show (⇑f : UpperHalfPlane → ℂ) =
-      ⇑(heq ▸ levelRaise (N / d) d k g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    rw [cuspForm_coe_eq_of_cast heq]
-    exact hg.symm
-  · rintro ⟨g, hg⟩
-    refine ⟨g, ?_⟩
-    rw [hg, cuspForm_coe_eq_of_cast heq]
+  refine ⟨fun ⟨g, hg⟩ ↦ ⟨g, ?_⟩, fun ⟨g, hg⟩ ↦ ⟨g, by rw [hg, cuspForm_coe_eq_of_cast heq]⟩⟩
+  apply DFunLike.coe_injective
+  show (⇑f : UpperHalfPlane → ℂ) =
+    ⇑(heq ▸ levelRaise (N / d) d k g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+  rw [cuspForm_coe_eq_of_cast heq]; exact hg.symm
 
 /-- Submodule-level forward bridge: the `heq`-cast of every level-raise image lies in
 `qSupportedOnDvdSubmodule N k d`. -/
@@ -332,9 +308,8 @@ theorem mem_qSupportedOnDvdSubmodule_inf_cuspFormCharSpace_iff_exists_cuspForm_l
   rw [Submodule.mem_inf]
   refine ⟨fun ⟨hsup, _⟩ ↦
     (qSupportedOnDvdSubmodule_mem_iff_exists_cuspForm_levelRaise_preimage_of_char
-      hd hdN χ f hfχ).mp hsup, fun h ↦ ⟨?_, hfχ⟩⟩
-  exact (qSupportedOnDvdSubmodule_mem_iff_exists_cuspForm_levelRaise_preimage_of_char
-    hd hdN χ f hfχ).mpr h
+      hd hdN χ f hfχ).mp hsup, fun h ↦ ⟨(qSupportedOnDvdSubmodule_mem_iff_exists_cuspForm_levelRaise_preimage_of_char
+    hd hdN χ f hfχ).mpr h, hfχ⟩⟩
 
 /-- For `h : M = N` a type-level equality of levels, the identity cast `(h ▸ ·)` is a
 `ℂ`-linear equivalence between the two CuspForm spaces. -/
@@ -392,13 +367,13 @@ theorem range_castLevelRaise_inf_cuspFormCharSpace_eq_qSupportedOnDvdSubmodule_i
       qSupportedOnDvdSubmodule N k d ⊓ cuspFormCharSpace k χ.toUnitHom := by
   ext f
   rw [Submodule.mem_inf, Submodule.mem_inf]
-  refine ⟨fun ⟨hrange, hchar⟩ ↦ ⟨?_, hchar⟩,
-          fun ⟨hsup, hchar⟩ ↦ ⟨?_, hchar⟩⟩
-  · exact range_castLevelRaise_le_qSupportedOnDvdSubmodule hdN k hrange
-  · obtain ⟨g, hg⟩ :=
-      (mem_qSupportedOnDvdSubmodule_inf_cuspFormCharSpace_iff_exists_cuspForm_levelRaise_preimage_of_char
-        hd hdN χ f hchar).mp ⟨hsup, hchar⟩
-    exact ⟨g, by rw [castLevelRaise_apply]; exact hg.symm⟩
+  refine ⟨fun ⟨hrange, hchar⟩ ↦
+    ⟨range_castLevelRaise_le_qSupportedOnDvdSubmodule hdN k hrange, hchar⟩,
+    fun ⟨hsup, hchar⟩ ↦ ⟨?_, hchar⟩⟩
+  obtain ⟨g, hg⟩ :=
+    (mem_qSupportedOnDvdSubmodule_inf_cuspFormCharSpace_iff_exists_cuspForm_levelRaise_preimage_of_char
+      hd hdN χ f hchar).mp ⟨hsup, hchar⟩
+  exact ⟨g, by rw [castLevelRaise_apply]; exact hg.symm⟩
 
 /-- Character-decomposition reverse bridge: if a cusp form `f : CuspForm Γ₁(N) k`
 decomposes as a finite sum `f = ∑ χ ∈ S, f_χ χ` with each summand `f_χ χ` lying in
@@ -417,8 +392,7 @@ theorem exists_cuspForm_levelRaise_preimage_of_qSupported_of_char_decomposition
     ∃ g : CuspForm ((Gamma1 (N / d)).map (mapGL ℝ)) k,
       f = castLevelRaise N d hdN k g := by
   have h_per_χ : ∀ χ ∈ S, ∃ g : CuspForm ((Gamma1 (N / d)).map (mapGL ℝ)) k,
-      f_χ χ = castLevelRaise N d hdN k g := by
-    intro χ hχ
+      f_χ χ = castLevelRaise N d hdN k g := fun χ hχ ↦ by
     obtain ⟨hsupp, hchar⟩ := Submodule.mem_inf.mp (h_mem χ hχ)
     obtain ⟨g, hg⟩ :=
       (qSupportedOnDvdSubmodule_mem_iff_exists_cuspForm_levelRaise_preimage_of_char
@@ -427,7 +401,7 @@ theorem exists_cuspForm_levelRaise_preimage_of_qSupported_of_char_decomposition
   choose g_χ hg_χ using h_per_χ
   refine ⟨∑ χ ∈ S.attach, g_χ χ.val χ.property, ?_⟩
   rw [map_sum, h_decomp, ← Finset.sum_attach S (fun χ ↦ f_χ χ)]
-  exact Finset.sum_congr rfl (fun χ _ ↦ hg_χ χ.val χ.property)
+  exact Finset.sum_congr rfl fun χ _ ↦ hg_χ χ.val χ.property
 
 /-- Character-space mainLemma at prime-power level: for `N = p^r` with `p` prime and
 `r ≥ 1`, a cusp form `f ∈ S_k(Γ₁(p^r), χ)` whose Fourier coefficients vanish at every
@@ -444,17 +418,13 @@ theorem mainLemma_charSpace_primePower
   have h_pr : p ^ r = p ^ (r - 1) * p := by
     conv_lhs => rw [show r = (r - 1) + 1 from (Nat.sub_add_cancel hr).symm]
     rw [pow_succ]
-  have h_div_eq : p ^ r / p = p ^ (r - 1) := by
-    rw [h_pr, Nat.mul_div_cancel _ hp_prime.pos]
   haveI : NeZero (p ^ r / p) := by
-    rw [h_div_eq]; exact ⟨pow_ne_zero _ hp_prime.ne_zero⟩
-  have h_supp : f ∈ qSupportedOnDvdSubmodule (p ^ r) k p := by
-    intro n hn
-    apply h
-    rw [Nat.coprime_pow_right_iff hr]
-    exact ((hp_prime.coprime_iff_not_dvd).mpr hn).symm
-  exact qSupportedOnDvd_mem_cuspFormsOld_of_char hp_prime.one_lt
-    (dvd_pow_self p hr.ne') χ f hfχ h_supp
+    rw [show p ^ r / p = p ^ (r - 1) from by rw [h_pr, Nat.mul_div_cancel _ hp_prime.pos]]
+    exact ⟨pow_ne_zero _ hp_prime.ne_zero⟩
+  refine qSupportedOnDvd_mem_cuspFormsOld_of_char hp_prime.one_lt
+    (dvd_pow_self p hr.ne') χ f hfχ fun n hn ↦ h n ?_
+  rw [Nat.coprime_pow_right_iff hr]
+  exact ((hp_prime.coprime_iff_not_dvd).mpr hn).symm
 
 /-- Composite-level mainLemma from a prime-supported decomposition: if
 `f : CuspForm Γ₁(N) k` decomposes as `f = ∑ p ∈ S, f_p p` with `S ⊆ N.primeFactors` and
@@ -471,7 +441,7 @@ theorem mainLemma_charSpace_of_prime_decomposition
     (h_supp : ∀ p ∈ S, f_p p ∈ qSupportedOnDvdSubmodule N k p) :
     f ∈ cuspFormsOld N k := by
   rw [h_decomp]
-  refine Submodule.sum_mem _ (fun p hp ↦ ?_)
+  refine Submodule.sum_mem _ fun p hp ↦ ?_
   have hp_pf := hS hp
   have hp_prime : p.Prime := Nat.prime_of_mem_primeFactors hp_pf
   have hpN : p ∣ N := Nat.dvd_of_mem_primeFactors hp_pf
@@ -539,16 +509,15 @@ theorem mainLemma_charSpace_of_sameLevelDivisorDecomposition
       samePiece d ∈ cuspFormCharSpace k χ.toUnitHom) :
     f ∈ cuspFormsOld N k := by
   rw [h_sum]
-  refine Submodule.sum_mem _ (fun d hd ↦ ?_)
+  refine Submodule.sum_mem _ fun d hd ↦ ?_
   rw [Finset.mem_filter, Nat.mem_divisors] at hd
   obtain ⟨⟨hdN, _⟩, hd_gt⟩ := hd
   have hd_pos : 0 < d := by omega
   haveI : NeZero d := ⟨hd_pos.ne'⟩
   haveI : NeZero (N / d) :=
     ⟨(Nat.div_pos (Nat.le_of_dvd (Nat.pos_of_neZero N) hdN) hd_pos).ne'⟩
-  have hd_mem : d ∈ N.divisors.filter (1 < ·) := by
-    rw [Finset.mem_filter, Nat.mem_divisors]
-    exact ⟨⟨hdN, NeZero.ne N⟩, hd_gt⟩
+  have hd_mem : d ∈ N.divisors.filter (1 < ·) :=
+    Finset.mem_filter.mpr ⟨Nat.mem_divisors.mpr ⟨hdN, NeZero.ne N⟩, hd_gt⟩
   exact qSupportedOnDvd_mem_cuspFormsOld_of_char hd_gt hdN χ
     (samePiece d) (h_pieces d hd_mem).2 (h_pieces d hd_mem).1
 
