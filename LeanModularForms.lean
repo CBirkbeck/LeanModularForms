@@ -44,4 +44,5 @@ import LeanModularForms.ForMathlib.ValenceFormulaFinal
 import LeanModularForms.ForMathlib.HW33Clean
 import LeanModularForms.SpherePacking.PhiHolomorphic
 import LeanModularForms.SpherePacking.CuspDecay
+import LeanModularForms.SpherePacking.CauchyCorollaries
 import LeanModularForms.SpherePacking.ViazovskaMagicFunction
