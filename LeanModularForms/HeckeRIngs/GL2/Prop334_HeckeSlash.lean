@@ -57,12 +57,10 @@ theorem heckeSlash_gen_invariant_Gamma1_of_slash_comm
   have hσ_Gamma0 : σ ∈ Gamma0 N := Gamma1_le_Gamma0 N hσ_Gamma1
   have h_units : Gamma0MapUnits (⟨σ, hσ_Gamma0⟩ : ↥(Gamma0 N)) = 1 := by
     ext
-    simp only [Gamma0MapUnits_val, Gamma0Map, MonoidHom.coe_mk, OneHom.coe_mk,
-      Units.val_one]
+    simp only [Gamma0MapUnits_val, Gamma0Map, MonoidHom.coe_mk, OneHom.coe_mk, Units.val_one]
     exact ((Gamma1_mem N σ).mp hσ_Gamma1).2.1
   have hc := hComm ⟨σ, hσ_Gamma0⟩
-  rw [h_units, map_one, Units.val_one, one_smul] at hc
-  exact hc
+  rwa [h_units, map_one, Units.val_one, one_smul] at hc
 
 /-- If the functional χ-equivariance of the Hecke slash holds, then for
 every `d : (ZMod N)ˣ`, the diamond operator `⟨d⟩` acts on the
@@ -163,12 +161,7 @@ theorem heckeSlash_gen_mem_modFormCharSpace_of_slash_comm
       modFormCharSpace k χ := by
   rw [modFormCharSpace_iff_nebentypus]
   intro g
-  show (⇑(heckeSlash_gen_asModularForm_of_slash_comm k χ D f hComm)) ∣[k]
-      mapGL ℝ (g : SL(2, ℤ)) =
-    (↑(χ (Gamma0MapUnits g)) : ℂ) •
-      ⇑(heckeSlash_gen_asModularForm_of_slash_comm k χ D f hComm)
-  rw [heckeSlash_gen_asModularForm_of_slash_comm_coe]
-  exact hComm g
+  simpa [heckeSlash_gen_asModularForm_of_slash_comm_coe] using hComm g
 
 /-- `mapGL ℚ (g : SL(2, ℤ))` lies in `(Gamma0_pair N).H` for every `g ∈ Gamma0 N`. -/
 private lemma mapGL_Q_mem_H (g : ↥(Gamma0 N)) :
@@ -195,9 +188,8 @@ theorem heckeSlash_gen_slash_comm_one
   have hinv := heckeSlash_gen_slash_invariant (P := Gamma0_pair N) k D f hf
     (mapGL ℚ (g : SL(2, ℤ))) (mapGL_Q_mem_H g)
   simp only [MonoidHom.one_apply, Units.val_one, one_smul]
-  change (heckeSlash_gen (Gamma0_pair N) k D f) ∣[k]
-    (mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) g = _
-  rw [← glMap_mapGL_Q_eq_mapGL_R]
+  rw [show (mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) g = glMap (mapGL ℚ (g : SL(2, ℤ))) from
+    (glMap_mapGL_Q_eq_mapGL_R g).symm]
   exact hinv
 
 end HeckeRing.GL2
