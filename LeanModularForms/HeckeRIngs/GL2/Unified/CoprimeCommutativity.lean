@@ -56,8 +56,6 @@ theorem ambientHeckeOfGoodIndex_mul_of_coprime
   letI : NeZero (n : ℕ) := ⟨Nat.pos_iff_ne_zero.mp n.property.1⟩
   letI : NeZero ((m : ℕ) * n) :=
     ⟨Nat.mul_ne_zero (NeZero.ne (m : ℕ)) (NeZero.ne (n : ℕ))⟩
-  change heckeT_n (N := N) k ((m : ℕ) * n) =
-    heckeT_n k (m : ℕ) * heckeT_n k (n : ℕ)
   exact heckeT_n_mul_coprime (N := N) k (m : ℕ) (n : ℕ) hmn
 
 /-- Coprime good-index operators on the ambient `Γ₁(N)` space commute by
@@ -66,11 +64,8 @@ theorem ambientHeckeOfGoodIndex_commute_of_coprime
     (k : ℤ) (m n : GoodIndex N) (hmn : Nat.Coprime (m : ℕ) (n : ℕ)) :
     Commute (ambientHeckeOfGoodIndex (N := N) k m)
       (ambientHeckeOfGoodIndex (N := N) k n) := by
-  show ambientHeckeOfGoodIndex (N := N) k m *
-      ambientHeckeOfGoodIndex (N := N) k n =
-    ambientHeckeOfGoodIndex (N := N) k n *
-      ambientHeckeOfGoodIndex (N := N) k m
-  rw [← ambientHeckeOfGoodIndex_mul_of_coprime (N := N) k m n hmn,
+  rw [Commute, SemiconjBy,
+    ← ambientHeckeOfGoodIndex_mul_of_coprime (N := N) k m n hmn,
     ← ambientHeckeOfGoodIndex_mul_of_coprime (N := N) k n m hmn.symm,
     show m * n = n * m from Subtype.ext (Nat.mul_comm (m : ℕ) (n : ℕ))]
 
