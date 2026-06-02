@@ -54,10 +54,6 @@ lemma map_mul_of_coprime (F : GoodHeckeFamily N V) (m n : GoodIndex N)
 lemma commute (F : GoodHeckeFamily N V) (m n : GoodIndex N) : Commute (F.op m) (F.op n) :=
   F.commute' m n
 
-lemma pairwise_commute (F : GoodHeckeFamily N V) :
-    Pairwise fun m n : GoodIndex N ↦ Commute (F.op m) (F.op n) :=
-  fun m n _ ↦ F.commute m n
-
 /-- Pointwise commutativity extracted from `Commute` at the `Module.End` level. -/
 lemma commute_apply (F : GoodHeckeFamily N V) (m n : GoodIndex N) (v : V) :
     F.op m (F.op n v) = F.op n (F.op m v) :=
@@ -72,12 +68,6 @@ lemma commute_of_coprime_from_mul (F : GoodHeckeFamily N V) (m n : GoodIndex N)
   show F.op m * F.op n = F.op n * F.op m
   rw [← F.map_mul_of_coprime m n hmn, ← F.map_mul_of_coprime n m hmn.symm,
     show (m * n : GoodIndex N) = n * m from Subtype.ext (Nat.mul_comm _ _)]
-
-/-- Pointwise form of `commute_of_coprime_from_mul`. -/
-lemma commute_apply_of_coprime_from_mul (F : GoodHeckeFamily N V) (m n : GoodIndex N)
-    (hmn : Nat.Coprime (m : ℕ) (n : ℕ)) (v : V) :
-    F.op m (F.op n v) = F.op n (F.op m v) :=
-  LinearMap.congr_fun (F.commute_of_coprime_from_mul m n hmn).eq v
 
 /-- Conjugate an endomorphism along a linear equivalence. -/
 noncomputable def conjEnd (e : V ≃ₗ[ℂ] W) (T : Module.End ℂ V) : Module.End ℂ W :=
