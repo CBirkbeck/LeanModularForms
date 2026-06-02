@@ -153,34 +153,4 @@ theorem heckeT_n_charRestrict_commute (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
   simpa [Module.End.mul_apply] using
     congr_fun (congr_arg DFunLike.coe (heckeT_n_comm (N := N) k m n)) (f : ModularForm _ k)
 
-/-- For distinct primes `p ≠ q`, the operators `heckeT_p_all k p hp` and
-`heckeT_p_all k q hq` commute pointwise on the eigenspace `modFormCharSpace k χ`. -/
-theorem heckeT_p_all_comm_on_charSpace_via_charRestrict (k : ℤ)
-    (χ : (ZMod N)ˣ →* ℂˣ)
-    {p q : ℕ} (hp : Nat.Prime p) (hq : Nat.Prime q) (hpq : p ≠ q)
-    (f : modFormCharSpace k χ) :
-    heckeT_p_all k p hp (heckeT_p_all k q hq
-      (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) =
-    heckeT_p_all k q hq (heckeT_p_all k p hp
-      (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) := by
-  have h := congr_fun (congr_arg DFunLike.coe
-    (heckeT_p_all_charRestrict_commute_distinct k χ hp hq hpq)) f
-  simp only [Module.End.mul_apply] at h
-  simpa using congr_arg (Subtype.val (α := _) (p := _)) h
-
-/-- For `m, n` coprime to `N` and any `χ`, the operators `heckeT_n k m` and
-`heckeT_n k n` commute pointwise on `modFormCharSpace k χ`. -/
-theorem heckeT_n_comm_on_charSpace (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
-    (m n : ℕ) [NeZero m] [NeZero n]
-    (hm : Nat.Coprime m N) (hn : Nat.Coprime n N)
-    (f : modFormCharSpace k χ) :
-    heckeT_n k m (heckeT_n k n
-      (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) =
-    heckeT_n k n (heckeT_n k m
-      (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) := by
-  have h := congr_fun (congr_arg DFunLike.coe
-    (heckeT_n_charRestrict_commute k χ m n hm hn)) f
-  simp only [Module.End.mul_apply] at h
-  simpa using congr_arg (Subtype.val (α := _) (p := _)) h
-
 end HeckeRing.GL2
