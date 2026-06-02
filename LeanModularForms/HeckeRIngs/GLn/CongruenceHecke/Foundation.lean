@@ -46,11 +46,8 @@ noncomputable def Delta0_submonoid (N : ℕ) : Submonoid (GL (Fin 2) ℚ) where
   carrier := {g | HasIntEntries 2 g ∧ 0 < (↑g : Matrix (Fin 2) (Fin 2) ℚ).det ∧
     ∃ A : Matrix (Fin 2) (Fin 2) ℤ, (↑g : Matrix (Fin 2) (Fin 2) ℚ) = A.map (Int.cast : ℤ → ℚ) ∧
       (N : ℤ) ∣ A 1 0 ∧ Int.gcd (A 0 0) N = 1}
-  one_mem' := by
-    refine ⟨hasIntEntries_one 2, by simp, 1, ?_, ?_, ?_⟩
-    · ext i j; simp [Matrix.map_apply, Matrix.one_apply]
-    · simp
-    · simp
+  one_mem' := ⟨hasIntEntries_one 2, by simp, 1,
+    by ext i j; simp [Matrix.map_apply, Matrix.one_apply], by simp, by simp⟩
   mul_mem' := by
     intro a b ⟨ha, hda, A, hA, hAN, hAco⟩ ⟨hb, hdb, B, hB, hBN, hBco⟩
     refine ⟨HasIntEntries.mul (n := 2) ha hb,
@@ -126,18 +123,14 @@ variable (N : ℕ) [NeZero N]
 omit [NeZero N] in
 /-- `Γ₀(N) ≤ SL₂(ℤ)` (as subgroups of `GL₂(ℚ)`): every Gamma0 element is in SLnZ. -/
 lemma Gamma0_le_SLnZ : (CongruenceSubgroup.Gamma0 N).map (mapGL ℚ) ≤ SLnZ_subgroup 2 := by
-  intro g hg
-  rw [Subgroup.mem_map] at hg
-  obtain ⟨σ, _, rfl⟩ := hg
+  rintro _ ⟨σ, _, rfl⟩
   exact MonoidHom.mem_range.mpr ⟨σ, rfl⟩
 
 omit [NeZero N] in
 /-- `Γ(N) ≤ Γ₀(N)`: the principal congruence subgroup is contained in Gamma0. -/
-lemma GammaN_le_Gamma0 : CongruenceSubgroup.Gamma N ≤ CongruenceSubgroup.Gamma0 N := by
-  intro σ hσ
+lemma GammaN_le_Gamma0 : CongruenceSubgroup.Gamma N ≤ CongruenceSubgroup.Gamma0 N := fun _ hσ ↦ by
   rw [CongruenceSubgroup.Gamma_mem] at hσ
-  rw [CongruenceSubgroup.Gamma0_mem]
-  exact hσ.2.2.1
+  exact CongruenceSubgroup.Gamma0_mem.mpr hσ.2.2.1
 
 omit [NeZero N] in
 private lemma gcd_A11_N_eq_one
@@ -145,8 +138,7 @@ private lemma gcd_A11_N_eq_one
     (hdet_coprime : Int.gcd A.det N = 1) :
     Int.gcd (A 1 1) N = 1 := by
   rw [← Int.isCoprime_iff_gcd_eq_one] at hdet_coprime ⊢
-  have hdet : A.det = A 0 0 * A 1 1 - A 0 1 * A 1 0 := by
-    rw [Matrix.det_fin_two]
+  have hdet : A.det = A 0 0 * A 1 1 - A 0 1 * A 1 0 := Matrix.det_fin_two A
   obtain ⟨k, hk⟩ := hAN
   have hdet_co' : IsCoprime (A 0 0 * A 1 1) (N : ℤ) := by
     have : A 0 0 * A 1 1 = A.det + (A 0 1 * k) * ↑N := by
@@ -161,8 +153,7 @@ private lemma intCast_eq_zero_of_dvd {m n : ℕ} (h : m ∣ n) (x : ℤ)
 
 private lemma intCast_eq_one_of_dvd {m n : ℕ} (h : m ∣ n) (x : ℤ)
     (hx : (x : ZMod n) = 1) : (x : ZMod m) = 1 := by
-  have h1 : ((x - 1 : ℤ) : ZMod n) = 0 := by push_cast; simp [hx]
-  have h2 := intCast_eq_zero_of_dvd h _ h1
+  have h2 := intCast_eq_zero_of_dvd h _ (by push_cast; simp [hx] : ((x - 1 : ℤ) : ZMod n) = 0)
   push_cast at h2; rwa [sub_eq_zero] at h2
 
 open CongruenceSubgroup in
@@ -184,8 +175,8 @@ private lemma int_crt {m n x y : ℤ} (h : x ≡ y [ZMOD ↑(Int.gcd m n)]) :
     exact ⟨Int.gcdB m n * k,
       by rw [show y = x + g * k from by linarith, hbez]; ring⟩
 
-private lemma intModEq_to_zmod {m : ℕ} {a b : ℤ}
-    (h : a ≡ b [ZMOD ↑m]) : (a : ZMod m) = (b : ZMod m) :=
+private lemma intModEq_to_zmod {m : ℕ} {a b : ℤ} (h : a ≡ b [ZMOD ↑m]) :
+    (a : ZMod m) = (b : ZMod m) :=
   (ZMod.intCast_eq_intCast_iff _ _ _).mpr h
 
 private lemma SL2_gamma_entry_modEq (N : ℕ) (γ : SpecialLinearGroup (Fin 2) ℤ)
@@ -397,9 +388,7 @@ theorem doubleCoset_eq_of_Gamma0_coprimeDet
       ((Gamma0 N).map (mapGL ℚ)) := by
   have hdet_pos := hα.2.1
   have hAdet_pos : 0 < A.det := by
-    have h1 : (A.det : ℚ) = (A.map (Int.cast : ℤ → ℚ)).det :=
-      (det_intMat_cast 2 A).symm
-    exact Int.cast_pos.mp (by rw [h1, ← hA]; exact hdet_pos)
+    exact Int.cast_pos.mp (by rw [(det_intMat_cast 2 A).symm, ← hA]; exact hdet_pos)
   have hAco2 : Int.gcd (A 1 1) N = 1 :=
     gcd_A11_N_eq_one N A hAN hdet_coprime
   ext x; constructor
