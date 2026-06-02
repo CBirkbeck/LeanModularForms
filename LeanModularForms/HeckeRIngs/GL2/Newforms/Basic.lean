@@ -394,13 +394,6 @@ theorem oldPart_add_newPart (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     (Submodule.linearProjOfIsCompl_apply_eq_zero_iff
       cuspFormsOld_isCompl_cuspFormsNew.symm).mpr hf]
 
-/-- **Characterisation of `cuspFormsOld` by vanishing newform part:**
-`f ∈ cuspFormsOld N k ↔ newPart f = 0`. -/
-theorem mem_cuspFormsOld_iff_newPart_eq_zero (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    f ∈ cuspFormsOld N k ↔ newPart f = 0 :=
-  ⟨newPart_of_mem_cuspFormsOld, fun h ↦ by
-    rw [← oldPart_add_newPart f, h, add_zero]; exact oldPart_mem_cuspFormsOld f⟩
-
 /-- **Characterisation of `cuspFormsNew` by vanishing oldform part.** -/
 theorem mem_cuspFormsNew_iff_oldPart_eq_zero (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     f ∈ cuspFormsNew N k ↔ oldPart f = 0 :=
