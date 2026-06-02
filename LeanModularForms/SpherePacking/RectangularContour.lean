@@ -740,45 +740,135 @@ noncomputable def rectangleContour
 
 /-! ## Null-homologous from convex open set -/
 
+/-- Auxiliary: every continuous `ℝ`-linear functional `f : ℂ →L[ℝ] ℝ` has the
+form `f w = Re (α * w)` for `α = ⟨f 1, -(f I)⟩ : ℂ`. -/
+private lemma realCLM_eq_re_mul {f : ℂ →L[ℝ] ℝ} (w : ℂ) :
+    f w = ((Complex.mk (f 1) (-(f I))) * w).re := by
+  have hf_decomp : f w = w.re * f 1 + w.im * f I := by
+    have h_decomp : w = (w.re : ℝ) • (1 : ℂ) + (w.im : ℝ) • Complex.I := by
+      simp [Complex.real_smul]
+    conv_lhs => rw [h_decomp]
+    rw [map_add, map_smul, map_smul]
+    simp [smul_eq_mul]
+  rw [hf_decomp, Complex.mul_re]
+  simp; ring
+
+/-- Auxiliary: if `f z < f w` for some `w`, the complex direction
+`⟨f 1, -(f I)⟩` is nonzero. -/
+private lemma realCLM_dir_ne_zero {f : ℂ →L[ℝ] ℝ} {z w : ℂ} (h : f z < f w) :
+    Complex.mk (f 1) (-(f I)) ≠ 0 := by
+  intro hα
+  rw [Complex.ext_iff] at hα
+  simp at hα
+  obtain ⟨h1, hI⟩ := hα
+  have hf_zero : ∀ u : ℂ, f u = 0 := fun u => by
+    rw [realCLM_eq_re_mul u, h1, hI]
+    simp
+  rw [hf_zero w, hf_zero z] at h
+  exact lt_irrefl _ h
+
+/-- Auxiliary: on the open half-plane where `Re(α * (u - z)) > 0`, the function
+`u ↦ Complex.log(α * (u - z))` is a holomorphic primitive of `u ↦ (u - z)⁻¹`. -/
+private lemma hasDerivAt_log_mul_sub_const {α z : ℂ} (hα : α ≠ 0) {w : ℂ}
+    (h : 0 < (α * (w - z)).re) :
+    HasDerivAt (fun u => Complex.log (α * (u - z))) (w - z)⁻¹ w := by
+  have hα_wz_slit : α * (w - z) ∈ slitPlane := Or.inl h
+  have h_inner : HasDerivAt (fun u => α * (u - z)) α w := by
+    have h1 : HasDerivAt (fun u : ℂ => u - z) 1 w := (hasDerivAt_id w).sub_const z
+    simpa using h1.const_mul α
+  have h_log : HasDerivAt (fun u => Complex.log (α * (u - z)))
+      (α / (α * (w - z))) w :=
+    h_inner.clog hα_wz_slit
+  convert h_log using 1
+  field_simp
+
 /-- Every closed pw-C¹ immersion whose image lies in a convex open subset of `ℂ`
 is null-homologous there.
 
-**Proof sketch (not yet formalized below):** for a point `w` outside the convex
-open set `U`, the Hahn–Banach separation theorem produces an `ℝ`-linear functional
-`L : ℂ → ℝ` and a real number `c` with `L(u) < c` for every `u ∈ U` and
-`L(w) ≥ c`. Hence `U` is contained in the open half-plane
-`{z : L(z) < L(w)}`, which is simply connected and avoids `w`. On any simply
-connected open set avoiding `w`, the function `z ↦ 1/(z-w)` has a holomorphic
-primitive (the principal branch of `Complex.log` composed with `z ↦ z - w`,
-suitably rotated so the slit goes through `w`). The contour integral of an
-exact differential around a closed loop is zero, so the generalized winding
-number vanishes.
-
-The relevant mathlib pieces are: `Convex.exists_le_of_notMem` / Hahn–Banach in
-ℝ², `Complex.hasDerivAt_log` on `slitPlane`, and `contourIntegral` exactness
-(via `contourIntegral_eq_sub_of_hasDerivAt`). The integration of these into a
-`generalizedWindingNumber = 0` statement still requires building the bridge
-from the pw-C¹ contour integral to the CPV/generalizedWindingNumber, which is
-non-trivial. -/
+**Proof.** For a point `z` outside the convex open set `U`, geometric
+Hahn–Banach (`geometric_hahn_banach_point_open`) produces an `ℝ`-linear
+functional `f : ℂ →L[ℝ] ℝ` with `f z < f w` for every `w ∈ U`. Writing
+`f` as `Re (α * ·)` for some `α ≠ 0` (since `f` is nontrivial), we conclude
+that the open half-plane `H := {w | 0 < Re (α * (w - z))}` contains the
+image of `γ` but not `z`. On `H` the function `w ↦ Complex.log (α * (w - z))`
+is a holomorphic primitive of `w ↦ (w - z)⁻¹`, so the FTC for closed
+piecewise-`C¹` paths (`contourIntegral_eq_zero_of_hasDerivAt_of_closed`)
+gives `∮_γ (w - z)⁻¹ dw = 0`. Combined with `hasGeneralizedWindingNumber_of_avoids`,
+this forces the generalized winding number to vanish. -/
 theorem IsNullHomologous.of_convex_open {x : ℂ}
     (γ : ClosedPwC1Immersion x) {U : Set ℂ}
-    (_hU_open : IsOpen U) (_hU_convex : Convex ℝ U)
+    (hU_open : IsOpen U) (hU_convex : Convex ℝ U)
     (h_image : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPwC1Immersion.toPiecewiseC1Path t ∈ U) :
     IsNullHomologous γ.toPwC1Immersion U where
   image_subset := h_image
   winding_zero := by
-    -- TODO: prove generalized winding number = 0 for w ∉ U using the Hahn–Banach
-    -- separation argument outlined in the theorem docstring. The proof needs:
-    --   (a) `Convex ℝ U ∧ w ∉ U` ⇒ ∃ `L : ℂ →ₗ[ℝ] ℝ`, `α : ℝ`, `L w = α` and
-    --       `∀ u ∈ U, L u < α` (geometric Hahn–Banach in ℝ²).
-    --   (b) On the half-plane `{z : L z < α}`, the function `1/(z-w)` has a
-    --       primitive (the principal branch of log, suitably rotated).
-    --   (c) The generalized winding number reduces to the ordinary contour
-    --       integral here because γ avoids `w`, and that integral is 0 because
-    --       the integrand has a primitive on a set containing the curve.
-    -- This argument is mathlib-friendly but takes ~200 lines to formalize
-    -- carefully because mathlib has no winding number library yet.
-    sorry
+    intro z hz
+    -- (1) Hahn–Banach separation: get `f : ℂ →L[ℝ] ℝ` with `f z < f w` on `U`.
+    obtain ⟨f, h_sep⟩ := geometric_hahn_banach_point_open hU_convex hU_open hz
+    -- (2) Pick any point in U to witness `f z < f _` (the curve does the job).
+    have h_strict : ∃ w₀ ∈ U, f z < f w₀ := by
+      refine ⟨γ.toPwC1Immersion.toPiecewiseC1Path 0, h_image 0 ⟨le_rfl, zero_le_one⟩, ?_⟩
+      exact h_sep _ (h_image 0 ⟨le_rfl, zero_le_one⟩)
+    obtain ⟨w₀, hw₀_U, hfzw₀⟩ := h_strict
+    -- (3) Build the complex direction α = ⟨f 1, -(f I)⟩ ≠ 0 with `f w = Re(α * w)`.
+    set α : ℂ := Complex.mk (f 1) (-(f I)) with hα_def
+    have hα_ne : α ≠ 0 := realCLM_dir_ne_zero hfzw₀
+    have hα_eq : ∀ w : ℂ, f w = (α * w).re := fun w => realCLM_eq_re_mul w
+    -- (4) γ avoids z: every γ t is in U, so f(γ t - z) > 0, so γ t ≠ z.
+    have h_avoid : ∀ t ∈ Icc (0 : ℝ) 1,
+        γ.toPwC1Immersion.toPiecewiseC1Path t ≠ z := by
+      intro t ht heq
+      have hγt_U : γ.toPwC1Immersion.toPiecewiseC1Path t ∈ U := h_image t ht
+      have := h_sep _ hγt_U
+      rw [heq] at this
+      exact lt_irrefl _ this
+    -- (5) Half-plane H = {w | 0 < Re(α * (w - z))} contains γ's image and not z.
+    have h_image_re_pos : ∀ t ∈ Icc (0 : ℝ) 1,
+        0 < (α * (γ.toPwC1Immersion.toPiecewiseC1Path t - z)).re := by
+      intro t ht
+      rw [← hα_eq, map_sub]
+      linarith [h_sep _ (h_image t ht)]
+    -- (6) Get a positive distance lower bound (γ avoids z and is on a compact set).
+    have hδ : ∃ δ > 0, ∀ t ∈ Icc (0 : ℝ) 1,
+        δ ≤ ‖γ.toPwC1Immersion.toPiecewiseC1Path t - z‖ :=
+      avoids_delta_bound γ.toPwC1Immersion.toPiecewiseC1Path z h_avoid
+    -- (7) γ is Lipschitz on ℝ (paper-faithful structure).
+    obtain ⟨K, hLip⟩ := ClosedPwC1Immersion.lipschitzWith_extend γ
+    -- (8) Integrability of (γ t - z)⁻¹ * γ'(t).
+    obtain ⟨δ, hδ_pos, h_dist_lb⟩ := hδ
+    have h_int : IntervalIntegrable
+        (fun t => (γ.toPwC1Immersion.toPiecewiseC1Path t - z)⁻¹ *
+          deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t)
+        volume 0 1 := by
+      have h_aux := intervalIntegrable_div_lipschitz γ.toPwC1Immersion.toPiecewiseC1Path
+        hδ_pos h_dist_lb hLip
+      -- `h_aux` integrates `deriv γ.toPath.extend t / (γ.toPath.extend t - z)`; we want
+      -- `(γ t - z)⁻¹ * deriv γ.toPath.extend t`. The two forms agree by
+      -- `div_eq_mul_inv` + `mul_comm` (the coercion `γ t = γ.toPath.extend t` is `rfl`).
+      refine h_aux.congr (fun t _ => ?_)
+      show deriv (⇑γ.toPwC1Immersion.toPath.extend) t /
+            (γ.toPwC1Immersion.toPath.extend t - z) =
+          (γ.toPwC1Immersion.toPiecewiseC1Path t - z)⁻¹ *
+            deriv γ.toPwC1Immersion.toPiecewiseC1Path.toPath.extend t
+      rw [div_eq_mul_inv, mul_comm]
+      rfl
+    -- (9) Primitive: F(w) = log(α * (w - z)) on H has derivative (w - z)⁻¹.
+    have h_prim : ∀ w ∈ {w : ℂ | 0 < (α * (w - z)).re},
+        HasDerivAt (fun u => Complex.log (α * (u - z))) (w - z)⁻¹ w := by
+      intro w hw
+      exact hasDerivAt_log_mul_sub_const hα_ne hw
+    -- (10) FTC for closed paths: contour integral is 0.
+    have h_contour_zero :
+        γ.toPwC1Immersion.toPiecewiseC1Path.contourIntegral (fun w => (w - z)⁻¹) = 0 :=
+      PiecewiseC1Path.contourIntegral_eq_zero_of_hasDerivAt_of_closed
+        γ.toPwC1Immersion.toPiecewiseC1Path rfl
+        h_image_re_pos h_prim h_int
+    -- (11) Bridge to generalized winding number.
+    have h_wind : HasGeneralizedWindingNumber γ.toPwC1Immersion.toPiecewiseC1Path z
+        ((2 * ↑Real.pi * I)⁻¹ * γ.toPwC1Immersion.toPiecewiseC1Path.contourIntegral
+          (fun w => (w - z)⁻¹)) :=
+      hasGeneralizedWindingNumber_of_avoids ⟨δ, hδ_pos, h_dist_lb⟩
+    rw [h_wind.eq, h_contour_zero, mul_zero]
 
 /-! ## Cauchy's theorem on a rectangle -/
 
