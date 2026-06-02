@@ -50,9 +50,8 @@ lemma adj_mul_mul_entry_00_eq (N : ℤ) (a b c d α β γ δ : ℤ) :
 private lemma inv_mul_mul_entry_smul_det {K : Type*} [Field K]
     (g h : Matrix (Fin 2) (Fin 2) K) (hdet : g.det ≠ 0) (i j : Fin 2) :
     (g⁻¹ * h * g) i j * g.det = (Matrix.adjugate g * h * g) i j := by
-  have hinv : g⁻¹ = (g.det)⁻¹ • Matrix.adjugate g := by
-    rw [Matrix.inv_def, Ring.inverse_eq_inv']
-  rw [hinv]
+  rw [show g⁻¹ = (g.det)⁻¹ • Matrix.adjugate g by
+    rw [Matrix.inv_def, Ring.inverse_eq_inv']]
   simp only [Matrix.smul_mul, Matrix.smul_apply, smul_eq_mul]
   field_simp
 
@@ -100,14 +99,11 @@ private lemma isUnit_ad_of_det_coprime {N : ℕ} (a b c d : ℤ)
     (hdet : Int.gcd (!![a, b; (N : ℤ) * c, d] : Matrix _ _ ℤ).det N = 1) :
     IsUnit ((a * d : ℤ) : ZMod N) := by
   have hdetval : (!![a, b; (N : ℤ) * c, d] : Matrix _ _ ℤ).det = a * d - b * ((N : ℤ) * c) := by
-    rw [Matrix.det_fin_two]
-    simp
+    rw [Matrix.det_fin_two]; simp
   have heq : ((a * d : ℤ) : ZMod N) =
       (((!![a, b; (N : ℤ) * c, d] : Matrix _ _ ℤ).det : ℤ) : ZMod N) := by
-    rw [hdetval]
-    push_cast
-    rw [show ((N : ZMod N)) = 0 from ZMod.natCast_self N]
-    ring
+    rw [hdetval]; push_cast
+    rw [show ((N : ZMod N)) = 0 from ZMod.natCast_self N]; ring
   rw [heq, ZMod.coe_int_isUnit_iff_isCoprime, Int.isCoprime_iff_gcd_eq_one, Int.gcd_comm]
   exact_mod_cast hdet
 
@@ -128,12 +124,8 @@ private lemma entry_11_mul_det_congr_mod
     simp only [Matrix.det_fin_two_of]; push_cast; ring
   rw [hcastN, h_conj_11, hdet_eq] at hQ
   have hZ : h'₁₁ * (!![a, b; (N : ℤ) * c, d] : Matrix _ _ ℤ).det =
-      a * d * δ + (N : ℤ) * (a * b * γ - b * c * α - c * d * β) := by
-    exact_mod_cast hQ
-  rw [hZ]
-  push_cast
-  ring_nf
-  simp
+      a * d * δ + (N : ℤ) * (a * b * γ - b * c * α - c * d * β) := mod_cast hQ
+  rw [hZ]; push_cast; ring_nf; simp
 
 private lemma conj_matrix_entry_11_eq_intCast
     (gG : GL (Fin 2) ℚ) (hS h'S : SL(2, ℤ))
@@ -150,8 +142,7 @@ private lemma conj_matrix_entry_11_eq_intCast
       congr_arg (fun X : GL (Fin 2) ℚ ↦ (X : Matrix (Fin 2) (Fin 2) ℚ)) h'_conj
   have h_entry := congr_fun (congr_fun h_mat_eq 1) 1
   rw [hA_rat, hAh_rat, mapGL_coe_matrix] at h_entry
-  simp only [algebraMap_int_eq] at h_entry
-  exact h_entry.symm
+  simpa using h_entry.symm
 
 private lemma conj_entry_11_intCast_eq_mod {N : ℕ}
     (a b c d α β γ δ h'₁₁ : ℤ)
@@ -169,10 +160,8 @@ private lemma conj_entry_11_intCast_eq_mod {N : ℕ}
     isUnit_ad_of_det_coprime a b c d hdet_cop
   have hdetA_mod : ((detA : ℤ) : ZMod N) = ((a * d : ℤ) : ZMod N) := by
     rw [hdetA_def]
-    simp only [Matrix.det_fin_two_of]
-    push_cast
-    rw [show ((N : ZMod N)) = 0 from ZMod.natCast_self N]
-    ring
+    simp only [Matrix.det_fin_two_of]; push_cast
+    rw [show ((N : ZMod N)) = 0 from ZMod.natCast_self N]; ring
   have h_mod' : (h'₁₁ : ZMod N) * ((a * d : ℤ) : ZMod N) =
       ((a * d : ℤ) : ZMod N) * (δ : ZMod N) := by
     calc (h'₁₁ : ZMod N) * ((a * d : ℤ) : ZMod N)
@@ -187,8 +176,7 @@ private lemma delta_elt_intCast_matrix_form {N : ℕ} [NeZero N]
     (g : (Gamma0_pair N).Δ) :
     ∃ a b c d : ℤ, (↑(g : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ) =
       !![(a : ℚ), (b : ℚ); (N : ℚ) * (c : ℚ), (d : ℚ)] := by
-  obtain ⟨_, _, A, hA_eq, hAN, _⟩ := g.2
-  obtain ⟨c, hc⟩ := hAN
+  obtain ⟨_, _, A, hA_eq, ⟨c, hc⟩, _⟩ := g.2
   refine ⟨A 0 0, A 0 1, c, A 1 1, ?_⟩
   have hA_reshape : A = !![A 0 0, A 0 1; (N : ℤ) * c, A 1 1] := by
     ext i j; fin_cases i <;> fin_cases j <;> simp [hc]
@@ -200,12 +188,9 @@ private lemma gamma0_elt_intCast_matrix_form {N : ℕ} (h : ↥(Gamma0 N)) :
         !![(α : ℚ), (β : ℚ); (N : ℚ) * (γ : ℚ), (δ : ℚ)] ∧
       (δ : ZMod N) = ((h : SL(2, ℤ)).val 1 1 : ZMod N) := by
   set Ah : Matrix (Fin 2) (Fin 2) ℤ := (h : SL(2, ℤ)).val with hAh_def
-  have hAh_N : (N : ℤ) ∣ Ah 1 0 :=
+  obtain ⟨γ, hγ⟩ : (N : ℤ) ∣ Ah 1 0 :=
     (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp (Gamma0_mem.mp h.property)
-  obtain ⟨γ, hγ⟩ := hAh_N
   refine ⟨Ah 0 0, Ah 0 1, γ, Ah 1 1, ?_, by rw [hAh_def]⟩
-  have hAh_reshape : Ah = !![Ah 0 0, Ah 0 1; (N : ℤ) * γ, Ah 1 1] := by
-    ext i j; fin_cases i <;> fin_cases j <;> simp [hγ]
   rw [mapGL_coe_matrix]
   ext i j; fin_cases i <;> fin_cases j <;>
     simp [RingHom.mapMatrix_apply, Matrix.map_apply, ← hAh_def, hγ]
@@ -226,10 +211,10 @@ theorem Gamma0MapUnits_preserved_of_detCoprime {N : ℕ} [NeZero N]
   obtain ⟨a, b, c, d, hA_rat⟩ := delta_elt_intCast_matrix_form g
   obtain ⟨α, β, γ, δ, hAh_rat, hδ_eq⟩ := gamma0_elt_intCast_matrix_form h
   set h'₁₁ : ℤ := (h' : SL(2, ℤ)).val 1 1
-  have hdet_ne : (!![(a : ℚ), (b : ℚ); (N : ℚ) * (c : ℚ), (d : ℚ)]).det ≠ 0 := by
-    rw [← hA_rat]; exact Matrix.GeneralLinearGroup.det_ne_zero g.val
+  have hdet_ne : (!![(a : ℚ), (b : ℚ); (N : ℚ) * (c : ℚ), (d : ℚ)]).det ≠ 0 :=
+    hA_rat ▸ Matrix.GeneralLinearGroup.det_ne_zero g.val
   have hdet_cop : Int.gcd (!![a, b; (N : ℤ) * c, d] : Matrix _ _ ℤ).det N = 1 := by
-    apply h_det_coprime
+    refine h_det_coprime _ ?_
     rw [hA_rat]
     ext i j; fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply]
   have h_conj_11 := conj_matrix_entry_11_eq_intCast (g : GL (Fin 2) ℚ)
