@@ -407,17 +407,6 @@ theorem mem_cuspFormsNew_iff_oldPart_eq_zero (f : CuspForm ((Gamma1 N).map (mapG
   ⟨oldPart_of_mem_cuspFormsNew, fun h ↦ by
     rw [← oldPart_add_newPart f, h, zero_add]; exact newPart_mem_cuspFormsNew f⟩
 
-/-- Conditional `mainLemma` consumer: under the coprime-to-`N` Fourier vanishing hypothesis,
-if additionally `newPart f = 0` then `f ∈ cuspFormsOld N k`.  The `_h_vanish` hypothesis
-mirrors the `Newforms.mainLemma` signature and is unused in the present proof. -/
-theorem mainLemma_of_newPart_eq_zero
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (_h_vanish : ∀ n : ℕ, Nat.Coprime n N →
-      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0)
-    (h_newPart_zero : newPart f = 0) :
-    f ∈ cuspFormsOld N k :=
-  (mem_cuspFormsOld_iff_newPart_eq_zero f).mpr h_newPart_zero
-
 /-- `T_n` commutes with addition on cusp forms. -/
 lemma heckeT_n_cusp_add (n : ℕ) [NeZero n]
     (f₁ f₂ : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
