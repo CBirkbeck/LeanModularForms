@@ -292,15 +292,6 @@ lemma DoubleCoset.doubleCoset_eq_iUnion_leftCosets (g : G) :
   convert Set.iUnion_congr h1
   rw [Set.iUnion_mul]
 
-/-- The product of two double cosets simplifies using `H * H = H` on the right. -/
-lemma doubleCoset_mul_doubleCoset_right (g h : G) :
-    DoubleCoset.doubleCoset g H H * DoubleCoset.doubleCoset h H H =
-    H * {g} * DoubleCoset.doubleCoset h H H := by
-  simp_rw [DoubleCoset.doubleCoset,
-    show (H : Set G) * {g} * (H : Set G) * (H * {h} * H) =
-      H * {g} * (H * H) * {h} * H by simp_rw [← mul_assoc],
-    coe_mul_coe H, ← mul_assoc]
-
 /-- The double coset `HhH` is a constant union indexed by the trivial quotient. -/
 lemma DoubleCoset.doubleCoset_one_mul (h : G) :
     DoubleCoset.doubleCoset h (H : Set G) H =
