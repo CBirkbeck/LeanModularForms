@@ -103,12 +103,10 @@ private lemma Newform.term_lCoeff_pow_of_bad_prime_pow
     (h_bad_pow : ∀ r : ℕ, f.lCoeff (p ^ r) = f.lCoeff p ^ r) (s : ℂ) (e : ℕ) :
     LSeries.term f.lCoeff s (p ^ e) = (f.lCoeff p * (p : ℂ) ^ (-s)) ^ e := by
   rw [LSeries.term_def₀ f.lCoeff_zero, h_bad_pow e]
-  have h_swap : ((p : ℂ) ^ e) ^ (-s) = ((p : ℂ) ^ (-s)) ^ e := by
-    rw [← Complex.natCast_cpow_natCast_mul (p : ℕ) e (-s),
-      show ((e : ℂ) * (-s)) = (-s) * (e : ℂ) from by ring,
-      Complex.cpow_mul_nat]
   push_cast
-  rw [mul_pow, h_swap]
+  rw [mul_pow, show ((p : ℂ) ^ e) ^ (-s) = ((p : ℂ) ^ (-s)) ^ e by
+    rw [← Complex.natCast_cpow_natCast_mul (p : ℕ) e (-s),
+      show ((e : ℂ) * (-s)) = (-s) * (e : ℂ) from by ring, Complex.cpow_mul_nat]]
 
 private lemma Newform.tsum_term_lCoeff_pow_at_bad_prime_eq_geom
     {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) {p : ℕ} (hp : p.Prime)
@@ -117,9 +115,9 @@ private lemma Newform.tsum_term_lCoeff_pow_at_bad_prime_eq_geom
     ‖f.lCoeff p * (p : ℂ) ^ (-s)‖ < 1 ∧
     ∑' e : ℕ, LSeries.term f.lCoeff s ((p : ℕ) ^ e) =
       (1 - f.lCoeff p * (p : ℂ) ^ (-s))⁻¹ := by
-  have h_term : ∀ e : ℕ, LSeries.term f.lCoeff s ((p : ℕ) ^ e) =
+  have h_term (e : ℕ) : LSeries.term f.lCoeff s ((p : ℕ) ^ e) =
       (f.lCoeff p * ((p : ℕ) : ℂ) ^ (-s)) ^ e :=
-    fun e ↦ f.term_lCoeff_pow_of_bad_prime_pow h_bad_pow s e
+    f.term_lCoeff_pow_of_bad_prime_pow h_bad_pow s e
   have h_sum_pow : Summable fun e : ℕ ↦ ‖LSeries.term f.lCoeff s ((p : ℕ) ^ e)‖ :=
     (f.lSeriesSummable hs).norm.comp_injective
       fun _ _ hab ↦ Nat.pow_right_injective hp.two_le hab
@@ -135,10 +133,9 @@ private lemma Newform.mem_primeFactors_image_iff {N : ℕ} [NeZero N] (p : Nat.P
         (fun ⟨q, hq⟩ ↦ (⟨q, (Nat.mem_primeFactors.mp hq).1⟩ : Nat.Primes)) ↔
       (p : ℕ) ∣ N := by
   simp only [Finset.mem_image, Finset.mem_attach, true_and, Subtype.exists, Nat.mem_primeFactors]
-  refine ⟨fun ⟨q, ⟨_, hq_N, _⟩, hq_eq⟩ ↦ ?_, fun hp_dvd ↦ ⟨(p : ℕ), ⟨p.prop, hp_dvd, NeZero.ne N⟩, rfl⟩⟩
-  have h_eq : (p : ℕ) = q := by
-    have := congr_arg (fun (x : Nat.Primes) ↦ (x : ℕ)) hq_eq.symm
-    simpa using this
+  refine ⟨fun ⟨q, ⟨_, hq_N, _⟩, hq_eq⟩ ↦ ?_,
+    fun hp_dvd ↦ ⟨(p : ℕ), ⟨p.prop, hp_dvd, NeZero.ne N⟩, rfl⟩⟩
+  have h_eq : (p : ℕ) = q := by simpa using congr_arg (fun (x : Nat.Primes) ↦ (x : ℕ)) hq_eq.symm
   rw [h_eq]; exact hq_N
 
 /-- Builds an `Newform.EulerStrippingArithmeticInput f χ` from the bundled
@@ -227,8 +224,7 @@ private lemma levelRaiseMatrix_inv_smul_vadd_one_eq
 
 private lemma exp_two_pi_mul_I_div_natCast_pow_eq_one (l : ℕ) [NeZero l] :
     Complex.exp (2 * (Real.pi : ℂ) * Complex.I / (l : ℂ)) ^ l = 1 := by
-  have hl_ne : (l : ℂ) ≠ 0 := mod_cast NeZero.ne l
-  rw [← Complex.exp_nat_mul, mul_div_cancel₀ _ hl_ne]
+  rw [← Complex.exp_nat_mul, mul_div_cancel₀ _ (mod_cast NeZero.ne l : (l : ℂ) ≠ 0)]
   exact Complex.exp_two_pi_mul_I
 
 private lemma qExpansion_coeff_smul_qParam_pow_shift_eq
@@ -321,17 +317,16 @@ theorem strongMultiplicityOne_of_analyticContradiction_of_newSubspaceZeroCriteri
     let bad : Finset ℕ := S ∪ S.image (· / n.val) ∪ n.val.primeFactors
     obtain ⟨q, hq_prime, hq_N, hq_notin, hq_ne⟩ :=
       Newform.exists_nonzero_prime_eigenvalue_of_analyticContradiction h_ana f χ hfχ bad
-    have hq_notin_S : q ∉ S := fun hqS ↦ hq_notin (by
-      simp only [bad, Finset.mem_union]; exact Or.inl (Or.inl hqS))
-    have hq_nd_n : ¬ q ∣ n.val := fun hqn ↦ hq_notin (by
+    have hq_notin_S : q ∉ S := fun hqS ↦ hq_notin <| by
+      simp only [bad, Finset.mem_union]; exact Or.inl (Or.inl hqS)
+    have hq_nd_n : ¬ q ∣ n.val := fun hqn ↦ hq_notin <| by
       simp only [bad, Finset.mem_union, Nat.mem_primeFactors]
-      exact Or.inr ⟨hq_prime, hqn, hn_pos.ne'⟩)
-    have hn_coprime_q : Nat.Coprime n.val q :=
-      ((hq_prime.coprime_iff_not_dvd).mpr hq_nd_n).symm
-    have hnq_notin_S : n.val * q ∉ S := fun hnqS ↦ hq_notin (by
+      exact Or.inr ⟨hq_prime, hqn, hn_pos.ne'⟩
+    have hn_coprime_q : Nat.Coprime n.val q := ((hq_prime.coprime_iff_not_dvd).mpr hq_nd_n).symm
+    have hnq_notin_S : n.val * q ∉ S := fun hnqS ↦ hq_notin <| by
       simp only [bad, Finset.mem_union]
       exact Or.inl (Or.inr (Finset.mem_image.mpr
-        ⟨n.val * q, hnqS, Nat.mul_div_cancel_left _ hn_pos⟩)))
+        ⟨n.val * q, hnqS, Nat.mul_div_cancel_left _ hn_pos⟩))
     let q_pnat : ℕ+ := ⟨q, hq_prime.pos⟩
     let nq_pnat : ℕ+ := ⟨n.val * q, Nat.mul_pos hn_pos hq_prime.pos⟩
     have hq_eq : f.eigenvalue q_pnat = g.eigenvalue q_pnat := h q_pnat hq_N hq_notin_S
