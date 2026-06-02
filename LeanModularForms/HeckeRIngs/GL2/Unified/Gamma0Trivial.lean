@@ -55,9 +55,6 @@ theorem gamma0TrivialFamily_prime_eq_heckeOperator_Gamma0
     (gamma0TrivialFamily (N := N) k).op ⟨p, hp.pos, hpN⟩ f =
       heckeOperator_Gamma0 N k (D_p_Gamma0 N p hp.pos) f := by
   let e := modFormCharSpace_one_equiv_Gamma0 N k
-  have hbridge :=
-    heckeOperator_Gamma0_eq_equiv_heckeT_p_on_charSpace_one
-      (N := N) k p hp hpN (e.symm f)
   calc
     (gamma0TrivialFamily (N := N) k).op ⟨p, hp.pos, hpN⟩ f
       = e ⟨heckeT_p k p hp hpN
@@ -71,7 +68,8 @@ theorem gamma0TrivialFamily_prime_eq_heckeOperator_Gamma0
         (modFormCharSpaceFamily_coe (N := N) k (1 : (ZMod N)ˣ →* ℂˣ)
           ⟨p, hp.pos, hpN⟩ (e.symm f))
     _ = heckeOperator_Gamma0 N k (D_p_Gamma0 N p hp.pos) (e (e.symm f)) := by
-      simpa using hbridge.symm
+      simpa using (heckeOperator_Gamma0_eq_equiv_heckeT_p_on_charSpace_one
+        (N := N) k p hp hpN (e.symm f)).symm
     _ = heckeOperator_Gamma0 N k (D_p_Gamma0 N p hp.pos) f := by
       rw [e.apply_symm_apply]
 
