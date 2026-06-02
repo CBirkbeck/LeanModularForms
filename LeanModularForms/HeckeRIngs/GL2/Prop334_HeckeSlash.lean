@@ -175,21 +175,4 @@ private lemma glMap_mapGL_Q_eq_mapGL_R (g : ↥(Gamma0 N)) :
   simp only [glMap, GeneralLinearGroup.map]
   exact (IsScalarTower.algebraMap_apply ℤ ℚ ℝ ((g : SL(2, ℤ)).val i j)).symm
 
-/-- For the trivial character `χ = 1`, the functional χ-equivariance of
-`heckeSlash_gen (Gamma0_pair N) k D` on `⇑f` follows directly from
-`heckeSlash_gen_slash_invariant` for any Γ₀(N)-invariant function. -/
-theorem heckeSlash_gen_slash_comm_one
-    (k : ℤ) (D : HeckeCoset (Gamma0_pair N)) (f : ℍ → ℂ)
-    (hf : ∀ h, h ∈ (Gamma0_pair N).H → f ∣[k] (glMap h) = f)
-    (g : ↥(Gamma0 N)) :
-    (heckeSlash_gen (Gamma0_pair N) k D f) ∣[k] mapGL ℝ (g : SL(2, ℤ)) =
-      (↑((1 : (ZMod N)ˣ →* ℂˣ) (Gamma0MapUnits g)) : ℂ) •
-        heckeSlash_gen (Gamma0_pair N) k D f := by
-  have hinv := heckeSlash_gen_slash_invariant (P := Gamma0_pair N) k D f hf
-    (mapGL ℚ (g : SL(2, ℤ))) (mapGL_Q_mem_H g)
-  simp only [MonoidHom.one_apply, Units.val_one, one_smul]
-  rw [show (mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) g = glMap (mapGL ℚ (g : SL(2, ℤ))) from
-    (glMap_mapGL_Q_eq_mapGL_R g).symm]
-  exact hinv
-
 end HeckeRing.GL2
