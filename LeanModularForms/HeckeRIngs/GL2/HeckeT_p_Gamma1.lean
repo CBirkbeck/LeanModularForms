@@ -243,11 +243,6 @@ private lemma adj_upper_inv_mul_upper_val (p : ℕ) (hp : 0 < p) (b₁ b₂ : �
   fin_cases i <;> fin_cases j <;>
     simp [Matrix.mul_apply, Fin.sum_univ_two, sub_div] <;> field_simp <;> ring
 
-/-- `(Gamma1_pair N).H ≤ (GL_pair 2).H` (i.e., Γ₁(N) image is in SL₂(ℤ) image). -/
-lemma Gamma1_pair_H_le_GL_pair_H (N : ℕ) [NeZero N] :
-    (Gamma1_pair N).H ≤ (GL_pair 2).H := fun _ hg ↦
-  let ⟨s, _, hs⟩ := Subgroup.mem_map.mp hg; ⟨s, hs⟩
-
 private lemma diagMat_1p_val (p : ℕ) (hp : 0 < p) :
     (diagMat 2 ![1, p] : GL (Fin 2) ℚ).val =
     !![(1 : ℚ), 0; 0, (p : ℚ)] := by
