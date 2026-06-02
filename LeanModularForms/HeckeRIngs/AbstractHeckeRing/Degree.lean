@@ -110,9 +110,6 @@ noncomputable def coeffSum : HeckeModule P ℤ →+ ℤ :=
 @[simp] lemma coeffSum_single (m₀ : HeckeLeftCoset P) (b : ℤ) :
     coeffSum P (HeckeLeftCoset_single P ℤ m₀ b) = b := Finsupp.liftAddHom_apply_single _ _ _
 
-/-- The coefficient sum of zero is zero. -/
-lemma coeffSum_zero : coeffSum P (0 : HeckeModule P ℤ) = 0 := map_zero _
-
 /-- The coefficient sum is additive. -/
 lemma coeffSum_add (m₁ m₂ : HeckeModule P ℤ) :
     coeffSum P (m₁ + m₂) = coeffSum P m₁ + coeffSum P m₂ := map_add _ _ _
@@ -206,9 +203,6 @@ section API
 
 /-- The degree map is multiplicative: `deg(f * g) = deg(f) * deg(g)`. -/
 lemma deg_mul (f g : 𝕋 P ℤ) : deg P (f * g) = deg P f * deg P g := (deg P).map_mul f g
-
-/-- The degree map is additive: `deg(f + g) = deg(f) + deg(g)`. -/
-lemma deg_add (f g : 𝕋 P ℤ) : deg P (f + g) = deg P f + deg P g := (deg P).map_add f g
 
 /-- The degree of an integer cast is the integer itself. -/
 @[simp] lemma deg_intCast (n : ℤ) : deg P (n : 𝕋 P ℤ) = n := by
