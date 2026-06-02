@@ -103,11 +103,6 @@ section API
 @[simp] lemma T_single_neg (D : HeckeCoset P) (a : ℤ) :
     -T_single P ℤ D a = T_single P ℤ D (-a) := (Finsupp.single_neg D a).symm
 
-/-- Subtraction of two basis elements with the same double coset. -/
-lemma T_single_sub (D : HeckeCoset P) (a b : ℤ) :
-    T_single P ℤ D a - T_single P ℤ D b = T_single P ℤ D (a - b) := by
-  simp [sub_eq_add_neg]
-
 /-- Scalar multiplication on a basis element. -/
 lemma T_single_smul (D : HeckeCoset P) (n a : ℤ) :
     n • T_single P ℤ D a = T_single P ℤ D (n * a) := Finsupp.smul_single' n D a
@@ -176,21 +171,11 @@ lemma heckeMultiplicity_nonneg (g₁ g₂ d : P.Δ) :
 @[ext] lemma ext_𝕋 {f g : 𝕋 P ℤ}
     (h : ∀ D : HeckeCoset P, f.toFun D = g.toFun D) : f = g := Finsupp.ext h
 
-/-- Induction principle for Hecke ring elements (basis + accumulation). -/
-lemma induction_on_𝕋 {C : 𝕋 P ℤ → Prop} (f : 𝕋 P ℤ) (h_zero : C 0)
-    (h_add : ∀ (D : HeckeCoset P) (a : ℤ) (g : 𝕋 P ℤ),
-      D ∉ g.support → a ≠ 0 → C g → C (T_single P ℤ D a + g)) : C f :=
-  Finsupp.induction f h_zero h_add
-
 /-- Linear induction principle: reduce to zero, single basis elements, and sums. -/
 lemma induction_linear_𝕋 {C : 𝕋 P ℤ → Prop} (f : 𝕋 P ℤ) (h_zero : C 0)
     (h_single : ∀ (D : HeckeCoset P) (a : ℤ), C (T_single P ℤ D a))
     (h_add : ∀ f g : 𝕋 P ℤ, C f → C g → C (f + g)) : C f :=
   Finsupp.induction_linear f h_zero h_add h_single
-
-/-- Every Hecke ring element is a finite sum of basis elements. -/
-lemma sum_single_𝕋 (f : 𝕋 P ℤ) :
-    f = ∑ D ∈ f.support, T_single P ℤ D (f.toFun D) := single_basis ℤ f
 
 /-- The action of a basis Hecke element on a basis module element as a sum over orbits. -/
 lemma T_single_smul_HeckeLeftCoset_single (D : HeckeCoset P) (m₀ : HeckeLeftCoset P) (a b : Z) :
