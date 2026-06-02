@@ -13,7 +13,7 @@ the Dedekind eta function. Since η is holomorphic and nonvanishing on ℍ,
 `logDeriv(η)` is holomorphic, hence E₂ is holomorphic.
 -/
 
-open ModularForm UpperHalfPlane Set Filter Topology Function
+open ModularForm EisensteinSeries UpperHalfPlane Set Filter Topology Function
 open scoped Real
 
 noncomputable section
@@ -33,7 +33,7 @@ theorem logDeriv_eta_differentiableOn :
 Proof: `logDeriv(η) = (π·I/12) · E₂` by `ModularForm.logDeriv_eta_eq_E2`, so
 `E₂ = (π·I/12)⁻¹ · logDeriv(η)` is holomorphic. -/
 theorem E₂_differentiableOn :
-    DifferentiableOn ℂ (E₂ ∘ ofComplex) {z : ℂ | 0 < z.im} := by
+    DifferentiableOn ℂ (E2 ∘ ofComplex) {z : ℂ | 0 < z.im} := by
   apply DifferentiableOn.congr ((differentiableOn_const _).mul logDeriv_eta_differentiableOn)
   intro z hz
   simp only [comp, ofComplex_apply_of_im_pos hz, Pi.mul_apply]
@@ -42,7 +42,6 @@ theorem E₂_differentiableOn :
     apply div_ne_zero
     · exact mul_ne_zero (Complex.ofReal_ne_zero.mpr Real.pi_ne_zero) Complex.I_ne_zero
     · norm_num
-  rw [show EisensteinSeries.E2 ⟨z, hz⟩ = E₂ ⟨z, hz⟩ from rfl] at h
   rw [h, inv_mul_cancel_left₀ hpi]
 
 end

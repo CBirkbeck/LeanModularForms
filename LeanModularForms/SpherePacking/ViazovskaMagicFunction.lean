@@ -152,8 +152,9 @@ theorem φ₀''_differentiableOn : DifferentiableOn ℂ φ₀'' {z : ℂ | 0 < z
   have hE₄z := (hE₄ z hz).differentiableAt hopen
   have hE₆z := (hE₆ z hz).differentiableAt hopen
   have hΔz := (hΔ z hz).differentiableAt hopen
-  have hΔ_ne : (Delta.toSlashInvariantForm ∘ UpperHalfPlane.ofComplex) z ≠ 0 := by
-    simp [Function.comp, UpperHalfPlane.ofComplex_apply_of_im_pos hz']; exact Δ_ne_zero ⟨z, hz'⟩
+  have hΔ_ne : (⇑Delta ∘ UpperHalfPlane.ofComplex) z ≠ 0 := by
+    simp only [Function.comp, UpperHalfPlane.ofComplex_apply_of_im_pos hz']
+    exact Delta_ne_zero ⟨z, hz'⟩
   apply (((hE₂z.mul hE₄z).sub hE₆z).pow 2 |>.div hΔz hΔ_ne).differentiableWithinAt.congr_of_eventuallyEq
   rw [nhdsWithin_eq_nhds.mpr (Filter.mem_of_superset hopen (fun _ h => h))]
   filter_upwards [hopen] with w hw
@@ -201,7 +202,7 @@ theorem segment_integral_eq_sub_of_hasDerivAt {f G : ℂ → ℂ} {S : Set ℂ}
     ∫ t in (0:ℝ)..1, f (a + t • (b - a)) * (b - a) = G b - G a := by
   have h_mem : ∀ t ∈ Icc (0 : ℝ) 1, a + ↑t • (b - a) ∈ S := fun t ht => by
     have : a + ↑t • (b - a) = (1 - t) • a + t • b := by
-      simp only [smul_sub, sub_smul, one_smul]; ring
+      simp only [Complex.real_smul]; push_cast; ring
     rw [this]
     exact hS_convex ha hb (by linarith [ht.2]) ht.1 (by ring)
   have hcont : ContinuousOn (fun t : ℝ => f (a + t • (b - a))) (Icc 0 1) :=

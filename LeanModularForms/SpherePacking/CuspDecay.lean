@@ -4,6 +4,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors:
 -/
 import Mathlib.NumberTheory.ModularForms.LevelOne
+import Mathlib.NumberTheory.ModularForms.Discriminant
+import Mathlib.NumberTheory.ModularForms.EisensteinSeries.QExpansion
+import Mathlib.NumberTheory.TsumDivisorsAntidiagonal
+import Mathlib.NumberTheory.LSeries.RiemannZeta
 
 /-!
 # Cusp decay for Eisenstein series and the Viazovska integrand
@@ -36,61 +40,153 @@ combines a numerator bound `‖E₂E₄ - E₆‖ = O(‖q‖)` with a denominat
 -/
 
 open Complex Set Filter Topology MeasureTheory ModularFormClass
+open ModularForm EisensteinSeries UpperHalfPlane Function.Periodic
+open scoped Real
 
 noncomputable section
 
+-- ---------------------------------------------------------------------------
+-- Private infrastructure: bridge Gamma(1) ↔ SL₂(ℤ).range, define Δ, E₄, E₆, φ₀
+-- ---------------------------------------------------------------------------
+
+lemma Gamma1_eq_SL2Z_range :
+    (CongruenceSubgroup.Gamma 1 : Subgroup (GL (Fin 2) ℝ)) =
+    (Matrix.SpecialLinearGroup.mapGL (R := ℤ) ℝ).range := by
+  rw [MonoidHom.range_eq_map]; congr 1; ext x
+  simp [CongruenceSubgroup.Gamma, Matrix.SpecialLinearGroup.ext_iff,
+    show ∀ (a : ℤ), (a : ZMod 1) = 0 from fun a =>
+      (ZMod.intCast_zmod_eq_zero_iff_dvd _ 1).mpr (one_dvd _),
+    show (0 : ZMod 1) = 1 from Subsingleton.elim _ _]
+
+set_option maxHeartbeats 800000 in
+/-- The Dedekind discriminant as a cusp form for `Γ(1)`. -/
+noncomputable def Delta : CuspForm (CongruenceSubgroup.Gamma 1) 12 where
+  toFun := discriminant
+  slash_action_eq' A hA := by
+    apply discriminantCuspForm.slash_action_eq'
+    rw [← Gamma1_eq_SL2Z_range]; exact hA
+  holo' := discriminantCuspForm.holo'
+  zero_at_cusps' hc := discriminantCuspForm.zero_at_cusps' (Gamma1_eq_SL2Z_range ▸ hc)
+
+lemma Delta_eq_discriminant (z : UpperHalfPlane) :
+    (Delta z : ℂ) = discriminant z := rfl
+
+/-- The discriminant `Δ(z)` is nonzero on the upper half-plane. -/
+lemma Delta_ne_zero (z : UpperHalfPlane) : (Delta z : ℂ) ≠ 0 := by
+  rw [Delta_eq_discriminant]; exact discriminant_ne_zero z
+
+/-- Eisenstein series E₄ (weight 4, level Γ(1)). -/
+noncomputable abbrev E₄ := ModularForm.E (k := 4) (by norm_num : 3 ≤ 4)
+
+/-- Eisenstein series E₆ (weight 6, level Γ(1)). -/
+noncomputable abbrev E₆ := ModularForm.E (k := 6) (by norm_num : 3 ≤ 6)
+
+/-- The Viazovska integrand: `φ₀ = (E₂ · E₄ - E₆)² / Δ`. -/
+noncomputable def φ₀ : UpperHalfPlane → ℂ :=
+  fun z => (EisensteinSeries.E2 z * E₄ z - E₆ z) ^ 2 / (Delta z : ℂ)
+
+/-- `φ₀` extended to all of `ℂ` (zero off the upper half-plane). -/
+noncomputable def φ₀'' (z : ℂ) : ℂ :=
+  if hz : 0 < z.im then φ₀ ⟨z, hz⟩ else 0
+
+-- ---------------------------------------------------------------------------
+-- cuspFunction helpers for Δ
+-- ---------------------------------------------------------------------------
+
+private noncomputable def cF_Delta_fun :=
+  SlashInvariantFormClass.cuspFunction 1 (⇑Delta)
+
+set_option maxHeartbeats 400000 in
+private lemma cF_Delta_ratio_eq_product (z : UpperHalfPlane) :
+    SlashInvariantFormClass.cuspFunction 1 (⇑Delta)
+        (qParam 1 (z : ℂ)) /
+      qParam 1 (z : ℂ) =
+    ∏' n : ℕ, (1 - eta_q n (z : ℂ)) ^ 24 := by
+  rw [SlashInvariantFormClass.eq_cuspFunction Delta z
+        ModularFormClass.one_mem_strictPeriods_SL2Z one_ne_zero,
+      Delta_eq_discriminant, discriminant_eq_q_prod z]
+  field_simp [qParam_ne_zero z]
+
+set_option maxHeartbeats 400000 in
+private lemma slope_cF_Delta_eq_product (z : UpperHalfPlane) :
+    slope (SlashInvariantFormClass.cuspFunction 1 (⇑Delta)) 0
+      (qParam 1 (z : ℂ)) =
+    ∏' n : ℕ, (1 - eta_q n (z : ℂ)) ^ 24 := by
+  have h0 : SlashInvariantFormClass.cuspFunction 1 (⇑Delta) 0 = 0 :=
+    CuspFormClass.cuspFunction_apply_zero Delta one_pos
+      ModularFormClass.one_mem_strictPeriods_SL2Z
+  simp only [slope_def_module, sub_zero, smul_eq_mul]
+  rw [h0, sub_zero, inv_mul_eq_div]
+  exact cF_Delta_ratio_eq_product z
+
+-- ---------------------------------------------------------------------------
+
 /-- The `q`-parameter `q = exp (2π i z)` tends to `0` as `Im(z) → ∞`. -/
 theorem tendsto_qParam_atImInfty :
-    Tendsto (fun (z : UpperHalfPlane) => Function.Periodic.qParam 1 (z : ℂ))
-    UpperHalfPlane.atImInfty (nhds 0) := by
-  have h := (tendsto_neg_cexp_atImInfty 0).neg
-  simp only [Nat.cast_zero, zero_add, mul_one, neg_neg, neg_zero] at h
-  exact h.congr fun z => by simp only [Function.Periodic.qParam]; congr 1; push_cast; ring
+    Tendsto (fun (z : UpperHalfPlane) => qParam 1 (z : ℂ))
+    UpperHalfPlane.atImInfty (nhds 0) :=
+  qParam_tendsto_atImInfty one_pos
 
 private lemma tendsto_one_atImInfty_of_cuspFunction_eq_one {k : ℤ}
     (f : ModularForm (CongruenceSubgroup.Gamma 1) k)
-    (hval : SlashInvariantFormClass.cuspFunction 1 f 0 = 1) :
-    Tendsto f UpperHalfPlane.atImInfty (nhds 1) := by
-  have hcont : ContinuousAt (SlashInvariantFormClass.cuspFunction 1 f) 0 :=
+    (hval : SlashInvariantFormClass.cuspFunction 1 (⇑f) 0 = 1) :
+    Tendsto (⇑f) UpperHalfPlane.atImInfty (nhds 1) := by
+  have hcont : ContinuousAt (SlashInvariantFormClass.cuspFunction 1 (⇑f)) 0 :=
     (analyticAt_cuspFunction_zero f one_pos one_mem_strictPeriods_SL2Z).continuousAt
-  rw [show (1 : ℂ) = SlashInvariantFormClass.cuspFunction 1 f 0 from hval.symm]
+  rw [show (1 : ℂ) = SlashInvariantFormClass.cuspFunction 1 (⇑f) 0 from hval.symm]
   exact (hcont.tendsto.comp tendsto_qParam_atImInfty).congr fun z =>
     SlashInvariantFormClass.eq_cuspFunction f z one_mem_strictPeriods_SL2Z one_ne_zero
 
-private lemma cuspFunction_E₄_zero : SlashInvariantFormClass.cuspFunction 1 E₄ 0 = 1 := by
-  have h := cuspfunc_Zero (n := 1) (f := E₄)
-  simp only [Nat.cast_one] at h
-  rw [h]; exact E4_q_exp_zero
+private lemma cuspFunction_E₄_zero : SlashInvariantFormClass.cuspFunction 1 (⇑E₄) 0 = 1 := by
+  rw [ModularFormClass.cuspFunction_apply_zero E₄ one_pos one_mem_strictPeriods_SL2Z]
+  rw [← ModularFormClass.qExpansion_coeff_zero E₄ one_pos one_mem_strictPeriods_SL2Z]
+  exact EisensteinSeries.E_qExpansion_coeff_zero (by norm_num) (by decide)
 
-private lemma cuspFunction_E₆_zero : SlashInvariantFormClass.cuspFunction 1 E₆ 0 = 1 := by
-  have h := cuspfunc_Zero (n := 1) (f := E₆)
-  simp only [Nat.cast_one] at h
-  rw [h]; exact E6_q_exp_zero
+private lemma cuspFunction_E₆_zero : SlashInvariantFormClass.cuspFunction 1 (⇑E₆) 0 = 1 := by
+  rw [ModularFormClass.cuspFunction_apply_zero E₆ one_pos one_mem_strictPeriods_SL2Z]
+  rw [← ModularFormClass.qExpansion_coeff_zero E₆ one_pos one_mem_strictPeriods_SL2Z]
+  exact EisensteinSeries.E_qExpansion_coeff_zero (by norm_num) (by decide)
 
 /-- `E₄(z) → 1` as `Im(z) → ∞`, from the `q`-expansion constant term. -/
-theorem E₄_tendsto_one_atImInfty : Tendsto E₄ UpperHalfPlane.atImInfty (nhds 1) :=
+theorem E₄_tendsto_one_atImInfty : Tendsto (⇑E₄) UpperHalfPlane.atImInfty (nhds 1) :=
   tendsto_one_atImInfty_of_cuspFunction_eq_one E₄ cuspFunction_E₄_zero
 
 /-- `E₆(z) → 1` as `Im(z) → ∞`, from the `q`-expansion constant term. -/
-theorem E₆_tendsto_one_atImInfty : Tendsto E₆ UpperHalfPlane.atImInfty (nhds 1) :=
+theorem E₆_tendsto_one_atImInfty : Tendsto (⇑E₆) UpperHalfPlane.atImInfty (nhds 1) :=
   tendsto_one_atImInfty_of_cuspFunction_eq_one E₆ cuspFunction_E₆_zero
 
 /-- The cuspFunction of `Δ`. -/
-noncomputable def cF_Delta := SlashInvariantFormClass.cuspFunction 1 Delta
+noncomputable def cF_Delta := SlashInvariantFormClass.cuspFunction 1 (⇑Delta)
 
+set_option maxHeartbeats 400000 in
 /-- The derivative of `cF_Delta` at `0` equals `1`. -/
 lemma deriv_cF_Delta_zero : deriv cF_Delta 0 = 1 := by
-  have hfps := ModularFormClass.hasFPowerSeries_cuspFunction Delta one_pos
-    one_mem_strictPeriods_SL2Z
   unfold cF_Delta
-  rw [hfps.hasFPowerSeriesAt.deriv]
-  simp [ModularFormClass.qExpansionFormalMultilinearSeries]
-  exact Delta_q_one_term
+  have h_da : HasDerivAt (SlashInvariantFormClass.cuspFunction 1 (⇑Delta))
+      (deriv (SlashInvariantFormClass.cuspFunction 1 (⇑Delta)) 0) 0 :=
+    (analyticAt_cuspFunction_zero Delta one_pos
+      one_mem_strictPeriods_SL2Z).differentiableAt.hasDerivAt
+  have h_limit : Filter.Tendsto (fun z : UpperHalfPlane =>
+      slope (SlashInvariantFormClass.cuspFunction 1 (⇑Delta)) 0
+        (qParam 1 (z : ℂ))) atImInfty (nhds 1) := by
+    simp_rw [slope_cF_Delta_eq_product]
+    exact discriminant_bounded_factor
+  have hq_nhds : Filter.Tendsto (fun z : UpperHalfPlane =>
+      qParam 1 (z : ℂ)) atImInfty (𝓝[≠] 0) :=
+    tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within _
+      (qParam_tendsto_atImInfty one_pos)
+      (Filter.Eventually.of_forall (fun z => qParam_ne_zero z))
+  have h_slope_comp : Filter.Tendsto (fun z : UpperHalfPlane =>
+      slope (SlashInvariantFormClass.cuspFunction 1 (⇑Delta)) 0
+        (qParam 1 (z : ℂ))) atImInfty
+      (nhds (deriv (SlashInvariantFormClass.cuspFunction 1 (⇑Delta)) 0)) :=
+    h_da.tendsto_slope.comp hq_nhds
+  exact tendsto_nhds_unique h_slope_comp h_limit
 
 /-- `cF_Delta` has derivative `1` at `0`. -/
 lemma cF_Delta_hasDerivAt_zero : HasDerivAt cF_Delta (1 : ℂ) 0 := by
   rw [← deriv_cF_Delta_zero]
-  exact (ModularFormClass.analyticAt_cuspFunction_zero Delta one_pos
+  exact (analyticAt_cuspFunction_zero Delta one_pos
     one_mem_strictPeriods_SL2Z).differentiableAt.hasDerivAt
 
 /-- `cF(q) / q → 1` as `q → 0`. -/
@@ -105,7 +201,7 @@ lemma cF_Delta_div_q_tendsto :
 
 /-- `deriv cF_Delta` is continuous at `0`. -/
 lemma continuousAt_deriv_cF_Delta : ContinuousAt (deriv cF_Delta) 0 :=
-  (ModularFormClass.analyticAt_cuspFunction_zero Delta one_pos
+  (analyticAt_cuspFunction_zero Delta one_pos
     one_mem_strictPeriods_SL2Z).deriv.continuousAt
 
 /-- `cF'(q) → 1` as `q → 0`. -/
@@ -124,9 +220,9 @@ lemma cF_ratio_tendsto_one :
   field_simp
 
 private lemma exp_eq_qParam_pow (z : UpperHalfPlane) (n : ℕ+) :
-    cexp (2 * ↑Real.pi * I * ↑↑n * ↑z) =
-    (Function.Periodic.qParam 1 (z : ℂ)) ^ (n : ℕ) := by
-  simp only [Function.Periodic.qParam, ← exp_nsmul, nsmul_eq_mul, ofReal_one, div_one]
+    cexp (2 * ↑Real.pi * Complex.I * ↑↑n * ↑z) =
+    (qParam 1 (z : ℂ)) ^ (n : ℕ) := by
+  simp only [qParam, ← exp_nsmul, nsmul_eq_mul, ofReal_one, div_one]
   ring_nf
 
 private lemma tsum_pnat_eq_r_times (r : ℝ) :
@@ -217,33 +313,36 @@ private lemma tsum_E2_series_bound {q : ℂ} (hq : ‖q‖ ≤ 1/2) :
     _ = 192 * ‖q‖ := by ring
 
 private lemma E2_sub_one_bound (z : UpperHalfPlane)
-    (hq : ‖Function.Periodic.qParam 1 (z : ℂ)‖ ≤ 1/2) :
-    ‖E₂ z - 1‖ ≤ 192 * ‖Function.Periodic.qParam 1 (z : ℂ)‖ := by
-  set q := Function.Periodic.qParam 1 (z : ℂ)
+    (hq : ‖qParam 1 (z : ℂ)‖ ≤ 1/2) :
+    ‖EisensteinSeries.E2 z - 1‖ ≤ 192 * ‖qParam 1 (z : ℂ)‖ := by
+  set q := qParam 1 (z : ℂ)
+  have hqlt : ‖q‖ < 1 := hq.trans_lt (by norm_num)
+  have hq_eq : cexp (2 * ↑Real.pi * Complex.I * ↑z) = q := by
+    simp [q, qParam]
   have hE2_sub :
-      E₂ z - 1 = (-24) * ∑' (n : ℕ+), ↑↑n * q ^ (n : ℕ) / (1 - q ^ (n : ℕ)) := by
-    have : E₂ z - 1 = (-24) * ∑' (n : ℕ+),
-        ↑↑n * cexp (2 * ↑Real.pi * I * ↑↑n * ↑z) /
-        (1 - cexp (2 * ↑Real.pi * I * ↑↑n * ↑z)) := by rw [E₂_eq z]; ring
-    rw [this]
-    congr 1
-    exact tsum_congr fun n => by rw [exp_eq_qParam_pow z n]
+      EisensteinSeries.E2 z - 1 = (-24 : ℂ) * ∑' (n : ℕ+), ↑↑n * q ^ (n : ℕ) / (1 - q ^ (n : ℕ)) := by
+    rw [EisensteinSeries.E2, Pi.smul_apply, smul_eq_mul, EisensteinSeries.G2_eq_tsum_cexp,
+        riemannZeta_two]
+    rw [← tsum_pow_div_one_sub_eq_tsum_sigma (by rwa [hq_eq]) 1]
+    simp only [pow_one, hq_eq]
+    have hpi2' : (Real.pi : ℂ) ≠ 0 := by exact_mod_cast Real.pi_ne_zero
+    field_simp; ring
   rw [hE2_sub, norm_mul, show ‖(-24 : ℂ)‖ = 24 from by norm_num]
   exact tsum_E2_series_bound hq
 
 private lemma cuspFunction_sub_one_isBigO {k : ℤ}
     {f : ModularForm (CongruenceSubgroup.Gamma 1) k}
-    (hval : SlashInvariantFormClass.cuspFunction 1 f 0 = 1) :
-    (fun q : ℂ => SlashInvariantFormClass.cuspFunction 1 f q - 1) =O[𝓝 0] id := by
+    (hval : SlashInvariantFormClass.cuspFunction 1 (⇑f) 0 = 1) :
+    (fun q : ℂ => SlashInvariantFormClass.cuspFunction 1 (⇑f) q - 1) =O[𝓝 0] id := by
   have hbig := (ModularFormClass.analyticAt_cuspFunction_zero f one_pos
     one_mem_strictPeriods_SL2Z).differentiableAt.hasFDerivAt.isBigO_sub
   simpa only [hval, sub_zero] using hbig
 
 private lemma sub_one_eventually_le_of_cuspFunction_eq_one {k : ℤ}
     (f : ModularForm (CongruenceSubgroup.Gamma 1) k)
-    (hval : SlashInvariantFormClass.cuspFunction 1 f 0 = 1) :
+    (hval : SlashInvariantFormClass.cuspFunction 1 (⇑f) 0 = 1) :
     ∃ C > 0, ∀ᶠ z : UpperHalfPlane in UpperHalfPlane.atImInfty,
-    ‖f z - 1‖ ≤ C * ‖Function.Periodic.qParam 1 (z : ℂ)‖ := by
+    ‖⇑f z - 1‖ ≤ C * ‖qParam 1 (z : ℂ)‖ := by
   obtain ⟨C, hC, hbound⟩ := (cuspFunction_sub_one_isBigO hval).exists_pos
   exact ⟨C, hC, (tendsto_qParam_atImInfty.eventually
     (hbound.bound.mono fun q hq => by simpa [id] using hq)).mono fun z hz => by
@@ -252,63 +351,63 @@ private lemma sub_one_eventually_le_of_cuspFunction_eq_one {k : ℤ}
 
 private lemma E4_sub_one_eventually_le : ∃ C > 0,
     ∀ᶠ z : UpperHalfPlane in UpperHalfPlane.atImInfty,
-    ‖E₄ z - 1‖ ≤ C * ‖Function.Periodic.qParam 1 (z : ℂ)‖ :=
+    ‖⇑E₄ z - 1‖ ≤ C * ‖qParam 1 (z : ℂ)‖ :=
   sub_one_eventually_le_of_cuspFunction_eq_one E₄ cuspFunction_E₄_zero
 
 private lemma E6_sub_one_eventually_le : ∃ C > 0,
     ∀ᶠ z : UpperHalfPlane in UpperHalfPlane.atImInfty,
-    ‖E₆ z - 1‖ ≤ C * ‖Function.Periodic.qParam 1 (z : ℂ)‖ :=
+    ‖⇑E₆ z - 1‖ ≤ C * ‖qParam 1 (z : ℂ)‖ :=
   sub_one_eventually_le_of_cuspFunction_eq_one E₆ cuspFunction_E₆_zero
 
 private lemma E2_sub_one_eventually_le :
     ∀ᶠ z : UpperHalfPlane in UpperHalfPlane.atImInfty,
-    ‖E₂ z - 1‖ ≤ 192 * ‖Function.Periodic.qParam 1 (z : ℂ)‖ :=
+    ‖EisensteinSeries.E2 z - 1‖ ≤ 192 * ‖qParam 1 (z : ℂ)‖ :=
   (tendsto_qParam_atImInfty.eventually
     (Metric.ball_mem_nhds 0 (by norm_num : (0:ℝ) < 1/2))).mono fun z hz =>
     E2_sub_one_bound z (by simp only [dist_zero_right] at hz; linarith)
 
 private lemma qParam_eventually_lt_one :
     ∀ᶠ z : UpperHalfPlane in UpperHalfPlane.atImInfty,
-    ‖Function.Periodic.qParam 1 (z : ℂ)‖ < 1 :=
+    ‖qParam 1 (z : ℂ)‖ < 1 :=
   (tendsto_qParam_atImInfty.eventually
     (Metric.ball_mem_nhds 0 (by norm_num : (0:ℝ) < 1))).mono fun _ hz => by
     rwa [dist_zero_right] at hz
 
 private lemma E2E4_sub_E6_bound {z : UpperHalfPlane} {C₁ C₂ : ℝ} (hC₁ : 0 < C₁)
-    (hE4 : ‖E₄ z - 1‖ ≤ C₁ * ‖Function.Periodic.qParam 1 (z : ℂ)‖)
-    (hE6 : ‖E₆ z - 1‖ ≤ C₂ * ‖Function.Periodic.qParam 1 (z : ℂ)‖)
-    (hE2 : ‖E₂ z - 1‖ ≤ 192 * ‖Function.Periodic.qParam 1 (z : ℂ)‖)
-    (hq_lt : ‖Function.Periodic.qParam 1 (z : ℂ)‖ < 1) :
-    ‖E₂ z * E₄ z - E₆ z‖ ≤
-    (193 * C₁ + 192 + C₂) * ‖Function.Periodic.qParam 1 (z : ℂ)‖ := by
-  set qz := Function.Periodic.qParam 1 (z : ℂ)
-  have hE2_norm : ‖E₂ z‖ ≤ 193 :=
-    calc ‖E₂ z‖ ≤ ‖(1 : ℂ)‖ + ‖E₂ z - 1‖ := norm_le_insert' _ _
+    (hE4 : ‖⇑E₄ z - 1‖ ≤ C₁ * ‖qParam 1 (z : ℂ)‖)
+    (hE6 : ‖⇑E₆ z - 1‖ ≤ C₂ * ‖qParam 1 (z : ℂ)‖)
+    (hE2 : ‖EisensteinSeries.E2 z - 1‖ ≤ 192 * ‖qParam 1 (z : ℂ)‖)
+    (hq_lt : ‖qParam 1 (z : ℂ)‖ < 1) :
+    ‖EisensteinSeries.E2 z * ⇑E₄ z - ⇑E₆ z‖ ≤
+    (193 * C₁ + 192 + C₂) * ‖qParam 1 (z : ℂ)‖ := by
+  set qz := qParam 1 (z : ℂ)
+  have hE2_norm : ‖EisensteinSeries.E2 z‖ ≤ 193 :=
+    calc ‖EisensteinSeries.E2 z‖ ≤ ‖(1 : ℂ)‖ + ‖EisensteinSeries.E2 z - 1‖ := norm_le_insert' _ _
       _ ≤ 1 + 192 * ‖qz‖ := by linarith [norm_one (α := ℂ)]
       _ ≤ 1 + 192 * 1 := by nlinarith [norm_nonneg qz]
       _ = 193 := by norm_num
-  rw [show E₂ z * E₄ z - E₆ z =
-    E₂ z * (E₄ z - 1) + (E₂ z - 1) - (E₆ z - 1) from by ring]
-  calc ‖E₂ z * (E₄ z - 1) + (E₂ z - 1) - (E₆ z - 1)‖
-      ≤ ‖E₂ z * (E₄ z - 1)‖ + ‖E₂ z - 1‖ + ‖E₆ z - 1‖ := by
-        linarith [norm_sub_le (E₂ z * (E₄ z - 1) + (E₂ z - 1)) (E₆ z - 1),
-                  norm_add_le (E₂ z * (E₄ z - 1)) (E₂ z - 1)]
-    _ ≤ ‖E₂ z‖ * (C₁ * ‖qz‖) + 192 * ‖qz‖ + C₂ * ‖qz‖ := by
+  rw [show EisensteinSeries.E2 z * ⇑E₄ z - ⇑E₆ z =
+    EisensteinSeries.E2 z * (⇑E₄ z - 1) + (EisensteinSeries.E2 z - 1) - (⇑E₆ z - 1) from by ring]
+  calc ‖EisensteinSeries.E2 z * (⇑E₄ z - 1) + (EisensteinSeries.E2 z - 1) - (⇑E₆ z - 1)‖
+      ≤ ‖EisensteinSeries.E2 z * (⇑E₄ z - 1)‖ + ‖EisensteinSeries.E2 z - 1‖ + ‖⇑E₆ z - 1‖ := by
+        linarith [norm_sub_le (EisensteinSeries.E2 z * (⇑E₄ z - 1) + (EisensteinSeries.E2 z - 1)) (⇑E₆ z - 1),
+                  norm_add_le (EisensteinSeries.E2 z * (⇑E₄ z - 1)) (EisensteinSeries.E2 z - 1)]
+    _ ≤ ‖EisensteinSeries.E2 z‖ * (C₁ * ‖qz‖) + 192 * ‖qz‖ + C₂ * ‖qz‖ := by
         gcongr
         rw [norm_mul]
         exact mul_le_mul_of_nonneg_left hE4 (norm_nonneg _)
-    _ = (‖E₂ z‖ * C₁ + 192 + C₂) * ‖qz‖ := by ring
+    _ = (‖EisensteinSeries.E2 z‖ * C₁ + 192 + C₂) * ‖qz‖ := by ring
     _ ≤ (193 * C₁ + 192 + C₂) * ‖qz‖ := by gcongr
 
 private lemma A_E_is_O_q : ∃ K > 0, ∃ A : ℝ, ∀ z : UpperHalfPlane, A ≤ z.im →
-    ‖E₂ z * E₄ z - E₆ z‖ ≤ K * ‖Function.Periodic.qParam 1 (z : ℂ)‖ ∧
-    ‖Function.Periodic.qParam 1 (z : ℂ)‖ < 1 ∧
-    Function.Periodic.qParam 1 (z : ℂ) ≠ 0 := by
+    ‖EisensteinSeries.E2 z * ⇑E₄ z - ⇑E₆ z‖ ≤ K * ‖qParam 1 (z : ℂ)‖ ∧
+    ‖qParam 1 (z : ℂ)‖ < 1 ∧
+    qParam 1 (z : ℂ) ≠ 0 := by
   obtain ⟨C₁, hC₁, hE4⟩ := E4_sub_one_eventually_le
   obtain ⟨C₂, _, hE6⟩ := E6_sub_one_eventually_le
   have hE2 := E2_sub_one_eventually_le
   have hqlt := qParam_eventually_lt_one
-  rw [Filter.eventually_atImInfty] at hE4 hE6 hE2 hqlt
+  simp only [Filter.Eventually, atImInfty_mem] at hE4 hE6 hE2 hqlt
   obtain ⟨A₁, h₁⟩ := hE4
   obtain ⟨A₂, h₂⟩ := hE6
   obtain ⟨A₃, h₃⟩ := hE2
@@ -319,18 +418,18 @@ private lemma A_E_is_O_q : ∃ K > 0, ∃ A : ℝ, ∀ z : UpperHalfPlane, A ≤
   have g₂ := h₂ z (ge _ (le_sup_of_le_left (le_sup_of_le_left le_sup_right)))
   have g₃ := h₃ z (ge _ (le_sup_of_le_left le_sup_right))
   have g₅ := h₅ z (ge _ le_sup_right)
-  exact ⟨E2E4_sub_E6_bound hC₁ g₁ g₂ g₃ g₅, g₅, Function.Periodic.qParam_ne_zero _⟩
+  exact ⟨E2E4_sub_E6_bound hC₁ g₁ g₂ g₃ g₅, g₅, qParam_ne_zero _⟩
 
 private lemma Delta_lower_bound : ∃ r > 0, ∀ z : UpperHalfPlane,
-    ‖Function.Periodic.qParam 1 (z : ℂ)‖ < r →
-    Function.Periodic.qParam 1 (z : ℂ) ≠ 0 →
-    1/2 * ‖Function.Periodic.qParam 1 (z : ℂ)‖ ≤ ‖Δ z‖ := by
+    ‖qParam 1 (z : ℂ)‖ < r →
+    qParam 1 (z : ℂ) ≠ 0 →
+    1/2 * ‖qParam 1 (z : ℂ)‖ ≤ ‖(Delta z : ℂ)‖ := by
   have h := cF_Delta_div_q_tendsto
   rw [Metric.tendsto_nhdsWithin_nhds] at h
   obtain ⟨δ, hδ_pos, hδ⟩ := h (1/2) (by norm_num)
   refine ⟨δ, hδ_pos, fun z hqz_small hqz_ne => ?_⟩
-  set qz := Function.Periodic.qParam 1 (z : ℂ)
-  have hDelta_eq : Δ z = cF_Delta qz :=
+  set qz := qParam 1 (z : ℂ)
+  have hDelta_eq : (Delta z : ℂ) = cF_Delta qz :=
     (SlashInvariantFormClass.eq_cuspFunction Delta z
       one_mem_strictPeriods_SL2Z one_ne_zero).symm
   rw [hDelta_eq]
@@ -349,19 +448,19 @@ theorem phi0_isBoundedAtImInfty :
   obtain ⟨K, hK_pos, A₁, hA₁⟩ := A_E_is_O_q
   obtain ⟨r, hr_pos, hDelta_lb⟩ := Delta_lower_bound
   have hq_event : ∀ᶠ z : UpperHalfPlane in UpperHalfPlane.atImInfty,
-      ‖Function.Periodic.qParam 1 (z : ℂ)‖ < r :=
+      ‖qParam 1 (z : ℂ)‖ < r :=
     (tendsto_qParam_atImInfty.eventually
       (Metric.ball_mem_nhds 0 hr_pos)).mono fun z hz => by rwa [dist_zero_right] at hz
-  rw [Filter.eventually_atImInfty] at hq_event
+  simp only [Filter.Eventually, atImInfty_mem] at hq_event
   obtain ⟨A₂, hA₂⟩ := hq_event
   refine ⟨2 * K ^ 2, max A₁ A₂, fun z hz => ?_⟩
-  set qz := Function.Periodic.qParam 1 (z : ℂ)
+  set qz := qParam 1 (z : ℂ)
   obtain ⟨hAE_bound, hqz_lt_one, hqz_ne⟩ := hA₁ z ((le_max_left _ _).trans hz)
-  have hDelta_lower : 1/2 * ‖qz‖ ≤ ‖Δ z‖ :=
+  have hDelta_lower : 1/2 * ‖qz‖ ≤ ‖(Delta z : ℂ)‖ :=
     hDelta_lb z (hA₂ z ((le_max_right _ _).trans hz)) hqz_ne
   simp only [φ₀]
   rw [norm_div, norm_pow]
-  calc ‖E₂ z * E₄ z - E₆ z‖ ^ 2 / ‖Δ z‖
+  calc ‖EisensteinSeries.E2 z * ⇑E₄ z - ⇑E₆ z‖ ^ 2 / ‖(Delta z : ℂ)‖
       ≤ (K * ‖qz‖) ^ 2 / (1/2 * ‖qz‖) :=
         div_le_div₀ (by positivity) (pow_le_pow_left₀ (norm_nonneg _) hAE_bound 2)
           (by positivity) hDelta_lower
