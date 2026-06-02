@@ -45,9 +45,9 @@ noncomputable def conjEndRingHom (e : V ≃ₗ[ℂ] W) :
     Module.End ℂ W →+* Module.End ℂ V where
   toFun T := e.symm.toLinearMap ∘ₗ T ∘ₗ e.toLinearMap
   map_one' := by ext v; simp
-  map_mul' T S := by ext v; simp
+  map_mul' _ _ := by ext v; simp
   map_zero' := by ext v; simp
-  map_add' T S := by ext v; simp
+  map_add' _ _ := by ext v; simp
 
 /-- Transport a ring hom `R → End(W)` across a linear equivalence `V ≃ₗ W`. -/
 noncomputable def transportRingHom {R : Type*} [Semiring R]
@@ -71,9 +71,7 @@ theorem primeHeckeElement_commute_of_ringHom
     {p q : ℕ} (hp : Nat.Prime p) (hq : Nat.Prime q) :
     Commute (ρ (primeHeckeElement p hp))
       (ρ (primeHeckeElement q hq)) := by
-  show ρ (primeHeckeElement p hp) * ρ (primeHeckeElement q hq) =
-      ρ (primeHeckeElement q hq) * ρ (primeHeckeElement p hp)
-  rw [← map_mul, ← map_mul, Gamma0_pair_HeckeAlgebra_mul_comm]
+  rw [Commute, SemiconjBy, ← map_mul, ← map_mul, Gamma0_pair_HeckeAlgebra_mul_comm]
 
 /-- Pointwise form of `primeHeckeElement_commute_of_ringHom`. -/
 theorem primeHeckeElement_commute_apply_of_ringHom
@@ -146,16 +144,10 @@ theorem gamma0TrivialFamily_prime_commute_from_ring
     (hpN : Nat.Coprime p N) (hqN : Nat.Coprime q N) :
     Commute
       ((gamma0TrivialFamily (N := N) k).op ⟨p, hp.pos, hpN⟩)
-      ((gamma0TrivialFamily (N := N) k).op ⟨q, hq.pos, hqN⟩) := by
-  show
-    (gamma0TrivialFamily (N := N) k).op ⟨p, hp.pos, hpN⟩ *
-      (gamma0TrivialFamily (N := N) k).op ⟨q, hq.pos, hqN⟩ =
-    (gamma0TrivialFamily (N := N) k).op ⟨q, hq.pos, hqN⟩ *
-      (gamma0TrivialFamily (N := N) k).op ⟨p, hp.pos, hpN⟩
-  ext f z
-  simp only [Module.End.mul_apply]
-  exact congrArg (fun g : ModularForm ((Gamma0 N).map (mapGL ℝ)) k ↦ g z)
-    (gamma0TrivialFamily_prime_commute_apply_from_ring (N := N) k hp hq hpN hqN f)
+      ((gamma0TrivialFamily (N := N) k).op ⟨q, hq.pos, hqN⟩) :=
+  LinearMap.ext fun f ↦ ModularForm.ext fun z ↦
+    congrArg (fun g : ModularForm ((Gamma0 N).map (mapGL ℝ)) k ↦ g z)
+      (gamma0TrivialFamily_prime_commute_apply_from_ring (N := N) k hp hq hpN hqN f)
 
 /-- The level-1 specialization of the ring-based prime commutativity theorem. -/
 theorem levelOneFamily_prime_commute_from_ring
