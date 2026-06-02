@@ -56,7 +56,7 @@ theorem exists_Gamma0_mul_lift_unitsMap
   obtain ⟨d', hd'⟩ :=
     ZMod.unitsMap_surjective (m := k * N) (n := N) (Nat.dvd_mul_left N k) d
   obtain ⟨β, hβ⟩ := Gamma0MapUnits_surjective (N := k * N) d'
-  exact ⟨β, by rw [hβ, hd']⟩
+  exact ⟨β, hβ ▸ hd'⟩
 
 /-- **Diamond lift across a level inclusion, `N ∣ M` form.**  Variant of
 `exists_Gamma0_mul_lift_unitsMap` stated in terms of a divisibility `N ∣ M`
@@ -67,7 +67,7 @@ theorem exists_Gamma0_lift_of_dvd
       ZMod.unitsMap h (Gamma0MapUnits β) = d := by
   obtain ⟨d', hd'⟩ := ZMod.unitsMap_surjective (m := M) (n := N) h d
   obtain ⟨β, hβ⟩ := Gamma0MapUnits_surjective (N := M) d'
-  exact ⟨β, by rw [hβ, hd']⟩
+  exact ⟨β, hβ ▸ hd'⟩
 
 /-- **Gamma0MapUnits is surjective on the diagonal stabilizer**.
 
@@ -83,9 +83,7 @@ theorem Gamma0MapUnits_surjOn_stab_diag
       ∃ (γ_SL : ↥(Gamma0 N)),
         (mapGL ℚ (γ_SL : SL(2, ℤ)) : GL (Fin 2) ℚ) = γ ∧
         Gamma0MapUnits γ_SL = d := by
-  haveI : NeZero (k * N) := ⟨by
-    have hN_pos : 0 < N := Nat.pos_of_neZero N
-    exact Nat.mul_pos hk hN_pos |>.ne'⟩
+  haveI : NeZero (k * N) := ⟨mul_ne_zero hk.ne' (NeZero.ne N)⟩
   obtain ⟨d', hd'_map⟩ :=
     ZMod.unitsMap_surjective (m := k * N) (n := N) (Nat.dvd_mul_left N k) d
   obtain ⟨σ_kN, hσ_kN_map⟩ :=
@@ -102,9 +100,8 @@ theorem Gamma0MapUnits_surjOn_stab_diag
   refine ⟨⟨γ_gl, hγ_H⟩, ?_, σ_N, rfl, ?_⟩
   · rw [stab_diag_eq_Gamma0 N k hk, Subgroup.mem_subgroupOf]
     exact Subgroup.mem_map.mpr ⟨σ, hσ_mem_kN, rfl⟩
-  · have hbridge := Gamma0MapUnits_unitsMap_of_Gamma0_mul N k σ hσ_mem_kN
-    show Gamma0MapUnits σ_N = d
-    rw [hbridge, hσ_kN_map, hd'_map]
+  · show Gamma0MapUnits σ_N = d
+    rw [Gamma0MapUnits_unitsMap_of_Gamma0_mul N k σ hσ_mem_kN, hσ_kN_map, hd'_map]
 
 private lemma Gamma0MapUnits_conj_eq {N : ℕ} (a b : ↥(Gamma0 N)) :
     Gamma0MapUnits (a⁻¹ * b * a) = Gamma0MapUnits b := by
@@ -117,12 +114,9 @@ private lemma mem_H_conj_of_source_stab {N : ℕ} [NeZero N]
     (h_src : g_source⁻¹ * γ_src_gl * g_source ∈ (Gamma0_pair N).H) :
     g_target⁻¹ * ((γ_L : GL (Fin 2) ℚ)⁻¹ * γ_src_gl * (γ_L : GL (Fin 2) ℚ)) * g_target
       ∈ (Gamma0_pair N).H := by
-  have h_conj_eq :
-      g_target⁻¹ * ((γ_L : GL (Fin 2) ℚ)⁻¹ * γ_src_gl * (γ_L : GL (Fin 2) ℚ)) * g_target =
-        (γ_R : GL (Fin 2) ℚ) * (g_source⁻¹ * γ_src_gl * g_source) *
-          (γ_R : GL (Fin 2) ℚ)⁻¹ := by
-    subst h_eq; group
-  rw [h_conj_eq]
+  rw [show g_target⁻¹ * ((γ_L : GL (Fin 2) ℚ)⁻¹ * γ_src_gl * (γ_L : GL (Fin 2) ℚ)) * g_target =
+    (γ_R : GL (Fin 2) ℚ) * (g_source⁻¹ * γ_src_gl * g_source) * (γ_R : GL (Fin 2) ℚ)⁻¹ from by
+      subst h_eq; group]
   exact (Gamma0_pair N).H.mul_mem ((Gamma0_pair N).H.mul_mem γ_R.property h_src)
     ((Gamma0_pair N).H.inv_mem γ_R.property)
 
@@ -171,19 +165,16 @@ theorem Gamma0MapUnits_surjOn_stab_transport
   have hγ_SL_tgt_mem : γ_SL_tgt ∈ Gamma0 N :=
     (Gamma0 N).mul_mem ((Gamma0 N).mul_mem
       ((Gamma0 N).inv_mem hγ_L_SL_mem) γ_SL_src.property) hγ_L_SL_mem
-  have hγ_SL_tgt_eq : (mapGL ℚ γ_SL_tgt : GL (Fin 2) ℚ) = γ_tgt_gl := by
-    show (mapGL ℚ (γ_L_SL⁻¹ * (γ_SL_src : SL(2, ℤ)) * γ_L_SL) : GL (Fin 2) ℚ) =
+  refine ⟨⟨γ_tgt_gl, hγ_tgt_H⟩, hγ_tgt_stab, ⟨γ_SL_tgt, hγ_SL_tgt_mem⟩, ?_, ?_⟩
+  · show (mapGL ℚ (γ_L_SL⁻¹ * (γ_SL_src : SL(2, ℤ)) * γ_L_SL) : GL (Fin 2) ℚ) =
       (γ_L : GL (Fin 2) ℚ)⁻¹ * γ_src_gl * (γ_L : GL (Fin 2) ℚ)
     simp only [map_mul, map_inv]
     rw [hγ_L_SL_eq, hγ_SL_src_eq]
-  have hγ_SL_tgt_map : Gamma0MapUnits ⟨γ_SL_tgt, hγ_SL_tgt_mem⟩ = d := by
-    have h_prod_eq : (⟨γ_SL_tgt, hγ_SL_tgt_mem⟩ : ↥(Gamma0 N)) =
+  · have h_prod_eq : (⟨γ_SL_tgt, hγ_SL_tgt_mem⟩ : ↥(Gamma0 N)) =
         (⟨γ_L_SL, hγ_L_SL_mem⟩ : ↥(Gamma0 N))⁻¹ * γ_SL_src *
-          ⟨γ_L_SL, hγ_L_SL_mem⟩ := by
-      apply Subtype.ext; simp [γ_SL_tgt, mul_assoc]
+          ⟨γ_L_SL, hγ_L_SL_mem⟩ :=
+      Subtype.ext (by simp [γ_SL_tgt, mul_assoc])
     rw [h_prod_eq, Gamma0MapUnits_conj_eq, hγ_SL_src_map]
-  exact ⟨⟨γ_tgt_gl, hγ_tgt_H⟩, hγ_tgt_stab,
-    ⟨γ_SL_tgt, hγ_SL_tgt_mem⟩, hγ_SL_tgt_eq, hγ_SL_tgt_map⟩
 
 /-- **Stab-surjectivity from diagonal reduction** (specialized form).
 
@@ -210,6 +201,6 @@ theorem Gamma0MapUnits_surjOn_stab_of_diagReduction
   · show (diagMat 2 (![1, k] : Fin 2 → ℕ) : GL (Fin 2) ℚ) =
       (γ_L : GL (Fin 2) ℚ)⁻¹ * g * (γ_R : GL (Fin 2) ℚ)⁻¹
     rw [h_eq]; group
-  · exact fun d' ↦ Gamma0MapUnits_surjOn_stab_diag N k hk d'
+  · exact Gamma0MapUnits_surjOn_stab_diag N k hk
 
 end HeckeRing.GL2.Prop334
