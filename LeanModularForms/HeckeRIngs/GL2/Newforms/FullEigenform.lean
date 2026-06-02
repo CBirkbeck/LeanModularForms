@@ -110,11 +110,11 @@ lemma heckeT_n_preserves_modFormCharSpace_general
 lemma heckeT_n_cusp_preserves_cuspFormCharSpace_general
     (k : ℤ) (n : ℕ) [NeZero n] (χ : (ZMod N)ˣ →* ℂˣ)
     {f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k} (hf : f ∈ cuspFormCharSpace k χ) :
-    heckeT_n_cusp k n f ∈ cuspFormCharSpace k χ := by
-  refine Unified.cuspFormCharSpace_of_toModularForm'_mem ?_
-  rw [heckeT_n_cusp_toModularForm']
-  exact heckeT_n_preserves_modFormCharSpace_general k n χ
-    (Unified.cuspFormCharSpace_toModularForm'_mem hf)
+    heckeT_n_cusp k n f ∈ cuspFormCharSpace k χ :=
+  Unified.cuspFormCharSpace_of_toModularForm'_mem <| by
+    rw [heckeT_n_cusp_toModularForm']
+    exact heckeT_n_preserves_modFormCharSpace_general k n χ
+      (Unified.cuspFormCharSpace_toModularForm'_mem hf)
 
 /-- **`T_n f` is a `T_q`-eigenform with the same eigenvalue as `f`, for every
 `q` coprime to `N`.**  Uses unconditional commutativity `T_n T_q = T_q T_n`
@@ -132,8 +132,8 @@ private lemma heckeT_n_cusp_of_newform_isEigen
     change (heckeT_n k q.val (heckeT_n_cusp k n f.toCuspForm).toModularForm').toFun z =
       (heckeT_n k n (heckeT_n_cusp k q.val f.toCuspForm).toModularForm').toFun z
     rw [heckeT_n_cusp_toModularForm', heckeT_n_cusp_toModularForm']
-    simpa [Module.End.mul_apply] using DFunLike.congr_fun
-      (DFunLike.congr_fun (heckeT_n_comm (N := N) k q.val n) f.toCuspForm.toModularForm') z
+    simpa [Module.End.mul_apply] using DFunLike.congr_fun (DFunLike.congr_fun
+      (heckeT_n_comm (N := N) k q.val n) f.toCuspForm.toModularForm') z
   rw [hcomm, f.isEigen q hq, heckeT_n_cusp_smul]
 
 /-- Bundle `heckeT_n_cusp k n f.toCuspForm` as an `Eigenform N k` with the same
@@ -171,7 +171,7 @@ private lemma Newform.heckeT_n_cusp_asEigenform_eigenvalue
     g.eigenvalue q • heckeT_n_cusp k n f.toCuspForm from g.isEigen q hq] at h_f_isEigen
   have h_diff : (g.eigenvalue q - f.eigenvalue q) • heckeT_n_cusp k n f.toCuspForm = 0 := by
     rw [sub_smul, h_f_isEigen, sub_self]
-  exact sub_eq_zero.mp ((smul_eq_zero.mp h_diff).resolve_right hTn_ne)
+  exact sub_eq_zero.mp <| (smul_eq_zero.mp h_diff).resolve_right hTn_ne
 
 /-- The SMO-supplied scalar `c_n` such that `T_n f = c_n • f` when `T_n f ≠ 0`. -/
 private noncomputable def Newform.smoConst
