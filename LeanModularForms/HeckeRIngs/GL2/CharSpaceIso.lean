@@ -54,10 +54,9 @@ private lemma modFormCharSpace_one_slash_Gamma0
   set g₀ : ↥(Gamma0 N) := ⟨g, hg⟩
   have hd : diamondOp k (Gamma0MapUnits g₀) f = f := by
     simpa using (mem_modFormCharSpace_iff k (1 : (ZMod N)ˣ →* ℂˣ) f).mp hf (Gamma0MapUnits g₀)
-  have heq : diamondOpAux k g₀ f = f := by
-    rw [← diamondOp_eq_diamondOpAux k (Gamma0MapUnits g₀) g₀ rfl]; exact hd
   ext z
-  exact congrArg (fun h : ModularForm _ _ ↦ h z) heq
+  exact congrArg (fun h : ModularForm _ _ ↦ h z)
+    ((diamondOp_eq_diamondOpAux k (Gamma0MapUnits g₀) g₀ rfl).symm ▸ hd)
 
 /-- The forward map sending an element of the trivial-character eigenspace inside
 `M_k(Γ₁(N))` to a `Γ₀(N)`-modular form. -/
@@ -109,24 +108,13 @@ lemma modFormGamma0ToGamma1_mem_modFormCharSpace_one
   rw [mem_modFormCharSpace_iff]
   intro d
   obtain ⟨g₀, hg₀⟩ := Gamma0MapUnits_surjective (N := N) d
-  have hrep : diamondOp k d = diamondOpAux k g₀ :=
-    diamondOp_eq_diamondOpAux k d g₀ hg₀
-  have hmem : mapGL ℝ (g₀ : SL(2, ℤ)) ∈ (Gamma0 N).map (mapGL ℝ) :=
-    Subgroup.mem_map.mpr ⟨_, g₀.property, rfl⟩
   have hslash : (⇑g : ℍ → ℂ) ∣[k] mapGL ℝ (g₀ : SL(2, ℤ)) = ⇑g :=
-    SlashInvariantFormClass.slash_action_eq g _ hmem
+    SlashInvariantFormClass.slash_action_eq g _
+      (Subgroup.mem_map.mpr ⟨_, g₀.property, rfl⟩)
   have hd_eq : diamondOp k d (modFormGamma0ToGamma1 g) = modFormGamma0ToGamma1 g := by
-    rw [hrep]
-    apply ModularForm.ext
-    intro z
-    show ((⇑(modFormGamma0ToGamma1 g) : ℍ → ℂ) ∣[k] mapGL ℝ (g₀ : SL(2, ℤ))) z =
-      modFormGamma0ToGamma1 g z
-    show ((⇑g : ℍ → ℂ) ∣[k] mapGL ℝ (g₀ : SL(2, ℤ))) z = g z
-    rw [hslash]
-  show diamondOpHom k d (modFormGamma0ToGamma1 g) =
-    ((1 : (ZMod N)ˣ →* ℂˣ) d : ℂ) • modFormGamma0ToGamma1 g
-  show diamondOp k d (modFormGamma0ToGamma1 g) =
-    ((1 : (ZMod N)ˣ →* ℂˣ) d : ℂ) • modFormGamma0ToGamma1 g
+    rw [diamondOp_eq_diamondOpAux k d g₀ hg₀]
+    exact ModularForm.ext fun _ ↦ congrFun hslash _
+  show diamondOp k d (modFormGamma0ToGamma1 g) = _
   rw [hd_eq, show ((1 : (ZMod N)ˣ →* ℂˣ) d : ℂ) = (1 : ℂ) from by simp, one_smul]
 
 /-- The backward map: a `Γ₀(N)`-modular form, regarded as an element of the
@@ -147,40 +135,16 @@ noncomputable def modFormCharSpaceOneToGamma0Linear :
     modFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ) →ₗ[ℂ]
       ModularForm ((Gamma0 N).map (mapGL ℝ)) k where
   toFun := modFormCharSpaceOneToGamma0
-  map_add' f₁ f₂ := by
-    apply ModularForm.ext
-    intro z
-    change ((↑(f₁ + f₂) : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) z =
-      ((↑f₁ : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) z +
-      ((↑f₂ : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) z
-    rw [Submodule.coe_add, ModularForm.add_apply]
-  map_smul' c f := by
-    apply ModularForm.ext
-    intro z
-    change ((↑(c • f) : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) z =
-      c • ((↑f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) z
-    rw [SetLike.val_smul]; rfl
+  map_add' _ _ := rfl
+  map_smul' _ _ := rfl
 
 /-- The backward map as a `ℂ`-linear map. -/
 noncomputable def modFormGamma0ToCharSpaceOneLinear :
     ModularForm ((Gamma0 N).map (mapGL ℝ)) k →ₗ[ℂ]
       modFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ) where
   toFun := modFormGamma0ToCharSpaceOne
-  map_add' g₁ g₂ := by
-    apply Subtype.ext
-    apply ModularForm.ext
-    intro z
-    change modFormGamma0ToGamma1 (g₁ + g₂) z =
-      (modFormGamma0ToGamma1 g₁ + modFormGamma0ToGamma1 g₂) z
-    rw [ModularForm.add_apply, modFormGamma0ToGamma1_apply,
-      modFormGamma0ToGamma1_apply, modFormGamma0ToGamma1_apply,
-      ModularForm.add_apply]
-  map_smul' c g := by
-    apply Subtype.ext
-    apply ModularForm.ext
-    intro z
-    change modFormGamma0ToGamma1 (c • g) z = (c • modFormGamma0ToGamma1 g) z
-    rfl
+  map_add' _ _ := rfl
+  map_smul' _ _ := rfl
 
 /-- **The trivial-character eigenspace is `M_k(Γ₀(N))`.** The `ℂ`-linear isomorphism
 identifies the diamond-trivial part of `M_k(Γ₁(N))` with `M_k(Γ₀(N))`. -/
@@ -191,15 +155,8 @@ noncomputable def modFormCharSpace_one_equiv_Gamma0 (N : ℕ) [NeZero N] (k : �
   map_add' := map_add modFormCharSpaceOneToGamma0Linear
   map_smul' := map_smul modFormCharSpaceOneToGamma0Linear
   invFun := modFormGamma0ToCharSpaceOneLinear
-  left_inv f := by
-    apply Subtype.ext
-    apply ModularForm.ext
-    intro z
-    rfl
-  right_inv g := by
-    apply ModularForm.ext
-    intro z
-    rfl
+  left_inv _ := rfl
+  right_inv _ := rfl
 
 @[simp]
 lemma modFormCharSpace_one_equiv_Gamma0_apply
