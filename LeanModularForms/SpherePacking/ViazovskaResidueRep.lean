@@ -5,6 +5,7 @@ Authors: Chris Birkbeck
 -/
 import LeanModularForms.SpherePacking.ContourLimitAtCusp
 import LeanModularForms.SpherePacking.RectangularContour
+import LeanModularForms.SpherePacking.TriangleContour
 import LeanModularForms.SpherePacking.ViazovskaMagicFunction
 
 /-!
@@ -166,6 +167,37 @@ theorem viazovska_tail_top_segment_tends_zero
   -- The integrand `viazovska_integrand_tail r z` is by definition
   -- `φ₀''(z) · e^{πirz}`, so this is `tendsto_phi0_topSegment_integral_zero`.
   exact tendsto_phi0_topSegment_integral_zero hr a b
+
+/-! ## Triangular contour validation for the I12 integrand
+
+The Viazovska left integrand `F(z) = φ₀(-1/(z+1)) · (z+1)² · e^{πirz}` is
+holomorphic on the open upper half-plane `{z : ℂ | 0 < z.im}`, which is
+convex (`convex_halfSpace_im_gt 0`) and open. By `cauchy_triangle_zero`
+(HW 3.3 specialised to `S = ∅`), the contour integral of `F` around any
+triangle strictly inside the upper half-plane is zero.
+
+This is the parallel of `viazovska_tail_rectangle_cauchy` for the triangular
+contour. It is the key building block for a triangle-based re-derivation
+of `I12_eq_rectangular` (from `ViazovskaMagicFunction.lean`), which states
+`I12 = I12_vert + I12_horiz`.
+-/
+
+/-- **Cauchy on a triangle for the I12 integrand.** For any triangle whose
+three vertices lie strictly inside the open upper half-plane, the contour
+integral of `viazovska_integrand_left r` around its boundary is zero.
+
+This is a direct instantiation of `cauchy_triangle_zero` on the convex open
+set `{z : ℂ | 0 < z.im}`, using the holomorphicity of the left integrand
+(`viazovska_integrand_left_differentiableOn`). -/
+theorem viazovska_left_triangle_cauchy
+    {a b c : ℂ} (hab : a ≠ b) (hbc : b ≠ c) (hca : c ≠ a)
+    (ha : 0 < a.im) (hb : 0 < b.im) (hc : 0 < c.im) (r : ℝ) :
+    (triangleContour a b c hab hbc hca).toPwC1Immersion.toPiecewiseC1Path.contourIntegral
+        (viazovska_integrand_left r) = 0 :=
+  cauchy_triangle_zero hab hbc hca
+    (U := {z : ℂ | 0 < z.im}) UpperHalfPlane.isOpen_upperHalfPlaneSet
+    ⟨I, by change 0 < (I : ℂ).im; simp⟩
+    convex_upperHalfPlaneSet ha hb hc (viazovska_integrand_left_differentiableOn r)
 
 end LeanModularForms
 
