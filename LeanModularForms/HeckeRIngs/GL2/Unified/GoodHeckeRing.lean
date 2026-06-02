@@ -51,8 +51,7 @@ already commute pairwise. -/
 noncomputable instance instCommRingHeckeSubalgebra (F : GoodHeckeFamily N V) :
     CommRing F.heckeSubalgebra :=
   Algebra.adjoinCommRingOfComm (R := ℂ) (s := Set.range F.op) <| by
-    rintro _ ⟨m, rfl⟩ _ ⟨n, rfl⟩
-    exact (F.commute m n).eq
+    rintro _ ⟨m, rfl⟩ _ ⟨n, rfl⟩; exact (F.commute m n).eq
 
 /-- Any two endomorphisms lying in the good-index Hecke subalgebra commute,
 because the subalgebra itself is commutative. -/
