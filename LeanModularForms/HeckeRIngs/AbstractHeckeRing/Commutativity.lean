@@ -43,8 +43,7 @@ def bar (g : G) : G := (ι.toFun g).unop
 @[simp] lemma bar_bar (g : G) : ι.bar (ι.bar g) = g := ι.involutive g
 
 /-- The anti-involution reverses multiplication: `bar(ab) = bar(b) * bar(a)`. -/
-lemma bar_mul (a b : G) : ι.bar (a * b) = ι.bar b * ι.bar a := by
-  simp only [bar, map_mul, unop_mul]
+lemma bar_mul (a b : G) : ι.bar (a * b) = ι.bar b * ι.bar a := by simp [bar]
 
 /-- The anti-involution fixes the identity. -/
 lemma bar_one : ι.bar 1 = 1 := by simp [bar]
@@ -72,21 +71,19 @@ lemma bar_doubleCoset_eq (g₁ g₂ : G)
     DoubleCoset.doubleCoset (ι.bar g₂) P.H P.H := by
   obtain ⟨h₁, hh₁, h₂, hh₂, hprod⟩ := (DoubleCoset.eq P.H P.H _ _).mp
     (DoubleCoset.mk_eq_of_doubleCoset_eq h)
-  rw [show ι.bar g₂ = ι.bar h₂ * ι.bar g₁ * ι.bar h₁ by
+  rw [show ι.bar g₂ = ι.bar h₂ * ι.bar g₁ * ι.bar h₁ from by
     rw [hprod, bar_mul, bar_mul, mul_assoc]]
   symm; rw [mul_assoc]
   trans DoubleCoset.doubleCoset (ι.bar g₁ * ι.bar h₁) (P.H : Set G) P.H
   · exact doset_mul_left_eq_self P ⟨ι.bar h₂, ι.bar_mem_H hh₂⟩ _
-  · exact DoubleCoset.doubleCoset_mul_right_eq_self P
-      ⟨ι.bar h₁, ι.bar_mem_H hh₁⟩ _
+  · exact DoubleCoset.doubleCoset_mul_right_eq_self P ⟨ι.bar h₁, ι.bar_mem_H hh₁⟩ _
 
 /-- The induced action of the anti-involution on double cosets, defined via `Quotient.lift`. -/
 noncomputable def onHeckeCoset (D : HeckeCoset P) : HeckeCoset P :=
   Quotient.lift (fun (g : P.Δ) ↦
     (⟦⟨ι.bar (g : G), ι.bar_mem_Δ g.2⟩⟧ : HeckeCoset P))
-    (fun a b (h : @Setoid.r _ (dcSetoid P) a b) ↦ by
-      rw [HeckeCoset.eq_iff]
-      exact ι.bar_doubleCoset_eq _ _ h) D
+    (fun _ _ (h : @Setoid.r _ (dcSetoid P) _ _) ↦ by
+      rw [HeckeCoset.eq_iff]; exact ι.bar_doubleCoset_eq _ _ h) D
 
 /-- `onHeckeCoset ⟦g⟧` equals `⟦bar(g)⟧`. -/
 lemma onHeckeCoset_mk (g : P.Δ) :
@@ -101,10 +98,8 @@ lemma onHeckeCoset_toSet (D : HeckeCoset P) :
   simp [onHeckeCoset_mk]
 
 /-- The action on double cosets is involutive: `onHeckeCoset(onHeckeCoset(D)) = D`. -/
-lemma onHeckeCoset_involutive : Function.Involutive ι.onHeckeCoset := by
-  apply HeckeCoset.ind; intro g
-  simp only [onHeckeCoset_mk]
-  rw [HeckeCoset.eq_iff]; simp [bar_bar]
+lemma onHeckeCoset_involutive : Function.Involutive ι.onHeckeCoset :=
+  HeckeCoset.ind fun g ↦ by simp only [onHeckeCoset_mk]; rw [HeckeCoset.eq_iff]; simp [bar_bar]
 
 private lemma bar_mem_doubleCoset (h_fix : ∀ D : HeckeCoset P, ι.onHeckeCoset D = D)
     (D₀ : HeckeCoset P) (x : G) (hx : x ∈ HeckeCoset.toSet D₀) :
@@ -166,13 +161,13 @@ private lemma bar_quotient_diff_mem_H
     (hbarx₂ : ι.bar x₂ = a₂ * g₂ * b₂)
     (hconj : g₂⁻¹ * a₁⁻¹ * a₂ * g₂ ∈ P.H) :
     x₂ * x₁⁻¹ ∈ P.H := by
-  have hbar_diff_H : ι.bar (x₂ * x₁⁻¹) ∈ P.H := by
-    rw [show ι.bar (x₂ * x₁⁻¹) = (ι.bar x₁)⁻¹ * ι.bar x₂ by
-      rw [← ι.bar_inv, ← ι.bar_mul],
-      show (ι.bar x₁)⁻¹ * ι.bar x₂ = b₁⁻¹ * (g₂⁻¹ * a₁⁻¹ * a₂ * g₂) * b₂ by
+  rw [← ι.bar_bar (x₂ * x₁⁻¹)]
+  refine ι.bar_mem_H ?_
+  rw [show ι.bar (x₂ * x₁⁻¹) = (ι.bar x₁)⁻¹ * ι.bar x₂ from by
+    rw [← ι.bar_inv, ← ι.bar_mul],
+    show (ι.bar x₁)⁻¹ * ι.bar x₂ = b₁⁻¹ * (g₂⁻¹ * a₁⁻¹ * a₂ * g₂) * b₂ from by
       rw [hbarx₁, hbarx₂]; group]
-    exact P.H.mul_mem (P.H.mul_mem (P.H.inv_mem hb₁) hconj) hb₂
-  rw [← ι.bar_bar (x₂ * x₁⁻¹)]; exact ι.bar_mem_H hbar_diff_H
+  exact P.H.mul_mem (P.H.mul_mem (P.H.inv_mem hb₁) hconj) hb₂
 
 private lemma decompQuot_eq_of_conj_mem (g₁ : P.Δ)
     (i₁ i₂ : decompQuot P g₁) (g_D : G)
@@ -196,8 +191,8 @@ private lemma conj_kernel_mem_of_stabilizer_mem
     g₂⁻¹ * (a₁ : G)⁻¹ * (a₂ : G) * g₂ ∈ P.H := by
   rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
     ConjAct.smul_def] at hrel
-  simp only [map_inv, ConjAct.ofConjAct_toConjAct, inv_inv,
-    Subgroup.coe_mul, Subgroup.coe_inv] at hrel
+  simp only [map_inv, ConjAct.ofConjAct_toConjAct, inv_inv, Subgroup.coe_mul,
+    Subgroup.coe_inv] at hrel
   convert hrel using 1; group
 
 private lemma fwd_inj_i (g₁ g₂ : P.Δ) (g_D : G)
@@ -395,10 +390,10 @@ private lemma heckeMultiplicity_le_comm (h_fix : ∀ D : HeckeCoset P, ι.onHeck
   obtain ⟨h1D, h2D, hbarD⟩ := bar_rep_mem_doubleCoset ι h_fix D
   obtain ⟨h1₁, h2₁, hbar₁⟩ := bar_rep_mem_doubleCoset ι h_fix D₁
   set q₀ : decompQuot P (HeckeCoset.rep D) := ⟦⟨(h1D : G), h1D.2⟩⟧ with hq₀
-  unfold heckeMultiplicity; push_cast
+  unfold heckeMultiplicity
+  push_cast
   rw [← heckeMultiplicity_uniform P (HeckeCoset.rep D₂) (HeckeCoset.rep D₁) D q₀]
-  norm_cast
-  exact Nat.card_le_card_of_injective
+  exact_mod_cast Nat.card_le_card_of_injective
     (heckeMultiplicity_le_comm_fwdMap ι h_fix D₁ D₂ D h1D h2D hbarD h1₁ h2₁ hbar₁ q₀ hq₀)
     (heckeMultiplicity_le_comm_fwdMap_injective ι h_fix D₁ D₂ D h1D h2D hbarD
       h1₁ h2₁ hbar₁ q₀ hq₀)
@@ -421,8 +416,8 @@ lemma m_comm_of_onHeckeCoset_eq (h_fix : ∀ D : HeckeCoset P, ι.onHeckeCoset D
     (D₁ D₂ : HeckeCoset P) :
     m P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) =
     m P (HeckeCoset.rep D₂) (HeckeCoset.rep D₁) := by
-  ext D; simp only [m, Finsupp.coe_mk]
-  exact heckeMultiplicity_comm_of_onHeckeCoset_eq ι h_fix D₁ D₂ D
+  ext D
+  simpa only [m, Finsupp.coe_mk] using heckeMultiplicity_comm_of_onHeckeCoset_eq ι h_fix D₁ D₂ D
 
 /-- Shimura Proposition 3.8: the Hecke ring is commutative when the anti-involution
 fixes every double coset. -/
@@ -430,7 +425,8 @@ theorem mul_comm_of_antiInvolution (h_fix : ∀ D : HeckeCoset P, ι.onHeckeCose
     (f g : 𝕋 P ℤ) : f * g = g * f := by
   apply induction_linear_𝕋 P f
   · simp
-  · intro D₁ a; apply induction_linear_𝕋 P g
+  · intro D₁ a
+    apply induction_linear_𝕋 P g
     · simp
     · intro D₂ b
       rw [T_single_mul_T_single, T_single_mul_T_single,
