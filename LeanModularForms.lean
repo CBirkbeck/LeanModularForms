@@ -48,3 +48,4 @@ import LeanModularForms.SpherePacking.CauchyCorollaries
 import LeanModularForms.SpherePacking.RectangularContour
 import LeanModularForms.SpherePacking.ContourLimitAtCusp
 import LeanModularForms.SpherePacking.ViazovskaMagicFunction
+import LeanModularForms.SpherePacking.ViazovskaResidueRep
