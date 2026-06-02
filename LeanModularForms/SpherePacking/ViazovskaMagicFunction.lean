@@ -628,7 +628,7 @@ private theorem hasDerivAt_vert_contour (t : ℝ) :
   simp [ofRealCLM] at h1
   convert (hasDerivAt_const t (-1 : ℂ)).add h1 using 1; ring
 
-private theorem ftc_tail_diag (r : ℝ) (G : ℂ → ℂ)
+theorem ftc_tail_diag (r : ℝ) (G : ℂ → ℂ)
     (hG : ∀ z ∈ {z : ℂ | 0 < z.im}, HasDerivAt G (viazovska_integrand_left r z) z)
     (δ : ℝ) (hδ : 0 < δ) (hδ1 : δ ≤ 1) :
     ∫ t in δ..1, viazovska_integrand_left r (contour_neg1_to_i t) * (1 + I) =
@@ -647,7 +647,7 @@ private theorem ftc_tail_diag (r : ℝ) (G : ℂ → ℂ)
       (by linarith))
   simpa [Function.comp] using h
 
-private theorem ftc_tail_vert (r : ℝ) (G : ℂ → ℂ)
+theorem ftc_tail_vert (r : ℝ) (G : ℂ → ℂ)
     (hG : ∀ z ∈ {z : ℂ | 0 < z.im}, HasDerivAt G (viazovska_integrand_left r z) z)
     (δ : ℝ) (hδ : 0 < δ) (hδ1 : δ ≤ 1) :
     ∫ t in δ..1, viazovska_integrand_left r (-1 + I * ↑t) * I =
@@ -685,7 +685,7 @@ private theorem D_eq_three_terms (r : ℝ) (G : ℂ → ℂ)
   rw [hcomm]
   linear_combination hsd + htd - hsv - htv - hhoriz
 
-private theorem head_integral_tendsto_zero {f : ℝ → ℂ}
+theorem head_integral_tendsto_zero {f : ℝ → ℂ}
     (hcont : ContinuousOn f (Icc 0 1)) :
     Filter.Tendsto (fun δ => ∫ t in (0:ℝ)..δ, f t) (𝓝[>] 0) (𝓝 0) := by
   obtain ⟨C, hC⟩ := isCompact_Icc.exists_bound_of_continuousOn hcont
@@ -785,7 +785,7 @@ private theorem segment_integrand_norm_bound (r : ℝ) {δ : ℝ} (hδ_pos : 0 <
     _ ≤ 1 * δ := by rw [hneg_norm]; exact mul_le_mul_of_nonneg_right hFb hδ_pos.le
     _ = δ := one_mul _
 
-private theorem G_diff_tendsto_zero (r : ℝ) (G : ℂ → ℂ)
+theorem G_diff_tendsto_zero (r : ℝ) (G : ℂ → ℂ)
     (hG : ∀ z ∈ {z : ℂ | 0 < z.im}, HasDerivAt G (viazovska_integrand_left r z) z) :
     Filter.Tendsto
       (fun δ : ℝ => G (-1 + ↑δ * I) - G (contour_neg1_to_i δ)) (𝓝[>] 0) (𝓝 0) := by

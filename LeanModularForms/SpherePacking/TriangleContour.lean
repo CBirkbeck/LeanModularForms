@@ -585,6 +585,47 @@ private lemma convex_combo_mem {U : Set ℂ} (hU : Convex ℝ U) {x y : ℂ}
     simp [Complex.real_smul]
   rw [h_eq]; exact h_combo
 
+/-- The image of the triangular contour `triangleContour a b c` on `[0, 1]` lies
+inside any convex set containing the three vertices. This is the key
+"image-in-U" fact that makes the triangle contour amenable to Cauchy's
+theorem on convex open sets. -/
+theorem triangleContour_image_subset_of_convex
+    {a b c : ℂ} (hab : a ≠ b) (hbc : b ≠ c) (hca : c ≠ a)
+    {U : Set ℂ} (hU_convex : Convex ℝ U)
+    (h_a_in_U : a ∈ U) (h_b_in_U : b ∈ U) (h_c_in_U : c ∈ U) :
+    ∀ t ∈ Icc (0 : ℝ) 1,
+      (triangleContour a b c hab hbc hca).toPwC1Immersion.toPiecewiseC1Path t ∈ U := by
+  intro t ht
+  show (trianglePath a b c).extend t ∈ U
+  rw [trianglePath_extend_eq a b c t ht]
+  by_cases ht1 : t ≤ 1/3
+  · have hcoeff_nn : 0 ≤ 3 * t := by linarith [ht.1]
+    have hcoeff_le : 3 * t ≤ 1 := by linarith [ht1]
+    simp only [triangleFun, if_pos ht1, triSeg1]
+    have h_eq : (1 - 3 * (t : ℂ)) * a + 3 * (t : ℂ) * b
+        = ((1 - 3 * t : ℝ) : ℂ) * a + ((3 * t : ℝ) : ℂ) * b := by push_cast; ring
+    rw [h_eq]
+    exact convex_combo_mem hU_convex h_a_in_U h_b_in_U hcoeff_nn hcoeff_le
+  · push Not at ht1
+    by_cases ht2 : t ≤ 2/3
+    · have hcoeff_nn : 0 ≤ 3 * t - 1 := by linarith
+      have hcoeff_le : 3 * t - 1 ≤ 1 := by linarith
+      simp only [triangleFun, if_neg (not_le.mpr ht1), if_pos ht2, triSeg2]
+      have h_eq : (2 - 3 * (t : ℂ)) * b + (3 * (t : ℂ) - 1) * c
+          = ((1 - (3 * t - 1) : ℝ) : ℂ) * b + ((3 * t - 1 : ℝ) : ℂ) * c := by
+        push_cast; ring
+      rw [h_eq]
+      exact convex_combo_mem hU_convex h_b_in_U h_c_in_U hcoeff_nn hcoeff_le
+    · push Not at ht2
+      have hcoeff_nn : 0 ≤ 3 * t - 2 := by linarith
+      have hcoeff_le : 3 * t - 2 ≤ 1 := by linarith [ht.2]
+      simp only [triangleFun, if_neg (not_le.mpr ht1), if_neg (not_le.mpr ht2), triSeg3]
+      have h_eq : (3 - 3 * (t : ℂ)) * c + (3 * (t : ℂ) - 2) * a
+          = ((1 - (3 * t - 2) : ℝ) : ℂ) * c + ((3 * t - 2 : ℝ) : ℂ) * a := by
+        push_cast; ring
+      rw [h_eq]
+      exact convex_combo_mem hU_convex h_c_in_U h_a_in_U hcoeff_nn hcoeff_le
+
 /-- **Cauchy's theorem on a triangle.** If `f` is holomorphic on a convex open
 set `U` containing the three vertices `a`, `b`, `c`, then the contour integral
 of `f` along the boundary of the triangle (traversed `a → b → c → a`) is zero.
@@ -597,54 +638,11 @@ theorem cauchy_triangle_zero
     (h_a_in_U : a ∈ U) (h_b_in_U : b ∈ U) (h_c_in_U : c ∈ U)
     {f : ℂ → ℂ} (hf : DifferentiableOn ℂ f U) :
     (triangleContour a b c hab hbc hca).toPwC1Immersion.toPiecewiseC1Path.contourIntegral f
-      = 0 := by
-  -- Image-in-U via segment-wise reasoning.
-  have h_image : ∀ t ∈ Icc (0 : ℝ) 1,
-      (triangleContour a b c hab hbc hca).toPwC1Immersion.toPiecewiseC1Path t ∈ U := by
-    intro t ht
-    -- Recall: the contour is `(trianglePath a b c).extend = triangleFun a b c`
-    -- on `[0, 1]`, broken into 3 pieces. On each piece, the path is an affine
-    -- combination of two vertices of the triangle.
-    show (trianglePath a b c).extend t ∈ U
-    rw [trianglePath_extend_eq a b c t ht]
-    -- Locate the segment.
-    by_cases ht1 : t ≤ 1/3
-    · -- First side: (1 - 3t) * a + 3t * b
-      have hcoeff_nn : 0 ≤ 3 * t := by linarith [ht.1]
-      have hcoeff_le : 3 * t ≤ 1 := by linarith [ht1]
-      simp only [triangleFun, if_pos ht1, triSeg1]
-      have h_eq : (1 - 3 * (t : ℂ)) * a + 3 * (t : ℂ) * b
-          = ((1 - 3 * t : ℝ) : ℂ) * a + ((3 * t : ℝ) : ℂ) * b := by push_cast; ring
-      rw [h_eq]
-      have := convex_combo_mem hU_convex h_a_in_U h_b_in_U hcoeff_nn hcoeff_le
-      -- The helper gives `((1 - 3t : ℝ) : ℂ) * a + ((3t : ℝ) : ℂ) * b ∈ U`, matching.
-      exact this
-    · push Not at ht1
-      by_cases ht2 : t ≤ 2/3
-      · -- Second side: (2 - 3t) * b + (3t - 1) * c
-        -- Reparametrise: write as `(1 - s) * b + s * c` with `s = 3t - 1 ∈ [0, 1]`.
-        have hcoeff_nn : 0 ≤ 3 * t - 1 := by linarith
-        have hcoeff_le : 3 * t - 1 ≤ 1 := by linarith
-        simp only [triangleFun, if_neg (not_le.mpr ht1), if_pos ht2, triSeg2]
-        have h_eq : (2 - 3 * (t : ℂ)) * b + (3 * (t : ℂ) - 1) * c
-            = ((1 - (3 * t - 1) : ℝ) : ℂ) * b + ((3 * t - 1 : ℝ) : ℂ) * c := by
-          push_cast; ring
-        rw [h_eq]
-        exact convex_combo_mem hU_convex h_b_in_U h_c_in_U hcoeff_nn hcoeff_le
-      · push Not at ht2
-        -- Third side: (3 - 3t) * c + (3t - 2) * a
-        -- Reparametrise: write as `(1 - s) * c + s * a` with `s = 3t - 2 ∈ [0, 1]`.
-        have hcoeff_nn : 0 ≤ 3 * t - 2 := by linarith
-        have hcoeff_le : 3 * t - 2 ≤ 1 := by linarith [ht.2]
-        simp only [triangleFun, if_neg (not_le.mpr ht1), if_neg (not_le.mpr ht2), triSeg3]
-        have h_eq : (3 - 3 * (t : ℂ)) * c + (3 * (t : ℂ) - 2) * a
-            = ((1 - (3 * t - 2) : ℝ) : ℂ) * c + ((3 * t - 2 : ℝ) : ℂ) * a := by
-          push_cast; ring
-        rw [h_eq]
-        exact convex_combo_mem hU_convex h_c_in_U h_a_in_U hcoeff_nn hcoeff_le
-  -- The basepoint is at parameter `0`, i.e. `a ∈ U`.
-  exact cauchy_integral_zero_pwc1 hU_open hU_ne hf (triangleContour a b c hab hbc hca)
-    (IsNullHomologous.of_convex_open _ hU_open hU_convex h_image) h_a_in_U
+      = 0 :=
+  cauchy_integral_zero_pwc1 hU_open hU_ne hf (triangleContour a b c hab hbc hca)
+    (IsNullHomologous.of_convex_open _ hU_open hU_convex
+      (triangleContour_image_subset_of_convex hab hbc hca hU_convex h_a_in_U h_b_in_U h_c_in_U))
+    h_a_in_U
 
 /-! ## Decomposition into three segment integrals
 
