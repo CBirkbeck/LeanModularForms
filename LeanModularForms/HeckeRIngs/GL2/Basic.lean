@@ -76,8 +76,7 @@ private lemma doubleCoset_eq_of_mem' (g δ : GL (Fin 2) ℚ)
     (h : g ∈ DoubleCoset.doubleCoset δ (SLnZ_subgroup 2) (SLnZ_subgroup 2)) :
     DoubleCoset.doubleCoset g (SLnZ_subgroup 2) (SLnZ_subgroup 2) =
       DoubleCoset.doubleCoset δ (SLnZ_subgroup 2) (SLnZ_subgroup 2) := by
-  obtain ⟨h₁, hh₁, h₂, hh₂, heq⟩ := DoubleCoset.mem_doubleCoset.mp h
-  rw [heq]
+  obtain ⟨h₁, hh₁, h₂, hh₂, rfl⟩ := DoubleCoset.mem_doubleCoset.mp h
   exact (doubleCoset_mul_right_eq_self (GL_pair 2) ⟨h₂, hh₂⟩ (h₁ * δ)).trans
     (doset_mul_left_eq_self (GL_pair 2) ⟨h₁, hh₁⟩ δ)
 
@@ -173,16 +172,16 @@ private lemma mem_mulSupport_right_scalar (b : Fin 2 → ℕ) (hb_pos : ∀ i, 0
   simp only [HeckeRing.mulSupport, Finset.top_eq_univ, Finset.mem_image, Finset.mem_univ,
     true_and, Prod.exists]
   have ⟨i₀⟩ : Nonempty (decompQuot (GL_pair 2) (HeckeCoset.rep D_b)) :=
-    Fintype.card_pos_iff.mp (by
+    Fintype.card_pos_iff.mp <| by
       have := HeckeRing.HeckeCoset_deg_pos (GL_pair 2) D_b
       simp only [HeckeRing.HeckeCoset_deg] at this
-      lia)
+      lia
   have h_card : Fintype.card (decompQuot (GL_pair 2) (HeckeCoset.rep D_c)) = 1 := by
     have := HeckeCoset_deg_scalar 2 c hc
     simp only [HeckeRing.HeckeCoset_deg] at this
     exact_mod_cast this
   have ⟨j₀⟩ : Nonempty (decompQuot (GL_pair 2) (HeckeCoset.rep D_c)) :=
-    Fintype.card_pos_iff.mp (by rw [h_card]; exact Nat.one_pos)
+    Fintype.card_pos_iff.mp <| by rw [h_card]; exact Nat.one_pos
   exact ⟨i₀, j₀, mulMap_right_scalar_eq b hb_pos hb c hc hbc (i₀, j₀)⟩
 
 private lemma heckeMultiplicity_right_scalar_eq_one (b : Fin 2 → ℕ)
@@ -206,9 +205,7 @@ private lemma heckeMultiplicity_right_scalar_eq_one (b : Fin 2 → ℕ)
     simp only [HeckeRing.heckeMultiplicity]
     norm_cast
     rw [Nat.card_eq_fintype_card]
-    apply Fintype.card_le_one_iff_subsingleton.mpr
-    constructor
-    intro ⟨⟨i₁, j₁⟩, h₁⟩ ⟨⟨i₂, j₂⟩, h₂⟩
+    refine Fintype.card_le_one_iff_subsingleton.mpr ⟨fun ⟨⟨i₁, j₁⟩, h₁⟩ ⟨⟨i₂, j₂⟩, h₂⟩ ↦ ?_⟩
     obtain rfl : j₁ = j₂ := Subsingleton.elim j₁ j₂
     simp only [Set.mem_setOf_eq] at h₁ h₂
     suffices hi : i₁ = i₂ by subst hi; rfl
