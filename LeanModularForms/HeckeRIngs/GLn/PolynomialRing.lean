@@ -55,11 +55,6 @@ lemma T_gen_diag_val (k : Fin n) (i : Fin n) :
     T_gen_diag n p k i =
     if (i : ℕ) < n - 1 - (k : ℕ) then 1 else p := rfl
 
-lemma T_gen_diag_pos (hp : p.Prime) (k : Fin n) : ∀ i, 0 < T_gen_diag n p k i := by
-  intro i
-  simp only [T_gen_diag]
-  split_ifs <;> [omega; exact hp.pos]
-
 /-- The T_gen diagonal satisfies the divisibility chain condition. -/
 lemma divChain_T_gen (k : Fin n) : DivChain n (T_gen_diag n p k) := by
   intro i hi
@@ -104,11 +99,6 @@ section Weight
 
 /-- Weight of a p-power diagonal: the sum of all exponents. -/
 def ppowWeight (e : Fin n → ℕ) : ℕ := ∑ i, e i
-
-/-- Weight is zero iff all exponents are zero. -/
-lemma ppowWeight_eq_zero_iff (e : Fin n → ℕ) :
-    ppowWeight n e = 0 ↔ ∀ i, e i = 0 := by
-  simp [ppowWeight, Finset.sum_eq_zero_iff]
 
 end Weight
 
