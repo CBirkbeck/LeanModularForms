@@ -72,14 +72,6 @@ noncomputable def modFormCharSpaceFamily (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) 
   map_mul_of_coprime' := heckeT_coprimeRestrict_mul_coprime k χ
   commute' := heckeT_coprimeRestrict_commute_from_mulFormula (N := N) k χ
 
-/-- The restricted `Γ₁(N), χ` good-index operators commute by restricting the
-ambient multiplication-table proof source. -/
-theorem modFormCharSpaceFamily_commute_from_mulFormula (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
-    (m n : GoodIndex N) :
-    Commute ((modFormCharSpaceFamily (N := N) k χ).op m)
-      ((modFormCharSpaceFamily (N := N) k χ).op n) :=
-  heckeT_coprimeRestrict_commute_from_mulFormula (N := N) k χ m n
-
 @[simp] lemma modFormCharSpaceFamily_apply (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (n : GoodIndex N) :
     (modFormCharSpaceFamily (N := N) k χ).op n = heckeT_coprimeRestrict k χ n := rfl
 
@@ -91,11 +83,5 @@ theorem modFormCharSpaceFamily_commute_from_mulFormula (k : ℤ) (χ : (ZMod N)�
         (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) := by
   haveI : NeZero (n : ℕ) := ⟨n.property.1.ne'⟩
   exact heckeT_n_charRestrict_coe (N := N) k (n : ℕ) n.property.2 χ f
-
-lemma modFormCharSpaceFamily_commute_apply (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (m n : GoodIndex N)
-    (f : modFormCharSpace k χ) :
-    (modFormCharSpaceFamily (N := N) k χ).op m ((modFormCharSpaceFamily k χ).op n f) =
-      (modFormCharSpaceFamily (N := N) k χ).op n ((modFormCharSpaceFamily k χ).op m f) :=
-  (modFormCharSpaceFamily (N := N) k χ).commute_apply m n f
 
 end HeckeRing.GL2.Unified
