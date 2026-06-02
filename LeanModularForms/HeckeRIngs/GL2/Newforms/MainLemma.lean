@@ -243,28 +243,6 @@ theorem oldPart_coeff_eq_zero_of_coprime
     (ModularFormClass.qExpansion (1 : ℝ) (oldPart f)).coeff n = 0 :=
   cuspFormsOld_coeff_eq_zero_of_coprime (oldPart f) (oldPart_mem_cuspFormsOld f) n hn
 
-/-- **Coprime coefficient vanishing transfers from `f` to `newPart f`.**
-If `f` has vanishing period-1 Fourier coefficients at all indices
-coprime to `N`, then so does `newPart f`. -/
-theorem newPart_coeff_eq_zero_of_coprime_of_vanish
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (h_vanish : ∀ n : ℕ, Nat.Coprime n N →
-      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0)
-    (n : ℕ) (hn : Nat.Coprime n N) :
-    (ModularFormClass.qExpansion (1 : ℝ) (newPart f)).coeff n = 0 := by
-  have h_eq : ModularFormClass.qExpansion (1 : ℝ)
-        (⇑(oldPart f + newPart f) : UpperHalfPlane → ℂ) =
-      ModularFormClass.qExpansion (1 : ℝ) ⇑(oldPart f) +
-        ModularFormClass.qExpansion (1 : ℝ) ⇑(newPart f) := by
-    have := qExpansion_add (Γ := (Gamma1 N).map (mapGL ℝ)) (h := 1) (a := k) (b := k)
-      one_pos (one_mem_strictPeriods_Gamma1_map N) (oldPart f) (newPart f)
-    convert this using 2
-  rw [oldPart_add_newPart f] at h_eq
-  have h_coeff := congrArg (fun ps : PowerSeries ℂ ↦ ps.coeff n) h_eq
-  simp only [map_add] at h_coeff
-  rw [h_vanish n hn, oldPart_coeff_eq_zero_of_coprime f n hn, zero_add] at h_coeff
-  exact h_coeff.symm
-
 /-- **The Main Lemma** (DS Theorem 5.7.1, Atkin-Lehner [AL70]):
 If `f ∈ S_k(Γ₁(N))` has Fourier expansion `f(τ) = Σ aₙ qⁿ` with `aₙ = 0`
 whenever `(n, N) = 1`, then `f` is an oldform.
