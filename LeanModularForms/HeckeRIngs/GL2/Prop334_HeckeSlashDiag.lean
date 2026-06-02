@@ -36,10 +36,9 @@ lemma diamondOpAux_apply_charSpace (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (g : ↥(Gamma0 N)) {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
     (hf : f ∈ modFormCharSpace k χ) :
     diamondOpAux k g f = (↑(χ (Gamma0MapUnits g)) : ℂ) • f := by
-  have h := (mem_modFormCharSpace_iff k χ f).mp hf (Gamma0MapUnits g)
-  rwa [show diamondOpHom k (Gamma0MapUnits g) =
-      diamondOp k (Gamma0MapUnits g) from rfl,
-    diamondOp_eq_diamondOpAux k _ g rfl] at h
+  have h : diamondOp k (Gamma0MapUnits g) f = (↑(χ (Gamma0MapUnits g)) : ℂ) • f :=
+    (mem_modFormCharSpace_iff k χ f).mp hf (Gamma0MapUnits g)
+  rwa [diamondOp_eq_diamondOpAux k _ g rfl] at h
 
 /-- **χ-equivariance of `heckeT_p`**: for `f ∈ modFormCharSpace k χ` and
 `g ∈ Γ₀(N)`,
@@ -56,18 +55,13 @@ theorem heckeT_p_fun_slash_comm_charSpace (k : ℤ) (p : ℕ)
     (↑(χ (Gamma0MapUnits g)) : ℂ) • heckeT_p_fun k p hp hpN f := by
   set d := Gamma0MapUnits g
   set Tf := heckeT_p k p hp hpN f
-  have hLHS : heckeT_p_fun k p hp hpN f ∣[k] mapGL ℝ (g : SL(2, ℤ)) =
-      ⇑(diamondOpAux k g Tf) := rfl
-  rw [hLHS, ← diamondOp_eq_diamondOpAux k d g rfl]
-  have h_apply_f : diamondOp k d Tf = heckeT_p k p hp hpN (diamondOp k d f) := by
-    show (diamondOp k d).comp (heckeT_p k p hp hpN) f =
-      (heckeT_p k p hp hpN).comp (diamondOp k d) f
-    rw [heckeT_p_comm_diamondOp (N := N) k p hp hpN d]
-  rw [h_apply_f]
-  have hdf : diamondOp k d f = (↑(χ d) : ℂ) • f := by
-    simpa using (mem_modFormCharSpace_iff k χ f).mp hf d
-  rw [hdf, map_smul]
-  rfl
+  show ⇑(diamondOpAux k g Tf) = _
+  rw [← diamondOp_eq_diamondOpAux k d g rfl,
+    show diamondOp k d Tf = heckeT_p k p hp hpN (diamondOp k d f) from
+      LinearMap.congr_fun (heckeT_p_comm_diamondOp (N := N) k p hp hpN d) f]
+  have hdf : diamondOp k d f = (↑(χ d) : ℂ) • f :=
+    (mem_modFormCharSpace_iff k χ f).mp hf d
+  rw [hdf, map_smul]; rfl
 
 /-- **Functional χ-equivariance at `D_p_Gamma0`, for `χ = 1`**: specializes the
 `hComm` hypothesis in `Prop334_HeckeSlash.lean` to the trivial character. -/
@@ -80,14 +74,10 @@ theorem heckeSlash_gen_functional_equivariance_D_p_Gamma0_trivial
       mapGL ℝ (g : SL(2, ℤ)) =
     (↑((1 : (ZMod N)ˣ →* ℂˣ) (Gamma0MapUnits g)) : ℂ) •
       heckeSlash_gen (Gamma0_pair N) k (D_p_Gamma0 N p hp.pos) (⇑f : ℍ → ℂ) := by
-  have hf_H : ∀ h, h ∈ (Gamma0_pair N).H → (⇑f : ℍ → ℂ) ∣[k] (glMap h) = ⇑f := by
-    intro h hh
-    set f_g0 : ModularForm ((Gamma0 N).map (mapGL ℝ)) k :=
-      modFormCharSpace_one_equiv_Gamma0 N k ⟨f, hf⟩
-    have hfg : (⇑f : ℍ → ℂ) = ⇑f_g0 := rfl
-    rw [hfg]
-    exact Gamma0_pair_H_invariant_of_invariant N
-      (fun γ hγ ↦ SlashInvariantFormClass.slash_action_eq f_g0 γ hγ) h hh
+  have hf_H : ∀ h, h ∈ (Gamma0_pair N).H → (⇑f : ℍ → ℂ) ∣[k] (glMap h) = ⇑f := fun h hh ↦
+    Gamma0_pair_H_invariant_of_invariant N
+      (fun γ hγ ↦ SlashInvariantFormClass.slash_action_eq
+        (modFormCharSpace_one_equiv_Gamma0 N k ⟨f, hf⟩) γ hγ) h hh
   exact heckeSlash_gen_slash_comm_one k (D_p_Gamma0 N p hp.pos) (⇑f) hf_H g
 
 /-- **Conditional form**: if the bridge `heckeSlash_gen D_p_Gamma0 ⇑f =
