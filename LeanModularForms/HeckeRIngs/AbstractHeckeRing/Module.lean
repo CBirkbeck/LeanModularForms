@@ -108,11 +108,6 @@ lemma single_smul_single (t : HeckeCoset P) (m : HeckeLeftCoset P) (a b : Z) :
   rw [smul_eq_sum]
   simp
 
-/-- Every finsupp is a sum of its basis elements. -/
-lemma single_basis {α : Type*} (t : Finsupp α Z) :
-    t = ∑ (i ∈ t.support), single i (t.toFun i) :=
-  (Finsupp.sum_single t).symm
-
 /-- The one element of `HeckeModule`: the basis element for the identity left coset. -/
 noncomputable instance instOneHeckeModule : One (HeckeModule P Z) :=
   ⟨Finsupp.single (HeckeLeftCoset.one P) 1⟩
