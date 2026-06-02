@@ -289,28 +289,6 @@ lemma slash_eq_of_levelRaiseFun_eq (l : ℕ) [NeZero l] (k : ℤ) (f g : UpperHa
     rw [Matrix.SpecialLinearGroup.det_mapGL]; norm_num
   rw [ModularForm.smul_slash, hσA, RingHom.id_apply, ← SlashAction.slash_mul]
 
-/-- Slash-boundedness reduction: for any `A : SL(2, ℤ)`, the boundedness of
-`f ∣[k] mapGL ℝ A` at `i∞` is equivalent to the boundedness of
-`g ∣[k] (α_l⁻¹ * mapGL ℝ A)` at `i∞`. -/
-lemma isBoundedAtImInfty_slash_iff_levelRaiseFun_eq (l : ℕ) [NeZero l] (k : ℤ)
-    (f g : UpperHalfPlane → ℂ) (hg_eq : g = levelRaiseFun l k f) (A : SL(2, ℤ)) :
-    UpperHalfPlane.IsBoundedAtImInfty
-        (f ∣[k] (mapGL ℝ A : GL (Fin 2) ℝ)) ↔
-      UpperHalfPlane.IsBoundedAtImInfty
-        (g ∣[k] (((levelRaiseMatrix l)⁻¹ : GL (Fin 2) ℝ) *
-          (mapGL ℝ A : GL (Fin 2) ℝ))) := by
-  rw [slash_eq_of_levelRaiseFun_eq l k f g hg_eq A, UpperHalfPlane.isBoundedAtImInfty_iff,
-    UpperHalfPlane.isBoundedAtImInfty_iff]
-  have hc_norm_pos : 0 < ‖((l : ℂ) ^ (k - 1))‖ := by
-    rw [norm_pos_iff]; exact zpow_ne_zero _ (Nat.cast_ne_zero.mpr (NeZero.ne l))
-  refine ⟨fun ⟨M, A_im, hbound⟩ ↦ ⟨M / ‖((l : ℂ) ^ (k - 1))‖, A_im, fun τ hτ ↦ ?_⟩,
-    fun ⟨M, A_im, hbound⟩ ↦ ⟨‖((l : ℂ) ^ (k - 1))‖ * M, A_im, fun τ hτ ↦ ?_⟩⟩
-  · have h := hbound τ hτ
-    rw [Pi.smul_apply, smul_eq_mul, norm_mul] at h
-    rwa [le_div_iff₀ hc_norm_pos, mul_comm]
-  · rw [Pi.smul_apply, smul_eq_mul, norm_mul]
-    exact mul_le_mul_of_nonneg_left (hbound τ hτ) (norm_nonneg _)
-
 private lemma levelRaiseMatrix_inv_apply_one_zero (l : ℕ) [NeZero l] :
     ((levelRaiseMatrix l)⁻¹ : GL (Fin 2) ℝ) 1 0 = 0 := by
   rw [Matrix.GeneralLinearGroup.coe_inv, Matrix.inv_def]
@@ -439,16 +417,6 @@ lemma isCusp_levelRaiseMatrix_inv_mul_mapGL_smul_infty
       (mapGL ℝ A : GL (Fin 2) ℝ)) • ∞) Γ := by
   rw [Subgroup.IsArithmetic.isCusp_iff_isCusp_SL2Z, isCusp_SL2Z_iff']
   exact ⟨cuspWitnessLevelRaiseInv l A, (mapGL_cuspWitnessLevelRaiseInv_smul_infty_eq l A).symm⟩
-
-open OnePoint in
-/-- Boundedness of `g ∣[k] (α_l⁻¹ * mapGL ℝ A)` at `i∞`. -/
-lemma isBoundedAtImInfty_slash_levelRaiseMatrix_inv_mul_mapGL (l N : ℕ) [NeZero l] [NeZero N]
-    (k : ℤ) (g : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) (A : SL(2, ℤ)) :
-    UpperHalfPlane.IsBoundedAtImInfty
-      (⇑g ∣[k] (((levelRaiseMatrix l)⁻¹ : GL (Fin 2) ℝ) *
-        (mapGL ℝ A : GL (Fin 2) ℝ))) :=
-  ModularFormClass.bdd_at_cusps g
-    (isCusp_levelRaiseMatrix_inv_mul_mapGL_smul_infty l A ((Gamma1 N).map (mapGL ℝ))) _ rfl
 
 /-- Slash zero-at-`i∞` reduction: for any `A : SL(2, ℤ)`, the zero-at-`i∞` of
 `f ∣[k] mapGL ℝ A` is equivalent to the zero-at-`i∞` of
@@ -580,51 +548,6 @@ lemma exists_unit_of_not_factorsThrough {N : ℕ} [NeZero N] {d : ℕ} (hd : d �
 private lemma natCast_eq_mul_natCast_div {l N : ℕ} (h_dvd : l ∣ N) :
     (N : ℤ) = (l : ℤ) * ((N / l : ℕ) : ℤ) := by
   rw [mul_comm]; exact mod_cast (Nat.div_mul_cancel h_dvd).symm
-
-/-- Structural ascent: if `γ ∈ Γ₀(N)` has `γ.val 1 1 ≡ 1 mod (N/l)`, then
-`levelRaiseConjOfDvd l γ` lies in the smaller subgroup `Γ₁(N/l)`. -/
-lemma levelRaiseConjOfDvd_mem_Gamma1_div_of_mem_ker (l N : ℕ) [NeZero l] [NeZero N]
-    (h_dvd : l ∣ N) {γ : SL(2, ℤ)} (hγ : γ ∈ Gamma0 N)
-    (hγ_ker : ((γ.val 1 1 : ℤ) : ZMod (N / l)) = 1) :
-    levelRaiseConjOfDvd l γ
-      (dvd_lower_left_of_dvd_of_mem_Gamma0 h_dvd hγ) ∈ Gamma1 (N / l) := by
-  set gtilde := levelRaiseConjOfDvd l γ (dvd_lower_left_of_dvd_of_mem_Gamma0 h_dvd hγ)
-  have hgtilde_eq00 : gtilde.val 0 0 = γ.val 0 0 := by
-    change (Matrix.of !![γ.val 0 0, l * γ.val 0 1; γ.val 1 0 / l, γ.val 1 1]) 0 0 = _; simp
-  have hgtilde_eq11 : gtilde.val 1 1 = γ.val 1 1 := by
-    change (Matrix.of !![γ.val 0 0, l * γ.val 0 1; γ.val 1 0 / l, γ.val 1 1]) 1 1 = _; simp
-  have hgtilde_eq10 : gtilde.val 1 0 = γ.val 1 0 / (l : ℤ) := by
-    change (Matrix.of !![γ.val 0 0, l * γ.val 0 1; γ.val 1 0 / l, γ.val 1 1]) 1 0 = _; simp
-  have hN_dvd_c : (N : ℤ) ∣ γ.val 1 0 :=
-    (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp (Gamma0_mem.mp hγ)
-  have hNl_dvd_N : ((N / l : ℕ) : ℤ) ∣ (N : ℤ) :=
-    ⟨(l : ℤ), by
-      rw [show ((N : ℕ) : ℤ) = (((N / l) * l : ℕ) : ℤ) by rw [Nat.div_mul_cancel h_dvd],
-        Nat.cast_mul]⟩
-  have h10_mod : ((γ.val 1 0 : ℤ) : ZMod (N / l)) = 0 :=
-    (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mpr (hNl_dvd_N.trans hN_dvd_c)
-  rw [Gamma1_mem]
-  refine ⟨?_, ?_, ?_⟩
-  · change (((gtilde 0 0 : ℤ)) : ZMod (N / l)) = 1
-    rw [show ((gtilde : SL(2, ℤ)) 0 0 : ℤ) = gtilde.val 0 0 from rfl, hgtilde_eq00]
-    have hdet_mod : ((γ.val 0 0 : ℤ) : ZMod (N/l)) * ((γ.val 1 1 : ℤ) : ZMod (N/l)) -
-        ((γ.val 0 1 : ℤ) : ZMod (N/l)) * ((γ.val 1 0 : ℤ) : ZMod (N/l)) = 1 := by
-      have hdet : γ.val 0 0 * γ.val 1 1 - γ.val 0 1 * γ.val 1 0 = 1 := by
-        rw [← Matrix.det_fin_two]; exact γ.property
-      have := congr_arg (fun x : ℤ ↦ ((x : ℤ) : ZMod (N/l))) hdet
-      push_cast at this
-      simpa using this
-    rwa [hγ_ker, mul_one, h10_mod, mul_zero, sub_zero] at hdet_mod
-  · change (((gtilde 1 1 : ℤ)) : ZMod (N / l)) = 1
-    rwa [show ((gtilde : SL(2, ℤ)) 1 1 : ℤ) = gtilde.val 1 1 from rfl, hgtilde_eq11]
-  · change (((gtilde 1 0 : ℤ)) : ZMod (N / l)) = 0
-    rw [show ((gtilde : SL(2, ℤ)) 1 0 : ℤ) = gtilde.val 1 0 from rfl, hgtilde_eq10,
-      ZMod.intCast_zmod_eq_zero_iff_dvd]
-    obtain ⟨m, hm⟩ := hN_dvd_c
-    rw [hm, natCast_eq_mul_natCast_div h_dvd,
-      show ((l : ℤ) * ((N / l : ℕ) : ℤ)) * m = (l : ℤ) * (((N / l : ℕ) : ℤ) * m) by ring,
-      Int.mul_ediv_cancel_left _ (Nat.cast_ne_zero.mpr (NeZero.ne l))]
-    exact ⟨m, rfl⟩
 
 /-- Algebraic two-multiplier contradiction: if `f ∣[k] M` is both `c₁ • f` and
 `c₂ • f` for two distinct scalars, then `f = 0`. -/
