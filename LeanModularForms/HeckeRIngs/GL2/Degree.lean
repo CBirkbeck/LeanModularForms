@@ -37,11 +37,9 @@ theorem deg_T_diag_ppow (i k : ℕ) (hk : 0 < k) :
   HeckeCoset_deg_T_diag_two_prime p hp (![p ^ i, p ^ (i + k)])
     (fun j ↦ by fin_cases j <;> exact pow_pos hp.pos _)
     (fun j hj ↦ by
-      have hi0 : j = 0 := by omega
-      subst hi0; simpa using Nat.pow_dvd_pow p (by omega : i ≤ i + k))
-    k hk (by
-    change p ^ (i + k) / p ^ i = p ^ k
-    rw [Nat.pow_div (by omega) hp.pos]; congr 1; omega)
+      obtain rfl : j = 0 := by omega
+      simpa using Nat.pow_dvd_pow p (Nat.le_add_right i k))
+    k hk (by simp [Nat.pow_div (Nat.le_add_right i k) hp.pos])
 
 /-- Scalar case: `deg(T(c, c)) = 1`. -/
 theorem deg_T_diag_scalar (c : ℕ) (hc : 0 < c) :
@@ -50,10 +48,7 @@ theorem deg_T_diag_scalar (c : ℕ) (hc : 0 < c) :
 
 private lemma deg_T_ad_of_pos (a d : ℕ) (ha : 0 < a) (hd : 0 < d) (hdvd : a ∣ d) :
     deg (GL_pair 2) (T_ad a d) = HeckeCoset_deg (GL_pair 2) (T_diag ![a, d]) := by
-  unfold deg
-  rw [T_ad_of_pos a d ha hd hdvd]
-  unfold T_elem
-  simp
+  simp [deg, T_ad_of_pos a d ha hd hdvd, T_elem]
 
 include hp in
 private lemma deg_ppow_term_lt (i k : ℕ) (h2i : 2 * i < k) :
@@ -62,17 +57,17 @@ private lemma deg_ppow_term_lt (i k : ℕ) (h2i : 2 * i < k) :
   have h_exp_eq : k - i = i + (k - 2 * i) := by omega
   rw [deg_T_ad_of_pos (p ^ i) (p ^ (k - i)) (pow_pos hp.pos i) (pow_pos hp.pos (k - i))
       (Nat.pow_dvd_pow p (by omega)),
-    show (![p ^ i, p ^ (k - i)] : Fin 2 → ℕ) = ![p ^ i, p ^ (i + (k - 2 * i))] from by
-      ext j; fin_cases j <;> simp only [h_exp_eq]]
+    show (![p ^ i, p ^ (k - i)] : Fin 2 → ℕ) = ![p ^ i, p ^ (i + (k - 2 * i))] by
+      ext j; fin_cases j <;> simp [h_exp_eq]]
   exact deg_T_diag_ppow p hp i (k - 2 * i) (by omega)
 
 include hp in
 private lemma deg_ppow_term_eq (i k : ℕ) (h2i : 2 * i = k) :
     deg (GL_pair 2) (T_ad (p ^ i) (p ^ (k - i))) = 1 := by
-  rw [show k - i = i from by omega,
+  rw [show k - i = i by omega,
     deg_T_ad_of_pos (p ^ i) (p ^ i) (pow_pos hp.pos i) (pow_pos hp.pos i) (dvd_refl _),
-    show T_diag (![p ^ i, p ^ i]) = T_diag (fun _ ↦ p ^ i) from by
-      congr 1; exact funext fun j ↦ by fin_cases j <;> rfl]
+    show T_diag (![p ^ i, p ^ i]) = T_diag (fun _ ↦ p ^ i) by
+      congr 1; ext j; fin_cases j <;> rfl]
   exact deg_T_diag_scalar (p ^ i) (pow_pos hp.pos i)
 
 include hp in
@@ -81,7 +76,7 @@ private lemma deg_ppow_shift (i k : ℕ) (hi : i < k / 2 + 1) :
     deg (GL_pair 2) (T_ad (p ^ i) (p ^ (k - i))) := by
   by_cases h2i : 2 * i < k
   · rw [deg_ppow_term_lt p hp (i + 1) (k + 2) (by omega),
-      show k + 2 - 2 * (i + 1) - 1 = k - 2 * i - 1 from by omega,
+      show k + 2 - 2 * (i + 1) - 1 = k - 2 * i - 1 by omega,
       (deg_ppow_term_lt p hp i k h2i).symm]
   · rw [deg_ppow_term_eq p hp (i + 1) (k + 2) (by omega),
       deg_ppow_term_eq p hp i k (by omega)]
@@ -115,23 +110,24 @@ theorem deg_T_sum_prime_pow (k : ℕ) :
       Finset.sum_congr rfl fun i hi ↦ by
         rw [Finset.mem_range] at hi; exact deg_ppow_shift p hp i k hi
     rw [h_tail, show deg (GL_pair 2) (T_ad (p ^ 0) (p ^ (k + 2 - 0))) =
-        ↑(p ^ (k + 1) * (p + 1)) from by
-      simpa [show k + 2 - 0 - 1 = k + 1 from by omega] using
+        ↑(p ^ (k + 1) * (p + 1)) by
+      simpa [show k + 2 - 0 - 1 = k + 1 by omega] using
         deg_ppow_term_lt p hp 0 (k + 2) (by omega)]
     have ih_k := ih k (by omega)
     rw [T_sum_ppow_expansion p hp k, map_sum] at ih_k; rw [ih_k]
     conv_rhs =>
-      rw [show k + 2 + 1 = (k + 1 + 1) + 1 from by omega,
+      rw [show k + 2 + 1 = (k + 1 + 1) + 1 by omega,
         Finset.sum_range_succ,
-        show k + 1 + 1 = (k + 1) + 1 from by omega,
+        show k + 1 + 1 = (k + 1) + 1 by omega,
         Finset.sum_range_succ]
     push_cast; ring
+
 private lemma deg_T_sum_one : deg (GL_pair 2) (T_sum 1) = 1 := by
   change deg (GL_pair 2) (∑ a ∈ Nat.divisors 1, T_ad a (1 / a)) = 1
   simp only [Nat.divisors_one, Finset.sum_singleton, Nat.div_self one_pos]
   rw [deg_T_ad_of_pos 1 1 one_pos one_pos (dvd_refl 1),
-    show T_diag (![1, 1]) = T_diag (fun _ ↦ (1 : ℕ)) from by
-      congr 1; exact funext fun j ↦ by fin_cases j <;> rfl]
+    show T_diag (![1, 1]) = T_diag (fun _ ↦ (1 : ℕ)) by
+      congr 1; ext j; fin_cases j <;> rfl]
   exact deg_T_diag_scalar 1 one_pos
 
 /-- Theorem 3.24(7): `deg(T(m)) = σ₁(m)`.
