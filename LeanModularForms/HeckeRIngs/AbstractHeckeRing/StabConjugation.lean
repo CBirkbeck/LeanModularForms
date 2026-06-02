@@ -93,15 +93,12 @@ noncomputable def decompQuot_mul_left_equiv (g : P.Δ) (h : P.H)
       QuotientGroup.leftRel K ((MulAut.conj h⁻¹) a) ((MulAut.conj h⁻¹) b) := by
     intro a b hab
     rw [QuotientGroup.leftRel_apply] at hab ⊢
-    rw [show ((MulAut.conj h⁻¹) a)⁻¹ * (MulAut.conj h⁻¹) b =
-      (MulAut.conj h⁻¹) (a⁻¹ * b) by simp [map_inv, map_mul]]
-    rw [Subgroup.mem_map] at hab
-    obtain ⟨k, hk, hkeq⟩ := hab
+    simp only [← map_inv, ← map_mul]
+    obtain ⟨k, hk, hkeq⟩ := Subgroup.mem_map.mp hab
     show (MulAut.conj h⁻¹) (a⁻¹ * b) ∈ K
     rw [show a⁻¹ * b = (MulAut.conj h) k from hkeq.symm]
     convert hk using 1
-    ext
-    simp [MulAut.conj_apply, mul_assoc]
+    ext; simp [MulAut.conj_apply, mul_assoc]
   exact Equiv.ofBijective
     (Quotient.map' (MulAut.conj h⁻¹) h_wd)
     ⟨fun x y hxy ↦ by
@@ -110,20 +107,16 @@ noncomputable def decompQuot_mul_left_equiv (g : P.Δ) (h : P.H)
       simp only [Quotient.map'_mk''] at hxy
       rw [Quotient.eq''] at hxy ⊢
       rw [QuotientGroup.leftRel_apply] at hxy ⊢
-      rw [show ((MulAut.conj h⁻¹) a)⁻¹ * (MulAut.conj h⁻¹) b =
-        (MulAut.conj h⁻¹) (a⁻¹ * b) by simp [map_inv, map_mul]] at hxy
-      rw [Subgroup.mem_map]
-      exact ⟨(MulAut.conj h⁻¹) (a⁻¹ * b), hxy, by
-        ext
-        simp [MulAut.conj_apply, mul_assoc]⟩,
+      simp only [← map_inv, ← map_mul] at hxy
+      exact Subgroup.mem_map.mpr ⟨(MulAut.conj h⁻¹) (a⁻¹ * b), hxy, by
+        ext; simp [MulAut.conj_apply, mul_assoc]⟩,
     fun x ↦ by
       revert x
       refine Quotient.ind fun b ↦ ⟨Quotient.mk'' ((MulAut.conj h) b), ?_⟩
       simp only [Quotient.map'_mk'']
       rw [Quotient.eq'', QuotientGroup.leftRel_apply]
       rw [show ((MulAut.conj h⁻¹) ((MulAut.conj h) b))⁻¹ * b = 1 by
-        ext
-        simp [MulAut.conj_apply, mul_assoc]]
+        ext; simp [MulAut.conj_apply, mul_assoc]]
       exact K.one_mem⟩
 
 /-- Combined left-right invariance: `decompQuot(h·g·k) ≃ decompQuot(g)` for `h, k ∈ H`.
@@ -138,8 +131,7 @@ noncomputable def decompQuot_double_H_equiv (g : P.Δ) (h k : P.H)
     (Subgroup.quotientEquivOfEq (stabilizerSubgroup_mul_right_H P g k)))
   change (ConjAct.toConjAct ((h : G) * (g : G) * (k : G)) • P.H).subgroupOf P.H =
     (ConjAct.toConjAct ((h : G) * ((g : G) * (k : G))) • P.H).subgroupOf P.H
-  congr 2
-  exact mul_assoc _ _ _
+  congr 2; exact mul_assoc _ _ _
 
 end ConjugationEquiv
 
