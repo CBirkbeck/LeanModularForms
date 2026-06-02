@@ -72,12 +72,8 @@ theorem heckeT_p_divN_preserves_modFormCharSpace
   rw [HeckeRing.GL2.heckeT_p_ut_orbit_comm_gamma0_fun k p hp hpN f g]
   show HeckeRing.GL2.heckeT_p_ut k p hp.pos (⇑f ∣[k] mapGL ℝ (g : SL(2, ℤ))) = _
   rw [hf g]
-  set c : ℂ := ↑(χ (Gamma0MapUnits g))
-  change HeckeRing.GL2.heckeT_p_ut k p hp.pos (c • ⇑f) =
-    c • HeckeRing.GL2.heckeT_p_ut k p hp.pos ⇑f
-  ext z
-  exact DFunLike.congr_fun
-    ((HeckeRing.GL2.heckeT_p_divN k p hp hpN).map_smul c f) z
+  exact DFunLike.ext _ _ fun _ ↦ DFunLike.congr_fun
+    ((HeckeRing.GL2.heckeT_p_divN k p hp hpN).map_smul _ f) _
 
 private theorem levelRaise_conj_char_eq
     (M : ℕ) [NeZero M] (d : ℕ) [NeZero d] (χ : (ZMod M)ˣ →* ℂˣ)
@@ -118,14 +114,8 @@ theorem modularFormLevelRaise_mem_modFormCharSpace
       (HeckeRing.GL2.levelRaiseConjOfDvd d (γ' : SL(2, ℤ)) hdvd : SL(2, ℤ)) ∈
         Gamma0 M :=
     HeckeRing.GL2.levelRaiseConjOfDvd_mem_Gamma0 d M _ γ'.property
-  rw [hf ⟨_, h_conj_G0⟩]
-  rw [levelRaise_conj_char_eq M d χ γ' hdvd h_conj_G0]
-  set c : ℂ :=
-    ↑((χ.comp (ZMod.unitsMap (Nat.dvd_mul_left M d))) (Gamma0MapUnits γ'))
-  change HeckeRing.GL2.levelRaiseFun d k (c • ⇑f) =
-    c • HeckeRing.GL2.levelRaiseFun d k ⇑f
-  ext z
-  exact DFunLike.congr_fun
-    ((HeckeRing.GL2.modularFormLevelRaise M d k).map_smul c f) z
+  rw [hf ⟨_, h_conj_G0⟩, levelRaise_conj_char_eq M d χ γ' hdvd h_conj_G0]
+  exact DFunLike.ext _ _ fun _ ↦ DFunLike.congr_fun
+    ((HeckeRing.GL2.modularFormLevelRaise M d k).map_smul _ f) _
 
 end HeckeRing.GL2.MainLemma
