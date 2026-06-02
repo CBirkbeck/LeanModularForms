@@ -38,25 +38,24 @@ lemma conjAct_smul_coe_eq (g : G) :
     rw [← ha.2]
     simp only [singleton_mul, image_mul_left, mul_singleton, image_mul_right,
       inv_inv, mem_preimage, inv_mul_cancel_right, inv_mul_cancel_left, ha.1]
-  · refine Set.mem_smul_set.mpr ⟨g⁻¹ * x * g, ?_, ?_⟩
-    · simp only [singleton_mul, image_mul_left, mul_singleton, image_mul_right,
-        inv_inv, mem_preimage, SetLike.mem_coe] at *
-      rwa [← mul_assoc] at h
-    · rw [ConjAct.smul_def, ConjAct.ofConjAct_toConjAct]; group
+  · refine Set.mem_smul_set.mpr ⟨g⁻¹ * x * g, ?_,
+      by rw [ConjAct.smul_def, ConjAct.ofConjAct_toConjAct]; group⟩
+    simp only [singleton_mul, image_mul_left, mul_singleton, image_mul_right,
+      inv_inv, mem_preimage, SetLike.mem_coe] at *
+    rwa [← mul_assoc] at h
 
 /-- Conjugation by an element of `H` fixes `H`. -/
-lemma conjAct_smul_elt_eq (h : H) :
-    ConjAct.toConjAct (h : G) • H = H := by
+lemma conjAct_smul_elt_eq (h : H) : ConjAct.toConjAct (h : G) • H = H := by
   have : ConjAct.toConjAct (h : G) • (H : Set G) = H := by
     rw [conjAct_smul_coe_eq, Subgroup.singleton_mul_subgroup h.2,
       Subgroup.subgroup_mul_singleton (by simp)]
   rw [← Subgroup.coe_pointwise_smul] at this; norm_cast at *
 
 /-- A left coset contained in another left coset is equal to it. -/
-lemma leftCoset_eq_of_subset (a b : G)
-    (h : {a} * (H : Set G) ⊆ {b} * H) : {a} * (H : Set G) = {b} * H := by
-  have ha : a ∈ {a} * (H : Set G) := by rw [Set.mem_mul]; use a; simp
-  obtain ⟨b', hb', y, hy, hb_eq⟩ := Set.mem_mul.mp (h ha)
+lemma leftCoset_eq_of_subset (a b : G) (h : {a} * (H : Set G) ⊆ {b} * H) :
+    {a} * (H : Set G) = {b} * H := by
+  obtain ⟨b', hb', y, hy, hb_eq⟩ :=
+    Set.mem_mul.mp (h (by rw [Set.mem_mul]; use a; simp : a ∈ {a} * (H : Set G)))
   simp only [Set.mem_singleton_iff] at hb'
   rw [← hb_eq, hb', ← Set.singleton_mul_singleton, mul_assoc,
     Subgroup.singleton_mul_subgroup hy]
@@ -178,11 +177,11 @@ protected lemma ind₂ {motive : HeckeCoset P → HeckeCoset P → Prop}
 /-- The representative of `HeckeCoset.one` belongs to `H`. -/
 lemma one_rep_mem_H (P : HeckePair G) : ((one P).rep : G) ∈ P.H := by
   have hm := rep_mem (one P)
-  rw [toSet_eq_rep] at hm
-  have h2 : DoubleCoset.doubleCoset ((rep (one P)) : G) P.H P.H =
-      DoubleCoset.doubleCoset (1 : G) P.H P.H :=
-    Quotient.exact (Quotient.out_eq (⟦⟨(1 : G), P.Δ.one_mem⟩⟧ : HeckeCoset P))
-  rw [h2, mem_doubleCoset] at hm
+  rw [toSet_eq_rep,
+    show DoubleCoset.doubleCoset ((rep (one P)) : G) P.H P.H =
+      DoubleCoset.doubleCoset (1 : G) P.H P.H from
+    Quotient.exact (Quotient.out_eq (⟦⟨(1 : G), P.Δ.one_mem⟩⟧ : HeckeCoset P)),
+    mem_doubleCoset] at hm
   obtain ⟨a, ha, b, hb, hab⟩ := hm
   rw [mul_one] at hab
   exact hab ▸ P.H.mul_mem ha hb
@@ -237,19 +236,18 @@ lemma smul_eq_singleton_mul (s : Set G) (g : G) : g • s = {g} * s :=
 /-- A subgroup `H` is the union of left cosets of any sub-subgroup `K ≤ H`. -/
 lemma set_eq_iUnion_leftCosets (K : Subgroup G) (hK : K ≤ H) :
     (H : Set G) = ⋃ (i : H ⧸ K.subgroupOf H), (i.out : G) • (K : Set G) := by
-  ext a; constructor
-  · intro ha
-    simp only [Set.mem_iUnion]
-    use (⟨a, ha⟩ : H)
+  ext a
+  refine ⟨fun ha ↦ ?_, fun ha ↦ ?_⟩
+  · simp only [Set.mem_iUnion]
+    refine ⟨(⟨a, ha⟩ : H), ?_⟩
     obtain ⟨h, hh⟩ := QuotientGroup.mk_out_eq_mul (K.subgroupOf H) (⟨a, ha⟩ : H)
     rw [hh]
     simp only [coe_mul]
-    refine Set.mem_smul_set.mpr ?_
-    use h⁻¹
-    simp
-    exact Subgroup.mem_subgroupOf.mp (SetLike.coe_mem h)
-  · intro ha
-    simp only [Set.mem_iUnion] at ha
+    refine Set.mem_smul_set.mpr ⟨h⁻¹, ?_, ?_⟩
+    · simp
+      exact Subgroup.mem_subgroupOf.mp (SetLike.coe_mem h)
+    · simp
+  · simp only [Set.mem_iUnion] at ha
     obtain ⟨i, h, hh, rfl⟩ := ha
     show ((Quotient.out i : H) : G) * h ∈ H
     exact mul_mem (by simp) (hK hh)
@@ -268,17 +266,15 @@ lemma conjAct_mul_self_eq_self (g : G) :
 /-- The intersection `H ∩ gHg⁻¹` acts trivially on `gHg⁻¹` by left multiplication. -/
 lemma inter_mul_conjAct_eq_conjAct (g : G) :
     ((H : Set G) ∩ (ConjAct.toConjAct g • H)) * (ConjAct.toConjAct g • H) =
-    (ConjAct.toConjAct g • H) := by
-  refine Subset.antisymm ?_ ?_
-  · exact le_trans (Set.inter_mul_subset (s₁ := (H : Set G))
+    (ConjAct.toConjAct g • H) :=
+  Subset.antisymm
+    (le_trans (Set.inter_mul_subset (s₁ := (H : Set G))
       (s₂ := (ConjAct.toConjAct g • H)) (t := (ConjAct.toConjAct g • H)))
-      (by simp [conjAct_mul_self_eq_self])
-  · exact subset_mul_right _ ⟨Subgroup.one_mem H,
-      Subgroup.one_mem (ConjAct.toConjAct g • H)⟩
+      (by simp [conjAct_mul_self_eq_self]))
+    (subset_mul_right _ ⟨Subgroup.one_mem H, Subgroup.one_mem (ConjAct.toConjAct g • H)⟩)
 
 /-- Right multiplication by a singleton is cancellative. -/
-lemma mul_singleton_right_cancel (g : G) (K L : Set G)
-    (h : K * {g} = L * {g}) : K = L := by
+lemma mul_singleton_right_cancel (g : G) (K L : Set G) (h : K * {g} = L * {g}) : K = L := by
   have h2 := congrFun (congrArg HMul.hMul h) {g⁻¹}
   simp_rw [mul_assoc, Set.singleton_mul_singleton] at h2; simpa using h2
 
