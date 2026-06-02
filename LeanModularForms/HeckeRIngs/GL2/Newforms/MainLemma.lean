@@ -234,15 +234,6 @@ theorem cuspFormsOld_coeff_eq_zero_of_coprime
       c * (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑x) from
         by simp [smul_eq_mul], ihx, mul_zero]
 
-/-- **Coprime coefficient vanishing for the oldform part.**  For any cusp
-form `f` and any `n` coprime to `N`, the `n`th period-1 Fourier
-coefficient of `oldPart f` is zero. -/
-theorem oldPart_coeff_eq_zero_of_coprime
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (n : ℕ) (hn : Nat.Coprime n N) :
-    (ModularFormClass.qExpansion (1 : ℝ) (oldPart f)).coeff n = 0 :=
-  cuspFormsOld_coeff_eq_zero_of_coprime (oldPart f) (oldPart_mem_cuspFormsOld f) n hn
-
 /-- **The Main Lemma** (DS Theorem 5.7.1, Atkin-Lehner [AL70]):
 If `f ∈ S_k(Γ₁(N))` has Fourier expansion `f(τ) = Σ aₙ qⁿ` with `aₙ = 0`
 whenever `(n, N) = 1`, then `f` is an oldform.
