@@ -101,15 +101,6 @@ noncomputable def cuspFormCharSpaceFamily
     rw [heckeT_n_mul_coprime k (m : ℕ) (n : ℕ) hmn]; rfl
   commute' := heckeT_n_cusp_charRestrict_commute_from_mulFormula (N := N) k χ
 
-/-- The restricted cusp `Γ₁(N), χ` good-index operators commute by restricting
-the ambient multiplication-table proof source. -/
-theorem cuspFormCharSpaceFamily_commute_from_mulFormula
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
-    (m n : GoodIndex N) :
-    Commute ((cuspFormCharSpaceFamily (N := N) k χ).op m)
-      ((cuspFormCharSpaceFamily (N := N) k χ).op n) :=
-  heckeT_n_cusp_charRestrict_commute_from_mulFormula (N := N) k χ m n
-
 @[simp] lemma cuspCharHeckeOfGoodIndex_coe
     (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (n : GoodIndex N) (f : cuspFormCharSpace k χ) :
