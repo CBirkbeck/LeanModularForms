@@ -355,77 +355,6 @@ theorem range_castLevelRaise_le_qSupportedOnDvdSubmodule
   rw [castLevelRaise_apply]
   exact cast_levelRaise_mem_qSupportedOnDvdSubmodule hdN g
 
-/-- Character-space Atkin-Lehner identification at the `Submodule` level: the range of
-`castLevelRaise`, intersected with the Nebentypus character space, equals
-`qSupportedOnDvdSubmodule N k d` intersected with the character space. -/
-theorem range_castLevelRaise_inf_cuspFormCharSpace_eq_qSupportedOnDvdSubmodule_inf_cuspFormCharSpace
-    {N : ℕ} [NeZero N] {d : ℕ} [NeZero d] [NeZero (N / d)]
-    (hd : 1 < d) (hdN : d ∣ N) {k : ℤ}
-    (χ : DirichletCharacter ℂ N) :
-    LinearMap.range (castLevelRaise N d hdN k) ⊓
-        cuspFormCharSpace k χ.toUnitHom =
-      qSupportedOnDvdSubmodule N k d ⊓ cuspFormCharSpace k χ.toUnitHom := by
-  ext f
-  rw [Submodule.mem_inf, Submodule.mem_inf]
-  refine ⟨fun ⟨hrange, hchar⟩ ↦
-    ⟨range_castLevelRaise_le_qSupportedOnDvdSubmodule hdN k hrange, hchar⟩,
-    fun ⟨hsup, hchar⟩ ↦ ⟨?_, hchar⟩⟩
-  obtain ⟨g, hg⟩ :=
-    (mem_qSupportedOnDvdSubmodule_inf_cuspFormCharSpace_iff_exists_cuspForm_levelRaise_preimage_of_char
-      hd hdN χ f hchar).mp ⟨hsup, hchar⟩
-  exact ⟨g, by rw [castLevelRaise_apply]; exact hg.symm⟩
-
-/-- Character-decomposition reverse bridge: if a cusp form `f : CuspForm Γ₁(N) k`
-decomposes as a finite sum `f = ∑ χ ∈ S, f_χ χ` with each summand `f_χ χ` lying in
-`qSupportedOnDvdSubmodule N k d ⊓ cuspFormCharSpace k χ.toUnitHom`, then `f` admits an
-explicit level-raise preimage `g : CuspForm Γ₁(N/d) k` with
-`f = castLevelRaise N d hdN k g`. -/
-theorem exists_cuspForm_levelRaise_preimage_of_qSupported_of_char_decomposition
-    {N d : ℕ} [NeZero N] [NeZero d] [NeZero (N / d)]
-    (hd : 1 < d) (hdN : d ∣ N) {k : ℤ}
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (S : Finset (DirichletCharacter ℂ N))
-    (f_χ : DirichletCharacter ℂ N → CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (h_mem : ∀ χ ∈ S, f_χ χ ∈
-      qSupportedOnDvdSubmodule N k d ⊓ cuspFormCharSpace k χ.toUnitHom)
-    (h_decomp : f = ∑ χ ∈ S, f_χ χ) :
-    ∃ g : CuspForm ((Gamma1 (N / d)).map (mapGL ℝ)) k,
-      f = castLevelRaise N d hdN k g := by
-  have h_per_χ : ∀ χ ∈ S, ∃ g : CuspForm ((Gamma1 (N / d)).map (mapGL ℝ)) k,
-      f_χ χ = castLevelRaise N d hdN k g := fun χ hχ ↦ by
-    obtain ⟨hsupp, hchar⟩ := Submodule.mem_inf.mp (h_mem χ hχ)
-    obtain ⟨g, hg⟩ :=
-      (qSupportedOnDvdSubmodule_mem_iff_exists_cuspForm_levelRaise_preimage_of_char
-        hd hdN χ (f_χ χ) hchar).mp hsupp
-    exact ⟨g, by rw [castLevelRaise_apply]; exact hg⟩
-  choose g_χ hg_χ using h_per_χ
-  refine ⟨∑ χ ∈ S.attach, g_χ χ.val χ.property, ?_⟩
-  rw [map_sum, h_decomp, ← Finset.sum_attach S (fun χ ↦ f_χ χ)]
-  exact Finset.sum_congr rfl fun χ _ ↦ hg_χ χ.val χ.property
-
-/-- Character-space mainLemma at prime-power level: for `N = p^r` with `p` prime and
-`r ≥ 1`, a cusp form `f ∈ S_k(Γ₁(p^r), χ)` whose Fourier coefficients vanish at every
-index coprime to `p^r` is an oldform, `f ∈ cuspFormsOld (p^r) k`. -/
-theorem mainLemma_charSpace_primePower
-    {p : ℕ} [hp : Fact p.Prime] {r : ℕ} (hr : 0 < r) {k : ℤ}
-    (χ : DirichletCharacter ℂ (p ^ r))
-    (f : CuspForm ((Gamma1 (p ^ r)).map (mapGL ℝ)) k)
-    (hfχ : f ∈ cuspFormCharSpace k χ.toUnitHom)
-    (h : ∀ n : ℕ, Nat.Coprime n (p ^ r) →
-      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0) :
-    f ∈ cuspFormsOld (p ^ r) k := by
-  have hp_prime : p.Prime := hp.out
-  have h_pr : p ^ r = p ^ (r - 1) * p := by
-    conv_lhs => rw [show r = (r - 1) + 1 from (Nat.sub_add_cancel hr).symm]
-    rw [pow_succ]
-  haveI : NeZero (p ^ r / p) := by
-    rw [show p ^ r / p = p ^ (r - 1) from by rw [h_pr, Nat.mul_div_cancel _ hp_prime.pos]]
-    exact ⟨pow_ne_zero _ hp_prime.ne_zero⟩
-  refine qSupportedOnDvd_mem_cuspFormsOld_of_char hp_prime.one_lt
-    (dvd_pow_self p hr.ne') χ f hfχ fun n hn ↦ h n ?_
-  rw [Nat.coprime_pow_right_iff hr]
-  exact ((hp_prime.coprime_iff_not_dvd).mpr hn).symm
-
 /-- Composite-level mainLemma from a prime-supported decomposition: if
 `f : CuspForm Γ₁(N) k` decomposes as `f = ∑ p ∈ S, f_p p` with `S ⊆ N.primeFactors` and
 each `f_p p` simultaneously in `cuspFormCharSpace k χ` and `qSupportedOnDvdSubmodule N k p`,
@@ -450,21 +379,6 @@ theorem mainLemma_charSpace_of_prime_decomposition
     ⟨(Nat.div_pos (Nat.le_of_dvd (Nat.pos_of_neZero N) hpN) hp_prime.pos).ne'⟩
   exact qSupportedOnDvd_mem_cuspFormsOld_of_char hp_prime.one_lt hpN χ
     (f_p p) (h_char p hp) (h_supp p hp)
-
-/-- Composite-level mainLemma at the full set of prime divisors: any cusp form `f` that
-decomposes as `f = ∑ p ∈ N.primeFactors, f_p p` with each `f_p` in the character space
-and `p`-supported is an oldform. -/
-theorem mainLemma_charSpace_of_primeFactors_decomposition
-    {N : ℕ} [NeZero N] {k : ℤ}
-    (χ : DirichletCharacter ℂ N)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (f_p : ℕ → CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (h_decomp : f = ∑ p ∈ N.primeFactors, f_p p)
-    (h_char : ∀ p ∈ N.primeFactors, f_p p ∈ cuspFormCharSpace k χ.toUnitHom)
-    (h_supp : ∀ p ∈ N.primeFactors, f_p p ∈ qSupportedOnDvdSubmodule N k p) :
-    f ∈ cuspFormsOld N k :=
-  mainLemma_charSpace_of_prime_decomposition χ f N.primeFactors subset_rfl
-    f_p h_decomp h_char h_supp
 
 /-- **Higher-level `p`-supported projection.**  The composition
 `V_p ∘ U_p` at modular-form level, mapping
