@@ -798,22 +798,6 @@ structure NewformExtended (N : ℕ) [NeZero N] (k : ℤ)
   coefficient is `1`. -/
   isNorm : (ModularFormClass.qExpansion (1 : ℝ) toCuspForm).coeff 1 = 1
 
-/-- For `f ∈ cuspFormsNewExtended` and `p ∣ N`, the bad-prime Hecke operator
-`heckeT_n_cusp k p f` lies in the classical `cuspFormsNew N k`, given the
-petN-adjoint identity `h_adj` and extended-oldspace preservation `h_T_p_old`. -/
-theorem heckeT_n_cusp_preserves_cuspFormsNew_of_NewformExtended_at_divN
-    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p] (hp : p.Prime)
-    (hpN : ¬ Nat.Coprime p N)
-    (h_adj : Newform.HasBadPrimeFrickePetNAdjoint N k p)
-    (h_T_p_old :
-      Newform.HasHeckeT_n_cusp_at_divN_PreservesCuspFormsOldExtended N k p hp hpN)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hf : f ∈ cuspFormsNewExtended N k) :
-    heckeT_n_cusp k p f ∈ cuspFormsNew N k :=
-  cuspFormsNewExtended_le_cuspFormsNew
-    (Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_T170_T171
-      hp hpN h_adj h_T_p_old f hf)
-
 /-- Bad-prime newspace-extended preservation needing only the petN-adjoint
 identity `h_adj` (the extended-oldspace input being unconditional). -/
 theorem Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_T170
