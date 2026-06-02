@@ -32,12 +32,12 @@ namespace HeckeRing.GL2
 private lemma ZMod_inv_mul_cancel (p : ℕ) (hp : Nat.Prime p) (a : ℤ)
     (h : (a : ZMod p) ≠ 0) : (a : ZMod p)⁻¹ * (a : ZMod p) = 1 := by
   haveI : NeZero p := ⟨hp.ne_zero⟩
-  apply ZMod.coe_int_inv_mul_eq_one
+  refine ZMod.coe_int_inv_mul_eq_one ?_
   rw [isCoprime_comm, Int.isCoprime_iff_gcd_eq_one]
   show Nat.Coprime p a.natAbs
   rw [hp.coprime_iff_not_dvd]
-  exact fun hdvd => h ((ZMod.intCast_zmod_eq_zero_iff_dvd a p).mpr
-    (Int.natCast_dvd_natCast.mpr hdvd |>.trans (Int.natAbs_dvd.mpr dvd_rfl)))
+  exact fun hdvd ↦ h ((ZMod.intCast_zmod_eq_zero_iff_dvd a p).mpr
+    ((Int.natCast_dvd_natCast.mpr hdvd).trans (Int.natAbs_dvd.mpr dvd_rfl)))
 
 private lemma SL2_entry_mul (A B : SL(2, ℤ)) (i j : Fin 2) :
     (A * B).1 i j = A.1 i 0 * B.1 0 j + A.1 i 1 * B.1 1 j := by
@@ -85,7 +85,7 @@ private lemma Gamma0_prime_index_inj :
       rcases lt_trichotomy k 0 with hk_neg | rfl | hk_pos
       · nlinarith [hp.pos, Int.natCast_nonneg j₁]
       · rfl
-      · nlinarith [hp.pos, show (j₂ : ℤ) < p from by exact_mod_cast h2]
+      · nlinarith [hp.pos, (mod_cast h2 : (j₂ : ℤ) < p)]
     subst hk0; simp only [Fin.mk.injEq]; omega
   · rw [mul_one, TjS_inv_10] at hf
     exact absurd hf (by norm_num)
@@ -115,8 +115,7 @@ private lemma Gamma0_prime_index_surj :
 
 /-- `[SL₂(ℤ) : Γ₀(p)] = p + 1` for prime `p`. -/
 theorem Gamma0_prime_index : (Gamma0 p).index = p + 1 := by
-  unfold Subgroup.index
-  rw [← Nat.card_congr (Equiv.ofBijective _
+  rw [Subgroup.index, ← Nat.card_congr (Equiv.ofBijective _
     ⟨Gamma0_prime_index_inj p hp, Gamma0_prime_index_surj p hp⟩), Nat.card_fin]
 
 end BaseCase
@@ -173,9 +172,9 @@ private lemma Gamma0_relindex_step_inj (k : ℕ) (hk : 0 < k) :
   obtain ⟨m, hm⟩ := hf
   have hm0 : m = 0 := by
     rcases lt_trichotomy m 0 with hm_neg | rfl | hm_pos
-    · nlinarith [hp.pos, Int.natCast_nonneg c₂, show (c₁ : ℤ) < p from by exact_mod_cast hc₁]
+    · nlinarith [hp.pos, Int.natCast_nonneg c₂, (mod_cast hc₁ : (c₁ : ℤ) < p)]
     · rfl
-    · nlinarith [hp.pos, Int.natCast_nonneg c₁, show (c₂ : ℤ) < p from by exact_mod_cast hc₂]
+    · nlinarith [hp.pos, Int.natCast_nonneg c₁, (mod_cast hc₂ : (c₂ : ℤ) < p)]
   subst hm0; simp only [mul_zero, sub_eq_zero] at hm
   simp only [Fin.mk.injEq]; exact_mod_cast hm.symm
 
@@ -200,7 +199,7 @@ private lemma Gamma0_relindex_step_surj (k : ℕ) (hk : 0 < k) :
       Matrix.det_fin_two σ.1 ▸ σ.2
     have h1_dvd : (p : ℤ) ∣ 1 :=
       hdet ▸ dvd_sub (dvd_mul_of_dvd_left h00_dvd _) (dvd_mul_of_dvd_right h10_dvd _)
-    linarith [Int.le_of_dvd one_pos h1_dvd, show (1 : ℤ) < p from by exact_mod_cast hp.one_lt]
+    linarith [Int.le_of_dvd one_pos h1_dvd, (mod_cast hp.one_lt : (1 : ℤ) < p)]
   set c₀ := ((q : ℤ) : ZMod p) * ((σ.1 0 0 : ℤ) : ZMod p)⁻¹ with hc₀_def
   have hc_lt : c₀.val < p := ZMod.val_lt c₀
   refine ⟨⟨c₀.val, hc_lt⟩, ?_⟩
@@ -223,8 +222,7 @@ private lemma Gamma0_relindex_step_surj (k : ℕ) (hk : 0 < k) :
 /-- `[Γ₀(pᵏ) : Γ₀(p^{k+1})] = p` for `k >= 1`. -/
 theorem Gamma0_relindex_step (k : ℕ) (hk : 0 < k) :
     (Gamma0 (p ^ (k + 1))).relIndex (Gamma0 (p ^ k)) = p := by
-  unfold Subgroup.relIndex Subgroup.index
-  rw [← Nat.card_congr (Equiv.ofBijective _
+  rw [Subgroup.relIndex, Subgroup.index, ← Nat.card_congr (Equiv.ofBijective _
     ⟨Gamma0_relindex_step_inj p hp k hk, Gamma0_relindex_step_surj p hp k hk⟩), Nat.card_fin]
 
 end InductiveStep
@@ -237,7 +235,7 @@ theorem Gamma0_prime_power_index (p : ℕ) (hp : Nat.Prime p) (k : ℕ) (hk : 0 
   | succ m ih =>
     rcases Nat.eq_zero_or_pos m with rfl | hm'
     · simp [Gamma0_prime_index p hp]
-    · have h_le : Gamma0 (p ^ (m + 1)) ≤ Gamma0 (p ^ m) := fun σ hσ => by
+    · have h_le : Gamma0 (p ^ (m + 1)) ≤ Gamma0 (p ^ m) := fun σ hσ ↦ by
         rw [Gamma0_mem, ZMod.intCast_zmod_eq_zero_iff_dvd] at hσ ⊢
         exact (Int.natCast_dvd_natCast.mpr (pow_dvd_pow p (Nat.le_succ m))).trans hσ
       rw [Nat.succ_sub_one, ← Subgroup.relIndex_mul_index h_le,
