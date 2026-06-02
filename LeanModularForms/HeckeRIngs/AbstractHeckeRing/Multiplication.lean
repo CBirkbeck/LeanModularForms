@@ -202,21 +202,6 @@ lemma doubleCoset_eq_of_rightCoset_eq (g₁ g₂ d : P.Δ) (p : decompQuot P g�
   rw [← hprod]
   exact DoubleCoset.doubleCoset_mul_right_eq_self P ⟨h, hh⟩ _
 
-/-- The set-form Hecke multiplicity is at most the `mulMap`-form multiplicity, since
-every set-form witness is a `mulMap`-form witness via `doubleCoset_eq_of_rightCoset_eq`. -/
-lemma heckeMultiplicity_le_heckeMultiplicityMulMap (g₁ g₂ d : P.Δ) :
-    heckeMultiplicity P g₁ g₂ d ≤ heckeMultiplicityMulMap P g₁ g₂ d := by
-  unfold heckeMultiplicity heckeMultiplicityMulMap
-  have h_card : Nat.card {p : decompQuot P g₁ × decompQuot P g₂ |
-        ({(p.1.out : G) * (g₁ : G)} : Set G) * {(p.2.out : G) * (g₂ : G)} * P.H =
-        {(d : G)} * (P.H : Set G)} ≤
-      Nat.card {p : decompQuot P g₁ × decompQuot P g₂ |
-        mulMap P g₁ g₂ p = (⟦d⟧ : HeckeCoset P)} :=
-    Nat.card_le_card_of_injective
-      (fun ⟨p, hp⟩ ↦ ⟨p, doubleCoset_eq_of_rightCoset_eq P g₁ g₂ d p hp⟩)
-      (fun ⟨_, _⟩ ⟨_, _⟩ heq ↦ Subtype.ext (Subtype.mk.inj heq))
-  exact_mod_cast h_card
-
 private lemma mulMap_T_one_eq (g₁ : P.Δ) (i : decompQuot P g₁)
     (j : decompQuot P (HeckeCoset.one P).rep) :
     mulMap P g₁ (HeckeCoset.one P).rep (i, j) = (⟦g₁⟧ : HeckeCoset P) := by
