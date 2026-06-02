@@ -328,18 +328,6 @@ lemma modularFormLevelRaise_apply (M : ℕ) [NeZero M] (d : ℕ) [NeZero d] (k :
     modularFormLevelRaise M d k f τ = f ((levelRaiseMatrix d) • τ) :=
   levelRaiseFun_apply d k (⇑f) τ
 
-/-- **Scaled pointwise formula** for the `ModularForm` level-raising operator:
-the level-raised form at `τ` equals `f` at the complex number `d · τ` (viewed
-as an upper-half-plane point). -/
-lemma modularFormLevelRaise_apply_mul (M : ℕ) [NeZero M] (d : ℕ) [NeZero d] (k : ℤ)
-    (f : ModularForm ((Gamma1 M).map (mapGL ℝ)) k) (τ : UpperHalfPlane) :
-    (modularFormLevelRaise M d k f τ : ℂ) =
-      f (UpperHalfPlane.mk ((d : ℂ) * (↑τ : ℂ)) (by
-        rw [Complex.mul_im, Complex.natCast_re, Complex.natCast_im, zero_mul, add_zero]
-        exact mul_pos (Nat.cast_pos.mpr (Nat.pos_of_neZero d)) τ.im_pos)) := by
-  rw [modularFormLevelRaise_apply]
-  exact congrArg f <| UpperHalfPlane.ext <| coe_levelRaiseMatrix_smul d τ
-
 /-- **Surjectivity of `α_l • _` on `ℍ`.** For every `τ' : ℍ` there exists
 `τ : ℍ` with `levelRaiseMatrix l • τ = τ'`; the explicit witness is
 `τ = UpperHalfPlane.mk (↑τ' / l)` (with positive imaginary part since
@@ -587,18 +575,6 @@ theorem qExpansion_modularFormLevelRaise_coeff'
     · rfl
     · simp
   exact (qExpansion_coeff_unique hh_pos hh_period_dN h_sum_g n).symm
-
-/-- **q-expansion scaling formula for `modularFormLevelRaise`.** The level-raised
-form `modularFormLevelRaise N d k f` has `(N : ℝ)`-level Fourier coefficients
-given by `d`-dilation of those of `f`. -/
-theorem qExpansion_modularFormLevelRaise_coeff
-    {N : ℕ} [NeZero N] {d : ℕ} [NeZero d] {k : ℤ}
-    (hN_period : (N : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods)
-    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) (n : ℕ) :
-    (qExpansion (N : ℝ) (modularFormLevelRaise N d k f)).coeff n =
-      if d ∣ n then (qExpansion (N : ℝ) f).coeff (n / d) else 0 :=
-  qExpansion_modularFormLevelRaise_coeff' (Nat.cast_pos.mpr (Nat.pos_of_neZero N))
-    hN_period (by rw [strictPeriods_Gamma1]; exact ⟨(N : ℤ), by simp⟩) f n
 
 /-- **Period-1 specialisation** of `qExpansion_modularFormLevelRaise_coeff'`:
 the canonical Fourier expansion of `modularFormLevelRaise N d k f` is the
