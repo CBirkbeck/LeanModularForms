@@ -73,9 +73,6 @@ noncomputable def lSeries [ModularFormClass F Γ k] (f : F) : ℂ → ℂ :=
 lemma lCoeff_apply [ModularFormClass F Γ k] (f : F) (n : ℕ) :
     lCoeff f n = (ModularFormClass.qExpansion Γ.strictWidthInfty f).coeff n := rfl
 
-@[simp]
-lemma lSeries_apply [ModularFormClass F Γ k] (f : F) (s : ℂ) :
-    lSeries f s = LSeries (lCoeff f) s := rfl
 
 /-- **Hecke's crude bound**: for a weight-`k` modular form (`0 ≤ k`) on an
 arithmetic subgroup, the abscissa of absolute convergence of the associated
