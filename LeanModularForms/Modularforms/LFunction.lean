@@ -625,24 +625,6 @@ theorem hasSum_qExpansion_imAxis_Gamma1_mapGL_ae
   filter_upwards with t ht
   exact hasSum_qExpansion_imAxis_Gamma1_mapGL_of_pos f ht
 
-open CongruenceSubgroup Matrix.SpecialLinearGroup in
-/-- **`HasCompletedMellinIdentity` for `(Gamma1 N).map (mapGL ℝ)`-cusp forms,
-modulo summability**, discharging both `h_meas` and `h_decomp` automatically and
-leaving only the summability hypothesis `h_summ` explicit. -/
-theorem hasCompletedMellinIdentity_of_qExpansion_summ_Gamma1_mapGL
-    {N : ℕ} [NeZero N] {k : ℤ} {F : Type*} [FunLike F ℍ ℂ]
-    [CuspFormClass F ((Gamma1 N).map (mapGL ℝ)) k] (f : F) (hk_pos : 0 < (k : ℝ))
-    (h_summ : ∀ {s : ℂ}, ((k : ℝ) / 2 + 1 : ℝ) < s.re →
-      (∑' m : ℕ, MeasureTheory.lintegral
-        (MeasureTheory.volume.restrict (Set.Ioi (0 : ℝ)))
-        (fun t : ℝ ↦ ‖(t : ℂ) ^ (s - 1) •
-          (lCoeff f m * Function.Periodic.qParam 1 (Complex.I * (t : ℂ)) ^ m)‖ₑ)) ≠
-          (⊤ : ENNReal)) :
-    HasCompletedMellinIdentity f :=
-  hasCompletedMellinIdentity_of_qExpansion_decomp_and_summ_one f hk_pos
-    (fun _ ↦ hasSum_qExpansion_imAxis_Gamma1_mapGL_ae f)
-    h_summ
-
 /-- **Pointwise norm of the period-one Mellin integrand on `Ioi 0`**.
 
 For any `t > 0`, complex `s`, coefficient `a : ℂ`, and `m : ℕ`,
@@ -774,94 +756,6 @@ lemma lintegral_qExpansion_term_eq_Gamma_of_succ
   congr 2
   push_cast
   ring
-
-open CongruenceSubgroup Matrix.SpecialLinearGroup in
-/-- **`h_summ` of period-one Mellin lintegrand reduces to coefficient-tail
-summability**: the per-`s` `h_summ` non-top condition follows from finiteness of
-```
-∑' n : ℕ, ENNReal.ofReal (‖lCoeff f (n + 1)‖ * ((n : ℝ) + 1) ^ (-s.re)) ≠ ⊤.
-``` -/
-theorem h_summ_of_tail_summable_Gamma1_mapGL
-    {N : ℕ} [NeZero N] {k : ℤ} {F : Type*} [FunLike F ℍ ℂ]
-    [CuspFormClass F ((Gamma1 N).map (mapGL ℝ)) k] (f : F) (hk_pos : 0 < (k : ℝ))
-    {s : ℂ} (hs : ((k : ℝ) / 2 + 1 : ℝ) < s.re)
-    (h_tail : (∑' n : ℕ,
-      ENNReal.ofReal (‖lCoeff f (n + 1)‖ * ((n : ℝ) + 1) ^ (-s.re))) ≠ ⊤) :
-    (∑' m : ℕ, ∫⁻ t in Set.Ioi (0 : ℝ),
-        ‖(t : ℂ) ^ (s - 1) •
-          (lCoeff f m * Function.Periodic.qParam 1 (Complex.I * (t : ℂ)) ^ m)‖ₑ) ≠
-      ⊤ := by
-  have hs_re : 0 < s.re := by linarith [show (0 : ℝ) < (k : ℝ) / 2 + 1 by linarith]
-  rw [show (∑' m : ℕ, ∫⁻ t in Set.Ioi (0 : ℝ),
-          ‖(t : ℂ) ^ (s - 1) •
-            (lCoeff f m * Function.Periodic.qParam 1 (Complex.I * (t : ℂ)) ^ m)‖ₑ) =
-        ∑' n : ℕ, ∫⁻ t in Set.Ioi (0 : ℝ),
-            ‖(t : ℂ) ^ (s - 1) •
-              (lCoeff f (n + 1) *
-                Function.Periodic.qParam 1 (Complex.I * (t : ℂ)) ^ (n + 1))‖ₑ by
-    rw [tsum_eq_zero_add' ENNReal.summable,
-        lintegral_qExpansion_term_zero_of_cuspForm f s, zero_add],
-    tsum_congr fun n ↦ lintegral_qExpansion_term_eq_Gamma_of_succ n hs_re]
-  have h_per_term : ∀ n : ℕ,
-      ENNReal.ofReal
-          (‖lCoeff f (n + 1)‖ * (2 * Real.pi * ((n : ℝ) + 1)) ^ (-s.re) *
-            Real.Gamma s.re) =
-        ENNReal.ofReal (Real.Gamma s.re * (2 * Real.pi) ^ (-s.re)) *
-          ENNReal.ofReal (‖lCoeff f (n + 1)‖ * ((n : ℝ) + 1) ^ (-s.re)) := fun n ↦ by
-    rw [Real.mul_rpow (by positivity) (by positivity),
-        show ‖lCoeff f (n + 1)‖ * ((2 * Real.pi) ^ (-s.re) * ((n : ℝ) + 1) ^ (-s.re))
-            * Real.Gamma s.re =
-          (Real.Gamma s.re * (2 * Real.pi) ^ (-s.re)) *
-            (‖lCoeff f (n + 1)‖ * ((n : ℝ) + 1) ^ (-s.re)) by ring]
-    exact ENNReal.ofReal_mul
-      (mul_nonneg (Real.Gamma_pos_of_pos hs_re).le (Real.rpow_nonneg (by positivity) _))
-  rw [tsum_congr h_per_term, ENNReal.tsum_mul_left]
-  exact ENNReal.mul_ne_top ENNReal.ofReal_ne_top h_tail
-
-open CongruenceSubgroup Matrix.SpecialLinearGroup in
-/-- **Coefficient-tail summability for `Γ₁(N)` cusp forms**: absolute summability
-of `fun n : ℕ ↦ ‖lCoeff f (n + 1)‖ * ((n : ℝ) + 1) ^ (-s.re)` on the half-plane
-`(k : ℝ)/2 + 1 < s.re`. -/
-theorem summable_lCoeff_mul_rpow_of_cuspForm_Gamma1_mapGL
-    {N : ℕ} [NeZero N] {k : ℤ} {F : Type*} [FunLike F ℍ ℂ]
-    [CuspFormClass F ((Gamma1 N).map (mapGL ℝ)) k] (f : F)
-    {s : ℂ} (hs : ((k : ℝ) / 2 + 1 : ℝ) < s.re) :
-    Summable (fun n : ℕ ↦ ‖lCoeff f (n + 1)‖ * ((n : ℝ) + 1) ^ (-s.re)) := by
-  have hp_lt : ((k : ℝ) / 2 - s.re) < -1 := by linarith
-  have h_bigO : (fun n : ℕ ↦ lCoeff f n) =O[atTop]
-      fun n : ℕ ↦ (n : ℝ) ^ ((k : ℝ) / 2) := by
-    simpa [lCoeff] using CuspFormClass.qExpansion_isBigO f
-  obtain ⟨C, hCev⟩ := h_bigO.bound
-  obtain ⟨N₀, hC⟩ := Filter.eventually_atTop.mp hCev
-  have h_target_bigO :
-      (fun n : ℕ ↦ ‖lCoeff f (n + 1)‖ * ((n : ℝ) + 1) ^ (-s.re)) =O[atTop]
-        fun n : ℕ ↦ ((n : ℝ) + 1) ^ ((k : ℝ) / 2 - s.re) := by
-    refine Asymptotics.IsBigO.of_bound |C| (Filter.eventually_atTop.mpr ⟨N₀, fun n hn ↦ ?_⟩)
-    have h_n1_pos : (0 : ℝ) < (n : ℝ) + 1 := by positivity
-    have h_pow_neg_nn : (0 : ℝ) ≤ ((n : ℝ) + 1) ^ (-s.re) := Real.rpow_nonneg h_n1_pos.le _
-    have h_pow_diff_nn : (0 : ℝ) ≤ ((n : ℝ) + 1) ^ ((k : ℝ) / 2 - s.re) :=
-      Real.rpow_nonneg h_n1_pos.le _
-    rw [Real.norm_eq_abs, abs_of_nonneg (mul_nonneg (norm_nonneg _) h_pow_neg_nn),
-        Real.norm_eq_abs, abs_of_nonneg h_pow_diff_nn]
-    have h_norm_bound : ‖lCoeff f (n + 1)‖ ≤ C * ((n : ℝ) + 1) ^ ((k : ℝ) / 2) := by
-      have h0 := hC (n + 1) (Nat.le_succ_of_le hn)
-      rw [show ((n + 1 : ℕ) : ℝ) = (n : ℝ) + 1 by push_cast; ring,
-          Real.norm_eq_abs, abs_of_nonneg (Real.rpow_nonneg h_n1_pos.le _)] at h0
-      exact h0
-    calc ‖lCoeff f (n + 1)‖ * ((n : ℝ) + 1) ^ (-s.re)
-        ≤ C * ((n : ℝ) + 1) ^ ((k : ℝ) / 2) * ((n : ℝ) + 1) ^ (-s.re) :=
-          mul_le_mul_of_nonneg_right h_norm_bound h_pow_neg_nn
-      _ = C * ((n : ℝ) + 1) ^ ((k : ℝ) / 2 - s.re) := by
-          rw [mul_assoc, ← Real.rpow_add h_n1_pos]; ring_nf
-      _ ≤ |C| * ((n : ℝ) + 1) ^ ((k : ℝ) / 2 - s.re) :=
-          mul_le_mul_of_nonneg_right (le_abs_self _) h_pow_diff_nn
-  refine summable_of_isBigO_nat ?_ h_target_bigO
-  rw [show (fun n : ℕ ↦ ((n : ℝ) + 1) ^ ((k : ℝ) / 2 - s.re)) =
-      fun n : ℕ ↦ ((n + 1 : ℕ) : ℝ) ^ ((k : ℝ) / 2 - s.re) by
-    funext n; push_cast; ring_nf]
-  exact (summable_nat_add_iff
-      (f := fun n : ℕ ↦ (n : ℝ) ^ ((k : ℝ) / 2 - s.re)) 1).mpr
-    (Real.summable_nat_rpow.mpr hp_lt)
 
 end ModularForms
 
