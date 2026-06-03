@@ -41,14 +41,6 @@ def ModForm_mk (Γ : Subgroup SL(2, ℤ)) (k : ℤ) (f : CuspForm Γ k) : Modula
   holo' := f.holo'
   bdd_at_cusps' := fun hc ↦ bdd_at_cusps f hc
 
-lemma ModForm_mk_inj (Γ : Subgroup SL(2, ℤ)) (k : ℤ) (f : CuspForm Γ k) (hf : f ≠ 0) :
-    ModForm_mk _ _ f ≠ 0 := by
-  rw [DFunLike.ne_iff] at *
-  obtain ⟨x, hx⟩ := hf
-  refine ⟨x, ?_⟩
-  simp only [CuspForm.zero_apply, ne_eq, ModForm_mk, zero_apply] at *
-  exact hx
-
 def CuspForm_to_ModularForm (Γ : Subgroup SL(2, ℤ)) (k : ℤ) :
     CuspForm Γ k →ₗ[ℂ] ModularForm Γ k where
   toFun f := ModForm_mk Γ k f
@@ -71,12 +63,6 @@ def CuspForm_iso_CuspFormSubmodule (Γ : Subgroup SL(2, ℤ)) (k : ℤ) :
   simp only [ModForm_mk, LinearMap.coe_mk, AddHom.coe_mk] at hf
   ext z
   simpa using congr_fun (congr_arg (fun x ↦ x.toFun) hf) z
-
-lemma mem_CuspFormSubmodule (Γ : Subgroup SL(2, ℤ)) (k : ℤ) (f : ModularForm Γ k)
-    (hf : f ∈ CuspFormSubmodule Γ k) :
-    ∃ g : CuspForm Γ k, f = CuspForm_to_ModularForm Γ k g := by
-  rw [CuspFormSubmodule, LinearMap.mem_range] at hf
-  aesop
 
 instance (priority := 100) CuspFormSubmodule.funLike : FunLike (CuspFormSubmodule Γ k) ℍ ℂ where
   coe f := f.1.toFun
@@ -180,8 +166,4 @@ lemma IsCuspForm_iff_coeffZero_eq_zero (k : ℤ) (f : ModularForm Γ(1) k) :
   · intro h
     rw [IsCuspForm, CuspFormSubmodule, LinearMap.mem_range]
     exact ⟨cuspFormOfCoeffZero f h, by ext; rfl⟩
-
-lemma CuspFormSubmodule_mem_iff_coeffZero_eq_zero (k : ℤ) (f : ModularForm Γ(1) k) :
-    f ∈ CuspFormSubmodule Γ(1) k ↔ (qExpansion 1 f).coeff 0 = 0 :=
-  IsCuspForm_iff_coeffZero_eq_zero k f
 
