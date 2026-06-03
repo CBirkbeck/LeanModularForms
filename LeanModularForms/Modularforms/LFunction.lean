@@ -153,12 +153,6 @@ lemma lSeries_eq_zero_iff_cuspForm [Γ.IsArithmetic] [CuspFormClass F Γ k]
   rw [LSeries_eq_zero_iff (lCoeff_zero_of_cuspForm f),
     or_iff_left (abscissaOfAbsConv_lCoeff_lt_top_of_cuspForm f).ne]
 
-/-- Contrapositive form: a cusp form with some non-zero `q`-expansion
-coefficient has a non-identically-zero L-function. -/
-lemma lSeries_ne_zero_of_lCoeff_ne_zero [Γ.IsArithmetic] [CuspFormClass F Γ k]
-    {f : F} (h : lCoeff f ≠ 0) :
-    lSeries f ≠ 0 :=
-  (lSeries_eq_zero_iff_cuspForm f).not.mpr h
 
 open CongruenceSubgroup Matrix.SpecialLinearGroup in
 /-- **Strict width at infinity of the GL₂(ℝ) image of Γ₁(N) is `1`.** -/
@@ -229,10 +223,6 @@ lemma imAxis_apply_of_pos [ModularFormClass F Γ k] (f : F) {t : ℝ} (ht : 0 < 
       simpa using ht⟩ := by
   unfold imAxis; rw [dif_pos ht]
 
-lemma imAxis_apply_of_nonpos [ModularFormClass F Γ k] (f : F) {t : ℝ}
-    (ht : ¬ 0 < t) :
-    imAxis f t = 0 := by
-  unfold imAxis; rw [dif_neg ht]
 
 /-- **Continuity of `imAxis f` on `Ioi 0`.** -/
 lemma continuousOn_imAxis [ModularFormClass F Γ k] (f : F) :
@@ -922,18 +912,6 @@ end ModularForms
 
 namespace LSeries
 
-/-- **Pointwise-norm domination ⇒ abscissa monotonicity.**
-
-If `b : ℕ → ℂ` is dominated by `a : ℕ → ℂ` pointwise in norm
-(`‖b n‖ ≤ ‖a n‖` for every `n : ℕ`), then
-`abscissaOfAbsConv b ≤ abscissaOfAbsConv a`. -/
-lemma abscissaOfAbsConv_le_of_norm_le {a b : ℕ → ℂ}
-    (h : ∀ n, ‖b n‖ ≤ ‖a n‖) :
-    abscissaOfAbsConv b ≤ abscissaOfAbsConv a :=
-  abscissaOfAbsConv_le_of_forall_lt_LSeriesSummable' fun y hy ↦
-    .of_norm_bounded (g := fun n ↦ ‖LSeries.term a (y : ℂ) n‖)
-      (LSeriesSummable_of_abscissaOfAbsConv_lt_re (by simpa using hy)).norm
-      fun n ↦ LSeries.norm_term_le _ (h n)
 
 /-- **Hecke entire-continuation predicate.**  A coefficient sequence
 `a : ℕ → ℂ` *has an entire extension* if there exists an entire
@@ -970,37 +948,6 @@ theorem unique {F G : ℂ → ℂ} (hF : Differentiable ℂ F) (hG : Differentia
       ⟨U, (isOpen_lt continuous_const Complex.continuous_re).mem_nhds hz₀,
         fun s hs ↦ (hFa (hU_sub s hs)).trans (hGa (hU_sub s hs)).symm⟩)
 
-/-- **Equality of entire extensions when underlying L-series agree.**
-If two coefficient sequences `a, b : ℕ → ℂ` both have entire
-extensions and their `LSeries` agree on the joint absolute-convergence
-half-plane, then their entire extensions are equal everywhere on `ℂ`. -/
-theorem extension_eq_of_lSeries_eq_on_halfPlane
-    {a b : ℕ → ℂ} {F G : ℂ → ℂ}
-    (hF : Differentiable ℂ F) (hG : Differentiable ℂ G)
-    (h_finite_a : abscissaOfAbsConv a < ⊤)
-    (h_finite_b : abscissaOfAbsConv b < ⊤)
-    (hFa : ∀ {s : ℂ}, abscissaOfAbsConv a < s.re → F s = LSeries a s)
-    (hGb : ∀ {s : ℂ}, abscissaOfAbsConv b < s.re → G s = LSeries b s)
-    (h_eq : ∀ {s : ℂ}, abscissaOfAbsConv a < s.re →
-        abscissaOfAbsConv b < s.re → LSeries a s = LSeries b s) :
-    F = G := by
-  obtain ⟨σ, hσ_max, _⟩ :=
-    EReal.exists_between_coe_real (max_lt h_finite_a h_finite_b)
-  let U : Set ℂ := {s : ℂ | (σ : ℝ) < s.re}
-  have hU_sub_a : ∀ s ∈ U, abscissaOfAbsConv a < (s.re : EReal) := fun s hs ↦
-    lt_of_lt_of_le (lt_of_le_of_lt (le_max_left _ _) hσ_max)
-      (by exact_mod_cast (hs : (σ : ℝ) < s.re).le)
-  have hU_sub_b : ∀ s ∈ U, abscissaOfAbsConv b < (s.re : EReal) := fun s hs ↦
-    lt_of_lt_of_le (lt_of_le_of_lt (le_max_right _ _) hσ_max)
-      (by exact_mod_cast (hs : (σ : ℝ) < s.re).le)
-  obtain ⟨z₀, hz₀⟩ : U.Nonempty := ⟨((σ + 1 : ℝ) : ℂ), by
-    show (σ : ℝ) < ((σ + 1 : ℝ) : ℂ).re; rw [Complex.ofReal_re]; linarith⟩
-  exact (Complex.analyticOnNhd_univ_iff_differentiable.mpr hF).eq_of_eventuallyEq
-    (Complex.analyticOnNhd_univ_iff_differentiable.mpr hG)
-    (Filter.eventuallyEq_iff_exists_mem.mpr
-      ⟨U, (isOpen_lt continuous_const Complex.continuous_re).mem_nhds hz₀, fun s hs ↦ by
-        rw [hFa (hU_sub_a s hs), h_eq (hU_sub_a s hs) (hU_sub_b s hs),
-          ← hGb (hU_sub_b s hs)]⟩)
 
 end HasEntireExtension
 
@@ -1082,26 +1029,6 @@ lemma coprimeStrip_one (S : Finset Nat.Primes) (f : ℕ → ℂ) :
   unfold coprimeStrip
   rw [if_pos (fun p _ h_dvd ↦ p.prop.one_lt.ne' (Nat.dvd_one.mp h_dvd))]
 
-/-- **`coprimeStrip` preserves multiplicativity on coprime arguments.**
-
-If `f m * f n = f (m * n)` whenever `gcd m n = 1`, then the same holds
-for `coprimeStrip S f`. -/
-lemma coprimeStrip_mul_of_coprime (S : Finset Nat.Primes) (f : ℕ → ℂ)
-    (hmul : ∀ {m n : ℕ}, Nat.Coprime m n → f (m * n) = f m * f n)
-    {m n : ℕ} (hmn : Nat.Coprime m n) :
-    coprimeStrip S f (m * n) = coprimeStrip S f m * coprimeStrip S f n := by
-  unfold coprimeStrip
-  by_cases hmn_strip : ∀ p ∈ S, ¬ (p : ℕ) ∣ m * n
-  · rw [if_pos hmn_strip,
-        if_pos (fun p hp h_dvd ↦ hmn_strip p hp (h_dvd.mul_right n)),
-        if_pos (fun p hp h_dvd ↦ hmn_strip p hp (h_dvd.mul_left m))]
-    exact hmul hmn
-  · rw [if_neg hmn_strip]
-    push Not at hmn_strip
-    obtain ⟨p, hp, hp_dvd⟩ := hmn_strip
-    rcases p.prop.dvd_mul.mp hp_dvd with h_dvd_m | h_dvd_n
-    · rw [if_neg (fun h ↦ h p hp h_dvd_m : ¬ ∀ p ∈ S, ¬ (p : ℕ) ∣ m), zero_mul]
-    · rw [if_neg (fun h ↦ h p hp h_dvd_n : ¬ ∀ p ∈ S, ¬ (p : ℕ) ∣ n), mul_zero]
 
 /-- **`coprimeStrip` value on a positive prime power at a prime in `S`**:
 `coprimeStrip S f (p^e) = 0` for `p ∈ S` and `e ≥ 1`. -/
