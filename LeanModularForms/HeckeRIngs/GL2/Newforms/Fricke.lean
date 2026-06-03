@@ -296,32 +296,6 @@ theorem Newform.imAxis_rapidDecay {N : ℕ} [NeZero N] {k : ℤ}
   Newform.imAxis_rapidDecay_of_exponentialDecay f
     (Newform.hasImAxisExponentialDecay f)
 
-/-- `Newform.ImAxisMellinData` constructor taking the exponential-decay
-hypothesis `hF_exp` in place of the `hF_top` rapid-decay field (discharged via
-`Newform.imAxis_rapidDecay_of_exponentialDecay`). -/
-noncomputable def Newform.ImAxisMellinData.ofExponentialDecay
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k)
-    (G : ℝ → ℂ) (ε : ℂ)
-    (hG_int : MeasureTheory.LocallyIntegrableOn G (Set.Ioi 0))
-    (hk_pos : 0 < (k : ℝ)) (hε_ne : ε ≠ 0)
-    (h_feq : ∀ x ∈ Set.Ioi (0 : ℝ),
-      (Newform.imAxis f) (1 / x) = (ε * ((x ^ (k : ℝ) : ℝ) : ℂ)) • G x)
-    (hF_exp : Newform.HasImAxisExponentialDecay f)
-    (hG_top : ∀ r : ℝ, Asymptotics.IsBigO Filter.atTop
-      (fun x : ℝ ↦ G x - 0) (fun x : ℝ ↦ x ^ r))
-    (h_bridge : ∀ {s : ℂ},
-      LSeries.abscissaOfAbsConv f.lCoeff_stripped < s.re →
-      mellin (Newform.imAxis f) s = LSeries f.lCoeff_stripped s) :
-    Newform.ImAxisMellinData f where
-  G := G
-  ε := ε
-  hG_int := hG_int
-  hk_pos := hk_pos
-  hε_ne := hε_ne
-  h_feq := h_feq
-  hF_top := Newform.imAxis_rapidDecay_of_exponentialDecay f hF_exp
-  hG_top := hG_top
-  h_bridge := h_bridge
 
 
 
@@ -655,32 +629,6 @@ private lemma peterssonAdj_frickeMatrix_det_pos (N : ℕ) [NeZero N] :
   rw [peterssonAdj_frickeMatrix_det_val]
   exact_mod_cast Nat.pos_of_ne_zero (NeZero.ne N)
 
-/-- The Möbius action of `peterssonAdj W_N` agrees with that of `W_N` (the
-overall sign cancels in the quotient). -/
-lemma Newform.peterssonAdj_frickeMatrix_smul (N : ℕ) [NeZero N] (τ : UpperHalfPlane) :
-    (peterssonAdj (Newform.frickeMatrix N)) • τ = Newform.frickeMatrix N • τ := by
-  apply UpperHalfPlane.ext
-  rw [UpperHalfPlane.coe_smul_of_det_pos (peterssonAdj_frickeMatrix_det_pos N),
-      UpperHalfPlane.coe_smul_of_det_pos (Newform.frickeMatrix_det_pos N)]
-  change
-      ((peterssonAdj (Newform.frickeMatrix N) : Matrix (Fin 2) (Fin 2) ℝ) 0 0 *
-            (τ : ℂ) +
-          (peterssonAdj (Newform.frickeMatrix N) :
-              Matrix (Fin 2) (Fin 2) ℝ) 0 1) /
-        ((peterssonAdj (Newform.frickeMatrix N) :
-              Matrix (Fin 2) (Fin 2) ℝ) 1 0 * (τ : ℂ) +
-          (peterssonAdj (Newform.frickeMatrix N) :
-              Matrix (Fin 2) (Fin 2) ℝ) 1 1) =
-      ((Newform.frickeMatrix N : Matrix (Fin 2) (Fin 2) ℝ) 0 0 * (τ : ℂ) +
-          (Newform.frickeMatrix N : Matrix (Fin 2) (Fin 2) ℝ) 0 1) /
-        ((Newform.frickeMatrix N : Matrix (Fin 2) (Fin 2) ℝ) 1 0 * (τ : ℂ) +
-          (Newform.frickeMatrix N : Matrix (Fin 2) (Fin 2) ℝ) 1 1)
-  rw [Newform.peterssonAdj_frickeMatrix_coe, Newform.frickeMatrix_coe]
-  simp only [Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val',
-    Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply]
-  push_cast
-  field_simp [Nat.cast_ne_zero.mpr (NeZero.ne N), UpperHalfPlane.ne_zero τ]
-  ring
 
 
 end FrickeAdjoint
