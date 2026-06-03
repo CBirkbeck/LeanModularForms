@@ -9,7 +9,7 @@ public import Mathlib.Data.Rat.Star
 public import Mathlib.LinearAlgebra.Dimension.Localization
 public import Mathlib.NumberTheory.ModularForms.LevelOne.Basic
 public import Mathlib.NumberTheory.ModularForms.LevelOne.DimensionFormula
-public import LeanModularForms.Modularforms.Eisenstein
+public import LeanModularForms.Modularforms.IsCuspForm
 public import LeanModularForms.Modularforms.DimGenCongLevels.Basic
 public import LeanModularForms.Modularforms.DimGenCongLevels.NormReduction
 public import LeanModularForms.Modularforms.DimGenCongLevels.FiniteDimensional
