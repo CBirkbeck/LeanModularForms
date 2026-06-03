@@ -78,48 +78,6 @@ private lemma imAxis_div_const_isBigO_rpow {N : ℕ} [NeZero N] {k : ℤ}
   rw [h_div_rpow, Real.norm_eq_abs, Real.norm_eq_abs, abs_mul,
     abs_of_pos (Real.rpow_pos_of_pos hc (-r))]
 
-/-- Build `Newform.ImAxisMellinData f` from a CuspForm-valued twist whose
-underlying function equals the Fricke slash
-`⇑f.toCuspForm.toModularForm' ∣[k] frickeMatrix N`, the weight positivity,
-and the Mellin–Dirichlet bridge. -/
-noncomputable def Newform.ImAxisMellinData.ofSlashEq
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k)
-    (twist : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (slash_eq : (⇑twist : UpperHalfPlane → ℂ) =
-      ⇑f.toCuspForm.toModularForm' ∣[k] Newform.frickeMatrix N)
-    (hk_pos : 0 < (k : ℝ))
-    (h_bridge : ∀ {s : ℂ},
-      LSeries.abscissaOfAbsConv f.lCoeff_stripped < s.re →
-      mellin (Newform.imAxis f) s = LSeries f.lCoeff_stripped s) :
-    Newform.ImAxisMellinData f := by
-  have hN_pos : (0 : ℝ) < (N : ℝ) :=
-    Nat.cast_pos.mpr (Nat.pos_of_ne_zero (NeZero.ne N))
-  have hN_ne : (N : ℂ) ≠ 0 := mod_cast hN_pos.ne'
-  let G : ℝ → ℂ := fun t ↦ _root_.ModularForms.imAxis twist (t / (N : ℝ))
-  let ε : ℂ := (N : ℂ) ^ (1 - k) * Complex.I ^ k
-  have hG_continuousOn : ContinuousOn G (Set.Ioi (0 : ℝ)) :=
-    (_root_.ModularForms.continuousOn_imAxis twist).comp
-      (Continuous.continuousOn (by fun_prop)) (fun t ht ↦ div_pos ht hN_pos)
-  have h_feq : ∀ x ∈ Set.Ioi (0 : ℝ),
-      Newform.imAxis f (1 / x) = (ε * ((x ^ (k : ℝ) : ℝ) : ℂ)) • G x := by
-    intro x hx
-    have h_cast : ((x ^ (k : ℝ) : ℝ) : ℂ) = ((x : ℝ) : ℂ) ^ k := by
-      rw [Real.rpow_intCast x k, Complex.ofReal_zpow]
-    change Newform.imAxis f (1 / x) =
-      (((N : ℂ) ^ (1 - k) * Complex.I ^ k) * ((x ^ (k : ℝ) : ℝ) : ℂ)) •
-        _root_.ModularForms.imAxis twist (x / (N : ℝ))
-    rw [Newform.imAxis_feq_of_slashEq f twist slash_eq hx, h_cast, smul_eq_mul]
-  exact {
-    G := G
-    ε := ε
-    hG_int := hG_continuousOn.locallyIntegrableOn measurableSet_Ioi
-    hk_pos := hk_pos
-    hε_ne := mul_ne_zero (zpow_ne_zero _ hN_ne) (zpow_ne_zero _ Complex.I_ne_zero)
-    h_feq := h_feq
-    hF_top := Newform.imAxis_rapidDecay f
-    hG_top := imAxis_div_const_isBigO_rpow twist hN_pos
-    h_bridge := h_bridge
-  }
 
 /-- For every newform `f` in a Nebentypus character eigenspace and every finite
 exceptional set `S`, the bad-prime-zero hypothesis forces the stripped Dirichlet
@@ -508,82 +466,6 @@ def Newform.FullDirichletQuotientUniversalFClause
 
 
 
-/-- Reduce `Newform.FullDirichletQuotientUniversalFClause f χ S T s₀` to a
-half-plane multiplicative entire identity (inverses cleared by
-cross-multiplication), the entirety of the Euler-factor product, and pointwise
-non-vanishing of the linear factors at `s₀`. -/
-theorem Newform.FullDirichletQuotientUniversalFClause_of_halfPlane_multIdentity
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (S : Finset ℕ) (T : Finset Nat.Primes) (s₀ : ℂ)
-    (h_χ_ne_one : (Newform.dirichletLift χ : DirichletCharacter ℂ N) ≠ 1)
-    (h_chi_sq_ne_one : (Newform.dirichletLift χ * Newform.dirichletLift χ
-      : DirichletCharacter ℂ N) ≠ 1)
-    (σ : ℝ)
-    (h_abscissa_lt : LSeries.abscissaOfAbsConv f.lCoeff_stripped < (σ : EReal))
-    (h_EFP_diff : Differentiable ℂ
-      (fun s : ℂ ↦ ∏ p ∈ T, Newform.eulerFactor_stripped f χ S s p))
-    (h_halfPlane_id : ∀ s : ℂ, σ < s.re →
-      LSeries f.lCoeff_stripped s *
-        DirichletCharacter.LFunction (Newform.dirichletLift χ
-          : DirichletCharacter ℂ N) (2 * s - k + 1) *
-        (∏ p ∈ T, (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-            ((p : ℕ) : ZMod N) *
-          ((p : ℕ) : ℂ) ^ (-(2 * s - k + 1)))) =
-      DirichletCharacter.LFunction (Newform.dirichletLift χ * Newform.dirichletLift χ
-        : DirichletCharacter ℂ N) (2 * (2 * s - k + 1)) *
-        (∏ p ∈ T, Newform.eulerFactor_stripped f χ S s p) *
-        (∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-          : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-          ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))))
-    (h_LinFP1_factor_ne_s₀ : ∀ p ∈ T,
-      (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-          ((p : ℕ) : ZMod N) *
-        ((p : ℕ) : ℂ) ^ (-(2 * s₀ - k + 1))) ≠ 0)
-    (h_LinFP2_factor_ne_s₀ : ∀ p ∈ T,
-      (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-        : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-        ((p : ℕ) : ℂ) ^ (-(2 * (2 * s₀ - k + 1)))) ≠ 0) :
-    Newform.FullDirichletQuotientUniversalFClause f χ S T s₀ := by
-  intro F hF h_F_eq
-  have h_LF_chi_diff : Differentiable ℂ (fun s : ℂ ↦
-      DirichletCharacter.LFunction (Newform.dirichletLift χ
-        : DirichletCharacter ℂ N) (2 * s - k + 1)) :=
-    differentiable_LFunction_comp h_χ_ne_one (by fun_prop)
-  have h_LF_chi_sq_diff : Differentiable ℂ (fun s : ℂ ↦
-      DirichletCharacter.LFunction (Newform.dirichletLift χ * Newform.dirichletLift χ
-        : DirichletCharacter ℂ N) (2 * (2 * s - k + 1))) :=
-    differentiable_LFunction_comp h_chi_sq_ne_one (by fun_prop)
-  have h_LinFP1_diff := differentiable_prod_linearFactor
-    (Newform.dirichletLift χ : DirichletCharacter ℂ N) T (g := fun s ↦ 2 * s - k + 1) (by fun_prop)
-  have h_LinFP2_diff := differentiable_prod_linearFactor
-    (Newform.dirichletLift χ * Newform.dirichletLift χ : DirichletCharacter ℂ N) T
-    (g := fun s ↦ 2 * (2 * s - k + 1)) (by fun_prop)
-  have h_global := eq_of_eqOn_halfPlane
-    (F := fun s ↦ F s *
-      DirichletCharacter.LFunction (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-        (2 * s - k + 1) *
-      ∏ p ∈ T, (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N) ((p : ℕ) : ZMod N) *
-        ((p : ℕ) : ℂ) ^ (-(2 * s - k + 1))))
-    (G := fun s ↦
-      DirichletCharacter.LFunction (Newform.dirichletLift χ * Newform.dirichletLift χ
-        : DirichletCharacter ℂ N) (2 * (2 * s - k + 1)) *
-      (∏ p ∈ T, Newform.eulerFactor_stripped f χ S s p) *
-      ∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-        : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-        ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1)))))
-    ((hF.mul h_LF_chi_diff).mul h_LinFP1_diff)
-    ((h_LF_chi_sq_diff.mul h_EFP_diff).mul h_LinFP2_diff) σ (fun s hs ↦ by
-      simp only [h_F_eq (lt_of_lt_of_le h_abscissa_lt (mod_cast hs.le))]
-      exact h_halfPlane_id s hs)
-  filter_upwards [prod_linearFactor_eventually_ne_zero
-      (Newform.dirichletLift χ : DirichletCharacter ℂ N) T (g := fun s ↦ 2 * s - k + 1)
-      (by fun_prop) s₀ h_LinFP1_factor_ne_s₀,
-    prod_linearFactor_eventually_ne_zero
-      (Newform.dirichletLift χ * Newform.dirichletLift χ : DirichletCharacter ℂ N) T
-      (g := fun s ↦ 2 * (2 * s - k + 1)) (by fun_prop) s₀ h_LinFP2_factor_ne_s₀,
-    LFunction_comp_affine_punctured_ne_zero (k := k) h_χ_ne_one s₀]
-    with s h_LP1_ne h_LP2_ne h_LF_ne
-  exact eq_div_prod_inv_of_mul_prod_eq (congrFun h_global s) h_LF_ne h_LP1_ne h_LP2_ne
 
 
 /-- The full-clause analogue of
