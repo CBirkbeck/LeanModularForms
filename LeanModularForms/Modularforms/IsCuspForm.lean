@@ -54,16 +54,6 @@ def CuspForm_to_ModularForm (Γ : Subgroup SL(2, ℤ)) (k : ℤ) :
 def CuspFormSubmodule (Γ : Subgroup SL(2, ℤ)) (k : ℤ) : Submodule ℂ (ModularForm Γ k) :=
   LinearMap.range (CuspForm_to_ModularForm Γ k)
 
-def CuspForm_iso_CuspFormSubmodule (Γ : Subgroup SL(2, ℤ)) (k : ℤ) :
-    CuspForm Γ k ≃ₗ[ℂ] CuspFormSubmodule Γ k := by
-  apply LinearEquiv.ofInjective
-  rw [injective_iff_map_eq_zero]
-  intro f hf
-  rw [CuspForm_to_ModularForm] at hf
-  simp only [ModForm_mk, LinearMap.coe_mk, AddHom.coe_mk] at hf
-  ext z
-  simpa using congr_fun (congr_arg (fun x ↦ x.toFun) hf) z
-
 instance (priority := 100) CuspFormSubmodule.funLike : FunLike (CuspFormSubmodule Γ k) ℍ ℂ where
   coe f := f.1.toFun
   coe_injective' f g h := by cases f; cases g; congr; exact DFunLike.ext' h
@@ -93,19 +83,6 @@ lemma CuspForm_to_ModularForm_coe (Γ : Subgroup SL(2, ℤ)) (k : ℤ) (f : Modu
   have hgg := congr_arg (fun x ↦ x.toSlashInvariantForm) hg
   simp only [ModForm_mk, LinearMap.coe_mk, AddHom.coe_mk] at *
   exact hgg
-
-/-- Build a `CuspForm` from a `SlashInvariantForm` that is holomorphic and tends to 0. -/
-noncomputable def cuspFormOfSIFTendstoZero {k : ℤ}
-    (f_SIF : SlashInvariantForm Γ(1) k)
-    (h_mdiff : MDifferentiable 𝓘(ℂ) 𝓘(ℂ) f_SIF.toFun)
-    (h_zero : Tendsto f_SIF.toFun atImInfty (𝓝 0)) : CuspForm Γ(1) k where
-  toSlashInvariantForm := f_SIF
-  holo' := h_mdiff
-  zero_at_cusps' hc := by
-    apply zero_at_cusps_of_zero_at_infty hc
-    intro A ⟨A', hA'⟩
-    rw [f_SIF.slash_action_eq' A ⟨A', CongruenceSubgroup.mem_Gamma_one A', hA'⟩]
-    exact h_zero
 
 private lemma isZeroAtImInfty_of_coeffZero {k : ℤ}
     (f : ModularForm Γ(1) k)

@@ -449,34 +449,3 @@ lemma isBigO_atImInfty_of_fourier_shift
     _ = (∑' m, ‖a m‖ * rexp (-(2 * π * c) * m)) * rexp (-(2 * π) * n₀ * z.im) := tsum_mul_right
     _ = _ := by ring_nf
 
-/--
-If `F` has a Fourier expansion starting at index `n₀ > 0` with absolutely summable coefficients
-at height `c > 0`, then `t^s * F(it) → 0` as `t → ∞` for any real power `s`.
-
-This converts a Fourier expansion representation directly into polynomial decay on the
-imaginary axis.
--/
-theorem tendsto_rpow_mul_resToImagAxis_of_fourier_shift
-    {F : ℍ → ℂ} {a : ℕ → ℂ} {n₀ : ℕ} {c : ℝ} (hn₀ : 0 < n₀) (hc : 0 < c)
-    (hF : ∀ z : ℍ, F z =
-      ∑' m : ℕ, a m * Complex.exp (2 * π * Complex.I * ((m + n₀ : ℕ) : ℂ) * (z : ℂ)))
-    (ha : Summable (fun m : ℕ ↦ ‖a m‖ * rexp (-(2 * π * c) * (m : ℝ)))) (s : ℝ) :
-    Tendsto (fun t : ℝ ↦ t ^ (s : ℂ) * F.resToImagAxis t) atTop (𝓝 0) :=
-  tendsto_rpow_mul_resToImagAxis_of_isBigO_exp (by positivity)
-    (isBigO_atImInfty_of_fourier_shift hn₀ hc hF ha) s
-
-
-
-/-- If `F` tends to `c` at `atImInfty`, then `F.resToImagAxis` tends to `c` at `atTop`. -/
-lemma tendsto_resToImagAxis_of_tendsto_atImInfty {F : ℍ → ℂ} {c : ℂ}
-    (hF : Tendsto F atImInfty (nhds c)) :
-    Tendsto F.resToImagAxis atTop (nhds c) := by
-  rw [Metric.tendsto_atTop]
-  intro ε hε
-  obtain ⟨A, hA⟩ := Filter.eventually_atImInfty.mp (Metric.tendsto_nhds.mp hF ε hε)
-  refine ⟨max A 1, fun t ht ↦ ?_⟩
-  have ht_pos : 0 < t := one_pos.trans_le (le_of_max_le_right ht)
-  simp only [Function.resToImagAxis, ResToImagAxis, ht_pos, ↓reduceDIte]
-  set z : ℍ := ⟨Complex.I * t, by simp [ht_pos]⟩
-  have hz_im : z.im = t := by simp [UpperHalfPlane.im, z]
-  exact hA z (by simpa [hz_im] using le_of_max_le_left ht)

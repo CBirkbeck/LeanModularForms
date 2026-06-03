@@ -259,23 +259,6 @@ def Newform.HasImAxisExponentialDecay {N : ℕ} [NeZero N] {k : ℤ}
   _root_.ModularForms.HasImAxisExponentialDecay f.toCuspForm
 
 
-/-- `Γ₁(N)`-cusp-form-side `HasImAxisExponentialDecay` for any cusp form on
-`(Gamma1 N).map (mapGL ℝ)` (strict period `1`). -/
-theorem Newform.cuspForm_Gamma1_hasImAxisExponentialDecay {N : ℕ} [NeZero N]
-    {k : ℤ} (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    _root_.ModularForms.HasImAxisExponentialDecay g := by
-  have h1_period : (1 : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
-    rw [show (Gamma1 N).map (mapGL ℝ) = (Gamma1 N : Subgroup (GL (Fin 2) ℝ)) from rfl,
-      CongruenceSubgroup.strictPeriods_Gamma1]
-    exact ⟨1, by simp⟩
-  exact _root_.ModularForms.hasImAxisExponentialDecay_of_strictPeriod
-    g (h := 1) one_pos h1_period
-
-
-
-
-
-
 /-- The Atkin-Lehner / Fricke matrix `W_N := !![0, -1; N, 0]` for level `N`,
 as an element of `GL (Fin 2) ℝ` with determinant `N > 0`. -/
 noncomputable def Newform.frickeMatrix (N : ℕ) [NeZero N] : GL (Fin 2) ℝ :=
@@ -652,22 +635,5 @@ theorem Newform.imAxis_eq_frickeSlash
   rw [h_τ_inner_coe, show ((N : ℝ) : ℂ) = (N : ℂ) by push_cast; rfl,
     show Complex.I * ((x : ℝ) : ℂ) = ((x : ℝ) : ℂ) * Complex.I by ring, mul_zpow]
   exact (frickeRootNumber_scalar_collapse hN_ne hx_ne Complex.I_ne_zero).symm
-
-/-- Imaginary-axis functional equation for a CuspForm `twist` whose underlying
-function equals the Fricke slash `⇑f.toCuspForm.toModularForm' ∣[k] W_N`:
-`Newform.imAxis f (1/x) = (N^{1-k} · I^k · x^k) · ModularForms.imAxis twist (x/N)`. -/
-theorem Newform.imAxis_feq_of_slashEq
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k)
-    (twist : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (slash_eq : (⇑twist : UpperHalfPlane → ℂ) =
-      ⇑f.toCuspForm.toModularForm' ∣[k] Newform.frickeMatrix N)
-    {x : ℝ} (hx : 0 < x) :
-    Newform.imAxis f (1 / x) =
-      ((N : ℂ) ^ (1 - k) * Complex.I ^ k * ((x : ℝ) : ℂ) ^ k) *
-      _root_.ModularForms.imAxis twist (x / (N : ℝ)) := by
-  rw [Newform.imAxis_eq_frickeSlash f hx]
-  congr 1
-  rw [_root_.ModularForms.imAxis_apply_of_pos twist
-    (div_pos hx (Nat.cast_pos.mpr (Nat.pos_of_ne_zero (NeZero.ne N)))), ← slash_eq]
 
 end HeckeRing.GL2

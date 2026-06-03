@@ -49,22 +49,6 @@ theorem modform_tendto_ndhs_zero {k : ℤ} (n : ℕ) [ModularFormClass F Γ(n) k
 
 
 
-lemma qExpansion_mul_coeff (a b : ℤ) (f : ModularForm Γ(n) a) (g : ModularForm Γ(n) b)
-    [NeZero n] : qExpansion n (f.mul g) = qExpansion n f * qExpansion n g := by
-  simpa using
-    (ModularForm.qExpansion_mul (Γ := Γ(n)) (h := n)
-      (hh := Nat.cast_pos.mpr (Nat.pos_of_neZero n))
-      (hΓ := by simp) f g)
-
-variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
-variable {F : Type*} [NormedAddCommGroup F] [NormedSpace 𝕜 F]
-
-
-lemma qExpansion_smul2 (a : ℂ) (f : ModularForm Γ(n) k) [NeZero n] :
-    a • qExpansion n f = qExpansion n (a • f) :=
-  (ModularForm.qExpansion_smul (Γ := Γ(n)) (h := n)
-      (hh := Nat.cast_pos.mpr (Nat.pos_of_neZero n)) (hΓ := by simp) a f).symm
-
 instance : FunLike (ℍ → ℂ) ℍ ℂ where
   coe := fun ⦃a₁⦄ ↦ a₁
   coe_injective' := fun ⦃_ _⦄ a ↦ a

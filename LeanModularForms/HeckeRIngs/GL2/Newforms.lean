@@ -90,42 +90,6 @@ private lemma Newform.term_lCoeff_pow_of_bad_prime_pow
     rw [← Complex.natCast_cpow_natCast_mul (p : ℕ) e (-s),
       show ((e : ℂ) * (-s)) = (-s) * (e : ℂ) from by ring, Complex.cpow_mul_nat]]
 
-private lemma Newform.tsum_term_lCoeff_pow_at_bad_prime_eq_geom
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) {p : ℕ} (hp : p.Prime)
-    (h_bad_pow : ∀ r : ℕ, f.lCoeff (p ^ r) = f.lCoeff p ^ r)
-    {s : ℂ} (hs : (k : ℝ) / 2 + 1 < s.re) :
-    ‖f.lCoeff p * (p : ℂ) ^ (-s)‖ < 1 ∧
-    ∑' e : ℕ, LSeries.term f.lCoeff s ((p : ℕ) ^ e) =
-      (1 - f.lCoeff p * (p : ℂ) ^ (-s))⁻¹ := by
-  have h_term (e : ℕ) : LSeries.term f.lCoeff s ((p : ℕ) ^ e) =
-      (f.lCoeff p * ((p : ℕ) : ℂ) ^ (-s)) ^ e :=
-    f.term_lCoeff_pow_of_bad_prime_pow h_bad_pow s e
-  have h_sum_pow : Summable fun e : ℕ ↦ ‖LSeries.term f.lCoeff s ((p : ℕ) ^ e)‖ :=
-    (f.lSeriesSummable hs).norm.comp_injective
-      fun _ _ hab ↦ Nat.pow_right_injective hp.two_le hab
-  have h_sum_pow_geom : Summable fun e : ℕ ↦ (f.lCoeff p * ((p : ℕ) : ℂ) ^ (-s)) ^ e :=
-    Summable.of_norm <| h_sum_pow.congr fun e ↦ by rw [h_term e]
-  have h_norm_lt : ‖f.lCoeff p * ((p : ℕ) : ℂ) ^ (-s)‖ < 1 :=
-    summable_geometric_iff_norm_lt_one.mp h_sum_pow_geom
-  exact ⟨h_norm_lt, by rw [tsum_congr h_term, tsum_geometric_of_norm_lt_one h_norm_lt]⟩
-
-/-- Prime-factor membership of `N` characterises `(Nat.primeFactors N).attach.image …`. -/
-private lemma Newform.mem_primeFactors_image_iff {N : ℕ} [NeZero N] (p : Nat.Primes) :
-    p ∈ (Nat.primeFactors N).attach.image
-        (fun ⟨q, hq⟩ ↦ (⟨q, (Nat.mem_primeFactors.mp hq).1⟩ : Nat.Primes)) ↔
-      (p : ℕ) ∣ N := by
-  simp only [Finset.mem_image, Finset.mem_attach, true_and, Subtype.exists, Nat.mem_primeFactors]
-  refine ⟨fun ⟨q, ⟨_, hq_N, _⟩, hq_eq⟩ ↦ ?_,
-    fun hp_dvd ↦ ⟨(p : ℕ), ⟨p.prop, hp_dvd, NeZero.ne N⟩, rfl⟩⟩
-  have h_eq : (p : ℕ) = q := by simpa using congr_arg (fun (x : Nat.Primes) ↦ (x : ℕ)) hq_eq.symm
-  rw [h_eq]; exact hq_N
-
-
-
-
-
-
-
 private lemma levelRaiseMatrix_inv_smul_vadd_one_eq
     {l : ℕ} [NeZero l] (τ : UpperHalfPlane) :
     ((levelRaiseMatrix l)⁻¹ • ((1 : ℝ) +ᵥ τ) : UpperHalfPlane) =

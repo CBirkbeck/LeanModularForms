@@ -202,35 +202,6 @@ lemma T_p_lower_mem_D_p_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.Prime p)
   obtain ⟨s, hs, t, ht, hfact⟩ := T_p_lower_factor_through_diag_1p N p hp hpN
   exact mem_D_p_Gamma0_of_factor_through_diag N p hp.pos _ s t hs ht hfact
 
-private lemma Gamma0_pair_H_entry_is_int {N : ℕ} [NeZero N] (g : GL (Fin 2) ℚ)
-    (hg : g ∈ (Gamma0_pair N).H) (i j : Fin 2) : ∃ n : ℤ, g.val i j = (n : ℚ) :=
-  let ⟨s, _, hs⟩ := Subgroup.mem_map.mp hg
-  ⟨s.val i j, by rw [← hs]; simp [mapGL_coe_matrix, algebraMap_int_eq]⟩
-
-private lemma T_p_upper_mul_upper_inv_eq (p : ℕ) (hp : Nat.Prime p) (b₁ b₂ : ℕ) :
-    (T_p_upper p hp.pos b₁ : GL (Fin 2) ℚ) *
-      (T_p_upper p hp.pos b₂ : GL (Fin 2) ℚ)⁻¹ =
-    GeneralLinearGroup.mkOfDetNeZero
-      (!![(1 : ℚ), ((b₁ : ℤ) - (b₂ : ℤ) : ℤ) / (p : ℚ); 0, 1])
-      (by simp [det_fin_two]) := by
-  rw [mul_inv_eq_iff_eq_mul]; apply Units.ext; ext i j
-  simp only [Units.val_mul, Matrix.mul_apply, Fin.sum_univ_two]
-  have hp_ne : (p : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr hp.ne_zero
-  fin_cases i <;> fin_cases j <;>
-    (simp [T_p_upper, GeneralLinearGroup.mkOfDetNeZero, sub_div]; try field_simp; try ring)
-
-private lemma T_p_upper_mul_lower_inv_eq (p : ℕ) (hp : Nat.Prime p) (b : ℕ) :
-    (T_p_upper p hp.pos b : GL (Fin 2) ℚ) *
-      (T_p_lower p hp.pos : GL (Fin 2) ℚ)⁻¹ =
-    GeneralLinearGroup.mkOfDetNeZero
-      (!![(1 / (p : ℚ)), (b : ℚ); 0, (p : ℚ)])
-      (by norm_num [det_fin_two]; exact hp.ne_zero) := by
-  have hp_ne : (p : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr hp.ne_zero
-  rw [mul_inv_eq_iff_eq_mul]; apply Units.ext; ext i j
-  simp only [Units.val_mul, Matrix.mul_apply, Fin.sum_univ_two]
-  fin_cases i <;> fin_cases j <;>
-    (simp [T_p_upper, T_p_lower, GeneralLinearGroup.mkOfDetNeZero]; try field_simp; try ring)
-
 /-- Inclusion `(Gamma0_pair N).H ≤ (GL_pair 2).H = SLnZ_subgroup 2`. Γ₀(N) is the
 image of the inclusion `Γ₀(N) ↪ SL₂(ℤ)` under `mapGL`. -/
 lemma Gamma0_pair_H_le_GL_pair_H (N : ℕ) [NeZero N] :
@@ -404,24 +375,5 @@ private lemma adj_inv_mul_mem_of_quot_eq (N : ℕ) [NeZero N] (p : ℕ) (hp : Na
     g₁ g₂
     e₁.choose_spec.choose_spec.choose_spec.choose_spec
     e₂.choose_spec.choose_spec.choose_spec.choose_spec hquot
-
-private lemma T_p_coset_reps_map_injective (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.Prime p)
-    (hpN : Nat.Coprime p N) : Function.Injective (T_p_coset_reps_map N p hp hpN) := by
-  intro j₁ j₂ heq
-  by_contra hne
-  simp only [T_p_coset_reps_map] at heq
-  by_cases h₁ : j₁.val < p <;> by_cases h₂ : j₂.val < p
-  · simp only [h₁, h₂, dite_true] at heq
-    exact adj_upper_inv_mul_upper_not_mem_Gamma0 N p hp j₁.val j₂.val h₁ h₂
-      (fun h ↦ hne (Fin.ext h))
-      (adj_inv_mul_mem_of_quot_eq N p hp _ _ _ _ heq)
-  · simp only [h₁, dite_true, h₂, dite_false] at heq
-    exact adj_upper_inv_mul_lower_not_mem_Gamma0 N p hp j₁.val
-      (adj_inv_mul_mem_of_quot_eq N p hp _ _ _ _ heq)
-  · simp only [h₁, dite_false, h₂, dite_true] at heq
-    exact adj_lower_inv_mul_upper_not_mem_Gamma0 N p hp j₂.val
-      (adj_inv_mul_mem_of_quot_eq N p hp _ _ _ _ heq)
-  · have := j₁.isLt; have := j₂.isLt; lia
-
 
 end HeckeRing.GL2

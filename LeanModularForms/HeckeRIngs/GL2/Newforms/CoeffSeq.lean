@@ -552,35 +552,6 @@ lemma Newform.norm_chi_unit_eq_one [NeZero N] (χ : (ZMod N)ˣ →* ℂˣ)
   exact Complex.norm_eq_one_of_pow_eq_one h_pow_C Fintype.card_pos.ne'
 
 omit [NeZero N] in
-/-- **Geometric convergence of the good-prime Euler factor argument.**  For
-any prime `q ≥ 2` coprime to `N` and `s ∈ ℂ` with `Re s > (k-1)/2`, the
-geometric ratio `χ(q) · q^{k-1} · (q^{-s})²` has norm `< 1`. -/
-lemma Newform.norm_eulerFactor_argument_lt_one [NeZero N]
-    (χ : (ZMod N)ˣ →* ℂˣ) (k : ℤ)
-    {q : ℕ} (hq : 2 ≤ q) (hqN : Nat.Coprime q N)
-    (s : ℂ) (hs : ((k : ℝ) - 1) / 2 < s.re) :
-    ‖((χ (ZMod.unitOfCoprime q hqN) : ℂ)) * (q : ℂ) ^ (k - 1) *
-      ((q : ℂ) ^ (-s)) ^ 2‖ < 1 := by
-  have hq_pos : (0 : ℝ) < (q : ℝ) := by
-    exact_mod_cast Nat.lt_of_lt_of_le (by norm_num : 0 < 2) hq
-  rw [norm_mul, norm_mul, norm_pow,
-    Newform.norm_chi_unit_eq_one χ (ZMod.unitOfCoprime q hqN), one_mul,
-    show ((q : ℂ) ^ (-s)) = ((q : ℝ) : ℂ) ^ (-s) by push_cast; rfl,
-    Complex.norm_cpow_eq_rpow_re_of_pos hq_pos,
-    show ((q : ℂ) ^ (k - 1)) = ((q : ℝ) : ℂ) ^ (k - 1) by push_cast; rfl,
-    show (((q : ℝ) : ℂ) ^ (k - 1)) = ((q : ℝ) : ℂ) ^ ((k - 1 : ℤ) : ℂ) from by
-      rw [Complex.cpow_intCast],
-    Complex.norm_cpow_eq_rpow_re_of_pos hq_pos,
-    show (-s).re = -s.re by simp,
-    show ((k - 1 : ℤ) : ℂ).re = (k - 1 : ℤ) by simp,
-    show (((q : ℝ) ^ (-s.re : ℝ)) ^ 2) = (q : ℝ) ^ ((-s.re) * 2) from by
-      rw [← Real.rpow_natCast ((q : ℝ) ^ (-s.re : ℝ)) 2, ← Real.rpow_mul hq_pos.le]
-      norm_num,
-    ← Real.rpow_add hq_pos,
-    show ((↑(k - 1 : ℤ) : ℝ) + (-s.re) * 2) = ((k : ℝ) - 1) - 2 * s.re from by
-      push_cast; ring]
-  exact Real.rpow_lt_one_of_one_lt_of_neg (mod_cast hq) (by linarith)
-
 /-- **Algebraic Dirichlet-quotient rewrite of the good-prime Euler
 factor.**  The local Euler factor `(1 + x)⁻¹` decomposes as the ratio
 `(1 - x) · (1 - x²)⁻¹`, exhibiting the formal Dirichlet-quotient shape
@@ -960,32 +931,6 @@ noncomputable def Newform.specialPoint (k : ℤ) : ℂ :=
 @[simp] lemma Newform.specialPoint_im (k : ℤ) :
     (Newform.specialPoint k).im = 0 := Complex.ofReal_im _
 
-
-/-- **Geometric convergence at the special point.**  For any prime `q ≥ 2`
-coprime to `N`, the argument `χ(q) · q^{-(2·s₀-k+1)} = χ(q) · q^{-5}` has
-norm `q^{-5} ≤ 2^{-5} = 1/32 < 1`. -/
-lemma Newform.norm_chi_q_cpow_neg_lt_one_of_re_pos [NeZero N]
-    (χ : (ZMod N)ˣ →* ℂˣ) {q : ℕ} (hq : 2 ≤ q) (hqN : Nat.Coprime q N)
-    {s' : ℂ} (hs' : (0 : ℝ) < s'.re) :
-    ‖(χ (ZMod.unitOfCoprime q hqN) : ℂ) * (q : ℂ) ^ (-s')‖ < 1 := by
-  have hq_two : (2 : ℝ) ≤ (q : ℝ) := mod_cast hq
-  rw [norm_mul, Newform.norm_chi_unit_eq_one, one_mul,
-    show ((q : ℂ) ^ (-s')) = ((q : ℝ) : ℂ) ^ (-s') by push_cast; rfl,
-    Complex.norm_cpow_eq_rpow_re_of_pos (by linarith)]
-  exact Real.rpow_lt_one_of_one_lt_of_neg (by linarith)
-    (by rw [Complex.neg_re]; linarith)
-
-/-- `1 + x ≠ 0` whenever `‖x‖ < 1`: otherwise `x = -1` and `‖x‖ = 1`. -/
-lemma Newform.one_add_ne_zero_of_norm_lt_one {x : ℂ} (hx : ‖x‖ < 1) :
-    (1 : ℂ) + x ≠ 0 := fun h ↦ by
-  rw [show x = -1 by linear_combination h] at hx
-  simp at hx
-
-/-- `1 - x ≠ 0` whenever `‖x‖ < 1`: otherwise `x = 1` and `‖x‖ = 1`. -/
-lemma Newform.one_sub_ne_zero_of_norm_lt_one {x : ℂ} (hx : ‖x‖ < 1) :
-    (1 : ℂ) - x ≠ 0 := fun h ↦ by
-  rw [show x = 1 by linear_combination -h] at hx
-  simp at hx
 
 /-- **Newform prime-nonvanishing** (Miyake Thm 4.5.16, Diamond–Shurman §5.9).
 For a `Newform f` lying in the character eigenspace

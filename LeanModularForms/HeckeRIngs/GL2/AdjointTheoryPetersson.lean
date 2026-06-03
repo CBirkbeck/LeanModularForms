@@ -160,14 +160,6 @@ private theorem diamondOp_cusp_cancel (d : (ZMod N)ˣ) (f : CuspForm ((Gamma1 N)
     ← diamondOpCusp_mul, mul_inv_cancel, diamondOpCusp_one]
   rfl
 
-private theorem diamondOp_cusp_inv_cancel (d : (ZMod N)ˣ)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    diamondOp_cusp k d⁻¹ (diamondOp_cusp k d f) = f := by
-  rw [show diamondOp_cusp k d⁻¹ (diamondOp_cusp k d f) =
-      ((diamondOpCusp k d⁻¹).comp (diamondOpCusp k d)) f from rfl,
-    ← diamondOpCusp_mul, inv_mul_cancel, diamondOpCusp_one]
-  rfl
-
 private theorem diamondOp_cusp_sub (d : (ZMod N)ˣ)
     (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     diamondOp_cusp k d (f - g) = diamondOp_cusp k d f - diamondOp_cusp k d g :=
@@ -451,11 +443,6 @@ private lemma heckeT_n_adjoint_on_charSpace (χ : (ZMod N)ˣ →* ℂˣ) (n : �
   rw [h_diamond]
   simp only [map_inv, Units.val_inv_eq_inv_val]
   exact petN_smul_right _ f (heckeT_n_cusp k n g)
-
-private lemma heckeT_n_cusp_isSemisimple_on_charSpace (χ : (ZMod N)ˣ →* ℂˣ)
-    [FiniteDimensional ℂ (cuspFormCharSpace k χ)] (n : ℕ) [NeZero n] (hn : Nat.Coprime n N) :
-    ⨆ μ : ℂ, (heckeT_n_cusp_charRestrict k n hn χ).maxGenEigenspace μ = ⊤ :=
-  Module.End.iSup_maxGenEigenspace_eq_top (heckeT_n_cusp_charRestrict k n hn χ)
 
 private lemma heckeT_n_cusp_charRestrict_commute (χ : (ZMod N)ˣ →* ℂˣ) (m n : ℕ) [NeZero m]
     [NeZero n] (hm : Nat.Coprime m N) (hn : Nat.Coprime n N) :

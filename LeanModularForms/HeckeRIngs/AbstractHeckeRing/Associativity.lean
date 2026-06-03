@@ -56,14 +56,6 @@ private lemma smulOrbit_map_injective (g β : P.Δ) :
   rw [Set.not_disjoint_iff]
   exact ⟨(i₁.out : G) * (g : G), ⟨1, P.H.one_mem, mul_one _⟩, ⟨k, hk, cancel⟩⟩
 
-private lemma smulOrbit_sum_eq (g β : P.Δ) (f : HeckeLeftCoset P → (HeckeLeftCoset P) →₀ ℤ) :
-    ∑ i ∈ smulOrbit P g β, f i =
-    ∑ q : decompQuot P g, f
-      (⟦⟨(β : G) * (q.out : G) * (g : G),
-        delta_mul_mem P.H P.Δ q.out β g P.h₀⟩⟧ : HeckeLeftCoset P) := by
-  conv_lhs => rw [smulOrbit]; simp only [Finset.top_eq_univ]
-  exact Finset.sum_image fun a _ b _ hab ↦ smulOrbit_map_injective P g β hab
-
 private lemma decompQuot_leftMul_bijective (g₀ : P.Δ) (h : P.H) :
     Function.Bijective (fun q : decompQuot P g₀ ↦
       (⟦⟨(h : G) * q.out, P.H.mul_mem h.2 q.out.2⟩⟧ : decompQuot P g₀)) := by
@@ -123,19 +115,6 @@ private lemma decompQuot_beta_leftMul_coset_eq (g₀ β : P.Δ) (h : P.H) (q : d
   · rintro ⟨_, rfl, k, hk, rfl⟩
     exact ⟨_, rfl, ((g₀ : G)⁻¹ * (n : G) * (g₀ : G)) * k, P.H.mul_mem hn_conj hk,
       by rw [hn_coe]; group⟩
-
-private lemma smulOrbit_sum_left_H_eq (g₀ β : P.Δ) (h : P.H) (c : ℤ) :
-    ∑ q : decompQuot P g₀, Finsupp.single
-      (⟦⟨(β : G) * (h : G) * q.out * (g₀ : G),
-      Submonoid.mul_mem _ (Submonoid.mul_mem _ (Submonoid.mul_mem _ β.2 (P.h₀ h.2))
-        (P.h₀ q.out.2)) g₀.2⟩⟧ : HeckeLeftCoset P) c =
-    ∑ q : decompQuot P g₀, Finsupp.single
-      (⟦⟨(β : G) * q.out * (g₀ : G), delta_mul_mem P.H P.Δ q.out β g₀ P.h₀⟩⟧ :
-        HeckeLeftCoset P) c := by
-  set σ : decompQuot P g₀ → decompQuot P g₀ :=
-    fun q ↦ ⟦⟨(h : G) * q.out, P.H.mul_mem h.2 q.out.2⟩⟧
-  exact Fintype.sum_bijective σ (decompQuot_leftMul_bijective P g₀ h) _ _
-    fun q ↦ by congr 1; exact decompQuot_beta_leftMul_coset_eq P g₀ β h q
 
 private lemma conjAct_inv_mem_of_subgroupOf (g : G)
     (n : (ConjAct.toConjAct g • P.H).subgroupOf P.H) : g⁻¹ * (n : G)⁻¹ * g ∈ P.H := by

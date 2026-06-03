@@ -521,54 +521,6 @@ private lemma gcd_step_matrix_eq (k : ℕ) (e : Fin (k + 2) ≃ Fin 2 ⊕ Fin k)
   exact blockEmbed_mul_diagonal_eq k e d d' _ _ _ _ hH hH' (gcd_2x2_mul a b)
     (fun i ↦ by simp only [Function.comp]; exact hrest _ (hinr0 i) (hinrj i)) hsub
 
-private lemma gcd_step_divchain (k : ℕ) (d : Fin (k + 2) → ℤ) (hd : ∀ i, 0 < d i) :
-    let a := d ⟨0, by omega⟩; let b := d ⟨1, by omega⟩
-    let g : ℤ := ↑(a.gcd b); let p := a / g; let q := b / g
-    ∃ (L R : SpecialLinearGroup (Fin (k + 2)) ℤ) (d' : Fin (k + 2) → ℤ),
-      (∀ i, 0 < d' i) ∧ d' ⟨0, by omega⟩ = g ∧ d' ⟨1, by omega⟩ = p * q * g ∧
-      (∀ j : Fin k, d' ⟨j.val + 2, by omega⟩ = d ⟨j.val + 2, by omega⟩) ∧
-      g ∣ (p * q * g) ∧ (g.natAbs ≤ a.natAbs) ∧ (¬(a ∣ b) → g.natAbs < a.natAbs) ∧
-      (L : Matrix _ _ ℤ) * Matrix.diagonal d * (R : Matrix _ _ ℤ) = Matrix.diagonal d' := by
-  intro a b g p q
-  set e := finEquivSum k
-  set d' : Fin (k + 2) → ℤ := fun i ↦
-    if i.val = 0 then g else if i.val = 1 then p * q * g else d i
-  have ha : 0 < a := hd ⟨0, by omega⟩; have hb : 0 < b := hd ⟨1, by omega⟩
-  have hg_pos : (0 : ℤ) < g :=
-    Int.natCast_pos.mpr (Nat.gcd_pos_of_pos_left _ (Int.natAbs_pos.mpr (ne_of_gt ha)))
-  have hp_pos : 0 < p := Int.ediv_pos_of_pos_of_dvd ha (le_of_lt hg_pos) (Int.gcd_dvd_left a b)
-  have hq_pos : 0 < q := Int.ediv_pos_of_pos_of_dvd hb (le_of_lt hg_pos) (Int.gcd_dvd_right a b)
-  have hd'_pos : ∀ i, 0 < d' i := fun i ↦ by
-    simp only [d']; split_ifs <;> [exact hg_pos; positivity; exact hd i]
-  set L22 := !![a.gcdA b, a.gcdB b; -(b / g), a / g]
-  set R22 := !![(1 : ℤ), -(a.gcdB b * (b / g)); 1, 1 - a.gcdB b * (b / g)]
-  set L_big : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ :=
-    (fromBlocks L22 0 0 (1 : Matrix (Fin k) (Fin k) ℤ)).submatrix e e
-  set R_big : Matrix (Fin (k + 2)) (Fin (k + 2)) ℤ :=
-    (fromBlocks R22 0 0 (1 : Matrix (Fin k) (Fin k) ℤ)).submatrix e e
-  have hL_det_big : L_big.det = 1 := by
-    simp only [L_big]; rw [det_submatrix_equiv_self, det_fromBlocks_zero₂₁, det_one, mul_one,
-      gcd_2x2_det_L a b ha]
-  have hR_det_big : R_big.det = 1 := by
-    simp only [R_big]; rw [det_submatrix_equiv_self, det_fromBlocks_zero₂₁, det_one, mul_one,
-      gcd_2x2_det_R a b]
-  refine ⟨⟨L_big, hL_det_big⟩, ⟨R_big, hR_det_big⟩, d', hd'_pos,
-    by simp [d'], by simp [d'], ?_, dvd_mul_left g (p * q), ?_, ?_, ?_⟩
-  · intro j; simp [d', show j.val + 2 ≠ 1 by omega]
-  · exact gcd_natAbs_le_left a b ha
-  · exact gcd_natAbs_lt_left_of_not_dvd a b ha
-  · show L_big * Matrix.diagonal d * R_big = Matrix.diagonal d'
-    have h1 : (1 : Fin (k + 2)).val = 1 := Fin.val_one k
-    refine gcd_step_matrix_eq k e (1 : Fin (k + 2)) d d' a b rfl rfl rfl ?_ ?_
-      (finEquivSum_symm_inl0 k) (finEquivSum_symm_inl1 k) (finEquivSum_symm_inr_ne_zero k)
-      (finEquivSum_symm_inr_ne_one k) (diagonal_submatrix_finEquivSum k)
-    · show (if (1 : Fin (k + 2)).val = 0 then g else if (1 : Fin (k + 2)).val = 1
-        then p * q * g else d 1) = _
-      rw [h1]; rfl
-    · intro i hi0 hij; simp only [d']
-      rw [if_neg (show (i : ℕ) ≠ 0 from fun h ↦ hi0 (Fin.ext h)),
-        if_neg (show (i : ℕ) ≠ 1 from fun h ↦ hij (Fin.ext (h.trans h1.symm)))]
-
 private noncomputable def genEquiv (k : ℕ) (j : Fin (k + 2)) (_hj : j.val ≠ 0) :
     Fin (k + 2) ≃ Fin 2 ⊕ Fin k :=
   (Equiv.swap (⟨1, by omega⟩ : Fin (k + 2)) j).trans (finEquivSum k)

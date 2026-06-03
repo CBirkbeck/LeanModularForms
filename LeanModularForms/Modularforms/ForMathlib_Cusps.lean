@@ -27,10 +27,3 @@ theorem zero_at_cusps_of_zero_at_infty {f : ℍ → ℂ} {c : OnePoint ℝ} {k :
   rw [Subgroup.IsArithmetic.isCusp_iff_isCusp_SL2Z] at hc
   exact (OnePoint.isZeroAt_iff_forall_SL2Z hc).mpr fun A _ ↦ hb A ⟨A, rfl⟩
 
-/-- If `f ∣[k] A` is bounded at imaginary infinity for every `A ∈ 𝒮ℒ`, then `f` is bounded at
-every cusp `c` of the arithmetic subgroup `𝒢`. -/
-theorem bounded_at_cusps_of_bounded_at_infty {f : ℍ → ℂ} {c : OnePoint ℝ} {k : ℤ}
-    {𝒢 : Subgroup (GL (Fin 2) ℝ)} [𝒢.IsArithmetic] (hc : IsCusp c 𝒢)
-    (hb : ∀ A ∈ 𝒮ℒ, UpperHalfPlane.IsBoundedAtImInfty (f ∣[k] A)) : c.IsBoundedAt f k := by
-  rw [Subgroup.IsArithmetic.isCusp_iff_isCusp_SL2Z] at hc
-  exact (OnePoint.isBoundedAt_iff_forall_SL2Z hc).mpr fun A _ ↦ hb A ⟨A, rfl⟩

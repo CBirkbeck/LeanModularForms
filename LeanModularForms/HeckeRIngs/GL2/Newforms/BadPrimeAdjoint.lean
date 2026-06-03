@@ -734,40 +734,4 @@ private lemma heckeT_n_succ_pp_eq_at_bad_prime
       heckeT_ppow_eq_pow_of_not_coprime k hp hpN v,
       pow_succ' (heckeT_p_all k p hp) v]
 
-/-- For a bad prime `p ∣ N` with the petN-adjoint hypothesis `h_adj`, `T_{p^v}`
-preserves `cuspFormsNewExtended` for every `v : ℕ`. -/
-theorem NewformExtended.heckeT_pp_cusp_mem_cuspFormsNewExtended_at_bad_of_T170
-    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p] (hp : p.Prime)
-    (hpN : ¬ Nat.Coprime p N)
-    (h_adj : Newform.HasBadPrimeFrickePetNAdjoint N k p)
-    (v : ℕ)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hf : f ∈ cuspFormsNewExtended N k) :
-    haveI : NeZero (p ^ v) := ⟨pow_ne_zero _ hp.ne_zero⟩
-    heckeT_n_cusp k (p ^ v) f ∈ cuspFormsNewExtended N k := by
-  induction v with
-  | zero =>
-    haveI : NeZero (p ^ 0) := ⟨by simp⟩
-    have h_op : heckeT_n (N := N) k (p ^ 0) = 1 := heckeT_n_one k
-    have h_eq : heckeT_n_cusp k (p ^ 0) f = f := by
-      apply CuspForm.ext; intro z
-      show (heckeT_n k (p ^ 0) f.toModularForm').toFun z = f z
-      rw [h_op]; rfl
-    rw [h_eq]; exact hf
-  | succ v ih =>
-    haveI : NeZero (p ^ v) := ⟨pow_ne_zero _ hp.ne_zero⟩
-    haveI : NeZero (p ^ (v + 1)) := ⟨pow_ne_zero _ hp.ne_zero⟩
-    have h_step : heckeT_n_cusp k (p ^ (v + 1)) f =
-        heckeT_n_cusp k p (heckeT_n_cusp k (p ^ v) f) := by
-      apply CuspForm.ext; intro z
-      show (heckeT_n k (p ^ (v + 1)) f.toModularForm').toFun z =
-        ((heckeT_n k p) ((heckeT_n k (p ^ v)) f.toModularForm')).toFun z
-      rw [heckeT_n_succ_pp_eq_at_bad_prime hp hpN v]; rfl
-    rw [h_step]
-    exact Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_T170
-      hp hpN h_adj _ ih
-
-
-
-
 end HeckeRing.GL2

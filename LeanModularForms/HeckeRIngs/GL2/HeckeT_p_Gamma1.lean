@@ -133,28 +133,6 @@ private lemma gamma_prime_det (N p : ℕ) [NeZero N] (hpN : Nat.Coprime p N) :
         ((N : ℤ) * mIdxOfCoprime N p hpN), 1] : Matrix (Fin 2) (Fin 2) ℤ).det = 1 := by
   simp [det_fin_two]; linarith [N_mul_mIdx_eq N p hpN]
 
-private lemma gamma_prime_mem_Gamma1 (N p : ℕ) [NeZero N] (hpN : Nat.Coprime p N) :
-    (⟨!![((aInvOfCoprime N p hpN : ℤ) * p), 1;
-         ((N : ℤ) * mIdxOfCoprime N p hpN), 1], gamma_prime_det N p hpN⟩ :
-      SL(2, ℤ)) ∈ Gamma1 N := by
-  refine (Gamma1_mem N _).mpr ⟨?_, ?_, ?_⟩
-  · change (((aInvOfCoprime N p hpN : ℤ) * p : ℤ) : ZMod N) = 1
-    push_cast; exact aInvOfCoprime_mul_eq_one N p hpN
-  · change ((1 : ℤ) : ZMod N) = 1; simp
-  · change (((N : ℤ) * mIdxOfCoprime N p hpN : ℤ) : ZMod N) = 0
-    push_cast; rw [ZMod.natCast_self, zero_mul]
-
-private lemma M_infty_eq_diag_mul_gamma_prime (N p : ℕ) [NeZero N] (hp : 0 < p)
-    (hpN : Nat.Coprime p N) :
-    M_infty N p hp hpN = diagMat 2 ![1, p] *
-      (mapGL ℚ (⟨!![((aInvOfCoprime N p hpN : ℤ) * p), 1;
-           ((N : ℤ) * mIdxOfCoprime N p hpN), 1], gamma_prime_det N p hpN⟩ :
-        SL(2, ℤ))) := by
-  apply Units.ext
-  rw [diag_1p_mul_mapGL_val p hp, M_infty_val]
-  ext i j
-  fin_cases i <;> fin_cases j <;> simp [mul_comm]
-
 /-- `M_∞` equals the product `(mapGL ℚ σ_p_specific) · T_p_lower` in `GL₂(ℚ)`.
 This is the form that gives the diamond-twisted slash identity. -/
 lemma M_infty_eq_sigma_mul_T_p_lower (N p : ℕ) [NeZero N] (hp : 0 < p)
@@ -208,11 +186,6 @@ lemma heckeT_p_fun_eq_coset_sum {N : ℕ} [NeZero N] (k : ℤ) {p : ℕ}
   congr 1
   rw [slash_M_infty_eq_diamond_slash_T_p_lower k p hp.pos hpN f]
 
-private lemma Gamma1_pair_H_entry_is_int {N : ℕ} [NeZero N] (g : GL (Fin 2) ℚ)
-    (hg : g ∈ (Gamma1_pair N).H) (i j : Fin 2) : ∃ n : ℤ, g.val i j = (n : ℚ) :=
-  let ⟨s, _, hs⟩ := Subgroup.mem_map.mp hg
-  ⟨s.val i j, by rw [← hs]; simp [mapGL_coe_matrix, algebraMap_int_eq]⟩
-
 private lemma adj_T_p_upper_val (p : ℕ) (hp : 0 < p) (b : ℕ) :
     (GL_adjugate (T_p_upper p hp b : GL (Fin 2) ℚ)).val =
     !![(p : ℚ), -(b : ℚ); 0, 1] := by
@@ -227,16 +200,6 @@ private lemma adj_T_p_upper_inv_val (p : ℕ) (hp : 0 < p) (b : ℕ) :
   ext i j
   fin_cases i <;> fin_cases j <;>
     simp [Matrix.det_fin_two_of] <;> field_simp
-
-private lemma adj_upper_inv_mul_upper_val (p : ℕ) (hp : 0 < p) (b₁ b₂ : ℕ) :
-    ((GL_adjugate (T_p_upper p hp b₁ : GL (Fin 2) ℚ))⁻¹ *
-      GL_adjugate (T_p_upper p hp b₂ : GL (Fin 2) ℚ)).val =
-    !![(1 : ℚ), ((b₁ : ℤ) - (b₂ : ℤ) : ℤ) / (p : ℚ); 0, 1] := by
-  have : (p : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr hp.ne'
-  rw [Units.val_mul, adj_T_p_upper_inv_val p hp b₁, adj_T_p_upper_val p hp b₂]
-  ext i j
-  fin_cases i <;> fin_cases j <;>
-    simp [Matrix.mul_apply, Fin.sum_univ_two, sub_div] <;> field_simp <;> ring
 
 private lemma diagMat_1p_val (p : ℕ) (hp : 0 < p) :
     (diagMat 2 ![1, p] : GL (Fin 2) ℚ).val =
@@ -256,41 +219,5 @@ private lemma diagMat_1p_inv_val (p : ℕ) (hp : 0 < p) :
   ext i j
   fin_cases i <;> fin_cases j <;>
     simp [Matrix.det_fin_two_of] <;> field_simp
-
-private lemma conj_diag_val_entry (p : ℕ) (hp : 0 < p) (s : SL(2, ℤ)) (i j : Fin 2) :
-    (((diagMat 2 ![1, p] : GL (Fin 2) ℚ))⁻¹ *
-      (mapGL ℚ s) * (diagMat 2 ![1, p])).val i j =
-    (![![((s.val 0 0 : ℤ) : ℚ), (p : ℚ) * (s.val 0 1 : ℤ)],
-       ![((s.val 1 0 : ℤ) : ℚ) / (p : ℚ), ((s.val 1 1 : ℤ) : ℚ)]]) i j := by
-  have : (p : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr hp.ne'
-  rw [Units.val_mul, Units.val_mul, diagMat_1p_inv_val p hp, diagMat_1p_val p hp]
-  simp only [mapGL_coe_matrix, Matrix.mul_apply, Fin.sum_univ_two,
-    algebraMap_int_eq]
-  fin_cases i <;> fin_cases j <;> simp <;> field_simp
-
-private lemma h_quot_imp_adj_mem_Gamma1 (N p : ℕ) [NeZero N] (hp : 0 < p)
-    (a₁ : GL (Fin 2) ℚ) (ha₁ : a₁ ∈ (Gamma1_pair N).H)
-    (c₁ : GL (Fin 2) ℚ) (hc₁ : c₁ ∈ (Gamma1_pair N).H)
-    (a₂ : GL (Fin 2) ℚ) (ha₂ : a₂ ∈ (Gamma1_pair N).H)
-    (c₂ : GL (Fin 2) ℚ) (hc₂ : c₂ ∈ (Gamma1_pair N).H)
-    (g₁ g₂ : GL (Fin 2) ℚ)
-    (heq₁ : GL_adjugate g₁ = a₁ * (HeckeCoset.rep (D_p_Gamma1 N p hp) : GL _ ℚ) * c₁)
-    (heq₂ : GL_adjugate g₂ = a₂ * (HeckeCoset.rep (D_p_Gamma1 N p hp) : GL _ ℚ) * c₂)
-    (hquot : (⟦(⟨a₁, ha₁⟩ : (Gamma1_pair N).H)⟧ :
-        decompQuot (Gamma1_pair N) (HeckeCoset.rep (D_p_Gamma1 N p hp))) =
-      ⟦⟨a₂, ha₂⟩⟧) :
-    (GL_adjugate g₁)⁻¹ * GL_adjugate g₂ ∈ (Gamma1_pair N).H := by
-  rw [heq₁, heq₂]
-  have hrel := QuotientGroup.leftRel_apply.mp (Quotient.exact hquot)
-  rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem] at hrel
-  simp only [ConjAct.smul_def, ConjAct.ofConjAct_toConjAct, map_inv, inv_inv,
-    Subgroup.coe_mul, Subgroup.coe_inv] at hrel
-  have h_prod : (a₁ * ↑(HeckeCoset.rep (D_p_Gamma1 N p hp)) * c₁)⁻¹ *
-      (a₂ * ↑(HeckeCoset.rep (D_p_Gamma1 N p hp)) * c₂) =
-      c₁⁻¹ * ((↑(HeckeCoset.rep (D_p_Gamma1 N p hp)))⁻¹ * (a₁⁻¹ * a₂) *
-        ↑(HeckeCoset.rep (D_p_Gamma1 N p hp))) * c₂ := by group
-  rw [h_prod]
-  exact (Gamma1_pair N).H.mul_mem
-    ((Gamma1_pair N).H.mul_mem ((Gamma1_pair N).H.inv_mem hc₁) hrel) hc₂
 
 end HeckeRing.GL2

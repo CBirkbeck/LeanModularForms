@@ -37,8 +37,6 @@ theorem β_eq_negI_mul_S_mul_α_inv_mul_S : β = negI * S * α⁻¹ * S := by
   ext; simp [β, S, α, negI]
 
 
-theorem ModularGroup.modular_negI_inv : negI⁻¹ = negI := by ext i j; simp [negI]
-
 section slash_action
 
 variable (f : ℍ → ℂ) (k : ℤ) (z : ℍ)
@@ -46,9 +44,6 @@ variable (f : ℍ → ℂ) (k : ℤ) (z : ℍ)
 open ModularForm
 
 theorem modular_negI_smul : negI.1 • z = z := by rw [specialLinearGroup_apply]; simp [negI]
-
-theorem modular_slash_negI_of_even (hk : Even k) : f ∣[k] negI.1 = f := by
-  ext x; rw [slash_action_eq'_iff, modular_negI_smul]; simp [negI, hk.neg_one_zpow]
 
 theorem modular_slash_S_apply :
     (f ∣[k] S) z = f (UpperHalfPlane.mk (-z)⁻¹ z.im_inv_neg_coe_pos) * z ^ (-k) := by
@@ -263,29 +258,5 @@ theorem slashaction_generators' (f : ℍ → ℂ) {G : Subgroup SL(2, ℤ)} (s :
     · simp [← hG]
     · exact h
     · exact SlashAction.slash_one k f
-
-theorem slashaction_generators_SL2Z
-    (f : ℍ → ℂ) (k : ℤ) (hS : f ∣[k] S = f) (hT : f ∣[k] T = f) :
-    (∀ γ : SL(2, ℤ), f ∣[k] γ = f) := by
-  intro γ
-  refine (slashaction_generators f ⊤ _ SL2Z_generate k).mpr ?_ ⟨γ, by simp⟩
-  rintro γ (rfl | rfl | rfl | _) <;> assumption
-
-theorem slashaction_generators_GL2R
-    (f : ℍ → ℂ) (k : ℤ) (hS : f ∣[k] S = f) (hT : f ∣[k] T = f) :
-    (∀ γ ∈ Subgroup.map (Matrix.SpecialLinearGroup.mapGL ℝ) (CongruenceSubgroup.Gamma 1),
-       f ∣[k] γ = f) := by
-  rintro γ ⟨A, hA₁, hA₂⟩
-  rw [← hA₂]
-  refine (slashaction_generators f ⊤ _ SL2Z_generate k).mpr ?_ ⟨A, by simp⟩
-  rintro γ (rfl | rfl | rfl | _) <;> assumption
-
-theorem slashaction_generators_Γ2 (f : ℍ → ℂ) (k : ℤ) (hα : f ∣[k] α.1 = f)
-    (hβ : f ∣[k] β.1 = f) (hnegI : f ∣[k] negI.1 = f) :
-    (∀ γ ∈ Subgroup.map (SpecialLinearGroup.mapGL ℝ) (Γ 2), f ∣[k] γ = f) := by
-  rintro γ ⟨A, hA₁, hA₂⟩
-  rw [← hA₂]
-  refine (slashaction_generators' f {α, β, negI} Γ2_generate k).mpr ?_ ⟨_, hA₁⟩
-  rintro γ (rfl | rfl | rfl | _) <;> assumption
 
 end slashaction_generators

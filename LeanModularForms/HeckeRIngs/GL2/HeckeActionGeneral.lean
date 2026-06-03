@@ -336,32 +336,6 @@ lemma tRep_gen_mul_anti (D₁ D₂ : HeckeCoset P) (i : decompQuot P (HeckeCoset
       ((j.out : GL _ ℚ) * (HeckeCoset.rep D₂ : GL _ ℚ))) := by
   rw [← GL_adjugate_mul]
 
-private lemma left_coset_disjoint_gen (D : HeckeCoset P)
-    (i j : decompQuot P (HeckeCoset.rep D)) (hij : i ≠ j) :
-    (P.H : Set (GL (Fin 2) ℚ)) * {tRep_gen P D i} ≠
-    (P.H : Set (GL (Fin 2) ℚ)) * {tRep_gen P D j} := by
-  intro h_eq
-  apply decompQuot_coset_diff P (HeckeCoset.rep D) i j hij
-  have hmem : tRep_gen P D i ∈ (P.H : Set _) * ({tRep_gen P D j} : Set _) := by
-    rw [← h_eq]; exact ⟨1, P.H.one_mem, _, rfl, by simp⟩
-  obtain ⟨h, hh, _, rfl, heq⟩ := hmem
-  have h_key : (i.out : GL (Fin 2) ℚ) * (HeckeCoset.rep D : GL (Fin 2) ℚ) =
-      ((j.out : GL (Fin 2) ℚ) * (HeckeCoset.rep D : GL (Fin 2) ℚ)) *
-        GL_adjugate h := by
-    have step := GL_adjugate_involutive
-      ((i.out : GL (Fin 2) ℚ) * (HeckeCoset.rep D : GL (Fin 2) ℚ))
-    change GL_adjugate (tRep_gen P D i) = _ at step
-    rw [show tRep_gen P D i = h * tRep_gen P D j from heq.symm] at step
-    rw [← step, GL_adjugate_mul h (tRep_gen P D j), GL_adjugate_involutive, mul_assoc]
-  calc ({(i.out : GL (Fin 2) ℚ) * (HeckeCoset.rep D : GL _ ℚ)} : Set _) * (P.H : Set _)
-      = ({((j.out : GL (Fin 2) ℚ) * (HeckeCoset.rep D : GL _ ℚ)) *
-          GL_adjugate h} : Set _) * (P.H : Set _) := by rw [h_key]
-    _ = ({(j.out : GL (Fin 2) ℚ) * (HeckeCoset.rep D : GL _ ℚ)} : Set _) *
-          (({GL_adjugate h} : Set _) * (P.H : Set _)) := by
-        rw [← Set.singleton_mul_singleton, mul_assoc]
-    _ = ({(j.out : GL (Fin 2) ℚ) * (HeckeCoset.rep D : GL _ ℚ)} : Set _) * (P.H : Set _) := by
-        rw [Subgroup.singleton_mul_subgroup (HeckePairAction.adjugate_mem_H h hh)]
-
 private lemma slash_tRep_gen_mul_eq_perm (k : ℤ) (D : HeckeCoset P) (f : ℍ → ℂ)
     (hf : ∀ h, h ∈ P.H → f ∣[k] (glMap h) = f) (σ_Q : GL (Fin 2) ℚ) (hσ : σ_Q ∈ P.H)
     (i : decompQuot P (HeckeCoset.rep D)) :

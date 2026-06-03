@@ -56,8 +56,6 @@ lemma subsingleton_decompQuot_T_one :
   rw [decompQuot_T_one_eq_top]
   exact QuotientGroup.subsingleton_quotient_top
 
-private lemma self_mem_singleton_mul (a : G) : a ∈ {a} * (H : Set G) := by simp
-
 private lemma conjAct_mem_of_leftCoset_eq (d : Δ) (h h' : H)
     (hyp : {(h : G)} * {(d : G)} * (H : Set G) =
       {(h' : G)} * {(d : G)} * (H : Set G)) :
@@ -140,18 +138,6 @@ private lemma leftCoset_exists (g : P.Δ) : ∃ (i : decompQuot P g),
   have ht := nonempty_of_mem h4
   rw [← Set.inter_eq_self_of_subset_left h6] at ht
   convert ht
-
-private lemma leftCoset_exists_unique (g : P.Δ) :
-    ∃! (i : decompQuot P g),
-      {(g : G)} * (P.H : Set G) = {(i.out : G) * (g : G)} * P.H := by
-  obtain ⟨i, hi⟩ := leftCoset_exists P g
-  use i
-  rw [Set.singleton_mul_singleton] at hi
-  simp only [hi, true_and]
-  intro j h
-  by_contra c
-  have := (decompQuot_coset_diff P g j i c).symm
-  aesop
 
 private lemma mul_mem_delta (a : H) (g : Δ) (h₀ : H.toSubmonoid ≤ Δ) :
     (a : G) * (g : G) ∈ Δ :=

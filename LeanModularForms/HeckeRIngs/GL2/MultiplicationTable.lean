@@ -50,17 +50,6 @@ variable (p : ℕ) (hp : p.Prime)
 section Telescoping
 
 include hp in
-/-- `T_ad(p^i, p^d)` unfolds to `T_ad` when `i ≤ d`. -/
-private lemma T_ad_ppow (i d : ℕ) (hid : i ≤ d) :
-    T_ad (p ^ i) (p ^ d) = T_elem ![p ^ i, p ^ d] :=
-  T_ad_of_pos _ _ (pow_pos hp.pos i) (pow_pos hp.pos d) (Nat.pow_dvd_pow p hid)
-
-include hp in
-/-- `T_ad(1, p^k)` equals `T_ad 1 (p^k)`. -/
-private lemma T_ad_one_ppow (k : ℕ) : T_ad 1 (p ^ k) = T_elem ![1, p ^ k] :=
-  T_ad_of_pos 1 (p ^ k) Nat.one_pos (pow_pos hp.pos k) (one_dvd _)
-
-include hp in
 /-- Key shift: `T_pp(p) * T_ad(p^j, p^d) = T_ad(p^{j+1}, p^{d+1})` when `j ≤ d`. -/
 private lemma T_pp_mul_T_ad_ppow (j d : ℕ) (hjd : j ≤ d) :
     T_pp p * T_ad (p ^ j) (p ^ d) = T_ad (p ^ (j + 1)) (p ^ (d + 1)) := by
@@ -954,20 +943,6 @@ private lemma T_pp_pow_eq_T_ad (q : ℕ) (hq : q.Prime) (i : ℕ) : T_pp q ^ i =
 /-- `gcd(q^r, q^s) = q^r` when `r <= s`. -/
 lemma gcd_pow_pow_of_le (q : ℕ) (r s : ℕ) (hrs : r ≤ s) : Nat.gcd (q ^ r) (q ^ s) = q ^ r :=
   Nat.dvd_antisymm (Nat.gcd_dvd_left _ _) (Nat.dvd_gcd (dvd_refl _) (Nat.pow_dvd_pow q hrs))
-
-/-- Prime-power product in divisor-sum form. -/
-private lemma T_sum_mul_prime_pow_aux (q : ℕ) (hq : q.Prime) (r s : ℕ) (hrs : r ≤ s) :
-    T_sum ⟨q ^ r, pow_pos hq.pos r⟩ * T_sum ⟨q ^ s, pow_pos hq.pos s⟩ = ∑ d ∈
-      (Nat.gcd (q ^ r) (q ^ s)).divisors, (d : ℤ) • (T_ad d d *
-        T_sum_nat (q ^ r * q ^ s / (d * d))) := by
-  rw [T_sum_ppow_mul q hq r s hrs, gcd_pow_pow_of_le q r s hrs, Nat.sum_divisors_prime_pow hq]
-  apply Finset.sum_congr rfl; intro i hi; rw [Finset.mem_range] at hi
-  rw [show (q ^ i : ℤ) = (↑(q ^ i) : ℤ) by push_cast; ring, T_pp_pow_eq_T_ad q hq i]
-  congr 2
-  rw [← pow_add, ← pow_add,
-    show i + i = 2 * i by ring,
-    Nat.pow_div (by omega) hq.pos]
-  exact (T_sum_nat_eq ⟨q ^ (r + s - 2 * i), pow_pos hq.pos _⟩).symm
 
 /-- Coprime base case for the divisor sum formula. -/
 private lemma T_sum_mul_of_coprime_aux (m n : ℕ+) (hcop : Nat.Coprime m n) :
