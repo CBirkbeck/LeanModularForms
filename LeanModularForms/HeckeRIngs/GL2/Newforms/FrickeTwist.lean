@@ -179,13 +179,6 @@ private lemma differentiable_LFunction_comp {N : ℕ} [NeZero N]
 
 
 
-private lemma t111_re_conditions {k : ℤ} {s : ℂ} (hs_re : (k : ℝ) / 2 + 1 < s.re) :
-    1 < (2 * s - k + 1).re ∧ 1 < (2 * (2 * s - k + 1)).re := by
-  have h1 : (2 * s - (k : ℂ) + 1).re = 2 * s.re - k + 1 := by
-    simp [Complex.add_re, Complex.sub_re, Complex.mul_re, Complex.intCast_re]
-  have h2 : (2 * (2 * s - (k : ℂ) + 1)).re = 4 * s.re - 2 * k + 2 := by
-    simp [Complex.add_re, Complex.sub_re, Complex.mul_re, Complex.intCast_re]; ring
-  exact ⟨by rw [h1]; linarith, by rw [h2]; linarith⟩
 
 private lemma t111_geom_bound {N : ℕ} [NeZero N] (χ : (ZMod N)ˣ →* ℂˣ) {k : ℤ} {s : ℂ}
     (hs_re : (k : ℝ) / 2 + 1 < s.re) {q : ℕ} (hq : Nat.Prime q) (hqN : Nat.Coprime q N) :
