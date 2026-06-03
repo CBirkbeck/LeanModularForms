@@ -371,28 +371,6 @@ lemma exists_charHom_of_jointDiamondCuspEigenspace_ne_bot {χ : (ZMod N)ˣ → �
     (V := CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (diamondOpCuspHom k) χ f hf_ne fun d ↦ Submodule.mem_iInf _ |>.mp hf_mem d, rfl⟩
 
-/-- **The cusp-form character subspaces `cuspFormCharSpace k χ` span
-`CuspForm (Γ₁(N)) k`.**  The reverse/consumer analogue of
-`ModularForm_Gamma1_iSup_charSpace` for cusp forms. -/
-theorem CuspForm_Gamma1_iSup_charSpace (k : ℤ) :
-    (⨆ χ : (ZMod N)ˣ →* ℂˣ, cuspFormCharSpace k χ) =
-    (⊤ : Submodule ℂ (CuspForm ((Gamma1 N).map (mapGL ℝ)) k)) := by
-  have heq : ∀ d (μ : ℂ), (diamondOpCuspHom (N := N) k d).maxGenEigenspace μ =
-      (diamondOpCuspHom k d).eigenspace μ :=
-    fun d μ ↦ Module.End.IsFinitelySemisimple.maxGenEigenspace_eq_eigenspace
-      (diamondOpCusp_isSemisimple d).isFinitelySemisimple μ
-  have h_top_fun :
-      (⨆ χ : (ZMod N)ˣ → ℂ, jointDiamondCuspEigenspace k χ) =
-      (⊤ : Submodule ℂ (CuspForm ((Gamma1 N).map (mapGL ℝ)) k)) := by
-    simpa [jointDiamondCuspEigenspace, heq] using
-      Module.End.iSup_iInf_maxGenEigenspace_eq_top_of_iSup_maxGenEigenspace_eq_top_of_commute
-        (diamondOpCuspHom (N := N) k) diamondOpCuspHom_pairwise_commute
-        fun d ↦ by simp_rw [heq]; exact diamondOpCusp_iSup_eigenspace_eq_top d
-  refine le_antisymm le_top (h_top_fun ▸ iSup_le fun χ ↦ ?_)
-  by_cases hχ : jointDiamondCuspEigenspace k χ = ⊥
-  · simp [hχ]
-  · obtain ⟨χ₀, hχ₀⟩ := exists_charHom_of_jointDiamondCuspEigenspace_ne_bot hχ
-    exact hχ₀ ▸ le_iSup (fun χ₀ : (ZMod N)ˣ →* ℂˣ ↦ cuspFormCharSpace k χ₀) χ₀
 
 /-- **The cusp-form character subspaces form an independent family.** -/
 theorem CuspForm_Gamma1_iSupIndep_charSpace (k : ℤ) :
