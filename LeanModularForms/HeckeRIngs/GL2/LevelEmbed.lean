@@ -57,17 +57,6 @@ theorem Gamma0_le_of_dvd {M N : ℕ} (h : M ∣ N) :
 theorem Gamma1_le_Gamma0 (N : ℕ) : Gamma1 N ≤ Gamma0 N :=
   Gamma1_in_Gamma0 N
 
-/-- The set of proper-divisor level pairs `(M, l)` with `M * l = N` and `M ≠ N`.
-These are the sources for level-raising into `S_k(N, χ)`. -/
-def lowerLevelPairs (N : ℕ) : Set (ℕ × ℕ) :=
-  {p | p.1 * p.2 = N ∧ 0 < p.1 ∧ 1 < p.2}
 
-/-- The set of proper divisors of N that are valid source levels (multiples of
-the conductor `m_χ`). For a Dirichlet character `χ` mod `N`, the valid source
-levels `M` satisfy `m_χ ∣ M ∣ N` with `M ≠ N`.
-
-Note: the conductor `m_χ` is available via `DirichletCharacter.conductor`. -/
-def validSourceLevels (N : ℕ) (m_χ : ℕ) : Set ℕ :=
-  {M | m_χ ∣ M ∧ M ∣ N ∧ M ≠ N ∧ 0 < M}
 
 end HeckeRing.GL2
