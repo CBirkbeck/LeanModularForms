@@ -62,21 +62,6 @@ open scoped MatrixGroups ModularForm Pointwise DirectSum
 
 variable {N : ℕ} [NeZero N] {k : ℤ}
 
-private lemma imAxis_div_const_isBigO_rpow {N : ℕ} [NeZero N] {k : ℤ}
-    (twist : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) {c : ℝ} (hc : 0 < c) (r : ℝ) :
-    Asymptotics.IsBigO Filter.atTop
-      (fun x : ℝ ↦ _root_.ModularForms.imAxis twist (x / c) - 0)
-      (fun x : ℝ ↦ x ^ r) := by
-  refine (((_root_.ModularForms.HasImAxisRapidDecay_of_HasImAxisExponentialDecay
-    twist (Newform.cuspForm_Gamma1_hasImAxisExponentialDecay twist)) r).comp_tendsto
-    (Filter.tendsto_id.atTop_div_const hc)).trans
-    (Asymptotics.IsBigO.of_bound (c ^ (-r)) ?_)
-  filter_upwards [Filter.eventually_gt_atTop (0 : ℝ)] with t ht
-  simp only [Function.comp_apply, id_eq]
-  have h_div_rpow : (t / c) ^ r = c ^ (-r) * t ^ r := by
-    rw [Real.div_rpow ht.le hc.le, Real.rpow_neg hc.le, div_eq_mul_inv]; ring
-  rw [h_div_rpow, Real.norm_eq_abs, Real.norm_eq_abs, abs_mul,
-    abs_of_pos (Real.rpow_pos_of_pos hc (-r))]
 
 
 /-- For every newform `f` in a Nebentypus character eigenspace and every finite
