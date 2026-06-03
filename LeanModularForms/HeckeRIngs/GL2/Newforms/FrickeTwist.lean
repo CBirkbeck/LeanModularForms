@@ -458,32 +458,6 @@ def Newform.HasDirichletZeroCertificate
           (Newform.dirichletLift χ : DirichletCharacter ℂ N) (2 * s - k + 1)))
 
 
-/-- Build `Newform.HasDirichletZeroCertificate f χ` directly from the explicit
-pole point, character non-trivialities, Dirichlet zero, non-cancellation, and
-universal-F clause. -/
-theorem Newform.HasDirichletZeroCertificate_of_dirichletZero
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (s₀ : ℂ)
-    (h_χ_ne_one : (Newform.dirichletLift χ : DirichletCharacter ℂ N) ≠ 1)
-    (h_chi_sq_ne_one : (Newform.dirichletLift χ * Newform.dirichletLift χ
-      : DirichletCharacter ℂ N) ≠ 1)
-    (h_den_zero : DirichletCharacter.LFunction
-      (Newform.dirichletLift χ : DirichletCharacter ℂ N) (2 * s₀ - k + 1) = 0)
-    (h_num_ne_zero : DirichletCharacter.LFunction
-      (Newform.dirichletLift χ * Newform.dirichletLift χ : DirichletCharacter ℂ N)
-      (2 * (2 * s₀ - k + 1)) ≠ 0)
-    (h_univ_F : ∀ F : ℂ → ℂ, Differentiable ℂ F →
-      (∀ {s : ℂ}, LSeries.abscissaOfAbsConv f.lCoeff_stripped < s.re →
-        F s = LSeries f.lCoeff_stripped s) →
-      F =ᶠ[nhdsWithin s₀ {s₀}ᶜ]
-        ((fun s ↦ DirichletCharacter.LFunction
-          (Newform.dirichletLift χ * Newform.dirichletLift χ
-            : DirichletCharacter ℂ N)
-          (2 * (2 * s - k + 1))) /
-        (fun s ↦ DirichletCharacter.LFunction
-          (Newform.dirichletLift χ : DirichletCharacter ℂ N) (2 * s - k + 1)))) :
-    Newform.HasDirichletZeroCertificate f χ :=
-  ⟨s₀, h_χ_ne_one, h_chi_sq_ne_one, h_den_zero, h_num_ne_zero, h_univ_F⟩
 
 /-- The analytic-continuation universal-F hypothesis for the simplified Dirichlet
 quotient `LFunction χ̃² (2(2s-k+1)) / LFunction χ̃ (2s-k+1)` (no finite Euler-factor
@@ -611,50 +585,6 @@ theorem Newform.FullDirichletQuotientUniversalFClause_of_halfPlane_multIdentity
     with s h_LP1_ne h_LP2_ne h_LF_ne
   exact eq_div_prod_inv_of_mul_prod_eq (congrFun h_global s) h_LF_ne h_LP1_ne h_LP2_ne
 
-/-- Discharge the half-plane identity of
-`Newform.FullDirichletQuotientUniversalFClause_of_halfPlane_multIdentity` from the
-pointwise T111 theorem `Newform.lSeries_stripped_value_identity`. -/
-theorem Newform.FullDirichletQuotientUniversalFClause_of_T111
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (S : Finset ℕ)
-    (h_bad : ∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
-      q ∉ S → f.lCoeff q = 0)
-    (T : Finset Nat.Primes)
-    (hT_iff : ∀ p : Nat.Primes, p ∈ T ↔
-      (p : ℕ) ∈ S ∧ Nat.Coprime (p : ℕ) N)
-    (s₀ : ℂ)
-    (h_χ_ne_one : (Newform.dirichletLift χ : DirichletCharacter ℂ N) ≠ 1)
-    (h_chi_sq_ne_one : (Newform.dirichletLift χ * Newform.dirichletLift χ
-      : DirichletCharacter ℂ N) ≠ 1)
-    (h_abscissa_lt : LSeries.abscissaOfAbsConv f.lCoeff_stripped <
-      (((k : ℝ) / 2 + 1 : ℝ) : EReal))
-    (h_EFP_diff : Differentiable ℂ
-      (fun s : ℂ ↦ ∏ p ∈ T, Newform.eulerFactor_stripped f χ S s p))
-    (h_LinFP1_factor_ne_s₀ : ∀ p ∈ T,
-      (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-          ((p : ℕ) : ZMod N) *
-        ((p : ℕ) : ℂ) ^ (-(2 * s₀ - k + 1))) ≠ 0)
-    (h_LinFP2_factor_ne_s₀ : ∀ p ∈ T,
-      (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-        : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-        ((p : ℕ) : ℂ) ^ (-(2 * (2 * s₀ - k + 1)))) ≠ 0) :
-    Newform.FullDirichletQuotientUniversalFClause f χ S T s₀ := by
-  refine Newform.FullDirichletQuotientUniversalFClause_of_halfPlane_multIdentity
-    f χ S T s₀ h_χ_ne_one h_chi_sq_ne_one ((k : ℝ) / 2 + 1)
-    h_abscissa_lt h_EFP_diff ?_ h_LinFP1_factor_ne_s₀ h_LinFP2_factor_ne_s₀
-  intro s hs_re
-  obtain ⟨hs', hs''⟩ := t111_re_conditions hs_re
-  have h_T111_mult := f.lSeries_stripped_value_identity χ hfχ S h_bad
-    hs_re hs' hs'' (fun q hq hqN _ ↦ t111_geom_bound χ hs_re hq hqN) T hT_iff
-    (fun q hq hqN _ ↦ t111_one_pm_ne χ hs_re hq hqN)
-  rw [DirichletCharacter.LFunction_eq_LSeries _ hs',
-    DirichletCharacter.LFunction_eq_LSeries _ hs'']
-  rw [Finset.prod_mul_distrib, Finset.prod_inv_distrib, Finset.prod_inv_distrib]
-    at h_T111_mult
-  exact mul_eq_mul_of_mul_inv_eq h_T111_mult
-    (Finset.prod_ne_zero_iff.mpr fun p _ ↦ linearFactor_ne_zero_of_one_lt_re _ p.prop hs'')
-    (Finset.prod_ne_zero_iff.mpr fun p _ ↦ linearFactor_ne_zero_of_one_lt_re _ p.prop hs')
 
 /-- The full-clause analogue of
 `Newform.dirichletQuotient_pole_witness_of_dirichletZero`, consuming the full
