@@ -453,39 +453,6 @@ theorem tsum_mellin_qParam_pow_imAxis_eq_LSeries
   rw [tsum_congr h_each, tsum_mul_left]
   rfl
 
-/-- **Conditional consumer theorem: q-expansion ⇒ completed L-series identity**.
-
-Width-`h` conditional version of the classical Hecke 1936 Mellin–Dirichlet identity:
-under the period-`h` q-expansion decomposition, measurability and summability
-hypotheses, `mellin g s = (2π/h)^{-s} · Γ(s) · LSeries a s`. -/
-theorem mellin_eq_completedLSeries_of_qExpansion_swap_hypotheses
-    {h : ℝ} (hh : 0 < h) {g : ℝ → ℂ} {a : ℕ → ℂ} (h_a0 : a 0 = 0) {s : ℂ}
-    (hs : 0 < s.re)
-    (h_decomp : ∀ᵐ (t : ℝ) ∂(MeasureTheory.volume.restrict (Set.Ioi (0 : ℝ))),
-      HasSum (fun m : ℕ ↦
-        a m * Function.Periodic.qParam h (Complex.I * (t : ℂ)) ^ m) (g t))
-    (h_meas : ∀ m, MeasureTheory.AEStronglyMeasurable
-      (fun t : ℝ ↦ (t : ℂ) ^ (s - 1) •
-        (a m * Function.Periodic.qParam h (Complex.I * (t : ℂ)) ^ m))
-      (MeasureTheory.volume.restrict (Set.Ioi (0 : ℝ))))
-    (h_summ : (∑' m : ℕ, MeasureTheory.lintegral
-      (MeasureTheory.volume.restrict (Set.Ioi (0 : ℝ)))
-      (fun t : ℝ ↦ ‖(t : ℂ) ^ (s - 1) •
-        (a m * Function.Periodic.qParam h (Complex.I * (t : ℂ)) ^ m)‖ₑ)) ≠
-        (⊤ : ENNReal)) :
-    mellin g s =
-      ((2 * Real.pi / h : ℝ) : ℂ) ^ (-s) * Complex.Gamma s * LSeries a s := by
-  rw [mellin_eq_tsum_mellin_of_hasSum_of_integrable
-      g (fun m t ↦ a m * Function.Periodic.qParam h (Complex.I * (t : ℂ)) ^ m)
-      h_decomp h_meas h_summ]
-  rw [show (fun m : ℕ ↦ mellin (fun t : ℝ ↦
-        a m * Function.Periodic.qParam h (Complex.I * (t : ℂ)) ^ m) s) =
-      fun m : ℕ ↦ a m * mellin (fun t : ℝ ↦
-        Function.Periodic.qParam h (Complex.I * (t : ℂ)) ^ m) s from
-      funext (fun m ↦
-        mellin_const_mul (fun t : ℝ ↦
-          Function.Periodic.qParam h (Complex.I * (t : ℂ)) ^ m) s (a m))]
-  exact tsum_mellin_qParam_pow_imAxis_eq_LSeries hh a h_a0 hs
 
 
 
@@ -493,29 +460,6 @@ theorem mellin_eq_completedLSeries_of_qExpansion_swap_hypotheses
 
 
 
-open CongruenceSubgroup Matrix.SpecialLinearGroup in
-
-/-- **Pointwise norm of the period-one Mellin integrand on `Ioi 0`**.
-
-For any `t > 0`, complex `s`, coefficient `a : ℂ`, and `m : ℕ`,
-```
-‖(t : ℂ) ^ (s - 1) • (a * qParam 1 (I·t) ^ m)‖
-  = t ^ (s.re - 1) * ‖a‖ * Real.exp (-(2 * Real.pi * m * t)).
-``` -/
-lemma norm_qParam_pow_imAxis_term (a : ℂ) (m : ℕ) (s : ℂ)
-    {t : ℝ} (ht : 0 < t) :
-    ‖(t : ℂ) ^ (s - 1) • (a * Function.Periodic.qParam 1 (Complex.I * (t : ℂ)) ^ m)‖
-      = t ^ (s.re - 1) * ‖a‖ * Real.exp (-(2 * Real.pi * m * t)) := by
-  rw [norm_smul, norm_mul, Complex.norm_cpow_eq_rpow_re_of_pos ht,
-      show (s - 1).re = s.re - 1 by simp [Complex.sub_re, Complex.one_re],
-      qParam_imAxis_eq_realExp,
-      show ((Real.exp (-(2 * Real.pi * t / 1)) : ℝ) : ℂ) ^ m
-          = (((Real.exp (-(2 * Real.pi * t / 1))) ^ m : ℝ) : ℂ) by push_cast; rfl,
-      show ((Real.exp (-(2 * Real.pi * t / 1)))) ^ m
-          = Real.exp (-(2 * Real.pi * m * t)) by
-        rw [← Real.exp_nat_mul]; congr 1; ring,
-      Complex.norm_real, Real.norm_eq_abs, abs_of_pos (Real.exp_pos _)]
-  ring
 
 
 
