@@ -57,13 +57,6 @@ theorem modform_tendto_ndhs_zero {k : ℤ} (n : ℕ) [ModularFormClass F Γ(n) k
   apply Function.Periodic.cuspFunction_eq_of_nonzero
   simpa only [ne_eq, mem_compl_iff, mem_singleton_iff] using hy0
 
-theorem derivWithin_mul2 (f g : ℂ → ℂ) (s : Set ℂ) (hf : DifferentiableOn ℂ f s)
-    (hd : DifferentiableOn ℂ g s) :
-    s.restrict (derivWithin (fun y ↦ f y * g y) s) =
-      s.restrict (derivWithin f s * g + f * derivWithin g s) := by
-  ext y
-  simp only [restrict_apply, Pi.add_apply, Pi.mul_apply]
-  rw [derivWithin_fun_mul (hf y y.2) (hd y y.2)]
 
 
 
