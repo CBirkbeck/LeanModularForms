@@ -452,32 +452,6 @@ theorem Newform.mem_alpha_p_Gamma1_doubleCoset_iff_exists_T_p_upper_left_factor
     exact Set.mem_iUnion.mpr ⟨b, ⟨γ, hγ, glMap (T_p_upper p hp.pos b.val), rfl, hmul⟩⟩
 
 open scoped Pointwise in
-/-- Membership in the double-coset-translated tile `Γ₁(N)·α_p·Γ₁(N) • D`: every
-`z` equals `(γ · β_b) • w` for some `b : Fin p`, `γ ∈ Γ₁(N)`, `w ∈ D`. -/
-theorem Newform.mem_alpha_p_Gamma1_doubleCoset_smul_set_iff_exists_T_p_upper_left_factor_smul
-    (N : ℕ) [NeZero N] {p : ℕ} (hp : p.Prime) (hpN : ¬ Nat.Coprime p N)
-    (D : Set UpperHalfPlane) {z : UpperHalfPlane} :
-    z ∈
-      (((((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ)) *
-          ({(glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)} : Set (GL (Fin 2) ℝ)) *
-        (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ))) • D) ↔
-      ∃ b : Fin p,
-        ∃ γ : GL (Fin 2) ℝ,
-          γ ∈ (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ)) ∧
-            ∃ w ∈ D,
-              (γ * (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)) • w = z := by
-  refine ⟨?_, ?_⟩
-  · rintro ⟨x, hx, w, hw, hsmul⟩
-    rw [Newform.mem_alpha_p_Gamma1_doubleCoset_iff_exists_T_p_upper_left_factor
-      N (p := p) hp hpN] at hx
-    obtain ⟨b, γ, hγ, hmul⟩ := hx
-    subst hmul
-    exact ⟨b, γ, hγ, w, hw, hsmul⟩
-  · rintro ⟨b, γ, hγ, w, hw, hsmul⟩
-    refine ⟨γ * (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ), ?_, w, hw, hsmul⟩
-    rw [Newform.mem_alpha_p_Gamma1_doubleCoset_iff_exists_T_p_upper_left_factor
-      N (p := p) hp hpN]
-    exact ⟨b, γ, hγ, rfl⟩
 
 open scoped Pointwise in
 
