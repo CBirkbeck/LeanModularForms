@@ -444,9 +444,6 @@ theorem peterssonInner_definite_levelOne
     (by rw [starRingEnd_apply]; exact mul_ne_zero (star_ne_zero.mpr hne) hne)
     (zpow_ne_zero _ (Complex.ofReal_ne_zero.mpr (ne_of_gt τ.im_pos))))
 
-private lemma arcsin_one_half : Real.arcsin (1 / 2) = Real.pi / 6 :=
-  Real.arcsin_eq_of_sin_eq Real.sin_pi_div_six
-    ⟨by linarith [Real.pi_pos], by linarith [Real.pi_pos]⟩
 
 
 /-- The integral of `y⁻²` over `(c, ∞)` equals `1/c` for `c > 0`.
