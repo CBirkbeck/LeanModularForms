@@ -941,16 +941,6 @@ theorem petN_eq_setIntegral_Gamma1_fundDomain_PSL
 
 
 
-/-- For a finite family `s : ι → Set ℍ` of null-measurable, pairwise AE-disjoint
-subsets of the upper half-plane, the integral of an integrable function over the
-union equals the finite sum of integrals over each piece. -/
-theorem setIntegral_iUnion_finite_aedisjoint
-    {ι : Type*} [Fintype ι] (s : ι → Set ℍ)
-    (hm : ∀ i, NullMeasurableSet (s i) μ_hyp)
-    (hd : Pairwise (fun i j : ι ↦ AEDisjoint μ_hyp (s i) (s j)))
-    (h : ℍ → ℂ) (hint : IntegrableOn h (⋃ i, s i) μ_hyp) :
-    ∫ τ in ⋃ i : ι, s i, h τ ∂μ_hyp = ∑ i : ι, ∫ τ in s i, h τ ∂μ_hyp := by
-  rw [integral_iUnion_ae hm hd hint, tsum_fintype]
 
 
 /-- A finite-family tile fundamental-domain bundle: a `Fintype`-indexed
