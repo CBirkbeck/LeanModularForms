@@ -384,26 +384,6 @@ theorem Newform.alpha_p_Gamma1_doubleCoset_partition_T_p_upper_left_cosets
   ⟨Newform.alpha_p_Gamma1_doubleCoset_eq_iUnion_T_p_upper_left_cosets N (p := p) hp hpN,
     Newform.T_p_upper_left_cosets_pairwiseDisjoint_Gamma1 N (p := p) hp.pos⟩
 
-open scoped Pointwise in
-/-- Each element of the bad-prime double coset `Γ₁(N) · α_p · Γ₁(N)` lies in the
-left `Γ₁(N)`-coset of a unique `β_b`, `b : Fin p`. -/
-theorem Newform.existsUnique_T_p_upper_left_coset_index_of_mem_alpha_p_doubleCoset
-    (N : ℕ) [NeZero N] {p : ℕ} (hp : p.Prime) (hpN : ¬ Nat.Coprime p N) {x : GL (Fin 2) ℝ}
-    (hx : x ∈
-      ((((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ)) *
-          ({(glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)} : Set (GL (Fin 2) ℝ)) *
-        (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ)))) :
-    ∃! b : Fin p,
-      x ∈ (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ)) *
-        ({(glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)} : Set (GL (Fin 2) ℝ)) := by
-  have hpart :=
-    Newform.alpha_p_Gamma1_doubleCoset_partition_T_p_upper_left_cosets N (p := p) hp hpN
-  rw [hpart.1] at hx
-  obtain ⟨b, hb⟩ := Set.mem_iUnion.mp hx
-  refine ⟨b, hb, ?_⟩
-  intro c hc
-  by_contra hne
-  exact Set.disjoint_left.mp (hpart.2 (Set.mem_univ b) (Set.mem_univ c) fun h ↦ hne h.symm) hb hc
 
 
 open scoped Pointwise in
