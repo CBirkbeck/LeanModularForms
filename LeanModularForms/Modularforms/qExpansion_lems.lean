@@ -77,9 +77,3 @@ lemma qExpansion_ext2 {α β : Type*} [FunLike α ℍ ℂ] [FunLike β ℍ ℂ] 
   ext m
   simp [qExpansion_coeff, hcf]
 
-lemma qExpansion_pow (f : ModularForm Γ(1) k) (n : ℕ) :
-    qExpansion 1 ((((DirectSum.of (ModularForm Γ(1)) k) f) ^ n) (n * k)) =
-      (qExpansion 1 f) ^ n := by
-  exact_mod_cast qExpansion_of_pow (Γ := Γ(1)) (h := (1 : ℕ))
-    (hh := by positivity) (hΓ := by simp) (f := f) (n := n)
-
