@@ -593,10 +593,6 @@ private lemma peterssonAdj_frickeMatrix_det_val (N : ℕ) [NeZero N] :
     (peterssonAdj (Newform.frickeMatrix N)).det.val = (N : ℝ) :=
   (congr_arg Units.val (peterssonAdj_det _)).trans (Newform.frickeMatrix_det N)
 
-private lemma peterssonAdj_frickeMatrix_det_pos (N : ℕ) [NeZero N] :
-    0 < (peterssonAdj (Newform.frickeMatrix N)).det.val := by
-  rw [peterssonAdj_frickeMatrix_det_val]
-  exact_mod_cast Nat.pos_of_ne_zero (NeZero.ne N)
 
 
 
