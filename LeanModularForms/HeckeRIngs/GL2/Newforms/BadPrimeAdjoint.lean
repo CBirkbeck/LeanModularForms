@@ -20,7 +20,7 @@ import Mathlib.NumberTheory.EulerProduct.DirichletLSeries
 import Mathlib.NumberTheory.LSeries.AbstractFuncEq
 import Mathlib.NumberTheory.LSeries.DirichletContinuation
 import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
-import LeanModularForms.HeckeRIngs.GL2.Newforms.MellinBridges
+import LeanModularForms.HeckeRIngs.GL2.Newforms.FrickeTwist
 
 /-!
 # Newforms: bad-prime Fricke adjoint candidate and the extended newspace
