@@ -52,21 +52,6 @@ def Newform.AnalyticContradiction : Prop :=
       (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
         q ∉ S → f.lCoeff q = 0) → False
 
-/-- Under `Newform.AnalyticContradiction`, the conclusion of
-`Newform.exists_nonzero_prime_eigenvalue` holds. -/
-theorem Newform.exists_nonzero_prime_eigenvalue_of_analyticContradiction
-    (h_ana : Newform.AnalyticContradiction)
-    (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (S : Finset ℕ) :
-    ∃ q : ℕ, ∃ hq : Nat.Prime q, Nat.Coprime q N ∧ q ∉ S ∧
-      f.eigenvalue ⟨q, hq.pos⟩ ≠ 0 := by
-  by_contra! h_none
-  apply h_ana f χ hfχ S
-  intro q hq hqN hqS
-  have h_eq : f.eigenvalue ⟨q, hq.pos⟩ = f.lCoeff q := by
-    rw [Newform.eigenvalue_eq_coeff f ⟨q, hq.pos⟩ hqN χ hfχ]; rfl
-  exact h_eq.symm.trans (h_none q hq hqN hqS)
 
 /-- Hecke's analytic continuation hypothesis: for every newform `f`, the
 Dirichlet series `LSeries f.lCoeff_stripped` admits an entire extension to `ℂ`
@@ -365,28 +350,6 @@ noncomputable def Newform.ImAxisMellinData.ofData_auto
   Newform.ImAxisMellinData.ofExponentialDecay f G ε hG_int hk_pos hε_ne
     h_feq (Newform.hasImAxisExponentialDecay f) hG_top h_bridge
 
-/-- `Newform.ImAxisMellinData` constructor taking the Atkin-Lehner / Fricke
-twist as a CuspForm `g`, discharging the entire twist (`G`-) side
-(`hG_int`, `hG_top`) and the `F`-side decay fields automatically. -/
-noncomputable def Newform.ImAxisMellinData.ofData_withTwist
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k)
-    (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (ε : ℂ)
-    (hk_pos : 0 < (k : ℝ)) (hε_ne : ε ≠ 0)
-    (h_feq : ∀ x ∈ Set.Ioi (0 : ℝ),
-      (Newform.imAxis f) (1 / x) =
-        (ε * ((x ^ (k : ℝ) : ℝ) : ℂ)) • _root_.ModularForms.imAxis g x)
-    (h_bridge : ∀ {s : ℂ},
-      LSeries.abscissaOfAbsConv f.lCoeff_stripped < s.re →
-      mellin (Newform.imAxis f) s = LSeries f.lCoeff_stripped s) :
-    Newform.ImAxisMellinData f :=
-  Newform.ImAxisMellinData.ofData_auto f
-    (_root_.ModularForms.imAxis g) ε
-    (_root_.ModularForms.locallyIntegrableOn_imAxis g)
-    hk_pos hε_ne h_feq
-    (_root_.ModularForms.HasImAxisRapidDecay_of_HasImAxisExponentialDecay g
-      (Newform.cuspForm_Gamma1_hasImAxisExponentialDecay g))
-    h_bridge
 
 /-- The Atkin-Lehner / Fricke matrix `W_N := !![0, -1; N, 0]` for level `N`,
 as an element of `GL (Fin 2) ℝ` with determinant `N > 0`. -/
