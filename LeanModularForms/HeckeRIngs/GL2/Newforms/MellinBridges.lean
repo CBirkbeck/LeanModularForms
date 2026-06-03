@@ -311,62 +311,6 @@ noncomputable def Newform.PerNewformFullDirichletData_of_classicalInputs_redDen
     (fun p hp ↦ Newform.den_factor_analytic_at χ s₀ p (h_den_factors_ne p hp))
     h_den_finite h_clause
 
-/-- Drops the explicit `h_clause` hypothesis from
-`Newform.PerNewformFullDirichletData_of_classicalInputs_redDen`, deriving it from
-`Newform.FullDirichletQuotientUniversalFClause_of_T111`. -/
-noncomputable def Newform.PerNewformFullDirichletData_of_classicalInputs_T111
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (S : Finset ℕ)
-    (h_bad : ∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
-      q ∉ S → f.lCoeff q = 0)
-    (T : Finset Nat.Primes)
-    (hT_iff : ∀ p : Nat.Primes, p ∈ T ↔
-      (p : ℕ) ∈ S ∧ Nat.Coprime (p : ℕ) N)
-    (s₀ : ℂ)
-    (h_χ_ne_one : (Newform.dirichletLift χ : DirichletCharacter ℂ N) ≠ 1)
-    (h_chi_sq_ne_one : (Newform.dirichletLift χ * Newform.dirichletLift χ
-      : DirichletCharacter ℂ N) ≠ 1)
-    (h_abscissa_lt : LSeries.abscissaOfAbsConv f.lCoeff_stripped <
-      (((k : ℝ) / 2 + 1 : ℝ) : EReal))
-    (h_zero : DirichletCharacter.LFunction
-      (Newform.dirichletLift χ : DirichletCharacter ℂ N) (2 * s₀ - k + 1) = 0)
-    (h_num_LF_ne : DirichletCharacter.LFunction
-      (Newform.dirichletLift χ * Newform.dirichletLift χ
-        : DirichletCharacter ℂ N) (2 * (2 * s₀ - k + 1)) ≠ 0)
-    (h_factors_ne : ∀ p ∈ T,
-      Newform.eulerFactor_stripped f χ S s₀ p ≠ 0 ∧
-      (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-          ((p : ℕ) : ZMod N) *
-        ((p : ℕ) : ℂ) ^ (-(2 * s₀ - k + 1))) ≠ 0)
-    (h_den_factors_ne : ∀ p ∈ T,
-      (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-        : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-        ((p : ℕ) : ℂ) ^ (-(2 * (2 * s₀ - k + 1)))) ≠ 0)
-    (h_EFP_diff : Differentiable ℂ
-      (fun s : ℂ ↦ ∏ p ∈ T, Newform.eulerFactor_stripped f χ S s p))
-    (h_num_factor_an : ∀ p ∈ T, AnalyticAt ℂ
-      (fun s ↦ Newform.eulerFactor_stripped f χ S s p *
-        (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-            ((p : ℕ) : ZMod N) *
-          ((p : ℕ) : ℂ) ^ (-(2 * s - k + 1)))⁻¹) s₀)
-    (h_den_finite :
-      meromorphicOrderAt
-        (fun s ↦
-          DirichletCharacter.LFunction
-            (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-            (2 * s - k + 1) *
-          ∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-            : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-            ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀ ≠ ⊤) :
-    Newform.PerNewformFullDirichletData f χ S :=
-  Newform.PerNewformFullDirichletData_of_classicalInputs_redDen
-    f χ S T s₀ h_χ_ne_one h_chi_sq_ne_one h_zero h_num_LF_ne h_factors_ne
-    h_den_factors_ne h_num_factor_an h_den_finite
-    (Newform.FullDirichletQuotientUniversalFClause_of_T111 f χ hfχ S h_bad T hT_iff s₀
-      h_χ_ne_one h_chi_sq_ne_one h_abscissa_lt h_EFP_diff
-      (fun p hp ↦ (h_factors_ne p hp).2)
-      h_den_factors_ne)
 
 /-- Direct bridge `Newform.HeckeFEData` + `Newform.PerNewformFullDirichletData` ⇒
 `Newform.AnalyticContradiction`, without going through newform uniqueness / SMO. -/
@@ -384,29 +328,7 @@ theorem Newform.analyticContradiction_of_HeckeFEData_of_PerNewformFullDirichletD
     (Newform.noEntireExtensionUnderBadPrime_of_full_dirichletZeroCertificate
       fun _ _ _ f χ hfχ S h_bad ↦ (h_data f χ hfχ S h_bad).toPre)
 
-/-- Reduces `Newform.HeckeEntireExtension` to per-newform structured
-`Newform.MellinPairData`, chaining through `Newform.HeckeFEData.ofMellinData`. -/
-theorem Newform.HeckeEntireExtension_of_MellinPairData
-    (h : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k),
-      Newform.MellinPairData f) :
-    Newform.HeckeEntireExtension :=
-  Newform.HeckeEntireExtension_of_HeckeFEData
-    (fun _N _ _k f ↦ Newform.HeckeFEData.ofMellinData (h f))
 
-/-- Direct bridge `Newform.ImAxisMellinData` + `Newform.PerNewformFullDirichletData`
-⇒ `Newform.AnalyticContradiction`, without going through newform uniqueness / SMO. -/
-theorem Newform.analyticContradiction_of_ImAxisMellinData_of_PerNewformFullDirichletData
-    (h_imAxis : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k),
-      Newform.ImAxisMellinData f)
-    (h_data : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
-      f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      ∀ (S : Finset ℕ),
-        (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
-          q ∉ S → f.lCoeff q = 0) →
-        Newform.PerNewformFullDirichletData f χ S) :
-    Newform.AnalyticContradiction :=
-  Newform.analyticContradiction_of_HeckeFEData_of_PerNewformFullDirichletData
-    (fun _N _ _k f ↦ Newform.HeckeFEData.ofImAxisData (h_imAxis f)) h_data
 
 /-- The classical Atkin-Lehner input as a single named structure: a CuspForm `twist`
 whose imaginary axis represents the Fricke slash image, plus the Mellin-Dirichlet
@@ -434,14 +356,6 @@ noncomputable def Newform.ImAxisMellinData.ofFrickeSlashData
   Newform.ImAxisMellinData.ofSlashEq f data.twist data.slash_eq
     data.hk_pos data.h_bridge
 
-/-- Reduces `Newform.HeckeEntireExtension` to per-newform `Newform.FrickeSlashData`:
-a CuspForm-valued Fricke slash image and Mellin-Dirichlet bridge. -/
-theorem Newform.HeckeEntireExtension_of_FrickeSlashData
-    (h : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k),
-      Newform.FrickeSlashData f) :
-    Newform.HeckeEntireExtension :=
-  Newform.HeckeEntireExtension_of_ImAxisMellinData
-    (fun _N _ _k f ↦ Newform.ImAxisMellinData.ofFrickeSlashData f (h f))
 
 /-- The classical Hecke 1936 identity
 `mellin (Newform.imAxis f) s = (2π)^{-s} · Γ(s) · LSeries f.lCoeff s` on
@@ -808,39 +722,7 @@ structure Newform.HasHeckeMultiplicativeStructure
   bad_prime_pow : ∀ {p : ℕ}, p.Prime → p ∣ N → ∀ r : ℕ,
     f.lCoeff (p ^ r) = f.lCoeff p ^ r
 
-/-- For a prime `p ∣ N`, the period-1 Fourier coefficient of
-`heckeT_p_divN k p hp hpN f.toCuspForm.toModularForm'` at index `m` equals
-`f.lCoeff (p * m)`. -/
-lemma Newform.lCoeff_heckeT_p_divN_apply
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k)
-    {p : ℕ} (hp : p.Prime) (hpN : ¬ Nat.Coprime p N) (m : ℕ) :
-    (ModularFormClass.qExpansion (1 : ℝ) ((heckeT_p_divN k p hp hpN)
-        f.toCuspForm.toModularForm')).coeff m =
-      f.lCoeff (p * m) := by
-  have : NeZero p := ⟨hp.pos.ne'⟩
-  rw [qExpansion_one_heckeT_p_divN_coeff hp hpN f.toCuspForm.toModularForm' m]
-  rfl
 
-/-- For a prime `p ∣ N` and exponent `r`, applying `heckeT_p_divN k p hp hpN` `r`
-times to `f.toCuspForm.toModularForm'` gives a ModularForm whose `m`-th period-1
-Fourier coefficient equals `f.lCoeff (p^r * m)`. -/
-lemma Newform.lCoeff_heckeT_p_divN_iterate_apply
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k)
-    {p : ℕ} (hp : p.Prime) (hpN : ¬ Nat.Coprime p N) (r m : ℕ) :
-    (ModularFormClass.qExpansion (1 : ℝ)
-        (((fun g ↦ heckeT_p_divN k p hp hpN g) : ModularForm _ k → ModularForm _ k)^[r]
-          f.toCuspForm.toModularForm')).coeff m =
-      f.lCoeff (p ^ r * m) := by
-  have : NeZero p := ⟨hp.pos.ne'⟩
-  induction r generalizing m with
-  | zero =>
-    simp only [pow_zero, Function.iterate_zero_apply, one_mul]
-    rfl
-  | succ r ih =>
-    rw [Function.iterate_succ_apply',
-      qExpansion_one_heckeT_p_divN_coeff hp hpN _ m, ih (p * m)]
-    congr 1
-    ring
 
 /-- For a prime `p ∣ N` and `f ∈ S_k^new`, `heckeT_n_cusp k p f` lies in `S_k^new`,
 given an explicit Petersson-adjoint operator `T_adj` for `T_p` at level `Γ₁(N)`
