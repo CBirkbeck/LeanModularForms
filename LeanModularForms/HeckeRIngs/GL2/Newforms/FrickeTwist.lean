@@ -195,11 +195,6 @@ private lemma differentiable_prod_linearFactor {N : ℕ} [NeZero N]
 
 
 
-private lemma mul_eq_mul_of_mul_inv_eq {A B C D E F : ℂ}
-    (h : A * B * C⁻¹ = D * (E * F⁻¹)) (hC : C ≠ 0) (hF : F ≠ 0) :
-    A * B * F = D * E * C := by
-  field_simp at h
-  linear_combination h
 
 private lemma eq_div_prod_inv_of_mul_prod_eq {T : Finset Nat.Primes} {Fs A B : ℂ}
     {e l₁ l₂ : Nat.Primes → ℂ}
