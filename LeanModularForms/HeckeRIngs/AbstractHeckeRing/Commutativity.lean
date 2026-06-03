@@ -13,7 +13,7 @@ Shimura Proposition 3.8: if an arithmetic group pair admits an anti-automorphism
 Hecke ring `𝕋 P ℤ` is commutative.
 -/
 
-open Commensurable Classical MulOpposite Set DoubleCoset Subgroup Commensurable Finsupp
+open Classical MulOpposite Set DoubleCoset Subgroup Finsupp
 
 open scoped Pointwise
 
@@ -76,6 +76,7 @@ noncomputable def onHeckeCoset (D : HeckeCoset P) : HeckeCoset P :=
   Quotient.lift (fun (g : P.Δ) ↦
     (⟦⟨ι.bar (g : G), ι.bar_mem_Δ g.2⟩⟧ : HeckeCoset P))
     (fun _ _ (h : @Setoid.r _ (dcSetoid P) _ _) ↦ by
+      show (⟦_⟧ : HeckeCoset P) = ⟦_⟧
       rw [HeckeCoset.eq_iff]; exact ι.bar_doubleCoset_eq _ _ h) D
 
 /-- `onHeckeCoset ⟦g⟧` equals `⟦bar(g)⟧`. -/
@@ -244,7 +245,7 @@ private lemma fwd_pair_mem (g₁ : P.Δ) (g₂ g_D q₀_val : G)
     ((ConjAct.toConjAct ((g₁ : G)) • P.H).subgroupOf P.H) c
   have hn₁_coe : ((⟦c⟧ : decompQuot P g₁).out : G) = (c : G) * (n₁ : G) := by
     simpa [Subgroup.coe_mul] using congr_arg (Subtype.val : ↥P.H → G) hn₁_eq
-  apply leftCoset_eq_of_not_disjoint; rw [@not_disjoint_iff]
+  apply leftCoset_eq_of_not_disjoint; rw [@Set.not_disjoint_iff]
   refine ⟨j'_val * g₂ * (((⟦c⟧ : decompQuot P g₁).out : G) * ((g₁ : G))),
     ⟨1, P.H.one_mem, by simp [smul_eq_mul]⟩, ?_⟩
   refine ⟨d_val⁻¹ * (((g₁ : G))⁻¹ * (n₁ : G) * ((g₁ : G))),
