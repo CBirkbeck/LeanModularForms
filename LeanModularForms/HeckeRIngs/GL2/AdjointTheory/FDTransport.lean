@@ -243,13 +243,10 @@ noncomputable instance Gamma_p_α_image_PSL_R_quotient_fintype
 
 open CongruenceSubgroup Pointwise UpperHalfPlane MeasureTheory in
 /-- Finite-index FD decomposition for `Γ_p(α) ≤ Γ₁(N)` at the `PSL(2, ℝ)`
-ambient. -/
-theorem Gamma_p_α_PSL_R_FD_finite_index_decomp
-    (α : GL (Fin 2) ℚ)
-    [Countable
-      (((Gamma1 N).map SL2Z_to_PSL2R) ⧸
-        (((Gamma_p_α (N := N) α).map SL2Z_to_PSL2R).subgroupOf
-          ((Gamma1 N).map SL2Z_to_PSL2R)))] :
+ambient.  Canonical form; the `[Countable …]` variant is folded in via the
+`Gamma_p_α_quotient_in_Gamma1_PSL_R_fintype` instance. -/
+private theorem Gamma_p_α_PSL_R_FD_finite_index_decomp_auto
+    (α : GL (Fin 2) ℚ) :
     IsFundamentalDomain
       (((Gamma_p_α (N := N) α).map SL2Z_to_PSL2R).subgroupOf
         ((Gamma1 N).map SL2Z_to_PSL2R))
@@ -263,82 +260,6 @@ theorem Gamma_p_α_PSL_R_FD_finite_index_decomp
     rw [map_SL2Z_to_PSL2R_eq_imageGamma1_PSL_R]; exact isFundamentalDomain_Gamma1_PSL_R
 
 open CongruenceSubgroup Pointwise UpperHalfPlane MeasureTheory in
-/-- `_auto` wrapper for the `PSL(2, ℝ)` FD decomposition. -/
-theorem Gamma_p_α_PSL_R_FD_finite_index_decomp_auto
-    (α : GL (Fin 2) ℚ) :
-    IsFundamentalDomain
-      (((Gamma_p_α (N := N) α).map SL2Z_to_PSL2R).subgroupOf
-        ((Gamma1 N).map SL2Z_to_PSL2R))
-      (⋃ q : ((Gamma1 N).map SL2Z_to_PSL2R) ⧸
-              (((Gamma_p_α (N := N) α).map SL2Z_to_PSL2R).subgroupOf
-                ((Gamma1 N).map SL2Z_to_PSL2R)),
-        ((q.out : ((Gamma1 N).map SL2Z_to_PSL2R)) : PSL(2, ℝ))⁻¹ •
-          Gamma1_fundDomain_PSL N)
-      μ_hyp :=
-  Gamma_p_α_PSL_R_FD_finite_index_decomp α
-
-open CongruenceSubgroup Pointwise ConjAct UpperHalfPlane MeasureTheory in
-/-- Projective FD-shift adapter for `Γ_p(α)` at `PSL(2, ℝ)`. -/
-theorem Gamma_p_α_PSL_R_lift_FD_smul_conjAct
-    (α : GL (Fin 2) ℚ) (α' : GL(2, ℝ)⁺) {s : Set ℍ}
-    (hs : IsFundamentalDomain
-      ((Gamma_p_α (N := N) α).map SL2Z_to_PSL2R) s μ_hyp) :
-    IsFundamentalDomain
-      ((ConjAct.toConjAct (GLPos_to_PSL_R_term α') •
-        ((Gamma_p_α (N := N) α).map SL2Z_to_PSL2R)) :
-          Subgroup (PSL(2, ℝ)))
-      (GLPos_to_PSL_R_term α' • s) μ_hyp :=
-  isFundamentalDomain_PSL_R_smul_conjAct (GLPos_to_PSL_R_term α') hs
-
-open CongruenceSubgroup Pointwise ConjAct UpperHalfPlane MeasureTheory in
-/-- Projective shifted FD-decomposition (general α/α'). -/
-theorem Gamma_p_α_PSL_R_FD_finite_index_decomp_shifted
-    (α : GL (Fin 2) ℚ) (α' : GL(2, ℝ)⁺) :
-    IsFundamentalDomain
-      ((ConjAct.toConjAct (GLPos_to_PSL_R_term α') •
-        ((Gamma_p_α (N := N) α).map SL2Z_to_PSL2R)) :
-          Subgroup PSL(2, ℝ))
-      (⋃ q : ((Gamma1 N).map SL2Z_to_PSL2R) ⧸
-              (((Gamma_p_α (N := N) α).map SL2Z_to_PSL2R).subgroupOf
-                ((Gamma1 N).map SL2Z_to_PSL2R)),
-        (GLPos_to_PSL_R_term α' *
-          ((q.out : ((Gamma1 N).map SL2Z_to_PSL2R)) : PSL(2, ℝ))⁻¹) •
-            (Gamma1_fundDomain_PSL N : Set ℍ))
-      μ_hyp := by
-  have h_ambient :
-      IsFundamentalDomain ((Gamma_p_α (N := N) α).map SL2Z_to_PSL2R)
-        (⋃ q : ((Gamma1 N).map SL2Z_to_PSL2R) ⧸
-                (((Gamma_p_α (N := N) α).map SL2Z_to_PSL2R).subgroupOf
-                  ((Gamma1 N).map SL2Z_to_PSL2R)),
-          ((q.out : ((Gamma1 N).map SL2Z_to_PSL2R)) : PSL(2, ℝ))⁻¹ •
-            (Gamma1_fundDomain_PSL N : Set ℍ))
-        μ_hyp := by
-    have h_image := (Gamma_p_α_PSL_R_FD_finite_index_decomp_auto (N := N) α).image_of_equiv
-      (Equiv.refl ℍ) (MeasureTheory.Measure.QuasiMeasurePreserving.id _)
-      ((Subgroup.subgroupOfEquivOfLe (Subgroup.map_mono (Gamma_p_α_le_Gamma1 α))).symm.toEquiv)
-      (fun _ _ ↦ rfl)
-    simpa using h_image
-  have h_set_eq :
-      (⋃ q : ((Gamma1 N).map SL2Z_to_PSL2R) ⧸
-              (((Gamma_p_α (N := N) α).map SL2Z_to_PSL2R).subgroupOf
-                ((Gamma1 N).map SL2Z_to_PSL2R)),
-        (GLPos_to_PSL_R_term α' *
-          ((q.out : ((Gamma1 N).map SL2Z_to_PSL2R)) : PSL(2, ℝ))⁻¹) •
-            (Gamma1_fundDomain_PSL N : Set ℍ)) =
-      GLPos_to_PSL_R_term α' •
-        (⋃ q : ((Gamma1 N).map SL2Z_to_PSL2R) ⧸
-                (((Gamma_p_α (N := N) α).map SL2Z_to_PSL2R).subgroupOf
-                  ((Gamma1 N).map SL2Z_to_PSL2R)),
-          ((q.out : ((Gamma1 N).map SL2Z_to_PSL2R)) : PSL(2, ℝ))⁻¹ •
-            (Gamma1_fundDomain_PSL N : Set ℍ)) := by
-    rw [Set.smul_set_iUnion]
-    refine Set.iUnion_congr ?_
-    intro q
-    exact mul_smul _ _ _
-  rw [h_set_eq]
-  exact Gamma_p_α_PSL_R_lift_FD_smul_conjAct α α' h_ambient
-
-open CongruenceSubgroup Pointwise UpperHalfPlane MeasureTheory in
 /-- Packaged per-α `Γ_p(α)`-fundamental-domain set. -/
 noncomputable def Gamma_p_α_fundDomain_PSL (α : GL (Fin 2) ℚ) : Set ℍ :=
   ⋃ q : ((Gamma1 N).map SL2Z_to_PSL2R) ⧸
@@ -346,21 +267,6 @@ noncomputable def Gamma_p_α_fundDomain_PSL (α : GL (Fin 2) ℚ) : Set ℍ :=
             ((Gamma1 N).map SL2Z_to_PSL2R)),
     ((q.out : ((Gamma1 N).map SL2Z_to_PSL2R)) : PSL(2, ℝ))⁻¹ •
       (Gamma1_fundDomain_PSL N : Set ℍ)
-
-open CongruenceSubgroup Pointwise UpperHalfPlane MeasureTheory in
-/-- The shifted FD set as `α' • Γ_p(α)-FD`. -/
-theorem Gamma_p_α_PSL_R_FD_finite_index_decomp_shifted_eq_smul
-    (α : GL (Fin 2) ℚ) (α' : GL(2, ℝ)⁺) :
-    (⋃ q : ((Gamma1 N).map SL2Z_to_PSL2R) ⧸
-            (((Gamma_p_α (N := N) α).map SL2Z_to_PSL2R).subgroupOf
-              ((Gamma1 N).map SL2Z_to_PSL2R)),
-      (GLPos_to_PSL_R_term α' *
-        ((q.out : ((Gamma1 N).map SL2Z_to_PSL2R)) : PSL(2, ℝ))⁻¹) •
-          (Gamma1_fundDomain_PSL N : Set ℍ)) =
-    GLPos_to_PSL_R_term α' • Gamma_p_α_fundDomain_PSL (N := N) α := by
-  unfold Gamma_p_α_fundDomain_PSL
-  rw [Set.smul_set_iUnion]
-  exact Set.iUnion_congr fun q ↦ mul_smul _ _ _
 
 open CongruenceSubgroup UpperHalfPlane ModularGroup MeasureTheory in
 /-- Generic SL outer-quotient ↔ scaled `Gamma1_fundDomain_PSL` integral bridge. -/
