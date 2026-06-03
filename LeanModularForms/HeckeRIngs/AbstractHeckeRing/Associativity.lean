@@ -56,66 +56,6 @@ private lemma smulOrbit_map_injective (g β : P.Δ) :
   rw [Set.not_disjoint_iff]
   exact ⟨(i₁.out : G) * (g : G), ⟨1, P.H.one_mem, mul_one _⟩, ⟨k, hk, cancel⟩⟩
 
-private lemma decompQuot_leftMul_bijective (g₀ : P.Δ) (h : P.H) :
-    Function.Bijective (fun q : decompQuot P g₀ ↦
-      (⟦⟨(h : G) * q.out, P.H.mul_mem h.2 q.out.2⟩⟧ : decompQuot P g₀)) := by
-  constructor
-  · intro q₁ q₂ heq
-    rw [Quotient.eq'', QuotientGroup.leftRel_apply] at heq
-    have hmem : (q₁.out : ↥P.H)⁻¹ * q₂.out ∈
-        (ConjAct.toConjAct (g₀ : G) • P.H).subgroupOf P.H := by
-      convert heq using 1
-      ext
-      simp only [Subgroup.coe_mul, InvMemClass.coe_inv, mul_inv_rev]
-      group
-    rw [← QuotientGroup.leftRel_apply, ← Quotient.eq''] at hmem
-    simpa using hmem
-  · intro q
-    refine ⟨⟦⟨(h : G)⁻¹ * q.out, P.H.mul_mem (P.H.inv_mem h.2) q.out.2⟩⟧, ?_⟩
-    rw [← Quotient.out_eq q, Quotient.eq'', QuotientGroup.leftRel_apply]
-    have hout := Quotient.out_eq (s := QuotientGroup.leftRel _)
-      (⟦⟨(h : G)⁻¹ * q.out, P.H.mul_mem (P.H.inv_mem h.2) q.out.2⟩⟧ :
-        decompQuot P g₀)
-    rw [Quotient.eq'', QuotientGroup.leftRel_apply] at hout
-    convert hout using 1
-    ext
-    simp only [Quotient.out_eq, Subgroup.coe_mul, InvMemClass.coe_inv, mul_inv_rev]
-    group
-
-private lemma decompQuot_beta_leftMul_coset_eq (g₀ β : P.Δ) (h : P.H) (q : decompQuot P g₀) :
-    (⟦⟨(β : G) * (h : G) * q.out * (g₀ : G),
-        Submonoid.mul_mem _ (Submonoid.mul_mem _ (Submonoid.mul_mem _ β.2 (P.h₀ h.2))
-          (P.h₀ q.out.2)) g₀.2⟩⟧ : HeckeLeftCoset P) =
-      (⟦⟨(β : G) * (⟦⟨(h : G) * q.out, P.H.mul_mem h.2 q.out.2⟩⟧ :
-          decompQuot P g₀).out * (g₀ : G),
-        delta_mul_mem P.H P.Δ
-          (⟦⟨(h : G) * q.out, P.H.mul_mem h.2 q.out.2⟩⟧ : decompQuot P g₀).out
-          β g₀ P.h₀⟩⟧ : HeckeLeftCoset P) := by
-  apply Quotient.sound
-  change lcRel P _ _
-  simp only [lcRel]
-  obtain ⟨n, hn_eq⟩ := QuotientGroup.mk_out_eq_mul
-    ((ConjAct.toConjAct (g₀ : G) • P.H).subgroupOf P.H) ⟨h * q.out, P.H.mul_mem h.2 q.out.2⟩
-  have hn_coe : ((⟦⟨(h : G) * (q.out : G),
-      P.H.mul_mem h.2 q.out.2⟩⟧ :
-      decompQuot P g₀).out : G) =
-      (h : G) * (q.out : G) * (n : G) := by
-    simpa [Subgroup.coe_mul] using congr_arg (Subtype.val : ↥P.H → G) hn_eq
-  have hn_conj : (g₀ : G)⁻¹ * (n : G) * (g₀ : G) ∈ P.H := by
-    have hn := n.2
-    rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
-      ConjAct.smul_def] at hn
-    simpa using hn
-  ext x
-  constructor
-  · rintro ⟨_, rfl, k, hk, rfl⟩
-    exact ⟨_, rfl, ((g₀ : G)⁻¹ * (n : G)⁻¹ * (g₀ : G)) * k,
-      P.H.mul_mem (by convert P.H.inv_mem hn_conj using 1; group) hk,
-      by rw [hn_coe]; group⟩
-  · rintro ⟨_, rfl, k, hk, rfl⟩
-    exact ⟨_, rfl, ((g₀ : G)⁻¹ * (n : G) * (g₀ : G)) * k, P.H.mul_mem hn_conj hk,
-      by rw [hn_coe]; group⟩
-
 private lemma conjAct_inv_mem_of_subgroupOf (g : G)
     (n : (ConjAct.toConjAct g • P.H).subgroupOf P.H) : g⁻¹ * (n : G)⁻¹ * g ∈ P.H := by
   have hn := n.2

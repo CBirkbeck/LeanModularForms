@@ -529,44 +529,6 @@ matrix `W_N` (the involution-up-to-scalar coefficient). -/
 def Newform.frickeSquareScalar (N : ℕ) (k : ℤ) : ℂ :=
   (-1 : ℂ) ^ k * (N : ℂ) ^ (k - 2)
 
-/-- Function-level Fricke double-slash identity: slashing twice by `W_N` scales
-`f` by `Newform.frickeSquareScalar N k`. -/
-lemma Newform.slash_frickeMatrix_frickeMatrix
-    {N : ℕ} [NeZero N] {k : ℤ} (f : UpperHalfPlane → ℂ) :
-    ((f ∣[k] Newform.frickeMatrix N) ∣[k] Newform.frickeMatrix N) =
-      Newform.frickeSquareScalar N k • f := by
-  funext τ
-  have hN_ne : (N : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (NeZero.ne N)
-  have hτ_ne : (τ : ℂ) ≠ 0 := UpperHalfPlane.ne_zero τ
-  rw [Newform.frickeMatrix_slash_apply (f ∣[k] Newform.frickeMatrix N) τ,
-    Newform.frickeMatrix_slash_apply f (Newform.frickeMatrix N • τ),
-    show Newform.frickeMatrix N • Newform.frickeMatrix N • τ = τ by
-      rw [← mul_smul]; exact frickeMatrix_sq_smul τ]
-  rw [Newform.frickeMatrix_smul,
-    show ((N : ℂ) * (-1 / ((N : ℂ) * (τ : ℂ)))) = -1 / (τ : ℂ) by field_simp,
-    show ((N : ℝ) : ℂ) = (N : ℂ) by push_cast; rfl]
-  rw [show f τ * (N : ℂ) ^ (k - 1) * (-1 / (τ : ℂ)) ^ (-k) *
-        (N : ℂ) ^ (k - 1) * ((N : ℂ) * (τ : ℂ)) ^ (-k) =
-      f τ * ((N : ℂ) ^ (k - 1) * (N : ℂ) ^ (k - 1)) *
-        ((-1 / (τ : ℂ)) ^ (-k) * ((N : ℂ) * (τ : ℂ)) ^ (-k)) by ring]
-  rw [show (-1 / (τ : ℂ)) ^ (-k) * ((N : ℂ) * (τ : ℂ)) ^ (-k) =
-      (-(N : ℂ)) ^ (-k) by
-    rw [← mul_zpow]
-    congr 1
-    field_simp]
-  rw [show (N : ℂ) ^ (k - 1) * (N : ℂ) ^ (k - 1) = (N : ℂ) ^ (2 * (k - 1)) by
-    rw [← zpow_add₀ hN_ne]; congr 1; ring]
-  rw [show (-(N : ℂ)) ^ (-k) = (-1 : ℂ) ^ k * (N : ℂ) ^ (-k) by
-    rw [show (-(N : ℂ)) = (-1 : ℂ) * (N : ℂ) by ring, mul_zpow]
-    rw [show (-1 : ℂ) ^ (-k) = (-1 : ℂ) ^ k by
-      rw [zpow_neg, show ((-1 : ℂ) ^ k)⁻¹ = ((-1 : ℂ)⁻¹) ^ k from (inv_zpow _ _).symm,
-          show ((-1 : ℂ)⁻¹ : ℂ) = -1 by norm_num]]]
-  rw [Pi.smul_apply, smul_eq_mul, Newform.frickeSquareScalar]
-  rw [show f τ * (N : ℂ) ^ (2 * (k - 1)) * ((-1 : ℂ) ^ k * (N : ℂ) ^ (-k)) =
-      (-1 : ℂ) ^ k * ((N : ℂ) ^ (2 * (k - 1)) * (N : ℂ) ^ (-k)) * f τ by ring]
-  rw [show (N : ℂ) ^ (2 * (k - 1)) * (N : ℂ) ^ (-k) = (N : ℂ) ^ (k - 2) by
-    rw [← zpow_add₀ hN_ne]; congr 1; ring]
-
 section FrickeAdjoint
 open UpperHalfPlane MeasureTheory
 open scoped UpperHalfPlane
@@ -597,43 +559,5 @@ private lemma frickeMatrix_smul_imAxis_coe {N : ℕ} [NeZero N] {x : ℝ} (hx : 
   push_cast
   field_simp [Nat.cast_ne_zero.mpr (NeZero.ne N)]
   rw [Complex.I_sq]
-
-/-- Imaginary-axis functional equation derived from the Fricke slash formula:
-`Newform.imAxis f (1/x) = (N^{1-k} · I^k · x^k) · (f ∣[k] W_N) ⟨I · (x/N), _⟩`. -/
-theorem Newform.imAxis_eq_frickeSlash
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) {x : ℝ} (hx : 0 < x) :
-    Newform.imAxis f (1 / x) =
-      ((N : ℂ) ^ (1 - k) * Complex.I ^ k * ((x : ℝ) : ℂ) ^ k) *
-      (⇑f.toCuspForm.toModularForm' ∣[k] Newform.frickeMatrix N)
-        ⟨Complex.I * ((x / (N : ℝ) : ℝ) : ℂ), im_I_mul_ofReal_pos
-          (div_pos hx (Nat.cast_pos.mpr (Nat.pos_of_ne_zero (NeZero.ne N))))⟩ := by
-  have hN_ne : (N : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (NeZero.ne N)
-  have hx_ne : (x : ℂ) ≠ 0 := by exact_mod_cast hx.ne'
-  set τ_inner : UpperHalfPlane :=
-    ⟨Complex.I * ((x / (N : ℝ) : ℝ) : ℂ), im_I_mul_ofReal_pos (div_pos hx
-      (Nat.cast_pos.mpr (Nat.pos_of_ne_zero (NeZero.ne N))))⟩
-  set τ_outer : UpperHalfPlane :=
-    ⟨Complex.I * ((1 / x : ℝ) : ℂ), im_I_mul_ofReal_pos (one_div_pos.mpr hx)⟩
-  have h_smul_eq : (Newform.frickeMatrix N • τ_inner : UpperHalfPlane) = τ_outer := by
-    apply UpperHalfPlane.ext
-    rw [show ((Newform.frickeMatrix N • τ_inner : UpperHalfPlane) : ℂ) =
-        (-1 : ℂ) / ((N : ℂ) * (Complex.I * ((x / (N : ℝ) : ℝ) : ℂ))) from
-        Newform.frickeMatrix_smul _ _]
-    exact frickeMatrix_smul_imAxis_coe hx
-  have h_imAxis_eq :
-      Newform.imAxis f (1 / x) =
-        (⇑f.toCuspForm.toModularForm' : UpperHalfPlane → ℂ) τ_outer := by
-    change ModularForms.imAxis f.toCuspForm (1 / x) = _
-    rw [ModularForms.imAxis_apply_of_pos f.toCuspForm (one_div_pos.mpr hx)]
-    rfl
-  rw [h_imAxis_eq, Newform.frickeMatrix_slash_apply (N := N) (k := k)
-    (⇑f.toCuspForm.toModularForm' : UpperHalfPlane → ℂ) τ_inner, h_smul_eq]
-  have h_τ_inner_coe : (N : ℂ) * (τ_inner : ℂ) = Complex.I * ((x : ℝ) : ℂ) := by
-    change (N : ℂ) * (Complex.I * ((x / (N : ℝ) : ℝ) : ℂ)) = Complex.I * (x : ℂ)
-    push_cast
-    field_simp
-  rw [h_τ_inner_coe, show ((N : ℝ) : ℂ) = (N : ℂ) by push_cast; rfl,
-    show Complex.I * ((x : ℝ) : ℂ) = ((x : ℝ) : ℂ) * Complex.I by ring, mul_zpow]
-  exact (frickeRootNumber_scalar_collapse hN_ne hx_ne Complex.I_ne_zero).symm
 
 end HeckeRing.GL2

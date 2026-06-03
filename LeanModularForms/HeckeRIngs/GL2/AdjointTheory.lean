@@ -331,20 +331,6 @@ lemma adjointGamma0Rep_units (p N : ℕ) (hpN : Nat.Coprime p N) [NeZero N] :
   simp only [MonoidHom.coe_mk, OneHom.coe_mk]
   exact hmod
 
-/-- `⟨p⟩ · f` equals `f` slashed by `sigma_p_specific N p`. -/
-lemma coe_diamondOp_cusp_eq_slash_sigma_p
-    (p : ℕ) (hp : 0 < p) (hpN : Nat.Coprime p N)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    (⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpN) f) :
-        UpperHalfPlane → ℂ) =
-      ⇑f ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-        (sigma_p_specific N p hp hpN) : GL (Fin 2) ℝ) := by
-  show (diamondOpCusp k (ZMod.unitOfCoprime p hpN) f : UpperHalfPlane → ℂ) = _
-  rw [diamondOpCusp_eq k (ZMod.unitOfCoprime p hpN)
-    ⟨sigma_p_specific N p hp hpN, sigma_p_specific_mem_Gamma0 N p hp hpN⟩
-    (Gamma0MapUnits_sigma_p_specific N p hp hpN)]
-  rfl
-
 /-- A representative `γ₁ ∈ Γ₁(N)` paired with `adjointGamma0Rep` for the slash
 formulation of the adjoint identity. -/
 noncomputable def adjointGamma1Rep (p N : ℕ) (hpN : Nat.Coprime p N) :
@@ -463,14 +449,6 @@ private lemma adjointGamma0Rep_mul_sigma_p_mem_Gamma1
     adjointGamma0Rep_mul_sigma_p_entry_11 p N hp hpN,
     adjointGamma0Rep_mul_sigma_p_entry_10 p N hp hpN⟩
 
-/-- The element `γ₀ · σ_p ∈ Γ₁(N)` packaged with its membership proof. -/
-noncomputable def gamma1_of_gamma0_sigma_p
-    (p N : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) :
-    ↥(Gamma1 N) :=
-  ⟨((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) *
-    sigma_p_specific N p hp hpN,
-    adjointGamma0Rep_mul_sigma_p_mem_Gamma1 p N hp hpN⟩
-
 section PeterssonAdjoint
 
 open UpperHalfPlane MeasureTheory
@@ -499,14 +477,6 @@ lemma peterssonAdj_mul (α β : GL (Fin 2) ℝ) :
   apply Units.ext
   rw [Units.val_mul, peterssonAdj_coe, peterssonAdj_coe, peterssonAdj_coe,
     Units.val_mul, Matrix.adjugate_mul_distrib]
-
-private lemma Gamma1Quot_mk_mul_right_inv_eq
-    (q γ : SL(2, ℤ)) (hγ : γ ∈ Gamma1 N) :
-    (⟦q * γ⁻¹⟧ : SL(2, ℤ) ⧸ Gamma1 N) = (⟦q⟧ : SL(2, ℤ) ⧸ Gamma1 N) := by
-  rw [QuotientGroup.eq]
-  show (q * γ⁻¹)⁻¹ * q ∈ Gamma1 N
-  rw [mul_inv_rev, inv_inv, mul_assoc, inv_mul_cancel, mul_one]
-  exact hγ
 
 /-- For an SL(2, ℤ) element cast to GL(2, ℝ), the `peterssonAdj` equals the group inverse.
 Since SL elements have determinant 1, their adjugate equals their inverse. -/
@@ -648,23 +618,6 @@ private lemma mapGL_SL_det_pos (γ : SL(2, ℤ)) :
       ((Int.castRingHom ℝ).mapMatrix γ.val) by rw [mapGL_coe_matrix]; rfl,
     ← RingHom.map_det, γ.property]
   norm_num
-
-private lemma peterssonInner_mapGL_smul_eq_of_slash_invariant
-    (D : Set ℍ) (γ : SL(2, ℤ)) (F G : ℍ → ℂ)
-    (hF : F ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ : GL (Fin 2) ℝ) = F)
-    (hG : G ∣[k] ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ : GL (Fin 2) ℝ) = G) :
-    peterssonInner k
-        (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ : GL (Fin 2) ℝ) • D) F G =
-      peterssonInner k D F G := by
-  have h := peterssonInner_slash_adjoint (k := k) D
-    (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ : GL (Fin 2) ℝ)) (mapGL_SL_det_pos γ) F
-    (G ∣[k] (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ : GL (Fin 2) ℝ)))
-  rw [peterssonAdj_mapGL_SL_eq_inv γ,
-    show ((G ∣[k] (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ : GL (Fin 2) ℝ)))
-          ∣[k] (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ : GL (Fin 2) ℝ))⁻¹) =
-        G by
-      rw [← SlashAction.slash_mul, mul_inv_cancel, SlashAction.slash_one], hF, hG] at h
-  exact h.symm
 
 end PeterssonAdjoint
 

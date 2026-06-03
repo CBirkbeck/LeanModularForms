@@ -928,9 +928,6 @@ end CoprimeMultiplicativity
 noncomputable def T_sum_nat (k : ℕ) : HeckeAlgebra 2 :=
   ∑ a ∈ k.divisors, T_ad a (k / a)
 
-/-- `T_sum_nat` agrees with `T_sum` on positive naturals. -/
-lemma T_sum_nat_eq (k : ℕ+) : T_sum_nat (k : ℕ) = T_sum k := rfl
-
 private lemma T_ad_self_eq_T_elem (c : ℕ) (hc : 0 < c) : T_ad c c = T_elem (fun _ ↦ c) := by
   rw [T_ad_of_pos c c hc hc (dvd_refl c)]
   exact T_elem_congr_diag 2 (funext fun j ↦ by fin_cases j <;> rfl)
@@ -939,10 +936,6 @@ private lemma T_ad_self_eq_T_elem (c : ℕ) (hc : 0 < c) : T_ad c c = T_elem (fu
 private lemma T_pp_pow_eq_T_ad (q : ℕ) (hq : q.Prime) (i : ℕ) : T_pp q ^ i =
     T_ad (q ^ i) (q ^ i) := by
   rw [T_ad_self_eq_T_elem _ (pow_pos hq.pos i), T_pp_pow q hq i]
-
-/-- `gcd(q^r, q^s) = q^r` when `r <= s`. -/
-lemma gcd_pow_pow_of_le (q : ℕ) (r s : ℕ) (hrs : r ≤ s) : Nat.gcd (q ^ r) (q ^ s) = q ^ r :=
-  Nat.dvd_antisymm (Nat.gcd_dvd_left _ _) (Nat.dvd_gcd (dvd_refl _) (Nat.pow_dvd_pow q hrs))
 
 /-- Coprime base case for the divisor sum formula. -/
 private lemma T_sum_mul_of_coprime_aux (m n : ℕ+) (hcop : Nat.Coprime m n) :

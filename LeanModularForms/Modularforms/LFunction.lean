@@ -272,52 +272,6 @@ theorem hasImAxisExponentialDecay_of_atImInfty_decay [ModularFormClass F Γ k]
   show ResToImagAxis (⇑f) x = ResToImagAxis (⇑f) x - 0
   ring
 
-/-- **Cusp-form-side `HasImAxisExponentialDecay` from a strict period.**
-
-Reduces `HasImAxisExponentialDecay f` to the strict-period hypothesis
-`h ∈ Γ.strictPeriods` (with `0 < h`) via `CuspFormClass.exp_decay_atImInfty`. -/
-theorem hasImAxisExponentialDecay_of_strictPeriod
-    [CuspFormClass F Γ k] (f : F) {h : ℝ} (hh : 0 < h)
-    (hΓ : h ∈ Γ.strictPeriods) :
-    HasImAxisExponentialDecay f := by
-  haveI : Fact (IsCusp OnePoint.infty Γ) :=
-    ⟨Γ.isCusp_of_mem_strictPeriods hh hΓ⟩
-  have hc : (0 : ℝ) < 2 * Real.pi / h := by positivity
-  refine hasImAxisExponentialDecay_of_atImInfty_decay f hc ?_
-  refine (CuspFormClass.exp_decay_atImInfty f hh hΓ).congr_right fun τ ↦ ?_
-  congr 1
-  field_simp
-
-/-- **The classical Hecke 1936 completed Mellin–Dirichlet identity for cusp forms**
-(Diamond–Shurman §5.9 Theorem 5.9.2 / Miyake Theorem 4.3.5 / 4.5.16):
-```
-mellin (imAxis f) s = (2 * Real.pi : ℂ) ^ (-s) * Complex.Gamma s * LSeries (lCoeff f) s
-```
-on the convergence half-plane `Re s > k/2 + 1`. -/
-def HasCompletedMellinIdentity [Γ.IsArithmetic] [CuspFormClass F Γ k] (f : F) : Prop :=
-  ∀ {s : ℂ}, ((k : ℝ) / 2 + 1 : ℝ) < s.re →
-    mellin (imAxis f) s =
-      (2 * Real.pi : ℂ) ^ (-s) * Complex.Gamma s * LSeries (lCoeff f) s
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 end ModularForms
 
 namespace LSeries
@@ -579,47 +533,5 @@ theorem differentiable_eulerFactor_polynomial_finset
   refine Differentiable.fun_finset_prod fun p _ ↦ ?_
   haveI : NeZero (((p : ℕ) : ℂ)) := ⟨by exact_mod_cast p.prop.pos.ne'⟩
   fun_prop
-
-/-- **Euler-stripping multiplier as an entire function plus pointwise bridge.**
-
-Assembles `coprimeStrip_LSeries_eq_polynomial_mul_LSeries` and
-`differentiable_eulerFactor_polynomial_finset` into the explicit triple shape
-```
-∃ stripping : ℂ → ℂ,
-  Differentiable ℂ stripping ∧
-  ∀ ⦃s : ℂ⦄, H s →
-    LSeries (coprimeStrip S f) s = stripping s * LSeries f s
-```
-where `H : ℂ → Prop` describes the half-plane on which all hypotheses hold. -/
-theorem hasEulerStrippingMultiplier_of_eulerProduct
-    (S : Finset Nat.Primes) (a : Nat.Primes → ℂ)
-    (f : ℕ → ℂ) (H : ℂ → Prop)
-    (hf₁ : f 1 = 1)
-    (hf_euler : ∀ ⦃s : ℂ⦄, H s →
-      HasProd
-        (fun p : Nat.Primes ↦ ∑' e : ℕ, LSeries.term f s ((p : ℕ) ^ e))
-        (LSeries f s))
-    (hg_euler : ∀ ⦃s : ℂ⦄, H s →
-      HasProd
-        (fun p : Nat.Primes ↦ ∑' e : ℕ,
-          LSeries.term (coprimeStrip S f) s ((p : ℕ) ^ e))
-        (LSeries (coprimeStrip S f) s))
-    (h_local_inv : ∀ ⦃s : ℂ⦄, H s → ∀ p ∈ S,
-      ∑' e : ℕ, LSeries.term f s ((p : ℕ) ^ e) =
-        (1 - a p * ((p : ℕ) : ℂ) ^ (-s))⁻¹)
-    (h_local_ne_zero : ∀ ⦃s : ℂ⦄, H s → ∀ p ∈ S,
-      1 - a p * ((p : ℕ) : ℂ) ^ (-s) ≠ 0) :
-    ∃ stripping : ℂ → ℂ,
-      Differentiable ℂ stripping ∧
-      ∀ ⦃s : ℂ⦄, H s →
-        LSeries (coprimeStrip S f) s = stripping s * LSeries f s := by
-  refine ⟨fun s ↦ ∏ p ∈ S, (1 - a p * ((p : ℕ) : ℂ) ^ (-s)),
-    differentiable_eulerFactor_polynomial_finset S a, ?_⟩
-  intro s hs
-  exact coprimeStrip_LSeries_eq_polynomial_mul_LSeries S hf₁ (hf_euler hs)
-    (hg_euler hs)
-    (fun p ↦ 1 - a p * ((p : ℕ) : ℂ) ^ (-s))
-    (h_local_ne_zero hs)
-    (h_local_inv hs)
 
 end LSeries

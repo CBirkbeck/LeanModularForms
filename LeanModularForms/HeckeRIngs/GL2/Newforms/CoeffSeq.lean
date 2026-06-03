@@ -538,20 +538,6 @@ noncomputable def Newform.dirichletLift (χ : (ZMod N)ˣ →* ℂˣ) :
     DirichletCharacter ℂ N := MulChar.ofUnitHom χ
 
 omit [NeZero N] in
-/-- **Norm of a character value at a unit equals 1**: the image `χ a : ℂˣ`
-is a finite-order unit in ℂ, hence a root of unity. -/
-lemma Newform.norm_chi_unit_eq_one [NeZero N] (χ : (ZMod N)ˣ →* ℂˣ)
-    (a : (ZMod N)ˣ) :
-    ‖((χ a : ℂˣ) : ℂ)‖ = 1 := by
-  have h_pow : (χ a) ^ Fintype.card ((ZMod N)ˣ) = 1 := by
-    rw [← map_pow]; convert map_one χ; exact pow_card_eq_one
-  have h_pow_C : ((χ a : ℂˣ) : ℂ) ^ Fintype.card ((ZMod N)ˣ) = 1 := by
-    rw [show ((χ a : ℂˣ) : ℂ) ^ Fintype.card ((ZMod N)ˣ) =
-        (((χ a) ^ Fintype.card ((ZMod N)ˣ) : ℂˣ) : ℂ) by push_cast; rfl,
-      h_pow, Units.val_one]
-  exact Complex.norm_eq_one_of_pow_eq_one h_pow_C Fintype.card_pos.ne'
-
-omit [NeZero N] in
 /-- **Algebraic Dirichlet-quotient rewrite of the good-prime Euler
 factor.**  The local Euler factor `(1 + x)⁻¹` decomposes as the ratio
 `(1 - x) · (1 - x²)⁻¹`, exhibiting the formal Dirichlet-quotient shape

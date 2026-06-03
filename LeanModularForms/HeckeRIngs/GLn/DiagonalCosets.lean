@@ -370,10 +370,6 @@ theorem exists_diagonal_of_posdet (A : Matrix (Fin n) (Fin n) ℤ) (hdet : 0 < A
 private noncomputable def finEquivSum (k : ℕ) : Fin (k + 2) ≃ Fin 2 ⊕ Fin k :=
   (Fin.castOrderIso (by omega : k + 2 = 2 + k)).toEquiv.trans finSumFinEquiv.symm
 
-private lemma diagonal_submatrix_finEquivSum (k : ℕ) (d : Fin (k + 2) → ℤ) :
-    (Matrix.diagonal (d ∘ (finEquivSum k).symm)).submatrix (finEquivSum k) (finEquivSum k) =
-    Matrix.diagonal d := by ext i j; simp [submatrix_apply, diagonal_apply]
-
 private lemma finEquivSum_mk_zero (k : ℕ) :
     finEquivSum k (0 : Fin (k + 2)) = Sum.inl ⟨0, by omega⟩ := by
   unfold finEquivSum; simp [Equiv.trans_apply, Fin.castOrderIso]; rfl
@@ -381,24 +377,6 @@ private lemma finEquivSum_mk_zero (k : ℕ) :
 private lemma finEquivSum_mk_one (k : ℕ) :
     finEquivSum k (1 : Fin (k + 2)) = Sum.inl ⟨1, by omega⟩ := by
   unfold finEquivSum; simp [Equiv.trans_apply, Fin.castOrderIso]; rfl
-
-private lemma finEquivSum_symm_inl0 (k : ℕ) :
-    (finEquivSum k).symm (Sum.inl (0 : Fin 2)) = (0 : Fin (k + 2)) :=
-  (finEquivSum k).symm_apply_eq.mpr (finEquivSum_mk_zero k).symm
-
-private lemma finEquivSum_symm_inl1 (k : ℕ) :
-    (finEquivSum k).symm (Sum.inl (1 : Fin 2)) = (1 : Fin (k + 2)) :=
-  (finEquivSum k).symm_apply_eq.mpr (finEquivSum_mk_one k).symm
-
-private lemma finEquivSum_symm_inr_ne_zero (k : ℕ) (i : Fin k) :
-    (finEquivSum k).symm (Sum.inr i) ≠ (0 : Fin (k + 2)) := fun h ↦ by
-  have := Equiv.apply_symm_apply (finEquivSum k) (Sum.inr i)
-  rw [h, finEquivSum_mk_zero] at this; nomatch this
-
-private lemma finEquivSum_symm_inr_ne_one (k : ℕ) (i : Fin k) :
-    (finEquivSum k).symm (Sum.inr i) ≠ (1 : Fin (k + 2)) := fun h ↦ by
-  have := Equiv.apply_symm_apply (finEquivSum k) (Sum.inr i)
-  rw [h, finEquivSum_mk_one] at this; nomatch this
 
 private lemma gcd_2x2_det_L (a b : ℤ) (ha : 0 < a) :
     let g : ℤ := ↑(a.gcd b); let s := a.gcdA b; let t := a.gcdB b

@@ -303,31 +303,6 @@ private lemma h_quot_imp_adj_mem_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat
     ((HeckeRing.GLn.Gamma0_pair N).H.mul_mem
       ((HeckeRing.GLn.Gamma0_pair N).H.inv_mem hc₁) hrel) hc₂
 
-private lemma adj_upper_inv_mul_upper_not_mem_Gamma0 (N : ℕ) [NeZero N] (p : ℕ)
-    (hp : Nat.Prime p) (b₁ b₂ : ℕ) (hb₁ : b₁ < p) (hb₂ : b₂ < p) (hne : b₁ ≠ b₂) :
-    (GL_adjugate (T_p_upper p hp.pos b₁ : GL (Fin 2) ℚ))⁻¹ *
-     GL_adjugate (T_p_upper p hp.pos b₂ : GL (Fin 2) ℚ) ∉
-       (HeckeRing.GLn.Gamma0_pair N).H := by
-  intro hmem
-  exact adj_upper_inv_mul_not_mem_H p hp b₁ b₂ hb₁ hb₂ hne
-    (Gamma0_pair_H_le_GL_pair_H N hmem)
-
-private lemma adj_upper_inv_mul_lower_not_mem_Gamma0 (N : ℕ) [NeZero N] (p : ℕ)
-    (hp : Nat.Prime p) (b : ℕ) :
-    (GL_adjugate (T_p_upper p hp.pos b : GL (Fin 2) ℚ))⁻¹ *
-     GL_adjugate (T_p_lower p hp.pos : GL (Fin 2) ℚ) ∉
-       (HeckeRing.GLn.Gamma0_pair N).H := by
-  intro hmem
-  exact adj_upper_inv_mul_lower_not_mem_H p hp b (Gamma0_pair_H_le_GL_pair_H N hmem)
-
-private lemma adj_lower_inv_mul_upper_not_mem_Gamma0 (N : ℕ) [NeZero N] (p : ℕ)
-    (hp : Nat.Prime p) (b : ℕ) :
-    (GL_adjugate (T_p_lower p hp.pos : GL (Fin 2) ℚ))⁻¹ *
-     GL_adjugate (T_p_upper p hp.pos b : GL (Fin 2) ℚ) ∉
-       (HeckeRing.GLn.Gamma0_pair N).H := by
-  intro hmem
-  exact adj_lower_inv_mul_upper_not_mem_H p hp b (Gamma0_pair_H_le_GL_pair_H N hmem)
-
 private lemma adj_T_p_upper_factor_through_rep (N : ℕ) [NeZero N] (p : ℕ)
     (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (b : ℕ) :
     ∃ (h₁ : GL _ ℚ) (_ : h₁ ∈ (HeckeRing.GLn.Gamma0_pair N).H)
@@ -343,37 +318,5 @@ private lemma adj_T_p_lower_factor_through_rep (N : ℕ) [NeZero N] (p : ℕ)
       GL_adjugate (T_p_lower p hp.pos : GL _ ℚ) =
         h₁ * (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) * h₂ :=
   adj_mem_dc_Gamma0 N p hp hpN _ (T_p_lower_mem_D_p_Gamma0 N p hp hpN)
-
-private noncomputable def T_p_coset_reps_map (N : ℕ) [NeZero N] (p : ℕ)
-    (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (j : Fin (p + 1)) :
-    decompQuot (HeckeRing.GLn.Gamma0_pair N)
-      (HeckeCoset.rep (D_p_Gamma0 N p hp.pos)) :=
-  if _h : j.val < p then
-    ⟦⟨(adj_T_p_upper_factor_through_rep N p hp hpN j.val).choose,
-      (adj_T_p_upper_factor_through_rep N p hp hpN j.val).choose_spec.choose⟩⟧
-  else
-    ⟦⟨(adj_T_p_lower_factor_through_rep N p hp hpN).choose,
-      (adj_T_p_lower_factor_through_rep N p hp hpN).choose_spec.choose⟩⟧
-
-private lemma adj_inv_mul_mem_of_quot_eq (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.Prime p)
-    (g₁ g₂ : GL _ ℚ)
-    (e₁ : ∃ (h₁ : GL _ ℚ) (_ : h₁ ∈ (HeckeRing.GLn.Gamma0_pair N).H)
-        (h₂ : GL _ ℚ) (_ : h₂ ∈ (HeckeRing.GLn.Gamma0_pair N).H),
-        GL_adjugate g₁ = h₁ * (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) * h₂)
-    (e₂ : ∃ (h₁ : GL _ ℚ) (_ : h₁ ∈ (HeckeRing.GLn.Gamma0_pair N).H)
-        (h₂ : GL _ ℚ) (_ : h₂ ∈ (HeckeRing.GLn.Gamma0_pair N).H),
-        GL_adjugate g₂ = h₁ * (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) * h₂)
-    (hquot : (⟦⟨e₁.choose, e₁.choose_spec.choose⟩⟧ :
-        decompQuot (HeckeRing.GLn.Gamma0_pair N)
-          (HeckeCoset.rep (D_p_Gamma0 N p hp.pos))) = ⟦⟨e₂.choose, e₂.choose_spec.choose⟩⟧) :
-    (GL_adjugate g₁)⁻¹ * GL_adjugate g₂ ∈ (HeckeRing.GLn.Gamma0_pair N).H :=
-  h_quot_imp_adj_mem_Gamma0 N p hp
-    e₁.choose e₁.choose_spec.choose
-    e₁.choose_spec.choose_spec.choose e₁.choose_spec.choose_spec.choose_spec.choose
-    e₂.choose e₂.choose_spec.choose
-    e₂.choose_spec.choose_spec.choose e₂.choose_spec.choose_spec.choose_spec.choose
-    g₁ g₂
-    e₁.choose_spec.choose_spec.choose_spec.choose_spec
-    e₂.choose_spec.choose_spec.choose_spec.choose_spec hquot
 
 end HeckeRing.GL2

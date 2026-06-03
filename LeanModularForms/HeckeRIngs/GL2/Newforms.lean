@@ -80,16 +80,6 @@ open scoped MatrixGroups ModularForm Pointwise DirectSum
 variable {N : ℕ} [NeZero N] {k : ℤ}
 
 
-private lemma Newform.term_lCoeff_pow_of_bad_prime_pow
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) {p : ℕ}
-    (h_bad_pow : ∀ r : ℕ, f.lCoeff (p ^ r) = f.lCoeff p ^ r) (s : ℂ) (e : ℕ) :
-    LSeries.term f.lCoeff s (p ^ e) = (f.lCoeff p * (p : ℂ) ^ (-s)) ^ e := by
-  rw [LSeries.term_def₀ f.lCoeff_zero, h_bad_pow e]
-  push_cast
-  rw [mul_pow, show ((p : ℂ) ^ e) ^ (-s) = ((p : ℂ) ^ (-s)) ^ e by
-    rw [← Complex.natCast_cpow_natCast_mul (p : ℕ) e (-s),
-      show ((e : ℂ) * (-s)) = (-s) * (e : ℂ) from by ring, Complex.cpow_mul_nat]]
-
 private lemma levelRaiseMatrix_inv_smul_vadd_one_eq
     {l : ℕ} [NeZero l] (τ : UpperHalfPlane) :
     ((levelRaiseMatrix l)⁻¹ • ((1 : ℝ) +ᵥ τ) : UpperHalfPlane) =

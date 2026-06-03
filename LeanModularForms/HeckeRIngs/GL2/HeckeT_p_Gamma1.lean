@@ -34,18 +34,6 @@ noncomputable def D_p_Gamma1 (N p : ℕ) [NeZero N] (hp : 0 < p) :
   ⟦⟨diagMat 2 ![1, p], diag_1p_mem_Delta1 N p hp⟩⟧
 
 
-private lemma diag_1p_mul_mapGL_val (p : ℕ) (hp : 0 < p) (s : SL(2, ℤ)) :
-    ((diagMat 2 ![1, p] : GL (Fin 2) ℚ) * (mapGL ℚ s)).val =
-    !![((s.val 0 0 : ℤ) : ℚ), ((s.val 0 1 : ℤ) : ℚ);
-       (p : ℚ) * (s.val 1 0 : ℤ), (p : ℚ) * (s.val 1 1 : ℤ)] := by
-  have hpos : ∀ k : Fin 2, 0 < (![1, p] : Fin 2 → ℕ) k := fun k ↦ by
-    fin_cases k <;> simp [hp]
-  rw [Units.val_mul, diagMat_val _ _ hpos]
-  ext i j
-  simp only [mapGL_coe_matrix, Matrix.mul_apply, Fin.sum_univ_two,
-    Matrix.diagonal_apply, algebraMap_int_eq]
-  fin_cases i <;> fin_cases j <;> simp
-
 /-- The natural number `a ∈ [0, N)` with `a ≡ p⁻¹ (mod N)`. -/
 noncomputable def aInvOfCoprime (N p : ℕ) [NeZero N] (hpN : Nat.Coprime p N) : ℕ :=
   (((ZMod.unitOfCoprime p hpN)⁻¹ : (ZMod N)ˣ) : ZMod N).val
@@ -128,11 +116,6 @@ noncomputable def M_infty (N p : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime
     !![((aInvOfCoprime N p hpN : ℤ) : ℚ) * p, 1;
        ((N : ℤ) * mIdxOfCoprime N p hpN : ℚ) * p, p] := rfl
 
-private lemma gamma_prime_det (N p : ℕ) [NeZero N] (hpN : Nat.Coprime p N) :
-    (!![((aInvOfCoprime N p hpN : ℤ) * p), 1;
-        ((N : ℤ) * mIdxOfCoprime N p hpN), 1] : Matrix (Fin 2) (Fin 2) ℤ).det = 1 := by
-  simp [det_fin_two]; linarith [N_mul_mIdx_eq N p hpN]
-
 /-- `M_∞` equals the product `(mapGL ℚ σ_p_specific) · T_p_lower` in `GL₂(ℚ)`.
 This is the form that gives the diamond-twisted slash identity. -/
 lemma M_infty_eq_sigma_mul_T_p_lower (N p : ℕ) [NeZero N] (hp : 0 < p)
@@ -191,16 +174,6 @@ private lemma adj_T_p_upper_val (p : ℕ) (hp : 0 < p) (b : ℕ) :
     !![(p : ℚ), -(b : ℚ); 0, 1] := by
   rw [GL_adjugate_val, T_p_upper_coe, Matrix.adjugate_fin_two_of, neg_zero]
 
-private lemma adj_T_p_upper_inv_val (p : ℕ) (hp : 0 < p) (b : ℕ) :
-    ((GL_adjugate (T_p_upper p hp b : GL (Fin 2) ℚ))⁻¹).val =
-    !![1 / (p : ℚ), (b : ℚ) / (p : ℚ); 0, 1] := by
-  have : (p : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr hp.ne'
-  rw [Matrix.coe_units_inv, adj_T_p_upper_val p hp b,
-    Matrix.inv_def, Matrix.adjugate_fin_two_of, Ring.inverse_eq_inv']
-  ext i j
-  fin_cases i <;> fin_cases j <;>
-    simp [Matrix.det_fin_two_of] <;> field_simp
-
 private lemma diagMat_1p_val (p : ℕ) (hp : 0 < p) :
     (diagMat 2 ![1, p] : GL (Fin 2) ℚ).val =
     !![(1 : ℚ), 0; 0, (p : ℚ)] := by
@@ -209,15 +182,5 @@ private lemma diagMat_1p_val (p : ℕ) (hp : 0 < p) :
   rw [diagMat_val _ _ hpos]
   ext k l
   fin_cases k <;> fin_cases l <;> simp
-
-private lemma diagMat_1p_inv_val (p : ℕ) (hp : 0 < p) :
-    ((diagMat 2 ![1, p] : GL (Fin 2) ℚ)⁻¹).val =
-    !![(1 : ℚ), 0; 0, (1 : ℚ) / p] := by
-  have : (p : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr hp.ne'
-  rw [Matrix.coe_units_inv, diagMat_1p_val p hp, Matrix.inv_def, Matrix.adjugate_fin_two,
-    Ring.inverse_eq_inv']
-  ext i j
-  fin_cases i <;> fin_cases j <;>
-    simp [Matrix.det_fin_two_of] <;> field_simp
 
 end HeckeRing.GL2
