@@ -309,13 +309,6 @@ lemma Newform.frickeMatrix_denom (N : ℕ) [NeZero N] (τ : ℂ) :
           Matrix (Fin 2) (Fin 2) ℝ) 1 1 = (N : ℂ) * τ
   simp [Newform.frickeMatrix_coe]
 
-/-- Möbius action of the Fricke matrix on `ℍ`: `W_N • τ = -1/(N · τ)`. -/
-lemma Newform.frickeMatrix_smul (N : ℕ) [NeZero N] (τ : UpperHalfPlane) :
-    ((Newform.frickeMatrix N • τ : UpperHalfPlane) : ℂ) =
-      -1 / ((N : ℂ) * (τ : ℂ)) := by
-  rw [UpperHalfPlane.coe_smul_of_det_pos (Newform.frickeMatrix_det_pos N),
-    Newform.frickeMatrix_num, Newform.frickeMatrix_denom]
-
 /-- The integer Fricke conjugate matrix `δ = !![d, -(c/N); -N·b, a]` of
 `γ = !![a, b; c, d] ∈ Γ₁(N)` (integer-valued since `N ∣ c`), satisfying
 `W_N · γ = δ · W_N` at the matrix level. -/

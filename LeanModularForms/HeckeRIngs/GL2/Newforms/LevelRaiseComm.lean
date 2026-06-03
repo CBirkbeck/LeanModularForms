@@ -452,21 +452,6 @@ private lemma T_p_upper_zero_mul_levelRaise_num (p d : ℕ) (hp : 0 < p) [NeZero
   rw [T_p_upper_zero_mul_levelRaise_matrix p d hp]
   simp
 
-private lemma T_p_upper_zero_mul_levelRaise_smul_coe {p d : ℕ} (hp : 0 < p) (hpd : p ∣ d)
-    [NeZero d] (z : UpperHalfPlane) :
-    ((((glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) * levelRaiseMatrix d : GL (Fin 2) ℝ) • z :
-        UpperHalfPlane) : ℂ) =
-      ((d / p : ℕ) : ℂ) * (z : ℂ) := by
-  rw [UpperHalfPlane.coe_smul_of_det_pos (T_p_upper_zero_mul_levelRaise_det_pos p d hp),
-    T_p_upper_zero_mul_levelRaise_num p d hp z,
-    T_p_upper_zero_mul_levelRaise_denom p d hp z]
-  have hp_cast_ne : ((p : ℕ) : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (Nat.pos_iff_ne_zero.mp hp)
-  have h_d_eq : ((d : ℕ) : ℂ) = ((p : ℕ) : ℂ) * ((d / p : ℕ) : ℂ) := by
-    rw [show ((p : ℕ) : ℂ) * ((d / p : ℕ) : ℂ) = (((p * (d / p) : ℕ) : ℂ)) by
-      push_cast; ring, Nat.mul_div_cancel' hpd]
-  rw [h_d_eq]
-  field_simp
-
 private lemma heckeT_n_cusp_decomp_of_mul {L : ℕ} [NeZero L] (k : ℤ) (a b m : ℕ) [NeZero a]
     [NeZero b] [NeZero m] (h_mul : heckeT_n (N := L) k m = heckeT_n k a * heckeT_n k b)
     (f : CuspForm ((Gamma1 L).map (mapGL ℝ)) k) :
