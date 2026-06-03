@@ -561,27 +561,6 @@ theorem hasCompletedMellinIdentity_of_qExpansion_swap_hypotheses_one
   exact mellin_eq_completedLSeries_of_qExpansion_swap_hypotheses_one
     (lCoeff_zero_of_cuspForm f) hs_re (h_decomp hs) (h_meas hs) (h_summ hs)
 
-/-- **Predicate-level consumer: `HasCompletedMellinIdentity` from period-one
-q-expansion decomposition + summability**, discharging the per-`s` `h_meas`
-hypothesis automatically via `aestronglyMeasurable_qParam_pow_imAxis_term`. -/
-theorem hasCompletedMellinIdentity_of_qExpansion_decomp_and_summ_one
-    [Γ.IsArithmetic] [CuspFormClass F Γ k] (f : F) (hk_pos : 0 < (k : ℝ))
-    (h_decomp : ∀ {s : ℂ}, ((k : ℝ) / 2 + 1 : ℝ) < s.re →
-      ∀ᵐ (t : ℝ) ∂(MeasureTheory.volume.restrict (Set.Ioi (0 : ℝ))),
-        HasSum (fun m : ℕ ↦
-          lCoeff f m * Function.Periodic.qParam 1 (Complex.I * (t : ℂ)) ^ m)
-          (imAxis f t))
-    (h_summ : ∀ {s : ℂ}, ((k : ℝ) / 2 + 1 : ℝ) < s.re →
-      (∑' m : ℕ, MeasureTheory.lintegral
-        (MeasureTheory.volume.restrict (Set.Ioi (0 : ℝ)))
-        (fun t : ℝ ↦ ‖(t : ℂ) ^ (s - 1) •
-          (lCoeff f m * Function.Periodic.qParam 1 (Complex.I * (t : ℂ)) ^ m)‖ₑ)) ≠
-          (⊤ : ENNReal)) :
-    HasCompletedMellinIdentity f :=
-  hasCompletedMellinIdentity_of_qExpansion_swap_hypotheses_one f hk_pos
-    h_decomp
-    (fun _ _ ↦ aestronglyMeasurable_qParam_pow_imAxis_term _ _)
-    h_summ
 
 open CongruenceSubgroup Matrix.SpecialLinearGroup in
 /-- **Pointwise q-expansion decomposition of `imAxis f` for `(Gamma1 N).map (mapGL ℝ)`**.
@@ -612,18 +591,6 @@ theorem hasSum_qExpansion_imAxis_Gamma1_mapGL_of_pos
   rw [smul_eq_mul, ← lCoeff_Gamma1_mapGL_eq N f]
 
 open CongruenceSubgroup Matrix.SpecialLinearGroup in
-/-- **a.e. q-expansion decomposition of `imAxis f` for `(Gamma1 N).map (mapGL ℝ)`**,
-the AE wrapper of `hasSum_qExpansion_imAxis_Gamma1_mapGL_of_pos`. -/
-theorem hasSum_qExpansion_imAxis_Gamma1_mapGL_ae
-    {N : ℕ} {k : ℤ} {F : Type*} [FunLike F ℍ ℂ]
-    [ModularFormClass F ((Gamma1 N).map (mapGL ℝ)) k] (f : F) :
-    ∀ᵐ (t : ℝ) ∂(MeasureTheory.volume.restrict (Set.Ioi (0 : ℝ))),
-      HasSum (fun m : ℕ ↦
-        lCoeff f m * Function.Periodic.qParam 1 (Complex.I * (t : ℂ)) ^ m)
-        (imAxis f t) := by
-  refine (MeasureTheory.ae_restrict_iff' measurableSet_Ioi).mpr ?_
-  filter_upwards with t ht
-  exact hasSum_qExpansion_imAxis_Gamma1_mapGL_of_pos f ht
 
 /-- **Pointwise norm of the period-one Mellin integrand on `Ioi 0`**.
 
@@ -730,32 +697,6 @@ theorem lintegral_real_qExpansion_term_eq_Gamma {a : ℂ} {m : ℕ} (hm : 1 ≤ 
       show (1 : ℝ) / 1 = 1 by norm_num, mul_one,
       ← ENNReal.ofReal_mul (norm_nonneg _)]
   congr 1; ring
-
-open CongruenceSubgroup Matrix.SpecialLinearGroup in
-/-- **`m = 0` summand vanishes for cusp forms**, since `lCoeff f 0 = 0`. -/
-lemma lintegral_qExpansion_term_zero_of_cuspForm
-    {N : ℕ} [NeZero N] {k : ℤ} {F : Type*} [FunLike F ℍ ℂ]
-    [CuspFormClass F ((Gamma1 N).map (mapGL ℝ)) k] (f : F) (s : ℂ) :
-    ∫⁻ t in Set.Ioi (0 : ℝ),
-        ‖(t : ℂ) ^ (s - 1) •
-            (lCoeff f 0 * Function.Periodic.qParam 1 (Complex.I * (t : ℂ)) ^ 0)‖ₑ = 0 := by
-  simp_rw [lCoeff_zero_of_cuspForm f, zero_mul, smul_zero, enorm_zero,
-    MeasureTheory.lintegral_zero]
-
-/-- **`m = n + 1` summand has Gamma expression for the period-one Mellin
-`h_summ` integrand**. -/
-lemma lintegral_qExpansion_term_eq_Gamma_of_succ
-    {a : ℂ} (n : ℕ) {s : ℂ} (hs : 0 < s.re) :
-    ∫⁻ t in Set.Ioi (0 : ℝ),
-        ‖(t : ℂ) ^ (s - 1) •
-            (a * Function.Periodic.qParam 1 (Complex.I * (t : ℂ)) ^ (n + 1))‖ₑ
-      = ENNReal.ofReal
-          (‖a‖ * (2 * Real.pi * ((n : ℝ) + 1)) ^ (-s.re) * Real.Gamma s.re) := by
-  rw [lintegral_enorm_qParam_pow_imAxis_term a (n + 1) s,
-      lintegral_real_qExpansion_term_eq_Gamma (a := a) n.succ_pos hs]
-  congr 2
-  push_cast
-  ring
 
 end ModularForms
 
