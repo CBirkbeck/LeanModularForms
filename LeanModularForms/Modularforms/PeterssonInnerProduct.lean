@@ -493,13 +493,6 @@ private theorem fd_region_indicator_section_eq {x : ℝ} (hx : |x| ≤ 1 / 2) (y
     · rw [Set.indicator_of_notMem hy_mem]
 
 
-private theorem integrableOn_one_div_sqrt_one_sub_sq_Icc :
-    IntegrableOn (fun x ↦ 1 / Real.sqrt (1 - x ^ 2)) (Icc (-1/2 : ℝ) (1/2)) volume := by
-  rw [← intervalIntegrable_iff_integrableOn_Icc_of_le (by norm_num : (-1/2 : ℝ) ≤ 1/2)]
-  refine ContinuousOn.intervalIntegrable (ContinuousOn.div continuousOn_const
-    (ContinuousOn.sqrt (continuousOn_const.sub (continuousOn_pow 2))) (fun x hx ↦ ?_))
-  rw [Set.uIcc_of_le (by norm_num : (-1/2 : ℝ) ≤ 1/2)] at hx
-  exact Real.sqrt_ne_zero'.mpr (by nlinarith [hx.1, hx.2])
 
 
 
