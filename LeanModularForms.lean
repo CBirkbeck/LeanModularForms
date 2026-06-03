@@ -28,7 +28,6 @@ import LeanModularForms.Modularforms.ResToImagAxis
 import LeanModularForms.Modularforms.riemannZetalems
 import LeanModularForms.Modularforms.SlashActionAuxil
 import LeanModularForms.Modularforms.summable_lems
-import LeanModularForms.Modularforms.tendstolems
 import LeanModularForms.Modularforms.tsumderivWithin
 import LeanModularForms.Modularforms.uniformcts
 import LeanModularForms.Modularforms.upperhalfplane
