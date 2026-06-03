@@ -301,22 +301,6 @@ def HasCompletedMellinIdentity [Γ.IsArithmetic] [CuspFormClass F Γ k] (f : F) 
       (2 * Real.pi : ℂ) ^ (-s) * Complex.Gamma s * LSeries (lCoeff f) s
 
 
-/-- **Identification of `Function.Periodic.qParam` on the imaginary axis with a real
-exponential**:
-```
-Function.Periodic.qParam h (Complex.I * t) = (Real.exp (-(2 * π * t / h)) : ℂ).
-``` -/
-lemma qParam_imAxis_eq_realExp (h : ℝ) (t : ℝ) :
-    Function.Periodic.qParam h (Complex.I * (t : ℂ)) =
-      (Real.exp (-(2 * Real.pi * t / h)) : ℂ) := by
-  unfold Function.Periodic.qParam
-  rw [Complex.ofReal_exp]
-  congr 1
-  rw [show 2 * (Real.pi : ℂ) * Complex.I * (Complex.I * (t : ℂ)) =
-        2 * (Real.pi : ℂ) * (Complex.I * Complex.I) * (t : ℂ) by ring,
-      Complex.I_mul_I]
-  push_cast
-  ring
 
 
 
