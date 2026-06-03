@@ -282,15 +282,6 @@ theorem ModularForm_Gamma1_charSpace_directSum (k : ℤ)
     (ModularForm_Gamma1_iSupIndep_charSpace k)
     (ModularForm_Gamma1_iSup_charSpace k)
 
-/-- **The character decomposition as a linear equivalence.**  Packages
-`ModularForm_Gamma1_charSpace_directSum` as an explicit `≃ₗ[ℂ]` between
-the direct sum `⨁ χ, modFormCharSpace k χ` and `ModularForm (Γ₁(N)) k`. -/
-noncomputable def ModularForm_Gamma1_charSpace_linearEquiv
-    (k : ℤ) [DecidableEq ((ZMod N)ˣ →* ℂˣ)] :
-    (⨁ χ : (ZMod N)ˣ →* ℂˣ, modFormCharSpace k χ) ≃ₗ[ℂ]
-      ModularForm ((Gamma1 N).map (mapGL ℝ)) k :=
-  LinearEquiv.ofBijective (DirectSum.coeLinearMap _)
-    (ModularForm_Gamma1_charSpace_directSum k)
 
 /-- Each character subspace `modFormCharSpace k χ` is finite-dimensional over
 `ℂ`, as a submodule of the finite-dimensional ambient
@@ -427,15 +418,6 @@ theorem CuspForm_Gamma1_iSupIndep_charSpace (k : ℤ) :
   ext d
   exact_mod_cast congr_fun h d
 
-/-- **Internal direct sum decomposition for cusp forms**: `CuspForm (Γ₁(N)) k`
-decomposes as the direct sum of the Nebentypus character spaces
-`cuspFormCharSpace k χ`. -/
-theorem CuspForm_Gamma1_charSpace_directSum (k : ℤ)
-    [DecidableEq ((ZMod N)ˣ →* ℂˣ)] :
-    DirectSum.IsInternal (fun χ : (ZMod N)ˣ →* ℂˣ ↦ cuspFormCharSpace k χ) :=
-  DirectSum.isInternal_submodule_of_iSupIndep_of_iSup_eq_top
-    (CuspForm_Gamma1_iSupIndep_charSpace k)
-    (CuspForm_Gamma1_iSup_charSpace k)
 
 
 /-- Each cusp-form character subspace `cuspFormCharSpace k χ` is
