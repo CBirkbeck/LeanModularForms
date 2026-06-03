@@ -64,32 +64,6 @@ theorem diamondOp_petersson_unitary
     (fun η hη ↦ slash_Gamma1_eq f η hη) (fun η hη ↦ slash_Gamma1_eq g η hη)
     (diamondOp_cusp k d f) (diamondOp_cusp k d g) rfl rfl
 
-open UpperHalfPlane ModularGroup MeasureTheory in
-private lemma sum_SL_tile_setIntegral_eq_fiberCard_smul (φ : ℍ → ℂ)
-    (φ_inv : ∀ (γ : SL(2, ℤ)), γ ∈ Gamma1 N → ∀ τ : UpperHalfPlane, φ (γ • τ) = φ τ)
-    (φ_int : IntegrableOn φ (Gamma1_fundDomain_PSL N) μ_hyp) :
-    ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-      ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane), φ τ ∂μ_hyp =
-    (slToPslQuot_fiberCard N) • ∫ τ in Gamma1_fundDomain_PSL N, φ τ ∂μ_hyp := by
-  classical
-  calc ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-          ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane), φ τ ∂μ_hyp
-      = ∑ q : SL(2, ℤ) ⧸ Gamma1 N,
-          ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (fdo : Set UpperHalfPlane), φ τ ∂μ_hyp :=
-        Finset.sum_congr rfl fun q _ ↦ setIntegral_SL_tile_fd_eq_fdo φ q
-    _ = ∑ q' : PSL(2, ℤ) ⧸ imageGamma1_PSL N,
-          (Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma1 N ↦ slToPslQuot q = q')).card •
-            ∫ τ in ((q'.out : PSL(2, ℤ)))⁻¹ • (fdo : Set UpperHalfPlane), φ τ ∂μ_hyp :=
-        sum_SL_tile_eq_fiberwise_PSL_tile φ φ_inv
-    _ = (slToPslQuot_fiberCard N) • ∑ q' : PSL(2, ℤ) ⧸ imageGamma1_PSL N,
-          ∫ τ in ((q'.out : PSL(2, ℤ)))⁻¹ • (fdo : Set UpperHalfPlane), φ τ ∂μ_hyp := by
-        rw [Finset.smul_sum]
-        refine Finset.sum_congr rfl fun q' _ ↦ ?_
-        congr 1
-        convert slToPslQuot_fiberCard_eq q' using 2
-        congr
-    _ = (slToPslQuot_fiberCard N) • ∫ τ in Gamma1_fundDomain_PSL N, φ τ ∂μ_hyp := by
-        rw [← setIntegral_Gamma1_fundDomain_PSL_eq_sum φ φ_int]
 
 private lemma peterssonAdj_glMap_T_p_upper (p : ℕ) (hp : 0 < p) (b : ℕ) :
     (peterssonAdj (glMap (T_p_upper p hp b)) : Matrix (Fin 2) (Fin 2) ℝ) =
