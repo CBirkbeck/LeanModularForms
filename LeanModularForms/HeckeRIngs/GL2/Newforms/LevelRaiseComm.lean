@@ -675,4 +675,13 @@ theorem diamondOp_preserves_cuspFormsNew (d : (ZMod N)ˣ)
   rw [← hgg, diamondOp_petersson_unitary]
   exact hf _ (diamondOp_preserves_cuspFormsOld _ _ hg)
 
+/-- The intersection of `cuspFormsOldExtended` and `cuspFormsNewExtended` is
+trivial. Mirrors `cuspFormsOld_disjoint_cuspFormsNew`. -/
+theorem cuspFormsOldExtended_disjoint_cuspFormsNewExtended
+    {N : ℕ} [NeZero N] {k : ℤ} :
+    Disjoint (cuspFormsOldExtended N k) (cuspFormsNewExtended N k) := by
+  rw [Submodule.disjoint_def]
+  intro f hf_old hf_new
+  exact petN_definite f (hf_new f hf_old)
+
 end HeckeRing.GL2

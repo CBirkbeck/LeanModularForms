@@ -15,7 +15,7 @@ import LeanModularForms.HeckeRIngs.GL2.AdjointTheoryPetersson
 import LeanModularForms.HeckeRIngs.GL2.CharacterDecomp
 import LeanModularForms.HeckeRIngs.GL2.LevelEmbed
 import LeanModularForms.HeckeRIngs.GL2.LevelRaise
-import LeanModularForms.HeckeRIngs.GL2.Newforms.BadPrimeReduction
+import LeanModularForms.HeckeRIngs.GL2.Newforms.CoeffSeq
 import LeanModularForms.HeckeRIngs.GL2.Unified.NebentypusHeckeRingHom
 import LeanModularForms.Modularforms.DimensionFormulas
 import LeanModularForms.Modularforms.LFunction
