@@ -1180,11 +1180,99 @@ private lemma gamma0_T_p_upper_zero_mul_M_infty_zero_val
     simp [Matrix.mul_apply, Fin.sum_univ_two, Matrix.of_apply] <;> ring
 
 open CongruenceSubgroup in
+/-- `some/some` case of `ds_p_plus_one_family_Gamma1_factor_inv_mul_notMem_Gamma0`:
+`(1,0)`-entry of the product is `N²·(b₂-b₁)`; `p ∤ N` and `|b₂-b₁| < p` block
+divisibility by `p`. -/
+private lemma ds_p_plus_one_family_Gamma1_factor_some_some_notMem_Gamma0 [NeZero N]
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) {b₁ b₂ : Fin p} (hb : b₁ ≠ b₂) :
+    ((ds_p_plus_one_family_Gamma1_factor N p hpN (some b₁) *
+      (ds_p_plus_one_family_Gamma1_factor N p hpN (some b₂))⁻¹).val 1 0 : ZMod p) ≠ 0 := by
+  haveI : NeZero p := ⟨hp.ne_zero⟩
+  haveI : Fact (Nat.Prime p) := ⟨hp⟩
+  have hpZ : Prime (p : ℤ) := Nat.prime_iff_prime_int.mp hp
+  have hpN_dvd : ¬ (p : ℤ) ∣ (N : ℤ) := by
+    rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
+    exact natCast_N_ne_zero_in_zmod_p (N := N) p hp hpN
+  have hne : b₁.val ≠ b₂.val := fun h ↦ hb (by rw [Fin.ext_iff.mpr h])
+  have hentry : ((ds_p_plus_one_family_Gamma1_factor N p hpN (some b₁) *
+      (ds_p_plus_one_family_Gamma1_factor N p hpN (some b₂))⁻¹).val 1 0 : ℤ) =
+      (N : ℤ) * (N : ℤ) * ((b₂.val : ℤ) - (b₁.val : ℤ)) := by
+    show ((gamma0_T_p_upper_Gamma1_factor N p hpN b₁.val *
+      (gamma0_T_p_upper_Gamma1_factor N p hpN b₂.val)⁻¹).val 1 0 : ℤ) = _
+    simp only [gamma0_T_p_upper_Gamma1_factor, Matrix.SpecialLinearGroup.coe_mul,
+      Matrix.SpecialLinearGroup.coe_inv, Matrix.adjugate_fin_two_of, Matrix.mul_apply,
+      Fin.sum_univ_two, Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
+      Matrix.of_apply, Matrix.empty_val', Matrix.cons_val_fin_one]
+    ring
+  rw [hentry, ne_eq, ZMod.intCast_zmod_eq_zero_iff_dvd]
+  intro hdvd
+  rcases hpZ.dvd_mul.mp hdvd with h2 | hdiff
+  · exact (hpZ.dvd_mul.mp h2).elim hpN_dvd hpN_dvd
+  · have hlt : |(b₂.val : ℤ) - (b₁.val : ℤ)| < p := by
+      rw [abs_lt]; constructor <;> [have := b₁.isLt; have := b₂.isLt] <;> omega
+    have hne0 : (b₂.val : ℤ) - (b₁.val : ℤ) ≠ 0 :=
+      sub_ne_zero.mpr fun h ↦ hne (by exact_mod_cast h.symm)
+    obtain ⟨c, hc⟩ := hdiff
+    have hcabs : 1 ≤ |c| := Int.one_le_abs (by rintro rfl; simp at hc; exact hne0 hc)
+    rw [hc, abs_mul, Nat.abs_cast] at hlt
+    nlinarith [hlt, hcabs, hp.pos]
+
+/-- `some/none` case: `(1,0)`-entry equals `N²` in `ZMod p`; `N²` is a unit since
+`p ∤ N`. -/
+private lemma ds_p_plus_one_family_Gamma1_factor_some_none_notMem_Gamma0 [NeZero N]
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (b₁ : Fin p) :
+    ((ds_p_plus_one_family_Gamma1_factor N p hpN (some b₁) *
+      (ds_p_plus_one_family_Gamma1_factor N p hpN none)⁻¹).val 1 0 : ZMod p) ≠ 0 := by
+  haveI : NeZero p := ⟨hp.ne_zero⟩
+  haveI : Fact (Nat.Prime p) := ⟨hp⟩
+  have hentry : (((ds_p_plus_one_family_Gamma1_factor N p hpN (some b₁) *
+      (ds_p_plus_one_family_Gamma1_factor N p hpN none)⁻¹).val 1 0 : ℤ) : ZMod p) =
+      (N : ZMod p) * (N : ZMod p) := by
+    show (((gamma0_T_p_upper_Gamma1_factor N p hpN b₁.val *
+      (gamma0_T_p_upper_Gamma1_factor N p hpN 0 *
+        M_infty_Gamma1_factor N p hpN 0)⁻¹).val 1 0 : ℤ) : ZMod p) = _
+    rw [Matrix.SpecialLinearGroup.coe_mul, Matrix.SpecialLinearGroup.coe_inv,
+      gamma0_T_p_upper_zero_mul_M_infty_zero_val (N := N) p hpN]
+    simp only [gamma0_T_p_upper_Gamma1_factor, Matrix.SpecialLinearGroup.coe_mk,
+      Matrix.adjugate_fin_two_of, Matrix.mul_apply, Fin.sum_univ_two, Matrix.cons_val',
+      Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.of_apply, Matrix.empty_val',
+      Matrix.cons_val_fin_one]
+    push_cast
+    rw [show ((p : ZMod p)) = 0 from ZMod.natCast_self p]
+    ring
+  rw [hentry]
+  exact N_mul_N_ne_zero_in_zmod_p (N := N) p hp hpN
+
+/-- `none/some` case: `(1,0)`-entry equals `-N²` in `ZMod p`; `-N²` is a unit since
+`p ∤ N`. -/
+private lemma ds_p_plus_one_family_Gamma1_factor_none_some_notMem_Gamma0 [NeZero N]
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (b₂ : Fin p) :
+    ((ds_p_plus_one_family_Gamma1_factor N p hpN none *
+      (ds_p_plus_one_family_Gamma1_factor N p hpN (some b₂))⁻¹).val 1 0 : ZMod p) ≠ 0 := by
+  haveI : NeZero p := ⟨hp.ne_zero⟩
+  haveI : Fact (Nat.Prime p) := ⟨hp⟩
+  have hentry : (((ds_p_plus_one_family_Gamma1_factor N p hpN none *
+      (ds_p_plus_one_family_Gamma1_factor N p hpN (some b₂))⁻¹).val 1 0 : ℤ) : ZMod p) =
+      -((N : ZMod p) * (N : ZMod p)) := by
+    show (((gamma0_T_p_upper_Gamma1_factor N p hpN 0 * M_infty_Gamma1_factor N p hpN 0 *
+      (gamma0_T_p_upper_Gamma1_factor N p hpN b₂.val)⁻¹).val 1 0 : ℤ) : ZMod p) = _
+    rw [Matrix.SpecialLinearGroup.coe_mul, Matrix.SpecialLinearGroup.coe_inv,
+      gamma0_T_p_upper_zero_mul_M_infty_zero_val (N := N) p hpN]
+    simp only [gamma0_T_p_upper_Gamma1_factor, Matrix.SpecialLinearGroup.coe_mk,
+      Matrix.adjugate_fin_two_of, Matrix.mul_apply, Fin.sum_univ_two, Matrix.cons_val',
+      Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.of_apply, Matrix.empty_val',
+      Matrix.cons_val_fin_one]
+    push_cast
+    rw [show ((p : ZMod p)) = 0 from ZMod.natCast_self p]
+    ring
+  rw [hentry]
+  exact neg_ne_zero.mpr (N_mul_N_ne_zero_in_zmod_p (N := N) p hp hpN)
+
 /-- **`p`-adic distinctness of the `ds_factor` reps.** Distinct indices `i ≠ j` give
 `ds_factor_i · ds_factor_j⁻¹ ∉ Γ₀(p)`, since the `(1,0)`-entry is either
 `N²(b₂-b₁)` (some-some; `p ∤ N²(b₂-b₁)`), `N²` (some-none), or `-N²` (none-some) in
-`ZMod p`; in each case `N²` is a unit since `p ∤ N`.  Inline `match` on
-`Option (Fin p) × Option (Fin p)`. -/
+`ZMod p`; in each case `N²` is a unit since `p ∤ N`.  Dispatched into three per-case
+helpers; the four-way `match` produces only one-line `exact` calls. -/
 private lemma ds_p_plus_one_family_Gamma1_factor_inv_mul_notMem_Gamma0
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     {i j : Option (Fin p)} (hij : i ≠ j) :
@@ -1195,71 +1283,12 @@ private lemma ds_p_plus_one_family_Gamma1_factor_inv_mul_notMem_Gamma0
   rw [Gamma0_mem]
   match i, j with
   | some b₁, some b₂ =>
-    -- `(1,0)`-entry is `N²·(b₂-b₁)`; `p ∤ N` and `|b₂-b₁| < p` block divisibility.
-    have hpZ : Prime (p : ℤ) := Nat.prime_iff_prime_int.mp hp
-    have hpN_dvd : ¬ (p : ℤ) ∣ (N : ℤ) := by
-      rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
-      exact natCast_N_ne_zero_in_zmod_p (N := N) p hp hpN
-    have hne : b₁.val ≠ b₂.val := fun h ↦ hij (by rw [Fin.ext_iff.mpr h])
-    have hentry : ((ds_p_plus_one_family_Gamma1_factor N p hpN (some b₁) *
-        (ds_p_plus_one_family_Gamma1_factor N p hpN (some b₂))⁻¹).val 1 0 : ℤ) =
-        (N : ℤ) * (N : ℤ) * ((b₂.val : ℤ) - (b₁.val : ℤ)) := by
-      show ((gamma0_T_p_upper_Gamma1_factor N p hpN b₁.val *
-        (gamma0_T_p_upper_Gamma1_factor N p hpN b₂.val)⁻¹).val 1 0 : ℤ) = _
-      simp only [gamma0_T_p_upper_Gamma1_factor, Matrix.SpecialLinearGroup.coe_mul,
-        Matrix.SpecialLinearGroup.coe_inv, Matrix.adjugate_fin_two_of, Matrix.mul_apply,
-        Fin.sum_univ_two, Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
-        Matrix.of_apply, Matrix.empty_val', Matrix.cons_val_fin_one]
-      ring
-    rw [hentry, ZMod.intCast_zmod_eq_zero_iff_dvd]
-    intro hdvd
-    rcases hpZ.dvd_mul.mp hdvd with h2 | hdiff
-    · exact (hpZ.dvd_mul.mp h2).elim hpN_dvd hpN_dvd
-    · have hlt : |(b₂.val : ℤ) - (b₁.val : ℤ)| < p := by
-        rw [abs_lt]; constructor <;> [have := b₁.isLt; have := b₂.isLt] <;> omega
-      have hne0 : (b₂.val : ℤ) - (b₁.val : ℤ) ≠ 0 :=
-        sub_ne_zero.mpr fun h ↦ hne (by exact_mod_cast h.symm)
-      obtain ⟨c, hc⟩ := hdiff
-      have hcabs : 1 ≤ |c| := Int.one_le_abs (by rintro rfl; simp at hc; exact hne0 hc)
-      rw [hc, abs_mul, Nat.abs_cast] at hlt
-      nlinarith [hlt, hcabs, hp.pos]
+    exact ds_p_plus_one_family_Gamma1_factor_some_some_notMem_Gamma0 p hp hpN
+      (fun h ↦ hij (by rw [h]))
   | some b₁, none =>
-    -- `(1,0)`-entry equals `N²` in `ZMod p`; `N²` is a unit since `p ∤ N`.
-    have hentry : (((ds_p_plus_one_family_Gamma1_factor N p hpN (some b₁) *
-        (ds_p_plus_one_family_Gamma1_factor N p hpN none)⁻¹).val 1 0 : ℤ) : ZMod p) =
-        (N : ZMod p) * (N : ZMod p) := by
-      show (((gamma0_T_p_upper_Gamma1_factor N p hpN b₁.val *
-        (gamma0_T_p_upper_Gamma1_factor N p hpN 0 *
-          M_infty_Gamma1_factor N p hpN 0)⁻¹).val 1 0 : ℤ) : ZMod p) = _
-      rw [Matrix.SpecialLinearGroup.coe_mul, Matrix.SpecialLinearGroup.coe_inv,
-        gamma0_T_p_upper_zero_mul_M_infty_zero_val (N := N) p hpN]
-      simp only [gamma0_T_p_upper_Gamma1_factor, Matrix.SpecialLinearGroup.coe_mk,
-        Matrix.adjugate_fin_two_of, Matrix.mul_apply, Fin.sum_univ_two, Matrix.cons_val',
-        Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.of_apply, Matrix.empty_val',
-        Matrix.cons_val_fin_one]
-      push_cast
-      rw [show ((p : ZMod p)) = 0 from ZMod.natCast_self p]
-      ring
-    rw [hentry]
-    exact N_mul_N_ne_zero_in_zmod_p (N := N) p hp hpN
+    exact ds_p_plus_one_family_Gamma1_factor_some_none_notMem_Gamma0 p hp hpN b₁
   | none, some b₂ =>
-    -- `(1,0)`-entry equals `-N²` in `ZMod p`; `-N²` is a unit since `p ∤ N`.
-    have hentry : (((ds_p_plus_one_family_Gamma1_factor N p hpN none *
-        (ds_p_plus_one_family_Gamma1_factor N p hpN (some b₂))⁻¹).val 1 0 : ℤ) : ZMod p) =
-        -((N : ZMod p) * (N : ZMod p)) := by
-      show (((gamma0_T_p_upper_Gamma1_factor N p hpN 0 * M_infty_Gamma1_factor N p hpN 0 *
-        (gamma0_T_p_upper_Gamma1_factor N p hpN b₂.val)⁻¹).val 1 0 : ℤ) : ZMod p) = _
-      rw [Matrix.SpecialLinearGroup.coe_mul, Matrix.SpecialLinearGroup.coe_inv,
-        gamma0_T_p_upper_zero_mul_M_infty_zero_val (N := N) p hpN]
-      simp only [gamma0_T_p_upper_Gamma1_factor, Matrix.SpecialLinearGroup.coe_mk,
-        Matrix.adjugate_fin_two_of, Matrix.mul_apply, Fin.sum_univ_two, Matrix.cons_val',
-        Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.of_apply, Matrix.empty_val',
-        Matrix.cons_val_fin_one]
-      push_cast
-      rw [show ((p : ZMod p)) = 0 from ZMod.natCast_self p]
-      ring
-    rw [hentry]
-    exact neg_ne_zero.mpr (N_mul_N_ne_zero_in_zmod_p (N := N) p hp hpN)
+    exact ds_p_plus_one_family_Gamma1_factor_none_some_notMem_Gamma0 p hp hpN b₂
   | none, none => exact (hij rfl).elim
 
 open CongruenceSubgroup in
