@@ -71,13 +71,6 @@ lemma Newform.frickeBadAdjointCandidate_apply
   rfl
 
 
-/-- `Newform.frickeSlashCuspForm` preserves `cuspFormsOld N k`: the Atkin-Lehner
-involution `f ↦ f ∣[k] W_N` maps oldforms to oldforms. Stated as a named Prop
-for downstream discharge. -/
-def Newform.HasFrickeSlashCuspFormPreservesCuspFormsOld
-    (N : ℕ) [NeZero N] (k : ℤ) : Prop :=
-  ∀ (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k),
-    g ∈ cuspFormsOld N k → Newform.frickeSlashCuspForm g ∈ cuspFormsOld N k
 
 /-- The Atkin-Lehner / Fricke matrix `W_M` post-multiplied by the level-raising
 matrix `α_d` equals `W_N` where `N = d * M`. -/
@@ -710,18 +703,6 @@ theorem Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_T170
       hp hpN)
     f hf
 
-/-- Bad-prime classical-newspace consumer needing only the petN-adjoint identity
-`h_adj`; the conclusion is in the classical `cuspFormsNew N k`. -/
-theorem heckeT_n_cusp_preserves_cuspFormsNew_of_NewformExtended_at_divN_of_T170
-    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p] (hp : p.Prime)
-    (hpN : ¬ Nat.Coprime p N)
-    (h_adj : Newform.HasBadPrimeFrickePetNAdjoint N k p)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hf : f ∈ cuspFormsNewExtended N k) :
-    heckeT_n_cusp k p f ∈ cuspFormsNew N k :=
-  cuspFormsNewExtended_le_cuspFormsNew
-    (Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_T170
-      hp hpN h_adj f hf)
 
 
 
