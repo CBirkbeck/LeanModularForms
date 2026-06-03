@@ -38,8 +38,6 @@ identification `↑Γ(1) = 𝒮ℒ` (`CongruenceSubgroup.Gamma_one_coe_eq_SL`) v
   `CuspForm.discriminantEquiv` (used by `Modularforms/JacobiTheta.lean`).
 * `weight_four_one_dimensional`, `weight_six_one_dimensional`, `weight_eight_one_dimensional`:
   one-dimensionality of low even-weight spaces (used in `Modularforms/RamanujanIdentities.lean`).
-* `Delta_eq_Delta_E4_E6_aux`, `Delta_E4_E6_eq`: the explicit identification of the
-  discriminant with `(E₄³ - E₆²)/1728` (used by `Modularforms/FG.lean`).
 * `dim_gen_cong_levels`: finite-dimensionality for any finite-index congruence subgroup,
   via mathlib's `FiniteDimensional ℂ (ModularForm 𝒮ℒ k)` instance and the norm-reduction
   injection.
@@ -137,80 +135,6 @@ lemma weight_eight_one_dimensional (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Even 
     omega
   · rw [hdim, if_neg hmod, hdiv]
     norm_cast
-
-/-! ### Explicit identification of `Δ` with `(E₄³ - E₆²)/1728` -/
-
-lemma delta_eq_E4E6_const : ∃ (c : ℂ), (c • Delta) = Delta_E4_E6_aux := by
-  have hr : Module.finrank ℂ (CuspForm Γ(1) 12) = 1 := by
-    apply Module.finrank_eq_of_rank_eq
-    rw [LinearEquiv.rank_eq (CuspForms_iso_Modforms 12),
-      LinearEquiv.rank_eq (modularFormGammaOneEquivSL (12 - 12))]
-    simpa using ModularForm.levelOne_weight_zero_rank_one
-  exact (finrank_eq_one_iff_of_nonzero' Delta Delta_ne_zero).mp hr Delta_E4_E6_aux
-
-lemma Delta_E4_E6_eq : ModForm_mk _ _ Delta_E4_E6_aux =
-    ((1/ 1728 : ℂ) • (((DirectSum.of _ 4 E₄)^3 - (DirectSum.of _ 6 E₆)^2) 12)) := by
-  ext
-  rfl
-
-lemma Delta_E4_E6_aux_q_one_term : (qExpansion 1 Delta_E4_E6_aux).coeff 1 = 1 := by
-  have h1 : (qExpansion 1 Delta_E4_E6_aux) = qExpansion 1 (ModForm_mk Γ(1) 12 Delta_E4_E6_aux) := by
-    refine qExpansion_ext2 Delta_E4_E6_aux (ModForm_mk Γ(1) 12 Delta_E4_E6_aux) ?_
-    ext z
-    rw [Delta_E4_E6_aux, ModForm_mk]
-    simp
-    rfl
-  rw [h1, Delta_E4_E6_eq]
-  simp only [one_div, DirectSum.sub_apply]
-  let A : ModularForm Γ(1) 12 := (((DirectSum.of _ 4 E₄) ^ 3) 12)
-  let B : ModularForm Γ(1) 12 := (((DirectSum.of _ 6 E₆) ^ 2) 12)
-  change (PowerSeries.coeff 1) (qExpansion 1 ((1728⁻¹ : ℂ) • ((A - B : ModularForm Γ(1) 12)))) = 1
-  rw [← Nat.cast_one (R := ℝ), ← qExpansion_smul2]
-  have hsub2 : qExpansion 1 (⇑A - ⇑B) = qExpansion 1 ⇑A - qExpansion 1 ⇑B := by
-    simpa using (ModularForm.qExpansion_sub (Γ := Γ(1)) (h := (1 : ℕ))
-      (hh := by positivity) (hΓ := by simp) (f := A) (g := B))
-  have hmain : (PowerSeries.coeff 1) ((1728⁻¹ : ℂ) • (qExpansion 1 ⇑A - qExpansion 1 ⇑B)) = 1 := by
-    have h4 := qExpansion_pow E₄ 3
-    have h6 := qExpansion_pow E₆ 2
-    simp only [Nat.cast_ofNat, Int.reduceMul] at h4 h6
-    have hA : qExpansion 1 A = (qExpansion 1 E₄) ^ 3 := by simpa [A] using h4
-    have hB : qExpansion 1 B = (qExpansion 1 E₆) ^ 2 := by simpa [B] using h6
-    rw [hA, hB]
-    simp
-    rw [pow_three, pow_two]
-    simp_rw [PowerSeries.coeff_mul]
-    rw [antidiagonal_one]
-    simp [Finset.mem_singleton, Prod.mk.injEq, one_ne_zero, zero_ne_one, and_self,
-      not_false_eq_true, Finset.sum_insert, Finset.antidiagonal_zero, Prod.mk_zero_zero,
-      Finset.sum_singleton, Prod.fst_zero, Prod.snd_zero]
-    have he4 := E4_q_exp_zero
-    have he6 := E6_q_exp_zero
-    simp only [PowerSeries.coeff_zero_eq_constantCoeff] at he4 he6
-    simp_rw [E4_q_exp_one, he4, he6]
-    ring_nf
-    rw [antidiagonal_one]
-    simp [Finset.mem_singleton, Prod.mk.injEq, one_ne_zero, zero_ne_one, and_self,
-      not_false_eq_true, Finset.sum_insert, Finset.sum_singleton]
-    simp_rw [E4_q_exp_one, he4, E6_q_exp_one]
-    ring
-  simpa [hsub2] using hmain
-
-theorem Delta_eq_Delta_E4_E6_aux : Delta = Delta_E4_E6_aux := by
-  ext z
-  obtain ⟨c, H⟩ := delta_eq_E4E6_const
-  suffices h2 : c = 1 by
-    rw [h2] at H
-    simp at H
-    rw [H]
-  have h2 := Delta_E4_E6_aux_q_one_term
-  rw [← H] at h2
-  have hs := (ModularForm.qExpansion_smul (Γ := Γ(1)) (h := (1 : ℕ))
-    (hh := by positivity) (hΓ := by simp) c Delta).symm
-  rw [show qExpansion 1 ⇑(c • Delta) = qExpansion 1 (c • ⇑Delta) from rfl,
-    ← Nat.cast_one (R := ℝ), ← hs] at h2
-  simp at h2
-  rw [Delta_q_one_term] at h2
-  simpa using h2
 
 /-! ### Finite-dimensionality for arbitrary finite-index congruence subgroups -/
 
