@@ -226,27 +226,6 @@ structure Newform.CompletedFrickeData {N : ℕ} [NeZero N] {k : ℤ}
     LSeries f.lCoeff_stripped s = stripping s * LSeries f.lCoeff s
 
 
-private lemma imAxis_scaled_rapidDecay {N : ℕ} [NeZero N] {k : ℤ}
-    (twist : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (r : ℝ) :
-    Asymptotics.IsBigO Filter.atTop
-      (fun x : ℝ ↦ _root_.ModularForms.imAxis twist (x / (N : ℝ)) - 0)
-      (fun x : ℝ ↦ x ^ r) := by
-  have hN_pos : (0 : ℝ) < (N : ℝ) := Nat.cast_pos.mpr (Nat.pos_of_neZero N)
-  have h_twist_decay :=
-    (_root_.ModularForms.HasImAxisRapidDecay_of_HasImAxisExponentialDecay
-      twist (Newform.cuspForm_Gamma1_hasImAxisExponentialDecay twist)) r
-  have h_tendsto : Filter.Tendsto (fun t : ℝ ↦ t / (N : ℝ))
-      Filter.atTop Filter.atTop :=
-    Filter.tendsto_id.atTop_div_const hN_pos
-  refine (h_twist_decay.comp_tendsto h_tendsto).trans ?_
-  refine Asymptotics.IsBigO.of_bound (((N : ℝ) ^ (-r))) ?_
-  filter_upwards [Filter.eventually_gt_atTop (0 : ℝ)] with t ht
-  simp only [Function.comp_apply]
-  have h_div_rpow : (t / (N : ℝ)) ^ r = (N : ℝ) ^ (-r) * t ^ r := by
-    rw [Real.div_rpow ht.le hN_pos.le, Real.rpow_neg hN_pos.le, div_eq_mul_inv]
-    ring
-  rw [h_div_rpow, Real.norm_eq_abs, Real.norm_eq_abs, abs_mul,
-    abs_of_pos (Real.rpow_pos_of_pos hN_pos (-r))]
 
 private lemma imAxis_scaled_feq {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k)
     (twist : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
