@@ -88,7 +88,8 @@ instance lcSetoid (P : HeckePair G) : Setoid P.Δ where
 /-- A Hecke left coset: an equivalence class of `Δ`-elements under `gH = hH`. -/
 def HeckeLeftCoset (P : HeckePair G) := Quotient (lcSetoid P)
 
-noncomputable instance (P : HeckePair G) : DecidableEq (HeckeLeftCoset P) := Classical.decEq _
+noncomputable instance instDecidableEqHeckeLeftCoset (P : HeckePair G) :
+    DecidableEq (HeckeLeftCoset P) := Classical.decEq _
 
 namespace HeckeCoset
 
