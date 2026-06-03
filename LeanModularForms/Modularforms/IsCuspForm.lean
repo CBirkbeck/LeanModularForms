@@ -8,8 +8,8 @@ module
 public import Mathlib.Analysis.CStarAlgebra.Module.Defs
 public import Mathlib.Geometry.Manifold.Notation
 public import Mathlib.NumberTheory.ModularForms.CuspFormSubmodule
+public import LeanModularForms.Modularforms.AtImInfty
 public import LeanModularForms.Modularforms.ForMathlib_Cusps
-public import LeanModularForms.Modularforms.qExpansion_lems
 
 @[expose] public section
 

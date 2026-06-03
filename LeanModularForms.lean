@@ -2,6 +2,5 @@ import LeanModularForms.Modularforms.AtImInfty
 import LeanModularForms.Modularforms.DimensionFormulas
 import LeanModularForms.Modularforms.ForMathlib_Cusps
 import LeanModularForms.Modularforms.IsCuspForm
-import LeanModularForms.Modularforms.qExpansion_lems
 import LeanModularForms.Modularforms.ResToImagAxis
 import LeanModularForms.Modularforms.SlashActionAuxil

@@ -5,7 +5,7 @@ Authors: LeanModularForms contributors
 -/
 import LeanModularForms.HeckeRIngs.GL2.HeckeT_p
 import LeanModularForms.HeckeRIngs.GL2.HeckeT_n
-import LeanModularForms.Modularforms.qExpansion_lems
+import LeanModularForms.Modularforms.AtImInfty
 import Mathlib.RingTheory.RootsOfUnity.PrimitiveRoots
 import Mathlib.RingTheory.RootsOfUnity.Complex
 import Mathlib.Algebra.Field.GeomSum
