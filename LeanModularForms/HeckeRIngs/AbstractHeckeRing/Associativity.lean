@@ -20,7 +20,7 @@ Proposition 3.4.
   equivalent to associativity of multiplication in the Hecke ring.
 -/
 
-open Commensurable Classical MulOpposite Set DoubleCoset Subgroup Commensurable
+open Classical MulOpposite Set DoubleCoset Subgroup
 
 open scoped Pointwise
 
@@ -53,7 +53,7 @@ private lemma smulOrbit_map_injective (g β : P.Δ) :
     exact hkk
   apply decompQuot_coset_diff P g i₁ i₂ hne
   refine leftCoset_eq_of_not_disjoint (H := P.H) _ _ ?_
-  rw [not_disjoint_iff]
+  rw [Set.not_disjoint_iff]
   exact ⟨(i₁.out : G) * (g : G), ⟨1, P.H.one_mem, mul_one _⟩, ⟨k, hk, cancel⟩⟩
 
 private lemma smulOrbit_sum_eq (g β : P.Δ) (f : HeckeLeftCoset P → (HeckeLeftCoset P) →₀ ℤ) :
@@ -188,7 +188,7 @@ private lemma coset_shift_fwd (q a b a' b' g₁ g₂ g_D n₁ n₂ : G)
     ({a' * g₂ * (b' * g₁)} : Set G) * ↑P.H = {g_D} * ↑P.H := by
   subst ha' hb'
   apply leftCoset_eq_of_not_disjoint
-  rw [not_disjoint_iff]
+  rw [Set.not_disjoint_iff]
   refine ⟨q⁻¹ * a * n₁ * g₂ * (g₂⁻¹ * n₁⁻¹ * g₂ * b * n₂ * g₁),
     ⟨1, P.H.one_mem, by simp⟩, ?_⟩
   have hmem : a * g₂ * (b * g₁) ∈ ({q * g_D} : Set G) * ↑P.H := by
@@ -210,7 +210,7 @@ private lemma coset_shift_inv (q a b a' b' g₁ g₂ g_D m₁ m₂ : G)
     (hm₂_conj : g₁⁻¹ * m₂ * g₁ ∈ P.H) :
     ({a * g₂ * (b * g₁)} : Set G) * ↑P.H = {q * g_D} * ↑P.H := by
   apply leftCoset_eq_of_not_disjoint
-  rw [not_disjoint_iff]
+  rw [Set.not_disjoint_iff]
   refine ⟨a * g₂ * (b * g₁), ⟨1, P.H.one_mem, by simp⟩, ?_⟩
   have hmem : a' * g₂ * (b' * g₁) ∈ ({g_D} : Set G) * ↑P.H := by
     rw [← hcond]
@@ -405,7 +405,7 @@ private lemma iter_doubleCoset_class_eq (β g_D g₁' g₂' i_out j_out h₁ h�
   change lcRel P _ _
   simp only [lcRel]
   apply leftCoset_eq_of_not_disjoint
-  rw [not_disjoint_iff]
+  rw [Set.not_disjoint_iff]
   refine ⟨β * h₁ * g_D, ?_, ?_⟩
   · refine ⟨g_D⁻¹ * (n : G)⁻¹ * g_D, conjAct_inv_mem_of_subgroupOf P g_D n, ?_⟩
     simp only [smul_eq_mul, hn_coe]
@@ -441,6 +441,7 @@ private lemma iter_mem_smulOrbit_mulMap (g₂ g₁ β : P.Δ) (i : decompQuot P 
     (Submonoid.mul_mem _ (Submonoid.mul_mem _
       (delta_mul_mem P.H P.Δ i.out β g₂ P.h₀) (P.h₀ j.out.2)) g₁.2)
   rw [← hsuff]
+  show _ ∈ smulOrbit _ _ _
   simp only [smulOrbit, Finset.mem_image]
   exact ⟨r, Finset.mem_univ _, rfl⟩
 
@@ -476,7 +477,7 @@ private lemma iter_connector_class_eq (α β g₁' g₂' i₀ k₀ k'_out : G)
   change lcRel P _ _
   simp only [lcRel]
   apply leftCoset_eq_of_not_disjoint
-  rw [not_disjoint_iff]
+  rw [Set.not_disjoint_iff]
   refine ⟨β * k₀ * g₁', ⟨1, P.H.one_mem, by simp⟩, ?_⟩
   refine ⟨g₁'⁻¹ * (n' : G)⁻¹ * g₁', conjAct_inv_mem_of_subgroupOf P g₁' n', ?_⟩
   simp only [smul_eq_mul, hk'_coe]
@@ -513,12 +514,13 @@ private lemma smulOrbit_indicator_eq_sum (g₁ : P.Δ) (x₀ : HeckeLeftCoset P)
     ∑ k : decompQuot P g₁,
       if (⟦⟨(β : G) * (k.out : G) * (g₁ : G), delta_mul_mem P.H P.Δ k.out β g₁ P.h₀⟩⟧ :
         HeckeLeftCoset P) = x₀ then 1 else 0 := by
+  classical
   by_cases hmem : x₀ ∈ smulOrbit P g₁ β
   · rw [if_pos hmem]
     simp only [smulOrbit, Finset.mem_image] at hmem
     obtain ⟨q₀, _, hq₀⟩ := hmem
     rw [Finset.sum_eq_single q₀]
-    · rw [if_pos hq₀]
+    · exact (if_pos hq₀).symm
     · intro q _ hne
       rw [if_neg]
       exact fun heq ↦ hne (smulOrbit_map_injective P g₁ β (heq.trans hq₀.symm))
@@ -741,20 +743,78 @@ which is equivalent to associativity of multiplication (Shimura Proposition 3.4)
 noncomputable instance instIsScalarTower :
     IsScalarTower (𝕋 P ℤ) (𝕋 P ℤ) (HeckeModule P ℤ) where
   smul_assoc x y z := by
-    simp only [smul_def]
-    induction x using Finsupp.induction_linear with
-    | zero => simp only [mul_zero, zero_smul_HeckeModule]
-    | add x₁ x₂ ih₁ ih₂ =>
+    show (x • y) • z = x • (y • z)
+    have hsmul : ∀ a b : 𝕋 P ℤ, a • b = b * a := fun _ _ ↦ rfl
+    rw [hsmul x y]
+    -- View Finsupp values as 𝕋 P ℤ via a thin wrapper.
+    let toT : (HeckeCoset P →₀ ℤ) → 𝕋 P ℤ := fun a ↦ a
+    let toM : (HeckeLeftCoset P →₀ ℤ) → HeckeModule P ℤ := fun a ↦ a
+    let motx : (HeckeCoset P →₀ ℤ) → Prop :=
+      fun x' ↦ (y * (toT x')) • z = (toT x') • (y • z)
+    change motx x
+    apply Finsupp.induction_linear
+    · -- x = 0
+      show (y * (toT 0)) • z = (toT 0) • y • z
+      change (y * (0 : 𝕋 P ℤ)) • z = ((0 : 𝕋 P ℤ)) • y • z
+      rw [mul_zero, zero_smul_HeckeModule, zero_smul_HeckeModule]
+    · -- x = x₁ + x₂
+      intro x₁ x₂ ih₁ ih₂
+      show (y * (toT (x₁ + x₂))) • z = (toT (x₁ + x₂)) • y • z
+      change (y * ((toT x₁) + (toT x₂))) • z = ((toT x₁) + (toT x₂)) • y • z
       rw [mul_add, smul_add_left, ih₁, ih₂, ← smul_add_left]
-    | single D₁ a₁ =>
-      induction y using Finsupp.induction_linear with
-      | zero => simp only [zero_mul, zero_smul_HeckeModule, smul_zero_HeckeModule]
-      | add y₁ y₂ ih₁ ih₂ =>
+    · -- x = single D₁ a₁
+      intro D₁ a₁
+      show (y * (toT (Finsupp.single D₁ a₁))) • z =
+        (toT (Finsupp.single D₁ a₁)) • y • z
+      -- Now induct on y.
+      let motY : (HeckeCoset P →₀ ℤ) → Prop :=
+        fun Y' ↦ ((toT Y') * (toT (Finsupp.single D₁ a₁))) • z =
+          (toT (Finsupp.single D₁ a₁)) • (toT Y') • z
+      change motY y
+      apply Finsupp.induction_linear
+      · show ((toT 0) * (toT (Finsupp.single D₁ a₁))) • z =
+          (toT (Finsupp.single D₁ a₁)) • (toT 0) • z
+        change (((0 : 𝕋 P ℤ)) * (toT (Finsupp.single D₁ a₁))) • z =
+          (toT (Finsupp.single D₁ a₁)) • ((0 : 𝕋 P ℤ)) • z
+        rw [zero_mul, zero_smul_HeckeModule, smul_zero_HeckeModule]
+      · intro y₁ y₂ ih₁ ih₂
+        show ((toT (y₁ + y₂)) * (toT (Finsupp.single D₁ a₁))) • z =
+          (toT (Finsupp.single D₁ a₁)) • (toT (y₁ + y₂)) • z
+        change ((toT y₁ + toT y₂) * (toT (Finsupp.single D₁ a₁))) • z =
+          (toT (Finsupp.single D₁ a₁)) • (toT y₁ + toT y₂) • z
         rw [add_mul, smul_add_left, ih₁, ih₂, smul_add_left, smul_add_right]
-      | single D₂ a₂ =>
-        induction z using Finsupp.induction_linear with
-        | zero => simp only [smul_zero_HeckeModule]
-        | add z₁ z₂ ih₁ ih₂ =>
+      · intro D₂ a₂
+        show ((toT (Finsupp.single D₂ a₂)) * (toT (Finsupp.single D₁ a₁))) • z =
+          (toT (Finsupp.single D₁ a₁)) • (toT (Finsupp.single D₂ a₂)) • z
+        -- Now induct on z.
+        let motZ : (HeckeLeftCoset P →₀ ℤ) → Prop :=
+          fun z' ↦ ((toT (Finsupp.single D₂ a₂)) *
+              (toT (Finsupp.single D₁ a₁))) • (toM z') =
+            (toT (Finsupp.single D₁ a₁)) •
+              (toT (Finsupp.single D₂ a₂)) • (toM z')
+        change motZ z
+        apply Finsupp.induction_linear
+        · show ((toT (Finsupp.single D₂ a₂)) * (toT (Finsupp.single D₁ a₁))) • (toM 0) =
+            (toT (Finsupp.single D₁ a₁)) • (toT (Finsupp.single D₂ a₂)) • (toM 0)
+          change ((toT (Finsupp.single D₂ a₂)) *
+              (toT (Finsupp.single D₁ a₁))) • (0 : HeckeModule P ℤ) =
+            (toT (Finsupp.single D₁ a₁)) •
+              (toT (Finsupp.single D₂ a₂)) • (0 : HeckeModule P ℤ)
+          rw [smul_zero_HeckeModule, smul_zero_HeckeModule, smul_zero_HeckeModule]
+        · intro z₁ z₂ ih₁ ih₂
+          show ((toT (Finsupp.single D₂ a₂)) * (toT (Finsupp.single D₁ a₁))) •
+              (toM (z₁ + z₂)) =
+            (toT (Finsupp.single D₁ a₁)) •
+              (toT (Finsupp.single D₂ a₂)) • (toM (z₁ + z₂))
+          change ((toT (Finsupp.single D₂ a₂)) * (toT (Finsupp.single D₁ a₁))) •
+              ((toM z₁ + toM z₂) : HeckeModule P ℤ) =
+            (toT (Finsupp.single D₁ a₁)) •
+              (toT (Finsupp.single D₂ a₂)) •
+                ((toM z₁ + toM z₂) : HeckeModule P ℤ)
           rw [smul_add_right, smul_add_right, ih₁, ih₂, smul_add_right]
-        | single m₀ c₀ =>
+        · intro m₀ c₀
+          show ((toT (Finsupp.single D₂ a₂)) * (toT (Finsupp.single D₁ a₁))) •
+              (toM (Finsupp.single m₀ c₀)) =
+            (toT (Finsupp.single D₁ a₁)) •
+              (toT (Finsupp.single D₂ a₂)) • (toM (Finsupp.single m₀ c₀))
           exact smul_assoc_singles P D₁ D₂ a₁ a₂ m₀ c₀
