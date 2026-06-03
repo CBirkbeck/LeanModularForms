@@ -480,29 +480,6 @@ theorem Newform.mem_alpha_p_Gamma1_doubleCoset_smul_set_iff_exists_T_p_upper_lef
     exact ⟨b, γ, hγ, rfl⟩
 
 open scoped Pointwise in
-/-- Nested `iUnion` form of the double-coset-translated tile:
-`(Γ₁(N) · α_p · Γ₁(N)) • D = ⋃ b ⋃ γ ⋃ (_ : γ ∈ Γ₁(N)), (γ · β_b) • D`. -/
-theorem Newform.alpha_p_Gamma1_doubleCoset_smul_set_eq_iUnion_T_p_upper_left_factor_smul
-    (N : ℕ) [NeZero N] {p : ℕ} (hp : p.Prime) (hpN : ¬ Nat.Coprime p N)
-    (D : Set UpperHalfPlane) :
-    ((((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ)) *
-        ({(glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)} : Set (GL (Fin 2) ℝ)) *
-      (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ))) • D =
-      Set.iUnion (fun b : Fin p ↦
-        Set.iUnion (fun γ : {γ : GL (Fin 2) ℝ //
-            γ ∈ (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) :
-              Set (GL (Fin 2) ℝ))} ↦
-          (((γ : GL (Fin 2) ℝ) *
-            (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)) • D))) := by
-  ext z
-  rw [Newform.mem_alpha_p_Gamma1_doubleCoset_smul_set_iff_exists_T_p_upper_left_factor_smul
-    N (p := p) hp hpN D]
-  simp only [Set.mem_iUnion, Set.mem_smul_set]
-  refine ⟨?_, ?_⟩
-  · rintro ⟨b, γ, hγ, w, hw, hsmul⟩
-    exact ⟨b, ⟨γ, hγ⟩, w, hw, hsmul⟩
-  · rintro ⟨b, ⟨γ, hγ⟩, w, hw, hsmul⟩
-    exact ⟨b, γ, hγ, w, hw, hsmul⟩
 
 open scoped Pointwise in
 
@@ -511,31 +488,6 @@ open scoped Pointwise in
 open scoped Pointwise in
 
 open scoped Pointwise in
-/-- `Γ₁`-action regrouping for one bad-prime upper representative. -/
-theorem Newform.iUnion_Gamma1_T_p_upper_left_factor_smul_eq_Gamma1_smul_T_p_upper_left_smul
-    (N : ℕ) [NeZero N] {p : ℕ} (hp : p.Prime) (b : Fin p)
-    (D : Set UpperHalfPlane) :
-    Set.iUnion (fun γ : {γ : GL (Fin 2) ℝ //
-        γ ∈ (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) :
-          Set (GL (Fin 2) ℝ))} ↦
-      (((γ : GL (Fin 2) ℝ) *
-        (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)) • D)) =
-      (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) :
-        Set (GL (Fin 2) ℝ)) •
-        ((glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ) • D) := by
-  ext z
-  simp only [Set.mem_iUnion, Set.mem_smul_set]
-  constructor
-  · rintro ⟨γ, w, hw, hzw⟩
-    refine ⟨(γ : GL (Fin 2) ℝ), γ.property,
-      (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ) • w, ?_, ?_⟩
-    · exact ⟨w, hw, rfl⟩
-    · simpa [mul_smul] using hzw
-  · rintro ⟨γ, hγ, y, hy, hzy⟩
-    rcases hy with ⟨w, hw, hyw⟩
-    refine ⟨⟨γ, hγ⟩, w, hw, ?_⟩
-    rw [mul_smul, show (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ) • w = y from hyw]
-    exact hzy
 
 open scoped Pointwise in
 
