@@ -287,14 +287,6 @@ theorem Newform.hasImAxisExponentialDecay {N : ℕ} [NeZero N] {k : ℤ}
     (f : Newform N k) : Newform.HasImAxisExponentialDecay f :=
   Newform.cuspForm_Gamma1_hasImAxisExponentialDecay f.toCuspForm
 
-/-- Rapid polynomial decay of `Newform.imAxis f`, unconditional for any
-`Γ₁(N)` newform. -/
-theorem Newform.imAxis_rapidDecay {N : ℕ} [NeZero N] {k : ℤ}
-    (f : Newform N k) :
-    ∀ r : ℝ, Asymptotics.IsBigO Filter.atTop
-      (fun x : ℝ ↦ Newform.imAxis f x - 0) (fun x : ℝ ↦ x ^ r) :=
-  Newform.imAxis_rapidDecay_of_exponentialDecay f
-    (Newform.hasImAxisExponentialDecay f)
 
 
 
@@ -611,14 +603,6 @@ section FrickeAdjoint
 open UpperHalfPlane MeasureTheory
 open scoped UpperHalfPlane
 
-/-- Petersson adjoint of `W_N` at the matrix level: underlying matrix
-`!![0, 1; -N, 0]`. -/
-lemma Newform.peterssonAdj_frickeMatrix_coe (N : ℕ) [NeZero N] :
-    (peterssonAdj (Newform.frickeMatrix N) : Matrix (Fin 2) (Fin 2) ℝ) =
-      !![0, 1; -(N : ℝ), 0] := by
-  rw [peterssonAdj_coe, Newform.frickeMatrix_coe, Matrix.adjugate_fin_two]
-  ext i j
-  fin_cases i <;> fin_cases j <;> simp
 
 private lemma peterssonAdj_frickeMatrix_det_val (N : ℕ) [NeZero N] :
     (peterssonAdj (Newform.frickeMatrix N)).det.val = (N : ℝ) :=
