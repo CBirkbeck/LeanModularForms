@@ -227,17 +227,6 @@ structure Newform.CompletedFrickeData {N : ℕ} [NeZero N] {k : ℤ}
 
 
 
-private lemma imAxis_scaled_feq {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k)
-    (twist : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (slash_eq : (⇑twist : UpperHalfPlane → ℂ) =
-      ⇑f.toCuspForm.toModularForm' ∣[k] Newform.frickeMatrix N)
-    {x : ℝ} (hx : x ∈ Set.Ioi (0 : ℝ)) :
-    Newform.imAxis f (1 / x) =
-      (((N : ℂ) ^ (1 - k) * Complex.I ^ k) * ((x ^ (k : ℝ) : ℝ) : ℂ)) •
-        _root_.ModularForms.imAxis twist (x / (N : ℝ)) := by
-  have h_cast : ((x ^ (k : ℝ) : ℝ) : ℂ) = ((x : ℝ) : ℂ) ^ k := by
-    rw [Real.rpow_intCast x k, Complex.ofReal_zpow]
-  rw [Newform.imAxis_feq_of_slashEq f twist slash_eq hx, h_cast, smul_eq_mul]
 
 
 
