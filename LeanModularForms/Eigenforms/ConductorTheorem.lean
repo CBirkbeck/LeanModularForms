@@ -203,12 +203,12 @@ lemma conductor_slash_T_conj_eq (l N : ℕ) [NeZero l] [NeZero N] (h_dvd : l ∣
     slash_T_zpow_eq_self_of_slash_T_eq k f hf_period i,
     conductor_slash_eq l N h_dvd k χ f g hg_char hg_eq γ hγ]
   have hσ_T : UpperHalfPlane.σ
-      (mapGL ℝ (ModularGroup.T ^ j) : GL (Fin 2) ℝ) = RingHom.id ℂ := by
+      (mapGL ℝ (ModularGroup.T ^ j) : GL (Fin 2) ℝ) = ContinuousAlgEquiv.refl ℝ ℂ := by
     unfold UpperHalfPlane.σ
-    rw [if_pos]
-    change (0 : ℝ) < (Matrix.GeneralLinearGroup.det (mapGL ℝ (ModularGroup.T ^ j))).val
-    rw [Matrix.SpecialLinearGroup.det_mapGL]; norm_num
-  rw [ModularForm.smul_slash, hσ_T, RingHom.id_apply,
+    rw [if_pos
+      (show (0 : ℝ) < (Matrix.GeneralLinearGroup.det (mapGL ℝ (ModularGroup.T ^ j))).val by
+        rw [Matrix.SpecialLinearGroup.det_mapGL]; norm_num)]
+  rw [ModularForm.smul_slash, hσ_T, ContinuousAlgEquiv.refl_apply,
     slash_T_zpow_eq_self_of_slash_T_eq k f hf_period j]
 
 /-- Slash invariance of `f` under `Γ₁(N/l)`: under the Case A hypotheses
@@ -252,7 +252,7 @@ lemma coe_levelRaiseMatrix_inv_smul (l : ℕ) [NeZero l] (z : UpperHalfPlane) :
 /-- The conjugation factor `σ` for `(levelRaiseMatrix l)⁻¹` is the
 identity (positive determinant `1/l`). -/
 lemma σ_levelRaiseMatrix_inv (l : ℕ) [NeZero l] :
-    UpperHalfPlane.σ ((levelRaiseMatrix l)⁻¹ : GL (Fin 2) ℝ) = RingHom.id ℂ := by
+    UpperHalfPlane.σ ((levelRaiseMatrix l)⁻¹ : GL (Fin 2) ℝ) = ContinuousAlgEquiv.refl ℝ ℂ := by
   unfold UpperHalfPlane.σ
   rw [if_pos (levelRaiseMatrix_inv_det_pos l)]
 
@@ -263,7 +263,7 @@ lemma slash_inv_eq_smul_of_levelRaiseFun_eq (l : ℕ) [NeZero l] (k : ℤ)
   rw [hg_eq]
   change (((l : ℂ) ^ (1 - k)) • (f ∣[k] (levelRaiseMatrix l : GL (Fin 2) ℝ))) ∣[k]
       ((levelRaiseMatrix l)⁻¹ : GL (Fin 2) ℝ) = ((l : ℂ) ^ (1 - k)) • f
-  rw [ModularForm.smul_slash, σ_levelRaiseMatrix_inv, RingHom.id_apply,
+  rw [ModularForm.smul_slash, σ_levelRaiseMatrix_inv, ContinuousAlgEquiv.refl_apply,
     ← SlashAction.slash_mul,
     show (levelRaiseMatrix l : GL (Fin 2) ℝ) * (levelRaiseMatrix l)⁻¹ = 1
       from mul_inv_cancel _, SlashAction.slash_one]
@@ -282,12 +282,11 @@ lemma slash_eq_of_levelRaiseFun_eq (l : ℕ) [NeZero l] (k : ℤ) (f g : UpperHa
       ← zpow_add₀ (Nat.cast_ne_zero.mpr (NeZero.ne l) : (l : ℂ) ≠ 0),
       show k - 1 + (1 - k) = 0 by ring, zpow_zero, one_smul]
   conv_lhs => rw [hf_eq]
-  have hσA : UpperHalfPlane.σ (mapGL ℝ A : GL (Fin 2) ℝ) = RingHom.id ℂ := by
+  have hσA : UpperHalfPlane.σ (mapGL ℝ A : GL (Fin 2) ℝ) = ContinuousAlgEquiv.refl ℝ ℂ := by
     unfold UpperHalfPlane.σ
-    rw [if_pos]
-    change (0 : ℝ) < (Matrix.GeneralLinearGroup.det (mapGL ℝ A)).val
-    rw [Matrix.SpecialLinearGroup.det_mapGL]; norm_num
-  rw [ModularForm.smul_slash, hσA, RingHom.id_apply, ← SlashAction.slash_mul]
+    rw [if_pos (show (0 : ℝ) < (Matrix.GeneralLinearGroup.det (mapGL ℝ A)).val by
+      rw [Matrix.SpecialLinearGroup.det_mapGL]; norm_num)]
+  rw [ModularForm.smul_slash, hσA, ContinuousAlgEquiv.refl_apply, ← SlashAction.slash_mul]
 
 private lemma levelRaiseMatrix_inv_apply_one_zero (l : ℕ) [NeZero l] :
     ((levelRaiseMatrix l)⁻¹ : GL (Fin 2) ℝ) 1 0 = 0 := by

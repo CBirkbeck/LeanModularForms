@@ -11,7 +11,7 @@ import LeanModularForms.HeckeRIngs.AbstractHeckeRing.Associativity
 The `Ring (𝕋 P ℤ)` instance and user-facing API lemmas for working with Hecke rings.
 -/
 
-open Commensurable Classical MulOpposite Set DoubleCoset Subgroup Commensurable
+open Classical MulOpposite Set DoubleCoset Subgroup
 
 open scoped Pointwise
 
@@ -49,9 +49,9 @@ theorem one_def : (1 : 𝕋 P Z) = T_single P Z (HeckeCoset.one P) 1 := rfl
 noncomputable instance instNonAssocSemiring : NonAssocSemiring (𝕋 P ℤ) :=
   { instNonUnitalNonAssocSemiring P with
     natCast := fun n ↦ T_single P ℤ (HeckeCoset.one P) n
-    natCast_zero := by simp only [Nat.cast_zero, single_zero]
+    natCast_zero := by simp only [Nat.cast_zero, single_zero]; rfl
     natCast_succ := fun _ ↦ by
-      simp only [Nat.cast_add, Nat.cast_one, single_add, add_right_inj]; rfl
+      simp only [Nat.cast_add, Nat.cast_one, single_add]; rfl
     one_mul := fun f ↦ by
       simp only [one_def, mul_def, T_single]
       simp
