@@ -42,9 +42,25 @@ private noncomputable def embedPoly (p : ℕ) (hp : p.Prime) :
 
 /-- `π ∘ embedPoly p = evalHom 2 p`. -/
 private lemma π_comp_embed (p : ℕ) (hp : p.Prime) :
-    π_hom.comp (embedPoly p hp) = evalHom 2 p :=
-  MvPolynomial.ringHom_ext (fun _ ↦ by simp [π_hom, embedPoly, evalHom])
-    fun _ ↦ by simp [π_hom, embedPoly, evalHom]
+    π_hom.comp (embedPoly p hp) = evalHom 2 p := by
+  apply MvPolynomial.ringHom_ext
+  · intro r; simp [π_hom, embedPoly, evalHom]
+  · intro i
+    show π_hom (embedPoly p hp (MvPolynomial.X i)) = evalHom 2 p (MvPolynomial.X i)
+    have h1 : embedPoly p hp (MvPolynomial.X i) =
+        MvPolynomial.X (⟨⟨p, hp⟩, i⟩ : GenIdx) := by
+      simp [embedPoly, MvPolynomial.rename_X]
+    rw [h1]
+    have h2 : π_hom (MvPolynomial.X (⟨⟨p, hp⟩, i⟩ : GenIdx)) = T_gen 2 p i := by
+      show (MvPolynomial.eval₂Hom (Int.castRingHom (HeckeAlgebra 2))
+        (fun x : GenIdx ↦ T_gen 2 x.1.1 x.2)) (MvPolynomial.X (⟨⟨p, hp⟩, i⟩ : GenIdx)) =
+        T_gen 2 p i
+      exact MvPolynomial.eval₂Hom_X' _ _ _
+    have h3 : evalHom 2 p (MvPolynomial.X i) = T_gen 2 p i := by
+      show (MvPolynomial.eval₂Hom (Int.castRingHom (HeckeAlgebra 2))
+        (fun k : Fin 2 ↦ T_gen 2 p k)) (MvPolynomial.X i) = T_gen 2 p i
+      exact MvPolynomial.eval₂Hom_X' _ _ _
+    rw [h2, h3]
 
 /-- Each p-power-diagonal T_elem is in the range of π. -/
 private lemma ppow_mem_π_range (p : ℕ) (hp : p.Prime)

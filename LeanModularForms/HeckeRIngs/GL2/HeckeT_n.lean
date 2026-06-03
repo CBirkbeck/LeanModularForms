@@ -421,11 +421,12 @@ noncomputable def heckeT_p_divN [NeZero N] (k : ℤ) (p : ℕ)
             (T_p_upper p hp.pos b))
         rw [hdet]; apply Rat.cast_pos.mpr
         rw [GeneralLinearGroup.val_det_apply, T_p_upper_det]; exact_mod_cast hp.pos
-      have hσ : UpperHalfPlane.σ (glMap (T_p_upper p hp.pos b)) = RingHom.id ℂ := by
-        unfold UpperHalfPlane.σ; split_ifs; rfl
+      have hσ : UpperHalfPlane.σ (glMap (T_p_upper p hp.pos b)) =
+          ContinuousAlgEquiv.refl ℝ ℂ := by
+        unfold UpperHalfPlane.σ; rw [if_pos hdet_pos]
       ext w; show ((c • ⇑f) ∣[k] glMap (T_p_upper p hp.pos b)) w =
         (c • (⇑f ∣[k] glMap (T_p_upper p hp.pos b))) w
-      rw [ModularForm.smul_slash, hσ]; rfl
+      rw [ModularForm.smul_slash, hσ, ContinuousAlgEquiv.refl_apply]
     simp_rw [smul_slash_upper]
     simp only [Pi.smul_apply, smul_eq_mul, ← Finset.mul_sum, Finset.sum_apply]
 

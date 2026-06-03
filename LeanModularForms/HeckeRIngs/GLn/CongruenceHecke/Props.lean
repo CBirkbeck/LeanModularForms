@@ -49,6 +49,7 @@ noncomputable def cosetMap (N : ℕ) [NeZero N] :
   Quotient.lift
     (fun g ↦ ⟦Delta0_inclusion N g⟧)
     (fun a b hab ↦ by
+      show ⟦Delta0_inclusion N a⟧ = ⟦Delta0_inclusion N b⟧
       rw [HeckeCoset.eq_iff]
       exact doubleCoset_eq_of_Gamma0_eq N a b hab)
 
@@ -125,6 +126,8 @@ private noncomputable instance instInfiniteGamma0Coset (N : ℕ) [NeZero N] :
     (fun n : ℕ ↦ (⟦⟨diagMat 2 (![1, n + 1]), diagMat_one_mem_Delta0 N n⟩⟧ :
       HeckeCoset (Gamma0_pair N)))
     (fun m n h ↦ by
+      change (⟦⟨diagMat 2 (![1, m + 1]), diagMat_one_mem_Delta0 N m⟩⟧ :
+        HeckeCoset (Gamma0_pair N)) = ⟦⟨diagMat 2 (![1, n + 1]), diagMat_one_mem_Delta0 N n⟩⟧ at h
       rw [HeckeCoset.eq_iff] at h
       have h_gl : DoubleCoset.doubleCoset (diagMat 2 (![1, m + 1]) : GL (Fin 2) ℚ)
           (SLnZ_subgroup 2 : Set _) (SLnZ_subgroup 2 : Set _) =
@@ -137,7 +140,10 @@ private noncomputable instance instInfiniteGamma0Coset (N : ℕ) [NeZero N] :
         exact (DoubleCoset.doubleCoset_eq_of_mem
           (Gamma0_doubleCoset_subset_Gamma N _ h_mem_dc)).symm
       have h_T : T_diag (![1, m + 1]) = T_diag (![1, n + 1]) := by
-        rw [T_diag, T_diag, HeckeCoset.eq_iff]
+        rw [T_diag, T_diag]
+        show (⟦diagMat_delta 2 (![1, m + 1])⟧ : HeckeCoset (GL_pair 2)) =
+          ⟦diagMat_delta 2 (![1, n + 1])⟧
+        rw [HeckeCoset.eq_iff]
         simp only [diagMat_delta, show ∀ k : ℕ, (∀ i : Fin 2, 0 < (![1, k + 1]) i) from
           fun k i ↦ by fin_cases i <;> simp]
         exact h_gl
@@ -408,10 +414,9 @@ private lemma lunip_inject_surjective (N : ℕ) [NeZero N]
       Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one]
     rw [hc'] at hτ'_det
     linear_combination hτ'_det + τ'.1 0 1 * (N : ℤ) * hc'_eq
-  have hwit_Gamma0 : (⟨wit, hwit_det⟩ : SpecialLinearGroup (Fin 2) ℤ) ∈
-      CongruenceSubgroup.Gamma0 N := by
-    rw [CongruenceSubgroup.Gamma0_mem]
-    simp [wit, Matrix.of_apply, Matrix.cons_val_one]
+  have hwit_Gamma0 : (⟨wit, hwit_det⟩ : SL(2, ℤ)) ∈
+      CongruenceSubgroup.Gamma0 N :=
+    CongruenceSubgroup.Gamma0_mem.mpr (by simp [wit, Matrix.of_apply, Matrix.cons_val_one])
   have h_wit_mem := Subgroup.mem_map_of_mem (mapGL ℚ) hwit_Gamma0
   set D_gl := (↑g_diag : GL (Fin 2) ℚ)
   set U_r : SpecialLinearGroup (Fin 2) ℤ := ⟨!![1, 0; (N : ℤ) * ↑r_int.toNat, 1],
