@@ -109,14 +109,6 @@ lemma iteratedDerivWithin_mul' (f g : ℂ → ℂ) (s : Set ℂ) (hs : IsOpen s)
       · apply ContDiffOn.derivWithin hg hs.uniqueDiffOn (m := m) (by simp)
       exact hx
 
-lemma iteratedDeriv_eq_iteratedDerivWithin (n : ℕ) (f : ℂ → ℂ) (s : Set ℂ) (hs : IsOpen s)
-    (z : ℂ) (hz : z ∈ s) : iteratedDeriv n f z = iteratedDerivWithin n f s z := by
-  rw [← iteratedDerivWithin_univ]
-  simp_rw [iteratedDerivWithin]
-  rw [iteratedFDerivWithin_congr_set]
-  apply EventuallyEq.symm
-  rw [eventuallyEq_univ]
-  exact hs.mem_nhds hz
 
 lemma qExpansion_mul_coeff (a b : ℤ) (f : ModularForm Γ(n) a) (g : ModularForm Γ(n) b)
     [NeZero n] : qExpansion n (f.mul g) = qExpansion n f * qExpansion n g := by
@@ -128,15 +120,6 @@ lemma qExpansion_mul_coeff (a b : ℤ) (f : ModularForm Γ(n) a) (g : ModularFor
 variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
 variable {F : Type*} [NormedAddCommGroup F] [NormedSpace 𝕜 F]
 
-lemma IteratedDeriv_smul (a : ℂ) (f : ℂ → ℂ) (m : ℕ) :
-    iteratedDeriv m (a • f) = a • iteratedDeriv m f := by
-  induction m with
-  | zero => simp
-  | succ m hm =>
-    rw [iteratedDeriv_succ, iteratedDeriv_succ, hm]
-    ext x
-    rw [Pi.smul_def]
-    exact deriv_const_smul_field a ..
 
 lemma qExpansion_smul2 (a : ℂ) (f : ModularForm Γ(n) k) [NeZero n] :
     a • qExpansion n f = qExpansion n (a • f) :=
@@ -147,16 +130,7 @@ instance : FunLike (ℍ → ℂ) ℍ ℂ where
   coe := fun ⦃a₁⦄ ↦ a₁
   coe_injective' := fun ⦃_ _⦄ a ↦ a
 
-lemma qExpansion_ext (f g : ℍ → ℂ) (h : f = g) : qExpansion 1 f = qExpansion 1 g := by
-  rw [h]
 
-lemma cuspFunction_congr_funLike
-    {α β : Type*} [FunLike α ℍ ℂ] [FunLike β ℍ ℂ] (n : ℕ) (f : α) (g : β) (h : ⇑f = ⇑g) :
-    cuspFunction n f = cuspFunction n g := by
-  ext z
-  by_cases hz : z = 0
-  · simp [cuspFunction, Periodic.cuspFunction, h]
-  · simp [cuspFunction, Periodic.cuspFunction, h, hz]
 
 lemma qExpansion_ext2 {α β : Type*} [FunLike α ℍ ℂ] [FunLike β ℍ ℂ] (f : α) (g : β) (h : ⇑f = ⇑g) :
     qExpansion 1 f = qExpansion 1 g := by
@@ -171,11 +145,6 @@ lemma IteratedDeriv_zero_fun (n : ℕ) (z : ℂ) :
   | zero => simp
   | succ n hn => simp
 
-lemma iteratedDeriv_const_eq_zero (m : ℕ) (hm : 0 < m) (c : ℂ) :
-    iteratedDeriv m (fun _ : ℂ ↦ c) = fun _ : ℂ ↦ 0 := by
-  ext z
-  have := iteratedDeriv_const_add hm (f := fun (x : ℂ) ↦ (0 : ℂ)) c (x := z)
-  simpa only [add_zero, IteratedDeriv_zero_fun] using this
 
 lemma qExpansion_pow (f : ModularForm Γ(1) k) (n : ℕ) :
     qExpansion 1 ((((DirectSum.of (ModularForm Γ(1)) k) f) ^ n) (n * k)) =
