@@ -81,13 +81,12 @@ lemma smul_slash_pos_det (k : ℤ) (c : ℂ) (φ : UpperHalfPlane → ℂ)
     (g : GL (Fin 2) ℚ) (hg : 0 < g.det.val) :
     (c • φ) ∣[k] g = c • (φ ∣[k] g) := by
   show (c • φ) ∣[k] glMap g = c • (φ ∣[k] glMap g)
-  have hσ : UpperHalfPlane.σ (glMap g) = RingHom.id ℂ := by
+  have hσ : UpperHalfPlane.σ (glMap g) = ContinuousAlgEquiv.refl ℝ ℂ := by
     unfold UpperHalfPlane.σ
-    simp only [glMap_det_pos_of_rat_det_pos g hg, ↓reduceIte]
+    rw [if_pos (glMap_det_pos_of_rat_det_pos g hg)]
   ext z
   show ((c • φ) ∣[k] glMap g) z = (c • (φ ∣[k] glMap g)) z
-  rw [ModularForm.smul_slash, hσ]
-  rfl
+  rw [ModularForm.smul_slash, hσ, ContinuousAlgEquiv.refl_apply]
 
 lemma T_p_upper_det_pos (p : ℕ) (hp : 0 < p) (b : ℕ) :
     0 < (T_p_upper p hp b).det.val := by
