@@ -12,7 +12,7 @@ The module action of `𝕋 P ℤ` on `HeckeModule P ℤ` (formal sums of left co
 theorem `eq_of_smul_eq_smul_𝕋`.
 -/
 
-open Commensurable Classical MulOpposite Set DoubleCoset Subgroup Commensurable
+open Classical MulOpposite Set DoubleCoset Subgroup
 
 open scoped Pointwise
 
@@ -25,7 +25,7 @@ variable (P : HeckePair G) (Z : Type*) [CommRing Z]
 open Finsupp
 
 /-- The scalar multiplication on `𝕋` by itself, defined as reverse multiplication. -/
-noncomputable instance instSMul𝕋 : SMul (𝕋 P ℤ) (𝕋 P ℤ) where
+noncomputable instance (priority := 1200) instSMul𝕋 : SMul (𝕋 P ℤ) (𝕋 P ℤ) where
   smul x y := y * x
 
 /-- The orbit of a left coset representative `β` under double coset representative `g`:
@@ -121,13 +121,24 @@ lemma one_eq_HeckeLeftCoset_single :
 lemma smul_add_left (T₁ T₂ : 𝕋 P Z) (m : HeckeModule P Z) :
     (T₁ + T₂) • m = T₁ • m + T₂ • m := by
   simp only [smul_eq_sum]
-  rw [Finsupp.sum_add_index]
+  refine Eq.trans (Finsupp.sum_add_index (f := T₁) (g := T₂) ?_ ?_) ?_
   · intro D1 _
-    simp
+    simp only [zero_mul, Finsupp.single_zero, Finset.sum_const_zero, Finsupp.sum_fun_zero]
+    rfl
   · intro D1 _ y b₂
-    simp only [Finsupp.sum, ← Finset.sum_add_distrib]
+    simp only [Finsupp.sum]
+    show (∑ x ∈ m.support, ∑ i ∈ smulOrbit P D1.rep x.rep,
+        Finsupp.single i ((y + b₂) * m x) : HeckeLeftCoset P →₀ Z) =
+      (∑ x ∈ m.support, ∑ i ∈ smulOrbit P D1.rep x.rep,
+        Finsupp.single i (y * m x) : HeckeLeftCoset P →₀ Z) +
+      (∑ x ∈ m.support, ∑ i ∈ smulOrbit P D1.rep x.rep,
+        Finsupp.single i (b₂ * m x) : HeckeLeftCoset P →₀ Z)
+    rw [← Finset.sum_add_distrib]
     refine Finset.sum_congr rfl fun m _ ↦ ?_
-    simp_rw [add_mul, Finsupp.single_add]
+    rw [← Finset.sum_add_distrib]
+    refine Finset.sum_congr rfl fun i _ ↦ ?_
+    rw [add_mul, Finsupp.single_add]
+  · rfl
 
 /-- The zero element of the Hecke ring acts as zero on the module. -/
 lemma zero_smul_HeckeModule (z : HeckeModule P Z) : (0 : 𝕋 P Z) • z = 0 := by
@@ -135,7 +146,15 @@ lemma zero_smul_HeckeModule (z : HeckeModule P Z) : (0 : 𝕋 P Z) • z = 0 := 
 
 /-- Any Hecke ring element acts as zero on the zero module element. -/
 lemma smul_zero_HeckeModule (T : 𝕋 P Z) : T • (0 : HeckeModule P Z) = 0 := by
-  simp only [smul_eq_sum, Finsupp.sum_zero_index, Finsupp.sum_fun_zero]
+  simp only [smul_eq_sum]
+  show Finsupp.sum T (fun D1 b₁ ↦ Finsupp.sum 0 fun m b₂ ↦
+    ∑ i ∈ smulOrbit P (HeckeCoset.rep D1) (HeckeLeftCoset.rep m),
+      Finsupp.single i (b₁ * b₂)) = 0
+  rw [show (fun D1 b₁ ↦ Finsupp.sum (0 : HeckeLeftCoset P →₀ Z) fun m b₂ ↦
+    ∑ i ∈ smulOrbit P (HeckeCoset.rep D1) (HeckeLeftCoset.rep m),
+      Finsupp.single i (b₁ * b₂)) = (fun _ _ ↦ (0 : HeckeLeftCoset P →₀ Z)) from by
+        ext; rw [Finsupp.sum_zero_index]]
+  exact Finsupp.sum_fun_zero _
 
 /-- The module action is additive in the module argument. -/
 lemma smul_add_right (T : 𝕋 P Z) (m₁ m₂ : HeckeModule P Z) :
@@ -152,12 +171,20 @@ lemma smul_add_right (T : 𝕋 P Z) (m₁ m₂ : HeckeModule P Z) :
         ∑ i ∈ smulOrbit P (HeckeCoset.rep D) (HeckeLeftCoset.rep m),
           Finsupp.single i (b * c)) := by
     intro D b
-    rw [Finsupp.sum_add_index']
-    · intro m; simp
+    refine Eq.trans (Finsupp.sum_add_index'
+      (f := (m₁ : HeckeLeftCoset P →₀ Z)) (g := m₂) ?_ ?_) ?_
+    · intro m
+      simp
     · intro m c₁ c₂
       simp only [← Finset.sum_add_distrib, mul_add, Finsupp.single_add]
+    · rfl
   simp_rw [inner_split]
-  rw [← Finsupp.sum_add]
+  show Finsupp.sum T (fun D1 b₁ ↦
+    Finsupp.sum m₁ (fun m c ↦ ∑ i ∈ smulOrbit P (HeckeCoset.rep D1) (HeckeLeftCoset.rep m),
+      Finsupp.single i (b₁ * c)) +
+    Finsupp.sum m₂ (fun m c ↦ ∑ i ∈ smulOrbit P (HeckeCoset.rep D1) (HeckeLeftCoset.rep m),
+      Finsupp.single i (b₁ * c))) = _
+  exact Finsupp.sum_add
 
 /-- The smul orbits of distinct double cosets acting on the same left coset are disjoint. -/
 lemma smulOrbit_disjoint_of_ne (g₁ g₂ : P.Δ) (β : P.Δ) (hne : (⟦g₁⟧ : HeckeCoset P) ≠ ⟦g₂⟧) :
