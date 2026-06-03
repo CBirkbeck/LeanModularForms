@@ -391,19 +391,6 @@ lemma cuspFormsNewExtended_le_cuspFormsNew {N : ℕ} [NeZero N] {k : ℤ} :
     cuspFormsNewExtended N k ≤ cuspFormsNew N k :=
   fun _ hf g hg ↦ hf g (cuspFormsOld_le_cuspFormsOldExtended hg)
 
-private lemma glMap_T_p_upper_zero_val (p : ℕ) (hp : 0 < p) :
-    ((glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
-      !![(1 : ℝ), 0; 0, (p : ℝ)] := by
-  show (T_p_upper p hp 0 : Matrix (Fin 2) (Fin 2) ℚ).map (algebraMap ℚ ℝ) =
-    !![(1 : ℝ), 0; 0, (p : ℝ)]
-  rw [T_p_upper_coe]
-  ext i j
-  fin_cases i <;> fin_cases j <;> simp
-
-private lemma levelRaiseMatrix_val (d : ℕ) [NeZero d] :
-    ((levelRaiseMatrix d : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
-      !![(d : ℝ), 0; 0, 1] := rfl
-
 private lemma heckeT_n_cusp_decomp_of_mul {L : ℕ} [NeZero L] (k : ℤ) (a b m : ℕ) [NeZero a]
     [NeZero b] [NeZero m] (h_mul : heckeT_n (N := L) k m = heckeT_n k a * heckeT_n k b)
     (f : CuspForm ((Gamma1 L).map (mapGL ℝ)) k) :
