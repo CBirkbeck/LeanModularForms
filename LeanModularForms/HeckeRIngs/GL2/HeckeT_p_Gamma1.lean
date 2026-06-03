@@ -33,10 +33,6 @@ noncomputable def D_p_Gamma1 (N p : ℕ) [NeZero N] (hp : 0 < p) :
     HeckeRing.HeckeCoset (Gamma1_pair N) :=
   ⟦⟨diagMat 2 ![1, p], diag_1p_mem_Delta1 N p hp⟩⟧
 
-/-- `diag(1,p)` as an element of `(Gamma1_pair N).Δ`. -/
-noncomputable def diag_1p_delta_Gamma1 (N p : ℕ) [NeZero N] (hp : 0 < p) :
-    (Gamma1_pair N).Δ :=
-  ⟨diagMat 2 ![1, p], diag_1p_mem_Delta1 N p hp⟩
 
 private lemma diag_1p_mul_mapGL_val (p : ℕ) (hp : 0 < p) (s : SL(2, ℤ)) :
     ((diagMat 2 ![1, p] : GL (Fin 2) ℚ) * (mapGL ℚ s)).val =
