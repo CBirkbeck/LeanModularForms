@@ -437,15 +437,6 @@ theorem CuspForm_Gamma1_charSpace_directSum (k : ℤ)
     (CuspForm_Gamma1_iSupIndep_charSpace k)
     (CuspForm_Gamma1_iSup_charSpace k)
 
-/-- **The cusp-form character decomposition as a linear equivalence.**  The
-cusp-form analogue of `ModularForm_Gamma1_charSpace_linearEquiv`: packages
-`CuspForm_Gamma1_charSpace_directSum` as a `≃ₗ[ℂ]`. -/
-noncomputable def CuspForm_Gamma1_charSpace_linearEquiv
-    (k : ℤ) [DecidableEq ((ZMod N)ˣ →* ℂˣ)] :
-    (⨁ χ : (ZMod N)ˣ →* ℂˣ, cuspFormCharSpace k χ) ≃ₗ[ℂ]
-      CuspForm ((Gamma1 N).map (mapGL ℝ)) k :=
-  LinearEquiv.ofBijective (DirectSum.coeLinearMap _)
-    (CuspForm_Gamma1_charSpace_directSum k)
 
 /-- Each cusp-form character subspace `cuspFormCharSpace k χ` is
 finite-dimensional over `ℂ`, as a submodule of the finite-dimensional
