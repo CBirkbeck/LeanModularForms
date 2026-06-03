@@ -448,29 +448,6 @@ private lemma arcsin_one_half : Real.arcsin (1 / 2) = Real.pi / 6 :=
   Real.arcsin_eq_of_sin_eq Real.sin_pi_div_six
     ⟨by linarith [Real.pi_pos], by linarith [Real.pi_pos]⟩
 
-/-- The integral `∫_{-1/2}^{1/2} 1/√(1-x²) dx = π/3`. -/
-theorem integral_one_div_sqrt_one_sub_sq :
-    ∫ x in (-1/2 : ℝ)..(1/2), 1 / Real.sqrt (1 - x ^ 2) = Real.pi / 3 := by
-  have hab : (-1/2 : ℝ) ≤ 1/2 := by norm_num
-  have hcont : ContinuousOn Real.arcsin (Set.Icc (-1/2) (1/2)) :=
-    Real.continuous_arcsin.continuousOn
-  have hderiv : ∀ x ∈ Set.Ioo (-1/2 : ℝ) (1/2),
-      HasDerivAt Real.arcsin (1 / Real.sqrt (1 - x ^ 2)) x := by
-    intro x ⟨hx1, hx2⟩
-    exact Real.hasDerivAt_arcsin (by linarith) (by linarith)
-  have hint : IntervalIntegrable (fun x ↦ 1 / Real.sqrt (1 - x ^ 2))
-      MeasureTheory.volume (-1/2) (1/2) := by
-    apply ContinuousOn.intervalIntegrable
-    apply ContinuousOn.div continuousOn_const
-    · exact ContinuousOn.sqrt (continuousOn_const.sub (continuousOn_pow 2))
-    · intro x hx
-      rw [Set.uIcc_of_le hab] at hx
-      exact Real.sqrt_ne_zero'.mpr (by nlinarith [hx.1, hx.2])
-  rw [intervalIntegral.integral_eq_sub_of_hasDerivAt_of_le hab hcont
-    (fun x hx ↦ hderiv x hx) hint]
-  have : Real.arcsin (-1 / 2) = -(Real.pi / 6) := by
-    rw [show (-1 : ℝ) / 2 = -(1 / 2) from by ring, Real.arcsin_neg, arcsin_one_half]
-  rw [arcsin_one_half, this]; ring
 
 /-- The integral of `y⁻²` over `(c, ∞)` equals `1/c` for `c > 0`.
 This is the Bochner-integral version of `integral_Ioi_rpow_of_lt` at exponent `-2`. -/
