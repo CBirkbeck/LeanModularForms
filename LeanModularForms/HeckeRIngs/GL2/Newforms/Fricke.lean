@@ -251,14 +251,6 @@ noncomputable def Newform.HeckeFEData.ofImAxisData
     (data : Newform.ImAxisMellinData f) : Newform.HeckeFEData f :=
   Newform.HeckeFEData.ofMellinData (Newform.MellinPairData.ofImAxisData data)
 
-/-- Global `Newform.HeckeEntireExtension` from per-newform
-`Newform.ImAxisMellinData`. -/
-theorem Newform.HeckeEntireExtension_of_ImAxisMellinData
-    (h : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k),
-      Newform.ImAxisMellinData f) :
-    Newform.HeckeEntireExtension :=
-  Newform.HeckeEntireExtension_of_HeckeFEData
-    (fun _N _ _k f ↦ Newform.HeckeFEData.ofImAxisData (h f))
 
 /-- Exponential decay of `Newform.imAxis f` at `∞`: the cusp-form-decay
 statement specialised to a newform (Diamond–Shurman §5.9 / Miyake §4.3.5). -/
@@ -331,24 +323,6 @@ noncomputable def Newform.ImAxisMellinData.ofExponentialDecay
   hG_top := hG_top
   h_bridge := h_bridge
 
-/-- `Newform.ImAxisMellinData` constructor for any `Γ₁(N)` newform that
-discharges both the `hF_exp` exponential-decay and `hF_top` rapid-decay
-obligations via `Newform.hasImAxisExponentialDecay`. -/
-noncomputable def Newform.ImAxisMellinData.ofData_auto
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k)
-    (G : ℝ → ℂ) (ε : ℂ)
-    (hG_int : MeasureTheory.LocallyIntegrableOn G (Set.Ioi 0))
-    (hk_pos : 0 < (k : ℝ)) (hε_ne : ε ≠ 0)
-    (h_feq : ∀ x ∈ Set.Ioi (0 : ℝ),
-      (Newform.imAxis f) (1 / x) = (ε * ((x ^ (k : ℝ) : ℝ) : ℂ)) • G x)
-    (hG_top : ∀ r : ℝ, Asymptotics.IsBigO Filter.atTop
-      (fun x : ℝ ↦ G x - 0) (fun x : ℝ ↦ x ^ r))
-    (h_bridge : ∀ {s : ℂ},
-      LSeries.abscissaOfAbsConv f.lCoeff_stripped < s.re →
-      mellin (Newform.imAxis f) s = LSeries f.lCoeff_stripped s) :
-    Newform.ImAxisMellinData f :=
-  Newform.ImAxisMellinData.ofExponentialDecay f G ε hG_int hk_pos hε_ne
-    h_feq (Newform.hasImAxisExponentialDecay f) hG_top h_bridge
 
 
 /-- The Atkin-Lehner / Fricke matrix `W_N := !![0, -1; N, 0]` for level `N`,
@@ -708,46 +682,6 @@ lemma Newform.peterssonAdj_frickeMatrix_smul (N : ℕ) [NeZero N] (τ : UpperHal
   field_simp [Nat.cast_ne_zero.mpr (NeZero.ne N), UpperHalfPlane.ne_zero τ]
   ring
 
-/-- Slash by `peterssonAdj W_N` equals `(-1)^k` times slash by `W_N`. -/
-lemma Newform.slash_peterssonAdj_frickeMatrix
-    {N : ℕ} [NeZero N] {k : ℤ} (g : UpperHalfPlane → ℂ) :
-    g ∣[k] peterssonAdj (Newform.frickeMatrix N) =
-      ((-1 : ℂ) ^ k) • (g ∣[k] Newform.frickeMatrix N) := by
-  funext τ
-  have hadj_σ : UpperHalfPlane.σ (peterssonAdj (Newform.frickeMatrix N)) =
-      RingHom.id ℂ := by
-    unfold UpperHalfPlane.σ
-    rw [if_pos (peterssonAdj_frickeMatrix_det_pos N)]
-  have hadj_denom : UpperHalfPlane.denom (peterssonAdj (Newform.frickeMatrix N)) τ =
-      -((N : ℂ) * (τ : ℂ)) := by
-    change (peterssonAdj (Newform.frickeMatrix N) : Matrix (Fin 2) (Fin 2) ℝ) 1 0 *
-          (τ : ℂ) +
-        (peterssonAdj (Newform.frickeMatrix N) : Matrix (Fin 2) (Fin 2) ℝ) 1 1 =
-        -((N : ℂ) * (τ : ℂ))
-    rw [Newform.peterssonAdj_frickeMatrix_coe]
-    simp only [Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val',
-      Matrix.empty_val', Matrix.cons_val_fin_one, Matrix.of_apply]
-    push_cast
-    ring
-  rw [Pi.smul_apply, smul_eq_mul, Newform.frickeMatrix_slash_apply,
-    show (g ∣[k] peterssonAdj (Newform.frickeMatrix N)) τ =
-      UpperHalfPlane.σ (peterssonAdj (Newform.frickeMatrix N))
-        (g ((peterssonAdj (Newform.frickeMatrix N)) • τ)) *
-        |((peterssonAdj (Newform.frickeMatrix N)).det.val)| ^ (k - 1) *
-        UpperHalfPlane.denom (peterssonAdj (Newform.frickeMatrix N)) τ ^ (-k) from rfl,
-    hadj_σ, RingHom.id_apply, peterssonAdj_frickeMatrix_det_val, hadj_denom,
-    Newform.peterssonAdj_frickeMatrix_smul,
-    show |(N : ℝ)| = (N : ℝ) from
-      abs_of_pos (Nat.cast_pos.mpr (Nat.pos_of_ne_zero (NeZero.ne N))),
-    show (-((N : ℂ) * (τ : ℂ))) ^ (-k) =
-      (-1 : ℂ) ^ k * ((N : ℂ) * (τ : ℂ)) ^ (-k) by
-      rw [show (-((N : ℂ) * (τ : ℂ))) = (-1 : ℂ) * ((N : ℂ) * (τ : ℂ)) by ring,
-          mul_zpow,
-        show (-1 : ℂ) ^ (-k) = (-1 : ℂ) ^ k by
-          rw [zpow_neg, show ((-1 : ℂ) ^ k)⁻¹ = ((-1 : ℂ)⁻¹) ^ k from
-                (inv_zpow _ _).symm,
-              show ((-1 : ℂ)⁻¹ : ℂ) = -1 by norm_num]]]
-  ring
 
 end FrickeAdjoint
 
