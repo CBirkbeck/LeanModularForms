@@ -222,17 +222,8 @@ theorem peterssonInner_neg_left (k : ℤ) (D : Set ℍ) (f g : ℍ → ℂ) :
     peterssonInner k D (-f) g = -peterssonInner k D f g := by
   simp only [peterssonInner, petersson, Pi.neg_apply, map_neg, neg_mul, integral_neg]
 
-/-- The norm of the Petersson pairing is symmetric. -/
-theorem norm_peterssonInner_symm (k : ℤ) (D : Set ℍ) (f g : ℍ → ℂ) :
-    ‖peterssonInner k D f g‖ = ‖peterssonInner k D g f‖ := by
-  rw [← peterssonInner_conj_symm, RCLike.norm_conj]
 
 
-/-- The Petersson integrand is integrable on any compact subset of `ℍ`. -/
-theorem integrableOn_compact_petersson (k : ℤ) {f g : ℍ → ℂ}
-    (hf : Continuous f) (hg : Continuous g) {K : Set ℍ} (hK : IsCompact K) :
-    IntegrableOn (fun τ ↦ petersson k f g τ) K μ_hyp :=
-  (petersson_continuous k hf hg).continuousOn.integrableOn_compact hK
 
 
 /-- The Petersson integrand of cusp forms is integrable over the standard fundamental
@@ -602,13 +593,6 @@ private theorem fd_lintegral_density_eq :
     measurableEquivRealProd.measurableEmbedding G (UpperHalfPlane.coe '' fd)]
   exact lintegral_fd_region_eq
 
-/-- **Hyperbolic area of the fundamental domain**: `μ_hyp(𝒟) = π/3`. -/
-theorem hyperbolicMeasure_fd_eq : μ_hyp fd = ENNReal.ofReal (Real.pi / 3) := by
-  have hfd : MeasurableSet (fd : Set ℍ) :=
-    ((isClosed_le continuous_const (continuous_normSq.comp continuous_coe)).inter
-      (isClosed_le (continuous_abs.comp continuous_re) continuous_const)).measurableSet
-  simp only [hyperbolicMeasure, withDensity_apply _ hfd]
-  rw [fd_lintegral_density_eq, integral_one_div_sqrt_one_sub_sq]
 
 
 end UpperHalfPlane
