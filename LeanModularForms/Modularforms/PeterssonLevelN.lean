@@ -314,26 +314,6 @@ theorem IsFundamentalDomain.iUnion_smul_of_transversal
       ← mul_smul]
     exact fun i₁ i₂ ↦ hs.aedisjoint fun heq ↦ hne (eq_of_mul_transversal hinj heq).1
 
-/-- **Normalizer-shift of a fundamental domain.** If `s` is an `H`-fundamental
-domain (where `H ≤ G_outer`) and `g ∈ G_outer` lies in the normalizer of `H`,
-then `g • s` is again an `H`-fundamental domain. -/
-theorem IsFundamentalDomain.smul_of_mem_normalizer
-    {G_outer α : Type*} [Group G_outer] [MeasurableSpace α] [MulAction G_outer α]
-    [MeasurableConstSMul G_outer α] {μ : Measure α} [SMulInvariantMeasure G_outer α μ]
-    {H : Subgroup G_outer} {s : Set α}
-    (hs : IsFundamentalDomain H s μ) {g : G_outer} (hg : g ∈ H.normalizer) :
-    IsFundamentalDomain H (g • s) μ :=
-  hs.image_of_equiv (MulAction.toPerm g)
-    (measurePreserving_smul _ _).quasiMeasurePreserving
-    { toFun := fun h' ↦ ⟨g⁻¹ * (h' : G_outer) * g,
-        (Subgroup.mem_normalizer_iff''.mp hg _).mp h'.2⟩
-      invFun := fun h' ↦ ⟨g * (h' : G_outer) * g⁻¹,
-        (Subgroup.mem_normalizer_iff.mp hg _).mp h'.2⟩
-      left_inv := fun _ ↦ Subtype.ext (by group)
-      right_inv := fun _ ↦ Subtype.ext (by group) }
-    fun h' x ↦ by
-      show g • ((g⁻¹ * (h' : G_outer) * g) • x) = (h' : G_outer) • (g • x)
-      simp only [smul_smul, mul_inv_cancel_left, mul_assoc]
 
 /-- **Conjugation-shift of a fundamental domain.** If `s` is an `H₁`-fundamental
 domain (where `H₁ ≤ G_outer`) and `H₂` is the pointwise conjugate `g · H₁ · g⁻¹`
@@ -483,17 +463,6 @@ theorem isFundamentalDomain_Gamma1_coset_tiling :
   isFundamentalDomain_Gamma1_PSL
 
 
-/-- Integrals of any function over two `imageGamma1 N`-fundamental domains agree,
-provided the integrand is invariant under the `imageGamma1 N`-action. -/
-theorem setIntegral_Gamma1_fundDomain_eq
-    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
-    {D D' : Set UpperHalfPlane}
-    (hD : IsFundamentalDomain (imageGamma1 N) D μ_hyp)
-    (hD' : IsFundamentalDomain (imageGamma1 N) D' μ_hyp)
-    {h : UpperHalfPlane → E}
-    (h_inv : ∀ (γ : imageGamma1 N) (τ : UpperHalfPlane), h (γ • τ) = h τ) :
-    ∫ τ in D, h τ ∂μ_hyp = ∫ τ in D', h τ ∂μ_hyp :=
-  hD.setIntegral_eq hD' h_inv
 
 
 open scoped MatrixGroups
@@ -799,15 +768,6 @@ theorem petersson_Gamma1_invariant (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) 
     petersson k ⇑f ⇑g (γ • τ) = petersson k ⇑f ⇑g τ := by
   rw [← petersson_slash_SL, slash_Gamma1_eq f γ hγ, slash_Gamma1_eq g γ hγ]
 
-/-- The Petersson integrand is invariant under the `imageGamma1 N`-action on `ℍ`:
-for `γ : imageGamma1 N` and `τ : ℍ`, `petersson k f g (γ • τ) = petersson k f g τ`. -/
-theorem petersson_imageGamma1_invariant (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (γ : imageGamma1 N) (τ : UpperHalfPlane) :
-    petersson k ⇑f ⇑g (γ • τ) = petersson k ⇑f ⇑g τ := by
-  obtain ⟨δ, hδ_mem, hδ_eq⟩ := γ.2
-  show petersson k ⇑f ⇑g ((γ : PSL(2, ℤ)) • τ) = _
-  rw [← hδ_eq]
-  exact petersson_Gamma1_invariant f g δ hδ_mem τ
 
 /-- Each `petN` summand equals an integral over a translate of `fd`:
 `peterssonInner k fd (f∣q⁻¹) (g∣q⁻¹) = ∫_{q⁻¹ • fd} petersson k f g dμ`. -/
@@ -992,18 +952,6 @@ theorem setIntegral_iUnion_finite_aedisjoint
     ∫ τ in ⋃ i : ι, s i, h τ ∂μ_hyp = ∑ i : ι, ∫ τ in s i, h τ ∂μ_hyp := by
   rw [integral_iUnion_ae hm hd hint, tsum_fintype]
 
-/-- The Petersson-inner-product specialization of
-`setIntegral_iUnion_finite_aedisjoint`: the inner product over a finite
-AE-disjoint cover decomposes as the sum of inner products over each piece. -/
-theorem peterssonInner_iUnion_finite_aedisjoint
-    {ι : Type*} [Fintype ι] (s : ι → Set ℍ)
-    (hm : ∀ i, NullMeasurableSet (s i) μ_hyp)
-    (hd : Pairwise (fun i j : ι ↦ AEDisjoint μ_hyp (s i) (s j)))
-    (f g : ℍ → ℂ)
-    (hint : IntegrableOn (fun τ ↦ petersson k f g τ) (⋃ i, s i) μ_hyp) :
-    peterssonInner k (⋃ i : ι, s i) f g =
-      ∑ i : ι, peterssonInner k (s i) f g :=
-  setIntegral_iUnion_finite_aedisjoint s hm hd _ hint
 
 /-- A finite-family tile fundamental-domain bundle: a `Fintype`-indexed
 finite family `tile : ι → Set X` of pairwise AE-disjoint, null-measurable
@@ -1038,13 +986,5 @@ end FiniteTileFundamentalDomain
 
 
 
-/-- If two subsets of `ℍ` are AE-equal under `μ_hyp`, integrability of the
-Petersson kernel on one transfers to the other. -/
-theorem integrableOn_petersson_congr_set_ae
-    {S T : Set ℍ} (hST : S =ᵐ[μ_hyp] T)
-    (f g : ℍ → ℂ) :
-    IntegrableOn (fun τ ↦ petersson k f g τ) S μ_hyp ↔
-    IntegrableOn (fun τ ↦ petersson k f g τ) T μ_hyp := by
-  simp only [IntegrableOn, Measure.restrict_congr_set hST]
 
 
