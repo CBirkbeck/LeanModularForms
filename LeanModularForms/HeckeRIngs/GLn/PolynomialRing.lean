@@ -133,7 +133,7 @@ lemma T_scalar_pow (c : ℕ) (hc : 0 < c) (k : ℕ) :
 /-- Each `T_gen k` lies in the range of `evalHom`. -/
 lemma T_gen_mem_evalHom_range (k : Fin n) :
     T_gen n p k ∈ (evalHom n p).range :=
-  ⟨MvPolynomial.X k, by simp [evalHom, MvPolynomial.eval₂Hom_X']⟩
+  ⟨MvPolynomial.X k, MvPolynomial.eval₂Hom_X' _ _ _⟩
 
 end PolynomialRing
 
@@ -165,11 +165,11 @@ lemma T_sum_p_eq_T_gen_zero (p : ℕ) (hp : p.Prime) :
 
 private lemma X_zero_mem_range (p : ℕ) :
     T_gen 2 p (0 : Fin 2) ∈ (evalHom 2 p).range :=
-  ⟨MvPolynomial.X 0, by simp [evalHom, MvPolynomial.eval₂Hom_X']⟩
+  ⟨MvPolynomial.X 0, MvPolynomial.eval₂Hom_X' _ _ _⟩
 
 private lemma X_one_mem_range (p : ℕ) :
     T_gen 2 p (1 : Fin 2) ∈ (evalHom 2 p).range :=
-  ⟨MvPolynomial.X 1, by simp [evalHom, MvPolynomial.eval₂Hom_X']⟩
+  ⟨MvPolynomial.X 1, MvPolynomial.eval₂Hom_X' _ _ _⟩
 
 private lemma T_pp_mem_range (p : ℕ) (hp : p.Prime) :
     T_pp p ∈ (evalHom 2 p).range := by
@@ -285,17 +285,18 @@ lemma evalHom_mem_R_p (n : ℕ) [NeZero n] (p : ℕ) (hp : p.Prime) (P : MvPolyn
   apply MvPolynomial.induction_on P
   · intro a
     show evalHom n p (MvPolynomial.C a) ∈ R_p n p hp
-    simp only [evalHom, MvPolynomial.eval₂Hom_C]
-    show (a : HeckeAlgebra n) ∈ R_p n p hp
-    rw [show (a : HeckeAlgebra n) = a • (1 : HeckeAlgebra n) from (zsmul_one a).symm]
+    rw [show evalHom n p (MvPolynomial.C a) = (a : HeckeAlgebra n) from
+      MvPolynomial.eval₂Hom_C _ _ _, show (a : HeckeAlgebra n) =
+        a • (1 : HeckeAlgebra n) from (zsmul_one a).symm]
     exact (R_p n p hp).zsmul_mem (R_p n p hp).one_mem a
   · intro f g hf hg; rw [map_add]; exact (R_p n p hp).add_mem hf hg
   · intro f i hf
     rw [map_mul]
-    exact (R_p n p hp).mul_mem hf (by
-      show evalHom n p (MvPolynomial.X i) ∈ R_p n p hp
-      simp only [evalHom, MvPolynomial.eval₂Hom_X']
-      exact T_gen_mem_R_p n p hp i)
+    refine (R_p n p hp).mul_mem hf ?_
+    show evalHom n p (MvPolynomial.X i) ∈ R_p n p hp
+    rw [show evalHom n p (MvPolynomial.X i) = T_gen n p i from
+      MvPolynomial.eval₂Hom_X' _ _ _]
+    exact T_gen_mem_R_p n p hp i
 
 /-- The restricted evaluation homomorphism into `R_p`. -/
 noncomputable def evalHomR (n : ℕ) [NeZero n] (p : ℕ) (hp : p.Prime) :
@@ -350,13 +351,22 @@ theorem evalHom_injective_one (p : ℕ) (hp : p.Prime) : Function.Injective (eva
   suffices h : ((evalHom 1 p) R).toFun D = MvPolynomial.coeff s R from h ▸ h0
   show Finsupp.toFun (MvPolynomial.eval₂Hom (Int.castRingHom (HeckeAlgebra 1))
     (fun k ↦ T_gen 1 p k) R) D = _
-  simp only [MvPolynomial.coe_eval₂Hom, MvPolynomial.eval₂_eq', Fin.prod_univ_one,
-    T_gen_pow_one p hp]
-  rw [Finset.sum_congr rfl (fun x _ ↦ intCast_mul_T_elem_eq_single (fun _ ↦ p ^ x 0) (R.coeff x))]
-  show ((∑ x ∈ R.support,
-    (Finsupp.single (T_diag (n := 1) (fun _ ↦ p ^ x 0))
-      (MvPolynomial.coeff x R) : HeckeCoset (GL_pair 1) →₀ ℤ))) D = MvPolynomial.coeff s R
-  rw [Finsupp.finset_sum_apply]
+  simp only [MvPolynomial.coe_eval₂Hom, MvPolynomial.eval₂_eq', Fin.prod_univ_one]
+  have h_sum_eq : (∑ x ∈ R.support,
+      (Int.castRingHom (HeckeAlgebra 1)) (MvPolynomial.coeff x R) * T_gen 1 p 0 ^ x 0) =
+    (∑ x ∈ R.support,
+      (Finsupp.single (T_diag (n := 1) (fun _ ↦ p ^ x 0))
+        (MvPolynomial.coeff x R) : HeckeCoset (GL_pair 1) →₀ ℤ)) :=
+    Finset.sum_congr rfl (fun x _ ↦ by
+      rw [T_gen_pow_one p hp]
+      exact intCast_mul_T_elem_eq_single (fun _ ↦ p ^ x 0) (R.coeff x))
+  show (∑ x ∈ R.support,
+      (Int.castRingHom (HeckeAlgebra 1)) (MvPolynomial.coeff x R) * T_gen 1 p 0 ^ x 0)
+        D = MvPolynomial.coeff s R
+  rw [h_sum_eq]
+  show (∑ x ∈ R.support, (Finsupp.single (T_diag (n := 1) (fun _ ↦ p ^ x 0))
+      (MvPolynomial.coeff x R) : HeckeCoset (GL_pair 1) →₀ ℤ)) D = MvPolynomial.coeff s R
+  rw [Finsupp.finsetSum_apply]
   simp only [Finsupp.single_apply, D]
   rw [Finset.sum_eq_single s (fun b _ hbs ↦ if_neg (fun hb ↦ hbs
     (Finsupp.ext (fun j ↦ by rw [Fin.fin_one_eq_zero j]; exact T_diag_one_ppow_inj p hp hb))))
@@ -459,7 +469,8 @@ private lemma det_rep_T_gen_zero_pow_mul (q : {p : ℕ // p.Prime}) (a₀ b₀ :
           show (Finsupp.sum (Finsupp.single _ 1) (fun D₁' b₁ ↦ g'.sum (fun D₂ b₂ ↦
               b₁ • b₂ • HeckeRing.m (GL_pair 2) (HeckeCoset.rep D₁') (HeckeCoset.rep D₂)))) D' = _
           rw [Finsupp.sum_single_index (by simp [Finsupp.sum]), Finsupp.sum]
-          simp [Finsupp.finset_sum_apply, Finsupp.smul_apply]] at hD'
+          simp only [one_smul, Finsupp.finsetSum_apply, Finsupp.smul_apply, smul_eq_mul]
+          rfl] at hD'
       exact hD')
     have hm_ne : (HeckeRing.m (GL_pair 2) (HeckeCoset.rep (T_diag (![1, q.1])))
         (HeckeCoset.rep D₂)) D' ≠ 0 := fun h ↦ hD₂_ne (by rw [h, mul_zero])
@@ -555,7 +566,19 @@ lemma T_mul_T_scalar_eval_shifted (c : ℕ) (hc : 0 < c) (f : HeckeAlgebra 2) (b
     show ((0 : HeckeAlgebra 2) * T_elem (fun _ : Fin 2 ↦ c)) (T_diag (b * fun _ ↦ c)) =
       (0 : HeckeAlgebra 2) (T_diag b)
     rw [zero_mul]; rfl
-  | add g h ihg ihh => rw [add_mul, Finsupp.add_apply, Finsupp.add_apply, ihg, ihh]
+  | add g h ihg ihh =>
+    set g' : HeckeAlgebra 2 := g
+    set h' : HeckeAlgebra 2 := h
+    change ((g' + h') * T_elem (fun _ : Fin 2 ↦ c)) (T_diag (b * fun _ ↦ c)) =
+      (g' + h') (T_diag b)
+    rw [add_mul,
+      show (g' * T_elem (fun _ : Fin 2 ↦ c) + h' * T_elem (fun _ : Fin 2 ↦ c))
+            (T_diag (b * fun _ ↦ c)) =
+            (g' * T_elem (fun _ : Fin 2 ↦ c)) (T_diag (b * fun _ ↦ c)) +
+            (h' * T_elem (fun _ : Fin 2 ↦ c)) (T_diag (b * fun _ ↦ c)) from
+        Finsupp.add_apply _ _ _,
+      show (g' + h') (T_diag b) = g' (T_diag b) + h' (T_diag b) from Finsupp.add_apply _ _ _,
+      ihg, ihh]
   | single D α =>
     obtain ⟨a, ha_pos, ha_div, ha_eq⟩ := exists_diagonal_representative 2 (HeckeCoset.rep D)
     have hD_eq : D = T_diag a := by rw [← Quotient.out_eq D]; exact ha_eq
@@ -591,7 +614,15 @@ lemma T_mul_T_scalar_eval_zero_of_not_dvd (c : ℕ) (hc : 0 < c) (f : HeckeAlgeb
   | zero =>
     show ((0 : HeckeAlgebra 2) * T_elem (fun _ : Fin 2 ↦ c)) (T_diag d) = 0
     rw [zero_mul]; rfl
-  | add g h ihg ihh => rw [add_mul, Finsupp.add_apply, ihg, ihh, add_zero]
+  | add g h ihg ihh =>
+    set g' : HeckeAlgebra 2 := g
+    set h' : HeckeAlgebra 2 := h
+    change ((g' + h') * T_elem (fun _ : Fin 2 ↦ c)) (T_diag d) = 0
+    rw [add_mul,
+      show (g' * T_elem (fun _ : Fin 2 ↦ c) + h' * T_elem (fun _ : Fin 2 ↦ c)) (T_diag d) =
+            (g' * T_elem (fun _ : Fin 2 ↦ c)) (T_diag d) +
+            (h' * T_elem (fun _ : Fin 2 ↦ c)) (T_diag d) from Finsupp.add_apply _ _ _,
+      ihg, ihh, add_zero]
   | single D α =>
     obtain ⟨a, ha_pos, ha_div, ha_eq⟩ := exists_diagonal_representative 2 (HeckeCoset.rep D)
     have hD_eq : D = T_diag a := by rw [← Quotient.out_eq D]; exact ha_eq
@@ -674,13 +705,23 @@ private lemma T_ad_one_p_mul_T_ad_one_ppow_eval_leading (p : ℕ) (hp : p.Prime)
         funext i; fin_cases i <;> simp]
     exact Finsupp.single_eq_same
   · rw [show T_ad 1 p = T_sum ⟨p, hp.pos⟩ from (T_sum_prime p hp).symm,
-      T_sum_prime_mul_T_ad p hp n (Nat.pos_of_ne_zero hn), Finsupp.add_apply,
+      T_sum_prime_mul_T_ad p hp n (Nat.pos_of_ne_zero hn)]
+    rw [show (T_ad 1 (p ^ (n + 1)) + (if n = 1 then ((p + 1 : ℕ) : ℤ) else (p : ℤ)) •
+              T_ad p (p ^ n)) (T_diag (![1, p ^ (n + 1)] : Fin 2 → ℕ)) =
+          T_ad 1 (p ^ (n + 1)) (T_diag (![1, p ^ (n + 1)] : Fin 2 → ℕ)) +
+            ((if n = 1 then ((p + 1 : ℕ) : ℤ) else (p : ℤ)) • T_ad p (p ^ n))
+              (T_diag (![1, p ^ (n + 1)] : Fin 2 → ℕ)) from Finsupp.add_apply _ _ _,
       T_ad_of_pos 1 (p ^ (n + 1)) Nat.one_pos (pow_pos hp.pos _) (one_dvd _),
       T_ad_of_pos p (p ^ n) hp.pos (pow_pos hp.pos _) (dvd_pow_self p hn)]
     rw [show (T_elem (![1, p ^ (n + 1)] : Fin 2 → ℕ))
           (T_diag (![1, p ^ (n + 1)] : Fin 2 → ℕ)) = 1 from
         Finsupp.single_eq_same]
-    rw [Finsupp.smul_apply, T_elem_p_ppow_eval_at_one_ppow_succ_zero p hp hn,
+    rw [show ((if n = 1 then ((p + 1 : ℕ) : ℤ) else (p : ℤ)) • T_elem (![p, p ^ n] : Fin 2 → ℕ))
+          (T_diag (![1, p ^ (n + 1)] : Fin 2 → ℕ)) =
+        (if n = 1 then ((p + 1 : ℕ) : ℤ) else (p : ℤ)) •
+          T_elem (![p, p ^ n] : Fin 2 → ℕ) (T_diag (![1, p ^ (n + 1)] : Fin 2 → ℕ)) from
+        Finsupp.smul_apply _ _ _,
+      T_elem_p_ppow_eval_at_one_ppow_succ_zero p hp hn,
       smul_zero, add_zero]
 
 /-- A non-leading support element `D₂` of `(T(1,p))ⁿ` contributes `0` to the product
@@ -735,9 +776,15 @@ lemma T_ad_one_p_pow_eval_leading (p : ℕ) (hp : p.Prime) (a : ℕ) :
         T_ad_of_pos 1 p Nat.one_pos hp.pos (one_dvd _),
       HeckeRing.mul_def, Finsupp.sum_single_index (by simp [Finsupp.sum])]
     simp only [one_smul]
-    rw [Finsupp.sum_apply, Finsupp.sum]
+    show (Finsupp.sum g fun D2 b₂ ↦ b₂ • HeckeRing.m (GL_pair 2)
+          (T_diag (![1, p] : Fin 2 → ℕ)).rep D2.rep) D_target = 1
+    rw [show (Finsupp.sum g fun D2 b₂ ↦ b₂ • HeckeRing.m (GL_pair 2)
+          (T_diag (![1, p] : Fin 2 → ℕ)).rep D2.rep) D_target =
+        g.sum (fun D2 b₂ ↦ (b₂ • HeckeRing.m (GL_pair 2)
+          (T_diag (![1, p] : Fin 2 → ℕ)).rep D2.rep) D_target) from
+      Finsupp.sum_apply, Finsupp.sum]
     have h_leading_in_supp : D_leading ∈ g.support :=
-      Finsupp.mem_support_iff.mpr (by rw [ih]; exact one_ne_zero)
+      Finsupp.mem_support_iff.mpr (ih ▸ one_ne_zero)
     rw [← Finset.sum_erase_add _ _ h_leading_in_supp]
     have h_erased : ∀ D₂ ∈ g.support.erase D_leading,
         (g D₂ • HeckeRing.m (GL_pair 2)
@@ -747,15 +794,33 @@ lemma T_ad_one_p_pow_eval_leading (p : ℕ) (hp : p.Prime) (a : ℕ) :
       simp only [Finsupp.smul_apply, smul_eq_mul]
       rw [T_ad_one_p_mul_supp_ne_leading_eval_zero p hp n D₂
         (Finsupp.mem_support_iff.mp hD₂.2) hD₂.1, mul_zero]
-    rw [Finset.sum_eq_zero h_erased, zero_add, ih]
-    simp only [Finsupp.smul_apply, smul_eq_mul, one_mul]
-    rw [← HeckeRing.T_single_one_mul_T_single_one]
-    change (T_elem (![1, p] : Fin 2 → ℕ) * T_elem (![1, p ^ n] : Fin 2 → ℕ)) D_target = 1
-    rw [show T_elem (![1, p] : Fin 2 → ℕ) = T_ad 1 p from
-        (T_ad_of_pos 1 p Nat.one_pos hp.pos (one_dvd _)).symm,
-      show T_elem (![1, p ^ n] : Fin 2 → ℕ) = T_ad 1 (p ^ n) from
-        (T_ad_of_pos 1 (p ^ n) Nat.one_pos (pow_pos hp.pos n) (one_dvd _)).symm]
-    exact T_ad_one_p_mul_T_ad_one_ppow_eval_leading p hp n
+    have h_sum_zero :
+        ∑ x ∈ g.support.erase D_leading, (g x • HeckeRing.m (GL_pair 2)
+          (HeckeCoset.rep (T_diag (![1, p] : Fin 2 → ℕ))) (HeckeCoset.rep x)) D_target = 0 :=
+      Finset.sum_eq_zero h_erased
+    -- Goal: ∑ + (g D_leading • m ...) D_target = 1
+    -- Strategy: prove the leading term equals 1, then linarith with h_sum_zero
+    have h_leading_eq : (g D_leading • HeckeRing.m (GL_pair 2)
+          (HeckeCoset.rep (T_diag (![1, p] : Fin 2 → ℕ))) (HeckeCoset.rep D_leading)) D_target = 1 := by
+      rw [Finsupp.smul_apply, ih, ← HeckeRing.T_single_one_mul_T_single_one]
+      show (1 : ℤ) • (T_elem (![1, p] : Fin 2 → ℕ) * T_elem (![1, p ^ n] : Fin 2 → ℕ)) D_target = 1
+      rw [one_smul,
+        show T_elem (![1, p] : Fin 2 → ℕ) = T_ad 1 p from
+          (T_ad_of_pos 1 p Nat.one_pos hp.pos (one_dvd _)).symm,
+        show T_elem (![1, p ^ n] : Fin 2 → ℕ) = T_ad 1 (p ^ n) from
+          (T_ad_of_pos 1 (p ^ n) Nat.one_pos (pow_pos hp.pos n) (one_dvd _)).symm]
+      exact T_ad_one_p_mul_T_ad_one_ppow_eval_leading p hp n
+    calc ∑ x ∈ g.support.erase D_leading, (g x • HeckeRing.m (GL_pair 2)
+            (HeckeCoset.rep (T_diag (![1, p] : Fin 2 → ℕ))) (HeckeCoset.rep x)) D_target +
+          (g D_leading • HeckeRing.m (GL_pair 2)
+            (HeckeCoset.rep (T_diag (![1, p] : Fin 2 → ℕ))) (HeckeCoset.rep D_leading)) D_target
+        = 0 + (g D_leading • HeckeRing.m (GL_pair 2)
+              (HeckeCoset.rep (T_diag (![1, p] : Fin 2 → ℕ))) (HeckeCoset.rep D_leading)) D_target :=
+          by rw [h_sum_zero]
+      _ = (g D_leading • HeckeRing.m (GL_pair 2)
+            (HeckeCoset.rep (T_diag (![1, p] : Fin 2 → ℕ))) (HeckeCoset.rep D_leading)) D_target :=
+          zero_add _
+      _ = 1 := h_leading_eq
 
 /-- For `a₁ ≠ a₂`, evaluating `(T_ad 1 p)^a₁` at the coset `T(1, p^{a₂})` gives `0`. -/
 private lemma T_ad_one_p_pow_eval_at_one_ppow_of_ne (p : ℕ) (hp : p.Prime) {a₁ a₂ : ℕ}
@@ -822,7 +887,8 @@ lemma monomial_eval_kronecker (p : ℕ) (hp : p.Prime)
 private lemma prod_T_gen_pow_eq_two (p : ℕ) (d : Fin 2 →₀ ℕ) :
     (∏ k ∈ d.support, T_gen 2 p k ^ d k) = T_gen 2 p 0 ^ (d 0) * T_gen 2 p 1 ^ (d 1) := by
   rw [Finset.prod_subset (Finset.subset_univ d.support) (fun k _ hk ↦ by
-    rw [Finsupp.notMem_support_iff.mp hk, pow_zero]), Fin.prod_univ_two]
+    rw [Finsupp.notMem_support_iff.mp hk, pow_zero]; rfl)]
+  rw [Fin.prod_univ_two]; rfl
 
 /-- Evaluating `evalHom 2 p R` at the coset `D` expands as
 `∑_{d ∈ supp R} (R.coeff d) · (T_gen(p,0)^{d 0} · T_gen(p,1)^{d 1}) D`. -/
@@ -832,12 +898,20 @@ private lemma evalHom_apply_eq_sum_monomial (p : ℕ) (R : MvPolynomial (Fin 2) 
     ∑ d ∈ R.support, R.coeff d * (T_gen 2 p 0 ^ (d 0) * T_gen 2 p 1 ^ (d 1)) D := by
   change (MvPolynomial.eval₂ (Int.castRingHom (HeckeAlgebra 2))
     (fun k : Fin 2 ↦ T_gen 2 p k) R) D = _
-  rw [MvPolynomial.eval₂_eq, Finset.sum_apply']
+  rw [MvPolynomial.eval₂_eq]
+  show (∑ d ∈ R.support, (Int.castRingHom (HeckeAlgebra 2)) (MvPolynomial.coeff d R) *
+    ∏ i ∈ d.support, T_gen 2 p i ^ d i) D = _
+  rw [show (∑ d ∈ R.support, (Int.castRingHom (HeckeAlgebra 2)) (MvPolynomial.coeff d R) *
+        ∏ i ∈ d.support, T_gen 2 p i ^ d i) D =
+      ∑ d ∈ R.support, ((Int.castRingHom (HeckeAlgebra 2)) (MvPolynomial.coeff d R) *
+        ∏ i ∈ d.support, T_gen 2 p i ^ d i) D from Finset.sum_apply' _]
   refine Finset.sum_congr rfl (fun d _ ↦ ?_)
   show (((R.coeff d : ℤ) : HeckeAlgebra 2) * (∏ k ∈ d.support, T_gen 2 p k ^ d k)) D = _
   rw [show ((R.coeff d : ℤ) : HeckeAlgebra 2) = (R.coeff d) • (1 : HeckeAlgebra 2) from
-    (zsmul_one _).symm, smul_mul_assoc, one_mul, Finsupp.smul_apply, smul_eq_mul,
-    prod_T_gen_pow_eq_two]
+    (zsmul_one _).symm, smul_mul_assoc, one_mul]
+  rw [show ((R.coeff d) • (∏ k ∈ d.support, T_gen 2 p k ^ d k : HeckeAlgebra 2)) D =
+    R.coeff d • (∏ k ∈ d.support, T_gen 2 p k ^ d k : HeckeAlgebra 2) D from
+    Finsupp.smul_apply _ _ _, smul_eq_mul, prod_T_gen_pow_eq_two]
 
 /-- n=2: evalHom is injective. -/
 theorem evalHom_injective_two (p : ℕ) (hp : p.Prime) :
