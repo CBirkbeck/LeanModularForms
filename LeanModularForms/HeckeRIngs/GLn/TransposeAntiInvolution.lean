@@ -81,6 +81,7 @@ lemma GL_pair_onHeckeCoset_eq (D : HeckeCoset (GL_pair n)) :
   obtain ⟨a, ha, _hdiv, hrep⟩ := exists_diagonal_representative n (HeckeCoset.rep D)
   rw [show D = T_diag a from hrep ▸ (Quotient.out_eq D).symm]
   simp only [T_diag, AntiInvolution.onHeckeCoset_mk]
+  show (⟦_⟧ : HeckeCoset _) = ⟦_⟧
   rw [HeckeCoset.eq_iff]
   simp only [AntiInvolution.bar, GL_pair_antiInvolution, diagMat_delta_val n a ha]
   congr 1

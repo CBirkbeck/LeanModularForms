@@ -78,7 +78,7 @@ private lemma cosetRep_delta_det_pos (σ : (GL_pair 2).H) (g : (GL_pair 2).Δ) :
   exact delta_det_pos_real g
 
 private lemma sigma_eq_id_of_pos_det {g : GL (Fin 2) ℝ} (hg : 0 < g.det.val) :
-    UpperHalfPlane.σ g = RingHom.id ℂ := by
+    UpperHalfPlane.σ g = ContinuousAlgEquiv.refl ℝ ℂ := by
   simp only [UpperHalfPlane.σ, hg, ↓reduceIte]
 
 private lemma glMap_transpose_det_val (g : GL (Fin 2) ℚ) :
