@@ -172,12 +172,6 @@ noncomputable def heckeMultiplicity (g₁ g₂ d : P.Δ) : ℤ :=
     ({(i.out : G) * (g₁ : G)} : Set G) * {(j.out : G) * (g₂ : G)} * P.H =
       {(d : G)} * (P.H : Set G)}
 
-/-- An alternative formulation of `heckeMultiplicity` using the rep-invariant
-predicate `mulMap P g₁ g₂ ⟨i, j⟩ = ⟦d⟧` in place of the rep-dependent set-form
-predicate `{i.out * g₁} * {j.out * g₂} * H = {d} * H`. -/
-noncomputable def heckeMultiplicityMulMap (g₁ g₂ d : P.Δ) : ℤ :=
-  Nat.card {⟨i, j⟩ : decompQuot P g₁ × decompQuot P g₂ |
-    mulMap P g₁ g₂ ⟨i, j⟩ = (⟦d⟧ : HeckeCoset P)}
 
 /-- The finite set of double cosets appearing in the product `D1 * D2`. -/
 noncomputable def mulSupport (g₁ g₂ : P.Δ) : Finset (HeckeCoset P) :=
