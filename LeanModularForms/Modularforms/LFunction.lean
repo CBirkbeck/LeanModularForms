@@ -367,27 +367,6 @@ theorem mellin_qParam_pow_imAxis {h : ℝ} (hh : 0 < h) {m : ℕ} (hm : 1 ≤ m)
     have : (0 : ℝ) < m := by exact_mod_cast hm.trans_lt' Nat.zero_lt_one
     positivity) hs]
 
-/-- **Factored q-expansion termwise Mellin identity**.
-
-For period `h > 0` and `m ≥ 1`,
-```
-mellin (fun t : ℝ ↦ Function.Periodic.qParam h (Complex.I * t) ^ m) s =
-  (2 * π / h : ℂ) ^ (-s) * Complex.Gamma s * (m : ℂ) ^ (-s)
-```
-on `Re s > 0`. -/
-theorem mellin_qParam_pow_imAxis_split {h : ℝ} (hh : 0 < h) {m : ℕ} (hm : 1 ≤ m)
-    {s : ℂ} (hs : 0 < s.re) :
-    mellin (fun t : ℝ ↦ Function.Periodic.qParam h (Complex.I * (t : ℂ)) ^ m) s =
-      ((2 * Real.pi / h : ℝ) : ℂ) ^ (-s) * Complex.Gamma s * ((m : ℕ) : ℂ) ^ (-s) := by
-  rw [mellin_qParam_pow_imAxis hh hm hs,
-      show ((2 * Real.pi * (m : ℕ) / h : ℝ) : ℂ) =
-          ((2 * Real.pi / h : ℝ) : ℂ) * (((m : ℕ) : ℝ) : ℂ) by
-        rw [← Complex.ofReal_mul]; push_cast; ring_nf,
-      Complex.mul_cpow_ofReal_nonneg
-        (by positivity : (0 : ℝ) ≤ 2 * Real.pi / h)
-        (by positivity : (0 : ℝ) ≤ ((m : ℕ) : ℝ)),
-      Complex.ofReal_natCast]
-  ring
 
 
 
