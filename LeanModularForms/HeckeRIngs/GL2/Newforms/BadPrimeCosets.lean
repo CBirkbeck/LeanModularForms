@@ -163,29 +163,6 @@ theorem Newform.T_p_upper_left_coset_injective_Gamma1
   have h_diff : γ.val 0 1 * (p : ℤ) = (b2.val : ℤ) - (b1.val : ℤ) := mod_cast h_real
   exact Newform.fin_eq_of_mul_eq_sub hp b1 b2 _ h_diff
 
-open scoped Pointwise in
-/-- The left `Γ₁(N)`-cosets `Γ₁(N).map (mapGL ℝ) · {β_b} ⊆ GL(2, ℝ)` for
-`b ∈ Fin p` are pairwise disjoint. -/
-theorem Newform.T_p_upper_left_cosets_pairwiseDisjoint_Gamma1
-    (N : ℕ) [NeZero N] {p : ℕ} (hp : 0 < p) :
-    (Set.univ : Set (Fin p)).PairwiseDisjoint
-      (fun b ↦ (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) :
-          Set (GL (Fin 2) ℝ)) *
-        ({(glMap (T_p_upper p hp b.val) : GL (Fin 2) ℝ)} :
-          Set (GL (Fin 2) ℝ))) := by
-  intro b1 _ b2 _ hb_ne
-  rw [Function.onFun, Set.disjoint_left]
-  rintro x ⟨g1, hg1, β1, hβ1_in, hx_eq1⟩ ⟨g2, hg2, β2, hβ2_in, hx_eq2⟩
-  rw [Set.mem_singleton_iff] at hβ1_in hβ2_in
-  subst hβ1_in hβ2_in
-  dsimp only at hx_eq1 hx_eq2
-  rw [← hx_eq2] at hx_eq1
-  obtain ⟨γ1, hγ1, rfl⟩ := Subgroup.mem_map.mp hg1
-  obtain ⟨γ2, hγ2, rfl⟩ := Subgroup.mem_map.mp hg2
-  apply hb_ne
-  apply Newform.T_p_upper_left_coset_injective_Gamma1 N hp b1 b2 (γ2⁻¹ * γ1)
-    (Subgroup.mul_mem _ (Subgroup.inv_mem _ hγ2) hγ1)
-  rw [map_mul, map_inv, mul_assoc, hx_eq1, ← mul_assoc, inv_mul_cancel, one_mul]
 
 private lemma Newform.alpha_p_mul_eq_M_mul_T_p_upper_int
     (p a b' c d B bb : ℤ) (hB : B * p = b' - a * bb) :
@@ -317,51 +294,6 @@ private lemma Newform.glMap_T_p_upper_eq_glMap_zero_mul_shiftSL {p : ℕ} (hp : 
     Matrix.cons_val_fin_one, Matrix.of_apply, Matrix.SpecialLinearGroup.coe_mk]
   fin_cases i <;> fin_cases j <;> simp [Matrix.cons_val_zero, Matrix.cons_val_one]
 
-open scoped Pointwise in
-/-- The double coset `Γ₁(N) · α_p · Γ₁(N) ⊆ GL(2, ℝ)` (where
-`α_p := glMap (T_p_upper p hp.pos 0)`) decomposes as the union over `b : Fin p`
-of the left cosets `Γ₁(N) · β_b`, where `β_b := glMap (T_p_upper p hp.pos b.val)`. -/
-theorem Newform.alpha_p_Gamma1_doubleCoset_eq_iUnion_T_p_upper_left_cosets
-    (N : ℕ) [NeZero N] {p : ℕ} (hp : p.Prime) (hpN : ¬ Nat.Coprime p N) :
-    ((((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ)) *
-        ({(glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)} : Set (GL (Fin 2) ℝ)) *
-      (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ))) =
-    (⋃ b : Fin p,
-      (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ)) *
-        ({(glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)} :
-          Set (GL (Fin 2) ℝ))) := by
-  ext x
-  constructor
-  · rintro ⟨y, hy, g2, hg2, rfl⟩
-    obtain ⟨g1, hg1, α', hα', rfl⟩ := hy
-    rw [Set.mem_singleton_iff] at hα'
-    subst hα'
-    obtain ⟨γ2_int, hγ2_int, rfl⟩ := Subgroup.mem_map.mp hg2
-    obtain ⟨γ2', b, hγ2'_mem, h_eq⟩ :=
-      Newform.alpha_p_mul_Gamma1_eq_Gamma1_mul_T_p_upper_b hp hpN γ2_int hγ2_int
-    refine Set.mem_iUnion.mpr ⟨b, ?_⟩
-    refine ⟨g1 * (mapGL ℝ γ2' : GL (Fin 2) ℝ), ?_,
-      (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ), rfl, ?_⟩
-    · exact Subgroup.mul_mem _ hg1
-        (Subgroup.mem_map.mpr ⟨γ2', hγ2'_mem, rfl⟩)
-    · change (g1 * (mapGL ℝ γ2' : GL (Fin 2) ℝ)) *
-          (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ) =
-        (g1 * (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) *
-          (mapGL ℝ γ2_int : GL (Fin 2) ℝ)
-      rw [mul_assoc, ← h_eq, ← mul_assoc]
-  · intro hx
-    obtain ⟨b, hb⟩ := Set.mem_iUnion.mp hx
-    obtain ⟨g, hg, β', hβ', rfl⟩ := hb
-    rw [Set.mem_singleton_iff] at hβ'
-    subst hβ'
-    refine ⟨g * (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ), ?_,
-      (mapGL ℝ (shiftSL (b.val : ℤ)) : GL (Fin 2) ℝ), ?_, ?_⟩
-    · exact ⟨g, hg, glMap (T_p_upper p hp.pos 0), rfl, rfl⟩
-    · exact Subgroup.mem_map.mpr ⟨shiftSL (b.val : ℤ), shiftSL_mem_Gamma1 N _, rfl⟩
-    · change (g * (glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)) *
-          (mapGL ℝ (shiftSL (b.val : ℤ)) : GL (Fin 2) ℝ) =
-        g * (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)
-      rw [mul_assoc, ← Newform.glMap_T_p_upper_eq_glMap_zero_mul_shiftSL hp.pos b.val]
 
 
 
