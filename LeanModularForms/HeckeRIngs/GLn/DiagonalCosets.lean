@@ -164,7 +164,9 @@ lemma T_diag_rep_decompose (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
   DoubleCoset.mem_doubleCoset.mp (T_diag_rep_mem_doubleCoset a ha)
 
 lemma T_diag_ones : T_diag (fun _ : Fin n ↦ 1) = HeckeCoset.one (GL_pair n) := by
-  simp only [T_diag, HeckeCoset.one]; rw [HeckeCoset.eq_iff]
+  simp only [T_diag, HeckeCoset.one]
+  show (⟦_⟧ : HeckeCoset (GL_pair n)) = ⟦_⟧
+  rw [HeckeCoset.eq_iff]
   simp only [diagMat_delta, dif_pos (fun _ ↦ Nat.one_pos)]
   congr 1; exact diagMat_one n
 
@@ -176,7 +178,9 @@ lemma T_diag_eq_iff (a b : Fin n → ℕ) (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 <
   refine ⟨fun h ↦ ?_, fun h ↦ ?_⟩
   · simpa [T_diag, HeckeCoset.toSet_mk, diagMat_delta_val n a ha, diagMat_delta_val n b hb]
       using congr_arg HeckeCoset.toSet h
-  · simp only [T_diag]; rw [HeckeCoset.eq_iff]
+  · simp only [T_diag]
+    show (⟦_⟧ : HeckeCoset (GL_pair n)) = ⟦_⟧
+    rw [HeckeCoset.eq_iff]
     simpa only [diagMat_delta_val n a ha, diagMat_delta_val n b hb]
 
 end TDiag
@@ -1043,12 +1047,18 @@ theorem T_diag_span (f : HeckeAlgebra n) :
   set S : Finset { p : Fin n → ℕ // (∀ i, 0 < p i) ∧ DivChain n p } := f.support.image toSub
   refine ⟨S, fun s ↦ f.toFun (T_diag s.1.1), ?_⟩
   simp_rw [show ∀ (a : Fin n → ℕ) (c : ℤ), c • T_elem a = Finsupp.single (T_diag a) c from
-    fun a c ↦ by unfold T_elem; rw [Finsupp.smul_single, smul_eq_mul, mul_one]]
+    fun a c ↦ by
+      unfold T_elem
+      show Finsupp.mapRange (c • ·) (smul_zero c) (Finsupp.single (T_diag a) 1) = _
+      rw [Finsupp.mapRange_single]
+      rw [smul_eq_mul, mul_one]]
   have h_Tdiag : ∀ (s : { p : Fin n → ℕ // (∀ i, 0 < p i) ∧ DivChain n p })
       (t : HeckeCoset (GL_pair n)), toSub t = s → T_diag s.1 = t := by
     intro s t hts; convert (hrep_fn t).symm using 2; exact (congr_arg Subtype.val hts).symm
   apply Finsupp.ext; intro x
-  rw [Finsupp.finset_sum_apply]
+  show (f : HeckeCoset (GL_pair n) →₀ ℤ) x =
+    (∑ y ∈ S.attach, (Finsupp.single (T_diag y.1.1) (f.toFun (T_diag y.1.1)) : _ →₀ ℤ)) x
+  rw [Finsupp.finsetSum_apply]
   by_cases hx : x ∈ f.support
   · rw [Finset.sum_eq_single_of_mem
       ⟨⟨a_fn x, ha_fn x, hdiv_fn x⟩, Finset.mem_image.mpr ⟨x, hx, rfl⟩⟩

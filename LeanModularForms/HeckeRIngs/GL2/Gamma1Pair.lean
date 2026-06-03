@@ -108,11 +108,19 @@ noncomputable def Gamma1_pair (N : ℕ) [NeZero N] : HeckeRing.HeckePair (GL (Fi
   h₁ := Delta1_le_commensurator N
 
 /-- The slash-action conjugation `σ` is the identity for matrices coming from
-`SL₂(ℤ)`: their determinant is `1 > 0`, so the `σ` branch picks `RingHom.id ℂ`. -/
+`SL₂(ℤ)`: their determinant is `1 > 0`, so the `σ` branch picks `ContinuousAlgEquiv.refl ℝ ℂ`. -/
 @[simp]
-lemma σ_mapGL_real_eq_id (s : SL(2, ℤ)) :
-    UpperHalfPlane.σ (mapGL ℝ s) = RingHom.id ℂ := by
+lemma σ_mapGL_real_eq_refl (s : SL(2, ℤ)) :
+    UpperHalfPlane.σ (mapGL ℝ s) = ContinuousAlgEquiv.refl ℝ ℂ := by
   simp [UpperHalfPlane.σ, SpecialLinearGroup.mapGL]
+
+/-- The slash-action conjugation `σ` (as a `RingHom`) is the identity for matrices
+coming from `SL₂(ℤ)`: their determinant is `1 > 0`. -/
+@[simp]
+lemma σ_mapGL_real_toRingHom_eq_id (s : SL(2, ℤ)) :
+    (UpperHalfPlane.σ (mapGL ℝ s) : ℂ →+* ℂ) = RingHom.id ℂ := by
+  rw [σ_mapGL_real_eq_refl]
+  rfl
 
 /-- Conjugation by a `Gamma0(N)` element preserves `Gamma1(N)`.
 This is the foundation for the diamond operator `⟨d⟩` on modular forms. -/
@@ -199,7 +207,7 @@ noncomputable def diamondOpAux (k : ℤ) (g : ↥(Gamma0 N)) :
     simp [SlashAction.add_slash, ModularForm.add_apply]; rfl
   map_smul' c f := by
     ext z; change ((c • ⇑f) ∣[k] mapGL ℝ (g : SL(2, ℤ))) z = c • _
-    rw [ModularForm.smul_slash, σ_mapGL_real_eq_id]; rfl
+    rw [ModularForm.smul_slash, σ_mapGL_real_eq_refl]; rfl
 
 /-- The `Gamma0Map` lifts to a group homomorphism to `(ZMod N)ˣ`: the bottom-right
 entry is a unit mod N with inverse the top-left entry (from `det = 1` and `N ∣ c`). -/
@@ -330,7 +338,7 @@ private noncomputable def diamondOpCuspAux (k : ℤ) (g : ↥(Gamma0 N)) :
     simp [SlashAction.add_slash, CuspForm.add_apply]; rfl
   map_smul' c f := by
     ext z; change ((c • ⇑f) ∣[k] mapGL ℝ (g : SL(2, ℤ))) z = c • _
-    rw [ModularForm.smul_slash, σ_mapGL_real_eq_id]; rfl
+    rw [ModularForm.smul_slash, σ_mapGL_real_eq_refl]; rfl
 
 /-- Well-definedness for the cusp-form diamond operator. -/
 theorem diamondOpCuspAux_eq_of_Gamma0Map_eq (k : ℤ) (g₁ g₂ : ↥(Gamma0 N))
