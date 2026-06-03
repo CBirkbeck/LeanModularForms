@@ -242,11 +242,6 @@ lemma locallyIntegrableOn_imAxis [ModularFormClass F Γ k] (f : F) :
     MeasureTheory.LocallyIntegrableOn (imAxis f) (Set.Ioi (0 : ℝ)) :=
   (continuousOn_imAxis f).locallyIntegrableOn measurableSet_Ioi
 
-/-- **Rapid polynomial decay of `imAxis f` at infinity (named hypothesis):**
-`∀ r : ℝ, (imAxis f x) =O[atTop] (x ^ r)`. -/
-def HasImAxisRapidDecay [ModularFormClass F Γ k] (f : F) : Prop :=
-  ∀ r : ℝ, Asymptotics.IsBigO Filter.atTop
-    (fun x : ℝ ↦ imAxis f x - 0) (fun x : ℝ ↦ x ^ r)
 
 /-- **Exponential decay of `imAxis f` at infinity (named hypothesis):**
 `∃ a > 0, (imAxis f x) =O[atTop] (exp (-a * x))`. -/
