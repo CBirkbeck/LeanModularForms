@@ -425,33 +425,6 @@ private lemma T_p_upper_zero_mul_levelRaise_det (p d : ℕ) (hp : 0 < p) [NeZero
   rw [T_p_upper_zero_mul_levelRaise_matrix p d hp, Matrix.det_fin_two_of]
   ring
 
-private lemma T_p_upper_zero_mul_levelRaise_det_pos (p d : ℕ) (hp : 0 < p) [NeZero d] :
-    0 < ((glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) * levelRaiseMatrix d).det.val := by
-  rw [T_p_upper_zero_mul_levelRaise_det p d hp]
-  exact mul_pos (Nat.cast_pos.mpr hp) (Nat.cast_pos.mpr (NeZero.pos d))
-
-private lemma T_p_upper_zero_mul_levelRaise_denom (p d : ℕ) (hp : 0 < p) [NeZero d]
-    (z : UpperHalfPlane) :
-    UpperHalfPlane.denom ((glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) * levelRaiseMatrix d)
-      (z : ℂ) = (p : ℂ) := by
-  show ((glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) *
-      levelRaiseMatrix d : GL (Fin 2) ℝ).val 1 0 * (z : ℂ) +
-    ((glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) *
-      levelRaiseMatrix d : GL (Fin 2) ℝ).val 1 1 = (p : ℂ)
-  rw [T_p_upper_zero_mul_levelRaise_matrix p d hp]
-  simp
-
-private lemma T_p_upper_zero_mul_levelRaise_num (p d : ℕ) (hp : 0 < p) [NeZero d]
-    (z : UpperHalfPlane) :
-    UpperHalfPlane.num ((glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) * levelRaiseMatrix d)
-      (z : ℂ) = (d : ℂ) * (z : ℂ) := by
-  show ((glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) *
-      levelRaiseMatrix d : GL (Fin 2) ℝ).val 0 0 * (z : ℂ) +
-    ((glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) *
-      levelRaiseMatrix d : GL (Fin 2) ℝ).val 0 1 = (d : ℂ) * (z : ℂ)
-  rw [T_p_upper_zero_mul_levelRaise_matrix p d hp]
-  simp
-
 private lemma heckeT_n_cusp_decomp_of_mul {L : ℕ} [NeZero L] (k : ℤ) (a b m : ℕ) [NeZero a]
     [NeZero b] [NeZero m] (h_mul : heckeT_n (N := L) k m = heckeT_n k a * heckeT_n k b)
     (f : CuspForm ((Gamma1 L).map (mapGL ℝ)) k) :
