@@ -13,7 +13,7 @@ the prime operator `T_p` from `GL2/HeckeT_p.lean`.
 
 ## Main definitions
 
-* `diamondOp_ext` — extended diamond: `⟨p⟩` when `(p,N)=1`, zero when `p∣N`
+* `diamondOp_n` — extended diamond: `⟨p⟩` when `(p,N)=1`, zero when `p∣N`
 * `heckeT_p_all` — `T_p` for all primes (coprime and dividing `N`)
 * `heckeT_ppow` — `T_{p^r}` via the recurrence
     `T_{p^{r+2}} = T_p T_{p^{r+1}} - p^{k-1} ⟨p⟩ T_{p^r}`
@@ -55,26 +55,21 @@ namespace HeckeRing.GL2
 
 variable {N : ℕ}
 
-/-- Extended diamond operator: equals `diamondOp k d` when `(p, N) = 1`,
-and zero when `p ∣ N`. This allows a uniform T_{p^r} recurrence for all primes. -/
-def diamondOp_ext [NeZero N] (k : ℤ) (p : ℕ) :
-    Module.End ℂ (ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :=
-  if h : Nat.Coprime p N then diamondOp k (ZMod.unitOfCoprime p h) else 0
-
-@[simp]
-theorem diamondOp_ext_coprime [NeZero N] (k : ℤ) {p : ℕ} (h : Nat.Coprime p N) :
-    diamondOp_ext k p = diamondOp k (ZMod.unitOfCoprime p h) := dif_pos h
-
-@[simp]
-theorem diamondOp_ext_not_coprime [NeZero N] (k : ℤ) {p : ℕ} (h : ¬Nat.Coprime p N) :
-    diamondOp_ext (N := N) k p = 0 := dif_neg h
-
 /-- Extended diamond operator for general `n ∈ ℕ`:
 equals `diamondOp k (n mod N)ˣ` when `(n, N) = 1`, zero otherwise.
-This is `⟨n⟩` in Diamond–Shurman §5.3. -/
+This is `⟨n⟩` in Diamond–Shurman §5.3.  At a prime argument it provides the
+uniform extension used in the `T_{p^r}` recurrence (vanishing when `p ∣ N`). -/
 def diamondOp_n [NeZero N] (k : ℤ) (n : ℕ) :
     Module.End ℂ (ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :=
   if h : Nat.Coprime n N then diamondOp k (ZMod.unitOfCoprime n h) else 0
+
+@[simp]
+theorem diamondOp_n_coprime [NeZero N] (k : ℤ) {n : ℕ} (h : Nat.Coprime n N) :
+    diamondOp_n k n = diamondOp k (ZMod.unitOfCoprime n h) := dif_pos h
+
+@[simp]
+theorem diamondOp_n_not_coprime [NeZero N] (k : ℤ) {n : ℕ} (h : ¬Nat.Coprime n N) :
+    diamondOp_n (N := N) k n = 0 := dif_neg h
 
 private lemma sum_slash' (k : ℤ) {ι : Type*} (s : Finset ι)
     (φ : ι → (UpperHalfPlane → ℂ)) (g : GL (Fin 2) ℝ) :
@@ -456,7 +451,7 @@ def heckeT_ppow [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.Prime p) :
   | 1 => heckeT_p_all k p hp
   | r + 2 =>
     heckeT_p_all k p hp * heckeT_ppow k p hp (r + 1) -
-      ((↑p : ℂ) ^ (k - 1)) • (diamondOp_ext k p * heckeT_ppow k p hp r)
+      ((↑p : ℂ) ^ (k - 1)) • (diamondOp_n k p * heckeT_ppow k p hp r)
 
 @[simp]
 theorem heckeT_ppow_zero [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.Prime p) :
@@ -470,7 +465,7 @@ theorem heckeT_ppow_one [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.Prime p) :
 theorem heckeT_ppow_succ_succ [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.Prime p) (r : ℕ) :
     heckeT_ppow (N := N) k p hp (r + 2) =
       heckeT_p_all k p hp * heckeT_ppow k p hp (r + 1) -
-        ((↑p : ℂ) ^ (k - 1)) • (diamondOp_ext k p * heckeT_ppow k p hp r) := rfl
+        ((↑p : ℂ) ^ (k - 1)) • (diamondOp_n k p * heckeT_ppow k p hp r) := rfl
 
 /-- When `p ∣ N` the diamond term vanishes, so `T_{p^r} = T_p^r`. -/
 theorem heckeT_ppow_eq_pow_of_not_coprime [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prime p)
@@ -482,7 +477,7 @@ theorem heckeT_ppow_eq_pow_of_not_coprime [NeZero N] (k : ℤ) {p : ℕ} (hp : N
     cases r with
     | zero => simp [heckeT_ppow, pow_one]
     | succ r =>
-      rw [heckeT_ppow_succ_succ, diamondOp_ext_not_coprime k hpN,
+      rw [heckeT_ppow_succ_succ, diamondOp_n_not_coprime k hpN,
         zero_mul, smul_zero, sub_zero, ih, ← pow_succ']
 
 /-- `T_{p^1}` for coprime `p` equals the concrete `heckeT_p`. -/
@@ -979,13 +974,13 @@ private lemma diamondOp_commute_heckeT_p_all_of_divN [NeZero N] (k : ℤ) {p q :
   rw [diamondOp_heckeT_p_all_eq_ut_of_divN k hpN hq hqN f,
       heckeT_p_all_not_coprime_apply k hq hqN (diamondOp k (ZMod.unitOfCoprime p hpN) f)]
 
-/-- `diamondOp_ext k p` commutes with `heckeT_ppow k q hq b` for any primes `p, q`. -/
-theorem diamondOp_ext_comm_heckeT_ppow [NeZero N] (k : ℤ)
+/-- `diamondOp_n k p` commutes with `heckeT_ppow k q hq b` for any primes `p, q`. -/
+theorem diamondOp_n_comm_heckeT_ppow [NeZero N] (k : ℤ)
     (p : ℕ) {q : ℕ} (hq : Nat.Prime q) (b : ℕ) :
-    diamondOp_ext (N := N) k p * heckeT_ppow k q hq b =
-      heckeT_ppow k q hq b * diamondOp_ext k p := by
+    diamondOp_n (N := N) k p * heckeT_ppow k q hq b =
+      heckeT_ppow k q hq b * diamondOp_n k p := by
   by_cases hpN : Nat.Coprime p N
-  · rw [diamondOp_ext_coprime k hpN]
+  · rw [diamondOp_n_coprime k hpN]
     by_cases hqN : Nat.Coprime q N
     · have hbase : diamondOp k (ZMod.unitOfCoprime p hpN) * heckeT_p_all k q hq =
           heckeT_p_all k q hq * diamondOp k (ZMod.unitOfCoprime p hpN) := by
@@ -993,9 +988,9 @@ theorem diamondOp_ext_comm_heckeT_ppow [NeZero N] (k : ℤ)
         exact LinearMap.ext fun f ↦ congr_fun (congr_arg DFunLike.coe
           (heckeT_p_comm_diamondOp k q hq hqN (ZMod.unitOfCoprime p hpN))) f
       have hdd : diamondOp k (ZMod.unitOfCoprime p hpN) *
-          diamondOp_ext (N := N) k q =
-        diamondOp_ext k q * diamondOp k (ZMod.unitOfCoprime p hpN) := by
-        rw [diamondOp_ext_coprime k hqN, Module.End.mul_eq_comp,
+          diamondOp_n (N := N) k q =
+        diamondOp_n k q * diamondOp k (ZMod.unitOfCoprime p hpN) := by
+        rw [diamondOp_n_coprime k hqN, Module.End.mul_eq_comp,
           ← diamondOp_mul, Module.End.mul_eq_comp, ← diamondOp_mul, mul_comm]
       induction b using Nat.strongRecOn with
       | _ b ihb =>
@@ -1015,7 +1010,7 @@ theorem diamondOp_ext_comm_heckeT_ppow [NeZero N] (k : ℤ)
               rw [← mul_assoc, hdd, mul_assoc, ihb n (by omega), ← mul_assoc]
     · rw [heckeT_ppow_eq_pow_of_not_coprime k hq hqN]
       exact (diamondOp_commute_heckeT_p_all_of_divN k hpN hq hqN).pow_right b
-  · rw [diamondOp_ext_not_coprime k hpN]; simp [zero_mul, mul_zero]
+  · rw [diamondOp_n_not_coprime k hpN]; simp [zero_mul, mul_zero]
 
 private theorem heckeT_p_all_comm_heckeT_ppow [NeZero N] (k : ℤ)
     {p q : ℕ} (hp : Nat.Prime p) (hq : Nat.Prime q) (hpq : p ≠ q) (b : ℕ) :
@@ -1036,10 +1031,10 @@ private theorem heckeT_p_all_comm_heckeT_ppow [NeZero N] (k : ℤ)
           ← mul_assoc, ihb 1 (by omega), mul_assoc, ihb (m + 1) (by omega), ← mul_assoc]
       · congr 1
         rw [← mul_assoc,
-            show heckeT_p_all k p hp * diamondOp_ext k q =
-              diamondOp_ext k q * heckeT_p_all k p hp by
+            show heckeT_p_all k p hp * diamondOp_n k q =
+              diamondOp_n k q * heckeT_p_all k p hp by
               rw [← heckeT_ppow_one k p hp]
-              exact (diamondOp_ext_comm_heckeT_ppow k q hp 1).symm,
+              exact (diamondOp_n_comm_heckeT_ppow k q hp 1).symm,
             mul_assoc, ihb m (by omega), ← mul_assoc]
 
 /-- `T_{p^a}` and `T_{p^b}` commute (same prime). -/
@@ -1047,9 +1042,9 @@ theorem heckeT_ppow_comm_same [NeZero N] (k : ℤ)
     {p : ℕ} (hp : Nat.Prime p) (a b : ℕ) :
     heckeT_ppow (N := N) k p hp a * heckeT_ppow k p hp b =
       heckeT_ppow k p hp b * heckeT_ppow k p hp a := by
-  have hdia : ∀ r, diamondOp_ext (N := N) k p * heckeT_ppow k p hp r =
-      heckeT_ppow k p hp r * diamondOp_ext k p :=
-    fun r ↦ diamondOp_ext_comm_heckeT_ppow k p hp r
+  have hdia : ∀ r, diamondOp_n (N := N) k p * heckeT_ppow k p hp r =
+      heckeT_ppow k p hp r * diamondOp_n k p :=
+    fun r ↦ diamondOp_n_comm_heckeT_ppow k p hp r
   have hTp : ∀ r, heckeT_p_all (N := N) k p hp * heckeT_ppow k p hp r =
       heckeT_ppow k p hp r * heckeT_p_all k p hp := by
     intro r; induction r using Nat.strongRecOn with
@@ -1063,10 +1058,10 @@ theorem heckeT_ppow_comm_same [NeZero N] (k : ℤ)
         · conv_rhs => rw [mul_assoc]
           rw [← mul_assoc, mul_assoc, ihr (n + 1) (by omega)]
         · congr 1
-          show heckeT_p_all k p hp * (diamondOp_ext k p * heckeT_ppow k p hp n) =
-            diamondOp_ext k p * heckeT_ppow k p hp n * heckeT_p_all k p hp
-          rw [← mul_assoc, show heckeT_p_all k p hp * diamondOp_ext k p =
-              diamondOp_ext k p * heckeT_p_all k p hp by
+          show heckeT_p_all k p hp * (diamondOp_n k p * heckeT_ppow k p hp n) =
+            diamondOp_n k p * heckeT_ppow k p hp n * heckeT_p_all k p hp
+          rw [← mul_assoc, show heckeT_p_all k p hp * diamondOp_n k p =
+              diamondOp_n k p * heckeT_p_all k p hp by
               rw [← heckeT_ppow_one k p hp]; exact (hdia 1).symm,
             mul_assoc, ihr n (by omega), ← mul_assoc]
   induction a using Nat.strongRecOn with
@@ -1102,7 +1097,7 @@ theorem heckeT_ppow_comm_heckeT_ppow [NeZero N] (k : ℤ)
           heckeT_p_all_comm_heckeT_ppow k hp hq hpq b, mul_assoc]
       · rw [smul_mul_assoc, mul_smul_comm]; congr 1
         rw [mul_assoc, ih n (by omega), ← mul_assoc,
-          diamondOp_ext_comm_heckeT_ppow k p hq b, mul_assoc]
+          diamondOp_n_comm_heckeT_ppow k p hq b, mul_assoc]
 
 private theorem heckeT_ppow_comm_heckeT_n_aux [NeZero N] (k : ℤ)
     {p : ℕ} (hp : Nat.Prime p) (r : ℕ) (m : ℕ) (hpm : ¬p ∣ m) :
@@ -1316,13 +1311,13 @@ private theorem diamondOp_n_one [NeZero N] (k : ℤ) : diamondOp_n (N := N) k 1 
   rw [this]; exact diamondOp_one k
 
 /-- `T_p` commutes with any power of `⟨p⟩_ext`. -/
-private lemma heckeT_p_all_comm_diamondOp_ext_pow [NeZero N] (k : ℤ) {p : ℕ}
+private lemma heckeT_p_all_comm_diamondOp_n_pow [NeZero N] (k : ℤ) {p : ℕ}
     (hp : Nat.Prime p) (j : ℕ) :
-    heckeT_p_all (N := N) k p hp * diamondOp_ext k p ^ j =
-      diamondOp_ext k p ^ j * heckeT_p_all k p hp := by
-  have hc : diamondOp_ext (N := N) k p * heckeT_p_all k p hp =
-      heckeT_p_all k p hp * diamondOp_ext k p :=
-    diamondOp_ext_comm_heckeT_ppow k p hp 1
+    heckeT_p_all (N := N) k p hp * diamondOp_n k p ^ j =
+      diamondOp_n k p ^ j * heckeT_p_all k p hp := by
+  have hc : diamondOp_n (N := N) k p * heckeT_p_all k p hp =
+      heckeT_p_all k p hp * diamondOp_n k p :=
+    diamondOp_n_comm_heckeT_ppow k p hp 1
   induction j with
   | zero => simp [pow_zero, one_mul, mul_one]
   | succ n ih => rw [pow_succ, ← mul_assoc, ih, mul_assoc, ← hc, ← mul_assoc]
@@ -1333,7 +1328,7 @@ private lemma heckeT_p_all_mul_heckeT_ppow_succ [NeZero N] (k : ℤ) {p : ℕ}
     (hp : Nat.Prime p) (r : ℕ) :
     heckeT_p_all (N := N) k p hp * heckeT_ppow k p hp (r + 1) =
       heckeT_ppow k p hp (r + 2) +
-        (↑p : ℂ) ^ (k - 1) • (diamondOp_ext k p * heckeT_ppow k p hp r) :=
+        (↑p : ℂ) ^ (k - 1) • (diamondOp_n k p * heckeT_ppow k p hp r) :=
   sub_eq_iff_eq_add.mp (heckeT_ppow_succ_succ (N := N) k p hp r).symm
 
 /-- The per-`j` summand identity in the inductive step of `heckeT_ppow_mul`:
@@ -1342,18 +1337,18 @@ private lemma heckeT_p_all_mul_heckeT_ppow_succ [NeZero N] (k : ℤ) {p : ℕ}
 private lemma heckeT_ppow_mul_summand_eq [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prime p)
     (a b j : ℕ) (hj2 : 2 * j ≤ a + b) :
     heckeT_p_all k p hp *
-        (↑p : ℂ) ^ ((↑j : ℤ) * (k - 1)) • (diamondOp_ext k p ^ j *
+        (↑p : ℂ) ^ ((↑j : ℤ) * (k - 1)) • (diamondOp_n k p ^ j *
           heckeT_ppow (N := N) k p hp (a + 1 + b - 2 * j)) -
         (↑p : ℂ) ^ (k - 1) •
-          (diamondOp_ext k p *
-            (↑p : ℂ) ^ ((↑j : ℤ) * (k - 1)) • (diamondOp_ext k p ^ j *
+          (diamondOp_n k p *
+            (↑p : ℂ) ^ ((↑j : ℤ) * (k - 1)) • (diamondOp_n k p ^ j *
               heckeT_ppow k p hp (a + b - 2 * j))) =
-      (↑p : ℂ) ^ ((↑j : ℤ) * (k - 1)) • (diamondOp_ext k p ^ j *
+      (↑p : ℂ) ^ ((↑j : ℤ) * (k - 1)) • (diamondOp_n k p ^ j *
         heckeT_ppow k p hp (a + 2 + b - 2 * j)) := by
-  have hcomm_j := heckeT_p_all_comm_diamondOp_ext_pow (N := N) k hp j
+  have hcomm_j := heckeT_p_all_comm_diamondOp_n_pow (N := N) k hp j
   have hrec_j : heckeT_p_all k p hp * heckeT_ppow k p hp (a + 1 + b - 2 * j) =
       heckeT_ppow k p hp (a + 2 + b - 2 * j) +
-        (↑p : ℂ) ^ (k - 1) • (diamondOp_ext (N := N) k p *
+        (↑p : ℂ) ^ (k - 1) • (diamondOp_n (N := N) k p *
           heckeT_ppow k p hp (a + b - 2 * j)) := by
     have hrr := heckeT_p_all_mul_heckeT_ppow_succ (N := N) k hp (a + b - 2 * j)
     rwa [show a + b - 2 * j + 1 = a + 1 + b - 2 * j by omega,
@@ -1364,7 +1359,7 @@ private lemma heckeT_ppow_mul_summand_eq [NeZero N] (k : ℤ) {p : ℕ} (hp : Na
     (↑p : ℂ) ^ (↑j * (k - 1)) * (↑p : ℂ) ^ (k - 1) from mul_comm _ _,
     ← smul_smul, ← smul_sub]
   congr 1
-  rw [← mul_assoc (diamondOp_ext (N := N) k p), ← pow_succ', ← mul_assoc, hcomm_j, mul_assoc,
+  rw [← mul_assoc (diamondOp_n (N := N) k p), ← pow_succ', ← mul_assoc, hcomm_j, mul_assoc,
     hrec_j, mul_add, mul_smul_comm, ← mul_assoc, ← pow_succ]
   simp [add_sub_cancel_right]
 
@@ -1373,15 +1368,15 @@ extra `j = a+1` terms split off the two sums:
 `T_p · ⟨p⟩^{a+1} · T_{p^{b-a-1}} = ⟨p⟩^{a+1}·T_{p^{b-a}} + p^{k-1}·⟨p⟩^{a+2}·T_{p^{b-a-2}}`. -/
 private lemma heckeT_ppow_mul_boundary_eq [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prime p)
     (a b : ℕ) (hab : a + 2 ≤ b) :
-    heckeT_p_all k p hp * diamondOp_ext k p ^ (a + 1) *
+    heckeT_p_all k p hp * diamondOp_n k p ^ (a + 1) *
         heckeT_ppow (N := N) k p hp (b - a - 1) =
-      diamondOp_ext k p ^ (a + 1) * heckeT_ppow k p hp (b - a) +
-        (↑p : ℂ) ^ (k - 1) • (diamondOp_ext k p ^ (a + 2) *
+      diamondOp_n k p ^ (a + 1) * heckeT_ppow k p hp (b - a) +
+        (↑p : ℂ) ^ (k - 1) • (diamondOp_n k p ^ (a + 2) *
           heckeT_ppow k p hp (b - a - 2)) := by
-  have hcomm := heckeT_p_all_comm_diamondOp_ext_pow (N := N) k hp (a + 1)
+  have hcomm := heckeT_p_all_comm_diamondOp_n_pow (N := N) k hp (a + 1)
   have hrec : heckeT_p_all k p hp * heckeT_ppow k p hp (b - a - 1) =
       heckeT_ppow k p hp (b - a) +
-        (↑p : ℂ) ^ (k - 1) • (diamondOp_ext (N := N) k p *
+        (↑p : ℂ) ^ (k - 1) • (diamondOp_n (N := N) k p *
           heckeT_ppow k p hp (b - a - 2)) := by
     have hrec := heckeT_p_all_mul_heckeT_ppow_succ (N := N) k hp (b - a - 2)
     rwa [show b - a - 2 + 1 = b - a - 1 by omega,
@@ -1394,15 +1389,15 @@ private lemma heckeT_ppow_mul_step [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prim
     (a b : ℕ) (hab : a + 2 ≤ b)
     (ih_succ : heckeT_ppow (N := N) k p hp (a + 1) * heckeT_ppow k p hp b =
       ∑ j ∈ Finset.range (a + 1 + 1), ((↑p : ℂ) ^ ((j : ℤ) * (k - 1))) •
-        (diamondOp_ext k p ^ j * heckeT_ppow k p hp (a + 1 + b - 2 * j)))
+        (diamondOp_n k p ^ j * heckeT_ppow k p hp (a + 1 + b - 2 * j)))
     (ih_a : heckeT_ppow (N := N) k p hp a * heckeT_ppow k p hp b =
       ∑ j ∈ Finset.range (a + 1), ((↑p : ℂ) ^ ((j : ℤ) * (k - 1))) •
-        (diamondOp_ext k p ^ j * heckeT_ppow k p hp (a + b - 2 * j))) :
+        (diamondOp_n k p ^ j * heckeT_ppow k p hp (a + b - 2 * j))) :
     heckeT_ppow (N := N) k p hp (a + 2) * heckeT_ppow k p hp b =
       ∑ j ∈ Finset.range (a + 2 + 1), ((↑p : ℂ) ^ ((j : ℤ) * (k - 1))) •
-        (diamondOp_ext k p ^ j * heckeT_ppow k p hp (a + 2 + b - 2 * j)) := by
+        (diamondOp_n k p ^ j * heckeT_ppow k p hp (a + 2 + b - 2 * j)) := by
   rw [heckeT_ppow_succ_succ k p hp a, sub_mul, smul_mul_assoc,
-      mul_assoc (diamondOp_ext k p), mul_assoc (heckeT_p_all k p hp), ih_succ, ih_a]
+      mul_assoc (diamondOp_n k p), mul_assoc (heckeT_p_all k p hp), ih_succ, ih_a]
   conv_rhs =>
     rw [show a + 2 + 1 = a + 1 + 2 by omega,
         Finset.sum_range_succ, Finset.sum_range_succ]
@@ -1417,14 +1412,14 @@ private lemma heckeT_ppow_mul_step [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prim
   suffices h_sum :
     ∑ x ∈ Finset.range (a + 1),
       (heckeT_p_all k p hp *
-        (↑p : ℂ) ^ ((↑x : ℤ) * (k - 1)) • (diamondOp_ext k p ^ x *
+        (↑p : ℂ) ^ ((↑x : ℤ) * (k - 1)) • (diamondOp_n k p ^ x *
           heckeT_ppow k p hp (a + 1 + b - 2 * x)) -
         (↑p : ℂ) ^ (k - 1) •
-          (diamondOp_ext k p *
-            (↑p : ℂ) ^ ((↑x : ℤ) * (k - 1)) • (diamondOp_ext k p ^ x *
+          (diamondOp_n k p *
+            (↑p : ℂ) ^ ((↑x : ℤ) * (k - 1)) • (diamondOp_n k p ^ x *
               heckeT_ppow k p hp (a + b - 2 * x)))) =
     ∑ x ∈ Finset.range (a + 1),
-      (↑p : ℂ) ^ ((↑x : ℤ) * (k - 1)) • (diamondOp_ext k p ^ x *
+      (↑p : ℂ) ^ ((↑x : ℤ) * (k - 1)) • (diamondOp_n k p ^ x *
         heckeT_ppow k p hp (a + 2 + b - 2 * x)) by
     rw [h_sum]
     conv_rhs => rw [add_assoc]
@@ -1433,10 +1428,10 @@ private lemma heckeT_ppow_mul_step [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prim
         show a + 2 + b - 2 * (a + 1) = b - a by omega,
         show a + 2 + b - 2 * (a + 2) = b - a - 2 by omega]
     rw [mul_smul_comm, ← mul_assoc]
-    suffices hsuff : heckeT_p_all k p hp * diamondOp_ext k p ^ (a + 1) *
+    suffices hsuff : heckeT_p_all k p hp * diamondOp_n k p ^ (a + 1) *
         heckeT_ppow k p hp (b - a - 1) =
-      diamondOp_ext k p ^ (a + 1) * heckeT_ppow k p hp (b - a) +
-        (↑p : ℂ) ^ (k - 1) • (diamondOp_ext k p ^ (a + 2) *
+      diamondOp_n k p ^ (a + 1) * heckeT_ppow k p hp (b - a) +
+        (↑p : ℂ) ^ (k - 1) • (diamondOp_n k p ^ (a + 2) *
           heckeT_ppow k p hp (b - a - 2)) by
       rw [hsuff, smul_add]; congr 1
       rw [smul_smul, ← zpow_add₀ (Nat.cast_ne_zero.mpr hp.ne_zero)]
@@ -1452,7 +1447,7 @@ private theorem heckeT_ppow_mul [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prime p
     heckeT_ppow (N := N) k p hp a * heckeT_ppow k p hp b =
       ∑ j ∈ Finset.range (a + 1),
         ((↑p : ℂ) ^ ((j : ℤ) * (k - 1))) •
-          (diamondOp_ext k p ^ j * heckeT_ppow k p hp (a + b - 2 * j)) := by
+          (diamondOp_n k p ^ j * heckeT_ppow k p hp (a + b - 2 * j)) := by
   induction a using Nat.strongRecOn with
   | _ a iha =>
   match a with
@@ -1468,7 +1463,7 @@ private theorem heckeT_ppow_mul [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prime p
       Nat.cast_one, one_mul, pow_one]
     show heckeT_ppow (N := N) k p hp 1 * heckeT_ppow k p hp (1 + c) =
       heckeT_ppow k p hp (1 + (1 + c)) +
-        ((↑p : ℂ) ^ (k - 1)) • (diamondOp_ext k p * heckeT_ppow k p hp (1 + (1 + c) - 2))
+        ((↑p : ℂ) ^ (k - 1)) • (diamondOp_n k p * heckeT_ppow k p hp (1 + (1 + c) - 2))
     rw [show 1 + (1 + c) - 2 = c by omega, show 1 + (1 + c) = c + 2 by omega,
       heckeT_ppow_one, heckeT_ppow_succ_succ]
     abel
@@ -1476,14 +1471,14 @@ private theorem heckeT_ppow_mul [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prime p
     exact heckeT_ppow_mul_step k hp a b hab
       (iha (a + 1) (by omega) (by omega)) (iha a (by omega) (by omega))
 
-/-- Diamond operators commute with `diamondOp_ext`: `⟨d⟩ · ⟨p⟩_ext = ⟨p⟩_ext · ⟨d⟩`. -/
-theorem diamondOp_ext_comm_diamondOp [NeZero N] (k : ℤ) (d : (ZMod N)ˣ) (p : ℕ) :
-    diamondOp k d * diamondOp_ext (N := N) k p =
-      diamondOp_ext k p * diamondOp k d := by
+/-- Diamond operators commute with `diamondOp_n`: `⟨d⟩ · ⟨p⟩_ext = ⟨p⟩_ext · ⟨d⟩`. -/
+theorem diamondOp_n_comm_diamondOp [NeZero N] (k : ℤ) (d : (ZMod N)ˣ) (p : ℕ) :
+    diamondOp k d * diamondOp_n (N := N) k p =
+      diamondOp_n k p * diamondOp k d := by
   by_cases hpN : Nat.Coprime p N
-  · rw [diamondOp_ext_coprime k hpN, Module.End.mul_eq_comp, ← diamondOp_mul,
+  · rw [diamondOp_n_coprime k hpN, Module.End.mul_eq_comp, ← diamondOp_mul,
         Module.End.mul_eq_comp, ← diamondOp_mul, mul_comm]
-  · simp [diamondOp_ext_not_coprime k hpN]
+  · simp [diamondOp_n_not_coprime k hpN]
 
 /-- `T_{p^r}` commutes with all diamond operators `⟨d⟩`. -/
 theorem heckeT_ppow_comm_diamondOp [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prime p)
@@ -1508,12 +1503,12 @@ theorem heckeT_ppow_comm_diamondOp [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prim
       congr 1
       · rw [← mul_assoc, hbase, mul_assoc, ih (n + 1) (by omega), ← mul_assoc]
       · rw [mul_smul_comm, smul_mul_assoc]; congr 1
-        rw [← mul_assoc, diamondOp_ext_comm_diamondOp k d p,
+        rw [← mul_assoc, diamondOp_n_comm_diamondOp k d p,
             mul_assoc, ih n (by omega), ← mul_assoc]
 
 private theorem diamondOp_n_pow_mul_eq [NeZero N] (k : ℤ) {p : ℕ}
     {d : ℕ} (j : ℕ) :
-    diamondOp_n (N := N) k (p ^ j * d) = diamondOp_ext k p ^ j * diamondOp_n k d := by
+    diamondOp_n (N := N) k (p ^ j * d) = diamondOp_n k p ^ j * diamondOp_n k d := by
   by_cases hpN : Nat.Coprime p N
   · by_cases hdN : Nat.Coprime d N
     · induction j with
@@ -1524,9 +1519,9 @@ private theorem diamondOp_n_pow_mul_eq [NeZero N] (k : ℤ) {p : ℕ}
           Nat.Coprime.mul_left (hpN.pow_left j) hdN
         rw [hrw, pow_succ, mul_assoc,
             show diamondOp_n (N := N) k (p * (p ^ j * d)) =
-              diamondOp_ext k p * diamondOp_n k (p ^ j * d) by
+              diamondOp_n k p * diamondOp_n k (p ^ j * d) by
               rw [diamondOp_n, dif_pos (Nat.Coprime.mul_left hpN hpjd_cop),
-                  diamondOp_ext_coprime k hpN, diamondOp_n, dif_pos hpjd_cop,
+                  diamondOp_n_coprime k hpN, diamondOp_n, dif_pos hpjd_cop,
                   Module.End.mul_eq_comp, ← diamondOp_mul]
               congr 1; ext; simp [ZMod.coe_unitOfCoprime],
             ih]
@@ -1534,7 +1529,7 @@ private theorem diamondOp_n_pow_mul_eq [NeZero N] (k : ℤ) {p : ℕ}
     · have hpjd_not : ¬Nat.Coprime (p ^ j * d) N := fun h ↦
         hdN (h.coprime_dvd_left (dvd_mul_left d (p ^ j)))
       simp [diamondOp_n, dif_neg hpjd_not, dif_neg hdN, mul_zero]
-  · rw [diamondOp_ext_not_coprime k hpN]
+  · rw [diamondOp_n_not_coprime k hpN]
     rcases Nat.eq_zero_or_pos j with rfl | hj_pos
     · simp [pow_zero, one_mul]
     · have : ¬Nat.Coprime (p ^ j * d) N := fun h ↦
@@ -1551,8 +1546,8 @@ private lemma heckeT_ppow_comm_diamondOp_n [NeZero N] (k : ℤ) {p : ℕ} (hp : 
   split_ifs with hdN
   · by_cases hpN : Nat.Coprime p N
     · exact (heckeT_ppow_comm_diamondOp k hp hpN _ _).symm
-    · rw [← diamondOp_ext_coprime k hdN]
-      exact (diamondOp_ext_comm_heckeT_ppow k d hp _).symm
+    · rw [← diamondOp_n_coprime k hdN]
+      exact (diamondOp_n_comm_heckeT_ppow k d hp _).symm
   · simp [mul_zero, zero_mul]
 
 /-- Reduction of a `T_n` value occurring in the divisor sum: pulling the `p`-power factor
@@ -1607,7 +1602,7 @@ private lemma heckeT_n_mul_aux_divisor_sum_summand [NeZero N]
     (hp_not_dvd_m' : ¬p ∣ m') (hp_not_dvd_n' : ¬p ∣ n')
     (hd' : d' ∈ (m'.gcd n').divisors) (hj_le : j ≤ min va vb) :
     (↑p : ℂ) ^ ((↑j : ℤ) * (k - 1)) •
-        (diamondOp_ext (N := N) k p ^ j *
+        (diamondOp_n (N := N) k p ^ j *
           heckeT_ppow k p hp (min va vb + max va vb - 2 * j)) *
       (↑d' : ℂ) ^ (k - 1) •
         (diamondOp_n k d' * heckeT_n_aux k (m' * n' / (d' * d'))) =
@@ -1627,7 +1622,7 @@ private lemma heckeT_n_mul_aux_divisor_sum_summand [NeZero N]
         (dvd_trans hd'_dvd_g' (Nat.gcd_dvd_right m' n')) hd'_pos hm'_pos hn'_pos hj_le,
       smul_mul_smul]
   congr 1
-  rw [mul_assoc (diamondOp_ext k p ^ j), ← mul_assoc (heckeT_ppow _ _ _ _),
+  rw [mul_assoc (diamondOp_n k p ^ j), ← mul_assoc (heckeT_ppow _ _ _ _),
       heckeT_ppow_comm_diamondOp_n k hp _ d', mul_assoc (diamondOp_n k d'), ← mul_assoc]
 
 /-- `p`-adic valuation of `g · p^c` is `c` when `p ∤ g`. -/
@@ -1680,7 +1675,7 @@ private theorem heckeT_n_mul_aux_divisor_sum [NeZero N]
     (hp_not_dvd_n' : ¬p ∣ n') :
     (∑ j ∈ Finset.range (min va vb + 1),
         ((↑p : ℂ) ^ ((j : ℤ) * (k - 1))) •
-          (diamondOp_ext k p ^ j *
+          (diamondOp_n k p ^ j *
             heckeT_ppow (N := N) k p hp (min va vb + max va vb - 2 * j))) *
       (∑ d ∈ (Nat.gcd m' n').divisors.attach,
         ((↑d.val : ℂ) ^ (k - 1)) •

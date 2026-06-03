@@ -133,11 +133,11 @@ private theorem heckeT_n_prime_sq_eq_heckeT_p_sq_sub_diamond
   haveI : NeZero (q ^ 2) := ⟨(pow_pos hq.pos 2).ne'⟩
   rw [heckeT_n_prime_pow k hq 2 (by norm_num)]
   show heckeT_p_all (N := N) k q hq * heckeT_ppow k q hq 1 -
-      (q : ℂ) ^ (k - 1) • (diamondOp_ext (N := N) k q * heckeT_ppow k q hq 0) =
+      (q : ℂ) ^ (k - 1) • (diamondOp_n (N := N) k q * heckeT_ppow k q hq 0) =
     heckeT_p k q hq hqN * heckeT_p k q hq hqN -
       (q : ℂ) ^ (k - 1) • diamondOp k (ZMod.unitOfCoprime q hqN)
   rw [heckeT_ppow_zero, heckeT_ppow_one, mul_one,
-    heckeT_p_all_coprime k hq hqN, diamondOp_ext_coprime k hqN]
+    heckeT_p_all_coprime k hq hqN, diamondOp_n_coprime k hqN]
 
 private theorem newform_toModularForm_ne_zero
     {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) :

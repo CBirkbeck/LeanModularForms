@@ -161,10 +161,10 @@ private theorem preservesCusps_heckeT_p_all (p : ℕ) (hp : Nat.Prime p) :
     PreservesCusps (N := N) (heckeT_p_all k p hp) :=
   fun f _ hc ↦ heckeT_p_all_zero_at_cusps p hp f hc
 
-private theorem preservesCusps_diamondOp_ext (p : ℕ) :
-    PreservesCusps (N := N) (diamondOp_ext k p) := by
+private theorem preservesCusps_diamondOp_n (p : ℕ) :
+    PreservesCusps (N := N) (diamondOp_n k p) := by
   intro f c hc
-  unfold diamondOp_ext
+  unfold diamondOp_n
   split
   · exact (diamondOpCusp k (ZMod.unitOfCoprime p ‹_›) f).zero_at_cusps' hc
   · show c.IsZeroAt ((0 : ModularForm ((Gamma1 N).map (mapGL ℝ)) k).toFun) k
@@ -223,7 +223,7 @@ private theorem preservesCusps_heckeT_ppow (p : ℕ) (hp : Nat.Prime p) :
       rw [heckeT_ppow_succ_succ]
       exact preservesCusps_sub
         (preservesCusps_mul (preservesCusps_heckeT_p_all p hp) (ih (r + 1) (by lia)))
-        (preservesCusps_smul _ (preservesCusps_mul (preservesCusps_diamondOp_ext p)
+        (preservesCusps_smul _ (preservesCusps_mul (preservesCusps_diamondOp_n p)
           (ih r (by lia))))
 
 private theorem preservesCusps_heckeT_n (n : ℕ) [NeZero n] :

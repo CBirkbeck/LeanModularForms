@@ -436,15 +436,15 @@ private lemma heckeT_n_cusp_ppow_succ_succ
       (heckeT_ppow k p hp (r + 1) f.toModularForm')).toFun z =
       ((heckeT_n k p) ((heckeT_n k (p ^ (r + 1))) f.toModularForm')).toFun z
     rw [← heckeT_n_prime k hp, ← heckeT_n_prime_pow k hp (r + 1) (by omega)]
-  · have key : (diamondOp_ext k p) ((heckeT_ppow k p hp r) f.toModularForm') =
+  · have key : (diamondOp_n k p) ((heckeT_ppow k p hp r) f.toModularForm') =
         (diamondOp k (ZMod.unitOfCoprime p hpL))
           ((heckeT_n (N := L) k (p ^ r)) f.toModularForm') := by
-      rw [diamondOp_ext_coprime k hpL]
+      rw [diamondOp_n_coprime k hpL]
       cases r with
       | zero => simp [heckeT_ppow_zero, heckeT_n_one]
       | succ r => rw [← heckeT_n_prime_pow k hp (r + 1) (by omega)]
-    rw [show diamondOp_ext k p * heckeT_ppow k p hp r =
-      (diamondOp_ext k p).comp (heckeT_ppow k p hp r) from rfl] at *
+    rw [show diamondOp_n k p * heckeT_ppow k p hp r =
+      (diamondOp_n k p).comp (heckeT_ppow k p hp r) from rfl] at *
     simp only [LinearMap.comp_apply] at *
     rw [key]; rfl
 

@@ -412,11 +412,11 @@ private theorem heckeT_ppow_preserves_charSpace [NeZero N] (k : ℤ) {p : ℕ} (
       heckeT_ppow k p hp r (diamondOpHom k d f) from
     DFunLike.congr_fun (heckeT_ppow_comm_diamondOp k hp hpN r d) f, hf d, map_smul]
 
-private theorem diamondOp_ext_charSpace [NeZero N] (k : ℤ) {p : ℕ} (hpN : Nat.Coprime p N)
+private theorem diamondOp_n_charSpace [NeZero N] (k : ℤ) {p : ℕ} (hpN : Nat.Coprime p N)
     (χ : (ZMod N)ˣ →* ℂˣ) {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
     (hf : f ∈ modFormCharSpace k χ) :
-    diamondOp_ext k p f = (↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ) • f := by
-  rw [diamondOp_ext_coprime k hpN]
+    diamondOp_n k p f = (↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ) • f := by
+  rw [diamondOp_n_coprime k hpN]
   exact (mem_modFormCharSpace_iff k χ f).mp hf (ZMod.unitOfCoprime p hpN)
 
 private theorem coeff_qExpansion_heckeT_ppow_succ_succ [NeZero N] (k : ℤ) {p : ℕ}
@@ -429,9 +429,9 @@ private theorem coeff_qExpansion_heckeT_ppow_succ_succ [NeZero N] (k : ℤ) {p :
           (qExpansion h (heckeT_ppow k p hp r f)).coeff m := by
   have h_apply : heckeT_ppow k p hp (r + 2) f =
       heckeT_p_all k p hp (heckeT_ppow k p hp (r + 1) f) -
-      (↑p : ℂ) ^ (k - 1) • (diamondOp_ext k p (heckeT_ppow k p hp r f)) :=
+      (↑p : ℂ) ^ (k - 1) • (diamondOp_n k p (heckeT_ppow k p hp r f)) :=
     DFunLike.congr_fun (heckeT_ppow_succ_succ (N := N) k p hp r) f
-  rw [diamondOp_ext_charSpace k hpN χ (heckeT_ppow_preserves_charSpace k hp hpN r χ hf),
+  rw [diamondOp_n_charSpace k hpN χ (heckeT_ppow_preserves_charSpace k hp hpN r χ hf),
     smul_smul, heckeT_p_all_coprime k hp hpN] at h_apply
   set χp := (↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ)
   set cpk := (↑p : ℂ) ^ (k - 1)

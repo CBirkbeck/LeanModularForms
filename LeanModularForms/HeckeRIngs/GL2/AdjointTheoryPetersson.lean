@@ -144,7 +144,7 @@ private theorem heckeT_n_cusp_ppow_recursion (p : ℕ) (hp : Nat.Prime p)
           ((heckeT_n k (p ^ r)) f.toModularForm')).toFun τ
   rw [heckeT_n_prime_pow k hp (r + 2) (by omega), heckeT_n_prime_pow k hp (r + 1) (by omega),
       heckeT_n_prime_coprime k hp hpN, heckeT_ppow_succ_succ k p hp r,
-      diamondOp_ext_coprime k hpN, heckeT_p_all_coprime k hp hpN]
+      diamondOp_n_coprime k hpN, heckeT_p_all_coprime k hp hpN]
   simp only [LinearMap.sub_apply, Module.End.mul_apply, LinearMap.smul_apply]
   conv_rhs =>
     rw [show heckeT_n k (p ^ r) = heckeT_ppow (N := N) k p hp r by

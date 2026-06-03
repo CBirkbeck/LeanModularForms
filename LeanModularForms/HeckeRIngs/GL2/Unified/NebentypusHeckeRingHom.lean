@@ -1100,7 +1100,7 @@ theorem heckeT_ppow_preserves_charSpace' (p : ℕ) (hp : Nat.Prime p)
       have ihr : heckeT_ppow k p hp r f ∈ modFormCharSpace k χ := ih r (by omega)
       refine Submodule.sub_mem _ (heckeT_p_all_preserves_modFormCharSpace k p hp χ ih1) ?_
       refine Submodule.smul_mem _ _ ?_
-      rw [Module.End.mul_apply, diamondOp_ext_coprime k hpN]
+      rw [Module.End.mul_apply, diamondOp_n_coprime k hpN]
       exact diamondOp_preserves_charSpace _ ihr
 
 /-- `heckeT_ppow k p hp r` (for `p ∤ N`) restricted to `modFormCharSpace k χ` as a
@@ -1157,11 +1157,11 @@ theorem heckeT_ppow_charRestrict_succ_succ (p : ℕ) (hp : Nat.Prime p)
   simp only [LinearMap.sub_apply, LinearMap.smul_apply, Module.End.mul_apply,
     Submodule.coe_sub, Submodule.coe_smul_of_tower, heckeT_p_all_charRestrict_coe,
     heckeT_ppow_charRestrict_coe]
-  have hdiam : diamondOp_ext k p
+  have hdiam : diamondOp_n k p
         (heckeT_ppow k p hp r (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) =
       (↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ) •
         heckeT_ppow k p hp r (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) := by
-    rw [diamondOp_ext_coprime k hpN]
+    rw [diamondOp_n_coprime k hpN]
     exact (mem_modFormCharSpace_iff k χ
       (heckeT_ppow k p hp r (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k))).mp
       (heckeT_ppow_preserves_charSpace' p hp hpN r f.property) (ZMod.unitOfCoprime p hpN)
