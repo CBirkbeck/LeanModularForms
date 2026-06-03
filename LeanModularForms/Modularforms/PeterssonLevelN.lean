@@ -495,13 +495,6 @@ theorem setIntegral_Gamma1_fundDomain_eq
     ∫ τ in D, h τ ∂μ_hyp = ∫ τ in D', h τ ∂μ_hyp :=
   hD.setIntegral_eq hD' h_inv
 
-/-- For `α : PSL(2, ℤ)` in the normalizer of `imageGamma1 N`, the shifted tiling
-`α • Gamma1_fundDomain N` is again a fundamental domain for `imageGamma1 N`
-acting on `ℍ`. -/
-theorem isFundamentalDomain_Gamma1_shift
-    {α : PSL(2, ℤ)} (hα : α ∈ (imageGamma1 N).normalizer) :
-    IsFundamentalDomain (imageGamma1 N) (α • Gamma1_fundDomain N) μ_hyp :=
-  isFundamentalDomain_Gamma1_coset_tiling.smul_of_mem_normalizer hα
 
 open scoped MatrixGroups
 
@@ -985,17 +978,6 @@ theorem petN_eq_setIntegral_Gamma1_fundDomain_PSL
       (integrableOn_petersson_Gamma1_fundDomain_PSL f g)]
 
 
-/-- `petN f g` equals `(slToPslQuot_fiberCard N) • ∫_D petersson k f g` for *any*
-`imageGamma1 N`-fundamental domain `D`. -/
-theorem petN_eq_setIntegral_fundDomain
-    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    {D : Set UpperHalfPlane}
-    (hD : IsFundamentalDomain (imageGamma1 N) D μ_hyp) :
-    petN f g = (slToPslQuot_fiberCard N) •
-      ∫ τ in D, petersson k ⇑f ⇑g τ ∂μ_hyp := by
-  rw [petN_eq_setIntegral_Gamma1_fundDomain_PSL,
-    setIntegral_Gamma1_fundDomain_eq isFundamentalDomain_Gamma1_coset_tiling hD
-      (petersson_imageGamma1_invariant f g)]
 
 
 
@@ -1048,22 +1030,8 @@ variable {X : Type*} [MeasurableSpace X] {μ : Measure X}
 /-- The tile union (as an `abbrev` so it unfolds during type-checking). -/
 abbrev union (F : FiniteTileFundamentalDomain μ ι T) : Set X := ⋃ i, F.tile i
 
-/-- The tile union is null-measurable. -/
-theorem nullMeasurableSet_union (F : FiniteTileFundamentalDomain μ ι T) :
-    NullMeasurableSet F.union μ :=
-  NullMeasurableSet.iUnion F.nullMeasurableSet_tile
 
 
-/-- **Integration consumer.** The integral over the target equals the
-finite sum of integrals over each tile. -/
-theorem setIntegral_eq_sum
-    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
-    (F : FiniteTileFundamentalDomain μ ι T) {f : X → E}
-    (hint : IntegrableOn f F.union μ) :
-    ∫ x in T, f x ∂μ = ∑ i : ι, ∫ x in F.tile i, f x ∂μ := by
-  rw [setIntegral_congr_set F.aeCover,
-    integral_iUnion_ae F.nullMeasurableSet_tile F.pairwiseAEDisjoint hint,
-    tsum_fintype]
 
 
 end FiniteTileFundamentalDomain
@@ -1079,23 +1047,4 @@ theorem integrableOn_petersson_congr_set_ae
     IntegrableOn (fun τ ↦ petersson k f g τ) T μ_hyp := by
   simp only [IntegrableOn, Measure.restrict_congr_set hST]
 
-/-- If two finite AE-disjoint families of null-measurable subsets of `ℍ` have
-AE-equal unions, their Petersson-inner-product sum decompositions are equal. -/
-theorem peterssonInner_sum_eq_of_AEDisjoint_unions_AEEq
-    {ι₁ : Type*} [Fintype ι₁] (S₁ : ι₁ → Set ℍ)
-    {ι₂ : Type*} [Fintype ι₂] (S₂ : ι₂ → Set ℍ)
-    (hm₁ : ∀ i, NullMeasurableSet (S₁ i) μ_hyp)
-    (hm₂ : ∀ j, NullMeasurableSet (S₂ j) μ_hyp)
-    (hd₁ : Pairwise (fun i j : ι₁ ↦ AEDisjoint μ_hyp (S₁ i) (S₁ j)))
-    (hd₂ : Pairwise (fun i j : ι₂ ↦ AEDisjoint μ_hyp (S₂ i) (S₂ j)))
-    (h_union_eq : (⋃ i, S₁ i) =ᵐ[μ_hyp] (⋃ j, S₂ j))
-    (f g : ℍ → ℂ)
-    (hint : IntegrableOn (fun τ ↦ petersson k f g τ) (⋃ i, S₁ i) μ_hyp) :
-    ∑ i : ι₁, peterssonInner k (S₁ i) f g =
-    ∑ j : ι₂, peterssonInner k (S₂ j) f g := by
-  rw [← peterssonInner_iUnion_finite_aedisjoint S₁ hm₁ hd₁ f g hint,
-      ← peterssonInner_iUnion_finite_aedisjoint S₂ hm₂ hd₂ f g
-        ((integrableOn_petersson_congr_set_ae h_union_eq f g).mp hint)]
-  unfold peterssonInner
-  exact setIntegral_congr_set h_union_eq
 
