@@ -34,7 +34,7 @@ result is `coeffSum(f • m) = deg(f) * coeffSum(m)`, which follows from the orb
 lemma `smulOrbit_card`.
 -/
 
-open Commensurable Classical MulOpposite Set DoubleCoset Subgroup Commensurable
+open Classical MulOpposite Set DoubleCoset Subgroup
 
 open scoped Pointwise
 
@@ -81,7 +81,7 @@ private lemma smulOrbit_map_inj (g : P.Δ) (β : P.Δ) :
     have := hkk; group at this ⊢; exact this
   refine decompQuot_coset_diff P g i₁ i₂ hne
     (leftCoset_eq_of_not_disjoint (H := P.H) _ _ ?_)
-  rw [not_disjoint_iff]
+  rw [Set.not_disjoint_iff]
   exact ⟨(i₁.out : G) * (g : G), ⟨1, P.H.one_mem, mul_one _⟩, ⟨k, hk, cancel⟩⟩
 
 /-- The cardinality of a smul orbit equals the degree of the acting double coset. -/
@@ -154,24 +154,69 @@ lemma deg_fun_add (f g : 𝕋 P ℤ) :
 /-- The degree equals the coefficient sum of the action on the identity module element. -/
 lemma deg_fun_eq_coeffSum_smul_one (f : 𝕋 P ℤ) :
     deg_fun P f = coeffSum P (f • (1 : HeckeModule P ℤ)) := by
-  induction f using Finsupp.induction_linear with
-  | zero => simp [zero_smul_HeckeModule]
-  | add f g ihf ihg => rw [deg_fun_add, ihf, ihg, smul_add_left, coeffSum_add]
-  | single D a => rw [deg_fun_T_single, one_eq_HeckeLeftCoset_single,
+  let toT : (HeckeCoset P →₀ ℤ) → 𝕋 P ℤ := fun a ↦ a
+  let mot : (HeckeCoset P →₀ ℤ) → Prop :=
+    fun f' ↦ deg_fun P (toT f') = coeffSum P ((toT f') • (1 : HeckeModule P ℤ))
+  change mot f
+  apply Finsupp.induction_linear
+  · show deg_fun P (toT 0) = coeffSum P ((toT 0) • (1 : HeckeModule P ℤ))
+    change deg_fun P (0 : 𝕋 P ℤ) = coeffSum P (((0 : 𝕋 P ℤ)) • (1 : HeckeModule P ℤ))
+    simp [zero_smul_HeckeModule]
+  · intro f g ihf ihg
+    show deg_fun P (toT (f + g)) =
+      coeffSum P ((toT (f + g)) • (1 : HeckeModule P ℤ))
+    change deg_fun P ((toT f + toT g) : 𝕋 P ℤ) =
+      coeffSum P (((toT f + toT g) : 𝕋 P ℤ) • (1 : HeckeModule P ℤ))
+    rw [deg_fun_add, ihf, ihg, smul_add_left, coeffSum_add]
+  · intro D a
+    show deg_fun P (toT (Finsupp.single D a)) =
+      coeffSum P ((toT (Finsupp.single D a)) • (1 : HeckeModule P ℤ))
+    rw [deg_fun_T_single, one_eq_HeckeLeftCoset_single,
       coeffSum_single_smul_single, mul_one]
 
 /-- The coefficient sum of a smul product factors as `deg(f) * coeffSum(m)`. -/
 lemma coeffSum_smul_eq (f : 𝕋 P ℤ) (m : HeckeModule P ℤ) :
     coeffSum P (f • m) = deg_fun P f * coeffSum P m := by
-  induction f using Finsupp.induction_linear with
-  | zero => simp [zero_smul_HeckeModule]
-  | add f₁ f₂ ih₁ ih₂ => rw [smul_add_left, coeffSum_add, ih₁, ih₂, deg_fun_add]; ring
-  | single D a =>
-    induction m using Finsupp.induction_linear with
-    | zero => simp [smul_zero_HeckeModule]
-    | add m₁ m₂ ih₁ ih₂ =>
+  let toT : (HeckeCoset P →₀ ℤ) → 𝕋 P ℤ := fun a ↦ a
+  let toM : (HeckeLeftCoset P →₀ ℤ) → HeckeModule P ℤ := fun a ↦ a
+  let motf : (HeckeCoset P →₀ ℤ) → Prop :=
+    fun f' ↦ coeffSum P ((toT f') • m) = deg_fun P (toT f') * coeffSum P m
+  change motf f
+  apply Finsupp.induction_linear
+  · show coeffSum P ((toT 0) • m) = deg_fun P (toT 0) * coeffSum P m
+    change coeffSum P (((0 : 𝕋 P ℤ)) • m) = deg_fun P (0 : 𝕋 P ℤ) * coeffSum P m
+    simp [zero_smul_HeckeModule]
+  · intro f₁ f₂ ih₁ ih₂
+    show coeffSum P ((toT (f₁ + f₂)) • m) =
+      deg_fun P (toT (f₁ + f₂)) * coeffSum P m
+    change coeffSum P (((toT f₁ + toT f₂) : 𝕋 P ℤ) • m) =
+      deg_fun P ((toT f₁ + toT f₂) : 𝕋 P ℤ) * coeffSum P m
+    rw [smul_add_left, coeffSum_add, ih₁, ih₂, deg_fun_add]; ring
+  · intro D a
+    show coeffSum P ((toT (Finsupp.single D a)) • m) =
+      deg_fun P (toT (Finsupp.single D a)) * coeffSum P m
+    let motm : (HeckeLeftCoset P →₀ ℤ) → Prop :=
+      fun m' ↦ coeffSum P ((toT (Finsupp.single D a)) • (toM m')) =
+        deg_fun P (toT (Finsupp.single D a)) * coeffSum P (toM m')
+    change motm m
+    apply Finsupp.induction_linear
+    · show coeffSum P ((toT (Finsupp.single D a)) • (toM 0)) =
+        deg_fun P (toT (Finsupp.single D a)) * coeffSum P (toM 0)
+      change coeffSum P ((toT (Finsupp.single D a)) • (0 : HeckeModule P ℤ)) =
+        deg_fun P (toT (Finsupp.single D a)) * coeffSum P (0 : HeckeModule P ℤ)
+      simp [smul_zero_HeckeModule]
+    · intro m₁ m₂ ih₁ ih₂
+      show coeffSum P ((toT (Finsupp.single D a)) • (toM (m₁ + m₂))) =
+        deg_fun P (toT (Finsupp.single D a)) * coeffSum P (toM (m₁ + m₂))
+      change coeffSum P
+          ((toT (Finsupp.single D a)) • ((toM m₁ + toM m₂) : HeckeModule P ℤ)) =
+        deg_fun P (toT (Finsupp.single D a)) *
+          coeffSum P ((toM m₁ + toM m₂) : HeckeModule P ℤ)
       rw [smul_add_right, coeffSum_add, ih₁, ih₂, coeffSum_add, deg_fun_T_single]; ring
-    | single m₀ b => rw [coeffSum_single_smul_single, coeffSum_single, deg_fun_T_single]
+    · intro m₀ b
+      show coeffSum P ((toT (Finsupp.single D a)) • (toM (Finsupp.single m₀ b))) =
+        deg_fun P (toT (Finsupp.single D a)) * coeffSum P (toM (Finsupp.single m₀ b))
+      rw [coeffSum_single_smul_single, coeffSum_single, deg_fun_T_single]
 
 /-- The degree function is multiplicative. -/
 lemma deg_fun_mul (f g : 𝕋 P ℤ) :
