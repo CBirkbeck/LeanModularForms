@@ -615,8 +615,7 @@ private lemma conjBack_matrix_mem_Gamma1
     (⟨!![y.val 0 0, j; (p : ℤ) * y.val 1 0, y.val 1 1], conjBack_matrix_det p hj⟩ :
       SL(2, ℤ)) ∈ Gamma1 N := by
   obtain ⟨hy00, hy11, hy10⟩ := (Gamma1_mem N y).mp hy₁
-  rw [Gamma1_mem]
-  refine ⟨?_, ?_, ?_⟩
+  refine (Gamma1_mem N _).mpr ⟨?_, ?_, ?_⟩
   · show (((!![y.val 0 0, j; (p : ℤ) * y.val 1 0, y.val 1 1] :
         Matrix (Fin 2) (Fin 2) ℤ) 0 0 : ℤ) : ZMod N) = 1
     simp only [Matrix.cons_val', Matrix.of_apply, Matrix.cons_val_zero, Matrix.empty_val',

@@ -63,7 +63,7 @@ theorem miyake_4_6_8_main_lemma_cuspForm
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (hfχ : f ∈ cuspFormCharSpace k χ)
     (h_vanish : ∀ n : ℕ, Nat.Coprime n N →
-      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0) :
+      (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n = 0) :
     ∃ f_p : ℕ → CuspForm ((Gamma1 N).map (mapGL ℝ)) k,
       f = ∑ p ∈ N.primeFactors, f_p p ∧
       (∀ p ∈ N.primeFactors,
@@ -113,7 +113,7 @@ theorem coprimeSieve_admits_squarefree_decomposition_in_charSpace
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (hfχ : f ∈ cuspFormCharSpace k χ)
     (h_vanish : ∀ n : ℕ, Nat.Coprime n N →
-      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0) :
+      (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n = 0) :
     ∃ f_d : ℕ → CuspForm ((Gamma1 N).map (mapGL ℝ)) k,
       f = ∑ d ∈ N.divisors.filter (1 < ·), f_d d ∧
       (∀ d ∈ N.divisors.filter (1 < ·),
@@ -142,10 +142,11 @@ private theorem heckeT_n_prime_sq_eq_heckeT_p_sq_sub_diamond
 private theorem newform_toModularForm_ne_zero
     {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) :
     f.toCuspForm.toModularForm' ≠ 0 := fun hF_zero ↦ by
-  have h1 : (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm.toModularForm').coeff 1 = 1 :=
+  have h1 : (UpperHalfPlane.qExpansion (1 : ℝ) f.toCuspForm.toModularForm').coeff 1 = 1 :=
     f.isNorm
   rw [show (⇑f.toCuspForm.toModularForm' : UpperHalfPlane → ℂ)
-      = (0 : UpperHalfPlane → ℂ) by rw [hF_zero]; rfl, qExpansion_zero] at h1
+      = (0 : UpperHalfPlane → ℂ) by rw [hF_zero]; rfl,
+      UpperHalfPlane.qExpansion_zero] at h1
   simp at h1
 
 /-- $\lambda_{q^2}(f) = \lambda_q(f)^2 - \chi(q) \cdot q^{k-1}$ for $f$ a newform
@@ -210,7 +211,7 @@ theorem mainLemma_charSpace_routeB
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (hfχ : f ∈ cuspFormCharSpace k χ)
     (h_vanish : ∀ n : ℕ, Nat.Coprime n N →
-      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0) :
+      (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n = 0) :
     f ∈ cuspFormsOld N k :=
   let ⟨f_d, h_sum, h_supp, h_char⟩ :=
     coprimeSieve_admits_squarefree_decomposition_in_charSpace χ f hfχ h_vanish

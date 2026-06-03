@@ -137,8 +137,7 @@ private lemma gamma_prime_mem_Gamma1 (N p : ℕ) [NeZero N] (hpN : Nat.Coprime p
     (⟨!![((aInvOfCoprime N p hpN : ℤ) * p), 1;
          ((N : ℤ) * mIdxOfCoprime N p hpN), 1], gamma_prime_det N p hpN⟩ :
       SL(2, ℤ)) ∈ Gamma1 N := by
-  rw [Gamma1_mem]
-  refine ⟨?_, ?_, ?_⟩
+  refine (Gamma1_mem N _).mpr ⟨?_, ?_, ?_⟩
   · change (((aInvOfCoprime N p hpN : ℤ) * p : ℤ) : ZMod N) = 1
     push_cast; exact aInvOfCoprime_mul_eq_one N p hpN
   · change ((1 : ℤ) : ZMod N) = 1; simp

@@ -596,12 +596,7 @@ private lemma monomial_prod_eval_at_Ds_eq_indicator (s d : GenIdx →₀ ℕ)
       intro ⟨_, h1⟩; exact absurd h1 (Nat.ne_of_gt hp₀_lt)
     · exact monomial_eval_zero_of_det_ne d s h_det_eq
 
-private lemma T_gen_algebraicIndependent :
-    haveI : Algebra ℤ (HeckeAlgebra 2) := Ring.toIntAlgebra _
-    AlgebraicIndependent ℤ (fun i : GenIdx ↦ T_gen 2 i.1.1 i.2) := by
-  haveI : Algebra ℤ (HeckeAlgebra 2) := Ring.toIntAlgebra _
-  rw [algebraicIndependent_iff_injective_aeval]
-  show Function.Injective π_hom
+private lemma π_injective : Function.Injective π_hom := by
   rw [RingHom.injective_iff_ker_eq_bot, eq_bot_iff]
   intro P hP; rw [RingHom.mem_ker] at hP; rw [Submodule.mem_bot]
   by_contra hP_ne
@@ -614,7 +609,13 @@ private lemma T_gen_algebraicIndependent :
   have h_zero : (π_hom P) D_s = 0 := by rw [hP]; rfl
   change (MvPolynomial.eval₂ (Int.castRingHom (HeckeAlgebra 2))
     (fun i : GenIdx ↦ T_gen 2 i.1.1 i.2) P) D_s = 0 at h_zero
-  rw [MvPolynomial.eval₂_eq, Finset.sum_apply'] at h_zero
+  rw [MvPolynomial.eval₂_eq] at h_zero
+  change (∑ d ∈ MvPolynomial.support P, (Int.castRingHom (HeckeAlgebra 2)) (MvPolynomial.coeff d P) *
+    ∏ i ∈ d.support, T_gen 2 (↑i.1) i.2 ^ d i) D_s = 0 at h_zero
+  rw [show (∑ d ∈ MvPolynomial.support P, (Int.castRingHom (HeckeAlgebra 2)) (MvPolynomial.coeff d P) *
+        ∏ i ∈ d.support, T_gen 2 (↑i.1) i.2 ^ d i) D_s =
+      ∑ d ∈ MvPolynomial.support P, ((Int.castRingHom (HeckeAlgebra 2)) (MvPolynomial.coeff d P) *
+        ∏ i ∈ d.support, T_gen 2 (↑i.1) i.2 ^ d i) D_s from Finset.sum_apply' _] at h_zero
   have h_term : ∀ d ∈ P.support,
       (((Int.castRingHom (HeckeAlgebra 2)) (P.coeff d)) *
         (∏ i ∈ d.support, T_gen 2 i.1.1 i.2 ^ d i)) D_s =
@@ -624,7 +625,10 @@ private lemma T_gen_algebraicIndependent :
       (∏ i ∈ d.support, T_gen 2 i.1.1 i.2 ^ d i)) D_s = _
     rw [show ((P.coeff d : ℤ) : HeckeAlgebra 2) =
       (P.coeff d) • (1 : HeckeAlgebra 2) from (zsmul_one _).symm,
-      smul_mul_assoc, one_mul, Finsupp.smul_apply, smul_eq_mul]
+      smul_mul_assoc, one_mul]
+    rw [show ((P.coeff d) • (∏ i ∈ d.support, T_gen 2 i.1.1 i.2 ^ d i : HeckeAlgebra 2)) D_s =
+      P.coeff d • (∏ i ∈ d.support, T_gen 2 i.1.1 i.2 ^ d i : HeckeAlgebra 2) D_s from
+      Finsupp.smul_apply _ _ _, smul_eq_mul]
   rw [Finset.sum_congr rfl h_term] at h_zero
   conv at h_zero =>
     arg 1; arg 2; ext d
@@ -642,9 +646,6 @@ private lemma T_gen_algebraicIndependent :
   rw [Finset.sum_congr rfl h_delta] at h_zero
   rw [Finset.sum_ite_eq_of_mem' (P.support) s _ hs_mem] at h_zero
   exact hs_coeff h_zero
-
-private lemma π_injective : Function.Injective π_hom :=
-  algebraicIndependent_iff_injective_aeval.mp T_gen_algebraicIndependent
 
 private lemma ker_π_le_ker_ψ :
     RingHom.ker π_hom ≤ RingHom.ker (ψ_hom N) := by
@@ -890,7 +891,9 @@ private lemma T_1p_mem_ψ_range (p : ℕ) (hp : p.Prime) :
         (by simp)) 1 ∈ (ψ_hom N).range :=
   ⟨MvPolynomial.X (⟨p, hp⟩, (0 : Fin 2)), by
     show ψ_hom N (MvPolynomial.X (⟨p, hp⟩, (0 : Fin 2))) = _
-    simp only [ψ_hom, MvPolynomial.eval₂Hom_X']; rfl⟩
+    letI : CommRing (𝕋 (Gamma0_pair N) ℤ) := instCommRing_Gamma0 N
+    refine (MvPolynomial.eval₂Hom_X' _ _ _).trans ?_
+    rfl⟩
 
 private lemma T_pp_mem_ψ_range (p : ℕ) (hp : p.Prime) (hpN : (p : ℤ).gcd N = 1) :
     HeckeRing.T_single (Gamma0_pair N) ℤ
@@ -902,7 +905,8 @@ private lemma T_pp_mem_ψ_range (p : ℕ) (hp : p.Prime) (hpN : (p : ℤ).gcd N 
     exact Nat.Prime.not_coprime_iff_dvd.mpr ⟨p, hp, dvd_refl p, h⟩ hpN
   refine ⟨MvPolynomial.X (⟨p, hp⟩, (1 : Fin 2)), ?_⟩
   show ψ_hom N (MvPolynomial.X (⟨p, hp⟩, (1 : Fin 2))) = _
-  simp only [ψ_hom, MvPolynomial.eval₂Hom_X']
+  letI : CommRing (𝕋 (Gamma0_pair N) ℤ) := instCommRing_Gamma0 N
+  refine (MvPolynomial.eval₂Hom_X' _ _ _).trans ?_
   simp only [show (1 : Fin 2) ≠ 0 from by omega, ↓reduceIte, dif_neg hp_not_dvd_N]
 
 private lemma T_p_ppow_mem_ψ_range (p : ℕ) (hp : p.Prime) (hpN : (p : ℤ).gcd N = 1)
@@ -1517,7 +1521,8 @@ private lemma T_scalar_diag_mem (d : ℕ) (hd : 0 < d) (hd_gcd : Int.gcd (↑d) 
           (by show Int.gcd (↑p) ↑N = 1; exact hp_gcd)) 1 ∈ (ψ_hom N).range :=
       ⟨MvPolynomial.X (⟨p, hp⟩, (1 : Fin 2)), by
         show ψ_hom N (MvPolynomial.X (⟨p, hp⟩, (1 : Fin 2))) = _
-        simp only [ψ_hom, MvPolynomial.eval₂Hom_X']
+        letI : CommRing (𝕋 (Gamma0_pair N) ℤ) := instCommRing_Gamma0 N
+        refine (MvPolynomial.eval₂Hom_X' _ _ _).trans ?_
         simp only [show (1 : Fin 2) ≠ 0 from by omega, ↓reduceIte, dif_neg hp_not_dvd_N]⟩
     rw [T_diag_Gamma0_congr N (fun i ↦ by fin_cases i <;> simp [hp.pos])
       (by show Int.gcd (↑p) ↑N = 1; exact hp_gcd) (fun _ ↦ hp.pos) hp_gcd

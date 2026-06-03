@@ -85,14 +85,14 @@ structure Newform (N : ℕ) [NeZero N] (k : ℤ)
   /-- Normalisation at the **canonical Fourier period** (`h = 1`): the first
   Fourier coefficient is `1`, i.e. `a₁ = 1` (the Diamond–Shurman / Miyake
   normalisation). -/
-  isNorm : (ModularFormClass.qExpansion (1 : ℝ) toCuspForm).coeff 1 = 1
+  isNorm : (UpperHalfPlane.qExpansion (1 : ℝ) toCuspForm).coeff 1 = 1
 
 /-- Predicate version: f is a newform if it's an eigenform in the new subspace
 with `a_1 = 1` (at period 1). -/
 structure IsNewform (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop where
   isEigen : IsEigenform f
   isNew : f ∈ cuspFormsNewExtended N k
-  isNorm : (ModularFormClass.qExpansion (1 : ℝ) f).coeff 1 = 1
+  isNorm : (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff 1 = 1
 
 
 
@@ -103,21 +103,21 @@ noncomputable def Newform.conductor (_f : Newform N k) : ℕ := N
 
 private lemma qExpansion_one_coeff_one_smul_of_norm
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (h_norm : (ModularFormClass.qExpansion (1 : ℝ) f.toModularForm').coeff 1 = 1)
+    (h_norm : (UpperHalfPlane.qExpansion (1 : ℝ) f.toModularForm').coeff 1 = 1)
     (c : ℂ) :
-    (ModularFormClass.qExpansion (1 : ℝ) (c • f)).coeff 1 = c := by
-  change (ModularFormClass.qExpansion (1 : ℝ) (⇑(c • f : CuspForm _ k))).coeff 1 = c
+    (UpperHalfPlane.qExpansion (1 : ℝ) (c • f)).coeff 1 = c := by
+  change (UpperHalfPlane.qExpansion (1 : ℝ) (⇑(c • f : CuspForm _ k))).coeff 1 = c
   rw [show (⇑(c • f : CuspForm _ k) : UpperHalfPlane → ℂ) = c • ⇑f from rfl,
     show (⇑f : UpperHalfPlane → ℂ) = ⇑f.toModularForm' from rfl,
-    qExpansion_smul one_pos (one_mem_strictPeriods_Gamma1_map N),
+    ModularForm.qExpansion_smul one_pos (one_mem_strictPeriods_Gamma1_map N),
     PowerSeries.coeff_smul, smul_eq_mul, h_norm, mul_one]
 
 lemma qExpansion_one_coeff_one_heckeT_n_cusp_eq_coeff
     (n : ℕ) [NeZero n] (hn : Nat.Coprime n N) (χ : (ZMod N)ˣ →* ℂˣ)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (hf_char : f.toModularForm' ∈ modFormCharSpace k χ) :
-    (ModularFormClass.qExpansion (1 : ℝ) (heckeT_n_cusp k n f)).coeff 1 =
-      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n := by
+    (UpperHalfPlane.qExpansion (1 : ℝ) (heckeT_n_cusp k n f)).coeff 1 =
+      (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n := by
   rw [show (⇑(heckeT_n_cusp k n f) : UpperHalfPlane → ℂ) =
         ⇑(heckeT_n_cusp k n f).toModularForm' from rfl,
     show (⇑f : UpperHalfPlane → ℂ) = ⇑f.toModularForm' from rfl, heckeT_n_cusp_toModularForm']
@@ -137,7 +137,7 @@ theorem Newform.eigenvalue_eq_coeff (f : Newform N k) (n : ℕ+)
     (hn : Nat.Coprime n.val N) (χ : (ZMod N)ˣ →* ℂˣ)
     (hf_char : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ) :
     f.eigenvalue n =
-      (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm).coeff n.val := by
+      (UpperHalfPlane.qExpansion (1 : ℝ) f.toCuspForm).coeff n.val := by
   haveI : NeZero n.val := ⟨n.pos.ne'⟩
   rw [← qExpansion_one_coeff_one_heckeT_n_cusp_eq_coeff n.val hn χ f.toCuspForm hf_char,
     f.isEigen n hn]
@@ -154,7 +154,7 @@ spectral theorem for Hecke operators and the Petersson adjoint formula. -/
 theorem mainLemma
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (h : ∀ n : ℕ, Nat.Coprime n N →
-      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0) :
+      (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n = 0) :
     f ∈ cuspFormsOld N k := by
   -- Decompose `f = f_old + f_new`; for each eigenform `g ∈ cuspFormsNew` with
   -- eigenvalue `λ_n ≠ 0`, the adjoint relation gives `⟨f, g⟩ = λ_n⁻¹ ⟨T_n f, g⟩`,
@@ -169,22 +169,22 @@ private lemma newform_diff_coprime_coeff_eq_zero
     (hgχ : g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
     (h : ∀ n : ℕ+, Nat.Coprime n.val N → f.eigenvalue n = g.eigenvalue n)
     (n : ℕ) (hn : Nat.Coprime n N) :
-    (ModularFormClass.qExpansion (1 : ℝ) (f.toCuspForm - g.toCuspForm)).coeff n = 0 := by
+    (UpperHalfPlane.qExpansion (1 : ℝ) (f.toCuspForm - g.toCuspForm)).coeff n = 0 := by
   have h1_period := one_mem_strictPeriods_Gamma1_map N
   conv_lhs =>
     rw [show (⇑f.toCuspForm - ⇑g.toCuspForm) =
         (⇑f.toCuspForm.toModularForm' - ⇑g.toCuspForm.toModularForm') from rfl]
-  rw [qExpansion_sub one_pos h1_period, map_sub, sub_eq_zero]
+  rw [ModularForm.qExpansion_sub one_pos h1_period, map_sub, sub_eq_zero]
   by_cases hn0 : n = 0
   · subst hn0
     simp [Nat.Coprime, Nat.gcd_zero_left] at hn
     subst hn
     have h_zero_f := (CuspFormClass.zero_at_infty f.toCuspForm).valueAtInfty_eq_zero
     have h_zero_g := (CuspFormClass.zero_at_infty g.toCuspForm).valueAtInfty_eq_zero
-    rw [ModularFormClass.qExpansion_coeff_zero _ one_pos h1_period,
-      ModularFormClass.qExpansion_coeff_zero _ one_pos h1_period,
-      show (⇑f.toModularForm' : UpperHalfPlane → ℂ) = ⇑f.toCuspForm from rfl,
-      show (⇑g.toModularForm' : UpperHalfPlane → ℂ) = ⇑g.toCuspForm from rfl, h_zero_f, h_zero_g]
+    rw [show (⇑f.toModularForm' : UpperHalfPlane → ℂ) = ⇑f.toCuspForm from rfl,
+      show (⇑g.toModularForm' : UpperHalfPlane → ℂ) = ⇑g.toCuspForm from rfl,
+      CuspFormClass.qExpansion_coeff_zero f.toCuspForm one_pos h1_period,
+      CuspFormClass.qExpansion_coeff_zero g.toCuspForm one_pos h1_period]
   have hn_pos : 0 < n := Nat.pos_of_ne_zero hn0
   have h_eq := h ⟨n, hn_pos⟩ hn
   rwa [Newform.eigenvalue_eq_coeff f ⟨n, hn_pos⟩ hn χ hfχ,

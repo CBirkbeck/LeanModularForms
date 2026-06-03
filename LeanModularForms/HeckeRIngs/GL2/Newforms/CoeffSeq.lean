@@ -72,10 +72,10 @@ theorem Newform.eigenvalue_coprime_mul (f : Newform N k) (m n : ℕ+)
         hmn_N χ hf_char,
       Newform.eigenvalue_eq_coeff f m hm χ hf_char,
       Newform.eigenvalue_eq_coeff f n hn χ hf_char]
-  change (ModularFormClass.qExpansion (1 : ℝ)
+  change (UpperHalfPlane.qExpansion (1 : ℝ)
         f.toCuspForm.toModularForm').coeff (m.val * n.val) =
-      (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm.toModularForm').coeff m.val *
-      (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm.toModularForm').coeff n.val
+      (UpperHalfPlane.qExpansion (1 : ℝ) f.toCuspForm.toModularForm').coeff m.val *
+      (UpperHalfPlane.qExpansion (1 : ℝ) f.toCuspForm.toModularForm').coeff n.val
   have h := eigenform_coeff_multiplicative_one k m n hm hn χ hf_char
     f.isNormalisedEigenform
   have hgcd : Nat.gcd m.val n.val = 1 := hmn
@@ -90,11 +90,11 @@ theorem Newform.eigenvalue_coprime_mul (f : Newform N k) (m n : ℕ+)
 period-1 q-expansion (the standard Fourier coefficients of `f` as a
 `Γ₁(N)`-cusp form). -/
 noncomputable def Newform.lCoeff (f : Newform N k) : ℕ → ℂ :=
-  fun n ↦ (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm).coeff n
+  fun n ↦ (UpperHalfPlane.qExpansion (1 : ℝ) f.toCuspForm).coeff n
 
 @[simp]
 lemma Newform.lCoeff_apply (f : Newform N k) (n : ℕ) :
-    f.lCoeff n = (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm).coeff n := rfl
+    f.lCoeff n = (UpperHalfPlane.qExpansion (1 : ℝ) f.toCuspForm).coeff n := rfl
 
 /-- `a₀(f) = 0` for a newform (cusp forms vanish at infinity). -/
 lemma Newform.lCoeff_zero (f : Newform N k) : f.lCoeff 0 = 0 := by
@@ -103,8 +103,7 @@ lemma Newform.lCoeff_zero (f : Newform N k) : f.lCoeff 0 = 0 := by
       strictPeriods_Gamma1]
     exact ⟨1, by simp⟩
   simp [Newform.lCoeff,
-    ModularFormClass.qExpansion_coeff_zero (f := f.toCuspForm) one_pos h1_period,
-    (CuspFormClass.zero_at_infty f.toCuspForm).valueAtInfty_eq_zero]
+    CuspFormClass.qExpansion_coeff_zero f.toCuspForm one_pos h1_period]
 
 /-- **Normalisation**: `a₁(f) = 1` for a newform, directly from `f.isNorm`
 (which is stated at the canonical period 1). -/
@@ -121,13 +120,13 @@ lemma Newform.lCoeff_mul_of_coprime (f : Newform N k) (m n : ℕ)
     (hf_char : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ) :
     f.lCoeff (m * n) = f.lCoeff m * f.lCoeff n := by
   have h_m : f.eigenvalue ⟨m, hm_pos⟩ =
-      (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm).coeff m :=
+      (UpperHalfPlane.qExpansion (1 : ℝ) f.toCuspForm).coeff m :=
     Newform.eigenvalue_eq_coeff (f := f) ⟨m, hm_pos⟩ hm χ hf_char
   have h_n : f.eigenvalue ⟨n, hn_pos⟩ =
-      (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm).coeff n :=
+      (UpperHalfPlane.qExpansion (1 : ℝ) f.toCuspForm).coeff n :=
     Newform.eigenvalue_eq_coeff (f := f) ⟨n, hn_pos⟩ hn χ hf_char
   have h_mn : f.eigenvalue ⟨m * n, Nat.mul_pos hm_pos hn_pos⟩ =
-      (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm).coeff (m * n) :=
+      (UpperHalfPlane.qExpansion (1 : ℝ) f.toCuspForm).coeff (m * n) :=
     Newform.eigenvalue_eq_coeff (f := f) ⟨m * n, Nat.mul_pos hm_pos hn_pos⟩
       (hm.mul_left hn) χ hf_char
   simp only [Newform.lCoeff_apply]
@@ -243,13 +242,13 @@ private lemma Newform.lCoeff_recur (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ
       exact Nat.mul_div_cancel _ (by positivity),
     show p ^ (r + 1) * p = p ^ (r + 2) by ring] at h
   simp only [Newform.lCoeff_apply]
-  change (ModularFormClass.qExpansion (1 : ℝ)
+  change (UpperHalfPlane.qExpansion (1 : ℝ)
         f.toCuspForm.toModularForm').coeff (p ^ (r + 2)) =
-      (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm.toModularForm').coeff p *
-      (ModularFormClass.qExpansion (1 : ℝ)
+      (UpperHalfPlane.qExpansion (1 : ℝ) f.toCuspForm.toModularForm').coeff p *
+      (UpperHalfPlane.qExpansion (1 : ℝ)
         f.toCuspForm.toModularForm').coeff (p ^ (r + 1)) -
       (χ (ZMod.unitOfCoprime p hpN) : ℂ) * (p : ℂ) ^ (k - 1) *
-      (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm.toModularForm').coeff (p ^ r)
+      (UpperHalfPlane.qExpansion (1 : ℝ) f.toCuspForm.toModularForm').coeff (p ^ r)
   linear_combination -h
 
 /-- **Bridge**: the Fourier coefficient sequence of a `Newform` living in a

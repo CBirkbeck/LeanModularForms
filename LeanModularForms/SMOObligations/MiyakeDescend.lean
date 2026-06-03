@@ -22,7 +22,7 @@ variable {N : ℕ} [NeZero N] {k : ℤ}
 
 /-- For `g : GL (Fin 2) ℝ` with positive determinant, `UpperHalfPlane.σ g` is the identity. -/
 lemma multipass_sigma_eq_id_of_det_pos (g : GL (Fin 2) ℝ)
-    (hg : 0 < g.det.val) : UpperHalfPlane.σ g = RingHom.id ℂ := by
+    (hg : 0 < g.det.val) : UpperHalfPlane.σ g = ContinuousAlgEquiv.refl ℝ ℂ := by
   simp only [UpperHalfPlane.σ, if_pos hg]
 
 /-- For `γ ∈ Γ₁(N)`, there exists `hγ' : γ ∈ Γ₀(N)` with `Gamma0MapUnits ⟨γ, hγ'⟩ = 1`. -/
@@ -378,9 +378,9 @@ lemma multipass_V_p_slash_descendCoset
         (mapGL ℝ (descendExtraGamma p N) : GL (Fin 2) ℝ) = ⇑g_low :=
       g_low.slash_action_eq' _ ⟨descendExtraGamma p N, h_γ_in_Γ1, rfl⟩
     have h_σ : UpperHalfPlane.σ (mapGL ℝ (descendExtraGamma p N) : GL (Fin 2) ℝ) =
-        RingHom.id ℂ :=
+        ContinuousAlgEquiv.refl ℝ ℂ :=
       multipass_sigma_eq_id_of_det_pos _ (by simp)
-    rw [h_inner_fun, ModularForm.smul_slash, h_σ, RingHom.id_apply, h_g_low_inv]
+    rw [h_inner_fun, ModularForm.smul_slash, h_σ, ContinuousAlgEquiv.refl_apply, h_g_low_inv]
     simp [Pi.smul_apply, smul_eq_mul]
 
 /-- **H31 (audit-multipass descendCosetList_lift_eq_glMap)**: every coset
@@ -421,10 +421,10 @@ lemma miyake_descent_upper_tri_qExpansion
     {M : ℕ} [NeZero M] (p : ℕ) [NeZero p] (hp : p.Prime) (hpM : p ∣ M)
     {k : ℤ}
     (g : ModularForm ((Gamma1 M).map (mapGL ℝ)) k) (m : ℕ) :
-    (ModularFormClass.qExpansion (1 : ℝ)
+    (UpperHalfPlane.qExpansion (1 : ℝ)
         (fun z ↦ ∑ v ∈ Finset.range p,
           (⇑g ∣[k] (T_p_upper p hp.pos v : GL (Fin 2) ℚ)) z)).coeff m =
-      (ModularFormClass.qExpansion (1 : ℝ) g).coeff (p * m) := by
+      (UpperHalfPlane.qExpansion (1 : ℝ) g).coeff (p * m) := by
   have hpM_not_coprime : ¬ Nat.Coprime p M := fun h ↦ hp.coprime_iff_not_dvd.mp h hpM
   rw [show (fun z : UpperHalfPlane ↦
       ∑ v ∈ Finset.range p,
@@ -505,7 +505,7 @@ theorem miyake_hecke_descend_char
   rw [(SlashAction.slash_mul k _ _ _).symm, h_action_eq v, SlashAction.slash_mul,
       multipass_modFormCharSpace_slash_apply χ hfχ (α v) (h_α_mem v),
       ModularForm.smul_slash, multipass_sigma_eq_id_of_det_pos _ (h_det_pos (σ v)),
-      RingHom.id_apply]
+      ContinuousAlgEquiv.refl_apply]
   simp only [Pi.smul_apply, smul_eq_mul, h_chi_eq v]
 
 lemma miyake_hecke_descend_Gamma1_inv

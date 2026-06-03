@@ -170,11 +170,28 @@ lemma heckeSum_Gamma0_apply_apply (k : ℤ) (T : 𝕋 (Gamma0_pair N) ℤ)
   classical
   unfold heckeSlashExt_gen
   induction T using Finsupp.induction_linear with
-  | zero => simp [Finsupp.sum_zero_index]
+  | zero => simp [Finsupp.sum_zero_index, heckeSum_Gamma0]
   | add T₁ T₂ h₁ h₂ =>
-    rw [heckeSum_Gamma0_add, Finsupp.sum_add_index' (h_zero := fun _ ↦ by simp)
-      (h_add := fun _ c₁ c₂ ↦ by rw [add_zsmul])]
-    simp [h₁, h₂]
+    have hsum : (T₁ + T₂).sum (fun D c ↦ c • heckeSlash_gen (Gamma0_pair N) k D ⇑f) z =
+        T₁.sum (fun D c ↦ c • heckeSlash_gen (Gamma0_pair N) k D ⇑f) z +
+        T₂.sum (fun D c ↦ c • heckeSlash_gen (Gamma0_pair N) k D ⇑f) z := by
+      rw [Finsupp.sum_add_index' (h_zero := fun _ ↦ by simp)
+        (h_add := fun _ c₁ c₂ ↦ by rw [add_zsmul])]
+      simp
+    have hadd : heckeSum_Gamma0 N k (T₁ + T₂) =
+        heckeSum_Gamma0 N k T₁ + heckeSum_Gamma0 N k T₂ :=
+      heckeSum_Gamma0_add (N := N) k T₁ T₂
+    have hadd_apply : (heckeSum_Gamma0 N k (T₁ + T₂)) f z =
+        (heckeSum_Gamma0 N k T₁) f z + (heckeSum_Gamma0 N k T₂) f z := by
+      have step1 : (heckeSum_Gamma0 N k (T₁ + T₂)) f =
+          (heckeSum_Gamma0 N k T₁) f + (heckeSum_Gamma0 N k T₂) f :=
+        DFunLike.congr_fun hadd f
+      have step2 : ((heckeSum_Gamma0 N k (T₁ + T₂)) f) z =
+          ((heckeSum_Gamma0 N k T₁) f + (heckeSum_Gamma0 N k T₂) f) z :=
+        congr_arg (· z) step1
+      simpa using step2
+    rw [hadd_apply, h₁, h₂]
+    exact hsum.symm
   | single D c =>
     rw [heckeSum_Gamma0_T_single,
       Finsupp.sum_single_index (by simp : (0 : ℤ) • heckeSlash_gen (Gamma0_pair N) k D _ = _)]
@@ -187,9 +204,12 @@ private lemma heckeSlashExt_gen_Gamma0_zsmul (k : ℤ) (n : ℤ) (T : 𝕋 (Gamm
     heckeSlashExt_gen (Gamma0_pair N) k (n • T) f =
       n • heckeSlashExt_gen (Gamma0_pair N) k T f := by
   unfold heckeSlashExt_gen
-  rw [Finsupp.sum_smul_index (g := T) (b := n)
-    (h := fun D c ↦ c • heckeSlash_gen (Gamma0_pair N) k D f) (by simp),
-    Finsupp.smul_sum]
+  have hsmi := Finsupp.sum_smul_index (g := T) (b := n)
+    (h := fun D c ↦ c • heckeSlash_gen (Gamma0_pair N) k D f) (by simp)
+  rw [show ((n • T : 𝕋 (Gamma0_pair N) ℤ).sum
+      fun D c ↦ c • heckeSlash_gen (Gamma0_pair N) k D f) =
+    T.sum (fun D a ↦ (n * a) • heckeSlash_gen (Gamma0_pair N) k D f) from hsmi]
+  rw [Finsupp.smul_sum]
   exact Finsupp.sum_congr fun D _ ↦ SemigroupAction.mul_smul ..
 
 /-- `heckeSum_Gamma0` is multiplicative on generators `T_single * T_single`. -/
@@ -206,7 +226,7 @@ private lemma heckeSum_Gamma0_mul_T_single (k : ℤ) (D₁ D₂ : HeckeCoset (Ga
       T_single (Gamma0_pair N) ℤ D₁ a = (b * a) • (T_single (Gamma0_pair N) ℤ D₂ 1 *
         T_single (Gamma0_pair N) ℤ D₁ 1) by
       rw [HeckeRing.T_single_mul_T_single, HeckeRing.T_single_mul_T_single,
-        one_smul, one_smul, ← SemigroupAction.mul_smul],
+        one_smul, one_smul, ← SemigroupAction.mul_smul]; rfl,
     heckeSlashExt_gen_Gamma0_zsmul, ← heckeOperator_Gamma0_comp N k D₁ D₂ f,
     heckeSum_Gamma0_T_single, heckeSum_Gamma0_T_single]
   show (b * a : ℤ) • (heckeOperator_Gamma0 N k D₁ (heckeOperator_Gamma0 N k D₂ f) :
@@ -221,16 +241,14 @@ private lemma heckeSum_Gamma0_mul_T_single (k : ℤ) (D₁ D₂ : HeckeCoset (Ga
 lemma heckeSum_Gamma0_mul (k : ℤ) (T₁ T₂ : 𝕋 (Gamma0_pair N) ℤ) :
     heckeSum_Gamma0 N k (T₁ * T₂) =
       heckeSum_Gamma0 N k T₁ * heckeSum_Gamma0 N k T₂ := by
-  induction T₁ using Finsupp.induction_linear with
-  | zero => simp [zero_mul]
-  | add T₁ T₁' h h' =>
-    rw [add_mul, heckeSum_Gamma0_add, heckeSum_Gamma0_add, h, h', add_mul]
-  | single D₁ a =>
-    induction T₂ using Finsupp.induction_linear with
-    | zero => simp [mul_zero]
-    | add T₂ T₂' h h' =>
-      rw [mul_add, heckeSum_Gamma0_add, heckeSum_Gamma0_add, h, h', mul_add]
-    | single D₂ b => exact heckeSum_Gamma0_mul_T_single N k D₁ D₂ a b
+  induction T₁ using HeckeRing.induction_linear_𝕋 with
+  | h_zero => rw [zero_mul, heckeSum_Gamma0_zero, zero_mul]
+  | h_single D₁ a =>
+    induction T₂ using HeckeRing.induction_linear_𝕋 with
+    | h_zero => rw [mul_zero, heckeSum_Gamma0_zero, mul_zero]
+    | h_single D₂ b => exact heckeSum_Gamma0_mul_T_single N k D₁ D₂ a b
+    | h_add T₂ T₂' h h' => rw [mul_add, heckeSum_Gamma0_add, heckeSum_Gamma0_add, h, h', mul_add]
+  | h_add T₁ T₁' h h' => rw [add_mul, heckeSum_Gamma0_add, heckeSum_Gamma0_add, h, h', add_mul]
 
 /-- The Hecke slash of `HeckeCoset.one` on a `Γ₀(N)`-invariant function equals the
 function itself. The single summand in `heckeSlash_gen` is the adjugate of

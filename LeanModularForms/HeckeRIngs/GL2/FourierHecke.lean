@@ -65,7 +65,7 @@ are the convention used downstream in `Newforms.lean` / `LFunction.lean`.
 -/
 
 open Matrix Subgroup.Commensurable Matrix.SpecialLinearGroup HeckeRing.GLn CongruenceSubgroup
-  ModularFormClass
+  ModularFormClass UpperHalfPlane
 
 open scoped Pointwise MatrixGroups ModularForm UpperHalfPlane Manifold
 
@@ -441,10 +441,11 @@ private theorem coeff_qExpansion_heckeT_ppow_succ_succ [NeZero N] (k : ℤ) {p :
     rw [ModularForm.IsGLPos.coe_smul]
     exact congr_arg (↑· : ModularForm _ k → ℍ → ℂ) h_apply
   conv_lhs => rw [h_coe]
-  rw [qExpansion_sub hh0 hh]
+  rw [ModularForm.qExpansion_sub hh0 hh]
   simp only [map_sub]
   congr 1
-  rw [ModularForm.IsGLPos.coe_smul, qExpansion_smul hh0 hh, PowerSeries.coeff_smul, smul_eq_mul]
+  rw [ModularForm.IsGLPos.coe_smul, ModularForm.qExpansion_smul hh0 hh, PowerSeries.coeff_smul,
+    smul_eq_mul]
 
 private abbrev HeckeTpCoeffFormula (k : ℤ) {p N : ℕ} [NeZero N] (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) (χ : (ZMod N)ˣ →* ℂˣ) (t : ℝ) : Prop :=
@@ -759,7 +760,7 @@ theorem eigenvalue_eq_fourierCoeff [NeZero N] (k : ℤ) (n : ℕ+) (hn : Nat.Cop
   have h_lhs : (qExpansion N (heckeT_n k n.val f)).coeff 1 =
       eigenvalue k f hf_eigen.1 n hn := by
     rw [eigenvalue_spec k f hf_eigen.1 n hn]
-    simp [qExpansion_smul (Nat.cast_pos.mpr (Nat.pos_of_neZero N))
+    simp [ModularForm.qExpansion_smul (Nat.cast_pos.mpr (Nat.pos_of_neZero N))
       (natCast_mem_strictPeriods_Gamma1_map N), hf_eigen.2]
   rw [← h1, h_lhs]
 
@@ -780,9 +781,9 @@ theorem eigenform_coeff_multiplicative [NeZero N] (k : ℤ) (m n : ℕ+) (hm : N
   have : NeZero n.val := ⟨n.pos.ne'⟩
   have h_smul : (qExpansion N (heckeT_n k m.val f)).coeff n.val =
       eigenvalue k f hf_eigen.1 m hm * (qExpansion N f).coeff n.val := by
-    rw [eigenvalue_spec k f hf_eigen.1 m hm, ModularForm.IsGLPos.coe_smul, qExpansion_smul
-      (Nat.cast_pos.mpr (Nat.pos_of_neZero N)) (natCast_mem_strictPeriods_Gamma1_map N),
-      PowerSeries.coeff_smul, smul_eq_mul]
+    rw [eigenvalue_spec k f hf_eigen.1 m hm, ModularForm.IsGLPos.coe_smul,
+      ModularForm.qExpansion_smul (Nat.cast_pos.mpr (Nat.pos_of_neZero N))
+      (natCast_mem_strictPeriods_Gamma1_map N), PowerSeries.coeff_smul, smul_eq_mul]
   rw [← eigenvalue_eq_fourierCoeff k m hm χ hf_char hf_eigen, ← h_smul, Nat.gcd_comm m.val,
     Nat.mul_comm m.val]
   exact fourierCoeff_heckeT_n k m.val hm χ hf_char n.val
@@ -883,7 +884,7 @@ theorem eigenvalue_eq_fourierCoeff_one [NeZero N] (k : ℤ) (n : ℕ+) (hn : Nat
   have h_lhs : (qExpansion (1 : ℝ) (heckeT_n k n.val f)).coeff 1 =
       eigenvalue k f hf_eigen.1 n hn := by
     rw [eigenvalue_spec k f hf_eigen.1 n hn]
-    simp [qExpansion_smul one_pos (one_mem_strictPeriods_Gamma1_map N), hf_eigen.2]
+    simp [ModularForm.qExpansion_smul one_pos (one_mem_strictPeriods_Gamma1_map N), hf_eigen.2]
   rw [← h1, h_lhs]
 
 /-- **Period-1 Hecke multiplicativity relations** for Fourier coefficients of a normalised
@@ -905,7 +906,7 @@ theorem eigenform_coeff_multiplicative_one [NeZero N] (k : ℤ) (m n : ℕ+)
   have h_smul : (qExpansion (1 : ℝ) (heckeT_n k m.val f)).coeff n.val =
       eigenvalue k f hf_eigen.1 m hm * (qExpansion (1 : ℝ) f).coeff n.val := by
     rw [eigenvalue_spec k f hf_eigen.1 m hm, ModularForm.IsGLPos.coe_smul,
-      qExpansion_smul one_pos (one_mem_strictPeriods_Gamma1_map N),
+      ModularForm.qExpansion_smul one_pos (one_mem_strictPeriods_Gamma1_map N),
       PowerSeries.coeff_smul, smul_eq_mul]
   rw [← eigenvalue_eq_fourierCoeff_one k m hm χ hf_char hf_eigen, ← h_smul, Nat.gcd_comm m.val,
     Nat.mul_comm m.val]

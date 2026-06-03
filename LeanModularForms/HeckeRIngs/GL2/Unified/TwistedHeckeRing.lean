@@ -190,12 +190,13 @@ lemma tRep_gen_Gamma0_det_pos (D : HeckeCoset (Gamma0_pair N))
 private lemma tRep_gen_sigma_eq_id
     (D : HeckeCoset (Gamma0_pair N))
     (i : decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) :
-    UpperHalfPlane.σ (glMap (tRep_gen (Gamma0_pair N) D i)) = RingHom.id ℂ := by
+    UpperHalfPlane.σ (glMap (tRep_gen (Gamma0_pair N) D i)) =
+      ContinuousAlgEquiv.refl ℝ ℂ := by
   unfold UpperHalfPlane.σ
   simp only [tRep_gen_Gamma0_det_pos (N := N) D i, ↓reduceIte]
 
 private lemma glMap_sigma_eq_id_of_mem_H (h : GL (Fin 2) ℚ) (hh : h ∈ (Gamma0_pair N).H) :
-    UpperHalfPlane.σ (glMap h) = RingHom.id ℂ := by
+    UpperHalfPlane.σ (glMap h) = ContinuousAlgEquiv.refl ℝ ℂ := by
   unfold UpperHalfPlane.σ
   simp only [show 0 < (glMap h).det.val from by
     simpa using Gamma0_pair_det_pos N ⟨h, (Gamma0_pair N).h₀ hh⟩, ↓reduceIte]
@@ -246,12 +247,9 @@ lemma twistedHeckeSlashExt_gen_add (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
       twistedHeckeSlashExt_gen (N := N) k χ T₁ f +
         twistedHeckeSlashExt_gen (N := N) k χ T₂ f := by
   dsimp [twistedHeckeSlashExt_gen]
-  rw [Finsupp.sum_add_index']
-  · intro D
-    simp
-  · intro D c₁ c₂
-    ext z
-    simp [add_smul]
+  exact Finsupp.sum_add_index'
+    (h := fun D c ↦ c • twistedHeckeSlash_gen (N := N) k χ D f)
+    (fun _ ↦ by simp) (fun _ _ _ ↦ by ext z; simp [add_smul])
 
 /-- The raw function-space `Γ₀(N),χ` condition for the existing Hecke pair. -/
 def IsGamma0TwistedInvariant (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (f : ℍ → ℂ) : Prop :=
@@ -415,7 +413,7 @@ lemma twisted_weighted_slash_tRep_gen_of_mem (k : ℤ) (χ : (ZMod N)ˣ →* ℂ
         (delta0NebentypusDeltaChar (N := N) χ
           (gamma0CorrectionDelta (N := N) D q h₁ h₂ hκ))
     ext z
-    simp only [Pi.smul_apply, smul_eq_mul, RingHom.id_apply]
+    simp only [Pi.smul_apply, smul_eq_mul, ContinuousAlgEquiv.refl_apply, RingHom.id_apply]
     rw [← mul_assoc, hscalar]
     rfl
 
@@ -681,17 +679,16 @@ private lemma twisted_weighted_slash_product_eq (k : ℤ) (χ : (ZMod N)ˣ →* 
           (f ∣[k] GL_adjugate (h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂)) := by
           rw [delta0NebentypusWeight_mul_eq_tripleDelta (N := N) χ D₁ D₂ D p
             h₁ hh₁ h₂ hh₂ heq]
-          congr 1
-          rw [show (f ∣[k] tRep_gen (Gamma0_pair N) D₂ p.2) ∣[k]
+          have hslash : (f ∣[k] tRep_gen (Gamma0_pair N) D₂ p.2) ∣[k]
               tRep_gen (Gamma0_pair N) D₁ p.1 =
-            f ∣[k] (tRep_gen (Gamma0_pair N) D₂ p.2 *
-              tRep_gen (Gamma0_pair N) D₁ p.1) from by
-              change (f ∣[k] glMap (tRep_gen (Gamma0_pair N) D₂ p.2)) ∣[k]
-                  glMap (tRep_gen (Gamma0_pair N) D₁ p.1) =
-                f ∣[k] glMap (tRep_gen (Gamma0_pair N) D₂ p.2 *
-                  tRep_gen (Gamma0_pair N) D₁ p.1)
-              rw [map_mul, ← SlashAction.slash_mul]]
-          rw [tRep_gen_mul_anti D₁ D₂ p.1 p.2, heq]
+              f ∣[k] (tRep_gen (Gamma0_pair N) D₂ p.2 *
+                tRep_gen (Gamma0_pair N) D₁ p.1) := by
+            change (f ∣[k] glMap (tRep_gen (Gamma0_pair N) D₂ p.2)) ∣[k]
+                glMap (tRep_gen (Gamma0_pair N) D₁ p.1) =
+              f ∣[k] glMap (tRep_gen (Gamma0_pair N) D₂ p.2 *
+                tRep_gen (Gamma0_pair N) D₁ p.1)
+            rw [map_mul, ← SlashAction.slash_mul]
+          rw [hslash, tRep_gen_mul_anti D₁ D₂ p.1 p.2, heq]
     _ = ((↑(delta0NebentypusWeight (N := N) χ D q) : ℂ)⁻¹) •
           (f ∣[k] tRep_gen (Gamma0_pair N) D q) := by
           simpa [q, delta0NebentypusWeight] using
@@ -1053,9 +1050,12 @@ private lemma twistedHeckeSlashExt_gen_zsmul (k : ℤ) (χ : (ZMod N)ˣ →* ℂ
     twistedHeckeSlashExt_gen (N := N) k χ (n • T) f =
       n • twistedHeckeSlashExt_gen (N := N) k χ T f := by
   unfold twistedHeckeSlashExt_gen
-  rw [Finsupp.sum_smul_index (g := T) (b := n)
-    (h := fun D c ↦ c • twistedHeckeSlash_gen (N := N) k χ D f) (by simp),
-    Finsupp.smul_sum]
+  have hsmi := Finsupp.sum_smul_index (g := T) (b := n)
+    (h := fun D c ↦ c • twistedHeckeSlash_gen (N := N) k χ D f) (by simp)
+  rw [show ((n • T : 𝕋 (Gamma0_pair N) ℤ).sum
+      fun D c ↦ c • twistedHeckeSlash_gen (N := N) k χ D f) =
+    T.sum (fun D a ↦ (n * a) • twistedHeckeSlash_gen (N := N) k χ D f) from hsmi]
+  rw [Finsupp.smul_sum]
   exact Finsupp.sum_congr fun D _ ↦ SemigroupAction.mul_smul _ _ _
 
 /-- The endomorphism of the abstract `Γ₀(N),χ` function submodule attached to one
@@ -1081,7 +1081,7 @@ noncomputable def twistedHeckeSumFunction (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
 
 @[simp] lemma twistedHeckeSumFunction_zero (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
     twistedHeckeSumFunction (N := N) k χ (0 : 𝕋 (Gamma0_pair N) ℤ) = 0 := by
-  simp [twistedHeckeSumFunction]
+  unfold twistedHeckeSumFunction; exact Finsupp.sum_zero_index
 
 @[simp] lemma twistedHeckeSumFunction_T_single (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (D : HeckeCoset (Gamma0_pair N)) (c : ℤ) :
@@ -1093,12 +1093,11 @@ lemma twistedHeckeSumFunction_add (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (T₁ T
     twistedHeckeSumFunction (N := N) k χ (T₁ + T₂) =
       twistedHeckeSumFunction (N := N) k χ T₁ +
         twistedHeckeSumFunction (N := N) k χ T₂ := by
-  dsimp [twistedHeckeSumFunction]
-  rw [Finsupp.sum_add_index']
-  · intro D
-    simp
-  · intro D c₁ c₂
-    ext f z
+  unfold twistedHeckeSumFunction
+  refine Finsupp.sum_add_index' (f := T₁) (g := T₂)
+    (h := fun D c ↦ (c : ℂ) • twistedHeckeOperatorFunction (N := N) k χ D) ?_ ?_
+  · intro D; simp
+  · intro D c₁ c₂; ext f z
     simp [add_smul]
 
 /-- Applying the endomorphism-valued extension agrees with the function-valued
@@ -1109,14 +1108,15 @@ lemma twistedHeckeSumFunction_apply_coe
     (f : gamma0TwistedInvariantFunctionSubmodule (N := N) k χ) :
     (twistedHeckeSumFunction (N := N) k χ T f : ℍ → ℂ) =
       twistedHeckeSlashExt_gen (N := N) k χ T f := by
-  induction T using Finsupp.induction_linear with
-  | zero =>
-      simp [twistedHeckeSumFunction, twistedHeckeSlashExt_gen]
-  | add T₁ T₂ h₁ h₂ =>
+  induction T using HeckeRing.induction_linear_𝕋 with
+  | h_zero =>
+      show (((0 : Module.End ℂ _) f : _) : ℍ → ℂ) = twistedHeckeSlashExt_gen (N := N) k χ 0 f
+      simp [twistedHeckeSlashExt_gen]; rfl
+  | h_add T₁ T₂ h₁ h₂ =>
       rw [twistedHeckeSumFunction_add, twistedHeckeSlashExt_gen_add]
       ext z
       simp [h₁, h₂]
-  | single D c =>
+  | h_single D c =>
       rw [twistedHeckeSumFunction_T_single]
       ext z
       unfold twistedHeckeSlashExt_gen
@@ -1141,7 +1141,7 @@ private lemma twistedHeckeSumFunction_mul_T_single (k : ℤ) (χ : (ZMod N)ˣ �
       (b * a) • (T_single (Gamma0_pair N) ℤ D₂ 1 *
         T_single (Gamma0_pair N) ℤ D₁ 1) := by
     rw [HeckeRing.T_single_mul_T_single, HeckeRing.T_single_mul_T_single,
-      one_smul, one_smul, ← SemigroupAction.mul_smul]
+      one_smul, one_smul, ← SemigroupAction.mul_smul]; rfl
   rw [h_prod, twistedHeckeSlashExt_gen_zsmul]
   rw [← twistedHeckeSlash_gen_comp (N := N) k χ D₁ D₂ (f : ℍ → ℂ)
     f.property (Gamma0_pair_HeckeAlgebra_mul_comm N
@@ -1164,21 +1164,19 @@ lemma twistedHeckeSumFunction_mul (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (T₁ T
     twistedHeckeSumFunction (N := N) k χ (T₁ * T₂) =
       twistedHeckeSumFunction (N := N) k χ T₁ *
         twistedHeckeSumFunction (N := N) k χ T₂ := by
-  induction T₁ using Finsupp.induction_linear with
-  | zero =>
-      simp [zero_mul]
-  | add T₁ T₁' h h' =>
-      rw [add_mul, twistedHeckeSumFunction_add, twistedHeckeSumFunction_add,
-        h, h', add_mul]
-  | single D₁ a =>
-      induction T₂ using Finsupp.induction_linear with
-      | zero =>
-          simp [mul_zero]
-      | add T₂ T₂' h h' =>
+  induction T₁ using HeckeRing.induction_linear_𝕋 with
+  | h_zero => rw [zero_mul, twistedHeckeSumFunction_zero, zero_mul]
+  | h_single D₁ a =>
+      induction T₂ using HeckeRing.induction_linear_𝕋 with
+      | h_zero => rw [mul_zero, twistedHeckeSumFunction_zero, mul_zero]
+      | h_single D₂ b =>
+          exact twistedHeckeSumFunction_mul_T_single (N := N) k χ D₁ D₂ a b
+      | h_add T₂ T₂' h h' =>
           rw [mul_add, twistedHeckeSumFunction_add, twistedHeckeSumFunction_add,
             h, h', mul_add]
-      | single D₂ b =>
-          exact twistedHeckeSumFunction_mul_T_single (N := N) k χ D₁ D₂ a b
+  | h_add T₁ T₁' h h' =>
+      rw [add_mul, twistedHeckeSumFunction_add, twistedHeckeSumFunction_add,
+        h, h', add_mul]
 
 private lemma twistedHeckeSlash_gen_identity_coset (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (f : ℍ → ℂ)
     (hf : IsGamma0TwistedInvariant (N := N) k χ f) :

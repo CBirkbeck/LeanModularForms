@@ -31,12 +31,12 @@ private theorem miyake_descent_witness_exists
     (hl'_dvd : ∀ q ∈ l'.primeFactors, q ∈ N.primeFactors)
     (hp_not_in : p ∉ l'.primeFactors)
     (h_vanish : ∀ n : ℕ, Nat.Coprime n (p * l') →
-      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0) :
+      (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n = 0) :
     ∃ f_lower : CuspForm ((Gamma1 (N / p)).map (mapGL ℝ)) k,
       f_lower ∈ cuspFormCharSpace k χ' ∧
       ∀ m : ℕ, Nat.Coprime m l' →
-        (ModularFormClass.qExpansion (1 : ℝ) f_lower).coeff m =
-          (ModularFormClass.qExpansion (1 : ℝ) f).coeff (p * m) := by
+        (UpperHalfPlane.qExpansion (1 : ℝ) f_lower).coeff m =
+          (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff (p * m) := by
   have hfχ_mod : f.toModularForm' ∈ modFormCharSpace k χ :=
     (cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace
       (k := k) χ f).mpr hfχ
@@ -47,8 +47,8 @@ private theorem miyake_descent_witness_exists
     descendSlashSumCuspForm χ f p hp hpN χ' hχ_eq hfχ_mod
   refine ⟨c • Φ, Submodule.smul_mem _ c
     (descendSlashSumCuspForm_mem_charSpace χ f p hp hpN χ' hχ_eq hfχ_mod), fun m hm_cop ↦ ?_⟩
-  rw [show (ModularFormClass.qExpansion (1 : ℝ) ⇑(c • Φ)).coeff m =
-        c * (ModularFormClass.qExpansion (1 : ℝ) Φ).coeff m from
+  rw [show (UpperHalfPlane.qExpansion (1 : ℝ) ⇑(c • Φ)).coeff m =
+        c * (UpperHalfPlane.qExpansion (1 : ℝ) Φ).coeff m from
       qExpansion_smul_cuspForm_coeff_aux c Φ m]
   haveI : NeZero (l' * (N / p)) := ⟨Nat.mul_ne_zero hl'_pos.ne' (NeZero.ne _)⟩
   obtain ⟨_χ_low, g_low, _hg_low_χ, hg_low_qexp, hg_low_full_qexp⟩ :=
@@ -57,8 +57,8 @@ private theorem miyake_descent_witness_exists
   rw [Φ_qExp_coeff_eq_count_div_p_mul_g_low_coeff χ f hfχ p hp hpN χ' hχ_eq hfχ_mod
       hl'_pos hl'_sqfree hpl' hl'_dvd hp_not_in h_vanish g_low hg_low_qexp
       hg_low_full_qexp m hm_cop,
-    show (ModularFormClass.qExpansion (1 : ℝ) f).coeff (p * m) =
-      (ModularFormClass.qExpansion (1 : ℝ) g_low).coeff m by
+    show (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff (p * m) =
+      (UpperHalfPlane.qExpansion (1 : ℝ) g_low).coeff m by
         have := hg_low_qexp (p * m) (dvd_mul_right p m)
           (Nat.coprime_mul_iff_left.mpr ⟨hpl', hm_cop⟩)
         rwa [Nat.mul_div_cancel_left m hp.pos] at this, hc_def]
@@ -119,14 +119,14 @@ private theorem castLevelRaise_qExpansion_coeff_eq
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (f_lower : CuspForm ((Gamma1 (N / p)).map (mapGL ℝ)) k) {l' : ℕ}
     (hf_lower_qexp : ∀ m : ℕ, Nat.Coprime m l' →
-      (ModularFormClass.qExpansion (1 : ℝ) f_lower).coeff m =
-        (ModularFormClass.qExpansion (1 : ℝ) f).coeff (p * m))
+      (UpperHalfPlane.qExpansion (1 : ℝ) f_lower).coeff m =
+        (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff (p * m))
     (h_vanish' : ∀ n : ℕ, Nat.Coprime n (p * l') →
-      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0)
+      (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n = 0)
     {n : ℕ} (hn : Nat.Coprime n l') :
-    (ModularFormClass.qExpansion (1 : ℝ)
+    (UpperHalfPlane.qExpansion (1 : ℝ)
         (HeckeRing.GL2.AtkinLehner.castLevelRaise N p hpN k f_lower)).coeff n =
-      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n := by
+      (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n := by
   have h_cast_coe :
       (⇑(HeckeRing.GL2.AtkinLehner.castLevelRaise N p hpN k f_lower) :
           UpperHalfPlane → ℂ) =
@@ -144,8 +144,8 @@ private theorem castLevelRaise_qExpansion_coeff_eq
     HeckeRing.GL2.qExpansion_one_modularFormLevelRaise_coeff f_lower.toModularForm' n]
   by_cases hpn : p ∣ n
   · rw [if_pos hpn]
-    show (ModularFormClass.qExpansion (1 : ℝ) f_lower).coeff (n / p) =
-      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n
+    show (UpperHalfPlane.qExpansion (1 : ℝ) f_lower).coeff (n / p) =
+      (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n
     rw [hf_lower_qexp (n / p) (hn.coprime_div_left hpn), Nat.mul_div_cancel' hpn]
   · rw [if_neg hpn]
     exact (h_vanish' n (Nat.Coprime.mul_right
@@ -161,7 +161,7 @@ theorem miyake_4_6_8_inductive_step
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (hfχ : f ∈ cuspFormCharSpace k χ)
     (h_vanish : ∀ n : ℕ, Nat.Coprime n (S.prod id) →
-      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0)
+      (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n = 0)
     {p : ℕ} (hp_in : p ∈ S) [NeZero (N / p)]
     (χ' : (ZMod (N / p))ˣ →* ℂˣ)
     (hχ_eq : χ = χ'.comp (ZMod.unitsMap
@@ -170,14 +170,14 @@ theorem miyake_4_6_8_inductive_step
       f_p ∈ HeckeRing.GL2.AtkinLehner.qSupportedOnDvdSubmodule N k p ∧
       f_p ∈ cuspFormCharSpace k χ ∧
       ∀ n : ℕ, Nat.Coprime n ((S.erase p).prod id) →
-        (ModularFormClass.qExpansion (1 : ℝ) (f - f_p)).coeff n = 0 := by
+        (UpperHalfPlane.qExpansion (1 : ℝ) (f - f_p)).coeff n = 0 := by
   set l' := (S.erase p).prod id with hl'_def
   have h_prod_eq : S.prod id = p * l' := by
     rw [hl'_def, ← Finset.mul_prod_erase S id hp_in]; simp
   have hp_prime : p.Prime := Nat.prime_of_mem_primeFactors (hS hp_in)
   have hpN : p ∣ N := Nat.dvd_of_mem_primeFactors (hS hp_in)
   have h_vanish' (n : ℕ) (hn : Nat.Coprime n (p * l')) :
-      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0 := h_vanish n (h_prod_eq ▸ hn)
+      (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n = 0 := h_vanish n (h_prod_eq ▸ hn)
   haveI : NeZero p := ⟨hp_prime.ne_zero⟩
   obtain ⟨hl'_pos, hpl', hl'_sqfree, hl'_dvd, hp_not_in_l'⟩ :=
     erase_prod_descent_properties S hS hp_prime
@@ -187,30 +187,31 @@ theorem miyake_4_6_8_inductive_step
   set f_p : CuspForm ((Gamma1 N).map (mapGL ℝ)) k :=
     HeckeRing.GL2.AtkinLehner.castLevelRaise N p hpN k f_lower
   have h_qexp_eq (n : ℕ) (hn : Nat.Coprime n l') :
-      (ModularFormClass.qExpansion (1 : ℝ) f_p).coeff n =
-        (ModularFormClass.qExpansion (1 : ℝ) f).coeff n :=
+      (UpperHalfPlane.qExpansion (1 : ℝ) f_p).coeff n =
+        (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n :=
     castLevelRaise_qExpansion_coeff_eq hp_prime hpN f f_lower hf_lower_qexp h_vanish' hn
   refine ⟨f_p, HeckeRing.GL2.AtkinLehner.range_castLevelRaise_le_qSupportedOnDvdSubmodule
       hpN k ⟨f_lower, rfl⟩,
     castLevelRaise_mem_cuspFormCharSpace hpN χ χ' hχ_eq f_lower hf_lower_char,
     fun n hn ↦ ?_⟩
   have h1_period := one_mem_strictPeriods_Gamma1_map N
-  have h_sub : ModularFormClass.qExpansion (1 : ℝ) (f - f_p) =
-      ModularFormClass.qExpansion (1 : ℝ) f -
-      ModularFormClass.qExpansion (1 : ℝ) f_p := by
-    rw [sub_eq_add_neg, sub_eq_add_neg, ← qExpansion_neg one_pos h1_period f_p]
-    exact qExpansion_add (Γ := (Gamma1 N).map (mapGL ℝ)) (h := 1) (a := k) (b := k)
+  have h_sub : UpperHalfPlane.qExpansion (1 : ℝ) (f - f_p) =
+      UpperHalfPlane.qExpansion (1 : ℝ) f -
+      UpperHalfPlane.qExpansion (1 : ℝ) f_p := by
+    rw [sub_eq_add_neg, sub_eq_add_neg, ← ModularForm.qExpansion_neg one_pos h1_period f_p]
+    exact ModularForm.qExpansion_add (Γ := (Gamma1 N).map (mapGL ℝ)) (h := 1) (a := k) (b := k)
       one_pos h1_period f (- f_p)
   rw [h_sub, map_sub, h_qexp_eq n hn, sub_self]
 
 private theorem cuspForm_eq_zero_of_qExpansion_coeff_eq_zero {N : ℕ} {k : ℤ}
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (h : ∀ n : ℕ, (ModularFormClass.qExpansion (1 : ℝ) f.toModularForm').coeff n = 0) :
+    (h : ∀ n : ℕ, (UpperHalfPlane.qExpansion (1 : ℝ) f.toModularForm').coeff n = 0) :
     f = 0 := by
   refine DFunLike.coe_injective ?_
   show (⇑f : UpperHalfPlane → ℂ) = 0
   rw [show (⇑f : UpperHalfPlane → ℂ) = ⇑f.toModularForm' from rfl,
-    (qExpansion_eq_zero_iff one_pos (one_mem_strictPeriods_Gamma1_map N) f.toModularForm').mp
+    (ModularForm.qExpansion_eq_zero_iff one_pos (one_mem_strictPeriods_Gamma1_map N)
+      (f := f.toModularForm')).mp
       (PowerSeries.ext fun n ↦ by rw [map_zero]; exact h n)]; rfl
 
 private theorem sum_ite_eq_add_sum_erase {M : Type*} [AddCommMonoid M]
@@ -231,7 +232,8 @@ private lemma factorsThrough_of_conductor_dvd {n : ℕ} (χ : DirichletCharacter
 private lemma conductor_dvd_of_factorsThrough {n : ℕ} (χ : DirichletCharacter ℂ n)
     (hn : n ≠ 0) {d : ℕ} (hfac : χ.FactorsThrough d) :
     χ.conductor ∣ d :=
-  χ.conductor_dvd_of_mem_conductorSet hn ((DirichletCharacter.mem_conductorSet_iff χ).mpr hfac)
+  haveI : NeZero n := ⟨hn⟩
+  χ.conductor_dvd_of_mem_conductorSet ((DirichletCharacter.mem_conductorSet_iff χ).mpr hfac)
 
 private lemma conductor_changeLevel {n m : ℕ} (hnm : n ∣ m) [NeZero n] [NeZero m]
     (χ : DirichletCharacter ℂ n) :
@@ -260,9 +262,9 @@ private theorem miyake_4_6_8_factor_dichotomy
     (hpl' : Nat.Coprime p l')
     (hl'_dvd : ∀ q ∈ l'.primeFactors, q ∈ N.primeFactors)
     (h_vanish : ∀ n : ℕ, Nat.Coprime n (p * l') →
-      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0) :
+      (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n = 0) :
     (∀ n : ℕ, Nat.Coprime n l' →
-        (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0) ∨
+        (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n = 0) ∨
       ∃ (χ' : (ZMod (N / p))ˣ →* ℂˣ),
         χ = χ'.comp (ZMod.unitsMap (Nat.div_dvd_of_dvd hpN)) := by
   haveI : NeZero p := ⟨hp.ne_zero⟩
@@ -288,7 +290,8 @@ private theorem miyake_4_6_8_factor_dichotomy
     have hgn := hg_qexp n
     rw [if_pos hn_cop] at hgn
     rw [← hgn, hg_zero, show (⇑(0 : CuspForm ((Gamma1 (l' * N)).map (mapGL ℝ)) k) :
-      UpperHalfPlane → ℂ) = (0 : UpperHalfPlane → ℂ) from rfl, qExpansion_zero, map_zero]
+      UpperHalfPlane → ℂ) = (0 : UpperHalfPlane → ℂ) from rfl, UpperHalfPlane.qExpansion_zero,
+      map_zero]
   · refine Or.inr ?_
     have h_cond_dvd_lNp : χ_dir.conductor ∣ l' * (N / p) := by
       have : χ_M.conductor ∣ (l' * N) / p :=
@@ -317,7 +320,7 @@ theorem miyake_4_6_8_subset_helper
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (hfχ : f ∈ cuspFormCharSpace k χ)
     (h_vanish : ∀ n : ℕ, Nat.Coprime n (S.prod id) →
-      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0) :
+      (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n = 0) :
     ∃ f_p : ℕ → CuspForm ((Gamma1 N).map (mapGL ℝ)) k,
       f = ∑ p ∈ S, f_p p ∧
       (∀ p ∈ S, f_p p ∈ HeckeRing.GL2.AtkinLehner.qSupportedOnDvdSubmodule N k p) ∧

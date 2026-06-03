@@ -369,30 +369,35 @@ theorem oldPart_add_newPart (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
 @[simp] theorem oldPart_of_mem_cuspFormsOld
     {f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k} (hf : f ∈ cuspFormsOld N k) :
     oldPart f = f := by
-  simp [oldPart, cuspFormsOldProjection,
-    Submodule.linearProjOfIsCompl_apply_left cuspFormsOld_isCompl_cuspFormsNew ⟨f, hf⟩]
+  have h := Submodule.linearProjOfIsCompl_apply_left
+    cuspFormsOld_isCompl_cuspFormsNew ⟨f, hf⟩
+  unfold oldPart cuspFormsOldProjection
+  exact congr_arg ((cuspFormsOld N k).subtype) h
 
 /-- If `f ∈ cuspFormsNew N k`, then `oldPart f = 0`. -/
 @[simp] theorem oldPart_of_mem_cuspFormsNew
     {f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k} (hf : f ∈ cuspFormsNew N k) :
     oldPart f = 0 := by
-  simp [oldPart, cuspFormsOldProjection,
-    (Submodule.linearProjOfIsCompl_apply_eq_zero_iff cuspFormsOld_isCompl_cuspFormsNew).mpr hf]
+  unfold oldPart cuspFormsOldProjection
+  exact (Submodule.projection_apply_eq_zero_iff
+    cuspFormsOld_isCompl_cuspFormsNew).mpr hf
 
 /-- If `f ∈ cuspFormsNew N k`, then `newPart f = f`. -/
 @[simp] theorem newPart_of_mem_cuspFormsNew
     {f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k} (hf : f ∈ cuspFormsNew N k) :
     newPart f = f := by
-  simp [newPart, cuspFormsNewProjection,
-    Submodule.linearProjOfIsCompl_apply_left cuspFormsOld_isCompl_cuspFormsNew.symm ⟨f, hf⟩]
+  have h := Submodule.linearProjOfIsCompl_apply_left
+    cuspFormsOld_isCompl_cuspFormsNew.symm ⟨f, hf⟩
+  unfold newPart cuspFormsNewProjection
+  exact congr_arg ((cuspFormsNew N k).subtype) h
 
 /-- If `f ∈ cuspFormsOld N k`, then `newPart f = 0`. -/
 @[simp] theorem newPart_of_mem_cuspFormsOld
     {f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k} (hf : f ∈ cuspFormsOld N k) :
     newPart f = 0 := by
-  simp [newPart, cuspFormsNewProjection,
-    (Submodule.linearProjOfIsCompl_apply_eq_zero_iff
-      cuspFormsOld_isCompl_cuspFormsNew.symm).mpr hf]
+  unfold newPart cuspFormsNewProjection
+  exact (Submodule.projection_apply_eq_zero_iff
+    cuspFormsOld_isCompl_cuspFormsNew.symm).mpr hf
 
 /-- **Characterisation of `cuspFormsNew` by vanishing oldform part.** -/
 theorem mem_cuspFormsNew_iff_oldPart_eq_zero (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :

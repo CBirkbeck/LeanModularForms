@@ -172,7 +172,7 @@ private lemma cosetRep_delta_adjugate_det_pos_gen (σ : P.H) (g : P.Δ) :
   rw [glMap_adjugate_det_val_gen]; exact cosetRep_delta_det_pos_gen σ g
 
 private lemma sigma_eq_id_of_pos_det_gen {g : GL (Fin 2) ℝ} (hg : 0 < g.det.val) :
-    UpperHalfPlane.σ g = RingHom.id ℂ := by
+    UpperHalfPlane.σ g = ContinuousAlgEquiv.refl ℝ ℂ := by
   unfold UpperHalfPlane.σ; simp only [hg, ↓reduceIte]
 
 end DetPositivity

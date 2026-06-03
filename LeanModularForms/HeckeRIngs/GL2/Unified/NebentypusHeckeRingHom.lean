@@ -145,13 +145,13 @@ private lemma smul_slash_tRep_gen_modForm
     (a : ℂ) (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
     a • ((⇑f) ∣[k] tRep_gen (Gamma0_pair N) D i) =
       ((a • ⇑f : ℍ → ℂ)) ∣[k] tRep_gen (Gamma0_pair N) D i := by
-  have hσ : UpperHalfPlane.σ (glMap (tRep_gen (Gamma0_pair N) D i)) = RingHom.id ℂ := by
+  have hσ : UpperHalfPlane.σ (glMap (tRep_gen (Gamma0_pair N) D i)) =
+      ContinuousAlgEquiv.refl ℝ ℂ := by
     unfold UpperHalfPlane.σ
     simp only [tRep_gen_Gamma0_det_pos (N := N) D i, ↓reduceIte]
   change a • ((⇑f) ∣[k] glMap (tRep_gen (Gamma0_pair N) D i)) =
     (a • ⇑f : ℍ → ℂ) ∣[k] glMap (tRep_gen (Gamma0_pair N) D i)
-  rw [ModularForm.smul_slash, hσ]
-  rfl
+  rw [ModularForm.smul_slash, hσ, ContinuousAlgEquiv.refl_apply]
 
 private lemma twistedHeckeSlash_gen_bdd_at_cusps
     (D : HeckeCoset (Gamma0_pair N))
@@ -279,7 +279,7 @@ noncomputable def nebentypusHeckeSum
 
 @[simp] lemma nebentypusHeckeSum_zero :
     nebentypusHeckeSum (N := N) (k := k) (χ := χ) (0 : 𝕋 (Gamma0_pair N) ℤ) = 0 := by
-  simp [nebentypusHeckeSum]
+  unfold nebentypusHeckeSum; exact Finsupp.sum_zero_index
 
 @[simp] lemma nebentypusHeckeSum_T_single
     (D : HeckeCoset (Gamma0_pair N)) (c : ℤ) :
@@ -292,12 +292,11 @@ lemma nebentypusHeckeSum_add
     nebentypusHeckeSum (N := N) (k := k) (χ := χ) (T₁ + T₂) =
       nebentypusHeckeSum (N := N) (k := k) (χ := χ) T₁ +
         nebentypusHeckeSum (N := N) (k := k) (χ := χ) T₂ := by
-  dsimp [nebentypusHeckeSum]
-  rw [Finsupp.sum_add_index']
-  · intro D
-    simp
-  · intro D c₁ c₂
-    ext f
+  unfold nebentypusHeckeSum
+  refine Finsupp.sum_add_index' (f := T₁) (g := T₂)
+    (h := fun D c ↦ (c : ℂ) • nebentypusHeckeOpLinear (N := N) (k := k) (χ := χ) D) ?_ ?_
+  · intro D; simp
+  · intro D c₁ c₂; ext f
     simp [add_smul]
 
 /-- Applying `Φ_χ` to a form `f` and coercing to a function reproduces the function-valued
@@ -310,16 +309,17 @@ lemma nebentypusHeckeSum_apply_coe
         ModularForm ((Gamma1 N).map (mapGL ℝ)) k) : ℍ → ℂ) =
       twistedHeckeSlashExt_gen (N := N) k χ T
         (⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) := by
-  induction T using Finsupp.induction_linear with
-  | zero =>
-      simp [nebentypusHeckeSum, twistedHeckeSlashExt_gen]
-  | add T₁ T₂ h₁ h₂ =>
+  induction T using HeckeRing.induction_linear_𝕋 with
+  | h_zero =>
+      rw [nebentypusHeckeSum_zero]
+      simp [twistedHeckeSlashExt_gen]; rfl
+  | h_add T₁ T₂ h₁ h₂ =>
       rw [nebentypusHeckeSum_add, twistedHeckeSlashExt_gen_add]
       funext z
       simp only [LinearMap.add_apply, Submodule.coe_add, ModularForm.add_apply,
         Pi.add_apply]
       rw [congrFun h₁ z, congrFun h₂ z]
-  | single D c =>
+  | h_single D c =>
       rw [nebentypusHeckeSum_T_single]
       funext z
       unfold twistedHeckeSlashExt_gen
@@ -787,13 +787,14 @@ private lemma slash_diag_scalar (k : ℤ) (c : ℕ) (hc : 0 < c) (f : ℍ → �
       Fin.prod_univ_two]
     positivity
   have hσ : UpperHalfPlane.σ (glMap (diagMat 2 (fun _ : Fin 2 ↦ c) : GL (Fin 2) ℚ)) =
-      RingHom.id ℂ := by
+      ContinuousAlgEquiv.refl ℝ ℂ := by
     unfold UpperHalfPlane.σ
     simp only [glMap_det_pos_of_rat_det_pos _ hdetpos, ↓reduceIte]
   have hcne : (c : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr hc.ne'
   ext z
   show (f ∣[k] glMap (diagMat 2 (fun _ : Fin 2 ↦ c) : GL (Fin 2) ℚ)) z = ((c : ℂ) ^ (k - 2) • f) z
   rw [ModularForm.slash_apply, hσ]
+  simp only [ContinuousAlgEquiv.refl_apply]
   have hsmul : (glMap (diagMat 2 (fun _ : Fin 2 ↦ c) : GL (Fin 2) ℚ)) • z = z := by
     apply UpperHalfPlane.ext
     rw [UpperHalfPlane.coe_smul_of_det_pos (glMap_det_pos_of_rat_det_pos _ hdetpos)]
@@ -819,7 +820,7 @@ private lemma slash_diag_scalar (k : ℤ) (c : ℕ) (hc : 0 < c) (f : ℍ → �
     rw [abs_of_nonneg (by positivity)]
     push_cast
     ring
-  rw [hsmul, hdenom, habsdet, RingHom.id_apply]
+  rw [hsmul, hdenom, habsdet]
   show f z * ((c : ℂ) ^ 2) ^ (k - 1) * (c : ℂ) ^ (-k) = (c : ℂ) ^ (k - 2) * f z
   rw [show ((c : ℂ) ^ 2) = (c : ℂ) ^ (2 : ℤ) by norm_cast, ← zpow_mul, mul_assoc,
     ← zpow_add₀ hcne, mul_comm]

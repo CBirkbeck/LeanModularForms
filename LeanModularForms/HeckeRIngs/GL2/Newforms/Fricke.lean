@@ -304,7 +304,7 @@ lemma Newform.frickeMatrix_det_pos (N : ℕ) [NeZero N] :
 
 /-- `σ` of the Fricke matrix is the identity (since det > 0). -/
 lemma Newform.frickeMatrix_σ (N : ℕ) [NeZero N] :
-    UpperHalfPlane.σ (Newform.frickeMatrix N) = RingHom.id ℂ := by
+    UpperHalfPlane.σ (Newform.frickeMatrix N) = ContinuousAlgEquiv.refl ℝ ℂ := by
   unfold UpperHalfPlane.σ
   rw [if_pos (Newform.frickeMatrix_det_pos N)]
 
@@ -504,7 +504,7 @@ noncomputable def Newform.frickeSlashCuspForm
     apply DFunLike.coe_injective
     change (c • (f : UpperHalfPlane → ℂ)) ∣[k] Newform.frickeMatrix N =
       c • ((f : UpperHalfPlane → ℂ) ∣[k] Newform.frickeMatrix N)
-    rw [ModularForm.smul_slash, Newform.frickeMatrix_σ, RingHom.id_apply]
+    rw [ModularForm.smul_slash, Newform.frickeMatrix_σ, ContinuousAlgEquiv.refl_apply]
 
 /-- Underlying function of the CuspForm Fricke operator. -/
 @[simp]
@@ -529,7 +529,7 @@ theorem Newform.frickeMatrix_slash_apply
         (f (Newform.frickeMatrix N • τ)) *
         |((Newform.frickeMatrix N).det.val)| ^ (k - 1) *
         UpperHalfPlane.denom (Newform.frickeMatrix N) τ ^ (-k) from rfl,
-    Newform.frickeMatrix_σ, RingHom.id_apply,
+    Newform.frickeMatrix_σ, ContinuousAlgEquiv.refl_apply,
     Newform.frickeMatrix_denom]
   congr 2
   rw [Newform.frickeMatrix_det, abs_of_pos]

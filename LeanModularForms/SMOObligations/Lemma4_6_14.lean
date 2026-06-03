@@ -184,8 +184,8 @@ private lemma descendCosetList_slash_sum_eq_T_p_upper_range_slash_sum {L : ℕ} 
 private lemma delta_slash_sum_coeff_zero_sq_case {L : ℕ} [NeZero L] {k : ℤ}
     (p : ℕ) [NeZero p] (hp : p.Prime) (hpL : p ∣ L) (hp_sq : p ^ 2 ∣ L)
     (Δ_form : CuspForm ((Gamma1 L).map (mapGL ℝ)) k) (m : ℕ)
-    (h_apm_zero : (ModularFormClass.qExpansion (1 : ℝ) ⇑Δ_form).coeff (p * m) = 0) :
-    (ModularFormClass.qExpansion (1 : ℝ)
+    (h_apm_zero : (UpperHalfPlane.qExpansion (1 : ℝ) ⇑Δ_form).coeff (p * m) = 0) :
+    (UpperHalfPlane.qExpansion (1 : ℝ)
       (fun z ↦ ∑ v : Fin (descendCosetCount p L),
         ((⇑Δ_form : UpperHalfPlane → ℂ) ∣[k]
           descendCosetList p L hp v) z)).coeff m = 0 := by
@@ -212,7 +212,7 @@ private lemma delta_slash_sum_per_q_recast_and_apply
     (hF_q_char : F_q ∈ cuspFormCharSpace k χ_F)
     (m : ℕ) (hq_not_m : ¬ q ∣ m)
     {L : ℕ} [NeZero L] (h_L_eq : L = q * M_q) :
-    (ModularFormClass.qExpansion (1 : ℝ)
+    (UpperHalfPlane.qExpansion (1 : ℝ)
       (fun z : UpperHalfPlane ↦
         ∑ v : Fin (descendCosetCount p L),
           ((⇑(HeckeRing.GL2.modularFormLevelRaise M_q q k F_q.toModularForm') :
@@ -256,7 +256,7 @@ private lemma delta_slash_sum_per_q_inner_fun_coeff_zero {N : ℕ} [NeZero N] {k
     (q : l'.primeFactors) (m : ℕ) (hm_cop : Nat.Coprime m l') :
     haveI := h_q_NeZero_aux q.val q.property
     haveI : NeZero q.val := ⟨(Nat.prime_of_mem_primeFactors q.property).ne_zero⟩
-    (ModularFormClass.qExpansion (1 : ℝ)
+    (UpperHalfPlane.qExpansion (1 : ℝ)
       (fun z : UpperHalfPlane ↦
         ∑ v : Fin (descendCosetCount p ((l' * N) * l' ^ 2)),
           ((⇑(HeckeRing.GL2.modularFormLevelRaise ((l' * N * l' ^ 2) / q.val) q.val k
@@ -314,14 +314,14 @@ private lemma miyake_4_6_14_delta_slash_sum_coeff_zero
     (Δ_form : CuspForm ((Gamma1 (l' * N)).map (mapGL ℝ)) k)
     (hΔ_form_χ : Δ_form ∈ cuspFormCharSpace k χ_M_unit)
     (hΔ_form_vanish : ∀ n : ℕ, Nat.Coprime n l' →
-      (ModularFormClass.qExpansion (1 : ℝ) ⇑Δ_form).coeff n = 0)
+      (UpperHalfPlane.qExpansion (1 : ℝ) ⇑Δ_form).coeff n = 0)
     (m : ℕ) (hm_cop : Nat.Coprime m l') :
-    (ModularFormClass.qExpansion (1 : ℝ)
+    (UpperHalfPlane.qExpansion (1 : ℝ)
       (fun z ↦ ∑ v : Fin (descendCosetCount p (l' * N)),
         ((⇑Δ_form : UpperHalfPlane → ℂ) ∣[k]
           descendCosetList p (l' * N) hp v) z)).coeff m = 0 := by
   have hp_dvd_lN : p ∣ l' * N := dvd_mul_of_dvd_right hpN l'
-  have h_apm_zero : (ModularFormClass.qExpansion (1 : ℝ) ⇑Δ_form).coeff (p * m) = 0 :=
+  have h_apm_zero : (UpperHalfPlane.qExpansion (1 : ℝ) ⇑Δ_form).coeff (p * m) = 0 :=
     hΔ_form_vanish (p * m) (Nat.coprime_mul_iff_left.mpr ⟨hpl', hm_cop⟩)
   obtain ⟨g_q_fam, F_q_fam, χ_F_fam, hg_q_char, hF_q_char, hF_eq_g,
       hχ_F_fam_rel, hg_q_qexp⟩ :=
@@ -337,9 +337,9 @@ private lemma miyake_4_6_14_delta_slash_sum_coeff_zero
     ⟨(Nat.div_pos (Nat.le_of_dvd (Nat.pos_of_ne_zero hLl2_NeZero.out) (h_q_dvd_Ll2_aux q hq))
       (Nat.prime_of_mem_primeFactors hq).pos).ne'⟩
   have h_qexp_eq : ∀ n : ℕ,
-      (ModularFormClass.qExpansion (1 : ℝ) Δ_form).coeff n =
+      (UpperHalfPlane.qExpansion (1 : ℝ) Δ_form).coeff n =
       ∑ q ∈ l'.primeFactors,
-        if q ∣ n then (ModularFormClass.qExpansion (1 : ℝ) (g_q_fam q)).coeff (n / q)
+        if q ∣ n then (UpperHalfPlane.qExpansion (1 : ℝ) (g_q_fam q)).coeff (n / q)
         else 0 := hg_q_qexp
   have h_Δ_fun_eq :=
     function_identity_Δ_eq_sum_V_q_F (L := l' * N) (k := k) Δ_form l' g_q_fam
@@ -389,10 +389,10 @@ private lemma miyake_4_6_14_delta_slash_sum_coeff_zero
            (⇑(HeckeRing.GL2.modularFormLevelRaise ((l' * N * l' ^ 2) / q.val) q.val k
              (F_q_fam q.val q.property).toModularForm') : UpperHalfPlane → ℂ) ∣[k]
               descendCosetList p ((l' * N) * l' ^ 2) hp v) z
-    show (ModularFormClass.qExpansion (1 : ℝ)
+    show (UpperHalfPlane.qExpansion (1 : ℝ)
         (fun z : UpperHalfPlane ↦ ∑ q ∈ l'.primeFactors.attach, inner_fun q z)).coeff m = 0
     have h_per_q_zero : ∀ q : l'.primeFactors,
-        (ModularFormClass.qExpansion (1 : ℝ) (inner_fun q)).coeff m = 0 := fun q ↦
+        (UpperHalfPlane.qExpansion (1 : ℝ) (inner_fun q)).coeff m = 0 := fun q ↦
       delta_slash_sum_per_q_inner_fun_coeff_zero p hp hpN hp_not_in
         h_q_NeZero_aux h_q_dvd_Ll2_aux χ_M_unit χ_M_unit_low hχ_M_unit_eq
         F_q_fam χ_F_fam hF_q_char hχ_F_fam_rel q m hm_cop
@@ -473,22 +473,22 @@ private lemma miyake_4_6_14_delta_slash_sum_coeff_zero
     have h1_period_full_div_p :
         (1 : ℝ) ∈ ((Gamma1 (((l' * N) * l' ^ 2) / p)).map (mapGL ℝ)).strictPeriods := by
       simp [strictPeriods_Gamma1]
-    have h_qexp_sum : ModularFormClass.qExpansion (1 : ℝ)
+    have h_qexp_sum : UpperHalfPlane.qExpansion (1 : ℝ)
         (fun z : UpperHalfPlane ↦ ∑ q ∈ l'.primeFactors.attach, inner_fun q z) =
         ∑ q ∈ l'.primeFactors.attach,
-          ModularFormClass.qExpansion (1 : ℝ) (Φ_q q).toModularForm' := by
+          UpperHalfPlane.qExpansion (1 : ℝ) (Φ_q q).toModularForm' := by
       rw [show (fun z : UpperHalfPlane ↦ ∑ q ∈ l'.primeFactors.attach, inner_fun q z) =
           (⇑Φ_total.toModularForm' : UpperHalfPlane → ℂ) from hΦ_total_fun.symm,
         show Φ_total.toModularForm' =
           ∑ q ∈ l'.primeFactors.attach, (Φ_q q).toModularForm' from
             cuspForm_finsetSum_toModularForm' l'.primeFactors.attach Φ_q]
-      exact map_sum (qExpansionAddHom (Γ := (Gamma1 (((l' * N) * l' ^ 2) / p)).map (mapGL ℝ))
+      exact map_sum (ModularForm.qExpansionAddHom (Γ := (Gamma1 (((l' * N) * l' ^ 2) / p)).map (mapGL ℝ))
         (h := (1 : ℝ)) one_pos h1_period_full_div_p k) (fun q ↦ (Φ_q q).toModularForm')
         l'.primeFactors.attach
     rw [h_qexp_sum, map_sum]
     refine Finset.sum_eq_zero fun q _ ↦ ?_
-    rw [show (ModularFormClass.qExpansion (1 : ℝ) (Φ_q q).toModularForm').coeff m =
-        (ModularFormClass.qExpansion (1 : ℝ) (inner_fun q)).coeff m from
+    rw [show (UpperHalfPlane.qExpansion (1 : ℝ) (Φ_q q).toModularForm').coeff m =
+        (UpperHalfPlane.qExpansion (1 : ℝ) (inner_fun q)).coeff m from
       congrArg (fun ps : PowerSeries ℂ ↦ ps.coeff m)
         (qExpansion_ext2 (⇑(Φ_q q) : UpperHalfPlane → ℂ) (inner_fun q)
           (funext (hΦ_q_fun q)))]
@@ -540,22 +540,22 @@ private lemma slash_sum_V_p_pointwise_eq_smul_g_low {N : ℕ} [NeZero N] {k : �
 private lemma slash_sum_V_p_qExp_coeff_eq {N : ℕ} [NeZero N] {k : ℤ}
     (p : ℕ) [NeZero p] (hp : p.Prime) (hpN : p ∣ N) [NeZero (N / p)]
     (g_low_cast : CuspForm ((Gamma1 (N / p)).map (mapGL ℝ)) k) (m : ℕ) :
-    (ModularFormClass.qExpansion (1 : ℝ)
+    (UpperHalfPlane.qExpansion (1 : ℝ)
         (fun z : UpperHalfPlane ↦ ∑ v : Fin (descendCosetCount p N),
           (⇑(HeckeRing.GL2.modularFormLevelRaise (N / p) p k
             g_low_cast.toModularForm') ∣[k] descendCosetList p N hp v) z)).coeff m =
       (descendCosetCount p N : ℂ) / (p : ℂ) *
-        (ModularFormClass.qExpansion (1 : ℝ)
+        (UpperHalfPlane.qExpansion (1 : ℝ)
           (⇑g_low_cast.toModularForm' : UpperHalfPlane → ℂ)).coeff m := by
   set D : ℂ := (descendCosetCount p N : ℂ) / (p : ℂ)
   set f : UpperHalfPlane → ℂ := fun z ↦ ∑ v : Fin (descendCosetCount p N),
     (⇑(HeckeRing.GL2.modularFormLevelRaise (N / p) p k
       g_low_cast.toModularForm') ∣[k] descendCosetList p N hp v) z
-  have h_qexp : ModularFormClass.qExpansion (1 : ℝ) f =
-      ModularFormClass.qExpansion (1 : ℝ) (D • g_low_cast.toModularForm') :=
+  have h_qexp : UpperHalfPlane.qExpansion (1 : ℝ) f =
+      UpperHalfPlane.qExpansion (1 : ℝ) (D • g_low_cast.toModularForm') :=
     qExpansion_ext2 f (D • g_low_cast.toModularForm') <| funext fun z ↦
       slash_sum_V_p_pointwise_eq_smul_g_low p hp hpN g_low_cast.toModularForm' z
-  rw [h_qexp, qExpansion_smul (F := ModularForm ((Gamma1 (N / p)).map (mapGL ℝ)) k)
+  rw [h_qexp, ModularForm.qExpansion_smul (F := ModularForm ((Gamma1 (N / p)).map (mapGL ℝ)) k)
       one_pos (one_mem_strictPeriods_Gamma1_map (N / p)) D g_low_cast.toModularForm',
     PowerSeries.coeff_smul, smul_eq_mul]
 
@@ -570,9 +570,9 @@ private lemma slash_sum_Δ_form_qExp_coeff_zero {N : ℕ} [NeZero N] {k : ℤ} (
     (Δ_form : CuspForm ((Gamma1 (l' * N)).map (mapGL ℝ)) k)
     (hΔ_form_χ : Δ_form ∈ cuspFormCharSpace k χ_M_unit)
     (hΔ_form_vanish : ∀ n : ℕ, Nat.Coprime n l' →
-      (ModularFormClass.qExpansion (1 : ℝ) ⇑Δ_form).coeff n = 0)
+      (UpperHalfPlane.qExpansion (1 : ℝ) ⇑Δ_form).coeff n = 0)
     (m : ℕ) (hm_cop : Nat.Coprime m l') :
-    (ModularFormClass.qExpansion (1 : ℝ)
+    (UpperHalfPlane.qExpansion (1 : ℝ)
       (fun z : UpperHalfPlane ↦ ∑ v : Fin (descendCosetCount p (l' * N)),
         ((⇑Δ_form : UpperHalfPlane → ℂ) ∣[k]
           descendCosetList p (l' * N) hp v) z)).coeff m = 0 := by
@@ -596,13 +596,13 @@ private lemma slash_sum_qExp_split_via_cuspForm {N : ℕ} [NeZero N] {k : ℤ}
       fun z ↦ ∑ v : Fin (descendCosetCount p N),
         (V_p_g_low_fun ∣[k] descendCosetList p N hp v) z)
     (hΦ_Δ_eq : (⇑Φ_Δ : UpperHalfPlane → ℂ) = Δ_form_slash) (m : ℕ) :
-    (ModularFormClass.qExpansion (1 : ℝ)
+    (UpperHalfPlane.qExpansion (1 : ℝ)
         ((fun z : UpperHalfPlane ↦ ∑ v : Fin (descendCosetCount p N),
           (V_p_g_low_fun ∣[k] descendCosetList p N hp v) z) + Δ_form_slash)).coeff m =
-      (ModularFormClass.qExpansion (1 : ℝ)
+      (UpperHalfPlane.qExpansion (1 : ℝ)
           (fun z : UpperHalfPlane ↦ ∑ v : Fin (descendCosetCount p N),
             (V_p_g_low_fun ∣[k] descendCosetList p N hp v) z)).coeff m +
-        (ModularFormClass.qExpansion (1 : ℝ) Δ_form_slash).coeff m := by
+        (UpperHalfPlane.qExpansion (1 : ℝ) Δ_form_slash).coeff m := by
   set lhs_fn : UpperHalfPlane → ℂ := fun z : UpperHalfPlane ↦
     ∑ v : Fin (descendCosetCount p N), (V_p_g_low_fun ∣[k] descendCosetList p N hp v) z
   have h_sum_eq_fn : (lhs_fn + Δ_form_slash : UpperHalfPlane → ℂ) =
@@ -610,13 +610,13 @@ private lemma slash_sum_qExp_split_via_cuspForm {N : ℕ} [NeZero N] {k : ℤ}
     funext z
     show lhs_fn z + Δ_form_slash z = (⇑Φ_RHS : UpperHalfPlane → ℂ) z + (⇑Φ_Δ) z
     rw [hΦ_RHS_eq, hΦ_Δ_eq]
-  have h_bridge : ModularFormClass.qExpansion (1 : ℝ)
+  have h_bridge : UpperHalfPlane.qExpansion (1 : ℝ)
         ((lhs_fn + Δ_form_slash) : UpperHalfPlane → ℂ) =
-      ModularFormClass.qExpansion (1 : ℝ) (Φ_RHS.toModularForm' + Φ_Δ.toModularForm') :=
+      UpperHalfPlane.qExpansion (1 : ℝ) (Φ_RHS.toModularForm' + Φ_Δ.toModularForm') :=
     qExpansion_ext2 ((lhs_fn + Δ_form_slash) : UpperHalfPlane → ℂ)
       (Φ_RHS.toModularForm' + Φ_Δ.toModularForm') h_sum_eq_fn
   rw [h_bridge,
-    qExpansion_add (Γ := (Gamma1 (N / p)).map (mapGL ℝ)) (h := (1 : ℝ))
+    ModularForm.qExpansion_add (Γ := (Gamma1 (N / p)).map (mapGL ℝ)) (h := (1 : ℝ))
       (a := k) (b := k) one_pos (one_mem_strictPeriods_Gamma1_map (N / p))
       Φ_RHS.toModularForm' Φ_Δ.toModularForm', map_add,
     qExpansion_ext2 Φ_RHS.toModularForm' (lhs_fn : UpperHalfPlane → ℂ) hΦ_RHS_eq,
@@ -655,16 +655,16 @@ private lemma miyake_descent_l_prime_gt_one_helper {N : ℕ} [NeZero N] {k : ℤ
     (Δ_form : CuspForm ((Gamma1 (l' * N)).map (mapGL ℝ)) k)
     (hΔ_form_χ : Δ_form ∈ cuspFormCharSpace k χ_M_unit)
     (hΔ_form_vanish : ∀ n : ℕ, Nat.Coprime n l' →
-      (ModularFormClass.qExpansion (1 : ℝ) ⇑Δ_form).coeff n = 0)
+      (UpperHalfPlane.qExpansion (1 : ℝ) ⇑Δ_form).coeff n = 0)
     (hΔ_form_fun_eq : (⇑Δ_form : UpperHalfPlane → ℂ) =
       fun z ↦ ⇑f.toModularForm' z -
         ⇑((HeckeRing.GL2.modularFormLevelRaise (l' * N / p) p k)
           g_low_cast.toModularForm') z)
     (m : ℕ) (hm_cop : Nat.Coprime m l') :
-    (PowerSeries.coeff m) (ModularFormClass.qExpansion (1 : ℝ)
+    (PowerSeries.coeff m) (UpperHalfPlane.qExpansion (1 : ℝ)
       (fun z ↦ ∑ v : Fin (descendCosetCount p (l' * N)),
         (⇑f.toModularForm' ∣[k] descendCosetList p (l' * N) hp v) z)) =
-    (PowerSeries.coeff m) (ModularFormClass.qExpansion (1 : ℝ)
+    (PowerSeries.coeff m) (UpperHalfPlane.qExpansion (1 : ℝ)
       (fun z ↦ ∑ v : Fin (descendCosetCount p (l' * N)),
         (⇑((HeckeRing.GL2.modularFormLevelRaise (l' * N / p) p k)
           g_low_cast.toModularForm') ∣[k] descendCosetList p (l' * N) hp v) z)) := by
@@ -733,50 +733,50 @@ private lemma descendCosetCount_mul_left_of_coprime
 
 lemma qExpansion_smul_cuspForm_coeff_aux {M : ℕ} [NeZero M] {k : ℤ} (c : ℂ)
     (f : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) (m : ℕ) :
-    (ModularFormClass.qExpansion (1 : ℝ) (c • f)).coeff m =
-      c * (ModularFormClass.qExpansion (1 : ℝ) f).coeff m := by
-  change (ModularFormClass.qExpansion (1 : ℝ) (c • f.toModularForm')).coeff m =
-    c * (ModularFormClass.qExpansion (1 : ℝ) (⇑f : UpperHalfPlane → ℂ)).coeff m
-  rw [qExpansion_smul (F := ModularForm ((Gamma1 M).map (mapGL ℝ)) k) one_pos
+    (UpperHalfPlane.qExpansion (1 : ℝ) (c • f)).coeff m =
+      c * (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff m := by
+  change (UpperHalfPlane.qExpansion (1 : ℝ) (c • f.toModularForm')).coeff m =
+    c * (UpperHalfPlane.qExpansion (1 : ℝ) (⇑f : UpperHalfPlane → ℂ)).coeff m
+  rw [ModularForm.qExpansion_smul (F := ModularForm ((Gamma1 M).map (mapGL ℝ)) k) one_pos
     (one_mem_strictPeriods_Gamma1_map M) c f.toModularForm',
     PowerSeries.coeff_smul, smul_eq_mul]
   rfl
 
 private lemma qExpansion_sub_cuspForm_coeff {M : ℕ} [NeZero M] {k : ℤ}
     (a b : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) (n : ℕ) :
-    (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑(a - b)) =
-    (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑a) -
-    (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑b) := by
+    (PowerSeries.coeff n) (UpperHalfPlane.qExpansion (1 : ℝ) ⇑(a - b)) =
+    (PowerSeries.coeff n) (UpperHalfPlane.qExpansion (1 : ℝ) ⇑a) -
+    (PowerSeries.coeff n) (UpperHalfPlane.qExpansion (1 : ℝ) ⇑b) := by
   have h1 := one_mem_strictPeriods_Gamma1_map M
-  have h_sub_qexp : ModularFormClass.qExpansion (1 : ℝ) (a - b) =
-      ModularFormClass.qExpansion (1 : ℝ) a - ModularFormClass.qExpansion (1 : ℝ) b := by
-    rw [sub_eq_add_neg, sub_eq_add_neg, ← qExpansion_neg one_pos h1 b]
-    exact qExpansion_add (Γ := (Gamma1 M).map (mapGL ℝ))
+  have h_sub_qexp : UpperHalfPlane.qExpansion (1 : ℝ) (a - b) =
+      UpperHalfPlane.qExpansion (1 : ℝ) a - UpperHalfPlane.qExpansion (1 : ℝ) b := by
+    rw [sub_eq_add_neg, sub_eq_add_neg, ← ModularForm.qExpansion_neg one_pos h1 b]
+    exact ModularForm.qExpansion_add (Γ := (Gamma1 M).map (mapGL ℝ))
       (h := (1 : ℝ)) (a := k) (b := k) one_pos h1 a (- b)
-  rw [show ModularFormClass.qExpansion (1 : ℝ) (⇑(a - b) : UpperHalfPlane → ℂ) =
-    ModularFormClass.qExpansion (1 : ℝ) (a - b) from rfl, h_sub_qexp, map_sub]
+  rw [show UpperHalfPlane.qExpansion (1 : ℝ) (⇑(a - b) : UpperHalfPlane → ℂ) =
+    UpperHalfPlane.qExpansion (1 : ℝ) (a - b) from rfl, h_sub_qexp, map_sub]
 
 private lemma f_qExp_eq_levelRaise_qExp_at_coprime {N : ℕ} [NeZero N] {k : ℤ}
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) {p : ℕ} [NeZero p] (hp : p.Prime) {l' : ℕ}
     (h_vanish : ∀ n : ℕ, Nat.Coprime n (p * l') →
-      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0)
+      (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n = 0)
     {Mp : ℕ} [NeZero Mp] (g_low_cast : CuspForm ((Gamma1 Mp).map (mapGL ℝ)) k)
     {L : ℕ} [NeZero L] (g_low : CuspForm ((Gamma1 L).map (mapGL ℝ)) k)
     (h_cast_fun : (⇑g_low_cast : UpperHalfPlane → ℂ) = ⇑g_low)
     (hg_low_qexp : ∀ n : ℕ, p ∣ n → Nat.Coprime n l' →
-      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n =
-        (ModularFormClass.qExpansion (1 : ℝ) g_low).coeff (n / p)) :
+      (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n =
+        (UpperHalfPlane.qExpansion (1 : ℝ) g_low).coeff (n / p)) :
     ∀ n : ℕ, Nat.Coprime n l' →
-      (ModularFormClass.qExpansion (1 : ℝ) ⇑f).coeff n =
-        (ModularFormClass.qExpansion (1 : ℝ)
+      (UpperHalfPlane.qExpansion (1 : ℝ) ⇑f).coeff n =
+        (UpperHalfPlane.qExpansion (1 : ℝ)
           ⇑(HeckeRing.GL2.modularFormLevelRaise Mp p k
             g_low_cast.toModularForm')).coeff n := by
   intro n hn_cop
   rw [HeckeRing.GL2.qExpansion_one_modularFormLevelRaise_coeff _ n]
   by_cases hpn : p ∣ n
   · rw [if_pos hpn, hg_low_qexp n hpn hn_cop,
-      show ModularFormClass.qExpansion (1 : ℝ) g_low_cast.toModularForm' =
-        ModularFormClass.qExpansion (1 : ℝ) (⇑g_low : UpperHalfPlane → ℂ) from
+      show UpperHalfPlane.qExpansion (1 : ℝ) g_low_cast.toModularForm' =
+        UpperHalfPlane.qExpansion (1 : ℝ) (⇑g_low : UpperHalfPlane → ℂ) from
         h_cast_fun ▸ rfl]
   · rw [if_neg hpn]
     exact h_vanish n (Nat.Coprime.mul_right ((hp.coprime_iff_not_dvd).mpr hpn).symm hn_cop)
@@ -789,17 +789,17 @@ private lemma g_bundled_qExp_eq_levelRaise_qExp {N : ℕ} [NeZero N] {k : ℤ}
     {L : ℕ} [NeZero L] (g_low : CuspForm ((Gamma1 L).map (mapGL ℝ)) k)
     (h_cast_fun : (⇑g_low_cast : UpperHalfPlane → ℂ) = ⇑g_low)
     (hg_low_full_qexp : ∀ m : ℕ,
-      (ModularFormClass.qExpansion (1 : ℝ) g_low).coeff m =
+      (UpperHalfPlane.qExpansion (1 : ℝ) g_low).coeff m =
         if Nat.Coprime m l' then
-          (ModularFormClass.qExpansion (1 : ℝ) f).coeff (p * m)
+          (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff (p * m)
         else 0)
     (h_vanish : ∀ n : ℕ, Nat.Coprime n (p * l') →
-      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0)
+      (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n = 0)
     (g_bundled : CuspForm ((Gamma1 (l' * N)).map (mapGL ℝ)) k)
     (hg_bundled_qexp : ∀ n : ℕ,
-      (ModularFormClass.qExpansion (1 : ℝ) g_bundled).coeff n =
+      (UpperHalfPlane.qExpansion (1 : ℝ) g_bundled).coeff n =
         if Nat.Coprime n l' then
-          (ModularFormClass.qExpansion (1 : ℝ) f).coeff n
+          (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n
         else 0)
     (hpM_eq : p * ((l' * N) / p) = l' * N) :
     (⇑g_bundled : UpperHalfPlane → ℂ) =
@@ -807,16 +807,16 @@ private lemma g_bundled_qExp_eq_levelRaise_qExp {N : ℕ} [NeZero N] {k : ℤ}
         g_low_cast.toModularForm') := by
   haveI hpMp_NeZero : NeZero (p * ((l' * N) / p)) := by rw [hpM_eq]; infer_instance
   have h_qExp_eq : ∀ n : ℕ,
-      (ModularFormClass.qExpansion (1 : ℝ) ⇑g_bundled).coeff n =
-        (ModularFormClass.qExpansion (1 : ℝ)
+      (UpperHalfPlane.qExpansion (1 : ℝ) ⇑g_bundled).coeff n =
+        (UpperHalfPlane.qExpansion (1 : ℝ)
           ⇑(HeckeRing.GL2.modularFormLevelRaise ((l' * N) / p) p k
             g_low_cast.toModularForm')).coeff n := by
     intro n
     rw [hg_bundled_qexp n, HeckeRing.GL2.qExpansion_one_modularFormLevelRaise_coeff _ n]
     by_cases hpn : p ∣ n
     · rw [if_pos hpn,
-        show ModularFormClass.qExpansion (1 : ℝ) g_low_cast.toModularForm' =
-          ModularFormClass.qExpansion (1 : ℝ) (⇑g_low : UpperHalfPlane → ℂ) from
+        show UpperHalfPlane.qExpansion (1 : ℝ) g_low_cast.toModularForm' =
+          UpperHalfPlane.qExpansion (1 : ℝ) (⇑g_low : UpperHalfPlane → ℂ) from
             h_cast_fun ▸ rfl,
         hg_low_full_qexp (n / p)]
       have h_cop_iff : Nat.Coprime n l' ↔ Nat.Coprime (n / p) l' := by
@@ -843,10 +843,10 @@ private lemma g_bundled_qExp_eq_levelRaise_qExp {N : ℕ} [NeZero N] {k : ℤ}
     (one_mem_strictPeriods_Gamma1_map (l' * N))
     g_bundled.toModularForm' Vp_form_cast (by
       intro n
-      have h_V : ModularFormClass.qExpansion (1 : ℝ) Vp_form_cast =
-          ModularFormClass.qExpansion (1 : ℝ) Vp_form := by
-        show ModularFormClass.qExpansion (1 : ℝ) (⇑Vp_form_cast : UpperHalfPlane → ℂ) =
-          ModularFormClass.qExpansion (1 : ℝ) (⇑Vp_form : UpperHalfPlane → ℂ)
+      have h_V : UpperHalfPlane.qExpansion (1 : ℝ) Vp_form_cast =
+          UpperHalfPlane.qExpansion (1 : ℝ) Vp_form := by
+        show UpperHalfPlane.qExpansion (1 : ℝ) (⇑Vp_form_cast : UpperHalfPlane → ℂ) =
+          UpperHalfPlane.qExpansion (1 : ℝ) (⇑Vp_form : UpperHalfPlane → ℂ)
         rw [h_Vp_form_cast_fun]
       rw [h_V]
       exact h_qExp_eq n)
@@ -863,21 +863,21 @@ private lemma descent_l_prime_gt_one_apply {N : ℕ} [NeZero N] {k : ℤ} (χ : 
     (hl'_dvd : ∀ q ∈ l'.primeFactors, q ∈ N.primeFactors)
     (hp_not_in : p ∉ l'.primeFactors)
     (h_vanish : ∀ n : ℕ, Nat.Coprime n (p * l') →
-      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0)
+      (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n = 0)
     [NeZero l'] [NeZero (l' * N)] [NeZero ((l' * N) / p)]
     {L : ℕ} [NeZero L] (g_low : CuspForm ((Gamma1 L).map (mapGL ℝ)) k)
     (g_low_cast : CuspForm ((Gamma1 ((l' * N) / p)).map (mapGL ℝ)) k)
     (h_cast_fun : (⇑g_low_cast : UpperHalfPlane → ℂ) = ⇑g_low)
     (hg_low_full_qexp : ∀ m : ℕ,
-      (ModularFormClass.qExpansion (1 : ℝ) g_low).coeff m =
+      (UpperHalfPlane.qExpansion (1 : ℝ) g_low).coeff m =
         if Nat.Coprime m l' then
-          (ModularFormClass.qExpansion (1 : ℝ) f).coeff (p * m)
+          (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff (p * m)
         else 0)
     (m : ℕ) (hm_cop : Nat.Coprime m l') :
-    (PowerSeries.coeff m) (ModularFormClass.qExpansion (1 : ℝ)
+    (PowerSeries.coeff m) (UpperHalfPlane.qExpansion (1 : ℝ)
       (fun z ↦ ∑ v : Fin (descendCosetCount p (l' * N)),
         (⇑f.toModularForm' ∣[k] descendCosetList p (l' * N) hp v) z)) =
-    (PowerSeries.coeff m) (ModularFormClass.qExpansion (1 : ℝ)
+    (PowerSeries.coeff m) (UpperHalfPlane.qExpansion (1 : ℝ)
       (fun z ↦ ∑ v : Fin (descendCosetCount p (l' * N)),
         (⇑((HeckeRing.GL2.modularFormLevelRaise (l' * N / p) p k)
           g_low_cast.toModularForm') ∣[k] descendCosetList p (l' * N) hp v) z)) := by
@@ -898,15 +898,15 @@ private lemma descent_l_prime_gt_one_apply {N : ℕ} [NeZero N] {k : ℤ} (χ : 
   have hp_dvd_lN : p ∣ l' * N := dvd_mul_of_dvd_right hpN l'
   have hpM_eq : p * ((l' * N) / p) = l' * N := Nat.mul_div_cancel' hp_dvd_lN
   have h_Δ_form_sub_qexp : ∀ n : ℕ,
-      (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑Δ_form) =
-      (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑f_restricted) -
-      (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑g_bundled) :=
+      (PowerSeries.coeff n) (UpperHalfPlane.qExpansion (1 : ℝ) ⇑Δ_form) =
+      (PowerSeries.coeff n) (UpperHalfPlane.qExpansion (1 : ℝ) ⇑f_restricted) -
+      (PowerSeries.coeff n) (UpperHalfPlane.qExpansion (1 : ℝ) ⇑g_bundled) :=
     fun n ↦ qExpansion_sub_cuspForm_coeff f_restricted g_bundled n
   have hΔ_form_vanish : ∀ n : ℕ, Nat.Coprime n l' →
-      (ModularFormClass.qExpansion (1 : ℝ) ⇑Δ_form).coeff n = 0 := fun n hn ↦ by
+      (UpperHalfPlane.qExpansion (1 : ℝ) ⇑Δ_form).coeff n = 0 := fun n hn ↦ by
     rw [h_Δ_form_sub_qexp n,
-      show (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑f_restricted) =
-        (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ) ⇑f) from rfl,
+      show (PowerSeries.coeff n) (UpperHalfPlane.qExpansion (1 : ℝ) ⇑f_restricted) =
+        (PowerSeries.coeff n) (UpperHalfPlane.qExpansion (1 : ℝ) ⇑f) from rfl,
       hg_bundled_qexp n, if_pos hn, sub_self]
   have h_g_bundled_eq_Vp :=
     g_bundled_qExp_eq_levelRaise_qExp f hp hpl' g_low_cast g_low h_cast_fun
@@ -930,15 +930,15 @@ private lemma descent_slashSum_qExp_coeff_eq_of_l_eq_one {N : ℕ} [NeZero N] {k
     (g_low_cast : CuspForm ((Gamma1 ((l' * N) / p)).map (mapGL ℝ)) k)
     (hp_dvd_lN : p ∣ l' * N)
     (h_delta_Fourier_vanish : ∀ n : ℕ, Nat.Coprime n l' →
-      (ModularFormClass.qExpansion (1 : ℝ) ⇑f).coeff n =
-      (ModularFormClass.qExpansion (1 : ℝ)
+      (UpperHalfPlane.qExpansion (1 : ℝ) ⇑f).coeff n =
+      (UpperHalfPlane.qExpansion (1 : ℝ)
         ⇑(HeckeRing.GL2.modularFormLevelRaise ((l' * N) / p) p k
           g_low_cast.toModularForm')).coeff n)
     (m : ℕ) :
-    (ModularFormClass.qExpansion (1 : ℝ)
+    (UpperHalfPlane.qExpansion (1 : ℝ)
       (fun z ↦ ∑ v : Fin (descendCosetCount p (l' * N)),
         (⇑f.toModularForm' ∣[k] descendCosetList p (l' * N) hp v) z)).coeff m =
-    (ModularFormClass.qExpansion (1 : ℝ)
+    (UpperHalfPlane.qExpansion (1 : ℝ)
       (fun z ↦ ∑ v : Fin (descendCosetCount p (l' * N)),
         (⇑(HeckeRing.GL2.modularFormLevelRaise ((l' * N) / p) p k
           g_low_cast.toModularForm') ∣[k] descendCosetList p (l' * N) hp v) z)).coeff m := by
@@ -958,25 +958,25 @@ private lemma descent_slashSum_qExp_coeff_eq_Dp_g_low_coeff {N : ℕ} [NeZero N]
     {l' : ℕ} (hl'_sqfree : Squarefree l') (hpl' : Nat.Coprime p l')
     (hl'_dvd : ∀ q ∈ l'.primeFactors, q ∈ N.primeFactors) (hp_not_in : p ∉ l'.primeFactors)
     (h_vanish : ∀ n : ℕ, Nat.Coprime n (p * l') →
-      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0)
+      (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n = 0)
     [NeZero l'] [NeZero (l' * N)] [NeZero ((l' * N) / p)]
     {L : ℕ} [NeZero L] (g_low : CuspForm ((Gamma1 L).map (mapGL ℝ)) k)
     (g_low_cast : CuspForm ((Gamma1 ((l' * N) / p)).map (mapGL ℝ)) k)
     (h_cast_fun : (⇑g_low_cast : UpperHalfPlane → ℂ) = ⇑g_low)
     (hg_low_qexp : ∀ n : ℕ, p ∣ n → Nat.Coprime n l' →
-      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n =
-        (ModularFormClass.qExpansion (1 : ℝ) g_low).coeff (n / p))
+      (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n =
+        (UpperHalfPlane.qExpansion (1 : ℝ) g_low).coeff (n / p))
     (hg_low_full_qexp : ∀ m : ℕ,
-      (ModularFormClass.qExpansion (1 : ℝ) g_low).coeff m =
+      (UpperHalfPlane.qExpansion (1 : ℝ) g_low).coeff m =
         if Nat.Coprime m l' then
-          (ModularFormClass.qExpansion (1 : ℝ) f).coeff (p * m)
+          (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff (p * m)
         else 0)
     (m : ℕ) (hm_cop : Nat.Coprime m l') :
-    (ModularFormClass.qExpansion (1 : ℝ)
+    (UpperHalfPlane.qExpansion (1 : ℝ)
       (fun z : UpperHalfPlane ↦ ∑ v : Fin (descendCosetCount p (l' * N)),
         (⇑f.toModularForm' ∣[k] descendCosetList p (l' * N) hp v) z)).coeff m =
       (descendCosetCount p (l' * N) : ℂ) / (p : ℂ) *
-        (ModularFormClass.qExpansion (1 : ℝ) g_low).coeff m := by
+        (UpperHalfPlane.qExpansion (1 : ℝ) g_low).coeff m := by
   have hp_dvd_lN : p ∣ l' * N := dvd_mul_of_dvd_right hpN l'
   set Ψ_fun : UpperHalfPlane → ℂ := fun z ↦
     ∑ v : Fin (descendCosetCount p (l' * N)),
@@ -994,19 +994,19 @@ private lemma descent_slashSum_qExp_coeff_eq_Dp_g_low_coeff {N : ℕ} [NeZero N]
       show (g_low_cast.toModularForm' : UpperHalfPlane → ℂ) z = g_low z by
         show (⇑g_low_cast : UpperHalfPlane → ℂ) z = ⇑g_low z; rw [h_cast_fun]]
     ring
-  have h_Vp_qexp_eq : ModularFormClass.qExpansion (1 : ℝ) Vp_slash_lifted_fun =
-      ModularFormClass.qExpansion (1 : ℝ) Dp_g_low :=
+  have h_Vp_qexp_eq : UpperHalfPlane.qExpansion (1 : ℝ) Vp_slash_lifted_fun =
+      UpperHalfPlane.qExpansion (1 : ℝ) Dp_g_low :=
     qExpansion_ext2 Vp_slash_lifted_fun Dp_g_low (funext h_Vp_slash_lifted)
   have h_Dp_g_low_qexp :
-      (ModularFormClass.qExpansion (1 : ℝ) Dp_g_low).coeff m =
+      (UpperHalfPlane.qExpansion (1 : ℝ) Dp_g_low).coeff m =
         (descendCosetCount p (l' * N) : ℂ) / (p : ℂ) *
-          (ModularFormClass.qExpansion (1 : ℝ) g_low).coeff m :=
+          (UpperHalfPlane.qExpansion (1 : ℝ) g_low).coeff m :=
     qExpansion_smul_cuspForm_coeff_aux _ g_low m
   have h_delta_Fourier_vanish :=
     f_qExp_eq_levelRaise_qExp_at_coprime f hp h_vanish g_low_cast g_low h_cast_fun hg_low_qexp
   have h_Psi_eq_Vp_coeff :
-      (ModularFormClass.qExpansion (1 : ℝ) Ψ_fun).coeff m =
-        (ModularFormClass.qExpansion (1 : ℝ) Vp_slash_lifted_fun).coeff m := by
+      (UpperHalfPlane.qExpansion (1 : ℝ) Ψ_fun).coeff m =
+        (UpperHalfPlane.qExpansion (1 : ℝ) Vp_slash_lifted_fun).coeff m := by
     rcases Nat.lt_or_ge 1 l' with hl1_gt | hl1_le
     · exact descent_l_prime_gt_one_apply χ f hfχ p hp hpN χ' hχ_eq
         hl1_gt hl'_sqfree hpl' hl'_dvd hp_not_in h_vanish g_low g_low_cast
@@ -1025,21 +1025,21 @@ lemma Φ_qExp_coeff_eq_count_div_p_mul_g_low_coeff {N : ℕ} [NeZero N] {k : ℤ
     {l' : ℕ} (hl'_pos : 0 < l') (hl'_sqfree : Squarefree l') (hpl' : Nat.Coprime p l')
     (hl'_dvd : ∀ q ∈ l'.primeFactors, q ∈ N.primeFactors) (hp_not_in : p ∉ l'.primeFactors)
     (h_vanish : ∀ n : ℕ, Nat.Coprime n (p * l') →
-      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0)
+      (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n = 0)
     [NeZero (l' * (N / p))] (g_low : CuspForm ((Gamma1 (l' * (N / p))).map (mapGL ℝ)) k)
     (hg_low_qexp : ∀ n : ℕ, p ∣ n → Nat.Coprime n l' →
-      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n =
-        (ModularFormClass.qExpansion (1 : ℝ) g_low).coeff (n / p))
+      (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n =
+        (UpperHalfPlane.qExpansion (1 : ℝ) g_low).coeff (n / p))
     (hg_low_full_qexp : ∀ m : ℕ,
-      (ModularFormClass.qExpansion (1 : ℝ) g_low).coeff m =
+      (UpperHalfPlane.qExpansion (1 : ℝ) g_low).coeff m =
         if Nat.Coprime m l' then
-          (ModularFormClass.qExpansion (1 : ℝ) f).coeff (p * m)
+          (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff (p * m)
         else 0)
     (m : ℕ) (hm_cop : Nat.Coprime m l') :
-    (ModularFormClass.qExpansion (1 : ℝ)
+    (UpperHalfPlane.qExpansion (1 : ℝ)
       (descendSlashSumCuspForm χ f p hp hpN χ' hχ_eq hfχ_mod)).coeff m =
       (descendCosetCount p N : ℂ) / (p : ℂ) *
-        (ModularFormClass.qExpansion (1 : ℝ) g_low).coeff m := by
+        (UpperHalfPlane.qExpansion (1 : ℝ) g_low).coeff m := by
   haveI hl'_NeZero : NeZero l' := ⟨hl'_pos.ne'⟩
   haveI : NeZero (l' * N) := ⟨Nat.mul_ne_zero hl'_pos.ne' (NeZero.ne N)⟩
   have hp_dvd_lN : p ∣ l' * N := dvd_mul_of_dvd_right hpN l'
@@ -1069,9 +1069,9 @@ lemma Φ_qExp_coeff_eq_count_div_p_mul_g_low_coeff {N : ℕ} [NeZero N] {k : ℤ
     descent_slashSum_qExp_coeff_eq_Dp_g_low_coeff χ f hfχ p hp hpN χ' hχ_eq
       hl'_sqfree hpl' hl'_dvd hp_not_in h_vanish g_low g_low_cast
       h_cast_fun hg_low_qexp hg_low_full_qexp m hm_cop
-  rw [show ModularFormClass.qExpansion (1 : ℝ)
+  rw [show UpperHalfPlane.qExpansion (1 : ℝ)
       (descendSlashSumCuspForm χ f p hp hpN χ' hχ_eq hfχ_mod) =
-      ModularFormClass.qExpansion (1 : ℝ) Ψ_fun from
+      UpperHalfPlane.qExpansion (1 : ℝ) Ψ_fun from
     qExpansion_ext2 Φ_fun Ψ_fun hΦ_eq_Ψ,
     h_slash_sum_lifted_qexp, h_D_eq]
 

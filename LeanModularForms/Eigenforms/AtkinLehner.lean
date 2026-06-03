@@ -34,7 +34,7 @@ is an oldform.  The framework captures "support on multiples of `d`":
 -/
 
 open scoped ModularForm
-open ModularFormClass CongruenceSubgroup Matrix.SpecialLinearGroup
+open ModularFormClass CongruenceSubgroup Matrix.SpecialLinearGroup UpperHalfPlane
 
 namespace HeckeRing.GL2.AtkinLehner
 
@@ -89,14 +89,16 @@ noncomputable def qSupportedOnDvdSubmodule (N : ℕ) [NeZero N] (k : ℤ) (d : �
   add_mem' {f g} hf hg n hn := by
     have h_eq : qExpansion (1 : ℝ) (⇑(f + g) : UpperHalfPlane → ℂ) =
         qExpansion (1 : ℝ) ⇑f + qExpansion (1 : ℝ) ⇑g := by
-      convert qExpansion_add (Γ := (Gamma1 N).map (mapGL ℝ)) (h := 1) (a := k) (b := k)
+      convert ModularForm.qExpansion_add (Γ := (Gamma1 N).map (mapGL ℝ))
+        (h := 1) (a := k) (b := k)
         one_pos (one_mem_strictPeriods_Gamma1_map N) f g using 2
     show (PowerSeries.coeff n) (qExpansion (1 : ℝ) ⇑(f + g)) = 0
     rw [h_eq, map_add, hf n hn, hg n hn, zero_add]
   smul_mem' c f hf n hn := by
     have h_eq : qExpansion (1 : ℝ) (⇑(c • f) : UpperHalfPlane → ℂ) =
         c • qExpansion (1 : ℝ) ⇑f := by
-      convert qExpansion_smul (Γ := (Gamma1 N).map (mapGL ℝ)) (k := k) (h := 1) one_pos
+      convert ModularForm.qExpansion_smul (Γ := (Gamma1 N).map (mapGL ℝ))
+        (k := k) (h := 1) one_pos
         (one_mem_strictPeriods_Gamma1_map N) c f using 2
     show (PowerSeries.coeff n) (qExpansion (1 : ℝ) ⇑(c • f)) = 0
     rw [h_eq, show (PowerSeries.coeff n) (c • qExpansion (1 : ℝ) ⇑f) =

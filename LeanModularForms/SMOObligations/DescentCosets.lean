@@ -32,16 +32,16 @@ theorem miyake_g_p_supported
     (l' : ℕ) (hl'_pos : 0 < l') (hl'_sqfree : Squarefree l')
     (hl'_dvd : ∀ q ∈ l'.primeFactors, q ∈ N.primeFactors)
     (h_vanish : ∀ n : ℕ, Nat.Coprime n (p * l') →
-      (ModularFormClass.qExpansion (1 : ℝ) f).coeff n = 0) :
+      (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n = 0) :
     let M := l' * N
     haveI : NeZero M := ⟨Nat.mul_ne_zero (Nat.pos_iff_ne_zero.mp hl'_pos) (NeZero.ne N)⟩
     have hNM : N ∣ M := Nat.dvd_mul_left N l'
     ∃ g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k,
       g ∈ cuspFormCharSpace k (χ.comp (ZMod.unitsMap hNM)) ∧
       g ∈ HeckeRing.GL2.AtkinLehner.qSupportedOnDvdSubmodule M k p ∧
-      ∀ n : ℕ, (ModularFormClass.qExpansion (1 : ℝ) g).coeff n =
+      ∀ n : ℕ, (UpperHalfPlane.qExpansion (1 : ℝ) g).coeff n =
         if Nat.Coprime n l' then
-          (ModularFormClass.qExpansion (1 : ℝ) f).coeff n
+          (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n
         else 0 := by
   obtain ⟨g, hg_char, hg_qexp⟩ :=
     miyake_4_6_5_iterated_L χ f hfχ l' hl'_pos hl'_sqfree hl'_dvd

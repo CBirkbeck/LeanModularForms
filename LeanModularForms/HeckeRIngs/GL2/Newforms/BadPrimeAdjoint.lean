@@ -503,7 +503,7 @@ private lemma diamondOp_slash_T_p_lower_apply
       · show ((1 : ℚ) : ℝ) = (1 : ℝ); norm_num
   show (⇑(diamondOp k (ZMod.unitOfCoprime p hpcop) g.toModularForm') ∣[k]
         glMap (T_p_lower p hp.pos)) z = _
-  rw [h_glMap_eq, ModularForm.slash_apply, σ_levelRaiseMatrix, RingHom.id_apply,
+  rw [h_glMap_eq, ModularForm.slash_apply, σ_levelRaiseMatrix, ContinuousAlgEquiv.refl_apply,
       abs_levelRaiseMatrix_det_val, denom_levelRaiseMatrix, one_zpow, mul_one]
   have h_LR_apply : ⇑(levelRaise M p k
         (diamondOp_cusp k (ZMod.unitOfCoprime p hpcop) g)) z =
@@ -686,7 +686,7 @@ structure NewformExtended (N : ℕ) [NeZero N] (k : ℤ)
   isNew : toCuspForm ∈ cuspFormsNewExtended N k
   /-- Normalisation at the canonical Fourier period: the first Fourier
   coefficient is `1`. -/
-  isNorm : (ModularFormClass.qExpansion (1 : ℝ) toCuspForm).coeff 1 = 1
+  isNorm : (UpperHalfPlane.qExpansion (1 : ℝ) toCuspForm).coeff 1 = 1
 
 /-- Bad-prime newspace-extended preservation needing only the petN-adjoint
 identity `h_adj` (the extended-oldspace input being unconditional). -/

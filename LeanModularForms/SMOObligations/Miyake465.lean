@@ -80,10 +80,10 @@ private lemma qExpansion_restrict_sub_levelRaise_heckeT_coeff
     (hp : p.Prime) (hpN : ¬ Nat.Coprime p N₀)
     (f₀ : CuspForm ((Gamma1 N₀).map (mapGL ℝ)) k) (n : ℕ) :
     haveI : NeZero (p * N₀) := ⟨Nat.mul_ne_zero hp.ne_zero (NeZero.ne N₀)⟩
-    (ModularFormClass.qExpansion (1 : ℝ)
+    (UpperHalfPlane.qExpansion (1 : ℝ)
         (CuspForm.restrictSubgroup (Gamma1_map_le_Gamma1_map_of_dvd (Nat.dvd_mul_left N₀ p)) f₀
           - HeckeRing.GL2.levelRaise N₀ p k (heckeT_n_cusp k p f₀))).coeff n
-      = if ¬ p ∣ n then (ModularFormClass.qExpansion (1 : ℝ) f₀).coeff n else 0 := by
+      = if ¬ p ∣ n then (UpperHalfPlane.qExpansion (1 : ℝ) f₀).coeff n else 0 := by
   haveI : NeZero (p * N₀) := ⟨Nat.mul_ne_zero hp.ne_zero (NeZero.ne N₀)⟩
   set f_res : CuspForm ((Gamma1 (p * N₀)).map (mapGL ℝ)) k :=
     CuspForm.restrictSubgroup (Gamma1_map_le_Gamma1_map_of_dvd (Nat.dvd_mul_left N₀ p)) f₀
@@ -101,7 +101,7 @@ private lemma qExpansion_restrict_sub_levelRaise_heckeT_coeff
   have h_coe_sub : (⇑(f_res - V_p_U_p_f) : UpperHalfPlane → ℂ) =
       ⇑f₀ - ⇑(HeckeRing.GL2.AtkinLehner.pSupportedRaise k p hp hpN f₀.toModularForm') := by
     show (⇑f_res - ⇑V_p_U_p_f : UpperHalfPlane → ℂ) = _; rw [h_VUp_fun]; rfl
-  show (PowerSeries.coeff n) (ModularFormClass.qExpansion (1 : ℝ)
+  show (PowerSeries.coeff n) (UpperHalfPlane.qExpansion (1 : ℝ)
     (⇑(f_res - V_p_U_p_f))) = _
   rw [h_coe_sub]
   set raised : ModularForm ((Gamma1 (p * N₀)).map (mapGL ℝ)) k :=
@@ -110,9 +110,9 @@ private lemma qExpansion_restrict_sub_levelRaise_heckeT_coeff
     ModularForm.restrictSubgroup (HeckeRing.GL2.MainLemma.Gamma1_mapGL_le_of_dvd
       (Nat.dvd_mul_left N₀ p)) f₀.toModularForm'
   rw [show (⇑f₀ - ⇑raised : UpperHalfPlane → ℂ) = ⇑(f_pN - raised) from rfl,
-    show ModularFormClass.qExpansion (1 : ℝ) (⇑(f_pN - raised)) =
-      ModularFormClass.qExpansion (1 : ℝ) (f_pN - raised) from rfl,
-    qExpansion_sub one_pos h1_period f_pN raised, map_sub,
+    show UpperHalfPlane.qExpansion (1 : ℝ) (⇑(f_pN - raised)) =
+      UpperHalfPlane.qExpansion (1 : ℝ) (f_pN - raised) from rfl,
+    ModularForm.qExpansion_sub one_pos h1_period f_pN raised, map_sub,
     HeckeRing.GL2.AtkinLehner.qExpansion_one_pSupportedRaise_coeff hp hpN
       f₀.toModularForm' n]
   by_cases hpn : p ∣ n <;>
@@ -175,9 +175,9 @@ private theorem miyake_4_6_5_single_prime_dvd_N
     have hNM : N ∣ M := Nat.dvd_mul_left N p
     ∃ g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k,
       g ∈ cuspFormCharSpace k (χ.comp (ZMod.unitsMap hNM)) ∧
-      ∀ n : ℕ, (ModularFormClass.qExpansion (1 : ℝ) g).coeff n =
+      ∀ n : ℕ, (UpperHalfPlane.qExpansion (1 : ℝ) g).coeff n =
         if ¬ p ∣ n then
-          (ModularFormClass.qExpansion (1 : ℝ) f).coeff n
+          (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n
         else 0 := by
   haveI : NeZero (p * N) := ⟨Nat.mul_ne_zero hp.ne_zero (NeZero.ne N)⟩
   exact ⟨CuspForm.restrictSubgroup (Gamma1_map_le_Gamma1_map_of_dvd (Nat.dvd_mul_left N p)) f -
@@ -200,9 +200,9 @@ private theorem miyake_4_6_5_iterated_helper
         (g' : CuspForm ((Gamma1 M').map (mapGL ℝ)) k),
         g' ∈ cuspFormCharSpace k (χ_M.comp (ZMod.unitsMap hMM')) ∧
         ∀ n : ℕ,
-          (ModularFormClass.qExpansion (1 : ℝ) g').coeff n =
+          (UpperHalfPlane.qExpansion (1 : ℝ) g').coeff n =
           if Nat.Coprime n (S.prod id) then
-            (ModularFormClass.qExpansion (1 : ℝ) g).coeff n
+            (UpperHalfPlane.qExpansion (1 : ℝ) g).coeff n
           else 0 := by
   induction n_iter with
   | zero =>
@@ -257,9 +257,9 @@ theorem miyake_4_6_5_iterated_L
     have hNM : N ∣ M := Nat.dvd_mul_left N L
     ∃ g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k,
       g ∈ cuspFormCharSpace k (χ.comp (ZMod.unitsMap hNM)) ∧
-      ∀ n : ℕ, (ModularFormClass.qExpansion (1 : ℝ) g).coeff n =
+      ∀ n : ℕ, (UpperHalfPlane.qExpansion (1 : ℝ) g).coeff n =
         if Nat.Coprime n L then
-          (ModularFormClass.qExpansion (1 : ℝ) f).coeff n
+          (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n
         else 0 := by
   have hS_prod : L.primeFactors.prod id = L := by
     simp [Nat.prod_primeFactors_of_squarefree hL_sqfree]
@@ -284,9 +284,9 @@ private theorem miyake_4_6_5_single_prime_coprime_to_N
     have hNM : N ∣ M := Nat.dvd_mul_right N (p ^ 2)
     ∃ g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k,
       g ∈ cuspFormCharSpace k (χ.comp (ZMod.unitsMap hNM)) ∧
-      ∀ n : ℕ, (ModularFormClass.qExpansion (1 : ℝ) g).coeff n =
+      ∀ n : ℕ, (UpperHalfPlane.qExpansion (1 : ℝ) g).coeff n =
         if ¬ p ∣ n then
-          (ModularFormClass.qExpansion (1 : ℝ) f).coeff n
+          (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n
         else 0 := by
   haveI hM_NeZero : NeZero (N * p ^ 2) :=
     ⟨Nat.mul_ne_zero (NeZero.ne N) (pow_ne_zero 2 hp.ne_zero)⟩
@@ -306,15 +306,15 @@ private theorem miyake_4_6_5_single_prime_coprime_to_N
   have key : ∀ (inst : NeZero (p * (p * N))) (h : N ∣ p * (p * N)),
       ∃ g : CuspForm (Subgroup.map (mapGL ℝ) (Gamma1 (p * (p * N)))) k,
       g ∈ @cuspFormCharSpace (p * (p * N)) inst k (χ.comp (ZMod.unitsMap h)) ∧
-      ∀ n : ℕ, (ModularFormClass.qExpansion (1 : ℝ) g).coeff n =
-        if ¬ p ∣ n then (ModularFormClass.qExpansion (1 : ℝ) f).coeff n else 0 :=
+      ∀ n : ℕ, (UpperHalfPlane.qExpansion (1 : ℝ) g).coeff n =
+        if ¬ p ∣ n then (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n else 0 :=
     fun _ h ↦ ⟨g_ppN, by convert h_g_ppN_χ using 2, h_g_ppN_qexp⟩
   exact @Eq.ndrec ℕ (p * (p * N))
     (fun M ↦ ∀ (inst : NeZero M) (h : N ∣ M),
       ∃ g : CuspForm (Subgroup.map (mapGL ℝ) (Gamma1 M)) k,
       g ∈ @cuspFormCharSpace M inst k (χ.comp (ZMod.unitsMap h)) ∧
-      ∀ n : ℕ, (ModularFormClass.qExpansion (1 : ℝ) g).coeff n =
-        if ¬ p ∣ n then (ModularFormClass.qExpansion (1 : ℝ) f).coeff n else 0)
+      ∀ n : ℕ, (UpperHalfPlane.qExpansion (1 : ℝ) g).coeff n =
+        if ¬ p ∣ n then (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n else 0)
     key (N * p ^ 2) hM_eq' hM_NeZero (Nat.dvd_mul_right N (p ^ 2))
 
 private theorem finish_peel_step
@@ -331,8 +331,8 @@ private theorem finish_peel_step
     (h_S_erase_prod_dvd_M : (S.erase q).prod id ∣ M)
     (g_int : CuspForm ((Gamma1 N').map (mapGL ℝ)) k)
     (hg_int_χ : g_int ∈ cuspFormCharSpace k (χ.comp (ZMod.unitsMap hNN')))
-    (hg_int_qexp : ∀ n : ℕ, (ModularFormClass.qExpansion (1 : ℝ) g_int).coeff n =
-      if ¬ q ∣ n then (ModularFormClass.qExpansion (1 : ℝ) f).coeff n else 0)
+    (hg_int_qexp : ∀ n : ℕ, (UpperHalfPlane.qExpansion (1 : ℝ) g_int).coeff n =
+      if ¬ q ∣ n then (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n else 0)
     (h_pf_dvd_new : ∀ p ∈ S.erase q,
       (¬ p ∣ N' → p ^ 2 ∣ M) ∧ (p ∣ N' → p ∣ M / N'))
     (ih : ∀ {N : ℕ} [NeZero N] {k : ℤ}
@@ -346,14 +346,14 @@ private theorem finish_peel_step
       (_ : ∀ p ∈ S, (¬ p ∣ N → p ^ 2 ∣ M) ∧ (p ∣ N → p ∣ M / N)),
       ∃ g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k,
         g ∈ cuspFormCharSpace k (χ.comp (ZMod.unitsMap hNM)) ∧
-        ∀ n : ℕ, (ModularFormClass.qExpansion (1 : ℝ) g).coeff n =
+        ∀ n : ℕ, (UpperHalfPlane.qExpansion (1 : ℝ) g).coeff n =
           if Nat.Coprime n (S.prod id) then
-            (ModularFormClass.qExpansion (1 : ℝ) f).coeff n else 0) :
+            (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n else 0) :
     ∃ g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k,
       g ∈ cuspFormCharSpace k (χ.comp (ZMod.unitsMap hNM)) ∧
-      ∀ n : ℕ, (ModularFormClass.qExpansion (1 : ℝ) g).coeff n =
+      ∀ n : ℕ, (UpperHalfPlane.qExpansion (1 : ℝ) g).coeff n =
         if Nat.Coprime n (S.prod id) then
-          (ModularFormClass.qExpansion (1 : ℝ) f).coeff n else 0 := by
+          (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n else 0 := by
   obtain ⟨g', hg'_χ, hg'_qexp⟩ :=
     ih (χ.comp (ZMod.unitsMap hNN')) g_int hg_int_χ
       (S.erase q) hS_erase_prime hS_erase_card hS_erase_sqfree
@@ -390,14 +390,14 @@ private theorem peel_step_of_dvd_N
       (_ : ∀ p ∈ S, (¬ p ∣ N → p ^ 2 ∣ M) ∧ (p ∣ N → p ∣ M / N)),
       ∃ g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k,
         g ∈ cuspFormCharSpace k (χ.comp (ZMod.unitsMap hNM)) ∧
-        ∀ n : ℕ, (ModularFormClass.qExpansion (1 : ℝ) g).coeff n =
+        ∀ n : ℕ, (UpperHalfPlane.qExpansion (1 : ℝ) g).coeff n =
           if Nat.Coprime n (S.prod id) then
-            (ModularFormClass.qExpansion (1 : ℝ) f).coeff n else 0) :
+            (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n else 0) :
     ∃ g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k,
       g ∈ cuspFormCharSpace k (χ.comp (ZMod.unitsMap hNM)) ∧
-      ∀ n : ℕ, (ModularFormClass.qExpansion (1 : ℝ) g).coeff n =
+      ∀ n : ℕ, (UpperHalfPlane.qExpansion (1 : ℝ) g).coeff n =
         if Nat.Coprime n (S.prod id) then
-          (ModularFormClass.qExpansion (1 : ℝ) f).coeff n else 0 := by
+          (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n else 0 := by
   haveI : NeZero q := ⟨hq_prime.ne_zero⟩
   obtain ⟨g_int, hg_int_χ, hg_int_qexp⟩ :=
     miyake_4_6_5_single_prime_dvd_N χ f hfχ q hq_prime
@@ -437,14 +437,14 @@ private theorem peel_step_of_not_dvd_N
       (_ : ∀ p ∈ S, (¬ p ∣ N → p ^ 2 ∣ M) ∧ (p ∣ N → p ∣ M / N)),
       ∃ g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k,
         g ∈ cuspFormCharSpace k (χ.comp (ZMod.unitsMap hNM)) ∧
-        ∀ n : ℕ, (ModularFormClass.qExpansion (1 : ℝ) g).coeff n =
+        ∀ n : ℕ, (UpperHalfPlane.qExpansion (1 : ℝ) g).coeff n =
           if Nat.Coprime n (S.prod id) then
-            (ModularFormClass.qExpansion (1 : ℝ) f).coeff n else 0) :
+            (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n else 0) :
     ∃ g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k,
       g ∈ cuspFormCharSpace k (χ.comp (ZMod.unitsMap hNM)) ∧
-      ∀ n : ℕ, (ModularFormClass.qExpansion (1 : ℝ) g).coeff n =
+      ∀ n : ℕ, (UpperHalfPlane.qExpansion (1 : ℝ) g).coeff n =
         if Nat.Coprime n (S.prod id) then
-          (ModularFormClass.qExpansion (1 : ℝ) f).coeff n else 0 := by
+          (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n else 0 := by
   haveI : NeZero q := ⟨hq_prime.ne_zero⟩
   obtain ⟨g_int, hg_int_χ, hg_int_qexp⟩ :=
     miyake_4_6_5_single_prime_coprime_to_N χ f hfχ q hq_prime
@@ -471,9 +471,9 @@ private theorem miyake_4_6_5_iterated_helper_general (n_iter : ℕ) :
       ∃ g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k,
         g ∈ cuspFormCharSpace k (χ.comp (ZMod.unitsMap hNM)) ∧
         ∀ n : ℕ,
-          (ModularFormClass.qExpansion (1 : ℝ) g).coeff n =
+          (UpperHalfPlane.qExpansion (1 : ℝ) g).coeff n =
           if Nat.Coprime n (S.prod id) then
-            (ModularFormClass.qExpansion (1 : ℝ) f).coeff n
+            (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n
           else 0 := by
   induction n_iter with
   | zero =>
@@ -516,9 +516,9 @@ private theorem miyake_4_6_5_iterated_L_general
       (¬ p ∣ N → p ^ 2 ∣ M) ∧ (p ∣ N → p ∣ M / N)) :
     ∃ g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k,
       g ∈ cuspFormCharSpace k (χ.comp (ZMod.unitsMap hNM)) ∧
-      ∀ n : ℕ, (ModularFormClass.qExpansion (1 : ℝ) g).coeff n =
+      ∀ n : ℕ, (UpperHalfPlane.qExpansion (1 : ℝ) g).coeff n =
         if Nat.Coprime n L then
-          (ModularFormClass.qExpansion (1 : ℝ) f).coeff n
+          (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n
         else 0 := by
   have hS_prod : L.primeFactors.prod id = L := by
     simp [Nat.prod_primeFactors_of_squarefree hL_sqfree]
@@ -543,9 +543,9 @@ theorem miyake_h_form_general
     have hNM : N ∣ M := Nat.dvd_mul_right N (l' ^ 2)
     ∃ h_form : CuspForm ((Gamma1 M).map (mapGL ℝ)) k,
       h_form ∈ cuspFormCharSpace k (χ.comp (ZMod.unitsMap hNM)) ∧
-      ∀ n : ℕ, (ModularFormClass.qExpansion (1 : ℝ) h_form).coeff n =
+      ∀ n : ℕ, (UpperHalfPlane.qExpansion (1 : ℝ) h_form).coeff n =
         if ¬ Nat.Coprime n l' then
-          (ModularFormClass.qExpansion (1 : ℝ) f).coeff n
+          (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n
         else 0 := by
   haveI : NeZero (N * l' ^ 2) :=
     ⟨Nat.mul_ne_zero (NeZero.ne N) (pow_ne_zero 2 (Nat.pos_iff_ne_zero.mp hl'_pos))⟩
@@ -569,16 +569,16 @@ theorem miyake_h_form_general
   have h1_period : (1 : ℝ) ∈ ((Gamma1 (N * l' ^ 2)).map (mapGL ℝ)).strictPeriods := by
     simp [strictPeriods_Gamma1]
   have h_sub :
-      ModularFormClass.qExpansion (1 : ℝ) (f_at_M - g) =
-        ModularFormClass.qExpansion (1 : ℝ) f_at_M -
-        ModularFormClass.qExpansion (1 : ℝ) g := by
-    rw [sub_eq_add_neg, sub_eq_add_neg, ← qExpansion_neg one_pos h1_period g]
-    exact qExpansion_add (Γ := (Gamma1 (N * l' ^ 2)).map (mapGL ℝ))
+      UpperHalfPlane.qExpansion (1 : ℝ) (f_at_M - g) =
+        UpperHalfPlane.qExpansion (1 : ℝ) f_at_M -
+        UpperHalfPlane.qExpansion (1 : ℝ) g := by
+    rw [sub_eq_add_neg, sub_eq_add_neg, ← ModularForm.qExpansion_neg one_pos h1_period g]
+    exact ModularForm.qExpansion_add (Γ := (Gamma1 (N * l' ^ 2)).map (mapGL ℝ))
       (h := (1 : ℝ)) (a := k) (b := k) one_pos h1_period f_at_M (- g)
-  rw [show ModularFormClass.qExpansion (1 : ℝ) (⇑(f_at_M - g) : UpperHalfPlane → ℂ) =
-        ModularFormClass.qExpansion (1 : ℝ) (f_at_M - g) from rfl, h_sub, map_sub,
-      show ModularFormClass.qExpansion (1 : ℝ) f_at_M =
-        ModularFormClass.qExpansion (1 : ℝ) f from rfl, hg_qexp n]
+  rw [show UpperHalfPlane.qExpansion (1 : ℝ) (⇑(f_at_M - g) : UpperHalfPlane → ℂ) =
+        UpperHalfPlane.qExpansion (1 : ℝ) (f_at_M - g) from rfl, h_sub, map_sub,
+      show UpperHalfPlane.qExpansion (1 : ℝ) f_at_M =
+        UpperHalfPlane.qExpansion (1 : ℝ) f from rfl, hg_qexp n]
   split_ifs <;> simp
 
 end HeckeRing.GL2

@@ -169,7 +169,8 @@ lemma diamondOp_levelRaise_eq (a : (ZMod N)ˣ) (M : ℕ) (d : ℕ) [NeZero M] [N
       ⇑g ∣[k] mapGL ℝ (g₀'_sl : SL(2, ℤ)) := by
     rw [diamondOpCusp_eq k (ZMod.unitsMap (Nat.dvd_mul_left M d) a) g₀' h_units]; rfl
   rw [hL]
-  have hσ_g₀ : UpperHalfPlane.σ (mapGL ℝ (g₀ : SL(2, ℤ))) = RingHom.id ℂ := by
+  have hσ_g₀ : UpperHalfPlane.σ (mapGL ℝ (g₀ : SL(2, ℤ))) =
+      ContinuousAlgEquiv.refl ℝ ℂ := by
     unfold UpperHalfPlane.σ
     rw [if_pos]
     show (0 : ℝ) < (Matrix.GeneralLinearGroup.det (mapGL ℝ (g₀ : SL(2, ℤ)))).val
@@ -178,7 +179,7 @@ lemma diamondOp_levelRaise_eq (a : (ZMod N)ˣ) (M : ℕ) (d : ℕ) [NeZero M] [N
       mapGL ℝ (g₀ : SL(2, ℤ))) z =
     (((d : ℂ) ^ (1 - k)) • (⇑(diamondOpCusp k (ZMod.unitsMap (Nat.dvd_mul_left M d) a) g)
       ∣[k] levelRaiseMatrix d)) z
-  rw [ModularForm.smul_slash k _ _ ((d : ℂ) ^ (1 - k)), hσ_g₀, RingHom.id_apply,
+  rw [ModularForm.smul_slash k _ _ ((d : ℂ) ^ (1 - k)), hσ_g₀, ContinuousAlgEquiv.refl_apply,
     show ((⇑g ∣[k] levelRaiseMatrix d) ∣[k] mapGL ℝ (g₀ : SL(2, ℤ))) =
         (⇑g ∣[k] (levelRaiseMatrix d * mapGL ℝ (g₀ : SL(2, ℤ)))) from
       (SlashAction.slash_mul k _ _ _).symm,
@@ -578,11 +579,12 @@ private lemma slash_T_p_upper_zero_mul_levelRaise_apply {p d : ℕ} (hp : 0 < p)
       (p : ℂ) ^ (k - 2) * ((f ∣[k] (levelRaiseMatrix (d / p) : GL (Fin 2) ℝ)) z) := by
   rw [ModularForm.slash_apply, ModularForm.slash_apply]
   have hσ_M : UpperHalfPlane.σ
-      ((glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) * levelRaiseMatrix d) = RingHom.id ℂ := by
+      ((glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) * levelRaiseMatrix d) =
+        ContinuousAlgEquiv.refl ℝ ℂ := by
     unfold UpperHalfPlane.σ
     rw [if_pos (T_p_upper_zero_mul_levelRaise_det_pos p d hp)]
   rw [hσ_M, σ_levelRaiseMatrix (d / p)]
-  simp only [RingHom.id_apply]
+  simp only [ContinuousAlgEquiv.refl_apply]
   rw [T_p_upper_zero_mul_levelRaise_smul_eq hp hpd z]
   have hdetM_abs : |(((glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) *
       levelRaiseMatrix d).det.val)| = (p : ℝ) * (d : ℝ) := by

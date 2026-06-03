@@ -252,7 +252,7 @@ lemma adj_upper_inv_mul_lower_not_mem_H (p : ℕ) (hp : Nat.Prime p) (b : ℕ) :
   simp [GeneralLinearGroup.mkOfDetNeZero] at hn
   have h_np : (n : ℚ) * p = 1 := by rw [← hn]; field_simp
   have h_int : n * (p : ℤ) = 1 := by exact_mod_cast h_np
-  have h_dvd : (p : ℤ) ∣ 1 := ⟨n, by lia⟩
+  have h_dvd : (p : ℤ) ∣ 1 := ⟨n, by linarith⟩
   have h_lt : (1 : ℤ) < ↑p := Int.ofNat_lt.mpr hp.one_lt
   exact absurd (Int.le_of_dvd one_pos h_dvd) (by lia)
 
@@ -278,7 +278,7 @@ lemma adj_lower_inv_mul_upper_not_mem_H (p : ℕ) (hp : Nat.Prime p) (b : ℕ) :
   simp [GeneralLinearGroup.mkOfDetNeZero] at hn
   have h_np : (n : ℚ) * p = 1 := by rw [← hn]; field_simp
   have h_int : n * (p : ℤ) = 1 := by exact_mod_cast h_np
-  have h_dvd : (p : ℤ) ∣ 1 := ⟨n, by lia⟩
+  have h_dvd : (p : ℤ) ∣ 1 := ⟨n, by linarith⟩
   have h_lt : (1 : ℤ) < ↑p := Int.ofNat_lt.mpr hp.one_lt
   exact absurd (Int.le_of_dvd one_pos h_dvd) (by lia)
 

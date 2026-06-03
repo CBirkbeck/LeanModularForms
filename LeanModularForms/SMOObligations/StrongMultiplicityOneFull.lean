@@ -68,13 +68,13 @@ omit [NeZero N] in
 `qExpansion_one_coeff_one_smul_of_norm` of `Newforms/MainLemma.lean`. -/
 private lemma qExpansion_one_coeff_one_smul_local
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (c : ℂ) :
-    (ModularFormClass.qExpansion (1 : ℝ) (c • f)).coeff 1 =
-      c * (ModularFormClass.qExpansion (1 : ℝ) f).coeff 1 := by
-  show (ModularFormClass.qExpansion (1 : ℝ) (⇑(c • f : CuspForm _ k))).coeff 1 =
-      c * (ModularFormClass.qExpansion (1 : ℝ) (⇑f)).coeff 1
+    (UpperHalfPlane.qExpansion (1 : ℝ) (c • f)).coeff 1 =
+      c * (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff 1 := by
+  show (UpperHalfPlane.qExpansion (1 : ℝ) (⇑(c • f : CuspForm _ k))).coeff 1 =
+      c * (UpperHalfPlane.qExpansion (1 : ℝ) (⇑f)).coeff 1
   rw [show (⇑(c • f : CuspForm _ k) : UpperHalfPlane → ℂ) = c • ⇑f from rfl,
     show (⇑f : UpperHalfPlane → ℂ) = ⇑f.toModularForm' from rfl,
-    qExpansion_smul one_pos (one_mem_strictPeriods_Gamma1_map N), PowerSeries.coeff_smul,
+    ModularForm.qExpansion_smul one_pos (one_mem_strictPeriods_Gamma1_map N), PowerSeries.coeff_smul,
     smul_eq_mul]
 
 /-- **Miyake Lemma 4.5.15(1)** (un-normalised form, period 1).  For an `Eigenform g`
@@ -85,12 +85,12 @@ theorem Eigenform.coeff_eq_coeff_one_mul_eigenvalue
     (g : Eigenform N k) (χ : (ZMod N)ˣ →* ℂˣ)
     (hgχ : g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
     (n : ℕ+) (hn : Nat.Coprime n.val N) :
-    (ModularFormClass.qExpansion (1 : ℝ) g.toCuspForm).coeff n.val =
-      (ModularFormClass.qExpansion (1 : ℝ) g.toCuspForm).coeff 1 * g.eigenvalue n := by
+    (UpperHalfPlane.qExpansion (1 : ℝ) g.toCuspForm).coeff n.val =
+      (UpperHalfPlane.qExpansion (1 : ℝ) g.toCuspForm).coeff 1 * g.eigenvalue n := by
   haveI : NeZero n.val := ⟨n.pos.ne'⟩
-  have h_lhs : (ModularFormClass.qExpansion (1 : ℝ)
+  have h_lhs : (UpperHalfPlane.qExpansion (1 : ℝ)
       (heckeT_n_cusp k n.val g.toCuspForm)).coeff 1 =
-      g.eigenvalue n * (ModularFormClass.qExpansion (1 : ℝ) g.toCuspForm).coeff 1 := by
+      g.eigenvalue n * (UpperHalfPlane.qExpansion (1 : ℝ) g.toCuspForm).coeff 1 := by
     rw [g.isEigen n hn]
     exact qExpansion_one_coeff_one_smul_local g.toCuspForm _
   rw [← qExpansion_one_coeff_one_heckeT_n_cusp_eq_coeff n.val hn χ g.toCuspForm hgχ,
@@ -107,16 +107,15 @@ theorem coeff_one_ne_zero_of_mem_cuspFormsNew_of_eigen
     (hgχ : g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
     (hg_new : g.toCuspForm ∈ cuspFormsNew N k)
     (hg_ne : g.toCuspForm ≠ 0) :
-    (ModularFormClass.qExpansion (1 : ℝ) g.toCuspForm).coeff 1 ≠ 0 := by
+    (UpperHalfPlane.qExpansion (1 : ℝ) g.toCuspForm).coeff 1 ≠ 0 := by
   intro h1
   have h_vanish : ∀ n : ℕ, Nat.Coprime n N →
-      (ModularFormClass.qExpansion (1 : ℝ) g.toCuspForm).coeff n = 0 := by
+      (UpperHalfPlane.qExpansion (1 : ℝ) g.toCuspForm).coeff n = 0 := by
     intro n hn
     by_cases hn0 : n = 0
     · subst hn0
-      rw [ModularFormClass.qExpansion_coeff_zero _ one_pos
-            (one_mem_strictPeriods_Gamma1_map N),
-        (CuspFormClass.zero_at_infty g.toCuspForm).valueAtInfty_eq_zero]
+      exact CuspFormClass.qExpansion_coeff_zero g.toCuspForm one_pos
+        (one_mem_strictPeriods_Gamma1_map N)
     · have hcoeff :=
         Eigenform.coeff_eq_coeff_one_mul_eigenvalue g χ hgχ ⟨n, Nat.pos_of_ne_zero hn0⟩ hn
       rwa [h1, zero_mul] at hcoeff
@@ -144,7 +143,7 @@ multiples of the conductor `m_χ`.
 
 This is the character-conductor-refined analogue of the project's `cuspFormsOld N k`;
 relating the two is gap #4 (see `cuspFormsOldChar_le_cuspFormsOld`). -/
-def cuspFormsOldChar (N : ℕ) [NeZero N] (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+noncomputable def cuspFormsOldChar (N : ℕ) [NeZero N] (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (m_χ : ℕ) :
     Submodule ℂ (CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :=
   Submodule.span ℂ
@@ -547,7 +546,7 @@ private theorem oldNewGenCharSpan_inf_charSpace_le_cuspFormsOldChar
         intro u hu
         rw [MonoidHom.mem_ker] at hu ⊢
         rw [hcomp, MonoidHom.comp_apply, hu, map_one]
-      exact χ.conductor_dvd_of_mem_conductorSet (NeZero.ne N)
+      exact χ.conductor_dvd_of_mem_conductorSet
         ((DirichletCharacter.mem_conductorSet_iff χ).mpr hfac)
     have hMne : M ≠ N := by
       rintro rfl
@@ -659,27 +658,27 @@ theorem oldPart_isEigen_of_eigenform
 private theorem coeff_smul_inv_eq_eigenvalue
     (g_new : Eigenform N k) (χ : (ZMod N)ˣ →* ℂˣ)
     (hgχ : g_new.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    {b₁ : ℂ} (hb₁_def : b₁ = (ModularFormClass.qExpansion (1 : ℝ) g_new.toCuspForm).coeff 1)
+    {b₁ : ℂ} (hb₁_def : b₁ = (UpperHalfPlane.qExpansion (1 : ℝ) g_new.toCuspForm).coeff 1)
     (hb₁_ne : b₁ ≠ 0) (n : ℕ+) (hn : Nat.Coprime n.val N) :
-    (ModularFormClass.qExpansion (1 : ℝ) (b₁⁻¹ • g_new.toCuspForm)).coeff n.val =
+    (UpperHalfPlane.qExpansion (1 : ℝ) (b₁⁻¹ • g_new.toCuspForm)).coeff n.val =
       g_new.eigenvalue n := by
-  have h_smul_coeff : (ModularFormClass.qExpansion (1 : ℝ) (b₁⁻¹ • g_new.toCuspForm)).coeff n.val =
-      b₁⁻¹ * (ModularFormClass.qExpansion (1 : ℝ) g_new.toCuspForm).coeff n.val := by
-    show (ModularFormClass.qExpansion (1 : ℝ)
+  have h_smul_coeff : (UpperHalfPlane.qExpansion (1 : ℝ) (b₁⁻¹ • g_new.toCuspForm)).coeff n.val =
+      b₁⁻¹ * (UpperHalfPlane.qExpansion (1 : ℝ) g_new.toCuspForm).coeff n.val := by
+    show (UpperHalfPlane.qExpansion (1 : ℝ)
         (⇑(b₁⁻¹ • g_new.toCuspForm : CuspForm _ k))).coeff n.val =
-      b₁⁻¹ * (ModularFormClass.qExpansion (1 : ℝ) (⇑g_new.toCuspForm)).coeff n.val
+      b₁⁻¹ * (UpperHalfPlane.qExpansion (1 : ℝ) (⇑g_new.toCuspForm)).coeff n.val
     rw [show (⇑(b₁⁻¹ • g_new.toCuspForm : CuspForm _ k) : UpperHalfPlane → ℂ) =
           b₁⁻¹ • ⇑g_new.toCuspForm from rfl,
       show (⇑g_new.toCuspForm : UpperHalfPlane → ℂ) =
         ⇑g_new.toCuspForm.toModularForm' from rfl,
-      qExpansion_smul one_pos (one_mem_strictPeriods_Gamma1_map N), PowerSeries.coeff_smul,
+      ModularForm.qExpansion_smul one_pos (one_mem_strictPeriods_Gamma1_map N), PowerSeries.coeff_smul,
       smul_eq_mul]
   rw [h_smul_coeff, Eigenform.coeff_eq_coeff_one_mul_eigenvalue g_new χ hgχ n hn, ← hb₁_def,
     ← mul_assoc, inv_mul_cancel₀ hb₁_ne, one_mul]
 
 private theorem isNormalisedEigenform_one_smul_inv
     (g_new : Eigenform N k)
-    {b₁ : ℂ} (hb₁_def : b₁ = (ModularFormClass.qExpansion (1 : ℝ) g_new.toCuspForm).coeff 1)
+    {b₁ : ℂ} (hb₁_def : b₁ = (UpperHalfPlane.qExpansion (1 : ℝ) g_new.toCuspForm).coeff 1)
     (hb₁_ne : b₁ ≠ 0) :
     IsNormalisedEigenform_one k (b₁⁻¹ • g_new.toCuspForm).toModularForm' := by
   refine ⟨fun n hn ↦ ?_, ?_⟩
@@ -689,19 +688,19 @@ private theorem isNormalisedEigenform_one_smul_inv
         (g_new.eigenvalue n • (b₁⁻¹ • g_new.toCuspForm)).toModularForm' := by
       rw [heckeT_n_cusp_smul, g_new.isEigen n hn, smul_comm]
     rwa [heckeT_n_cusp_toModularForm'] at h_lift
-  · show (ModularFormClass.qExpansion (1 : ℝ) (b₁⁻¹ • g_new.toCuspForm)).coeff 1 = 1
+  · show (UpperHalfPlane.qExpansion (1 : ℝ) (b₁⁻¹ • g_new.toCuspForm)).coeff 1 = 1
     rw [qExpansion_one_coeff_one_smul_local g_new.toCuspForm b₁⁻¹, ← hb₁_def,
       inv_mul_cancel₀ hb₁_ne]
 
 private theorem eigenvalue_coprime_mul_of_coeff_one_ne_zero
     (g_new : Eigenform N k) (χ : (ZMod N)ˣ →* ℂˣ)
     (hgχ : g_new.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (hb₁_ne : (ModularFormClass.qExpansion (1 : ℝ) g_new.toCuspForm).coeff 1 ≠ 0)
+    (hb₁_ne : (UpperHalfPlane.qExpansion (1 : ℝ) g_new.toCuspForm).coeff 1 ≠ 0)
     (m n : ℕ+) (hm : Nat.Coprime m.val N) (hn : Nat.Coprime n.val N)
     (hmn : Nat.Coprime m.val n.val) :
     g_new.eigenvalue ⟨m.val * n.val, Nat.mul_pos m.pos n.pos⟩ =
       g_new.eigenvalue m * g_new.eigenvalue n := by
-  set b₁ := (ModularFormClass.qExpansion (1 : ℝ) g_new.toCuspForm).coeff 1 with hb₁_def
+  set b₁ := (UpperHalfPlane.qExpansion (1 : ℝ) g_new.toCuspForm).coeff 1 with hb₁_def
   set F₁ : ModularForm ((Gamma1 N).map (mapGL ℝ)) k :=
     (b₁⁻¹ • g_new.toCuspForm).toModularForm'
   have hF₁_char : F₁ ∈ modFormCharSpace k χ :=
@@ -725,12 +724,12 @@ private theorem eigenvalue_coprime_mul_of_coeff_one_ne_zero
 private theorem eigenvalue_at_prime_sq_of_coeff_one_ne_zero
     (g_new : Eigenform N k) (χ : (ZMod N)ˣ →* ℂˣ)
     (hgχ : g_new.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (hb₁_ne : (ModularFormClass.qExpansion (1 : ℝ) g_new.toCuspForm).coeff 1 ≠ 0)
+    (hb₁_ne : (UpperHalfPlane.qExpansion (1 : ℝ) g_new.toCuspForm).coeff 1 ≠ 0)
     {q : ℕ} (hq : Nat.Prime q) (hqN : Nat.Coprime q N) :
     g_new.eigenvalue ⟨q ^ 2, pow_pos hq.pos 2⟩ =
       g_new.eigenvalue ⟨q, hq.pos⟩ ^ 2 -
         (χ (ZMod.unitOfCoprime q hqN) : ℂ) * (q : ℂ) ^ (k - 1) := by
-  set b₁ := (ModularFormClass.qExpansion (1 : ℝ) g_new.toCuspForm).coeff 1 with hb₁_def
+  set b₁ := (UpperHalfPlane.qExpansion (1 : ℝ) g_new.toCuspForm).coeff 1 with hb₁_def
   set F₁ : ModularForm ((Gamma1 N).map (mapGL ℝ)) k :=
     (b₁⁻¹ • g_new.toCuspForm).toModularForm' with hF₁_def
   have hF₁_char : F₁ ∈ modFormCharSpace k χ :=
@@ -754,7 +753,7 @@ private theorem eigenvalue_at_prime_sq_of_coeff_one_ne_zero
   have hcq := coeff_smul_inv_eq_eigenvalue g_new χ hgχ hb₁_def hb₁_ne q_pnat hqN
   have hcqsq := coeff_smul_inv_eq_eigenvalue g_new χ hgχ hb₁_def hb₁_ne
     ⟨q ^ 2, pow_pos hq_pos 2⟩ (Nat.Coprime.pow_left 2 hqN)
-  have hc1 : (ModularFormClass.qExpansion (1 : ℝ) (b₁⁻¹ • ⇑g_new.toCuspForm)).coeff 1 = 1 := by
+  have hc1 : (UpperHalfPlane.qExpansion (1 : ℝ) (b₁⁻¹ • ⇑g_new.toCuspForm)).coeff 1 = 1 := by
     have := hF₁_eigen.2
     rwa [hF₁_def, show (⇑(b₁⁻¹ • g_new.toCuspForm).toModularForm' : UpperHalfPlane → ℂ)
       = b₁⁻¹ • ⇑g_new.toCuspForm from rfl] at this
@@ -766,7 +765,7 @@ private theorem eigenvalue_agree_of_cofactor_ne_zero
     (f : Newform N k) (g_new : Eigenform N k) (χ : (ZMod N)ˣ →* ℂˣ)
     (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
     (hgχ : g_new.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (hb₁_ne : (ModularFormClass.qExpansion (1 : ℝ) g_new.toCuspForm).coeff 1 ≠ 0)
+    (hb₁_ne : (UpperHalfPlane.qExpansion (1 : ℝ) g_new.toCuspForm).coeff 1 ≠ 0)
     (n m : ℕ+) (hn : Nat.Coprime n.val N) (hmN : Nat.Coprime m.val N)
     (hnm : Nat.Coprime n.val m.val)
     (hm_ne : f.eigenvalue m ≠ 0) (hm_eq : f.eigenvalue m = g_new.eigenvalue m)
@@ -781,7 +780,7 @@ private theorem eigenvalues_eq_all_coprime_of_eq_off_finite_eigenform
     (f : Newform N k) (g_new : Eigenform N k) (χ : (ZMod N)ˣ →* ℂˣ)
     (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
     (hgχ : g_new.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (hb₁_ne : (ModularFormClass.qExpansion (1 : ℝ) g_new.toCuspForm).coeff 1 ≠ 0)
+    (hb₁_ne : (UpperHalfPlane.qExpansion (1 : ℝ) g_new.toCuspForm).coeff 1 ≠ 0)
     (S : Finset ℕ)
     (hyp : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S →
       f.eigenvalue n = g_new.eigenvalue n) :
@@ -834,7 +833,7 @@ private theorem eigenvalue_cross_agree_of_cofactor_ne_zero
     (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
     (ψ : (ZMod M)ˣ →* ℂˣ)
     (hgψ : g.toCuspForm.toModularForm' ∈ modFormCharSpace k ψ)
-    (hb₁_ne : (ModularFormClass.qExpansion (1 : ℝ) g.toCuspForm).coeff 1 ≠ 0)
+    (hb₁_ne : (UpperHalfPlane.qExpansion (1 : ℝ) g.toCuspForm).coeff 1 ≠ 0)
     (hMN : M ∣ N)
     (n m : ℕ+) (hn : Nat.Coprime n.val N) (hmN : Nat.Coprime m.val N)
     (hnm : Nat.Coprime n.val m.val)
@@ -852,7 +851,7 @@ private theorem eigenvalues_eq_all_coprime_cross_level
     (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
     (ψ : (ZMod M)ˣ →* ℂˣ)
     (hgψ : g.toCuspForm.toModularForm' ∈ modFormCharSpace k ψ)
-    (hb₁_ne : (ModularFormClass.qExpansion (1 : ℝ) g.toCuspForm).coeff 1 ≠ 0)
+    (hb₁_ne : (UpperHalfPlane.qExpansion (1 : ℝ) g.toCuspForm).coeff 1 ≠ 0)
     (hMN : M ∣ N) (hψχ : ψ.comp (ZMod.unitsMap hMN) = χ)
     (S : Finset ℕ)
     (hyp : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S →
@@ -901,8 +900,8 @@ theorem newPart_eq_smul_of_shared_eigenvalues
     (h_eig : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S →
       f.eigenvalue n = g_new.eigenvalue n) :
     g_new.toCuspForm =
-      (ModularFormClass.qExpansion (1 : ℝ) g_new.toCuspForm).coeff 1 • f.toCuspForm := by
-  set b₁ := (ModularFormClass.qExpansion (1 : ℝ) g_new.toCuspForm).coeff 1 with hb₁_def
+      (UpperHalfPlane.qExpansion (1 : ℝ) g_new.toCuspForm).coeff 1 • f.toCuspForm := by
+  set b₁ := (UpperHalfPlane.qExpansion (1 : ℝ) g_new.toCuspForm).coeff 1 with hb₁_def
   by_cases hg0 : g_new.toCuspForm = 0
   · have hb₁0 : b₁ = 0 := by
       rw [hb₁_def, show (⇑g_new.toCuspForm : UpperHalfPlane → ℂ) =
@@ -924,24 +923,24 @@ theorem newPart_eq_smul_of_shared_eigenvalues
         ((cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace (k := k) χ
           f.toCuspForm).mp (by convert hfχ using 1))
     have h_vanish : ∀ n : ℕ, Nat.Coprime n N →
-        (ModularFormClass.qExpansion (1 : ℝ) (g₁ - f.toCuspForm)).coeff n = 0 := by
+        (UpperHalfPlane.qExpansion (1 : ℝ) (g₁ - f.toCuspForm)).coeff n = 0 := by
       intro n hn
-      show (ModularFormClass.qExpansion (1 : ℝ)
+      show (UpperHalfPlane.qExpansion (1 : ℝ)
           (⇑g₁.toModularForm' - ⇑f.toCuspForm.toModularForm')).coeff n = 0
-      rw [qExpansion_sub one_pos (one_mem_strictPeriods_Gamma1_map N), map_sub, sub_eq_zero]
+      rw [ModularForm.qExpansion_sub one_pos (one_mem_strictPeriods_Gamma1_map N), map_sub, sub_eq_zero]
       by_cases hn0 : n = 0
       · subst hn0
-        rw [ModularFormClass.qExpansion_coeff_zero _ one_pos (one_mem_strictPeriods_Gamma1_map N),
-            ModularFormClass.qExpansion_coeff_zero _ one_pos (one_mem_strictPeriods_Gamma1_map N),
-            show (⇑g₁.toModularForm' : UpperHalfPlane → ℂ) = ⇑g₁ from rfl,
+        rw [show (⇑g₁.toModularForm' : UpperHalfPlane → ℂ) = ⇑g₁ from rfl,
             show (⇑f.toCuspForm.toModularForm' : UpperHalfPlane → ℂ) = ⇑f.toCuspForm from rfl,
-            (CuspFormClass.zero_at_infty g₁).valueAtInfty_eq_zero,
-            (CuspFormClass.zero_at_infty f.toCuspForm).valueAtInfty_eq_zero]
+            CuspFormClass.qExpansion_coeff_zero g₁ one_pos
+              (one_mem_strictPeriods_Gamma1_map N),
+            CuspFormClass.qExpansion_coeff_zero f.toCuspForm one_pos
+              (one_mem_strictPeriods_Gamma1_map N)]
       · have hn_pos : 0 < n := Nat.pos_of_ne_zero hn0
-        have hL : (ModularFormClass.qExpansion (1 : ℝ) (⇑g₁.toModularForm')).coeff n =
+        have hL : (UpperHalfPlane.qExpansion (1 : ℝ) (⇑g₁.toModularForm')).coeff n =
             g_new.eigenvalue ⟨n, hn_pos⟩ :=
           coeff_smul_inv_eq_eigenvalue g_new χ hgχ hb₁_def hb₁_ne ⟨n, hn_pos⟩ hn
-        have hR : (ModularFormClass.qExpansion (1 : ℝ)
+        have hR : (UpperHalfPlane.qExpansion (1 : ℝ)
             (⇑f.toCuspForm.toModularForm')).coeff n = f.eigenvalue ⟨n, hn_pos⟩ :=
           (Newform.eigenvalue_eq_coeff f ⟨n, hn_pos⟩ hn χ hfχ).symm
         rw [hL, hR, h_eig_all ⟨n, hn_pos⟩ hn]
@@ -1070,7 +1069,7 @@ private theorem oldPart_lam_eq_eigenvalue_aux
       haveI : NeZero n.val := ⟨n.pos.ne'⟩
       heckeT_n_cusp k n.val h = lam n • h)
     (hh_ne : h ≠ 0)
-    (hc₁'_ne : (ModularFormClass.qExpansion (1 : ℝ) h).coeff 1 ≠ 0)
+    (hc₁'_ne : (UpperHalfPlane.qExpansion (1 : ℝ) h).coeff 1 ≠ 0)
     (S : Finset ℕ)
     (hh_lam : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S → lam n = f.eigenvalue n) :
     ∀ n : ℕ+, Nat.Coprime n.val N → lam n = f.eigenvalue n := by
@@ -1103,34 +1102,33 @@ private theorem oldPart_diff_qExpansion_coeff_eq_zero
       haveI : NeZero n.val := ⟨n.pos.ne'⟩
       heckeT_n_cusp k n.val h = lam n • h)
     (hh_ne : h ≠ 0)
-    (hc₁'_ne : (ModularFormClass.qExpansion (1 : ℝ) h).coeff 1 ≠ 0)
+    (hc₁'_ne : (UpperHalfPlane.qExpansion (1 : ℝ) h).coeff 1 ≠ 0)
     (S : Finset ℕ)
     (hh_lam : ∀ n : ℕ+, Nat.Coprime n.val N → n.val ∉ S → lam n = f.eigenvalue n) :
     ∀ n : ℕ, Nat.Coprime n N →
-      (ModularFormClass.qExpansion (1 : ℝ)
+      (UpperHalfPlane.qExpansion (1 : ℝ)
         (levelInclude_cusp hMN k h -
-          (ModularFormClass.qExpansion (1 : ℝ) h).coeff 1 • f.toCuspForm)).coeff n = 0 := by
+          (UpperHalfPlane.qExpansion (1 : ℝ) h).coeff 1 • f.toCuspForm)).coeff n = 0 := by
   set h_eig_b : Eigenform M k := eigenformOfIsEigenform ψ h hh_char ⟨lam, hh_eig⟩
   have hh_eig_b_cusp : h_eig_b.toCuspForm = h := rfl
   have hψ_mod' : h_eig_b.toCuspForm.toModularForm' ∈ modFormCharSpace k ψ :=
     (cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace (k := k) ψ h).mpr hh_char
-  set c₁' := (ModularFormClass.qExpansion (1 : ℝ) h).coeff 1
+  set c₁' := (UpperHalfPlane.qExpansion (1 : ℝ) h).coeff 1
   set ιh : CuspForm ((Gamma1 N).map (mapGL ℝ)) k := levelInclude_cusp hMN k h with hιh_def
   have h_lam_eq : ∀ n : ℕ+, Nat.Coprime n.val N → lam n = f.eigenvalue n :=
     oldPart_lam_eq_eigenvalue_aux f χ hfχ hMN ψ hψχ h hh_char lam hh_eig hh_ne hc₁'_ne S hh_lam
   intro n hn
-  show (ModularFormClass.qExpansion (1 : ℝ)
+  show (UpperHalfPlane.qExpansion (1 : ℝ)
       (⇑ιh.toModularForm' - ⇑(c₁' • f.toCuspForm).toModularForm')).coeff n = 0
-  rw [qExpansion_sub one_pos (one_mem_strictPeriods_Gamma1_map N), map_sub, sub_eq_zero]
+  rw [ModularForm.qExpansion_sub one_pos (one_mem_strictPeriods_Gamma1_map N), map_sub, sub_eq_zero]
   by_cases hn0 : n = 0
   · subst hn0
-    rw [ModularFormClass.qExpansion_coeff_zero _ one_pos (one_mem_strictPeriods_Gamma1_map N),
-        ModularFormClass.qExpansion_coeff_zero _ one_pos (one_mem_strictPeriods_Gamma1_map N),
-        show (⇑ιh.toModularForm' : UpperHalfPlane → ℂ) = ⇑ιh from rfl,
+    rw [show (⇑ιh.toModularForm' : UpperHalfPlane → ℂ) = ⇑ιh from rfl,
         show (⇑(c₁' • f.toCuspForm).toModularForm' : UpperHalfPlane → ℂ) =
           ⇑(c₁' • f.toCuspForm) from rfl,
-        (CuspFormClass.zero_at_infty ιh).valueAtInfty_eq_zero,
-        (CuspFormClass.zero_at_infty (c₁' • f.toCuspForm)).valueAtInfty_eq_zero]
+        CuspFormClass.qExpansion_coeff_zero ιh one_pos (one_mem_strictPeriods_Gamma1_map N),
+        CuspFormClass.qExpansion_coeff_zero (c₁' • f.toCuspForm) one_pos
+          (one_mem_strictPeriods_Gamma1_map N)]
   · have hn_pos : 0 < n := Nat.pos_of_ne_zero hn0
     set np : ℕ+ := ⟨n, hn_pos⟩
     have hnp_val : (np : ℕ) = n := rfl
@@ -1140,7 +1138,7 @@ private theorem oldPart_diff_qExpansion_coeff_eq_zero
       rw [show (⇑ιh.toModularForm' : UpperHalfPlane → ℂ) = ⇑ιh from rfl,
         show (⇑h_eig_b.toCuspForm.toModularForm' : UpperHalfPlane → ℂ) = ⇑h_eig_b.toCuspForm
           from rfl, hh_eig_b_cusp, hιh_def, levelInclude_cusp_coe]
-    have hL : (ModularFormClass.qExpansion (1 : ℝ) (⇑ιh.toModularForm')).coeff n =
+    have hL : (UpperHalfPlane.qExpansion (1 : ℝ) (⇑ιh.toModularForm')).coeff n =
         c₁' * f.eigenvalue np := by
       rw [qExpansion_ext2 ιh.toModularForm' h_eig_b.toCuspForm.toModularForm' hfun, ← hnp_val,
         show (⇑h_eig_b.toCuspForm.toModularForm' : UpperHalfPlane → ℂ) =
@@ -1148,11 +1146,11 @@ private theorem oldPart_diff_qExpansion_coeff_eq_zero
         Eigenform.coeff_eq_coeff_one_mul_eigenvalue h_eig_b ψ hψ_mod' np hnM,
         eigenformOfIsEigenform_eigenvalue ψ h hh_char lam hh_eig hh_ne np hnM,
         h_lam_eq np hn, hh_eig_b_cusp]
-    have hR : (ModularFormClass.qExpansion (1 : ℝ)
+    have hR : (UpperHalfPlane.qExpansion (1 : ℝ)
         (⇑(c₁' • f.toCuspForm).toModularForm')).coeff n = c₁' * f.eigenvalue np := by
       rw [show (⇑(c₁' • f.toCuspForm).toModularForm' : UpperHalfPlane → ℂ) =
             c₁' • ⇑f.toCuspForm.toModularForm' from rfl,
-        qExpansion_smul one_pos (one_mem_strictPeriods_Gamma1_map N), PowerSeries.coeff_smul,
+        ModularForm.qExpansion_smul one_pos (one_mem_strictPeriods_Gamma1_map N), PowerSeries.coeff_smul,
         smul_eq_mul, ← hnp_val, Newform.eigenvalue_eq_coeff f np hn χ hfχ]
       congr 1
     rw [hL, hR]
@@ -1168,7 +1166,7 @@ private theorem oldPart_f_mem_cuspFormsOldExtended
     (c₁' : ℂ) (hc₁'_ne : c₁' ≠ 0)
     (h_diff_char : levelInclude_cusp hMN k h - c₁' • f.toCuspForm ∈ cuspFormCharSpace k χ)
     (h_vanish : ∀ n : ℕ, Nat.Coprime n N →
-      (ModularFormClass.qExpansion (1 : ℝ)
+      (UpperHalfPlane.qExpansion (1 : ℝ)
         (levelInclude_cusp hMN k h - c₁' • f.toCuspForm)).coeff n = 0) :
     f.toCuspForm ∈ cuspFormsOldExtended N k := by
   set ιh : CuspForm ((Gamma1 N).map (mapGL ℝ)) k := levelInclude_cusp hMN k h
@@ -1205,7 +1203,7 @@ theorem oldPart_eq_zero_of_shared_eigenvalues
   set h_eig_b : Eigenform M k := eigenformOfIsEigenform ψ h hh_char ⟨lam, hh_eig⟩
   have hψ_mod' : h_eig_b.toCuspForm.toModularForm' ∈ modFormCharSpace k ψ :=
     (cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace (k := k) ψ h).mpr hh_char
-  set c₁' := (ModularFormClass.qExpansion (1 : ℝ) h).coeff 1
+  set c₁' := (UpperHalfPlane.qExpansion (1 : ℝ) h).coeff 1
   have hc₁'_ne : c₁' ≠ 0 :=
     coeff_one_ne_zero_of_mem_cuspFormsNew_of_eigen h_eig_b ψ hψ_mod' hh_new hh_ne
   set ιh : CuspForm ((Gamma1 N).map (mapGL ℝ)) k := levelInclude_cusp hMN k h
@@ -1221,9 +1219,9 @@ theorem oldPart_eq_zero_of_shared_eigenvalues
   have hf_ext : f.toCuspForm ∈ cuspFormsOldExtended N k :=
     oldPart_f_mem_cuspFormsOldExtended f χ hMN hMne h c₁' hc₁'_ne h_diff_char h_vanish
   refine newform_notMem_cuspFormsOldExtended f (fun hf0 ↦ ?_) hf_ext
-  have h1 : (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm).coeff 1 = 1 := f.isNorm
+  have h1 : (UpperHalfPlane.qExpansion (1 : ℝ) f.toCuspForm).coeff 1 = 1 := f.isNorm
   rw [hf0, show (⇑(0 : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : UpperHalfPlane → ℂ) =
-      (0 : UpperHalfPlane → ℂ) from rfl, qExpansion_zero] at h1
+      (0 : UpperHalfPlane → ℂ) from rfl, UpperHalfPlane.qExpansion_zero] at h1
   simp at h1
 
 /-- **Miyake Theorem 4.6.12 (Strong Multiplicity One, full constant-multiple form).**
@@ -1256,7 +1254,7 @@ theorem strongMultiplicityOne_constMul
       fun n hn hnS ↦ by
         haveI : NeZero n.val := ⟨n.pos.ne'⟩
         rw [oldPart_isEigen_of_eigenform g n hn, h_eig n hn hnS]
-  exact ⟨(ModularFormClass.qExpansion (1 : ℝ) g.toCuspForm).coeff 1,
+  exact ⟨(UpperHalfPlane.qExpansion (1 : ℝ) g.toCuspForm).coeff 1,
     newPart_eq_smul_of_shared_eigenvalues f g χ hfχ hgχ
       ((mem_cuspFormsNew_iff_oldPart_eq_zero g.toCuspForm).mpr h_old_zero) S h_eig⟩
 

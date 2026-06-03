@@ -704,8 +704,10 @@ theorem peterssonInner_slash_adjoint
   have h_eq : ∀ τ, petersson k (f ∣[k] α) g τ =
       ↑|α.det.val| ^ (k - 2) * petersson k f g' (α • τ) := by
     intro τ
-    rw [hg_decomp, petersson_slash, show σ α = RingHom.id ℂ from if_pos hα,
-      RingHom.id_apply]
+    rw [hg_decomp, petersson_slash,
+      show σ α = ContinuousAlgEquiv.refl ℝ ℂ by
+        simp [σ]; intro hcontra; exact absurd hα (not_lt.mpr hcontra),
+      ContinuousAlgEquiv.refl_apply]
   simp_rw [h_eq]
   symm
   have hpet_adj : ∀ τ, petersson k f (g ∣[k] peterssonAdj α) τ =

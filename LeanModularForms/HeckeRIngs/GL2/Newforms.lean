@@ -144,12 +144,12 @@ private lemma exp_two_pi_mul_I_div_natCast_pow_eq_one (l : ℕ) [NeZero l] :
 private lemma qExpansion_coeff_smul_qParam_pow_shift_eq
     {N : ℕ} [NeZero N] {l : ℕ} [NeZero l] {k : ℤ}
     (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hg_supp : ∀ n : ℕ, ¬ l ∣ n → (ModularFormClass.qExpansion (1 : ℝ) g).coeff n = 0)
+    (hg_supp : ∀ n : ℕ, ¬ l ∣ n → (UpperHalfPlane.qExpansion (1 : ℝ) g).coeff n = 0)
     (σ : UpperHalfPlane) (n : ℕ) :
-    (ModularFormClass.qExpansion (1 : ℝ) g).coeff n •
+    (UpperHalfPlane.qExpansion (1 : ℝ) g).coeff n •
         Function.Periodic.qParam (1 : ℝ)
           ((((1 : ℝ) / (l : ℝ)) +ᵥ σ : UpperHalfPlane) : ℂ) ^ n =
-      (ModularFormClass.qExpansion (1 : ℝ) g).coeff n •
+      (UpperHalfPlane.qExpansion (1 : ℝ) g).coeff n •
         Function.Periodic.qParam (1 : ℝ) (σ : ℂ) ^ n := by
   have hqP :
       Function.Periodic.qParam (1 : ℝ) ((((1 : ℝ) / (l : ℝ)) +ᵥ σ : UpperHalfPlane) : ℂ) =
@@ -170,7 +170,7 @@ theorem exists_levelRaise_preimage_of_coeff_support_multiples
     {N : ℕ} [NeZero N] {l : ℕ} [NeZero l] (_hl : 1 < l) (_hlN : l ∣ N) {k : ℤ}
     (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (hg_supp : ∀ n : ℕ, ¬ l ∣ n →
-      (ModularFormClass.qExpansion (1 : ℝ) g).coeff n = 0) :
+      (UpperHalfPlane.qExpansion (1 : ℝ) g).coeff n = 0) :
     ∃ f : UpperHalfPlane → ℂ,
       (⇑g : UpperHalfPlane → ℂ) = levelRaiseFun l k f ∧
       f ∣[k] (mapGL ℝ ModularGroup.T : GL (Fin 2) ℝ) = f := by
@@ -197,11 +197,17 @@ theorem exists_levelRaise_preimage_of_coeff_support_multiples
     set σ : UpperHalfPlane := (levelRaiseMatrix l)⁻¹ • τ
     rw [levelRaiseMatrix_inv_smul_vadd_one_eq τ]
     set σ' : UpperHalfPlane := ((1 : ℝ) / (l : ℝ)) +ᵥ σ
+    haveI : Fact (IsCusp OnePoint.infty ((Gamma1 N).map (mapGL ℝ))) :=
+      ⟨((Gamma1 N).map (mapGL ℝ)).isCusp_of_mem_strictPeriods one_pos h1_period⟩
     have Hσ' : HasSum (fun n : ℕ ↦
-        (ModularFormClass.qExpansion (1 : ℝ) g).coeff n •
+        (UpperHalfPlane.qExpansion (1 : ℝ) g).coeff n •
           Function.Periodic.qParam (1 : ℝ) (σ' : ℂ) ^ n) ((⇑g : _ → ℂ) σ') :=
-      ModularFormClass.hasSum_qExpansion (f := g) one_pos h1_period σ'
+      UpperHalfPlane.hasSum_qExpansion one_pos
+        (SlashInvariantFormClass.periodic_comp_ofComplex g h1_period)
+        (ModularFormClass.holo g) (ModularFormClass.bdd_at_infty g) σ'
     rw [funext (qExpansion_coeff_smul_qParam_pow_shift_eq g hg_supp σ)] at Hσ'
-    exact (ModularFormClass.hasSum_qExpansion (f := g) one_pos h1_period σ |>.unique Hσ').symm
+    exact (UpperHalfPlane.hasSum_qExpansion one_pos
+      (SlashInvariantFormClass.periodic_comp_ofComplex g h1_period)
+      (ModularFormClass.holo g) (ModularFormClass.bdd_at_infty g) σ |>.unique Hσ').symm
 
 end HeckeRing.GL2

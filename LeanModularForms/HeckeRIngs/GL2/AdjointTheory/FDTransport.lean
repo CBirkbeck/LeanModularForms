@@ -867,7 +867,8 @@ theorem hyperbolicMeasure_Gamma_p_α_fundDomain_PSL_canonical_lt_top
   rw [tsum_fintype]
   refine ENNReal.sum_lt_top.mpr fun q' _ ↦ ?_
   rw [(isFundamentalDomain_fdo_PSL.smul _).measure_eq isFundamentalDomain_fdo_PSL]
-  exact lt_of_le_of_lt (measure_mono fdo_subset_fd) hyperbolicMeasure_fd_lt_top
+  exact lt_of_le_of_lt (measure_mono ModularGroup.fdo_subset_fd)
+    hyperbolicMeasure_fd_lt_top
 
 open CongruenceSubgroup in
 /-- The natural quotient map `SL ⧸ Γ_p(α) → SL ⧸ Γ₁(N)`, sending each
