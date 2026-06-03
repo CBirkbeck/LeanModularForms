@@ -415,77 +415,20 @@ def AlphaTilePairwiseAEDisjoint (α : GL (Fin 2) ℝ) : Prop :=
         (q₂.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • fd))
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- Null-measurability hypothesis for each `α`-shifted-tile piece. -/
-def AlphaTileNullMeasurable (α : GL (Fin 2) ℝ) : Prop :=
-  ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
-    NullMeasurableSet
-      ((α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-        (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- Integrability of `h` on the `α`-shifted-tile union (over `SL/Γ₁`). -/
-def AlphaIntegrableUnion (α : GL (Fin 2) ℝ) (h : ℍ → ℂ) : Prop :=
-  IntegrableOn h
-    (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-      (α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-        (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ)) μ_hyp
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- Per-`q` pairwise-AE-disjoint hypothesis for an α-family `α : ℕ → GL` of tiles,
-indexed by `b ∈ Finset.range p`, on a fixed `q`. -/
-def AlphaFamilyPerQTilePairwiseAEDisjoint (p : ℕ) (α : ℕ → GL (Fin 2) ℝ) : Prop :=
-  ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
-    ((Finset.range p : Finset ℕ) : Set ℕ).Pairwise (fun b₁ b₂ ↦ AEDisjoint μ_hyp
-        ((α b₁ * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (q.out : SL(2, ℤ))⁻¹ :
-          GL (Fin 2) ℝ)) • (ModularGroup.fd : Set ℍ))
-        ((α b₂ * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (q.out : SL(2, ℤ))⁻¹ :
-          GL (Fin 2) ℝ)) • (ModularGroup.fd : Set ℍ)))
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- Per-`q` null-measurability hypothesis for each tile in an α-family
-`α : ℕ → GL`, `b ∈ Finset.range p`, on a fixed `q`. -/
-def AlphaFamilyPerQTileNullMeasurable (p : ℕ) (α : ℕ → GL (Fin 2) ℝ) : Prop :=
-  ∀ q : SL(2, ℤ) ⧸ Gamma1 N, ∀ b ∈ Finset.range p,
-    NullMeasurableSet
-      ((α b * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (q.out : SL(2, ℤ))⁻¹ :
-        GL (Fin 2) ℝ)) • (ModularGroup.fd : Set ℍ)) μ_hyp
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- Per-`q` integrability of `h` on an α-family tile biUnion over `b ∈ range p`. -/
-def AlphaFamilyPerQIntegrableBUnion (p : ℕ) (α : ℕ → GL (Fin 2) ℝ)
-    (h : ℍ → ℂ) : Prop :=
-  ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
-    IntegrableOn h
-    (⋃ b ∈ Finset.range p,
-      (α b * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) (q.out : SL(2, ℤ))⁻¹ :
-        GL (Fin 2) ℝ)) • (ModularGroup.fd : Set ℍ)) μ_hyp
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- Pairwise-AE-disjoint hypothesis for the *plain* `SL/Γ₁`-tile union (no
-α-prefactor); i.e. `Pairwise (q ↦ AEDisjoint (q.out⁻¹ • fd))`. Specialisation of
-`AlphaTilePairwiseAEDisjoint` to `α := 1`. -/
-def SLTilePairwiseAEDisjoint : Prop :=
-  Pairwise (fun (q₁ q₂ : SL(2, ℤ) ⧸ Gamma1 N) ↦ AEDisjoint μ_hyp
-      (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-        (q₁.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ))
-      (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-        (q₂.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • fd))
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- Null-measurability hypothesis for the *plain* `SL/Γ₁`-tile pieces. -/
-def SLTileNullMeasurable : Prop :=
-  ∀ q : SL(2, ℤ) ⧸ Gamma1 N,
-    NullMeasurableSet
-      (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-        (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ)) μ_hyp
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- Integrability of `h` on the plain `SL/Γ₁`-tile union (no α prefactor). -/
-def SLTileIntegrableUnion (h : ℍ → ℂ) : Prop :=
-  IntegrableOn h
-    (⋃ q : SL(2, ℤ) ⧸ Gamma1 N,
-      ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-        (q.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ) • (fd : Set ℍ)) μ_hyp
 
 private lemma heckeT_p_cusp_comm_diamondOp_private
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (d : (ZMod N)ˣ)
