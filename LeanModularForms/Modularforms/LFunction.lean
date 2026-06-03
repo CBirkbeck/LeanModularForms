@@ -392,66 +392,8 @@ theorem mellin_qParam_pow_imAxis_split {h : ℝ} (hh : 0 < h) {m : ℕ} (hm : 1 
       Complex.ofReal_natCast]
   ring
 
-/-- **Conditional sum-swap for the Mellin transform of a tsum**.
 
-If a function `g : ℝ → ℂ` decomposes as a `tsum` of functions `fᵢ` a.e. on
-`Ioi 0`, and if each weighted-by-`t^{s-1}` term is a.e. strongly measurable
-on `Ioi 0` with overall finite L¹-norm sum, then the Mellin transform of
-`g` equals the tsum of termwise Mellin transforms. -/
-theorem mellin_eq_tsum_mellin_of_hasSum_of_integrable
-    {ι : Type*} [Countable ι] (g : ℝ → ℂ) (f : ι → ℝ → ℂ) {s : ℂ}
-    (h_decomp : ∀ᵐ t ∂(MeasureTheory.volume.restrict (Set.Ioi (0 : ℝ))),
-      HasSum (fun i ↦ f i t) (g t))
-    (h_meas : ∀ i, MeasureTheory.AEStronglyMeasurable
-      (fun t : ℝ ↦ (t : ℂ) ^ (s - 1) • f i t)
-      (MeasureTheory.volume.restrict (Set.Ioi (0 : ℝ))))
-    (h_summ : (∑' i, MeasureTheory.lintegral
-      (MeasureTheory.volume.restrict (Set.Ioi (0 : ℝ)))
-      (fun t : ℝ ↦ ‖(t : ℂ) ^ (s - 1) • f i t‖ₑ)) ≠ (⊤ : ENNReal)) :
-    mellin g s = ∑' i, mellin (f i) s := by
-  unfold mellin
-  have h_ae_eq :
-      (fun t : ℝ ↦ (t : ℂ) ^ (s - 1) • g t) =ᶠ[
-          MeasureTheory.ae (MeasureTheory.volume.restrict (Set.Ioi (0 : ℝ)))]
-        fun t : ℝ ↦ ∑' i, (t : ℂ) ^ (s - 1) • f i t := by
-    filter_upwards [h_decomp] with t ht
-    rw [(ht.const_smul ((t : ℂ) ^ (s - 1))).tsum_eq]
-  rw [MeasureTheory.integral_congr_ae h_ae_eq,
-      MeasureTheory.integral_tsum h_meas h_summ]
 
-/-- **Scalar-pullout for Mellin (ℂ)**, the `*`-form of `mellin_const_smul`:
-```
-mellin (fun t : ℝ ↦ c * f t) s = c * mellin f s.
-``` -/
-lemma mellin_const_mul (f : ℝ → ℂ) (s : ℂ) (c : ℂ) :
-    mellin (fun t : ℝ ↦ c * f t) s = c * mellin f s :=
-  mellin_const_smul f s c
-
-/-- **Algebraic normalization: termwise Mellin tsum = `(2π/h)^{-s} · Γ(s) · LSeries`**.
-
-Given a coefficient sequence `a : ℕ → ℂ` with `a 0 = 0` (matching the cusp-form
-constraint `lCoeff f 0 = 0`), the tsum of `a m · mellin (qParam^m) s` factors as
-```
-∑' m, a m · mellin (qParam h (I·t)^m) s
-  = (2π/h)^(-s) · Γ(s) · LSeries a s
-```
-on `Re s > 0`. -/
-theorem tsum_mellin_qParam_pow_imAxis_eq_LSeries
-    {h : ℝ} (hh : 0 < h) (a : ℕ → ℂ) (h_a0 : a 0 = 0)
-    {s : ℂ} (hs : 0 < s.re) :
-    ∑' m : ℕ, a m * mellin (fun t : ℝ ↦
-        Function.Periodic.qParam h (Complex.I * (t : ℂ)) ^ m) s =
-      ((2 * Real.pi / h : ℝ) : ℂ) ^ (-s) * Complex.Gamma s * LSeries a s := by
-  have h_each : ∀ m : ℕ,
-      a m * mellin (fun t : ℝ ↦
-          Function.Periodic.qParam h (Complex.I * (t : ℂ)) ^ m) s =
-        (((2 * Real.pi / h : ℝ) : ℂ) ^ (-s) * Complex.Gamma s) * LSeries.term a s m := fun m ↦ by
-    rcases Nat.eq_zero_or_pos m with rfl | hm_pos
-    · rw [LSeries.term_zero, h_a0, zero_mul, mul_zero]
-    · rw [mellin_qParam_pow_imAxis_split hh hm_pos hs, LSeries.term_def₀ h_a0]
-      ring
-  rw [tsum_congr h_each, tsum_mul_left]
-  rfl
 
 
 
