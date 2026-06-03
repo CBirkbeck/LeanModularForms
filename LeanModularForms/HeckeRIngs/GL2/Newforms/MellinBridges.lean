@@ -266,67 +266,8 @@ noncomputable def Newform.PerNewformFullDirichletData_of_classicalInputs
   h_den_finite := h_den_finite
   h_clause := h_clause
 
-/-- A reduction of `Newform.PerNewformFullDirichletData_of_classicalInputs` that
-drops the per-prime denominator-factor analyticity hypothesis, deriving it from the
-per-prime non-vanishing hypothesis via `Newform.den_factor_analytic_at`. -/
-noncomputable def Newform.PerNewformFullDirichletData_of_classicalInputs_redDen
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (S : Finset ℕ) (T : Finset Nat.Primes) (s₀ : ℂ)
-    (h_χ_ne_one : (Newform.dirichletLift χ : DirichletCharacter ℂ N) ≠ 1)
-    (h_chi_sq_ne_one : (Newform.dirichletLift χ * Newform.dirichletLift χ
-      : DirichletCharacter ℂ N) ≠ 1)
-    (h_zero : DirichletCharacter.LFunction
-      (Newform.dirichletLift χ : DirichletCharacter ℂ N) (2 * s₀ - k + 1) = 0)
-    (h_num_LF_ne : DirichletCharacter.LFunction
-      (Newform.dirichletLift χ * Newform.dirichletLift χ
-        : DirichletCharacter ℂ N) (2 * (2 * s₀ - k + 1)) ≠ 0)
-    (h_factors_ne : ∀ p ∈ T,
-      Newform.eulerFactor_stripped f χ S s₀ p ≠ 0 ∧
-      (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-          ((p : ℕ) : ZMod N) *
-        ((p : ℕ) : ℂ) ^ (-(2 * s₀ - k + 1))) ≠ 0)
-    (h_den_factors_ne : ∀ p ∈ T,
-      (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-        : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-        ((p : ℕ) : ℂ) ^ (-(2 * (2 * s₀ - k + 1)))) ≠ 0)
-    (h_num_factor_an : ∀ p ∈ T, AnalyticAt ℂ
-      (fun s ↦ Newform.eulerFactor_stripped f χ S s p *
-        (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-            ((p : ℕ) : ZMod N) *
-          ((p : ℕ) : ℂ) ^ (-(2 * s - k + 1)))⁻¹) s₀)
-    (h_den_finite :
-      meromorphicOrderAt
-        (fun s ↦
-          DirichletCharacter.LFunction
-            (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-            (2 * s - k + 1) *
-          ∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-            : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-            ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀ ≠ ⊤)
-    (h_clause : Newform.FullDirichletQuotientUniversalFClause f χ S T s₀) :
-    Newform.PerNewformFullDirichletData f χ S :=
-  Newform.PerNewformFullDirichletData_of_classicalInputs f χ S T s₀
-    h_χ_ne_one h_chi_sq_ne_one h_zero h_num_LF_ne h_factors_ne
-    h_num_factor_an
-    (fun p hp ↦ Newform.den_factor_analytic_at χ s₀ p (h_den_factors_ne p hp))
-    h_den_finite h_clause
 
 
-/-- Direct bridge `Newform.HeckeFEData` + `Newform.PerNewformFullDirichletData` ⇒
-`Newform.AnalyticContradiction`, without going through newform uniqueness / SMO. -/
-theorem Newform.analyticContradiction_of_HeckeFEData_of_PerNewformFullDirichletData
-    (h_FE : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k), Newform.HeckeFEData f)
-    (h_data : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
-      f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      ∀ (S : Finset ℕ),
-        (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
-          q ∉ S → f.lCoeff q = 0) →
-        Newform.PerNewformFullDirichletData f χ S) :
-    Newform.AnalyticContradiction :=
-  Newform.analyticContradiction_of_HeckeEntireExtension_of_NoEntireExtensionUnderBadPrime
-    (Newform.HeckeEntireExtension_of_HeckeFEData h_FE)
-    (Newform.noEntireExtensionUnderBadPrime_of_full_dirichletZeroCertificate
-      fun _ _ _ f χ hfχ S h_bad ↦ (h_data f χ hfχ S h_bad).toPre)
 
 
 
@@ -348,13 +289,6 @@ structure Newform.FrickeSlashData {N : ℕ} [NeZero N] {k : ℤ}
     LSeries.abscissaOfAbsConv f.lCoeff_stripped < s.re →
     mellin (Newform.imAxis f) s = LSeries f.lCoeff_stripped s
 
-/-- **Build `Newform.ImAxisMellinData` from `FrickeSlashData` (T132 H1).** -/
-noncomputable def Newform.ImAxisMellinData.ofFrickeSlashData
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k)
-    (data : Newform.FrickeSlashData f) :
-    Newform.ImAxisMellinData f :=
-  Newform.ImAxisMellinData.ofSlashEq f data.twist data.slash_eq
-    data.hk_pos data.h_bridge
 
 
 /-- The classical Hecke 1936 identity
