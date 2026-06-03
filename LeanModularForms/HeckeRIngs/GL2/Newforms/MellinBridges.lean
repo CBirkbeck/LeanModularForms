@@ -225,16 +225,6 @@ structure Newform.CompletedFrickeData {N : ℕ} [NeZero N] {k : ℤ}
   stripping_bridge : ∀ {s : ℂ}, ((k : ℝ) / 2 + 1 : ℝ) < s.re →
     LSeries f.lCoeff_stripped s = stripping s * LSeries f.lCoeff s
 
-private lemma imAxis_scaled_locallyIntegrableOn {N : ℕ} [NeZero N] {k : ℤ}
-    (twist : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    MeasureTheory.LocallyIntegrableOn
-      (fun t : ℝ ↦ _root_.ModularForms.imAxis twist (t / (N : ℝ)))
-      (Set.Ioi (0 : ℝ)) := by
-  have hN_pos : (0 : ℝ) < (N : ℝ) := Nat.cast_pos.mpr (Nat.pos_of_neZero N)
-  have h_div_cts : ContinuousOn (fun t : ℝ ↦ t / (N : ℝ)) (Set.Ioi (0 : ℝ)) :=
-    Continuous.continuousOn (by fun_prop)
-  exact ((_root_.ModularForms.continuousOn_imAxis twist).comp h_div_cts
-    fun t ht ↦ div_pos ht hN_pos).locallyIntegrableOn measurableSet_Ioi
 
 private lemma imAxis_scaled_rapidDecay {N : ℕ} [NeZero N] {k : ℤ}
     (twist : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (r : ℝ) :
