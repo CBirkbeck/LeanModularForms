@@ -37,7 +37,8 @@ discriminant `Δ` to relate weight `k` to weight `k - 12`, using the explicit id
 
 -/
 
-open ModularForm EisensteinSeries UpperHalfPlane TopologicalSpace Set MeasureTheory intervalIntegral
+open ModularForm hiding E₄ E₆
+open EisensteinSeries UpperHalfPlane TopologicalSpace Set MeasureTheory intervalIntegral
   Metric Filter Function Complex MatrixGroups SlashInvariantFormClass ModularFormClass
 
 open scoped Interval Real NNReal ENNReal Topology BigOperators Nat
@@ -162,7 +163,7 @@ lemma Delta_E4_E6_aux_q_one_term : (qExpansion 1 Delta_E4_E6_aux).coeff 1 = 1 :=
   change (PowerSeries.coeff 1) (qExpansion 1 ((1728⁻¹ : ℂ) • ((A - B : ModularForm Γ(1) 12)))) = 1
   rw [← Nat.cast_one (R := ℝ), ← qExpansion_smul2]
   have hsub2 : qExpansion 1 (⇑A - ⇑B) = qExpansion 1 ⇑A - qExpansion 1 ⇑B := by
-    simpa using (qExpansion_sub (Γ := Γ(1)) (h := (1 : ℕ))
+    simpa using (ModularForm.qExpansion_sub (Γ := Γ(1)) (h := (1 : ℕ))
       (hh := by positivity) (hΓ := by simp) (f := A) (g := B))
   have hmain : (PowerSeries.coeff 1) ((1728⁻¹ : ℂ) • (qExpansion 1 ⇑A - qExpansion 1 ⇑B)) = 1 := by
     have h4 := qExpansion_pow E₄ 3
@@ -199,7 +200,7 @@ theorem Delta_eq_Delta_E4_E6_aux : Delta = Delta_E4_E6_aux := by
     rw [H]
   have h2 := Delta_E4_E6_aux_q_one_term
   rw [← H] at h2
-  have hs := (qExpansion_smul (Γ := Γ(1)) (h := (1 : ℕ))
+  have hs := (ModularForm.qExpansion_smul (Γ := Γ(1)) (h := (1 : ℕ))
     (hh := by positivity) (hΓ := by simp) c Delta).symm
   rw [show qExpansion 1 ⇑(c • Delta) = qExpansion 1 (c • ⇑Delta) from rfl,
     ← Nat.cast_one (R := ℝ), ← hs] at h2
@@ -224,7 +225,7 @@ lemma weight_eight_one_dimensional (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Even 
   set c := (qExpansion 1 f).coeff 0 with hc
   have hcusp : IsCuspForm Γ(1) k (E k hk - c⁻¹ • f) := by
     rw [IsCuspForm_iff_coeffZero_eq_zero, ← Nat.cast_one (R := ℝ), qExpansion_coe_sub,
-      qExpansion_sub (Γ := Γ(1)) (h := (1 : ℕ)) (hh := by positivity) (hΓ := by simp)]
+      ModularForm.qExpansion_sub (Γ := Γ(1)) (h := (1 : ℕ)) (hh := by positivity) (hΓ := by simp)]
     have hnorm0 := modularForm_normalise f hf2
     have hcInv : c⁻¹ = ((PowerSeries.coeff 0) (qExpansion 1 ⇑f))⁻¹ := by simp [hc]
     have hnorm : (PowerSeries.coeff 0) (qExpansion 1 ⇑(c⁻¹ • f)) = 1 := by
@@ -371,7 +372,7 @@ lemma dim_modforms_eq_one_add_dim_cuspforms (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk
     have hqsub : qExpansion 1 ⇑(c • E k hk - f) =
         qExpansion 1 ⇑(c • E k hk) - qExpansion 1 ⇑f := by
       simpa using
-        (qExpansion_sub (Γ := Γ(1)) (h := (1 : ℕ)) (hh := by positivity) (hΓ := by simp)
+        (ModularForm.qExpansion_sub (Γ := Γ(1)) (h := (1 : ℕ)) (hh := by positivity) (hΓ := by simp)
           (f := c • E k hk) (g := f))
     have hsmul : qExpansion 1 ⇑(c • E k hk) = c • qExpansion 1 (E k hk) := by
       simpa using (qExpansion_smul2 1 c (E k hk)).symm
@@ -599,8 +600,8 @@ lemma dim_gen_cong_levels (k : ℤ) (Γ : Subgroup SL(2, ℤ)) (hΓ : Subgroup.i
       (Γ := (𝒮ℒ : Subgroup (GL (Fin 2) ℝ))) (k := w) (h := h) hh hperSL
   let trunc : ModularForm GΓ k →ₗ[ℂ] (Fin N → ℂ) :=
     { toFun := fun f n ↦ (qExpansion h f).coeff n
-      map_add' f g := by ext n; simp [qExpansion_add hh hperΓ f g]
-      map_smul' a f := by ext n; simp [qExpansion_smul hh hperΓ a f] }
+      map_add' f g := by ext n; simp [ModularForm.qExpansion_add hh hperΓ f g]
+      map_smul' a f := by ext n; simp [ModularForm.qExpansion_smul hh hperΓ a f] }
   have htrunc_inj : Function.Injective trunc := by
     intro f g hfg
     refine dim_gen_cong_levels_eq_of_coeff_eq_zero hNinj f g fun m hm ↦ ?_
