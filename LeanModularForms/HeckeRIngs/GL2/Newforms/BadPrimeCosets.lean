@@ -505,24 +505,6 @@ theorem Newform.alpha_p_Gamma1_doubleCoset_smul_set_eq_iUnion_T_p_upper_left_fac
     exact ⟨b, γ, hγ, w, hw, hsmul⟩
 
 open scoped Pointwise in
-/-- `q`-tile specialization of the bad-prime double-coset tile equality. -/
-theorem Newform.alpha_p_Gamma1_doubleCoset_smul_qOut_inv_fd_eq_iUnion_T_p_upper_left_factor_smul
-    (N : ℕ) [NeZero N] {p : ℕ} (hp : p.Prime) (hpN : ¬ Nat.Coprime p N)
-    (q : SL(2, ℤ) ⧸ Gamma1 N) :
-    ((((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ)) *
-        ({(glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)} : Set (GL (Fin 2) ℝ)) *
-      (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ))) •
-        ((q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane)) =
-      Set.iUnion (fun b : Fin p ↦
-        Set.iUnion (fun γ : {γ : GL (Fin 2) ℝ //
-            γ ∈ (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) :
-              Set (GL (Fin 2) ℝ))} ↦
-          (((γ : GL (Fin 2) ℝ) *
-            (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)) •
-              ((q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane))))) := by
-  simpa using
-    Newform.alpha_p_Gamma1_doubleCoset_smul_set_eq_iUnion_T_p_upper_left_factor_smul
-      N (p := p) hp hpN ((q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane))
 
 open scoped Pointwise in
 
@@ -595,25 +577,6 @@ theorem Newform.alpha_p_Gamma1_doubleCoset_smul_whole_qOut_inv_fd_eq_iUnion_q_Ga
 open scoped Pointwise in
 
 open scoped Pointwise in
-/-- Whole-`q`-domain set-action regrouping pulling `Γ₁(N)` out of the
-`(q, b)`-iUnion: the bad-prime double coset acting on the SL(2,ℤ)-fundamental
-cover `⋃_q q.out⁻¹ • fd` as a single `Γ₁(N)`-orbit of the per-`(q, b)` tile family. -/
-theorem Newform.alpha_p_Gamma1_doubleCoset_smul_whole_qOut_inv_fd_eq_Gamma1_smul_iUnion_q_b_T_p_upper_smul
-    (N : ℕ) [NeZero N] {p : ℕ} (hp : p.Prime) (hpN : ¬ Nat.Coprime p N) :
-    ((((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ)) *
-        ({(glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)} : Set (GL (Fin 2) ℝ)) *
-      (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ))) •
-        (Set.iUnion (fun q : SL(2, ℤ) ⧸ Gamma1 N ↦
-          ((q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane)))) =
-      (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ)) •
-        Set.iUnion (fun q : SL(2, ℤ) ⧸ Gamma1 N ↦
-          Set.iUnion (fun b : Fin p ↦
-            (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ) •
-              ((q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane)))) := by
-  rw [Newform.alpha_p_Gamma1_doubleCoset_smul_whole_qOut_inv_fd_eq_iUnion_q_Gamma1_smul_T_p_upper_left_smul
-    N (p := p) hp hpN, Set.smul_iUnion]
-  refine Set.iUnion_congr fun q ↦ ?_
-  rw [Set.smul_iUnion]
 
 open UpperHalfPlane MeasureTheory in
 
@@ -621,13 +584,6 @@ open UpperHalfPlane MeasureTheory in
 
 open UpperHalfPlane MeasureTheory in
 
-/-- Determinant of `T_p_lower_with_offset`. -/
-lemma Newform.T_p_lower_with_offset_det (N : ℕ) {p : ℕ} (hp : 0 < p) (b : ℕ) :
-    (Newform.T_p_lower_with_offset N hp b).det.val = (p : ℝ) := by
-  change ((Newform.T_p_lower_with_offset N hp b : GL (Fin 2) ℝ) :
-    Matrix (Fin 2) (Fin 2) ℝ).det = (p : ℝ)
-  rw [Newform.T_p_lower_with_offset_coe]
-  simp [Matrix.det_fin_two]
 
 
 open UpperHalfPlane MeasureTheory in
@@ -649,13 +605,6 @@ lemma Newform.T_p_lower_with_offset_adjugate_coe (N : ℕ) {p : ℕ} (hp : 0 < p
       !![(1 : ℝ), 0; ((N : ℝ) * b), (p : ℝ)] := by
   simp [Newform.T_p_lower_with_offset_adjugate, Matrix.GeneralLinearGroup.mkOfDetNeZero]
 
-/-- Determinant of `T_p_lower_with_offset_adjugate`. -/
-lemma Newform.T_p_lower_with_offset_adjugate_det (N : ℕ) {p : ℕ} (hp : 0 < p) (b : ℕ) :
-    (Newform.T_p_lower_with_offset_adjugate N hp b).det.val = (p : ℝ) := by
-  change ((Newform.T_p_lower_with_offset_adjugate N hp b : GL (Fin 2) ℝ) :
-    Matrix (Fin 2) (Fin 2) ℝ).det = (p : ℝ)
-  rw [Newform.T_p_lower_with_offset_adjugate_coe]
-  simp [Matrix.det_fin_two]
 
 
 /-- `peterssonAdj (T_p_lower_with_offset N hp b) = T_p_lower_with_offset_adjugate N hp b`
