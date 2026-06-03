@@ -498,26 +498,6 @@ lemma Newform.frickeSlashCuspForm_coe
       (f : UpperHalfPlane → ℂ) ∣[k] Newform.frickeMatrix N :=
   rfl
 
-/-- Slash formula for the Fricke matrix:
-`(f ∣[k] W_N) τ = f (W_N • τ) · N^{k-1} · (N · τ)^{-k}`. -/
-theorem Newform.frickeMatrix_slash_apply
-    {N : ℕ} [NeZero N] {k : ℤ}
-    (f : UpperHalfPlane → ℂ) (τ : UpperHalfPlane) :
-    (f ∣[k] Newform.frickeMatrix N) τ =
-      f (Newform.frickeMatrix N • τ) *
-        ((N : ℝ) : ℂ) ^ (k - 1) *
-        ((N : ℂ) * (τ : ℂ)) ^ (-k) := by
-  rw [show (f ∣[k] Newform.frickeMatrix N) τ =
-      UpperHalfPlane.σ (Newform.frickeMatrix N)
-        (f (Newform.frickeMatrix N • τ)) *
-        |((Newform.frickeMatrix N).det.val)| ^ (k - 1) *
-        UpperHalfPlane.denom (Newform.frickeMatrix N) τ ^ (-k) from rfl,
-    Newform.frickeMatrix_σ, ContinuousAlgEquiv.refl_apply,
-    Newform.frickeMatrix_denom]
-  congr 2
-  rw [Newform.frickeMatrix_det, abs_of_pos]
-  exact_mod_cast Nat.pos_of_ne_zero (NeZero.ne N)
-
 /-- The scalar `(-1)^k · N^{k-2}` appearing when slashing twice by the Fricke
 matrix `W_N` (the involution-up-to-scalar coefficient). -/
 def Newform.frickeSquareScalar (N : ℕ) (k : ℤ) : ℂ :=

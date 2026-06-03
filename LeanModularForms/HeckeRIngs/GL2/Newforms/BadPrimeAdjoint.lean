@@ -72,55 +72,6 @@ lemma Newform.frickeBadAdjointCandidate_apply
 
 
 
-/-- The Atkin-Lehner / Fricke matrix `W_M` post-multiplied by the level-raising
-matrix `α_d` equals `W_N` where `N = d * M`. -/
-lemma Newform.frickeMatrix_mul_levelRaiseMatrix
-    {M : ℕ} [NeZero M] {d : ℕ} [NeZero d] :
-    haveI : NeZero (d * M) := ⟨Nat.mul_ne_zero (NeZero.ne d) (NeZero.ne M)⟩
-    (Newform.frickeMatrix M : GL (Fin 2) ℝ) *
-        HeckeRing.GL2.levelRaiseMatrix d =
-      Newform.frickeMatrix (d * M) := by
-  haveI : NeZero (d * M) := ⟨Nat.mul_ne_zero (NeZero.ne d) (NeZero.ne M)⟩
-  apply Units.ext
-  ext i j
-  fin_cases i <;> fin_cases j <;>
-    simp [Newform.frickeMatrix, HeckeRing.GL2.levelRaiseMatrix,
-      Matrix.GeneralLinearGroup.mkOfDetNeZero, Units.val_mul, Matrix.mul_apply,
-      Fin.sum_univ_two, mul_comm d M]
-
-
-private lemma alpha_d_smul_frickeMatrix_dM_smul_eq_frickeMatrix_M_smul
-    {M : ℕ} [NeZero M] {d : ℕ} [NeZero d] (τ : UpperHalfPlane) :
-    haveI : NeZero (d * M) := ⟨Nat.mul_ne_zero (NeZero.ne d) (NeZero.ne M)⟩
-    (HeckeRing.GL2.levelRaiseMatrix d : GL (Fin 2) ℝ) •
-        ((Newform.frickeMatrix (d * M) : GL (Fin 2) ℝ) • τ) =
-      (Newform.frickeMatrix M : GL (Fin 2) ℝ) • τ := by
-  haveI : NeZero (d * M) := ⟨Nat.mul_ne_zero (NeZero.ne d) (NeZero.ne M)⟩
-  apply UpperHalfPlane.ext
-  rw [coe_levelRaiseMatrix_smul, Newform.frickeMatrix_smul, Newform.frickeMatrix_smul]
-  have hd_ne : (d : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (NeZero.ne d)
-  have hM_ne : (M : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (NeZero.ne M)
-  have hτ_ne : (τ : ℂ) ≠ 0 := UpperHalfPlane.ne_zero τ
-  push_cast
-  field_simp
-
-private lemma levelRaise_frickeSlash_scalar_eq
-    {d M : ℕ} {k : ℤ} (hd : (d : ℂ) ≠ 0) (X τ : ℂ) :
-    X * ((↑(d * M) : ℝ) : ℂ) ^ (k - 1) * (((d * M : ℕ) : ℂ) * τ) ^ (-k) =
-      (d : ℂ)⁻¹ * (X * ((M : ℝ) : ℂ) ^ (k - 1) * ((M : ℂ) * τ) ^ (-k)) := by
-  rw [show (((d * M : ℕ) : ℝ) : ℂ) = (d : ℂ) * (M : ℂ) by push_cast; ring,
-    show (((d * M : ℕ) : ℂ) * τ) = (d : ℂ) * (M : ℂ) * τ by push_cast; ring,
-    mul_zpow, mul_zpow ((d : ℂ) * (M : ℂ)) τ (-k), mul_zpow (d : ℂ) (M : ℂ) (-k),
-    show (((M : ℝ) : ℂ) ^ (k - 1) : ℂ) = (M : ℂ) ^ (k - 1) by push_cast; rfl,
-    mul_zpow (M : ℂ) τ (-k)]
-  have h_d_combine : (d : ℂ) ^ (k - 1) * (d : ℂ) ^ (-k) = (d : ℂ)⁻¹ := by
-    rw [← zpow_add₀ hd, show (k - 1) + (-k) = (-1 : ℤ) by ring, zpow_neg_one]
-  rw [show X * ((d : ℂ) ^ (k - 1) * (M : ℂ) ^ (k - 1)) *
-        ((d : ℂ) ^ (-k) * (M : ℂ) ^ (-k) * τ ^ (-k)) =
-      ((d : ℂ) ^ (k - 1) * (d : ℂ) ^ (-k)) *
-        (X * (M : ℂ) ^ (k - 1) * ((M : ℂ) ^ (-k) * τ ^ (-k))) by ring]
-  rw [h_d_combine]
-
 /-- Scalar-corrected bad-prime Fricke adjoint candidate
 `(frickeSquareScalar N k)⁻¹ • frickeBadAdjointCandidate k p`, the operator whose
 `petN` adjoint identity holds with no extra scalar (the classical

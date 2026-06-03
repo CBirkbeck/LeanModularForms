@@ -467,53 +467,6 @@ private lemma T_p_upper_zero_mul_levelRaise_smul_coe {p d : ℕ} (hp : 0 < p) (h
   rw [h_d_eq]
   field_simp
 
-private lemma T_p_upper_zero_mul_levelRaise_smul_eq {p d : ℕ} (hp : 0 < p) (hpd : p ∣ d)
-    [NeZero d] (z : UpperHalfPlane) :
-    haveI : NeZero (d / p) := ⟨(Nat.div_pos (Nat.le_of_dvd (NeZero.pos d) hpd) hp).ne'⟩
-    (((glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) * levelRaiseMatrix d : GL (Fin 2) ℝ) • z :
-        UpperHalfPlane) =
-      ((levelRaiseMatrix (d / p) : GL (Fin 2) ℝ) • z : UpperHalfPlane) := by
-  haveI : NeZero (d / p) := ⟨(Nat.div_pos (Nat.le_of_dvd (NeZero.pos d) hpd) hp).ne'⟩
-  apply UpperHalfPlane.ext
-  rw [T_p_upper_zero_mul_levelRaise_smul_coe hp hpd z]
-  have h_LR_det_pos : 0 < (levelRaiseMatrix (d / p) : GL (Fin 2) ℝ).det.val := by
-    show 0 < ((levelRaiseMatrix (d / p) : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ).det
-    rw [levelRaiseMatrix_val (d / p), Matrix.det_fin_two_of]
-    have : (0 : ℝ) < ((d / p : ℕ) : ℝ) :=
-      mod_cast Nat.div_pos (Nat.le_of_dvd (NeZero.pos d) hpd) hp
-    linarith
-  rw [UpperHalfPlane.coe_smul_of_det_pos h_LR_det_pos]
-  have h_num : UpperHalfPlane.num (levelRaiseMatrix (d / p)) (z : ℂ) =
-      ((d / p : ℕ) : ℂ) * (z : ℂ) := by
-    show ((levelRaiseMatrix (d / p) : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) 0 0 * (z : ℂ) +
-      ((levelRaiseMatrix (d / p) : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) 0 1 = _
-    rw [levelRaiseMatrix_val (d / p)]
-    simp
-  have h_denom : UpperHalfPlane.denom (levelRaiseMatrix (d / p)) (z : ℂ) = 1 := by
-    show ((levelRaiseMatrix (d / p) : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) 1 0 * (z : ℂ) +
-      ((levelRaiseMatrix (d / p) : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) 1 1 = 1
-    rw [levelRaiseMatrix_val (d / p)]
-    simp
-  rw [h_num, h_denom, div_one]
-
-private lemma T_p_zero_levelRaise_scalar_collapse {p d : ℕ} (hp : 0 < p) (hpd : p ∣ d) (x : ℂ) :
-    x * (((p : ℝ) * (d : ℝ) : ℝ) : ℂ) ^ (k - 1) * (p : ℂ) ^ (-k) =
-      (p : ℂ) ^ (k - 2) * (x * (((d / p : ℕ) : ℝ) : ℂ) ^ (k - 1)) := by
-  have hpC : (p : ℂ) ≠ 0 := mod_cast hp.ne'
-  have hdetC : (((p : ℝ) * (d : ℝ) : ℝ) : ℂ) = ((p : ℂ) * (p : ℂ)) * ((d / p : ℕ) : ℂ) := by
-    rw [show (((p : ℝ) * (d : ℝ) : ℝ) : ℂ) = (p : ℂ) * (d : ℂ) by push_cast; ring,
-      show (d : ℂ) = ((p * (d / p) : ℕ) : ℂ) by rw [Nat.mul_div_cancel' hpd]]
-    push_cast; ring
-  rw [hdetC, show (((d / p : ℕ) : ℝ) : ℂ) = ((d / p : ℕ) : ℂ) by push_cast; ring,
-    mul_zpow, mul_zpow,
-    show x * (((p : ℂ) ^ (k - 1) * (p : ℂ) ^ (k - 1)) * ((d / p : ℕ) : ℂ) ^ (k - 1)) *
-        (p : ℂ) ^ (-k) =
-      (((p : ℂ) ^ (k - 1) * (p : ℂ) ^ (k - 1)) * (p : ℂ) ^ (-k)) *
-        (x * ((d / p : ℕ) : ℂ) ^ (k - 1)) by ring,
-    show (p : ℂ) ^ (k - 1) * (p : ℂ) ^ (k - 1) = (p : ℂ) ^ (2 * k - 2) by
-      rw [← zpow_add₀ hpC]; congr 1; ring,
-    ← zpow_add₀ hpC, show (2 * k - 2 + -k : ℤ) = k - 2 by ring]
-
 private lemma heckeT_n_cusp_decomp_of_mul {L : ℕ} [NeZero L] (k : ℤ) (a b m : ℕ) [NeZero a]
     [NeZero b] [NeZero m] (h_mul : heckeT_n (N := L) k m = heckeT_n k a * heckeT_n k b)
     (f : CuspForm ((Gamma1 L).map (mapGL ℝ)) k) :
