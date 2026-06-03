@@ -322,19 +322,6 @@ def Newform.HasHeckeT_n_cusp_at_divN_PreservesCuspFormsOld
   ∀ (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k),
     g ∈ cuspFormsOld N k → heckeT_n_cusp k p g ∈ cuspFormsOld N k
 
-/-- `frickeBadAdjointCandidate k p` preserves `cuspFormsOld N k`, assuming Fricke
-and bad-prime Hecke each preserve `cuspFormsOld N k`. -/
-lemma Newform.frickeBadAdjointCandidate_preserves_cuspFormsOld
-    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
-    {hp : p.Prime} {hpN : ¬ Nat.Coprime p N}
-    (h_fricke_old :
-      Newform.HasFrickeSlashCuspFormPreservesCuspFormsOld N k)
-    (h_T_p_old :
-      Newform.HasHeckeT_n_cusp_at_divN_PreservesCuspFormsOld N k p hp hpN)
-    (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (hg : g ∈ cuspFormsOld N k) :
-    Newform.frickeBadAdjointCandidate k p g ∈ cuspFormsOld N k := by
-  rw [Newform.frickeBadAdjointCandidate_apply]
-  exact h_fricke_old _ (h_T_p_old _ (h_fricke_old _ hg))
 
 /-- Scalar-corrected bad-prime Fricke adjoint candidate
 `(frickeSquareScalar N k)⁻¹ • frickeBadAdjointCandidate k p`, the operator whose
@@ -364,33 +351,7 @@ def Newform.HasBadPrimeFrickePetNAdjoint
     petN (heckeT_n_cusp k p f) g =
       petN f (Newform.frickeBadAdjointCandidateNormalized k p g)
 
-/-- For `p` prime with `p ∣ N`, the bad-prime Hecke operator `heckeT_n_cusp k p`
-preserves `cuspFormsNew N k`, given the normalized petN-adjoint Prop `h_adj` and
-oldspace preservation `h_old` of the normalized candidate. -/
-theorem Newform.heckeT_n_cusp_preserves_cuspFormsNew_at_divN_of_normalized_fricke_adjoint
-    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p] (hp : p.Prime)
-    (hpN : ¬ Nat.Coprime p N)
-    (h_adj : Newform.HasBadPrimeFrickePetNAdjoint N k p)
-    (h_old : ∀ (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k),
-      g ∈ cuspFormsOld N k →
-        Newform.frickeBadAdjointCandidateNormalized k p g ∈ cuspFormsOld N k)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (hf : f ∈ cuspFormsNew N k) :
-    heckeT_n_cusp k p f ∈ cuspFormsNew N k :=
-  heckeT_n_cusp_preserves_cuspFormsNew_at_divN_of_petersson_adjoint hp hpN
-    (Newform.frickeBadAdjointCandidateNormalized k p) h_adj h_old f hf
 
-/-- `frickeBadAdjointCandidateNormalized` preserves `cuspFormsOld`, from the
-unnormalized preservation. -/
-lemma Newform.frickeBadAdjointCandidateNormalized_preserves_cuspFormsOld
-    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
-    (h_unnormalized :
-      ∀ (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k),
-        g ∈ cuspFormsOld N k →
-          Newform.frickeBadAdjointCandidate k p g ∈ cuspFormsOld N k)
-    (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (hg : g ∈ cuspFormsOld N k) :
-    Newform.frickeBadAdjointCandidateNormalized k p g ∈ cuspFormsOld N k := by
-  rw [Newform.frickeBadAdjointCandidateNormalized_apply]
-  exact (cuspFormsOld N k).smul_mem _ (h_unnormalized g hg)
 
 
 /-- For `p ∣ N`, given a Petersson-adjoint `T_adj` for `T_p` that preserves
@@ -763,35 +724,8 @@ theorem heckeT_n_cusp_preserves_cuspFormsNew_of_NewformExtended_at_divN_of_T170
       hp hpN h_adj f hf)
 
 
-/-- `frickeBadAdjointCandidate` preserves `cuspFormsOldExtended` unconditionally. -/
-lemma Newform.frickeBadAdjointCandidate_preserves_cuspFormsOldExtended_unconditional
-    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
-    (hp : p.Prime) (hpN : ¬ Nat.Coprime p N)
-    (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hg : g ∈ cuspFormsOldExtended N k) :
-    Newform.frickeBadAdjointCandidate k p g ∈ cuspFormsOldExtended N k :=
-  Newform.frickeBadAdjointCandidate_preserves_cuspFormsOldExtended
-    (hp := hp) (hpN := hpN)
-    (Newform.hasFrickeSlashCuspFormPreservesCuspFormsOldExtended N k)
-    (Newform.HasHeckeT_n_cusp_at_divN_PreservesCuspFormsOldExtended_unconditional
-      hp hpN)
-    g hg
 
 
-/-- For `f ∈ cuspFormsNewExtended` and every prime `p`, the Hecke operator
-`heckeT_n_cusp k p f` lies in the classical `cuspFormsNew N k`, with the
-petN-adjoint hypothesis `h_adj_at_bad` required only at bad primes. -/
-theorem heckeT_n_cusp_preserves_cuspFormsNew_of_NewformExtended_of_T170_unified
-    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p] (hp : p.Prime)
-    (h_adj_at_bad : ¬ Nat.Coprime p N → Newform.HasBadPrimeFrickePetNAdjoint N k p)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hf : f ∈ cuspFormsNewExtended N k) :
-    heckeT_n_cusp k p f ∈ cuspFormsNew N k := by
-  by_cases hpN : Nat.Coprime p N
-  · exact heckeT_n_preserves_cuspFormsNew p hpN f
-      (cuspFormsNewExtended_le_cuspFormsNew hf)
-  · exact heckeT_n_cusp_preserves_cuspFormsNew_of_NewformExtended_at_divN_of_T170
-      hp hpN (h_adj_at_bad hpN) f hf
 
 
 
@@ -892,39 +826,6 @@ private lemma heckeT_n_cusp_mem_cuspFormsNewExtended_bad_only_step
   exact NewformExtended.heckeT_pp_cusp_mem_cuspFormsNewExtended_at_bad_of_T170
     hpp (h_bad p hpp (Nat.minFac_dvd m)) (h_adj p hpp (Nat.minFac_dvd m)) v _ h_mid
 
-/-- For `n : ℕ` whose every prime factor divides `N`, with the petN-adjoint
-hypothesis `h_adj_at_each` for each such prime, `T_n` preserves
-`cuspFormsNewExtended`. -/
-theorem NewformExtended.heckeT_n_cusp_mem_cuspFormsNewExtended_of_bad_only_T170
-    {N : ℕ} [NeZero N] {k : ℤ} (n : ℕ) [NeZero n]
-    (h_bad_only : ∀ p, p.Prime → p ∣ n → ¬ Nat.Coprime p N)
-    (h_adj_at_each : ∀ (p : ℕ) [NeZero p], p.Prime → p ∣ n →
-      Newform.HasBadPrimeFrickePetNAdjoint N k p)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hf : f ∈ cuspFormsNewExtended N k) :
-    heckeT_n_cusp k n f ∈ cuspFormsNewExtended N k := by
-  suffices h : ∀ (m : ℕ) (_ : 0 < m),
-      (∀ p, p.Prime → p ∣ m → ¬ Nat.Coprime p N) →
-      (∀ (p : ℕ) [NeZero p], p.Prime → p ∣ m →
-          Newform.HasBadPrimeFrickePetNAdjoint N k p) →
-      ∀ (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k),
-        g ∈ cuspFormsNewExtended N k →
-        haveI : NeZero m := ⟨by omega⟩
-        heckeT_n_cusp k m g ∈ cuspFormsNewExtended N k from
-    h n (NeZero.pos n) h_bad_only h_adj_at_each f hf
-  intro m
-  induction m using Nat.strong_induction_on with
-  | _ m ih =>
-    intro hm_pos h_bad h_adj g hg
-    haveI : NeZero m := ⟨by omega⟩
-    by_cases hm1 : m = 1
-    · subst hm1
-      rw [show heckeT_n_cusp k 1 g = g from
-        CuspForm.ext fun z ↦ by rw [show (heckeT_n_cusp k 1 g) z =
-          (heckeT_n k 1 g.toModularForm').toFun z from rfl, heckeT_n_one]; rfl]
-      exact hg
-    · exact heckeT_n_cusp_mem_cuspFormsNewExtended_bad_only_step m (by omega)
-        h_bad h_adj ih g hg
 
 
 end HeckeRing.GL2
