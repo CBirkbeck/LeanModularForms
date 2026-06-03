@@ -492,29 +492,6 @@ private theorem fd_region_indicator_section_eq {x : ℝ} (hx : |x| ≤ 1 / 2) (y
         lt_of_lt_of_le hsc hy_mem⟩
     · rw [Set.indicator_of_notMem hy_mem]
 
-private theorem fd_region_lintegral_section_eq (x : ℝ) :
-    ∫⁻ y, (measurableEquivRealProd '' (UpperHalfPlane.coe '' (fd : Set ℍ))).indicator
-        (fun p : ℝ × ℝ ↦ ENNReal.ofReal (p.2 ^ (-2 : ℤ))) (x, y) ∂volume =
-    (Icc (-1/2 : ℝ) (1/2)).indicator
-      (fun x ↦ ENNReal.ofReal (1 / Real.sqrt (1 - x ^ 2))) x := by
-  by_cases hx : |x| ≤ 1 / 2
-  · have hx_mem : x ∈ Icc (-1/2 : ℝ) (1/2) := by
-      simp only [abs_le, mem_Icc] at hx ⊢; constructor <;> linarith
-    have hsc : 0 < Real.sqrt (1 - x ^ 2) := Real.sqrt_pos_of_pos (by nlinarith [abs_le.mp hx])
-    rw [Set.indicator_of_mem hx_mem]
-    simp_rw [fd_region_indicator_section_eq hx]
-    rw [lintegral_indicator measurableSet_Ici, setLIntegral_congr Ioi_ae_eq_Ici.symm,
-      ← ofReal_integral_eq_lintegral_ofReal (integrableOn_zpow_neg_two_Ioi hsc)
-        (ae_of_all _ fun y ↦ by positivity), integral_zpow_neg_two_Ioi hsc]
-  · push Not at hx
-    have hx_nmem : x ∉ Icc (-1/2 : ℝ) (1/2) := fun ⟨h1, h2⟩ ↦
-      absurd (abs_le.mpr ⟨by linarith, h2⟩) (not_le.mpr hx)
-    rw [Set.indicator_of_notMem hx_nmem]
-    refine MeasureTheory.lintegral_eq_zero_of_ae_eq_zero (.of_forall fun y ↦ ?_)
-    show (measurableEquivRealProd '' (UpperHalfPlane.coe '' (fd : Set ℍ))).indicator
-      (fun p : ℝ × ℝ ↦ ENNReal.ofReal (p.2 ^ (-2 : ℤ))) (x, y) = 0
-    rw [Set.indicator_apply_eq_zero]
-    exact fun h ↦ absurd ((mem_fd_image_iff x y).mp h).1 (not_le.mpr hx)
 
 private theorem integrableOn_one_div_sqrt_one_sub_sq_Icc :
     IntegrableOn (fun x ↦ 1 / Real.sqrt (1 - x ^ 2)) (Icc (-1/2 : ℝ) (1/2)) volume := by
