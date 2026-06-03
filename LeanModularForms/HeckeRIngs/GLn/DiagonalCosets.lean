@@ -370,14 +370,6 @@ theorem exists_diagonal_of_posdet (A : Matrix (Fin n) (Fin n) ℤ) (hdet : 0 < A
 private noncomputable def finEquivSum (k : ℕ) : Fin (k + 2) ≃ Fin 2 ⊕ Fin k :=
   (Fin.castOrderIso (by omega : k + 2 = 2 + k)).toEquiv.trans finSumFinEquiv.symm
 
-private lemma finEquivSum_mk_zero (k : ℕ) :
-    finEquivSum k (0 : Fin (k + 2)) = Sum.inl ⟨0, by omega⟩ := by
-  unfold finEquivSum; simp [Equiv.trans_apply, Fin.castOrderIso]; rfl
-
-private lemma finEquivSum_mk_one (k : ℕ) :
-    finEquivSum k (1 : Fin (k + 2)) = Sum.inl ⟨1, by omega⟩ := by
-  unfold finEquivSum; simp [Equiv.trans_apply, Fin.castOrderIso]; rfl
-
 private lemma gcd_2x2_det_L (a b : ℤ) (ha : 0 < a) :
     let g : ℤ := ↑(a.gcd b); let s := a.gcdA b; let t := a.gcdB b
     (!![s, t; -(b / g), a / g] : Matrix (Fin 2) (Fin 2) ℤ).det = 1 := by

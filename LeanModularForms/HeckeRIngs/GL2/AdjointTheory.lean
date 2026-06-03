@@ -440,15 +440,6 @@ private lemma adjointGamma0Rep_mul_sigma_p_entry_10
     rw [ZMod.natCast_self]; ring]
   ring
 
-private lemma adjointGamma0Rep_mul_sigma_p_mem_Gamma1
-    (p N : ℕ) [NeZero N] (hp : 0 < p) (hpN : Nat.Coprime p N) :
-    ((adjointGamma0Rep p N hpN : Gamma0 N) : SL(2, ℤ)) *
-      sigma_p_specific N p hp hpN ∈ Gamma1 N := by
-  rw [Gamma1_mem]
-  exact ⟨adjointGamma0Rep_mul_sigma_p_entry_00 p N hp hpN,
-    adjointGamma0Rep_mul_sigma_p_entry_11 p N hp hpN,
-    adjointGamma0Rep_mul_sigma_p_entry_10 p N hp hpN⟩
-
 section PeterssonAdjoint
 
 open UpperHalfPlane MeasureTheory
@@ -610,14 +601,6 @@ theorem peterssonInner_slash_adjoint
   rw [show α • D = (fun τ ↦ α' • τ) '' D by rw [Set.image_smul]; rfl]
   exact (measurePreserving_smul α' μ_hyp).setIntegral_image_emb
     (measurableEmbedding_const_smul α') _ D
-
-private lemma mapGL_SL_det_pos (γ : SL(2, ℤ)) :
-    0 < (((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) γ : GL (Fin 2) ℝ)).det.val := by
-  show 0 < (((mapGL ℝ γ : GL (Fin 2) ℝ)) : Matrix (Fin 2) (Fin 2) ℝ).det
-  rw [show ((mapGL ℝ γ : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
-      ((Int.castRingHom ℝ).mapMatrix γ.val) by rw [mapGL_coe_matrix]; rfl,
-    ← RingHom.map_det, γ.property]
-  norm_num
 
 end PeterssonAdjoint
 

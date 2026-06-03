@@ -518,12 +518,6 @@ theorem Newform.frickeMatrix_slash_apply
   rw [Newform.frickeMatrix_det, abs_of_pos]
   exact_mod_cast Nat.pos_of_ne_zero (NeZero.ne N)
 
-private lemma frickeMatrix_sq_smul {N : ℕ} [NeZero N] (τ : UpperHalfPlane) :
-    (Newform.frickeMatrix N * Newform.frickeMatrix N) • τ = τ := by
-  apply UpperHalfPlane.ext
-  rw [mul_smul, Newform.frickeMatrix_smul, Newform.frickeMatrix_smul]
-  field_simp [Nat.cast_ne_zero.mpr (NeZero.ne N), UpperHalfPlane.ne_zero τ]
-
 /-- The scalar `(-1)^k · N^{k-2}` appearing when slashing twice by the Fricke
 matrix `W_N` (the involution-up-to-scalar coefficient). -/
 def Newform.frickeSquareScalar (N : ℕ) (k : ℤ) : ℂ :=
@@ -539,25 +533,5 @@ open scoped UpperHalfPlane
 
 
 end FrickeAdjoint
-
-private lemma frickeRootNumber_scalar_collapse {k : ℤ} {n x I fv : ℂ}
-    (hn : n ≠ 0) (hx : x ≠ 0) (hI : I ≠ 0) :
-    n ^ (1 - k) * I ^ k * x ^ k *
-      (fv * n ^ (k - 1) * (x ^ (-k) * I ^ (-k))) = fv := by
-  simp only [zpow_sub₀ hn, zpow_neg]
-  field_simp
-
-private lemma im_I_mul_ofReal_pos {r : ℝ} (hr : 0 < r) :
-    0 < (Complex.I * ((r : ℝ) : ℂ)).im := by
-  rw [Complex.mul_im, Complex.I_im, Complex.I_re, Complex.ofReal_re, Complex.ofReal_im]
-  simpa using hr
-
-private lemma frickeMatrix_smul_imAxis_coe {N : ℕ} [NeZero N] {x : ℝ} (hx : 0 < x) :
-    (-1 : ℂ) / ((N : ℂ) * (Complex.I * ((x / (N : ℝ) : ℝ) : ℂ))) =
-      Complex.I * ((1 / x : ℝ) : ℂ) := by
-  have : (x : ℂ) ≠ 0 := by exact_mod_cast hx.ne'
-  push_cast
-  field_simp [Nat.cast_ne_zero.mpr (NeZero.ne N)]
-  rw [Complex.I_sq]
 
 end HeckeRing.GL2

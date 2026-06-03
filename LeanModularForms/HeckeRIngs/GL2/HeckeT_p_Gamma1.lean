@@ -169,18 +169,4 @@ lemma heckeT_p_fun_eq_coset_sum {N : ℕ} [NeZero N] (k : ℤ) {p : ℕ}
   congr 1
   rw [slash_M_infty_eq_diamond_slash_T_p_lower k p hp.pos hpN f]
 
-private lemma adj_T_p_upper_val (p : ℕ) (hp : 0 < p) (b : ℕ) :
-    (GL_adjugate (T_p_upper p hp b : GL (Fin 2) ℚ)).val =
-    !![(p : ℚ), -(b : ℚ); 0, 1] := by
-  rw [GL_adjugate_val, T_p_upper_coe, Matrix.adjugate_fin_two_of, neg_zero]
-
-private lemma diagMat_1p_val (p : ℕ) (hp : 0 < p) :
-    (diagMat 2 ![1, p] : GL (Fin 2) ℚ).val =
-    !![(1 : ℚ), 0; 0, (p : ℚ)] := by
-  have hpos : ∀ k : Fin 2, 0 < (![1, p] : Fin 2 → ℕ) k := fun k ↦ by
-    fin_cases k <;> simp [hp]
-  rw [diagMat_val _ _ hpos]
-  ext k l
-  fin_cases k <;> fin_cases l <;> simp
-
 end HeckeRing.GL2

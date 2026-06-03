@@ -255,23 +255,6 @@ lemma imAxis_eq_resToImagAxis [ModularFormClass F Γ k] (f : F) :
   funext t
   simp only [imAxis, ResToImagAxis]
 
-/-- **`atImInfty` exponential decay ⇒ `HasImAxisExponentialDecay`.**
-
-A bridge from the standard cusp-form decay statement
-`f =O[atImInfty] (fun τ => exp (-c · τ.im))` to the imaginary-axis-side
-`HasImAxisExponentialDecay f` predicate. -/
-theorem hasImAxisExponentialDecay_of_atImInfty_decay [ModularFormClass F Γ k]
-    (f : F) {c : ℝ} (hc : 0 < c)
-    (hf : (⇑f : ℍ → ℂ) =O[UpperHalfPlane.atImInfty]
-      fun τ : ℍ ↦ Real.exp (-c * τ.im)) :
-    HasImAxisExponentialDecay f := by
-  refine ⟨c, hc, (Asymptotics.IsBigO.congr'
-    (isBigO_resToImagAxis_of_isBigO_atImInfty hc hf) ?_ .rfl).mono le_rfl⟩
-  refine .of_forall fun x ↦ ?_
-  rw [imAxis_eq_resToImagAxis f]
-  show ResToImagAxis (⇑f) x = ResToImagAxis (⇑f) x - 0
-  ring
-
 end ModularForms
 
 namespace LSeries
@@ -490,48 +473,5 @@ theorem eulerStripping_bridge_via_eulerProduct
     · rw [if_pos hp, if_pos hp, one_mul]
     · rw [if_neg hp, if_neg hp, mul_one]
   rw [hf_euler.unique (h_mul.congr_fun fun p ↦ (h_ψr_eq_φf p).symm)]; ring
-
-/-- **Inverted Euler-stripping bridge: `coprimeStrip` LSeries factors as a
-polynomial multiplier times the original LSeries.**
-
-Under the Euler-product `HasProd` hypotheses for both `f` and `coprimeStrip S f`,
-plus a representation of each local Euler factor of `f` at `p ∈ S` as `(poly p)⁻¹`
-(with `poly p ≠ 0`):
-```
-LSeries (coprimeStrip S f) s = (∏ p ∈ S, poly p) * LSeries f s.
-``` -/
-theorem coprimeStrip_LSeries_eq_polynomial_mul_LSeries
-    {f : ℕ → ℂ} {s : ℂ} (S : Finset Nat.Primes)
-    (hf₁ : f 1 = 1)
-    (hf_euler : HasProd
-      (fun p : Nat.Primes ↦ ∑' e : ℕ, LSeries.term f s ((p : ℕ) ^ e))
-      (LSeries f s))
-    (hg_euler : HasProd
-      (fun p : Nat.Primes ↦ ∑' e : ℕ, LSeries.term (coprimeStrip S f) s
-        ((p : ℕ) ^ e))
-      (LSeries (coprimeStrip S f) s))
-    (poly : Nat.Primes → ℂ)
-    (h_poly_ne_zero : ∀ p ∈ S, poly p ≠ 0)
-    (h_poly_inv : ∀ p ∈ S,
-      ∑' e : ℕ, LSeries.term f s ((p : ℕ) ^ e) = (poly p)⁻¹) :
-    LSeries (coprimeStrip S f) s = (∏ p ∈ S, poly p) * LSeries f s := by
-  have h_bridge := eulerStripping_bridge_via_eulerProduct S hf₁ hf_euler hg_euler
-  rwa [Finset.prod_congr rfl h_poly_inv, Finset.prod_inv_distrib,
-    eq_inv_mul_iff_mul_eq₀ (Finset.prod_ne_zero_iff.mpr h_poly_ne_zero), eq_comm] at h_bridge
-
-/-- **Entirety of the explicit finite-Euler-factor polynomial multiplier.**
-
-For any finite `Finset` of primes `S` and any `a : Nat.Primes → ℂ`, the function
-```
-s ↦ ∏ p ∈ S, (1 - a p * ((p : ℕ) : ℂ) ^ (-s))
-```
-is entire on `ℂ`. -/
-theorem differentiable_eulerFactor_polynomial_finset
-    (S : Finset Nat.Primes) (a : Nat.Primes → ℂ) :
-    Differentiable ℂ (fun s : ℂ ↦
-      ∏ p ∈ S, (1 - a p * ((p : ℕ) : ℂ) ^ (-s))) := by
-  refine Differentiable.fun_finset_prod fun p _ ↦ ?_
-  haveI : NeZero (((p : ℕ) : ℂ)) := ⟨by exact_mod_cast p.prop.pos.ne'⟩
-  fun_prop
 
 end LSeries

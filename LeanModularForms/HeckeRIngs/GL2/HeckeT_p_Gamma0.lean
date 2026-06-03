@@ -276,47 +276,4 @@ private noncomputable def adj_mem_dc_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp :
   obtain ⟨a, ha, b, hb, heq⟩ := h
   exact ⟨a, ha, b, hb, heq⟩
 
-private lemma h_quot_imp_adj_mem_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.Prime p)
-    (a₁ : GL _ ℚ) (ha₁ : a₁ ∈ (HeckeRing.GLn.Gamma0_pair N).H)
-    (c₁ : GL _ ℚ) (hc₁ : c₁ ∈ (HeckeRing.GLn.Gamma0_pair N).H)
-    (a₂ : GL _ ℚ) (ha₂ : a₂ ∈ (HeckeRing.GLn.Gamma0_pair N).H)
-    (c₂ : GL _ ℚ) (hc₂ : c₂ ∈ (HeckeRing.GLn.Gamma0_pair N).H)
-    (g₁ g₂ : GL _ ℚ)
-    (heq₁ : GL_adjugate g₁ =
-      a₁ * (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) * c₁)
-    (heq₂ : GL_adjugate g₂ =
-      a₂ * (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) * c₂)
-    (hquot : (⟦(⟨a₁, ha₁⟩ : (HeckeRing.GLn.Gamma0_pair N).H)⟧ :
-        decompQuot (HeckeRing.GLn.Gamma0_pair N)
-          (HeckeCoset.rep (D_p_Gamma0 N p hp.pos))) = ⟦⟨a₂, ha₂⟩⟧) :
-    (GL_adjugate g₁)⁻¹ * GL_adjugate g₂ ∈ (HeckeRing.GLn.Gamma0_pair N).H := by
-  rw [heq₁, heq₂]
-  have hrel := QuotientGroup.leftRel_apply.mp (Quotient.exact hquot)
-  rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem] at hrel
-  simp only [ConjAct.smul_def, ConjAct.ofConjAct_toConjAct, map_inv, inv_inv,
-    Subgroup.coe_mul, Subgroup.coe_inv] at hrel
-  rw [show (a₁ * ↑(HeckeCoset.rep (D_p_Gamma0 N p hp.pos)) * c₁)⁻¹ *
-        (a₂ * ↑(HeckeCoset.rep (D_p_Gamma0 N p hp.pos)) * c₂) =
-      c₁⁻¹ * ((↑(HeckeCoset.rep (D_p_Gamma0 N p hp.pos)))⁻¹ * (a₁⁻¹ * a₂) *
-        ↑(HeckeCoset.rep (D_p_Gamma0 N p hp.pos))) * c₂ by group]
-  exact (HeckeRing.GLn.Gamma0_pair N).H.mul_mem
-    ((HeckeRing.GLn.Gamma0_pair N).H.mul_mem
-      ((HeckeRing.GLn.Gamma0_pair N).H.inv_mem hc₁) hrel) hc₂
-
-private lemma adj_T_p_upper_factor_through_rep (N : ℕ) [NeZero N] (p : ℕ)
-    (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (b : ℕ) :
-    ∃ (h₁ : GL _ ℚ) (_ : h₁ ∈ (HeckeRing.GLn.Gamma0_pair N).H)
-      (h₂ : GL _ ℚ) (_ : h₂ ∈ (HeckeRing.GLn.Gamma0_pair N).H),
-      GL_adjugate (T_p_upper p hp.pos b : GL _ ℚ) =
-        h₁ * (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) * h₂ :=
-  adj_mem_dc_Gamma0 N p hp hpN _ (T_p_upper_mem_D_p_Gamma0 N p hp b)
-
-private lemma adj_T_p_lower_factor_through_rep (N : ℕ) [NeZero N] (p : ℕ)
-    (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
-    ∃ (h₁ : GL _ ℚ) (_ : h₁ ∈ (HeckeRing.GLn.Gamma0_pair N).H)
-      (h₂ : GL _ ℚ) (_ : h₂ ∈ (HeckeRing.GLn.Gamma0_pair N).H),
-      GL_adjugate (T_p_lower p hp.pos : GL _ ℚ) =
-        h₁ * (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) * h₂ :=
-  adj_mem_dc_Gamma0 N p hp hpN _ (T_p_lower_mem_D_p_Gamma0 N p hp hpN)
-
 end HeckeRing.GL2

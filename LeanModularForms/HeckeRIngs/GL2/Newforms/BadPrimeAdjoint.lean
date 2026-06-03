@@ -572,15 +572,6 @@ theorem Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended
     (Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended_minimal_proof
       hp hpN)
 
-/-- Bad-prime Hecke preservation of `cuspFormsOldExtended`, unconditional. -/
-theorem Newform.HasHeckeT_n_cusp_at_divN_PreservesCuspFormsOldExtended_unconditional
-    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
-    (hp : Nat.Prime p) (hpN : ¬ Nat.Coprime p N) :
-    Newform.HasHeckeT_n_cusp_at_divN_PreservesCuspFormsOldExtended N k p hp hpN :=
-  Newform.HasHeckeT_n_cusp_at_divN_PreservesCuspFormsOldExtended_proof hp hpN
-    (Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended_unconditional
-      hp hpN)
-
 /-- `frickeBadAdjointCandidate k p` preserves `cuspFormsOldExtended`, assuming
 Fricke and bad-prime Hecke each preserve it. -/
 lemma Newform.frickeBadAdjointCandidate_preserves_cuspFormsOldExtended
@@ -650,23 +641,6 @@ theorem Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_classica
           (hp := hp) (hpN := hpN) h_fricke_old h_T_p_old)
         g hg)
     f hf
-
-/-- Bad-prime newspace-extended preservation needing only the petN-adjoint
-identity `h_adj` and the extended-oldspace Hecke preservation `h_T_p_old`
-(Fricke preservation being unconditional). -/
-theorem Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_T170_T171
-    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p] (hp : p.Prime)
-    (hpN : ¬ Nat.Coprime p N)
-    (h_adj : Newform.HasBadPrimeFrickePetNAdjoint N k p)
-    (h_T_p_old :
-      Newform.HasHeckeT_n_cusp_at_divN_PreservesCuspFormsOldExtended N k p hp hpN)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hf : f ∈ cuspFormsNewExtended N k) :
-    heckeT_n_cusp k p f ∈ cuspFormsNewExtended N k :=
-  Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_classicalInputs
-    hp hpN h_adj
-    (Newform.hasFrickeSlashCuspFormPreservesCuspFormsOldExtended N k)
-    h_T_p_old f hf
 
 /-- The intersection of `cuspFormsOldExtended` and `cuspFormsNewExtended` is
 trivial. Mirrors `cuspFormsOld_disjoint_cuspFormsNew`. -/

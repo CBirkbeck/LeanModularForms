@@ -105,9 +105,6 @@ lemma leftCoset_eq_of_not_disjoint (f g : G)
   rw [← ha] at ha2
   rw [ha2]
 
-private lemma singleton_mul_subset_mul (g : G) (T S : Set G) (h : g ∈ S) :
-    {g} * T ⊆ S * T := mul_subset_mul_right (singleton_subset_iff.mpr h)
-
 private lemma mul_mem_delta (a : H) (g : Δ) (h₀ : H.toSubmonoid ≤ Δ) :
     (a : G) * (g : G) ∈ Δ :=
   Submonoid.mul_mem _ (h₀ a.2) g.2
