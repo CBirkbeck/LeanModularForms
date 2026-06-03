@@ -464,23 +464,6 @@ private lemma mem_fd_image_iff (x y : ℝ) :
     exact ⟨by simp [Complex.normSq_apply]; nlinarith, habs⟩
 
 
-private theorem fd_region_indicator_section_eq {x : ℝ} (hx : |x| ≤ 1 / 2) (y : ℝ) :
-    (measurableEquivRealProd '' (UpperHalfPlane.coe '' (fd : Set ℍ))).indicator
-        (fun p : ℝ × ℝ ↦ ENNReal.ofReal (p.2 ^ (-2 : ℤ))) (x, y) =
-    (Ici (Real.sqrt (1 - x ^ 2))).indicator
-      (fun y ↦ ENNReal.ofReal (y ^ (-2 : ℤ))) y := by
-  have h1x : 0 ≤ 1 - x ^ 2 := by nlinarith [abs_le.mp hx]
-  have hsc : 0 < Real.sqrt (1 - x ^ 2) := Real.sqrt_pos_of_pos (by nlinarith [abs_le.mp hx])
-  by_cases hmem : (x, y) ∈ measurableEquivRealProd '' (UpperHalfPlane.coe '' (fd : Set ℍ))
-  · rw [Set.indicator_of_mem hmem, Set.indicator_of_mem]
-    rw [mem_Ici, ← Real.sqrt_sq (le_of_lt ((mem_fd_image_iff x y).mp hmem).2.2)]
-    exact Real.sqrt_le_sqrt (by linarith [((mem_fd_image_iff x y).mp hmem).2.1])
-  · rw [Set.indicator_of_notMem hmem]
-    by_cases hy_mem : y ∈ Ici (Real.sqrt (1 - x ^ 2))
-    · exfalso; apply hmem; rw [mem_fd_image_iff, mem_Ici] at *
-      exact ⟨hx, by nlinarith [Real.sq_sqrt h1x, sq_le_sq' (by linarith) hy_mem],
-        lt_of_lt_of_le hsc hy_mem⟩
-    · rw [Set.indicator_of_notMem hy_mem]
 
 
 
