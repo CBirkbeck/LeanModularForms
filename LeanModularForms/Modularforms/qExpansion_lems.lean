@@ -77,14 +77,6 @@ lemma qExpansion_ext2 {α β : Type*} [FunLike α ℍ ℂ] [FunLike β ℍ ℂ] 
   ext m
   simp [qExpansion_coeff, hcf]
 
-@[simp]
-lemma IteratedDeriv_zero_fun (n : ℕ) (z : ℂ) :
-    iteratedDeriv n (fun _ : ℂ ↦ (0 : ℂ)) z = 0 := by
-  induction n with
-  | zero => simp
-  | succ n hn => simp
-
-
 lemma qExpansion_pow (f : ModularForm Γ(1) k) (n : ℕ) :
     qExpansion 1 ((((DirectSum.of (ModularForm Γ(1)) k) f) ^ n) (n * k)) =
       (qExpansion 1 f) ^ n := by
