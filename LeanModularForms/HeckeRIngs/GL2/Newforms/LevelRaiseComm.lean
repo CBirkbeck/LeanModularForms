@@ -404,19 +404,6 @@ private lemma levelRaiseMatrix_val (d : ℕ) [NeZero d] :
     ((levelRaiseMatrix d : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
       !![(d : ℝ), 0; 0, 1] := rfl
 
-private lemma T_p_upper_zero_mul_levelRaise_matrix (p d : ℕ) (hp : 0 < p) [NeZero d] :
-    (((glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) * levelRaiseMatrix d : GL (Fin 2) ℝ) :
-        Matrix (Fin 2) (Fin 2) ℝ) =
-      !![(d : ℝ), 0; 0, (p : ℝ)] := by
-  rw [show (((glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) * levelRaiseMatrix d : GL (Fin 2) ℝ) :
-        Matrix (Fin 2) (Fin 2) ℝ) =
-      ((glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) *
-        ((levelRaiseMatrix d : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) from
-      Units.val_mul _ _, glMap_T_p_upper_zero_val p hp, levelRaiseMatrix_val d]
-  ext i j
-  rw [Matrix.mul_apply, Fin.sum_univ_two]
-  fin_cases i <;> fin_cases j <;> simp
-
 private lemma heckeT_n_cusp_decomp_of_mul {L : ℕ} [NeZero L] (k : ℤ) (a b m : ℕ) [NeZero a]
     [NeZero b] [NeZero m] (h_mul : heckeT_n (N := L) k m = heckeT_n k a * heckeT_n k b)
     (f : CuspForm ((Gamma1 L).map (mapGL ℝ)) k) :
