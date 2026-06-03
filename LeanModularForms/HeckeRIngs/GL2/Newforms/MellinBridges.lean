@@ -192,13 +192,6 @@ structure Newform.CompletedMellinData {N : ℕ} [NeZero N] {k : ℤ}
   stripping_bridge : ∀ {s : ℂ}, ((k : ℝ) / 2 + 1 : ℝ) < s.re →
     LSeries f.lCoeff_stripped s = stripping s * LSeries f.lCoeff s
 
-private lemma stripping_completion_factors_cancel {p : ℂ} (hp : p ≠ 0)
-    {g : ℂ} (hg : g ≠ 0) (a L s : ℂ) :
-    a * p ^ s * g⁻¹ * (p ^ (-s) * g * L) = a * L := by
-  have h1 : p ^ s * p ^ (-s) = 1 := by
-    rw [← Complex.cpow_add _ _ hp, add_neg_cancel, Complex.cpow_zero]
-  field_simp
-  linear_combination (a * L) * h1
 
 private lemma eqOn_LSeries_of_entire_of_eqOn_halfPlane {c : ℕ → ℂ} {Λ : ℂ → ℂ}
     {b : ℝ} (hΛ : Differentiable ℂ Λ)
