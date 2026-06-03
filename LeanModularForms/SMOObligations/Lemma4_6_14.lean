@@ -143,6 +143,47 @@ private lemma cuspForm_finsetSum_toModularForm' {α : Type*} [DecidableEq α]
   · intro q s hqs ih
     rw [Finset.sum_insert hqs, Finset.sum_insert hqs, ← ih]; rfl
 
+/-- Helper for `miyake_4_6_14_delta_slash_sum_coeff_zero`: if a cusp-form family
+`Φ_q : α → CuspForm (Gamma1 M) k` identifies the family of functions
+`inner_fun : α → UpperHalfPlane → ℂ` pointwise, and the period-1 `q`-expansion of every
+`inner_fun q` has vanishing `m`-th coefficient, then so does the period-1 `q`-expansion
+of `fun z ↦ ∑ q ∈ s, inner_fun q z`. -/
+private lemma qExp_finsetSum_inner_fun_coeff_zero_via_cuspForm_family
+    {α : Type*} [DecidableEq α] {M : ℕ} [NeZero M] {k : ℤ}
+    (Φ_q : α → CuspForm ((Gamma1 M).map (mapGL ℝ)) k)
+    (inner_fun : α → UpperHalfPlane → ℂ) (s : Finset α)
+    (hΦ_q_fun : ∀ q ∈ s, (⇑(Φ_q q) : UpperHalfPlane → ℂ) = inner_fun q)
+    (m : ℕ)
+    (h_per_q_zero : ∀ q ∈ s,
+        (UpperHalfPlane.qExpansion (1 : ℝ) (inner_fun q)).coeff m = 0) :
+    (UpperHalfPlane.qExpansion (1 : ℝ)
+        fun z : UpperHalfPlane ↦ ∑ q ∈ s, inner_fun q z).coeff m = 0 := by
+  let Φ_total : CuspForm ((Gamma1 M).map (mapGL ℝ)) k := ∑ q ∈ s, Φ_q q
+  have hΦ_total_fun : (⇑Φ_total : UpperHalfPlane → ℂ) =
+      fun z : UpperHalfPlane ↦ ∑ q ∈ s, inner_fun q z := by
+    funext z
+    rw [show (⇑Φ_total : UpperHalfPlane → ℂ) z =
+      (⇑(∑ q ∈ s, Φ_q q) : UpperHalfPlane → ℂ) z from rfl,
+      cuspForm_finsetSum_coe_apply s Φ_q z]
+    exact Finset.sum_congr rfl fun q hq ↦ congr_fun (hΦ_q_fun q hq) z
+  have h_qexp_sum : UpperHalfPlane.qExpansion (1 : ℝ)
+      (fun z : UpperHalfPlane ↦ ∑ q ∈ s, inner_fun q z) =
+      ∑ q ∈ s, UpperHalfPlane.qExpansion (1 : ℝ) (Φ_q q).toModularForm' := by
+    rw [show (fun z : UpperHalfPlane ↦ ∑ q ∈ s, inner_fun q z) =
+          (⇑Φ_total.toModularForm' : UpperHalfPlane → ℂ) from hΦ_total_fun.symm,
+      show Φ_total.toModularForm' = ∑ q ∈ s, (Φ_q q).toModularForm' from
+          cuspForm_finsetSum_toModularForm' s Φ_q]
+    exact map_sum (ModularForm.qExpansionAddHom
+      (Γ := (Gamma1 M).map (mapGL ℝ)) (h := (1 : ℝ)) one_pos
+      (one_mem_strictPeriods_Gamma1_map M) k) (fun q ↦ (Φ_q q).toModularForm') s
+  rw [h_qexp_sum, map_sum]
+  refine Finset.sum_eq_zero fun q hq ↦ ?_
+  rw [show (UpperHalfPlane.qExpansion (1 : ℝ) (Φ_q q).toModularForm').coeff m =
+      (UpperHalfPlane.qExpansion (1 : ℝ) (inner_fun q)).coeff m from
+    congrArg (fun ps : PowerSeries ℂ ↦ ps.coeff m)
+      (qExpansion_ext2 (⇑(Φ_q q) : UpperHalfPlane → ℂ) (inner_fun q) (hΦ_q_fun q hq))]
+  exact h_per_q_zero q hq
+
 /-- A `descendCosetList` slash-sum at a level divisible by `p ^ 2` (so that the coset
 count is `p`) collapses to the slash-sum over the upper-triangular representatives
 `T_p_upper`. -/
@@ -461,38 +502,9 @@ private lemma miyake_4_6_14_delta_slash_sum_coeff_zero
         (slash_sum_descendCoset_level_recast p hp (h_q_M_q_eq q)
           (⇑(HeckeRing.GL2.modularFormLevelRaise (((l' * N) * l' ^ 2) / q.val) q.val k
             (F_q_fam q.val q.property).toModularForm') : UpperHalfPlane → ℂ)) z
-    let Φ_total : CuspForm ((Gamma1 (((l' * N) * l' ^ 2) / p)).map (mapGL ℝ)) k :=
-      ∑ q ∈ l'.primeFactors.attach, Φ_q q
-    have hΦ_total_fun : (⇑Φ_total : UpperHalfPlane → ℂ) =
-        fun z : UpperHalfPlane ↦ ∑ q ∈ l'.primeFactors.attach, inner_fun q z := by
-      funext z
-      rw [show (⇑Φ_total : UpperHalfPlane → ℂ) z =
-        (⇑(∑ q ∈ l'.primeFactors.attach, Φ_q q) : UpperHalfPlane → ℂ) z from rfl,
-        cuspForm_finsetSum_coe_apply l'.primeFactors.attach Φ_q z]
-      exact Finset.sum_congr rfl (fun q _ ↦ hΦ_q_fun q z)
-    have h1_period_full_div_p :
-        (1 : ℝ) ∈ ((Gamma1 (((l' * N) * l' ^ 2) / p)).map (mapGL ℝ)).strictPeriods := by
-      simp [strictPeriods_Gamma1]
-    have h_qexp_sum : UpperHalfPlane.qExpansion (1 : ℝ)
-        (fun z : UpperHalfPlane ↦ ∑ q ∈ l'.primeFactors.attach, inner_fun q z) =
-        ∑ q ∈ l'.primeFactors.attach,
-          UpperHalfPlane.qExpansion (1 : ℝ) (Φ_q q).toModularForm' := by
-      rw [show (fun z : UpperHalfPlane ↦ ∑ q ∈ l'.primeFactors.attach, inner_fun q z) =
-          (⇑Φ_total.toModularForm' : UpperHalfPlane → ℂ) from hΦ_total_fun.symm,
-        show Φ_total.toModularForm' =
-          ∑ q ∈ l'.primeFactors.attach, (Φ_q q).toModularForm' from
-            cuspForm_finsetSum_toModularForm' l'.primeFactors.attach Φ_q]
-      exact map_sum (ModularForm.qExpansionAddHom (Γ := (Gamma1 (((l' * N) * l' ^ 2) / p)).map (mapGL ℝ))
-        (h := (1 : ℝ)) one_pos h1_period_full_div_p k) (fun q ↦ (Φ_q q).toModularForm')
-        l'.primeFactors.attach
-    rw [h_qexp_sum, map_sum]
-    refine Finset.sum_eq_zero fun q _ ↦ ?_
-    rw [show (UpperHalfPlane.qExpansion (1 : ℝ) (Φ_q q).toModularForm').coeff m =
-        (UpperHalfPlane.qExpansion (1 : ℝ) (inner_fun q)).coeff m from
-      congrArg (fun ps : PowerSeries ℂ ↦ ps.coeff m)
-        (qExpansion_ext2 (⇑(Φ_q q) : UpperHalfPlane → ℂ) (inner_fun q)
-          (funext (hΦ_q_fun q)))]
-    exact h_per_q_zero q
+    exact qExp_finsetSum_inner_fun_coeff_zero_via_cuspForm_family Φ_q inner_fun
+      l'.primeFactors.attach (fun q _ ↦ funext (hΦ_q_fun q)) m
+      (fun q _ ↦ h_per_q_zero q)
 
 noncomputable def descendSlashSumCuspForm {N : ℕ} [NeZero N] {k : ℤ} (χ : (ZMod N)ˣ →* ℂˣ)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (p : ℕ) [NeZero p] (hp : p.Prime) (hpN : p ∣ N)
