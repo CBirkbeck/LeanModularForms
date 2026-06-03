@@ -334,31 +334,6 @@ lemma qParam_imAxis_eq_realExp (h : ℝ) (t : ℝ) :
   push_cast
   ring
 
-/-- **q-expansion termwise Mellin identity**.
-
-For period `h > 0` and `m ≥ 1`,
-```
-mellin (fun t : ℝ ↦ Function.Periodic.qParam h (Complex.I * t) ^ m) s =
-  (2 * π * m / h : ℂ) ^ (-s) * Complex.Gamma s
-```
-on `Re s > 0`. -/
-theorem mellin_qParam_pow_imAxis {h : ℝ} (hh : 0 < h) {m : ℕ} (hm : 1 ≤ m)
-    {s : ℂ} (hs : 0 < s.re) :
-    mellin (fun t : ℝ ↦ Function.Periodic.qParam h (Complex.I * (t : ℂ)) ^ m) s =
-      ((2 * Real.pi * m / h : ℝ) : ℂ) ^ (-s) * Complex.Gamma s := by
-  have h_eq :
-      (fun t : ℝ ↦ Function.Periodic.qParam h (Complex.I * (t : ℂ)) ^ m) =
-        (fun t : ℝ ↦ (Real.exp (-(2 * Real.pi * m / h * t)) : ℂ)) := by
-    funext t
-    rw [qParam_imAxis_eq_realExp h t,
-        show ((Real.exp (-(2 * Real.pi * t / h)) : ℝ) : ℂ) ^ m =
-            (((Real.exp (-(2 * Real.pi * t / h)))^m : ℝ) : ℂ) by push_cast; rfl,
-        show (Real.exp (-(2 * Real.pi * t / h)))^m =
-            Real.exp (-(2 * Real.pi * m / h * t)) by
-          rw [← Real.exp_nat_mul]; congr 1; ring]
-  rw [h_eq, mellin_realExp_neg_const_mul (by
-    have : (0 : ℝ) < m := by exact_mod_cast hm.trans_lt' Nat.zero_lt_one
-    positivity) hs]
 
 
 
