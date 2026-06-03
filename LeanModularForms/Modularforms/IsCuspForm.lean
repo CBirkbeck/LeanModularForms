@@ -94,17 +94,6 @@ lemma CuspForm_to_ModularForm_coe (Γ : Subgroup SL(2, ℤ)) (k : ℤ) (f : Modu
   simp only [ModForm_mk, LinearMap.coe_mk, AddHom.coe_mk] at *
   exact hgg
 
-lemma CuspForm_to_ModularForm_Fun_coe (Γ : Subgroup SL(2, ℤ)) (k : ℤ) (f : ModularForm Γ k)
-    (hf : IsCuspForm Γ k f) : (IsCuspForm_to_CuspForm Γ k f hf).toFun = f.toFun := by
-  rw [IsCuspForm_to_CuspForm]
-  rw [IsCuspForm, CuspFormSubmodule, LinearMap.mem_range] at hf
-  have hg := hf.choose_spec
-  simp_rw [CuspForm_to_ModularForm] at hg
-  have hgg := congr_arg (fun x ↦ x.toFun) hg
-  simp only [ModForm_mk, LinearMap.coe_mk, AddHom.coe_mk, SlashInvariantForm.toFun_eq_coe,
-    SlashInvariantForm.coe_mk, toSlashInvariantForm_coe, CuspForm.toSlashInvariantForm_coe] at *
-  exact hgg
-
 /-- Build a `CuspForm` from a `SlashInvariantForm` that is holomorphic and tends to 0. -/
 noncomputable def cuspFormOfSIFTendstoZero {k : ℤ}
     (f_SIF : SlashInvariantForm Γ(1) k)
