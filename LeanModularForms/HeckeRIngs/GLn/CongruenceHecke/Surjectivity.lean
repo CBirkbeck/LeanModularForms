@@ -149,8 +149,9 @@ private lemma coprime_mul_coeff (f g : HeckeAlgebra 2)
     show (Finsupp.sum f (fun D₁ b₁ ↦ Finsupp.sum g (fun D₂ b₂ ↦
       b₁ • b₂ • HeckeRing.m (GL_pair 2) (HeckeCoset.rep D₁)
         (HeckeCoset.rep D₂)))) D = _
-    simp only [Finsupp.sum, Finsupp.finset_sum_apply, Finsupp.smul_apply,
+    simp only [Finsupp.sum, Finsupp.finsetSum_apply, Finsupp.smul_apply,
       smul_eq_mul, mul_assoc]
+    rfl
   rw [h_expand]
   conv_lhs =>
     arg 2; ext D₁; arg 2; ext D₂
@@ -170,12 +171,14 @@ private lemma coprime_mul_coeff (f g : HeckeAlgebra 2)
     · subst h; simp only [true_and]
       rw [Finset.sum_ite_eq']; split_ifs with hm
       · rfl
-      · simp [Finsupp.notMem_support_iff.mp hm]
+      · have h_zero : g (T_diag d₂) = 0 := Finsupp.notMem_support_iff.mp hm
+        rw [h_zero, mul_zero]
     · simp [h]
   rw [Finset.sum_congr rfl h_inner, Finset.sum_ite_eq']
   split_ifs with hm
   · rfl
-  · simp [Finsupp.notMem_support_iff.mp hm]
+  · have h_zero : f (T_diag d₁) = 0 := Finsupp.notMem_support_iff.mp hm
+    rw [h_zero, zero_mul]
 
 open HeckeRing.GLn.Inj
   (T_gen_pow_support_qpower T_gen_pow_entries_qpower support_mul_exists
@@ -203,11 +206,12 @@ private lemma prod_gen_det_eq (S : Finset {p : ℕ // p.Prime})
   | empty =>
     intro D hD
     simp only [Finset.prod_empty] at hD ⊢
-    rw [HeckeRing.one_def (GL_pair 2) (Z := ℤ)] at hD
+    have hD' : (HeckeRing.T_single (GL_pair 2) ℤ (HeckeCoset.one (GL_pair 2)) 1) D ≠ 0 := by
+      change (1 : HeckeAlgebra 2) D ≠ 0
+      exact hD
     have hD_eq : D = HeckeCoset.one (GL_pair 2) := by
       by_contra hne
-      apply hD
-      show (HeckeRing.T_single (GL_pair 2) ℤ (HeckeCoset.one (GL_pair 2)) 1) D = 0
+      apply hD'
       show (Finsupp.single (HeckeCoset.one (GL_pair 2)) 1) D = 0
       rw [Finsupp.single_apply, if_neg (Ne.symm hne)]
     rw [hD_eq, show (HeckeCoset.one (GL_pair 2) : HeckeCoset (GL_pair 2)) =
@@ -377,14 +381,16 @@ private lemma multi_prime_coeff_factor (S : Finset {p : ℕ // p.Prime})
   induction S using Finset.induction with
   | empty =>
     simp only [Finset.prod_empty]
-    rw [HeckeRing.one_def (GL_pair 2) (Z := ℤ)]
+    change (HeckeRing.T_single (GL_pair 2) ℤ (HeckeCoset.one (GL_pair 2)) 1) (T_diag 1) = 1
     show (Finsupp.single (HeckeCoset.one (GL_pair 2)) (1 : ℤ)) (T_diag 1) = 1
     rw [Finsupp.single_apply, if_pos]
     show HeckeCoset.one (GL_pair 2) = T_diag 1
     exact T_diag_ones.symm
   | @insert q S' hq ih =>
-    rw [Finset.prod_insert hq, Finset.prod_insert hq, Finset.prod_insert hq,
-      multi_prime_factor_step q S' hq e d, ih]
+    rw [Finset.prod_insert hq, Finset.prod_insert hq, Finset.prod_insert hq]
+    exact (multi_prime_factor_step q S' hq e d).trans
+      (congr_arg ((T_gen 2 q.1 0 ^ (e q 0) * T_gen 2 q.1 1 ^ (e q 1))
+        (T_diag (ppowDiag 2 q.1 ![d q 1, d q 0 + d q 1])) * ·) ih)
 
 private noncomputable def toPrimeExp (d : GenIdx →₀ ℕ) : {p : ℕ // p.Prime} → Fin 2 → ℕ :=
   fun p k ↦ d (p, k)
@@ -404,7 +410,8 @@ private lemma monomial_eval_eq_prod_primes (d : GenIdx →₀ ℕ) :
   rw [show T_gen 2 (↑p) 0 ^ toPrimeExp d p 0 * T_gen 2 (↑p) 1 ^ toPrimeExp d p 1 =
     ∏ i ∈ S, (fun j : GenIdx ↦ T_gen 2 (↑j.1) j.2) i ^ d i from by
       simp [S, Fin.prod_univ_two, toPrimeExp, Finset.prod_image (fun
-        (_ : Fin 2) _ (_ : Fin 2) _ h ↦ Prod.mk.injEq _ _ _ _ |>.mp h |>.2)]]
+        (_ : Fin 2) _ (_ : Fin 2) _ h ↦ Prod.mk.injEq _ _ _ _ |>.mp h |>.2)]
+      rfl]
   refine Finset.prod_subset (M := HeckeAlgebra 2) ?_ ?_
   · intro i hi
     simp only [Finset.mem_filter, Finsupp.mem_support_iff] at hi
@@ -590,7 +597,9 @@ private lemma monomial_prod_eval_at_Ds_eq_indicator (s d : GenIdx →₀ ℕ)
     · exact monomial_eval_zero_of_det_ne d s h_det_eq
 
 private lemma T_gen_algebraicIndependent :
+    haveI : Algebra ℤ (HeckeAlgebra 2) := Ring.toIntAlgebra _
     AlgebraicIndependent ℤ (fun i : GenIdx ↦ T_gen 2 i.1.1 i.2) := by
+  haveI : Algebra ℤ (HeckeAlgebra 2) := Ring.toIntAlgebra _
   rw [algebraicIndependent_iff_injective_aeval]
   show Function.Injective π_hom
   rw [RingHom.injective_iff_ker_eq_bot, eq_bot_iff]
