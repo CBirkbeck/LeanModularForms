@@ -891,23 +891,6 @@ theorem ennreal_tsum_lCoeff_mul_rpow_ne_top_of_cuspForm_Gamma1_mapGL
       (summable_lCoeff_mul_rpow_of_cuspForm_Gamma1_mapGL f hs)]
   exact ENNReal.ofReal_ne_top
 
-open CongruenceSubgroup Matrix.SpecialLinearGroup in
-/-- **`HasCompletedMellinIdentity` for `(Gamma1 N).map (mapGL ℝ)` cusp forms**.
-
-The full classical Hecke 1936 completed Mellin–Dirichlet identity for any
-weight-`k` cusp form on `(Gamma1 N).map (mapGL ℝ)` (with `0 < (k : ℝ)`):
-on the half-plane `(k : ℝ)/2 + 1 < s.re`,
-```
-mellin (imAxis f) s = (2π)^(-s) · Γ(s) · LSeries (lCoeff f) s.
-``` -/
-theorem hasCompletedMellinIdentity_Gamma1_mapGL
-    {N : ℕ} [NeZero N] {k : ℤ} {F : Type*} [FunLike F ℍ ℂ]
-    [CuspFormClass F ((Gamma1 N).map (mapGL ℝ)) k] (f : F)
-    (hk_pos : 0 < (k : ℝ)) :
-    HasCompletedMellinIdentity f :=
-  hasCompletedMellinIdentity_of_tail_summable_Gamma1_mapGL f hk_pos
-    (fun {_s} hs ↦ ennreal_tsum_lCoeff_mul_rpow_ne_top_of_cuspForm_Gamma1_mapGL f hs)
-
 end ModularForms
 
 namespace LSeries
