@@ -131,70 +131,6 @@ noncomputable def Newform.PerNewformFullDirichletData.toPre
   h_den_finite := D.h_den_finite
   h_clause := D.h_clause
 
-/-- The `T = ∅` specialization of `Newform.PerNewformFullDirichletData`, built from
-the irreducible classical inputs (character non-trivialities, the Dirichlet zero,
-the squared-character L-value non-cancellation, and the universal-F clause). -/
-noncomputable def Newform.PerNewformFullDirichletData_T_empty_of_classicalInputs
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (S : Finset ℕ) (s₀ : ℂ)
-    (h_χ_ne_one : (Newform.dirichletLift χ : DirichletCharacter ℂ N) ≠ 1)
-    (h_chi_sq_ne_one : (Newform.dirichletLift χ * Newform.dirichletLift χ
-      : DirichletCharacter ℂ N) ≠ 1)
-    (h_zero : DirichletCharacter.LFunction
-      (Newform.dirichletLift χ : DirichletCharacter ℂ N) (2 * s₀ - k + 1) = 0)
-    (h_num_LF_ne : DirichletCharacter.LFunction
-      (Newform.dirichletLift χ * Newform.dirichletLift χ
-        : DirichletCharacter ℂ N) (2 * (2 * s₀ - k + 1)) ≠ 0)
-    (h_clause : Newform.FullDirichletQuotientUniversalFClause f χ S ∅ s₀) :
-    Newform.PerNewformFullDirichletData f χ S where
-  T := ∅
-  s₀ := s₀
-  h_zero := h_zero
-  h_num_LF_ne := h_num_LF_ne
-  h_factors_ne := fun p hp ↦ absurd hp (Finset.notMem_empty p)
-  h_num_an := by
-    simp only [Finset.prod_empty, mul_one]
-    exact Complex.analyticOnNhd_univ_iff_differentiable.mpr
-      ((DirichletCharacter.differentiable_LFunction h_chi_sq_ne_one).comp (by fun_prop))
-      s₀ (Set.mem_univ _)
-  h_den_an := by
-    simp only [Finset.prod_empty, mul_one]
-    exact Complex.analyticOnNhd_univ_iff_differentiable.mpr
-      ((DirichletCharacter.differentiable_LFunction h_χ_ne_one).comp (by fun_prop))
-      s₀ (Set.mem_univ _)
-  h_den_finite := by
-    set den_fn : ℂ → ℂ := fun s ↦
-      DirichletCharacter.LFunction
-        (Newform.dirichletLift χ : DirichletCharacter ℂ N) (2 * s - k + 1) *
-      ∏ p ∈ (∅ : Finset Nat.Primes),
-        (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-          : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-          ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹
-    have h_an_univ : AnalyticOnNhd ℂ den_fn Set.univ :=
-      Complex.analyticOnNhd_univ_iff_differentiable.mpr <| by
-        simp only [den_fn, Finset.prod_empty, mul_one]
-        exact (DirichletCharacter.differentiable_LFunction h_χ_ne_one).comp (by fun_prop)
-    set s' : ℂ := (((k : ℝ) / 2 + 2 : ℝ) : ℂ)
-    have h_re_gt_one : (1 : ℝ) < (2 * s' - (k : ℂ) + 1).re := by
-      have h_re : (2 * s' - (k : ℂ) + 1).re = 5 := by
-        simp [s', Complex.add_re, Complex.sub_re, Complex.mul_re,
-          Complex.intCast_re, Complex.intCast_im]
-        ring
-      linarith
-    have h_order_s'_ne_top : analyticOrderAt den_fn s' ≠ ⊤ := by
-      rw [(h_an_univ s' (Set.mem_univ _)).analyticOrderAt_eq_zero.mpr <| by
-        simp only [den_fn, Finset.prod_empty, mul_one]
-        rw [DirichletCharacter.LFunction_eq_LSeries _ h_re_gt_one]
-        exact DirichletCharacter.LSeries_ne_zero_of_one_lt_re _ h_re_gt_one]
-      exact ENat.zero_ne_top
-    rw [(h_an_univ s₀ (Set.mem_univ _)).meromorphicOrderAt_eq]
-    intro h
-    rcases ENat.ne_top_iff_exists.mp (AnalyticOnNhd.analyticOrderAt_ne_top_of_isPreconnected
-      h_an_univ isPreconnected_univ (Set.mem_univ _) (Set.mem_univ _) h_order_s'_ne_top)
-      with ⟨n, hn⟩
-    rw [← hn] at h
-    simp at h
-  h_clause := h_clause
 
 
 
@@ -230,12 +166,6 @@ def Newform.HasCompletedMellinIdentity {N : ℕ} [NeZero N] {k : ℤ}
     (f : Newform N k) : Prop :=
   ModularForms.HasCompletedMellinIdentity f.toCuspForm
 
-/-- The classical Hecke 1936 completed Mellin–Dirichlet identity holds for every
-weight-`k` newform on `Γ₁(N)` with `0 < (k : ℝ)`. -/
-theorem Newform.hasCompletedMellinIdentity {N : ℕ} [NeZero N] {k : ℤ}
-    (f : Newform N k) (hk_pos : 0 < (k : ℝ)) :
-    Newform.HasCompletedMellinIdentity f :=
-  ModularForms.hasCompletedMellinIdentity_Gamma1_mapGL f.toCuspForm hk_pos
 
 /-- The completed Mellin–LSeries data for a newform: a Mathlib `StrongFEPair`
 carrying the honest completed Mellin–Dirichlet identity (Gamma factor, full
