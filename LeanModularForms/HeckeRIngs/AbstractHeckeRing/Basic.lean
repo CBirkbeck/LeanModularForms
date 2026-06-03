@@ -20,7 +20,7 @@ Basic definitions for Hecke rings following Shimura Ch. 3: `HeckePair`, double c
 spaces `HeckeCoset` and `HeckeLeftCoset`, the Hecke ring type `𝕋`, and foundational double coset lemmas.
 -/
 
-open Commensurable Classical MulOpposite Set DoubleCoset Subgroup Subgroup.Commensurable
+open Classical MulOpposite Set DoubleCoset Subgroup Subgroup.Commensurable
 
 open scoped Pointwise
 

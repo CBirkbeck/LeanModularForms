@@ -301,7 +301,8 @@ theorem fd_subset_closure_fdo : (fd : Set ℍ) ⊆ closure fdo := by
             mul_le_mul_of_nonneg_left hz.2 (by linarith)
         _ < 1 / 2 := by nlinarith
   · calc dist (↑z) wc
-        ≤ |((↑z : ℂ) - wc).re| + |((↑z : ℂ) - wc).im| := Complex.norm_le_abs_re_add_abs_im _
+        ≤ |((↑z : ℂ) - wc).re| + |((↑z : ℂ) - wc).im| := by
+          rw [Complex.dist_eq]; exact Complex.norm_le_abs_re_add_abs_im _
       _ = t * |z.re| + t := by
           simp [coe_re, coe_im, wc, sub_mul, abs_mul, abs_of_pos ht, abs_neg]
       _ ≤ t * (1 / 2) + t := by linarith [mul_le_mul_of_nonneg_left hz.2 ht.le]

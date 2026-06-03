@@ -62,7 +62,7 @@ variable {F : Type*} [FunLike F ℍ ℂ]
 /-- The coefficient sequence `n ↦ (q-expansion of f).coeff n`, viewed as `ℕ → ℂ`,
 the natural input to mathlib's `LSeries`. -/
 noncomputable def lCoeff [ModularFormClass F Γ k] (f : F) : ℕ → ℂ :=
-  fun n ↦ (ModularFormClass.qExpansion Γ.strictWidthInfty f).coeff n
+  fun n ↦ (qExpansion Γ.strictWidthInfty f).coeff n
 
 /-- The **L-function** of a modular form,
 `L(·, f) = Σ_{n≥1} (lCoeff f) n · n^{-·}`. -/
@@ -71,7 +71,7 @@ noncomputable def lSeries [ModularFormClass F Γ k] (f : F) : ℂ → ℂ :=
 
 @[simp]
 lemma lCoeff_apply [ModularFormClass F Γ k] (f : F) (n : ℕ) :
-    lCoeff f n = (ModularFormClass.qExpansion Γ.strictWidthInfty f).coeff n := rfl
+    lCoeff f n = (qExpansion Γ.strictWidthInfty f).coeff n := rfl
 
 
 /-- **Hecke's crude bound**: for a weight-`k` modular form (`0 ≤ k`) on an
@@ -119,9 +119,8 @@ lemma lCoeff_zero_of_cuspForm [Γ.IsArithmetic] [CuspFormClass F Γ k]
     (f : F) :
     lCoeff f 0 = 0 := by
   simp only [lCoeff,
-    ModularFormClass.qExpansion_coeff_zero (F := F) (Γ := Γ) (k := k) (f := f)
-      (Γ.strictWidthInfty_pos_iff.mpr Fact.out) Γ.strictWidthInfty_mem_strictPeriods,
-    (CuspFormClass.zero_at_infty f).valueAtInfty_eq_zero]
+    CuspFormClass.qExpansion_coeff_zero (F := F) (Γ := Γ) (k := k) (f := f)
+      (Γ.strictWidthInfty_pos_iff.mpr Fact.out) Γ.strictWidthInfty_mem_strictPeriods]
 
 /-- Finite abscissa of absolute convergence for a cusp form. -/
 lemma abscissaOfAbsConv_lCoeff_lt_top_of_cuspForm [Γ.IsArithmetic]
@@ -163,7 +162,7 @@ open CongruenceSubgroup Matrix.SpecialLinearGroup in
 lemma lCoeff_Gamma1_mapGL_eq (N : ℕ)
     {k : ℤ} {F : Type*} [FunLike F ℍ ℂ]
     [ModularFormClass F ((Gamma1 N).map (mapGL ℝ)) k] (f : F) (n : ℕ) :
-    lCoeff f n = (ModularFormClass.qExpansion (1 : ℝ) f).coeff n := by
+    lCoeff f n = (qExpansion (1 : ℝ) f).coeff n := by
   rw [lCoeff_apply, strictWidthInfty_Gamma1_mapGL]
 
 /-- **Formal local Euler factor identity.**  For complex `c, x` with
