@@ -300,17 +300,6 @@ def HasCompletedMellinIdentity [Γ.IsArithmetic] [CuspFormClass F Γ k] (f : F) 
     mellin (imAxis f) s =
       (2 * Real.pi : ℂ) ^ (-s) * Complex.Gamma s * LSeries (lCoeff f) s
 
-/-- **Termwise Mellin transform of `t ↦ exp(-(c·t))` for `c > 0`**:
-```
-mellin (fun t : ℝ ↦ (Real.exp (-(c * t)) : ℂ)) s = (c : ℂ) ^ (-s) * Complex.Gamma s
-```
-on `Re s > 0`. -/
-theorem mellin_realExp_neg_const_mul {c : ℝ} (hc : 0 < c) {s : ℂ} (hs : 0 < s.re) :
-    mellin (fun t : ℝ ↦ (Real.exp (-(c * t)) : ℂ)) s =
-      (c : ℂ) ^ (-s) * Complex.Gamma s := by
-  show mellin (fun t : ℝ ↦ (fun u : ℝ ↦ (Real.exp (-u) : ℂ)) (c * t)) s = _
-  rw [mellin_comp_mul_left (fun u : ℝ ↦ (Real.exp (-u) : ℂ)) s hc,
-    ← Complex.GammaIntegral_eq_mellin, ← Complex.Gamma_eq_integral hs, smul_eq_mul]
 
 /-- **Identification of `Function.Periodic.qParam` on the imaginary axis with a real
 exponential**:
