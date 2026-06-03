@@ -94,19 +94,12 @@ structure IsNewform (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop where
   isNew : f ∈ cuspFormsNewExtended N k
   isNorm : (ModularFormClass.qExpansion (1 : ℝ) f).coeff 1 = 1
 
-/-- A `Newform` satisfies `IsNewform`. -/
-theorem Newform.isNewform (f : Newform N k) : IsNewform f.toCuspForm where
-  isEigen := f.toEigenform.isEigenform
-  isNew := f.isNew
-  isNorm := f.isNorm
 
 /-- A `Newform` is **primitive** at its level if its underlying cusp form
 lies in the new subspace. -/
 def Newform.IsPrimitive (f : Newform N k) : Prop :=
   f.toCuspForm ∈ cuspFormsNewExtended N k
 
-/-- Every `Newform` is primitive at its own level. -/
-theorem Newform.isPrimitive (f : Newform N k) : f.IsPrimitive := f.isNew
 
 /-- The **conductor** of a `Newform N k` is the smallest level at which `f`
 arises as a `Newform`; for a bundled `Newform N k` this is `N` itself. -/
@@ -154,22 +147,6 @@ theorem Newform.eigenvalue_eq_coeff (f : Newform N k) (n : ℕ+)
     f.isEigen n hn]
   exact (qExpansion_one_coeff_one_smul_of_norm f.toCuspForm f.isNorm _).symm
 
-/-- **Un-normalised analogue of `Newform.eigenvalue_eq_coeff`.**  For an
-`Eigenform` `f` lying in `modFormCharSpace k χ` and *assumed normalised at
-period 1* (`a₁ = 1`), the classical eigenvalue at `n` (coprime to `N`) equals
-the `n`-th canonical Fourier coefficient.  Identical proof to
-`Newform.eigenvalue_eq_coeff`, but the normalisation is taken as a hypothesis
-rather than read off the `Newform.isNorm` field. -/
-theorem Eigenform.eigenvalue_eq_coeff_of_norm (f : Eigenform N k) (n : ℕ+)
-    (hn : Nat.Coprime n.val N) (χ : (ZMod N)ˣ →* ℂˣ)
-    (hf_char : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (h_norm₁ : (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm).coeff 1 = 1) :
-    f.eigenvalue n =
-      (ModularFormClass.qExpansion (1 : ℝ) f.toCuspForm).coeff n.val := by
-  haveI : NeZero n.val := ⟨n.pos.ne'⟩
-  rw [← qExpansion_one_coeff_one_heckeT_n_cusp_eq_coeff n.val hn χ f.toCuspForm hf_char,
-    f.isEigen n hn]
-  exact (qExpansion_one_coeff_one_smul_of_norm f.toCuspForm h_norm₁ (f.eigenvalue n)).symm
 
 private lemma qExpansion_one_levelRaise_coeff_eq_zero_of_not_dvd
     {M : ℕ} [NeZero M] {d : ℕ} [NeZero d]
