@@ -263,7 +263,8 @@ lemma E_k_q_expansion (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Even k) (z : ℍ) 
     (E k hk) z = 1 +
       (1 / riemannZeta k) * ((-2 * π * Complex.I) ^ k / (k - 1)!) *
         ∑' n : ℕ+, σ (k - 1) n * Complex.exp (2 * π * Complex.I * z * n) := by
-  rw [_root_.E, IsGLPos.smul_apply]
+  rw [_root_.E]
+  show ((1 / 2 : ℂ) • (ModularForm.eisensteinSeriesMF hk standardCongruenceCondition) z) = _
   have hmf : (ModularForm.eisensteinSeriesMF hk standardCongruenceCondition) z =
       (eisensteinSeriesSIF standardCongruenceCondition k) z := rfl
   rw [hmf]
@@ -279,9 +280,11 @@ lemma E_k_q_expansion (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Even k) (z : ℍ) 
     omega
   rw [← inv_mul_eq_iff_eq_mul₀ z2] at HE2
   simp at *
-  conv => enter [1, 2]; rw [← HE2]
-  simp_rw [← mul_assoc]
-  rw [HE1, mul_add]
-  have : 2⁻¹ * (riemannZeta k)⁻¹ * (2 * riemannZeta k) = 1 := by field_simp
-  rw [this]
-  ring
+  -- HE2 has `tsum` with one `AddCommMonoid` instance path; the goal's `tsum` has another.
+  -- They are definitionally equal; finish via `convert` which performs unification up to defeq.
+  have key : (2 : ℂ)⁻¹ * ((riemannZeta ↑k)⁻¹ *
+        ∑' (x : Fin 2 → ℤ), (((x 0 : ℂ) * (z : ℂ) + (x 1 : ℂ)) ^ k)⁻¹) =
+      1 + (riemannZeta ↑k)⁻¹ * ((-(2 * ↑π * Complex.I)) ^ k / ↑(k - 1)!) *
+        ∑' (n : ℕ+), ↑((σ (k - 1)) ↑n) * cexp (2 * ↑π * Complex.I * ↑z * ↑↑n) := by
+    rw [HE1]; field_simp
+  convert (HE2 ▸ key) using 2

@@ -81,8 +81,8 @@ private theorem der_iter_eq_der2 (k n : ℕ) (r : ℍ') :
 theorem der_iter_eq_der2' (k n : ℕ) (r : ℍ') :
     derivWithin (iteratedDerivWithin k (fun s : ℂ ↦ Complex.exp (2 * ↑π * Complex.I * n * s)) ℍ')
       ℍ' ↑r =
-      iteratedDerivWithin (k + 1) (fun s : ℂ ↦ Complex.exp (2 * ↑π * Complex.I * n * s)) ℍ' ↑r :=
-  (iteratedDerivWithin_succ).symm
+      iteratedDerivWithin (k + 1) (fun s : ℂ ↦ Complex.exp (2 * ↑π * Complex.I * n * s)) ℍ' ↑r := by
+  rw [iteratedDerivWithin_succ]
 
 private noncomputable def ctsExpTwoPiN (K : Set ℂ) : ContinuousMap K ℂ where
   toFun r := Complex.exp (2 * ↑π * Complex.I * r)

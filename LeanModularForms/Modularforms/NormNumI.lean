@@ -37,8 +37,9 @@ theorem split_add {z₁ z₂ : ℂ} {a₁ a₂ b₁ b₂ : ℝ}
     z₁ + z₂ = ⟨(a₁ + a₂), (b₁ + b₂)⟩ := h₁ ▸ h₂ ▸ rfl
 
 theorem split_mul {z₁ z₂ : ℂ} {a₁ a₂ b₁ b₂ : ℝ} (h₁ : z₁ = ⟨a₁, b₁⟩) (h₂ : z₂ = ⟨a₂, b₂⟩) :
-    z₁ * z₂ = ⟨(a₁ * a₂ - b₁ * b₂), (a₁ * b₂ + b₁ * a₂)⟩ :=
-  Ring.mul_congr h₁ h₂ rfl
+    z₁ * z₂ = ⟨(a₁ * a₂ - b₁ * b₂), (a₁ * b₂ + b₁ * a₂)⟩ := by
+  subst h₁; subst h₂
+  apply Complex.ext <;> simp [Complex.mul_re, Complex.mul_im]
 
 theorem split_inv {z : ℂ} {x y : ℝ} (h : z = ⟨x, y⟩) :
     z⁻¹ = ⟨x / (x * x + y * y), - y / (x * x + y * y)⟩ := by

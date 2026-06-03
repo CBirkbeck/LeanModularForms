@@ -44,7 +44,7 @@ and establishes its basic properties.
 open ModularForm EisensteinSeries UpperHalfPlane TopologicalSpace Set MeasureTheory intervalIntegral
   Metric Filter Function Complex MatrixGroups
 
-open scoped Interval Real NNReal ENNReal Topology BigOperators Nat
+open scoped Interval Real NNReal ENNReal Topology BigOperators Nat ModularForm
 
 open ArithmeticFunction
 
@@ -66,7 +66,7 @@ lemma DiscriminantProductFormula (z : ℍ) : Δ z = cexp (2 * π * Complex.I * z
 lemma Delta_eq_eta_pow (z : ℍ) : Δ z = (η z) ^ 24 := by
   have hm : Multipliable (fun n : ℕ ↦ 1 - ModularForm.eta_q n z) :=
     (MultipliableEtaProductExpansion z).congr fun n ↦ by simp [ModularForm.eta_q_eq_cexp]
-  rw [η, ModularForm.eta, Δ, mul_pow,
+  rw [show η z = ModularForm.eta z from rfl, ModularForm.eta, Δ, mul_pow,
     tprod_pow (f := fun n : ℕ ↦ 1 - ModularForm.eta_q n z) hm 24]
   congr
   · rw [Periodic.qParam, ← Complex.exp_nat_mul]
@@ -77,7 +77,7 @@ lemma Delta_eq_eta_pow (z : ℍ) : Δ z = (η z) ^ 24 := by
 
 lemma Δ_ne_zero (z : UpperHalfPlane) : Δ z ≠ 0 := by
   rw [Delta_eq_eta_pow]
-  simpa [η] using ModularForm.eta_ne_zero (z := (z : ℂ)) z.2
+  simpa using ModularForm.eta_ne_zero (z := (z : ℂ)) z.2
 
 lemma Discriminant_T_invariant : (Δ ∣[(12 : ℤ)] ModularGroup.T) = Δ := by
   ext z
@@ -148,7 +148,7 @@ lemma atImInfty_pnat_mono (S : Set ℍ) (hS : S ∈ atImInfty) (B : ℝ) : ∃ A
       simp only [mul_im, natCast_re, coe_im, natCast_im, coe_re, zero_mul, add_zero]
       have hs2 := hs.2
       simp at *
-      have hn : (1 : ℝ) ≤ n := by exact_mod_cast PNat.one_le n
+      have hn : (1 : ℝ) ≤ n := by exact_mod_cast (n.2 : 1 ≤ (n : ℕ))
       refine ⟨le_trans hs2.1 ?_, le_trans hs2.2 ?_⟩ <;>
         exact (le_mul_iff_one_le_left s.2).mpr hn
     refine ⟨?_, K⟩
@@ -309,7 +309,7 @@ def Delta : CuspForm (CongruenceSubgroup.Gamma 1) 12 where
     simp only [SlashInvariantForm.coe_mk]
     have he2 : DifferentiableOn ℂ (fun z ↦ (η z) ^ 24) {z | 0 < z.im} :=
       DifferentiableOn.pow (fun x hx ↦ DifferentiableAt.differentiableWithinAt <| by
-        simpa [η] using ModularForm.differentiableAt_eta_of_mem_upperHalfPlaneSet (z := x) hx) _
+        simpa using ModularForm.differentiableAt_eta_of_mem_upperHalfPlaneSet (z := x) hx) _
     rw [Discriminant_SIF]
     simp only [SlashInvariantForm.coe_mk]
     refine he2.congr fun z hz ↦ ?_

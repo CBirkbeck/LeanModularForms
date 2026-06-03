@@ -37,7 +37,8 @@ of `E₄` and `E₆`, the q-expansion of the discriminant `Δ` to first order, r
 * `E₂_isBoundedAtImInfty`: the (non-modular) Eisenstein series `E₂` is bounded at infinity.
 -/
 
-open ModularForm EisensteinSeries UpperHalfPlane TopologicalSpace Set MeasureTheory intervalIntegral
+open ModularForm hiding E₄ E₆
+open EisensteinSeries UpperHalfPlane TopologicalSpace Set MeasureTheory intervalIntegral
   Metric Filter Function Complex MatrixGroups
 
 open scoped Interval Real NNReal ENNReal Topology BigOperators Nat
@@ -162,8 +163,8 @@ theorem cuspfunc_lim_coef {k : ℤ} {F : Type*} [FunLike F ℍ ℂ] (n : ℕ) (c
   have hq2 := Function.Periodic.im_invQParam_pos_of_norm_lt_one (h := n)
     (by exact_mod_cast Nat.pos_of_neZero n) hq hq1
   have hft := hf ⟨Periodic.invQParam (↑n) q, hq2⟩
-  have hcusp := eq_cuspFunction (h := n) f ⟨Periodic.invQParam (↑n) q, hq2⟩
-    (by simp) (by simp [hn.1])
+  have hcusp := SlashInvariantFormClass.eq_cuspFunction (h := n) f
+    (τ := ⟨Periodic.invQParam (↑n) q, hq2⟩) (by simp) (by exact_mod_cast hn.1)
   have hn' : (n : ℝ) ≠ 0 := by exact_mod_cast hn.1
   simp only [smul_eq_mul] at *
   rw [Function.Periodic.qParam_right_inv hn' hq1] at hcusp hft
@@ -180,9 +181,15 @@ lemma tsum_zero_pow (f : ℕ → ℂ) : (∑' m, f m * 0 ^ m) = f 0 := by
 
 lemma cuspfunc_Zero [hn : NeZero n] [ModularFormClass F Γ(n) k] :
     cuspFunction n f 0 = (qExpansion n f).coeff 0 := by
-  have hsum := ModularFormClass.hasSum_qExpansion_of_norm_lt (h := n) (q := 0) f
-    (by have := hn.1; positivity) (by simp)
-  simp only [norm_zero, zero_lt_one, smul_eq_mul, forall_const] at hsum
+  have hn_pos : (0 : ℝ) < n := by exact_mod_cast (Nat.pos_of_neZero n)
+  have hΓ : (n : ℝ) ∈ Γ(n).strictPeriods := by simp
+  haveI : Fact (IsCusp OnePoint.infty Γ(n)) :=
+    ⟨Γ(n).isCusp_of_mem_strictPeriods hn_pos hΓ⟩
+  have hper := SlashInvariantFormClass.periodic_comp_ofComplex f hΓ
+  have hsum := hasSum_qExpansion_of_norm_lt (f := (f : ℍ → ℂ)) hn_pos hper
+    (ModularFormClass.holo f) (ModularFormClass.bdd_at_infty f)
+    (q := 0) (by simp)
+  simp only [smul_eq_mul] at hsum
   rw [(summable_zero_pow _).hasSum_iff, tsum_zero_pow] at hsum
   exact hsum.symm
 
@@ -255,7 +262,15 @@ lemma q_exp_unique (c : ℕ → ℂ) (f : ModularForm Γ(n) k) [hn : NeZero n]
     (hf : ∀ τ : ℍ, HasSum (fun m : ℕ ↦ c m • 𝕢 n τ ^ m) (f τ)) :
     c = fun m ↦ (qExpansion n f).coeff m := by
   ext m
-  have h := hasFPowerSeries_cuspFunction (h := n) f (by have := hn.1; positivity) (by simp)
+  have hn_pos : (0 : ℝ) < n := by exact_mod_cast (Nat.pos_of_neZero n)
+  have hΓ : (n : ℝ) ∈ Γ(n).strictPeriods := by simp
+  haveI : Fact (IsCusp OnePoint.infty Γ(n)) :=
+    ⟨Γ(n).isCusp_of_mem_strictPeriods hn_pos hΓ⟩
+  have hAn := ModularFormClass.analyticAt_cuspFunction_zero (f := f) hn_pos hΓ
+  have h := hasFPowerSeries_cuspFunction (F := ModularForm Γ(n) k) f hn_pos hAn
+    (fun τ ↦ hasSum_qExpansion (f := (f : ℍ → ℂ)) hn_pos
+      (SlashInvariantFormClass.periodic_comp_ofComplex f hΓ)
+      (ModularFormClass.holo f) (ModularFormClass.bdd_at_infty f) τ)
   let qExpansion2 : PowerSeries ℂ := .mk fun m ↦ c m
   let qq : FormalMultilinearSeries ℂ ℂ ℂ :=
     fun m ↦ qExpansion2.coeff m • ContinuousMultilinearMap.mkPiAlgebraFin ℂ m _
@@ -527,7 +542,7 @@ theorem E4E6_coeff_zero_eq_zero :
       qExpansion 1 (((DirectSum.of (ModularForm Γ(1)) 4) E₄ ^ 3) 12) -
         qExpansion 1 (((DirectSum.of (ModularForm Γ(1)) 6) E₆ ^ 2) 12) := by
     simpa using
-      qExpansion_sub (Γ := Γ(1)) (h := (1 : ℕ))
+      ModularForm.qExpansion_sub (Γ := Γ(1)) (h := (1 : ℕ))
         (hh := by positivity) (hΓ := by simp)
         ((((DirectSum.of (ModularForm Γ(1)) 4) E₄ ^ 3) 12))
         ((((DirectSum.of (ModularForm Γ(1)) 6) E₆ ^ 2) 12))
@@ -537,26 +552,28 @@ theorem E4E6_coeff_zero_eq_zero :
   have hds : (((DirectSum.of (ModularForm Γ(1)) 4) E₄ ^ 3) 12) = E₄.mul (E₄.mul E₄) := by
     ext z
     rw [pow_three, DirectSum.of_mul_of, DirectSum.of_mul_of]
-    simp
-    rw [DFunLike.congr_arg (GradedMonoid.GMul.mul E₄ (GradedMonoid.GMul.mul E₄ E₄)) rfl]
     rfl
   have hd6 : ((DirectSum.of (ModularForm Γ(1)) 6) E₆ ^ 2) 12 = E₆.mul E₆ := by
     ext z
     rw [pow_two, DirectSum.of_mul_of]
-    simp
-    rw [DFunLike.congr_arg (GradedMonoid.GMul.mul E₆ E₆) rfl]
     rfl
-  rw [hds, hd6, ← Nat.cast_one (R := ℝ), qExpansion_mul_coeff, qExpansion_mul_coeff,
-    qExpansion_mul_coeff, PowerSeries.coeff_mul, PowerSeries.coeff_mul]
-  simp only [Finset.antidiagonal_zero, Prod.mk_zero_zero, Finset.sum_singleton, Prod.fst_zero,
-    Prod.snd_zero]
-  rw [Nat.cast_one]
-  simp_rw [E4_q_exp_zero, E6_q_exp_zero]
-  rw [PowerSeries.coeff_mul]
-  simp only [Finset.antidiagonal_zero, Prod.mk_zero_zero, Finset.sum_singleton, Prod.fst_zero,
-    Prod.snd_zero, one_mul, mul_one]
-  rw [E4_q_exp_zero]
-  simp
+  rw [hds, hd6]
+  -- Use congr! to handle the typeclass mismatch on Γ argument
+  have hE43 : (PowerSeries.coeff 0) (qExpansion (1 : ℝ) ⇑(E₄.mul (E₄.mul E₄))) = 1 := by
+    rw [ModularForm.qExpansion_mul (Γ := Γ(1)) (h := (1 : ℝ))
+      (hh := one_pos) (hΓ := by simp) E₄ (E₄.mul E₄),
+      ModularForm.qExpansion_mul (Γ := Γ(1)) (h := (1 : ℝ))
+        (hh := one_pos) (hΓ := by simp) E₄ E₄]
+    simp [PowerSeries.coeff_mul, Finset.antidiagonal_zero, Prod.mk_zero_zero,
+      Finset.sum_singleton, Prod.fst_zero, Prod.snd_zero, Nat.cast_one, E4_q_exp_zero]
+  have hE62 : (PowerSeries.coeff 0) (qExpansion (1 : ℝ) ⇑(E₆.mul E₆)) = 1 := by
+    rw [ModularForm.qExpansion_mul (Γ := Γ(1)) (h := (1 : ℝ))
+      (hh := one_pos) (hΓ := by simp) E₆ E₆]
+    simp [PowerSeries.coeff_mul, Finset.antidiagonal_zero, Prod.mk_zero_zero,
+      Finset.sum_singleton, Prod.fst_zero, Prod.snd_zero, Nat.cast_one, E6_q_exp_zero]
+  -- Mathlib v4.30: typeclass paths for the implicit `Γ` argument in `qExpansion` differ
+  -- between `hE43`/`hE62` and the goal; `convert!` unifies them up to defeq.
+  convert (sub_eq_zero.mpr (hE43.trans hE62.symm)) using 2
 
 /-- The cusp form realising `Δ = (E₄³ - E₆²) / 1728`. -/
 def Delta_E4_E6_aux : CuspForm (CongruenceSubgroup.Gamma 1) 12 :=
@@ -887,7 +904,9 @@ lemma norm_tsum_logDeriv_expo_le {q : ℂ} (hq : ‖q‖ < 1) :
     rw [norm_div, norm_mul, Complex.norm_natCast]
     have hdenom_lower : 1 - r ≤ ‖1 - q ^ (n : ℕ)‖ := calc
       1 - r ≤ 1 - r ^ (n : ℕ) := by
-        have : r ^ (n : ℕ) ≤ r := by simpa using pow_le_pow_of_le_one (norm_nonneg _) hq.le n.one_le
+        have : r ^ (n : ℕ) ≤ r := by
+          simpa [pow_one] using pow_le_pow_of_le_one (norm_nonneg _) hq.le (n := (n : ℕ)) (m := 1)
+            (by exact_mod_cast (n.2 : 1 ≤ (n : ℕ)))
         linarith
       _ = 1 - ‖q ^ (n : ℕ)‖ := by rw [norm_pow]
       _ ≤ ‖1 - q ^ (n : ℕ)‖ := by
@@ -948,9 +967,9 @@ lemma E₂_isBoundedAtImInfty : IsBoundedAtImInfty E₂ := by
         gcongr; exact norm_tsum_logDeriv_expo_le_of_norm_le hq_bound hr₀_lt_one
 
 /-- E₄ is bounded at infinity (as a modular form). -/
-lemma E₄_isBoundedAtImInfty : IsBoundedAtImInfty E₄.toFun :=
-  ModularFormClass.bdd_at_infty E₄
+lemma E₄_isBoundedAtImInfty : IsBoundedAtImInfty (_root_.E₄).toFun :=
+  ModularFormClass.bdd_at_infty (_root_.E₄)
 
 /-- The product E₂ · E₄ is bounded at infinity. -/
-lemma E₂_mul_E₄_isBoundedAtImInfty : IsBoundedAtImInfty (E₂ * E₄.toFun) :=
+lemma E₂_mul_E₄_isBoundedAtImInfty : IsBoundedAtImInfty (E₂ * (_root_.E₄).toFun) :=
   E₂_isBoundedAtImInfty.mul E₄_isBoundedAtImInfty

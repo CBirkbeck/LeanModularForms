@@ -193,13 +193,18 @@ private lemma norm_cuspFunction_apply_zero_eq_zero_of_qExpansion_coeff_eq_zero
     (hcoeff : ∀ m < N, (qExpansion (cuspWidth (Γ := Γ)) f).coeff m = 0) :
     ‖cuspFunction (cuspWidth (Γ := Γ)) (ModularForm.norm 𝒮ℒ f) 0‖ = 0 := by
   have hval0 : valueAtInfty f = 0 := by
+    have hAn := ModularFormClass.analyticAt_cuspFunction_zero (f := f) hh hperΓ
+    have hper := SlashInvariantFormClass.periodic_comp_ofComplex f hperΓ
     have h0 : (qExpansion (cuspWidth (Γ := Γ)) f).coeff 0 = valueAtInfty f :=
-      ModularFormClass.qExpansion_coeff_zero (f := f) (h := cuspWidth (Γ := Γ)) hh hperΓ
+      UpperHalfPlane.qExpansion_coeff_zero hh hAn hper
     simpa [h0] using hcoeff 0 hNpos
   have hnorm0 : valueAtInfty (ModularForm.norm 𝒮ℒ f) = 0 :=
     valueAtInfty_norm_eq_zero_of_valueAtInfty_eq_zero (k := k) Γ f hΓ hval0
-  have h0 :=
-    ModularFormClass.cuspFunction_apply_zero (f := ModularForm.norm 𝒮ℒ f) hh hperSL
+  have hAn' :=
+    ModularFormClass.analyticAt_cuspFunction_zero (f := ModularForm.norm 𝒮ℒ f) hh hperSL
+  have hper' :=
+    SlashInvariantFormClass.periodic_comp_ofComplex (ModularForm.norm 𝒮ℒ f) hperSL
+  have h0 := UpperHalfPlane.cuspFunction_apply_zero hh hAn' hper'
   calc
     ‖cuspFunction (cuspWidth (Γ := Γ)) (ModularForm.norm 𝒮ℒ f) 0‖ =
         ‖valueAtInfty (ModularForm.norm 𝒮ℒ f)‖ := by simpa using congrArg norm h0

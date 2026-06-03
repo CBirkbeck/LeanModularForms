@@ -34,23 +34,12 @@ theorem modform_tendto_ndhs_zero {k : ℤ} (n : ℕ) [ModularFormClass F Γ(n) k
     Tendsto (fun x ↦ (⇑f ∘ ↑ofComplex) (Periodic.invQParam (↑n) x)) (𝓝[≠] 0)
     (𝓝 (cuspFunction n f 0)) := by
   simp only [comp_apply]
-  have hi : IsCusp OnePoint.infty Γ(n) := by
-    apply Γ(n).isCusp_of_mem_strictPeriods (h := n)
-    · exact_mod_cast Nat.pos_of_neZero n
-    · simp
   have hn_pos : (0 : ℝ) < n := by exact_mod_cast Nat.pos_of_neZero n
+  have hΓ : (n : ℝ) ∈ Γ(n).strictPeriods := by simp
   have h2 : Tendsto (cuspFunction n f) (𝓝[≠] 0) (𝓝 (cuspFunction n f 0)) := by
     apply tendsto_nhdsWithin_of_tendsto_nhds
-    apply (Function.Periodic.differentiableAt_cuspFunction_zero (h := n)
-      hn_pos ?_ ?_ ?_).continuousAt.tendsto
-    · apply SlashInvariantFormClass.periodic_comp_ofComplex
-      simp
-    · simp only [eventually_comap, eventually_atTop, ge_iff_le]
-      refine ⟨1, fun b hb a ha ↦ ?_⟩
-      apply ModularFormClass.differentiableAt_comp_ofComplex (z := a)
-      rw [ha]
-      linarith
-    exact ModularFormClass.bounded_at_infty_comp_ofComplex f hi
+    have hAn := ModularFormClass.analyticAt_cuspFunction_zero (f := f) hn_pos hΓ
+    exact hAn.continuousAt.tendsto
   apply h2.congr'
   rw [eventuallyEq_nhdsWithin_iff, eventually_iff_exists_mem]
   refine ⟨ball 0 1, Metric.ball_mem_nhds _ Real.zero_lt_one, fun y hy hy0 ↦ ?_⟩
@@ -73,8 +62,8 @@ variable {F : Type*} [NormedAddCommGroup F] [NormedSpace 𝕜 F]
 
 lemma qExpansion_smul2 (a : ℂ) (f : ModularForm Γ(n) k) [NeZero n] :
     a • qExpansion n f = qExpansion n (a • f) :=
-  (qExpansion_smul (Γ := Γ(n)) (h := n) (hh := Nat.cast_pos.mpr (Nat.pos_of_neZero n))
-    (hΓ := by simp) a f).symm
+  (ModularForm.qExpansion_smul (Γ := Γ(n)) (h := n)
+      (hh := Nat.cast_pos.mpr (Nat.pos_of_neZero n)) (hΓ := by simp) a f).symm
 
 instance : FunLike (ℍ → ℂ) ℍ ℂ where
   coe := fun ⦃a₁⦄ ↦ a₁

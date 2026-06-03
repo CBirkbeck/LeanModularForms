@@ -39,13 +39,13 @@ variable {Γ : Subgroup (GL (Fin 2) ℝ)} {k : ℤ} {h : ℝ} {F : Type*} [FunLi
 public lemma modularForm_tendsto_valueAtInfty [ModularFormClass F Γ k] [Γ.HasDetPlusMinusOne]
     [DiscreteTopology Γ] (f : F) (hh : 0 < h) (hΓ : h ∈ Γ.strictPeriods) :
     Tendsto (fun τ : ℍ ↦ f τ) atImInfty (𝓝 (valueAtInfty f)) := by
+  have hAn := ModularFormClass.analyticAt_cuspFunction_zero (f := f) hh hΓ
+  have hper := SlashInvariantFormClass.periodic_comp_ofComplex f hΓ
   have ht : Tendsto (fun τ : ℍ ↦ f τ) atImInfty (𝓝 (cuspFunction h f 0)) := by
     refine Filter.Tendsto.congr (fun τ ↦ ?_)
-      (((ModularFormClass.analyticAt_cuspFunction_zero (f := f) hh hΓ).continuousAt.tendsto).comp
-        (UpperHalfPlane.qParam_tendsto_atImInfty hh))
-    simpa [SlashInvariantFormClass.cuspFunction] using
-      (SlashInvariantFormClass.eq_cuspFunction (f := f) (h := h) τ hΓ hh.ne')
-  simpa [ModularFormClass.cuspFunction_apply_zero (f := f) hh hΓ] using ht
+      ((hAn.continuousAt.tendsto).comp (UpperHalfPlane.qParam_tendsto_atImInfty hh))
+    simpa using (SlashInvariantFormClass.eq_cuspFunction (f := f) (h := h) τ hΓ hh.ne')
+  simpa [UpperHalfPlane.cuspFunction_apply_zero hh hAn hper] using ht
 
 end Tendsto
 
@@ -59,13 +59,20 @@ public lemma cuspFunction_isBigO_pow_of_qExpansion_coeff_eq_zero
     (f : F) (hh : 0 < h) (hΓ : h ∈ Γ.strictPeriods) (N : ℕ)
     (hcoeff : ∀ n < N, (qExpansion h f).coeff n = 0) :
     cuspFunction h f =O[𝓝 (0 : ℂ)] (fun q : ℂ ↦ ‖q‖ ^ N) := by
-  have hps : (qExpansionFormalMultilinearSeries h f).partialSum N = 0 := by
+  haveI : Fact (IsCusp OnePoint.infty Γ) := ⟨Γ.isCusp_of_mem_strictPeriods hh hΓ⟩
+  have hper := SlashInvariantFormClass.periodic_comp_ofComplex f hΓ
+  have hAn := ModularFormClass.analyticAt_cuspFunction_zero (f := f) hh hΓ
+  have hhol := ModularFormClass.holo f
+  have hbdd := ModularFormClass.bdd_at_infty f
+  have hFPS : HasFPowerSeriesAt (cuspFunction h f)
+      (qExpansionFormalMultilinearSeries (F := F) h f) 0 :=
+    (hasFPowerSeries_cuspFunction (F := F) f hh hAn
+      (fun τ ↦ hasSum_qExpansion hh hper hhol hbdd τ)).hasFPowerSeriesAt
+  have hps : (qExpansionFormalMultilinearSeries (F := F) h f).partialSum N = 0 := by
     ext q
     exact Finset.sum_eq_zero fun n hn ↦ by
       simp [hcoeff n (by simpa [Finset.mem_range] using hn)]
-  simpa [zero_add, hps] using
-    (ModularFormClass.hasFPowerSeries_cuspFunction
-      (f := f) hh hΓ).hasFPowerSeriesAt.isBigO_sub_partialSum_pow N
+  simpa [zero_add, hps] using hFPS.isBigO_sub_partialSum_pow N
 
 private lemma norm_cuspFunction_div_pow_le_of_ball_bound
     [ModularFormClass F Γ k] [Γ.HasDetPlusMinusOne] [DiscreteTopology Γ]
@@ -127,9 +134,11 @@ public lemma qExpansion_coeff_eq_zero_of_cuspFunction_isBigO_pow
   have hbound_int :
       ‖∮ (z : ℂ) in C(0, R), cuspFunction h f z / z ^ (n + 1)‖ ≤ 2 * π * R * C' :=
     norm_circleIntegral_cuspFunction_div_pow_le (f := f) hn hC'pos.le hδ hR0 hRltδ hRlt1
+  have : Fact (IsCusp OnePoint.infty Γ) := ⟨Γ.isCusp_of_mem_strictPeriods hh hΓ⟩
+  have hper := SlashInvariantFormClass.periodic_comp_ofComplex f hΓ
   have hcoeff_le : ‖(qExpansion h f).coeff n‖ ≤ K * R := by
-    rw [ModularFormClass.qExpansion_coeff_eq_circleIntegral
-      (f := f) (Γ := Γ) (k := k) (h := h) hh hΓ n (hR := hR0) (hR' := hRlt1)]
+    rw [qExpansion_coeff_eq_circleIntegral (f := (f : ℍ → ℂ)) hh hper
+      (ModularFormClass.holo f) (ModularFormClass.bdd_at_infty f) n hR0 hRlt1]
     have := mul_le_mul_of_nonneg_left hbound_int (norm_nonneg ((2 * π * Complex.I : ℂ)⁻¹))
     simpa [norm_mul, K, mul_assoc, mul_left_comm, mul_comm] using this
   have hRlt : R < ε / K :=
@@ -141,45 +150,6 @@ public lemma qExpansion_coeff_eq_zero_of_cuspFunction_isBigO_pow
   linarith [norm_nonneg ((qExpansion h f).coeff n)]
 
 end BigO
-
-section Linearity
-
-variable {Γ : Subgroup (GL (Fin 2) ℝ)} {k : ℤ} {h : ℝ}
-
-open scoped ComplexConjugate
-
-private lemma valueAtInfty_add [DiscreteTopology Γ] [Γ.HasDetPlusMinusOne]
-    (f g : ModularForm Γ k) (hh : 0 < h) (hΓ : h ∈ Γ.strictPeriods) :
-    valueAtInfty (f + g) = valueAtInfty f + valueAtInfty g := by
-  have hf := modularForm_tendsto_valueAtInfty (Γ := Γ) (k := k) (h := h) (f := f) hh hΓ
-  have hg := modularForm_tendsto_valueAtInfty (Γ := Γ) (k := k) (h := h) (f := g) hh hΓ
-  simpa [UpperHalfPlane.valueAtInfty, Pi.add_apply] using (hf.add hg).limUnder_eq
-
-private lemma valueAtInfty_smul [DiscreteTopology Γ] [Γ.HasDetOne]
-    (a : ℂ) (f : ModularForm Γ k) (hh : 0 < h) (hΓ : h ∈ Γ.strictPeriods) :
-    valueAtInfty (a • f) = a • valueAtInfty f := by
-  simpa [UpperHalfPlane.valueAtInfty, Pi.smul_apply] using
-    ((modularForm_tendsto_valueAtInfty (Γ := Γ) (k := k) (h := h) (f := f) hh hΓ).const_smul
-      a).limUnder_eq
-
-private lemma cuspFunction_add [DiscreteTopology Γ] [Γ.HasDetPlusMinusOne]
-    (f g : ModularForm Γ k) (hh : 0 < h) (hΓ : h ∈ Γ.strictPeriods) :
-    cuspFunction h (f + g) = fun q ↦ cuspFunction h f q + cuspFunction h g q := by
-  simpa [Pi.add_apply] using _root_.cuspFunction_add (h := h)
-    (f := (f : ℍ → ℂ)) (g := (g : ℍ → ℂ))
-    (by simpa [cuspFunction] using
-      (ModularFormClass.analyticAt_cuspFunction_zero (f := f) hh hΓ).continuousAt)
-    (by simpa [cuspFunction] using
-      (ModularFormClass.analyticAt_cuspFunction_zero (f := g) hh hΓ).continuousAt)
-
-private lemma cuspFunction_smul [DiscreteTopology Γ] [Γ.HasDetOne]
-    (a : ℂ) (f : ModularForm Γ k) (hh : 0 < h) (hΓ : h ∈ Γ.strictPeriods) :
-    cuspFunction h (a • f) = fun q ↦ a • cuspFunction h f q := by
-  simpa [Pi.smul_apply] using _root_.cuspFunction_smul (h := h) (f := (f : ℍ → ℂ))
-    (by simpa [cuspFunction] using
-      (ModularFormClass.analyticAt_cuspFunction_zero (f := f) hh hΓ).continuousAt) a
-
-end Linearity
 
 end
 

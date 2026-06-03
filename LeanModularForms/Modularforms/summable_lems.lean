@@ -470,7 +470,7 @@ lemma G_2_alt_summable_δ (z : ℍ) : Summable fun (m : Fin 2 → ℤ) ↦
     (1 / (((m 0 : ℂ) * z + m 1) ^ 2 * (m 0 * z + m 1 + 1)) + δ (m 0) (m 1)) := by
   let s : Finset (Fin 2 → ℤ) := {![0, 0], ![0, -1]}
   rw [← Finset.summable_compl_iff s]
-  have := (G_2_alt_summable z).subtype sᶜ
+  have := (G_2_alt_summable z).subtype (· ∉ s)
   simp only [Fin.isValue, one_div, mul_inv_rev] at *
   apply this.congr
   intro b
