@@ -961,17 +961,7 @@ noncomputable def Newform.specialPoint (k : ℤ) : ℂ :=
 @[simp] lemma Newform.specialPoint_im (k : ℤ) :
     (Newform.specialPoint k).im = 0 := Complex.ofReal_im _
 
-/-- Real part of the image point `s' = 2 · s₀ - k + 1` is `5`. -/
-lemma Newform.two_specialPoint_sub_k_add_one_re (k : ℤ) :
-    (2 * Newform.specialPoint k - (k : ℂ) + 1).re = 5 := by
-  simp [Newform.specialPoint, Complex.add_re, Complex.sub_re, Complex.mul_re]; ring
 
-/-- Real part of the doubled image point `2s' = 2 · (2 · s₀ - k + 1)` is `10`. -/
-lemma Newform.two_two_specialPoint_sub_k_add_one_re (k : ℤ) :
-    (2 * (2 * Newform.specialPoint k - (k : ℂ) + 1)).re = 10 := by
-  simp [Newform.specialPoint, Complex.add_re, Complex.sub_re, Complex.mul_re]; ring
-
-omit [NeZero N] in
 /-- **Geometric convergence at the special point.**  For any prime `q ≥ 2`
 coprime to `N`, the argument `χ(q) · q^{-(2·s₀-k+1)} = χ(q) · q^{-5}` has
 norm `q^{-5} ≤ 2^{-5} = 1/32 < 1`. -/
