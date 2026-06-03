@@ -417,14 +417,6 @@ private lemma T_p_upper_zero_mul_levelRaise_matrix (p d : ℕ) (hp : 0 < p) [NeZ
   rw [Matrix.mul_apply, Fin.sum_univ_two]
   fin_cases i <;> fin_cases j <;> simp
 
-private lemma T_p_upper_zero_mul_levelRaise_det (p d : ℕ) (hp : 0 < p) [NeZero d] :
-    ((glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) * levelRaiseMatrix d).det.val =
-      (p : ℝ) * (d : ℝ) := by
-  show ((glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) * levelRaiseMatrix d :
-    GL (Fin 2) ℝ).val.det = (p : ℝ) * (d : ℝ)
-  rw [T_p_upper_zero_mul_levelRaise_matrix p d hp, Matrix.det_fin_two_of]
-  ring
-
 private lemma heckeT_n_cusp_decomp_of_mul {L : ℕ} [NeZero L] (k : ℤ) (a b m : ℕ) [NeZero a]
     [NeZero b] [NeZero m] (h_mul : heckeT_n (N := L) k m = heckeT_n k a * heckeT_n k b)
     (f : CuspForm ((Gamma1 L).map (mapGL ℝ)) k) :
