@@ -160,14 +160,6 @@ noncomputable def Newform.eulerStrippingArithmeticInput_of_heckeStruct
     rw [(sub_eq_zero.mp h_eq_zero).symm, norm_one] at h_norm
     exact lt_irrefl 1 h_norm
 
-/-- `Newform.HasEulerStrippingMultiplier f` from the bundled Hecke
-multiplicative structure `Newform.HasHeckeMultiplicativeStructure f χ`. -/
-theorem Newform.hasEulerStrippingMultiplier_of_heckeStruct
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (h : Newform.HasHeckeMultiplicativeStructure f χ) :
-    Newform.HasEulerStrippingMultiplier f :=
-  f.hasEulerStrippingMultiplier_of_arithmeticInput χ
-    (f.eulerStrippingArithmeticInput_of_heckeStruct χ h)
 
 /-- A `Newform.CompletedFrickeData f` exists for any newform `f` (with
 `0 < (k : ℝ)`) given the Fricke twist `Newform.HasFrickeTwistAsCuspForm f` and
@@ -201,16 +193,6 @@ theorem Newform.HeckeEntireExtension_of_CompletedFrickeData
   Newform.HeckeEntireExtension_of_CompletedMellinData
     fun _N _ _k f ↦ Newform.CompletedMellinData.ofCompletedFrickeData (h f)
 
-/-- The global `Newform.HeckeEntireExtension` from the classical inputs
-`HasFrickeTwistAsCuspForm` and `HasEulerStrippingMultiplier`. -/
-theorem Newform.HeckeEntireExtension_of_classicalInputs
-    (h_fricke : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k), Newform.HasFrickeTwistAsCuspForm f)
-    (h_pos : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (_f : Newform N k), 0 < (k : ℝ))
-    (h_stripping :
-      ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k), Newform.HasEulerStrippingMultiplier f) :
-    Newform.HeckeEntireExtension :=
-  Newform.HeckeEntireExtension_of_CompletedFrickeData fun _N _ _k f ↦
-    (Newform.completedFrickeData_of_classicalInputs f (h_fricke f) (h_pos f) (h_stripping f)).some
 
 private lemma levelRaiseMatrix_inv_smul_vadd_one_eq
     {l : ℕ} [NeZero l] (τ : UpperHalfPlane) :
