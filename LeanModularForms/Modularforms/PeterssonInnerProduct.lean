@@ -544,28 +544,6 @@ private theorem lintegral_fd_region_eq :
     if_pos (by norm_num : (-1/2 : ℝ) ≤ 1/2), one_smul,
     uIoc_of_le (by norm_num : (-1/2 : ℝ) ≤ 1/2), integral_Icc_eq_integral_Ioc]
 
-private theorem fd_lintegral_density_eq :
-    ∫⁻ τ in fd, ENNReal.ofReal (τ.im ^ (-2 : ℤ)) ∂(comap UpperHalfPlane.coe volume) =
-      ENNReal.ofReal (∫ x in (-1/2 : ℝ)..(1/2), 1 / Real.sqrt (1 - x ^ 2)) := by
-  have hfd : MeasurableSet (fd : Set ℍ) :=
-    ((isClosed_le continuous_const (continuous_normSq.comp continuous_coe)).inter
-      (isClosed_le (continuous_abs.comp continuous_re) continuous_const)).measurableSet
-  set F : ℂ → ENNReal := fun z ↦ ENNReal.ofReal (z.im ^ (-2 : ℤ))
-  change ∫⁻ τ in fd, F ↑τ ∂comap UpperHalfPlane.coe volume = _
-  rw [(⟨isOpenEmbedding_coe.measurableEmbedding.measurable,
-       isOpenEmbedding_coe.measurableEmbedding.map_comap volume⟩ :
-       MeasurePreserving UpperHalfPlane.coe _ _).setLIntegral_comp_emb
-    isOpenEmbedding_coe.measurableEmbedding F fd]
-  rw [show ∫⁻ z in UpperHalfPlane.coe '' fd, F z ∂volume.restrict (range UpperHalfPlane.coe) =
-      ∫⁻ z in UpperHalfPlane.coe '' fd, F z ∂volume from by
-    congr 1; exact Measure.restrict_restrict_of_subset (image_subset_range _ _)]
-  set G : ℝ × ℝ → ENNReal := fun p ↦ ENNReal.ofReal (p.2 ^ (-2 : ℤ))
-  have hFG : ∀ z : ℂ, F z = G (measurableEquivRealProd z) := fun z ↦ by
-    simp [F, G, measurableEquivRealProd]
-  simp_rw [hFG]
-  rw [volume_preserving_equiv_real_prod.setLIntegral_comp_emb
-    measurableEquivRealProd.measurableEmbedding G (UpperHalfPlane.coe '' fd)]
-  exact lintegral_fd_region_eq
 
 
 
