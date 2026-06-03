@@ -82,14 +82,7 @@ instance : Countable SL(2, ℤ) := Subtype.countable
 
 namespace UpperHalfPlane
 
-/-- The embedding `ℍ ↪ ℂ` is a measurable embedding. -/
-theorem measurableEmbedding_coe :
-    MeasurableEmbedding (UpperHalfPlane.coe : ℍ → ℂ) :=
-  isOpenEmbedding_coe.measurableEmbedding
 
-/-- `UpperHalfPlane.im` is measurable. -/
-theorem measurable_im : Measurable (UpperHalfPlane.im : ℍ → ℝ) :=
-  continuous_im.measurable
 
 /-- The hyperbolic area measure on the upper half-plane, defined as
 `dμ_hyp = (Im τ)⁻² dx dy` where `dx dy` is the Lebesgue measure on `ℂ`
@@ -234,16 +227,6 @@ theorem norm_peterssonInner_symm (k : ℤ) (D : Set ℍ) (f g : ℍ → ℂ) :
     ‖peterssonInner k D f g‖ = ‖peterssonInner k D g f‖ := by
   rw [← peterssonInner_conj_symm, RCLike.norm_conj]
 
-/-- For modular forms `f, g` of weight `k` for a subgroup `Γ` with determinant `±1`,
-the norm of the Petersson integrand is `Γ`-invariant. This is a restatement of
-`SlashInvariantFormClass.norm_petersson_smul` from mathlib. -/
-theorem norm_petersson_SL_invariant {F F' : Type*} [FunLike F ℍ ℂ] [FunLike F' ℍ ℂ]
-    {k : ℤ} {Γ : Subgroup (GL (Fin 2) ℝ)} [Γ.HasDetPlusMinusOne]
-    [SlashInvariantFormClass F Γ k] {f : F}
-    [SlashInvariantFormClass F' Γ k] {f' : F'}
-    {g : GL (Fin 2) ℝ} (hg : g ∈ Γ) (τ : ℍ) :
-    ‖petersson k f f' (g • τ)‖ = ‖petersson k f f' τ‖ :=
-  SlashInvariantFormClass.norm_petersson_smul hg
 
 /-- The Petersson integrand is integrable on any compact subset of `ℍ`. -/
 theorem integrableOn_compact_petersson (k : ℤ) {f g : ℍ → ℂ}
@@ -251,11 +234,6 @@ theorem integrableOn_compact_petersson (k : ℤ) {f g : ℍ → ℂ}
     IntegrableOn (fun τ ↦ petersson k f g τ) K μ_hyp :=
   (petersson_continuous k hf hg).continuousOn.integrableOn_compact hK
 
-/-- The Petersson integrand is integrable on any truncated fundamental domain. -/
-theorem integrableOn_truncatedFundamentalDomain (k : ℤ) {f g : ℍ → ℂ}
-    (hf : Continuous f) (hg : Continuous g) (y : ℝ) :
-    IntegrableOn (fun τ ↦ petersson k f g τ) (truncatedFundamentalDomain y) μ_hyp :=
-  integrableOn_compact_petersson k hf hg (isCompact_truncatedFundamentalDomain y)
 
 /-- The Petersson integrand of cusp forms is integrable over the standard fundamental
 domain against the hyperbolic measure. -/
@@ -296,16 +274,6 @@ theorem peterssonInner_conj_smul_left (k : ℤ) (D : Set ℍ) (c : ℂ) (f g : �
     congr 1; ext τ; ring]
   exact integral_const_mul (conj c) _
 
-/-- At `(f, f)`, the Petersson integrand is real and non-negative pointwise. -/
-theorem petersson_self_re_nonneg (k : ℤ) (f : ℍ → ℂ) (τ : ℍ) :
-    0 ≤ (petersson k f f τ).re := by
-  unfold petersson
-  have h : conj (f τ) * f τ = ↑(Complex.normSq (f τ)) :=
-    Complex.normSq_eq_conj_mul_self.symm
-  rw [h, show (↑(Complex.normSq (f τ)) * (↑(im τ) : ℂ) ^ k).re =
-      Complex.normSq (f τ) * (im τ) ^ k from by
-    rw [← Complex.ofReal_zpow, ← Complex.ofReal_mul, Complex.ofReal_re]]
-  exact mul_nonneg (Complex.normSq_nonneg _) (zpow_nonneg τ.im_pos.le k)
 
 /-- The open fundamental domain `𝒟ᵒ` is open in `ℍ`. -/
 theorem isOpen_fdo : IsOpen (fdo : Set ℍ) :=
@@ -642,9 +610,6 @@ theorem hyperbolicMeasure_fd_eq : μ_hyp fd = ENNReal.ofReal (Real.pi / 3) := by
   simp only [hyperbolicMeasure, withDensity_apply _ hfd]
   rw [fd_lintegral_density_eq, integral_one_div_sqrt_one_sub_sq]
 
-/-- `μ_hyp(𝒟)` as a real number. -/
-theorem hyperbolicMeasure_fd_toReal : (μ_hyp fd).toReal = Real.pi / 3 := by
-  rw [hyperbolicMeasure_fd_eq, ENNReal.toReal_ofReal (by positivity)]
 
 end UpperHalfPlane
 
@@ -667,40 +632,11 @@ noncomputable def pet (f g : CuspForm Γ k) : ℂ :=
 theorem pet_conj_symm (f g : CuspForm Γ k) : conj (pet g f) = pet f g :=
   peterssonInner_conj_symm k _ _ _
 
-/-- The Petersson pairing with the zero cusp form on the right vanishes. -/
-theorem pet_zero_right (f : CuspForm Γ k) : pet f 0 = 0 :=
-  peterssonInner_zero_right k _ _
 
-/-- The Petersson pairing with the zero cusp form on the left vanishes. -/
-theorem pet_zero_left (g : CuspForm Γ k) : pet 0 g = 0 :=
-  peterssonInner_zero_left k _ _
 
-/-- Negation in the right argument of `pet`. -/
-theorem pet_neg_right (f g : CuspForm Γ k) : pet f (-g) = -pet f g :=
-  peterssonInner_neg_right k _ _ _
 
-/-- Negation in the left argument of `pet`. -/
-theorem pet_neg_left (f g : CuspForm Γ k) : pet (-f) g = -pet f g :=
-  peterssonInner_neg_left k _ _ _
 
-/-- The norm of the Petersson pairing is symmetric. -/
-theorem norm_pet_symm (f g : CuspForm Γ k) : ‖pet f g‖ = ‖pet g f‖ :=
-  norm_peterssonInner_symm k _ _ _
 
-/-- Real-scalar multiplication in the right argument of `pet`. -/
-theorem pet_smul_right (c : ℝ) (f g : CuspForm Γ k) :
-    pet f (c • g) = c * pet f g := by
-  unfold pet peterssonInner
-  rw [← integral_const_mul]
-  congr 1; ext τ
-  simp [petersson, mul_comm (c : ℂ), mul_assoc]
 
-/-- Real-scalar multiplication in the left argument of `pet`. -/
-theorem pet_smul_left (c : ℝ) (f g : CuspForm Γ k) :
-    pet (c • f) g = c * pet f g := by
-  unfold pet peterssonInner
-  rw [← integral_const_mul]
-  congr 1; ext τ
-  simp [petersson, map_mul, Complex.conj_ofReal, mul_assoc]
 
 end CuspForm
