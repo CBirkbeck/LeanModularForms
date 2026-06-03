@@ -254,13 +254,6 @@ def HasImAxisExponentialDecay [ModularFormClass F Γ k] (f : F) : Prop :=
   ∃ a : ℝ, 0 < a ∧ Asymptotics.IsBigO Filter.atTop
     (fun x : ℝ ↦ imAxis f x - 0) (fun x : ℝ ↦ Real.exp (-a * x))
 
-/-- **Exponential decay implies rapid polynomial decay.** -/
-theorem HasImAxisRapidDecay_of_HasImAxisExponentialDecay
-    [ModularFormClass F Γ k] (f : F) (h : HasImAxisExponentialDecay f) :
-    HasImAxisRapidDecay f := by
-  obtain ⟨a, ha_pos, h_exp⟩ := h
-  intro r
-  exact h_exp.trans (isLittleO_exp_neg_mul_rpow_atTop ha_pos r).isBigO
 
 /-- **`imAxis` agrees with `ResToImagAxis ⇑f`.** -/
 lemma imAxis_eq_resToImagAxis [ModularFormClass F Γ k] (f : F) :
