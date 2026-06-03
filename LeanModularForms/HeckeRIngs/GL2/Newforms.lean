@@ -79,24 +79,6 @@ open scoped MatrixGroups ModularForm Pointwise DirectSum
 
 variable {N : ℕ} [NeZero N] {k : ℤ}
 
-/-- The full Newform Euler product on `Re s > k/2 + 1`, given full coprime
-multiplicativity of the Fourier coefficient sequence `f.lCoeff`. -/
-theorem Newform.lSeries_full_hasProd_of_full_coprime_mul
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k)
-    (h_full_mul : ∀ {m n : ℕ}, Nat.Coprime m n →
-      f.lCoeff (m * n) = f.lCoeff m * f.lCoeff n)
-    {s : ℂ} (hs : (k : ℝ) / 2 + 1 < s.re) :
-    HasProd
-      (fun p : Nat.Primes ↦ ∑' e : ℕ, LSeries.term f.lCoeff s ((p : ℕ) ^ e))
-      (LSeries f.lCoeff s) := by
-  refine EulerProduct.eulerProduct_hasProd (f := LSeries.term f.lCoeff s) ?_ ?_
-    (f.lSeriesSummable hs).norm rfl
-  · rw [LSeries.term_def, if_neg one_ne_zero, f.lCoeff_one, Nat.cast_one, Complex.one_cpow, div_one]
-  · intro m n hmn
-    rw [LSeries.term_def₀ f.lCoeff_zero, LSeries.term_def₀ f.lCoeff_zero,
-      LSeries.term_def₀ f.lCoeff_zero, h_full_mul hmn]
-    push_cast
-    rw [Complex.natCast_mul_natCast_cpow]; ring
 
 private lemma Newform.term_lCoeff_pow_of_bad_prime_pow
     {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) {p : ℕ}
@@ -141,17 +123,6 @@ private lemma Newform.mem_primeFactors_image_iff {N : ℕ} [NeZero N] (p : Nat.P
 
 
 
-/-- Projects `Newform.CompletedFrickeData` onto `Newform.CompletedMellinData`,
-discarding the slash-side data and keeping the analytic-content fields. -/
-noncomputable def Newform.CompletedMellinData.ofCompletedFrickeData
-    {N : ℕ} [NeZero N] {k : ℤ} {f : Newform N k}
-    (data : Newform.CompletedFrickeData f) : Newform.CompletedMellinData f where
-  pair := data.pair
-  hk_pos := data.hk_pos
-  completed_bridge := data.completed_bridge
-  stripping := data.stripping
-  stripping_diff := data.stripping_diff
-  stripping_bridge := data.stripping_bridge
 
 
 
