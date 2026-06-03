@@ -561,6 +561,31 @@ private lemma exists_primesOf_snd_exp_lt (d s : GenIdx →₀ ℕ) (hds : d ≠ 
     simp [Finsupp.notMem_support_iff.mp ‹(p,k) ∉ d.support›,
           Finsupp.notMem_support_iff.mp ‹(p,k) ∉ s.support›]
 
+/-- The non-equal, equal-primes-and-determinant branch of
+`monomial_prod_eval_at_Ds_eq_indicator`: given `d ≠ s` with the same `primesOf` and
+matching `detProd`, the test monomial evaluates to `0` via a strict descent at some
+prime where `toPrimeExp s · 1 < toPrimeExp d · 1`. -/
+private lemma monomial_prod_eval_at_Ds_eq_zero_of_same_primes
+    (s d : GenIdx →₀ ℕ) (hds : d ≠ s)
+    (h_same_primes : primesOf d = primesOf s)
+    (h_det_eq : ∏ p ∈ primesOf d, p.1 ^ (toPrimeExp d p 0 + 2 * toPrimeExp d p 1) =
+                ∏ p ∈ primesOf s, p.1 ^ (toPrimeExp s p 0 + 2 * toPrimeExp s p 1))
+    (h_weight_le : (s.sum (fun i c ↦ if i.2 = (1 : Fin 2) then c else 0)) ≤
+                   (d.sum (fun i c ↦ if i.2 = (1 : Fin 2) then c else 0))) :
+    (∏ p ∈ primesOf d, (T_gen 2 p.1 0 ^ (toPrimeExp d p 0) *
+      T_gen 2 p.1 1 ^ (toPrimeExp d p 1)))
+      (T_diag (∏ p ∈ primesOf s, ppowDiag 2 p.1
+        ![toPrimeExp s p 1, toPrimeExp s p 0 + toPrimeExp s p 1])) = 0 := by
+  rw [h_same_primes, multi_prime_coeff_factor (primesOf s) (toPrimeExp d) (toPrimeExp s)]
+  obtain ⟨p₀, hp₀_mem, hp₀_lt⟩ :=
+    exists_primesOf_snd_exp_lt d s hds h_same_primes h_det_eq h_weight_le
+  apply Finset.prod_eq_zero hp₀_mem
+  rw [HeckeRing.GLn.Inj.monomial_eval_kronecker p₀.1 p₀.2
+    (toPrimeExp d p₀ 0) (toPrimeExp d p₀ 1)
+    (toPrimeExp s p₀ 0) (toPrimeExp s p₀ 1) hp₀_lt.le]
+  simp only [ite_eq_right_iff, one_ne_zero]
+  intro ⟨_, h1⟩; exact absurd h1 (Nat.ne_of_gt hp₀_lt)
+
 private lemma monomial_prod_eval_at_Ds_eq_indicator (s d : GenIdx →₀ ℕ)
     (h_weight_le : (s.sum (fun i c ↦ if i.2 = (1 : Fin 2) then c else 0)) ≤
                    (d.sum (fun i c ↦ if i.2 = (1 : Fin 2) then c else 0))) :
@@ -581,19 +606,11 @@ private lemma monomial_prod_eval_at_Ds_eq_indicator (s d : GenIdx →₀ ℕ)
     by_cases h_det_eq :
         ∏ p ∈ primesOf d, p.1 ^ (toPrimeExp d p 0 + 2 * toPrimeExp d p 1) =
         ∏ p ∈ primesOf s, p.1 ^ (toPrimeExp s p 0 + 2 * toPrimeExp s p 1)
-    · have h_same_primes : primesOf d = primesOf s :=
-        Finset.Subset.antisymm
+    · exact monomial_prod_eval_at_Ds_eq_zero_of_same_primes s d hds
+        (Finset.Subset.antisymm
           (primesOf_subset_of_detProd_dvd d s (dvd_of_eq h_det_eq))
-          (primesOf_subset_of_detProd_dvd s d (dvd_of_eq h_det_eq.symm))
-      rw [h_same_primes, multi_prime_coeff_factor (primesOf s) (toPrimeExp d) (toPrimeExp s)]
-      obtain ⟨p₀, hp₀_mem, hp₀_lt⟩ :=
-        exists_primesOf_snd_exp_lt d s hds h_same_primes h_det_eq h_weight_le
-      apply Finset.prod_eq_zero hp₀_mem
-      rw [HeckeRing.GLn.Inj.monomial_eval_kronecker p₀.1 p₀.2
-        (toPrimeExp d p₀ 0) (toPrimeExp d p₀ 1)
-        (toPrimeExp s p₀ 0) (toPrimeExp s p₀ 1) hp₀_lt.le]
-      simp only [ite_eq_right_iff, one_ne_zero]
-      intro ⟨_, h1⟩; exact absurd h1 (Nat.ne_of_gt hp₀_lt)
+          (primesOf_subset_of_detProd_dvd s d (dvd_of_eq h_det_eq.symm)))
+        h_det_eq h_weight_le
     · exact monomial_eval_zero_of_det_ne d s h_det_eq
 
 private lemma π_injective : Function.Injective π_hom := by
