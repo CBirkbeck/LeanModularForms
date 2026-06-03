@@ -391,16 +391,6 @@ lemma cuspFormsNewExtended_le_cuspFormsNew {N : ℕ} [NeZero N] {k : ℤ} :
     cuspFormsNewExtended N k ≤ cuspFormsNew N k :=
   fun _ hf g hg ↦ hf g (cuspFormsOld_le_cuspFormsOldExtended hg)
 
-/-- For the `p ∣ d` bad-prime case, `heckeT_p_divN (LR_d g)` lies in
-`cuspFormsOldExtended N k`. -/
-def Newform.HasHeckeT_p_divN_LRpd_in_cuspFormsOldExtended
-    (N : ℕ) [NeZero N] (k : ℤ) (p : ℕ) [NeZero p]
-    (_hp : Nat.Prime p) (_hpN : ¬ Nat.Coprime p N) : Prop :=
-  ∀ (M d : ℕ) [NeZero M] [NeZero d] (heq : d * M = N) (_hd : 1 < d) (_hpd : p ∣ d)
-    (g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k),
-    haveI : NeZero p := ⟨_hp.ne_zero⟩
-    heckeT_n_cusp k p (heq ▸ levelRaise M d k g) ∈ cuspFormsOldExtended N k
-
 /-- The function-level collapse identity for the `p ∣ d` bad-prime case: with
 `d' = d/p`, the upper-triangular sum collapses to a level-raise by `d'`, i.e.
 `heckeT_p_divN (LR_d g) z = levelRaiseFun d' k g z`. -/
@@ -576,42 +566,6 @@ private lemma T_p_divN_collapse_final_scalar {p d : ℕ} (hp : 0 < p) (hpd : p �
       ((p : ℂ) * (p : ℂ) ^ (1 - k) * (p : ℂ) ^ (k - 2)) *
         (((d / p : ℕ) : ℂ) ^ (1 - k) * h) by ring,
     hp_exp, one_mul]
-
-private theorem Newform.HasHeckeT_p_divN_LR_d_collapse_identity_proof
-    {p : ℕ} [NeZero p] (hp : Nat.Prime p) (hpN : ¬ Nat.Coprime p N) :
-    Newform.HasHeckeT_p_divN_LR_d_collapse_identity N k p hp hpN := by
-  intro M d _ _ heq _hd hpd g z
-  haveI : NeZero (d / p) :=
-    ⟨(Nat.div_pos (Nat.le_of_dvd (NeZero.pos d) hpd) hp.pos).ne'⟩
-  subst heq
-  show (heckeT_n_cusp k p (levelRaise M d k g)).toFun z = levelRaiseFun (d / p) k ⇑g z
-  show ((heckeT_n k p) (levelRaise M d k g).toModularForm').toFun z = _
-  rw [heckeT_n_prime k hp]
-  change ⇑((heckeT_p_all k p hp) ((levelRaise M d k) g).toModularForm') z = _
-  rw [show ⇑((heckeT_p_all k p hp) ((levelRaise M d k) g).toModularForm') =
-        heckeT_p_ut k p hp.pos (⇑((levelRaise M d k) g).toModularForm') from
-      heckeT_p_all_not_coprime_apply k hp
-        (fun h ↦ hp.coprime_iff_not_dvd.mp h (dvd_mul_of_dvd_left hpd M)) _]
-  show heckeT_p_ut k p hp.pos (⇑((levelRaise M d k) g).toModularForm') z = _
-  rw [heckeT_p_ut_levelRaise p hp M d g]
-  simp only [Finset.sum_apply]
-  simp_rw [Nat.mod_eq_zero_of_dvd (hpd.mul_right _)]
-  simp_rw [show (⇑g.toModularForm' ∣[k] (T_p_upper p hp.pos 0 : GL (Fin 2) ℚ))
-      ∣[k] levelRaiseMatrix d =
-    ⇑g.toModularForm' ∣[k]
-      (glMap (T_p_upper p hp.pos 0) * levelRaiseMatrix d) from
-    show (⇑g.toModularForm' ∣[k] glMap (T_p_upper p hp.pos 0))
-      ∣[k] levelRaiseMatrix d = _ from (SlashAction.slash_mul k _ _ _).symm]
-  simp_rw [Pi.smul_apply, smul_eq_mul]
-  simp_rw [slash_T_p_upper_zero_mul_levelRaise_apply (k := k) hp.pos hpd
-    ⇑g.toModularForm']
-  rw [Finset.sum_const, Finset.card_range, nsmul_eq_mul]
-  show ((p : ℕ) : ℂ) * ((d : ℂ) ^ (1 - k) *
-      ((p : ℂ) ^ (k - 2) *
-        (⇑g ∣[k] (levelRaiseMatrix (d / p) : GL (Fin 2) ℝ)) z)) =
-    ((d / p : ℕ) : ℂ) ^ (1 - k) *
-      (⇑g ∣[k] levelRaiseMatrix (d / p)) z
-  exact T_p_divN_collapse_final_scalar hp.pos hpd _
 
 private lemma heckeT_n_cusp_decomp_of_mul {L : ℕ} [NeZero L] (k : ℤ) (a b m : ℕ) [NeZero a]
     [NeZero b] [NeZero m] (h_mul : heckeT_n (N := L) k m = heckeT_n k a * heckeT_n k b)

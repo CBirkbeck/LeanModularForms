@@ -371,25 +371,4 @@ lemma coprimeStrip_one (S : Finset Nat.Primes) (f : ℕ → ℂ) :
   rw [if_pos (fun p _ h_dvd ↦ p.prop.one_lt.ne' (Nat.dvd_one.mp h_dvd))]
 
 
-/-- **`coprimeStrip` value on a positive prime power at a prime in `S`**:
-`coprimeStrip S f (p^e) = 0` for `p ∈ S` and `e ≥ 1`. -/
-lemma coprimeStrip_prime_pow_at_S (S : Finset Nat.Primes) (f : ℕ → ℂ)
-    {p : Nat.Primes} (hp : p ∈ S) {e : ℕ} (he : 1 ≤ e) :
-    coprimeStrip S f ((p : ℕ) ^ e) = 0 := by
-  unfold coprimeStrip
-  rw [if_neg]
-  push Not
-  exact ⟨p, hp, dvd_pow_self _ (Nat.one_le_iff_ne_zero.mp he)⟩
-
-/-- **`coprimeStrip` value on a prime power at a prime not in `S`**:
-`coprimeStrip S f (p^e) = f (p^e)` for `p ∉ S` and any `e : ℕ`. -/
-lemma coprimeStrip_prime_pow_off_S (S : Finset Nat.Primes) (f : ℕ → ℂ)
-    {p : Nat.Primes} (hp : p ∉ S) (e : ℕ) :
-    coprimeStrip S f ((p : ℕ) ^ e) = f ((p : ℕ) ^ e) := by
-  unfold coprimeStrip
-  rw [if_pos]
-  intro q hq h_dvd
-  exact hp (Subtype.ext ((Nat.prime_dvd_prime_iff_eq q.prop p.prop).mp
-    (q.prop.dvd_of_dvd_pow h_dvd)) ▸ hq)
-
 end LSeries

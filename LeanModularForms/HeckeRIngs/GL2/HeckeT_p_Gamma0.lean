@@ -209,19 +209,4 @@ lemma Gamma0_pair_H_le_GL_pair_H (N : ℕ) [NeZero N] :
   let ⟨s, _, hs⟩ := Subgroup.mem_map.mp hg
   ⟨s, hs⟩
 
-private lemma adj_diag_1p_eq_T_p_lower (p : ℕ) (hp : Nat.Prime p) :
-    GL_adjugate (diagMat 2 ![1, p] : GL (Fin 2) ℚ) = (T_p_lower p hp.pos : GL (Fin 2) ℚ) := by
-  apply Units.ext; ext i j
-  have hpos : ∀ k : Fin 2, 0 < (![1, p] : Fin 2 → Nat) k := fun k ↦ by
-    fin_cases k <;> simp [hp.pos]
-  simp only [GL_adjugate_val, diagMat_val _ _ hpos]
-  have huniv : (Finset.univ : Finset (Fin 2)) = {0, 1} := by
-    ext x; fin_cases x <;> simp
-  have he0 : ({0, 1} : Finset (Fin 2)).erase 0 = {1} := by decide
-  have he1 : ({0, 1} : Finset (Fin 2)).erase 1 = {0} := by decide
-  fin_cases i <;> fin_cases j <;>
-    simp [T_p_lower, GeneralLinearGroup.mkOfDetNeZero,
-      Matrix.of_apply, huniv, he0, he1,
-      Finset.prod_singleton]
-
 end HeckeRing.GL2
