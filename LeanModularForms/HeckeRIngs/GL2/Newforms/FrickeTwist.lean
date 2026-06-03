@@ -457,17 +457,6 @@ def Newform.HasDirichletZeroCertificate
         (fun s ↦ DirichletCharacter.LFunction
           (Newform.dirichletLift χ : DirichletCharacter ℂ N) (2 * s - k + 1)))
 
-/-- `Newform.noEntireExtensionUnderBadPrime_of_dirichletZeroCertificate` with the
-per-newform certificate hypothesis written as `Newform.HasDirichletZeroCertificate`. -/
-theorem Newform.noEntireExtensionUnderBadPrime_of_HasDirichletZeroCertificate
-    (h_cert : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ),
-      f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ →
-      ∀ (S : Finset ℕ),
-        (∀ q : ℕ, ∀ (_hq : Nat.Prime q) (_hqN : Nat.Coprime q N),
-          q ∉ S → f.lCoeff q = 0) →
-        Newform.HasDirichletZeroCertificate f χ) :
-    Newform.NoEntireExtensionUnderBadPrime :=
-  Newform.noEntireExtensionUnderBadPrime_of_dirichletZeroCertificate h_cert
 
 /-- Build `Newform.HasDirichletZeroCertificate f χ` directly from the explicit
 pole point, character non-trivialities, Dirichlet zero, non-cancellation, and
@@ -514,41 +503,7 @@ def Newform.DirichletQuotientUniversalFClause
       (fun s ↦ DirichletCharacter.LFunction
         (Newform.dirichletLift χ : DirichletCharacter ℂ N) (2 * s - k + 1)))
 
-/-- `Newform.HasDirichletZeroCertificate_of_dirichletZero` taking the universal-F
-clause via the named Prop `Newform.DirichletQuotientUniversalFClause f χ s₀`. -/
-theorem Newform.HasDirichletZeroCertificate_of_dirichletZero_of_clause
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (s₀ : ℂ)
-    (h_χ_ne_one : (Newform.dirichletLift χ : DirichletCharacter ℂ N) ≠ 1)
-    (h_chi_sq_ne_one : (Newform.dirichletLift χ * Newform.dirichletLift χ
-      : DirichletCharacter ℂ N) ≠ 1)
-    (h_den_zero : DirichletCharacter.LFunction
-      (Newform.dirichletLift χ : DirichletCharacter ℂ N) (2 * s₀ - k + 1) = 0)
-    (h_num_ne_zero : DirichletCharacter.LFunction
-      (Newform.dirichletLift χ * Newform.dirichletLift χ : DirichletCharacter ℂ N)
-      (2 * (2 * s₀ - k + 1)) ≠ 0)
-    (h_clause : Newform.DirichletQuotientUniversalFClause f χ s₀) :
-    Newform.HasDirichletZeroCertificate f χ :=
-  Newform.HasDirichletZeroCertificate_of_dirichletZero f χ s₀
-    h_χ_ne_one h_chi_sq_ne_one h_den_zero h_num_ne_zero h_clause
 
-/-- `Newform.DirichletQuotientUniversalFClause` unfolds definitionally to the raw
-`∀ F` analytic-continuation clause. -/
-theorem Newform.DirichletQuotientUniversalFClause_iff
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (s₀ : ℂ) :
-    Newform.DirichletQuotientUniversalFClause f χ s₀ ↔
-      ∀ F : ℂ → ℂ, Differentiable ℂ F →
-        (∀ {s : ℂ}, LSeries.abscissaOfAbsConv f.lCoeff_stripped < s.re →
-          F s = LSeries f.lCoeff_stripped s) →
-        F =ᶠ[nhdsWithin s₀ {s₀}ᶜ]
-          ((fun s ↦ DirichletCharacter.LFunction
-            (Newform.dirichletLift χ * Newform.dirichletLift χ
-              : DirichletCharacter ℂ N)
-            (2 * (2 * s - k + 1))) /
-          (fun s ↦ DirichletCharacter.LFunction
-            (Newform.dirichletLift χ : DirichletCharacter ℂ N) (2 * s - k + 1))) :=
-  Iff.rfl
 
 /-- The analytic-continuation universal-F hypothesis matching the full T111
 Dirichlet quotient, including the finite Euler-factor correction products over the
@@ -576,52 +531,7 @@ def Newform.FullDirichletQuotientUniversalFClause
           : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
           ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹))
 
-/-- At `T = ∅` the finite Euler-factor products collapse to `1`, so the full
-universal-F clause reduces to the simplified one. -/
-theorem Newform.simplified_eq_full_DirichletQuotientUniversalFClause_T_empty
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (S : Finset ℕ) (s₀ : ℂ) :
-    Newform.FullDirichletQuotientUniversalFClause f χ S ∅ s₀ ↔
-      Newform.DirichletQuotientUniversalFClause f χ s₀ := by
-  unfold Newform.FullDirichletQuotientUniversalFClause
-    Newform.DirichletQuotientUniversalFClause
-  simp only [Finset.prod_empty, mul_one]
 
-/-- Reduce `Newform.DirichletQuotientUniversalFClause f χ s₀` to a half-plane
-multiplicative identity hypothesis `LSeries f.lCoeff_stripped s · LFunction χ̃
-(2s-k+1) = LFunction χ̃² (2(2s-k+1))` valid above some abscissa `σ`. -/
-theorem Newform.DirichletQuotientUniversalFClause_of_halfPlane_identity
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (s₀ : ℂ)
-    (h_χ_ne_one : (Newform.dirichletLift χ : DirichletCharacter ℂ N) ≠ 1)
-    (h_chi_sq_ne_one : (Newform.dirichletLift χ * Newform.dirichletLift χ
-      : DirichletCharacter ℂ N) ≠ 1)
-    (σ : ℝ)
-    (h_abscissa_lt : LSeries.abscissaOfAbsConv f.lCoeff_stripped < (σ : EReal))
-    (h_halfPlane_id : ∀ s : ℂ, σ < s.re →
-      LSeries f.lCoeff_stripped s *
-        DirichletCharacter.LFunction (Newform.dirichletLift χ
-          : DirichletCharacter ℂ N) (2 * s - k + 1) =
-        DirichletCharacter.LFunction (Newform.dirichletLift χ * Newform.dirichletLift χ
-          : DirichletCharacter ℂ N) (2 * (2 * s - k + 1))) :
-    Newform.DirichletQuotientUniversalFClause f χ s₀ := by
-  intro F hF h_F_eq
-  set num : ℂ → ℂ := fun s ↦ DirichletCharacter.LFunction
-    (Newform.dirichletLift χ * Newform.dirichletLift χ : DirichletCharacter ℂ N)
-    (2 * (2 * s - k + 1))
-  set den : ℂ → ℂ := fun s ↦ DirichletCharacter.LFunction
-    (Newform.dirichletLift χ : DirichletCharacter ℂ N) (2 * s - k + 1)
-  have h_F_den_eq_num : ∀ s : ℂ, F s * den s = num s :=
-    congrFun (eq_of_eqOn_halfPlane
-      (hF.mul (differentiable_LFunction_comp h_χ_ne_one (by fun_prop)))
-      (differentiable_LFunction_comp h_chi_sq_ne_one (by fun_prop)) σ (fun s hs ↦ by
-        rw [h_F_eq (lt_of_lt_of_le h_abscissa_lt (mod_cast hs.le))]
-        exact h_halfPlane_id s hs))
-  refine (LFunction_comp_affine_punctured_ne_zero (k := k) h_χ_ne_one s₀).mono
-    (fun s h_den_s_ne ↦ ?_)
-  change F s = num s / den s
-  rw [eq_div_iff h_den_s_ne]
-  exact h_F_den_eq_num s
 
 
 /-- Reduce `Newform.FullDirichletQuotientUniversalFClause f χ S T s₀` to a
