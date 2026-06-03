@@ -406,13 +406,6 @@ multi-cluster forms to a few lines each. Each named Prop is `rfl`-equal to its i
 form. -/
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- Pairwise-AE-disjoint hypothesis for the `α`-shifted-tile union (over `SL/Γ₁`). -/
-def AlphaTilePairwiseAEDisjoint (α : GL (Fin 2) ℝ) : Prop :=
-  Pairwise (fun (q₁ q₂ : SL(2, ℤ) ⧸ Gamma1 N) ↦ AEDisjoint μ_hyp
-      ((α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-        (q₁.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • (fd : Set ℍ))
-      ((α * ((mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ)
-        (q₂.out : SL(2, ℤ))⁻¹ : GL (Fin 2) ℝ)) • fd))
 
 open UpperHalfPlane ModularGroup MeasureTheory in
 
