@@ -383,14 +383,6 @@ variable [NeZero n]
 /-- The Hecke algebra for `GL_n`. -/
 abbrev HeckeAlgebra := 𝕋 (GL_pair n) ℤ
 
-/-- Embed an integer matrix with positive determinant into `Δ` as a `GL_n(ℚ)` element. -/
-noncomputable def intMat_to_delta (A : Matrix (Fin n) (Fin n) ℤ) (hdet : 0 < A.det) :
-    (GL_pair n).Δ :=
-  have hne : (A.map (Int.cast : ℤ → ℚ)).det ≠ 0 := by
-    rw [det_intMat_cast]; exact_mod_cast hdet.ne'
-  ⟨GeneralLinearGroup.mkOfDetNeZero _ hne, ⟨A, rfl⟩, by
-    change 0 < (A.map (Int.cast : ℤ → ℚ)).det
-    rw [det_intMat_cast]; exact_mod_cast hdet⟩
 
 
 end API
