@@ -163,11 +163,6 @@ theorem heckeSlash_gen_mem_modFormCharSpace_of_slash_comm
   intro g
   simpa [heckeSlash_gen_asModularForm_of_slash_comm_coe] using hComm g
 
-/-- `mapGL ℚ (g : SL(2, ℤ))` lies in `(Gamma0_pair N).H` for every `g ∈ Gamma0 N`. -/
-private lemma mapGL_Q_mem_H (g : ↥(Gamma0 N)) :
-    (mapGL ℚ (g : SL(2, ℤ)) : GL (Fin 2) ℚ) ∈ (Gamma0_pair N).H :=
-  Subgroup.mem_map.mpr ⟨g, g.property, rfl⟩
-
 /-- Compatibility of `glMap ∘ mapGL ℚ` with `mapGL ℝ` on `SL(2, ℤ)` elements. -/
 private lemma glMap_mapGL_Q_eq_mapGL_R (g : ↥(Gamma0 N)) :
     glMap (mapGL ℚ (g : SL(2, ℤ))) = (mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) g := by
