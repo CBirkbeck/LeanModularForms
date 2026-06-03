@@ -482,11 +482,6 @@ theorem isFundamentalDomain_Gamma1_coset_tiling :
     IsFundamentalDomain (imageGamma1 N) (Gamma1_fundDomain N) μ_hyp :=
   isFundamentalDomain_Gamma1_PSL
 
-/-- Shifting `Gamma1_fundDomain N` by any element `g` of the subgroup
-`imageGamma1 N` again yields a fundamental domain for that same subgroup. -/
-theorem isFundamentalDomain_Gamma1_smul (g : imageGamma1 N) :
-    IsFundamentalDomain (imageGamma1 N) (g • Gamma1_fundDomain N) μ_hyp :=
-  isFundamentalDomain_Gamma1_coset_tiling.smul g
 
 /-- Integrals of any function over two `imageGamma1 N`-fundamental domains agree,
 provided the integrand is invariant under the `imageGamma1 N`-action. -/
@@ -545,35 +540,6 @@ theorem isFundamentalDomain_Gamma1_PSL_R :
   rw [h_g_coe, PSL2Z_to_PSL2R_smul_eq]
   rfl
 
-/-- Transfer of an `IsFundamentalDomain` claim from the projective-real subgroup
-`imageGamma1_PSL_R N : Subgroup PSL(2, ℝ)` to the projective-integer subgroup
-`imageGamma1_PSL N : Subgroup PSL(2, ℤ)`; the reverse of
-`isFundamentalDomain_Gamma1_PSL_R`. -/
-theorem isFundamentalDomain_imageGamma1_PSL_of_PSL_R
-    {S : Set UpperHalfPlane}
-    (hS : IsFundamentalDomain (imageGamma1_PSL_R N) S μ_hyp) :
-    IsFundamentalDomain (imageGamma1_PSL N) S μ_hyp := by
-  have h_image_eq : (Equiv.refl ℍ) '' S = S := by simp
-  rw [← h_image_eq]
-  refine hS.image_of_equiv (Equiv.refl ℍ)
-    (MeasureTheory.Measure.QuasiMeasurePreserving.id μ_hyp)
-    ((Subgroup.equivMapOfInjective (imageGamma1_PSL N) PSL2Z_to_PSL2R
-      PSL2Z_to_PSL2R_injective).toEquiv) ?_
-  intro g τ
-  show (Equiv.refl ℍ) (((Subgroup.equivMapOfInjective (imageGamma1_PSL N)
-        PSL2Z_to_PSL2R PSL2Z_to_PSL2R_injective).toEquiv g : imageGamma1_PSL_R N) • τ) =
-      ((g : imageGamma1_PSL N) : PSL(2, ℤ)) • (Equiv.refl ℍ) τ
-  simp only [Equiv.refl_apply]
-  show (((Subgroup.equivMapOfInjective (imageGamma1_PSL N) PSL2Z_to_PSL2R
-        PSL2Z_to_PSL2R_injective).toEquiv g : imageGamma1_PSL_R N) :
-        PSL(2, ℝ)) • τ =
-      ((g : imageGamma1_PSL N) : PSL(2, ℤ)) • τ
-  have h_g_coe :
-      ((((Subgroup.equivMapOfInjective (imageGamma1_PSL N) PSL2Z_to_PSL2R
-        PSL2Z_to_PSL2R_injective).toEquiv g) : imageGamma1_PSL_R N) : PSL(2, ℝ)) =
-      PSL2Z_to_PSL2R ((g : imageGamma1_PSL N) : PSL(2, ℤ)) :=
-    Subgroup.coe_equivMapOfInjective_apply _ _ _ _
-  rw [h_g_coe, PSL2Z_to_PSL2R_smul_eq]
 
 /-- The direct integer-to-projective-real map `SL2Z_to_PSL2R` produces the same
 `Γ₁(N)`-image as the two-step composition through `imageGamma1_PSL N`:
@@ -640,13 +606,6 @@ theorem slLeftMul_comp (h₁ h₂ : SL(2, ℤ)) (q : SL(2, ℤ) ⧸ Gamma1 N) :
   induction q using QuotientGroup.induction_on with
   | _ g => simp [mul_assoc]
 
-/-- `slLeftMul h` is a bijection, with inverse `slLeftMul h⁻¹`. -/
-noncomputable def slLeftMulEquiv (h : SL(2, ℤ)) :
-    SL(2, ℤ) ⧸ Gamma1 N ≃ SL(2, ℤ) ⧸ Gamma1 N where
-  toFun := slLeftMul h
-  invFun := slLeftMul h⁻¹
-  left_inv q := by rw [slLeftMul_comp, inv_mul_cancel, slLeftMul_one]
-  right_inv q := by rw [slLeftMul_comp, mul_inv_cancel, slLeftMul_one]
 
 /-- **SL-equivariance of `slToPslQuot`.** For `h : SL(2,ℤ)` and `q : SL/Γ₁`:
 `slToPslQuot (h · q) = (PSL.mk h) · slToPslQuot q` where `·` on the RHS is the
@@ -1025,13 +984,6 @@ theorem petN_eq_setIntegral_Gamma1_fundDomain_PSL
     setIntegral_Gamma1_fundDomain_PSL_eq_sum _
       (integrableOn_petersson_Gamma1_fundDomain_PSL f g)]
 
-/-- `petN f g` expressed as an integral over the canonical Γ₁(N)-fundamental
-domain `Gamma1_fundDomain N`. -/
-theorem petN_eq_setIntegral_Gamma1_fundDomain
-    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    petN f g = (slToPslQuot_fiberCard N) •
-      ∫ τ in Gamma1_fundDomain N, petersson k ⇑f ⇑g τ ∂μ_hyp :=
-  petN_eq_setIntegral_Gamma1_fundDomain_PSL f g
 
 /-- `petN f g` equals `(slToPslQuot_fiberCard N) • ∫_D petersson k f g` for *any*
 `imageGamma1 N`-fundamental domain `D`. -/
@@ -1045,30 +997,7 @@ theorem petN_eq_setIntegral_fundDomain
     setIntegral_Gamma1_fundDomain_eq isFundamentalDomain_Gamma1_coset_tiling hD
       (petersson_imageGamma1_invariant f g)]
 
-/-- For `α` in the normalizer of `imageGamma1 N`, `petN f g` equals the
-(fiber-count weighted) integral of the Petersson integrand over the shifted
-fundamental domain `α • Gamma1_fundDomain N`. -/
-theorem petN_eq_setIntegral_normalizer_shift
-    (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    {α : PSL(2, ℤ)} (hα : α ∈ (imageGamma1 N).normalizer) :
-    petN f g = (slToPslQuot_fiberCard N) •
-      ∫ τ in α • Gamma1_fundDomain N, petersson k ⇑f ⇑g τ ∂μ_hyp :=
-  petN_eq_setIntegral_fundDomain f g (isFundamentalDomain_Gamma1_shift hα)
 
-/-- Per-tile reduction for `petN`-equalities: if the Petersson integrand
-equalities hold tile-by-tile on the PSL fundamental domain, then
-`petN`-equalities follow. -/
-theorem petN_eq_of_per_tile_integral_eq
-    (f₁ g₁ f₂ g₂ : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (h_per_tile : ∀ q' : PSL(2, ℤ) ⧸ imageGamma1_PSL N,
-      ∫ τ in ((q'.out : PSL(2, ℤ)))⁻¹ • (fdo : Set ℍ),
-        petersson k ⇑f₁ ⇑g₁ τ ∂μ_hyp =
-      ∫ τ in ((q'.out : PSL(2, ℤ)))⁻¹ • (fdo : Set ℍ),
-        petersson k ⇑f₂ ⇑g₂ τ ∂μ_hyp) :
-    petN f₁ g₁ = petN f₂ g₂ := by
-  rw [petN_eq_nsmul_sum_PSL_tile f₁ g₁, petN_eq_nsmul_sum_PSL_tile f₂ g₂]
-  congr 1
-  exact Finset.sum_congr rfl fun q' _ ↦ h_per_tile q'
 
 /-- For a finite family `s : ι → Set ℍ` of null-measurable, pairwise AE-disjoint
 subsets of the upper half-plane, the integral of an integrable function over the
@@ -1124,11 +1053,6 @@ theorem nullMeasurableSet_union (F : FiniteTileFundamentalDomain μ ι T) :
     NullMeasurableSet F.union μ :=
   NullMeasurableSet.iUnion F.nullMeasurableSet_tile
 
-/-- The target set is null-measurable (inherited from the tile union via
-`aeCover`). -/
-theorem nullMeasurableSet_target (F : FiniteTileFundamentalDomain μ ι T) :
-    NullMeasurableSet T μ :=
-  F.nullMeasurableSet_union.congr F.aeCover.symm
 
 /-- **Integration consumer.** The integral over the target equals the
 finite sum of integrals over each tile. -/
@@ -1141,37 +1065,10 @@ theorem setIntegral_eq_sum
     integral_iUnion_ae F.nullMeasurableSet_tile F.pairwiseAEDisjoint hint,
     tsum_fintype]
 
-/-- **Measure additivity consumer.** The measure of the target equals the
-finite sum of tile measures. -/
-theorem measure_eq_sum (F : FiniteTileFundamentalDomain μ ι T) :
-    μ T = ∑ i : ι, μ (F.tile i) := by
-  rw [measure_congr F.aeCover,
-    measure_iUnion₀ F.pairwiseAEDisjoint F.nullMeasurableSet_tile,
-    tsum_fintype]
 
 end FiniteTileFundamentalDomain
 
-/-- The level-`N` Petersson inner product over a finite tile fundamental-domain
-target decomposes as the finite sum of inner products over each tile. -/
-theorem FiniteTileFundamentalDomain.peterssonInner_eq_sum
-    {ι : Type*} [Fintype ι] {T : Set ℍ}
-    (F : FiniteTileFundamentalDomain μ_hyp ι T)
-    (f g : ℍ → ℂ)
-    (hint : IntegrableOn (fun τ ↦ petersson k f g τ) F.union μ_hyp) :
-    peterssonInner k T f g = ∑ i : ι, peterssonInner k (F.tile i) f g :=
-  F.setIntegral_eq_sum hint
 
-/-- Shifting the integration domain by an `SL₂(ℤ)` matrix `γ` is equivalent to
-slashing both Petersson slots by `γ`:
-`peterssonInner k (γ • S) f g = peterssonInner k S (f ∣[k] γ) (g ∣[k] γ)`. -/
-theorem peterssonInner_smul_set_eq_slash
-    (γ : SL(2, ℤ)) (S : Set ℍ) (f g : ℍ → ℂ) :
-    peterssonInner k ((γ : SL(2, ℤ)) • S) f g =
-    peterssonInner k S (f ∣[k] (γ : SL(2, ℤ))) (g ∣[k] (γ : SL(2, ℤ))) := by
-  unfold peterssonInner
-  rw [setIntegral_smul_eq]
-  exact integral_congr_ae <| Filter.Eventually.of_forall fun τ ↦
-    (petersson_slash_SL k f g γ τ).symm
 
 /-- If two subsets of `ℍ` are AE-equal under `μ_hyp`, integrability of the
 Petersson kernel on one transfers to the other. -/
@@ -1202,23 +1099,3 @@ theorem peterssonInner_sum_eq_of_AEDisjoint_unions_AEEq
   unfold peterssonInner
   exact setIntegral_congr_set h_union_eq
 
-/-- Bundled form of `peterssonInner_sum_eq_of_AEDisjoint_unions_AEEq`: given two
-`FiniteTileFundamentalDomain` bundles whose target sets are AE-equal under
-`μ_hyp`, the Petersson-inner-product sums over their respective tile families
-agree. -/
-theorem FiniteTileFundamentalDomain.peterssonInner_sum_eq_of_target_aeEq
-    {ι₁ : Type*} [Fintype ι₁] {T₁ : Set ℍ}
-    (F₁ : FiniteTileFundamentalDomain μ_hyp ι₁ T₁)
-    {ι₂ : Type*} [Fintype ι₂] {T₂ : Set ℍ}
-    (F₂ : FiniteTileFundamentalDomain μ_hyp ι₂ T₂)
-    (hT : T₁ =ᵐ[μ_hyp] T₂)
-    (f g : ℍ → ℂ)
-    (hint : IntegrableOn (fun τ ↦ petersson k f g τ) F₁.union μ_hyp) :
-    ∑ i : ι₁, peterssonInner k (F₁.tile i) f g =
-    ∑ j : ι₂, peterssonInner k (F₂.tile j) f g :=
-  peterssonInner_sum_eq_of_AEDisjoint_unions_AEEq F₁.tile F₂.tile
-    F₁.nullMeasurableSet_tile F₂.nullMeasurableSet_tile
-    F₁.pairwiseAEDisjoint F₂.pairwiseAEDisjoint
-    (F₁.aeCover.symm.trans (hT.trans F₂.aeCover)) f g hint
-
-end
