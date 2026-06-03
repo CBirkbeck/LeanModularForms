@@ -181,17 +181,6 @@ private lemma differentiable_LFunction_comp {N : ℕ} [NeZero N]
 
 
 
-private lemma t111_one_pm_ne {N : ℕ} [NeZero N] (χ : (ZMod N)ˣ →* ℂˣ) {k : ℤ} {s : ℂ}
-    (hs_re : (k : ℝ) / 2 + 1 < s.re) {q : ℕ} (hq : Nat.Prime q) (hqN : Nat.Coprime q N) :
-    (1 : ℂ) + (χ (ZMod.unitOfCoprime q hqN) : ℂ) * (q : ℂ) ^ (-(2 * s - k + 1)) ≠ 0 ∧
-    (1 : ℂ) - (χ (ZMod.unitOfCoprime q hqN) : ℂ) * (q : ℂ) ^ (-(2 * s - k + 1)) ≠ 0 := by
-  have h_norm_lt : ‖(χ (ZMod.unitOfCoprime q hqN) : ℂ) * (q : ℂ) ^ (-(2 * s - k + 1))‖ < 1 :=
-    Newform.norm_chi_q_cpow_neg_lt_one_of_re_pos χ hq.two_le hqN (by
-      have : (2 * s - (k : ℂ) + 1).re = 2 * s.re - k + 1 := by
-        simp [Complex.add_re, Complex.sub_re, Complex.mul_re, Complex.intCast_re]
-      rw [this]; linarith)
-  exact ⟨Newform.one_add_ne_zero_of_norm_lt_one h_norm_lt,
-         Newform.one_sub_ne_zero_of_norm_lt_one h_norm_lt⟩
 
 private lemma differentiable_prod_linearFactor {N : ℕ} [NeZero N]
     (ψ : DirichletCharacter ℂ N) (T : Finset Nat.Primes) {g : ℂ → ℂ}
