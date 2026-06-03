@@ -430,26 +430,6 @@ theorem Newform.existsUnique_T_p_upper_left_factor_of_mem_alpha_p_doubleCoset
     exact huniq c ⟨γ', hγ', glMap (T_p_upper p hp.pos c.val), rfl, hmul'⟩
 
 open scoped Pointwise in
-/-- Membership in the bad-prime double coset as a left-factor biconditional:
-`x ∈ Γ₁(N)·α_p·Γ₁(N) ↔ ∃ b ∃ γ ∈ Γ₁(N), γ · β_b = x`. -/
-theorem Newform.mem_alpha_p_Gamma1_doubleCoset_iff_exists_T_p_upper_left_factor
-    (N : ℕ) [NeZero N] {p : ℕ} (hp : p.Prime) (hpN : ¬ Nat.Coprime p N) {x : GL (Fin 2) ℝ} :
-    x ∈
-      ((((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ)) *
-          ({(glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)} : Set (GL (Fin 2) ℝ)) *
-        (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ))) ↔
-      ∃ b : Fin p, ∃ γ : GL (Fin 2) ℝ,
-        γ ∈ (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ)) ∧
-          γ * (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ) = x := by
-  refine ⟨?_, ?_⟩
-  · intro hx
-    obtain ⟨b, hb, _⟩ :=
-      Newform.existsUnique_T_p_upper_left_factor_of_mem_alpha_p_doubleCoset
-        N (p := p) hp hpN hx
-    exact ⟨b, hb⟩
-  · rintro ⟨b, γ, hγ, hmul⟩
-    rw [(Newform.alpha_p_Gamma1_doubleCoset_partition_T_p_upper_left_cosets N (p := p) hp hpN).1]
-    exact Set.mem_iUnion.mpr ⟨b, ⟨γ, hγ, glMap (T_p_upper p hp.pos b.val), rfl, hmul⟩⟩
 
 open scoped Pointwise in
 
