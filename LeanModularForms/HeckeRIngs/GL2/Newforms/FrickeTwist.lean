@@ -177,14 +177,6 @@ private lemma differentiable_LFunction_comp {N : ℕ} [NeZero N]
     Differentiable ℂ (fun s ↦ DirichletCharacter.LFunction ψ (g s)) :=
   (DirichletCharacter.differentiable_LFunction hψ).comp hg
 
-private lemma eq_of_eqOn_halfPlane {F G : ℂ → ℂ} (hF : Differentiable ℂ F)
-    (hG : Differentiable ℂ G) (σ : ℝ) (h : ∀ s : ℂ, σ < s.re → F s = G s) :
-    F = G := by
-  have hz₀ : σ < ((σ + 1 : ℝ) : ℂ).re := by rw [Complex.ofReal_re]; linarith
-  exact (Complex.analyticOnNhd_univ_iff_differentiable.mpr hF).eq_of_eventuallyEq
-    (Complex.analyticOnNhd_univ_iff_differentiable.mpr hG)
-    (((isOpen_lt continuous_const Complex.continuous_re).eventually_mem hz₀).mono
-      (fun s hs ↦ h s hs))
 
 private lemma LFunction_comp_affine_punctured_ne_zero {N : ℕ} [NeZero N]
     {ψ : DirichletCharacter ℂ N} (hψ : ψ ≠ 1) {k : ℤ} (s₀ : ℂ) :
