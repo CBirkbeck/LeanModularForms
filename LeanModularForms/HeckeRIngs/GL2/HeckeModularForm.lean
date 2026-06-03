@@ -316,9 +316,10 @@ private theorem heckeSlash_comp (k : ℤ) (D₁ D₂ : HeckeCoset (GL_pair 2)) (
         (fun D c ↦ c • heckeSlash k D f) from by
     unfold heckeSlashExt; rw [mul_singleton_𝕋]; simp,
     show m (GL_pair 2) (HeckeCoset.rep D₂) (HeckeCoset.rep D₁) =
-      m (GL_pair 2) (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) from by
-      simpa only [T_single_one_mul_T_single_one] using
-        mul_comm (T_single (GL_pair 2) ℤ D₂ 1) (T_single (GL_pair 2) ℤ D₁ 1)]
+      m (GL_pair 2) (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) from
+      (T_single_one_mul_T_single_one (GL_pair 2) D₂ D₁).symm.trans
+        ((mul_comm (T_single (GL_pair 2) ℤ D₂ 1) (T_single (GL_pair 2) ℤ D₁ 1)).trans
+          (T_single_one_mul_T_single_one (GL_pair 2) D₁ D₂))]
   simp_rw [heckeSlash]
   rw [show (∑ i : decompQuot (GL_pair 2) (HeckeCoset.rep D₁),
       (∑ j : decompQuot (GL_pair 2) (HeckeCoset.rep D₂),
@@ -393,10 +394,15 @@ lemma heckeSum_apply_apply (k : ℤ) (T : HeckeAlgebra 2) (f : ModularForm 𝒮�
   classical
   induction T using Finsupp.induction_linear with
   | zero =>
-    simp only [heckeSum_zero, LinearMap.zero_apply, ModularForm.zero_apply]
+    show ((heckeSum k (0 : 𝕋 (GL_pair 2) ℤ)) f) z = _
+    rw [heckeSum_zero]
+    simp only [LinearMap.zero_apply, ModularForm.zero_apply]
     unfold heckeSlashExt; rw [Finsupp.sum_zero_index]; rfl
   | add T₁ T₂ h₁ h₂ =>
-    rw [heckeSum_add]
+    have hadd : heckeSum k ((T₁ + T₂ : HeckeAlgebra 2)) = heckeSum k T₁ + heckeSum k T₂ :=
+      heckeSum_add k T₁ T₂
+    rw [show ((heckeSum k (T₁ + T₂)) f) z = ((heckeSum k T₁ + heckeSum k T₂) f) z from by
+      rw [hadd]]
     simp only [LinearMap.add_apply, ModularForm.add_apply, h₁, h₂]
     unfold heckeSlashExt
     rw [show (T₁ + T₂).sum (fun D c ↦ c • heckeSlash k D (f : ℍ → ℂ)) =
@@ -462,11 +468,15 @@ private lemma heckeSlash_one (k : ℤ) (f : ℍ → ℂ) (hf : ∀ γ ∈ 𝒮�
     HeckeRing.one_def _ _, heckeSum_T_single, heckeOperatorLinear_one, one_smul]
 
 /-- Helper: heckeSlashExt is `ℤ`-linear in the Hecke algebra argument. -/
-private lemma heckeSlashExt_zsmul (k : ℤ) (n : ℤ) (T : HeckeAlgebra 2) (f : ℍ → ℂ) :
+private lemma heckeSlashExt_zsmul (k : ℤ) (n : ℤ) (T : 𝕋 (GL_pair 2) ℤ) (f : ℍ → ℂ) :
     heckeSlashExt k (n • T) f = n • heckeSlashExt k T f := by
   unfold heckeSlashExt
-  rw [Finsupp.sum_smul_index (g := T) (b := n) (h := fun D c ↦ c • heckeSlash k D f)
-      (by simp), Finsupp.smul_sum]
+  show Finsupp.sum (n • T) (fun D c ↦ c • heckeSlash k D f) =
+    n • Finsupp.sum T (fun D c ↦ c • heckeSlash k D f)
+  rw [show Finsupp.sum (n • T) (fun D c ↦ c • heckeSlash k D f) =
+        Finsupp.sum T (fun D c ↦ (n * c) • heckeSlash k D f) from
+      Finsupp.sum_smul_index (g := T) (b := n)
+        (h := fun D c ↦ c • heckeSlash k D f) (by simp), Finsupp.smul_sum]
   exact Finsupp.sum_congr fun D _ ↦ SemigroupAction.mul_smul _ _ _
 
 /-- Helper: multiplicativity of `heckeSum` on basis elements. -/
@@ -481,7 +491,7 @@ private lemma heckeSum_mul_T_single (k : ℤ) (D₁ D₂ : HeckeCoset (GL_pair 2
     show T_single (GL_pair 2) ℤ D₂ b * T_single (GL_pair 2) ℤ D₁ a =
       (b * a) • (T_single (GL_pair 2) ℤ D₂ 1 * T_single (GL_pair 2) ℤ D₁ 1) from by
       rw [HeckeRing.T_single_mul_T_single, HeckeRing.T_single_mul_T_single,
-        one_smul, one_smul, ← SemigroupAction.mul_smul],
+        one_smul, one_smul, ← SemigroupAction.mul_smul]; rfl,
     heckeSlashExt_zsmul, ← heckeOperator_comp k D₁ D₂ f]
   show (b * a : ℤ) • (heckeOperator k D₁ (heckeOperator k D₂ f) : ℍ → ℂ) z =
       ((heckeSum k (T_single (GL_pair 2) ℤ D₁ a) *
@@ -500,13 +510,27 @@ private lemma heckeSum_mul_T_single (k : ℤ) (D₁ D₂ : HeckeCoset (GL_pair 2
 lemma heckeSum_mul (k : ℤ) (T₁ T₂ : HeckeAlgebra 2) :
     heckeSum k (T₁ * T₂) = heckeSum k T₁ * heckeSum k T₂ := by
   induction T₁ using Finsupp.induction_linear with
-  | zero => simp [zero_mul]
+  | zero =>
+    change heckeSum k ((0 : HeckeAlgebra 2) * T₂) =
+      heckeSum k (0 : HeckeAlgebra 2) * heckeSum k T₂
+    rw [zero_mul, heckeSum_zero, zero_mul]
   | add T₁ T₁' h h' =>
+    set S₁ : HeckeAlgebra 2 := T₁
+    set S₁' : HeckeAlgebra 2 := T₁'
+    change heckeSum k ((S₁ + S₁') * T₂) = heckeSum k (S₁ + S₁') * heckeSum k T₂
     rw [add_mul, heckeSum_add, heckeSum_add, h, h', add_mul]
   | single D₁ a =>
+    set S₁ : HeckeAlgebra 2 := Finsupp.single D₁ a
     induction T₂ using Finsupp.induction_linear with
-    | zero => simp [mul_zero]
+    | zero =>
+      change heckeSum k (S₁ * (0 : HeckeAlgebra 2)) =
+        heckeSum k S₁ * heckeSum k (0 : HeckeAlgebra 2)
+      rw [mul_zero, heckeSum_zero, mul_zero]
     | add T₂ T₂' h h' =>
+      set S₂ : HeckeAlgebra 2 := T₂
+      set S₂' : HeckeAlgebra 2 := T₂'
+      change heckeSum k (S₁ * (S₂ + S₂')) =
+        heckeSum k S₁ * heckeSum k (S₂ + S₂')
       rw [mul_add, heckeSum_add, heckeSum_add, h, h', mul_add]
     | single D₂ b => exact heckeSum_mul_T_single k D₁ D₂ a b
 
