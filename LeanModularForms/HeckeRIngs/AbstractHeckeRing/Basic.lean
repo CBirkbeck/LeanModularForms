@@ -73,7 +73,8 @@ instance dcSetoid (P : HeckePair G) : Setoid P.Δ where
     This is the basis type for the Hecke ring. -/
 def HeckeCoset (P : HeckePair G) := Quotient (dcSetoid P)
 
-noncomputable instance (P : HeckePair G) : DecidableEq (HeckeCoset P) := Classical.decEq _
+noncomputable instance instDecidableEqHeckeCoset (P : HeckePair G) :
+    DecidableEq (HeckeCoset P) := Classical.decEq _
 
 /-- Two elements of `Δ` define the same left coset `gH = hH`. -/
 def lcRel (P : HeckePair G) (g h : P.Δ) : Prop :=

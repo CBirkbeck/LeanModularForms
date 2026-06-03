@@ -293,13 +293,13 @@ private lemma measurableSet_fd_diff_fdo : MeasurableSet (fd \ fdo : Set ℍ) :=
   MeasurableSet.diff
     ((isClosed_le continuous_const (Complex.continuous_normSq.comp continuous_coe)).inter
       (isClosed_le (continuous_abs.comp continuous_re) continuous_const)).measurableSet
-    isOpen_fdo.measurableSet
+    UpperHalfPlane.isOpen_fdo.measurableSet
 
 /-- The open fundamental domain `𝒟ᵒ` is a fundamental domain for `PSL(2, ℤ)`
 acting on `ℍ` with respect to the hyperbolic measure `μ_hyp`. -/
 theorem isFundamentalDomain_fdo_PSL :
     IsFundamentalDomain PSL(2, ℤ) (fdo : Set ℍ) μ_hyp where
-  nullMeasurableSet := isOpen_fdo.measurableSet.nullMeasurableSet
+  nullMeasurableSet := UpperHalfPlane.isOpen_fdo.measurableSet.nullMeasurableSet
   ae_covers := by
     rw [ae_iff]
     apply measure_mono_null (show {x | ¬∃ g : PSL(2, ℤ), g • x ∈ fdo} ⊆

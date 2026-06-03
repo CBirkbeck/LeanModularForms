@@ -95,13 +95,13 @@ reduction instead). -/
 theorem pet_definite [Γ.IsArithmetic] (f : CuspForm Γ k) (hpet : pet f f = 0) :
     f = 0 := by
   have hfdo : ∀ τ ∈ fdo, (⇑f) τ = 0 := fun τ hτ ↦
-    eq_zero_on_fd_of_peterssonInner_self_eq_zero f hpet (fdo_subset_fd hτ)
+    eq_zero_on_fd_of_peterssonInner_self_eq_zero f hpet (UpperHalfPlane.fdo_subset_fd hτ)
   set τ₀ : ℍ := ⟨⟨0, 2⟩, by norm_num⟩
   have hτ₀ : τ₀ ∈ fdo := by
     refine ⟨by norm_num [Complex.normSq_apply], ?_⟩
     change |(τ₀ : ℂ).re| < 1 / 2
     norm_num
-  have hev := Filter.eventually_of_mem (isOpen_fdo.mem_nhds hτ₀) hfdo
+  have hev := Filter.eventually_of_mem (UpperHalfPlane.isOpen_fdo.mem_nhds hτ₀) hfdo
   have h := UpperHalfPlane.eq_zero_of_frequently (CuspFormClass.holo f)
     (hev.filter_mono nhdsWithin_le_nhds).frequently
   ext τ
