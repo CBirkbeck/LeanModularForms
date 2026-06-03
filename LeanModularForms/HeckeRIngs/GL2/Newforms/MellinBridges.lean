@@ -193,28 +193,6 @@ structure Newform.CompletedMellinData {N : ℕ} [NeZero N] {k : ℤ}
     LSeries f.lCoeff_stripped s = stripping s * LSeries f.lCoeff s
 
 
-private lemma eqOn_LSeries_of_entire_of_eqOn_halfPlane {c : ℕ → ℂ} {Λ : ℂ → ℂ}
-    {b : ℝ} (hΛ : Differentiable ℂ Λ)
-    (h_direct : ∀ {s : ℂ}, b < s.re → Λ s = LSeries c s)
-    {s₀ : ℂ} (hs₀ : LSeries.abscissaOfAbsConv c < (s₀.re : EReal)) :
-    Λ s₀ = LSeries c s₀ := by
-  obtain ⟨σ, hσ_abs, hσ_s⟩ := EReal.exists_between_coe_real hs₀
-  let U : Set ℂ := {s | (σ : ℝ) < s.re}
-  have hs₀_in_U : s₀ ∈ U := by exact_mod_cast hσ_s
-  have hΛ_an : AnalyticOnNhd ℂ Λ U := fun z _ ↦
-    (Complex.analyticOnNhd_univ_iff_differentiable.mpr hΛ) z (Set.mem_univ _)
-  have hL_an : AnalyticOnNhd ℂ (LSeries c) U := fun z hz ↦
-    LSeries_analyticOnNhd c z (hσ_abs.trans (by exact_mod_cast (hz : (σ : ℝ) < z.re)))
-  let z₀ : ℂ := ((max σ b + 1 : ℝ) : ℂ)
-  have hz₀_re : z₀.re = max σ b + 1 := Complex.ofReal_re _
-  have hzRe_gt_σ : σ < z₀.re := by rw [hz₀_re]; linarith [le_max_left σ b]
-  have hzRe_gt_b : b < z₀.re := by rw [hz₀_re]; linarith [le_max_right σ b]
-  have h_eq_nhds : Λ =ᶠ[nhds z₀] (LSeries c) :=
-    Filter.eventuallyEq_iff_exists_mem.mpr
-      ⟨{s | b < s.re}, (isOpen_lt continuous_const Complex.continuous_re).mem_nhds hzRe_gt_b,
-        fun _ ↦ h_direct⟩
-  exact (hΛ_an.eqOn_of_preconnected_of_eventuallyEq hL_an
-    (convex_halfSpace_re_gt σ).isPreconnected hzRe_gt_σ h_eq_nhds) hs₀_in_U
 
 
 /-- The corrected Fricke / completed Mellin data for a newform: the Atkin-Lehner /
