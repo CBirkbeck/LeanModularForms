@@ -258,15 +258,6 @@ def Newform.HasImAxisExponentialDecay {N : ℕ} [NeZero N] {k : ℤ}
     (f : Newform N k) : Prop :=
   _root_.ModularForms.HasImAxisExponentialDecay f.toCuspForm
 
-/-- Rapid polynomial decay of `Newform.imAxis f` follows from the
-exponential-decay hypothesis. -/
-theorem Newform.imAxis_rapidDecay_of_exponentialDecay
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k)
-    (h : Newform.HasImAxisExponentialDecay f) :
-    ∀ r : ℝ, Asymptotics.IsBigO Filter.atTop
-      (fun x : ℝ ↦ Newform.imAxis f x - 0) (fun x : ℝ ↦ x ^ r) :=
-  _root_.ModularForms.HasImAxisRapidDecay_of_HasImAxisExponentialDecay
-    f.toCuspForm h
 
 /-- `Γ₁(N)`-cusp-form-side `HasImAxisExponentialDecay` for any cusp form on
 `(Gamma1 N).map (mapGL ℝ)` (strict period `1`). -/
@@ -280,12 +271,6 @@ theorem Newform.cuspForm_Gamma1_hasImAxisExponentialDecay {N : ℕ} [NeZero N]
   exact _root_.ModularForms.hasImAxisExponentialDecay_of_strictPeriod
     g (h := 1) one_pos h1_period
 
-/-- For every `Γ₁(N)` newform `f`, `Newform.HasImAxisExponentialDecay f` holds
-unconditionally (via `CuspFormClass.exp_decay_atImInfty` and the strict-period-1
-fact for `Γ₁(N)`). -/
-theorem Newform.hasImAxisExponentialDecay {N : ℕ} [NeZero N] {k : ℤ}
-    (f : Newform N k) : Newform.HasImAxisExponentialDecay f :=
-  Newform.cuspForm_Gamma1_hasImAxisExponentialDecay f.toCuspForm
 
 
 
