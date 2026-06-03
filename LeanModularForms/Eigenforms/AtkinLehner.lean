@@ -105,10 +105,6 @@ noncomputable def qSupportedOnDvdSubmodule (N : ℕ) [NeZero N] (k : ℤ) (d : �
       c * (PowerSeries.coeff n) (qExpansion (1 : ℝ) ⇑f) by simp [smul_eq_mul],
       hf n hn, mul_zero]
 
-@[simp] lemma mem_qSupportedOnDvdSubmodule
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    f ∈ qSupportedOnDvdSubmodule N k d ↔ QExpansionSupportedOnDvd d f :=
-  Iff.rfl
 
 /-- Level-raise q-expansion forward direction (modular form): for
 `g : ModularForm Γ₁(M) k`, the image `modularFormLevelRaise M d k g`
