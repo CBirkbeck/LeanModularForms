@@ -182,16 +182,6 @@ private lemma differentiable_LFunction_comp {N : ℕ} [NeZero N]
 
 
 
-private lemma differentiable_prod_linearFactor {N : ℕ} [NeZero N]
-    (ψ : DirichletCharacter ℂ N) (T : Finset Nat.Primes) {g : ℂ → ℂ}
-    (hg : Differentiable ℂ g) :
-    Differentiable ℂ (fun s : ℂ ↦
-      ∏ p ∈ T, (1 - ψ ((p : ℕ) : ZMod N) * ((p : ℕ) : ℂ) ^ (-(g s)))) := by
-  refine Differentiable.fun_finset_prod fun p _ ↦
-    (differentiable_const _).sub <| Differentiable.const_mul (fun s ↦
-      (AnalyticAt.cpow analyticAt_const
-          (Complex.analyticOnNhd_univ_iff_differentiable.mpr hg s (Set.mem_univ _)).neg
-        (Complex.natCast_mem_slitPlane.mpr p.prop.pos.ne')).differentiableAt) _
 
 
 
