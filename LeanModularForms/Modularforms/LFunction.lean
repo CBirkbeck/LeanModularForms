@@ -524,71 +524,9 @@ lemma continuousOn_qParam_pow_imAxis_term {a : ℕ → ℂ} (m : ℕ) (s : ℂ) 
       fun _ ht ↦ Complex.ofReal_mem_slitPlane.mpr ht
   exact h_cpow.smul (by fun_prop)
 
-/-- **AE strong measurability of the period-one weighted Mellin integrand**. -/
-lemma aestronglyMeasurable_qParam_pow_imAxis_term {a : ℕ → ℂ} (m : ℕ) (s : ℂ) :
-    MeasureTheory.AEStronglyMeasurable
-      (fun t : ℝ ↦ (t : ℂ) ^ (s - 1) •
-        (a m * Function.Periodic.qParam 1 (Complex.I * (t : ℂ)) ^ m))
-      (MeasureTheory.volume.restrict (Set.Ioi (0 : ℝ))) :=
-  (continuousOn_qParam_pow_imAxis_term m s).aestronglyMeasurable measurableSet_Ioi
-
-/-- **Predicate-level consumer: `HasCompletedMellinIdentity` from period-one
-q-expansion swap hypotheses**.
-
-Promotes `mellin_eq_completedLSeries_of_qExpansion_swap_hypotheses_one` to the
-`HasCompletedMellinIdentity` predicate level for a positive-weight cusp form. -/
-theorem hasCompletedMellinIdentity_of_qExpansion_swap_hypotheses_one
-    [Γ.IsArithmetic] [CuspFormClass F Γ k] (f : F) (hk_pos : 0 < (k : ℝ))
-    (h_decomp : ∀ {s : ℂ}, ((k : ℝ) / 2 + 1 : ℝ) < s.re →
-      ∀ᵐ (t : ℝ) ∂(MeasureTheory.volume.restrict (Set.Ioi (0 : ℝ))),
-        HasSum (fun m : ℕ ↦
-          lCoeff f m * Function.Periodic.qParam 1 (Complex.I * (t : ℂ)) ^ m)
-          (imAxis f t))
-    (h_meas : ∀ {s : ℂ}, ((k : ℝ) / 2 + 1 : ℝ) < s.re →
-      ∀ m, MeasureTheory.AEStronglyMeasurable
-        (fun t : ℝ ↦ (t : ℂ) ^ (s - 1) •
-          (lCoeff f m * Function.Periodic.qParam 1 (Complex.I * (t : ℂ)) ^ m))
-        (MeasureTheory.volume.restrict (Set.Ioi (0 : ℝ))))
-    (h_summ : ∀ {s : ℂ}, ((k : ℝ) / 2 + 1 : ℝ) < s.re →
-      (∑' m : ℕ, MeasureTheory.lintegral
-        (MeasureTheory.volume.restrict (Set.Ioi (0 : ℝ)))
-        (fun t : ℝ ↦ ‖(t : ℂ) ^ (s - 1) •
-          (lCoeff f m * Function.Periodic.qParam 1 (Complex.I * (t : ℂ)) ^ m)‖ₑ)) ≠
-          (⊤ : ENNReal)) :
-    HasCompletedMellinIdentity f := by
-  intro s hs
-  have hs_re : 0 < s.re := by linarith [show (0 : ℝ) < (k : ℝ) / 2 + 1 by linarith]
-  exact mellin_eq_completedLSeries_of_qExpansion_swap_hypotheses_one
-    (lCoeff_zero_of_cuspForm f) hs_re (h_decomp hs) (h_meas hs) (h_summ hs)
 
 
-open CongruenceSubgroup Matrix.SpecialLinearGroup in
-/-- **Pointwise q-expansion decomposition of `imAxis f` for `(Gamma1 N).map (mapGL ℝ)`**.
 
-For a modular form `f` on `(Gamma1 N).map (mapGL ℝ)` of weight `k` and any
-`t > 0`, the imaginary-axis function `imAxis f t = f(it)` has the period-one
-q-expansion
-```
-imAxis f t = ∑' m, lCoeff f m · qParam 1 (I·t)^m.
-``` -/
-theorem hasSum_qExpansion_imAxis_Gamma1_mapGL_of_pos
-    {N : ℕ} {k : ℤ} {F : Type*} [FunLike F ℍ ℂ]
-    [ModularFormClass F ((Gamma1 N).map (mapGL ℝ)) k] (f : F)
-    {t : ℝ} (ht : 0 < t) :
-    HasSum (fun m : ℕ ↦
-      lCoeff f m * Function.Periodic.qParam 1 (Complex.I * (t : ℂ)) ^ m)
-      (imAxis f t) := by
-  have h_im : 0 < (Complex.I * ((t : ℝ) : ℂ)).im := by
-    rw [Complex.mul_im, Complex.I_im, Complex.I_re,
-        Complex.ofReal_re, Complex.ofReal_im]
-    simpa using ht
-  have h1_period : (1 : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
-    rw [← strictWidthInfty_Gamma1_mapGL N]
-    exact ((Gamma1 N).map (mapGL ℝ)).strictWidthInfty_mem_strictPeriods
-  rw [imAxis_apply_of_pos f ht]
-  refine (ModularFormClass.hasSum_qExpansion (f := f) one_pos h1_period
-    ⟨Complex.I * (t : ℂ), h_im⟩).congr_fun fun m ↦ ?_
-  rw [smul_eq_mul, ← lCoeff_Gamma1_mapGL_eq N f]
 
 open CongruenceSubgroup Matrix.SpecialLinearGroup in
 
@@ -626,21 +564,6 @@ lemma enorm_qParam_pow_imAxis_term_of_pos (a : ℂ) (m : ℕ) (s : ℂ)
       = ENNReal.ofReal (t ^ (s.re - 1) * ‖a‖ * Real.exp (-(2 * Real.pi * m * t))) := by
   rw [← ofReal_norm_eq_enorm, norm_qParam_pow_imAxis_term a m s ht]
 
-/-- **lintegral congruence for the period-one Mellin `h_summ` summand**.
-
-For each `m : ℕ`, complex `s`, and `a : ℂ`, the `enorm`-lintegral of the
-period-one weighted Mellin integrand on `Ioi 0` equals the `lintegral` of the
-real expression
-```
-ENNReal.ofReal (t ^ (s.re - 1) * ‖a‖ * Real.exp (-(2 * Real.pi * m * t))).
-``` -/
-lemma lintegral_enorm_qParam_pow_imAxis_term (a : ℂ) (m : ℕ) (s : ℂ) :
-    ∫⁻ t in Set.Ioi (0 : ℝ),
-      ‖(t : ℂ) ^ (s - 1) • (a * Function.Periodic.qParam 1 (Complex.I * (t : ℂ)) ^ m)‖ₑ
-      = ∫⁻ t in Set.Ioi (0 : ℝ),
-          ENNReal.ofReal (t ^ (s.re - 1) * ‖a‖ * Real.exp (-(2 * Real.pi * m * t))) := by
-  exact MeasureTheory.setLIntegral_congr_fun measurableSet_Ioi fun _ ht ↦
-    enorm_qParam_pow_imAxis_term_of_pos a m s ht
 
 private lemma ofReal_rpow_mul_norm_mul_exp_ae_eq (a : ℂ) (m : ℕ) (s : ℂ) :
     ∀ᵐ (t : ℝ) ∂(MeasureTheory.volume.restrict (Set.Ioi (0 : ℝ))),
@@ -654,49 +577,6 @@ private lemma ofReal_rpow_mul_norm_mul_exp_ae_eq (a : ℂ) (m : ℕ) (s : ℂ) :
         ‖a‖ * (t ^ (s.re - 1) * Real.exp (-(2 * Real.pi * (m : ℝ) * t))) by ring]
   exact ENNReal.ofReal_mul (norm_nonneg _)
 
-/-- **One-term Gamma evaluation of the period-one Mellin `h_summ` summand**.
-
-For `1 ≤ m` and `0 < s.re`,
-```
-∫⁻ t in Ioi 0, ENNReal.ofReal (t^(s.re-1) * ‖a‖ * Real.exp (-(2π m t)))
-  = ENNReal.ofReal (‖a‖ * (2π m)^(-s.re) * Γ(s.re)).
-``` -/
-theorem lintegral_real_qExpansion_term_eq_Gamma {a : ℂ} {m : ℕ} (hm : 1 ≤ m)
-    {s : ℂ} (hs : 0 < s.re) :
-    ∫⁻ t in Set.Ioi (0 : ℝ),
-        ENNReal.ofReal (t ^ (s.re - 1) * ‖a‖ * Real.exp (-(2 * Real.pi * m * t)))
-      = ENNReal.ofReal
-          (‖a‖ * (2 * Real.pi * m : ℝ) ^ (-s.re) * Real.Gamma s.re) := by
-  have hb_pos : (0 : ℝ) < 2 * Real.pi * (m : ℝ) := by
-    have : (0 : ℝ) < (m : ℝ) := by exact_mod_cast hm.trans_lt' Nat.zero_lt_one
-    positivity
-  have hq : -1 < s.re - 1 := by linarith
-  let f_mathlib : ℝ → ℝ := fun x : ℝ ↦
-    x ^ (s.re - 1) * Real.exp (-(2 * Real.pi * (m : ℝ)) * x ^ (1 : ℝ))
-  have h_align : ∀ t : ℝ, 0 < t →
-      f_mathlib t = t ^ (s.re - 1) * Real.exp (-(2 * Real.pi * (m : ℝ) * t)) := fun t _ ↦ by
-    show t ^ (s.re - 1) * Real.exp (-(2 * Real.pi * (m : ℝ)) * t ^ (1 : ℝ))
-        = t ^ (s.re - 1) * Real.exp (-(2 * Real.pi * (m : ℝ) * t))
-    rw [Real.rpow_one]; ring_nf
-  rw [MeasureTheory.lintegral_congr_ae (ofReal_rpow_mul_norm_mul_exp_ae_eq a m s),
-      MeasureTheory.lintegral_const_mul' _ _ ENNReal.ofReal_ne_top,
-      MeasureTheory.setLIntegral_congr_fun measurableSet_Ioi
-        (fun t ht ↦ congrArg ENNReal.ofReal (h_align t ht).symm)]
-  have h_nn : ∀ᵐ (t : ℝ) ∂(MeasureTheory.volume.restrict (Set.Ioi (0 : ℝ))),
-      0 ≤ f_mathlib t := by
-    refine (MeasureTheory.ae_restrict_iff' measurableSet_Ioi).mpr ?_
-    filter_upwards with t ht
-    exact mul_nonneg (Real.rpow_nonneg ht.le _) (Real.exp_pos _).le
-  rw [← MeasureTheory.ofReal_integral_eq_lintegral_ofReal
-        (integrableOn_rpow_mul_exp_neg_mul_rpow (p := 1) (s := s.re - 1)
-          (b := 2 * Real.pi * (m : ℝ)) hq le_rfl hb_pos) h_nn,
-      integral_rpow_mul_exp_neg_mul_rpow (p := 1) (q := s.re - 1)
-        (b := 2 * Real.pi * (m : ℝ)) one_pos hq hb_pos,
-      show -(s.re - 1 + 1) / 1 = -s.re by ring,
-      show (s.re - 1 + 1) / 1 = s.re by ring,
-      show (1 : ℝ) / 1 = 1 by norm_num, mul_one,
-      ← ENNReal.ofReal_mul (norm_nonneg _)]
-  congr 1; ring
 
 end ModularForms
 
