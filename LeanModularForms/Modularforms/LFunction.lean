@@ -819,20 +819,6 @@ theorem h_summ_of_tail_summable_Gamma1_mapGL
   exact ENNReal.mul_ne_top ENNReal.ofReal_ne_top h_tail
 
 open CongruenceSubgroup Matrix.SpecialLinearGroup in
-/-- **`HasCompletedMellinIdentity` from coefficient-tail summability for
-`(Gamma1 N).map (mapGL ℝ)`-cusp forms**, leaving the coefficient-tail summability
-bound as the only remaining hypothesis. -/
-theorem hasCompletedMellinIdentity_of_tail_summable_Gamma1_mapGL
-    {N : ℕ} [NeZero N] {k : ℤ} {F : Type*} [FunLike F ℍ ℂ]
-    [CuspFormClass F ((Gamma1 N).map (mapGL ℝ)) k] (f : F) (hk_pos : 0 < (k : ℝ))
-    (h_tail : ∀ {s : ℂ}, ((k : ℝ) / 2 + 1 : ℝ) < s.re →
-      (∑' n : ℕ,
-          ENNReal.ofReal (‖lCoeff f (n + 1)‖ * ((n : ℝ) + 1) ^ (-s.re))) ≠ ⊤) :
-    HasCompletedMellinIdentity f :=
-  hasCompletedMellinIdentity_of_qExpansion_summ_Gamma1_mapGL f hk_pos
-    (fun hs ↦ h_summ_of_tail_summable_Gamma1_mapGL f hk_pos hs (h_tail hs))
-
-open CongruenceSubgroup Matrix.SpecialLinearGroup in
 /-- **Coefficient-tail summability for `Γ₁(N)` cusp forms**: absolute summability
 of `fun n : ℕ ↦ ‖lCoeff f (n + 1)‖ * ((n : ℝ) + 1) ^ (-s.re)` on the half-plane
 `(k : ℝ)/2 + 1 < s.re`. -/
@@ -876,20 +862,6 @@ theorem summable_lCoeff_mul_rpow_of_cuspForm_Gamma1_mapGL
   exact (summable_nat_add_iff
       (f := fun n : ℕ ↦ (n : ℝ) ^ ((k : ℝ) / 2 - s.re)) 1).mpr
     (Real.summable_nat_rpow.mpr hp_lt)
-
-open CongruenceSubgroup Matrix.SpecialLinearGroup in
-/-- **ENNReal-form coefficient-tail summability for `Γ₁(N)` cusp forms**, the
-ENNReal repackaging of `summable_lCoeff_mul_rpow_of_cuspForm_Gamma1_mapGL`. -/
-theorem ennreal_tsum_lCoeff_mul_rpow_ne_top_of_cuspForm_Gamma1_mapGL
-    {N : ℕ} [NeZero N] {k : ℤ} {F : Type*} [FunLike F ℍ ℂ]
-    [CuspFormClass F ((Gamma1 N).map (mapGL ℝ)) k] (f : F)
-    {s : ℂ} (hs : ((k : ℝ) / 2 + 1 : ℝ) < s.re) :
-    (∑' n : ℕ,
-      ENNReal.ofReal (‖lCoeff f (n + 1)‖ * ((n : ℝ) + 1) ^ (-s.re))) ≠ ⊤ := by
-  rw [← ENNReal.ofReal_tsum_of_nonneg
-      (fun n ↦ mul_nonneg (norm_nonneg _) (Real.rpow_nonneg (by positivity) _))
-      (summable_lCoeff_mul_rpow_of_cuspForm_Gamma1_mapGL f hs)]
-  exact ENNReal.ofReal_ne_top
 
 end ModularForms
 
