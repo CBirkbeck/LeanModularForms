@@ -249,12 +249,6 @@ def HasImAxisExponentialDecay [ModularFormClass F Γ k] (f : F) : Prop :=
     (fun x : ℝ ↦ imAxis f x - 0) (fun x : ℝ ↦ Real.exp (-a * x))
 
 
-/-- **`imAxis` agrees with `ResToImagAxis ⇑f`.** -/
-lemma imAxis_eq_resToImagAxis [ModularFormClass F Γ k] (f : F) :
-    imAxis f = ResToImagAxis (⇑f) := by
-  funext t
-  simp only [imAxis, ResToImagAxis]
-
 end ModularForms
 
 namespace LSeries
@@ -429,49 +423,5 @@ lemma coprimeStrip_eulerFactor_off_S
   · have h_pow_ne : ((p : ℕ) ^ e : ℕ) ≠ 0 := (pow_pos p.prop.pos e).ne'
     rw [LSeries.term_def, LSeries.term_def, if_neg h_pow_ne,
       if_neg h_pow_ne, coprimeStrip_prime_pow_off_S S f hp e]
-
-/-- **Euler-stripping bridge from named `HasProd` Euler-product hypotheses.**
-
-Under named Euler-product hypotheses for `f` and `coprimeStrip S f`,
-```
-LSeries f s = (∏ p ∈ S, ∑' e, LSeries.term f s (p^e)) · LSeries (coprimeStrip S f) s
-``` -/
-theorem eulerStripping_bridge_via_eulerProduct
-    {f : ℕ → ℂ} {s : ℂ} (S : Finset Nat.Primes)
-    (hf₁ : f 1 = 1)
-    (hf_euler : HasProd
-      (fun p : Nat.Primes ↦ ∑' e : ℕ, LSeries.term f s ((p : ℕ) ^ e))
-      (LSeries f s))
-    (hg_euler : HasProd
-      (fun p : Nat.Primes ↦ ∑' e : ℕ, LSeries.term (coprimeStrip S f) s
-        ((p : ℕ) ^ e))
-      (LSeries (coprimeStrip S f) s)) :
-    LSeries f s = (∏ p ∈ S, ∑' e : ℕ, LSeries.term f s ((p : ℕ) ^ e)) *
-                    LSeries (coprimeStrip S f) s := by
-  set φ_f : Nat.Primes → ℂ :=
-    fun p ↦ ∑' e : ℕ, LSeries.term f s ((p : ℕ) ^ e)
-  set φ_g : Nat.Primes → ℂ :=
-    fun p ↦ ∑' e : ℕ, LSeries.term (coprimeStrip S f) s ((p : ℕ) ^ e)
-  have h_φ_g_eq : ∀ p : Nat.Primes,
-      φ_g p = if p ∈ S then 1 else φ_f p := fun p ↦ by
-    by_cases hp : p ∈ S
-    · rw [if_pos hp]; exact coprimeStrip_eulerFactor_at_S S hf₁ s hp
-    · rw [if_neg hp]; exact coprimeStrip_eulerFactor_off_S S f s hp
-  set ψ : Nat.Primes → ℂ := fun p ↦ if p ∈ S then 1 else φ_f p
-  set r : Nat.Primes → ℂ := fun p ↦ if p ∈ S then φ_f p else 1
-  have h_r_HasProd : HasProd r (∏ p ∈ S, φ_f p) :=
-    Finset.prod_congr rfl (fun p hp ↦ by
-        show (if p ∈ S then φ_f p else 1) = φ_f p; rw [if_pos hp]) ▸
-      hasProd_prod_of_ne_finset_one (s := S)
-        fun p hp ↦ by show (if p ∈ S then φ_f p else 1) = 1; rw [if_neg hp]
-  have h_mul : HasProd (fun p ↦ ψ p * r p)
-      ((LSeries (coprimeStrip S f) s) * ∏ p ∈ S, φ_f p) :=
-    (hg_euler.congr_fun fun p ↦ (h_φ_g_eq p).symm).mul h_r_HasProd
-  have h_ψr_eq_φf : ∀ p : Nat.Primes, ψ p * r p = φ_f p := fun p ↦ by
-    show (if p ∈ S then (1 : ℂ) else φ_f p) * (if p ∈ S then φ_f p else 1) = φ_f p
-    by_cases hp : p ∈ S
-    · rw [if_pos hp, if_pos hp, one_mul]
-    · rw [if_neg hp, if_neg hp, mul_one]
-  rw [hf_euler.unique (h_mul.congr_fun fun p ↦ (h_ψr_eq_φf p).symm)]; ring
 
 end LSeries

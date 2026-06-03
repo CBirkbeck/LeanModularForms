@@ -263,17 +263,4 @@ private lemma GL_adjugate_mem_toSet_Gamma0 (N : ℕ) [NeZero N]
       r₁ * (HeckeCoset.rep D : GL _ ℚ) * r₂ from hrep_eq]
   group
 
-private noncomputable def adj_mem_dc_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.Prime p)
-    (hpN : Nat.Coprime p N)
-    (g : GL (Fin 2) ℚ) (hg : g ∈ HeckeCoset.toSet (D_p_Gamma0 N p hp.pos)) :
-    ∃ (h₁ : GL _ ℚ) (_ : h₁ ∈ (HeckeRing.GLn.Gamma0_pair N).H)
-      (h₂ : GL _ ℚ) (_ : h₂ ∈ (HeckeRing.GLn.Gamma0_pair N).H),
-      GL_adjugate g =
-        h₁ * (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) * h₂ := by
-  have h := GL_adjugate_mem_toSet_Gamma0 N (D_p_Gamma0 N p hp.pos) g hg
-    (adj_rep_mem_D_p_Gamma0 N p hp hpN)
-  rw [HeckeCoset.toSet_eq_rep, DoubleCoset.mem_doubleCoset] at h
-  obtain ⟨a, ha, b, hb, heq⟩ := h
-  exact ⟨a, ha, b, hb, heq⟩
-
 end HeckeRing.GL2

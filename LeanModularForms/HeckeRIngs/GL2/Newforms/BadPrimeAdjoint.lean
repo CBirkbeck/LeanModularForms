@@ -301,12 +301,6 @@ def Newform.HasFrickeSlashCuspFormPreservesCuspFormsOldExtended
     g ∈ cuspFormsOldExtended N k →
     Newform.frickeSlashCuspForm g ∈ cuspFormsOldExtended N k
 
-/-- `HasFrickeSlashCuspFormPreservesCuspFormsOldExtended` holds unconditionally. -/
-theorem Newform.hasFrickeSlashCuspFormPreservesCuspFormsOldExtended
-    (N : ℕ) [NeZero N] (k : ℤ) :
-    Newform.HasFrickeSlashCuspFormPreservesCuspFormsOldExtended N k :=
-  Newform.frickeSlashCuspForm_preserves_cuspFormsOldExtended
-
 /-- For the bad-prime case `p ∣ N`, the Hecke operator `heckeT_n_cusp k p`
 preserves `cuspFormsOld N k`. Stated as a named Prop for downstream discharge. -/
 def Newform.HasHeckeT_n_cusp_at_divN_PreservesCuspFormsOld
@@ -385,39 +379,6 @@ def Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended
   ∀ (M : ℕ) [NeZero M] (hMN : M ∣ N) (_hMltN : M < N)
     (g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k),
     heckeT_n_cusp k p (levelInclude_cusp hMN k g) ∈ cuspFormsOldExtended N k
-
-/-- Bad-prime Hecke preservation of `cuspFormsOldExtended`, given the
-trivial-inclusion preservation gap Prop `h_trivial`. -/
-theorem Newform.HasHeckeT_n_cusp_at_divN_PreservesCuspFormsOldExtended_proof
-    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
-    (hp : Nat.Prime p) (hpN : ¬ Nat.Coprime p N)
-    (h_trivial :
-      Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended
-        N k p hp hpN) :
-    Newform.HasHeckeT_n_cusp_at_divN_PreservesCuspFormsOldExtended N k p hp hpN := by
-  intro f hf
-  refine Submodule.span_induction
-    (p := fun x _ ↦ heckeT_n_cusp k p x ∈ cuspFormsOldExtended N k)
-    ?_ ?_ ?_ ?_ hf
-  · rintro f₀ (⟨M, d, _, _, hd, heq, g, rfl⟩ | ⟨M, _, hMN, hMltN, g, rfl⟩)
-    · by_cases hpd : p ∣ d
-      · exact Newform.HasHeckeT_p_divN_LRpd_in_cuspFormsOldExtended_proof hp hpN
-          M d heq hd hpd g
-      · have hpd_cop : Nat.Coprime p d := (hp.coprime_iff_not_dvd).mpr hpd
-        rw [heckeT_p_all_levelRaise_comm_divN p hp hpN M d heq hpd_cop g]
-        apply cuspFormsOld_le_cuspFormsOldExtended
-        refine Submodule.subset_span ?_
-        exact ⟨M, d, inferInstance, inferInstance, hd, heq, _, rfl⟩
-    · exact h_trivial M hMN hMltN g
-  · change heckeT_n_cusp k p (0 : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) ∈
-      cuspFormsOldExtended N k
-    rw [heckeT_n_cusp_zero]; exact (cuspFormsOldExtended N k).zero_mem
-  · intros f₁ f₂ _ _ ih₁ ih₂
-    change heckeT_n_cusp k p (f₁ + f₂) ∈ cuspFormsOldExtended N k
-    rw [heckeT_n_cusp_add]; exact (cuspFormsOldExtended N k).add_mem ih₁ ih₂
-  · intros c f₁ _ ih
-    change heckeT_n_cusp k p (c • f₁) ∈ cuspFormsOldExtended N k
-    rw [heckeT_n_cusp_smul]; exact (cuspFormsOldExtended N k).smul_mem c ih
 
 /-- Named Prop for the `Coprime p M ∧ p * M = N` corner case of trivial-inclusion
 preservation. -/
@@ -563,15 +524,6 @@ theorem Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended
       (Submodule.subset_span ?_))
     exact ⟨M, p, inferInstance, inferInstance, hp.one_lt, rfl, _, rfl⟩
 
-/-- Trivial-inclusion preservation, unconditional. -/
-theorem Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended_unconditional
-    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
-    (hp : Nat.Prime p) (hpN : ¬ Nat.Coprime p N) :
-    Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended N k p hp hpN :=
-  Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended_proof hp hpN
-    (Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended_minimal_proof
-      hp hpN)
-
 /-- `frickeBadAdjointCandidate k p` preserves `cuspFormsOldExtended`, assuming
 Fricke and bad-prime Hecke each preserve it. -/
 lemma Newform.frickeBadAdjointCandidate_preserves_cuspFormsOldExtended
@@ -618,29 +570,6 @@ theorem Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_normaliz
   heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_petersson_adjoint
     hp hpN
     (Newform.frickeBadAdjointCandidateNormalized k p) h_adj h_old f hf
-
-/-- Bad-prime Hecke preservation of `cuspFormsNewExtended` from the three
-classical inputs (the petN-adjoint identity `h_adj` and the two extended
-oldspace-preservation Props) at the extended level. -/
-theorem Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_classicalInputs
-    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p] (hp : p.Prime)
-    (hpN : ¬ Nat.Coprime p N)
-    (h_adj : Newform.HasBadPrimeFrickePetNAdjoint N k p)
-    (h_fricke_old :
-      Newform.HasFrickeSlashCuspFormPreservesCuspFormsOldExtended N k)
-    (h_T_p_old :
-      Newform.HasHeckeT_n_cusp_at_divN_PreservesCuspFormsOldExtended N k p hp hpN)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hf : f ∈ cuspFormsNewExtended N k) :
-    heckeT_n_cusp k p f ∈ cuspFormsNewExtended N k :=
-  Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_normalized_fricke_adjoint
-    hp hpN h_adj
-    (fun g hg ↦
-      Newform.frickeBadAdjointCandidateNormalized_preserves_cuspFormsOldExtended
-        (Newform.frickeBadAdjointCandidate_preserves_cuspFormsOldExtended
-          (hp := hp) (hpN := hpN) h_fricke_old h_T_p_old)
-        g hg)
-    f hf
 
 /-- The intersection of `cuspFormsOldExtended` and `cuspFormsNewExtended` is
 trivial. Mirrors `cuspFormsOld_disjoint_cuspFormsNew`. -/
