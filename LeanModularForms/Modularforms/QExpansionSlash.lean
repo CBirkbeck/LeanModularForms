@@ -53,10 +53,6 @@ theorem rootOfUnity_sum_eq {n : ℕ} (_hn : 1 < n) {ζ : ℂ} (hζ : IsPrimitive
       rw [← pow_mul, mul_comm, pow_mul, hζ.pow_eq_one, one_pow]
     simp [this]
 
-/-- Variant with `b * k` instead of `k * b`. -/
-theorem rootOfUnity_sum_eq' {n : ℕ} (hn : 1 < n) {ζ : ℂ} (hζ : IsPrimitiveRoot ζ n)
-    (k : ℕ) : ∑ b ∈ range n, ζ ^ (b * k) = if n ∣ k then (n : ℂ) else 0 := by
-  simp_rw [mul_comm _ k]; exact rootOfUnity_sum_eq hn hζ k
 
 /-- Scaling the argument by `p`: `qParam h (p · z) = (qParam h z) ^ p`.
 This is the key identity for computing q-expansions of `f(pτ)`. -/
