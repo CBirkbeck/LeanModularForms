@@ -65,49 +65,6 @@ theorem derivWithin_mul2 (f g : ℂ → ℂ) (s : Set ℂ) (hf : DifferentiableO
   simp only [restrict_apply, Pi.add_apply, Pi.mul_apply]
   rw [derivWithin_fun_mul (hf y y.2) (hd y y.2)]
 
-lemma iteratedDerivWithin_mul' (f g : ℂ → ℂ) (s : Set ℂ) (hs : IsOpen s)
-    (x : ℂ) (hx : x ∈ s) (m : ℕ)
-    (hf : ContDiffOn ℂ ⊤ f s) (hg : ContDiffOn ℂ ⊤ g s) :
-    iteratedDerivWithin m (f * g) s x =
-    ∑ i ∈ Finset.range m.succ, (m.choose i) * (iteratedDerivWithin i f s x) *
-    (iteratedDerivWithin (m - i) g s x) := by
-  induction m generalizing f g with
-  | zero => simp only [iteratedDerivWithin_zero, Pi.mul_apply, Nat.succ_eq_add_one, zero_add,
-    Finset.range_one, zero_le, Nat.sub_eq_zero_of_le, Finset.sum_singleton, Nat.choose_self,
-    Nat.cast_one, one_mul]
-  | succ m hm =>
-    have h1 :=
-      derivWithin_mul2 f g s (hf.differentiableOn (by simp)) (hg.differentiableOn (by simp))
-    have h2 : (fun y ↦ f y * g y) = f * g := by ext y; simp
-    rw [iteratedDerivWithin_succ']
-    have hset : s.EqOn (derivWithin (f * g) s) (derivWithin f s * g + f * derivWithin g s) := by
-      intro z hz
-      aesop
-    rw [iteratedDerivWithin_congr hset hx, iteratedDerivWithin_add hx hs.uniqueDiffOn, hm _ _ hf,
-      hm _ _ _ hg]
-    · simp_rw [← iteratedDerivWithin_succ']
-      have := Finset.sum_choose_succ_mul (fun i ↦ fun j ↦
-        ((iteratedDerivWithin i f s x) * (iteratedDerivWithin j g s x))) m
-      simp only [Nat.succ_eq_add_one] at *
-      rw [show m + 1 + 1 = m + 2 by ring]
-      simp_rw [← mul_assoc] at *
-      rw [this, add_comm]
-      congr 1
-      apply Finset.sum_congr rfl
-      intros i hi
-      congr
-      simp at hi
-      omega
-    · exact ContDiffOn.derivWithin hf hs.uniqueDiffOn (m := ⊤) (by simp)
-    · exact ContDiffOn.derivWithin hg hs.uniqueDiffOn (m := ⊤) (by simp)
-    · apply ContDiffOn.mul
-      · exact ContDiffOn.derivWithin hf hs.uniqueDiffOn (m := m) (by simp)
-      · apply ContDiffOn.of_le hg (by simp)
-      exact hx
-    · apply ContDiffOn.mul
-      · apply ContDiffOn.of_le hf (by simp)
-      · apply ContDiffOn.derivWithin hg hs.uniqueDiffOn (m := m) (by simp)
-      exact hx
 
 
 lemma qExpansion_mul_coeff (a b : ℤ) (f : ModularForm Γ(n) a) (g : ModularForm Γ(n) b)
