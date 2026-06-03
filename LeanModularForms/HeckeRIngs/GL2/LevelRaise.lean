@@ -36,6 +36,7 @@ equals the Fourier coefficient of `f` at `q`. In matrix form:
 -/
 
 open Matrix Matrix.SpecialLinearGroup CongruenceSubgroup CuspForm ModularFormClass
+  UpperHalfPlane
 
 open scoped MatrixGroups ModularForm Pointwise
 
@@ -77,7 +78,7 @@ lemma abs_levelRaiseMatrix_det_val (l : ℕ) [NeZero l] :
 /-- The conjugation factor `σ` for `levelRaiseMatrix l` is the identity
 (positive determinant). -/
 lemma σ_levelRaiseMatrix (l : ℕ) [NeZero l] :
-    UpperHalfPlane.σ (levelRaiseMatrix l) = RingHom.id ℂ := by
+    UpperHalfPlane.σ (levelRaiseMatrix l) = ContinuousAlgEquiv.refl ℝ ℂ := by
   unfold UpperHalfPlane.σ; rw [if_pos (levelRaiseMatrix_det_pos l)]
 
 /-- For γ ∈ Γ₁(d*M), the entry `γ.val 1 0` is divisible by `d`. -/
@@ -241,7 +242,7 @@ def levelRaise (M : ℕ) [NeZero M] (d : ℕ) [NeZero d] (k : ℤ) :
     change ((d : ℂ) ^ (1 - k)) • ((⇑(c • f) ∣[k] levelRaiseMatrix d) z) =
       c • (((d : ℂ) ^ (1 - k)) • ((⇑f ∣[k] levelRaiseMatrix d) z))
     simp only [show (⇑(c • f) : UpperHalfPlane → ℂ) = c • ⇑f from rfl,
-      ModularForm.smul_slash, σ_levelRaiseMatrix d, RingHom.id_apply,
+      ModularForm.smul_slash, σ_levelRaiseMatrix d, ContinuousAlgEquiv.refl_apply,
       Pi.smul_apply, smul_eq_mul]
     ring
 
@@ -267,7 +268,7 @@ def modularFormLevelRaise (M : ℕ) [NeZero M] (d : ℕ) [NeZero d] (k : ℤ) :
     change ((d : ℂ) ^ (1 - k)) • ((⇑(c • f) ∣[k] levelRaiseMatrix d) z) =
       c • (((d : ℂ) ^ (1 - k)) • ((⇑f ∣[k] levelRaiseMatrix d) z))
     simp only [show (⇑(c • f) : UpperHalfPlane → ℂ) = c • ⇑f from rfl,
-      ModularForm.smul_slash, σ_levelRaiseMatrix d, RingHom.id_apply,
+      ModularForm.smul_slash, σ_levelRaiseMatrix d, ContinuousAlgEquiv.refl_apply,
       Pi.smul_apply, smul_eq_mul]
     ring
 
@@ -290,13 +291,13 @@ lemma slash_mapGL_levelRaiseFun (l : ℕ) [NeZero l] (k : ℤ) (γ : SL(2, ℤ))
     levelRaiseFun l k f ∣[k] (mapGL ℝ γ : GL (Fin 2) ℝ) =
       levelRaiseFun l k
         (f ∣[k] (mapGL ℝ (levelRaiseConjOfDvd l γ hdvd) : GL (Fin 2) ℝ)) := by
-  have hσγ : UpperHalfPlane.σ (mapGL ℝ γ : GL (Fin 2) ℝ) = RingHom.id ℂ := by
+  have hσγ : UpperHalfPlane.σ (mapGL ℝ γ : GL (Fin 2) ℝ) = ContinuousAlgEquiv.refl ℝ ℂ := by
     unfold UpperHalfPlane.σ
     rw [if_pos (show (0 : ℝ) < (Matrix.GeneralLinearGroup.det (mapGL ℝ γ)).val by
       rw [Matrix.SpecialLinearGroup.det_mapGL]; norm_num)]
   change ((l : ℂ) ^ (1 - k) • (f ∣[k] levelRaiseMatrix l)) ∣[k]
       (mapGL ℝ γ : GL (Fin 2) ℝ) = _
-  rw [ModularForm.smul_slash, hσγ, RingHom.id_apply, ← SlashAction.slash_mul,
+  rw [ModularForm.smul_slash, hσγ, ContinuousAlgEquiv.refl_apply, ← SlashAction.slash_mul,
     ← levelRaiseMatrix_mul_mapGL l γ hdvd, SlashAction.slash_mul]
   rfl
 
@@ -306,7 +307,7 @@ cancels the `l^{k-1}` factor from the slash action. -/
 lemma levelRaiseFun_apply (l : ℕ) [NeZero l] (k : ℤ) (f : UpperHalfPlane → ℂ) (τ : UpperHalfPlane) :
     levelRaiseFun l k f τ = f ((levelRaiseMatrix l) • τ) := by
   change ((l : ℂ) ^ (1 - k)) • ((f ∣[k] levelRaiseMatrix l) τ) = _
-  rw [ModularForm.slash_apply, σ_levelRaiseMatrix, RingHom.id_apply,
+  rw [ModularForm.slash_apply, σ_levelRaiseMatrix, ContinuousAlgEquiv.refl_apply,
     abs_levelRaiseMatrix_det_val, denom_levelRaiseMatrix, one_zpow, mul_one,
     smul_eq_mul, Complex.ofReal_natCast, mul_comm (f _), ← mul_assoc,
     ← zpow_add₀ (Nat.cast_ne_zero.mpr (NeZero.ne l))]
@@ -559,22 +560,26 @@ theorem qExpansion_modularFormLevelRaise_coeff'
     (hh_period_N : h ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods)
     (hh_period_dN : h ∈ ((Gamma1 (d * N)).map (mapGL ℝ)).strictPeriods)
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) (n : ℕ) :
-    (qExpansion h (modularFormLevelRaise N d k f)).coeff n =
-      if d ∣ n then (qExpansion h f).coeff (n / d) else 0 := by
+    (UpperHalfPlane.qExpansion h ⇑(modularFormLevelRaise N d k f)).coeff n =
+      if d ∣ n then (UpperHalfPlane.qExpansion h ⇑f).coeff (n / d) else 0 := by
   have h_sum_g : ∀ τ : UpperHalfPlane,
       HasSum (fun j : ℕ ↦
-        (if d ∣ j then (qExpansion h f).coeff (j / d) else 0) •
+        (if d ∣ j then (UpperHalfPlane.qExpansion h ⇑f).coeff (j / d) else 0) •
           Function.Periodic.qParam h (τ : ℂ) ^ j)
         (modularFormLevelRaise N d k f τ) := fun τ ↦ by
     rw [modularFormLevelRaise_apply N d k f τ]
-    have hfsum := hasSum_qExpansion f hh_pos hh_period_N (levelRaiseMatrix d • τ)
+    have hfsum := UpperHalfPlane.hasSum_qExpansion (f := ⇑f) hh_pos
+        (SlashInvariantFormClass.periodic_comp_ofComplex f hh_period_N)
+        (ModularFormClass.holo f) (ModularFormClass.bdd_at_infty f)
+        (levelRaiseMatrix d • τ)
     rw [coe_levelRaiseMatrix_smul d τ, qParam_nat_mul_eq_pow h d (τ : ℂ)] at hfsum
     convert hasSum_pow_dvd_reindex (Nat.pos_of_neZero d) hfsum using 1
     funext j
     split_ifs with hdvd
     · rfl
     · simp
-  exact (qExpansion_coeff_unique hh_pos hh_period_dN h_sum_g n).symm
+  exact (ModularFormClass.qExpansion_coeff_unique (f := modularFormLevelRaise N d k f)
+    hh_pos hh_period_dN h_sum_g n).symm
 
 /-- **Period-1 specialisation** of `qExpansion_modularFormLevelRaise_coeff'`:
 the canonical Fourier expansion of `modularFormLevelRaise N d k f` is the
@@ -582,8 +587,8 @@ the canonical Fourier expansion of `modularFormLevelRaise N d k f` is the
 theorem qExpansion_one_modularFormLevelRaise_coeff
     {N : ℕ} [NeZero N] {d : ℕ} [NeZero d] {k : ℤ}
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) (n : ℕ) :
-    (qExpansion (1 : ℝ) (modularFormLevelRaise N d k f)).coeff n =
-      if d ∣ n then (qExpansion (1 : ℝ) f).coeff (n / d) else 0 :=
+    (UpperHalfPlane.qExpansion (1 : ℝ) ⇑(modularFormLevelRaise N d k f)).coeff n =
+      if d ∣ n then (UpperHalfPlane.qExpansion (1 : ℝ) ⇑f).coeff (n / d) else 0 :=
   qExpansion_modularFormLevelRaise_coeff' one_pos
     (by rw [strictPeriods_Gamma1]; exact ⟨1, by simp⟩)
     (by rw [strictPeriods_Gamma1]; exact ⟨1, by simp⟩) f n
