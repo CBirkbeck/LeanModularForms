@@ -446,16 +446,6 @@ theorem peterssonInner_definite_levelOne
 
 
 
-/-- The integral of `y⁻²` over `(c, ∞)` equals `1/c` for `c > 0`.
-This is the Bochner-integral version of `integral_Ioi_rpow_of_lt` at exponent `-2`. -/
-theorem integral_zpow_neg_two_Ioi {c : ℝ} (hc : 0 < c) :
-    ∫ y in Set.Ioi c, y ^ (-2 : ℤ) = 1 / c := by
-  have h_cast : ((-2 : ℤ) : ℝ) = (-2 : ℝ) := by norm_cast
-  rw [show ∫ y in Set.Ioi c, y ^ (-2 : ℤ) = ∫ y in Set.Ioi c, y ^ (-2 : ℝ) from by
-    congr 1; ext y; rw [← h_cast, Real.rpow_intCast]]
-  rw [integral_Ioi_rpow_of_lt (by norm_num : (-2 : ℝ) < -1) hc]
-  rw [show (-2 : ℝ) + 1 = -1 from by norm_num, Real.rpow_neg_one c]
-  field_simp
 
 private lemma mem_fd_image_iff (x y : ℝ) :
     (x, y) ∈ measurableEquivRealProd '' (UpperHalfPlane.coe '' (fd : Set ℍ)) ↔
