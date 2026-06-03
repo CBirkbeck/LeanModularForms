@@ -144,22 +144,6 @@ theorem Newform.eigenvalue_eq_coeff (f : Newform N k) (n : ℕ+)
   exact (qExpansion_one_coeff_one_smul_of_norm f.toCuspForm f.isNorm _).symm
 
 
-private lemma qExpansion_one_levelRaise_coeff_eq_zero_of_not_dvd
-    {M : ℕ} [NeZero M] {d : ℕ} [NeZero d]
-    (g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k)
-    (n : ℕ) (hn : ¬ d ∣ n) :
-    (ModularFormClass.qExpansion (1 : ℝ) (levelRaise M d k g)).coeff n = 0 := by
-  let g_mf : ModularForm ((Gamma1 M).map (mapGL ℝ)) k :=
-    { toSlashInvariantForm := g.toSlashInvariantForm
-      holo' := g.holo'
-      bdd_at_cusps' := fun {c} hc γ hγ ↦
-        (g.zero_at_cusps' hc γ hγ).isBoundedAtImInfty }
-  have h_fun_eq : (⇑(levelRaise M d k g) : UpperHalfPlane → ℂ) =
-      ⇑(modularFormLevelRaise M d k g_mf) := by rw [coe_modularFormLevelRaise]; rfl
-  rw [show ModularFormClass.qExpansion (1 : ℝ) (levelRaise M d k g) =
-      ModularFormClass.qExpansion (1 : ℝ) (modularFormLevelRaise M d k g_mf) from
-        qExpansion_ext2 _ _ h_fun_eq,
-    qExpansion_one_modularFormLevelRaise_coeff, if_neg hn]
 
 /-- **The Main Lemma** (DS Theorem 5.7.1, Atkin-Lehner [AL70]):
 If `f ∈ S_k(Γ₁(N))` has Fourier expansion `f(τ) = Σ aₙ qⁿ` with `aₙ = 0`
