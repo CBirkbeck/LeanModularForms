@@ -589,9 +589,6 @@ open UpperHalfPlane MeasureTheory
 open scoped UpperHalfPlane
 
 
-private lemma peterssonAdj_frickeMatrix_det_val (N : ℕ) [NeZero N] :
-    (peterssonAdj (Newform.frickeMatrix N)).det.val = (N : ℝ) :=
-  (congr_arg Units.val (peterssonAdj_det _)).trans (Newform.frickeMatrix_det N)
 
 
 
