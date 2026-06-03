@@ -836,12 +836,76 @@ private lemma card_quotient_K_subgroupOf_G
   exact Gamma_up_relIndex_Gamma1 p hp hpN
 
 open CongruenceSubgroup in
+/-- For distinct `Fin p` tiles `b₁ ≠ b₂`, the product `shiftSL_loc b₁ · shiftSL_loc b₂⁻¹` is
+not in `Γ⁰(p)`: its `(0,1)`-entry is `b₁ - b₂` with `0 < |b₁ - b₂| < p`. -/
+private lemma T_p_lower_tile_some_some_notMem_Gamma_up
+    (p : ℕ) (hp : Nat.Prime p) {b₁ b₂ : Fin p} (hb : b₁ ≠ b₂) :
+    ((shiftSL_loc (b₁.val : ℤ) * (shiftSL_loc (b₂.val : ℤ))⁻¹).val 0 1 : ZMod p) ≠ 0 := by
+  have hne : (b₁ : ℤ) ≠ (b₂ : ℤ) := by
+    simp only [ne_eq, Nat.cast_inj]; exact fun h ↦ hb (by rw [Fin.ext_iff.mpr h])
+  have hentry : ((shiftSL_loc (b₁.val : ℤ) * (shiftSL_loc (b₂.val : ℤ))⁻¹).val 0 1 : ℤ) =
+      (b₁.val : ℤ) - (b₂.val : ℤ) := by
+    simp only [shiftSL_loc, Matrix.SpecialLinearGroup.coe_mul,
+      Matrix.SpecialLinearGroup.coe_inv, Matrix.adjugate_fin_two_of, Matrix.mul_apply,
+      Fin.sum_univ_two, Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
+      Matrix.of_apply, Matrix.empty_val', Matrix.cons_val_fin_one]
+    ring
+  rw [hentry, ne_eq, ZMod.intCast_zmod_eq_zero_iff_dvd]
+  intro hdvd
+  have hlt : |(b₁.val : ℤ) - (b₂.val : ℤ)| < p := by
+    rw [abs_lt]; constructor <;> [have := b₂.isLt; have := b₁.isLt] <;> omega
+  have hb' : (b₁.val : ℤ) - (b₂.val : ℤ) ≠ 0 := sub_ne_zero.mpr hne
+  obtain ⟨c, hc⟩ := hdvd
+  have hcabs : 1 ≤ |c| := Int.one_le_abs (by rintro rfl; simp at hc; exact hb' hc)
+  rw [hc, abs_mul, Nat.abs_cast] at hlt
+  nlinarith [hlt, hcabs, hp.pos]
+
+open CongruenceSubgroup in
+/-- For a `some/none` tile pair, `shiftSL_loc b₁ · M_∞⁻¹` has `(0,1)`-entry
+`-1 + b₁·(a·p) ≡ -1 (mod p)`, hence is not in `Γ⁰(p)`. -/
+private lemma T_p_lower_tile_some_none_notMem_Gamma_up [NeZero N]
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (b₁ : Fin p) :
+    ((shiftSL_loc (b₁.val : ℤ) * (M_infty_Gamma1_factor N p hpN 0)⁻¹).val 0 1 : ZMod p) ≠ 0 := by
+  haveI : NeZero p := ⟨hp.ne_zero⟩
+  haveI : Fact (Nat.Prime p) := ⟨hp⟩
+  have hentry : ((shiftSL_loc (b₁.val : ℤ) * (M_infty_Gamma1_factor N p hpN 0)⁻¹).val 0 1 : ℤ) =
+      -1 + (b₁.val : ℤ) * ((aInvOfCoprime N p hpN : ℤ) * p) := by
+    simp only [M_infty_Gamma1_factor, shiftSL_loc, Matrix.SpecialLinearGroup.coe_mul,
+      Matrix.SpecialLinearGroup.coe_inv, Matrix.adjugate_fin_two_of, Matrix.mul_apply,
+      Fin.sum_univ_two, Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
+      Matrix.of_apply, Matrix.empty_val', Matrix.cons_val_fin_one]
+    push_cast; ring
+  rw [hentry]; push_cast
+  rw [show ((b₁.val : ZMod p) * ((aInvOfCoprime N p hpN : ZMod p) * (p : ZMod p))) = 0 by
+    rw [ZMod.natCast_self, mul_zero, mul_zero], add_zero]
+  exact (neg_ne_zero.mpr one_ne_zero)
+
+open CongruenceSubgroup in
+/-- For a `none/some` tile pair, `M_∞ · shiftSL_loc b₂⁻¹` has `(0,1)`-entry
+`1 - a·p·b₂ ≡ 1 (mod p)`, hence is not in `Γ⁰(p)`. -/
+private lemma T_p_lower_tile_none_some_notMem_Gamma_up [NeZero N]
+    (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (b₂ : Fin p) :
+    ((M_infty_Gamma1_factor N p hpN 0 * (shiftSL_loc (b₂.val : ℤ))⁻¹).val 0 1 : ZMod p) ≠ 0 := by
+  haveI : NeZero p := ⟨hp.ne_zero⟩
+  haveI : Fact (Nat.Prime p) := ⟨hp⟩
+  have hentry : ((M_infty_Gamma1_factor N p hpN 0 * (shiftSL_loc (b₂.val : ℤ))⁻¹).val 0 1 : ℤ) =
+      1 - (aInvOfCoprime N p hpN : ℤ) * p * (b₂.val : ℤ) := by
+    simp only [M_infty_Gamma1_factor, shiftSL_loc, Matrix.SpecialLinearGroup.coe_mul,
+      Matrix.SpecialLinearGroup.coe_inv, Matrix.adjugate_fin_two_of, Matrix.mul_apply,
+      Fin.sum_univ_two, Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
+      Matrix.of_apply, Matrix.empty_val', Matrix.cons_val_fin_one]
+    push_cast; ring
+  rw [hentry]; push_cast
+  rw [show ((aInvOfCoprime N p hpN : ZMod p) * (p : ZMod p) * (b₂.val : ZMod p)) = 0 by
+    rw [ZMod.natCast_self, mul_zero, zero_mul], sub_zero]
+  exact one_ne_zero
+
+open CongruenceSubgroup in
 /-- **`p`-adic distinctness of the geometric reps.** For distinct tiles `i ≠ j`, the
 upper-right entry of `γ_i · γ_j⁻¹` is *not* `≡ 0 mod p`, so `γ_i·γ_j⁻¹ ∉ Γ⁰(p)`.  Concretely:
 `shiftSL_loc b₁ · shiftSL_loc b₂⁻¹` has `(0,1) = b₁ - b₂` (`0 < |b₁-b₂| < p`); the `M_∞` reps
 give `(0,1) ≡ ±1 mod p`.  This is the `p`-adic separation of the `T_p` coset representatives.
-The four `Option (Fin p) × Option (Fin p)` cases are dispatched inline: matrix entries
-are computed symbolically, then divisibility / `(p : ZMod p) = 0` finishes each branch. -/
+The four cases are dispatched into per-case helpers. -/
 private lemma T_p_lower_tile_family_inv_mul_notMem_Gamma_up
     (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     {i j : Option (Fin p)} (hij : i ≠ j) :
@@ -851,57 +915,17 @@ private lemma T_p_lower_tile_family_inv_mul_notMem_Gamma_up
   rw [Gamma_up_mem]
   match i, j with
   | some b₁, some b₂ =>
-    -- `(0,1)`-entry of `shiftSL_loc b₁ · shiftSL_loc b₂⁻¹` is `b₁ - b₂` with `|b₁-b₂| < p`.
-    have hne : (b₁ : ℤ) ≠ (b₂ : ℤ) := by
-      simp only [ne_eq, Nat.cast_inj]; exact fun h ↦ hij (by rw [Fin.ext_iff.mpr h])
-    have hentry : ((shiftSL_loc (b₁.val : ℤ) * (shiftSL_loc (b₂.val : ℤ))⁻¹).val 0 1 : ℤ) =
-        (b₁.val : ℤ) - (b₂.val : ℤ) := by
-      simp only [shiftSL_loc, Matrix.SpecialLinearGroup.coe_mul,
-        Matrix.SpecialLinearGroup.coe_inv, Matrix.adjugate_fin_two_of, Matrix.mul_apply,
-        Fin.sum_univ_two, Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
-        Matrix.of_apply, Matrix.empty_val', Matrix.cons_val_fin_one]
-      ring
     rw [show T_p_lower_tile_family N p hpN (some b₁) = shiftSL_loc (b₁.val : ℤ) from rfl,
-      show T_p_lower_tile_family N p hpN (some b₂) = shiftSL_loc (b₂.val : ℤ) from rfl, hentry,
-      ZMod.intCast_zmod_eq_zero_iff_dvd]
-    intro hdvd
-    have hlt : |(b₁.val : ℤ) - (b₂.val : ℤ)| < p := by
-      rw [abs_lt]; constructor <;> [have := b₂.isLt; have := b₁.isLt] <;> omega
-    have hb : (b₁.val : ℤ) - (b₂.val : ℤ) ≠ 0 := sub_ne_zero.mpr hne
-    obtain ⟨c, hc⟩ := hdvd
-    have hcabs : 1 ≤ |c| := Int.one_le_abs (by rintro rfl; simp at hc; exact hb hc)
-    rw [hc, abs_mul, Nat.abs_cast] at hlt
-    nlinarith [hlt, hcabs, hp.pos]
+      show T_p_lower_tile_family N p hpN (some b₂) = shiftSL_loc (b₂.val : ℤ) from rfl]
+    exact T_p_lower_tile_some_some_notMem_Gamma_up p hp (fun h ↦ hij (by rw [h]))
   | some b₁, none =>
-    -- `(0,1)`-entry of `shiftSL_loc b₁ · M_∞⁻¹` is `-1 + b₁·(a·p) ≡ -1 mod p ≠ 0`.
     rw [show T_p_lower_tile_family N p hpN (some b₁) = shiftSL_loc (b₁.val : ℤ) from rfl,
       show T_p_lower_tile_family N p hpN none = M_infty_Gamma1_factor N p hpN 0 from rfl]
-    have hentry : ((shiftSL_loc (b₁.val : ℤ) * (M_infty_Gamma1_factor N p hpN 0)⁻¹).val 0 1 : ℤ) =
-        -1 + (b₁.val : ℤ) * ((aInvOfCoprime N p hpN : ℤ) * p) := by
-      simp only [M_infty_Gamma1_factor, shiftSL_loc, Matrix.SpecialLinearGroup.coe_mul,
-        Matrix.SpecialLinearGroup.coe_inv, Matrix.adjugate_fin_two_of, Matrix.mul_apply,
-        Fin.sum_univ_two, Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
-        Matrix.of_apply, Matrix.empty_val', Matrix.cons_val_fin_one]
-      push_cast; ring
-    rw [hentry]; push_cast
-    rw [show ((b₁.val : ZMod p) * ((aInvOfCoprime N p hpN : ZMod p) * (p : ZMod p))) = 0 by
-      rw [ZMod.natCast_self, mul_zero, mul_zero], add_zero]
-    exact (neg_ne_zero.mpr one_ne_zero)
+    exact T_p_lower_tile_some_none_notMem_Gamma_up p hp hpN b₁
   | none, some b₂ =>
-    -- `(0,1)`-entry of `M_∞ · shiftSL_loc b₂⁻¹` is `1 - a·p·b₂ ≡ 1 mod p ≠ 0`.
     rw [show T_p_lower_tile_family N p hpN none = M_infty_Gamma1_factor N p hpN 0 from rfl,
       show T_p_lower_tile_family N p hpN (some b₂) = shiftSL_loc (b₂.val : ℤ) from rfl]
-    have hentry : ((M_infty_Gamma1_factor N p hpN 0 * (shiftSL_loc (b₂.val : ℤ))⁻¹).val 0 1 : ℤ) =
-        1 - (aInvOfCoprime N p hpN : ℤ) * p * (b₂.val : ℤ) := by
-      simp only [M_infty_Gamma1_factor, shiftSL_loc, Matrix.SpecialLinearGroup.coe_mul,
-        Matrix.SpecialLinearGroup.coe_inv, Matrix.adjugate_fin_two_of, Matrix.mul_apply,
-        Fin.sum_univ_two, Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
-        Matrix.of_apply, Matrix.empty_val', Matrix.cons_val_fin_one]
-      push_cast; ring
-    rw [hentry]; push_cast
-    rw [show ((aInvOfCoprime N p hpN : ZMod p) * (p : ZMod p) * (b₂.val : ZMod p)) = 0 by
-      rw [ZMod.natCast_self, mul_zero, zero_mul], sub_zero]
-    exact one_ne_zero
+    exact T_p_lower_tile_none_some_notMem_Gamma_up p hp hpN b₂
   | none, none => exact (hij rfl).elim
 
 open CongruenceSubgroup Pointwise ConjAct in
