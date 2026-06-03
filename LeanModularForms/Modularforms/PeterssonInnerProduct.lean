@@ -473,12 +473,6 @@ private lemma mem_fd_image_iff (x y : ℝ) :
     refine ⟨⟨x, y⟩, ⟨⟨⟨x, y⟩, hy⟩, ?_, rfl⟩, by simp [measurableEquivRealProd]⟩
     exact ⟨by simp [Complex.normSq_apply]; nlinarith, habs⟩
 
-private theorem measurableSet_fd_realProd_image :
-    MeasurableSet (measurableEquivRealProd '' (UpperHalfPlane.coe '' (fd : Set ℍ))) := by
-  rw [measurableEquivRealProd.measurableSet_image]
-  exact isOpenEmbedding_coe.measurableEmbedding.measurableSet_image.mpr
-    ((isClosed_le continuous_const (continuous_normSq.comp continuous_coe)).inter
-    (isClosed_le (continuous_abs.comp continuous_re) continuous_const)).measurableSet
 
 private theorem fd_region_indicator_section_eq {x : ℝ} (hx : |x| ≤ 1 / 2) (y : ℝ) :
     (measurableEquivRealProd '' (UpperHalfPlane.coe '' (fd : Set ℍ))).indicator
