@@ -556,23 +556,6 @@ theorem Newform.alpha_p_Gamma1_doubleCoset_smul_set_eq_iUnion_Gamma1_smul_T_p_up
     N (p := p) hp b D
 
 open scoped Pointwise in
-/-- Whole-`q`-domain `Γ₁`-action form of the bad-prime double-coset tile equality. -/
-theorem Newform.alpha_p_Gamma1_doubleCoset_smul_whole_qOut_inv_fd_eq_iUnion_q_Gamma1_smul_T_p_upper_left_smul
-    (N : ℕ) [NeZero N] {p : ℕ} (hp : p.Prime) (hpN : ¬ Nat.Coprime p N) :
-    ((((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ)) *
-        ({(glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)} : Set (GL (Fin 2) ℝ)) *
-      (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ))) •
-        (Set.iUnion (fun q : SL(2, ℤ) ⧸ Gamma1 N ↦
-          ((q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane)))) =
-      Set.iUnion (fun q : SL(2, ℤ) ⧸ Gamma1 N ↦
-        Set.iUnion (fun b : Fin p ↦
-          (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ)) •
-            ((glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ) •
-              ((q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane))))) := by
-  rw [Set.smul_iUnion]
-  refine Set.iUnion_congr fun q ↦ ?_
-  exact Newform.alpha_p_Gamma1_doubleCoset_smul_set_eq_iUnion_Gamma1_smul_T_p_upper_left_smul
-    N (p := p) hp hpN ((q.out : SL(2, ℤ))⁻¹ • (fd : Set UpperHalfPlane))
 
 open scoped Pointwise in
 
