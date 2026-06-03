@@ -180,11 +180,6 @@ private lemma differentiable_LFunction_comp {N : ℕ} [NeZero N]
 
 
 
-private lemma t111_geom_bound {N : ℕ} [NeZero N] (χ : (ZMod N)ˣ →* ℂˣ) {k : ℤ} {s : ℂ}
-    (hs_re : (k : ℝ) / 2 + 1 < s.re) {q : ℕ} (hq : Nat.Prime q) (hqN : Nat.Coprime q N) :
-    ‖((χ (ZMod.unitOfCoprime q hqN) : ℂ) * (q : ℂ) ^ (k - 1)) *
-      ((q : ℂ) ^ (-s)) ^ 2‖ < 1 :=
-  Newform.norm_eulerFactor_argument_lt_one χ k hq.two_le hqN _ (by linarith)
 
 private lemma t111_one_pm_ne {N : ℕ} [NeZero N] (χ : (ZMod N)ˣ →* ℂˣ) {k : ℤ} {s : ℂ}
     (hs_re : (k : ℝ) / 2 + 1 < s.re) {q : ℕ} (hq : Nat.Prime q) (hqN : Nat.Coprime q N) :
