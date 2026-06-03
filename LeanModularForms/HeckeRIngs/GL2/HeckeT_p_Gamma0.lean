@@ -90,15 +90,7 @@ lemma T_p_lower_mem_Delta0 (N : ℕ) [NeZero N] (p : ℕ) (hp : 0 < p)
   exact ⟨⟨A, hA_eq⟩, by rw [T_p_lower_det]; exact_mod_cast hp,
     A, hA_eq, by simp [A], by simp only [A]; exact_mod_cast hpN⟩
 
-/-- `T_p_upper(b)` as an element of `(Gamma0_pair N).Δ`. -/
-noncomputable def T_p_upper_delta_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : 0 < p) (b : ℕ) :
-    (Gamma0_pair N).Δ :=
-  ⟨T_p_upper p hp b, T_p_upper_mem_Delta0 N p hp b⟩
 
-/-- `T_p_lower p` as an element of `(Gamma0_pair N).Δ` when `gcd(p,N) = 1`. -/
-noncomputable def T_p_lower_delta_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : 0 < p)
-    (hpN : Nat.Coprime p N) : (Gamma0_pair N).Δ :=
-  ⟨T_p_lower p hp, T_p_lower_mem_Delta0 N p hp hpN⟩
 
 /-- The Γ₀(N)-double coset degree of `diag(1,p)` is `p + 1` for `p` prime
 coprime to `N`: the `decompQuot` has exactly `p + 1` elements. -/
@@ -431,17 +423,5 @@ private lemma T_p_coset_reps_map_injective (N : ℕ) [NeZero N] (p : ℕ) (hp : 
       (adj_inv_mul_mem_of_quot_eq N p hp _ _ _ _ heq)
   · have := j₁.isLt; have := j₂.isLt; lia
 
-/-- The `p+1` classical representatives `T_p_upper(b)` (for `b = 0, …, p-1`) and
-`T_p_lower(p)` give a bijection `Fin (p+1) ≃ decompQuot (Gamma0_pair N)
-(rep (D_p_Gamma0 N p))` via the adjugate anti-involution. -/
-noncomputable def T_p_coset_reps_Gamma0_equiv (N : ℕ) [NeZero N] (p : ℕ)
-    (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
-    Fin (p + 1) ≃ decompQuot (HeckeRing.GLn.Gamma0_pair N)
-      (HeckeCoset.rep (D_p_Gamma0 N p hp.pos)) := by
-  refine Equiv.ofBijective (T_p_coset_reps_map N p hp hpN) ?_
-  rw [Fintype.bijective_iff_injective_and_card]
-  refine ⟨T_p_coset_reps_map_injective N p hp hpN, ?_⟩
-  rw [Fintype.card_fin, ← Nat.card_eq_fintype_card]
-  exact (HeckeCoset_deg_D_p_Gamma0 N p hp hpN).symm
 
 end HeckeRing.GL2
