@@ -95,10 +95,6 @@ structure IsNewform (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop where
   isNorm : (ModularFormClass.qExpansion (1 : ℝ) f).coeff 1 = 1
 
 
-/-- A `Newform` is **primitive** at its level if its underlying cusp form
-lies in the new subspace. -/
-def Newform.IsPrimitive (f : Newform N k) : Prop :=
-  f.toCuspForm ∈ cuspFormsNewExtended N k
 
 
 /-- The **conductor** of a `Newform N k` is the smallest level at which `f`
