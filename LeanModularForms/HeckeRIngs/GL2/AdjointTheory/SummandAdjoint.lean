@@ -31,15 +31,6 @@ instance : ContinuousConstSMul SL(2, ℤ) UpperHalfPlane where
     show Continuous fun τ ↦ (map (Int.castRingHom ℝ) c) • τ
     exact continuous_const_smul _
 
-private lemma mapGL_det_matrix_eq_one (σ : SL(2, ℤ)) :
-    (((mapGL ℝ : SL(2, ℤ) →* _) σ : GL (Fin 2) ℝ) :
-      Matrix (Fin 2) (Fin 2) ℝ).det = 1 := by
-  rw [show (((mapGL ℝ : SL(2, ℤ) →* _) σ : GL (Fin 2) ℝ) :
-      Matrix (Fin 2) (Fin 2) ℝ) =
-      ((Int.castRingHom ℝ).mapMatrix (σ : SL(2, ℤ)).val) by
-    rw [mapGL_coe_matrix]; rfl]
-  rw [← RingHom.map_det, (σ : SL(2, ℤ)).property]
-  simp
 
 theorem glMap_T_p_upper_det_pos (p : ℕ) (hp : 0 < p) (b : ℕ) :
     0 < (glMap (T_p_upper p hp b) : GL (Fin 2) ℝ).det.val := by
