@@ -391,21 +391,6 @@ lemma cuspFormsNewExtended_le_cuspFormsNew {N : ℕ} [NeZero N] {k : ℤ} :
     cuspFormsNewExtended N k ≤ cuspFormsNew N k :=
   fun _ hf g hg ↦ hf g (cuspFormsOld_le_cuspFormsOldExtended hg)
 
-/-- The function-level collapse identity for the `p ∣ d` bad-prime case: with
-`d' = d/p`, the upper-triangular sum collapses to a level-raise by `d'`, i.e.
-`heckeT_p_divN (LR_d g) z = levelRaiseFun d' k g z`. -/
-def Newform.HasHeckeT_p_divN_LR_d_collapse_identity
-    (N : ℕ) [NeZero N] (k : ℤ) (p : ℕ) [NeZero p]
-    (_hp : Nat.Prime p) (_hpN : ¬ Nat.Coprime p N) : Prop :=
-  ∀ (M d : ℕ) [NeZero M] [NeZero d] (heq : d * M = N) (_hd : 1 < d) (_hpd : p ∣ d)
-    (g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) (z : UpperHalfPlane),
-    haveI : NeZero p := ⟨_hp.ne_zero⟩
-    haveI : NeZero (d / p) :=
-      ⟨(Nat.div_pos (Nat.le_of_dvd (NeZero.pos d) _hpd) _hp.pos).ne'⟩
-    (heckeT_n_cusp k p (heq ▸ levelRaise M d k g) :
-        CuspForm ((Gamma1 N).map (mapGL ℝ)) k).toFun z =
-      levelRaiseFun (d / p) k ⇑g z
-
 private lemma glMap_T_p_upper_zero_val (p : ℕ) (hp : 0 < p) :
     ((glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) : Matrix (Fin 2) (Fin 2) ℝ) =
       !![(1 : ℝ), 0; 0, (p : ℝ)] := by
@@ -528,44 +513,6 @@ private lemma T_p_zero_levelRaise_scalar_collapse {p d : ℕ} (hp : 0 < p) (hpd 
     show (p : ℂ) ^ (k - 1) * (p : ℂ) ^ (k - 1) = (p : ℂ) ^ (2 * k - 2) by
       rw [← zpow_add₀ hpC]; congr 1; ring,
     ← zpow_add₀ hpC, show (2 * k - 2 + -k : ℤ) = k - 2 by ring]
-
-private lemma slash_T_p_upper_zero_mul_levelRaise_apply {p d : ℕ} (hp : 0 < p) (hpd : p ∣ d)
-    [NeZero d] [NeZero (d / p)] (f : UpperHalfPlane → ℂ) (z : UpperHalfPlane) :
-    ((f ∣[k] ((glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) * levelRaiseMatrix d)) z) =
-      (p : ℂ) ^ (k - 2) * ((f ∣[k] (levelRaiseMatrix (d / p) : GL (Fin 2) ℝ)) z) := by
-  rw [ModularForm.slash_apply, ModularForm.slash_apply]
-  have hσ_M : UpperHalfPlane.σ
-      ((glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) * levelRaiseMatrix d) =
-        ContinuousAlgEquiv.refl ℝ ℂ := by
-    unfold UpperHalfPlane.σ
-    rw [if_pos (T_p_upper_zero_mul_levelRaise_det_pos p d hp)]
-  rw [hσ_M, σ_levelRaiseMatrix (d / p)]
-  simp only [ContinuousAlgEquiv.refl_apply]
-  rw [T_p_upper_zero_mul_levelRaise_smul_eq hp hpd z]
-  have hdetM_abs : |(((glMap (T_p_upper p hp 0) : GL (Fin 2) ℝ) *
-      levelRaiseMatrix d).det.val)| = (p : ℝ) * (d : ℝ) := by
-    rw [T_p_upper_zero_mul_levelRaise_det p d hp]
-    exact abs_of_pos (mul_pos (Nat.cast_pos.mpr hp) (Nat.cast_pos.mpr (NeZero.pos d)))
-  rw [hdetM_abs, T_p_upper_zero_mul_levelRaise_denom p d hp z,
-    abs_levelRaiseMatrix_det_val (d / p), denom_levelRaiseMatrix (d / p) z, one_zpow, mul_one]
-  exact T_p_zero_levelRaise_scalar_collapse hp hpd _
-
-private lemma T_p_divN_collapse_final_scalar {p d : ℕ} (hp : 0 < p) (hpd : p ∣ d) (h : ℂ) :
-    (p : ℂ) * ((d : ℂ) ^ (1 - k) * ((p : ℂ) ^ (k - 2) * h)) =
-      ((d / p : ℕ) : ℂ) ^ (1 - k) * h := by
-  have hpC : (p : ℂ) ≠ 0 := mod_cast hp.ne'
-  have hdC : (d : ℂ) = (p : ℂ) * ((d / p : ℕ) : ℂ) := by
-    rw [show (d : ℂ) = ((p * (d / p) : ℕ) : ℂ) by rw [Nat.mul_div_cancel' hpd]]
-    push_cast; ring
-  have hp_exp : (p : ℂ) * (p : ℂ) ^ (1 - k) * (p : ℂ) ^ (k - 2) = 1 := by
-    rw [mul_assoc, ← zpow_add₀ hpC, show ((1 - k) + (k - 2) : ℤ) = -1 by ring, zpow_neg_one]
-    exact mul_inv_cancel₀ hpC
-  rw [hdC, mul_zpow,
-    show (p : ℂ) * (((p : ℂ) ^ (1 - k) * ((d / p : ℕ) : ℂ) ^ (1 - k)) *
-        ((p : ℂ) ^ (k - 2) * h)) =
-      ((p : ℂ) * (p : ℂ) ^ (1 - k) * (p : ℂ) ^ (k - 2)) *
-        (((d / p : ℕ) : ℂ) ^ (1 - k) * h) by ring,
-    hp_exp, one_mul]
 
 private lemma heckeT_n_cusp_decomp_of_mul {L : ℕ} [NeZero L] (k : ℤ) (a b m : ℕ) [NeZero a]
     [NeZero b] [NeZero m] (h_mul : heckeT_n (N := L) k m = heckeT_n k a * heckeT_n k b)

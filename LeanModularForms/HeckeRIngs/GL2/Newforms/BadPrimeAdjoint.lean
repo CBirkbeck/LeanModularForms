@@ -89,47 +89,6 @@ lemma Newform.frickeMatrix_mul_levelRaiseMatrix
       Fin.sum_univ_two, mul_comm d M]
 
 
-private lemma frickeSlashCuspForm_levelInclude_cusp_eq_smul_levelRaise
-    {M : ℕ} [NeZero M] {d : ℕ} [NeZero d] (hMN : M ∣ d * M) {k : ℤ}
-    (g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) :
-    haveI : NeZero (d * M) := ⟨Nat.mul_ne_zero (NeZero.ne d) (NeZero.ne M)⟩
-    Newform.frickeSlashCuspForm (levelInclude_cusp hMN k g) =
-      (d : ℂ) ^ (k - 1) • levelRaise M d k (Newform.frickeSlashCuspForm g) := by
-  haveI : NeZero (d * M) := ⟨Nat.mul_ne_zero (NeZero.ne d) (NeZero.ne M)⟩
-  set Y : CuspForm ((Gamma1 M).map (mapGL ℝ)) k := Newform.frickeSlashCuspForm g
-  apply CuspForm.ext
-  intro τ
-  have h_zpow_cancel : ((d : ℂ) ^ (k - 1)) * ((d : ℂ) ^ (1 - k)) = 1 := by
-    rw [← zpow_add₀ (Nat.cast_ne_zero.mpr (NeZero.ne d)),
-      show (k - 1) + (1 - k) = (0 : ℤ) by ring, zpow_zero]
-  show (⇑(Newform.frickeSlashCuspForm
-      (levelInclude_cusp hMN k g)) : UpperHalfPlane → ℂ) τ =
-      (⇑((d : ℂ) ^ (k - 1) • levelRaise M d k Y) : UpperHalfPlane → ℂ) τ
-  rw [show (⇑(Newform.frickeSlashCuspForm
-        (levelInclude_cusp hMN k g)) : UpperHalfPlane → ℂ) =
-      (⇑(levelInclude_cusp hMN k g) : UpperHalfPlane → ℂ) ∣[k]
-        (Newform.frickeMatrix (d * M) : GL (Fin 2) ℝ) from rfl,
-    show (⇑(levelInclude_cusp hMN k g) : UpperHalfPlane → ℂ) = ⇑g from rfl,
-    (Newform.frickeMatrix_mul_levelRaiseMatrix (M := M) (d := d)).symm,
-    SlashAction.slash_mul]
-  show ((⇑g ∣[k] (Newform.frickeMatrix M : GL (Fin 2) ℝ)) ∣[k]
-        (HeckeRing.GL2.levelRaiseMatrix d : GL (Fin 2) ℝ)) τ =
-    ((d : ℂ) ^ (k - 1)) * ((⇑(levelRaise M d k Y) : UpperHalfPlane → ℂ) τ)
-  rw [show (⇑(levelRaise M d k Y) : UpperHalfPlane → ℂ) τ =
-      ((d : ℂ) ^ (1 - k)) *
-        ((⇑Y : UpperHalfPlane → ℂ) ∣[k]
-          (HeckeRing.GL2.levelRaiseMatrix d : GL (Fin 2) ℝ)) τ from rfl,
-    show (⇑Y : UpperHalfPlane → ℂ) = ⇑g ∣[k]
-      (Newform.frickeMatrix M : GL (Fin 2) ℝ) from rfl,
-    show ((d : ℂ) ^ (k - 1)) *
-        (((d : ℂ) ^ (1 - k)) *
-          (((⇑g ∣[k] (Newform.frickeMatrix M : GL (Fin 2) ℝ)) ∣[k]
-            (HeckeRing.GL2.levelRaiseMatrix d : GL (Fin 2) ℝ)) τ)) =
-      (((d : ℂ) ^ (k - 1)) * ((d : ℂ) ^ (1 - k))) *
-        (((⇑g ∣[k] (Newform.frickeMatrix M : GL (Fin 2) ℝ)) ∣[k]
-          (HeckeRing.GL2.levelRaiseMatrix d : GL (Fin 2) ℝ)) τ) by ring,
-    h_zpow_cancel, one_mul]
-
 private lemma alpha_d_smul_frickeMatrix_dM_smul_eq_frickeMatrix_M_smul
     {M : ℕ} [NeZero M] {d : ℕ} [NeZero d] (τ : UpperHalfPlane) :
     haveI : NeZero (d * M) := ⟨Nat.mul_ne_zero (NeZero.ne d) (NeZero.ne M)⟩
@@ -162,54 +121,6 @@ private lemma levelRaise_frickeSlash_scalar_eq
         (X * (M : ℂ) ^ (k - 1) * ((M : ℂ) ^ (-k) * τ ^ (-k))) by ring]
   rw [h_d_combine]
 
-private lemma frickeSlashCuspForm_levelRaise_eq_smul_levelInclude_cusp
-    {M : ℕ} [NeZero M] {d : ℕ} [NeZero d] (hMN : M ∣ d * M) {k : ℤ}
-    (g₀ : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) :
-    haveI : NeZero (d * M) := ⟨Nat.mul_ne_zero (NeZero.ne d) (NeZero.ne M)⟩
-    Newform.frickeSlashCuspForm (levelRaise M d k g₀) =
-      (d : ℂ)⁻¹ • levelInclude_cusp hMN k (Newform.frickeSlashCuspForm g₀) := by
-  haveI : NeZero (d * M) := ⟨Nat.mul_ne_zero (NeZero.ne d) (NeZero.ne M)⟩
-  set h_inclusion : CuspForm ((Gamma1 (d * M)).map (mapGL ℝ)) k :=
-    levelInclude_cusp hMN k (Newform.frickeSlashCuspForm g₀)
-  apply CuspForm.ext
-  intro τ
-  show (⇑(Newform.frickeSlashCuspForm
-        (levelRaise M d k g₀)) : UpperHalfPlane → ℂ) τ =
-      (⇑((d : ℂ)⁻¹ • h_inclusion) : UpperHalfPlane → ℂ) τ
-  rw [show (⇑(Newform.frickeSlashCuspForm
-          (levelRaise M d k g₀)) : UpperHalfPlane → ℂ) =
-      (⇑(levelRaise M d k g₀) : UpperHalfPlane → ℂ) ∣[k]
-        (Newform.frickeMatrix (d * M) : GL (Fin 2) ℝ) from rfl,
-    Newform.frickeMatrix_slash_apply,
-    show (⇑(levelRaise M d k g₀) : UpperHalfPlane → ℂ)
-        ((Newform.frickeMatrix (d * M) : GL (Fin 2) ℝ) • τ) =
-      levelRaiseFun d k (⇑g₀)
-        ((Newform.frickeMatrix (d * M) : GL (Fin 2) ℝ) • τ) from rfl,
-    levelRaiseFun_apply,
-    alpha_d_smul_frickeMatrix_dM_smul_eq_frickeMatrix_M_smul]
-  show ⇑g₀ ((Newform.frickeMatrix M : GL (Fin 2) ℝ) • τ) *
-        ((↑(d * M) : ℝ) : ℂ) ^ (k - 1) * (((d * M : ℕ) : ℂ) * (τ : ℂ)) ^ (-k) =
-      (⇑((d : ℂ)⁻¹ • h_inclusion) : UpperHalfPlane → ℂ) τ
-  rw [show (⇑((d : ℂ)⁻¹ • h_inclusion) : UpperHalfPlane → ℂ) τ =
-        (d : ℂ)⁻¹ * (⇑h_inclusion : UpperHalfPlane → ℂ) τ from rfl,
-    show (⇑h_inclusion : UpperHalfPlane → ℂ) =
-        (⇑(Newform.frickeSlashCuspForm g₀) : UpperHalfPlane → ℂ) from rfl,
-    show (⇑(Newform.frickeSlashCuspForm g₀) : UpperHalfPlane → ℂ) =
-        (⇑g₀ : UpperHalfPlane → ℂ) ∣[k]
-          (Newform.frickeMatrix M : GL (Fin 2) ℝ) from rfl,
-    Newform.frickeMatrix_slash_apply]
-  exact levelRaise_frickeSlash_scalar_eq (Nat.cast_ne_zero.mpr (NeZero.ne d))
-    (⇑g₀ ((Newform.frickeMatrix M : GL (Fin 2) ℝ) • τ)) (τ : ℂ)
-
-/-- For the bad-prime case `p ∣ N`, the Hecke operator `heckeT_n_cusp k p`
-preserves `cuspFormsOld N k`. Stated as a named Prop for downstream discharge. -/
-def Newform.HasHeckeT_n_cusp_at_divN_PreservesCuspFormsOld
-    (N : ℕ) [NeZero N] (k : ℤ) (p : ℕ) [NeZero p]
-    (_hp : p.Prime) (_hpN : ¬ Nat.Coprime p N) : Prop :=
-  ∀ (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k),
-    g ∈ cuspFormsOld N k → heckeT_n_cusp k p g ∈ cuspFormsOld N k
-
-
 /-- Scalar-corrected bad-prime Fricke adjoint candidate
 `(frickeSquareScalar N k)⁻¹ • frickeBadAdjointCandidate k p`, the operator whose
 `petN` adjoint identity holds with no extra scalar (the classical
@@ -229,55 +140,6 @@ lemma Newform.frickeBadAdjointCandidateNormalized_apply
       (Newform.frickeSquareScalar N k)⁻¹ •
         Newform.frickeBadAdjointCandidate k p g :=
   rfl
-
-private lemma heckeT_n_cusp_prime_apply_of_not_coprime
-    {L : ℕ} [NeZero L] {k : ℤ} {p : ℕ} [NeZero p] (hp : Nat.Prime p)
-    (hpL : ¬ Nat.Coprime p L)
-    (F : CuspForm ((Gamma1 L).map (mapGL ℝ)) k) (z : UpperHalfPlane) :
-    (heckeT_n_cusp k p F) z = heckeT_p_ut k p hp.pos ⇑F z := by
-  show (heckeT_n k p F.toModularForm').toFun z = _
-  rw [heckeT_n_prime k hp]
-  exact congrFun (heckeT_p_all_not_coprime_apply k hp hpL _) z
-
-private lemma diamondOp_slash_T_p_lower_apply
-    {M : ℕ} [NeZero M] {k : ℤ} {p : ℕ} [NeZero p]
-    (hp : Nat.Prime p) (hpcop : Nat.Coprime p M)
-    (g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) (z : UpperHalfPlane) :
-    (⇑(diamondOp k (ZMod.unitOfCoprime p hpcop) g.toModularForm') ∣[k]
-        (T_p_lower p hp.pos : GL (Fin 2) ℚ)) z =
-      ((p : ℂ) ^ (k - 1)) * ⇑(levelRaise M p k
-        (diamondOp_cusp k (ZMod.unitOfCoprime p hpcop) g)) z := by
-  have h_glMap_eq : (glMap (T_p_lower p hp.pos) : GL (Fin 2) ℝ) = levelRaiseMatrix p := by
-    apply Units.ext
-    ext i j
-    show ((T_p_lower p hp.pos : Matrix (Fin 2) (Fin 2) ℚ).map
-          (algebraMap ℚ ℝ)) i j =
-         (!![(p : ℝ), 0; 0, 1] : Matrix (Fin 2) (Fin 2) ℝ) i j
-    rw [T_p_lower_coe]
-    fin_cases i
-    · fin_cases j
-      · show ((p : ℚ) : ℝ) = (p : ℝ); norm_num
-      · show ((0 : ℚ) : ℝ) = 0; norm_num
-    · fin_cases j
-      · show ((0 : ℚ) : ℝ) = 0; norm_num
-      · show ((1 : ℚ) : ℝ) = (1 : ℝ); norm_num
-  show (⇑(diamondOp k (ZMod.unitOfCoprime p hpcop) g.toModularForm') ∣[k]
-        glMap (T_p_lower p hp.pos)) z = _
-  rw [h_glMap_eq, ModularForm.slash_apply, σ_levelRaiseMatrix, ContinuousAlgEquiv.refl_apply,
-      abs_levelRaiseMatrix_det_val, denom_levelRaiseMatrix, one_zpow, mul_one]
-  have h_LR_apply : ⇑(levelRaise M p k
-        (diamondOp_cusp k (ZMod.unitOfCoprime p hpcop) g)) z =
-      ⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpcop) g) (levelRaiseMatrix p • z) := by
-    show levelRaiseFun p k ⇑(diamondOp_cusp k (ZMod.unitOfCoprime p hpcop) g) z = _
-    rw [levelRaiseFun_apply]
-  rw [h_LR_apply]
-  show ⇑(diamondOp k (ZMod.unitOfCoprime p hpcop) g.toModularForm')
-        (levelRaiseMatrix p • z) * ((p : ℝ) ^ (k - 1) : ℂ) =
-      (p : ℂ) ^ (k - 1) *
-        ⇑(diamondOp k (ZMod.unitOfCoprime p hpcop) g.toModularForm')
-          (levelRaiseMatrix p • z)
-  rw [show ((p : ℝ) ^ (k - 1) : ℂ) = (p : ℂ) ^ (k - 1) by push_cast; rfl]
-  ring
 
 /-- The intersection of `cuspFormsOldExtended` and `cuspFormsNewExtended` is
 trivial. Mirrors `cuspFormsOld_disjoint_cuspFormsNew`. -/
