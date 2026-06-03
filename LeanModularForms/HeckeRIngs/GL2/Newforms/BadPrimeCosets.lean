@@ -363,26 +363,6 @@ theorem Newform.alpha_p_Gamma1_doubleCoset_eq_iUnion_T_p_upper_left_cosets
         g * (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)
       rw [mul_assoc, ← Newform.glMap_T_p_upper_eq_glMap_zero_mul_shiftSL hp.pos b.val]
 
-open scoped Pointwise in
-/-- The double coset `Γ₁(N) · α_p · Γ₁(N)` as a disjoint union of `p` left
-`Γ₁(N)`-cosets indexed by `Fin p`: the decomposition equality together with
-left-coset pairwise disjointness. -/
-theorem Newform.alpha_p_Gamma1_doubleCoset_partition_T_p_upper_left_cosets
-    (N : ℕ) [NeZero N] {p : ℕ} (hp : p.Prime) (hpN : ¬ Nat.Coprime p N) :
-    ((((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ)) *
-        ({(glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)} : Set (GL (Fin 2) ℝ)) *
-      (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ))) =
-    (⋃ b : Fin p,
-      (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ)) *
-        ({(glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)} :
-          Set (GL (Fin 2) ℝ))) ∧
-    (Set.univ : Set (Fin p)).PairwiseDisjoint
-      (fun b ↦ (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) :
-          Set (GL (Fin 2) ℝ)) *
-        ({(glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ)} :
-          Set (GL (Fin 2) ℝ))) :=
-  ⟨Newform.alpha_p_Gamma1_doubleCoset_eq_iUnion_T_p_upper_left_cosets N (p := p) hp hpN,
-    Newform.T_p_upper_left_cosets_pairwiseDisjoint_Gamma1 N (p := p) hp.pos⟩
 
 
 
