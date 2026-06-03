@@ -686,9 +686,68 @@ private lemma Miyake467Decomp_inductive_step_right_branch {N : ℕ} [NeZero N] {
   · intro n
     rw [m7_qExp_zero_branch q n, zero_add, h_an_f'_eq_f n]
 
+/-- Dispatches the Miyake 4.6.7 inductive step into the left or right branch using the
+conductor-theorem dichotomy on the `q`-supported piece `h_form` at level `N·q²`. -/
+private lemma Miyake467Decomp_inductive_step_dispatch {N : ℕ} [NeZero N] {k : ℤ}
+    (χ : (ZMod N)ˣ →* ℂˣ) (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
+    (l q l' : ℕ) [NeZero (N * l ^ 2)] [NeZero (N * q ^ 2)] [NeZero q]
+    [NeZero ((N * q ^ 2) / q)] [NeZero ((N * l ^ 2) / q)]
+    (hl_gt : 1 < l) (hl'_gt1 : 1 < l') (hq_prime : q.Prime) (hq_dvd_l : q ∣ l)
+    (hq_in : q ∈ l.primeFactors)
+    (h_pf_eq : l.primeFactors = insert q l'.primeFactors)
+    (hq_not_in_l' : q ∉ l'.primeFactors)
+    (hNM' : N ∣ N * l ^ 2) (hNNq2 : N ∣ N * q ^ 2)
+    (h_level_eq : N * q ^ 2 * l' ^ 2 = N * l ^ 2)
+    (h_lvl_dvd : N * q ^ 2 * l' ^ 2 ∣ N * l ^ 2)
+    (hNq2_dvd_Nl2 : N * q ^ 2 ∣ N * l ^ 2)
+    (hNq_dvd_Nl2divq : N * q ^ 2 / q ∣ N * l ^ 2 / q)
+    (h_divq_dvd_Nq2 : (N * q ^ 2) / q ∣ N * q ^ 2)
+    (h_sub_q : (Gamma1 (N * q ^ 2)).map (mapGL ℝ) ≤
+      (Gamma1 ((N * q ^ 2) / q)).map (mapGL ℝ))
+    (h_sub_Nl2_Nq2 : (Gamma1 (N * l ^ 2)).map (mapGL ℝ) ≤
+      (Gamma1 (N * q ^ 2)).map (mapGL ℝ))
+    (h_sub_lift_q : (Gamma1 ((N * l ^ 2) / q)).map (mapGL ℝ) ≤
+      (Gamma1 (N * q ^ 2 / q)).map (mapGL ℝ))
+    (h_form : CuspForm ((Gamma1 (N * q ^ 2)).map (mapGL ℝ)) k)
+    (h_form_char : h_form ∈ cuspFormCharSpace k (χ.comp (ZMod.unitsMap hNNq2)))
+    (h_form_qexp : ∀ n : ℕ,
+      (UpperHalfPlane.qExpansion (1 : ℝ) h_form).coeff n =
+      if ¬ n.Coprime q then (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff n else 0)
+    (f' : CuspForm ((Gamma1 (N * q ^ 2)).map (mapGL ℝ)) k)
+    (h_IH : Miyake467Decomp (χ.comp (ZMod.unitsMap hNNq2)) f' l' hl'_gt1)
+    (hf'_qexp : ∀ n : ℕ,
+      (PowerSeries.coeff n) (UpperHalfPlane.qExpansion (1 : ℝ) ⇑f') =
+      if n.Coprime q then
+        (PowerSeries.coeff n) (UpperHalfPlane.qExpansion (1 : ℝ) ⇑f)
+      else 0) :
+    Miyake467Decomp χ f l hl_gt := by
+  let χ_M : DirichletCharacter ℂ (N * q ^ 2) :=
+    MulChar.ofUnitHom (χ.comp (ZMod.unitsMap hNNq2))
+  have h_χ_M_toUnit : χ_M.toUnitHom = χ.comp (ZMod.unitsMap hNNq2) :=
+    MulChar.equivToUnitHom.apply_symm_apply _
+  obtain ⟨φ, hφ_eq, hφ_period⟩ :=
+    HeckeRing.GL2.exists_levelRaise_preimage_of_coeff_support_multiples
+      hq_prime.one_lt (m7_q_dvd_Nq2 N q) h_form fun n hn_not_dvd ↦ by
+        rw [h_form_qexp n, if_neg (not_not_intro
+          (hq_prime.coprime_iff_not_dvd.mpr hn_not_dvd).symm)]
+  rcases HeckeRing.GL2.conductor_theorem_dichotomy_cuspForm_strong
+      q (N * q ^ 2) (m7_q_dvd_Nq2 N q) k χ_M φ h_form (h_χ_M_toUnit ▸ h_form_char)
+      hφ_eq hφ_period with
+    ⟨h_fac, F, hF_char, hF_eq⟩ | hφ_zero
+  · exact Miyake467Decomp_inductive_step_left_branch χ f l q l' hl_gt hl'_gt1 hq_in h_pf_eq
+      hq_not_in_l' hNM' hNNq2 h_level_eq h_lvl_dvd hNq2_dvd_Nl2 hNq_dvd_Nl2divq
+      h_divq_dvd_Nq2 h_sub_q h_sub_Nl2_Nq2 h_sub_lift_q h_form h_form_qexp f' h_IH hf'_qexp
+      (χ_M := χ_M) h_χ_M_toUnit φ hφ_eq hF_char hF_eq
+  · have hh_form_zero : (⇑h_form : UpperHalfPlane → ℂ) = 0 := by
+      rw [hφ_eq, hφ_zero]; exact m7_levelRaiseFun_zero q k
+    exact Miyake467Decomp_inductive_step_right_branch χ f l q l' hl_gt hl'_gt1 hq_prime
+      hq_dvd_l hq_in h_pf_eq hq_not_in_l' hNM' hNNq2 h_level_eq h_lvl_dvd hNq2_dvd_Nl2
+      hNq_dvd_Nl2divq h_form h_form_qexp f' h_IH hf'_qexp hh_form_zero
+
 /-- Inductive step of Miyake 4.6.7 (`l = q · l'` with `l' > 1`): split off the prime `q` via the
 auxiliary `h_form` and `f' = f - h_form`, apply the induction hypothesis `ih` to `f'` at level
-`N·q²` and modulus `l'`, then reassemble the per-prime data at level `N·l²`. -/
+`N·q²` and modulus `l'`, then reassemble the per-prime data at level `N·l²` via the
+`_dispatch` helper. -/
 private lemma Miyake467Decomp_inductive_step {N : ℕ} [NeZero N] {k : ℤ} (n : ℕ)
     (ih : ∀ (l : ℕ), l.primeFactors.card = n →
       ∀ (N : ℕ) [NeZero N] (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
@@ -725,35 +784,17 @@ private lemma Miyake467Decomp_inductive_step {N : ℕ} [NeZero N] {k : ℤ} (n :
   have h_IH : Miyake467Decomp (χ.comp (ZMod.unitsMap hNNq2)) f' l' hl'_gt1 :=
     ih l' hl'_pf_card (N * q ^ 2) k (χ.comp (ZMod.unitsMap hNNq2))
       f' hf'_char hl'_gt1 hl'_sqfree hf'_vanish
-  let χ_M : DirichletCharacter ℂ (N * q ^ 2) :=
-    MulChar.ofUnitHom (χ.comp (ZMod.unitsMap hNNq2))
-  have h_χ_M_toUnit : χ_M.toUnitHom = χ.comp (ZMod.unitsMap hNNq2) :=
-    MulChar.equivToUnitHom.apply_symm_apply _
   haveI hNq2_div_q_ne : NeZero (N * q ^ 2 / q) := m7_NeZero_Nq2_div_q (N := N) hq_prime
-  obtain ⟨φ, hφ_eq, hφ_period⟩ :=
-    HeckeRing.GL2.exists_levelRaise_preimage_of_coeff_support_multiples
-      hq_prime.one_lt (m7_q_dvd_Nq2 N q) h_form fun n hn_not_dvd ↦ by
-        rw [h_form_qexp n, if_neg (not_not_intro
-          (hq_prime.coprime_iff_not_dvd.mpr hn_not_dvd).symm)]
   haveI hNl2_div_q_ne : NeZero ((N * l ^ 2) / q) :=
     m7_NeZero_Nl2_div_q (N := N) (l := l) hq_in
   obtain ⟨hNq2l'2_ne, h_level_eq, h_lvl_dvd, h_divq_dvd_Nq2, h_sub_q,
       hNq2_dvd_Nl2, h_sub_Nl2_Nq2, hNq_dvd_Nl2divq, h_sub_lift_q⟩ :=
     Miyake467Decomp_inductive_step_level_relations (N := N) l q l' hq_prime hl_eq_ql' hl'_pos
   haveI : NeZero ((N * q ^ 2) * l' ^ 2) := hNq2l'2_ne
-  rcases HeckeRing.GL2.conductor_theorem_dichotomy_cuspForm_strong
-      q (N * q ^ 2) (m7_q_dvd_Nq2 N q) k χ_M φ h_form (h_χ_M_toUnit ▸ h_form_char)
-      hφ_eq hφ_period with
-    ⟨h_fac, F, hF_char, hF_eq⟩ | hφ_zero
-  · exact Miyake467Decomp_inductive_step_left_branch χ f l q l' hl_gt hl'_gt1 hq_in h_pf_eq
-      hq_not_in_l' hNM' hNNq2 h_level_eq h_lvl_dvd hNq2_dvd_Nl2 hNq_dvd_Nl2divq
-      h_divq_dvd_Nq2 h_sub_q h_sub_Nl2_Nq2 h_sub_lift_q h_form h_form_qexp f' h_IH hf'_qexp
-      (χ_M := χ_M) h_χ_M_toUnit φ hφ_eq hF_char hF_eq
-  · have hh_form_zero : (⇑h_form : UpperHalfPlane → ℂ) = 0 := by
-      rw [hφ_eq, hφ_zero]; exact m7_levelRaiseFun_zero q k
-    exact Miyake467Decomp_inductive_step_right_branch χ f l q l' hl_gt hl'_gt1 hq_prime
-      hq_dvd_l hq_in h_pf_eq hq_not_in_l' hNM' hNNq2 h_level_eq h_lvl_dvd hNq2_dvd_Nl2
-      hNq_dvd_Nl2divq h_form h_form_qexp f' h_IH hf'_qexp hh_form_zero
+  exact Miyake467Decomp_inductive_step_dispatch χ f l q l' hl_gt hl'_gt1 hq_prime
+    hq_dvd_l hq_in h_pf_eq hq_not_in_l' hNM' hNNq2 h_level_eq h_lvl_dvd hNq2_dvd_Nl2
+    hNq_dvd_Nl2divq h_divq_dvd_Nq2 h_sub_q h_sub_Nl2_Nq2 h_sub_lift_q h_form
+    h_form_char h_form_qexp f' h_IH hf'_qexp
 
 /-- **Strengthened M7-sqfree** (Miyake p. 159-160) — same as
 `miyake_4_6_7_squarefree_decomp` but ALSO exposes, for each prime `q ∣ l`, a
