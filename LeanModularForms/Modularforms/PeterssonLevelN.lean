@@ -432,7 +432,7 @@ theorem hyperbolicMeasure_Gamma1_fundDomain_PSL_lt_top :
   rw [tsum_fintype]
   refine ENNReal.sum_lt_top.mpr fun q' _ ↦ ?_
   rw [(isFundamentalDomain_fdo_PSL.smul _).measure_eq isFundamentalDomain_fdo_PSL]
-  exact lt_of_le_of_lt (measure_mono fdo_subset_fd) hyperbolicMeasure_fd_lt_top
+  exact lt_of_le_of_lt (measure_mono ModularGroup.fdo_subset_fd) hyperbolicMeasure_fd_lt_top
 
 /-- The Petersson integrand `petersson k f g` is integrable on the Γ₁(N)-
 fundamental domain `Gamma1_fundDomain_PSL N` for two `Γ₁(N)`-cusp forms. -/
