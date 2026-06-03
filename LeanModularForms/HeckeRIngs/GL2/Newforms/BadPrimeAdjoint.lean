@@ -767,45 +767,6 @@ theorem NewformExtended.heckeT_pp_cusp_mem_cuspFormsNewExtended_at_bad_of_T170
     exact Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_T170
       hp hpN h_adj _ ih
 
-private lemma heckeT_n_cusp_mem_cuspFormsNewExtended_bad_only_step
-    {N : ℕ} [NeZero N] {k : ℤ} (m : ℕ) (hm_gt : 1 < m)
-    (h_bad : ∀ p, p.Prime → p ∣ m → ¬ Nat.Coprime p N)
-    (h_adj : ∀ (p : ℕ) [NeZero p], p.Prime → p ∣ m →
-      Newform.HasBadPrimeFrickePetNAdjoint N k p)
-    (ih : ∀ j, j < m → (hj : 0 < j) →
-      (∀ p, p.Prime → p ∣ j → ¬ Nat.Coprime p N) →
-      (∀ (p : ℕ) [NeZero p], p.Prime → p ∣ j →
-        Newform.HasBadPrimeFrickePetNAdjoint N k p) →
-      ∀ (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k),
-        g ∈ cuspFormsNewExtended N k →
-        haveI : NeZero j := ⟨by omega⟩
-        heckeT_n_cusp k j g ∈ cuspFormsNewExtended N k)
-    (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hg : g ∈ cuspFormsNewExtended N k) :
-    haveI : NeZero m := ⟨by omega⟩
-    heckeT_n_cusp k m g ∈ cuspFormsNewExtended N k := by
-  haveI : NeZero m := ⟨by omega⟩
-  set p := m.minFac
-  have hpp : p.Prime := Nat.minFac_prime (by omega : m ≠ 1)
-  set v := m.factorization p
-  have hpv_pos : 0 < p ^ v := pow_pos hpp.pos v
-  have hdiv_pos : 0 < m / p ^ v :=
-    Nat.div_pos (Nat.le_of_dvd (by omega) (Nat.ordProj_dvd m p)) hpv_pos
-  haveI : NeZero (p ^ v) := ⟨hpv_pos.ne'⟩
-  haveI : NeZero (m / p ^ v) := ⟨hdiv_pos.ne'⟩
-  haveI : NeZero p := ⟨hpp.ne_zero⟩
-  have h_mid : heckeT_n_cusp k (m / p ^ v) g ∈ cuspFormsNewExtended N k :=
-    ih (m / p ^ v) (heckeT_n_unfold_lt m hm_gt) hdiv_pos
-      (fun q hq hqdiv ↦
-        h_bad q hq (hqdiv.trans (Nat.div_dvd_of_dvd (Nat.ordProj_dvd m p))))
-      (fun q _ hq_prime hqdiv ↦
-        h_adj q hq_prime (hqdiv.trans (Nat.div_dvd_of_dvd (Nat.ordProj_dvd m p))))
-      g hg
-  rw [show heckeT_n_cusp k m g =
-      heckeT_n_cusp k (p ^ v) (heckeT_n_cusp k (m / p ^ v) g) from
-    CuspForm.ext fun z ↦ heckeT_n_cusp_unfold m hm_gt g z]
-  exact NewformExtended.heckeT_pp_cusp_mem_cuspFormsNewExtended_at_bad_of_T170
-    hpp (h_bad p hpp (Nat.minFac_dvd m)) (h_adj p hpp (Nat.minFac_dvd m)) v _ h_mid
 
 
 
