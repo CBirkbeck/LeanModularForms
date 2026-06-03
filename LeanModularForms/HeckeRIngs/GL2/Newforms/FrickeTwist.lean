@@ -194,10 +194,6 @@ private lemma differentiable_prod_linearFactor {N : ℕ} [NeZero N]
         (Complex.natCast_mem_slitPlane.mpr p.prop.pos.ne')).differentiableAt) _
 
 
-private lemma linearFactor_ne_zero_of_one_lt_re {N : ℕ} [NeZero N]
-    (ψ : DirichletCharacter ℂ N) {p : ℕ} (hp : Nat.Prime p) {z : ℂ} (hz : 1 < z.re) :
-    (1 - ψ (p : ZMod N) * (p : ℂ) ^ (-z)) ≠ 0 :=
-  fun h_zero ↦ Newform.dirichletLift_eulerFactor_ne_zero ψ hp hz (by rw [h_zero, inv_zero])
 
 private lemma mul_eq_mul_of_mul_inv_eq {A B C D E F : ℂ}
     (h : A * B * C⁻¹ = D * (E * F⁻¹)) (hC : C ≠ 0) (hF : F ≠ 0) :
