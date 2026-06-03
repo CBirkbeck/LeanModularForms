@@ -886,7 +886,8 @@ private lemma theta_prod_sq_CF_apply (z : ℍ) :
 private lemma finrank_cuspform_12 :
     Module.finrank ℂ (CuspForm (CongruenceSubgroup.Gamma 1) 12) = 1 := by
   apply Module.finrank_eq_of_rank_eq
-  rw [LinearEquiv.rank_eq (CuspForms_iso_Modforms 12)]
+  rw [LinearEquiv.rank_eq (CuspForms_iso_Modforms 12),
+    LinearEquiv.rank_eq (modularFormGammaOneEquivSL (12 - 12))]
   simpa using ModularForm.levelOne_weight_zero_rank_one
 
 private lemma theta_prod_sq_proportional :
