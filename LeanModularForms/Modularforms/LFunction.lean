@@ -487,42 +487,7 @@ theorem mellin_eq_completedLSeries_of_qExpansion_swap_hypotheses
           Function.Periodic.qParam h (Complex.I * (t : ℂ)) ^ m) s (a m))]
   exact tsum_mellin_qParam_pow_imAxis_eq_LSeries hh a h_a0 hs
 
-/-- **Period-one corollary**.
 
-Specialisation of `mellin_eq_completedLSeries_of_qExpansion_swap_hypotheses` to
-`h = 1`, matching the scalar `(2π)^{-s} · Γ(s)` in `HasCompletedMellinIdentity`.
--/
-theorem mellin_eq_completedLSeries_of_qExpansion_swap_hypotheses_one
-    {g : ℝ → ℂ} {a : ℕ → ℂ} (h_a0 : a 0 = 0) {s : ℂ} (hs : 0 < s.re)
-    (h_decomp : ∀ᵐ (t : ℝ) ∂(MeasureTheory.volume.restrict (Set.Ioi (0 : ℝ))),
-      HasSum (fun m : ℕ ↦
-        a m * Function.Periodic.qParam 1 (Complex.I * (t : ℂ)) ^ m) (g t))
-    (h_meas : ∀ m, MeasureTheory.AEStronglyMeasurable
-      (fun t : ℝ ↦ (t : ℂ) ^ (s - 1) •
-        (a m * Function.Periodic.qParam 1 (Complex.I * (t : ℂ)) ^ m))
-      (MeasureTheory.volume.restrict (Set.Ioi (0 : ℝ))))
-    (h_summ : (∑' m : ℕ, MeasureTheory.lintegral
-      (MeasureTheory.volume.restrict (Set.Ioi (0 : ℝ)))
-      (fun t : ℝ ↦ ‖(t : ℂ) ^ (s - 1) •
-        (a m * Function.Periodic.qParam 1 (Complex.I * (t : ℂ)) ^ m)‖ₑ)) ≠
-        (⊤ : ENNReal)) :
-    mellin g s =
-      (2 * Real.pi : ℂ) ^ (-s) * Complex.Gamma s * LSeries a s := by
-  have h := mellin_eq_completedLSeries_of_qExpansion_swap_hypotheses
-    (h := 1) one_pos h_a0 hs h_decomp h_meas h_summ
-  rwa [show ((2 * Real.pi / 1 : ℝ) : ℂ) = (2 * Real.pi : ℂ) by push_cast; ring] at h
-
-/-- **Continuity on `Ioi 0` of the period-one weighted Mellin integrand**
-`t ↦ (t : ℂ)^{s-1} • (a m · qParam 1 (I·t)^m)`. -/
-lemma continuousOn_qParam_pow_imAxis_term {a : ℕ → ℂ} (m : ℕ) (s : ℂ) :
-    ContinuousOn
-      (fun t : ℝ ↦ (t : ℂ) ^ (s - 1) •
-        (a m * Function.Periodic.qParam 1 (Complex.I * (t : ℂ)) ^ m))
-      (Set.Ioi (0 : ℝ)) := by
-  have h_cpow : ContinuousOn (fun t : ℝ ↦ ((t : ℝ) : ℂ) ^ (s - 1)) (Set.Ioi 0) :=
-    (Complex.continuous_ofReal.continuousOn (s := Set.Ioi (0 : ℝ))).cpow_const
-      fun _ ht ↦ Complex.ofReal_mem_slitPlane.mpr ht
-  exact h_cpow.smul (by fun_prop)
 
 
 
@@ -552,17 +517,6 @@ lemma norm_qParam_pow_imAxis_term (a : ℂ) (m : ℕ) (s : ℂ)
       Complex.norm_real, Real.norm_eq_abs, abs_of_pos (Real.exp_pos _)]
   ring
 
-/-- **Pointwise enorm of the period-one Mellin integrand on `Ioi 0`**, the
-ENNReal-form of `norm_qParam_pow_imAxis_term`:
-```
-‖(t : ℂ) ^ (s - 1) • (a * qParam 1 (I·t) ^ m)‖ₑ
-  = ENNReal.ofReal (t ^ (s.re - 1) * ‖a‖ * Real.exp (-(2 * Real.pi * m * t))).
-``` -/
-lemma enorm_qParam_pow_imAxis_term_of_pos (a : ℂ) (m : ℕ) (s : ℂ)
-    {t : ℝ} (ht : 0 < t) :
-    ‖(t : ℂ) ^ (s - 1) • (a * Function.Periodic.qParam 1 (Complex.I * (t : ℂ)) ^ m)‖ₑ
-      = ENNReal.ofReal (t ^ (s.re - 1) * ‖a‖ * Real.exp (-(2 * Real.pi * m * t))) := by
-  rw [← ofReal_norm_eq_enorm, norm_qParam_pow_imAxis_term a m s ht]
 
 
 private lemma ofReal_rpow_mul_norm_mul_exp_ae_eq (a : ℂ) (m : ℕ) (s : ℂ) :
