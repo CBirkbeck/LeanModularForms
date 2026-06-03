@@ -193,14 +193,6 @@ private lemma differentiable_prod_linearFactor {N : ℕ} [NeZero N]
           (Complex.analyticOnNhd_univ_iff_differentiable.mpr hg s (Set.mem_univ _)).neg
         (Complex.natCast_mem_slitPlane.mpr p.prop.pos.ne')).differentiableAt) _
 
-private lemma prod_linearFactor_eventually_ne_zero {N : ℕ} [NeZero N]
-    (ψ : DirichletCharacter ℂ N) (T : Finset Nat.Primes) {g : ℂ → ℂ}
-    (hg : Differentiable ℂ g) (s₀ : ℂ)
-    (h : ∀ p ∈ T, (1 - ψ ((p : ℕ) : ZMod N) * ((p : ℕ) : ℂ) ^ (-(g s₀))) ≠ 0) :
-    ∀ᶠ s in nhdsWithin s₀ {s₀}ᶜ,
-      (∏ p ∈ T, (1 - ψ ((p : ℕ) : ZMod N) * ((p : ℕ) : ℂ) ^ (-(g s)))) ≠ 0 :=
-  ((differentiable_prod_linearFactor ψ T hg).continuous.continuousAt.eventually_ne
-    (Finset.prod_ne_zero_iff.mpr h)).filter_mono nhdsWithin_le_nhds
 
 private lemma linearFactor_ne_zero_of_one_lt_re {N : ℕ} [NeZero N]
     (ψ : DirichletCharacter ℂ N) {p : ℕ} (hp : Nat.Prime p) {z : ℂ} (hz : 1 < z.re) :
