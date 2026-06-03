@@ -196,75 +196,7 @@ noncomputable def Newform.PerNewformFullDirichletData_T_empty_of_classicalInputs
     simp at h
   h_clause := h_clause
 
-/-- The denominator-side per-prime factor
-`s ↦ (1 - χ̃²(p) · p^{-(2(2s-k+1))})⁻¹` is analytic at any point `s₀` where the
-underlying `1 - χ̃²(p) · p^{-(2(2s₀-k+1))}` does not vanish. -/
-theorem Newform.den_factor_analytic_at
-    {N : ℕ} [NeZero N] {k : ℤ} (χ : (ZMod N)ˣ →* ℂˣ) (s₀ : ℂ) (p : Nat.Primes)
-    (h_ne : (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-        : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-        ((p : ℕ) : ℂ) ^ (-(2 * (2 * s₀ - k + 1)))) ≠ 0) :
-    AnalyticAt ℂ
-      (fun (s : ℂ) ↦ (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-        : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-        ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀ :=
-  (analyticAt_const.sub (analyticAt_const.mul (AnalyticAt.cpow analyticAt_const (by fun_prop)
-    (Complex.natCast_mem_slitPlane.mpr p.prop.pos.ne')))).inv h_ne
 
-/-- The general-`T` analogue of
-`Newform.PerNewformFullDirichletData_T_empty_of_classicalInputs`, taking per-prime
-factor-analyticity hypotheses `h_num_factor_an`, `h_den_factor_an` explicitly. -/
-noncomputable def Newform.PerNewformFullDirichletData_of_classicalInputs
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (S : Finset ℕ) (T : Finset Nat.Primes) (s₀ : ℂ)
-    (h_χ_ne_one : (Newform.dirichletLift χ : DirichletCharacter ℂ N) ≠ 1)
-    (h_chi_sq_ne_one : (Newform.dirichletLift χ * Newform.dirichletLift χ
-      : DirichletCharacter ℂ N) ≠ 1)
-    (h_zero : DirichletCharacter.LFunction
-      (Newform.dirichletLift χ : DirichletCharacter ℂ N) (2 * s₀ - k + 1) = 0)
-    (h_num_LF_ne : DirichletCharacter.LFunction
-      (Newform.dirichletLift χ * Newform.dirichletLift χ
-        : DirichletCharacter ℂ N) (2 * (2 * s₀ - k + 1)) ≠ 0)
-    (h_factors_ne : ∀ p ∈ T,
-      Newform.eulerFactor_stripped f χ S s₀ p ≠ 0 ∧
-      (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-          ((p : ℕ) : ZMod N) *
-        ((p : ℕ) : ℂ) ^ (-(2 * s₀ - k + 1))) ≠ 0)
-    (h_num_factor_an : ∀ p ∈ T, AnalyticAt ℂ
-      (fun s ↦ Newform.eulerFactor_stripped f χ S s p *
-        (1 - (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-            ((p : ℕ) : ZMod N) *
-          ((p : ℕ) : ℂ) ^ (-(2 * s - k + 1)))⁻¹) s₀)
-    (h_den_factor_an : ∀ p ∈ T, AnalyticAt ℂ
-      (fun (s : ℂ) ↦ (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-        : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-        ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀)
-    (h_den_finite :
-      meromorphicOrderAt
-        (fun s ↦
-          DirichletCharacter.LFunction
-            (Newform.dirichletLift χ : DirichletCharacter ℂ N)
-            (2 * s - k + 1) *
-          ∏ p ∈ T, (1 - ((Newform.dirichletLift χ * Newform.dirichletLift χ
-            : DirichletCharacter ℂ N)) ((p : ℕ) : ZMod N) *
-            ((p : ℕ) : ℂ) ^ (-(2 * (2 * s - k + 1))))⁻¹) s₀ ≠ ⊤)
-    (h_clause : Newform.FullDirichletQuotientUniversalFClause f χ S T s₀) :
-    Newform.PerNewformFullDirichletData f χ S where
-  T := T
-  s₀ := s₀
-  h_zero := h_zero
-  h_num_LF_ne := h_num_LF_ne
-  h_factors_ne := h_factors_ne
-  h_num_an :=
-    AnalyticAt.mul ((Complex.analyticOnNhd_univ_iff_differentiable.mpr
-      ((DirichletCharacter.differentiable_LFunction h_chi_sq_ne_one).comp (by fun_prop)))
-      s₀ (Set.mem_univ _)) (Finset.analyticAt_fun_prod _ h_num_factor_an)
-  h_den_an :=
-    AnalyticAt.mul ((Complex.analyticOnNhd_univ_iff_differentiable.mpr
-      ((DirichletCharacter.differentiable_LFunction h_χ_ne_one).comp (by fun_prop)))
-      s₀ (Set.mem_univ _)) (Finset.analyticAt_fun_prod _ h_den_factor_an)
-  h_den_finite := h_den_finite
-  h_clause := h_clause
 
 
 
@@ -361,34 +293,6 @@ private lemma eqOn_LSeries_of_entire_of_eqOn_halfPlane {c : ℕ → ℂ} {Λ : �
   exact (hΛ_an.eqOn_of_preconnected_of_eventuallyEq hL_an
     (convex_halfSpace_re_gt σ).isPreconnected hzRe_gt_σ h_eq_nhds) hs₀_in_U
 
-/-- Produces the global `Newform.HeckeEntireExtension` predicate from per-newform
-`Newform.CompletedMellinData`, via the analytic identity principle. -/
-theorem Newform.HeckeEntireExtension_of_CompletedMellinData
-    (h : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k),
-      Newform.CompletedMellinData f) :
-    Newform.HeckeEntireExtension := by
-  intro N _ k f
-  obtain ⟨pair, hk_pos, h_completed, stripping, h_strip_diff, h_strip_bridge⟩ := h f
-  have h2π : (2 * Real.pi : ℂ) ≠ 0 :=
-    mul_ne_zero two_ne_zero (Complex.ofReal_ne_zero.mpr Real.pi_ne_zero)
-  have : NeZero (2 * Real.pi : ℂ) := ⟨h2π⟩
-  let Λ : ℂ → ℂ := fun s ↦
-    stripping s * ((2 * Real.pi : ℂ) ^ s) * (Complex.Gamma s)⁻¹ * pair.Λ s
-  have h_Λ_diff : Differentiable ℂ Λ :=
-    ((h_strip_diff.mul (differentiable_const_cpow_of_neZero (2 * Real.pi : ℂ))).mul
-      Complex.differentiable_one_div_Gamma).mul pair.differentiable_Λ
-  have h_direct :
-      ∀ {s : ℂ}, ((k : ℝ) / 2 + 1 : ℝ) < s.re →
-        Λ s = LSeries f.lCoeff_stripped s := by
-    intro s hs
-    have hs_re_pos : 0 < s.re := by linarith
-    show stripping s * ((2 * Real.pi : ℂ) ^ s) * (Complex.Gamma s)⁻¹ * pair.Λ s
-        = LSeries f.lCoeff_stripped s
-    rw [h_completed hs, h_strip_bridge hs]
-    exact stripping_completion_factors_cancel h2π
-      (Complex.Gamma_ne_zero_of_re_pos hs_re_pos) (stripping s) (LSeries f.lCoeff s) s
-  exact ⟨Λ, h_Λ_diff, fun {_} hs₀ ↦
-    eqOn_LSeries_of_entire_of_eqOn_halfPlane h_Λ_diff h_direct hs₀⟩
 
 /-- The corrected Fricke / completed Mellin data for a newform: the Atkin-Lehner /
 Fricke slash-equality data (`twist`, `slash_eq`) together with the analytic content
@@ -465,56 +369,7 @@ private lemma imAxis_scaled_feq {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k)
     rw [Real.rpow_intCast x k, Complex.ofReal_zpow]
   rw [Newform.imAxis_feq_of_slashEq f twist slash_eq hx, h_cast, smul_eq_mul]
 
-/-- Constructs `Newform.CompletedFrickeData` from a CuspForm-supplied Atkin-Lehner
-twist and an Euler-stripping multiplier, with `pair` built from the `imAxis`
-infrastructure and `completed_bridge` discharged by
-`Newform.hasCompletedMellinIdentity`. -/
-noncomputable def Newform.CompletedFrickeData.ofSlashEqWithStripping
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k)
-    (twist : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (slash_eq : (⇑twist : UpperHalfPlane → ℂ) =
-      ⇑f.toCuspForm.toModularForm' ∣[k] Newform.frickeMatrix N)
-    (hk_pos : 0 < (k : ℝ))
-    (stripping : ℂ → ℂ)
-    (stripping_diff : Differentiable ℂ stripping)
-    (stripping_bridge : ∀ {s : ℂ}, ((k : ℝ) / 2 + 1 : ℝ) < s.re →
-      LSeries f.lCoeff_stripped s = stripping s * LSeries f.lCoeff s) :
-    Newform.CompletedFrickeData f where
-  twist := twist
-  slash_eq := slash_eq
-  pair :=
-    { f := Newform.imAxis f
-      g := fun t ↦ _root_.ModularForms.imAxis twist (t / (N : ℝ))
-      k := (k : ℝ)
-      ε := (N : ℂ) ^ (1 - k) * Complex.I ^ k
-      f₀ := 0
-      g₀ := 0
-      hf_int := Newform.locallyIntegrableOn_imAxis f
-      hg_int := imAxis_scaled_locallyIntegrableOn twist
-      hk := hk_pos
-      hε := mul_ne_zero (zpow_ne_zero _ (Nat.cast_ne_zero.mpr (NeZero.ne N)))
-        (zpow_ne_zero _ Complex.I_ne_zero)
-      h_feq := fun _ hx ↦ imAxis_scaled_feq f twist slash_eq hx
-      hf_top := Newform.imAxis_rapidDecay f
-      hg_top := imAxis_scaled_rapidDecay twist
-      hf₀ := rfl
-      hg₀ := rfl }
-  hk_pos := hk_pos
-  completed_bridge := fun {_} hs ↦ by
-    rw [Newform.lCoeff_eq_modularForms_lCoeff_funext f]
-    exact Newform.hasCompletedMellinIdentity f hk_pos hs
-  stripping := stripping
-  stripping_diff := stripping_diff
-  stripping_bridge := stripping_bridge
 
-/-- Existence of a CuspForm-valued Atkin-Lehner Fricke involution image
-`twist : CuspForm ((Gamma1 N).map (mapGL ℝ)) k` whose underlying `ℍ → ℂ` map
-equals the slash `⇑f.toCuspForm.toModularForm' ∣[k] W_N`. -/
-def Newform.HasFrickeTwistAsCuspForm
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) : Prop :=
-  ∃ twist : CuspForm ((Gamma1 N).map (mapGL ℝ)) k,
-    (⇑twist : UpperHalfPlane → ℂ) =
-      ⇑f.toCuspForm.toModularForm' ∣[k] Newform.frickeMatrix N
 
 /-- Existence of an entire multiplier `stripping : ℂ → ℂ` such that the stripped
 Newform L-series factors as `stripping(s) · LSeries f.lCoeff s` on the
@@ -658,20 +513,5 @@ structure Newform.HasHeckeMultiplicativeStructure
 
 
 
-/-- For a prime `p ∣ N` and `f ∈ S_k^new`, `heckeT_n_cusp k p f` lies in `S_k^new`,
-given an explicit Petersson-adjoint operator `T_adj` for `T_p` at level `Γ₁(N)`
-that preserves the old-subspace `cuspFormsOld N k`. -/
-theorem heckeT_n_cusp_preserves_cuspFormsNew_at_divN_of_petersson_adjoint
-    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p] (_hp : p.Prime)
-    (_hpN : ¬ Nat.Coprime p N)
-    (T_adj : CuspForm ((Gamma1 N).map (mapGL ℝ)) k →ₗ[ℂ]
-             CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (h_adj : ∀ (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k),
-      petN (heckeT_n_cusp k p f) g = petN f (T_adj g))
-    (h_old : ∀ (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k),
-      g ∈ cuspFormsOld N k → T_adj g ∈ cuspFormsOld N k)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (hf : f ∈ cuspFormsNew N k) :
-    heckeT_n_cusp k p f ∈ cuspFormsNew N k :=
-  fun g hg ↦ h_adj f g ▸ hf _ (h_old g hg)
 
 end HeckeRing.GL2
