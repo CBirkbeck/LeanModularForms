@@ -405,29 +405,6 @@ theorem Newform.existsUnique_T_p_upper_left_coset_index_of_mem_alpha_p_doubleCos
   by_contra hne
   exact Set.disjoint_left.mp (hpart.2 (Set.mem_univ b) (Set.mem_univ c) fun h ↦ hne h.symm) hb hc
 
-open scoped Pointwise in
-/-- Each element `x` of the bad-prime double coset factors as `x = γ · β_b` with
-`γ ∈ Γ₁(N).map (mapGL ℝ)` and a unique `b : Fin p`. -/
-theorem Newform.existsUnique_T_p_upper_left_factor_of_mem_alpha_p_doubleCoset
-    (N : ℕ) [NeZero N] {p : ℕ} (hp : p.Prime) (hpN : ¬ Nat.Coprime p N) {x : GL (Fin 2) ℝ}
-    (hx : x ∈
-      ((((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ)) *
-          ({(glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)} : Set (GL (Fin 2) ℝ)) *
-        (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ)))) :
-    ∃! b : Fin p, ∃ γ : GL (Fin 2) ℝ,
-      γ ∈ (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ)) ∧
-        γ * (glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ) = x := by
-  obtain ⟨b, hb, huniq⟩ :=
-    Newform.existsUnique_T_p_upper_left_coset_index_of_mem_alpha_p_doubleCoset
-      N (p := p) hp hpN hx
-  refine ⟨b, ?_, ?_⟩
-  · obtain ⟨γ, hγ, y, hy, hmul⟩ := hb
-    rw [Set.mem_singleton_iff] at hy
-    subst hy
-    exact ⟨γ, hγ, hmul⟩
-  · intro c hc
-    obtain ⟨γ', hγ', hmul'⟩ := hc
-    exact huniq c ⟨γ', hγ', glMap (T_p_upper p hp.pos c.val), rfl, hmul'⟩
 
 open scoped Pointwise in
 
