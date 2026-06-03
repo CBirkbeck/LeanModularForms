@@ -447,21 +447,6 @@ theorem peterssonInner_definite_levelOne
 
 
 
-private lemma mem_fd_image_iff (x y : ℝ) :
-    (x, y) ∈ measurableEquivRealProd '' (UpperHalfPlane.coe '' (fd : Set ℍ)) ↔
-    |x| ≤ 1 / 2 ∧ 1 ≤ x ^ 2 + y ^ 2 ∧ 0 < y := by
-  constructor
-  · rintro ⟨z, ⟨τ, hτ, rfl⟩, hprod⟩
-    have hx : x = (τ : ℂ).re := by
-      have := congr_arg Prod.fst hprod; simp [measurableEquivRealProd] at this; exact this.symm
-    have hy : y = (τ : ℂ).im := by
-      have := congr_arg Prod.snd hprod; simp [measurableEquivRealProd] at this; exact this.symm
-    subst hx; subst hy
-    obtain ⟨hns, habs⟩ := hτ
-    exact ⟨habs, by rwa [Complex.normSq_apply, ← sq, ← sq] at hns, τ.im_pos⟩
-  · rintro ⟨habs, hns, hy⟩
-    refine ⟨⟨x, y⟩, ⟨⟨⟨x, y⟩, hy⟩, ?_, rfl⟩, by simp [measurableEquivRealProd]⟩
-    exact ⟨by simp [Complex.normSq_apply]; nlinarith, habs⟩
 
 
 
