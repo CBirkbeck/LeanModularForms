@@ -178,25 +178,6 @@ private lemma differentiable_LFunction_comp {N : ℕ} [NeZero N]
   (DirichletCharacter.differentiable_LFunction hψ).comp hg
 
 
-private lemma LFunction_comp_affine_punctured_ne_zero {N : ℕ} [NeZero N]
-    {ψ : DirichletCharacter ℂ N} (hψ : ψ ≠ 1) {k : ℤ} (s₀ : ℂ) :
-    ∀ᶠ s in nhdsWithin s₀ {s₀}ᶜ,
-      DirichletCharacter.LFunction ψ (2 * s - k + 1) ≠ 0 := by
-  set g : ℂ → ℂ := fun s ↦ DirichletCharacter.LFunction ψ (2 * s - k + 1)
-  have hg_diff : Differentiable ℂ g :=
-    differentiable_LFunction_comp hψ (by fun_prop)
-  have hg_an : AnalyticAt ℂ g s₀ :=
-    Complex.analyticOnNhd_univ_iff_differentiable.mpr hg_diff s₀ (Set.mem_univ _)
-  set s' : ℂ := (((k : ℝ) / 2 + 2 : ℝ) : ℂ)
-  have h_re : (1 : ℝ) < (2 * s' - (k : ℂ) + 1).re := by
-    have : (2 * s' - (k : ℂ) + 1).re = 5 := by
-      simp [s', Complex.add_re, Complex.sub_re, Complex.mul_re,
-        Complex.intCast_re, Complex.intCast_im]; ring
-    rw [this]; norm_num
-  refine hg_an.eventually_eq_zero_or_eventually_ne_zero.resolve_left (fun h_ev ↦ ?_)
-  exact LFunction_dirichletLift_ne_zero_of_one_lt_re h_re
-    (congrFun ((Complex.analyticOnNhd_univ_iff_differentiable.mpr hg_diff).eq_of_eventuallyEq
-      (fun _ _ ↦ analyticAt_const) (h_ev.mono (fun _ h ↦ h))) s')
 
 private lemma t111_re_conditions {k : ℤ} {s : ℂ} (hs_re : (k : ℝ) / 2 + 1 < s.re) :
     1 < (2 * s - k + 1).re ∧ 1 < (2 * (2 * s - k + 1)).re := by
