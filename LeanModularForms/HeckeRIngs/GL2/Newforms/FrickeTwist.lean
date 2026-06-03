@@ -196,15 +196,6 @@ private lemma differentiable_prod_linearFactor {N : ℕ} [NeZero N]
 
 
 
-private lemma eq_div_prod_inv_of_mul_prod_eq {T : Finset Nat.Primes} {Fs A B : ℂ}
-    {e l₁ l₂ : Nat.Primes → ℂ}
-    (h_id : Fs * A * (∏ p ∈ T, l₁ p) = B * (∏ p ∈ T, e p) * ∏ p ∈ T, l₂ p)
-    (hA : A ≠ 0) (h_l₁ : (∏ p ∈ T, l₁ p) ≠ 0) (h_l₂ : (∏ p ∈ T, l₂ p) ≠ 0) :
-    Fs = B * (∏ p ∈ T, e p * (l₁ p)⁻¹) / (A * ∏ p ∈ T, (l₂ p)⁻¹) := by
-  rw [Finset.prod_mul_distrib, Finset.prod_inv_distrib, Finset.prod_inv_distrib,
-    eq_div_iff (mul_ne_zero hA (inv_ne_zero h_l₂))]
-  field_simp [h_l₁]
-  linear_combination h_id
 
 /-- From a newform-character pair, an explicit pole point `s₀`, a Dirichlet
 L-function zero at `2 s₀ - k + 1`, the corresponding non-cancellation, and the
