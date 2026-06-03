@@ -392,36 +392,4 @@ lemma coprimeStrip_prime_pow_off_S (S : Finset Nat.Primes) (f : ℕ → ℂ)
   exact hp (Subtype.ext ((Nat.prime_dvd_prime_iff_eq q.prop p.prop).mp
     (q.prop.dvd_of_dvd_pow h_dvd)) ▸ hq)
 
-/-- **Local Euler factor of the coprimeStrip sequence at a prime in `S`.**
-
-If `f 1 = 1`, then for `p ∈ S` the local Euler factor of `coprimeStrip S f`
-at `p` collapses to `1`. -/
-lemma coprimeStrip_eulerFactor_at_S
-    (S : Finset Nat.Primes) {f : ℕ → ℂ} (hf₁ : f 1 = 1)
-    (s : ℂ) {p : Nat.Primes} (hp : p ∈ S) :
-    ∑' e : ℕ, LSeries.term (coprimeStrip S f) s ((p : ℕ) ^ e) = 1 := by
-  have h_term_zero : ∀ e : ℕ, 1 ≤ e →
-      LSeries.term (coprimeStrip S f) s ((p : ℕ) ^ e) = 0 := fun e he ↦ by
-    rw [LSeries.term_def, if_neg (pow_pos p.prop.pos e).ne',
-      coprimeStrip_prime_pow_at_S S f hp he, zero_div]
-  rw [tsum_eq_single 0 fun e he_ne_zero ↦
-    h_term_zero e (Nat.one_le_iff_ne_zero.mpr he_ne_zero)]
-  show LSeries.term (coprimeStrip S f) s ((p : ℕ) ^ 0) = 1
-  rw [pow_zero, LSeries.term_def, if_neg one_ne_zero, coprimeStrip_one S f, hf₁,
-      Nat.cast_one, Complex.one_cpow, div_one]
-
-/-- **Local Euler factor of the coprimeStrip sequence at a prime not in `S`**:
-for `p ∉ S` it equals the local Euler factor of `f` at `p`. -/
-lemma coprimeStrip_eulerFactor_off_S
-    (S : Finset Nat.Primes) (f : ℕ → ℂ)
-    (s : ℂ) {p : Nat.Primes} (hp : p ∉ S) :
-    ∑' e : ℕ, LSeries.term (coprimeStrip S f) s ((p : ℕ) ^ e) =
-      ∑' e : ℕ, LSeries.term f s ((p : ℕ) ^ e) := by
-  refine tsum_congr fun e ↦ ?_
-  rcases Nat.eq_zero_or_pos e with rfl | he
-  · simp [coprimeStrip_one S f]
-  · have h_pow_ne : ((p : ℕ) ^ e : ℕ) ≠ 0 := (pow_pos p.prop.pos e).ne'
-    rw [LSeries.term_def, LSeries.term_def, if_neg h_pow_ne,
-      if_neg h_pow_ne, coprimeStrip_prime_pow_off_S S f hp e]
-
 end LSeries

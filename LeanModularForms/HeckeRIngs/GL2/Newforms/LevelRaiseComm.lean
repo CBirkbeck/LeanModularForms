@@ -307,40 +307,6 @@ private lemma heckeT_p_all_levelRaise_comm
   congr 1
   exact diamondOp_T_p_lower_levelRaise p hp M d hpN hpM g
 
-/-- Bad-prime version of `heckeT_p_all_levelRaise_comm`: for `p ∣ N` (so `T_p`
-is `heckeT_p_divN`) with `p ∤ d`, the Hecke operator commutes with the
-level-raise `LR_d` from `S_k(Γ₁(M)) → S_k(Γ₁(d·M))` (where `d · M = N`). -/
-lemma heckeT_p_all_levelRaise_comm_divN
-    (p : ℕ) (hp : Nat.Prime p) (hpN : ¬ Nat.Coprime p N)
-    (M : ℕ) (d : ℕ) [NeZero M] [NeZero d] (heq : d * M = N)
-    (hpd : Nat.Coprime p d)
-    (g : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) :
-    haveI : NeZero p := ⟨hp.ne_zero⟩
-    heckeT_n_cusp k p (heq ▸ levelRaise M d k g) =
-      heq ▸ levelRaise M d k (heckeT_n_cusp k p g) := by
-  haveI : NeZero p := ⟨hp.ne_zero⟩
-  subst heq
-  apply CuspForm.ext
-  intro z
-  show (heckeT_n (N := d * M) k p (levelRaise M d k g).toModularForm').toFun z =
-    (((d : ℂ) ^ (1 - k)) • ((heckeT_n_cusp (N := M) k p g : CuspForm _ k).toFun
-      ∣[k] levelRaiseMatrix d)) z
-  rw [heckeT_n_prime k hp]
-  change ⇑((heckeT_p_all k p hp) ((levelRaise M d k) g).toModularForm') z =
-    (((d : ℂ) ^ (1 - k)) • (⇑(heckeT_n (N := M) k p g.toModularForm')
-      ∣[k] levelRaiseMatrix d)) z
-  rw [heckeT_n_prime k hp,
-    show ⇑((heckeT_p_all k p hp) ((levelRaise M d k) g).toModularForm') =
-        heckeT_p_ut k p hp.pos (⇑((levelRaise M d k) g).toModularForm') from
-      heckeT_p_all_not_coprime_apply k hp hpN _,
-    show ⇑((heckeT_p_all k p hp) g.toModularForm') =
-        heckeT_p_ut k p hp.pos (⇑g.toModularForm') from
-      heckeT_p_all_not_coprime_apply k hp (fun h ↦ hpN (hpd.mul_right h)) _]
-  show heckeT_p_ut k p hp.pos (⇑((levelRaise M d k) g).toModularForm') z =
-    (((d : ℂ) ^ (1 - k)) • (heckeT_p_ut k p hp.pos (⇑g.toModularForm') ∣[k]
-      levelRaiseMatrix d)) z
-  rw [heckeT_p_ut_levelRaise p hp M d g, heckeT_p_ut_levelRaise_reindex p hp M d hpd.symm g]
-
 /-- `Γ₁(N) ≤ Γ₁(M)` for `M ∣ N`: a matrix congruent to the identity modulo `N`
 is also congruent modulo `M`. -/
 lemma Gamma1_le_Gamma1_of_dvd {M N : ℕ} (hMN : M ∣ N) :
@@ -646,31 +612,6 @@ private theorem Newform.HasHeckeT_p_divN_LR_d_collapse_identity_proof
     ((d / p : ℕ) : ℂ) ^ (1 - k) *
       (⇑g ∣[k] levelRaiseMatrix (d / p)) z
   exact T_p_divN_collapse_final_scalar hp.pos hpd _
-
-/-- Proof of `HasHeckeT_p_divN_LRpd_in_cuspFormsOldExtended`: for `p ∣ d` with
-`1 < d`, the bad-prime Hecke operator on `LR_d g` equals
-`levelInclude_cusp (LR_{d/p} g)`, which lies in the extended oldspace. -/
-theorem Newform.HasHeckeT_p_divN_LRpd_in_cuspFormsOldExtended_proof
-    {p : ℕ} [NeZero p] (hp : Nat.Prime p) (hpN : ¬ Nat.Coprime p N) :
-    Newform.HasHeckeT_p_divN_LRpd_in_cuspFormsOldExtended N k p hp hpN := by
-  intro M d _ _ heq _hd hpd g
-  haveI : NeZero (d / p) :=
-    ⟨(Nat.div_pos (Nat.le_of_dvd (NeZero.pos d) hpd) hp.pos).ne'⟩
-  subst heq
-  have hQM_dvd : (d / p) * M ∣ d * M := ⟨p, by
-    rw [mul_assoc, mul_comm M p, ← mul_assoc, Nat.div_mul_cancel hpd]⟩
-  have hQM_lt : (d / p) * M < d * M :=
-    Nat.mul_lt_mul_of_pos_right (Nat.div_lt_self (NeZero.pos d) hp.one_lt) (NeZero.pos M)
-  have h_eq : heckeT_n_cusp k p (levelRaise M d k g) =
-      levelInclude_cusp hQM_dvd k (levelRaise M (d / p) k g) := by
-    apply CuspForm.ext
-    intro z
-    show (heckeT_n_cusp k p (levelRaise M d k g)).toFun z = _
-    rw [Newform.HasHeckeT_p_divN_LR_d_collapse_identity_proof hp hpN
-      M d rfl _hd hpd g z]
-    rfl
-  rw [h_eq]
-  exact levelInclude_cusp_mem_cuspFormsOldExtended hQM_dvd hQM_lt _
 
 private lemma heckeT_n_cusp_decomp_of_mul {L : ℕ} [NeZero L] (k : ℤ) (a b m : ℕ) [NeZero a]
     [NeZero b] [NeZero m] (h_mul : heckeT_n (N := L) k m = heckeT_n k a * heckeT_n k b)

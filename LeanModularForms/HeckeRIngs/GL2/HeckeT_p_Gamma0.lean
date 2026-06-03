@@ -224,43 +224,4 @@ private lemma adj_diag_1p_eq_T_p_lower (p : ℕ) (hp : Nat.Prime p) :
       Matrix.of_apply, huniv, he0, he1,
       Finset.prod_singleton]
 
-private lemma adj_rep_mem_D_p_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.Prime p)
-    (hpN : Nat.Coprime p N) :
-    GL_adjugate (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) ∈
-      HeckeCoset.toSet (D_p_Gamma0 N p hp.pos) := by
-  have hrep := HeckeCoset.rep_mem (D_p_Gamma0 N p hp.pos)
-  rw [D_p_Gamma0, HeckeCoset.toSet_mk, DoubleCoset.mem_doubleCoset] at hrep
-  obtain ⟨a, ha, c, hc, hrep_eq⟩ := hrep
-  have hTl := T_p_lower_mem_D_p_Gamma0 N p hp hpN
-  rw [HeckeCoset.toSet_eq_rep, DoubleCoset.mem_doubleCoset] at hTl
-  obtain ⟨b₁, hb₁, b₂, hb₂, hTl_eq⟩ := hTl
-  rw [HeckeCoset.toSet_eq_rep, DoubleCoset.mem_doubleCoset]
-  refine ⟨GL_adjugate c * b₁,
-    (HeckeRing.GLn.Gamma0_pair N).H.mul_mem
-      (HeckePairAction.adjugate_mem_H c hc) hb₁,
-    b₂ * GL_adjugate a,
-    (HeckeRing.GLn.Gamma0_pair N).H.mul_mem hb₂
-      (HeckePairAction.adjugate_mem_H a ha), ?_⟩
-  conv_lhs => rw [show (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) =
-    a * diagMat 2 ![1, p] * c from hrep_eq]
-  rw [GL_adjugate_mul, GL_adjugate_mul, mul_assoc, adj_diag_1p_eq_T_p_lower p hp, hTl_eq]
-  group
-
-private lemma GL_adjugate_mem_toSet_Gamma0 (N : ℕ) [NeZero N]
-    (D : HeckeCoset (HeckeRing.GLn.Gamma0_pair N))
-    (g : GL (Fin 2) ℚ) (hg : g ∈ HeckeCoset.toSet D)
-    (hadj_rep : GL_adjugate (HeckeCoset.rep D : GL _ ℚ) ∈ HeckeCoset.toSet D) :
-    GL_adjugate g ∈ HeckeCoset.toSet D := by
-  rw [HeckeCoset.toSet_eq_rep, DoubleCoset.mem_doubleCoset] at hg hadj_rep ⊢
-  obtain ⟨a, ha, c, hc, heq⟩ := hg
-  obtain ⟨r₁, hr₁, r₂, hr₂, hrep_eq⟩ := hadj_rep
-  refine ⟨GL_adjugate c * r₁, (HeckeRing.GLn.Gamma0_pair N).H.mul_mem
-      (HeckePairAction.adjugate_mem_H c hc) hr₁,
-    r₂ * GL_adjugate a, (HeckeRing.GLn.Gamma0_pair N).H.mul_mem hr₂
-      (HeckePairAction.adjugate_mem_H a ha), ?_⟩
-  rw [heq, GL_adjugate_mul, GL_adjugate_mul,
-    show GL_adjugate (HeckeCoset.rep D : GL _ ℚ) =
-      r₁ * (HeckeCoset.rep D : GL _ ℚ) * r₂ from hrep_eq]
-  group
-
 end HeckeRing.GL2

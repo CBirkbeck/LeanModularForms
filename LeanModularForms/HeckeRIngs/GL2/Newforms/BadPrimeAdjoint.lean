@@ -272,28 +272,6 @@ theorem Newform.frickeSlashCuspForm_levelRaise_mem_cuspFormsOldExtended
   exact Submodule.smul_mem _ _
     (levelInclude_cusp_mem_cuspFormsOldExtended hMN hMltN _)
 
-/-- `Newform.frickeSlashCuspForm` preserves `cuspFormsOldExtended N k`: the
-Atkin-Lehner / Fricke involution maps the extended oldspace to itself. -/
-theorem Newform.frickeSlashCuspForm_preserves_cuspFormsOldExtended
-    {N : ℕ} [NeZero N] {k : ℤ} (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hg : g ∈ cuspFormsOldExtended N k) :
-    Newform.frickeSlashCuspForm g ∈ cuspFormsOldExtended N k :=
-  Newform.frickeSlashCuspForm_preserves_cuspFormsOldExtended_iff_on_generators.mpr
-    (fun f h_or ↦ h_or.elim
-      (fun h_lr_gen ↦ by
-        obtain ⟨M, d, hM_NeZero, hd_NeZero, hd_lt, heq, g₀, h_eq⟩ := h_lr_gen
-        haveI := hM_NeZero
-        haveI := hd_NeZero
-        rw [← h_eq]
-        exact Newform.frickeSlashCuspForm_levelRaise_mem_cuspFormsOldExtended
-          hd_lt heq g₀)
-      (fun h_inc_gen ↦ by
-        obtain ⟨M, hM_NeZero, hMN, hMltN, g₀, h_eq⟩ := h_inc_gen
-        haveI := hM_NeZero
-        rw [← h_eq]
-        exact Newform.frickeSlashCuspForm_levelInclude_cusp_mem_cuspFormsOldExtended
-          hMN hMltN g₀)) g hg
-
 /-- Named-Prop form of `Fricke` preservation on `cuspFormsOldExtended`. -/
 def Newform.HasFrickeSlashCuspFormPreservesCuspFormsOldExtended
     (N : ℕ) [NeZero N] (k : ℤ) : Prop :=
@@ -399,47 +377,6 @@ private lemma heckeT_n_cusp_prime_apply_of_not_coprime
   rw [heckeT_n_prime k hp]
   exact congrFun (heckeT_p_all_not_coprime_apply k hp hpL _) z
 
-/-- Trivial-inclusion preservation, reduced to the `Coprime p M ∧ p * M = N`
-corner case `h_minimal`. -/
-theorem Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended_proof
-    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
-    (hp : Nat.Prime p) (hpN : ¬ Nat.Coprime p N)
-    (h_minimal :
-      Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended_minimal
-        N k p hp hpN) :
-    Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended N k p hp hpN := by
-  intro M _ hMN hMltN g
-  by_cases hpM : p ∣ M
-  · have hpcop_M : ¬ Nat.Coprime p M := fun h ↦ hp.coprime_iff_not_dvd.mp h hpM
-    have h_eq : heckeT_n_cusp k p (levelInclude_cusp hMN k g) =
-        levelInclude_cusp hMN k (heckeT_n_cusp k p g) := by
-      apply CuspForm.ext; intro z
-      rw [levelInclude_cusp_coe, heckeT_n_cusp_prime_apply_of_not_coprime hp hpN,
-        heckeT_n_cusp_prime_apply_of_not_coprime hp hpcop_M, levelInclude_cusp_coe]
-    rw [h_eq]
-    exact levelInclude_cusp_mem_cuspFormsOldExtended hMN hMltN _
-  · have hpcop_M : Nat.Coprime p M := hp.coprime_iff_not_dvd.mpr hpM
-    have hp_dvd_N : p ∣ N := by
-      by_contra h_ndvd; exact hpN (hp.coprime_iff_not_dvd.mpr h_ndvd)
-    have hpM_dvd : p * M ∣ N := hpcop_M.mul_dvd_of_dvd_of_dvd hp_dvd_N hMN
-    by_cases hpM_lt : p * M < N
-    · haveI : NeZero (p * M) := ⟨Nat.mul_ne_zero hp.ne_zero (NeZero.ne M)⟩
-      have hpcop_pM : ¬ Nat.Coprime p (p * M) := fun h ↦
-        hp.coprime_iff_not_dvd.mp h ⟨M, rfl⟩
-      have h_eq : heckeT_n_cusp k p (levelInclude_cusp hMN k g) =
-          levelInclude_cusp hpM_dvd k
-            (heckeT_n_cusp k p (levelInclude_cusp (Dvd.intro_left p rfl) k g)) := by
-        apply CuspForm.ext; intro z
-        rw [levelInclude_cusp_coe, heckeT_n_cusp_prime_apply_of_not_coprime hp hpN,
-          heckeT_n_cusp_prime_apply_of_not_coprime hp hpcop_pM]
-        simp only [levelInclude_cusp_coe]
-      rw [h_eq]
-      exact levelInclude_cusp_mem_cuspFormsOldExtended hpM_dvd hpM_lt _
-    · push Not at hpM_lt
-      have hpM_eq : p * M = N := le_antisymm
-        (Nat.le_of_dvd (NeZero.pos N) hpM_dvd) hpM_lt
-      exact h_minimal M hMN hMltN hpcop_M hpM_eq g
-
 private lemma diamondOp_slash_T_p_lower_apply
     {M : ℕ} [NeZero M] {k : ℤ} {p : ℕ} [NeZero p]
     (hp : Nat.Prime p) (hpcop : Nat.Coprime p M)
@@ -507,69 +444,6 @@ private lemma heckeT_n_cusp_levelInclude_cusp_eq_sub_smul_levelRaise_diamond
     rfl
   rw [h_T_M_apply, diamondOp_slash_T_p_lower_apply hp hpcop_M g z]
   ring
-
-/-- Proof of the `Coprime p M ∧ p * M = N` minimal corner case of
-trivial-inclusion preservation. -/
-theorem Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended_minimal_proof
-    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
-    (hp : Nat.Prime p) (hpN : ¬ Nat.Coprime p N) :
-    Newform.HasHeckeT_n_cusp_TrivialInclusion_preserves_cuspFormsOldExtended_minimal
-      N k p hp hpN := by
-  intro M _ hMN hMltN hpcop_M hpM_eq g
-  subst hpM_eq
-  rw [heckeT_n_cusp_levelInclude_cusp_eq_sub_smul_levelRaise_diamond hp hpcop_M hMN g]
-  apply Submodule.sub_mem
-  · exact levelInclude_cusp_mem_cuspFormsOldExtended hMN hMltN _
-  · refine Submodule.smul_mem _ _ (cuspFormsOld_le_cuspFormsOldExtended
-      (Submodule.subset_span ?_))
-    exact ⟨M, p, inferInstance, inferInstance, hp.one_lt, rfl, _, rfl⟩
-
-/-- `frickeBadAdjointCandidate k p` preserves `cuspFormsOldExtended`, assuming
-Fricke and bad-prime Hecke each preserve it. -/
-lemma Newform.frickeBadAdjointCandidate_preserves_cuspFormsOldExtended
-    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
-    {hp : p.Prime} {hpN : ¬ Nat.Coprime p N}
-    (h_fricke_old :
-      Newform.HasFrickeSlashCuspFormPreservesCuspFormsOldExtended N k)
-    (h_T_p_old :
-      Newform.HasHeckeT_n_cusp_at_divN_PreservesCuspFormsOldExtended N k p hp hpN)
-    (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hg : g ∈ cuspFormsOldExtended N k) :
-    Newform.frickeBadAdjointCandidate k p g ∈ cuspFormsOldExtended N k := by
-  rw [Newform.frickeBadAdjointCandidate_apply]
-  exact h_fricke_old _ (h_T_p_old _ (h_fricke_old _ hg))
-
-/-- `frickeBadAdjointCandidateNormalized` preserves `cuspFormsOldExtended`, from
-the unnormalized preservation. -/
-lemma Newform.frickeBadAdjointCandidateNormalized_preserves_cuspFormsOldExtended
-    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p]
-    (h_unnormalized :
-      ∀ (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k),
-        g ∈ cuspFormsOldExtended N k →
-          Newform.frickeBadAdjointCandidate k p g ∈ cuspFormsOldExtended N k)
-    (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hg : g ∈ cuspFormsOldExtended N k) :
-    Newform.frickeBadAdjointCandidateNormalized k p g ∈
-        cuspFormsOldExtended N k := by
-  rw [Newform.frickeBadAdjointCandidateNormalized_apply]
-  exact (cuspFormsOldExtended N k).smul_mem _ (h_unnormalized g hg)
-
-/-- Bad-prime newspace-extended preservation from the petN-adjoint identity
-`h_adj` and oldspace-extended preservation `h_old` of the normalized candidate. -/
-theorem Newform.heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_normalized_fricke_adjoint
-    {N : ℕ} [NeZero N] {k : ℤ} {p : ℕ} [NeZero p] (hp : p.Prime)
-    (hpN : ¬ Nat.Coprime p N)
-    (h_adj : Newform.HasBadPrimeFrickePetNAdjoint N k p)
-    (h_old : ∀ (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k),
-      g ∈ cuspFormsOldExtended N k →
-        Newform.frickeBadAdjointCandidateNormalized k p g ∈
-            cuspFormsOldExtended N k)
-    (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hf : f ∈ cuspFormsNewExtended N k) :
-    heckeT_n_cusp k p f ∈ cuspFormsNewExtended N k :=
-  heckeT_n_cusp_preserves_cuspFormsNewExtended_at_divN_of_petersson_adjoint
-    hp hpN
-    (Newform.frickeBadAdjointCandidateNormalized k p) h_adj h_old f hf
 
 /-- The intersection of `cuspFormsOldExtended` and `cuspFormsNewExtended` is
 trivial. Mirrors `cuspFormsOld_disjoint_cuspFormsNew`. -/
