@@ -381,17 +381,6 @@ theorem mellin_qParam_pow_imAxis {h : ℝ} (hh : 0 < h) {m : ℕ} (hm : 1 ≤ m)
 
 
 
-private lemma ofReal_rpow_mul_norm_mul_exp_ae_eq (a : ℂ) (m : ℕ) (s : ℂ) :
-    ∀ᵐ (t : ℝ) ∂(MeasureTheory.volume.restrict (Set.Ioi (0 : ℝ))),
-        ENNReal.ofReal
-            (t ^ (s.re - 1) * ‖a‖ * Real.exp (-(2 * Real.pi * (m : ℝ) * t)))
-          = ENNReal.ofReal ‖a‖ *
-              ENNReal.ofReal
-                (t ^ (s.re - 1) * Real.exp (-(2 * Real.pi * (m : ℝ) * t))) := by
-  filter_upwards with t
-  rw [show t ^ (s.re - 1) * ‖a‖ * Real.exp (-(2 * Real.pi * (m : ℝ) * t)) =
-        ‖a‖ * (t ^ (s.re - 1) * Real.exp (-(2 * Real.pi * (m : ℝ) * t))) by ring]
-  exact ENNReal.ofReal_mul (norm_nonneg _)
 
 
 end ModularForms
