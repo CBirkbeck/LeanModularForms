@@ -77,17 +77,6 @@ private lemma peterssonAdj_glMap_T_p_upper (p : ℕ) (hp : 0 < p) (b : ℕ) :
   ext i j
   fin_cases i <;> fin_cases j <;> simp [Matrix.of_apply]
 
-private lemma peterssonAdj_glMap_T_p_lower (p : ℕ) (hp : 0 < p) :
-    (peterssonAdj (glMap (T_p_lower p hp)) : Matrix (Fin 2) (Fin 2) ℝ) =
-      !![(1 : ℝ), 0; 0, (p : ℝ)] := by
-  rw [peterssonAdj_coe]
-  have hcoe : (glMap (T_p_lower p hp) : Matrix (Fin 2) (Fin 2) ℝ) =
-      !![(p : ℝ), 0; 0, (1 : ℝ)] := by
-    ext i j
-    fin_cases i <;> fin_cases j <;> simp [glMap, T_p_lower]
-  rw [hcoe, Matrix.adjugate_fin_two]
-  ext i j
-  fin_cases i <;> fin_cases j <;> simp [Matrix.of_apply]
 
 /-- `glMap (mapGL ℚ γ) = mapGL ℝ γ` for `γ : SL(2, ℤ)`: the composite
 `SL(2, ℤ) → GL(2, ℚ) → GL(2, ℝ)` equals the direct map `mapGL ℝ`. -/
