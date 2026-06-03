@@ -530,19 +530,6 @@ private theorem integrableOn_one_div_sqrt_one_sub_sq_Icc :
   rw [Set.uIcc_of_le (by norm_num : (-1/2 : ℝ) ≤ 1/2)] at hx
   exact Real.sqrt_ne_zero'.mpr (by nlinarith [hx.1, hx.2])
 
-private theorem lintegral_fd_region_eq :
-    ∫⁻ p in measurableEquivRealProd '' (UpperHalfPlane.coe '' (fd : Set ℍ)),
-      ENNReal.ofReal (p.2 ^ (-2 : ℤ)) ∂(volume : Measure (ℝ × ℝ)) =
-    ENNReal.ofReal (∫ x in (-1/2 : ℝ)..(1/2), 1 / Real.sqrt (1 - x ^ 2)) := by
-  rw [← lintegral_indicator measurableSet_fd_realProd_image, volume_eq_prod ℝ ℝ,
-    lintegral_prod _ (AEMeasurable.indicator (by fun_prop) measurableSet_fd_realProd_image)]
-  simp_rw [fd_region_lintegral_section_eq, lintegral_indicator measurableSet_Icc]
-  rw [← ofReal_integral_eq_lintegral_ofReal integrableOn_one_div_sqrt_one_sub_sq_Icc
-    (ae_of_all _ fun x ↦ by positivity)]
-  congr 1
-  rw [intervalIntegral.intervalIntegral_eq_integral_uIoc,
-    if_pos (by norm_num : (-1/2 : ℝ) ≤ 1/2), one_smul,
-    uIoc_of_le (by norm_num : (-1/2 : ℝ) ≤ 1/2), integral_Icc_eq_integral_Ioc]
 
 
 
