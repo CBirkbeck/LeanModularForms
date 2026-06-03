@@ -138,40 +138,8 @@ private lemma Newform.mem_primeFactors_image_iff {N : ℕ} [NeZero N] (p : Nat.P
   have h_eq : (p : ℕ) = q := by simpa using congr_arg (fun (x : Nat.Primes) ↦ (x : ℕ)) hq_eq.symm
   rw [h_eq]; exact hq_N
 
-/-- Builds an `Newform.EulerStrippingArithmeticInput f χ` from the bundled
-Hecke multiplicative structure `Newform.HasHeckeMultiplicativeStructure f χ`
-(Diamond–Shurman §5.8 Prop 5.8.5, Miyake §4.5.16). -/
-noncomputable def Newform.eulerStrippingArithmeticInput_of_heckeStruct
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (h : Newform.HasHeckeMultiplicativeStructure f χ) :
-    Newform.EulerStrippingArithmeticInput f χ where
-  hfχ := h.hfχ
-  S := (Nat.primeFactors N).attach.image
-    (fun ⟨p, hp⟩ ↦ ⟨p, (Nat.mem_primeFactors.mp hp).1⟩)
-  hS p := Newform.mem_primeFactors_image_iff p
-  hf_full_euler := fun {_} hs ↦ f.lSeries_full_hasProd_of_full_coprime_mul h.full_coprime_mul hs
-  h_bad_local_inv := fun s hs p hp_S ↦
-    (f.tsum_term_lCoeff_pow_at_bad_prime_eq_geom p.prop
-      (h.bad_prime_pow p.prop ((Newform.mem_primeFactors_image_iff p).mp hp_S)) hs).2
-  h_bad_local_ne_zero := by
-    intro s hs p hp_S h_eq_zero
-    have h_norm := (f.tsum_term_lCoeff_pow_at_bad_prime_eq_geom p.prop
-      (h.bad_prime_pow p.prop ((Newform.mem_primeFactors_image_iff p).mp hp_S)) hs).1
-    rw [(sub_eq_zero.mp h_eq_zero).symm, norm_one] at h_norm
-    exact lt_irrefl 1 h_norm
 
 
-/-- A `Newform.CompletedFrickeData f` exists for any newform `f` (with
-`0 < (k : ℝ)`) given the Fricke twist `Newform.HasFrickeTwistAsCuspForm f` and
-the Euler-stripping multiplier `Newform.HasEulerStrippingMultiplier f`. -/
-theorem Newform.completedFrickeData_of_classicalInputs
-    {N : ℕ} [NeZero N] {k : ℤ} (f : Newform N k) (h_fricke : Newform.HasFrickeTwistAsCuspForm f)
-    (hk_pos : 0 < (k : ℝ)) (h_stripping : Newform.HasEulerStrippingMultiplier f) :
-    Nonempty (Newform.CompletedFrickeData f) :=
-  let ⟨twist, slash_eq⟩ := h_fricke
-  let ⟨stripping, stripping_diff, stripping_bridge⟩ := h_stripping
-  ⟨Newform.CompletedFrickeData.ofSlashEqWithStripping f twist slash_eq hk_pos
-    stripping stripping_diff stripping_bridge⟩
 
 /-- Projects `Newform.CompletedFrickeData` onto `Newform.CompletedMellinData`,
 discarding the slash-side data and keeping the analytic-content fields. -/
@@ -185,13 +153,6 @@ noncomputable def Newform.CompletedMellinData.ofCompletedFrickeData
   stripping_diff := data.stripping_diff
   stripping_bridge := data.stripping_bridge
 
-/-- The global `Newform.HeckeEntireExtension` from per-newform
-`Newform.CompletedFrickeData`. -/
-theorem Newform.HeckeEntireExtension_of_CompletedFrickeData
-    (h : ∀ ⦃N : ℕ⦄ [NeZero N] ⦃k : ℤ⦄ (f : Newform N k), Newform.CompletedFrickeData f) :
-    Newform.HeckeEntireExtension :=
-  Newform.HeckeEntireExtension_of_CompletedMellinData
-    fun _N _ _k f ↦ Newform.CompletedMellinData.ofCompletedFrickeData (h f)
 
 
 private lemma levelRaiseMatrix_inv_smul_vadd_one_eq
