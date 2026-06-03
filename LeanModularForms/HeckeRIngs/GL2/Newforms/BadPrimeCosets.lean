@@ -538,22 +538,6 @@ theorem Newform.iUnion_Gamma1_T_p_upper_left_factor_smul_eq_Gamma1_smul_T_p_uppe
     exact hzy
 
 open scoped Pointwise in
-/-- `Γ₁`-action form of the bad-prime double-coset tile equality. -/
-theorem Newform.alpha_p_Gamma1_doubleCoset_smul_set_eq_iUnion_Gamma1_smul_T_p_upper_left_smul
-    (N : ℕ) [NeZero N] {p : ℕ} (hp : p.Prime) (hpN : ¬ Nat.Coprime p N)
-    (D : Set UpperHalfPlane) :
-    ((((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ)) *
-        ({(glMap (T_p_upper p hp.pos 0) : GL (Fin 2) ℝ)} : Set (GL (Fin 2) ℝ)) *
-      (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) : Set (GL (Fin 2) ℝ))) • D =
-      Set.iUnion (fun b : Fin p ↦
-        (((Gamma1 N).map (mapGL ℝ) : Subgroup (GL (Fin 2) ℝ)) :
-          Set (GL (Fin 2) ℝ)) •
-          ((glMap (T_p_upper p hp.pos b.val) : GL (Fin 2) ℝ) • D)) := by
-  rw [Newform.alpha_p_Gamma1_doubleCoset_smul_set_eq_iUnion_T_p_upper_left_factor_smul
-    N (p := p) hp hpN D]
-  refine Set.iUnion_congr fun b ↦ ?_
-  exact Newform.iUnion_Gamma1_T_p_upper_left_factor_smul_eq_Gamma1_smul_T_p_upper_left_smul
-    N (p := p) hp b D
 
 open scoped Pointwise in
 
