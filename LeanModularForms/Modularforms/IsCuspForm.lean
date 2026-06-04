@@ -34,8 +34,3 @@ variable {Γ : Subgroup SL(2, ℤ)} {k : ℤ}
 def IsCuspForm (Γ : Subgroup SL(2, ℤ)) (k : ℤ) (f : ModularForm Γ k) : Prop :=
   ModularForm.IsCuspForm f
 
-/-- Reconstruct a `CuspForm` from a modular form known to be a cusp form. -/
-def IsCuspForm_to_CuspForm (Γ : Subgroup SL(2, ℤ)) (k : ℤ) (f : ModularForm Γ k)
-    (hf : IsCuspForm Γ k f) : CuspForm Γ k :=
-  hf.choose
-
