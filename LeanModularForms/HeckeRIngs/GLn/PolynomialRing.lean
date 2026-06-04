@@ -765,13 +765,5 @@ lemma monomial_eval_kronecker (p : ℕ) (hp : p.Prime)
         (fun i ↦ by fin_cases i <;> simp [pow_pos hp.pos])
         (divChain_two_of_dvd (pow_dvd_pow p (by omega))) 0 h_not_dvd
 
-/-- For `n = 2`, the monomial `∏ₖ T_gen(p,k)^{d k}` over the support of `d` equals
-`T_gen(p,0)^{d 0} · T_gen(p,1)^{d 1}` (missing factors contribute `T_gen^0 = 1`). -/
-private lemma prod_T_gen_pow_eq_two (p : ℕ) (d : Fin 2 →₀ ℕ) :
-    (∏ k ∈ d.support, T_gen 2 p k ^ d k) = T_gen 2 p 0 ^ (d 0) * T_gen 2 p 1 ^ (d 1) := by
-  rw [Finset.prod_subset (Finset.subset_univ d.support) (fun k _ hk ↦ by
-    rw [Finsupp.notMem_support_iff.mp hk, pow_zero]; rfl)]
-  rw [Fin.prod_univ_two]; rfl
-
 end HeckeRing.GLn.Inj
 
