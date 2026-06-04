@@ -817,46 +817,8 @@ private lemma T_sum_ppow_mul_step (r s : ℕ) (hrs : r + 2 ≤ s)
 
 section CoprimeMultiplicativity
 
-/-- Coprime factoring: `T(a,da) T(b,db) = T(ab,da*db)` when `a*da` and `b*db` are coprime. -/
-lemma T_ad_mul_of_coprime (a b da db : ℕ)
-    (ha : 0 < a) (hb : 0 < b) (hda : 0 < da) (hdb : 0 < db) (hdva : a ∣ da) (hdvb : b ∣ db)
-    (hcop : Nat.Coprime (a * da) (b * db)) :
-    T_ad a da * T_ad b db = T_ad (a * b) (da * db) := by
-  rw [T_ad_of_pos a da ha hda hdva, T_ad_of_pos b db hb hdb hdvb,
-      T_ad_of_pos (a * b) (da * db) (Nat.mul_pos ha hb)
-        (Nat.mul_pos hda hdb) (Nat.mul_dvd_mul hdva hdvb)]
-  have ha_pos : ∀ i, 0 < ![a, da] i := fun i ↦ by fin_cases i <;> first | exact ha | exact hda
-  have hb_pos : ∀ i, 0 < ![b, db] i := fun i ↦ by fin_cases i <;> first | exact hb | exact hdb
-  have ha_div : DivChain 2 (![a, da]) := fun i hi ↦ by
-    (have : i = 0 := by omega); subst this; simpa using hdva
-  have hb_div : DivChain 2 (![b, db]) := fun i hi ↦ by
-    (have : i = 0 := by omega); subst this; simpa using hdvb
-  rw [← show T_elem ((![a, da]) * (![b, db])) = T_elem ![a * b, da * db] by
-    congr 1; ext i; fin_cases i <;> simp [Pi.mul_apply]]
-  exact T_diag_mul_coprime 2 (![a, da]) (![b, db]) ha_pos hb_pos ha_div hb_div
-    (by simpa [Fin.prod_univ_two] using hcop)
-
-/-- When `T_ad` conditions fail, the product is zero and so is the RHS. -/
-private lemma T_ad_mul_zero_of_not_dvd (a da : ℕ) (h : ¬(0 < a ∧ 0 < da ∧ a ∣ da))
-    (x : HeckeAlgebra 2) : T_ad a da * x = 0 := by rw [show T_ad a da = 0 from dif_neg h, zero_mul]
-
 private lemma T_ad_mul_zero_of_not_dvd' (b db : ℕ) (h : ¬(0 < b ∧ 0 < db ∧ b ∣ db))
     (x : HeckeAlgebra 2) : x * T_ad b db = 0 := by rw [show T_ad b db = 0 from dif_neg h, mul_zero]
-
-/-- The multiplication map on `m.divisors ×ˢ n.divisors` is injective when `m` and `n`
-    are coprime. -/
-lemma mul_injOn_coprime_divisors (m n : ℕ) (hcop : Nat.Coprime m n) :
-    Set.InjOn (fun p : ℕ × ℕ ↦ p.1 * p.2) (↑(m.divisors ×ˢ n.divisors)) := by
-  intro ⟨a₁, b₁⟩ h₁ ⟨a₂, b₂⟩ h₂ heq
-  simp only [Finset.mem_coe, Finset.mem_product, Nat.mem_divisors] at h₁ h₂
-  simp only at heq
-  have haeq : a₁ = a₂ := Nat.dvd_antisymm
-    (((hcop.coprime_dvd_left h₁.1.1).coprime_dvd_right h₂.2.1).dvd_of_dvd_mul_right
-      (heq ▸ dvd_mul_right a₁ b₁))
-    (((hcop.coprime_dvd_left h₂.1.1).coprime_dvd_right h₁.2.1).dvd_of_dvd_mul_right
-      (heq ▸ dvd_mul_right a₂ b₂))
-  have ha_pos : 0 < a₁ := Nat.pos_of_ne_zero fun h ↦ by simp [h] at h₁
-  exact Prod.ext haeq (Nat.eq_of_mul_eq_mul_left ha_pos (haeq ▸ heq))
 
 end CoprimeMultiplicativity
 

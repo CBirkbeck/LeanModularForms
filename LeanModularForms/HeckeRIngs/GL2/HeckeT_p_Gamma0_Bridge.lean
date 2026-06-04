@@ -274,24 +274,4 @@ theorem tRep_gen_D_p_Gamma0_matches_T_p_reps (k : ℤ) (p : ℕ) (hp : Nat.Prime
   exact Fintype.sum_bijective φ h_bij _ _
     (phiOfFactorisations_slash_eq_tRep_gen_Gamma0_bridge k p hp D f hf h_upper_dc h_lower_dc)
 
-/-- On `modFormCharSpace k 1`, the Γ₁(N)-level Hecke operator `heckeT_p_fun` agrees
-as a function `ℍ → ℂ` with `heckeSlash_gen (Gamma0_pair N) k (D_p_Gamma0 N p hp.pos)`,
-which unfolds the Γ₀(N)-level abstract Hecke operator `heckeOperator_Gamma0`. -/
-theorem heckeT_p_fun_eq_heckeSlash_gen_Gamma0_on_charSpace_one (k : ℤ) (p : ℕ)
-    (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
-    (f : modFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ)) :
-    heckeT_p_fun k p hp hpN (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) =
-    heckeSlash_gen (Gamma0_pair N) k (D_p_Gamma0 N p hp.pos)
-      (⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) := by
-  rw [heckeT_p_fun_eq_coset_sum k hp hpN (f : ModularForm _ k),
-    slash_M_infty_eq_diamond_slash_T_p_lower k p hp.pos hpN (f : ModularForm _ k),
-    show ⇑(diamondOp k (ZMod.unitOfCoprime p hpN)
-        (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) =
-      ⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) from by
-      rw [diamondOp_trivial_of_charSpaceOne (N := N) k f (ZMod.unitOfCoprime p hpN)]]
-  unfold heckeSlash_gen
-  rw [tRep_gen_D_p_Gamma0_matches_T_p_reps k p hp hpN _
-    (charSpaceOne_Gamma0_pair_H_invariant k f)]
-  simp only [heckeT_p_ut]
-
 end HeckeRing.GL2

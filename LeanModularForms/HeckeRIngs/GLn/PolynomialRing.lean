@@ -55,21 +55,6 @@ lemma T_gen_diag_val (k : Fin n) (i : Fin n) :
     T_gen_diag n p k i =
     if (i : ℕ) < n - 1 - (k : ℕ) then 1 else p := rfl
 
-/-- The T_gen diagonal has p-power entries (each entry is 1 = p^0 or p = p^1). -/
-lemma T_gen_diag_is_ppow (k : Fin n) :
-    T_gen_diag n p k =
-    ppowDiag n p (fun i ↦ if (i : ℕ) < n - 1 - (k : ℕ) then 0 else 1) := by
-  funext i
-  simp only [T_gen_diag, ppowDiag]
-  split_ifs <;> simp
-
-/-- The exponent function for T_gen is monotone. -/
-lemma T_gen_exp_monotone (k : Fin n) :
-    Monotone (fun i : Fin n ↦ if (i : ℕ) < n - 1 - (k : ℕ) then 0 else 1) := by
-  intro i j hij
-  simp only
-  split_ifs <;> omega
-
 variable [NeZero n]
 
 include hp
