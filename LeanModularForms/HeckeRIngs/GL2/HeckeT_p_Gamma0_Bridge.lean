@@ -36,23 +36,6 @@ namespace HeckeRing.GL2
 
 variable {N : ℕ} [NeZero N]
 
-private lemma charSpaceOne_Gamma0_pair_H_invariant (k : ℤ)
-    (f : modFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ)) :
-    ∀ h, h ∈ (Gamma0_pair N).H →
-      (⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) ∣[k] glMap h =
-        ⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) := by
-  set g : ModularForm ((Gamma0 N).map (mapGL ℝ)) k :=
-    modFormCharSpace_one_equiv_Gamma0 N k f
-  exact Gamma0_pair_H_invariant_of_invariant N
-    (fun γ hγ ↦ SlashInvariantFormClass.slash_action_eq g γ hγ)
-
-private lemma diamondOp_trivial_of_charSpaceOne (k : ℤ)
-    (f : modFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ)) (d : (ZMod N)ˣ) :
-    diamondOp k d (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) =
-      (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) := by
-  simpa using (mem_modFormCharSpace_iff k (1 : (ZMod N)ˣ →* ℂˣ)
-    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)).mp f.property d
-
 private lemma adj_diag_1p_eq_T_p_lower_bridge (p : ℕ) (hp : Nat.Prime p) :
     GL_adjugate (diagMat 2 ![1, p] : GL (Fin 2) ℚ) =
       (T_p_lower p hp.pos : GL (Fin 2) ℚ) := by
@@ -227,51 +210,5 @@ private lemma phiOfFactorisations_injective_Gamma0_bridge (p : ℕ) (hp : Nat.Pr
       (Gamma0_pair_H_le_GL_pair_H N (adj_inv_mul_mem_H_of_factorisations_Gamma0_bridge
         D _ _ h_lower_dc (h_upper_dc ⟨j₂.val, h₂⟩) heq))
   · omega
-
-/-- Γ₀(N)-level analogue of `tRep_gen_D_p_matches_T_p_reps`: for a `Γ₀(N)`-invariant
-function `f : ℍ → ℂ`, the abstract `heckeSlash_gen` sum equals the explicit `T_p`
-coset-sum formula. -/
-theorem tRep_gen_D_p_Gamma0_matches_T_p_reps (k : ℤ) (p : ℕ) (hp : Nat.Prime p)
-    (hpN : Nat.Coprime p N) (f : ℍ → ℂ)
-    (hf : ∀ h, h ∈ (Gamma0_pair N).H → f ∣[k] glMap h = f) :
-    ∑ i : decompQuot (Gamma0_pair N) (HeckeCoset.rep (D_p_Gamma0 N p hp.pos)),
-      f ∣[k] tRep_gen (Gamma0_pair N) (D_p_Gamma0 N p hp.pos) i =
-    (∑ b ∈ Finset.range p, f ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ)) +
-      f ∣[k] (T_p_lower p hp.pos : GL (Fin 2) ℚ) := by
-  set D := D_p_Gamma0 N p hp.pos
-  have h_upper_dc : ∀ b : Fin p,
-      ∃ (h₁ : GL _ ℚ) (_ : h₁ ∈ (Gamma0_pair N).H)
-        (h₂ : GL _ ℚ) (_ : h₂ ∈ (Gamma0_pair N).H),
-        GL_adjugate (T_p_upper p hp.pos b.val : GL _ ℚ) =
-          h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂ := fun b ↦
-    adj_mem_dc_factorisation_Gamma0_bridge p hp hpN _
-      (T_p_upper_mem_D_p_Gamma0 N p hp b.val)
-  have h_lower_dc :
-      ∃ (h₁ : GL _ ℚ) (_ : h₁ ∈ (Gamma0_pair N).H)
-        (h₂ : GL _ ℚ) (_ : h₂ ∈ (Gamma0_pair N).H),
-        GL_adjugate (T_p_lower p hp.pos : GL _ ℚ) =
-          h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂ :=
-    adj_mem_dc_factorisation_Gamma0_bridge p hp hpN _
-      (T_p_lower_mem_D_p_Gamma0 N p hp hpN)
-  set φ := phiOfFactorisations_Gamma0_bridge p hp D h_upper_dc h_lower_dc
-  have h_card : Fintype.card (decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) = p + 1 := by
-    have h := HeckeCoset_deg_D_p_Gamma0 N p hp hpN
-    rwa [Nat.card_eq_fintype_card] at h
-  have h_bij : Function.Bijective φ :=
-    Fintype.bijective_iff_injective_and_card _ |>.mpr
-      ⟨phiOfFactorisations_injective_Gamma0_bridge p hp D h_upper_dc h_lower_dc,
-        by rw [Fintype.card_fin, h_card]⟩
-  symm
-  rw [← Fin.sum_univ_eq_sum_range,
-    show (∑ j : Fin p, f ∣[k] (T_p_upper p hp.pos j.val : GL _ ℚ)) +
-        f ∣[k] (T_p_lower p hp.pos : GL _ ℚ) =
-      ∑ j : Fin (p + 1),
-        if h : j.val < p then f ∣[k] (T_p_upper p hp.pos j.val : GL _ ℚ)
-        else f ∣[k] (T_p_lower p hp.pos : GL _ ℚ) from by
-      rw [Fin.sum_univ_castSucc]; congr 1
-      · congr 1; ext j; simp [j.isLt]
-      · simp]
-  exact Fintype.sum_bijective φ h_bij _ _
-    (phiOfFactorisations_slash_eq_tRep_gen_Gamma0_bridge k p hp D f hf h_upper_dc h_lower_dc)
 
 end HeckeRing.GL2

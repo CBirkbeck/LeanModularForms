@@ -122,11 +122,6 @@ lemma divChain_dvd {a : Fin n → ℕ} (ha : DivChain n a) {i j : Fin n} (hij : 
   | zero => intro hd; show _ ∣ a ⟨i.val, hd⟩; rfl
   | succ m ih => exact fun hd ↦ dvd_trans (ih (by omega)) (ha (i.val + m) hd)
 
-/-- The quotient `a j / a i` is positive when `i ≤ j` in a divisibility chain. -/
-lemma divChain_div_pos {a : Fin n → ℕ} (hpos : ∀ i, 0 < a i) (ha : DivChain n a) {i j : Fin n}
-    (hij : i ≤ j) : 0 < a j / a i :=
-  Nat.div_pos (Nat.le_of_dvd (hpos j) (divChain_dvd n ha hij)) (hpos i)
-
 section TDiag
 
 variable {n} [NeZero n]

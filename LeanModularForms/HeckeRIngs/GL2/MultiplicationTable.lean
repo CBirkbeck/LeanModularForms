@@ -817,9 +817,6 @@ private lemma T_sum_ppow_mul_step (r s : ℕ) (hrs : r + 2 ≤ s)
 
 section CoprimeMultiplicativity
 
-private lemma T_ad_mul_zero_of_not_dvd' (b db : ℕ) (h : ¬(0 < b ∧ 0 < db ∧ b ∣ db))
-    (x : HeckeAlgebra 2) : x * T_ad b db = 0 := by rw [show T_ad b db = 0 from dif_neg h, mul_zero]
-
 end CoprimeMultiplicativity
 
 end HeckeRing.GL2

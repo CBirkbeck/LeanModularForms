@@ -40,11 +40,6 @@ This is the HeckeCoset of the diagonal matrix `diag(1,p)`. -/
 noncomputable def D_p (p : ℕ) (hp : 0 < p) : HeckeRing.HeckeCoset (GL_pair 2) :=
   ⟦⟨diagMat 2 ![1, p], diagMat_mem_posDetInt 2 _ (fun i ↦ by fin_cases i <;> simp [hp])⟩⟧
 
-private lemma SL_invariant_to_H_invariant {k : ℤ} {f : ℍ → ℂ}
-    (hf_SL : ∀ γ ∈ 𝒮ℒ, f ∣[k] γ = f) :
-    ∀ h, h ∈ (GL_pair 2).H → f ∣[k] (glMap h) = f := fun _ ⟨s, hs⟩ ↦ hs ▸
-  hf_SL (glMap (mapGL ℚ s)) ⟨s, (glMap_mapGL_eq s).symm⟩
-
 private lemma SLnZ_entry_is_int (g : GL (Fin 2) ℚ) (hg : g ∈ SLnZ_subgroup 2)
     (i j : Fin 2) : ∃ n : ℤ, g.val i j = (n : ℚ) :=
   let ⟨s, hs⟩ := hg

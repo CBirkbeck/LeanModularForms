@@ -90,12 +90,4 @@ lemma upperTriGL_val (a : Fin n → ℕ) (hpos : ∀ i, 0 < a i) (hdiv : DivChai
     (B : UpperTriRep n a hdiv) : (↑(upperTriGL n a hpos hdiv B) : Matrix (Fin n) (Fin n) ℚ) =
     (upperTriMat n a hdiv B).map (Int.cast : ℤ → ℚ) := rfl
 
-/-- The unipotent upper-triangular matrix with `1` on the diagonal and `B_{ij}` above. -/
-def unipMat (a : Fin n → ℕ) (hdiv : DivChain n a) (B : UpperTriRep n a hdiv) :
-    Matrix (Fin n) (Fin n) ℤ :=
-  fun i j ↦
-    if h : i < j then (B ⟨(i, j), h⟩ : ℕ)
-    else if i = j then 1
-    else 0
-
 end HeckeRing.GLn
