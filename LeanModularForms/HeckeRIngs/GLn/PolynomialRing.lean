@@ -256,44 +256,6 @@ private lemma T_diag_one_ppow_inj (p : ℕ) (hp : p.Prime) {b s : Fin 1 →₀ �
     (fun _ ↦ Nat.pow_pos hp.pos) (fun _ ↦ Nat.pow_pos hp.pos) (hdiv b) (hdiv s) hb
   exact Nat.pow_right_injective hp.two_le (congr_fun heq 0)
 
-/-- n=1: evalHom is injective. Different monomials map to distinct basis elements,
-    so the images are ℤ-linearly independent. -/
-theorem evalHom_injective_one (p : ℕ) (hp : p.Prime) : Function.Injective (evalHom 1 p) := by
-  intro P Q hPQ
-  rw [← sub_eq_zero]
-  set R := P - Q
-  have hR : evalHom 1 p R = 0 := by simp [R, map_sub, hPQ]
-  by_contra hne
-  obtain ⟨s, hs⟩ := MvPolynomial.support_nonempty.mpr hne
-  have hcoeff : R.coeff s ≠ 0 := MvPolynomial.mem_support_iff.mp hs
-  set D := T_diag (n := 1) (fun _ ↦ p ^ (s 0))
-  have h0 : (evalHom 1 p R).toFun D = 0 := by rw [hR]; rfl
-  apply hcoeff
-  suffices h : ((evalHom 1 p) R).toFun D = MvPolynomial.coeff s R from h ▸ h0
-  show Finsupp.toFun (MvPolynomial.eval₂Hom (Int.castRingHom (HeckeAlgebra 1))
-    (fun k ↦ T_gen 1 p k) R) D = _
-  simp only [MvPolynomial.coe_eval₂Hom, MvPolynomial.eval₂_eq', Fin.prod_univ_one]
-  have h_sum_eq : (∑ x ∈ R.support,
-      (Int.castRingHom (HeckeAlgebra 1)) (MvPolynomial.coeff x R) * T_gen 1 p 0 ^ x 0) =
-    (∑ x ∈ R.support,
-      (Finsupp.single (T_diag (n := 1) (fun _ ↦ p ^ x 0))
-        (MvPolynomial.coeff x R) : HeckeCoset (GL_pair 1) →₀ ℤ)) :=
-    Finset.sum_congr rfl (fun x _ ↦ by
-      rw [T_gen_pow_one p hp]
-      exact intCast_mul_T_elem_eq_single (fun _ ↦ p ^ x 0) (R.coeff x))
-  show (∑ x ∈ R.support,
-      (Int.castRingHom (HeckeAlgebra 1)) (MvPolynomial.coeff x R) * T_gen 1 p 0 ^ x 0)
-        D = MvPolynomial.coeff s R
-  rw [h_sum_eq]
-  show (∑ x ∈ R.support, (Finsupp.single (T_diag (n := 1) (fun _ ↦ p ^ x 0))
-      (MvPolynomial.coeff x R) : HeckeCoset (GL_pair 1) →₀ ℤ)) D = MvPolynomial.coeff s R
-  rw [Finsupp.finsetSum_apply]
-  simp only [Finsupp.single_apply, D]
-  rw [Finset.sum_eq_single s (fun b _ hbs ↦ if_neg (fun hb ↦ hbs
-    (Finsupp.ext (fun j ↦ by rw [Fin.fin_one_eq_zero j]; exact T_diag_one_ppow_inj p hp hb))))
-    (fun hns ↦ absurd hs hns)]
-  simp
-
 /-- A two-entry diagonal `![a, b]` is a divisibility chain iff `a ∣ b`. -/
 private lemma divChain_two_of_dvd {a b : ℕ} (hab : a ∣ b) :
     DivChain 2 (![a, b] : Fin 2 → ℕ) := by
