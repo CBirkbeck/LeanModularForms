@@ -458,11 +458,6 @@ lemma hasCauchyPVOn'_empty (f : ℂ → ℂ) (γ : ℝ → ℂ) (a b : ℝ) :
   exact intervalIntegral.integral_congr fun t _ =>
     (cpvIntegrandOn_of_forall_gt (by simp)).symm
 
-lemma cauchyPrincipalValueOn_empty
-    (f : ℂ → ℂ) (γ : ℝ → ℂ) (a b : ℝ) :
-    cauchyPrincipalValueOn ∅ f γ a b = ∫ t in a..b, f (γ t) * deriv γ t :=
-  (hasCauchyPVOn'_empty f γ a b).cauchyPVOn_eq
-
 /-- PV exists with value equal to the ordinary contour integral when the curve avoids
 all singularities. -/
 lemma hasCauchyPVOn'_avoids
