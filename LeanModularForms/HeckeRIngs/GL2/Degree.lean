@@ -50,24 +50,4 @@ private lemma deg_T_ad_of_pos (a d : ℕ) (ha : 0 < a) (hd : 0 < d) (hdvd : a �
     deg (GL_pair 2) (T_ad a d) = HeckeCoset_deg (GL_pair 2) (T_diag ![a, d]) := by
   simp [deg, T_ad_of_pos a d ha hd hdvd, T_elem]
 
-include hp in
-private lemma deg_ppow_term_lt (i k : ℕ) (h2i : 2 * i < k) :
-    deg (GL_pair 2) (T_ad (p ^ i) (p ^ (k - i))) =
-    ↑(p ^ (k - 2 * i - 1) * (p + 1)) := by
-  have h_exp_eq : k - i = i + (k - 2 * i) := by omega
-  rw [deg_T_ad_of_pos (p ^ i) (p ^ (k - i)) (pow_pos hp.pos i) (pow_pos hp.pos (k - i))
-      (Nat.pow_dvd_pow p (by omega)),
-    show (![p ^ i, p ^ (k - i)] : Fin 2 → ℕ) = ![p ^ i, p ^ (i + (k - 2 * i))] by
-      ext j; fin_cases j <;> simp [h_exp_eq]]
-  exact deg_T_diag_ppow p hp i (k - 2 * i) (by omega)
-
-include hp in
-private lemma deg_ppow_term_eq (i k : ℕ) (h2i : 2 * i = k) :
-    deg (GL_pair 2) (T_ad (p ^ i) (p ^ (k - i))) = 1 := by
-  rw [show k - i = i by omega,
-    deg_T_ad_of_pos (p ^ i) (p ^ i) (pow_pos hp.pos i) (pow_pos hp.pos i) (dvd_refl _),
-    show T_diag (![p ^ i, p ^ i]) = T_diag (fun _ ↦ p ^ i) by
-      congr 1; ext j; fin_cases j <;> rfl]
-  exact deg_T_diag_scalar (p ^ i) (pow_pos hp.pos i)
-
 end HeckeRing.GL2
