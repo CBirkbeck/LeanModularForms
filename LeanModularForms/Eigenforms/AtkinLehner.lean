@@ -209,11 +209,6 @@ def castCuspFormLinearEquiv {M N : ℕ} (h : M = N) (k : ℤ) :
   left_inv x := by subst h; rfl
   right_inv x := by subst h; rfl
 
-@[simp] lemma castCuspFormLinearEquiv_apply {M N : ℕ} (h : M = N) (k : ℤ)
-    (x : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) :
-    castCuspFormLinearEquiv h k x =
-      (h ▸ x : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) := rfl
-
 /-- The Atkin-Lehner level-raise operator packaged at the same-level target `Γ₁(N)`:
 the composition of `levelRaise (N/d) d k` with `castCuspFormLinearEquiv`. -/
 noncomputable def castLevelRaise (N : ℕ) [NeZero N] (d : ℕ) [NeZero d]
