@@ -796,30 +796,5 @@ private lemma evalHom_apply_eq_sum_monomial (p : ℕ) (R : MvPolynomial (Fin 2) 
     R.coeff d • (∏ k ∈ d.support, T_gen 2 p k ^ d k : HeckeAlgebra 2) D from
     Finsupp.smul_apply _ _ _, smul_eq_mul, prod_T_gen_pow_eq_two]
 
-/-- n=2: evalHom is injective. -/
-theorem evalHom_injective_two (p : ℕ) (hp : p.Prime) :
-    Function.Injective (evalHom 2 p) := by
-  intro P Q hPQ
-  rw [← sub_eq_zero]; set R := P - Q with hR_def
-  have hR : evalHom 2 p R = 0 := by simp [R, map_sub, hPQ]
-  by_contra hR_ne
-  obtain ⟨s, hs_mem, hs_min⟩ := Finset.exists_min_image R.support
-    (fun d : Fin 2 →₀ ℕ ↦ d 1) (MvPolynomial.support_nonempty.mpr hR_ne)
-  have hs_coeff : R.coeff s ≠ 0 := MvPolynomial.mem_support_iff.mp hs_mem
-  have h_zero : (evalHom 2 p R) (T_diag (ppowDiag 2 p ![s 1, s 0 + s 1])) = 0 := by rw [hR]; rfl
-  rw [evalHom_apply_eq_sum_monomial] at h_zero
-  have h_delta : ∀ d ∈ R.support,
-      R.coeff d * (T_gen 2 p 0 ^ (d 0) * T_gen 2 p 1 ^ (d 1))
-          (T_diag (ppowDiag 2 p ![s 1, s 0 + s 1])) =
-      if d = s then R.coeff d else 0 := by
-    intro d hd_mem
-    rw [monomial_eval_kronecker p hp (d 0) (d 1) (s 0) (s 1) (hs_min d hd_mem)]
-    by_cases hds : d = s
-    · subst hds; simp
-    · rw [if_neg hds, if_neg (fun ⟨h0, h1⟩ ↦ hds (by ext i; fin_cases i; exacts [h0, h1])),
-        mul_zero]
-  rw [Finset.sum_congr rfl h_delta, Finset.sum_ite_eq_of_mem' R.support s _ hs_mem] at h_zero
-  exact hs_coeff h_zero
-
 end HeckeRing.GLn.Inj
 
