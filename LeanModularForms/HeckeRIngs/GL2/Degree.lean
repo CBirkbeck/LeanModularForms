@@ -46,8 +46,4 @@ theorem deg_T_diag_scalar (c : ℕ) (hc : 0 < c) :
     HeckeCoset_deg (GL_pair 2) (T_diag (fun _ ↦ c)) = 1 :=
   HeckeCoset_deg_T_diag_two_scalar (fun _ ↦ c) (fun _ ↦ hc) (divChain_const 2 c) rfl
 
-private lemma deg_T_ad_of_pos (a d : ℕ) (ha : 0 < a) (hd : 0 < d) (hdvd : a ∣ d) :
-    deg (GL_pair 2) (T_ad a d) = HeckeCoset_deg (GL_pair 2) (T_diag ![a, d]) := by
-  simp [deg, T_ad_of_pos a d ha hd hdvd, T_elem]
-
 end HeckeRing.GL2
