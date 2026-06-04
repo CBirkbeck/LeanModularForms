@@ -21,10 +21,6 @@ a non-zero limit. Candidates for upstreaming to
 
 open UpperHalfPlane Filter Topology ModularForm
 
-lemma Filter.eventually_atImInfty {p : ℍ → Prop} :
-    (∀ᶠ x in atImInfty, p x) ↔ ∃ A : ℝ, ∀ z : ℍ, A ≤ z.im → p z :=
-  atImInfty_mem (setOf p)
-
 /-- `FunLike` on raw `ℍ → ℂ`, used by the `qExpansion`-extensionality lemma when one of
 the arguments is an explicit function instead of a bundled modular form. -/
 instance : FunLike (ℍ → ℂ) ℍ ℂ where
