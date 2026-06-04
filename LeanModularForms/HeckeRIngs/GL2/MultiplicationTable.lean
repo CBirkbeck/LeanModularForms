@@ -651,13 +651,6 @@ private lemma T_pp_comm_T_sum_ppow (k : ℕ) : T_pp p * T_sum ⟨p ^ k, pow_pos 
       (fun i' hi' ↦ by (have : i' = 0 := by omega); subst this; simpa using hdvd)
   · simp [T_ad_eq_zero h, mul_zero, zero_mul]
 
-private lemma T_pp_pow_comm_T_sum_ppow (i k : ℕ) : T_pp p ^ i *
-    T_sum ⟨p ^ k, pow_pos hp.pos k⟩ = T_sum ⟨p ^ k, pow_pos hp.pos k⟩ * T_pp p ^ i := by
-  induction i with
-  | zero => simp
-  | succ i ih => rw [pow_succ', mul_assoc, ih, ← mul_assoc, T_pp_comm_T_sum_ppow p hp k,
-      mul_assoc, ← pow_succ']
-
 section CoprimeMultiplicativity
 
 end CoprimeMultiplicativity
