@@ -87,18 +87,6 @@ private lemma GL_adjugate_mem_D_p_Gamma0_bridge (p : ℕ) (hp : Nat.Prime p)
       r₁ * (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) * r₂ from hrep_eq]
   group
 
-private lemma adj_mem_dc_factorisation_Gamma0_bridge (p : ℕ) (hp : Nat.Prime p)
-    (hpN : Nat.Coprime p N) (g : GL (Fin 2) ℚ)
-    (hg : g ∈ HeckeCoset.toSet (D_p_Gamma0 N p hp.pos)) :
-    ∃ (h₁ : GL (Fin 2) ℚ) (_ : h₁ ∈ (Gamma0_pair N).H)
-      (h₂ : GL (Fin 2) ℚ) (_ : h₂ ∈ (Gamma0_pair N).H),
-      GL_adjugate g =
-        h₁ * (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) * h₂ := by
-  have hadj_mem := GL_adjugate_mem_D_p_Gamma0_bridge p hp hpN g hg
-  rw [HeckeCoset.toSet_eq_rep, DoubleCoset.mem_doubleCoset] at hadj_mem
-  obtain ⟨h₁, hh₁, h₂, hh₂, heq⟩ := hadj_mem
-  exact ⟨h₁, hh₁, h₂, hh₂, heq⟩
-
 private lemma slash_eq_tRep_gen_of_adj_mem_Gamma0_bridge (k : ℤ) (f : ℍ → ℂ)
     (hf : ∀ h, h ∈ (Gamma0_pair N).H → f ∣[k] glMap h = f) (D : HeckeCoset (Gamma0_pair N))
     (g h₁ h₂ : GL (Fin 2) ℚ) (hh₁ : h₁ ∈ (Gamma0_pair N).H) (hh₂ : h₂ ∈ (Gamma0_pair N).H)
@@ -152,63 +140,5 @@ private noncomputable def phiOfFactorisations_Gamma0_bridge (p : ℕ)
     ⟦⟨(h_upper_dc ⟨j.val, h⟩).choose, (h_upper_dc ⟨j.val, h⟩).choose_spec.choose⟩⟧
   else
     ⟦⟨h_lower_dc.choose, h_lower_dc.choose_spec.choose⟩⟧
-
-private lemma phiOfFactorisations_slash_eq_tRep_gen_Gamma0_bridge (k : ℤ) (p : ℕ)
-    (hp : Nat.Prime p) (D : HeckeCoset (Gamma0_pair N)) (f : ℍ → ℂ)
-    (hf : ∀ h, h ∈ (Gamma0_pair N).H → f ∣[k] glMap h = f)
-    (h_upper_dc : ∀ b : Fin p,
-      ∃ (h₁ : GL _ ℚ) (_ : h₁ ∈ (Gamma0_pair N).H) (h₂ : GL _ ℚ)
-        (_ : h₂ ∈ (Gamma0_pair N).H),
-        GL_adjugate (T_p_upper p hp.pos b.val : GL _ ℚ) =
-          h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂)
-    (h_lower_dc : ∃ (h₁ : GL _ ℚ) (_ : h₁ ∈ (Gamma0_pair N).H) (h₂ : GL _ ℚ)
-      (_ : h₂ ∈ (Gamma0_pair N).H),
-      GL_adjugate (T_p_lower p hp.pos : GL _ ℚ) =
-        h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂) (j : Fin (p + 1)) :
-    (if _h : j.val < p then f ∣[k] (T_p_upper p hp.pos j.val : GL _ ℚ)
-      else f ∣[k] (T_p_lower p hp.pos : GL _ ℚ)) =
-    f ∣[k] tRep_gen (Gamma0_pair N) D
-      (phiOfFactorisations_Gamma0_bridge p hp D h_upper_dc h_lower_dc j) := by
-  simp only [phiOfFactorisations_Gamma0_bridge]
-  split_ifs with h
-  · set e := h_upper_dc ⟨j.val, h⟩
-    exact slash_eq_tRep_gen_of_adj_mem_Gamma0_bridge k f hf D _ _ _ e.choose_spec.choose
-      e.choose_spec.choose_spec.choose_spec.choose
-      e.choose_spec.choose_spec.choose_spec.choose_spec
-  · exact slash_eq_tRep_gen_of_adj_mem_Gamma0_bridge k f hf D _ _ _
-      h_lower_dc.choose_spec.choose h_lower_dc.choose_spec.choose_spec.choose_spec.choose
-      h_lower_dc.choose_spec.choose_spec.choose_spec.choose_spec
-
-private lemma phiOfFactorisations_injective_Gamma0_bridge (p : ℕ) (hp : Nat.Prime p)
-    (D : HeckeCoset (Gamma0_pair N))
-    (h_upper_dc : ∀ b : Fin p,
-      ∃ (h₁ : GL _ ℚ) (_ : h₁ ∈ (Gamma0_pair N).H) (h₂ : GL _ ℚ)
-        (_ : h₂ ∈ (Gamma0_pair N).H),
-        GL_adjugate (T_p_upper p hp.pos b.val : GL _ ℚ) =
-          h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂)
-    (h_lower_dc : ∃ (h₁ : GL _ ℚ) (_ : h₁ ∈ (Gamma0_pair N).H) (h₂ : GL _ ℚ)
-      (_ : h₂ ∈ (Gamma0_pair N).H),
-      GL_adjugate (T_p_lower p hp.pos : GL _ ℚ) =
-        h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂) :
-    Function.Injective
-      (phiOfFactorisations_Gamma0_bridge p hp D h_upper_dc h_lower_dc) := by
-  intro j₁ j₂ heq
-  by_contra hne
-  simp only [phiOfFactorisations_Gamma0_bridge] at heq
-  by_cases h₁ : j₁.val < p <;> by_cases h₂ : j₂.val < p
-  · simp only [h₁, h₂, dite_true] at heq
-    exact HeckeRing.GL2.adj_upper_inv_mul_not_mem_H p hp j₁.val j₂.val h₁ h₂
-      (fun h ↦ hne (Fin.ext h))
-      (Gamma0_pair_H_le_GL_pair_H N (adj_inv_mul_mem_H_of_factorisations_Gamma0_bridge
-        D _ _ (h_upper_dc ⟨j₁.val, h₁⟩) (h_upper_dc ⟨j₂.val, h₂⟩) heq))
-  · simp only [h₁, dite_true, h₂, dite_false] at heq
-    exact HeckeRing.GL2.adj_upper_inv_mul_lower_not_mem_H p hp j₁.val
-      (Gamma0_pair_H_le_GL_pair_H N (adj_inv_mul_mem_H_of_factorisations_Gamma0_bridge
-        D _ _ (h_upper_dc ⟨j₁.val, h₁⟩) h_lower_dc heq))
-  · simp only [h₁, dite_false, h₂, dite_true] at heq
-    exact HeckeRing.GL2.adj_lower_inv_mul_upper_not_mem_H p hp j₂.val
-      (Gamma0_pair_H_le_GL_pair_H N (adj_inv_mul_mem_H_of_factorisations_Gamma0_bridge
-        D _ _ h_lower_dc (h_upper_dc ⟨j₂.val, h₂⟩) heq))
-  · omega
 
 end HeckeRing.GL2
