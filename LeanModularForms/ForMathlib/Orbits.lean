@@ -5,7 +5,7 @@ Authors: Chris Birkbeck
 -/
 import Mathlib.Analysis.Meromorphic.NormalForm
 import Mathlib.LinearAlgebra.Matrix.FixedDetMatrices
-import Mathlib.NumberTheory.ModularForms.LevelOne
+import Mathlib.NumberTheory.ModularForms.LevelOne.Basic
 import LeanModularForms.ForMathlib.ModularInvariance
 
 /-!
@@ -156,8 +156,9 @@ private theorem no_zeros_above_height' (hf : f ≠ 0) :
       ∀ (p : ℍ), H₀ ≤ (p : ℂ).im → f p ≠ 0 := by
   obtain ⟨H₀, hH₀_gt, hH₀_nonvan⟩ := exists_height_cusp_nonvanishing f hf
   refine ⟨H₀, hH₀_gt, fun p hp hfp => ?_⟩
-  have h_eq := SlashInvariantFormClass.eq_cuspFunction f p
-      one_mem_strictPeriods_SL one_ne_zero
+  have h_one_mem : (1 : ℝ) ∈ (↑(Gamma 1) : Subgroup (GL (Fin 2) ℝ)).strictPeriods :=
+    Gamma_one_coe_eq_SL.symm ▸ one_mem_strictPeriods_SL
+  have h_eq := SlashInvariantFormClass.eq_cuspFunction f p h_one_mem one_ne_zero
   have h_qParam_mem : Function.Periodic.qParam (1 : ℝ) (↑p : ℂ) ∈
       Metric.closedBall (0 : ℂ) (Real.exp (-2 * Real.pi * H₀)) := by
     rw [Metric.mem_closedBall, dist_zero_right, Function.Periodic.norm_qParam, div_one]

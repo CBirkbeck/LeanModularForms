@@ -174,7 +174,7 @@ private lemma volume_shell_le {t₀ r₁ r₂ : ℝ} (hr : r₁ ≤ r₂) :
         rw [← ENNReal.ofReal_add (by linarith) (by linarith)]; ring_nf
 
 private lemma symmDiff_subset_boundaryLayers {g x e ε₁ ε₂ : ℝ} (h_approx : |g - x| ≤ e)
-    (h_xor : Xor' (ε₂ < g ∧ g ≤ ε₁) (ε₂ < x ∧ x ≤ ε₁)) :
+    (h_xor : Xor (ε₂ < g ∧ g ≤ ε₁) (ε₂ < x ∧ x ≤ ε₁)) :
     |x - ε₂| ≤ e ∨ |x - ε₁| ≤ e := by
   have h_abs := abs_le.mp h_approx
   rcases h_xor with ⟨⟨hg_lo, hg_hi⟩, hnotB⟩ | ⟨⟨hx_lo, hx_hi⟩, hnotA⟩
@@ -319,7 +319,7 @@ lemma annulus_symmDiff_measure_bound {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : �
   have h_subset : symmDiff γAnn tAnnLin ⊆ shell₁ ∪ shell₂ := by
     intro t ht
     rw [Set.mem_symmDiff] at ht
-    have hxor : Xor' (t ∈ γAnn) (t ∈ tAnnLin) := ht
+    have hxor : Xor (t ∈ γAnn) (t ∈ tAnnLin) := ht
     have ht_localized : |t - t₀| < δ₁ := by
       rcases hxor with ⟨ht_γAnn, _⟩ | ⟨ht_tAnn, _⟩
       · exact h_localize_γAnn t ht_γAnn
@@ -329,7 +329,7 @@ lemma annulus_symmDiff_measure_bound {γ : ℝ → ℂ} {a b t₀ : ℝ} {L : �
       convert norm_linear_approx_bound h_quad ht_lt_δ₀ using 2
     have ht_Icc : t ∈ Set.Icc a b := by
       rcases hxor with ⟨⟨ht_Icc, _, _, _⟩, _⟩ | ⟨⟨ht_Icc, _, _, _⟩, _⟩ <;> exact ht_Icc
-    have hxor' : Xor' (ε₂ < g t ∧ g t ≤ ε₁) (ε₂ < x t ∧ x t ≤ ε₁) := by
+    have hxor' : Xor (ε₂ < g t ∧ g t ≤ ε₁) (ε₂ < x t ∧ x t ≤ ε₁) := by
       rcases hxor with ⟨⟨_, _, hγ_lo, hγ_hi⟩, hnotB⟩ | ⟨⟨_, _, ht_lo, ht_hi⟩, hnotA⟩
       · exact Or.inl ⟨⟨hγ_lo, hγ_hi⟩,
           fun ⟨h1, h2⟩ => hnotB ⟨ht_Icc, ht_localized, h1, h2⟩⟩

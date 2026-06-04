@@ -160,6 +160,8 @@ theorem oncurve_seg4_capture
   have h_seg_eq : z = fdBoundary_seg1_H H s - 1 := by
     rw [hz_seg, ← h4s]
     exact seg4_eq_seg1_minus_one_H H s
+  have hMC : ModularFormClass (ModularForm (Gamma 1) k) 𝒮ℒ k :=
+    Gamma_one_coe_eq_SL ▸ inferInstance
   have h_periodic : Function.Periodic (modularFormCompOfComplex f) (1 : ℂ) := by
     simpa using SlashInvariantFormClass.periodic_comp_ofComplex f
       one_mem_strictPeriods_SL

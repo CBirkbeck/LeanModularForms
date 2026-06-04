@@ -128,6 +128,8 @@ private lemma truncation_iff_shift_union
 omit hf in
 private lemma logDeriv_modFormComp_periodic :
     Function.Periodic (logDeriv (modularFormCompOfComplex f)) (1 : ℂ) := by
+  have hMC : ModularFormClass (ModularForm (Gamma 1) k) 𝒮ℒ k :=
+    Gamma_one_coe_eq_SL ▸ inferInstance
   have h_per : Function.Periodic (modularFormCompOfComplex f) (1 : ℂ) := by
     simpa only [Nat.cast_one] using SlashInvariantFormClass.periodic_comp_ofComplex f
       one_mem_strictPeriods_SL
@@ -312,7 +314,6 @@ private theorem tendsto_pvIntegral_seg5
               rw [Set.mem_Ioc] at ht
               simp only [pvIntegrand, cauchyPrincipalValueIntegrandOn,
                 if_neg (hε t ht.1 ht.2)]
-              rfl
           · exact Filter.Eventually.of_forall fun t ht => by
               rw [Set.mem_Ioc] at ht
               exact absurd ht.1 (by linarith [ht.2])
@@ -522,6 +523,8 @@ private lemma modFormComp_ne_zero_at_height
       Metric.closedBall (0 : ℂ) (seg5_q_radius_H H) := by
     rw [Metric.mem_closedBall, dist_zero_right, Function.Periodic.norm_qParam]
     simp [seg5_q_radius_H, hz_im]
+  have hMC : ModularFormClass (ModularForm (Gamma 1) k) 𝒮ℒ k :=
+    Gamma_one_coe_eq_SL ▸ inferInstance
   exact absurd ((SlashInvariantFormClass.eq_cuspFunction f ⟨z, hz_pos⟩
     one_mem_strictPeriods_SL one_ne_zero).trans
     (h_bridge ▸ h_zero)) (hcusp _ h_qmem (Complex.exp_ne_zero _))
@@ -591,6 +594,8 @@ private lemma modular_side_h_capture
               fdBoundary_H_eq_seg1_H (by linarith : 4 - t ≤ 1)]
           have h_F_zero_shifted :
               modularFormCompOfComplex f (fdBoundary_H H (4 - t)) = 0 := by
+            have hMC : ModularFormClass (ModularForm (Gamma 1) k) 𝒮ℒ k :=
+              Gamma_one_coe_eq_SL ▸ inferInstance
             have h_F_per : Function.Periodic (modularFormCompOfComplex f) (1 : ℂ) := by
               simpa only [Nat.cast_one] using SlashInvariantFormClass.periodic_comp_ofComplex f
                 one_mem_strictPeriods_SL

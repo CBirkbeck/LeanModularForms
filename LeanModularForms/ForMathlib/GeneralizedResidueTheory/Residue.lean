@@ -294,7 +294,7 @@ private lemma continuousAt_g_at_pole
     ContinuousAt (fun w => f w - ∑ s ∈ S0, residueSimplePole f s / (w - s)) z := by
   have h2 : ContinuousAt
       (fun w => ∑ s ∈ S0.filter (· ≠ z), residueSimplePole f s / (w - s)) z :=
-    tendsto_finset_sum _ fun s hs' => by
+    tendsto_finsetSum _ fun s hs' => by
       simp only [Finset.mem_filter] at hs'
       exact (continuousAt_const.div (continuousAt_id.sub continuousAt_const)
         (sub_ne_zero.mpr (Ne.symm hs'.2))).tendsto
@@ -386,7 +386,7 @@ private lemma singular_sum_eq_winding_residues
       ∑ s ∈ S0, residueSimplePole f s / (γ.toFun t - s) * deriv γ.toFun t =
     ∑ s ∈ S0, 2 * Real.pi * I *
       generalizedWindingNumber' γ.toFun γ.a γ.b s * residueSimplePole f s := by
-  rw [intervalIntegral.integral_finset_sum (s := S0) fun s hs =>
+  rw [intervalIntegral.integral_finsetSum (s := S0) fun s hs =>
     (piecewiseC1_deriv_intervalIntegrable γ hγ'_bdd).continuousOn_mul
       (Set.uIcc_of_le (le_of_lt γ.hab) ▸
         continuousOn_const.div (γ.continuous_toFun.sub continuousOn_const)

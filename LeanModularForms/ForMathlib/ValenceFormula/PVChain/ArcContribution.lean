@@ -318,10 +318,10 @@ lemma arc_cpv_integral_S_identity (S : Finset UpperHalfPlane)
       have h_not_ind_4mt : ¬ind (4 - t) := fun h => h_near ((h_ind_sym t ht_ioo).mp h)
       have h_F_t : F t = logDeriv g (γ t) * deriv γ t := by
         show cauchyPrincipalValueIntegrandOn _ _ _ _ _ = _
-        unfold cauchyPrincipalValueIntegrandOn; rw [if_neg h_near]; rfl
+        unfold cauchyPrincipalValueIntegrandOn; rw [if_neg h_near]
       have h_F_4mt : F (4 - t) = logDeriv g (γ (4 - t)) * deriv γ (4 - t) := by
         show cauchyPrincipalValueIntegrandOn _ _ _ _ _ = _
-        unfold cauchyPrincipalValueIntegrandOn; rw [if_neg h_not_ind_4mt]; rfl
+        unfold cauchyPrincipalValueIntegrandOn; rw [if_neg h_not_ind_4mt]
       rw [h_F_4mt, h_F_t, if_neg h_near]
       simp only [Complex.ofReal_one, mul_one]
       have h_rev : γ (4 - t) = -(1:ℂ) / γ t := fdBoundary_arc_S_reverse H t ht_ioo

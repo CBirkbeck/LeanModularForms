@@ -98,7 +98,7 @@ private lemma cpv_cauchy_of_sum_and_regular (S0 : Finset ℂ) (f : ℂ → ℂ)
     else 0
   set g_reg := fun z => f z - ∑ s ∈ S0, residueSimplePole f s / (z - s)
   have h_sum_tendsto : Tendsto S' (𝓝[>] 0) (𝓝 (∑ s ∈ S0.attach, L_fn s.val s.property)) :=
-    tendsto_finset_sum _ fun ⟨s, hs⟩ _ => hL_fn s hs
+    tendsto_finsetSum _ fun ⟨s, hs⟩ _ => hL_fn s hs
   have h_A_tendsto : Tendsto (fun ε => M ε - S' ε) (𝓝[>] 0)
       (𝓝 (∫ t in γ.a..γ.b, g_reg (γ.toFun t) * deriv γ.toFun t)) :=
     multipointPV_diff_tendsto S0 f γ (cpv_crossing_null S0 γ) g_reg
@@ -231,7 +231,7 @@ private lemma cpv_eq_sum_single_pole_cpvs
         (𝓝 (∑ s ∈ S0,
           cauchyPrincipalValue' (fun z => residueSimplePole f s / (z - s))
             γ.toFun γ.a γ.b s)) := by
-    refine tendsto_finset_sum _ fun s hs => ?_
+    refine tendsto_finsetSum _ fun s hs => ?_
     obtain ⟨Ls, hLs⟩ := hPV_singular s hs
     rw [show cauchyPrincipalValue' (fun z => residueSimplePole f s / (z - s))
       γ.toFun γ.a γ.b s = Ls from hLs.limUnder_eq]

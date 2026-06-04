@@ -276,7 +276,7 @@ theorem cpv_polarPart_at_uncrossed_pole
         (fun t => ∑ k : Fin (decomp.order s),
           decomp.coeff s k / (γP.toPath.extend t - s) ^ (k.val + 1))
         (Icc (0 : ℝ) 1) :=
-      continuousOn_finset_sum _ fun k _ => h_cont_inv_each k
+      continuousOn_finsetSum _ fun k _ => h_cont_inv_each k
     refine h_sum_cont.congr fun t ht => ?_
     change decomp.polarPart s (γP.toPath.extend t) =
       ∑ k : Fin (decomp.order s),

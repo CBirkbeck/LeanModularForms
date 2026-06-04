@@ -371,7 +371,7 @@ theorem exists_continuous_arg_lift_with_partition
   refine ⟨N, s, hN_pos, hs_zero, hs_N, hs_mono, hs_in, hs_avoid, h_slit, ?_, ?_⟩
   -- Continuity of θ
   · refine ContinuousOn.add continuousOn_const ?_
-    refine continuousOn_finset_sum _ ?_
+    refine continuousOn_finsetSum _ ?_
     intro j hj
     refine continuousOn_im_log_segRatio hγ hρ_pos h_dist_lb h_unif
       (hs_in j (Finset.mem_range.mp hj).le) (hs_in (j + 1) (Finset.mem_range.mp hj))

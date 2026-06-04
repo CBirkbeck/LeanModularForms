@@ -378,7 +378,7 @@ private lemma A_eq_integral_A_int (S0 : Finset ℂ) (f g_reg : ℂ → ℂ) (γ 
   have hSum_int : IntervalIntegrable (fun t => ∑ s ∈ S0, S_int_fun s t) volume γ.a γ.b := by
     convert IntervalIntegrable.sum S0 hS_int using 1
     ext t; simp [Finset.sum_apply]
-  rw [(intervalIntegral.integral_finset_sum hS_int).symm,
+  rw [(intervalIntegral.integral_finsetSum hS_int).symm,
     ← intervalIntegral.integral_sub
       (pvIntegrand_intervalIntegrable_of_nonempty S0 f g_reg γ hS0_ne hg_decomp hg_cont hε)
       hSum_int]
