@@ -861,19 +861,3 @@ theorem evalHom_injective_two (p : ℕ) (hp : p.Prime) :
 
 end HeckeRing.GLn.Inj
 
-namespace HeckeRing.GLn
-
-variable (n : ℕ) [NeZero n] (p : ℕ) (hp : p.Prime)
-
-include hp in
-/-- evalHom is injective. Proved for `n = 1` and `n = 2`;
-    the general case is not yet formalised. -/
-theorem evalHom_injective :
-    Function.Injective (evalHom n p) := by
-  by_cases h1 : n = 1
-  · subst h1; exact Inj.evalHom_injective_one p ‹_›
-  · by_cases h2 : n = 2
-    · subst h2; exact Inj.evalHom_injective_two p ‹_›
-    · sorry -- General n requires Phase B/C
-
-end HeckeRing.GLn
