@@ -637,20 +637,6 @@ theorem T_sum_ppow_recurrence : ∀ k : ℕ, 0 < k →
   | k + 3, _, ih =>
     exact T_sum_ppow_recurrence_step p hp (k + 1) (by omega) ih
 
-/-- Theorem 3.24(4): `T(pʳ) · T(pˢ) = Σ_{i=0}^{r} pⁱ · T(pⁱ,pⁱ) · T(p^{r+s−2i})`
-    for r ≤ s. Proved by induction on r using `T_sum_ppow_recurrence`. -/
-private lemma T_pp_comm_T_sum_ppow (k : ℕ) : T_pp p * T_sum ⟨p ^ k, pow_pos hp.pos k⟩ =
-    T_sum ⟨p ^ k, pow_pos hp.pos k⟩ * T_pp p := by
-  rw [T_sum_ppow_expansion p hp k, Finset.mul_sum, Finset.sum_mul]
-  apply Finset.sum_congr rfl; intro i _
-  by_cases h : 0 < p ^ i ∧ 0 < p ^ (k - i) ∧ p ^ i ∣ p ^ (k - i)
-  · obtain ⟨_, _, hdvd⟩ := h
-    rw [T_ad_of_pos (p ^ i) (p ^ (k - i)) (pow_pos hp.pos i) (pow_pos hp.pos (k - i)) hdvd]
-    exact T_pp_comm_T_elem p hp _
-      (fun i' ↦ by fin_cases i' <;> first | exact pow_pos hp.pos i | exact pow_pos hp.pos (k - i))
-      (fun i' hi' ↦ by (have : i' = 0 := by omega); subst this; simpa using hdvd)
-  · simp [T_ad_eq_zero h, mul_zero, zero_mul]
-
 section CoprimeMultiplicativity
 
 end CoprimeMultiplicativity
