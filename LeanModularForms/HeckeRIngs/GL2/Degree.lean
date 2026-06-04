@@ -70,15 +70,4 @@ private lemma deg_ppow_term_eq (i k : ℕ) (h2i : 2 * i = k) :
       congr 1; ext j; fin_cases j <;> rfl]
   exact deg_T_diag_scalar (p ^ i) (pow_pos hp.pos i)
 
-include hp in
-private lemma deg_ppow_shift (i k : ℕ) (hi : i < k / 2 + 1) :
-    deg (GL_pair 2) (T_ad (p ^ (i + 1)) (p ^ (k + 2 - (i + 1)))) =
-    deg (GL_pair 2) (T_ad (p ^ i) (p ^ (k - i))) := by
-  by_cases h2i : 2 * i < k
-  · rw [deg_ppow_term_lt p hp (i + 1) (k + 2) (by omega),
-      show k + 2 - 2 * (i + 1) - 1 = k - 2 * i - 1 by omega,
-      (deg_ppow_term_lt p hp i k h2i).symm]
-  · rw [deg_ppow_term_eq p hp (i + 1) (k + 2) (by omega),
-      deg_ppow_term_eq p hp i k (by omega)]
-
 end HeckeRing.GL2
