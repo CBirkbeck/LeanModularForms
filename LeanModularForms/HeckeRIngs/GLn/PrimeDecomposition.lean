@@ -154,35 +154,6 @@ omit [NeZero n] in
 private lemma prod_pos_of_pos (a : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i) :
     0 < ∏ i, a i := Finset.prod_pos fun i _ ↦ ha_pos i
 
-omit [NeZero n] in
-
-omit [NeZero n] in
-/-- Removing the prime `p` strictly shrinks the determinant's factorization support:
-    every prime of the p-free part divides the original, and `p` itself drops out. -/
-private lemma removePrime_prod_factorization_support_ssubset (a : Fin n → ℕ)
-    (ha_pos : ∀ i, 0 < a i) (p : ℕ)
-    (hp_mem : p ∈ (∏ i, a i).factorization.support) :
-    (∏ i, (removePrime n p a) i).factorization.support ⊂
-      (∏ i, a i).factorization.support := by
-  refine ⟨fun q hq ↦ ?_, fun h_sup ↦ ?_⟩
-  · rw [Finsupp.mem_support_iff] at hq ⊢
-    intro h_zero
-    refine hq ?_
-    have h_le := (Nat.factorization_le_iff_dvd
-      (prod_pos_of_pos n _ (removePrime_pos n p a ha_pos)).ne'
-      (prod_pos_of_pos n a ha_pos).ne').mpr
-      (Finset.prod_dvd_prod_of_dvd _ _ fun i _ ↦ Nat.ordCompl_dvd (a i) p) q
-    omega
-  · have hp_in : p ∈ (∏ i, (removePrime n p a) i).factorization.support := h_sup hp_mem
-    rw [Finsupp.mem_support_iff] at hp_in
-    refine hp_in ?_
-    rw [Nat.factorization_prod (fun i _ ↦ (removePrime_pos n p a ha_pos i).ne'),
-      Finset.sum_apply']
-    refine Finset.sum_eq_zero fun i _ ↦ ?_
-    simp only [removePrime]
-    rw [Nat.factorization_ordCompl]
-    exact Finsupp.erase_same
-
 end FullFactorization
 
 section Generation
