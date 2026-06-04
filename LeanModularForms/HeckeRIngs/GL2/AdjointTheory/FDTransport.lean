@@ -124,14 +124,6 @@ lemma slash_α_Gamma_p_α_invariant_cuspForm
 open CongruenceSubgroup Pointwise ConjAct UpperHalfPlane MeasureTheory in
 
 open CongruenceSubgroup Pointwise ConjAct UpperHalfPlane MeasureTheory in
-/-- FD-shift adapter (generic `GL(2, ℝ)⁺` form). -/
-theorem isFundamentalDomain_GLPos_smul_conjAct
-    (α' : GL(2, ℝ)⁺) {H₁ : Subgroup (GL(2, ℝ)⁺)} {s : Set ℍ}
-    (hs : MeasureTheory.IsFundamentalDomain (H₁ : Subgroup (GL(2, ℝ)⁺)) s μ_hyp) :
-    MeasureTheory.IsFundamentalDomain
-      ((ConjAct.toConjAct α' • H₁ : Subgroup (GL(2, ℝ)⁺)))
-      (α' • s) μ_hyp :=
-  MeasureTheory.IsFundamentalDomain.smul_of_eq_conjAct hs rfl
 
 open CongruenceSubgroup Pointwise ConjAct UpperHalfPlane MeasureTheory in
 

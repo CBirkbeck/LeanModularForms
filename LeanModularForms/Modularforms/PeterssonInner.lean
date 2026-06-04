@@ -46,13 +46,6 @@ open scoped Manifold
 
 variable {Γ : Subgroup (GL (Fin 2) ℝ)} {k : ℤ}
 
-/-- Additivity of `pet` in the second argument. -/
-theorem pet_add_right [Γ.IsArithmetic] (f g₁ g₂ : CuspForm Γ k) :
-    pet f (g₁ + g₂) = pet f g₁ + pet f g₂ :=
-  peterssonInner_add_right k _ _ _ _
-    (peterssonInner_integrableOn k Γ f g₁)
-    (peterssonInner_integrableOn k Γ f g₂)
-
 /-- The Petersson inner product as an `Inner ℂ` instance on cusp forms. -/
 instance innerProductCuspForm : Inner ℂ (CuspForm Γ k) where
   inner := pet

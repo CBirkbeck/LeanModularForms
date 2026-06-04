@@ -62,40 +62,6 @@ theorem heckeT_p_all_eq_gamma0_on_charSpace_one (k : ℤ) (p : ℕ) (hp : Nat.Pr
   heckeT_p_all_coprime k hp hpN ▸
     heckeT_p_val_eq_heckeOperator_Gamma0_on_charSpace_one k p hp hpN f
 
-/-- `heckeT_p_all k p hp`, restricted to the trivial-character eigenspace, preserves
-the eigenspace. For `p` coprime to `N`, this specialises
-`heckeT_p_preserves_modFormCharSpace` to `χ = 1`. -/
-lemma heckeT_p_all_preserves_charSpace_one_coprime (k : ℤ) (p : ℕ) (hp : Nat.Prime p)
-    (hpN : Nat.Coprime p N) {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
-    (hf : f ∈ modFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ)) :
-    heckeT_p_all k p hp f ∈ modFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ) :=
-  heckeT_p_all_coprime k hp hpN ▸ heckeT_p_preserves_modFormCharSpace k p hp hpN _ hf
-
-/-- The two Γ₀(N)-Hecke operators `heckeOperator_Gamma0` for primes `p, q` commute
-pointwise on `g`. This is the analytic shadow of commutativity of the abstract Hecke
-ring `𝕋 (Gamma0_pair N) ℤ` (`Gamma0_pair_HeckeAlgebra_mul_comm`): both operators are
-single-`T` images, so their composites agree by `heckeSum_Gamma0_mul`. -/
-private lemma heckeOperator_Gamma0_comm_of_coprime (k : ℤ) {p q : ℕ}
-    (hp : 0 < p) (hq : 0 < q) (g : ModularForm ((Gamma0 N).map (mapGL ℝ)) k) :
-    heckeOperator_Gamma0 N k (D_p_Gamma0 N p hp)
-      (heckeOperator_Gamma0 N k (D_p_Gamma0 N q hq) g) =
-    heckeOperator_Gamma0 N k (D_p_Gamma0 N q hq)
-      (heckeOperator_Gamma0 N k (D_p_Gamma0 N p hp) g) := by
-  have hpq_comm :
-      heckeOperatorLinear_Gamma0 N k (D_p_Gamma0 N p hp) *
-        heckeOperatorLinear_Gamma0 N k (D_p_Gamma0 N q hq) =
-      heckeOperatorLinear_Gamma0 N k (D_p_Gamma0 N q hq) *
-        heckeOperatorLinear_Gamma0 N k (D_p_Gamma0 N p hp) := by
-    have hp_one : heckeOperatorLinear_Gamma0 N k (D_p_Gamma0 N p hp) =
-        heckeSum_Gamma0 N k (T_single (Gamma0_pair N) ℤ (D_p_Gamma0 N p hp) 1) := by
-      rw [heckeSum_Gamma0_T_single, one_smul]
-    have hq_one : heckeOperatorLinear_Gamma0 N k (D_p_Gamma0 N q hq) =
-        heckeSum_Gamma0 N k (T_single (Gamma0_pair N) ℤ (D_p_Gamma0 N q hq) 1) := by
-      rw [heckeSum_Gamma0_T_single, one_smul]
-    rw [hp_one, hq_one, ← heckeSum_Gamma0_mul, ← heckeSum_Gamma0_mul,
-      Gamma0_pair_HeckeAlgebra_mul_comm]
-  simpa [Module.End.mul_apply] using congr_fun (congr_arg DFunLike.coe hpq_comm) g
-
 /-- On the trivial-character eigenspace, the iso `modFormCharSpace_one_equiv_Gamma0`
 intertwines `heckeT_p_all k p hp` (for `p` coprime to `N`) with the Γ₀(N)-Hecke
 operator `heckeOperator_Gamma0 N k (D_p_Gamma0 N p hp.pos)`. -/
@@ -111,25 +77,6 @@ private lemma equiv_heckeT_p_all_eq_heckeOperator_Gamma0 (k : ℤ) (p : ℕ) (hp
   rw [modFormCharSpace_one_equiv_Gamma0_apply, Subtype.coe_mk,
     heckeT_p_all_eq_gamma0_on_charSpace_one k p hp hpN f,
     modFormCharSpace_one_equiv_Gamma0_symm_apply]
-
-/-- Helper for `heckeT_p_all_comm_on_charSpace_one_coprime`: the composite
-`heckeT_p_all k p hp (heckeT_p_all k q hq f)` on the trivial-character eigenspace
-factors as a double `heckeOperator_Gamma0` on the Γ₀(N) side. -/
-private lemma heckeT_p_all_comp_eq_gamma0_double (k : ℤ) {p q : ℕ} (hp : Nat.Prime p)
-    (hq : Nat.Prime q) (hpN : Nat.Coprime p N) (hqN : Nat.Coprime q N)
-    (f : modFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ))
-    (hf_pres_q : heckeT_p_all k q hq (f : ModularForm _ k) ∈
-      modFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ)) :
-    heckeT_p_all k p hp (heckeT_p_all k q hq (f : ModularForm _ k)) =
-    ((modFormCharSpace_one_equiv_Gamma0 N k).symm
-      (heckeOperator_Gamma0 N k (D_p_Gamma0 N p hp.pos)
-        (heckeOperator_Gamma0 N k (D_p_Gamma0 N q hq.pos)
-          (modFormCharSpace_one_equiv_Gamma0 N k f))) :
-        ModularForm ((Gamma1 N).map (mapGL ℝ)) k) := by
-  have h_outer := heckeT_p_all_eq_gamma0_on_charSpace_one k p hp hpN
-    ⟨heckeT_p_all k q hq (f : ModularForm _ k), hf_pres_q⟩
-  rw [Subtype.coe_mk] at h_outer
-  rw [h_outer, equiv_heckeT_p_all_eq_heckeOperator_Gamma0 k q hq hqN f hf_pres_q]
 
 /-- Conjugation of an endomorphism of `ModularForm ((Gamma0 N).map (mapGL ℝ)) k` by
 the iso `modFormCharSpace_one_equiv_Gamma0`, yielding an endomorphism of

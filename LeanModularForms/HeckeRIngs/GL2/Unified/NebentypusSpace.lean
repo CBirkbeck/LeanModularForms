@@ -56,18 +56,4 @@ slash/Nebentypus condition. -/
       IsNebentypus k (gamma0NebentypusChar (N := N) χ) (f : UpperHalfPlane → ℂ) :=
   Iff.rfl
 
-/-- The identity map gives a linear equivalence from the existing
-`modFormCharSpace k χ` to the experimental `Γ₀(N), χ`-style space. -/
-noncomputable def modFormCharSpace_equiv_gamma0Nebentypus (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
-    modFormCharSpace k χ ≃ₗ[ℂ] gamma0NebentypusSubmodule (N := N) k χ where
-  toFun f := ⟨f.1, (isNebentypus_iff k (gamma0NebentypusChar (N := N) χ)
-      (f.1 : UpperHalfPlane → ℂ)).2 ((modFormCharSpace_iff_nebentypus (N := N) k χ f.1).1 f.2)⟩
-  invFun f := ⟨f.1, (modFormCharSpace_iff_nebentypus (N := N) k χ f.1).2
-    ((isNebentypus_iff k (gamma0NebentypusChar (N := N) χ) (f : UpperHalfPlane → ℂ)).1
-      ((mem_gamma0NebentypusSubmodule_iff (N := N) k χ f.1).1 f.2))⟩
-  left_inv _ := rfl
-  right_inv _ := rfl
-  map_add' _ _ := rfl
-  map_smul' _ _ := rfl
-
 end HeckeRing.GL2.Unified

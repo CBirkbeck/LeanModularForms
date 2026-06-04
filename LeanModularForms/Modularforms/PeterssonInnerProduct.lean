@@ -82,8 +82,6 @@ instance : Countable SL(2, ℤ) := Subtype.countable
 
 namespace UpperHalfPlane
 
-
-
 /-- The hyperbolic area measure on the upper half-plane, defined as
 `dμ_hyp = (Im τ)⁻² dx dy` where `dx dy` is the Lebesgue measure on `ℂ`
 pulled back to `ℍ` via the canonical embedding.
@@ -222,10 +220,6 @@ theorem peterssonInner_neg_left (k : ℤ) (D : Set ℍ) (f g : ℍ → ℂ) :
     peterssonInner k D (-f) g = -peterssonInner k D f g := by
   simp only [peterssonInner, petersson, Pi.neg_apply, map_neg, neg_mul, integral_neg]
 
-
-
-
-
 /-- The Petersson integrand of cusp forms is integrable over the standard fundamental
 domain against the hyperbolic measure. -/
 theorem peterssonInner_integrableOn {F F' : Type*} [FunLike F ℍ ℂ] [FunLike F' ℍ ℂ]
@@ -264,7 +258,6 @@ theorem peterssonInner_conj_smul_left (k : ℤ) (D : Set ℍ) (c : ℂ) (f g : �
     simp only [peterssonInner, petersson, Pi.smul_apply, smul_eq_mul, map_mul]
     congr 1; ext τ; ring]
   exact integral_const_mul (conj c) _
-
 
 /-- The open fundamental domain `𝒟ᵒ` is open in `ℍ`. -/
 theorem isOpen_fdo : IsOpen (fdo : Set ℍ) :=
@@ -445,18 +438,6 @@ theorem peterssonInner_definite_levelOne
     (by rw [starRingEnd_apply]; exact mul_ne_zero (star_ne_zero.mpr hne) hne)
     (zpow_ne_zero _ (Complex.ofReal_ne_zero.mpr (ne_of_gt τ.im_pos))))
 
-
-
-
-
-
-
-
-
-
-
-
-
 end UpperHalfPlane
 
 namespace CuspForm
@@ -473,16 +454,5 @@ for `Γ` consists of `n` translates of `𝒟`, and the Petersson inner product
 scales accordingly. -/
 noncomputable def pet (f g : CuspForm Γ k) : ℂ :=
   peterssonInner k ModularGroup.fd f g
-
-/-- Hermitian symmetry for `pet`. -/
-theorem pet_conj_symm (f g : CuspForm Γ k) : conj (pet g f) = pet f g :=
-  peterssonInner_conj_symm k _ _ _
-
-
-
-
-
-
-
 
 end CuspForm

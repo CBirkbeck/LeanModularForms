@@ -158,36 +158,4 @@ theorem mainLemma
   -- available, so the conclusion is left unproved.
   sorry
 
-private lemma newform_diff_coprime_coeff_eq_zero
-    (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (hgχ : g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (h : ∀ n : ℕ+, Nat.Coprime n.val N → f.eigenvalue n = g.eigenvalue n)
-    (n : ℕ) (hn : Nat.Coprime n N) :
-    (UpperHalfPlane.qExpansion (1 : ℝ) (f.toCuspForm - g.toCuspForm)).coeff n = 0 := by
-  have h1_period := one_mem_strictPeriods_Gamma1_map N
-  conv_lhs =>
-    rw [show (⇑f.toCuspForm - ⇑g.toCuspForm) =
-        (⇑f.toCuspForm.toModularForm' - ⇑g.toCuspForm.toModularForm') from rfl]
-  rw [ModularForm.qExpansion_sub one_pos h1_period, map_sub, sub_eq_zero]
-  by_cases hn0 : n = 0
-  · subst hn0
-    simp [Nat.Coprime, Nat.gcd_zero_left] at hn
-    subst hn
-    have h_zero_f := (CuspFormClass.zero_at_infty f.toCuspForm).valueAtInfty_eq_zero
-    have h_zero_g := (CuspFormClass.zero_at_infty g.toCuspForm).valueAtInfty_eq_zero
-    rw [show (⇑f.toModularForm' : UpperHalfPlane → ℂ) = ⇑f.toCuspForm from rfl,
-      show (⇑g.toModularForm' : UpperHalfPlane → ℂ) = ⇑g.toCuspForm from rfl,
-      CuspFormClass.qExpansion_coeff_zero f.toCuspForm one_pos h1_period,
-      CuspFormClass.qExpansion_coeff_zero g.toCuspForm one_pos h1_period]
-  have hn_pos : 0 < n := Nat.pos_of_ne_zero hn0
-  have h_eq := h ⟨n, hn_pos⟩ hn
-  rwa [Newform.eigenvalue_eq_coeff f ⟨n, hn_pos⟩ hn χ hfχ,
-    Newform.eigenvalue_eq_coeff g ⟨n, hn_pos⟩ hn χ hgχ] at h_eq
-
-private lemma newform_diff_mem_cuspFormsNew (f g : Newform N k) :
-    f.toCuspForm - g.toCuspForm ∈ cuspFormsNew N k :=
-  (cuspFormsNew N k).sub_mem (cuspFormsNewExtended_le_cuspFormsNew f.isNew)
-    (cuspFormsNewExtended_le_cuspFormsNew g.isNew)
-
 end HeckeRing.GL2

@@ -82,12 +82,6 @@ def cuspFormGammaOneEquivSL (k : ℤ) : CuspForm Γ(1) k ≃ₗ[ℂ] CuspForm �
 
 /-! ### Weight-`< 12` cusp forms vanish -/
 
-/-- The space of `Γ(1)` cusp forms of weight `k < 12` has rank zero. -/
-lemma cuspform_weight_lt_12_zero (k : ℤ) (hk : k < 12) :
-    Module.rank ℂ (CuspForm Γ(1) k) = 0 := by
-  rw [LinearEquiv.rank_eq (cuspFormGammaOneEquivSL k)]
-  exact CuspForm.rank_eq_zero_of_weight_lt_twelve hk
-
 /-! ### The `CuspForm Γ(1) k ≃ₗ ModularForm Γ(1) (k-12)` isomorphism -/
 
 /-! ### Low even weights are one-dimensional -/

@@ -929,36 +929,11 @@ theorem evalHom_injective_two (p : ℕ) (hp : p.Prime) :
   rw [Finset.sum_congr rfl h_delta, Finset.sum_ite_eq_of_mem' R.support s _ hs_mem] at h_zero
   exact hs_coeff h_zero
 
-/-- Surjectivity of `evalHomR` follows from surjectivity onto `R_p`. -/
-lemma evalHomR_surjective (n : ℕ) [NeZero n] (p : ℕ) (hp : p.Prime)
-    (h_surj : ∀ f ∈ R_p n p hp, f ∈ (evalHom n p).range) :
-    Function.Surjective (evalHomR n p hp) := by
-  intro ⟨f, hf⟩
-  obtain ⟨P, hP⟩ := h_surj f hf
-  exact ⟨P, Subtype.ext hP⟩
-
-/-- Injectivity of `evalHomR` follows from injectivity of `evalHom`. -/
-lemma evalHomR_injective (n : ℕ) [NeZero n] (p : ℕ) (_hp : p.Prime)
-    (h_inj : Function.Injective (evalHom n p)) :
-    Function.Injective (evalHomR n p ‹_›) := by
-  intro P Q hPQ
-  exact h_inj (Subtype.ext_iff.mp hPQ)
-
 end HeckeRing.GLn.Inj
 
 namespace HeckeRing.GLn
 
 variable (n : ℕ) [NeZero n] (p : ℕ) (hp : p.Prime)
-
-/-- Every element of R_p is in the image of evalHom (surjectivity).
-    Proved for `n = 1` and `n = 2`; the general case is not yet formalised. -/
-theorem T_gen_generates_R_p :
-    ∀ f ∈ R_p n p hp, f ∈ (evalHom n p).range := by
-  by_cases h1 : n = 1
-  · subst h1; exact SurjOne.T_gen_generates_R_p_one p ‹_›
-  · by_cases h2 : n = 2
-    · subst h2; exact Surj.T_gen_generates_R_p_two p ‹_›
-    · sorry -- General n requires Phase B (projection ψ) and Phase C (induction)
 
 include hp in
 /-- evalHom is injective. Proved for `n = 1` and `n = 2`;

@@ -425,40 +425,4 @@ private lemma heckeSlash_gen_SL_invariant {k : ℤ} (D : HeckeCoset (GL_pair 2))
     heckeSlash_gen (GL_pair 2) k D f
   exact heckeSlash_gen_slash_invariant k D f (SL_invariant_to_H_invariant hf_SL) _ hmem
 
-/-- **Commutativity of Hecke operators at level 1.**
-For SL₂(ℤ)-invariant `f`, the Hecke operators `T_p` and `T_q` commute:
-`T_p(T_q(f)) = T_q(T_p(f))`. -/
-theorem heckeT_p_fun_comm_of_GL_pair {N : ℕ} [NeZero N] (k : ℤ)
-    (p q : ℕ) (hp : Nat.Prime p) (hq : Nat.Prime q)
-    (hpN : Nat.Coprime p N) (hqN : Nat.Coprime q N)
-    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hf_SL : ∀ γ ∈ 𝒮ℒ, (⇑f) ∣[k] γ = ⇑f) :
-    heckeT_p_fun k p hp hpN (⟨⟨heckeT_p_fun k q hq hqN f,
-        (heckeT_p k q hq hqN f).slash_action_eq'⟩,
-        (heckeT_p k q hq hqN f).holo',
-        (heckeT_p k q hq hqN f).bdd_at_cusps'⟩ : ModularForm _ k) =
-    heckeT_p_fun k q hq hqN (⟨⟨heckeT_p_fun k p hp hpN f,
-        (heckeT_p k p hp hpN f).slash_action_eq'⟩,
-        (heckeT_p k p hp hpN f).holo',
-        (heckeT_p k p hp hpN f).bdd_at_cusps'⟩ : ModularForm _ k) := by
-  have heckeT_p_fun_SL : ∀ r : ℕ, ∀ hr : Nat.Prime r, ∀ hrN : Nat.Coprime r N,
-      ∀ γ ∈ 𝒮ℒ, heckeT_p_fun k r hr hrN f ∣[k] γ = heckeT_p_fun k r hr hrN f :=
-    fun r hr hrN γ hγ ↦ by
-      rw [heckeT_p_fun_eq_heckeSlash_gen k r hr hrN f hf_SL]
-      exact heckeSlash_gen_SL_invariant (D_p r hr.pos) hf_SL γ hγ
-  set Tqf : ModularForm _ k :=
-    ⟨⟨heckeT_p_fun k q hq hqN f, (heckeT_p k q hq hqN f).slash_action_eq'⟩,
-     (heckeT_p k q hq hqN f).holo', (heckeT_p k q hq hqN f).bdd_at_cusps'⟩
-  set Tpf : ModularForm _ k :=
-    ⟨⟨heckeT_p_fun k p hp hpN f, (heckeT_p k p hp hpN f).slash_action_eq'⟩,
-     (heckeT_p k p hp hpN f).holo', (heckeT_p k p hp hpN f).bdd_at_cusps'⟩
-  rw [heckeT_p_fun_eq_heckeSlash_gen k p hp hpN Tqf (heckeT_p_fun_SL q hq hqN),
-      heckeT_p_fun_eq_heckeSlash_gen k q hq hqN Tpf (heckeT_p_fun_SL p hp hpN)]
-  change heckeSlash_gen (GL_pair 2) k (D_p p hp.pos) (heckeT_p_fun k q hq hqN f) =
-    heckeSlash_gen (GL_pair 2) k (D_p q hq.pos) (heckeT_p_fun k p hp hpN f)
-  conv_lhs => rw [heckeT_p_fun_eq_heckeSlash_gen k q hq hqN f hf_SL]
-  conv_rhs => rw [heckeT_p_fun_eq_heckeSlash_gen k p hp hpN f hf_SL]
-  exact heckeSlash_gen_GL_pair_comm k (D_p p hp.pos) (D_p q hq.pos) (⇑f)
-    (SL_invariant_to_H_invariant hf_SL)
-
 end HeckeRing.GL2

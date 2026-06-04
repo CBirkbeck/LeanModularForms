@@ -64,26 +64,9 @@ the natural input to mathlib's `LSeries`. -/
 noncomputable def lCoeff [ModularFormClass F Γ k] (f : F) : ℕ → ℂ :=
   fun n ↦ (qExpansion Γ.strictWidthInfty f).coeff n
 
-/-- The **L-function** of a modular form,
-`L(·, f) = Σ_{n≥1} (lCoeff f) n · n^{-·}`. -/
-noncomputable def lSeries [ModularFormClass F Γ k] (f : F) : ℂ → ℂ :=
-  LSeries (lCoeff f)
-
 @[simp]
 lemma lCoeff_apply [ModularFormClass F Γ k] (f : F) (n : ℕ) :
     lCoeff f n = (qExpansion Γ.strictWidthInfty f).coeff n := rfl
-
-/-- **Hecke's crude bound**: for a weight-`k` modular form (`0 ≤ k`) on an
-arithmetic subgroup, the abscissa of absolute convergence of the associated
-L-function is at most `k + 1`. -/
-lemma abscissaOfAbsConv_lCoeff_le [Γ.IsArithmetic] [ModularFormClass F Γ k]
-    (hk : 0 ≤ k) (f : F) :
-    abscissaOfAbsConv (lCoeff f) ≤ ((k : ℝ) + 1 : ℝ) := by
-  have h_bigO : (fun n : ℕ ↦ lCoeff f n) =O[atTop] fun n : ℕ ↦ (n : ℝ) ^ (k : ℝ) := by
-    simpa [lCoeff, Real.rpow_intCast]
-      using ModularFormClass.qExpansion_isBigO hk f
-  simpa using LSeries.abscissaOfAbsConv_le_of_isBigO_rpow (f := lCoeff f)
-    (x := (k : ℝ)) h_bigO
 
 /-- **Hecke's bound for cusp forms**: for a weight-`k` cusp form on an
 arithmetic subgroup, the abscissa of absolute convergence of the associated
@@ -96,20 +79,6 @@ lemma abscissaOfAbsConv_lCoeff_le_cuspForm [Γ.IsArithmetic]
     simpa [lCoeff] using CuspFormClass.qExpansion_isBigO f
   simpa using LSeries.abscissaOfAbsConv_le_of_isBigO_rpow
     (f := lCoeff f) (x := ((k : ℝ) / 2)) h_bigO
-
-/-- For a cusp form, the `0`-th `q`-expansion coefficient vanishes. -/
-lemma lCoeff_zero_of_cuspForm [Γ.IsArithmetic] [CuspFormClass F Γ k]
-    (f : F) :
-    lCoeff f 0 = 0 := by
-  simp only [lCoeff,
-    CuspFormClass.qExpansion_coeff_zero (F := F) (Γ := Γ) (k := k) (f := f)
-      (Γ.strictWidthInfty_pos_iff.mpr Fact.out) Γ.strictWidthInfty_mem_strictPeriods]
-
-/-- Finite abscissa of absolute convergence for a cusp form. -/
-lemma abscissaOfAbsConv_lCoeff_lt_top_of_cuspForm [Γ.IsArithmetic]
-    [CuspFormClass F Γ k] (f : F) :
-    abscissaOfAbsConv (lCoeff f) < ⊤ :=
-  lt_of_le_of_lt (abscissaOfAbsConv_lCoeff_le_cuspForm f) (EReal.coe_lt_top _)
 
 open CongruenceSubgroup Matrix.SpecialLinearGroup in
 /-- **Strict width at infinity of the GL₂(ℝ) image of Γ₁(N) is `1`.** -/
@@ -140,22 +109,6 @@ lemma imAxis_apply_of_pos [ModularFormClass F Γ k] (f : F) {t : ℝ} (ht : 0 < 
         Complex.ofReal_re, Complex.ofReal_im]
       simpa using ht⟩ := by
   unfold imAxis; rw [dif_pos ht]
-
-/-- **Continuity of `imAxis f` on `Ioi 0`.** -/
-lemma continuousOn_imAxis [ModularFormClass F Γ k] (f : F) :
-    ContinuousOn (imAxis f) (Set.Ioi 0) := by
-  rw [continuousOn_iff_continuous_restrict]
-  have h_pos : ∀ t : Set.Ioi (0 : ℝ),
-      0 < (Complex.I * (((t : ℝ) : ℂ))).im := fun t ↦ by
-    have ht : (0 : ℝ) < (t : ℝ) := t.prop
-    show 0 < (Complex.I * ((t : ℝ) : ℂ)).im
-    rw [Complex.mul_im, Complex.I_im, Complex.I_re,
-      Complex.ofReal_re, Complex.ofReal_im]
-    simpa using ht
-  refine ((ModularFormClass.continuous f).comp ((continuous_const.mul
-    (Complex.continuous_ofReal.comp continuous_subtype_val)).upperHalfPlaneMk
-      h_pos)).congr (fun t ↦ ?_)
-  exact (imAxis_apply_of_pos f t.prop).symm
 
 end ModularForms
 

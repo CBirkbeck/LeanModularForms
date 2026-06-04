@@ -246,33 +246,6 @@ theorem ModularForm_Gamma1_iSup_charSpace (k : ℤ) :
   · obtain ⟨χ₀, hχ₀⟩ := exists_charHom_of_jointDiamondEigenspace_ne_bot hχ
     exact hχ₀ ▸ le_iSup (fun χ₀ : (ZMod N)ˣ →* ℂˣ ↦ modFormCharSpace k χ₀) χ₀
 
-/-- **The character subspaces form an independent family**. Distinct
-characters differ at some `d`, giving distinct eigenvalues of the corresponding
-diamond operator; the eigenspaces of that operator at distinct eigenvalues are
-disjoint. -/
-theorem ModularForm_Gamma1_iSupIndep_charSpace (k : ℤ) :
-    iSupIndep (fun χ : (ZMod N)ˣ →* ℂˣ ↦ modFormCharSpace k χ) := by
-  have heq : ∀ d (μ : ℂ), (diamondOpHom (N := N) k d).maxGenEigenspace μ =
-      (diamondOpHom k d).eigenspace μ :=
-    fun d μ ↦ Module.End.IsFinitelySemisimple.maxGenEigenspace_eq_eigenspace
-      (diamondOp_isSemisimple d).isFinitelySemisimple μ
-  have h_indep_fun :
-      iSupIndep (fun χ : (ZMod N)ˣ → ℂ ↦ jointDiamondEigenspace k χ) := by
-    have h_mapsTo : ∀ (i j : (ZMod N)ˣ) (φ : ℂ),
-        Set.MapsTo (diamondOpHom (N := N) k i)
-          ((diamondOpHom k j).maxGenEigenspace φ : Set _)
-          ((diamondOpHom k j).maxGenEigenspace φ : Set _) := fun i j φ ↦
-      Module.End.mapsTo_maxGenEigenspace_of_comm
-        (by rcases eq_or_ne i j with rfl | hij
-            · exact Commute.refl _
-            · exact diamondOpHom_pairwise_commute hij.symm) φ
-    simpa [jointDiamondEigenspace, heq] using
-      Module.End.independent_iInf_maxGenEigenspace_of_forall_mapsTo
-        (f := diamondOpHom (N := N) k) h_mapsTo
-  refine h_indep_fun.comp fun χ₁ χ₂ h ↦ ?_
-  ext d
-  exact_mod_cast congr_fun h d
-
 /-- Each character subspace `modFormCharSpace k χ` is finite-dimensional over
 `ℂ`, as a submodule of the finite-dimensional ambient
 `ModularForm ((Gamma1 N).map (mapGL ℝ)) k`. -/

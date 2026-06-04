@@ -937,14 +937,6 @@ private lemma T_pp_pow_eq_T_ad (q : ℕ) (hq : q.Prime) (i : ℕ) : T_pp q ^ i =
     T_ad (q ^ i) (q ^ i) := by
   rw [T_ad_self_eq_T_elem _ (pow_pos hq.pos i), T_pp_pow q hq i]
 
-/-- Coprime base case for the divisor sum formula. -/
-private lemma T_sum_mul_of_coprime_aux (m n : ℕ+) (hcop : Nat.Coprime m n) :
-    T_sum m * T_sum n = ∑ d ∈ (Nat.gcd m n).divisors,
-      (d : ℤ) • (T_ad d d * T_sum_nat (↑m * ↑n / (d * d))) := by
-  rw [show Nat.gcd m n = 1 from hcop, Nat.divisors_one, Finset.sum_singleton]
-  simp only [Nat.cast_one, one_smul, one_mul, T_ad_one_one, one_mul, Nat.div_one]
-  rw [T_sum_mul_coprime m n hcop]; rfl
-
 /-- GCD factoring: `gcd(q^a * m', q^b * n') = q^(min a b) * gcd(m', n')`. -/
 lemma gcd_factor_prime_pow (q : ℕ) (hq : q.Prime) (a b : ℕ) (m' n' : ℕ+)
     (hqm : ¬ q ∣ (m' : ℕ)) (hqn : ¬ q ∣ (n' : ℕ)) :
@@ -1038,53 +1030,5 @@ private lemma T_sum_mul_peel_prime_summand (q : ℕ) (hq : q.Prime) (a b : ℕ) 
       ((hcop_qi_d'.mul_right hcop_qi_d').mul_left (hcop_qi_d'.mul_right hcop_qi_d'))]
   · exact T_sum_mul_peel_prime_summand_rhs q hq a b m' n' hqm hqn r s hr hs i hi d'
       hd'_dvd hqd' hcop_qi_d' hd'_pos
-
-/-- Peel-off-a-prime step for the divisor sum formula. -/
-private lemma T_sum_mul_peel_prime_aux (q : ℕ) (hq : q.Prime) (a b : ℕ) (_ha : 0 < a)
-    (_hb : 0 < b) (m' n' : ℕ+) (hqm : ¬ q ∣ (m' : ℕ)) (hqn : ¬ q ∣ (n' : ℕ))
-    (ih : T_sum m' * T_sum n' = ∑ d ∈ (Nat.gcd m' n').divisors,
-      (d : ℤ) • (T_ad d d * T_sum_nat (↑m' * ↑n' / (d * d)))) :
-    T_sum ⟨q ^ a * m', Nat.mul_pos (pow_pos hq.pos a) m'.pos⟩ *
-      T_sum ⟨q ^ b * n', Nat.mul_pos (pow_pos hq.pos b) n'.pos⟩ =
-    ∑ d ∈ (Nat.gcd (q ^ a * m') (q ^ b * n')).divisors,
-      (d : ℤ) • (T_ad d d * T_sum_nat (q ^ a * ↑m' * (q ^ b * ↑n') / (d * d))) := by
-  have hcop_qm : Nat.Coprime (q ^ a) m' := (Nat.Prime.coprime_pow_of_not_dvd hq hqm).symm
-  have hcop_qn : Nat.Coprime (q ^ b) n' := (Nat.Prime.coprime_pow_of_not_dvd hq hqn).symm
-  set qa : ℕ+ := ⟨q ^ a, pow_pos hq.pos a⟩; set qb : ℕ+ := ⟨q ^ b, pow_pos hq.pos b⟩
-  rw [show T_sum ⟨q ^ a * m', _⟩ = T_sum qa * T_sum m' from (T_sum_mul_coprime qa m' hcop_qm).symm,
-    show T_sum ⟨q ^ b * n', _⟩ = T_sum qb * T_sum n' from (T_sum_mul_coprime qb n' hcop_qn).symm,
-    show T_sum qa * T_sum m' * (T_sum qb * T_sum n') =
-      (T_sum qa * T_sum qb) * (T_sum m' * T_sum n') from
-      mul_mul_mul_comm _ _ _ _]
-  set r := min a b with hr_def; set g := Nat.gcd (m' : ℕ) n'
-  have hcop_rg : Nat.Coprime (q ^ r) g :=
-    (Nat.Prime.coprime_pow_of_not_dvd hq (fun h ↦ hqm (dvd_trans h (Nat.gcd_dvd_left _ _)))).symm
-  rw [gcd_factor_prime_pow q hq a b m' n' hqm hqn]
-  open scoped Pointwise in
-  rw [Nat.divisors_mul,
-    show (Nat.divisors (q ^ r) * Nat.divisors g) =
-    (Nat.divisors (q ^ r) ×ˢ Nat.divisors g).image (fun p ↦ p.1 * p.2) by rfl]
-  rw [ih]; set s := max a b with hs_def; have hrs : r ≤ s := min_le_max
-  rw [show T_sum qa * T_sum qb =
-    T_sum ⟨q ^ r, pow_pos hq.pos r⟩ * T_sum ⟨q ^ s, pow_pos hq.pos s⟩
-    by simp only [r, s, min_def, max_def]
-       split
-       · rfl
-       · exact mul_comm _ _,
-    T_sum_ppow_mul q hq r s hrs, Finset.sum_mul]
-  simp_rw [smul_mul_assoc, Finset.mul_sum]
-  rw [Finset.sum_image (mul_injOn_coprime_divisors _ _ hcop_rg),
-    show ∑ x ∈ (q ^ r).divisors ×ˢ g.divisors,
-    (↑(x.1 * x.2) : ℤ) • (T_ad (x.1 * x.2) (x.1 * x.2) *
-      T_sum_nat (q ^ a * ↑m' * (q ^ b * ↑n') / (x.1 * x.2 * (x.1 * x.2)))) =
-    ∑ d₁ ∈ (q ^ r).divisors, ∑ d₂ ∈ g.divisors,
-      (↑(d₁ * d₂) : ℤ) • (T_ad (d₁ * d₂) (d₁ * d₂) *
-        T_sum_nat (q ^ a * ↑m' * (q ^ b * ↑n') / (d₁ * d₂ * (d₁ * d₂)))) from
-    by rw [← Finset.sum_product']]
-  rw [Nat.sum_divisors_prime_pow hq]
-  apply Finset.sum_congr rfl; intro i hi; rw [Finset.mem_range] at hi
-  rw [Finset.smul_sum]; apply Finset.sum_congr rfl; intro d' hd'
-  rw [show (↑q : ℤ) ^ i = (↑(q ^ i) : ℤ) by push_cast; ring]
-  exact T_sum_mul_peel_prime_summand q hq a b m' n' hqm hqn r s hr_def hs_def i hi d' hd'
 
 end HeckeRing.GL2

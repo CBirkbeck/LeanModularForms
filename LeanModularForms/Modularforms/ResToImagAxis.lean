@@ -339,15 +339,6 @@ lemma tendsto_rpow_mul_of_isBigO_exp {g : ℝ → ℂ} {s b : ℝ} (hb : 0 < b)
   filter_upwards [eventually_gt_atTop 0] with t ht
   rw [Complex.ofReal_mul, Complex.ofReal_cpow ht.le]
 
-/--
-If `F : ℍ → ℂ` is `O(exp(-c * im τ))` at `atImInfty` for some `c > 0`, then
-`t^s * F(it) → 0` as `t → ∞` for any real power `s`.
--/
-theorem tendsto_rpow_mul_resToImagAxis_of_isBigO_exp {F : ℍ → ℂ} {c : ℝ} (hc : 0 < c)
-    (hF : F =O[atImInfty] fun τ ↦ rexp (-c * τ.im)) (s : ℝ) :
-    Tendsto (fun t : ℝ ↦ (t : ℂ) ^ (s : ℂ) * F.resToImagAxis t) atTop (𝓝 0) :=
-  tendsto_rpow_mul_of_isBigO_exp hc (isBigO_resToImagAxis_of_isBigO_atImInfty hc hF)
-
 /-- Real part of the Fourier exponent `2πi(m+n₀)w` is `-2π(m+n₀)·im w`. -/
 private lemma mul_re_two_pi_I_natCast (m n₀ : ℕ) (w : ℂ) :
     (2 * π * I * ((m + n₀ : ℕ) : ℂ) * w).re = -(2 * π) * (m + n₀) * w.im := by
@@ -363,31 +354,4 @@ private lemma exp_neg_two_pi_natCast_add_le (m n₀ : ℕ) {c y : ℝ} (hy : c �
   nlinarith [Real.pi_pos, (Nat.cast_nonneg m : (0 : ℝ) ≤ m),
     (Nat.cast_nonneg n₀ : (0 : ℝ) ≤ n₀),
     mul_le_mul_of_nonneg_left hy (by positivity : (0 : ℝ) ≤ 2 * π * (↑m + ↑n₀))]
-
-/--
-For `c ≤ y`, the `m`-part of the decay factor at height `y` is bounded by its value at the
-reference height `c`, keeping the `n₀`-part at height `y`:
-`exp(-2π(m+n₀)y) ≤ exp(-2πc·m) · exp(-2π·n₀·y)`. Used in the main norm estimate.
--/
-private lemma exp_neg_two_pi_natCast_add_le_mul (m n₀ : ℕ) {c y : ℝ} (hy : c ≤ y) :
-    rexp (-(2 * π) * (↑m + ↑n₀) * y) ≤ rexp (-(2 * π * c) * m) * rexp (-(2 * π) * n₀ * y) := by
-  rw [← Real.exp_add, Real.exp_le_exp]
-  nlinarith [Real.pi_pos, (Nat.cast_nonneg m : (0 : ℝ) ≤ m),
-    (Nat.cast_nonneg n₀ : (0 : ℝ) ≤ n₀),
-    mul_le_mul_of_nonneg_left hy (by positivity : (0 : ℝ) ≤ 2 * π * ↑m)]
-
-/--
-The Fourier terms `m ↦ a_m · exp(2πi(m+n₀)w)` are absolutely summable at any height
-`w.im ≥ c`, provided the coefficient bound `m ↦ ‖a_m‖ · exp(-2πc·m)` is summable.
--/
-private lemma summable_norm_fourier_shift_term {a : ℕ → ℂ} (n₀ : ℕ) {c : ℝ} (w : ℂ)
-    (hw : c ≤ w.im) (ha : Summable (fun m : ℕ ↦ ‖a m‖ * rexp (-(2 * π * c) * (m : ℝ)))) :
-    Summable fun m : ℕ ↦ ‖a m * cexp (2 * π * I * ((m + n₀ : ℕ) : ℂ) * w)‖ := by
-  refine .of_nonneg_of_le (fun _ ↦ norm_nonneg _) (fun m ↦ ?_)
-    (ha.mul_right (rexp (-(2 * π * c) * n₀)))
-  rw [norm_mul, norm_exp, mul_re_two_pi_I_natCast]
-  calc ‖a m‖ * rexp (-(2 * π) * (↑m + ↑n₀) * w.im)
-      ≤ ‖a m‖ * (rexp (-(2 * π * c) * m) * rexp (-(2 * π * c) * n₀)) :=
-        mul_le_mul_of_nonneg_left (exp_neg_two_pi_natCast_add_le m n₀ hw) (norm_nonneg (a m))
-    _ = ‖a m‖ * rexp (-(2 * π * c) * m) * rexp (-(2 * π * c) * n₀) := by ring
 

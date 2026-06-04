@@ -1014,25 +1014,4 @@ theorem heckeT_p_preserves_modFormCharSpace [NeZero N] (k : ℤ) (p : ℕ)
     congr_fun (congr_arg DFunLike.coe (heckeT_p_comm_diamondOp k p hp hpN d)) f
   rw [h1, hf d, map_smul]
 
-/-- `diag(1,p)` lies in `Δ₁(N)` for any `N` and `p > 0`. -/
-lemma diag_1p_mem_Delta1 (N p : ℕ) [NeZero N] (hp : 0 < p) :
-    diagMat 2 ![1, p] ∈ Delta1_submonoid N := by
-  set A : Matrix (Fin 2) (Fin 2) ℤ := Matrix.diagonal (fun i ↦ ((![1, p] i : ℕ) : ℤ))
-  have hcoe : (↑(diagMat 2 ![1, p]) : Matrix _ _ ℚ) =
-      Matrix.diagonal (fun i ↦ ((![1, p] i : ℕ) : ℚ)) := by
-    unfold diagMat
-    rw [dif_pos fun i ↦ by fin_cases i <;> simp [hp]]
-    rfl
-  have hA_eq : (↑(diagMat 2 ![1, p]) : Matrix _ _ ℚ) = A.map (Int.cast : ℤ → ℚ) := by
-    rw [hcoe]
-    ext i j
-    fin_cases i <;> fin_cases j <;>
-      simp [A, Matrix.diagonal, Matrix.map_apply, Int.cast_natCast]
-  refine ⟨⟨A, hA_eq⟩, ?_, A, hA_eq, ?_, ?_⟩
-  · rw [hcoe, Matrix.det_diagonal]
-    simp
-    exact_mod_cast hp
-  · simp [A, Matrix.diagonal]
-  · simp [A, Matrix.diagonal]
-
 end HeckeRing.GL2

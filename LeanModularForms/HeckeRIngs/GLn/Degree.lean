@@ -162,36 +162,6 @@ private lemma transpose_mem_conj_of_mem_conj_inv
     rw [h]; exact coe_mem_SLnZ n ρ.transpose
   rw [mul_assoc, ← h_trans, ← mul_assoc, inv_mul_cancel, one_mul]
 
-private lemma relIndex_conj_inv_eq_conj_diag (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
-    (ConjAct.toConjAct (diagMat n a)⁻¹ • SLnZ_subgroup n).relIndex
-      (SLnZ_subgroup n) =
-    (ConjAct.toConjAct (diagMat n a) • SLnZ_subgroup n).relIndex
-      (SLnZ_subgroup n) := by
-  rw [relIndex_eq_comap_index, relIndex_eq_comap_index]
-  set H := SLnZ_subgroup n; set α := diagMat n a
-  set f := (mapGL ℚ : SL(n, ℤ) →* GL (Fin n) ℚ)
-  set φ := invTransposeEquiv n
-  suffices h : (ConjAct.toConjAct α • H).comap f =
-      ((ConjAct.toConjAct α⁻¹ • H).comap f).map φ.toMonoidHom by
-    rw [h]; simp [Subgroup.index_map_equiv]
-  ext σ; simp only [Subgroup.mem_map, MulEquiv.coe_toMonoidHom]
-  constructor
-  · intro hσ
-    refine ⟨φ σ, ?_, invTransposeEquiv_invol n σ⟩
-    show f (φ σ) ∈ ConjAct.toConjAct α⁻¹ • H
-    have : f (φ σ) = (f σ.transpose)⁻¹ := by
-      show f (σ.transpose⁻¹) = _; exact map_inv f _
-    rw [this]
-    exact (ConjAct.toConjAct α⁻¹ • H).inv_mem
-      (transpose_mem_conj_inv_of_mem_conj n a ha σ hσ)
-  · rintro ⟨τ, hτ, rfl⟩
-    show f (φ τ) ∈ ConjAct.toConjAct α • H
-    have : f (φ τ) = (f τ.transpose)⁻¹ := by
-      show f (τ.transpose⁻¹) = _; exact map_inv f _
-    rw [this]
-    exact (ConjAct.toConjAct α • H).inv_mem
-      (transpose_mem_conj_of_mem_conj_inv n a ha τ hτ)
-
 variable [NeZero n]
 
 /-- The map sending each upper-triangular representative `B` to the coset of
@@ -235,33 +205,6 @@ private lemma upperTriRep_injective_to_quotient (a : Fin n → ℕ) (ha : ∀ i,
     have hγ' : f γ = upperTriGL n a ha hdiv B₁ * (upperTriGL n a ha hdiv B₂)⁻¹ := hγ
     rw [hγ', mul_assoc, inv_mul_cancel, mul_one]
   exact upperTriMat_distinct_cosets n a ha hdiv B₁ B₂ hne (f γ) ⟨γ, rfl⟩ h_eq
-
-/-- The cardinality of `UpperTriRep` is at most the relative index
-`[H : α⁻¹ H α⁻¹]`, where `α = diagMat a` and `H = SLnZ_subgroup n`.
-
-Proved by constructing an injection from `UpperTriRep` into the quotient
-`H / (α⁻¹-conjugate ∩ H)` and applying `Fintype.card_le_of_injective`. -/
-private lemma upperTriRep_card_le_relIndex (a : Fin n → ℕ) (ha : ∀ i, 0 < a i)
-    (hdiv : DivChain n a) (h_rel_ne : (ConjAct.toConjAct (diagMat n a : GL (Fin n) ℚ)⁻¹ •
-      (GL_pair n).H).relIndex (GL_pair n).H ≠ 0) :
-    Fintype.card (UpperTriRep n a hdiv) ≤
-      (ConjAct.toConjAct (diagMat n a : GL (Fin n) ℚ)⁻¹ •
-        (GL_pair n).H).relIndex (GL_pair n).H := by
-  set H := (GL_pair n).H
-  set α := (diagMat n a : GL (Fin n) ℚ)
-  set f := (mapGL ℚ : SL(n, ℤ) →* GL (Fin n) ℚ)
-  haveI : Fintype (H ⧸ (ConjAct.toConjAct α⁻¹ • H).subgroupOf H) :=
-    Subgroup.fintypeOfIndexNeZero h_rel_ne
-  set injMap : UpperTriRep n a hdiv → H ⧸ (ConjAct.toConjAct α⁻¹ • H).subgroupOf H :=
-    fun B ↦ ⟦⟨(f (unipSL n a hdiv B))⁻¹,
-      H.inv_mem (show f (unipSL n a hdiv B) ∈ H from ⟨unipSL n a hdiv B, rfl⟩)⟩⟧
-  have h_inj : Function.Injective injMap :=
-    upperTriRep_injective_to_quotient n a ha hdiv α rfl H rfl f rfl
-  calc Fintype.card (UpperTriRep n a hdiv)
-      ≤ Fintype.card (H ⧸ (ConjAct.toConjAct α⁻¹ • H).subgroupOf H) :=
-        Fintype.card_le_of_injective injMap h_inj
-    _ = (ConjAct.toConjAct α⁻¹ • H).relIndex H := by
-        simp only [Subgroup.relIndex, Subgroup.index, ← Nat.card_eq_fintype_card]
 
 private lemma a1_eq_a0_mul_pk {p : ℕ} {a : Fin 2 → ℕ} {k : ℕ}
     (h_ratio : a 1 / a 0 = p ^ k) (h_dvd_a : a 0 ∣ a 1) :

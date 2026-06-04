@@ -150,25 +150,11 @@ end RpSubring
 
 section FullFactorization
 
-private def ppowClosureSet (n : ℕ) [NeZero n] : Set (HeckeAlgebra n) :=
-  { f | ∃ (p : ℕ) (_hp : p.Prime) (e : Fin n → ℕ) (_hmono : Monotone e),
-    f = T_elem (ppowDiag n p e) }
-
 omit [NeZero n] in
 private lemma prod_pos_of_pos (a : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i) :
     0 < ∏ i, a i := Finset.prod_pos fun i _ ↦ ha_pos i
 
 omit [NeZero n] in
-/-- Empty factorization support of the determinant forces every diagonal entry to be `1`. -/
-private lemma eq_one_of_prod_factorization_support_card_zero (a : Fin n → ℕ)
-    (ha_pos : ∀ i, 0 < a i) (hcard : (∏ i, a i).factorization.support.card ≤ 0) :
-    a = fun _ ↦ 1 := by
-  have h_det : ∏ i, a i = 1 := by
-    have := Nat.factorization_prod_pow_eq_self (prod_pos_of_pos n a ha_pos).ne'
-    rwa [Finsupp.prod, Finset.card_eq_zero.mp (Nat.le_zero.mp hcard),
-      Finset.prod_empty, eq_comm] at this
-  funext i
-  exact Nat.eq_one_of_dvd_one (h_det ▸ Finset.dvd_prod_of_mem _ (Finset.mem_univ i))
 
 omit [NeZero n] in
 /-- Removing the prime `p` strictly shrinks the determinant's factorization support:

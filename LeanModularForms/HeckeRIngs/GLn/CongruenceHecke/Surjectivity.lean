@@ -1615,10 +1615,4 @@ private noncomputable def shimura_ring_hom :
     (fun _ ha ↦ (ker_π_le_ker_ψ N) ha)).comp
     (RingHom.quotientKerEquivOfSurjective π_surjective).symm.toRingHom
 
-private theorem shimura_ring_hom_surjective :
-    Function.Surjective (shimura_ring_hom N) :=
-  (Ideal.Quotient.lift_surjective_of_surjective (RingHom.ker π_hom)
-      (fun _ ha ↦ (ker_π_le_ker_ψ N) ha) (ψ_surjective N)).comp
-    (RingHom.quotientKerEquivOfSurjective π_surjective).symm.surjective
-
 end HeckeRing.GLn
