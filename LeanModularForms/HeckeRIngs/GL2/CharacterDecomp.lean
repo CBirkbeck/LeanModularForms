@@ -161,12 +161,6 @@ end Abstract
 
 variable {N : ℕ} [NeZero N] {k : ℤ}
 
-/-- Each diamond operator has finite order (it is the image of a finite-order
-group element under `diamondOpHom`). -/
-lemma diamondOpHom_isOfFinOrder (d : (ZMod N)ˣ) :
-    IsOfFinOrder (diamondOpHom k d) :=
-  (diamondOpHom k).isOfFinOrder (isOfFinOrder_of_finite d)
-
 /-- Finite-dimensionality of the space of modular forms for `Γ₁(N)`. Derived
 from `dim_gen_cong_levels` in `DimensionFormulas.lean`. -/
 instance modularForm_Gamma1_finiteDimensional :

@@ -111,12 +111,6 @@ private lemma chi_unitOfCoprime_one_eq_one {N : ℕ} (χ : (ZMod N)ˣ →* ℂˣ
     (↑(χ (ZMod.unitOfCoprime 1 h)) : ℂ) = 1 := by
   simp [unitOfCoprime_one_eq_one]
 
-private lemma natCast_mem_strictPeriods_Gamma1_map (N : ℕ) :
-    (N : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
-  rw [show (Gamma1 N).map (mapGL ℝ) = (Gamma1 N : Subgroup (GL (Fin 2) ℝ)) from rfl,
-    strictPeriods_Gamma1]
-  exact ⟨(N : ℤ), by simp⟩
-
 lemma one_mem_strictPeriods_Gamma1_map (N : ℕ) :
     (1 : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
   rw [show (Gamma1 N).map (mapGL ℝ) = (Gamma1 N : Subgroup (GL (Fin 2) ℝ)) from rfl,

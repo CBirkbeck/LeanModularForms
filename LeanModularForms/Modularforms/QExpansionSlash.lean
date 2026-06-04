@@ -396,36 +396,6 @@ private theorem hasSum_heckeT_p_of_ut {N : ℕ} [NeZero N] (k : ℤ) {p : ℕ}
   · show heckeT_p_fun k p hp hpN f τ = heckeT_p_ut k p hp.pos (⇑f) τ + pk * χp * f pτ
     simp only [heckeT_p_fun, Pi.add_apply, h_slash_lower]
 
-/-- **Fourier coefficient formula for `T_p`** (Diamond–Shurman Prop 5.2.2).
-For `f ∈ M_k(Γ₁(N), χ)` and prime `p` coprime to `N`,
-`a_m(T_p f) = a_{pm}(f) + χ(p) · p^{k-1} · a_{m/p}(f)`, where `a_{m/p} = 0` when
-`p ∤ m`. (Mathlib's slash action carries the `|det|^{k-1}` factor.) -/
-theorem fourierCoeff_heckeT_p [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prime p)
-    (hpN : Nat.Coprime p N) (χ : (ZMod N)ˣ →* ℂˣ)
-    {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
-    (hf : f ∈ modFormCharSpace k χ) (m : ℕ) :
-    (qExpansion N (heckeT_p k p hp hpN f)).coeff m =
-      (qExpansion N f).coeff (p * m) +
-        (↑p : ℂ) ^ (k - 1) * ↑(χ (ZMod.unitOfCoprime p hpN)) *
-          (if p ∣ m then (qExpansion N f).coeff (m / p) else 0) := by
-  have hN_pos : (0 : ℝ) < N := Nat.cast_pos.mpr (Nat.pos_of_neZero N)
-  have hΓ : (Gamma1 N).map (mapGL ℝ) = (Gamma1 N : Subgroup (GL (Fin 2) ℝ)) := rfl
-  have hN_period : (N : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
-    rw [hΓ, strictPeriods_Gamma1]; exact ⟨(N : ℤ), by simp⟩
-  have h1_period : (1 : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
-    rw [hΓ, strictPeriods_Gamma1]; exact ⟨1, by simp⟩
-  set a := fun n ↦ (qExpansion (↑N) (⇑f)).coeff n
-  have hf_hs : ∀ σ : ℍ, HasSum (fun n ↦ a n • (Function.Periodic.qParam (↑N) ↑σ) ^ n)
-      (f σ) := hasSum_qExpansion_of_strictPeriod hN_pos hN_period f
-  suffices key : ∀ τ : ℍ, HasSum
-      (fun n : ℕ ↦ (a (p * n) + (↑p : ℂ) ^ (k - 1) *
-          ↑(χ (ZMod.unitOfCoprime p hpN)) * if p ∣ n then a (n / p) else 0) •
-        Function.Periodic.qParam (↑N) ↑τ ^ n) ((heckeT_p k p hp hpN f) τ) by
-    exact (ModularFormClass.qExpansion_coeff_unique hN_pos hN_period key m).symm
-  exact fun τ ↦ hasSum_heckeT_p_of_ut k hp hpN χ hf (↑N) a τ hf_hs
-    (hasSum_heckeT_p_ut_period_N k hp hpN (⇑f) a τ hf_hs
-      (fun n hn ↦ qExpansion_coeff_eq_zero_of_not_dvd hN_period h1_period f hn))
-
 /-- **Fourier coefficient formula for `T_p` at period 1** (Diamond–Shurman
 Prop 5.2.2, canonical period). The period-`1` sibling of `fourierCoeff_heckeT_p`:
 since every `Γ₁(N)`-form is `1`-periodic, the canonical `q`-expansion uses
