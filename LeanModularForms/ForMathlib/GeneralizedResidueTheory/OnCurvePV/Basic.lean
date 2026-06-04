@@ -261,18 +261,8 @@ lemma arc_angle_injective {t t' : ℝ}
 lemma cpv_avoidance (f : ℂ → ℂ) (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ)
     (h_cont : ContinuousOn γ (Set.Icc a b)) (hab : a ≤ b)
     (h_avoid : ∀ t ∈ Set.Icc a b, γ t ≠ z₀) :
-    CauchyPrincipalValueExists' f γ a b z₀ := by
-  obtain ⟨t₀, ht₀, ht₀_min⟩ := isCompact_Icc.exists_isMinOn
-    ⟨a, Set.left_mem_Icc.mpr hab⟩ (h_cont.sub continuousOn_const).norm
-  set C := ∫ t in a..b, f (γ t) * deriv γ t
-  refine ⟨C, ?_⟩
-  apply Tendsto.congr' _ tendsto_const_nhds
-  rw [Filter.EventuallyEq, Filter.eventually_iff_exists_mem]
-  refine ⟨Set.Ioo 0 ‖γ t₀ - z₀‖,
-    Ioo_mem_nhdsGT (norm_pos_iff.mpr (sub_ne_zero.mpr (h_avoid t₀ ht₀))), fun ε hε => ?_⟩
-  exact intervalIntegral.integral_congr fun t ht => by
-    rw [Set.uIcc_of_le hab] at ht
-    exact (if_pos (lt_of_lt_of_le hε.2 (ht₀_min ht))).symm
+    CauchyPrincipalValueExists' f γ a b z₀ :=
+  cauchyPrincipalValueExists'_of_avoidance h_cont hab h_avoid
 
 /-- CPV on adjacent intervals can be concatenated (when `a ≤ b ≤ c`). -/
 lemma cpv_concat (f : ℂ → ℂ) (γ : ℝ → ℂ) (a b c : ℝ) (z₀ : ℂ)
@@ -281,19 +271,9 @@ lemma cpv_concat (f : ℂ → ℂ) (γ : ℝ → ℂ) (a b c : ℝ) (z₀ : ℂ)
     (hab : a ≤ b) (hbc : b ≤ c)
     (h_int : ∀ ε > 0, IntervalIntegrable
         (fun t => if ε < ‖γ t - z₀‖ then f (γ t) * deriv γ t else 0) volume a c) :
-    CauchyPrincipalValueExists' f γ a c z₀ := by
-  obtain ⟨L₁, hL₁⟩ := h_ab
-  obtain ⟨L₂, hL₂⟩ := h_bc
-  refine ⟨L₁ + L₂, ?_⟩
-  apply Tendsto.congr' _ (hL₁.add hL₂)
-  rw [Filter.EventuallyEq]
-  filter_upwards [self_mem_nhdsWithin] with ε hε
-  have hII := h_int ε hε
-  have hac := hab.trans hbc
-  exact intervalIntegral.integral_add_adjacent_intervals
-    (hII.mono_set <| by rw [Set.uIcc_of_le hab, Set.uIcc_of_le hac]
-                        exact Set.Icc_subset_Icc_right hbc)
-    (hII.mono_set <| by rw [Set.uIcc_of_le hbc, Set.uIcc_of_le hac]
-                        exact Set.Icc_subset_Icc_left hab)
+    CauchyPrincipalValueExists' f γ a c z₀ :=
+  let ⟨_, hL₁⟩ := h_ab
+  let ⟨_, hL₂⟩ := h_bc
+  ⟨_, hL₁.concat hL₂ hab hbc h_int⟩
 
 end

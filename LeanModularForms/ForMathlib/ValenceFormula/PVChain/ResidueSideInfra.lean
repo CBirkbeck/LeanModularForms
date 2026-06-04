@@ -254,17 +254,8 @@ omit f hf in
 /-- CPV of `c/(z - s)` exists when the curve avoids `s` (limit is just the regular integral). -/
 lemma cpvExists_of_off_curve (γ : ℝ → ℂ) (hγ_cont : Continuous γ) (a b : ℝ) (s : ℂ)
     (c : ℂ) (hab : a ≤ b) (h_off : ∀ t ∈ Icc a b, γ t ≠ s) :
-    CauchyPrincipalValueExists' (fun z => c / (z - s)) γ a b s := by
-  obtain ⟨t₀, ht₀, ht₀_min⟩ := isCompact_Icc.exists_isMinOn ⟨a, left_mem_Icc.mpr hab⟩
-    ((hγ_cont.continuousOn.sub continuousOn_const).norm)
-  have hδ_pos : 0 < ‖γ t₀ - s‖ := norm_pos_iff.mpr (sub_ne_zero.mpr (h_off t₀ ht₀))
-  refine ⟨∫ t in a..b, (c / (γ t - s)) * deriv γ t,
-    Filter.Tendsto.congr' ?_ tendsto_const_nhds⟩
-  rw [Filter.EventuallyEq]
-  filter_upwards [Ioo_mem_nhdsGT hδ_pos] with ε hε
-  refine intervalIntegral.integral_congr fun t ht => ?_
-  rw [Set.uIcc_of_le hab] at ht
-  exact (if_pos (lt_of_lt_of_le hε.2 (ht₀_min ht))).symm
+    CauchyPrincipalValueExists' (fun z => c / (z - s)) γ a b s :=
+  cauchyPrincipalValueExists'_of_avoidance hγ_cont.continuousOn hab h_off
 
 omit f hf in
 /-- CPV of `c · (z - s)⁻¹` from CPV of `(z - s)⁻¹` by scaling. -/
@@ -272,20 +263,8 @@ lemma cpvExists_scale (γ : ℝ → ℂ) (a b : ℝ) (s c : ℂ)
     (h : CauchyPrincipalValueExists' (fun z => (z - s)⁻¹) γ a b s) :
     CauchyPrincipalValueExists' (fun z => c / (z - s)) γ a b s := by
   obtain ⟨L, hL⟩ := h
-  unfold HasCauchyPV' at hL
-  refine ⟨c * L, ?_⟩
-  show Tendsto _ _ _
-  have h_eq : (fun ε => ∫ t in a..b, if ‖γ t - s‖ > ε
-      then (c / (γ t - s)) * deriv γ t else 0) =
-    fun ε => c * ∫ t in a..b, if ‖γ t - s‖ > ε
-      then (γ t - s)⁻¹ * deriv γ t else 0 := by
-    ext ε
-    erw [← intervalIntegral.integral_const_mul]
-    refine intervalIntegral.integral_congr fun t _ => ?_
-    dsimp only
-    split_ifs <;> ring
-  erw [h_eq]
-  exact hL.const_mul c
+  exact ⟨c * L, (hL.const_mul c).congr_along_curve fun t => by
+    rw [div_eq_mul_inv]⟩
 
 omit f hf in
 private lemma residueSimplePole_congr_local (F G : ℂ → ℂ) (z₀ : ℂ)
