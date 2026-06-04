@@ -88,9 +88,6 @@ instance lcSetoid (P : HeckePair G) : Setoid P.Δ where
 /-- A Hecke left coset: an equivalence class of `Δ`-elements under `gH = hH`. -/
 def HeckeLeftCoset (P : HeckePair G) := Quotient (lcSetoid P)
 
-noncomputable instance instDecidableEqHeckeLeftCoset (P : HeckePair G) :
-    DecidableEq (HeckeLeftCoset P) := Classical.decEq _
-
 namespace HeckeCoset
 
 variable {P : HeckePair G}
@@ -206,7 +203,6 @@ lemma DoubleCoset.doubleCoset_mul_right_eq_self (P : HeckePair G)
   simp_rw [DoubleCoset.doubleCoset, ← Set.singleton_mul_singleton, ← mul_assoc]
   conv => enter [1]; rw [mul_assoc, Subgroup.singleton_mul_subgroup h.2]
 
-
 /-- Scalar multiplication by a group element is the same as singleton set multiplication. -/
 lemma smul_eq_singleton_mul (s : Set G) (g : G) : g • s = {g} * s :=
   Set.singleton_smul.symm
@@ -288,7 +284,6 @@ lemma DoubleCoset.doubleCoset_eq_iUnion_leftCosets (g : G) :
     simp_rw [smul_eq_singleton_mul, ← Set.singleton_mul_singleton, ← mul_assoc]
   convert Set.iUnion_congr h1
   rw [Set.iUnion_mul]
-
 
 /-- The Hecke ring type: formal `Z`-linear combinations of double cosets `HeckeCoset P`. -/
 def 𝕋 (P : HeckePair G) (Z : Type*) [CommRing Z] := Finsupp (HeckeCoset P) Z
