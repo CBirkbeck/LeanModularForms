@@ -39,10 +39,3 @@ def IsCuspForm_to_CuspForm (Γ : Subgroup SL(2, ℤ)) (k : ℤ) (f : ModularForm
     (hf : IsCuspForm Γ k f) : CuspForm Γ k :=
   hf.choose
 
-/-- The `SlashInvariantForm` part of `IsCuspForm_to_CuspForm` agrees with the
-underlying modular form. -/
-lemma CuspForm_to_ModularForm_coe (Γ : Subgroup SL(2, ℤ)) (k : ℤ) (f : ModularForm Γ k)
-    (hf : IsCuspForm Γ k f) :
-    (IsCuspForm_to_CuspForm Γ k f hf).toSlashInvariantForm = f.toSlashInvariantForm := by
-  have hg : (IsCuspForm_to_CuspForm Γ k f hf).toModularFormₗ = f := hf.choose_spec
-  exact congr_arg ModularForm.toSlashInvariantForm hg
