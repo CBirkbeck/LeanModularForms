@@ -129,13 +129,13 @@ private lemma cpv_integrand_intervalIntegrable_arc (S : Finset UpperHalfPlane)
     (H : ℝ) (ε : ℝ) (hε : 0 < ε) (h_oncurve : ∀ t ∈ Set.Ioo (1:ℝ) 3,
         modularFormCompOfComplex f (fdBoundary_H H t) = 0 →
         fdBoundary_H H t ∈ (↑(sArcOfS S) : Set ℂ)) :
-    IntervalIntegrable (fun t => cauchyPrincipalValueIntegrandOn (↑(sArcOfS S))
+    IntervalIntegrable (fun t => cpvIntegrandOn (↑(sArcOfS S))
         (logDeriv (modularFormCompOfComplex f)) (fdBoundary_H H) ε t)
       volume 1 3 := by
   set g := modularFormCompOfComplex f
   set γ := fdBoundary_H H
   set S_arc := sArcOfS S
-  set F := fun t => cauchyPrincipalValueIntegrandOn (↑S_arc) (logDeriv g) γ ε t
+  set F := fun t => cpvIntegrandOn (↑S_arc) (logDeriv g) γ ε t
   set K' := {t ∈ Set.Icc (1:ℝ) 3 | ∀ s ∈ S_arc, ε ≤ ‖γ t - (s : ℂ)‖}
   have hK'_compact : IsCompact K' := by
     refine IsCompact.of_isClosed_subset isCompact_Icc ?_ (fun _t ⟨ht, _⟩ => ht)
@@ -195,16 +195,16 @@ private lemma cpv_integrand_intervalIntegrable_arc (S : Finset UpperHalfPlane)
       isClosed_le (by fun_prop) continuous_const
   have hF_K : EqOn F (fun t => logDeriv g (γ t) * deriv γ t) K := by
     intro t ⟨_, h_not_near⟩
-    change cauchyPrincipalValueIntegrandOn (↑S_arc) (logDeriv g) γ ε t = _
-    simp only [cauchyPrincipalValueIntegrandOn]
+    change cpvIntegrandOn (↑S_arc) (logDeriv g) γ ε t = _
+    simp only [cpvIntegrandOn]
     simp only [Finset.mem_coe] at h_not_near
     exact if_neg h_not_near
   have h_int_K : IntegrableOn F K :=
     (IntegrableOn.mono_set h_int hK_subset_K').congr_fun hF_K.symm hK_meas
   have h_compl_zero : EqOn F 0 (Set.uIoc (1:ℝ) 3 \ K) := by
     intro t ⟨ht_uioc, h_not_K⟩
-    change cauchyPrincipalValueIntegrandOn (↑S_arc) (logDeriv g) γ ε t = 0
-    simp only [cauchyPrincipalValueIntegrandOn]
+    change cpvIntegrandOn (↑S_arc) (logDeriv g) γ ε t = 0
+    simp only [cpvIntegrandOn]
     refine if_pos ?_
     by_contra h_far
     exact h_not_K ⟨ht_uioc, by simpa [Finset.mem_coe] using h_far⟩
@@ -254,7 +254,7 @@ lemma arc_cpv_integral_S_identity (S : Finset UpperHalfPlane)
     (H : ℝ) (ε : ℝ) (hε : 0 < ε) (h_oncurve : ∀ t ∈ Set.Ioo (1:ℝ) 3,
         modularFormCompOfComplex f (fdBoundary_H H t) = 0 →
         fdBoundary_H H t ∈ (↑(sArcOfS S) : Set ℂ)) :
-    (∫ t in (1:ℝ)..3, cauchyPrincipalValueIntegrandOn (sArcOfS S)
+    (∫ t in (1:ℝ)..3, cpvIntegrandOn (sArcOfS S)
         (logDeriv (modularFormCompOfComplex f)) (fdBoundary_H H) ε t) =
     -(↑k * (↑Real.pi / 12 * I)) *
       ↑(∫ t in (1:ℝ)..3,
@@ -263,7 +263,7 @@ lemma arc_cpv_integral_S_identity (S : Finset UpperHalfPlane)
   set g := modularFormCompOfComplex f with hg_def
   set γ := fdBoundary_H H
   set S_arc := sArcOfS S
-  set F := cauchyPrincipalValueIntegrandOn S_arc (logDeriv g) γ ε
+  set F := cpvIntegrandOn S_arc (logDeriv g) γ ε
   set ind := fun t => ∃ s ∈ S_arc, ‖γ t - (s : ℂ)‖ ≤ ε
   have h_ind_1 : ind 1 :=
     ⟨_, sArcOfS_rho_plus_one_in S, by
@@ -296,8 +296,8 @@ lemma arc_cpv_integral_S_identity (S : Finset UpperHalfPlane)
     rw [Set.uIcc_of_le (by norm_num : (1:ℝ) ≤ 3)] at ht
     by_cases h_near : ind t
     · have h_F_t : F t = 0 := by
-        show cauchyPrincipalValueIntegrandOn _ _ _ _ _ = 0
-        rw [cauchyPrincipalValueIntegrandOn, if_pos h_near]
+        show cpvIntegrandOn _ _ _ _ _ = 0
+        rw [cpvIntegrandOn, if_pos h_near]
       have h_ind_4mt : ind (4 - t) := by
         by_cases h1 : 1 < t ∧ t < 3
         · exact (h_ind_sym t ⟨h1.1, h1.2⟩).mpr h_near
@@ -308,8 +308,8 @@ lemma arc_cpv_integral_S_identity (S : Finset UpperHalfPlane)
             subst this
             exact (show (4:ℝ) - 3 = 1 by norm_num) ▸ h_ind_1
       have h_F_4mt : F (4 - t) = 0 := by
-        show cauchyPrincipalValueIntegrandOn _ _ _ _ _ = 0
-        rw [cauchyPrincipalValueIntegrandOn, if_pos h_ind_4mt]
+        show cpvIntegrandOn _ _ _ _ _ = 0
+        rw [cpvIntegrandOn, if_pos h_ind_4mt]
       rw [h_F_4mt, h_F_t]
       simp [h_near]
     · have ht_ioo : t ∈ Set.Ioo (1:ℝ) 3 :=
@@ -317,11 +317,11 @@ lemma arc_cpv_integral_S_identity (S : Finset UpperHalfPlane)
          lt_of_le_of_ne ht.2 (fun h => h_near (h ▸ h_ind_3))⟩
       have h_not_ind_4mt : ¬ind (4 - t) := fun h => h_near ((h_ind_sym t ht_ioo).mp h)
       have h_F_t : F t = logDeriv g (γ t) * deriv γ t := by
-        show cauchyPrincipalValueIntegrandOn _ _ _ _ _ = _
-        unfold cauchyPrincipalValueIntegrandOn; rw [if_neg h_near]
+        show cpvIntegrandOn _ _ _ _ _ = _
+        unfold cpvIntegrandOn; rw [if_neg h_near]
       have h_F_4mt : F (4 - t) = logDeriv g (γ (4 - t)) * deriv γ (4 - t) := by
-        show cauchyPrincipalValueIntegrandOn _ _ _ _ _ = _
-        unfold cauchyPrincipalValueIntegrandOn; rw [if_neg h_not_ind_4mt]
+        show cpvIntegrandOn _ _ _ _ _ = _
+        unfold cpvIntegrandOn; rw [if_neg h_not_ind_4mt]
       rw [h_F_4mt, h_F_t, if_neg h_near]
       simp only [Complex.ofReal_one, mul_one]
       have h_rev : γ (4 - t) = -(1:ℂ) / γ t := fdBoundary_arc_S_reverse H t ht_ioo
@@ -412,10 +412,10 @@ theorem arc_cpv_contribution_tendsto (S : Finset UpperHalfPlane)
     (H : ℝ) (h_oncurve : ∀ t ∈ Set.Ioo (1:ℝ) 3,
         modularFormCompOfComplex f (fdBoundary_H H t) = 0 →
         fdBoundary_H H t ∈ (↑(sArcOfS S) : Set ℂ)) :
-    Tendsto (fun ε => ∫ t in (1:ℝ)..3, cauchyPrincipalValueIntegrandOn (sArcOfS S)
+    Tendsto (fun ε => ∫ t in (1:ℝ)..3, cpvIntegrandOn (sArcOfS S)
         (logDeriv (modularFormCompOfComplex f)) (fdBoundary_H H) ε t)
       (𝓝[>] 0) (𝓝 (-(2 * ↑Real.pi * I * (k : ℂ) / 12))) := by
-  set I_arc : ℝ → ℂ := fun ε => ∫ t in (1:ℝ)..3, cauchyPrincipalValueIntegrandOn (sArcOfS S)
+  set I_arc : ℝ → ℂ := fun ε => ∫ t in (1:ℝ)..3, cpvIntegrandOn (sArcOfS S)
       (logDeriv (modularFormCompOfComplex f)) (fdBoundary_H H) ε t
   set m_fun : ℝ → ℝ := fun ε => ∫ t in (1:ℝ)..3,
       if (∃ s ∈ sArcOfS S, ‖fdBoundary_H H t - (s : ℂ)‖ ≤ ε)
@@ -518,16 +518,16 @@ omit f hf in
 lemma arc_cpv_eventually_eq_union (S : Finset UpperHalfPlane)
     (H : ℝ) (g : ℂ → ℂ) :
     ∀ᶠ ε in 𝓝[>] (0:ℝ),
-      ∫ t in (1:ℝ)..3, cauchyPrincipalValueIntegrandOn (sArcOfS S ∪ sVertOfS S)
+      ∫ t in (1:ℝ)..3, cpvIntegrandOn (sArcOfS S ∪ sVertOfS S)
           g (fdBoundary_H H) ε t =
-      ∫ t in (1:ℝ)..3, cauchyPrincipalValueIntegrandOn (sArcOfS S)
+      ∫ t in (1:ℝ)..3, cpvIntegrandOn (sArcOfS S)
           g (fdBoundary_H H) ε t := by
   obtain ⟨δ, hδ_pos, h_far⟩ := arc_svert_combined_dist H S
   filter_upwards [nhdsWithin_le_nhds (Iio_mem_nhds hδ_pos)] with ε hε_lt
   apply intervalIntegral.integral_congr
   intro t ht
   rw [Set.uIcc_of_le (by norm_num : (1:ℝ) ≤ 3)] at ht
-  unfold cauchyPrincipalValueIntegrandOn
+  unfold cpvIntegrandOn
   by_cases h_sarc : ∃ s ∈ sArcOfS S, ‖fdBoundary_H H t - s‖ ≤ ε
   · obtain ⟨s, hs, hle⟩ := h_sarc
     rw [if_pos ⟨s, Finset.mem_union_left _ hs, hle⟩, if_pos ⟨s, hs, hle⟩]

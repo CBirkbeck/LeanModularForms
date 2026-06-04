@@ -3,6 +3,7 @@ Copyright (c) 2024. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors:
 -/
+import LeanModularForms.ForMathlib.CauchyPrincipalValue
 import LeanModularForms.ForMathlib.ClassicalCPV
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.CauchyPrimitive
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.Homotopy.Invariance
@@ -17,11 +18,13 @@ generalized residue theorem for piecewise C¹ immersions.
 
 ## Main Definitions
 
-* `cauchyPrincipalValueIntegrandOn` — multi-point PV integrand
 * `cauchyPrincipalValueOn` — multi-point CPV integral
 * `CauchyPrincipalValueExistsOn` — existence of multi-point CPV
 * `residueSimplePole` — residue at a simple pole via limit
 * `HasSimplePoleAt` (re-exported from `ForMathlib.Residue`) — simple pole decomposition
+
+The multi-point PV integrand `cpvIntegrandOn` is imported from
+`LeanModularForms.ForMathlib.CauchyPrincipalValue`.
 
 ## Main Results
 
@@ -34,20 +37,13 @@ open scoped Real Interval
 
 noncomputable section
 
-/-- Multi-point PV integrand: zero near any s in S, else f(γ(t))·γ'(t). -/
-def cauchyPrincipalValueIntegrandOn
-    (S : Finset ℂ) (f : ℂ → ℂ) (γ : ℝ → ℂ)
-    (ε : ℝ) (t : ℝ) : ℂ :=
-  if ∃ s ∈ S, ‖γ t - s‖ ≤ ε then 0
-  else f (γ t) * deriv γ t
-
 /-- The multi-point Cauchy principal value. -/
 def cauchyPrincipalValueOn
     (S : Finset ℂ) (f : ℂ → ℂ) (γ : ℝ → ℂ)
     (a b : ℝ) : ℂ :=
   limUnder (𝓝[>] (0 : ℝ)) fun ε =>
     ∫ t in a..b,
-      cauchyPrincipalValueIntegrandOn S f γ ε t
+      cpvIntegrandOn S f γ ε t
 
 /-- Existence of the multi-point PV. -/
 def CauchyPrincipalValueExistsOn
@@ -55,7 +51,7 @@ def CauchyPrincipalValueExistsOn
     (a b : ℝ) : Prop :=
   ∃ L : ℂ, Tendsto (fun ε =>
     ∫ t in a..b,
-      cauchyPrincipalValueIntegrandOn S f γ ε t)
+      cpvIntegrandOn S f γ ε t)
     (𝓝[>] 0) (𝓝 L)
 
 /-- Residue of f at z₀ via the limit formula
@@ -433,20 +429,6 @@ theorem integral_eq_sum_residues_of_avoids
     singular_sum_eq_winding_residues f S0 γ hγ_avoids hγ'_bdd, add_zero, Finset.mul_sum]
   exact Finset.sum_congr rfl fun _ _ => by ring
 
-lemma cauchyPrincipalValueIntegrandOn_eq_of_far
-    (S0 : Finset ℂ) (f : ℂ → ℂ) (γ : ℝ → ℂ) (ε : ℝ) (t : ℝ)
-    (h_far : ∀ s ∈ S0, ε < ‖γ t - s‖) :
-    cauchyPrincipalValueIntegrandOn S0 f γ ε t = f (γ t) * deriv γ t := by
-  unfold cauchyPrincipalValueIntegrandOn
-  rw [if_neg]
-  push Not
-  exact h_far
-
-lemma cauchyPrincipalValueIntegrandOn_empty
-    (f : ℂ → ℂ) (γ : ℝ → ℂ) (ε : ℝ) (t : ℝ) :
-    cauchyPrincipalValueIntegrandOn ∅ f γ ε t = f (γ t) * deriv γ t :=
-  cauchyPrincipalValueIntegrandOn_eq_of_far ∅ f γ ε t (by simp)
-
 lemma cauchyPrincipalValueOn_empty
     (f : ℂ → ℂ) (γ : ℝ → ℂ) (a b : ℝ) :
     cauchyPrincipalValueOn ∅ f γ a b = ∫ t in a..b, f (γ t) * deriv γ t := by
@@ -455,14 +437,14 @@ lemma cauchyPrincipalValueOn_empty
   apply limUnder_eventually_eq_const
   filter_upwards [Ioo_mem_nhdsGT (show (0:ℝ) < 1 by norm_num)] with ε _
   exact intervalIntegral.integral_congr fun t _ =>
-    cauchyPrincipalValueIntegrandOn_empty f γ ε t
+    cpvIntegrandOn_of_forall_gt (by simp)
 
 private lemma cpv_eq_classical_eventually_of_avoids
     (S0 : Finset ℂ) (f : ℂ → ℂ) (γ : PiecewiseC1Curve)
     (h_avoids : ∀ s ∈ S0, ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s)
     (hS0_ne : S0.Nonempty) :
     ∃ δ > 0, ∀ ε ∈ Ioo 0 δ, ∀ t ∈ Set.uIcc γ.a γ.b,
-      cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε t =
+      cpvIntegrandOn S0 f γ.toFun ε t =
         f (γ.toFun t) * deriv γ.toFun t := by
   have h_cpt : IsCompact (γ.toFun '' Icc γ.a γ.b) :=
     isCompact_Icc.image_of_continuousOn γ.continuous_toFun
@@ -478,7 +460,7 @@ private lemma cpv_eq_classical_eventually_of_avoids
       _ = δ := hδ_eq
   refine ⟨δ, hδ_pos, fun ε ⟨_, hε_lt_δ⟩ t ht => ?_⟩
   rw [Set.uIcc_of_le (le_of_lt γ.hab)] at ht
-  exact cauchyPrincipalValueIntegrandOn_eq_of_far S0 f γ.toFun ε t fun s hs =>
+  exact cpvIntegrandOn_of_forall_gt fun s hs =>
     calc ε < δ := hε_lt_δ
       _ ≤ Metric.infDist s (γ.toFun '' Icc γ.a γ.b) :=
         Finset.min'_le _ _ (Finset.mem_image_of_mem δ_fun hs)
@@ -497,7 +479,7 @@ lemma cauchyPrincipalValueExistsOn_avoids
     exact (Filter.Tendsto.congr' (by
       filter_upwards [Ioo_mem_nhdsGT (show (0:ℝ) < 1 by norm_num)] with ε _
       exact intervalIntegral.integral_congr fun t _ =>
-        cauchyPrincipalValueIntegrandOn_empty f γ.toFun ε t)
+        (cpvIntegrandOn_of_forall_gt (by simp)).symm)
       tendsto_const_nhds)
   · obtain ⟨δ, hδ_pos, hδ⟩ := cpv_eq_classical_eventually_of_avoids
       S0 f γ h_avoids (Finset.nonempty_of_ne_empty hS0_empty)

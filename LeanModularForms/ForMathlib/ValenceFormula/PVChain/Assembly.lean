@@ -177,7 +177,7 @@ private lemma pvIntegrand_seg4_eq_neg_seg1 (_S : Finset UpperHalfPlane) (Sx : Fi
   have h4u_gt3 : (3:ℝ) < 4 - u := by linarith [hu.2]
   have h4u_lt4 : 4 - u < 4 := by linarith [hu.1]
   have h_trunc := h_trunc_iff u hu
-  simp only [pvIntegrand, cauchyPrincipalValueIntegrandOn]
+  simp only [pvIntegrand, cpvIntegrandOn]
   by_cases h_trunc_u : ∃ s ∈ Sx, ‖fdBoundary_H H u - s‖ ≤ ε
   · rw [if_pos h_trunc_u, if_pos (h_trunc.mpr h_trunc_u)]
     simp only [neg_zero]
@@ -312,7 +312,7 @@ private theorem tendsto_pvIntegral_seg5
           apply intervalIntegral.integral_congr_ae'
           · exact Filter.Eventually.of_forall fun t ht => by
               rw [Set.mem_Ioc] at ht
-              simp only [pvIntegrand, cauchyPrincipalValueIntegrandOn,
+              simp only [pvIntegrand, cpvIntegrandOn,
                 if_neg (hε t ht.1 ht.2)]
           · exact Filter.Eventually.of_forall fun t ht => by
               rw [Set.mem_Ioc] at ht
@@ -445,13 +445,13 @@ private lemma pvIntegrand_intervalIntegrable
     push Not at h_contra
     exact h_not_near ⟨s, Finset.mem_coe.mpr hs, h_contra.le⟩
   have hF_K : EqOn F (fun t => logDeriv g (γ t) * deriv γ t) K := fun t ⟨_, h_not_near⟩ => by
-    change cauchyPrincipalValueIntegrandOn S₀ (logDeriv g) γ ε t = _
-    simp only [cauchyPrincipalValueIntegrandOn, Finset.mem_coe] at h_not_near ⊢
+    change cpvIntegrandOn S₀ (logDeriv g) γ ε t = _
+    simp only [cpvIntegrandOn, Finset.mem_coe] at h_not_near ⊢
     exact if_neg h_not_near
   have h_compl_zero : EqOn F 0 (uIoc a b \ K) := by
     intro t ⟨ht_uioc, h_not_K⟩
-    change cauchyPrincipalValueIntegrandOn S₀ (logDeriv g) γ ε t = 0
-    simp only [cauchyPrincipalValueIntegrandOn]
+    change cpvIntegrandOn S₀ (logDeriv g) γ ε t = 0
+    simp only [cpvIntegrandOn]
     refine if_pos ?_
     by_contra h_far
     exact h_not_K ⟨ht_uioc, by simpa using h_far⟩

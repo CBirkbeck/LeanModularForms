@@ -160,8 +160,8 @@ private lemma cpv_residue_side_eventually_eq (S : Finset UpperHalfPlane)
     let γ := fdBoundary_H H
     ∀ᶠ ε in 𝓝[>] (0:ℝ),
       ∀ t ∈ Set.uIcc (0:ℝ) 5,
-        cauchyPrincipalValueIntegrandOn S0 F γ ε t =
-        cauchyPrincipalValueIntegrandOn S_on F γ ε t := by
+        cpvIntegrandOn S0 F γ ε t =
+        cpvIntegrandOn S_on F γ ε t := by
   intro F γ
   have h_finite_family : ∀ᶠ ε in 𝓝[>] (0:ℝ),
       ∀ s ∈ Sbox \ S_on, ∀ t ∈ Icc (0:ℝ) 5, ε < ‖γ t - s‖ := by
@@ -183,7 +183,7 @@ private lemma cpv_residue_side_eventually_eq (S : Finset UpperHalfPlane)
     exact h_all.mono (fun ε hε s hs => hε ⟨s, hs⟩)
   filter_upwards [h_finite_family] with ε hε t ht
   rw [Set.uIcc_of_le (by norm_num : (0:ℝ) ≤ 5)] at ht
-  simp only [cauchyPrincipalValueIntegrandOn]
+  simp only [cpvIntegrandOn]
   have h_iff :
       (∃ s ∈ S0, ‖γ t - s‖ ≤ ε) ↔ (∃ s ∈ S_on, ‖γ t - s‖ ≤ ε) := by
     constructor
@@ -329,14 +329,14 @@ theorem cpv_residue_side_tendsto (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, 
       show γ_imm.a = (0:ℝ) from rfl,
       show γ_imm.b = (5:ℝ) from rfl] at hL_tendsto h_val
   have hL_tendsto_F : Tendsto (fun ε =>
-      ∫ t in (0:ℝ)..5, cauchyPrincipalValueIntegrandOn S0 F γ ε t)
+      ∫ t in (0:ℝ)..5, cpvIntegrandOn S0 F γ ε t)
       (𝓝[>] 0) (𝓝 L) := by
     apply hL_tendsto.congr'
     filter_upwards [self_mem_nhdsWithin]
     intro ε hε
     apply intervalIntegral.integral_congr
     intro t _
-    simp only [cauchyPrincipalValueIntegrandOn]
+    simp only [cpvIntegrandOn]
     split_ifs with h
     · rfl
     · push Not at h
@@ -348,7 +348,7 @@ theorem cpv_residue_side_tendsto (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, 
       congr 1
       exact logDerivPatched_eq_raw_off F S0 hSimplePoles h_not
   have hL_tendsto_S_on : Tendsto (fun ε =>
-      ∫ t in (0:ℝ)..5, cauchyPrincipalValueIntegrandOn S_on F γ ε t)
+      ∫ t in (0:ℝ)..5, cpvIntegrandOn S_on F γ ε t)
       (𝓝[>] 0) (𝓝 L) :=
     hL_tendsto_F.congr' ((cpv_residue_side_eventually_eq f hf S
       hS_complete hH_sqrt3 hH_ge1 hH_bound hM_half hHM

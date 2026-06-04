@@ -67,7 +67,7 @@ private lemma dominated_convergence_empty_case (f g_reg : ℂ → ℂ) (γ : Pie
     (hg_decomp : ∀ z, z ∉ (∅ : Finset ℂ) → f z = g_reg z + ∑ s ∈ (∅ : Finset ℂ),
       residueSimplePole f s / (z - s)) :
     let M := fun ε => ∫ t in γ.a..γ.b,
-      cauchyPrincipalValueIntegrandOn ∅ f γ.toFun ε t
+      cpvIntegrandOn ∅ f γ.toFun ε t
     let S' := fun ε => ∑ s ∈ (∅ : Finset ℂ).attach,
       ∫ t in γ.a..γ.b, if ‖γ.toFun t - s.val‖ > ε
         then (residueSimplePole f s.val / (γ.toFun t - s.val)) * deriv γ.toFun t else 0
@@ -82,7 +82,7 @@ private lemma dominated_convergence_empty_case (f g_reg : ℂ → ℂ) (γ : Pie
   filter_upwards [self_mem_nhdsWithin] with ε _
   simp only [A, S', M, G, Finset.attach_empty, Finset.sum_empty, sub_zero]
   refine (intervalIntegral.integral_congr fun t _ => ?_).symm
-  simp only [cauchyPrincipalValueIntegrandOn, Finset.notMem_empty, false_and,
+  simp only [cpvIntegrandOn, Finset.notMem_empty, false_and,
     exists_false, ↓reduceIte, hf_eq_g (γ.toFun t)]
 
 private lemma pointwise_ae_limit_off_crossing (S0 : Finset ℂ) (f g_reg : ℂ → ℂ)
@@ -92,7 +92,7 @@ private lemma pointwise_ae_limit_off_crossing (S0 : Finset ℂ) (f g_reg : ℂ �
     (hg_decomp : ∀ z, z ∉ (S0 : Set ℂ) →
       f z = g_reg z + ∑ s ∈ S0, residueSimplePole f s / (z - s)) :
     let A_int : ℝ → ℝ → ℂ := fun ε t =>
-      cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε t -
+      cpvIntegrandOn S0 f γ.toFun ε t -
         ∑ s ∈ S0, if ‖γ.toFun t - s‖ > ε
           then (residueSimplePole f s / (γ.toFun t - s)) * deriv γ.toFun t else 0
     let f_lim : ℝ → ℂ := fun t => g_reg (γ.toFun t) * deriv γ.toFun t
@@ -120,7 +120,7 @@ private lemma pointwise_ae_limit_off_crossing (S0 : Finset ℂ) (f g_reg : ℂ �
         simp only [A_int, f_lim]
         have hall_far : ∀ s ∈ S0, ε < ‖γ.toFun t - s‖ :=
           fun s hs => hε_small.trans_le (Finset.inf'_le _ hs)
-        simp only [cauchyPrincipalValueIntegrandOn,
+        simp only [cpvIntegrandOn,
           if_neg (by push Not; exact hall_far : ¬ ∃ s ∈ S0, ‖γ.toFun t - s‖ ≤ ε),
           residue_sum_ifs_eq_mul_deriv hall_far, ← sub_mul]
         rw [show f (γ.toFun t) - ∑ s ∈ S0, residueSimplePole f s / (γ.toFun t - s) =
@@ -136,10 +136,10 @@ private lemma norm_A_int_bound_all_far (S0 : Finset ℂ) (f g_reg : ℂ → ℂ)
     {t ε : ℝ} (hε : 0 < ε) (ht : t ∈ Icc γ.a γ.b)
     (hall : ∀ s ∈ S0, ε < ‖γ.toFun t - s‖) (B : ℝ)
     (hB : max 0 Mg * max 0 Mγ' ≤ B) :
-    ‖cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε t -
+    ‖cpvIntegrandOn S0 f γ.toFun ε t -
       ∑ s ∈ S0, (if ‖γ.toFun t - s‖ > ε
         then residueSimplePole f s / (γ.toFun t - s) * deriv γ.toFun t else 0)‖ ≤ B := by
-  simp only [cauchyPrincipalValueIntegrandOn]
+  simp only [cpvIntegrandOn]
   rw [if_neg (by push Not; exact hall), residue_sum_ifs_eq_mul_deriv hall, ← sub_mul,
     show f (γ.toFun t) - ∑ s ∈ S0, residueSimplePole f s / (γ.toFun t - s) =
       g_reg (γ.toFun t) by
@@ -194,10 +194,10 @@ private lemma norm_A_int_bound_some_near (S0 : Finset ℂ) (f : ℂ → ℂ) (γ
     (hδ_sep : ∀ s ∈ S0, ∀ s' ∈ S0, s ≠ s' → δ ≤ ‖s' - s‖)
     {t ε : ℝ} (ht : t ∈ Icc γ.a γ.b) {s₀ : ℂ} (hs₀ : s₀ ∈ S0) (hs₀_near : ‖γ.toFun t - s₀‖ ≤ ε)
     (B : ℝ) (hB : max 0 (2 * (S0.card : ℝ) * Mc / δ) * max 0 Mγ' ≤ B) :
-    ‖cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε t -
+    ‖cpvIntegrandOn S0 f γ.toFun ε t -
       ∑ s ∈ S0, (if ‖γ.toFun t - s‖ > ε
         then residueSimplePole f s / (γ.toFun t - s) * deriv γ.toFun t else 0)‖ ≤ B := by
-  simp only [cauchyPrincipalValueIntegrandOn]
+  simp only [cpvIntegrandOn]
   rw [if_pos ⟨s₀, hs₀, hs₀_near⟩]
   simp only [zero_sub, norm_neg]
   have h_γ'_bound : ‖deriv γ.toFun t‖ ≤ Mγ' := hMγ' t ht
@@ -243,7 +243,7 @@ private lemma A_int_norm_bound (S0 : Finset ℂ) (f g_reg : ℂ → ℂ) (γ : P
     (hδ_sep : ∀ s ∈ S0, ∀ s' ∈ S0, s ≠ s' → δ ≤ ‖s' - s‖) :
     let B := max 1 (max (max 0 Mg) (max 0 (2 * (S0.card : ℝ) * Mc / δ)) * max 0 Mγ')
     ∀ ε > 0, ∀ᵐ t ∂volume, t ∈ Ι γ.a γ.b →
-      ‖cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε t -
+      ‖cpvIntegrandOn S0 f γ.toFun ε t -
         ∑ s ∈ S0, (if ‖γ.toFun t - s‖ > ε
           then (residueSimplePole f s / (γ.toFun t - s)) * deriv γ.toFun t
           else 0)‖ ≤ B := by
@@ -266,23 +266,23 @@ private lemma A_int_aEStronglyMeasurable (S0 : Finset ℂ) (f g_reg : ℂ → �
       f z = g_reg z + ∑ s ∈ S0, residueSimplePole f s / (z - s))
     (hg_cont : ContinuousOn g_reg (γ.toFun '' Icc γ.a γ.b)) {ε : ℝ} (hε : 0 < ε) :
     AEStronglyMeasurable
-      (fun t => cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε t -
+      (fun t => cpvIntegrandOn S0 f γ.toFun ε t -
         ∑ s ∈ S0, if ‖γ.toFun t - s‖ > ε
           then (residueSimplePole f s / (γ.toFun t - s)) * deriv γ.toFun t else 0)
       (volume.restrict (Ι γ.a γ.b)) := by
   have hγ_cont := γ.toPiecewiseC1Curve.continuous_toFun
   have hγ'_off_P := continuousOn_deriv_off_partition γ
   have h_eq_decomposed : ∀ t,
-      cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε t =
+      cpvIntegrandOn S0 f γ.toFun ε t =
       (if ∃ s ∈ S0, ‖γ.toFun t - s‖ ≤ ε then 0
         else (g_reg (γ.toFun t) + ∑ s ∈ S0, residueSimplePole f s / (γ.toFun t - s)) *
           deriv γ.toFun t) := fun t => by
-    simp only [cauchyPrincipalValueIntegrandOn]
+    simp only [cpvIntegrandOn]
     split_ifs with h_near
     · rfl
     · push Not at h_near
       rw [hg_decomp (γ.toFun t) (γt_not_mem_S0_of_all_far hε h_near)]
-  have h_meas_pv : AEStronglyMeasurable (cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε)
+  have h_meas_pv : AEStronglyMeasurable (cpvIntegrandOn S0 f γ.toFun ε)
       (volume.restrict (Icc γ.a γ.b)) :=
     (aEStronglyMeasurable_pv_integrand_decomposed S0 (residueSimplePole f) hε hg_cont
       hγ_cont hγ'_off_P).congr (ae_of_all _ (fun t => (h_eq_decomposed t).symm))
@@ -294,7 +294,7 @@ private lemma pvIntegrand_intervalIntegrable_of_nonempty (S0 : Finset ℂ) (f g_
     (hg_decomp : ∀ z, z ∉ (S0 : Set ℂ) →
       f z = g_reg z + ∑ s ∈ S0, residueSimplePole f s / (z - s))
     (hg_cont : ContinuousOn g_reg (γ.toFun '' Icc γ.a γ.b)) {ε : ℝ} (hε : 0 < ε) :
-    IntervalIntegrable (cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε)
+    IntervalIntegrable (cpvIntegrandOn S0 f γ.toFun ε)
       volume γ.a γ.b := by
   have hγ_cont := γ.toPiecewiseC1Curve.continuous_toFun
   have hγ'_off_P := continuousOn_deriv_off_partition γ
@@ -307,9 +307,9 @@ private lemma pvIntegrand_intervalIntegrable_of_nonempty (S0 : Finset ℂ) (f g_
       hS0_nonempty.choose_spec)
   let Mb := (|Mg| + S0.card * res_bound / ε) * |Mγ'| + 1
   have h_bound : ∀ t ∈ Icc γ.a γ.b,
-      ‖cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε t‖ ≤ Mb := by
+      ‖cpvIntegrandOn S0 f γ.toFun ε t‖ ≤ Mb := by
     intro t ht
-    simp only [cauchyPrincipalValueIntegrandOn]
+    simp only [cpvIntegrandOn]
     split_ifs with h
     · simp only [Mb, norm_zero]; positivity
     · push Not at h
@@ -338,13 +338,13 @@ private lemma pvIntegrand_intervalIntegrable_of_nonempty (S0 : Finset ℂ) (f g_
                         div_le_div_of_nonneg_left h_res_nonneg hε (h s hs).le
               _ = |Mg| + S0.card * res_bound / ε := by simp only [Finset.sum_const]; ring
         _ ≤ Mb := by simp only [Mb]; linarith
-  have h_eq_ae : (fun t => cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε t)
+  have h_eq_ae : (fun t => cpvIntegrandOn S0 f γ.toFun ε t)
       =ᵐ[volume.restrict (Icc γ.a γ.b)]
       (fun t => if ∃ s ∈ S0, ‖γ.toFun t - s‖ ≤ ε then (0 : ℂ)
         else (g_reg (γ.toFun t) + ∑ s ∈ S0, residueSimplePole f s / (γ.toFun t - s)) *
           deriv γ.toFun t) := by
     filter_upwards [ae_restrict_mem isClosed_Icc.measurableSet] with t _
-    simp only [cauchyPrincipalValueIntegrandOn]
+    simp only [cpvIntegrandOn]
     split_ifs with h_near
     · rfl
     · push Not at h_near
@@ -360,10 +360,10 @@ private lemma A_eq_integral_A_int (S0 : Finset ℂ) (f g_reg : ℂ → ℂ) (γ 
       f z = g_reg z + ∑ s ∈ S0, residueSimplePole f s / (z - s))
     (hg_cont : ContinuousOn g_reg (γ.toFun '' Icc γ.a γ.b)) :
     let A_int : ℝ → ℝ → ℂ := fun ε t =>
-      cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε t -
+      cpvIntegrandOn S0 f γ.toFun ε t -
         ∑ s ∈ S0, if ‖γ.toFun t - s‖ > ε
           then (residueSimplePole f s / (γ.toFun t - s)) * deriv γ.toFun t else 0
-    let M := fun ε => ∫ t in γ.a..γ.b, cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε t
+    let M := fun ε => ∫ t in γ.a..γ.b, cpvIntegrandOn S0 f γ.toFun ε t
     let S' := fun ε => ∑ s ∈ S0, ∫ t in γ.a..γ.b,
       if ‖γ.toFun t - s‖ > ε then (residueSimplePole f s / (γ.toFun t - s)) *
         deriv γ.toFun t else 0
@@ -391,7 +391,7 @@ lemma dominated_convergence_multipoint_helper (S0 : Finset ℂ) (f : ℂ → ℂ
       f z = g_reg z + ∑ s ∈ S0, residueSimplePole f s / (z - s))
     (_hg_cont : ContinuousOn g_reg (γ.toFun '' Icc γ.a γ.b))
     (hS0_sep : ∃ δ > 0, ∀ s ∈ S0, ∀ s' ∈ S0, s ≠ s' → δ ≤ ‖s' - s‖) :
-    let M := fun ε => ∫ t in γ.a..γ.b, cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε t
+    let M := fun ε => ∫ t in γ.a..γ.b, cpvIntegrandOn S0 f γ.toFun ε t
     let S' := fun ε => ∑ s ∈ S0.attach, ∫ t in γ.a..γ.b,
       if ‖γ.toFun t - s.val‖ > ε
       then (residueSimplePole f s.val / (γ.toFun t - s.val)) * deriv γ.toFun t else 0
@@ -403,7 +403,7 @@ lemma dominated_convergence_multipoint_helper (S0 : Finset ℂ) (f : ℂ → ℂ
   · subst hS0_empty
     exact dominated_convergence_empty_case f g_reg γ _hg_decomp
   · let A_int : ℝ → ℝ → ℂ := fun ε t =>
-      cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε t -
+      cpvIntegrandOn S0 f γ.toFun ε t -
         ∑ s ∈ S0, if ‖γ.toFun t - s‖ > ε
           then (residueSimplePole f s / (γ.toFun t - s)) * deriv γ.toFun t else 0
     have h_A_eq_int : ∀ ε > 0, A ε = ∫ t in γ.a..γ.b, A_int ε t := fun ε hε => by
@@ -433,7 +433,7 @@ lemma multipointPV_diff_tendsto (S0 : Finset ℂ) (f : ℂ → ℂ) (γ : Piecew
       f z = g_reg z + ∑ s ∈ S0, residueSimplePole f s / (z - s))
     (hg_cont : ContinuousOn g_reg (γ.toFun '' Icc γ.a γ.b))
     (hS0_sep : ∃ δ > 0, ∀ s ∈ S0, ∀ s' ∈ S0, s ≠ s' → δ ≤ ‖s' - s‖) :
-    let M := fun ε => ∫ t in γ.a..γ.b, cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε t
+    let M := fun ε => ∫ t in γ.a..γ.b, cpvIntegrandOn S0 f γ.toFun ε t
     let S' := fun ε => ∑ s ∈ S0.attach, ∫ t in γ.a..γ.b,
       if ‖γ.toFun t - s.val‖ > ε
       then (residueSimplePole f s.val / (γ.toFun t - s.val)) * deriv γ.toFun t else 0
@@ -483,8 +483,8 @@ lemma multipointPV_eq_sum_of_integral_zero (S0 : Finset ℂ) (f : ℂ → ℂ)
   have h_S'_tendsto : Tendsto S' (𝓝[>] 0) (𝓝 L) := by
     rw [h_S'_eq]
     have : Tendsto (fun ε =>
-        (∫ t in γ.a..γ.b, cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε t) -
-        ((∫ t in γ.a..γ.b, cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε t) - S'_attach ε))
+        (∫ t in γ.a..γ.b, cpvIntegrandOn S0 f γ.toFun ε t) -
+        ((∫ t in γ.a..γ.b, cpvIntegrandOn S0 f γ.toFun ε t) - S'_attach ε))
         (𝓝[>] 0) (𝓝 (L - 0)) := hL.sub h_A_tendsto
     simpa [sub_sub_cancel] using this
   rw [h_pv_eq_L, tendsto_nhds_unique h_S'_tendsto _hPV_each_tendsto]

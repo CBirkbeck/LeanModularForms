@@ -89,9 +89,9 @@ private lemma cpv_cauchy_of_sum_and_regular (S0 : Finset ℂ) (f : ℂ → ℂ)
       (fun z => f z - ∑ s ∈ S0, residueSimplePole f s / (z - s))
       (γ.toFun '' Icc γ.a γ.b)) :
     Cauchy (map (fun ε =>
-      ∫ t in γ.a..γ.b, cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε t) (𝓝[>] 0)) := by
+      ∫ t in γ.a..γ.b, cpvIntegrandOn S0 f γ.toFun ε t) (𝓝[>] 0)) := by
   choose L_fn hL_fn using hPV_each
-  set M := fun ε => ∫ t in γ.a..γ.b, cauchyPrincipalValueIntegrandOn S0 f γ.toFun ε t
+  set M := fun ε => ∫ t in γ.a..γ.b, cpvIntegrandOn S0 f γ.toFun ε t
   set S' := fun ε => ∑ s ∈ S0.attach, ∫ t in γ.a..γ.b,
     if ‖γ.toFun t - s.val‖ > ε then
       (residueSimplePole f s.val / (γ.toFun t - s.val)) * deriv γ.toFun t
@@ -121,7 +121,7 @@ lemma cauchyPrincipalValueOn_singular_sum (S0 : Finset ℂ) (f : ℂ → ℂ)
     CauchyPrincipalValueExistsOn S0 f γ.toFun γ.a γ.b := by
   by_cases hS0_empty : S0 = ∅
   · subst hS0_empty
-    unfold CauchyPrincipalValueExistsOn cauchyPrincipalValueIntegrandOn
+    unfold CauchyPrincipalValueExistsOn cpvIntegrandOn
     refine ⟨∫ t in γ.a..γ.b, f (γ.toFun t) * deriv γ.toFun t,
       Tendsto.congr' ?_ tendsto_const_nhds⟩
     filter_upwards [self_mem_nhdsWithin] with ε _

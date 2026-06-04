@@ -38,7 +38,7 @@ with singular set `S₀`. Zero when `γ(t)` is within `ε` of any `s ∈ S₀`,
 otherwise `logDeriv f (γ t) * γ'(t)`. -/
 noncomputable def pvIntegrand {k : ℤ} (f : ModularForm (Gamma 1) k) (γ : ℝ → ℂ)
     (S₀ : Finset ℂ) (ε : ℝ) (t : ℝ) : ℂ :=
-  cauchyPrincipalValueIntegrandOn S₀ (logDeriv (modularFormCompOfComplex f)) γ ε t
+  cpvIntegrandOn S₀ (logDeriv (modularFormCompOfComplex f)) γ ε t
 
 /-- Arc singular set: unit-circle zeros (and S-transforms) plus ρ, ρ+1. -/
 noncomputable def sArcOfS (S : Finset UpperHalfPlane) : Finset ℂ :=
