@@ -148,14 +148,6 @@ lemma T_elem_ppow_mem_R_p (p : ℕ) (hp : p.Prime) (e : Fin n → ℕ) (hmono : 
 
 end RpSubring
 
-section FullFactorization
-
-omit [NeZero n] in
-private lemma prod_pos_of_pos (a : Fin n → ℕ) (ha_pos : ∀ i, 0 < a i) :
-    0 < ∏ i, a i := Finset.prod_pos fun i _ ↦ ha_pos i
-
-end FullFactorization
-
 section Generation
 
 end Generation
