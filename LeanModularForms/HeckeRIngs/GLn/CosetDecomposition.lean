@@ -79,15 +79,6 @@ lemma upperTriMat_det_pos (a : Fin n → ℕ) (hpos : ∀ i, 0 < a i) (hdiv : Di
   rw [upperTriMat_det]
   exact_mod_cast Finset.prod_pos fun i _ ↦ hpos i
 
-lemma upperTriMat_injective (a : Fin n → ℕ) (hpos : ∀ i, 0 < a i) (hdiv : DivChain n a) :
-    Function.Injective (upperTriMat n a hdiv) := by
-  intro B₁ B₂ h
-  funext ⟨⟨i, j⟩, hij⟩
-  have h_eq := congr_fun₂ h i j
-  simp only [upperTriMat_apply_lt, hij] at h_eq
-  have h_ai_pos : (a i : ℤ) ≠ 0 := mod_cast (hpos i).ne'
-  exact Fin.ext <| by exact_mod_cast mul_left_cancel₀ h_ai_pos h_eq
-
 /-- The upper-triangular representative as a `GL_n(ℚ)` element. -/
 noncomputable def upperTriGL (a : Fin n → ℕ) (hpos : ∀ i, 0 < a i) (hdiv : DivChain n a)
     (B : UpperTriRep n a hdiv) : GL (Fin n) ℚ :=
@@ -176,25 +167,5 @@ private lemma coset_entry_zero_of_lt {a : Fin n → ℕ} {hpos : ∀ i, 0 < a i}
     exact le_mul_of_one_le_left (by omega) (Int.one_le_abs hσ_ne)
   rw [h_cancel, le_abs] at h_abs
   omega
-
-private lemma coset_col_entry_eq {a : Fin n → ℕ} {hpos : ∀ i, 0 < a i}
-    {hdiv : DivChain n a} {B₁ B₂ : UpperTriRep n a hdiv} {σ : SpecialLinearGroup (Fin n) ℤ}
-    (hmat : upperTriMat n a hdiv B₁ = σ.val * upperTriMat n a hdiv B₂) {j : Fin n}
-    (ih' : ∀ (k : Fin n), k.val < j.val → ∀ (i : Fin n), σ.val i k = if i = k then 1 else 0)
-    (i : Fin n) : σ.val i j = if i = j then 1 else 0 := by
-  have h_eq : upperTriMat n a hdiv B₁ i j =
-      ∑ k : Fin n, σ.val i k * upperTriMat n a hdiv B₂ k j := by
-    rw [hmat]; simp [Matrix.mul_apply]
-  rw [coset_sum_eq n (B₂ := B₂) ih'] at h_eq
-  rcases lt_trichotomy i j with hij | rfl | hij
-  · rw [if_neg hij.ne]
-    exact coset_entry_zero_of_lt n (hpos := hpos) (B₁ := B₁) hij
-      (by simpa only [hij, ↓reduceIte] using h_eq)
-  · simp only [lt_irrefl, ↓reduceIte, upperTriMat_apply_diag] at h_eq ⊢
-    exact mul_right_cancel₀ (show (a i : ℤ) ≠ 0 from mod_cast (hpos i).ne') (by linarith)
-  · rw [if_neg hij.ne']
-    simp only [hij.asymm, ↓reduceIte, upperTriMat_apply_gt _ _ _ _ hij] at h_eq
-    exact (mul_eq_zero.mp (by linarith)).resolve_right
-      (show (a j : ℤ) ≠ 0 from mod_cast (hpos j).ne')
 
 end HeckeRing.GLn

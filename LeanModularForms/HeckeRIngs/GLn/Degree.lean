@@ -54,10 +54,6 @@ private lemma conjAct_smul_eq_of_mem {G : Type*} [Group G] (H : Subgroup G)
 
 variable (n : ℕ)
 
-private def unipSL (a : Fin n → ℕ) (hdiv : DivChain n a) (B : UpperTriRep n a hdiv) :
-    SL(n, ℤ) :=
-  ⟨unipMat n a hdiv B, unipMat_det n a hdiv B⟩
-
 private lemma mapGL_injective : Function.Injective (mapGL ℚ : SL(n, ℤ) →* GL (Fin n) ℚ) := by
   intro x y hxy; ext i j
   have h := congr_arg (fun g ↦ (Units.val g) i j) hxy

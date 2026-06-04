@@ -77,14 +77,6 @@ include hp
 noncomputable def T_gen (k : Fin n) : HeckeAlgebra n :=
   T_elem (T_gen_diag n p k)
 
-/-- Each T_gen lies in R_p. -/
-lemma T_gen_mem_R_p (k : Fin n) : T_gen n p k ∈ R_p n p hp := by
-  have h_eq : T_gen n p k =
-      T_elem (ppowDiag n p (fun i ↦ if (i : ℕ) < n - 1 - (k : ℕ) then 0 else 1)) :=
-    T_elem_congr_diag (n := n) (T_gen_diag_is_ppow n p k)
-  rw [h_eq]
-  exact T_elem_ppow_mem_R_p n p hp _ (T_gen_exp_monotone n k)
-
 omit hp
 
 end TGen

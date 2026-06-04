@@ -294,20 +294,4 @@ theorem heckeT_p_fun_eq_heckeSlash_gen_Gamma0_on_charSpace_one (k : ℤ) (p : �
     (charSpaceOne_Gamma0_pair_H_invariant k f)]
   simp only [heckeT_p_ut]
 
-/-- **Main theorem**: on `modFormCharSpace k 1`, the Γ₁(N)-level Hecke operator
-`heckeT_p` corresponds via `modFormCharSpace_one_equiv_Gamma0` to the Γ₀(N)-level
-Hecke operator `heckeOperator_Gamma0 N k (D_p_Gamma0 N p hp.pos)`.
-
-Stated as equality of modular forms in `ModularForm ((Gamma1 N).map (mapGL ℝ)) k`. -/
-theorem heckeT_p_val_eq_heckeOperator_Gamma0_on_charSpace_one (k : ℤ) (p : ℕ)
-    (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
-    (f : modFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ)) :
-    heckeT_p k p hp hpN (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) =
-    ((modFormCharSpace_one_equiv_Gamma0 N k).symm
-      (heckeOperator_Gamma0 N k (D_p_Gamma0 N p hp.pos)
-        (modFormCharSpace_one_equiv_Gamma0 N k f)) :
-        ModularForm ((Gamma1 N).map (mapGL ℝ)) k) := by
-  ext z
-  exact congr_fun (heckeT_p_fun_eq_heckeSlash_gen_Gamma0_on_charSpace_one k p hp hpN f) z
-
 end HeckeRing.GL2

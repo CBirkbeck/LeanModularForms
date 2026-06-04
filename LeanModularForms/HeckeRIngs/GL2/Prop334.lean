@@ -29,12 +29,4 @@ open Matrix CongruenceSubgroup HeckeRing.GLn Matrix.SpecialLinearGroup HeckeRing
 
 open scoped MatrixGroups
 
-private lemma inv_mul_mul_entry_smul_det {K : Type*} [Field K]
-    (g h : Matrix (Fin 2) (Fin 2) K) (hdet : g.det ≠ 0) (i j : Fin 2) :
-    (g⁻¹ * h * g) i j * g.det = (Matrix.adjugate g * h * g) i j := by
-  rw [show g⁻¹ = (g.det)⁻¹ • Matrix.adjugate g by
-    rw [Matrix.inv_def, Ring.inverse_eq_inv']]
-  simp only [Matrix.smul_mul, Matrix.smul_apply, smul_eq_mul]
-  field_simp
-
 end HeckeRing.GL2.Prop334

@@ -858,53 +858,6 @@ lemma mul_injOn_coprime_divisors (m n : ℕ) (hcop : Nat.Coprime m n) :
   have ha_pos : 0 < a₁ := Nat.pos_of_ne_zero fun h ↦ by simp [h] at h₁
   exact Prod.ext haeq (Nat.eq_of_mul_eq_mul_left ha_pos (haeq ▸ heq))
 
-/-- Theorem 3.24(3a): coprime multiplicativity `T(m) T(n) = T(mn)` when `gcd(m,n) = 1`. -/
-theorem T_sum_mul_coprime (m n : ℕ+) (hcop : Nat.Coprime m n) :
-    T_sum m * T_sum n = T_sum ⟨m * n, Nat.mul_pos m.pos n.pos⟩ := by
-  set M := (m : ℕ) with hM; set N := (n : ℕ) with hN
-  change (∑ a ∈ M.divisors, T_ad a (M / a)) * (∑ b ∈ N.divisors, T_ad b (N / b)) =
-    ∑ c ∈ (M * N).divisors, T_ad c ((M * N) / c)
-  open scoped Pointwise in
-  rw [Finset.sum_mul_sum, Nat.divisors_mul,
-    show (Nat.divisors M * Nat.divisors N) =
-    (Nat.divisors M ×ˢ Nat.divisors N).image (fun p ↦ p.1 * p.2) by rfl,
-    Finset.sum_image (mul_injOn_coprime_divisors M N hcop), ← Finset.sum_product']
-  apply Finset.sum_congr rfl
-  intro ⟨a, b⟩ hab
-  simp only [Finset.mem_product, Nat.mem_divisors] at hab
-  have ha_pos : 0 < a := Nat.pos_of_ne_zero (fun h ↦ by simp [h] at hab)
-  have hb_pos : 0 < b := Nat.pos_of_ne_zero (fun h ↦ by simp [h] at hab)
-  rw [(Nat.div_mul_div_comm hab.1.1 hab.2.1).symm]
-  by_cases hca : a ∣ (M / a)
-  · by_cases hcb : b ∣ (N / b)
-    · apply T_ad_mul_of_coprime a b (M / a) (N / b) ha_pos hb_pos
-        (Nat.div_pos (Nat.le_of_dvd (by omega) hab.1.1) ha_pos)
-        (Nat.div_pos (Nat.le_of_dvd (by omega) hab.2.1) hb_pos)
-        hca hcb
-      rwa [hM, hN, Nat.mul_div_cancel' hab.1.1, Nat.mul_div_cancel' hab.2.1]
-    · rw [T_ad_mul_zero_of_not_dvd' b (N / b)
-        (by push Not; intro _ _; exact hcb) (T_ad a (M / a))]
-      symm; unfold T_ad; rw [dif_neg]; push Not
-      intro _ _ hdvd; apply hcb
-      exact ((hcop.symm.coprime_dvd_left hab.2.1).coprime_dvd_right
-        (Nat.div_dvd_of_dvd hab.1.1)).dvd_of_dvd_mul_left
-        (dvd_trans (dvd_mul_left b a) hdvd)
-  · rw [T_ad_mul_zero_of_not_dvd a (M / a)
-      (by push Not; intro _ _; exact hca)]
-    symm; unfold T_ad; rw [dif_neg]; push Not
-    intro _ _ hdvd; apply hca
-    exact ((hcop.coprime_dvd_left hab.1.1).coprime_dvd_right
-      (Nat.div_dvd_of_dvd hab.2.1)).dvd_of_dvd_mul_right
-      (dvd_trans (dvd_mul_right a b) hdvd)
-
 end CoprimeMultiplicativity
-
-/-- T_sum extended to ℕ: agrees with `T_sum` for positive arguments, zero for 0. -/
-noncomputable def T_sum_nat (k : ℕ) : HeckeAlgebra 2 :=
-  ∑ a ∈ k.divisors, T_ad a (k / a)
-
-private lemma T_ad_self_eq_T_elem (c : ℕ) (hc : 0 < c) : T_ad c c = T_elem (fun _ ↦ c) := by
-  rw [T_ad_of_pos c c hc hc (dvd_refl c)]
-  exact T_elem_congr_diag 2 (funext fun j ↦ by fin_cases j <;> rfl)
 
 end HeckeRing.GL2
