@@ -345,32 +345,6 @@ instance cuspFormCharSpace_finiteDimensional
 section InvariantSubmoduleCharDecomp
 
 /-- **Character decomposition of a diamond-invariant submodule of
-`ModularForm (Γ₁(N)) k`.**  If `p ⊆ M_k(Γ₁(N))` is stable under every
-diamond operator `⟨d⟩` for `d ∈ (ZMod N)ˣ`, then `p` equals the supremum
-of its intersections with the Nebentypus character subspaces
-`modFormCharSpace k χ`.  Specialising `p = ⊤` recovers
-`ModularForm_Gamma1_iSup_charSpace`. -/
-theorem modFormCharSpace_iSup_inf_of_diamondOpHom_invariant
-    (k : ℤ) (p : Submodule ℂ (ModularForm ((Gamma1 N).map (mapGL ℝ)) k))
-    (hp : ∀ d : (ZMod N)ˣ, ∀ f ∈ p, diamondOpHom k d f ∈ p) :
-    (⨆ χ : (ZMod N)ˣ →* ℂˣ, p ⊓ modFormCharSpace k χ) = p := by
-  have h_fun_top :
-      (⨆ χ : (ZMod N)ˣ → ℂ, p ⊓ jointDiamondEigenspace k χ) = p := by
-    simp only [jointDiamondEigenspace]
-    exact iSup_inf_iInf_eigenspace_eq_self_of_invariant (diamondOpHom k)
-      diamondOpHom_pairwise_commute diamondOp_isSemisimple
-      diamondOp_iSup_eigenspace_eq_top p hp
-  refine le_antisymm (iSup_le fun _ ↦ inf_le_left) ?_
-  conv_lhs => rw [← h_fun_top]
-  refine iSup_le fun χ ↦ ?_
-  by_cases hχ : p ⊓ jointDiamondEigenspace k χ = ⊥
-  · simp [hχ]
-  · obtain ⟨χ₀, hχ₀⟩ := exists_charHom_of_jointDiamondEigenspace_ne_bot
-      (fun h_bot ↦ hχ (by rw [h_bot, inf_bot_eq]))
-    rw [← hχ₀, jointDiamondEigenspace_eq_modFormCharSpace]
-    exact le_iSup (fun ψ : (ZMod N)ˣ →* ℂˣ ↦ p ⊓ modFormCharSpace k ψ) χ₀
-
-/-- **Character decomposition of a diamond-invariant submodule of
 `CuspForm (Γ₁(N)) k`.**  The cusp-form analogue of
 `modFormCharSpace_iSup_inf_of_diamondOpHom_invariant`. -/
 theorem cuspFormCharSpace_iSup_inf_of_diamondOpCuspHom_invariant

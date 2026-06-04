@@ -871,35 +871,8 @@ theorem sum_SL_tile_Gamma_p_α_eq_fiberCard_mul_SL_tile_Gamma1
         congr
 
 open CongruenceSubgroup UpperHalfPlane ModularGroup MeasureTheory in
-/-- Petersson kernel: `Γ_p(α)` outer-SL sum equals `relIndex • petN`. -/
-theorem sum_SL_Gamma_p_α_setIntegral_fd_petersson_eq_relIndex_mul_petN
-    (α : GL (Fin 2) ℚ) (f g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    ∑ q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α,
-      ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ),
-        petersson k ⇑f ⇑g τ ∂μ_hyp =
-    (slGamma_p_αToGamma1_fiberCard (N := N) α) • petN f g := by
-  rw [sum_SL_tile_Gamma_p_α_eq_fiberCard_mul_SL_tile_Gamma1 (N := N) α
-      (petersson k ⇑f ⇑g)
-      (fun γ hγ τ ↦ petersson_Gamma1_invariant f g γ hγ τ)]
-  congr 1
-  show ∑ q' : SL(2, ℤ) ⧸ Gamma1 N,
-      ∫ τ in (q'.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ),
-        petersson k ⇑f ⇑g τ ∂μ_hyp = petN f g
-  unfold petN
-  exact Finset.sum_congr rfl fun q' _ ↦ (petN_summand_eq_setIntegral f g q').symm
 
 open UpperHalfPlane ModularGroup MeasureTheory in
-/-- Generic SL-element Petersson-fd-slash setIntegral identity. -/
-theorem peterssonInner_fd_slash_SL_eq_setIntegral_shifted_fd
-    (F G : ℍ → ℂ) (s : SL(2, ℤ)) :
-    peterssonInner k fd (F ∣[k] (s : SL(2, ℤ))⁻¹) (G ∣[k] (s : SL(2, ℤ))⁻¹) =
-    ∫ τ in (s : SL(2, ℤ))⁻¹ • (fd : Set ℍ),
-      petersson k F G τ ∂μ_hyp := by
-  simp only [peterssonInner]
-  simp_rw [petersson_slash_SL]
-  rw [← Set.image_smul,
-    ← (measurePreserving_smul (s : SL(2, ℤ))⁻¹ μ_hyp).setIntegral_image_emb
-      (measurableEmbedding_const_smul _)]
 
 open CongruenceSubgroup UpperHalfPlane ModularGroup MeasureTheory in
 

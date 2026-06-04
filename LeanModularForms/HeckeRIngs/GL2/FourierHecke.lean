@@ -746,24 +746,6 @@ def IsNormalisedEigenform [NeZero N] (k : ℤ) (f : ModularForm ((Gamma1 N).map 
     Prop :=
   IsCommonEigenfunction k f ∧ (qExpansion N f).coeff 1 = 1
 
-/-- **Eigenvalue = Fourier coefficient** (Miyake Thm 4.5.16, DS (5.21)): if `f` is a normalised
-eigenform (`a_1 = 1`) in `M_k(Γ₁(N), χ)` and `(n, N) = 1`, then `λ_n = a_n(f)`. -/
-theorem eigenvalue_eq_fourierCoeff [NeZero N] (k : ℤ) (n : ℕ+) (hn : Nat.Coprime n.val N)
-    (χ : (ZMod N)ˣ →* ℂˣ) {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
-    (hf_char : f ∈ modFormCharSpace k χ) (hf_eigen : IsNormalisedEigenform k f) :
-    eigenvalue k f hf_eigen.1 n hn = (qExpansion N f).coeff n.val := by
-  have : NeZero n.val := ⟨n.pos.ne'⟩
-  have h1 := fourierCoeff_heckeT_n k n.val hn χ hf_char 1
-  simp only [Nat.gcd_one_left, Nat.divisors_one, Finset.sum_singleton, Nat.Coprime, dite_true,
-    Nat.cast_one, one_zpow, unitOfCoprime_one_eq_one, map_one, Units.val_one, one_mul,
-    Nat.div_one] at h1
-  have h_lhs : (qExpansion N (heckeT_n k n.val f)).coeff 1 =
-      eigenvalue k f hf_eigen.1 n hn := by
-    rw [eigenvalue_spec k f hf_eigen.1 n hn]
-    simp [ModularForm.qExpansion_smul (Nat.cast_pos.mpr (Nat.pos_of_neZero N))
-      (natCast_mem_strictPeriods_Gamma1_map N), hf_eigen.2]
-  rw [← h1, h_lhs]
-
 private theorem fourierCoeff_heckeT_ppow_period_one [NeZero N] (k : ℤ) {p : ℕ}
     (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (χ : (ZMod N)ˣ →* ℂˣ) (v : ℕ)
     {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k} (hf : f ∈ modFormCharSpace k χ) (m : ℕ) :
