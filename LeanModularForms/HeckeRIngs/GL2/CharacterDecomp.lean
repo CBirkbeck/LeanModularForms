@@ -172,13 +172,6 @@ lemma diamondOp_isSemisimple (d : (ZMod N)ˣ) :
     (diamondOpHom k d).IsSemisimple :=
   charDecomp_isSemisimple_of_isOfFinOrder (diamondOpHom_isOfFinOrder d)
 
-/-- The diamond operators pairwise commute. They are all images under the
-monoid homomorphism `diamondOpHom` from the abelian group `(ZMod N)ˣ`, so their
-images commute. -/
-lemma diamondOpHom_pairwise_commute :
-    Pairwise fun d₁ d₂ : (ZMod N)ˣ ↦ Commute (diamondOpHom k d₁) (diamondOpHom k d₂) :=
-  fun _ _ _ ↦ (Commute.all _ _).map (diamondOpHom k)
-
 /-- Finite-dimensionality of the space of modular forms for `Γ₁(N)`. Derived
 from `dim_gen_cong_levels` in `DimensionFormulas.lean`. -/
 instance modularForm_Gamma1_finiteDimensional :
@@ -191,37 +184,12 @@ instance modularForm_Gamma0_finiteDimensional :
     FiniteDimensional ℂ (ModularForm ((Gamma0 N).map (mapGL ℝ)) k) :=
   dim_gen_cong_levels k (Gamma0 N) Subgroup.FiniteIndex.index_ne_zero
 
-/-- For each diamond operator, the supremum of its eigenspaces is the whole
-space. -/
-lemma diamondOp_iSup_eigenspace_eq_top (d : (ZMod N)ˣ) :
-    ⨆ μ : ℂ, (diamondOpHom k d).eigenspace μ =
-    (⊤ : Submodule ℂ (ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) := by
-  simpa only [Module.End.IsFinitelySemisimple.maxGenEigenspace_eq_eigenspace
-    (diamondOp_isSemisimple d).isFinitelySemisimple] using
-    Module.End.iSup_maxGenEigenspace_eq_top (diamondOpHom k d)
-
 /-- The joint eigenspace indexed by a function `χ : (ZMod N)ˣ → ℂ`. When `χ` is
 not the underlying function of a character `(ZMod N)ˣ →* ℂˣ`, this space is
 `⊥`; otherwise it coincides with `modFormCharSpace k χ₀` for that character. -/
 noncomputable def jointDiamondEigenspace (k : ℤ) (χ : (ZMod N)ˣ → ℂ) :
     Submodule ℂ (ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :=
   ⨅ d : (ZMod N)ˣ, (diamondOpHom k d).eigenspace (χ d)
-
-/-- `jointDiamondEigenspace` at the underlying function of a character agrees
-with `modFormCharSpace`. -/
-lemma jointDiamondEigenspace_eq_modFormCharSpace (χ₀ : (ZMod N)ˣ →* ℂˣ) :
-    jointDiamondEigenspace k (fun d ↦ (χ₀ d : ℂ)) = modFormCharSpace k χ₀ := rfl
-
-/-- If `jointDiamondEigenspace k χ ≠ ⊥`, then `χ` comes from a character, i.e.,
-equals `(d ↦ (χ₀ d : ℂ))` for some `χ₀ : (ZMod N)ˣ →* ℂˣ`. -/
-lemma exists_charHom_of_jointDiamondEigenspace_ne_bot {χ : (ZMod N)ˣ → ℂ}
-    (hχ : jointDiamondEigenspace k χ ≠ ⊥) :
-    ∃ χ₀ : (ZMod N)ˣ →* ℂˣ, (fun d ↦ ((χ₀ d) : ℂ)) = χ := by
-  rw [Submodule.ne_bot_iff] at hχ
-  obtain ⟨f, hf_mem, hf_ne⟩ := hχ
-  exact ⟨charDecomp_charHomOfEigenvector
-    (V := ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (diamondOpHom k) χ f hf_ne fun d ↦ Submodule.mem_iInf _ |>.mp hf_mem d, rfl⟩
 
 /-- Each character subspace `modFormCharSpace k χ` is finite-dimensional over
 `ℂ`, as a submodule of the finite-dimensional ambient

@@ -838,37 +838,6 @@ theorem setIntegral_SL_tile_Gamma_p_α_eq_SL_tile_Gamma1
   exact h_inv γ⁻¹ ((Gamma1 N).inv_mem h_quot_eq) τ
 
 open CongruenceSubgroup UpperHalfPlane MeasureTheory Classical in
-/-- SL/Γ_p(α) → SL/Γ₁(N) fiber-sum reindex. -/
-theorem sum_SL_tile_Gamma_p_α_eq_fiberCard_mul_SL_tile_Gamma1
-    (α : GL (Fin 2) ℚ) (h : ℍ → ℂ)
-    (h_inv : ∀ γ ∈ Gamma1 N, ∀ τ : ℍ, h (γ • τ) = h τ) :
-    ∑ q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α,
-      ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ), h τ ∂μ_hyp =
-    (slGamma_p_αToGamma1_fiberCard (N := N) α) •
-      ∑ q' : SL(2, ℤ) ⧸ Gamma1 N,
-        ∫ τ in (q'.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ), h τ ∂μ_hyp := by
-  calc ∑ q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α,
-          ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ), h τ ∂μ_hyp
-      = ∑ q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α,
-          ∫ τ in ((slGamma_p_αToGamma1 (N := N) α q).out : SL(2, ℤ))⁻¹ •
-            (fd : Set ℍ), h τ ∂μ_hyp :=
-        Finset.sum_congr rfl fun q _ ↦ setIntegral_SL_tile_Gamma_p_α_eq_SL_tile_Gamma1 (N := N) α h h_inv q
-    _ = ∑ q' : SL(2, ℤ) ⧸ Gamma1 N,
-          ∑ q ∈ Finset.univ.filter (fun q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α ↦
-            slGamma_p_αToGamma1 (N := N) α q = q'),
-            ∫ τ in (q'.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ), h τ ∂μ_hyp :=
-        (Finset.sum_fiberwise' Finset.univ
-          (slGamma_p_αToGamma1 (N := N) α)
-          (fun q' ↦ ∫ τ in (q'.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ), h τ ∂μ_hyp)).symm
-    _ = (slGamma_p_αToGamma1_fiberCard (N := N) α) •
-          ∑ q' : SL(2, ℤ) ⧸ Gamma1 N,
-            ∫ τ in (q'.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ), h τ ∂μ_hyp := by
-        rw [Finset.smul_sum]
-        refine Finset.sum_congr rfl fun q' _ ↦ ?_
-        rw [Finset.sum_const]
-        congr 1
-        convert slGamma_p_αToGamma1_fiberCard_eq (N := N) α q' using 2
-        congr
 
 open CongruenceSubgroup UpperHalfPlane ModularGroup MeasureTheory in
 

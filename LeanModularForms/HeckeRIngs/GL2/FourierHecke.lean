@@ -680,45 +680,6 @@ private theorem fourierCoeff_heckeT_n_composite [NeZero N] (k : ℤ) (n : ℕ) [
         (heckeT_n k q f) (heckeT_n_preserves_charSpace k q hqN χ hf) m)
       (ih q (heckeT_n_unfold_lt n hn_gt) hq_pos.ne' hqN f hf)
 
-/-- **General Fourier coefficient formula for `T_n`** (DS Prop 5.3.1, Miy Thm 4.5.13): for
-`f ∈ M_k(Γ₁(N), χ)` and positive integer `n` coprime to `N`,
-`a_m(T_n f) = Σ_{d | gcd(m,n)} d^{k-1} · χ(d) · a_{mn/d²}(f)`. -/
-theorem fourierCoeff_heckeT_n [NeZero N] (k : ℤ) (n : ℕ) [NeZero n] (hn : Nat.Coprime n N)
-    (χ : (ZMod N)ˣ →* ℂˣ) {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
-    (hf : f ∈ modFormCharSpace k χ) (m : ℕ) :
-    (qExpansion N (heckeT_n k n f)).coeff m =
-      ∑ d ∈ (Nat.gcd m n).divisors,
-        if h : d.Coprime N then
-          (↑d : ℂ) ^ (k - 1) * ↑(χ (ZMod.unitOfCoprime d h)) *
-            (qExpansion N f).coeff (m * n / (d * d))
-        else 0 := by
-  suffices key : ∀ (n : ℕ) (hn0 : n ≠ 0) (hn : Nat.Coprime n N)
-      (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-      (hf : f ∈ modFormCharSpace k χ) (m : ℕ),
-      haveI : NeZero n := ⟨hn0⟩
-      (qExpansion N (heckeT_n k n f)).coeff m =
-        ∑ d ∈ (Nat.gcd m n).divisors,
-          if h : d.Coprime N then
-            (↑d : ℂ) ^ (k - 1) * ↑(χ (ZMod.unitOfCoprime d h)) *
-              (qExpansion N f).coeff (m * n / (d * d))
-          else 0 by
-    exact key n (NeZero.ne n) hn f hf m
-  intro n
-  induction n using Nat.strongRecOn with
-  | _ n ih =>
-  intro hn0 hnN f hf m
-  have : NeZero n := ⟨hn0⟩
-  by_cases hn1 : n = 1
-  · subst hn1
-    simp [heckeT_n_one, Module.End.one_apply, Nat.gcd_one_right, Nat.divisors_one,
-      Finset.sum_singleton, Nat.Coprime, unitOfCoprime_one_eq_one]
-  · have hn_gt : 1 < n := by omega
-    by_cases hn_prime : Nat.Prime n
-    · exact fourierCoeff_heckeT_n_prime k hn_prime hnN χ
-        (fun g hg m' ↦ fourierCoeff_heckeT_p k hn_prime hnN χ hg m') hf m
-    · exact fourierCoeff_heckeT_n_composite k n hn_gt hnN χ
-        (fun hp hpN v g hg m' ↦ fourierCoeff_heckeT_ppow k hp hpN χ v hg m') ih hf m
-
 /-- A modular form is a **common eigenfunction** of all `T_n` with `(n,N) = 1`
 if `T_n f = a · f` for some eigenvalue `a ∈ ℂ`. -/
 abbrev IsCommonEigenfunction [NeZero N] (k : ℤ) (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
@@ -740,11 +701,6 @@ theorem eigenvalue_spec [NeZero N] (k : ℤ) (f : ModularForm ((Gamma1 N).map (m
     heckeT_n k n.val f = eigenvalue k f hf n hn • f :=
   haveI : NeZero n.val := ⟨n.pos.ne'⟩
   (hf n hn).choose_spec
-
-/-- A **normalised eigenform** is a common eigenfunction with `a_1(f) = 1`. -/
-def IsNormalisedEigenform [NeZero N] (k : ℤ) (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    Prop :=
-  IsCommonEigenfunction k f ∧ (qExpansion N f).coeff 1 = 1
 
 private theorem fourierCoeff_heckeT_ppow_period_one [NeZero N] (k : ℤ) {p : ℕ}
     (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (χ : (ZMod N)ˣ →* ℂˣ) (v : ℕ)
