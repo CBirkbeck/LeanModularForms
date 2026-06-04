@@ -73,44 +73,6 @@ private lemma hasSum_qExpansion_of_strictPeriod
   UpperHalfPlane.hasSum_qExpansion hh (SlashInvariantFormClass.periodic_comp_ofComplex f hΓ)
     (ModularFormClass.holo f) (ModularFormClass.bdd_at_infty f) τ
 
-/-- q-expansion periodicity: for `f` with strict period `1` (e.g., `Γ₁(N)` forms),
-the coefficient `(qExpansion N f).coeff n = 0` unless `N ∣ n`.
-
-This is because `f(τ+1) = f(τ)` forces `a_n * (exp(2πin/N) - 1) = 0`,
-so `a_n = 0` when `N ∤ n`. -/
-theorem qExpansion_coeff_eq_zero_of_not_dvd [NeZero N]
-    {Γ : Subgroup (GL (Fin 2) ℝ)} {k : ℤ}
-    {F : Type*} [FunLike F ℍ ℂ] [ModularFormClass F Γ k]
-    (hN : (N : ℝ) ∈ Γ.strictPeriods) (h1 : (1 : ℝ) ∈ Γ.strictPeriods)
-    (f : F) {n : ℕ} (hn : ¬(N : ℕ) ∣ n) :
-    (qExpansion (↑N) f).coeff n = 0 := by
-  set ζ := Function.Periodic.qParam (↑N) (1 : ℂ) with hζ_def
-  have hN_pos : (0 : ℝ) < N := Nat.cast_pos.mpr (Nat.pos_of_neZero N)
-  have hζ_prim : IsPrimitiveRoot ζ N := by
-    rw [hζ_def, Function.Periodic.qParam]
-    convert Complex.isPrimitiveRoot_exp N (NeZero.ne N) using 1; push_cast; ring
-  have hζn_ne : ζ ^ n ≠ 1 := mt (hζ_prim.pow_eq_one_iff_dvd n).mp hn
-  have h_coeff_eq : ∀ m : ℕ, (qExpansion (↑N) f).coeff m * ζ ^ m =
-      (qExpansion (↑N) f).coeff m := by
-    intro m; suffices ∀ σ : ℍ, HasSum (fun m' ↦ ((qExpansion (↑N) (⇑f)).coeff m' *
-        ζ ^ m') • Function.Periodic.qParam (↑N) ↑σ ^ m') (f σ) from
-      ModularFormClass.qExpansion_coeff_unique hN_pos hN this m
-    intro σ
-    set σ₁ : ℍ := ⟨↑σ + 1, by simp [Complex.add_im]; linarith [σ.im_pos]⟩
-    have h_shift := hasSum_qExpansion_of_strictPeriod hN_pos hN f σ₁
-    have hq_shift : Function.Periodic.qParam (↑N) ↑σ₁ =
-        Function.Periodic.qParam (↑N) ↑σ * ζ := by simp [σ₁, qParam_add, hζ_def]
-    have hf_eq : f σ₁ = f σ := by
-      have := (SlashInvariantFormClass.periodic_comp_ofComplex f h1) (↑σ : ℂ)
-      simp only [Function.comp_apply] at this
-      convert this using 1 <;> congr 1 <;> ext : 1
-      · exact (UpperHalfPlane.ofComplex_apply_of_im_pos σ₁.im_pos).symm ▸ rfl
-      · exact (UpperHalfPlane.ofComplex_apply σ).symm ▸ rfl
-    rw [hq_shift, hf_eq] at h_shift; unfold HasSum at h_shift ⊢
-    exact h_shift.congr fun s ↦ by congr 1; ext n'; simp [smul_eq_mul, mul_pow]; ring
-  exact (mul_eq_zero.mp (by rw [mul_sub, mul_one, h_coeff_eq n, sub_self])).resolve_right
-    (sub_ne_zero.mpr hζn_ne)
-
 private theorem coe_smul_T_p_upper (p : ℕ) (hp : 0 < p) (b : ℕ) (τ : ℍ) :
     (↑(glMap (T_p_upper p hp b) • τ) : ℂ) = ↑τ / ↑p + ↑b / ↑p := by
   simp only [UpperHalfPlane.coe_smul, UpperHalfPlane.num, UpperHalfPlane.denom]
@@ -261,52 +223,6 @@ private theorem sum_qParam_pow_period_one {p : ℕ} (hp : Nat.Prime p) (n : ℕ)
     rw [geom_sum_eq hζn_ne, show (ζ ^ n) ^ p = 1 from by
       rw [← pow_mul, mul_comm, pow_mul, hζ_prim.pow_eq_one, one_pow]]
     simp
-
-private theorem hasSum_heckeT_p_ut_period_N {N : ℕ} [NeZero N] (k : ℤ) {p : ℕ}
-    (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (f : ℍ → ℂ) (a : ℕ → ℂ) (τ : ℍ)
-    (hf_hs : ∀ σ : ℍ, HasSum
-      (fun n ↦ a n • Function.Periodic.qParam (↑N) ↑σ ^ n) (f σ))
-    (ha_zero : ∀ n, ¬ (N : ℕ) ∣ n → a n = 0) :
-    HasSum (fun n ↦ a (p * n) • Function.Periodic.qParam (↑N) ↑τ ^ n)
-      (heckeT_p_ut k p hp.pos f τ) := by
-  set q := Function.Periodic.qParam (↑N) ↑τ
-  rw [heckeT_p_ut_eq_inv_mul_sum k p hp f τ]
-  have hinj : Function.Injective (p * · : ℕ → ℕ) := mul_right_injective₀ hp.ne_zero
-  set w := Function.Periodic.qParam (↑N) ((↑τ : ℂ) / ↑p) with hw_def
-  set ζ := Function.Periodic.qParam (↑N) (1 / (↑p : ℂ))
-  have hp_ne : (↑p : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr hp.ne_zero
-  have hw_pow_p : w ^ p = q := by rw [hw_def, ← qParam_mul_nat]; congr 1; field_simp
-  have h_rewritten : HasSum
-      (fun n ↦ a n • w ^ n * ∑ b ∈ Finset.range p, ζ ^ (n * b))
-      (∑ b ∈ Finset.range p, f (glMap (T_p_upper p hp.pos b) • τ)) := by
-    convert hasSum_sum (fun b _ ↦ hf_hs (glMap (T_p_upper p hp.pos b) • τ)) using 2 with n
-    trans (∑ b ∈ Finset.range p, a n * (w ^ n * ζ ^ (n * b)))
-    · rw [smul_eq_mul, ← Finset.mul_sum, ← Finset.mul_sum, mul_assoc]
-    · exact Finset.sum_congr rfl fun b _ ↦ by
-        rw [qParam_smul_T_p_upper_pow (↑N) p hp.pos b τ n, smul_eq_mul]
-  have h_ind : HasSum (fun n' ↦ (if p ∣ n' then a n' • w ^ n' else 0))
-      ((↑p : ℂ)⁻¹ * ∑ b ∈ Finset.range p, f (glMap (T_p_upper p hp.pos b) • τ)) := by
-    rw [show (↑p : ℂ)⁻¹ * ∑ b ∈ Finset.range p, f (glMap (T_p_upper p hp.pos b) • τ) =
-        (↑p : ℂ)⁻¹ • ∑ b ∈ Finset.range p, f (glMap (T_p_upper p hp.pos b) • τ) from by
-      simp [smul_eq_mul]]
-    have h_scaled := h_rewritten.const_smul (↑p : ℂ)⁻¹
-    unfold HasSum at h_scaled ⊢
-    refine h_scaled.congr fun s ↦ ?_
-    congr 1; ext n
-    simp only [smul_eq_mul]
-    by_cases ha : a n = 0
-    · simp [ha]
-    · rw [sum_qParam_pow_period_N hp hpN (not_imp_comm.mp (ha_zero n) ha)]
-      split_ifs with h
-      · rw [mul_comm (a n * w ^ n), ← mul_assoc, inv_mul_cancel₀ hp_ne, one_mul]
-      · ring
-  rw [← hinj.hasSum_iff (fun x hx ↦ by
-    simp only [Set.mem_range, not_exists] at hx
-    simp [show ¬p ∣ x from fun ⟨k, hk⟩ ↦ hx k (by omega)])] at h_ind
-  simp only [Function.comp_def, show ∀ m, p ∣ p * m from dvd_mul_right p, if_true] at h_ind
-  convert h_ind using 2 with m
-  · rw [smul_eq_mul, smul_eq_mul, pow_mul, hw_pow_p]
-  · exact Finset.sum_congr rfl fun b _ ↦ (f_smul_T_p_upper_eq p hp f b τ).symm
 
 private theorem hasSum_heckeT_p_ut_period_one (k : ℤ) {p : ℕ} (hp : Nat.Prime p)
     (f : ℍ → ℂ) (a : ℕ → ℂ) (τ : ℍ)
