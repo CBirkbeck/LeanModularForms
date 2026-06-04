@@ -512,40 +512,6 @@ private theorem fourierCoeff_heckeT_ppow_succ_succ_eq [NeZero N] (k : ℤ) {p : 
       else 0 by split_ifs with hd <;> [exact ih1 f hf (m / p); rfl]]
   exact ppow_divisorSum_recurrence k hp hpN χ r m (fun j ↦ (qExpansion t f).coeff j)
 
-private theorem fourierCoeff_heckeT_ppow [NeZero N] (k : ℤ) {p : ℕ} (hp : Nat.Prime p)
-    (hpN : Nat.Coprime p N) (χ : (ZMod N)ˣ →* ℂˣ) (v : ℕ)
-    {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k} (hf : f ∈ modFormCharSpace k χ) (m : ℕ) :
-    (qExpansion N (heckeT_ppow k p hp v f)).coeff m =
-      ∑ d ∈ (Nat.gcd m (p ^ v)).divisors,
-        if h : d.Coprime N then
-          (↑d : ℂ) ^ (k - 1) * ↑(χ (ZMod.unitOfCoprime d h)) *
-            (qExpansion N f).coeff (m * p ^ v / (d * d))
-        else 0 := by
-  have hTp : HeckeTpCoeffFormula k hp hpN χ (N : ℝ) :=
-    fun g hg m' ↦ fourierCoeff_heckeT_p k hp hpN χ hg m'
-  suffices key : ∀ v, ∀ f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k,
-      f ∈ modFormCharSpace k χ → ∀ m,
-      (qExpansion N (heckeT_ppow k p hp v f)).coeff m =
-        ∑ d ∈ (Nat.gcd m (p ^ v)).divisors,
-          if h : d.Coprime N then
-            (↑d : ℂ) ^ (k - 1) * ↑(χ (ZMod.unitOfCoprime d h)) *
-              (qExpansion N f).coeff (m * p ^ v / (d * d))
-          else 0 from key v f hf m
-  intro v
-  induction v using Nat.strongRecOn with
-  | _ v ih_v =>
-  intro f hf m
-  match v with
-  | 0 =>
-    simp [pow_zero, heckeT_ppow, Module.End.one_apply, Nat.gcd_one_right, Nat.divisors_one,
-      Finset.sum_singleton, Nat.Coprime, unitOfCoprime_one_eq_one]
-  | 1 => exact fourierCoeff_heckeT_ppow_one_eq k hp hpN χ hTp hf m
-  | r + 2 =>
-    exact fourierCoeff_heckeT_ppow_succ_succ_eq k hp hpN χ
-      (Nat.cast_pos.mpr (Nat.pos_of_neZero N)) (natCast_mem_strictPeriods_Gamma1_map N) hTp hf r m
-      (fun g hg m' ↦ ih_v (r + 1) (by omega) g hg m')
-      (fun g hg m' ↦ ih_v r (by omega) g hg m')
-
 private abbrev HeckeTppowCoeffFormula (k : ℤ) {p N : ℕ} [NeZero N] (hp : Nat.Prime p)
     (χ : (ZMod N)ˣ →* ℂˣ) (t : ℝ) : Prop :=
   ∀ (v : ℕ) (g : ModularForm ((Gamma1 N).map (mapGL ℝ)) k), g ∈ modFormCharSpace k χ → ∀ m',

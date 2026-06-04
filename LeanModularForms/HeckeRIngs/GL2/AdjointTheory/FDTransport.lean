@@ -806,36 +806,6 @@ theorem slGamma_p_αToGamma1_fiberCard_eq (α : GL (Fin 2) ℚ)
   slGamma_p_αToGamma1_fiber_card_uniform (N := N) α q' _
 
 open CongruenceSubgroup UpperHalfPlane MeasureTheory in
-/-- Fiber-invariance of the SL-tile integral at `H = Γ₁(N)`, `Γ_p(α)`-quotient. -/
-theorem setIntegral_SL_tile_Gamma_p_α_eq_SL_tile_Gamma1
-    (α : GL (Fin 2) ℚ) (h : ℍ → ℂ)
-    (h_inv : ∀ γ ∈ Gamma1 N, ∀ τ : ℍ, h (γ • τ) = h τ)
-    (q : SL(2, ℤ) ⧸ Gamma_p_α (N := N) α) :
-    ∫ τ in (q.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ), h τ ∂μ_hyp =
-      ∫ τ in ((slGamma_p_αToGamma1 (N := N) α q).out : SL(2, ℤ))⁻¹ •
-        (fd : Set ℍ), h τ ∂μ_hyp := by
-  have h_quot_eq : (QuotientGroup.mk q.out : SL(2, ℤ) ⧸ Gamma1 N) =
-      QuotientGroup.mk ((slGamma_p_αToGamma1 (N := N) α q).out : SL(2, ℤ)) := by
-    have h1 : slGamma_p_αToGamma1 (N := N) α q = QuotientGroup.mk q.out := by
-      conv_lhs => rw [← q.out_eq]
-      rfl
-    exact h1.symm.trans (slGamma_p_αToGamma1 (N := N) α q).out_eq.symm
-  rw [QuotientGroup.eq] at h_quot_eq
-  set γ := (q.out : SL(2, ℤ))⁻¹ * (slGamma_p_αToGamma1 (N := N) α q).out with hγ_def
-  have h_eq : ((slGamma_p_αToGamma1 (N := N) α q).out : SL(2, ℤ)) = q.out * γ := by
-    rw [hγ_def]
-    group
-  rw [show ((slGamma_p_αToGamma1 (N := N) α q).out : SL(2, ℤ))⁻¹ • (fd : Set ℍ) =
-      ((γ : SL(2, ℤ))⁻¹ • ((q.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ))) by
-    rw [h_eq, mul_inv_rev, mul_smul]]
-  symm
-  rw [show ((γ⁻¹ : SL(2, ℤ)) • ((q.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ)) : Set ℍ) =
-      (fun τ ↦ (γ⁻¹ : SL(2, ℤ)) • τ) '' ((q.out : SL(2, ℤ))⁻¹ • (fd : Set ℍ)) from rfl,
-    (measurePreserving_smul (γ⁻¹ : SL(2, ℤ)) μ_hyp).setIntegral_image_emb
-      (measurableEmbedding_const_smul _)]
-  congr 1
-  ext τ
-  exact h_inv γ⁻¹ ((Gamma1 N).inv_mem h_quot_eq) τ
 
 open CongruenceSubgroup UpperHalfPlane MeasureTheory Classical in
 

@@ -167,11 +167,6 @@ lemma diamondOpHom_isOfFinOrder (d : (ZMod N)ˣ) :
     IsOfFinOrder (diamondOpHom k d) :=
   (diamondOpHom k).isOfFinOrder (isOfFinOrder_of_finite d)
 
-/-- Each diamond operator is a semisimple endomorphism. -/
-lemma diamondOp_isSemisimple (d : (ZMod N)ˣ) :
-    (diamondOpHom k d).IsSemisimple :=
-  charDecomp_isSemisimple_of_isOfFinOrder (diamondOpHom_isOfFinOrder d)
-
 /-- Finite-dimensionality of the space of modular forms for `Γ₁(N)`. Derived
 from `dim_gen_cong_levels` in `DimensionFormulas.lean`. -/
 instance modularForm_Gamma1_finiteDimensional :
@@ -183,13 +178,6 @@ from `dim_gen_cong_levels`. -/
 instance modularForm_Gamma0_finiteDimensional :
     FiniteDimensional ℂ (ModularForm ((Gamma0 N).map (mapGL ℝ)) k) :=
   dim_gen_cong_levels k (Gamma0 N) Subgroup.FiniteIndex.index_ne_zero
-
-/-- The joint eigenspace indexed by a function `χ : (ZMod N)ˣ → ℂ`. When `χ` is
-not the underlying function of a character `(ZMod N)ˣ →* ℂˣ`, this space is
-`⊥`; otherwise it coincides with `modFormCharSpace k χ₀` for that character. -/
-noncomputable def jointDiamondEigenspace (k : ℤ) (χ : (ZMod N)ˣ → ℂ) :
-    Submodule ℂ (ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :=
-  ⨅ d : (ZMod N)ˣ, (diamondOpHom k d).eigenspace (χ d)
 
 /-- Each character subspace `modFormCharSpace k χ` is finite-dimensional over
 `ℂ`, as a submodule of the finite-dimensional ambient
