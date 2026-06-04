@@ -243,9 +243,6 @@ section API
 @[simp] lemma deg_T_single (D : HeckeCoset P) (a : ℤ) :
     deg P (T_single P ℤ D a) = a * HeckeCoset_deg P D := deg_fun_T_single P D a
 
-/-- The degree of the identity element is 1. -/
-@[simp] lemma deg_one_val : deg P (1 : 𝕋 P ℤ) = 1 := (deg P).map_one
-
 /-- The degree map is multiplicative: `deg(f * g) = deg(f) * deg(g)`. -/
 lemma deg_mul (f g : 𝕋 P ℤ) : deg P (f * g) = deg P f * deg P g := (deg P).map_mul f g
 
