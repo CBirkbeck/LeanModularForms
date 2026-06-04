@@ -18,8 +18,11 @@ generalized residue theorem for piecewise C¹ immersions.
 
 ## Main Definitions
 
-* `cauchyPrincipalValueOn` — multi-point CPV integral
-* `CauchyPrincipalValueExistsOn` — existence of multi-point CPV
+* `HasCauchyPVOn'` — the **primary API predicate**: the multi-point CPV exists with
+  value `L` (Tendsto-based, on a raw curve `γ : ℝ → ℂ` over `[a, b]`).
+* `cauchyPrincipalValueOn` — multi-point CPV value (limUnder-based; secondary)
+* `CauchyPrincipalValueExistsOn` — abbreviation `∃ L, HasCauchyPVOn' S f γ a b L`
+* `HasCauchyPVOn'.cauchyPVOn_eq` — bridge: `HasCauchyPVOn' S f γ a b L → cauchyPrincipalValueOn S f γ a b = L`
 * `residueSimplePole` — residue at a simple pole via limit
 * `HasSimplePoleAt` (re-exported from `ForMathlib.Residue`) — simple pole decomposition
 
@@ -37,7 +40,16 @@ open scoped Real Interval
 
 noncomputable section
 
-/-- The multi-point Cauchy principal value. -/
+/-- The multi-point Cauchy principal value exists with value `L`: the ε-truncated
+integral along `γ` over `[a, b]` tends to `L` as `ε → 0⁺`. **Primary API predicate**
+(Tendsto-based). -/
+def HasCauchyPVOn'
+    (S : Finset ℂ) (f : ℂ → ℂ) (γ : ℝ → ℂ)
+    (a b : ℝ) (L : ℂ) : Prop :=
+  Tendsto (fun ε => ∫ t in a..b, cpvIntegrandOn S f γ ε t) (𝓝[>] 0) (𝓝 L)
+
+/-- The multi-point Cauchy principal value (limUnder-based; secondary).
+Returns junk when the limit does not exist; use `HasCauchyPVOn'` for the predicate. -/
 def cauchyPrincipalValueOn
     (S : Finset ℂ) (f : ℂ → ℂ) (γ : ℝ → ℂ)
     (a b : ℝ) : ℂ :=
@@ -45,14 +57,23 @@ def cauchyPrincipalValueOn
     ∫ t in a..b,
       cpvIntegrandOn S f γ ε t
 
-/-- Existence of the multi-point PV. -/
+/-- Existence of the multi-point PV; abbreviation `∃ L, HasCauchyPVOn' S f γ a b L`. -/
 def CauchyPrincipalValueExistsOn
     (S : Finset ℂ) (f : ℂ → ℂ) (γ : ℝ → ℂ)
     (a b : ℝ) : Prop :=
-  ∃ L : ℂ, Tendsto (fun ε =>
-    ∫ t in a..b,
-      cpvIntegrandOn S f γ ε t)
-    (𝓝[>] 0) (𝓝 L)
+  ∃ L : ℂ, HasCauchyPVOn' S f γ a b L
+
+/-- Bridge theorem: if `HasCauchyPVOn' S f γ a b L`, then `cauchyPrincipalValueOn S f γ a b = L`. -/
+theorem HasCauchyPVOn'.cauchyPVOn_eq {S : Finset ℂ} {f : ℂ → ℂ} {γ : ℝ → ℂ}
+    {a b : ℝ} {L : ℂ} (h : HasCauchyPVOn' S f γ a b L) :
+    cauchyPrincipalValueOn S f γ a b = L :=
+  h.limUnder_eq
+
+/-- The limit in `HasCauchyPVOn'` is unique. -/
+theorem HasCauchyPVOn'.unique {S : Finset ℂ} {f : ℂ → ℂ} {γ : ℝ → ℂ} {a b : ℝ}
+    {L₁ L₂ : ℂ} (h₁ : HasCauchyPVOn' S f γ a b L₁) (h₂ : HasCauchyPVOn' S f γ a b L₂) :
+    L₁ = L₂ :=
+  tendsto_nhds_unique h₁ h₂
 
 /-- Residue of f at z₀ via the limit formula
 `lim_{z → z₀} (z - z₀) · f(z)`. -/
@@ -429,23 +450,29 @@ theorem integral_eq_sum_residues_of_avoids
     singular_sum_eq_winding_residues f S0 γ hγ_avoids hγ'_bdd, add_zero, Finset.mul_sum]
   exact Finset.sum_congr rfl fun _ _ => by ring
 
-lemma cauchyPrincipalValueOn_empty
-    (f : ℂ → ℂ) (γ : ℝ → ℂ) (a b : ℝ) :
-    cauchyPrincipalValueOn ∅ f γ a b = ∫ t in a..b, f (γ t) * deriv γ t := by
-  unfold cauchyPrincipalValueOn
-  haveI : (𝓝[>] (0 : ℝ)).NeBot := nhdsWithin_Ioi_neBot (le_refl 0)
-  apply limUnder_eventually_eq_const
+/-- PV with empty singular set is just the ordinary contour integral. -/
+lemma hasCauchyPVOn'_empty (f : ℂ → ℂ) (γ : ℝ → ℂ) (a b : ℝ) :
+    HasCauchyPVOn' ∅ f γ a b (∫ t in a..b, f (γ t) * deriv γ t) := by
+  refine Filter.Tendsto.congr' ?_ tendsto_const_nhds
   filter_upwards [Ioo_mem_nhdsGT (show (0:ℝ) < 1 by norm_num)] with ε _
   exact intervalIntegral.integral_congr fun t _ =>
-    cpvIntegrandOn_of_forall_gt (by simp)
+    (cpvIntegrandOn_of_forall_gt (by simp)).symm
 
-private lemma cpv_eq_classical_eventually_of_avoids
+lemma cauchyPrincipalValueOn_empty
+    (f : ℂ → ℂ) (γ : ℝ → ℂ) (a b : ℝ) :
+    cauchyPrincipalValueOn ∅ f γ a b = ∫ t in a..b, f (γ t) * deriv γ t :=
+  (hasCauchyPVOn'_empty f γ a b).cauchyPVOn_eq
+
+/-- PV exists with value equal to the ordinary contour integral when the curve avoids
+all singularities. -/
+lemma hasCauchyPVOn'_avoids
     (S0 : Finset ℂ) (f : ℂ → ℂ) (γ : PiecewiseC1Curve)
-    (h_avoids : ∀ s ∈ S0, ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s)
-    (hS0_ne : S0.Nonempty) :
-    ∃ δ > 0, ∀ ε ∈ Ioo 0 δ, ∀ t ∈ Set.uIcc γ.a γ.b,
-      cpvIntegrandOn S0 f γ.toFun ε t =
-        f (γ.toFun t) * deriv γ.toFun t := by
+    (h_avoids : ∀ s ∈ S0, ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) :
+    HasCauchyPVOn' S0 f γ.toFun γ.a γ.b
+      (∫ t in γ.a..γ.b, f (γ.toFun t) * deriv γ.toFun t) := by
+  by_cases hS0_empty : S0 = ∅
+  · subst hS0_empty; exact hasCauchyPVOn'_empty f γ.toFun γ.a γ.b
+  have hS0_ne : S0.Nonempty := Finset.nonempty_of_ne_empty hS0_empty
   have h_cpt : IsCompact (γ.toFun '' Icc γ.a γ.b) :=
     isCompact_Icc.image_of_continuousOn γ.continuous_toFun
   have h_ne : (γ.toFun '' Icc γ.a γ.b).Nonempty :=
@@ -458,54 +485,32 @@ private lemma cpv_eq_classical_eventually_of_avoids
     calc (0 : ℝ) < δ_fun s := (h_cpt.isClosed.notMem_iff_infDist_pos h_ne).mp
           fun ⟨t, ht, hts⟩ => h_avoids s hs t ht hts
       _ = δ := hδ_eq
-  refine ⟨δ, hδ_pos, fun ε ⟨_, hε_lt_δ⟩ t ht => ?_⟩
+  refine Filter.Tendsto.congr' ?_ tendsto_const_nhds
+  rw [Filter.EventuallyEq, Filter.eventually_iff_exists_mem]
+  refine ⟨Ioo 0 δ, Ioo_mem_nhdsGT hδ_pos, fun ε ⟨_, hε_lt_δ⟩ => ?_⟩
+  refine intervalIntegral.integral_congr fun t ht => ?_
   rw [Set.uIcc_of_le (le_of_lt γ.hab)] at ht
-  exact cpvIntegrandOn_of_forall_gt fun s hs =>
+  exact (cpvIntegrandOn_of_forall_gt fun s hs =>
     calc ε < δ := hε_lt_δ
       _ ≤ Metric.infDist s (γ.toFun '' Icc γ.a γ.b) :=
         Finset.min'_le _ _ (Finset.mem_image_of_mem δ_fun hs)
       _ ≤ dist s (γ.toFun t) := Metric.infDist_le_dist_of_mem ⟨t, ht, rfl⟩
-      _ = ‖γ.toFun t - s‖ := by rw [dist_eq_norm, norm_sub_rev]
+      _ = ‖γ.toFun t - s‖ := by rw [dist_eq_norm, norm_sub_rev]).symm
 
 /-- PV exists when curve avoids all singularities. -/
 lemma cauchyPrincipalValueExistsOn_avoids
     (S0 : Finset ℂ) (f : ℂ → ℂ) (γ : PiecewiseC1Curve)
     (h_avoids : ∀ s ∈ S0, ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) :
-    CauchyPrincipalValueExistsOn S0 f γ.toFun γ.a γ.b := by
-  unfold CauchyPrincipalValueExistsOn
-  use ∫ t in γ.a..γ.b, f (γ.toFun t) * deriv γ.toFun t
-  by_cases hS0_empty : S0 = ∅
-  · subst hS0_empty
-    exact (Filter.Tendsto.congr' (by
-      filter_upwards [Ioo_mem_nhdsGT (show (0:ℝ) < 1 by norm_num)] with ε _
-      exact intervalIntegral.integral_congr fun t _ =>
-        (cpvIntegrandOn_of_forall_gt (by simp)).symm)
-      tendsto_const_nhds)
-  · obtain ⟨δ, hδ_pos, hδ⟩ := cpv_eq_classical_eventually_of_avoids
-      S0 f γ h_avoids (Finset.nonempty_of_ne_empty hS0_empty)
-    exact (Filter.Tendsto.congr' (by
-      rw [Filter.EventuallyEq, Filter.eventually_iff_exists_mem]
-      exact ⟨Ioo 0 δ, Ioo_mem_nhdsGT hδ_pos, fun ε hε =>
-        intervalIntegral.integral_congr fun t ht => (hδ ε hε t ht).symm⟩)
-      tendsto_const_nhds)
+    CauchyPrincipalValueExistsOn S0 f γ.toFun γ.a γ.b :=
+  ⟨_, hasCauchyPVOn'_avoids S0 f γ h_avoids⟩
 
 /-- PV value equals classical integral when avoiding. -/
 lemma cauchyPrincipalValueOn_avoids
     (S0 : Finset ℂ) (f : ℂ → ℂ) (γ : PiecewiseC1Curve)
     (h_avoids : ∀ s ∈ S0, ∀ t ∈ Icc γ.a γ.b, γ.toFun t ≠ s) :
     cauchyPrincipalValueOn S0 f γ.toFun γ.a γ.b =
-      ∫ t in γ.a..γ.b, f (γ.toFun t) * deriv γ.toFun t := by
-  unfold cauchyPrincipalValueOn
-  haveI : (𝓝[>] (0 : ℝ)).NeBot := nhdsWithin_Ioi_neBot (le_refl 0)
-  by_cases hS0_empty : S0 = ∅
-  · subst hS0_empty
-    exact cauchyPrincipalValueOn_empty f γ.toFun γ.a γ.b |>.symm ▸ rfl
-  · obtain ⟨δ, hδ_pos, hδ⟩ := cpv_eq_classical_eventually_of_avoids
-      S0 f γ h_avoids (Finset.nonempty_of_ne_empty hS0_empty)
-    apply limUnder_eventually_eq_const
-    rw [Filter.eventually_iff_exists_mem]
-    exact ⟨Ioo 0 δ, Ioo_mem_nhdsGT hδ_pos, fun ε hε =>
-      intervalIntegral.integral_congr (hδ ε hε)⟩
+      ∫ t in γ.a..γ.b, f (γ.toFun t) * deriv γ.toFun t :=
+  (hasCauchyPVOn'_avoids S0 f γ h_avoids).cauchyPVOn_eq
 
 /-- PV of 1/z equals 2πi times winding number. -/
 theorem pv_integral_inverse

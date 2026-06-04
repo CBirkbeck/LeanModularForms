@@ -121,12 +121,7 @@ lemma cauchyPrincipalValueOn_singular_sum (S0 : Finset ℂ) (f : ℂ → ℂ)
     CauchyPrincipalValueExistsOn S0 f γ.toFun γ.a γ.b := by
   by_cases hS0_empty : S0 = ∅
   · subst hS0_empty
-    unfold CauchyPrincipalValueExistsOn cpvIntegrandOn
-    refine ⟨∫ t in γ.a..γ.b, f (γ.toFun t) * deriv γ.toFun t,
-      Tendsto.congr' ?_ tendsto_const_nhds⟩
-    filter_upwards [self_mem_nhdsWithin] with ε _
-    refine intervalIntegral.integral_congr fun t _ => ?_
-    simp only [Finset.notMem_empty, false_and, exists_false, ↓reduceIte]
+    exact ⟨_, hasCauchyPVOn'_empty f γ.toFun γ.a γ.b⟩
   · exact CompleteSpace.complete (cpv_cauchy_of_sum_and_regular S0 f γ
       (Finset.nonempty_iff_ne_empty.mpr hS0_empty) hPV_each hg_reg_cont)
 
