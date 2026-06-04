@@ -87,13 +87,6 @@ structure Newform (N : ℕ) [NeZero N] (k : ℤ)
   normalisation). -/
   isNorm : (UpperHalfPlane.qExpansion (1 : ℝ) toCuspForm).coeff 1 = 1
 
-/-- Predicate version: f is a newform if it's an eigenform in the new subspace
-with `a_1 = 1` (at period 1). -/
-structure IsNewform (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop where
-  isEigen : IsEigenform f
-  isNew : f ∈ cuspFormsNewExtended N k
-  isNorm : (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff 1 = 1
-
 /-- The **conductor** of a `Newform N k` is the smallest level at which `f`
 arises as a `Newform`; for a bundled `Newform N k` this is `N` itself. -/
 noncomputable def Newform.conductor (_f : Newform N k) : ℕ := N
