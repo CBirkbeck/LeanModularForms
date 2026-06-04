@@ -300,11 +300,6 @@ theorem CauchyPrincipalValueExists'.concat {f : ℂ → ℂ} {γ : ℝ → ℂ} 
   let ⟨_, hL₂⟩ := h_bc
   ⟨_, hL₁.concat hL₂ hab hbc h_int⟩
 
-/-- The generalized winding number of γ around z₀ exists with value `n`:
-`n_{z₀}(γ) = (1/2πi) · PV ∮_γ dz/(z - z₀)`. -/
-def HasGeneralizedWindingNumber' (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) (n : ℂ) : Prop :=
-  HasCauchyPV' (·⁻¹) (fun t ↦ γ t - z₀) a b 0 (2 * Real.pi * I * n)
-
 /-- The generalized winding number of γ around z₀, defined via principal value.
 `n_{z₀}(γ) = (1/2πi) · PV ∮_γ dz/(z - z₀)`. -/
 def generalizedWindingNumber' (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) : ℂ :=
