@@ -39,9 +39,6 @@ noncomputable def gamma0NebentypusChar (χ : (ZMod N)ˣ →* ℂˣ) : ↥(Gamma0
   χ.comp (Gamma0MapUnits (N := N))
 
 omit [NeZero N] in
-@[simp] lemma gamma0NebentypusChar_apply (χ : (ZMod N)ˣ →* ℂˣ) (g : ↥(Gamma0 N)) :
-    gamma0NebentypusChar (N := N) χ g = χ (Gamma0MapUnits g) :=
-  rfl
 
 /-- The existing `modFormCharSpace k χ`, copied so that its carrier is expressed
 as the twisted `Γ₀(N)`-Nebentypus condition. -/
@@ -73,11 +70,6 @@ noncomputable def modFormCharSpace_equiv_gamma0Nebentypus (k : ℤ) (χ : (ZMod 
   map_add' _ _ := rfl
   map_smul' _ _ := rfl
 
-@[simp] lemma mem_modFormCharSpace_iff_mem_gamma0NebentypusSubmodule (k : ℤ)
-    (χ : (ZMod N)ˣ →* ℂˣ) (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    f ∈ modFormCharSpace k χ ↔ f ∈ gamma0NebentypusSubmodule (N := N) k χ :=
-  ⟨fun hf ↦ (modFormCharSpace_equiv_gamma0Nebentypus (N := N) k χ ⟨f, hf⟩).property,
-    fun hf ↦ ((modFormCharSpace_equiv_gamma0Nebentypus (N := N) k χ).symm ⟨f, hf⟩).property⟩
 
 /-- The good Hecke family transported to the experimental `Γ₀(N), χ`-style
 space. This is still the same away-from-the-level family, but it now lives on a
@@ -87,16 +79,5 @@ noncomputable def gamma0NebentypusFamily (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) 
   GoodHeckeFamily.transport (modFormCharSpace_equiv_gamma0Nebentypus (N := N) k χ)
     (modFormCharSpaceFamily (N := N) k χ)
 
-/-- Coercing the transported experimental operator back to the ambient modular
-form space gives the original `heckeT_n` operator on the underlying function. -/
-@[simp] lemma gamma0NebentypusFamily_coe (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
-    (n : GoodIndex N) (f : gamma0NebentypusSubmodule (N := N) k χ) :
-    (((gamma0NebentypusFamily (N := N) k χ).op n f :
-        gamma0NebentypusSubmodule (N := N) k χ) :
-        ModularForm ((Gamma1 N).map (mapGL ℝ)) k) =
-      ambientHeckeOfGoodIndex (N := N) k n
-        (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :=
-  modFormCharSpaceFamily_coe (N := N) k χ n
-    ((modFormCharSpace_equiv_gamma0Nebentypus (N := N) k χ).symm f)
 
 end HeckeRing.GL2.Unified
