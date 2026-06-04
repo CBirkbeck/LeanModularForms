@@ -3,8 +3,9 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
+import LeanModularForms.ForMathlib.FDBoundaryReparametrization
 import LeanModularForms.ForMathlib.FDWindingDataFullSeg1Seg4
-import LeanModularForms.ForMathlib.ResidueSideBridge
+import LeanModularForms.ForMathlib.ResidueSide
 
 /-!
 # Fully-ForMathlib Valence Formula (via bridged residue/modular sides)
@@ -12,8 +13,10 @@ import LeanModularForms.ForMathlib.ResidueSideBridge
 This file combines:
 - `valence_formula_unconditional_mkD` (the top-level valence formula with
   `mkD` baked in, requiring residue/modular side Tendsto hypotheses)
-- `cpv_residue_side_HasCauchyPVOn` and `cpv_modular_side_HasCauchyPVOn`
-  (the residue/modular side results bridged from the old chain)
+- the old-chain residue/modular sides `cpv_residue_side_forMathlib` /
+  `cpv_modular_side_forMathlib`, converted on the fly via
+  `hasCauchyPVOn_of_cauchyPVOn'_tendsto` from
+  `FDBoundaryReparametrization.lean`
 
 The end result is a ForMathlib-native, axiom-clean final valence formula
 theorem that requires only `hf : f ≠ 0` as input.
@@ -70,8 +73,10 @@ private lemma gwnPrime_eq_gwn_of_mem_fd {H : ℝ} (hH : 1 < H)
 
 include hf in
 /-- **Final unconditional valence formula**, combining
-`valence_formula_unconditional_mkD` with `cpv_residue_side_HasCauchyPVOn` and
-`cpv_modular_side_HasCauchyPVOn` from `ResidueSideBridge`. -/
+`valence_formula_unconditional_mkD` with the residue and modular side
+`Tendsto` results `cpv_residue_side_forMathlib` / `cpv_modular_side_forMathlib`,
+converted on the fly into `HasCauchyPVOn` form via
+`hasCauchyPVOn_of_cauchyPVOn'_tendsto`. -/
 theorem valence_formula_textbook_unconditional_FM
     (S : Finset UpperHalfPlane) (hS : ∀ p ∈ S, p ∈ 𝒟)
     (hS_complete : ∀ p, p ∈ 𝒟 → orderOfVanishingAt' (⇑f) p ≠ 0 → p ∈ S)
@@ -88,10 +93,10 @@ theorem valence_formula_textbook_unconditional_FM
         p ≠ ellipticPointRho' ∧ ‖(p : ℂ)‖ = 1 ∧ (p : ℂ).re < 0),
       ↑(orderOfVanishingAt' (⇑f) s) =
     (k : ℂ) / 12 := by
-  obtain ⟨H₀_res, hH₀_res, h_res_bridge⟩ :=
-    cpv_residue_side_HasCauchyPVOn f hf S hS hS_complete
-  obtain ⟨H₀_mod, hH₀_mod, h_mod_bridge⟩ :=
-    cpv_modular_side_HasCauchyPVOn f hf S hS hS_complete
+  obtain ⟨H₀_res, hH₀_res, h_res_old⟩ :=
+    cpv_residue_side_forMathlib f hf S hS hS_complete
+  obtain ⟨H₀_mod, hH₀_mod, h_mod_old⟩ :=
+    cpv_modular_side_forMathlib f hf S hS hS_complete
   set M := max (max (max H₀_res H₀_mod) H_S) 1
   set H_res := M + 1
   have hM_res : H₀_res ≤ M := by simp [M]
@@ -119,7 +124,7 @@ theorem valence_formula_textbook_unconditional_FM
       Finset.sum_congr rfl fun s hs => by
         rw [gwnPrime_eq_gwn_of_mem_fd hH (hS s hs) (hH_above s hs)]
     rw [← h_sum_eq]
-    refine (h_res_bridge hH_ge_res γ hγ).congr' ?_
+    refine (hasCauchyPVOn_of_cauchyPVOn'_tendsto γ hγ (h_res_old hH_ge_res)).congr' ?_
     filter_upwards with ε
     simp only [F_int_FM, dif_pos hH, hγ_def]
   · intro H hH_ge hH
@@ -127,7 +132,7 @@ theorem valence_formula_textbook_unconditional_FM
     set γ := (fdWindingDataFull_unconditional hH).boundary with hγ_def
     have hγ : ∀ t ∈ Icc (0 : ℝ) 1, γ.toPath.extend t = fdBoundaryFun H t :=
       (fdWindingDataFull_unconditional hH).boundary_eq
-    refine (h_mod_bridge hH_ge_mod γ hγ).congr' ?_
+    refine (hasCauchyPVOn_of_cauchyPVOn'_tendsto γ hγ (h_mod_old hH_ge_mod)).congr' ?_
     filter_upwards with ε
     simp only [F_int_FM, dif_pos hH, hγ_def]
 
