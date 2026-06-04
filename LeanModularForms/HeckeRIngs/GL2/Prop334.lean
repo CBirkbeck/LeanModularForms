@@ -149,36 +149,4 @@ private lemma gamma0_elt_intCast_matrix_form {N : ℕ} (h : ↥(Gamma0 N)) :
   ext i j; fin_cases i <;> fin_cases j <;>
     simp [RingHom.mapMatrix_apply, Matrix.map_apply, ← hAh_def, hγ]
 
-/-- For `g ∈ Δ₀(N)` with `gcd(det g, N) = 1` and `h h' ∈ Γ₀(N)` related by
-`mapGL ℚ h' = g⁻¹ · mapGL ℚ h · g` in `GL₂(ℚ)`, the nebentypus character values
-agree: `Gamma0MapUnits h' = Gamma0MapUnits h`. This is the coprime-determinant
-case of Shimura Proposition 3.34. -/
-theorem Gamma0MapUnits_preserved_of_detCoprime {N : ℕ} [NeZero N]
-    (g : (Gamma0_pair N).Δ)
-    (h_det_coprime : ∀ A : Matrix (Fin 2) (Fin 2) ℤ,
-      (↑(g : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ) =
-        A.map (Int.cast : ℤ → ℚ) → Int.gcd A.det N = 1)
-    (h h' : ↥(Gamma0 N))
-    (h'_conj : (mapGL ℚ (h' : SL(2, ℤ)) : GL (Fin 2) ℚ) =
-      (g : GL (Fin 2) ℚ)⁻¹ * mapGL ℚ (h : SL(2, ℤ)) * (g : GL (Fin 2) ℚ)) :
-    Gamma0MapUnits h' = Gamma0MapUnits h := by
-  obtain ⟨a, b, c, d, hA_rat⟩ := delta_elt_intCast_matrix_form g
-  obtain ⟨α, β, γ, δ, hAh_rat, hδ_eq⟩ := gamma0_elt_intCast_matrix_form h
-  set h'₁₁ : ℤ := (h' : SL(2, ℤ)).val 1 1
-  have hdet_ne : (!![(a : ℚ), (b : ℚ); (N : ℚ) * (c : ℚ), (d : ℚ)]).det ≠ 0 :=
-    hA_rat ▸ Matrix.GeneralLinearGroup.det_ne_zero g.val
-  have hdet_cop : Int.gcd (!![a, b; (N : ℤ) * c, d] : Matrix _ _ ℤ).det N = 1 := by
-    refine h_det_coprime _ ?_
-    rw [hA_rat]
-    ext i j; fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply]
-  have h_conj_11 := conj_matrix_entry_11_eq_intCast (g : GL (Fin 2) ℚ)
-    (h : SL(2, ℤ)) (h' : SL(2, ℤ)) a b c d α β γ δ N hA_rat hAh_rat h'_conj
-  have h'₁₁_eq_δ : (h'₁₁ : ZMod N) = (δ : ZMod N) :=
-    conj_entry_11_intCast_eq_mod a b c d α β γ δ h'₁₁ hdet_ne hdet_cop h_conj_11
-  have hGamma0Map : Gamma0Map N h' = Gamma0Map N h := by
-    simp only [Gamma0Map, MonoidHom.coe_mk, OneHom.coe_mk]
-    rw [← hδ_eq]; exact h'₁₁_eq_δ
-  ext
-  rw [Gamma0MapUnits_val, Gamma0MapUnits_val, hGamma0Map]
-
 end HeckeRing.GL2.Prop334

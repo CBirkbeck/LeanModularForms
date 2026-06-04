@@ -461,15 +461,4 @@ theorem heckeT_p_fun_comm_of_GL_pair {N : ℕ} [NeZero N] (k : ℤ)
   exact heckeSlash_gen_GL_pair_comm k (D_p p hp.pos) (D_p q hq.pos) (⇑f)
     (SL_invariant_to_H_invariant hf_SL)
 
-/-- Cleaner version using the `heckeT_p` linear map directly. -/
-theorem heckeT_p_comm {N : ℕ} [NeZero N] (k : ℤ)
-    (p q : ℕ) (hp : Nat.Prime p) (hq : Nat.Prime q)
-    (hpN : Nat.Coprime p N) (hqN : Nat.Coprime q N)
-    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hf_SL : ∀ γ ∈ 𝒮ℒ, (⇑f) ∣[k] γ = ⇑f) :
-    heckeT_p k p hp hpN (heckeT_p k q hq hqN f) =
-    heckeT_p k q hq hqN (heckeT_p k p hp hpN f) := by
-  ext z
-  exact congr_fun (heckeT_p_fun_comm_of_GL_pair k p q hp hq hpN hqN f hf_SL) z
-
 end HeckeRing.GL2

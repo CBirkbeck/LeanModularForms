@@ -48,12 +48,6 @@ open scoped Pointwise MatrixGroups
 
 namespace HeckeRing.GLn
 
-/-- Gaussian binomial coefficient `[n choose k]_q`. -/
-def gaussianBinom (q : ℕ) (m k : ℕ) : ℕ :=
-  if k ≤ m then
-    (Finset.range k).prod fun i ↦ (q ^ (m - i) - 1) / (q ^ (k - i) - 1)
-  else 0
-
 private lemma conjAct_smul_eq_of_mem {G : Type*} [Group G] (H : Subgroup G)
     {h : G} (hh : h ∈ H) : ConjAct.toConjAct h • H = H :=
   Subgroup.conjAct_pointwise_smul_eq_self (Subgroup.le_normalizer hh)
@@ -268,48 +262,6 @@ private lemma upperTriRep_card_le_relIndex (a : Fin n → ℕ) (ha : ∀ i, 0 < 
         Fintype.card_le_of_injective injMap h_inj
     _ = (ConjAct.toConjAct α⁻¹ • H).relIndex H := by
         simp only [Subgroup.relIndex, Subgroup.index, ← Nat.card_eq_fintype_card]
-
-/-- The number of upper-triangular representatives is a lower bound on the degree. -/
-theorem upperTriRep_card_le_HeckeCoset_deg (a : Fin n → ℕ) (ha : ∀ i, 0 < a i)
-    (hdiv : DivChain n a) :
-    (Fintype.card (UpperTriRep n a hdiv) : ℤ) ≤
-    HeckeCoset_deg (GL_pair n) (T_diag a) := by
-  set H := (GL_pair n).H
-  set D := T_diag a
-  set δ := (HeckeCoset.rep D : GL (Fin n) ℚ)
-  set α := (diagMat n a : GL (Fin n) ℚ) with hα_def
-  have h_α_inv_comm : α⁻¹ ∈ Subgroup.Commensurable.commensurator H :=
-    (Subgroup.Commensurable.commensurator H).inv_mem
-      ((GL_pair n).h₁ (diagMat_mem_posDetInt n a ha))
-  have h_rel_ne : (ConjAct.toConjAct α⁻¹ • H).relIndex H ≠ 0 :=
-    ((Subgroup.Commensurable.commensurator_mem_iff H α⁻¹).mp h_α_inv_comm).1
-  have h_card_le : Fintype.card (UpperTriRep n a hdiv) ≤
-      (ConjAct.toConjAct α⁻¹ • H).relIndex H :=
-    upperTriRep_card_le_relIndex n a ha hdiv h_rel_ne
-  have h_S2 := relIndex_conj_inv_eq_conj_diag n a ha
-  have h_in_set : δ ∈ HeckeCoset.toSet D := HeckeCoset.rep_mem D
-  have h_D_set : HeckeCoset.toSet D = DoubleCoset.doubleCoset α ↑H ↑H := by
-    simp only [D, T_diag, HeckeCoset.toSet_mk, hα_def]; congr 1; exact diagMat_delta_val n a ha
-  rw [h_D_set, DoubleCoset.mem_doubleCoset] at h_in_set
-  obtain ⟨σ₁, hσ₁, σ₂, hσ₂, hδ_eq⟩ := h_in_set
-  have h_smul_σ₁ : ConjAct.toConjAct σ₁ • H = H := conjAct_smul_eq_of_mem H hσ₁
-  have h_δ_smul : ConjAct.toConjAct δ • H =
-      ConjAct.toConjAct σ₁ • (ConjAct.toConjAct α • H) := by
-    rw [hδ_eq, map_mul, map_mul, ← smul_smul, ← smul_smul, conjAct_smul_eq_of_mem H hσ₂]
-  have h_S1 : (ConjAct.toConjAct α • H).relIndex H =
-      (ConjAct.toConjAct δ • H).relIndex H := by
-    rw [h_δ_smul]
-    have := Subgroup.relIndex_pointwise_smul
-      (ConjAct.toConjAct σ₁) (ConjAct.toConjAct α • H) H
-    rw [h_smul_σ₁] at this; exact this.symm
-  have h_def : HeckeCoset_deg (GL_pair n) D =
-      ↑((ConjAct.toConjAct δ • H).relIndex H) := by
-    simp only [HeckeCoset_deg]; rw [← Nat.card_eq_fintype_card]; rfl
-  calc (Fintype.card (UpperTriRep n a hdiv) : ℤ)
-      ≤ ↑((ConjAct.toConjAct α⁻¹ • H).relIndex H) := by exact_mod_cast h_card_le
-    _ = ↑((ConjAct.toConjAct α • H).relIndex H) := by exact_mod_cast h_S2
-    _ = ↑((ConjAct.toConjAct δ • H).relIndex H) := by exact_mod_cast h_S1
-    _ = HeckeCoset_deg (GL_pair n) D := h_def.symm
 
 private lemma a1_eq_a0_mul_pk {p : ℕ} {a : Fin 2 → ℕ} {k : ℕ}
     (h_ratio : a 1 / a 0 = p ^ k) (h_dvd_a : a 0 ∣ a 1) :

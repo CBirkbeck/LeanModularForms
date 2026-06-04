@@ -53,28 +53,6 @@ theorem pet_add_right [Γ.IsArithmetic] (f g₁ g₂ : CuspForm Γ k) :
     (peterssonInner_integrableOn k Γ f g₁)
     (peterssonInner_integrableOn k Γ f g₂)
 
-/-- Additivity of `pet` in the first argument. -/
-theorem pet_add_left [Γ.IsArithmetic] (f₁ f₂ g : CuspForm Γ k) :
-    pet (f₁ + f₂) g = pet f₁ g + pet f₂ g :=
-  calc pet (f₁ + f₂) g
-      = starRingEnd ℂ (pet g (f₁ + f₂)) := (pet_conj_symm _ _).symm
-    _ = starRingEnd ℂ (pet g f₁ + pet g f₂) := by rw [pet_add_right]
-    _ = starRingEnd ℂ (pet g f₁) + starRingEnd ℂ (pet g f₂) := map_add _ _ _
-    _ = pet f₁ g + pet f₂ g := by rw [pet_conj_symm, pet_conj_symm]
-
-/-- Complex scalar in the second argument: `⟨f, c • g⟩ = c * ⟨f, g⟩`.
-Requires `[Γ.HasDetOne]` for `Module ℂ (CuspForm Γ k)`. -/
-theorem pet_smul_right_complex [Γ.HasDetOne] (c : ℂ) (f g : CuspForm Γ k) :
-    pet f (c • g) = c * pet f g :=
-  peterssonInner_smul_right k _ c f g
-
-/-- Conjugate-complex scalar in the first argument:
-`⟨c • f, g⟩ = conj(c) * ⟨f, g⟩`.
-Requires `[Γ.HasDetOne]` for `Module ℂ (CuspForm Γ k)`. -/
-theorem pet_conj_smul_left [Γ.HasDetOne] (c : ℂ) (f g : CuspForm Γ k) :
-    pet (c • f) g = starRingEnd ℂ c * pet f g :=
-  peterssonInner_conj_smul_left k _ c f g
-
 /-- The Petersson inner product as an `Inner ℂ` instance on cusp forms. -/
 instance innerProductCuspForm : Inner ℂ (CuspForm Γ k) where
   inner := pet

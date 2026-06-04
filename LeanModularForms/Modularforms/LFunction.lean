@@ -73,7 +73,6 @@ noncomputable def lSeries [ModularFormClass F Γ k] (f : F) : ℂ → ℂ :=
 lemma lCoeff_apply [ModularFormClass F Γ k] (f : F) (n : ℕ) :
     lCoeff f n = (qExpansion Γ.strictWidthInfty f).coeff n := rfl
 
-
 /-- **Hecke's crude bound**: for a weight-`k` modular form (`0 ≤ k`) on an
 arithmetic subgroup, the abscissa of absolute convergence of the associated
 L-function is at most `k + 1`. -/
@@ -98,22 +97,6 @@ lemma abscissaOfAbsConv_lCoeff_le_cuspForm [Γ.IsArithmetic]
   simpa using LSeries.abscissaOfAbsConv_le_of_isBigO_rpow
     (f := lCoeff f) (x := ((k : ℝ) / 2)) h_bigO
 
-/-- Convergence of `LSeries (lCoeff f) s` on the half-plane `Re s > k + 1` for
-a weight-`k` modular form of non-negative weight. -/
-lemma lSeriesSummable_of_modularForm [Γ.IsArithmetic] [ModularFormClass F Γ k]
-    (hk : 0 ≤ k) (f : F) {s : ℂ} (hs : (k : ℝ) + 1 < s.re) :
-    LSeriesSummable (lCoeff f) s :=
-  LSeriesSummable_of_abscissaOfAbsConv_lt_re
-    ((abscissaOfAbsConv_lCoeff_le hk f).trans_lt (by exact_mod_cast hs))
-
-/-- Convergence of `LSeries (lCoeff f) s` on the half-plane `Re s > k/2 + 1` for
-a weight-`k` cusp form.  This is the standard absolute-convergence region. -/
-lemma lSeriesSummable_of_cuspForm [Γ.IsArithmetic] [CuspFormClass F Γ k]
-    (f : F) {s : ℂ} (hs : (k : ℝ) / 2 + 1 < s.re) :
-    LSeriesSummable (lCoeff f) s :=
-  LSeriesSummable_of_abscissaOfAbsConv_lt_re
-    ((abscissaOfAbsConv_lCoeff_le_cuspForm f).trans_lt (by exact_mod_cast hs))
-
 /-- For a cusp form, the `0`-th `q`-expansion coefficient vanishes. -/
 lemma lCoeff_zero_of_cuspForm [Γ.IsArithmetic] [CuspFormClass F Γ k]
     (f : F) :
@@ -128,28 +111,6 @@ lemma abscissaOfAbsConv_lCoeff_lt_top_of_cuspForm [Γ.IsArithmetic]
     abscissaOfAbsConv (lCoeff f) < ⊤ :=
   lt_of_le_of_lt (abscissaOfAbsConv_lCoeff_le_cuspForm f) (EReal.coe_lt_top _)
 
-/-- **LSeries injectivity for cusp forms.**  Two cusp forms have equal
-L-functions iff their `q`-expansion coefficients agree at every `n ≠ 0`. -/
-lemma lSeries_eq_iff_cuspForm [Γ.IsArithmetic]
-    {F' : Type*} [FunLike F' ℍ ℂ]
-    [CuspFormClass F Γ k] [CuspFormClass F' Γ k]
-    (f : F) (g : F') :
-    lSeries f = lSeries g ↔ ∀ n ≠ 0, lCoeff f n = lCoeff g n := by
-  unfold lSeries
-  exact LSeries_eq_iff_of_abscissaOfAbsConv_lt_top
-    (abscissaOfAbsConv_lCoeff_lt_top_of_cuspForm f)
-    (abscissaOfAbsConv_lCoeff_lt_top_of_cuspForm g)
-
-/-- **LSeries non-vanishing for cusp forms.**  The L-function of a cusp form
-is identically zero iff all its `q`-expansion coefficients vanish. -/
-lemma lSeries_eq_zero_iff_cuspForm [Γ.IsArithmetic] [CuspFormClass F Γ k]
-    (f : F) :
-    lSeries f = 0 ↔ lCoeff f = 0 := by
-  unfold lSeries
-  rw [LSeries_eq_zero_iff (lCoeff_zero_of_cuspForm f),
-    or_iff_left (abscissaOfAbsConv_lCoeff_lt_top_of_cuspForm f).ne]
-
-
 open CongruenceSubgroup Matrix.SpecialLinearGroup in
 /-- **Strict width at infinity of the GL₂(ℝ) image of Γ₁(N) is `1`.** -/
 @[simp]
@@ -158,45 +119,6 @@ lemma strictWidthInfty_Gamma1_mapGL (N : ℕ) :
   CongruenceSubgroup.strictWidthInfty_Gamma1 N
 
 open CongruenceSubgroup Matrix.SpecialLinearGroup in
-/-- **`ModularForms.lCoeff` on a `Γ₁(N)` form reduces to `qExpansion 1`.** -/
-lemma lCoeff_Gamma1_mapGL_eq (N : ℕ)
-    {k : ℤ} {F : Type*} [FunLike F ℍ ℂ]
-    [ModularFormClass F ((Gamma1 N).map (mapGL ℝ)) k] (f : F) (n : ℕ) :
-    lCoeff f n = (qExpansion (1 : ℝ) f).coeff n := by
-  rw [lCoeff_apply, strictWidthInfty_Gamma1_mapGL]
-
-/-- **Formal local Euler factor identity.**  For complex `c, x` with
-`‖c · x²‖ < 1`, the alternating-power series
-`Σᵣ (if r % 2 = 0 then (-c)^(r/2) · x^r else 0)` sums to `(1 + c · x²)⁻¹`. -/
-theorem tsum_alternating_pow_eq (c x : ℂ) (h : ‖c * x ^ 2‖ < 1) :
-    ∑' (r : ℕ), (if r % 2 = 0 then ((-c) ^ (r / 2) * x ^ r) else 0) =
-      (1 + c * x ^ 2)⁻¹ := by
-  have h_neg : ‖(-c) * x ^ 2‖ < 1 := by
-    rw [show (-c) * x ^ 2 = -(c * x ^ 2) by ring, norm_neg]; exact h
-  have h_even_term : ∀ k : ℕ,
-      (if (2 * k) % 2 = 0 then ((-c) ^ ((2 * k) / 2) * x ^ (2 * k)) else 0) =
-        ((-c) * x ^ 2) ^ k := fun k ↦ by
-    rw [if_pos (by omega : (2 * k) % 2 = 0), show (2 * k) / 2 = k by omega]; ring
-  have h_odd_term : ∀ k : ℕ,
-      (if (2 * k + 1) % 2 = 0 then
-          ((-c) ^ ((2 * k + 1) / 2) * x ^ (2 * k + 1))
-        else 0) = 0 := fun k ↦ if_neg (by omega)
-  have h_summ_even : Summable fun k : ℕ ↦
-      (if (2 * k) % 2 = 0 then ((-c) ^ ((2 * k) / 2) * x ^ (2 * k)) else 0) := by
-    refine Summable.congr (summable_geometric_of_norm_lt_one h_neg) (fun k ↦ ?_)
-    rw [h_even_term k]
-  have h_summ_odd : Summable fun k : ℕ ↦
-      (if (2 * k + 1) % 2 = 0 then
-          ((-c) ^ ((2 * k + 1) / 2) * x ^ (2 * k + 1))
-        else 0) := by
-    refine Summable.congr summable_zero (fun k ↦ ?_); rw [h_odd_term k]
-  have h_split :=
-    tsum_even_add_odd
-      (f := fun r ↦ if r % 2 = 0 then ((-c) ^ (r / 2) * x ^ r) else 0)
-      h_summ_even h_summ_odd
-  rw [tsum_congr h_even_term, tsum_congr h_odd_term, tsum_zero, add_zero,
-    tsum_geometric_of_norm_lt_one h_neg] at h_split
-  rw [← h_split, show (1 : ℂ) - (-c) * x ^ 2 = 1 + c * x ^ 2 by ring]
 
 /-- **Modular form on the positive imaginary axis.**
 
@@ -219,7 +141,6 @@ lemma imAxis_apply_of_pos [ModularFormClass F Γ k] (f : F) {t : ℝ} (ht : 0 < 
       simpa using ht⟩ := by
   unfold imAxis; rw [dif_pos ht]
 
-
 /-- **Continuity of `imAxis f` on `Ioi 0`.** -/
 lemma continuousOn_imAxis [ModularFormClass F Γ k] (f : F) :
     ContinuousOn (imAxis f) (Set.Ioi 0) := by
@@ -236,23 +157,9 @@ lemma continuousOn_imAxis [ModularFormClass F Γ k] (f : F) :
       h_pos)).congr (fun t ↦ ?_)
   exact (imAxis_apply_of_pos f t.prop).symm
 
-/-- **Local integrability of `imAxis f` on `Ioi 0`.** -/
-lemma locallyIntegrableOn_imAxis [ModularFormClass F Γ k] (f : F) :
-    MeasureTheory.LocallyIntegrableOn (imAxis f) (Set.Ioi (0 : ℝ)) :=
-  (continuousOn_imAxis f).locallyIntegrableOn measurableSet_Ioi
-
-
-/-- **Exponential decay of `imAxis f` at infinity (named hypothesis):**
-`∃ a > 0, (imAxis f x) =O[atTop] (exp (-a * x))`. -/
-def HasImAxisExponentialDecay [ModularFormClass F Γ k] (f : F) : Prop :=
-  ∃ a : ℝ, 0 < a ∧ Asymptotics.IsBigO Filter.atTop
-    (fun x : ℝ ↦ imAxis f x - 0) (fun x : ℝ ↦ Real.exp (-a * x))
-
-
 end ModularForms
 
 namespace LSeries
-
 
 /-- **Hecke entire-continuation predicate.**  A coefficient sequence
 `a : ℕ → ℂ` *has an entire extension* if there exists an entire
@@ -288,7 +195,6 @@ theorem unique {F G : ℂ → ℂ} (hF : Differentiable ℂ F) (hG : Differentia
     (Filter.eventuallyEq_iff_exists_mem.mpr
       ⟨U, (isOpen_lt continuous_const Complex.continuous_re).mem_nhds hz₀,
         fun s hs ↦ (hFa (hU_sub s hs)).trans (hGa (hU_sub s hs)).symm⟩)
-
 
 end HasEntireExtension
 
@@ -339,21 +245,6 @@ def HasMeromorphicExtensionWithPole (a : ℕ → ℂ) : Prop :=
 
 namespace HasMeromorphicExtensionWithPole
 
-/-- **Bridge: meromorphic extension with a pole forbids entire extension.**
-
-A coefficient sequence `a : ℕ → ℂ` cannot admit both an entire extension
-and a meromorphic extension with a pole. -/
-theorem not_hasEntireExtension {a : ℕ → ℂ}
-    (h_pole : LSeries.HasMeromorphicExtensionWithPole a) :
-    ¬ LSeries.HasEntireExtension a := by
-  rintro ⟨F, hF_diff, hF_eq⟩
-  obtain ⟨g, s₀, hg_mero, hg_order, h_punc⟩ := h_pole
-  have h_F_order_nonneg : 0 ≤ meromorphicOrderAt F s₀ :=
-    (Complex.analyticOnNhd_univ_iff_differentiable.mpr hF_diff s₀
-      (Set.mem_univ _)).meromorphicOrderAt_nonneg
-  rw [meromorphicOrderAt_congr (h_punc F hF_diff @hF_eq)] at h_F_order_nonneg
-  exact absurd h_F_order_nonneg (not_le.mpr hg_order)
-
 end HasMeromorphicExtensionWithPole
 
 /-- **Coprime-stripped coefficient sequence at a Finset of primes.**
@@ -369,6 +260,5 @@ lemma coprimeStrip_one (S : Finset Nat.Primes) (f : ℕ → ℂ) :
     coprimeStrip S f 1 = f 1 := by
   unfold coprimeStrip
   rw [if_pos (fun p _ h_dvd ↦ p.prop.one_lt.ne' (Nat.dvd_one.mp h_dvd))]
-
 
 end LSeries

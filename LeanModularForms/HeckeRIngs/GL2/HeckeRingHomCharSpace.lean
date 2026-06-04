@@ -108,21 +108,6 @@ noncomputable def heckeT_p_all_charRestrict (k : ℤ) (p : ℕ) (hp : Nat.Prime 
         modFormCharSpace k χ) : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) =
     heckeT_p_all k p hp (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) := rfl
 
-/-- For distinct primes `p ≠ q`, the restricted operators
-`heckeT_p_all_charRestrict k p χ` and `heckeT_p_all_charRestrict k q χ` commute. -/
-theorem heckeT_p_all_charRestrict_commute_distinct (k : ℤ)
-    (χ : (ZMod N)ˣ →* ℂˣ)
-    {p q : ℕ} (hp : Nat.Prime p) (hq : Nat.Prime q) (hpq : p ≠ q) :
-    Commute (heckeT_p_all_charRestrict k p hp χ)
-      (heckeT_p_all_charRestrict k q hq χ) := by
-  show heckeT_p_all_charRestrict k p hp χ * heckeT_p_all_charRestrict k q hq χ =
-    heckeT_p_all_charRestrict k q hq χ * heckeT_p_all_charRestrict k p hp χ
-  refine LinearMap.ext fun f ↦ Subtype.ext ?_
-  simp only [Module.End.mul_apply, heckeT_p_all_charRestrict_coe]
-  simpa [Module.End.mul_apply] using
-    congr_fun (congr_arg DFunLike.coe (heckeT_p_all_comm_distinct (N := N) k hp hq hpq))
-      (f : ModularForm _ k)
-
 /-- `heckeT_n k n` (for `n` coprime to `N`) restricted to `modFormCharSpace k χ`
 as a `ℂ`-linear endomorphism. -/
 noncomputable def heckeT_n_charRestrict (k : ℤ) (n : ℕ) [NeZero n]
@@ -139,18 +124,5 @@ noncomputable def heckeT_n_charRestrict (k : ℤ) (n : ℕ) [NeZero n]
     ((heckeT_n_charRestrict k n hn χ f :
         modFormCharSpace k χ) : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) =
     heckeT_n k n (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) := rfl
-
-/-- For any `m, n` coprime to `N`, the restrictions
-`heckeT_n_charRestrict k m hm χ` and `heckeT_n_charRestrict k n hn χ` commute. -/
-theorem heckeT_n_charRestrict_commute (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
-    (m n : ℕ) [NeZero m] [NeZero n]
-    (hm : Nat.Coprime m N) (hn : Nat.Coprime n N) :
-    Commute (heckeT_n_charRestrict k m hm χ) (heckeT_n_charRestrict k n hn χ) := by
-  show heckeT_n_charRestrict k m hm χ * heckeT_n_charRestrict k n hn χ =
-    heckeT_n_charRestrict k n hn χ * heckeT_n_charRestrict k m hm χ
-  refine LinearMap.ext fun f ↦ Subtype.ext ?_
-  simp only [Module.End.mul_apply, heckeT_n_charRestrict_coe]
-  simpa [Module.End.mul_apply] using
-    congr_fun (congr_arg DFunLike.coe (heckeT_n_comm (N := N) k m n)) (f : ModularForm _ k)
 
 end HeckeRing.GL2

@@ -1009,15 +1009,6 @@ section OperatorCommutativityFromRing
 
 variable {k : ℤ} {χ : (ZMod N)ˣ →* ℂˣ}
 
-/-- Since the source ring `𝕋 (Gamma0_pair N) ℤ` is commutative and `heckeRingHomCharSpace`
-is a ring hom, its image in `Module.End ℂ (modFormCharSpace k χ)` is commutative. -/
-theorem heckeRingHomCharSpace_commute (T₁ T₂ : 𝕋 (Gamma0_pair N) ℤ) :
-    Commute (heckeRingHomCharSpace (k := k) (χ := χ) T₁)
-      (heckeRingHomCharSpace (k := k) (χ := χ) T₂) := by
-  show heckeRingHomCharSpace (k := k) (χ := χ) T₁ * heckeRingHomCharSpace (k := k) (χ := χ) T₂ =
-    heckeRingHomCharSpace (k := k) (χ := χ) T₂ * heckeRingHomCharSpace (k := k) (χ := χ) T₁
-  rw [← map_mul, ← map_mul, Gamma0_pair_HeckeAlgebra_mul_comm]
-
 /-- Endomorphism form of the normalization bridge: on the χ-space, the canonical χ-twisted
 operator at the prime double coset `D_p` equals the scalar `χ(p)⁻¹` times the restricted
 concrete operator `heckeT_p_all_charRestrict`. -/

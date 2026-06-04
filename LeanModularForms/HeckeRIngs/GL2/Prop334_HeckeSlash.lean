@@ -62,24 +62,6 @@ theorem heckeSlash_gen_invariant_Gamma1_of_slash_comm
   have hc := hComm ⟨σ, hσ_Gamma0⟩
   rwa [h_units, map_one, Units.val_one, one_smul] at hc
 
-/-- If the functional χ-equivariance of the Hecke slash holds, then for
-every `d : (ZMod N)ˣ`, the diamond operator `⟨d⟩` acts on the
-Hecke-transformed function as multiplication by `χ d`. -/
-theorem heckeSlash_gen_diamondOpHom_of_functional_comm
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (D : HeckeCoset (Gamma0_pair N))
-    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hComm : ∀ g : ↥(Gamma0 N),
-      (heckeSlash_gen (Gamma0_pair N) k D (⇑f : ℍ → ℂ)) ∣[k]
-        mapGL ℝ (g : SL(2, ℤ)) =
-      (↑(χ (Gamma0MapUnits g)) : ℂ) •
-        heckeSlash_gen (Gamma0_pair N) k D (⇑f : ℍ → ℂ))
-    (d : (ZMod N)ˣ) (g : ↥(Gamma0 N)) (hg : Gamma0MapUnits g = d) :
-    (heckeSlash_gen (Gamma0_pair N) k D (⇑f : ℍ → ℂ)) ∣[k]
-      mapGL ℝ (g : SL(2, ℤ)) =
-    (↑(χ d) : ℂ) •
-      heckeSlash_gen (Gamma0_pair N) k D (⇑f : ℍ → ℂ) := by
-  rw [hComm g, hg]
-
 /-- The Hecke slash preserves holomorphicity. -/
 lemma heckeSlash_gen_Gamma1_holomorphic (k : ℤ)
     (D : HeckeCoset (Gamma0_pair N))
@@ -146,22 +128,6 @@ noncomputable def heckeSlash_gen_asModularForm_of_slash_comm
     (⇑(heckeSlash_gen_asModularForm_of_slash_comm k χ D f hComm) :
         ℍ → ℂ) =
       heckeSlash_gen (Gamma0_pair N) k D (⇑f : ℍ → ℂ) := rfl
-
-/-- The Hecke-transformed modular form lies in `modFormCharSpace k χ`,
-given the functional χ-equivariance hypothesis. -/
-theorem heckeSlash_gen_mem_modFormCharSpace_of_slash_comm
-    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (D : HeckeCoset (Gamma0_pair N))
-    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hComm : ∀ g : ↥(Gamma0 N),
-      (heckeSlash_gen (Gamma0_pair N) k D (⇑f : ℍ → ℂ)) ∣[k]
-        mapGL ℝ (g : SL(2, ℤ)) =
-      (↑(χ (Gamma0MapUnits g)) : ℂ) •
-        heckeSlash_gen (Gamma0_pair N) k D (⇑f : ℍ → ℂ)) :
-    heckeSlash_gen_asModularForm_of_slash_comm k χ D f hComm ∈
-      modFormCharSpace k χ := by
-  rw [modFormCharSpace_iff_nebentypus]
-  intro g
-  simpa [heckeSlash_gen_asModularForm_of_slash_comm_coe] using hComm g
 
 /-- Compatibility of `glMap ∘ mapGL ℚ` with `mapGL ℝ` on `SL(2, ℤ)` elements. -/
 private lemma glMap_mapGL_Q_eq_mapGL_R (g : ↥(Gamma0 N)) :

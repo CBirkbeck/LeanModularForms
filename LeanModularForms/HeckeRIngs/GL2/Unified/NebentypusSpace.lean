@@ -70,14 +70,4 @@ noncomputable def modFormCharSpace_equiv_gamma0Nebentypus (k : ℤ) (χ : (ZMod 
   map_add' _ _ := rfl
   map_smul' _ _ := rfl
 
-
-/-- The good Hecke family transported to the experimental `Γ₀(N), χ`-style
-space. This is still the same away-from-the-level family, but it now lives on a
-space whose carrier is stated using the `Γ₀(N)` twisted slash law. -/
-noncomputable def gamma0NebentypusFamily (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
-    GoodHeckeFamily N (gamma0NebentypusSubmodule (N := N) k χ) :=
-  GoodHeckeFamily.transport (modFormCharSpace_equiv_gamma0Nebentypus (N := N) k χ)
-    (modFormCharSpaceFamily (N := N) k χ)
-
-
 end HeckeRing.GL2.Unified

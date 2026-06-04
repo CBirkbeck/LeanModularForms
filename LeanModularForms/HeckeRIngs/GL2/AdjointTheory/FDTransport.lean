@@ -57,11 +57,6 @@ lemma Gamma_p_α_le_Gamma1 (α : GL (Fin 2) ℚ) :
   inf_le_right
 
 open CongruenceSubgroup Pointwise ConjAct in
-/-- `Γ_p(α)` has finite index in `Γ₁(N)`. -/
-theorem Gamma_p_α_finiteIndex_in_Gamma1 (α : GL (Fin 2) ℚ) :
-    ((Gamma_p_α (N := N) α).subgroupOf (Gamma1 N)).FiniteIndex :=
-  have : (Gamma_p_α (N := N) α).FiniteIndex := Gamma_p_α_finiteIndex α
-  Subgroup.instFiniteIndex_subgroupOf _ _
 
 open CongruenceSubgroup Pointwise ConjAct in
 /-- `Γ_p(α)` conjugation embedding. -/
@@ -93,29 +88,6 @@ lemma Gamma_p_α_conjBy_spec (α : GL (Fin 2) ℚ)
   (Classical.choose_spec (Gamma_p_α_conj_mem_Gamma1 α γ.property)).2
 
 open CongruenceSubgroup Pointwise ConjAct in
-/-- Injectivity of `Gamma_p_α_conjBy`. -/
-lemma Gamma_p_α_conjBy_injective (α : GL (Fin 2) ℚ) :
-    Function.Injective (Gamma_p_α_conjBy (N := N) α) := by
-  intro γ₁ γ₂ h
-  apply Subtype.ext
-  have h_mapGL :
-      (α.map (Rat.castHom ℝ) : GL (Fin 2) ℝ) *
-        (mapGL ℝ ((γ₁ : SL(2, ℤ))) : GL (Fin 2) ℝ) *
-        ((α.map (Rat.castHom ℝ) : GL (Fin 2) ℝ))⁻¹ =
-      (α.map (Rat.castHom ℝ) : GL (Fin 2) ℝ) *
-        (mapGL ℝ ((γ₂ : SL(2, ℤ))) : GL (Fin 2) ℝ) *
-        ((α.map (Rat.castHom ℝ) : GL (Fin 2) ℝ))⁻¹ := by
-    rw [← Gamma_p_α_conjBy_spec α γ₁, congrArg Subtype.val h,
-      Gamma_p_α_conjBy_spec α γ₂]
-  have h_γ : (mapGL ℝ ((γ₁ : SL(2, ℤ))) : GL (Fin 2) ℝ) =
-      mapGL ℝ ((γ₂ : SL(2, ℤ))) := by
-    have h_step1 : (α.map (Rat.castHom ℝ) : GL (Fin 2) ℝ) *
-        (mapGL ℝ ((γ₁ : SL(2, ℤ))) : GL (Fin 2) ℝ) =
-        (α.map (Rat.castHom ℝ) : GL (Fin 2) ℝ) * mapGL ℝ ((γ₂ : SL(2, ℤ))) := by
-      simpa only [inv_mul_cancel_right]
-        using congrArg (· * (α.map (Rat.castHom ℝ) : GL (Fin 2) ℝ)) h_mapGL
-    exact mul_left_cancel h_step1
-  exact mapGL_injective h_γ
 
 open CongruenceSubgroup Pointwise ConjAct UpperHalfPlane MeasureTheory in
 /-- Slash by α is `Γ_p(α)`-invariant on Γ₁(N)-cusp forms. -/
@@ -150,14 +122,6 @@ lemma slash_α_Gamma_p_α_invariant_cuspForm
   exact slash_Gamma1_eq f δ hδ
 
 open CongruenceSubgroup Pointwise ConjAct UpperHalfPlane MeasureTheory in
-/-- Finite-index FD-transport reduction. -/
-lemma slash_α_Gamma_p_α_invariant_at_FD_decomp_witness
-    (α : GL (Fin 2) ℚ) (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    ∀ {γ : SL(2, ℤ)}, γ ∈ Gamma_p_α (N := N) α →
-      ((⇑f) ∣[k] ((α.map (Rat.castHom ℝ) : GL (Fin 2) ℝ))) ∣[k]
-        ((mapGL ℝ γ : GL (Fin 2) ℝ)) =
-      (⇑f) ∣[k] ((α.map (Rat.castHom ℝ) : GL (Fin 2) ℝ)) :=
-  slash_α_Gamma_p_α_invariant_cuspForm α f
 
 open CongruenceSubgroup Pointwise ConjAct UpperHalfPlane MeasureTheory in
 /-- FD-shift adapter (generic `GL(2, ℝ)⁺` form). -/
@@ -170,20 +134,6 @@ theorem isFundamentalDomain_GLPos_smul_conjAct
   MeasureTheory.IsFundamentalDomain.smul_of_eq_conjAct hs rfl
 
 open CongruenceSubgroup Pointwise ConjAct UpperHalfPlane MeasureTheory in
-/-- FD-shift adapter for `Γ_p(α)` (`GL(2, ℝ)⁺` lift). -/
-theorem Gamma_p_α_GLPos_lift_FD_smul_conjAct
-    (α : GL (Fin 2) ℚ) (α' : GL(2, ℝ)⁺) {s : Set ℍ}
-    (hs : IsFundamentalDomain
-      ((Gamma_p_α (N := N) α).map
-        (ModularGroup.coeHom : SL(2, ℤ) →* GL(2, ℝ)⁺))
-      s μ_hyp) :
-    IsFundamentalDomain
-      (ConjAct.toConjAct α' •
-        ((Gamma_p_α (N := N) α).map
-          (ModularGroup.coeHom : SL(2, ℤ) →* GL(2, ℝ)⁺)) :
-          Subgroup GL(2, ℝ)⁺)
-      (α' • s) μ_hyp :=
-  isFundamentalDomain_GLPos_smul_conjAct α' hs
 
 open CongruenceSubgroup Pointwise UpperHalfPlane MeasureTheory in
 /-- Finite-index FD decomposition for `Γ_p(α) ≤ Γ₁(N)` (generic ambient). -/
@@ -204,14 +154,6 @@ theorem Gamma_p_α_FD_finite_index_decomp
   hD.subgroup_iUnion_out_smul _
 
 open CongruenceSubgroup Pointwise ConjAct UpperHalfPlane MeasureTheory in
-/-- Generic projective FD-shift adapter at `PSL(2, ℝ)`. -/
-theorem isFundamentalDomain_PSL_R_smul_conjAct
-    (α : PSL(2, ℝ)) {H₁ : Subgroup (PSL(2, ℝ))} {s : Set ℍ}
-    (hs : MeasureTheory.IsFundamentalDomain (H₁ : Subgroup (PSL(2, ℝ))) s μ_hyp) :
-    MeasureTheory.IsFundamentalDomain
-      ((ConjAct.toConjAct α • H₁ : Subgroup (PSL(2, ℝ))))
-      (α • s) μ_hyp :=
-  MeasureTheory.IsFundamentalDomain.smul_of_eq_conjAct hs rfl
 
 open CongruenceSubgroup in
 /-- Finite-index instance for the projective image of `Γ_p(α)` inside the

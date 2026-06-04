@@ -66,32 +66,6 @@ noncomputable def D_p_Gamma0 (N p : ℕ) [NeZero N] (hp : 0 < p) :
     HeckeRing.HeckeCoset (Gamma0_pair N) :=
   ⟦diag_1p_delta_Gamma0 N p hp⟧
 
-/-- Membership of `T_p_upper(b)` in `Δ₀(N)`.
-The top-left entry is `1`, so the `gcd` condition is automatic; the lower-left
-entry is `0`, so the divisibility condition is automatic. -/
-lemma T_p_upper_mem_Delta0 (N : ℕ) [NeZero N] (p : ℕ) (hp : 0 < p) (b : ℕ) :
-    (T_p_upper p hp b : GL (Fin 2) ℚ) ∈ Delta0_submonoid N := by
-  set A : Matrix (Fin 2) (Fin 2) ℤ := !![1, (b : ℤ); 0, (p : ℤ)]
-  have hA_eq : (↑(T_p_upper p hp b) : Matrix _ _ ℚ) = A.map (Int.cast : ℤ → ℚ) := by
-    ext i j; fin_cases i <;> fin_cases j <;>
-      simp [T_p_upper, GeneralLinearGroup.mkOfDetNeZero, A, Matrix.map_apply]
-  exact ⟨⟨A, hA_eq⟩, by rw [T_p_upper_det]; exact_mod_cast hp,
-    A, hA_eq, by simp [A], by simp [A]⟩
-
-/-- Membership of `T_p_lower p` in `Δ₀(N)` requires `gcd(p, N) = 1` because the
-top-left entry is `p`. -/
-lemma T_p_lower_mem_Delta0 (N : ℕ) [NeZero N] (p : ℕ) (hp : 0 < p)
-    (hpN : Nat.Coprime p N) :
-    (T_p_lower p hp : GL (Fin 2) ℚ) ∈ Delta0_submonoid N := by
-  set A : Matrix (Fin 2) (Fin 2) ℤ := !![(p : ℤ), 0; 0, 1]
-  have hA_eq : (↑(T_p_lower p hp) : Matrix _ _ ℚ) = A.map (Int.cast : ℤ → ℚ) := by
-    ext i j; fin_cases i <;> fin_cases j <;>
-      simp [T_p_lower, GeneralLinearGroup.mkOfDetNeZero, A, Matrix.map_apply]
-  exact ⟨⟨A, hA_eq⟩, by rw [T_p_lower_det]; exact_mod_cast hp,
-    A, hA_eq, by simp [A], by simp only [A]; exact_mod_cast hpN⟩
-
-
-
 /-- The Γ₀(N)-double coset degree of `diag(1,p)` is `p + 1` for `p` prime
 coprime to `N`: the `decompQuot` has exactly `p + 1` elements. -/
 lemma HeckeCoset_deg_D_p_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.Prime p)

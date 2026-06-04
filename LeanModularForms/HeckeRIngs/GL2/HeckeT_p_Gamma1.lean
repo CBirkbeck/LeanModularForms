@@ -27,13 +27,6 @@ open scoped MatrixGroups ModularForm
 
 namespace HeckeRing.GL2
 
-/-- The double coset `Γ₁(N) · diag(1,p) · Γ₁(N)` in `Gamma1_pair N`,
-representing the Hecke operator `T_p` at level `N`. -/
-noncomputable def D_p_Gamma1 (N p : ℕ) [NeZero N] (hp : 0 < p) :
-    HeckeRing.HeckeCoset (Gamma1_pair N) :=
-  ⟦⟨diagMat 2 ![1, p], diag_1p_mem_Delta1 N p hp⟩⟧
-
-
 /-- The natural number `a ∈ [0, N)` with `a ≡ p⁻¹ (mod N)`. -/
 noncomputable def aInvOfCoprime (N p : ℕ) [NeZero N] (hpN : Nat.Coprime p N) : ℕ :=
   (((ZMod.unitOfCoprime p hpN)⁻¹ : (ZMod N)ˣ) : ZMod N).val

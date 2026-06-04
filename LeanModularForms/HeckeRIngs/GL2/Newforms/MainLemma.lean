@@ -94,9 +94,6 @@ structure IsNewform (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop where
   isNew : f ∈ cuspFormsNewExtended N k
   isNorm : (UpperHalfPlane.qExpansion (1 : ℝ) f).coeff 1 = 1
 
-
-
-
 /-- The **conductor** of a `Newform N k` is the smallest level at which `f`
 arises as a `Newform`; for a bundled `Newform N k` this is `N` itself. -/
 noncomputable def Newform.conductor (_f : Newform N k) : ℕ := N
@@ -142,8 +139,6 @@ theorem Newform.eigenvalue_eq_coeff (f : Newform N k) (n : ℕ+)
   rw [← qExpansion_one_coeff_one_heckeT_n_cusp_eq_coeff n.val hn χ f.toCuspForm hf_char,
     f.isEigen n hn]
   exact (qExpansion_one_coeff_one_smul_of_norm f.toCuspForm f.isNorm _).symm
-
-
 
 /-- **The Main Lemma** (DS Theorem 5.7.1, Atkin-Lehner [AL70]):
 If `f ∈ S_k(Γ₁(N))` has Fourier expansion `f(τ) = Σ aₙ qⁿ` with `aₙ = 0`
@@ -194,20 +189,5 @@ private lemma newform_diff_mem_cuspFormsNew (f g : Newform N k) :
     f.toCuspForm - g.toCuspForm ∈ cuspFormsNew N k :=
   (cuspFormsNew N k).sub_mem (cuspFormsNewExtended_le_cuspFormsNew f.isNew)
     (cuspFormsNewExtended_le_cuspFormsNew g.isNew)
-
-/-- **Atkin-Lehner uniqueness** (DS Theorem 5.8.2 part 1): two newforms in
-`S_k(Γ₁(N), χ)` with the same eigenvalues at all primes `(p, N) = 1` are equal.
-Both newforms must lie in the same Nebentypus eigenspace `modFormCharSpace k χ`,
-as required by `Newform.eigenvalue_eq_coeff` to bridge `λ_n → a_n`. -/
-theorem newform_unique
-    (f g : Newform N k) (χ : (ZMod N)ˣ →* ℂˣ)
-    (hfχ : f.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (hgχ : g.toCuspForm.toModularForm' ∈ modFormCharSpace k χ)
-    (h : ∀ n : ℕ+, Nat.Coprime n.val N → f.eigenvalue n = g.eigenvalue n) :
-    f.toCuspForm = g.toCuspForm := by
-  refine sub_eq_zero.mp <|
-    Submodule.disjoint_def.mp cuspFormsOld_disjoint_cuspFormsNew _ ?_
-      (newform_diff_mem_cuspFormsNew f g)
-  exact mainLemma _ (newform_diff_coprime_coeff_eq_zero f g χ hfχ hgχ h)
 
 end HeckeRing.GL2

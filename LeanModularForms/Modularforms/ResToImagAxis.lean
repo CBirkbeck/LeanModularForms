@@ -306,7 +306,6 @@ theorem ResToImagAxis.EventuallyPos.smul {F : ℍ → ℂ} {c : ℝ} (hF : ResTo
   simp only [Function.resToImagAxis, ResToImagAxis, htpos, ↓reduceDIte] at hFpos_t
   simp [ResToImagAxis, htpos, mul_pos hc hFpos_t]
 
-
 /--
 If `F : ℍ → ℂ` is `O(exp(-c * im τ))` at `atImInfty` for some `c > 0`, then
 the restriction to the imaginary axis `t ↦ F(it)` is `O(exp(-c * t))` at `atTop`.
@@ -348,22 +347,6 @@ theorem tendsto_rpow_mul_resToImagAxis_of_isBigO_exp {F : ℍ → ℂ} {c : ℝ}
     (hF : F =O[atImInfty] fun τ ↦ rexp (-c * τ.im)) (s : ℝ) :
     Tendsto (fun t : ℝ ↦ (t : ℂ) ^ (s : ℂ) * F.resToImagAxis t) atTop (𝓝 0) :=
   tendsto_rpow_mul_of_isBigO_exp hc (isBigO_resToImagAxis_of_isBigO_atImInfty hc hF)
-
-/--
-For a cusp form `f` of level `Γ(n)`, we have `t^s * f(it) → 0` as `t → ∞` for any real power `s`.
-
-This follows from the exponential decay of cusp forms at infinity: `f = O(exp(-2π τ.im / n))`.
--/
-theorem cuspForm_rpow_mul_resToImagAxis_tendsto_zero {n : ℕ} {k : ℤ} {F : Type*}
-    [NeZero n] [FunLike F ℍ ℂ] [CuspFormClass F Γ(n) k] (f : F) (s : ℝ) :
-    Tendsto (fun t : ℝ ↦ (t : ℂ) ^ (s : ℂ) * (f : ℍ → ℂ).resToImagAxis t) atTop (𝓝 0) := by
-  have hn_pos : (0 : ℝ) < n := Nat.cast_pos.mpr (NeZero.pos n)
-  have hmem : (n : ℝ) ∈ (Γ(n) : Subgroup (GL (Fin 2) ℝ)).strictPeriods := by
-    simpa only [strictPeriods_Gamma] using AddSubgroup.mem_zmultiples (n : ℝ)
-  have hdecay' : (f : ℍ → ℂ) =O[atImInfty] fun τ ↦ rexp (-(2 * π / n) * τ.im) := by
-    convert CuspFormClass.exp_decay_atImInfty hn_pos hmem (f := f) using 2 with τ
-    field_simp
-  exact tendsto_rpow_mul_resToImagAxis_of_isBigO_exp (div_pos (by positivity) hn_pos) hdecay' s
 
 /-- Real part of the Fourier exponent `2πi(m+n₀)w` is `-2π(m+n₀)·im w`. -/
 private lemma mul_re_two_pi_I_natCast (m n₀ : ℕ) (w : ℂ) :
@@ -407,45 +390,4 @@ private lemma summable_norm_fourier_shift_term {a : ℕ → ℂ} (n₀ : ℕ) {c
       ≤ ‖a m‖ * (rexp (-(2 * π * c) * m) * rexp (-(2 * π * c) * n₀)) :=
         mul_le_mul_of_nonneg_left (exp_neg_two_pi_natCast_add_le m n₀ hw) (norm_nonneg (a m))
     _ = ‖a m‖ * rexp (-(2 * π * c) * m) * rexp (-(2 * π * c) * n₀) := by ring
-
-/--
-If `F` has a Fourier expansion `∑_{m≥0} a_m exp(2πi(m+n₀)z)` with `n₀ > 0`,
-and the coefficients are absolutely summable at height `im z = c`,
-then `F = O(exp(-2π n₀ · im z))` at `atImInfty`.
-
-The key bound is: for `im z ≥ c`,
-  `‖F(z)‖ ≤ (∑_m ‖a_m‖ · exp(-2π c m)) · exp(-2π n₀ · im z)`
--/
-lemma isBigO_atImInfty_of_fourier_shift
-    {F : ℍ → ℂ} {a : ℕ → ℂ} {n₀ : ℕ} {c : ℝ} (_hn₀ : 0 < n₀) (_hc : 0 < c)
-    (hF : ∀ z : ℍ, F z =
-      ∑' m : ℕ, a m * cexp (2 * π * I * ((m + n₀ : ℕ) : ℂ) * (z : ℂ)))
-    (ha : Summable (fun m : ℕ ↦ ‖a m‖ * rexp (-(2 * π * c) * (m : ℝ)))) :
-    F =O[atImInfty] fun z : ℍ ↦ rexp (-(2 * π * (n₀ : ℝ)) * z.im) := by
-  rw [Asymptotics.isBigO_iff]
-  refine ⟨∑' m, ‖a m‖ * rexp (-(2 * π * c) * m), Filter.eventually_atImInfty.mpr
-    ⟨c, fun z hz ↦ ?_⟩⟩
-  rw [hF z, Real.norm_of_nonneg (Real.exp_pos _).le]
-  have hexp_re (m : ℕ) :
-      (2 * π * I * ((m + n₀ : ℕ) : ℂ) * z).re = -(2 * π) * (m + n₀) * z.im :=
-    mul_re_two_pi_I_natCast m n₀ z
-  have hsum_norms := summable_norm_fourier_shift_term n₀ (z : ℂ) hz ha
-  have hsum_norms' : Summable fun m ↦ ‖a m‖ * rexp (-(2 * π) * (m + n₀) * z.im) := by
-    convert hsum_norms with m
-    rw [norm_mul, norm_exp, hexp_re]
-  calc ‖∑' m, a m * cexp (2 * π * I * ((m + n₀ : ℕ) : ℂ) * z)‖
-      ≤ ∑' m, ‖a m * cexp (2 * π * I * ((m + n₀ : ℕ) : ℂ) * z)‖ :=
-        norm_tsum_le_tsum_norm hsum_norms
-    _ = ∑' m, ‖a m‖ * rexp (-(2 * π) * (m + n₀) * z.im) := by
-        simp only [norm_mul, norm_exp, hexp_re]
-    _ ≤ ∑' m, ‖a m‖ * rexp (-(2 * π * c) * m) * rexp (-(2 * π) * n₀ * z.im) := by
-        refine Summable.tsum_le_tsum (fun m ↦ ?_) hsum_norms'
-          (ha.mul_right (rexp (-(2 * π) * n₀ * z.im)))
-        calc ‖a m‖ * rexp (-(2 * π) * (↑m + ↑n₀) * z.im)
-            ≤ ‖a m‖ * (rexp (-(2 * π * c) * m) * rexp (-(2 * π) * n₀ * z.im)) :=
-              mul_le_mul_of_nonneg_left (exp_neg_two_pi_natCast_add_le_mul m n₀ hz)
-                (norm_nonneg (a m))
-          _ = ‖a m‖ * rexp (-(2 * π * c) * m) * rexp (-(2 * π) * n₀ * z.im) := by ring
-    _ = (∑' m, ‖a m‖ * rexp (-(2 * π * c) * m)) * rexp (-(2 * π) * n₀ * z.im) := tsum_mul_right
-    _ = _ := by ring_nf
 

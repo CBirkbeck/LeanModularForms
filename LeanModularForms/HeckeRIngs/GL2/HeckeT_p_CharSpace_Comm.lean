@@ -131,45 +131,6 @@ private lemma heckeT_p_all_comp_eq_gamma0_double (k : ℤ) {p q : ℕ} (hp : Nat
   rw [Subtype.coe_mk] at h_outer
   rw [h_outer, equiv_heckeT_p_all_eq_heckeOperator_Gamma0 k q hq hqN f hf_pres_q]
 
-/-- On `modFormCharSpace k 1`, for two primes `p, q` both coprime to `N`,
-`heckeT_p_all k p hp (heckeT_p_all k q hq f) = heckeT_p_all k q hq (heckeT_p_all k p hp f)`
-— a direct corollary of `Gamma0_pair_HeckeAlgebra_mul_comm`. The proof goes through
-the iso `modFormCharSpace_one_equiv_Gamma0`.
-
-The main mathematical content: `heckeT_p_all` on the trivial-χ eigenspace *is* a
-Γ₀(N)-Hecke operator (up to conjugation by `equiv`), and Γ₀(N) Hecke operators commute
-by the abstract Hecke ring being commutative. -/
-theorem heckeT_p_all_comm_on_charSpace_one_coprime (k : ℤ) {p q : ℕ} (hp : Nat.Prime p)
-    (hq : Nat.Prime q) (hpN : Nat.Coprime p N) (hqN : Nat.Coprime q N)
-    (f : modFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ)) :
-    heckeT_p_all k p hp (heckeT_p_all k q hq
-      (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) =
-    heckeT_p_all k q hq (heckeT_p_all k p hp
-      (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) := by
-  set g : ModularForm ((Gamma0 N).map (mapGL ℝ)) k := modFormCharSpace_one_equiv_Gamma0 N k f
-  rw [heckeT_p_all_comp_eq_gamma0_double k hp hq hpN hqN f
-      (heckeT_p_all_preserves_charSpace_one_coprime k q hq hqN f.property),
-    heckeT_p_all_comp_eq_gamma0_double k hq hp hqN hpN f
-      (heckeT_p_all_preserves_charSpace_one_coprime k p hp hpN f.property)]
-  congr 2
-  exact heckeOperator_Gamma0_comm_of_coprime k hp.pos hq.pos g
-
-/-- **Commutativity on `modFormCharSpace k χ`**: for distinct primes `p, q` and any
-character `χ`, the operators `heckeT_p_all k p hp` and `heckeT_p_all k q hq` commute
-pointwise on the eigenspace `modFormCharSpace k χ`.
-
-This is an immediate corollary of the global commutativity theorem
-`heckeT_p_all_comm_distinct`. -/
-theorem heckeT_p_all_comm_on_charSpace (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) {p q : ℕ}
-    (hp : Nat.Prime p) (hq : Nat.Prime q) (hpq : p ≠ q) (f : modFormCharSpace k χ) :
-    heckeT_p_all k p hp (heckeT_p_all k q hq
-      (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) =
-    heckeT_p_all k q hq (heckeT_p_all k p hp
-      (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) := by
-  simpa [Module.End.mul_apply] using congr_fun
-    (congr_arg DFunLike.coe (heckeT_p_all_comm_distinct (N := N) k hp hq hpq))
-    (f : ModularForm _ k)
-
 /-- Conjugation of an endomorphism of `ModularForm ((Gamma0 N).map (mapGL ℝ)) k` by
 the iso `modFormCharSpace_one_equiv_Gamma0`, yielding an endomorphism of
 `modFormCharSpace k 1`. -/

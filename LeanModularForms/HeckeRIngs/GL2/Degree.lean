@@ -130,31 +130,4 @@ private lemma deg_T_sum_one : deg (GL_pair 2) (T_sum 1) = 1 := by
       congr 1; ext j; fin_cases j <;> rfl]
   exact deg_T_diag_scalar 1 one_pos
 
-/-- Theorem 3.24(7): `deg(T(m)) = σ₁(m)`.
-    By prime factorization + coprime multiplicativity + prime-power case. -/
-theorem deg_T_sum (m : ℕ+) :
-    deg (GL_pair 2) (T_sum m) = (σ 1) (m : ℕ) := by
-  obtain ⟨n, hn⟩ := m
-  revert hn
-  induction n using Nat.recOnPosPrimePosCoprime with
-  | zero => intro h; omega
-  | one =>
-    intro hn
-    rw [show (⟨1, hn⟩ : ℕ+) = (1 : ℕ+) from rfl, deg_T_sum_one]
-    simp
-  | @prime_pow p k hp hk =>
-    intro hn
-    rw [deg_T_sum_prime_pow p hp k]; simp only [ArithmeticFunction.sigma_one_apply]
-    have h := @Nat.sum_divisors_prime_pow ℕ _ k p id hp; simp only [id] at h
-    exact_mod_cast h.symm
-  | @coprime a b ha hb hcop iha ihb =>
-    intro hn
-    have ha_pos : 0 < a := by omega
-    have hb_pos : 0 < b := by omega
-    rw [show T_sum ⟨a * b, hn⟩ = T_sum ⟨a, ha_pos⟩ * T_sum ⟨b, hb_pos⟩ from
-      (T_sum_mul_coprime ⟨a, ha_pos⟩ ⟨b, hb_pos⟩ hcop).symm,
-      map_mul, iha ha_pos, ihb hb_pos]
-    simp only [ArithmeticFunction.sigma_one_apply]
-    exact_mod_cast (Nat.Coprime.sum_divisors_mul hcop).symm
-
 end HeckeRing.GL2

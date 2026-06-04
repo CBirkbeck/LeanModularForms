@@ -1087,49 +1087,4 @@ private lemma T_sum_mul_peel_prime_aux (q : ℕ) (hq : q.Prime) (a b : ℕ) (_ha
   rw [show (↑q : ℤ) ^ i = (↑(q ^ i) : ℤ) by push_cast; ring]
   exact T_sum_mul_peel_prime_summand q hq a b m' n' hqm hqn r s hr_def hs_def i hi d' hd'
 
-/-- Theorem 3.24(3): `T(m) · T(n) = Σ_{d∣gcd(m,n)} d · T(d,d) · T(mn/d²)`.
-    From Identity 4 at each prime + coprime multiplicativity. -/
-theorem T_sum_mul (m n : ℕ+) : T_sum m * T_sum n =
-    ∑ d ∈ (Nat.gcd m n).divisors, (d : ℤ) • (T_ad d d * T_sum_nat (↑m * ↑n / (d * d))) := by
-  suffices h_ind : ∀ (g : ℕ) (m n : ℕ+), Nat.gcd m n = g → T_sum m * T_sum n =
-      ∑ d ∈ g.divisors, (d : ℤ) • (T_ad d d * T_sum_nat (↑m * ↑n / (d * d))) from h_ind _ m n rfl
-  intro g; induction g using Nat.strongRecOn with | _ g ih =>
-  intro m n h_gcd
-  by_cases hg1 : g = 1
-  · subst hg1; rw [Nat.divisors_one, Finset.sum_singleton]
-    have := T_sum_mul_of_coprime_aux m n h_gcd
-    rw [h_gcd, Nat.divisors_one, Finset.sum_singleton] at this; exact this
-  · obtain ⟨q, hq, hq_dvd_g⟩ := Nat.exists_prime_and_dvd (by omega : g ≠ 1)
-    have hq_dvd_m : q ∣ (m : ℕ) := dvd_trans hq_dvd_g (h_gcd ▸ Nat.gcd_dvd_left m n)
-    have hq_dvd_n : q ∣ (n : ℕ) := dvd_trans hq_dvd_g (h_gcd ▸ Nat.gcd_dvd_right m n)
-    set a_ord := m.val.factorization q; set b_ord := n.val.factorization q
-    set m' : ℕ+ := ⟨ordCompl[q] m, Nat.ordCompl_pos q m.pos.ne'⟩
-    set n' : ℕ+ := ⟨ordCompl[q] n, Nat.ordCompl_pos q n.pos.ne'⟩
-    have hm_eq : (m : ℕ) = q ^ a_ord * m' := (Nat.ordProj_mul_ordCompl_eq_self m q).symm
-    have hn_eq : (n : ℕ) = q ^ b_ord * n' := (Nat.ordProj_mul_ordCompl_eq_self n q).symm
-    have ha : 0 < a_ord := (Nat.Prime.dvd_iff_one_le_factorization hq m.pos.ne').mp hq_dvd_m
-    have hb : 0 < b_ord := (Nat.Prime.dvd_iff_one_le_factorization hq n.pos.ne').mp hq_dvd_n
-    have hqm' : ¬ q ∣ (m' : ℕ) := Nat.not_dvd_ordCompl hq m.pos.ne'
-    have hqn' : ¬ q ∣ (n' : ℕ) := Nat.not_dvd_ordCompl hq n.pos.ne'
-    have h_smaller : Nat.gcd m' n' < g := by
-      have hg_pos : 0 < g := h_gcd ▸ Nat.gcd_pos_of_pos_left _ m.pos
-      have h1 : Nat.gcd (m' : ℕ) (n' : ℕ) ∣ g := h_gcd ▸ Nat.dvd_gcd
-        ((Nat.gcd_dvd_left _ _).trans (Nat.ordCompl_dvd m q))
-        ((Nat.gcd_dvd_right _ _).trans (Nat.ordCompl_dvd n q))
-      have h2 : ¬ q ∣ Nat.gcd (m' : ℕ) (n' : ℕ) :=
-        fun h ↦ hqm' (h.trans (Nat.gcd_dvd_left _ _))
-      exact lt_of_le_of_lt
-        (Nat.le_of_dvd (Nat.div_pos (Nat.le_of_dvd hg_pos hq_dvd_g) hq.pos)
-          (((Nat.Prime.coprime_iff_not_dvd hq).mpr h2).symm.dvd_of_dvd_mul_right
-            ((Nat.div_mul_cancel hq_dvd_g).symm ▸ h1)))
-        (Nat.div_lt_self hg_pos hq.one_lt)
-    rw [show m = ⟨q ^ a_ord * m', Nat.mul_pos (pow_pos hq.pos a_ord) m'.pos⟩ from
-        Subtype.ext hm_eq,
-      show n = ⟨q ^ b_ord * n', Nat.mul_pos (pow_pos hq.pos b_ord) n'.pos⟩ from
-        Subtype.ext hn_eq,
-      show g = Nat.gcd (q ^ a_ord * ↑m') (q ^ b_ord * ↑n') from by
-        rw [← h_gcd, ← hm_eq, ← hn_eq]]
-    convert T_sum_mul_peel_prime_aux q hq a_ord b_ord ha hb m' n' hqm' hqn'
-      (ih _ h_smaller m' n' rfl) using 2
-
 end HeckeRing.GL2

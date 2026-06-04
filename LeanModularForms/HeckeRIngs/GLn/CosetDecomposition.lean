@@ -112,30 +112,6 @@ lemma unipMat_det (a : Fin n → ℕ) (hdiv : DivChain n a) (B : UpperTriRep n a
   refine (Matrix.det_of_upperTriangular fun i j (h : j < i) ↦ ?_).trans (by simp [unipMat])
   simp only [unipMat, dif_neg h.asymm, if_neg h.ne']
 
-/-- Each upper-triangular representative lies in `Γ · diag(a) · Γ`. -/
-theorem upperTriGL_mem_doubleCoset (a : Fin n → ℕ) (hpos : ∀ i, 0 < a i) (hdiv : DivChain n a)
-    (B : UpperTriRep n a hdiv) : (upperTriGL n a hpos hdiv B : GL (Fin n) ℚ) ∈
-    DoubleCoset.doubleCoset (diagMat n a : GL (Fin n) ℚ) (SLnZ_subgroup n) (SLnZ_subgroup n) := by
-  rw [DoubleCoset.mem_doubleCoset]
-  set γ_SL : SpecialLinearGroup (Fin n) ℤ := ⟨unipMat n a hdiv B, unipMat_det n a hdiv B⟩
-  refine ⟨1, (SLnZ_subgroup n).one_mem, (γ_SL : GL (Fin n) ℚ), coe_mem_SLnZ n γ_SL, ?_⟩
-  rw [one_mul]
-  apply Units.ext
-  change (upperTriMat n a hdiv B).map (Int.cast : ℤ → ℚ) =
-    (↑(diagMat n a) : Matrix (Fin n) (Fin n) ℚ) *
-    (↑(γ_SL : GL (Fin n) ℚ) : Matrix (Fin n) (Fin n) ℚ)
-  simp only [mapGL_coe_matrix, algebraMap_int_eq, diagMat_val n a hpos]
-  ext i j
-  simp only [Matrix.mul_apply, Matrix.diagonal_apply, Matrix.map_apply]
-  rw [Finset.sum_eq_single i]
-  · simp only [ite_mul, zero_mul]
-    change ((upperTriMat n a hdiv B i j : ℤ) : ℚ) =
-      ((a i : ℤ) : ℚ) * ((unipMat n a hdiv B i j : ℤ) : ℚ)
-    simp only [upperTriMat, unipMat]
-    split_ifs <;> push_cast <;> ring
-  · exact fun k _ hk ↦ by simp [hk.symm]
-  · exact fun h ↦ (h (Finset.mem_univ i)).elim
-
 private lemma coset_sum_eq {a : Fin n → ℕ} {hdiv : DivChain n a} {B₂ : UpperTriRep n a hdiv}
     {σ : SpecialLinearGroup (Fin n) ℤ} {i j : Fin n}
     (ih : ∀ (k : Fin n), k.val < j.val → ∀ (i : Fin n), σ.val i k = if i = k then 1 else 0) :

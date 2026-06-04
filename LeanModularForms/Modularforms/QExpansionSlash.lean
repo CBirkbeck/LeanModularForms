@@ -39,21 +39,6 @@ noncomputable section
 
 open Complex Finset UpperHalfPlane
 
-/-- **Root-of-unity orthogonality**: for a primitive `n`-th root of unity `ζ`,
-`Σ_{b=0}^{n-1} ζ^{kb} = n` if `n ∣ k`, and `= 0` if `n ∤ k`. -/
-theorem rootOfUnity_sum_eq {n : ℕ} (_hn : 1 < n) {ζ : ℂ} (hζ : IsPrimitiveRoot ζ n)
-    (k : ℕ) : ∑ b ∈ range n, ζ ^ (k * b) = if n ∣ k then (n : ℂ) else 0 := by
-  split_ifs with hdvd
-  · obtain ⟨m, rfl⟩ := hdvd
-    simp [pow_mul, hζ.pow_eq_one, one_pow, sum_const, card_range, nsmul_eq_mul]
-  · have hζk : ζ ^ k ≠ 1 := fun h ↦ hdvd (hζ.dvd_of_pow_eq_one k h)
-    simp_rw [show ∀ b, ζ ^ (k * b) = (ζ ^ k) ^ b from fun b ↦ by rw [← pow_mul]]
-    rw [geom_sum_eq hζk]
-    have : (ζ ^ k) ^ n = 1 := by
-      rw [← pow_mul, mul_comm, pow_mul, hζ.pow_eq_one, one_pow]
-    simp [this]
-
-
 /-- Scaling the argument by `p`: `qParam h (p · z) = (qParam h z) ^ p`.
 This is the key identity for computing q-expansions of `f(pτ)`. -/
 theorem qParam_mul_nat (h : ℝ) (p : ℕ) (z : ℂ) :

@@ -55,12 +55,6 @@ lemma T_gen_diag_val (k : Fin n) (i : Fin n) :
     T_gen_diag n p k i =
     if (i : ℕ) < n - 1 - (k : ℕ) then 1 else p := rfl
 
-/-- The T_gen diagonal satisfies the divisibility chain condition. -/
-lemma divChain_T_gen (k : Fin n) : DivChain n (T_gen_diag n p k) := by
-  intro i hi
-  simp only [T_gen_diag_val]
-  split_ifs <;> first | rfl | omega
-
 /-- The T_gen diagonal has p-power entries (each entry is 1 = p^0 or p = p^1). -/
 lemma T_gen_diag_is_ppow (k : Fin n) :
     T_gen_diag n p k =
@@ -96,9 +90,6 @@ omit hp
 end TGen
 
 section Weight
-
-/-- Weight of a p-power diagonal: the sum of all exponents. -/
-def ppowWeight (e : Fin n → ℕ) : ℕ := ∑ i, e i
 
 end Weight
 
@@ -979,14 +970,5 @@ theorem evalHom_injective :
   · by_cases h2 : n = 2
     · subst h2; exact Inj.evalHom_injective_two p ‹_›
     · sorry -- General n requires Phase B/C
-
-/-- Shimura Theorem 3.20: the p-local Hecke ring is isomorphic to a polynomial ring.
-    `R_p^{(n)} ≅ ℤ[X₁,...,Xₙ]`. -/
-noncomputable def R_p_isPolynomialRing :
-    MvPolynomial (Fin n) ℤ ≃+* R_p n p hp :=
-  RingEquiv.ofBijective (Inj.evalHomR n p hp)
-    ⟨Inj.evalHomR_injective n p hp (evalHom_injective n p hp),
-     Inj.evalHomR_surjective n p hp (T_gen_generates_R_p n p hp)⟩
-
 
 end HeckeRing.GLn

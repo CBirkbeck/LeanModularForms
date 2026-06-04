@@ -1621,12 +1621,4 @@ private theorem shimura_ring_hom_surjective :
       (fun _ ha ↦ (ker_π_le_ker_ψ N) ha) (ψ_surjective N)).comp
     (RingHom.quotientKerEquivOfSurjective π_surjective).symm.surjective
 
-/-- **Shimura Theorem 3.35**: There exists a surjective ring homomorphism
-    `R(Γ, Δ) →+* R(Γ₀(N), Δ₀(N))`. -/
-theorem shimura_thm_3_35 (N : ℕ) [NeZero N] :
-    ∃ φ : HeckeRing.𝕋 (GL_pair 2) ℤ →+* HeckeRing.𝕋 (Gamma0_pair N) ℤ,
-      Function.Surjective φ :=
-  ⟨shimura_ring_hom N, shimura_ring_hom_surjective N⟩
-
-
 end HeckeRing.GLn

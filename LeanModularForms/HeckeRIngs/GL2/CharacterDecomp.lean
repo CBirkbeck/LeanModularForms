@@ -273,16 +273,6 @@ theorem ModularForm_Gamma1_iSupIndep_charSpace (k : ℤ) :
   ext d
   exact_mod_cast congr_fun h d
 
-/-- **Internal direct sum decomposition**: `ModularForm (Γ₁(N)) k` decomposes
-as the direct sum of the Nebentypus character spaces `modFormCharSpace k χ`. -/
-theorem ModularForm_Gamma1_charSpace_directSum (k : ℤ)
-    [DecidableEq ((ZMod N)ˣ →* ℂˣ)] :
-    DirectSum.IsInternal (fun χ : (ZMod N)ˣ →* ℂˣ ↦ modFormCharSpace k χ) :=
-  DirectSum.isInternal_submodule_of_iSupIndep_of_iSup_eq_top
-    (ModularForm_Gamma1_iSupIndep_charSpace k)
-    (ModularForm_Gamma1_iSup_charSpace k)
-
-
 /-- Each character subspace `modFormCharSpace k χ` is finite-dimensional over
 `ℂ`, as a submodule of the finite-dimensional ambient
 `ModularForm ((Gamma1 N).map (mapGL ℝ)) k`. -/
@@ -371,7 +361,6 @@ lemma exists_charHom_of_jointDiamondCuspEigenspace_ne_bot {χ : (ZMod N)ˣ → �
     (V := CuspForm ((Gamma1 N).map (mapGL ℝ)) k)
     (diamondOpCuspHom k) χ f hf_ne fun d ↦ Submodule.mem_iInf _ |>.mp hf_mem d, rfl⟩
 
-
 /-- **The cusp-form character subspaces form an independent family.** -/
 theorem CuspForm_Gamma1_iSupIndep_charSpace (k : ℤ) :
     iSupIndep (fun χ : (ZMod N)ˣ →* ℂˣ ↦ cuspFormCharSpace k χ) := by
@@ -395,8 +384,6 @@ theorem CuspForm_Gamma1_iSupIndep_charSpace (k : ℤ) :
   refine h_indep_fun.comp fun χ₁ χ₂ h ↦ ?_
   ext d
   exact_mod_cast congr_fun h d
-
-
 
 /-- Each cusp-form character subspace `cuspFormCharSpace k χ` is
 finite-dimensional over `ℂ`, as a submodule of the finite-dimensional

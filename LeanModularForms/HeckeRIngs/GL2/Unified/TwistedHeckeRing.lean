@@ -1246,15 +1246,4 @@ private lemma twistedHeckeSlash_gen_identity_coset (k : ℤ) (χ : (ZMod N)ˣ �
     twistedHeckeSumFunction_T_single, twistedHeckeOperatorFunction_one]
   simp
 
-/-- The existing `Γ₀(N)` Hecke ring acts on the abstract twisted
-`Γ₀(N),χ` function space by a genuine ring homomorphism. -/
-noncomputable def twistedHeckeRingHomFunction (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
-    𝕋 (Gamma0_pair N) ℤ →+*
-      Module.End ℂ (gamma0TwistedInvariantFunctionSubmodule (N := N) k χ) where
-  toFun := twistedHeckeSumFunction (N := N) k χ
-  map_zero' := twistedHeckeSumFunction_zero (N := N) k χ
-  map_one' := twistedHeckeSumFunction_one (N := N) k χ
-  map_add' := twistedHeckeSumFunction_add (N := N) k χ
-  map_mul' := twistedHeckeSumFunction_mul (N := N) k χ
-
 end HeckeRing.GL2.Unified
