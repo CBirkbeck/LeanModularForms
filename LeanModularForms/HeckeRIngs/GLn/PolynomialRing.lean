@@ -773,28 +773,5 @@ private lemma prod_T_gen_pow_eq_two (p : ℕ) (d : Fin 2 →₀ ℕ) :
     rw [Finsupp.notMem_support_iff.mp hk, pow_zero]; rfl)]
   rw [Fin.prod_univ_two]; rfl
 
-/-- Evaluating `evalHom 2 p R` at the coset `D` expands as
-`∑_{d ∈ supp R} (R.coeff d) · (T_gen(p,0)^{d 0} · T_gen(p,1)^{d 1}) D`. -/
-private lemma evalHom_apply_eq_sum_monomial (p : ℕ) (R : MvPolynomial (Fin 2) ℤ)
-    (D : HeckeCoset (GL_pair 2)) :
-    (evalHom 2 p R) D =
-    ∑ d ∈ R.support, R.coeff d * (T_gen 2 p 0 ^ (d 0) * T_gen 2 p 1 ^ (d 1)) D := by
-  change (MvPolynomial.eval₂ (Int.castRingHom (HeckeAlgebra 2))
-    (fun k : Fin 2 ↦ T_gen 2 p k) R) D = _
-  rw [MvPolynomial.eval₂_eq]
-  show (∑ d ∈ R.support, (Int.castRingHom (HeckeAlgebra 2)) (MvPolynomial.coeff d R) *
-    ∏ i ∈ d.support, T_gen 2 p i ^ d i) D = _
-  rw [show (∑ d ∈ R.support, (Int.castRingHom (HeckeAlgebra 2)) (MvPolynomial.coeff d R) *
-        ∏ i ∈ d.support, T_gen 2 p i ^ d i) D =
-      ∑ d ∈ R.support, ((Int.castRingHom (HeckeAlgebra 2)) (MvPolynomial.coeff d R) *
-        ∏ i ∈ d.support, T_gen 2 p i ^ d i) D from Finset.sum_apply' _]
-  refine Finset.sum_congr rfl (fun d _ ↦ ?_)
-  show (((R.coeff d : ℤ) : HeckeAlgebra 2) * (∏ k ∈ d.support, T_gen 2 p k ^ d k)) D = _
-  rw [show ((R.coeff d : ℤ) : HeckeAlgebra 2) = (R.coeff d) • (1 : HeckeAlgebra 2) from
-    (zsmul_one _).symm, smul_mul_assoc, one_mul]
-  rw [show ((R.coeff d) • (∏ k ∈ d.support, T_gen 2 p k ^ d k : HeckeAlgebra 2)) D =
-    R.coeff d • (∏ k ∈ d.support, T_gen 2 p k ^ d k : HeckeAlgebra 2) D from
-    Finsupp.smul_apply _ _ _, smul_eq_mul, prod_T_gen_pow_eq_two]
-
 end HeckeRing.GLn.Inj
 
