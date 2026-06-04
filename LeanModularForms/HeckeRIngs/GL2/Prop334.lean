@@ -49,36 +49,4 @@ lemma matrix_fin_two_conj_entry_11_mod_eq (N : ℤ) (a b c d α β γ δ : ℤ)
   rw [inv_mul_mul_entry_smul_det _ _ hdet]
   simp [Matrix.adjugate_fin_two, Matrix.mul_apply, Fin.sum_univ_two]; ring
 
-private lemma isUnit_ad_of_det_coprime {N : ℕ} (a b c d : ℤ)
-    (hdet : Int.gcd (!![a, b; (N : ℤ) * c, d] : Matrix _ _ ℤ).det N = 1) :
-    IsUnit ((a * d : ℤ) : ZMod N) := by
-  have hdetval : (!![a, b; (N : ℤ) * c, d] : Matrix _ _ ℤ).det = a * d - b * ((N : ℤ) * c) := by
-    rw [Matrix.det_fin_two]; simp
-  have heq : ((a * d : ℤ) : ZMod N) =
-      (((!![a, b; (N : ℤ) * c, d] : Matrix _ _ ℤ).det : ℤ) : ZMod N) := by
-    rw [hdetval]; push_cast
-    rw [show ((N : ZMod N)) = 0 from ZMod.natCast_self N]; ring
-  rw [heq, ZMod.coe_int_isUnit_iff_isCoprime, Int.isCoprime_iff_gcd_eq_one, Int.gcd_comm]
-  exact_mod_cast hdet
-
-private lemma entry_11_mul_det_congr_mod
-    (N : ℕ) (a b c d α β γ δ : ℤ) (h'₁₁ : ℤ)
-    (hdet : (!![(a : ℚ), b; (N : ℚ) * c, d]).det ≠ 0)
-    (h_conj_11 :
-      ((!![(a : ℚ), b; (N : ℚ) * c, d])⁻¹ *
-          !![(α : ℚ), β; (N : ℚ) * γ, δ] * !![(a : ℚ), b; (N : ℚ) * c, d]) 1 1 =
-        (h'₁₁ : ℚ)) :
-    ((h'₁₁ * (!![a, b; (N : ℤ) * c, d] : Matrix _ _ ℤ).det : ℤ) : ZMod N) =
-      ((a * d * δ : ℤ) : ZMod N) := by
-  have hdet_int : (!![(a : ℚ), b; ((N : ℤ) : ℚ) * c, d]).det ≠ 0 := mod_cast hdet
-  have hQ := matrix_fin_two_conj_entry_11_mod_eq (N : ℤ) a b c d α β γ δ hdet_int
-  have hcastN : ((N : ℤ) : ℚ) = (N : ℚ) := by push_cast; rfl
-  have hdet_eq : (!![(a : ℚ), b; (N : ℚ) * c, d]).det =
-      ((!![a, b; (N : ℤ) * c, d] : Matrix _ _ ℤ).det : ℚ) := by
-    simp only [Matrix.det_fin_two_of]; push_cast; ring
-  rw [hcastN, h_conj_11, hdet_eq] at hQ
-  have hZ : h'₁₁ * (!![a, b; (N : ℤ) * c, d] : Matrix _ _ ℤ).det =
-      a * d * δ + (N : ℤ) * (a * b * γ - b * c * α - c * d * β) := mod_cast hQ
-  rw [hZ]; push_cast; ring_nf; simp
-
 end HeckeRing.GL2.Prop334

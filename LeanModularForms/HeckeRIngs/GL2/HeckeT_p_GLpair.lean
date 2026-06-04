@@ -392,37 +392,4 @@ lemma diamondOp_trivial_of_SL_invariant {N : ℕ} [NeZero N] (k : ℤ) (u : (ZMo
   change (⇑f ∣[k] mapGL ℝ (g : SL(2, ℤ))) = ⇑f
   exact hf_SL _ ⟨g, rfl⟩
 
-/-- **Main theorem.** For an SL₂(ℤ)-invariant function `f : ℍ → ℂ`, the explicit
-Hecke operator `T_p` (at any level N with `gcd(p,N) = 1`) reduces on SL₂(ℤ)-invariant
-forms to the abstract Hecke operator `heckeSlash_gen (GL_pair 2) k (D_p p)`. -/
-theorem heckeT_p_fun_eq_heckeSlash_gen {N : ℕ} [NeZero N] (k : ℤ) (p : ℕ)
-    (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
-    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hf_SL : ∀ γ ∈ 𝒮ℒ, (⇑f) ∣[k] γ = ⇑f) :
-    heckeT_p_fun k p hp hpN f =
-    heckeSlash_gen (GL_pair 2) k (D_p p hp.pos) (⇑f) := by
-  rw [heckeSlash_gen, tRep_gen_D_p_matches_T_p_reps k p hp (⇑f) hf_SL]
-  simp only [heckeT_p_fun, heckeT_p_ut]
-  congr 2
-  exact diamondOp_trivial_of_SL_invariant k _ f hf_SL
-
-/-- The heckeSlash_gen operators commute for GL_pair 2 because the Hecke algebra
-`𝕋 (GL_pair 2) ℤ` is commutative. -/
-theorem heckeSlash_gen_GL_pair_comm (k : ℤ) (D₁ D₂ : HeckeCoset (GL_pair 2)) (f : ℍ → ℂ)
-    (hf : ∀ h, h ∈ (GL_pair 2).H → f ∣[k] (glMap h) = f) :
-    heckeSlash_gen (GL_pair 2) k D₁ (heckeSlash_gen (GL_pair 2) k D₂ f) =
-    heckeSlash_gen (GL_pair 2) k D₂ (heckeSlash_gen (GL_pair 2) k D₁ f) :=
-  heckeSlash_gen_comm k D₁ D₂ f hf (fun _ _ ↦ mul_comm _ _)
-
-private lemma heckeSlash_gen_SL_invariant {k : ℤ} (D : HeckeCoset (GL_pair 2)) {f : ℍ → ℂ}
-    (hf_SL : ∀ γ ∈ 𝒮ℒ, f ∣[k] γ = f) :
-    ∀ γ ∈ 𝒮ℒ, (heckeSlash_gen (GL_pair 2) k D f) ∣[k] γ =
-      heckeSlash_gen (GL_pair 2) k D f := by
-  intro γ hγ; obtain ⟨s, hs⟩ := hγ
-  have hmem : mapGL ℚ s ∈ (GL_pair 2).H := ⟨s, rfl⟩
-  rw [← hs]
-  change (heckeSlash_gen (GL_pair 2) k D f) ∣[k] glMap (mapGL ℚ s) =
-    heckeSlash_gen (GL_pair 2) k D f
-  exact heckeSlash_gen_slash_invariant k D f (SL_invariant_to_H_invariant hf_SL) _ hmem
-
 end HeckeRing.GL2

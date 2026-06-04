@@ -93,29 +93,11 @@ private lemma SL_transpose_inv_eq (σ : SL(n, ℤ)) :
   Subtype.ext (by simp only [SpecialLinearGroup.coe_inv,
     SpecialLinearGroup.coe_transpose, Matrix.adjugate_transpose])
 
-private lemma invTransposeEquiv_invol (σ : SL(n, ℤ)) :
-    invTransposeEquiv n (invTransposeEquiv n σ) = σ := by
-  rw [show invTransposeEquiv n σ = (invTransposeEquiv n).symm σ from SL_transpose_inv_eq n σ]
-  exact (invTransposeEquiv n).apply_symm_apply σ
-
 private lemma mapGL_injective : Function.Injective (mapGL ℚ : SL(n, ℤ) →* GL (Fin n) ℚ) := by
   intro x y hxy; ext i j
   have h := congr_arg (fun g ↦ (Units.val g) i j) hxy
   simp only [mapGL_coe_matrix, map_apply_coe, RingHom.mapMatrix_apply,
     Matrix.map_apply] at h; exact_mod_cast h
-
-private lemma relIndex_eq_comap_index (K : Subgroup (GL (Fin n) ℚ)) :
-    K.relIndex (SLnZ_subgroup n) = (K.comap (mapGL ℚ : SL(n, ℤ) →* GL (Fin n) ℚ)).index := by
-  set f := (mapGL ℚ : SL(n, ℤ) →* GL (Fin n) ℚ)
-  set H := SLnZ_subgroup n
-  have h_H_eq : H = Subgroup.map f ⊤ := MonoidHom.range_eq_map f
-  have h_inf : K ⊓ H = Subgroup.map f (K.comap f) := by
-    rw [h_H_eq, ← MonoidHom.range_eq_map f, inf_comm, Subgroup.map_comap_eq]
-  calc K.relIndex H
-      = (K ⊓ H).relIndex H := (Subgroup.inf_relIndex_right _ _).symm
-    _ = (Subgroup.map f (K.comap f)).relIndex (Subgroup.map f ⊤) := by rw [h_inf, h_H_eq]
-    _ = (K.comap f).relIndex ⊤ := Subgroup.relIndex_map_map_of_injective _ _ (mapGL_injective n)
-    _ = (K.comap f).index := (K.comap f).relIndex_top_right
 
 private lemma transpose_mul_diagMat (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (σ ρ : SL(n, ℤ))
     (h : (σ : GL (Fin n) ℚ) * diagMat n a = diagMat n a * (ρ : GL (Fin n) ℚ)) :
@@ -129,82 +111,7 @@ private lemma transpose_mul_diagMat (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (�
     RingHom.mapMatrix_apply, diagMat_val n a ha, Matrix.transpose_mul,
     Matrix.diagonal_transpose] using hM
 
-private lemma transpose_mem_conj_inv_of_mem_conj
-    (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (σ : SL(n, ℤ))
-    (hσ : (σ : GL (Fin n) ℚ) ∈ ConjAct.toConjAct (diagMat n a) • SLnZ_subgroup n) :
-    (σ.transpose : GL (Fin n) ℚ) ∈
-      ConjAct.toConjAct (diagMat n a)⁻¹ • SLnZ_subgroup n := by
-  rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def,
-    ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct] at hσ
-  simp only [inv_inv] at hσ
-  obtain ⟨ρ, hρ⟩ := MonoidHom.mem_range.mp (show _ ∈ SLnZ_subgroup n from hσ)
-  have h_trans := transpose_mul_diagMat n a ha σ ρ (by rw [hρ]; group)
-  rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def,
-    ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct, inv_inv]
-  suffices h : diagMat n a * (σ.transpose : GL (Fin n) ℚ) *
-      (diagMat n a)⁻¹ = (ρ.transpose : GL (Fin n) ℚ) by
-    rw [h]; exact coe_mem_SLnZ n ρ.transpose
-  rw [h_trans, mul_assoc, mul_inv_cancel, mul_one]
-
-private lemma transpose_mem_conj_of_mem_conj_inv
-    (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (τ : SL(n, ℤ))
-    (hτ : (τ : GL (Fin n) ℚ) ∈ ConjAct.toConjAct (diagMat n a)⁻¹ • SLnZ_subgroup n) :
-    (τ.transpose : GL (Fin n) ℚ) ∈
-      ConjAct.toConjAct (diagMat n a) • SLnZ_subgroup n := by
-  rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def,
-    ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct, inv_inv] at hτ
-  obtain ⟨ρ, hρ⟩ := MonoidHom.mem_range.mp (show _ ∈ SLnZ_subgroup n from hτ)
-  have h_trans := transpose_mul_diagMat n a ha ρ τ (by rw [hρ]; group)
-  rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def,
-    ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct, inv_inv]
-  suffices h : (diagMat n a)⁻¹ * (τ.transpose : GL (Fin n) ℚ) *
-      diagMat n a = (ρ.transpose : GL (Fin n) ℚ) by
-    rw [h]; exact coe_mem_SLnZ n ρ.transpose
-  rw [mul_assoc, ← h_trans, ← mul_assoc, inv_mul_cancel, one_mul]
-
 variable [NeZero n]
-
-/-- The map sending each upper-triangular representative `B` to the coset of
-`(f(unipSL B))⁻¹` in the quotient `H ⧸ (α⁻¹-conjugate of H)` is injective.
-
-This is the core injectivity argument: if two representatives map to the same coset,
-then their ratio lies in `H`, contradicting `upperTriMat_distinct_cosets`. -/
-private lemma upperTriRep_injective_to_quotient (a : Fin n → ℕ) (ha : ∀ i, 0 < a i)
-    (hdiv : DivChain n a) (α : GL (Fin n) ℚ) (hα : α = diagMat n a)
-    (H : Subgroup (GL (Fin n) ℚ)) (hH : H = SLnZ_subgroup n) (f : SL(n, ℤ) →* GL (Fin n) ℚ)
-    (hf : f = (mapGL ℚ : SL(n, ℤ) →* GL (Fin n) ℚ))
-    [Fintype (H ⧸ (ConjAct.toConjAct α⁻¹ • H).subgroupOf H)] :
-    Function.Injective
-      (fun B : UpperTriRep n a hdiv ↦
-        (⟦⟨(f (unipSL n a hdiv B))⁻¹,
-          H.inv_mem (show f (unipSL n a hdiv B) ∈ H from
-            hH ▸ hf ▸ ⟨unipSL n a hdiv B, rfl⟩)⟩⟧ :
-          H ⧸ (ConjAct.toConjAct α⁻¹ • H).subgroupOf H)) := by
-  subst hα hH hf
-  intro B₁ B₂ heq
-  by_contra hne
-  have hq := QuotientGroup.eq.mp heq
-  rw [Subgroup.mem_subgroupOf] at hq
-  simp only [Subgroup.coe_mul, InvMemClass.coe_inv, inv_inv] at hq
-  rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def,
-    ConjAct.ofConjAct_inv, ConjAct.ofConjAct_toConjAct, inv_inv] at hq
-  set α := (diagMat n a : GL (Fin n) ℚ)
-  set f := (mapGL ℚ : SL(n, ℤ) →* GL (Fin n) ℚ)
-  have h1 : upperTriGL n a ha hdiv B₁ = α * f (unipSL n a hdiv B₁) :=
-    upperTriGL_eq_diagMat_mul n a ha hdiv B₁
-  have h2 : upperTriGL n a ha hdiv B₂ = α * f (unipSL n a hdiv B₂) :=
-    upperTriGL_eq_diagMat_mul n a ha hdiv B₂
-  have hmem : upperTriGL n a ha hdiv B₁ * (upperTriGL n a ha hdiv B₂)⁻¹ ∈
-      SLnZ_subgroup n := by
-    suffices upperTriGL n a ha hdiv B₁ * (upperTriGL n a ha hdiv B₂)⁻¹ =
-        α * (f (unipSL n a hdiv B₁) * (f (unipSL n a hdiv B₂))⁻¹) * α⁻¹ by
-      rw [this]; exact hq
-    rw [h1, h2]; group
-  obtain ⟨γ, hγ⟩ := (MonoidHom.mem_range.mp (show _ ∈ SLnZ_subgroup n from hmem))
-  have h_eq : upperTriGL n a ha hdiv B₁ = f γ * upperTriGL n a ha hdiv B₂ := by
-    have hγ' : f γ = upperTriGL n a ha hdiv B₁ * (upperTriGL n a ha hdiv B₂)⁻¹ := hγ
-    rw [hγ', mul_assoc, inv_mul_cancel, mul_one]
-  exact upperTriMat_distinct_cosets n a ha hdiv B₁ B₂ hne (f γ) ⟨γ, rfl⟩ h_eq
 
 private lemma a1_eq_a0_mul_pk {p : ℕ} {a : Fin 2 → ℕ} {k : ℕ}
     (h_ratio : a 1 / a 0 = p ^ k) (h_dvd_a : a 0 ∣ a 1) :

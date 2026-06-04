@@ -250,20 +250,6 @@ open HeckeRing.GLn
 private lemma T_gen_diag_one_eq (p : ℕ) : T_gen_diag 1 p (0 : Fin 1) = fun _ ↦ p := by
   funext i; simp [T_gen_diag_val]
 
-/-- n=1 surjectivity: every element of R_p is in the range of evalHom. -/
-theorem T_gen_generates_R_p_one (p : ℕ) (hp : p.Prime) :
-    ∀ f ∈ R_p 1 p hp, f ∈ (evalHom 1 p).range := by
-  intro f hf
-  apply Subring.closure_le.mpr _ hf
-  intro x hx
-  obtain ⟨e, _hmono, rfl⟩ := hx
-  have he : ppowDiag 1 p e = fun _ ↦ p ^ (e 0) := by
-    funext i; simp [ppowDiag]; congr 1; exact congr_arg e (Subsingleton.elim i 0)
-  rw [T_elem_congr_diag 1 he, ← T_scalar_pow 1 p hp.pos (e 0),
-    show T_elem (fun _ : Fin 1 ↦ p) = T_gen 1 p (0 : Fin 1) from by
-      unfold T_gen; exact (T_elem_congr_diag 1 (T_gen_diag_one_eq p)).symm]
-  exact (evalHom 1 p).range.pow_mem (T_gen_mem_evalHom_range 1 p 0) _
-
 end HeckeRing.GLn.SurjOne
 
 namespace HeckeRing.GLn.Inj
@@ -288,15 +274,6 @@ lemma evalHom_mem_R_p (n : ℕ) [NeZero n] (p : ℕ) (hp : p.Prime) (P : MvPolyn
     rw [show evalHom n p (MvPolynomial.X i) = T_gen n p i from
       MvPolynomial.eval₂Hom_X' _ _ _]
     exact T_gen_mem_R_p n p hp i
-
-/-- The restricted evaluation homomorphism into `R_p`. -/
-noncomputable def evalHomR (n : ℕ) [NeZero n] (p : ℕ) (hp : p.Prime) :
-    MvPolynomial (Fin n) ℤ →+* R_p n p hp where
-  toFun P := ⟨evalHom n p P, evalHom_mem_R_p n p hp P⟩
-  map_zero' := Subtype.ext (map_zero _)
-  map_one' := Subtype.ext (map_one _)
-  map_add' x y := Subtype.ext (map_add _ x y)
-  map_mul' x y := Subtype.ext (map_mul _ x y)
 
 /-- For n=1, `T_gen(0)^k = T_elem(fun _ => p^k)`. -/
 private lemma T_gen_pow_one (p : ℕ) (hp : p.Prime) (k : ℕ) :

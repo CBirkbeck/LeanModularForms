@@ -68,18 +68,6 @@ noncomputable def lCoeff [ModularFormClass F Γ k] (f : F) : ℕ → ℂ :=
 lemma lCoeff_apply [ModularFormClass F Γ k] (f : F) (n : ℕ) :
     lCoeff f n = (qExpansion Γ.strictWidthInfty f).coeff n := rfl
 
-/-- **Hecke's bound for cusp forms**: for a weight-`k` cusp form on an
-arithmetic subgroup, the abscissa of absolute convergence of the associated
-L-function is at most `k/2 + 1`. -/
-lemma abscissaOfAbsConv_lCoeff_le_cuspForm [Γ.IsArithmetic]
-    [CuspFormClass F Γ k] (f : F) :
-    abscissaOfAbsConv (lCoeff f) ≤ ((k : ℝ) / 2 + 1 : ℝ) := by
-  have h_bigO :
-      (fun n : ℕ ↦ lCoeff f n) =O[atTop] fun n : ℕ ↦ (n : ℝ) ^ ((k : ℝ) / 2) := by
-    simpa [lCoeff] using CuspFormClass.qExpansion_isBigO f
-  simpa using LSeries.abscissaOfAbsConv_le_of_isBigO_rpow
-    (f := lCoeff f) (x := ((k : ℝ) / 2)) h_bigO
-
 open CongruenceSubgroup Matrix.SpecialLinearGroup in
 /-- **Strict width at infinity of the GL₂(ℝ) image of Γ₁(N) is `1`.** -/
 @[simp]

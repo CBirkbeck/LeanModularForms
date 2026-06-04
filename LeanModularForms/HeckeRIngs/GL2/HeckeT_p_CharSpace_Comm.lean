@@ -62,22 +62,6 @@ theorem heckeT_p_all_eq_gamma0_on_charSpace_one (k : ℤ) (p : ℕ) (hp : Nat.Pr
   heckeT_p_all_coprime k hp hpN ▸
     heckeT_p_val_eq_heckeOperator_Gamma0_on_charSpace_one k p hp hpN f
 
-/-- On the trivial-character eigenspace, the iso `modFormCharSpace_one_equiv_Gamma0`
-intertwines `heckeT_p_all k p hp` (for `p` coprime to `N`) with the Γ₀(N)-Hecke
-operator `heckeOperator_Gamma0 N k (D_p_Gamma0 N p hp.pos)`. -/
-private lemma equiv_heckeT_p_all_eq_heckeOperator_Gamma0 (k : ℤ) (p : ℕ) (hp : Nat.Prime p)
-    (hpN : Nat.Coprime p N) (f : modFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ))
-    (hpres : heckeT_p_all k p hp (f : ModularForm _ k) ∈
-      modFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ)) :
-    modFormCharSpace_one_equiv_Gamma0 N k
-        ⟨heckeT_p_all k p hp (f : ModularForm _ k), hpres⟩ =
-      heckeOperator_Gamma0 N k (D_p_Gamma0 N p hp.pos)
-        (modFormCharSpace_one_equiv_Gamma0 N k f) := by
-  refine ModularForm.ext fun z ↦ ?_
-  rw [modFormCharSpace_one_equiv_Gamma0_apply, Subtype.coe_mk,
-    heckeT_p_all_eq_gamma0_on_charSpace_one k p hp hpN f,
-    modFormCharSpace_one_equiv_Gamma0_symm_apply]
-
 /-- Conjugation of an endomorphism of `ModularForm ((Gamma0 N).map (mapGL ℝ)) k` by
 the iso `modFormCharSpace_one_equiv_Gamma0`, yielding an endomorphism of
 `modFormCharSpace k 1`. -/

@@ -1001,17 +1001,4 @@ theorem heckeT_p_comm_diamondOp [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.Prime p
   rw [diamondOp_eq_diamondOpAux k d g hg]
   exact congr_fun (orbit_sum_comm k p hp hpN f g) z
 
-/-- `T_p` preserves the modular form character space `M_k(Γ₁(N), χ)`. -/
-theorem heckeT_p_preserves_modFormCharSpace [NeZero N] (k : ℤ) (p : ℕ)
-    (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
-    (χ : (ZMod N)ˣ →* ℂˣ) {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}
-    (hf : f ∈ modFormCharSpace k χ) :
-    heckeT_p k p hp hpN f ∈ modFormCharSpace k χ := by
-  rw [mem_modFormCharSpace_iff] at hf ⊢
-  intro d
-  have h1 : diamondOpHom k d (heckeT_p k p hp hpN f) =
-      heckeT_p k p hp hpN (diamondOpHom k d f) :=
-    congr_fun (congr_arg DFunLike.coe (heckeT_p_comm_diamondOp k p hp hpN d)) f
-  rw [h1, hf d, map_smul]
-
 end HeckeRing.GL2

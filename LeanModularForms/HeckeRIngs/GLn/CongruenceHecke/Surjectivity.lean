@@ -1609,10 +1609,4 @@ private lemma ψ_surjective :
     rw [hD]
     exact T_diag_mem_ψ_range N a ha hgcd hdiv
 
-private noncomputable def shimura_ring_hom :
-    HeckeAlgebra 2 →+* HeckeRing.𝕋 (Gamma0_pair N) ℤ :=
-  (Ideal.Quotient.lift (RingHom.ker π_hom) (ψ_hom N)
-    (fun _ ha ↦ (ker_π_le_ker_ψ N) ha)).comp
-    (RingHom.quotientKerEquivOfSurjective π_surjective).symm.toRingHom
-
 end HeckeRing.GLn

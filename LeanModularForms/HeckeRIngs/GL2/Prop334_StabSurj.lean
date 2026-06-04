@@ -34,33 +34,4 @@ open Matrix CongruenceSubgroup HeckeRing.GLn Matrix.SpecialLinearGroup HeckeRing
 
 open scoped Pointwise MatrixGroups
 
-/-- For `γ ∈ Γ₀(kN) ⊆ Γ₀(N)`, the nebentypus value at level `N` is the
-image of the level-`kN` nebentypus value under `ZMod.unitsMap`. -/
-lemma Gamma0MapUnits_unitsMap_of_Gamma0_mul (N k : ℕ) [NeZero N] [NeZero (k * N)]
-    (γ : SL(2, ℤ)) (hγ_kN : γ ∈ Gamma0 (k * N))
-    (hγ_N : γ ∈ Gamma0 N) :
-    Gamma0MapUnits (⟨γ, hγ_N⟩ : ↥(Gamma0 N)) =
-      ZMod.unitsMap (Nat.dvd_mul_left N k)
-        (Gamma0MapUnits (⟨γ, hγ_kN⟩ : ↥(Gamma0 (k * N)))) := by
-  apply Units.ext
-  rw [Gamma0MapUnits_val, ZMod.unitsMap_val, Gamma0MapUnits_val]
-  exact (ZMod.cast_intCast (Nat.dvd_mul_left N k) (γ.val 1 1)).symm
-
-private lemma Gamma0MapUnits_conj_eq {N : ℕ} (a b : ↥(Gamma0 N)) :
-    Gamma0MapUnits (a⁻¹ * b * a) = Gamma0MapUnits b := by
-  rw [map_mul, map_mul, map_inv]
-  exact inv_mul_cancel_comm _ _
-
-private lemma mem_H_conj_of_source_stab {N : ℕ} [NeZero N]
-    (g_target g_source γ_src_gl : GL (Fin 2) ℚ) (γ_L γ_R : (Gamma0_pair N).H)
-    (h_eq : g_source = (γ_L : GL (Fin 2) ℚ) * g_target * (γ_R : GL (Fin 2) ℚ))
-    (h_src : g_source⁻¹ * γ_src_gl * g_source ∈ (Gamma0_pair N).H) :
-    g_target⁻¹ * ((γ_L : GL (Fin 2) ℚ)⁻¹ * γ_src_gl * (γ_L : GL (Fin 2) ℚ)) * g_target
-      ∈ (Gamma0_pair N).H := by
-  rw [show g_target⁻¹ * ((γ_L : GL (Fin 2) ℚ)⁻¹ * γ_src_gl * (γ_L : GL (Fin 2) ℚ)) * g_target =
-    (γ_R : GL (Fin 2) ℚ) * (g_source⁻¹ * γ_src_gl * g_source) * (γ_R : GL (Fin 2) ℚ)⁻¹ from by
-      subst h_eq; group]
-  exact (Gamma0_pair N).H.mul_mem ((Gamma0_pair N).H.mul_mem γ_R.property h_src)
-    ((Gamma0_pair N).H.inv_mem γ_R.property)
-
 end HeckeRing.GL2.Prop334
