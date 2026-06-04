@@ -205,6 +205,140 @@ theorem HasCauchyPV'.unique {f : ℂ → ℂ} {γ : ℝ → ℂ} {a b : ℝ} {z�
     L₁ = L₂ :=
   tendsto_nhds_unique h₁ h₂
 
+/-! ### Algebraic API for `HasCauchyPV'`
+
+These lemmas let downstream sites stop hand-rolling the `Tendsto` manipulation that
+arises whenever one CPV is built from another via an algebraic identity on the
+integrand. -/
+
+/-- The CPV integrand `if ε < ‖γ t - z₀‖ then f(γ t) * deriv γ t else 0` is congr in `f`. -/
+theorem HasCauchyPV'.congr_along_curve {f g : ℂ → ℂ} {γ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ} {L : ℂ}
+    (h : HasCauchyPV' f γ a b z₀ L) (h_eq : ∀ t, f (γ t) = g (γ t)) :
+    HasCauchyPV' g γ a b z₀ L := by
+  show Tendsto _ _ _
+  refine Filter.Tendsto.congr (fun ε => intervalIntegral.integral_congr fun t _ => ?_) h
+  split_ifs <;> simp [h_eq]
+
+/-- Scalar multiplication: if the CPV of `f` is `L`, then the CPV of `c * f` is `c * L`. -/
+theorem HasCauchyPV'.const_mul {f : ℂ → ℂ} {γ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ} {L : ℂ}
+    (h : HasCauchyPV' f γ a b z₀ L) (c : ℂ) :
+    HasCauchyPV' (fun z => c * f z) γ a b z₀ (c * L) := by
+  have h_eq : (fun ε => ∫ t in a..b, if ‖γ t - z₀‖ > ε
+        then (c * f (γ t)) * deriv γ t else 0) =
+      fun ε => c * ∫ t in a..b, if ‖γ t - z₀‖ > ε
+        then f (γ t) * deriv γ t else 0 := by
+    ext ε
+    rw [← intervalIntegral.integral_const_mul]
+    refine intervalIntegral.integral_congr fun t _ => ?_
+    split_ifs <;> ring
+  show Tendsto _ _ _
+  rw [h_eq]
+  exact Filter.Tendsto.const_mul c h
+
+/-- Right-multiplication by a scalar: CPV of `f * c` is `L * c`. -/
+theorem HasCauchyPV'.mul_const {f : ℂ → ℂ} {γ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ} {L : ℂ}
+    (h : HasCauchyPV' f γ a b z₀ L) (c : ℂ) :
+    HasCauchyPV' (fun z => f z * c) γ a b z₀ (L * c) := by
+  simpa [mul_comm] using h.const_mul c
+
+/-- Negation: CPV of `-f` is `-L`. -/
+theorem HasCauchyPV'.neg' {f : ℂ → ℂ} {γ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ} {L : ℂ}
+    (h : HasCauchyPV' f γ a b z₀ L) :
+    HasCauchyPV' (fun z => -f z) γ a b z₀ (-L) := by
+  have := h.const_mul (-1)
+  simpa using this
+
+/-- Addition of two CPVs along the same curve. The integrability hypothesis
+`h_int` is the standard ε-uniform interval-integrability requirement (needed
+to split the joint integral). -/
+theorem HasCauchyPV'.add' {f g : ℂ → ℂ} {γ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ}
+    {L₁ L₂ : ℂ} (h₁ : HasCauchyPV' f γ a b z₀ L₁) (h₂ : HasCauchyPV' g γ a b z₀ L₂)
+    (h_int_f : ∀ ε > 0, IntervalIntegrable
+        (fun t => if ‖γ t - z₀‖ > ε then f (γ t) * deriv γ t else 0) volume a b)
+    (h_int_g : ∀ ε > 0, IntervalIntegrable
+        (fun t => if ‖γ t - z₀‖ > ε then g (γ t) * deriv γ t else 0) volume a b) :
+    HasCauchyPV' (fun z => f z + g z) γ a b z₀ (L₁ + L₂) := by
+  show Tendsto _ _ _
+  refine Filter.Tendsto.congr' ?_ (Filter.Tendsto.add h₁ h₂)
+  filter_upwards [self_mem_nhdsWithin] with ε hε
+  rw [← intervalIntegral.integral_add (h_int_f ε hε) (h_int_g ε hε)]
+  refine intervalIntegral.integral_congr fun t _ => ?_
+  split_ifs <;> ring
+
+/-- Subtraction of two CPVs along the same curve (same integrability shape as `.add`). -/
+theorem HasCauchyPV'.sub' {f g : ℂ → ℂ} {γ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ}
+    {L₁ L₂ : ℂ} (h₁ : HasCauchyPV' f γ a b z₀ L₁) (h₂ : HasCauchyPV' g γ a b z₀ L₂)
+    (h_int_f : ∀ ε > 0, IntervalIntegrable
+        (fun t => if ‖γ t - z₀‖ > ε then f (γ t) * deriv γ t else 0) volume a b)
+    (h_int_g : ∀ ε > 0, IntervalIntegrable
+        (fun t => if ‖γ t - z₀‖ > ε then g (γ t) * deriv γ t else 0) volume a b) :
+    HasCauchyPV' (fun z => f z - g z) γ a b z₀ (L₁ - L₂) := by
+  show Tendsto _ _ _
+  refine Filter.Tendsto.congr' ?_ (Filter.Tendsto.sub h₁ h₂)
+  filter_upwards [self_mem_nhdsWithin] with ε hε
+  rw [← intervalIntegral.integral_sub (h_int_f ε hε) (h_int_g ε hε)]
+  refine intervalIntegral.integral_congr fun t _ => ?_
+  split_ifs <;> ring
+
+/-- The shift `f z = g (z - c)` translates the CPV: if `HasCauchyPV' g (γ - c) … L`,
+then `HasCauchyPV' f γ … L` (when `f` agrees with `g (· - c)` on the curve). -/
+theorem HasCauchyPV'.of_eventuallyEq_along_curve
+    {f g : ℂ → ℂ} {γ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ} {L : ℂ}
+    (h : HasCauchyPV' g γ a b z₀ L) (h_eq : ∀ t, g (γ t) = f (γ t)) :
+    HasCauchyPV' f γ a b z₀ L :=
+  h.congr_along_curve h_eq
+
+/-- Avoidance: if `γ` stays away from `z₀` on `[a, b]`, then the CPV equals the
+ordinary integral; in particular it exists. -/
+theorem HasCauchyPV'.of_avoidance {f : ℂ → ℂ} {γ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ}
+    (h_cont : ContinuousOn γ (Icc a b)) (hab : a ≤ b)
+    (h_avoid : ∀ t ∈ Icc a b, γ t ≠ z₀) :
+    HasCauchyPV' f γ a b z₀ (∫ t in a..b, f (γ t) * deriv γ t) := by
+  obtain ⟨t₀, ht₀, ht₀_min⟩ := isCompact_Icc.exists_isMinOn
+    ⟨a, left_mem_Icc.mpr hab⟩ (h_cont.sub continuousOn_const).norm
+  apply Tendsto.congr' _ tendsto_const_nhds
+  rw [Filter.EventuallyEq, Filter.eventually_iff_exists_mem]
+  refine ⟨Ioo 0 ‖γ t₀ - z₀‖,
+    Ioo_mem_nhdsGT (norm_pos_iff.mpr (sub_ne_zero.mpr (h_avoid t₀ ht₀))), fun ε hε => ?_⟩
+  exact intervalIntegral.integral_congr fun t ht => by
+    rw [uIcc_of_le hab] at ht
+    exact (if_pos (lt_of_lt_of_le hε.2 (ht₀_min ht))).symm
+
+/-- Concatenation: CPV on adjacent intervals `[a, b]` and `[b, c]` glues to `[a, c]`. -/
+theorem HasCauchyPV'.concat {f : ℂ → ℂ} {γ : ℝ → ℂ} {a b c : ℝ} {z₀ : ℂ}
+    {L₁ L₂ : ℂ}
+    (h_ab : HasCauchyPV' f γ a b z₀ L₁) (h_bc : HasCauchyPV' f γ b c z₀ L₂)
+    (hab : a ≤ b) (hbc : b ≤ c)
+    (h_int : ∀ ε > 0, IntervalIntegrable
+        (fun t => if ε < ‖γ t - z₀‖ then f (γ t) * deriv γ t else 0) volume a c) :
+    HasCauchyPV' f γ a c z₀ (L₁ + L₂) := by
+  show Tendsto _ _ _
+  refine Filter.Tendsto.congr' ?_ (Filter.Tendsto.add h_ab h_bc)
+  filter_upwards [self_mem_nhdsWithin] with ε hε
+  have hII := h_int ε hε
+  have hac := hab.trans hbc
+  exact intervalIntegral.integral_add_adjacent_intervals
+    (hII.mono_set <| by rw [uIcc_of_le hab, uIcc_of_le hac]; exact Icc_subset_Icc_right hbc)
+    (hII.mono_set <| by rw [uIcc_of_le hbc, uIcc_of_le hac]; exact Icc_subset_Icc_left hab)
+
+/-- Existence version of avoidance. -/
+theorem cauchyPrincipalValueExists'_of_avoidance {f : ℂ → ℂ} {γ : ℝ → ℂ} {a b : ℝ}
+    {z₀ : ℂ} (h_cont : ContinuousOn γ (Icc a b)) (hab : a ≤ b)
+    (h_avoid : ∀ t ∈ Icc a b, γ t ≠ z₀) :
+    CauchyPrincipalValueExists' f γ a b z₀ :=
+  ⟨_, HasCauchyPV'.of_avoidance h_cont hab h_avoid⟩
+
+/-- Existence version of concatenation. -/
+theorem CauchyPrincipalValueExists'.concat {f : ℂ → ℂ} {γ : ℝ → ℂ} {a b c : ℝ}
+    {z₀ : ℂ} (h_ab : CauchyPrincipalValueExists' f γ a b z₀)
+    (h_bc : CauchyPrincipalValueExists' f γ b c z₀) (hab : a ≤ b) (hbc : b ≤ c)
+    (h_int : ∀ ε > 0, IntervalIntegrable
+        (fun t => if ε < ‖γ t - z₀‖ then f (γ t) * deriv γ t else 0) volume a c) :
+    CauchyPrincipalValueExists' f γ a c z₀ :=
+  let ⟨_, hL₁⟩ := h_ab
+  let ⟨_, hL₂⟩ := h_bc
+  ⟨_, hL₁.concat hL₂ hab hbc h_int⟩
+
 /-- The generalized winding number of γ around z₀ exists with value `n`:
 `n_{z₀}(γ) = (1/2πi) · PV ∮_γ dz/(z - z₀)`. -/
 def HasGeneralizedWindingNumber' (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) (n : ℂ) : Prop :=

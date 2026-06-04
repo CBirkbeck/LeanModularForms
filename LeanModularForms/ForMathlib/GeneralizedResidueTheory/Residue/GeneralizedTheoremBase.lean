@@ -331,11 +331,7 @@ theorem generalizedResidueTheorem'
 lemma CauchyPrincipalValueExists'.const_mul
     {f : ℂ → ℂ} {γ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ} (c : ℂ)
     (h : CauchyPrincipalValueExists' f γ a b z₀) :
-    CauchyPrincipalValueExists' (fun z => c * f z) γ a b z₀ := by
-  obtain ⟨L, hL⟩ := h
-  refine ⟨c * L, (hL.const_mul c).congr fun ε => ?_⟩
-  erw [← intervalIntegral.integral_const_mul]
-  refine intervalIntegral.integral_congr fun _ _ => ?_
-  split_ifs <;> ring
+    CauchyPrincipalValueExists' (fun z => c * f z) γ a b z₀ :=
+  let ⟨_, hL⟩ := h; ⟨_, hL.const_mul c⟩
 
 end
