@@ -664,6 +664,11 @@ private lemma π_injective : Function.Injective π_hom := by
   rw [Finset.sum_ite_eq_of_mem' (P.support) s _ hs_mem] at h_zero
   exact hs_coeff h_zero
 
+private lemma ker_π_le_ker_ψ :
+    RingHom.ker π_hom ≤ RingHom.ker (ψ_hom N) := by
+  rw [(RingHom.injective_iff_ker_eq_bot π_hom).mp π_injective]
+  exact bot_le
+
 private lemma product_mem_GL_DC_scalar
     (c : ℕ) (hc : 0 < c) (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i)
     (hc_gcd : Int.gcd (↑c) ↑N = 1) (ha_gcd : Int.gcd (a 0) N = 1)
@@ -1603,5 +1608,25 @@ private lemma ψ_surjective :
         (Quotient.out_eq D).symm, hrep]
     rw [hD]
     exact T_diag_mem_ψ_range N a ha hgcd hdiv
+
+private noncomputable def shimura_ring_hom :
+    HeckeAlgebra 2 →+* HeckeRing.𝕋 (Gamma0_pair N) ℤ :=
+  (Ideal.Quotient.lift (RingHom.ker π_hom) (ψ_hom N)
+    (fun _ ha ↦ (ker_π_le_ker_ψ N) ha)).comp
+    (RingHom.quotientKerEquivOfSurjective π_surjective).symm.toRingHom
+
+private theorem shimura_ring_hom_surjective :
+    Function.Surjective (shimura_ring_hom N) :=
+  (Ideal.Quotient.lift_surjective_of_surjective (RingHom.ker π_hom)
+      (fun _ ha ↦ (ker_π_le_ker_ψ N) ha) (ψ_surjective N)).comp
+    (RingHom.quotientKerEquivOfSurjective π_surjective).symm.surjective
+
+/-- **Shimura Theorem 3.35**: There exists a surjective ring homomorphism
+    `R(Γ, Δ) →+* R(Γ₀(N), Δ₀(N))`. -/
+theorem shimura_thm_3_35 (N : ℕ) [NeZero N] :
+    ∃ φ : HeckeRing.𝕋 (GL_pair 2) ℤ →+* HeckeRing.𝕋 (Gamma0_pair N) ℤ,
+      Function.Surjective φ :=
+  ⟨shimura_ring_hom N, shimura_ring_hom_surjective N⟩
+
 
 end HeckeRing.GLn

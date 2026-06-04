@@ -82,9 +82,59 @@ def cuspFormGammaOneEquivSL (k : ℤ) : CuspForm Γ(1) k ≃ₗ[ℂ] CuspForm �
 
 /-! ### Weight-`< 12` cusp forms vanish -/
 
+/-- The space of `Γ(1)` cusp forms of weight `k < 12` has rank zero. -/
+lemma cuspform_weight_lt_12_zero (k : ℤ) (hk : k < 12) :
+    Module.rank ℂ (CuspForm Γ(1) k) = 0 := by
+  rw [LinearEquiv.rank_eq (cuspFormGammaOneEquivSL k)]
+  exact CuspForm.rank_eq_zero_of_weight_lt_twelve hk
+
+lemma IsCuspForm_weight_lt_eq_zero (k : ℤ) (hk : k < 12) (f : ModularForm Γ(1) k)
+    (hf : IsCuspForm Γ(1) k f) : f = 0 := by
+  have hfc2 := CuspForm_to_ModularForm_coe _ _ f hf
+  ext z
+  have hz := congr_fun (congr_arg (fun x ↦ x.1) hfc2) z
+  simp only [SlashInvariantForm.toFun_eq_coe, CuspForm.toSlashInvariantForm_coe,
+    toSlashInvariantForm_coe] at hz
+  rw [ModularForm.zero_apply, ← hz,
+    rank_zero_iff_forall_zero.mp (cuspform_weight_lt_12_zero k hk)
+      (IsCuspForm_to_CuspForm Γ(1) k f hf)]
+  simp only [CuspForm.zero_apply]
+
 /-! ### The `CuspForm Γ(1) k ≃ₗ ModularForm Γ(1) (k-12)` isomorphism -/
 
+/-- Division by the discriminant yields a linear equivalence between `Γ(1)`-cusp forms of
+weight `k` and `Γ(1)`-modular forms of weight `k - 12`. This is the project's wrapper around
+mathlib's `CuspForm.discriminantEquiv` (stated for `𝒮ℒ`). -/
+def CuspForms_iso_Modforms (k : ℤ) :
+    CuspForm Γ(1) k ≃ₗ[ℂ] ModularForm Γ(1) (k - 12) :=
+  (cuspFormGammaOneEquivSL k).trans
+    (CuspForm.discriminantEquiv.trans (modularFormGammaOneEquivSL (k - 12)).symm)
+
 /-! ### Low even weights are one-dimensional -/
+
+lemma weight_four_one_dimensional : Module.rank ℂ (ModularForm Γ(1) 4) = 1 := by
+  rw [LinearEquiv.rank_eq (modularFormGammaOneEquivSL 4)]
+  exact ModularForm.levelOne_weight_four_rank_one
+
+lemma weight_six_one_dimensional : Module.rank ℂ (ModularForm Γ(1) 6) = 1 := by
+  rw [LinearEquiv.rank_eq (modularFormGammaOneEquivSL 6)]
+  exact ModularForm.levelOne_weight_six_rank_one
+
+/-- For even `k` with `3 ≤ k < 12`, the space of `Γ(1)` modular forms of weight `k` is
+one-dimensional. -/
+lemma weight_eight_one_dimensional (k : ℕ) (hk : 3 ≤ (k : ℤ)) (hk2 : Even k) (hk3 : k < 12) :
+    Module.rank ℂ (ModularForm Γ(1) k) = 1 := by
+  rw [LinearEquiv.rank_eq (modularFormGammaOneEquivSL (k : ℤ))]
+  have hdim := ModularForm.dimension_level_one k hk2
+  have hdiv : k / 12 = 0 := Nat.div_eq_zero_iff.mpr (Or.inr hk3)
+  by_cases hmod : k ≡ 2 [MOD 12]
+  · have hk2' : k = 2 := by
+      have h12 : k % 12 = 2 % 12 := hmod
+      have hk' : k = k % 12 := (Nat.mod_eq_of_lt hk3).symm
+      omega
+    omega
+  · rw [hdim, if_neg hmod, hdiv]
+    norm_cast
 
 /-! ### Finite-dimensionality for arbitrary finite-index congruence subgroups -/
 

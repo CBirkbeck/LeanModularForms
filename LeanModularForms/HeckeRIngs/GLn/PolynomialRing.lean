@@ -55,6 +55,27 @@ lemma T_gen_diag_val (k : Fin n) (i : Fin n) :
     T_gen_diag n p k i =
     if (i : ℕ) < n - 1 - (k : ℕ) then 1 else p := rfl
 
+/-- The T_gen diagonal satisfies the divisibility chain condition. -/
+lemma divChain_T_gen (k : Fin n) : DivChain n (T_gen_diag n p k) := by
+  intro i hi
+  simp only [T_gen_diag_val]
+  split_ifs <;> first | rfl | omega
+
+/-- The T_gen diagonal has p-power entries (each entry is 1 = p^0 or p = p^1). -/
+lemma T_gen_diag_is_ppow (k : Fin n) :
+    T_gen_diag n p k =
+    ppowDiag n p (fun i ↦ if (i : ℕ) < n - 1 - (k : ℕ) then 0 else 1) := by
+  funext i
+  simp only [T_gen_diag, ppowDiag]
+  split_ifs <;> simp
+
+/-- The exponent function for T_gen is monotone. -/
+lemma T_gen_exp_monotone (k : Fin n) :
+    Monotone (fun i : Fin n ↦ if (i : ℕ) < n - 1 - (k : ℕ) then 0 else 1) := by
+  intro i j hij
+  simp only
+  split_ifs <;> omega
+
 variable [NeZero n]
 
 include hp
@@ -62,11 +83,22 @@ include hp
 noncomputable def T_gen (k : Fin n) : HeckeAlgebra n :=
   T_elem (T_gen_diag n p k)
 
+/-- Each T_gen lies in R_p. -/
+lemma T_gen_mem_R_p (k : Fin n) : T_gen n p k ∈ R_p n p hp := by
+  have h_eq : T_gen n p k =
+      T_elem (ppowDiag n p (fun i ↦ if (i : ℕ) < n - 1 - (k : ℕ) then 0 else 1)) :=
+    T_elem_congr_diag (n := n) (T_gen_diag_is_ppow n p k)
+  rw [h_eq]
+  exact T_elem_ppow_mem_R_p n p hp _ (T_gen_exp_monotone n k)
+
 omit hp
 
 end TGen
 
 section Weight
+
+/-- Weight of a p-power diagonal: the sum of all exponents. -/
+def ppowWeight (e : Fin n → ℕ) : ℕ := ∑ i, e i
 
 end Weight
 
@@ -84,6 +116,24 @@ lemma T_elem_ones_eq_one : T_elem (fun _ : Fin n ↦ 1) = 1 := by
   show HeckeRing.T_single (GL_pair n) ℤ (T_diag (fun _ : Fin n ↦ 1)) 1 = 1
   rw [T_diag_ones]
   exact (HeckeRing.one_def (GL_pair n) (Z := ℤ)).symm
+
+/-- `T(c,...,c)^k = T(c^k,...,c^k)`: scalar diagonal elements are closed under powers. -/
+lemma T_scalar_pow (c : ℕ) (hc : 0 < c) (k : ℕ) :
+    T_elem (fun _ : Fin n ↦ c) ^ k = T_elem (fun _ : Fin n ↦ c ^ k) := by
+  induction k with
+  | zero =>
+    simp only [pow_zero]
+    symm
+    exact (T_elem_congr_diag n (funext fun _ ↦ by simp)).trans (T_elem_ones_eq_one n)
+  | succ k ih =>
+    rw [pow_succ', ih, T_diag_scalar_mul n c hc (fun _ ↦ c ^ k) (fun _ ↦ pow_pos hc k)
+      (divChain_const n _)]
+    exact T_elem_congr_diag n (funext fun _ ↦ by simp only [Pi.mul_apply]; ring)
+
+/-- Each `T_gen k` lies in the range of `evalHom`. -/
+lemma T_gen_mem_evalHom_range (k : Fin n) :
+    T_gen n p k ∈ (evalHom n p).range :=
+  ⟨MvPolynomial.X k, MvPolynomial.eval₂Hom_X' _ _ _⟩
 
 end PolynomialRing
 
@@ -201,9 +251,127 @@ theorem T_gen_generates_R_p_two (p : ℕ) (hp : p.Prime) :
 
 end HeckeRing.GLn.Surj
 
+namespace HeckeRing.GLn.SurjOne
+
+open HeckeRing.GLn
+
+/-- For n=1, `T_gen_diag 1 p 0 = fun _ => p`. -/
+private lemma T_gen_diag_one_eq (p : ℕ) : T_gen_diag 1 p (0 : Fin 1) = fun _ ↦ p := by
+  funext i; simp [T_gen_diag_val]
+
+/-- n=1 surjectivity: every element of R_p is in the range of evalHom. -/
+theorem T_gen_generates_R_p_one (p : ℕ) (hp : p.Prime) :
+    ∀ f ∈ R_p 1 p hp, f ∈ (evalHom 1 p).range := by
+  intro f hf
+  apply Subring.closure_le.mpr _ hf
+  intro x hx
+  obtain ⟨e, _hmono, rfl⟩ := hx
+  have he : ppowDiag 1 p e = fun _ ↦ p ^ (e 0) := by
+    funext i; simp [ppowDiag]; congr 1; exact congr_arg e (Subsingleton.elim i 0)
+  rw [T_elem_congr_diag 1 he, ← T_scalar_pow 1 p hp.pos (e 0),
+    show T_elem (fun _ : Fin 1 ↦ p) = T_gen 1 p (0 : Fin 1) from by
+      unfold T_gen; exact (T_elem_congr_diag 1 (T_gen_diag_one_eq p)).symm]
+  exact (evalHom 1 p).range.pow_mem (T_gen_mem_evalHom_range 1 p 0) _
+
+end HeckeRing.GLn.SurjOne
+
 namespace HeckeRing.GLn.Inj
 
 open HeckeRing.GLn HeckeRing.GL2
+
+/-- Every element in the image of `evalHom` belongs to `R_p`. -/
+lemma evalHom_mem_R_p (n : ℕ) [NeZero n] (p : ℕ) (hp : p.Prime) (P : MvPolynomial (Fin n) ℤ) :
+    evalHom n p P ∈ R_p n p hp := by
+  apply MvPolynomial.induction_on P
+  · intro a
+    show evalHom n p (MvPolynomial.C a) ∈ R_p n p hp
+    rw [show evalHom n p (MvPolynomial.C a) = (a : HeckeAlgebra n) from
+      MvPolynomial.eval₂Hom_C _ _ _, show (a : HeckeAlgebra n) =
+        a • (1 : HeckeAlgebra n) from (zsmul_one a).symm]
+    exact (R_p n p hp).zsmul_mem (R_p n p hp).one_mem a
+  · intro f g hf hg; rw [map_add]; exact (R_p n p hp).add_mem hf hg
+  · intro f i hf
+    rw [map_mul]
+    refine (R_p n p hp).mul_mem hf ?_
+    show evalHom n p (MvPolynomial.X i) ∈ R_p n p hp
+    rw [show evalHom n p (MvPolynomial.X i) = T_gen n p i from
+      MvPolynomial.eval₂Hom_X' _ _ _]
+    exact T_gen_mem_R_p n p hp i
+
+/-- The restricted evaluation homomorphism into `R_p`. -/
+noncomputable def evalHomR (n : ℕ) [NeZero n] (p : ℕ) (hp : p.Prime) :
+    MvPolynomial (Fin n) ℤ →+* R_p n p hp where
+  toFun P := ⟨evalHom n p P, evalHom_mem_R_p n p hp P⟩
+  map_zero' := Subtype.ext (map_zero _)
+  map_one' := Subtype.ext (map_one _)
+  map_add' x y := Subtype.ext (map_add _ x y)
+  map_mul' x y := Subtype.ext (map_mul _ x y)
+
+/-- For n=1, `T_gen(0)^k = T_elem(fun _ => p^k)`. -/
+private lemma T_gen_pow_one (p : ℕ) (hp : p.Prime) (k : ℕ) :
+    T_gen 1 p (0 : Fin 1) ^ k = T_elem (fun _ : Fin 1 ↦ p ^ k) := by
+  rw [show T_gen 1 p (0 : Fin 1) = T_elem (fun _ : Fin 1 ↦ p) from by
+    unfold T_gen; exact T_elem_congr_diag 1 (SurjOne.T_gen_diag_one_eq p)]
+  exact T_scalar_pow 1 p hp.pos k
+
+/-- An integer scalar times the basis element `T_elem a` is the single `Finsupp` at
+`T_diag a` with that coefficient. -/
+private lemma intCast_mul_T_elem_eq_single {n : ℕ} [NeZero n] (a : Fin n → ℕ) (c : ℤ) :
+    (Int.castRingHom (HeckeAlgebra n)) c * T_elem a =
+      (Finsupp.single (T_diag a) c : HeckeAlgebra n) := by
+  rw [show (Int.castRingHom (HeckeAlgebra n)) c = c • (1 : HeckeAlgebra n) from by
+      rw [zsmul_eq_mul, mul_one]; rfl, smul_mul_assoc, one_mul]
+  show c • (Finsupp.single (T_diag a) (1 : ℤ) : HeckeAlgebra n) = _
+  rw [Finsupp.smul_single, smul_eq_mul, mul_one]
+
+/-- For `n = 1` and `p` prime, the cosets `T_diag (fun _ => p^k)` are injective in `k`:
+if they coincide for `b 0` and `s 0`, then `b 0 = s 0`. -/
+private lemma T_diag_one_ppow_inj (p : ℕ) (hp : p.Prime) {b s : Fin 1 →₀ ℕ}
+    (hb : (T_diag (n := 1) (fun _ ↦ p ^ b 0) : HeckeCoset (GL_pair 1)) =
+      T_diag (fun _ ↦ p ^ s 0)) : b 0 = s 0 := by
+  have hdiv : ∀ c : Fin 1 →₀ ℕ, DivChain 1 (fun _ : Fin 1 ↦ p ^ c 0) :=
+    fun c i hi ↦ absurd hi (by omega)
+  have heq := diagonal_representative_unique (n := 1) _ _
+    (fun _ ↦ Nat.pow_pos hp.pos) (fun _ ↦ Nat.pow_pos hp.pos) (hdiv b) (hdiv s) hb
+  exact Nat.pow_right_injective hp.two_le (congr_fun heq 0)
+
+/-- n=1: evalHom is injective. Different monomials map to distinct basis elements,
+    so the images are ℤ-linearly independent. -/
+theorem evalHom_injective_one (p : ℕ) (hp : p.Prime) : Function.Injective (evalHom 1 p) := by
+  intro P Q hPQ
+  rw [← sub_eq_zero]
+  set R := P - Q
+  have hR : evalHom 1 p R = 0 := by simp [R, map_sub, hPQ]
+  by_contra hne
+  obtain ⟨s, hs⟩ := MvPolynomial.support_nonempty.mpr hne
+  have hcoeff : R.coeff s ≠ 0 := MvPolynomial.mem_support_iff.mp hs
+  set D := T_diag (n := 1) (fun _ ↦ p ^ (s 0))
+  have h0 : (evalHom 1 p R).toFun D = 0 := by rw [hR]; rfl
+  apply hcoeff
+  suffices h : ((evalHom 1 p) R).toFun D = MvPolynomial.coeff s R from h ▸ h0
+  show Finsupp.toFun (MvPolynomial.eval₂Hom (Int.castRingHom (HeckeAlgebra 1))
+    (fun k ↦ T_gen 1 p k) R) D = _
+  simp only [MvPolynomial.coe_eval₂Hom, MvPolynomial.eval₂_eq', Fin.prod_univ_one]
+  have h_sum_eq : (∑ x ∈ R.support,
+      (Int.castRingHom (HeckeAlgebra 1)) (MvPolynomial.coeff x R) * T_gen 1 p 0 ^ x 0) =
+    (∑ x ∈ R.support,
+      (Finsupp.single (T_diag (n := 1) (fun _ ↦ p ^ x 0))
+        (MvPolynomial.coeff x R) : HeckeCoset (GL_pair 1) →₀ ℤ)) :=
+    Finset.sum_congr rfl (fun x _ ↦ by
+      rw [T_gen_pow_one p hp]
+      exact intCast_mul_T_elem_eq_single (fun _ ↦ p ^ x 0) (R.coeff x))
+  show (∑ x ∈ R.support,
+      (Int.castRingHom (HeckeAlgebra 1)) (MvPolynomial.coeff x R) * T_gen 1 p 0 ^ x 0)
+        D = MvPolynomial.coeff s R
+  rw [h_sum_eq]
+  show (∑ x ∈ R.support, (Finsupp.single (T_diag (n := 1) (fun _ ↦ p ^ x 0))
+      (MvPolynomial.coeff x R) : HeckeCoset (GL_pair 1) →₀ ℤ)) D = MvPolynomial.coeff s R
+  rw [Finsupp.finsetSum_apply]
+  simp only [Finsupp.single_apply, D]
+  rw [Finset.sum_eq_single s (fun b _ hbs ↦ if_neg (fun hb ↦ hbs
+    (Finsupp.ext (fun j ↦ by rw [Fin.fin_one_eq_zero j]; exact T_diag_one_ppow_inj p hp hb))))
+    (fun hns ↦ absurd hs hns)]
+  simp
 
 /-- A two-entry diagonal `![a, b]` is a divisibility chain iff `a ∣ b`. -/
 private lemma divChain_two_of_dvd {a b : ℕ} (hab : a ∣ b) :
@@ -714,5 +882,111 @@ lemma monomial_eval_kronecker (p : ℕ) (hp : p.Prime)
         (fun i ↦ by fin_cases i <;> simp [pow_pos hp.pos])
         (divChain_two_of_dvd (pow_dvd_pow p (by omega))) 0 h_not_dvd
 
+/-- For `n = 2`, the monomial `∏ₖ T_gen(p,k)^{d k}` over the support of `d` equals
+`T_gen(p,0)^{d 0} · T_gen(p,1)^{d 1}` (missing factors contribute `T_gen^0 = 1`). -/
+private lemma prod_T_gen_pow_eq_two (p : ℕ) (d : Fin 2 →₀ ℕ) :
+    (∏ k ∈ d.support, T_gen 2 p k ^ d k) = T_gen 2 p 0 ^ (d 0) * T_gen 2 p 1 ^ (d 1) := by
+  rw [Finset.prod_subset (Finset.subset_univ d.support) (fun k _ hk ↦ by
+    rw [Finsupp.notMem_support_iff.mp hk, pow_zero]; rfl)]
+  rw [Fin.prod_univ_two]; rfl
+
+/-- Evaluating `evalHom 2 p R` at the coset `D` expands as
+`∑_{d ∈ supp R} (R.coeff d) · (T_gen(p,0)^{d 0} · T_gen(p,1)^{d 1}) D`. -/
+private lemma evalHom_apply_eq_sum_monomial (p : ℕ) (R : MvPolynomial (Fin 2) ℤ)
+    (D : HeckeCoset (GL_pair 2)) :
+    (evalHom 2 p R) D =
+    ∑ d ∈ R.support, R.coeff d * (T_gen 2 p 0 ^ (d 0) * T_gen 2 p 1 ^ (d 1)) D := by
+  change (MvPolynomial.eval₂ (Int.castRingHom (HeckeAlgebra 2))
+    (fun k : Fin 2 ↦ T_gen 2 p k) R) D = _
+  rw [MvPolynomial.eval₂_eq]
+  show (∑ d ∈ R.support, (Int.castRingHom (HeckeAlgebra 2)) (MvPolynomial.coeff d R) *
+    ∏ i ∈ d.support, T_gen 2 p i ^ d i) D = _
+  rw [show (∑ d ∈ R.support, (Int.castRingHom (HeckeAlgebra 2)) (MvPolynomial.coeff d R) *
+        ∏ i ∈ d.support, T_gen 2 p i ^ d i) D =
+      ∑ d ∈ R.support, ((Int.castRingHom (HeckeAlgebra 2)) (MvPolynomial.coeff d R) *
+        ∏ i ∈ d.support, T_gen 2 p i ^ d i) D from Finset.sum_apply' _]
+  refine Finset.sum_congr rfl (fun d _ ↦ ?_)
+  show (((R.coeff d : ℤ) : HeckeAlgebra 2) * (∏ k ∈ d.support, T_gen 2 p k ^ d k)) D = _
+  rw [show ((R.coeff d : ℤ) : HeckeAlgebra 2) = (R.coeff d) • (1 : HeckeAlgebra 2) from
+    (zsmul_one _).symm, smul_mul_assoc, one_mul]
+  rw [show ((R.coeff d) • (∏ k ∈ d.support, T_gen 2 p k ^ d k : HeckeAlgebra 2)) D =
+    R.coeff d • (∏ k ∈ d.support, T_gen 2 p k ^ d k : HeckeAlgebra 2) D from
+    Finsupp.smul_apply _ _ _, smul_eq_mul, prod_T_gen_pow_eq_two]
+
+/-- n=2: evalHom is injective. -/
+theorem evalHom_injective_two (p : ℕ) (hp : p.Prime) :
+    Function.Injective (evalHom 2 p) := by
+  intro P Q hPQ
+  rw [← sub_eq_zero]; set R := P - Q with hR_def
+  have hR : evalHom 2 p R = 0 := by simp [R, map_sub, hPQ]
+  by_contra hR_ne
+  obtain ⟨s, hs_mem, hs_min⟩ := Finset.exists_min_image R.support
+    (fun d : Fin 2 →₀ ℕ ↦ d 1) (MvPolynomial.support_nonempty.mpr hR_ne)
+  have hs_coeff : R.coeff s ≠ 0 := MvPolynomial.mem_support_iff.mp hs_mem
+  have h_zero : (evalHom 2 p R) (T_diag (ppowDiag 2 p ![s 1, s 0 + s 1])) = 0 := by rw [hR]; rfl
+  rw [evalHom_apply_eq_sum_monomial] at h_zero
+  have h_delta : ∀ d ∈ R.support,
+      R.coeff d * (T_gen 2 p 0 ^ (d 0) * T_gen 2 p 1 ^ (d 1))
+          (T_diag (ppowDiag 2 p ![s 1, s 0 + s 1])) =
+      if d = s then R.coeff d else 0 := by
+    intro d hd_mem
+    rw [monomial_eval_kronecker p hp (d 0) (d 1) (s 0) (s 1) (hs_min d hd_mem)]
+    by_cases hds : d = s
+    · subst hds; simp
+    · rw [if_neg hds, if_neg (fun ⟨h0, h1⟩ ↦ hds (by ext i; fin_cases i; exacts [h0, h1])),
+        mul_zero]
+  rw [Finset.sum_congr rfl h_delta, Finset.sum_ite_eq_of_mem' R.support s _ hs_mem] at h_zero
+  exact hs_coeff h_zero
+
+/-- Surjectivity of `evalHomR` follows from surjectivity onto `R_p`. -/
+lemma evalHomR_surjective (n : ℕ) [NeZero n] (p : ℕ) (hp : p.Prime)
+    (h_surj : ∀ f ∈ R_p n p hp, f ∈ (evalHom n p).range) :
+    Function.Surjective (evalHomR n p hp) := by
+  intro ⟨f, hf⟩
+  obtain ⟨P, hP⟩ := h_surj f hf
+  exact ⟨P, Subtype.ext hP⟩
+
+/-- Injectivity of `evalHomR` follows from injectivity of `evalHom`. -/
+lemma evalHomR_injective (n : ℕ) [NeZero n] (p : ℕ) (_hp : p.Prime)
+    (h_inj : Function.Injective (evalHom n p)) :
+    Function.Injective (evalHomR n p ‹_›) := by
+  intro P Q hPQ
+  exact h_inj (Subtype.ext_iff.mp hPQ)
+
 end HeckeRing.GLn.Inj
 
+namespace HeckeRing.GLn
+
+variable (n : ℕ) [NeZero n] (p : ℕ) (hp : p.Prime)
+
+/-- Every element of R_p is in the image of evalHom (surjectivity).
+    Proved for `n = 1` and `n = 2`; the general case is not yet formalised. -/
+theorem T_gen_generates_R_p :
+    ∀ f ∈ R_p n p hp, f ∈ (evalHom n p).range := by
+  by_cases h1 : n = 1
+  · subst h1; exact SurjOne.T_gen_generates_R_p_one p ‹_›
+  · by_cases h2 : n = 2
+    · subst h2; exact Surj.T_gen_generates_R_p_two p ‹_›
+    · sorry -- General n requires Phase B (projection ψ) and Phase C (induction)
+
+include hp in
+/-- evalHom is injective. Proved for `n = 1` and `n = 2`;
+    the general case is not yet formalised. -/
+theorem evalHom_injective :
+    Function.Injective (evalHom n p) := by
+  by_cases h1 : n = 1
+  · subst h1; exact Inj.evalHom_injective_one p ‹_›
+  · by_cases h2 : n = 2
+    · subst h2; exact Inj.evalHom_injective_two p ‹_›
+    · sorry -- General n requires Phase B/C
+
+/-- Shimura Theorem 3.20: the p-local Hecke ring is isomorphic to a polynomial ring.
+    `R_p^{(n)} ≅ ℤ[X₁,...,Xₙ]`. -/
+noncomputable def R_p_isPolynomialRing :
+    MvPolynomial (Fin n) ℤ ≃+* R_p n p hp :=
+  RingEquiv.ofBijective (Inj.evalHomR n p hp)
+    ⟨Inj.evalHomR_injective n p hp (evalHom_injective n p hp),
+     Inj.evalHomR_surjective n p hp (T_gen_generates_R_p n p hp)⟩
+
+
+end HeckeRing.GLn
