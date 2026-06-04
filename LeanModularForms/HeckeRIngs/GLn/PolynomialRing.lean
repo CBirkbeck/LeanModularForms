@@ -228,34 +228,6 @@ namespace HeckeRing.GLn.Inj
 
 open HeckeRing.GLn HeckeRing.GL2
 
-/-- For n=1, `T_gen(0)^k = T_elem(fun _ => p^k)`. -/
-private lemma T_gen_pow_one (p : ℕ) (hp : p.Prime) (k : ℕ) :
-    T_gen 1 p (0 : Fin 1) ^ k = T_elem (fun _ : Fin 1 ↦ p ^ k) := by
-  rw [show T_gen 1 p (0 : Fin 1) = T_elem (fun _ : Fin 1 ↦ p) from by
-    unfold T_gen; exact T_elem_congr_diag 1 (SurjOne.T_gen_diag_one_eq p)]
-  exact T_scalar_pow 1 p hp.pos k
-
-/-- An integer scalar times the basis element `T_elem a` is the single `Finsupp` at
-`T_diag a` with that coefficient. -/
-private lemma intCast_mul_T_elem_eq_single {n : ℕ} [NeZero n] (a : Fin n → ℕ) (c : ℤ) :
-    (Int.castRingHom (HeckeAlgebra n)) c * T_elem a =
-      (Finsupp.single (T_diag a) c : HeckeAlgebra n) := by
-  rw [show (Int.castRingHom (HeckeAlgebra n)) c = c • (1 : HeckeAlgebra n) from by
-      rw [zsmul_eq_mul, mul_one]; rfl, smul_mul_assoc, one_mul]
-  show c • (Finsupp.single (T_diag a) (1 : ℤ) : HeckeAlgebra n) = _
-  rw [Finsupp.smul_single, smul_eq_mul, mul_one]
-
-/-- For `n = 1` and `p` prime, the cosets `T_diag (fun _ => p^k)` are injective in `k`:
-if they coincide for `b 0` and `s 0`, then `b 0 = s 0`. -/
-private lemma T_diag_one_ppow_inj (p : ℕ) (hp : p.Prime) {b s : Fin 1 →₀ ℕ}
-    (hb : (T_diag (n := 1) (fun _ ↦ p ^ b 0) : HeckeCoset (GL_pair 1)) =
-      T_diag (fun _ ↦ p ^ s 0)) : b 0 = s 0 := by
-  have hdiv : ∀ c : Fin 1 →₀ ℕ, DivChain 1 (fun _ : Fin 1 ↦ p ^ c 0) :=
-    fun c i hi ↦ absurd hi (by omega)
-  have heq := diagonal_representative_unique (n := 1) _ _
-    (fun _ ↦ Nat.pow_pos hp.pos) (fun _ ↦ Nat.pow_pos hp.pos) (hdiv b) (hdiv s) hb
-  exact Nat.pow_right_injective hp.two_le (congr_fun heq 0)
-
 /-- A two-entry diagonal `![a, b]` is a divisibility chain iff `a ∣ b`. -/
 private lemma divChain_two_of_dvd {a b : ℕ} (hab : a ∣ b) :
     DivChain 2 (![a, b] : Fin 2 → ℕ) := by
