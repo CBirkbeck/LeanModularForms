@@ -246,10 +246,6 @@ section API
 /-- The degree map is multiplicative: `deg(f * g) = deg(f) * deg(g)`. -/
 lemma deg_mul (f g : 𝕋 P ℤ) : deg P (f * g) = deg P f * deg P g := (deg P).map_mul f g
 
-/-- The degree of an integer cast is the integer itself. -/
-@[simp] lemma deg_intCast (n : ℤ) : deg P (n : 𝕋 P ℤ) = n := by
-  simp [deg, deg_fun, HeckeCoset_deg_T_one]
-
 /-- **Generic multiplicity-degree-sum identity**: when the support of the
 multiplication finsupp `m P D₁ D₂` is contained in `{D_out1, D_out2}`, the
 weighted sum of multiplicities by degrees equals the product of degrees. -/
