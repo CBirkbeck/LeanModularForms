@@ -658,12 +658,6 @@ private lemma T_pp_pow_comm_T_sum_ppow (i k : ℕ) : T_pp p ^ i *
   | succ i ih => rw [pow_succ', mul_assoc, ih, ← mul_assoc, T_pp_comm_T_sum_ppow p hp k,
       mul_assoc, ← pow_succ']
 
-private lemma T_sum_p_comm_T_pp_pow (i : ℕ) : T_sum ⟨p, hp.pos⟩ * T_pp p ^ i =
-    T_pp p ^ i * T_sum ⟨p, hp.pos⟩ := by
-  rw [show T_sum ⟨p, hp.pos⟩ =
-    T_sum ⟨p ^ 1, pow_pos hp.pos 1⟩ by congr 1; exact (Subtype.ext (pow_one p)).symm]
-  exact (T_pp_pow_comm_T_sum_ppow p hp i 1).symm
-
 section CoprimeMultiplicativity
 
 end CoprimeMultiplicativity
