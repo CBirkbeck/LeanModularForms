@@ -272,7 +272,9 @@ lemma cpvExists_scale (γ : ℝ → ℂ) (a b : ℝ) (s c : ℂ)
     (h : CauchyPrincipalValueExists' (fun z => (z - s)⁻¹) γ a b s) :
     CauchyPrincipalValueExists' (fun z => c / (z - s)) γ a b s := by
   obtain ⟨L, hL⟩ := h
+  unfold HasCauchyPV' at hL
   refine ⟨c * L, ?_⟩
+  show Tendsto _ _ _
   have h_eq : (fun ε => ∫ t in a..b, if ‖γ t - s‖ > ε
       then (c / (γ t - s)) * deriv γ t else 0) =
     fun ε => c * ∫ t in a..b, if ‖γ t - s‖ > ε

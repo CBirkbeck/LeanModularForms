@@ -172,21 +172,59 @@ structure PiecewiseC1Immersion extends PiecewiseC1Curve where
   right_deriv_limit : ∀ p ∈ partition, p < b →
     ∃ L : ℂ, L ≠ 0 ∧ Tendsto (deriv toPiecewiseC1PathOn.toFun) (𝓝[>] p) (𝓝 L)
 
-/-- The Cauchy principal value of ∮_γ f(z) dz, excluding ε-neighborhoods of z₀. -/
+/-- The Cauchy principal value of ∮_γ f(z) dz exists with value `L`: the ε-truncated
+integral along `γ` over `[a, b]` (excluding the ε-neighbourhood of `z₀`) tends to `L`
+as `ε → 0⁺`. **Primary API predicate** (Tendsto-based, raw `ℝ → ℂ`, `[a, b]`). -/
+def HasCauchyPV' (f : ℂ → ℂ) (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) (L : ℂ) : Prop :=
+  Tendsto (fun ε ↦
+      ∫ t in a..b, if ‖γ t - z₀‖ > ε then f (γ t) * deriv γ t else 0)
+    (𝓝[>] 0) (𝓝 L)
+
+/-- The Cauchy principal value of ∮_γ f(z) dz, excluding ε-neighborhoods of z₀.
+limUnder-based; secondary. Returns junk when the limit does not exist; use
+`HasCauchyPV'` for the predicate. -/
 def cauchyPrincipalValue' (f : ℂ → ℂ) (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) : ℂ :=
   limUnder (𝓝[>] (0 : ℝ)) fun ε ↦
     ∫ t in a..b, if ‖γ t - z₀‖ > ε then f (γ t) * deriv γ t else 0
 
-/-- The Cauchy principal value exists if the limit exists. -/
+/-- The Cauchy principal value exists; abbreviation `∃ L, HasCauchyPV' f γ a b z₀ L`. -/
 def CauchyPrincipalValueExists' (f : ℂ → ℂ) (γ : ℝ → ℂ)
     (a b : ℝ) (z₀ : ℂ) : Prop :=
-  ∃ L : ℂ, Tendsto (fun ε ↦
-    ∫ t in a..b, if ‖γ t - z₀‖ > ε then f (γ t) * deriv γ t else 0)
-    (𝓝[>] 0) (𝓝 L)
+  ∃ L : ℂ, HasCauchyPV' f γ a b z₀ L
+
+/-- Bridge theorem: if `HasCauchyPV' f γ a b z₀ L`, then
+`cauchyPrincipalValue' f γ a b z₀ = L`. -/
+theorem HasCauchyPV'.cauchyPV_eq {f : ℂ → ℂ} {γ : ℝ → ℂ}
+    {a b : ℝ} {z₀ : ℂ} {L : ℂ} (h : HasCauchyPV' f γ a b z₀ L) :
+    cauchyPrincipalValue' f γ a b z₀ = L :=
+  h.limUnder_eq
+
+/-- The limit in `HasCauchyPV'` is unique. -/
+theorem HasCauchyPV'.unique {f : ℂ → ℂ} {γ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ}
+    {L₁ L₂ : ℂ} (h₁ : HasCauchyPV' f γ a b z₀ L₁) (h₂ : HasCauchyPV' f γ a b z₀ L₂) :
+    L₁ = L₂ :=
+  tendsto_nhds_unique h₁ h₂
+
+/-- The generalized winding number of γ around z₀ exists with value `n`:
+`n_{z₀}(γ) = (1/2πi) · PV ∮_γ dz/(z - z₀)`. -/
+def HasGeneralizedWindingNumber' (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) (n : ℂ) : Prop :=
+  HasCauchyPV' (·⁻¹) (fun t ↦ γ t - z₀) a b 0 (2 * Real.pi * I * n)
 
 /-- The generalized winding number of γ around z₀, defined via principal value.
 `n_{z₀}(γ) = (1/2πi) · PV ∮_γ dz/(z - z₀)`. -/
 def generalizedWindingNumber' (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) : ℂ :=
   (2 * Real.pi * I)⁻¹ * cauchyPrincipalValue' (·⁻¹) (fun t ↦ γ t - z₀) a b 0
+
+/-- Bridge: if `HasGeneralizedWindingNumber' γ a b z₀ n`, then
+`generalizedWindingNumber' γ a b z₀ = n`. -/
+theorem HasGeneralizedWindingNumber'.gWN_eq {γ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ} {n : ℂ}
+    (h : HasGeneralizedWindingNumber' γ a b z₀ n) :
+    generalizedWindingNumber' γ a b z₀ = n := by
+  unfold generalizedWindingNumber'
+  rw [h.cauchyPV_eq]
+  have h_ne : (2 * Real.pi * I : ℂ) ≠ 0 := by
+    simp only [ne_eq, mul_eq_zero, not_or]
+    exact ⟨⟨two_ne_zero, by exact_mod_cast Real.pi_ne_zero⟩, Complex.I_ne_zero⟩
+  field_simp
 
 end

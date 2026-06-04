@@ -178,6 +178,7 @@ private lemma single_pole_pv_base_exists
         else 0)
       (𝓝[>] 0) (𝓝 L') := by
   obtain ⟨L, hL⟩ := hPV
+  unfold HasCauchyPV' at hL
   refine ⟨L / c, ?_⟩
   have h_int_eq : ∀ ε,
       (∫ t in γ.a..γ.b,
