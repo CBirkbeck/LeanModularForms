@@ -297,28 +297,6 @@ lemma tRep_mul_anti (D₁ D₂ : HeckeCoset (GL_pair 2))
        ((j.out : GL _ ℚ) * (HeckeCoset.rep D₂ : GL _ ℚ)))).unop := by
   simp only [tRep, ← MulOpposite.unop_mul, ← (GL_transposeEquiv 2).map_mul]
 
-/-- Key term-equality: the product `tRep D₂ j * tRep D₁ i` equals
-    `f ∣[k] tRep(D, q)` for some coset representative `q` in
-    `decompQuot(mulMap(i,j))`, up to Γ-invariance. -/
-private lemma slash_tRep_product_eq (k : ℤ) (D₁ D₂ : HeckeCoset (GL_pair 2))
-    (i : decompQuot (GL_pair 2) (HeckeCoset.rep D₁))
-    (j : decompQuot (GL_pair 2) (HeckeCoset.rep D₂))
-    (f : ℍ → ℂ) (hf : ∀ γ ∈ 𝒮ℒ, f ∣[k] γ = f) :
-    ∃ q : decompQuot (GL_pair 2)
-      (HeckeCoset.rep (mulMap (GL_pair 2) (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) (i, j))),
-    f ∣[k] (tRep D₂ j * tRep D₁ i) =
-    f ∣[k] tRep (mulMap (GL_pair 2) (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) (i, j)) q := by
-  set D := mulMap (GL_pair 2) (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) (i, j)
-  have hg_mem : (i.out : GL (Fin 2) ℚ) * (HeckeCoset.rep D₁ : GL _ ℚ) *
-      ((j.out : GL _ ℚ) * (HeckeCoset.rep D₂ : GL _ ℚ)) ∈ HeckeCoset.toSet D := by
-    show _ ∈ HeckeCoset.toSet (⟦⟨_, _⟩⟧ : HeckeCoset (GL_pair 2))
-    simp only [HeckeCoset.toSet_mk]; exact DoubleCoset.mem_doubleCoset_self _ _ _
-  rw [HeckeCoset.toSet_eq_rep, DoubleCoset.mem_doubleCoset] at hg_mem
-  obtain ⟨h₁, hh₁, h₂, hh₂, hg_eq⟩ := hg_mem
-  refine ⟨⟦⟨h₁, hh₁⟩⟧, ?_⟩
-  rw [tRep_mul_anti, hg_eq]
-  exact slash_tRep_of_mem k D h₁ h₂ hh₁ hh₂ f hf
-
 end SlashInvariance
 
 end HeckeRing.GL2

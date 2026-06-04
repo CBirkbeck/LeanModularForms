@@ -34,12 +34,6 @@ open scoped Pointwise MatrixGroups ModularForm UpperHalfPlane
 
 namespace HeckeRing.GL2
 
-/-- The double coset `SL₂(ℤ) · diag(1,p) · SL₂(ℤ)` in `GL_pair 2`,
-representing the Hecke operator `T_p` at level 1.
-This is the HeckeCoset of the diagonal matrix `diag(1,p)`. -/
-noncomputable def D_p (p : ℕ) (hp : 0 < p) : HeckeRing.HeckeCoset (GL_pair 2) :=
-  ⟦⟨diagMat 2 ![1, p], diagMat_mem_posDetInt 2 _ (fun i ↦ by fin_cases i <;> simp [hp])⟩⟧
-
 private lemma SLnZ_entry_is_int (g : GL (Fin 2) ℚ) (hg : g ∈ SLnZ_subgroup 2)
     (i j : Fin 2) : ∃ n : ℤ, g.val i j = (n : ℚ) :=
   let ⟨s, hs⟩ := hg

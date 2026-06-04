@@ -223,29 +223,6 @@ lemma exists_charHom_of_jointDiamondEigenspace_ne_bot {χ : (ZMod N)ˣ → ℂ}
     (V := ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
     (diamondOpHom k) χ f hf_ne fun d ↦ Submodule.mem_iInf _ |>.mp hf_mem d, rfl⟩
 
-/-- **The character subspaces `modFormCharSpace k χ` span the whole space**:
-modular forms for `Γ₁(N)` decompose into the span of Nebentypus character
-spaces, one for each character `(ZMod N)ˣ →* ℂˣ`. -/
-theorem ModularForm_Gamma1_iSup_charSpace (k : ℤ) :
-    (⨆ χ : (ZMod N)ˣ →* ℂˣ, modFormCharSpace k χ) =
-    (⊤ : Submodule ℂ (ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) := by
-  have heq : ∀ d (μ : ℂ), (diamondOpHom (N := N) k d).maxGenEigenspace μ =
-      (diamondOpHom k d).eigenspace μ :=
-    fun d μ ↦ Module.End.IsFinitelySemisimple.maxGenEigenspace_eq_eigenspace
-      (diamondOp_isSemisimple d).isFinitelySemisimple μ
-  have h_top_fun :
-      (⨆ χ : (ZMod N)ˣ → ℂ, jointDiamondEigenspace k χ) =
-      (⊤ : Submodule ℂ (ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) := by
-    simpa [jointDiamondEigenspace, heq] using
-      Module.End.iSup_iInf_maxGenEigenspace_eq_top_of_iSup_maxGenEigenspace_eq_top_of_commute
-        (diamondOpHom (N := N) k) diamondOpHom_pairwise_commute
-        fun d ↦ by simp_rw [heq]; exact diamondOp_iSup_eigenspace_eq_top d
-  refine le_antisymm le_top (h_top_fun ▸ iSup_le fun χ ↦ ?_)
-  by_cases hχ : jointDiamondEigenspace k χ = ⊥
-  · simp [hχ]
-  · obtain ⟨χ₀, hχ₀⟩ := exists_charHom_of_jointDiamondEigenspace_ne_bot hχ
-    exact hχ₀ ▸ le_iSup (fun χ₀ : (ZMod N)ˣ →* ℂˣ ↦ modFormCharSpace k χ₀) χ₀
-
 /-- Each character subspace `modFormCharSpace k χ` is finite-dimensional over
 `ℂ`, as a submodule of the finite-dimensional ambient
 `ModularForm ((Gamma1 N).map (mapGL ℝ)) k`. -/
@@ -415,22 +392,6 @@ theorem cuspFormCharSpace_iSup_inf_of_diamondOpCuspHom_invariant
       (fun h_bot ↦ hχ (by rw [h_bot, inf_bot_eq]))
     rw [← hχ₀, jointDiamondCuspEigenspace_eq_cuspFormCharSpace]
     exact le_iSup (fun ψ : (ZMod N)ˣ →* ℂˣ ↦ p ⊓ cuspFormCharSpace k ψ) χ₀
-
-/-- **Finsupp-indexed character decomposition of a modular form in a
-diamond-invariant submodule.**  Consumer-facing corollary of
-`modFormCharSpace_iSup_inf_of_diamondOpHom_invariant`: any element of a
-diamond-invariant submodule `p ⊆ M_k(Γ₁(N))` is a finitely-supported sum
-of Nebentypus-character components, each landing simultaneously in `p`
-and in its character subspace. -/
-theorem exists_finsupp_charSpace_of_diamondOpHom_invariant
-    (k : ℤ) (p : Submodule ℂ (ModularForm ((Gamma1 N).map (mapGL ℝ)) k))
-    (hp : ∀ d : (ZMod N)ˣ, ∀ f ∈ p, diamondOpHom k d f ∈ p)
-    {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k} (hf : f ∈ p) :
-    ∃ g : ((ZMod N)ˣ →* ℂˣ) →₀ ModularForm ((Gamma1 N).map (mapGL ℝ)) k,
-      (∀ χ : (ZMod N)ˣ →* ℂˣ, g χ ∈ p ⊓ modFormCharSpace k χ) ∧
-      (g.sum fun _ y ↦ y) = f :=
-  (Submodule.mem_iSup_iff_exists_finsupp _ _).mp <|
-    (modFormCharSpace_iSup_inf_of_diamondOpHom_invariant k p hp).symm ▸ hf
 
 /-- **Finsupp-indexed character decomposition of a cusp form in a
 diamond-invariant submodule.**  Cusp-form analogue of

@@ -416,28 +416,6 @@ theorem eq_zero_on_fd_of_peterssonInner_self_eq_zero {F : Type*} [FunLike F ℍ 
   exact Complex.normSq_eq_zero.mp ((mul_eq_zero.mp hgτ).elim id
     (fun h ↦ absurd h (ne_of_gt (zpow_pos τ.im_pos k))))
 
-/-- **Positive-definiteness (level one)**: for a cusp form `f` of weight `k` for
-`SL₂(ℤ)` (embedded via `mapGL`), if `⟨f, f⟩ = 0` then `f = 0`. -/
-theorem peterssonInner_definite_levelOne
-    (k : ℤ)
-    {F : Type*} [FunLike F ℍ ℂ]
-    [CuspFormClass F (Matrix.SpecialLinearGroup.mapGL ℝ (n := Fin 2) (R := ℤ)).range k]
-    (f : F) (hpet : peterssonInner k fd (fun τ ↦ f τ) (fun τ ↦ f τ) = 0) :
-    ∀ τ, f τ = 0 := by
-  intro τ
-  obtain ⟨g, hg⟩ := exists_smul_mem_fd τ
-  have hzero : f (g • τ) = 0 := eq_zero_on_fd_of_peterssonInner_self_eq_zero f hpet hg
-  have hinv : petersson k (⇑f) (⇑f) (g • τ) = petersson k (⇑f) (⇑f) τ :=
-    SlashInvariantFormClass.petersson_smul (Γ := (Matrix.SpecialLinearGroup.mapGL ℝ).range)
-      (show Matrix.SpecialLinearGroup.mapGL ℝ g ∈ _ from ⟨g, rfl⟩)
-  have hpet_zero : petersson k (⇑f) (⇑f) τ = 0 := by
-    rw [← hinv, petersson, hzero, map_zero, zero_mul, zero_mul]
-  simp only [petersson] at hpet_zero
-  by_contra hne
-  exact absurd hpet_zero (mul_ne_zero
-    (by rw [starRingEnd_apply]; exact mul_ne_zero (star_ne_zero.mpr hne) hne)
-    (zpow_ne_zero _ (Complex.ofReal_ne_zero.mpr (ne_of_gt τ.im_pos))))
-
 end UpperHalfPlane
 
 namespace CuspForm

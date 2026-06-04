@@ -764,30 +764,6 @@ theorem eigenvalue_eq_fourierCoeff [NeZero N] (k : ℤ) (n : ℕ+) (hn : Nat.Cop
       (natCast_mem_strictPeriods_Gamma1_map N), hf_eigen.2]
   rw [← h1, h_lhs]
 
-/-- The Fourier coefficients of a normalised eigenform in `M_k(N, χ)` satisfy the **Hecke
-multiplicativity relations** `a_m · a_n = Σ_{d | gcd(m,n)} d^{k-1} χ(d) a_{mn/d²}`; in particular
-`a_m a_n = a_{mn}` when `gcd(m,n) = 1` ([Miy] Lemma 4.5.15). -/
-theorem eigenform_coeff_multiplicative [NeZero N] (k : ℤ) (m n : ℕ+) (hm : Nat.Coprime m.val N)
-    (_ : Nat.Coprime n.val N) (χ : (ZMod N)ˣ →* ℂˣ)
-    {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k} (hf_char : f ∈ modFormCharSpace k χ)
-    (hf_eigen : IsNormalisedEigenform k f) :
-    (qExpansion N f).coeff m.val * (qExpansion N f).coeff n.val =
-      ∑ d ∈ (Nat.gcd m.val n.val).divisors,
-        if h : d.Coprime N then
-          (↑d : ℂ) ^ (k - 1) * ↑(χ (ZMod.unitOfCoprime d h)) *
-            (qExpansion N f).coeff (m.val * n.val / (d * d))
-        else 0 := by
-  have : NeZero m.val := ⟨m.pos.ne'⟩
-  have : NeZero n.val := ⟨n.pos.ne'⟩
-  have h_smul : (qExpansion N (heckeT_n k m.val f)).coeff n.val =
-      eigenvalue k f hf_eigen.1 m hm * (qExpansion N f).coeff n.val := by
-    rw [eigenvalue_spec k f hf_eigen.1 m hm, ModularForm.IsGLPos.coe_smul,
-      ModularForm.qExpansion_smul (Nat.cast_pos.mpr (Nat.pos_of_neZero N))
-      (natCast_mem_strictPeriods_Gamma1_map N), PowerSeries.coeff_smul, smul_eq_mul]
-  rw [← eigenvalue_eq_fourierCoeff k m hm χ hf_char hf_eigen, ← h_smul, Nat.gcd_comm m.val,
-    Nat.mul_comm m.val]
-  exact fourierCoeff_heckeT_n k m.val hm χ hf_char n.val
-
 private theorem fourierCoeff_heckeT_ppow_period_one [NeZero N] (k : ℤ) {p : ℕ}
     (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (χ : (ZMod N)ˣ →* ℂˣ) (v : ℕ)
     {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k} (hf : f ∈ modFormCharSpace k χ) (m : ℕ) :
