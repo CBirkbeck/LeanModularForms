@@ -214,16 +214,6 @@ theorem T_gen_generates_R_p_two (p : ℕ) (hp : p.Prime) :
 
 end HeckeRing.GLn.Surj
 
-namespace HeckeRing.GLn.SurjOne
-
-open HeckeRing.GLn
-
-/-- For n=1, `T_gen_diag 1 p 0 = fun _ => p`. -/
-private lemma T_gen_diag_one_eq (p : ℕ) : T_gen_diag 1 p (0 : Fin 1) = fun _ ↦ p := by
-  funext i; simp [T_gen_diag_val]
-
-end HeckeRing.GLn.SurjOne
-
 namespace HeckeRing.GLn.Inj
 
 open HeckeRing.GLn HeckeRing.GL2
