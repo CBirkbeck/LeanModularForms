@@ -241,13 +241,6 @@ theorem HasCauchyPV'.mul_const {f : ℂ → ℂ} {γ : ℝ → ℂ} {a b : ℝ} 
     HasCauchyPV' (fun z => f z * c) γ a b z₀ (L * c) := by
   simpa [mul_comm] using h.const_mul c
 
-/-- Negation: CPV of `-f` is `-L`. -/
-theorem HasCauchyPV'.neg' {f : ℂ → ℂ} {γ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ} {L : ℂ}
-    (h : HasCauchyPV' f γ a b z₀ L) :
-    HasCauchyPV' (fun z => -f z) γ a b z₀ (-L) := by
-  have := h.const_mul (-1)
-  simpa using this
-
 /-- Addition of two CPVs along the same curve. The integrability hypothesis
 `h_int` is the standard ε-uniform interval-integrability requirement (needed
 to split the joint integral). -/
