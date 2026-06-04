@@ -197,37 +197,4 @@ private lemma coset_col_entry_eq {a : Fin n → ℕ} {hpos : ∀ i, 0 < a i}
     exact (mul_eq_zero.mp (by linarith)).resolve_right
       (show (a j : ℤ) ≠ 0 from mod_cast (hpos j).ne')
 
-/-- Distinct entry assignments give distinct left cosets of `SL_n(ℤ)`. -/
-theorem upperTriMat_distinct_cosets (a : Fin n → ℕ) (hpos : ∀ i, 0 < a i) (hdiv : DivChain n a)
-    (B₁ B₂ : UpperTriRep n a hdiv) (hne : B₁ ≠ B₂) :
-    ∀ (γ : GL (Fin n) ℚ), γ ∈ SLnZ_subgroup n →
-      upperTriGL n a hpos hdiv B₁ ≠ γ * upperTriGL n a hpos hdiv B₂ := by
-  intro γ ⟨σ, hσ⟩ heq
-  subst hσ
-  refine hne ?_
-  have hmat : upperTriMat n a hdiv B₁ = σ.val * upperTriMat n a hdiv B₂ := by
-    have h := congr_arg Units.val heq
-    have hσ_val : (↑(mapGL ℚ σ) : Matrix _ _ ℚ) = σ.val.map (Int.cast) := by
-      simp [mapGL_coe_matrix, algebraMap_int_eq, RingHom.mapMatrix_apply]
-    simp only [Units.val_mul, upperTriGL_val, hσ_val] at h
-    ext i j
-    have hij := congr_fun (congr_fun h i) j
-    simp only [Matrix.map_apply, Matrix.mul_apply] at hij
-    exact_mod_cast hij
-  suffices hσ_cols : ∀ (m : ℕ), ∀ (j : Fin n), j.val < m →
-      ∀ (i : Fin n), σ.val i j = if i = j then 1 else 0 by
-    have hσ_one : σ.val = 1 := by
-      ext i j
-      rw [hσ_cols (j.val + 1) j (by omega) i, Matrix.one_apply]
-    exact upperTriMat_injective n a hpos hdiv (by rw [hmat, hσ_one, Matrix.one_mul])
-  intro m
-  induction m with
-  | zero => intro j hj; omega
-  | succ m ih =>
-    intro j hj i
-    rcases Nat.lt_succ_iff_lt_or_eq.mp hj with hlt | hjeq
-    · exact ih j hlt i
-    · exact coset_col_entry_eq n (hpos := hpos) (B₁ := B₁) (B₂ := B₂) hmat
-        (fun k hk ↦ ih k (hjeq ▸ hk)) i
-
 end HeckeRing.GLn

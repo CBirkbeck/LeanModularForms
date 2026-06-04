@@ -647,18 +647,6 @@ section Commutativity
 
 variable {P : HeckePair (GL (Fin 2) ℚ)} [HeckePairAction P]
 
-/-- When the Hecke algebra multiplication is commutative, the Hecke operators commute
-on P.H-invariant functions. -/
-theorem heckeSlash_gen_comm (k : ℤ) (D₁ D₂ : HeckeCoset P) (f : ℍ → ℂ)
-    (hf : ∀ h, h ∈ P.H → f ∣[k] (glMap h) = f)
-    (hcomm : ∀ A B : HeckeCoset P,
-      T_single P ℤ A 1 * T_single P ℤ B 1 =
-      T_single P ℤ B 1 * T_single P ℤ A 1) :
-    heckeSlash_gen P k D₁ (heckeSlash_gen P k D₂ f) =
-    heckeSlash_gen P k D₂ (heckeSlash_gen P k D₁ f) := by
-  rw [heckeSlash_gen_comp k D₁ D₂ f hf (hcomm D₂ D₁),
-      heckeSlash_gen_comp k D₂ D₁ f hf (hcomm D₁ D₂), hcomm D₂ D₁]
-
 end Commutativity
 
 end HeckeRing.GL2

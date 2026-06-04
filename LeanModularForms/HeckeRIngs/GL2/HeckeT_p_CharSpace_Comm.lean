@@ -47,21 +47,6 @@ namespace HeckeRing.GL2
 
 variable {N : ℕ} [NeZero N]
 
-/-- On the trivial-character eigenspace, `heckeT_p_all k p hp` (coprime case) is
-carried by the iso `modFormCharSpace_one_equiv_Gamma0` to the abstract Hecke operator
-`heckeOperator_Gamma0 N k (D_p_Gamma0 N p hp.pos)`. This is the Γ₀(N)-bridge made
-operational: `heckeT_p_all` on `modFormCharSpace k 1` is conjugate to a Γ₀(N)-Hecke
-operator. -/
-theorem heckeT_p_all_eq_gamma0_on_charSpace_one (k : ℤ) (p : ℕ) (hp : Nat.Prime p)
-    (hpN : Nat.Coprime p N) (f : modFormCharSpace k (1 : (ZMod N)ˣ →* ℂˣ)) :
-    heckeT_p_all k p hp (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) =
-    ((modFormCharSpace_one_equiv_Gamma0 N k).symm
-      (heckeOperator_Gamma0 N k (D_p_Gamma0 N p hp.pos)
-        (modFormCharSpace_one_equiv_Gamma0 N k f)) :
-        ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :=
-  heckeT_p_all_coprime k hp hpN ▸
-    heckeT_p_val_eq_heckeOperator_Gamma0_on_charSpace_one k p hp hpN f
-
 /-- Conjugation of an endomorphism of `ModularForm ((Gamma0 N).map (mapGL ℝ)) k` by
 the iso `modFormCharSpace_one_equiv_Gamma0`, yielding an endomorphism of
 `modFormCharSpace k 1`. -/

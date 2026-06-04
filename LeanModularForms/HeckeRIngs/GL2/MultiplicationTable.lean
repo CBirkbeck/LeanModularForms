@@ -907,46 +907,4 @@ private lemma T_ad_self_eq_T_elem (c : ℕ) (hc : 0 < c) : T_ad c c = T_elem (fu
   rw [T_ad_of_pos c c hc hc (dvd_refl c)]
   exact T_elem_congr_diag 2 (funext fun j ↦ by fin_cases j <;> rfl)
 
-/-- `T_pp q ^ i = T_ad (q^i) (q^i)` : the `i`-th power of `T(p,p)` equals `T_ad(p^i, p^i)`. -/
-private lemma T_pp_pow_eq_T_ad (q : ℕ) (hq : q.Prime) (i : ℕ) : T_pp q ^ i =
-    T_ad (q ^ i) (q ^ i) := by
-  rw [T_ad_self_eq_T_elem _ (pow_pos hq.pos i), T_pp_pow q hq i]
-
-/-- RHS computation for the inner summand: T_sum_nat product equals the combined quotient. -/
-private lemma T_sum_mul_peel_prime_summand_rhs (q : ℕ) (hq : q.Prime) (a b : ℕ) (m' n' : ℕ+)
-    (hqm : ¬ q ∣ (m' : ℕ)) (hqn : ¬ q ∣ (n' : ℕ)) (r s : ℕ) (hr : r = min a b)
-    (hs : s = max a b) (i : ℕ) (hi : i < r + 1) (d' : ℕ) (hd'_dvd : d' ∣ Nat.gcd (m' : ℕ) n')
-    (_hqd' : ¬ q ∣ d') (_hcop_qi_d' : Nat.Coprime (q ^ i) d') (hd'_pos : 0 < d') :
-    T_sum ⟨q ^ (r + s - 2 * i), pow_pos hq.pos _⟩ *
-      T_sum_nat (↑m' * ↑n' / (d' * d')) =
-    T_sum_nat (q ^ a * ↑m' * (q ^ b * ↑n') / (q ^ i * d' * (q ^ i * d'))) := by
-  have hq_ndvd_quot : ¬ q ∣ ↑m' * ↑n' / (d' * d') := fun h ↦
-    hqm ((hq.dvd_mul.mp (dvd_trans h
-      (Nat.div_dvd_of_dvd (Nat.mul_dvd_mul (dvd_trans hd'_dvd (Nat.gcd_dvd_left _ _))
-        (dvd_trans hd'_dvd (Nat.gcd_dvd_right _ _)))))).elim id (fun h' ↦ absurd h' hqn))
-  have h_quot_pos : 0 < ↑m' * ↑n' / (d' * d') := Nat.div_pos
-    (Nat.le_of_dvd (Nat.mul_pos m'.pos n'.pos) (Nat.mul_dvd_mul
-      (dvd_trans hd'_dvd (Nat.gcd_dvd_left _ _))
-      (dvd_trans hd'_dvd (Nat.gcd_dvd_right _ _)))) (Nat.mul_pos hd'_pos hd'_pos)
-  change T_sum_nat ↑(⟨q ^ (r + s - 2 * i), pow_pos hq.pos _⟩ : ℕ+) *
-    T_sum_nat (↑m' * ↑n' / (d' * d')) =
-    T_sum_nat (q ^ a * ↑m' * (q ^ b * ↑n') / (q ^ i * d' * (q ^ i * d')))
-  rw [show (⟨q ^ (r + s - 2 * i), pow_pos hq.pos _⟩ : ℕ+).val = q ^ (r + s - 2 * i) by rfl,
-    show T_sum_nat (q ^ (r + s - 2 * i)) * T_sum_nat (↑m' * ↑n' / (d' * d')) =
-    T_sum_nat (q ^ (r + s - 2 * i) * (↑m' * ↑n' / (d' * d'))) from by
-      change T_sum ⟨_, pow_pos hq.pos _⟩ * T_sum ⟨_, h_quot_pos⟩ = _
-      rw [T_sum_mul_coprime _ _ ((Nat.Prime.coprime_pow_of_not_dvd hq hq_ndvd_quot).symm)]
-      rfl]
-  congr 1
-  have hrs_eq : r + s = a + b := by omega
-  rw [hrs_eq, show q ^ i * d' * (q ^ i * d') = q ^ (2 * i) * (d' * d') by ring,
-    show q ^ a * ↑m' * (q ^ b * ↑n') = q ^ (a + b) * (↑m' * ↑n') by ring,
-    show q ^ (a + b) = q ^ (a + b - 2 * i) * q ^ (2 * i) from by
-      rw [← pow_add]; congr 1; omega,
-    show q ^ (a + b - 2 * i) * q ^ (2 * i) * (↑m' * ↑n') =
-      q ^ (2 * i) * (q ^ (a + b - 2 * i) * (↑m' * ↑n')) by ring,
-    Nat.mul_div_mul_left _ _ (pow_pos hq.pos (2 * i)),
-    Nat.mul_div_assoc _ (Nat.mul_dvd_mul
-      (dvd_trans hd'_dvd (Nat.gcd_dvd_left _ _)) (dvd_trans hd'_dvd (Nat.gcd_dvd_right _ _)))]
-
 end HeckeRing.GL2

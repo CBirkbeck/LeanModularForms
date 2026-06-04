@@ -58,58 +58,11 @@ private def unipSL (a : Fin n → ℕ) (hdiv : DivChain n a) (B : UpperTriRep n 
     SL(n, ℤ) :=
   ⟨unipMat n a hdiv B, unipMat_det n a hdiv B⟩
 
-private lemma upperTriGL_eq_diagMat_mul (a : Fin n → ℕ) (ha : ∀ i, 0 < a i)
-    (hdiv : DivChain n a) (B : UpperTriRep n a hdiv) :
-    upperTriGL n a ha hdiv B = diagMat n a * (unipSL n a hdiv B : GL (Fin n) ℚ) := by
-  apply Units.ext
-  have hunip_val : (↑(mapGL ℚ (unipSL n a hdiv B)) : Matrix _ _ ℚ) =
-      (unipSL n a hdiv B).val.map (Int.cast) := by
-    simp [mapGL_coe_matrix, algebraMap_int_eq, RingHom.mapMatrix_apply]
-  simp only [upperTriGL_val, Units.val_mul, hunip_val, diagMat_val n a ha]
-  ext i j
-  simp only [Matrix.map_apply, Matrix.mul_apply, Matrix.diagonal_apply]
-  rw [Finset.sum_eq_single i]
-  · simp only [ite_mul, zero_mul, unipSL, unipMat, upperTriMat]
-    split_ifs <;> push_cast <;> ring
-  · intro k _ hk; simp [Ne.symm hk]
-  · intro h; exact absurd (Finset.mem_univ i) h
-
-private def invTransposeEquiv : SL(n, ℤ) ≃* SL(n, ℤ) where
-  toFun σ := σ.transpose⁻¹
-  invFun σ := σ⁻¹.transpose
-  left_inv σ := by
-    change (σ.transpose⁻¹)⁻¹.transpose = σ
-    simp only [inv_inv]; ext i j; simp [coe_transpose]
-  right_inv σ := by
-    change (σ⁻¹.transpose).transpose⁻¹ = σ
-    rw [show (σ⁻¹.transpose).transpose = σ⁻¹ from Subtype.ext (by ext; simp [coe_transpose]),
-      inv_inv]
-  map_mul' σ τ := by
-    rw [show (σ * τ).transpose = τ.transpose * σ.transpose from
-      Subtype.ext (by simp [Matrix.transpose_mul]), _root_.mul_inv_rev]
-
-private lemma SL_transpose_inv_eq (σ : SL(n, ℤ)) :
-    σ.transpose⁻¹ = σ⁻¹.transpose :=
-  Subtype.ext (by simp only [SpecialLinearGroup.coe_inv,
-    SpecialLinearGroup.coe_transpose, Matrix.adjugate_transpose])
-
 private lemma mapGL_injective : Function.Injective (mapGL ℚ : SL(n, ℤ) →* GL (Fin n) ℚ) := by
   intro x y hxy; ext i j
   have h := congr_arg (fun g ↦ (Units.val g) i j) hxy
   simp only [mapGL_coe_matrix, map_apply_coe, RingHom.mapMatrix_apply,
     Matrix.map_apply] at h; exact_mod_cast h
-
-private lemma transpose_mul_diagMat (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) (σ ρ : SL(n, ℤ))
-    (h : (σ : GL (Fin n) ℚ) * diagMat n a = diagMat n a * (ρ : GL (Fin n) ℚ)) :
-    diagMat n a * (σ.transpose : GL (Fin n) ℚ) =
-    (ρ.transpose : GL (Fin n) ℚ) * diagMat n a := by
-  apply Units.ext
-  simp only [Units.val_mul, mapGL_coe_matrix, map_apply_coe, RingHom.mapMatrix_apply,
-    diagMat_val n a ha, SpecialLinearGroup.coe_transpose, Matrix.transpose_map]
-  have hM := congr_arg (Matrix.transpose ∘ Units.val) h
-  simpa only [Function.comp_apply, Units.val_mul, mapGL_coe_matrix, map_apply_coe,
-    RingHom.mapMatrix_apply, diagMat_val n a ha, Matrix.transpose_mul,
-    Matrix.diagonal_transpose] using hM
 
 variable [NeZero n]
 

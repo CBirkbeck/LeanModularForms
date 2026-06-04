@@ -121,11 +121,6 @@ lemma T_scalar_pow (c : ℕ) (hc : 0 < c) (k : ℕ) :
       (divChain_const n _)]
     exact T_elem_congr_diag n (funext fun _ ↦ by simp only [Pi.mul_apply]; ring)
 
-/-- Each `T_gen k` lies in the range of `evalHom`. -/
-lemma T_gen_mem_evalHom_range (k : Fin n) :
-    T_gen n p k ∈ (evalHom n p).range :=
-  ⟨MvPolynomial.X k, MvPolynomial.eval₂Hom_X' _ _ _⟩
-
 end PolynomialRing
 
 end HeckeRing.GLn
@@ -255,25 +250,6 @@ end HeckeRing.GLn.SurjOne
 namespace HeckeRing.GLn.Inj
 
 open HeckeRing.GLn HeckeRing.GL2
-
-/-- Every element in the image of `evalHom` belongs to `R_p`. -/
-lemma evalHom_mem_R_p (n : ℕ) [NeZero n] (p : ℕ) (hp : p.Prime) (P : MvPolynomial (Fin n) ℤ) :
-    evalHom n p P ∈ R_p n p hp := by
-  apply MvPolynomial.induction_on P
-  · intro a
-    show evalHom n p (MvPolynomial.C a) ∈ R_p n p hp
-    rw [show evalHom n p (MvPolynomial.C a) = (a : HeckeAlgebra n) from
-      MvPolynomial.eval₂Hom_C _ _ _, show (a : HeckeAlgebra n) =
-        a • (1 : HeckeAlgebra n) from (zsmul_one a).symm]
-    exact (R_p n p hp).zsmul_mem (R_p n p hp).one_mem a
-  · intro f g hf hg; rw [map_add]; exact (R_p n p hp).add_mem hf hg
-  · intro f i hf
-    rw [map_mul]
-    refine (R_p n p hp).mul_mem hf ?_
-    show evalHom n p (MvPolynomial.X i) ∈ R_p n p hp
-    rw [show evalHom n p (MvPolynomial.X i) = T_gen n p i from
-      MvPolynomial.eval₂Hom_X' _ _ _]
-    exact T_gen_mem_R_p n p hp i
 
 /-- For n=1, `T_gen(0)^k = T_elem(fun _ => p^k)`. -/
 private lemma T_gen_pow_one (p : ℕ) (hp : p.Prime) (k : ℕ) :

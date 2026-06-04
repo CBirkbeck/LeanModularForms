@@ -355,41 +355,4 @@ private lemma sum_tRep_gen_eq_sum_of_adj_factored {ι : Type*} [Fintype ι] (k :
     rw [Fintype.bijective_iff_injective_and_card]; exact ⟨h_inj, hcard⟩
   exact (Fintype.sum_bijective φ h_bij _ _ h_val).symm
 
-theorem tRep_gen_D_p_matches_T_p_reps (k : ℤ) (p : ℕ) (hp : Nat.Prime p) (f : ℍ → ℂ)
-    (hf : ∀ γ ∈ 𝒮ℒ, f ∣[k] γ = f) :
-    ∑ i : decompQuot (GL_pair 2) (HeckeCoset.rep (D_p p hp.pos)),
-      f ∣[k] tRep_gen (GL_pair 2) (D_p p hp.pos) i =
-    (∑ b ∈ Finset.range p, f ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ)) +
-      f ∣[k] (T_p_lower p hp.pos : GL (Fin 2) ℚ) := by
-  set D := D_p p hp.pos
-  have hadj_rep := adj_rep_mem_D_p p hp
-  set g : Fin (p + 1) → GL (Fin 2) ℚ := fun j ↦
-    if (j : ℕ) < p then T_p_upper p hp.pos (j : ℕ) else T_p_lower p hp.pos with hg
-  have hmem : ∀ j, g j ∈ HeckeCoset.toSet D := by
-    intro j; simp only [hg]; split_ifs
-    · exact T_p_upper_mem_D_p p hp (j : ℕ)
-    · exact T_p_lower_mem_D_p p hp
-  have hfac := fun j ↦ adj_mem_dc D (g j) (hmem j) hadj_rep
-  have hdist : ∀ j₁ j₂ : Fin (p + 1), j₁ ≠ j₂ →
-      (GL_adjugate (g j₁))⁻¹ * GL_adjugate (g j₂) ∉ (GL_pair 2).H := by
-    intro j₁ j₂ hne; simp only [hg]; exact adj_Tp_rep_inv_mul_not_mem_H p hp j₁ j₂ hne
-  rw [sum_tRep_gen_eq_sum_of_adj_factored k f hf D g
-      (by rw [Fintype.card_fin]; exact (card_decompQuot_D_p p hp).symm) hfac hdist,
-    sum_range_add_eq_sum_fin_succ_dite p
-      (fun n ↦ f ∣[k] (T_p_upper p hp.pos n : GL (Fin 2) ℚ))
-      (f ∣[k] (T_p_lower p hp.pos : GL (Fin 2) ℚ))]
-  refine Finset.sum_congr rfl fun j _ ↦ ?_
-  simp only [hg]; split_ifs <;> rfl
-
-/-- For an SL₂(ℤ)-invariant modular form, the diamond operator acts trivially:
-`⟨d⟩f = f` for any `d ∈ (ℤ/Nℤ)ˣ`, because every `Γ₀(N)` element lies in `SL₂(ℤ)`. -/
-lemma diamondOp_trivial_of_SL_invariant {N : ℕ} [NeZero N] (k : ℤ) (u : (ZMod N)ˣ)
-    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-    (hf_SL : ∀ γ ∈ 𝒮ℒ, (⇑f) ∣[k] γ = ⇑f) :
-    ⇑(diamondOp k u f) = ⇑f := by
-  obtain ⟨g, hg⟩ := Gamma0MapUnits_surjective u
-  rw [diamondOp_eq_diamondOpAux k u g hg]
-  change (⇑f ∣[k] mapGL ℝ (g : SL(2, ℤ))) = ⇑f
-  exact hf_SL _ ⟨g, rfl⟩
-
 end HeckeRing.GL2

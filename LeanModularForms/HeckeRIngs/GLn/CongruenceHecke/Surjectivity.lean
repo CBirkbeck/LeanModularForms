@@ -664,11 +664,6 @@ private lemma π_injective : Function.Injective π_hom := by
   rw [Finset.sum_ite_eq_of_mem' (P.support) s _ hs_mem] at h_zero
   exact hs_coeff h_zero
 
-private lemma ker_π_le_ker_ψ :
-    RingHom.ker π_hom ≤ RingHom.ker (ψ_hom N) := by
-  rw [(RingHom.injective_iff_ker_eq_bot π_hom).mp π_injective]
-  exact bot_le
-
 private lemma product_mem_GL_DC_scalar
     (c : ℕ) (hc : 0 < c) (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a i)
     (hc_gcd : Int.gcd (↑c) ↑N = 1) (ha_gcd : Int.gcd (a 0) N = 1)

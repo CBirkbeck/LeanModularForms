@@ -37,16 +37,4 @@ private lemma inv_mul_mul_entry_smul_det {K : Type*} [Field K]
   simp only [Matrix.smul_mul, Matrix.smul_apply, smul_eq_mul]
   field_simp
 
-/-- For `g = !![a, b; N·c, d]` with `det g ≠ 0` and `h = !![α, β; N·γ, δ]`
-(promoted to `M₂(ℚ)`), the (1,1) entry of the rational conjugate satisfies
-`(g⁻¹ · h · g)₁₁ · det g = a·d·δ + N · (a·b·γ - b·c·α - c·d·β)` over `ℚ`. -/
-lemma matrix_fin_two_conj_entry_11_mod_eq (N : ℤ) (a b c d α β γ δ : ℤ)
-    (hdet : (!![(a : ℚ), b; N * c, d]).det ≠ 0) :
-    ((!![(a : ℚ), b; N * c, d])⁻¹ *
-        !![(α : ℚ), β; N * γ, δ] * !![(a : ℚ), b; N * c, d]) 1 1 *
-      (!![(a : ℚ), b; N * c, d]).det =
-      (a : ℚ) * d * δ + N * (a * b * γ - b * c * α - c * d * β) := by
-  rw [inv_mul_mul_entry_smul_det _ _ hdet]
-  simp [Matrix.adjugate_fin_two, Matrix.mul_apply, Fin.sum_univ_two]; ring
-
 end HeckeRing.GL2.Prop334
