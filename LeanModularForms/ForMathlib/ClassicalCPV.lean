@@ -310,16 +310,4 @@ def HasGeneralizedWindingNumber' (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) (n 
 def generalizedWindingNumber' (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) : ℂ :=
   (2 * Real.pi * I)⁻¹ * cauchyPrincipalValue' (·⁻¹) (fun t ↦ γ t - z₀) a b 0
 
-/-- Bridge: if `HasGeneralizedWindingNumber' γ a b z₀ n`, then
-`generalizedWindingNumber' γ a b z₀ = n`. -/
-theorem HasGeneralizedWindingNumber'.gWN_eq {γ : ℝ → ℂ} {a b : ℝ} {z₀ : ℂ} {n : ℂ}
-    (h : HasGeneralizedWindingNumber' γ a b z₀ n) :
-    generalizedWindingNumber' γ a b z₀ = n := by
-  unfold generalizedWindingNumber'
-  rw [h.cauchyPV_eq]
-  have h_ne : (2 * Real.pi * I : ℂ) ≠ 0 := by
-    simp only [ne_eq, mul_eq_zero, not_or]
-    exact ⟨⟨two_ne_zero, by exact_mod_cast Real.pi_ne_zero⟩, Complex.I_ne_zero⟩
-  field_simp
-
 end
