@@ -181,33 +181,6 @@ private theorem f_smul_T_p_upper_eq (p : ℕ) (hp : Nat.Prime p) (f : ℍ → �
         simp; exact div_pos (by linarith [τ.im_pos]) (Nat.cast_pos.mpr hp.pos)⟩ : ℍ) := by
   congr 1; ext : 1; rw [coe_smul_T_p_upper p hp.pos b τ]; push_cast; ring
 
-private theorem sum_qParam_pow_period_N {N : ℕ} [NeZero N] {p : ℕ}
-    (hp : Nat.Prime p) (hpN : Nat.Coprime p N) {n : ℕ} (hNn : (N : ℕ) ∣ n) :
-    ∑ b ∈ Finset.range p, Function.Periodic.qParam (↑N) (1 / (↑p : ℂ)) ^ (n * b) =
-      if p ∣ n then (↑p : ℂ) else 0 := by
-  set ζ := Function.Periodic.qParam (↑N) (1 / (↑p : ℂ)) with hζ_def
-  have hζ_pN : IsPrimitiveRoot ζ (p * N) := by
-    rw [hζ_def, Function.Periodic.qParam]
-    convert Complex.isPrimitiveRoot_exp (p * N)
-      (Nat.mul_ne_zero hp.ne_zero (NeZero.ne N)) using 1
-    push_cast; ring
-  split_ifs with hpn
-  · have hζ_pow : ζ ^ n = 1 :=
-      (hζ_pN.pow_eq_one_iff_dvd n).mpr (Nat.Coprime.mul_dvd_of_dvd_of_dvd hpN hpn hNn)
-    simp_rw [pow_mul ζ n, hζ_pow, one_pow, Finset.sum_const, Finset.card_range,
-      nsmul_eq_mul, mul_one]
-  · have hζn_ne : ζ ^ n ≠ 1 := by
-      intro h_eq
-      have hdvd := (hζ_pN.pow_eq_one_iff_dvd n).mp h_eq
-      obtain ⟨j, rfl⟩ := hNn
-      exact hpn ((Nat.dvd_of_mul_dvd_mul_left (Nat.pos_of_neZero N)
-        (by rwa [show p * N = N * p from by ring] at hdvd)).mul_left N)
-    simp_rw [pow_mul ζ n]
-    rw [geom_sum_eq hζn_ne, show (ζ ^ n) ^ p = 1 from by
-      obtain ⟨j, rfl⟩ := hNn
-      rw [← pow_mul, hζ_pN.pow_eq_one_iff_dvd]; exact ⟨j, by ring⟩]
-    simp
-
 private theorem sum_qParam_pow_period_one {p : ℕ} (hp : Nat.Prime p) (n : ℕ) :
     ∑ b ∈ Finset.range p, Function.Periodic.qParam (1 : ℝ) (1 / (↑p : ℂ)) ^ (n * b) =
       if p ∣ n then (↑p : ℂ) else 0 := by
