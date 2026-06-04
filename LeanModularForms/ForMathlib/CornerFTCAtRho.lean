@@ -173,17 +173,6 @@ private lemma vertDelta_norm_simp {ε H : ℝ} (hH : fdHeightValid H) :
     ε / (5 * (H - Real.sqrt 3 / 2)) * (5 * (H - Real.sqrt 3 / 2)) by ring]
   exact div_mul_cancel₀ ε (ne_of_gt (by have := hH.sub_pos; positivity))
 
-/-- Compute the argument of `2 sin α * (↑(cos β) + ↑(sin β) · I)` for suitable α, β.
-Helper for `arc_arg_at_rho` and `arc_arg_at_rp1`. -/
-private lemma arg_two_sin_mul {α β : ℝ} (hα_pos : 0 < α) (hα_lt_pi : α < Real.pi)
-    (hβ_lt : -Real.pi < β) (hβ_le : β ≤ Real.pi) :
-    (↑(2 * Real.sin α) * (↑(Real.cos β) + ↑(Real.sin β) * I) : ℂ).arg = β := by
-  rw [Complex.ofReal_cos, Complex.ofReal_sin]
-  exact Complex.arg_mul_cos_add_sin_mul_I
-    (show (0 : ℝ) < 2 * Real.sin α by
-      have := Real.sin_pos_of_pos_of_lt_pi hα_pos hα_lt_pi; positivity)
-    ⟨hβ_lt, hβ_le⟩
-
 /-- Wrap the standard "piece for reference + a.e. match + endpoint rewrites" pattern. -/
 private lemma neg_ftc_piece_wrap {a b : ℝ} {F G : ℝ → ℂ} {LR LL : ℂ}
     (h_piece : IntervalIntegrable (fun t => deriv G t / G t) volume a b ∧
