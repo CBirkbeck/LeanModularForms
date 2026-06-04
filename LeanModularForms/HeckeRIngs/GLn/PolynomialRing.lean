@@ -85,19 +85,6 @@ lemma T_elem_ones_eq_one : T_elem (fun _ : Fin n ↦ 1) = 1 := by
   rw [T_diag_ones]
   exact (HeckeRing.one_def (GL_pair n) (Z := ℤ)).symm
 
-/-- `T(c,...,c)^k = T(c^k,...,c^k)`: scalar diagonal elements are closed under powers. -/
-lemma T_scalar_pow (c : ℕ) (hc : 0 < c) (k : ℕ) :
-    T_elem (fun _ : Fin n ↦ c) ^ k = T_elem (fun _ : Fin n ↦ c ^ k) := by
-  induction k with
-  | zero =>
-    simp only [pow_zero]
-    symm
-    exact (T_elem_congr_diag n (funext fun _ ↦ by simp)).trans (T_elem_ones_eq_one n)
-  | succ k ih =>
-    rw [pow_succ', ih, T_diag_scalar_mul n c hc (fun _ ↦ c ^ k) (fun _ ↦ pow_pos hc k)
-      (divChain_const n _)]
-    exact T_elem_congr_diag n (funext fun _ ↦ by simp only [Pi.mul_apply]; ring)
-
 end PolynomialRing
 
 end HeckeRing.GLn
