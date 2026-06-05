@@ -1,8 +1,8 @@
- /-
- Copyright (c) 2026. All rights reserved.
- Released under Apache 2.0 license as described in the file LICENSE.
- Authors: LeanModularForms contributors
- -/
+/-
+Copyright (c) 2026 Chris Birkbeck. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Chris Birkbeck
+-/
 import LeanModularForms.HeckeRIngs.GL2.HeckeRingHomCharSpace
 import LeanModularForms.HeckeRIngs.GL2.HeckeActionGeneral
 import LeanModularForms.HeckeRIngs.GLn.CongruenceHecke
@@ -10,11 +10,27 @@ import LeanModularForms.HeckeRIngs.GLn.CongruenceHecke
 /-!
 # Twisted `Γ₀(N)` Hecke-ring action on Nebentypus spaces
 
-This file begins the direct construction of the general-`χ` action of the
-existing Hecke ring `𝕋 (Gamma0_pair N) ℤ` on the experimental `Γ₀(N), χ` spaces.
+This file constructs the `χ`-twisted action of the Hecke ring
+`𝕋 (Gamma0_pair N) ℤ` on `Γ₀(N), χ`-invariant functions: a semigroup character
+on `Δ₀(N)` from the upper-left entry modulo `N` (the classical Nebentypus
+formalism), the character-weighted Hecke slash over the right-coset
+decomposition of each double coset, and its multiplicativity over the ring.
 
-The first step is the semigroup character on `Δ₀(N)` coming from the upper-left
-entry modulo `N`, as in the classical Nebentypus formalism.
+## Main definitions
+
+* `delta0NebentypusDeltaChar`: the semigroup character on `Δ₀(N)` attached to a
+  Dirichlet character `χ`.
+* `twistedHeckeSlash_gen`: the `χ`-weighted Hecke slash of a double coset.
+* `IsGamma0TwistedInvariant`: the `Γ₀(N), χ` function-level invariance condition.
+* `twistedHeckeSumFunction`: the resulting `𝕋 (Gamma0_pair N) ℤ`-indexed family
+  of endomorphisms of the invariant submodule.
+
+## Main results
+
+* `twistedHeckeSlash_gen_comp`: composing two coset operators agrees with the
+  Hecke-ring product.
+* `twistedHeckeSumFunction_mul`: the endomorphism-valued action is
+  multiplicative on `𝕋 (Gamma0_pair N) ℤ`.
 -/
 
 open Matrix Matrix.SpecialLinearGroup CongruenceSubgroup HeckeRing.GLn
@@ -29,14 +45,13 @@ open HeckeRing.GL2
 variable {N : ℕ} [NeZero N]
 
 /-- A concrete integer matrix witness for an element of `Δ₀(N)`. -/
-noncomputable def delta0IntegralMatrix (g : (Gamma0_pair N).Δ) :
-    Matrix (Fin 2) (Fin 2) ℤ :=
+noncomputable def delta0IntegralMatrix (g : (Gamma0_pair N).Δ) : Matrix (Fin 2) (Fin 2) ℤ :=
   Classical.choose g.2.2.2
 
 /-- The chosen integer matrix witness really represents `g`. -/
 lemma delta0IntegralMatrix_spec (g : (Gamma0_pair N).Δ) :
     ((g : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ) =
-      (delta0IntegralMatrix (N := N) g).map (Int.cast : ℤ → ℚ) :=
+      (delta0IntegralMatrix g).map (Int.cast : ℤ → ℚ) :=
   (Classical.choose_spec g.2.2.2).1
 
 /-- The lower-left entry of the chosen witness is divisible by `N`. -/
@@ -45,119 +60,93 @@ lemma delta0IntegralMatrix_lower_left_dvd (g : (Gamma0_pair N).Δ) :
   (Classical.choose_spec g.2.2.2).2.1
 
 /-- The upper-left entry of the chosen witness is coprime to `N`. -/
-lemma delta0IntegralMatrix_upper_left_coprime (g : (Gamma0_pair N).Δ) :
-    Int.gcd (delta0IntegralMatrix (N := N) g 0 0) N = 1 :=
+lemma delta0IntegralMatrix_upper_left_coprime (g : (Gamma0_pair N).Δ) : Int.gcd
+    (delta0IntegralMatrix (N := N) g 0 0) N = 1 :=
   (Classical.choose_spec g.2.2.2).2.2
 
 /-- Any two integer witnesses for the same element of `Δ₀(N)` agree entrywise. -/
-lemma delta0IntegralMatrix_witness_unique (g : (Gamma0_pair N).Δ)
-    (A : Matrix (Fin 2) (Fin 2) ℤ)
+lemma delta0IntegralMatrix_witness_unique (g : (Gamma0_pair N).Δ) (A : Matrix (Fin 2) (Fin 2) ℤ)
     (hA : ((g : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ) = A.map (Int.cast : ℤ → ℚ)) :
-    delta0IntegralMatrix (N := N) g = A := by
-  ext i j
-  have h_entry :
-      (((delta0IntegralMatrix (N := N) g).map (Int.cast : ℤ → ℚ)) i j) =
-        ((A.map (Int.cast : ℤ → ℚ)) i j) := by
-    rw [← delta0IntegralMatrix_spec (N := N) g, hA]
-  simp only [Matrix.map_apply] at h_entry
-  exact Int.cast_injective h_entry
+    delta0IntegralMatrix (N := N) g = A :=
+  Matrix.map_injective Int.cast_injective ((delta0IntegralMatrix_spec g).symm.trans hA)
 
 /-- The upper-left entry of a `Δ₀(N)` witness is a unit modulo `N`. -/
 lemma delta0UpperEntry_isUnit (g : (Gamma0_pair N).Δ) :
-    IsUnit ((delta0IntegralMatrix (N := N) g 0 0 : ℤ) : ZMod N) := by
-  have hco_nat : Nat.Coprime (delta0IntegralMatrix (N := N) g 0 0).natAbs N := by
-    simpa using Int.isCoprime_iff_nat_coprime.mp
-      (Int.isCoprime_iff_gcd_eq_one.mpr (delta0IntegralMatrix_upper_left_coprime (N := N) g))
-  rcases Int.natAbs_eq (delta0IntegralMatrix (N := N) g 0 0) with hnonneg | hneg
-  · rw [hnonneg]
-    simpa [ZMod.coe_unitOfCoprime] using (ZMod.unitOfCoprime _ hco_nat).isUnit
-  · rw [hneg]
-    simpa [ZMod.coe_unitOfCoprime] using IsUnit.neg (ZMod.unitOfCoprime _ hco_nat).isUnit
+    IsUnit ((delta0IntegralMatrix (N := N) g 0 0 : ℤ) : ZMod N) :=
+  (ZMod.coe_int_isUnit_iff_isCoprime _ N).mpr
+    (isCoprime_comm.mpr (Int.isCoprime_iff_gcd_eq_one.mpr
+      (delta0IntegralMatrix_upper_left_coprime (N := N) g)))
 
 /-- The unit in `(ZMod N)ˣ` attached to the upper-left entry of a `Δ₀(N)` matrix. -/
 noncomputable def Delta0UpperUnit (g : (Gamma0_pair N).Δ) : (ZMod N)ˣ :=
   (delta0UpperEntry_isUnit (N := N) g).unit
 
 /-- The value of `Delta0UpperUnit` as a `ZMod N`. -/
+@[simp]
 lemma Delta0UpperUnit_val (g : (Gamma0_pair N).Δ) :
-    ((Delta0UpperUnit (N := N) g : (ZMod N)ˣ) : ZMod N) =
-      (delta0IntegralMatrix (N := N) g 0 0 : ZMod N) :=
-  IsUnit.unit_spec (delta0UpperEntry_isUnit (N := N) g)
+    (Delta0UpperUnit g : ZMod N) = (delta0IntegralMatrix g 0 0 : ZMod N) :=
+  (delta0UpperEntry_isUnit g).unit_spec
 
 /-- The chosen witness for a product in `Δ₀(N)` is the product of the chosen
 integer witnesses. -/
-lemma delta0IntegralMatrix_mul (g h : (Gamma0_pair N).Δ) :
-    delta0IntegralMatrix (N := N) (g * h) =
-      delta0IntegralMatrix (N := N) g * delta0IntegralMatrix (N := N) h := by
+lemma delta0IntegralMatrix_mul (g h : (Gamma0_pair N).Δ) : delta0IntegralMatrix (N := N) (g * h) =
+    delta0IntegralMatrix (N := N) g * delta0IntegralMatrix (N := N) h := by
   apply delta0IntegralMatrix_witness_unique (N := N) (g := g * h)
-  calc
-    (((g * h : (Gamma0_pair N).Δ) : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ)
-      = (((g : (Gamma0_pair N).Δ) : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ) *
-          (((h : (Gamma0_pair N).Δ) : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ) := rfl
-    _ = (delta0IntegralMatrix (N := N) g).map (Int.cast : ℤ → ℚ) *
-          (delta0IntegralMatrix (N := N) h).map (Int.cast : ℤ → ℚ) := by
-            rw [delta0IntegralMatrix_spec (N := N) g, delta0IntegralMatrix_spec (N := N) h]
-    _ = (delta0IntegralMatrix (N := N) g * delta0IntegralMatrix (N := N) h).map
-          (Int.cast : ℤ → ℚ) := by
-            ext i j
-            simp [Matrix.mul_apply]
+  simp [delta0IntegralMatrix_spec, ← Matrix.map_mul_intCast]
 
 /-- The upper-left units multiply on `Δ₀(N)`. -/
 lemma Delta0UpperUnit_mul (g h : (Gamma0_pair N).Δ) :
-    Delta0UpperUnit (N := N) (g * h) =
-      Delta0UpperUnit (N := N) g * Delta0UpperUnit (N := N) h := by
+    Delta0UpperUnit (N := N) (g * h) = Delta0UpperUnit (N := N) g * Delta0UpperUnit (N := N) h := by
   ext
   rw [Units.val_mul, Delta0UpperUnit_val, Delta0UpperUnit_val, Delta0UpperUnit_val,
     delta0IntegralMatrix_mul, Matrix.mul_apply, Fin.sum_univ_two]
-  have hz :
-      ((delta0IntegralMatrix (N := N) g 0 1 * delta0IntegralMatrix (N := N) h 1 0 : ℤ) :
-        ZMod N) = 0 := by
+  have hz : ((delta0IntegralMatrix g 0 1 * delta0IntegralMatrix h 1 0 : ℤ) : ZMod N) = 0 := by
     rw [ZMod.intCast_zmod_eq_zero_iff_dvd]
-    exact dvd_mul_of_dvd_right (delta0IntegralMatrix_lower_left_dvd (N := N) h) _
+    exact dvd_mul_of_dvd_right (delta0IntegralMatrix_lower_left_dvd h) _
   simp [hz, add_comm]
+
+/-- The chosen integer witness for the identity of `Δ₀(N)` is the identity matrix. -/
+@[simp] lemma delta0IntegralMatrix_one :
+    delta0IntegralMatrix (N := N) (1 : (Gamma0_pair N).Δ) = 1 := by
+  apply delta0IntegralMatrix_witness_unique (N := N) (g := 1)
+  simp
+
+/-- The upper-left unit of the identity of `Δ₀(N)` is `1`. -/
+@[simp] lemma Delta0UpperUnit_one : Delta0UpperUnit (N := N) (1 : (Gamma0_pair N).Δ) = 1 := by
+  ext
+  rw [Delta0UpperUnit_val]
+  simp
 
 /-- The semigroup character on `Δ₀(N)` obtained from the upper-left unit. -/
 noncomputable def delta0NebentypusDeltaChar (χ : (ZMod N)ˣ →* ℂˣ) :
     (Gamma0_pair N).Δ →* ℂˣ where
   toFun g := χ (Delta0UpperUnit (N := N) g)
-  map_one' := by
-    have hmat : delta0IntegralMatrix (N := N) (1 : (Gamma0_pair N).Δ) = 1 := by
-      apply delta0IntegralMatrix_witness_unique (N := N) (g := 1)
-      simp
-    have h_unit_one : Delta0UpperUnit (N := N) (1 : (Gamma0_pair N).Δ) = 1 := by
-      ext
-      rw [Delta0UpperUnit_val]
-      simp [hmat]
-    simp [h_unit_one]
+  map_one' := by simp
   map_mul' g h := by
     rw [Delta0UpperUnit_mul (N := N) g h, map_mul]
 
 private lemma units_coe_mul_inv_mul_right_cancel (a b : ℂˣ) :
     ((↑(a * b) : ℂ)⁻¹ * (↑b : ℂ)) = (↑a : ℂ)⁻¹ := by
-  rw [Units.val_mul, _root_.mul_inv_rev, mul_assoc, mul_comm (↑a : ℂ)⁻¹ (↑b : ℂ),
-    ← mul_assoc, inv_mul_cancel₀ b.ne_zero, one_mul]
+  simp [Units.val_mul, _root_.mul_inv_rev, mul_comm]
 
-/-- The restriction of the `Δ₀(N)` upper-left character to `Γ₀(N) = H`. It is
-evaluated on `adj(h)` to match the adjugated representatives of the generalized
-Hecke action; for `h ∈ Γ₀(N)` this is the usual lower-right Nebentypus entry. -/
+/-- The `Δ₀(N)` upper-left character restricted to `Γ₀(N) = H`, evaluated on `adj(h)` to
+match adjugated coset representatives; for `h ∈ Γ₀(N)` this gives the classical
+lower-right Nebentypus entry. -/
 noncomputable def delta0NebentypusHChar (χ : (ZMod N)ˣ →* ℂˣ) (h : GL (Fin 2) ℚ)
     (hh : h ∈ (Gamma0_pair N).H) : ℂˣ :=
-  delta0NebentypusDeltaChar (N := N) χ ⟨h, (Gamma0_pair N).h₀ hh⟩
+  delta0NebentypusDeltaChar χ ⟨h, (Gamma0_pair N).h₀ hh⟩
 
 /-- The concrete `Δ₀(N)` representative `σᵢ · rep(D)` attached to an index in the
 right-coset decomposition of a `Γ₀(N)` Hecke coset. -/
 noncomputable def deltaRep_gen (D : HeckeCoset (Gamma0_pair N))
-    (i : decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) : (Gamma0_pair N).Δ := by
-  refine ⟨(i.out : GL (Fin 2) ℚ) * (HeckeCoset.rep D : GL (Fin 2) ℚ), ?_⟩
-  exact (Gamma0_pair N).Δ.mul_mem
-    ((Gamma0_pair N).h₀ (show (i.out : GL (Fin 2) ℚ) ∈ (Gamma0_pair N).H from SetLike.coe_mem _))
-    (show (HeckeCoset.rep D : GL (Fin 2) ℚ) ∈ (Gamma0_pair N).Δ from SetLike.coe_mem _)
+    (i : decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) : (Gamma0_pair N).Δ :=
+  ⟨(i.out : GL (Fin 2) ℚ) * (HeckeCoset.rep D : GL (Fin 2) ℚ),
+    (Gamma0_pair N).Δ.mul_mem ((Gamma0_pair N).h₀ (SetLike.coe_mem _)) (SetLike.coe_mem _)⟩
 
 /-- The nebentypus weight attached to a `Γ₀(N)` Hecke-coset summand. -/
 noncomputable def delta0NebentypusWeight (χ : (ZMod N)ˣ →* ℂˣ)
-    (D : HeckeCoset (Gamma0_pair N))
-    (i : decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) : ℂˣ :=
-  delta0NebentypusDeltaChar (N := N) χ (deltaRep_gen (N := N) D i)
+    (D : HeckeCoset (Gamma0_pair N)) (i : decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) : ℂˣ :=
+  delta0NebentypusDeltaChar (N := N) χ <| deltaRep_gen (N := N) D i
 
 /-- The twisted Hecke slash action attached to the existing `Γ₀(N)` Hecke coset.
 Since the slash uses the adjugated representatives `tRep_gen = adj(σᵢ · rep(D))`,
@@ -166,7 +155,7 @@ the twisted fixed-space law `f ∣ h = η(h)⁻¹ f` for `h ∈ Γ₀(N)`. -/
 noncomputable def twistedHeckeSlash_gen (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (D : HeckeCoset (Gamma0_pair N)) (f : ℍ → ℂ) : ℍ → ℂ :=
   ∑ i : decompQuot (Gamma0_pair N) (HeckeCoset.rep D),
-    (↑(delta0NebentypusWeight (N := N) χ D i) : ℂ)⁻¹ •
+    (↑(delta0NebentypusWeight χ D i) : ℂ)⁻¹ •
       (f ∣[k] tRep_gen (Gamma0_pair N) D i)
 
 /-- Positivity of the real determinant of an adjugated `Γ₀(N)` Hecke
@@ -175,31 +164,21 @@ lemma tRep_gen_Gamma0_det_pos (D : HeckeCoset (Gamma0_pair N))
     (i : decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) :
     0 < (glMap (tRep_gen (Gamma0_pair N) D i)).det.val := by
   have hRat : 0 < (tRep_gen (Gamma0_pair N) D i).det.val := by
-    have hdelta :
-        0 <
-          (((i.out : GL (Fin 2) ℚ) * (HeckeCoset.rep D : GL (Fin 2) ℚ) :
-              GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ).det := by
-      simpa [deltaRep_gen] using (deltaRep_gen (N := N) D i).prop.2.1
     change 0 < (GL_adjugate
       ((i.out : GL (Fin 2) ℚ) * (HeckeCoset.rep D : GL (Fin 2) ℚ))).det.val
     rw [GeneralLinearGroup.val_det_apply, GL_adjugate_val, Matrix.det_adjugate,
       Fintype.card_fin]
-    simpa using hdelta
+    simpa [deltaRep_gen] using (deltaRep_gen (N := N) D i).prop.2.1
   exact glMap_det_pos_of_rat_det_pos _ hRat
 
-private lemma tRep_gen_sigma_eq_id
-    (D : HeckeCoset (Gamma0_pair N))
+private lemma tRep_gen_sigma_eq_id (D : HeckeCoset (Gamma0_pair N))
     (i : decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) :
-    UpperHalfPlane.σ (glMap (tRep_gen (Gamma0_pair N) D i)) =
-      ContinuousAlgEquiv.refl ℝ ℂ := by
-  unfold UpperHalfPlane.σ
-  simp only [tRep_gen_Gamma0_det_pos (N := N) D i, ↓reduceIte]
+    UpperHalfPlane.σ (glMap (tRep_gen (Gamma0_pair N) D i)) = ContinuousAlgEquiv.refl ℝ ℂ := by
+  simp only [UpperHalfPlane.σ, tRep_gen_Gamma0_det_pos D i, ↓reduceIte]
 
 private lemma glMap_sigma_eq_id_of_mem_H (h : GL (Fin 2) ℚ) (hh : h ∈ (Gamma0_pair N).H) :
     UpperHalfPlane.σ (glMap h) = ContinuousAlgEquiv.refl ℝ ℂ := by
-  unfold UpperHalfPlane.σ
-  simp only [show 0 < (glMap h).det.val from by
-    simpa using Gamma0_pair_det_pos N ⟨h, (Gamma0_pair N).h₀ hh⟩, ↓reduceIte]
+  simp only [UpperHalfPlane.σ, Gamma0_pair_det_pos N ⟨h, (Gamma0_pair N).h₀ hh⟩, ↓reduceIte]
 
 private lemma smul_slash_tRep_gen (k : ℤ) (D : HeckeCoset (Gamma0_pair N))
     (i : decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) (c : ℂ) (f : ℍ → ℂ) :
@@ -207,123 +186,99 @@ private lemma smul_slash_tRep_gen (k : ℤ) (D : HeckeCoset (Gamma0_pair N))
       c • (f ∣[k] tRep_gen (Gamma0_pair N) D i) := by
   change (c • f) ∣[k] glMap (tRep_gen (Gamma0_pair N) D i) =
     c • (f ∣[k] glMap (tRep_gen (Gamma0_pair N) D i))
-  ext z
-  rw [ModularForm.smul_slash, tRep_gen_sigma_eq_id (N := N) D i]
-  rfl
+  simp [ModularForm.smul_slash, tRep_gen_sigma_eq_id D i]
 
+/-- The twisted Hecke slash of a coset distributes over pointwise addition of functions. -/
 @[simp] lemma twistedHeckeSlash_gen_add (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
-    (D : HeckeCoset (Gamma0_pair N)) (f g : ℍ → ℂ) :
-    twistedHeckeSlash_gen (N := N) k χ D (f + g) =
-      twistedHeckeSlash_gen (N := N) k χ D f +
-        twistedHeckeSlash_gen (N := N) k χ D g := by
-  ext z
+    (D : HeckeCoset (Gamma0_pair N)) (f g : ℍ → ℂ) : twistedHeckeSlash_gen k χ D (f + g) =
+      twistedHeckeSlash_gen k χ D f + twistedHeckeSlash_gen k χ D g := by
   simp [twistedHeckeSlash_gen, Finset.sum_add_distrib]
 
+/-- The `χ`-twisted Hecke slash is linear in the input function. -/
 @[simp] lemma twistedHeckeSlash_gen_smul (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (D : HeckeCoset (Gamma0_pair N)) (c : ℂ) (f : ℍ → ℂ) :
-    twistedHeckeSlash_gen (N := N) k χ D (c • f) =
-      c • twistedHeckeSlash_gen (N := N) k χ D f := by
+    twistedHeckeSlash_gen (N := N) k χ D (c • f) = c • twistedHeckeSlash_gen (N := N) k χ D f := by
   simp only [twistedHeckeSlash_gen, Finset.smul_sum]
-  apply Finset.sum_congr rfl
-  intro i _
-  ext z
-  change
-    (↑(delta0NebentypusWeight (N := N) χ D i) : ℂ)⁻¹ *
-        (((c • f) ∣[k] tRep_gen (Gamma0_pair N) D i) z) =
-      c * ((↑(delta0NebentypusWeight (N := N) χ D i) : ℂ)⁻¹ *
-        ((f ∣[k] tRep_gen (Gamma0_pair N) D i) z))
-  rw [smul_slash_tRep_gen (N := N) k D i c f]
-  simp [Pi.smul_apply, smul_eq_mul, mul_left_comm]
+  refine Finset.sum_congr rfl fun i _ ↦ ?_
+  rw [smul_slash_tRep_gen, smul_comm]
 
-/-- The weighted Hecke slash action extended by `ℤ`-linearity to the existing
+/-- The weighted Hecke slash action extended by `ℤ`-linearity to the
 Hecke ring `𝕋 (Gamma0_pair N) ℤ`. -/
 noncomputable def twistedHeckeSlashExt_gen (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (T : 𝕋 (Gamma0_pair N) ℤ) (f : ℍ → ℂ) : ℍ → ℂ :=
-  T.sum (fun D c ↦ c • twistedHeckeSlash_gen (N := N) k χ D f)
+  T.sum (fun D c ↦ c • twistedHeckeSlash_gen k χ D f)
 
+/-- The `ℤ`-linear extension `twistedHeckeSlashExt_gen` is additive in the Hecke-ring element. -/
+@[simp]
 lemma twistedHeckeSlashExt_gen_add (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (T₁ T₂ : 𝕋 (Gamma0_pair N) ℤ) (f : ℍ → ℂ) :
     twistedHeckeSlashExt_gen (N := N) k χ (T₁ + T₂) f =
       twistedHeckeSlashExt_gen (N := N) k χ T₁ f +
-        twistedHeckeSlashExt_gen (N := N) k χ T₂ f := by
-  dsimp [twistedHeckeSlashExt_gen]
-  exact Finsupp.sum_add_index'
-    (h := fun D c ↦ c • twistedHeckeSlash_gen (N := N) k χ D f)
-    (fun _ ↦ by simp) (fun _ _ _ ↦ by ext z; simp [add_smul])
+        twistedHeckeSlashExt_gen (N := N) k χ T₂ f :=
+  Finsupp.sum_add_index' (fun _ ↦ by simp) (fun _ _ _ ↦ funext fun z ↦ by simp [add_smul])
 
-/-- The raw function-space `Γ₀(N),χ` condition for the existing Hecke pair. -/
+/-- The `Γ₀(N),χ` function-level invariance condition: `f ∣[k] h = χ(adj(h)) • f` for all
+`h` in the Hecke-pair subgroup `Γ₀(N)`. -/
 def IsGamma0TwistedInvariant (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (f : ℍ → ℂ) : Prop :=
   ∀ h : GL (Fin 2) ℚ, ∀ hh : h ∈ (Gamma0_pair N).H,
     f ∣[k] glMap h =
-      (↑(delta0NebentypusHChar (N := N) χ (GL_adjugate h)
+      (↑(delta0NebentypusHChar χ (GL_adjugate h)
         (HeckePairAction.adjugate_mem_H h hh)) : ℂ) • f
 
-/-- The abstract `Γ₀(N),χ` fixed submodule of functions. -/
+/-- The `Γ₀(N),χ` twisted-invariant submodule of functions `ℍ → ℂ`. -/
 noncomputable def gamma0TwistedInvariantFunctionSubmodule (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
     Submodule ℂ (ℍ → ℂ) where
   carrier := {f | IsGamma0TwistedInvariant (N := N) k χ f}
-  zero_mem' := by
-    intro h hh
-    simp [SlashAction.zero_slash]
+  zero_mem' := by simp [IsGamma0TwistedInvariant, SlashAction.zero_slash]
   add_mem' := by
     intro f g hf hg h hh
-    rw [SlashAction.add_slash, hf h hh, hg h hh]
-    ext z
-    simp [Pi.add_apply, mul_add]
+    simp [SlashAction.add_slash, hf h hh, hg h hh]
   smul_mem' := by
     intro c f hf h hh
-    rw [ModularForm.smul_slash, glMap_sigma_eq_id_of_mem_H (N := N) h hh, hf h hh]
-    ext z
-    simp [Pi.smul_apply, smul_eq_mul, mul_left_comm]
+    rw [ModularForm.smul_slash, glMap_sigma_eq_id_of_mem_H h hh, hf h hh]
+    exact smul_comm c _ f
 
 /-- The `H`-correction element attached to replacing `h₁` by its quotient
 representative in a right-coset decomposition. -/
 noncomputable def gamma0Correction (D : HeckeCoset (Gamma0_pair N))
-    (q : decompQuot (Gamma0_pair N) (HeckeCoset.rep D))
-    (h₁ h₂ : GL (Fin 2) ℚ) : GL (Fin 2) ℚ :=
+    (q : decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) (h₁ h₂ : GL (Fin 2) ℚ) : GL (Fin 2) ℚ :=
   (HeckeCoset.rep D : GL _ ℚ)⁻¹ * ((q.out : GL _ ℚ)⁻¹ * h₁) *
     (HeckeCoset.rep D : GL _ ℚ) * h₂
 
 /-- The correction element lies in `Γ₀(N)`. -/
 lemma gamma0Correction_mem_H (D : HeckeCoset (Gamma0_pair N))
-    (q : decompQuot (Gamma0_pair N) (HeckeCoset.rep D))
-    (h₁ : GL (Fin 2) ℚ) (hh₁ : h₁ ∈ (Gamma0_pair N).H)
-    (h₂ : GL (Fin 2) ℚ) (hh₂ : h₂ ∈ (Gamma0_pair N).H)
+    (q : decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) (h₁ : GL (Fin 2) ℚ)
+    (hh₁ : h₁ ∈ (Gamma0_pair N).H) (h₂ : GL (Fin 2) ℚ) (hh₂ : h₂ ∈ (Gamma0_pair N).H)
     (hq : (⟦q.out⟧ : decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) = ⟦⟨h₁, hh₁⟩⟧) :
     gamma0Correction (N := N) D q h₁ h₂ ∈ (Gamma0_pair N).H := by
   have h_K := QuotientGroup.leftRel_apply.mp (Quotient.exact hq)
   rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
     ConjAct.smul_def] at h_K
-  simp only [ConjAct.ofConjAct_toConjAct, map_inv, inv_inv] at h_K
-  exact (Gamma0_pair N).H.mul_mem (by
-    convert h_K using 1) hh₂
+  simp only [ConjAct.ofConjAct_toConjAct, map_inv, inv_inv, Subgroup.coe_mul,
+    Subgroup.coe_inv] at h_K
+  exact (Gamma0_pair N).H.mul_mem h_K hh₂
 
 /-- The adjugate decomposition of a corrected representative. -/
 lemma gamma0_adjugate_decomp_eq (D : HeckeCoset (Gamma0_pair N))
     (q : decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) (h₁ h₂ : GL (Fin 2) ℚ) :
     GL_adjugate (h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂) =
-    GL_adjugate (gamma0Correction (N := N) D q h₁ h₂) *
-      tRep_gen (Gamma0_pair N) D q := by
-  simp only [tRep_gen, gamma0Correction]
-  rw [← GL_adjugate_mul]
-  congr 1
-  simp only [mul_assoc, mul_inv_cancel_left]
+    GL_adjugate (gamma0Correction (N := N) D q h₁ h₂) * tRep_gen (Gamma0_pair N) D q := by
+  simp [tRep_gen, gamma0Correction, ← GL_adjugate_mul, mul_assoc, mul_inv_cancel_left]
 
 /-- The `Δ₀(N)` element `h₁ · rep(D) · h₂`. -/
-noncomputable def gamma0TripleDelta (D : HeckeCoset (Gamma0_pair N))
-    (h₁ : GL (Fin 2) ℚ) (hh₁ : h₁ ∈ (Gamma0_pair N).H)
-    (h₂ : GL (Fin 2) ℚ) (hh₂ : h₂ ∈ (Gamma0_pair N).H) : (Gamma0_pair N).Δ :=
+noncomputable def gamma0TripleDelta (D : HeckeCoset (Gamma0_pair N)) (h₁ : GL (Fin 2) ℚ)
+    (hh₁ : h₁ ∈ (Gamma0_pair N).H) (h₂ : GL (Fin 2) ℚ) (hh₂ : h₂ ∈ (Gamma0_pair N).H)
+    : (Gamma0_pair N).Δ :=
   ⟨h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂,
     (Gamma0_pair N).Δ.mul_mem
-      ((Gamma0_pair N).Δ.mul_mem ((Gamma0_pair N).h₀ hh₁)
-        (show (HeckeCoset.rep D : GL _ ℚ) ∈ (Gamma0_pair N).Δ from SetLike.coe_mem _))
+      ((Gamma0_pair N).Δ.mul_mem ((Gamma0_pair N).h₀ hh₁) (SetLike.coe_mem _))
       ((Gamma0_pair N).h₀ hh₂)⟩
 
 /-- The correction term as a `Δ₀(N)` element via `H ⊆ Δ`. -/
 noncomputable def gamma0CorrectionDelta (D : HeckeCoset (Gamma0_pair N))
     (q : decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) (h₁ h₂ : GL (Fin 2) ℚ)
-    (hκ : gamma0Correction (N := N) D q h₁ h₂ ∈ (Gamma0_pair N).H) : (Gamma0_pair N).Δ :=
-  ⟨gamma0Correction (N := N) D q h₁ h₂, (Gamma0_pair N).h₀ hκ⟩
+    (hκ : gamma0Correction D q h₁ h₂ ∈ (Gamma0_pair N).H) : (Gamma0_pair N).Δ :=
+  ⟨gamma0Correction D q h₁ h₂, (Gamma0_pair N).h₀ hκ⟩
 
 /-- The corrected representative factorization inside `Δ₀(N)`. -/
 lemma gamma0TripleDelta_eq_deltaRep_mul_correction (D : HeckeCoset (Gamma0_pair N))
@@ -333,39 +288,29 @@ lemma gamma0TripleDelta_eq_deltaRep_mul_correction (D : HeckeCoset (Gamma0_pair 
     (hκ : gamma0Correction (N := N) D q h₁ h₂ ∈ (Gamma0_pair N).H) :
     gamma0TripleDelta (N := N) D h₁ hh₁ h₂ hh₂ =
       deltaRep_gen (N := N) D q * gamma0CorrectionDelta (N := N) D q h₁ h₂ hκ := by
-  apply Subtype.ext
-  change h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂ =
-    ((q.out : GL _ ℚ) * (HeckeCoset.rep D : GL _ ℚ)) *
-      gamma0Correction (N := N) D q h₁ h₂
-  simp only [gamma0Correction]
-  group
+  simp [gamma0Correction, gamma0TripleDelta, deltaRep_gen, gamma0CorrectionDelta, mul_assoc]
 
 private lemma slash_GL_adjugate_triple_eq_correction_slash (k : ℤ)
     (D : HeckeCoset (Gamma0_pair N)) (q : decompQuot (Gamma0_pair N) (HeckeCoset.rep D))
     (h₁ h₂ : GL (Fin 2) ℚ) (f : ℍ → ℂ) :
     f ∣[k] GL_adjugate (h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂) =
-      (f ∣[k] glMap (GL_adjugate (gamma0Correction (N := N) D q h₁ h₂))) ∣[k]
+      (f ∣[k] glMap (GL_adjugate (gamma0Correction D q h₁ h₂))) ∣[k]
         glMap (tRep_gen (Gamma0_pair N) D q) := by
-  rw [gamma0_adjugate_decomp_eq (N := N) D q h₁ h₂]
-  change f ∣[k] glMap (GL_adjugate (gamma0Correction (N := N) D q h₁ h₂) *
+  rw [gamma0_adjugate_decomp_eq D q h₁ h₂]
+  change f ∣[k] glMap (GL_adjugate (gamma0Correction D q h₁ h₂) *
       tRep_gen (Gamma0_pair N) D q) = _
   rw [map_mul, SlashAction.slash_mul]
 
 private lemma delta0NebentypusHChar_adjugate_adjugate_correction (χ : (ZMod N)ˣ →* ℂˣ)
     (D : HeckeCoset (Gamma0_pair N)) (q : decompQuot (Gamma0_pair N) (HeckeCoset.rep D))
-    (h₁ h₂ : GL (Fin 2) ℚ)
-    (hκ : gamma0Correction (N := N) D q h₁ h₂ ∈ (Gamma0_pair N).H)
+    (h₁ h₂ : GL (Fin 2) ℚ) (hκ : gamma0Correction (N := N) D q h₁ h₂ ∈ (Gamma0_pair N).H)
     (hκadj : GL_adjugate (gamma0Correction (N := N) D q h₁ h₂) ∈ (Gamma0_pair N).H) :
     delta0NebentypusHChar (N := N) χ
         (GL_adjugate (GL_adjugate (gamma0Correction (N := N) D q h₁ h₂)))
         (HeckePairAction.adjugate_mem_H
           (GL_adjugate (gamma0Correction (N := N) D q h₁ h₂)) hκadj) =
-      delta0NebentypusDeltaChar (N := N) χ
-        (gamma0CorrectionDelta (N := N) D q h₁ h₂ hκ) := by
-  unfold delta0NebentypusHChar gamma0CorrectionDelta
-  apply congrArg (delta0NebentypusDeltaChar (N := N) χ)
-  apply Subtype.ext
-  exact GL_adjugate_involutive _
+      delta0NebentypusDeltaChar (N := N) χ (gamma0CorrectionDelta (N := N) D q h₁ h₂ hκ) := by
+  exact congrArg (delta0NebentypusDeltaChar (N := N) χ) (Subtype.ext (GL_adjugate_involutive _))
 
 /-- Twisted replacement for `slash_tRep_gen_of_mem`: the `H` correction is
 absorbed by the inverse character coefficient. -/
@@ -374,14 +319,14 @@ lemma twisted_weighted_slash_tRep_gen_of_mem (k : ℤ) (χ : (ZMod N)ˣ →* ℂ
     (h₁ : GL (Fin 2) ℚ) (hh₁ : h₁ ∈ (Gamma0_pair N).H)
     (h₂ : GL (Fin 2) ℚ) (hh₂ : h₂ ∈ (Gamma0_pair N).H)
     (f : ℍ → ℂ) (hf : IsGamma0TwistedInvariant (N := N) k χ f) :
-    let q : decompQuot (Gamma0_pair N) (HeckeCoset.rep D) := ⟦⟨h₁, hh₁⟩⟧
     ((↑(delta0NebentypusDeltaChar (N := N) χ
       (gamma0TripleDelta (N := N) D h₁ hh₁ h₂ hh₂)) : ℂ)⁻¹) •
         (f ∣[k] GL_adjugate (h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂)) =
-      ((↑(delta0NebentypusDeltaChar (N := N) χ
-        (deltaRep_gen (N := N) D q)) : ℂ)⁻¹) •
-        (f ∣[k] tRep_gen (Gamma0_pair N) D q) := by
-  intro q
+      ((↑(delta0NebentypusDeltaChar (N := N) χ (deltaRep_gen (N := N) D
+        (⟦⟨h₁, hh₁⟩⟧ : decompQuot (Gamma0_pair N) (HeckeCoset.rep D)))) : ℂ)⁻¹) •
+        (f ∣[k] tRep_gen (Gamma0_pair N) D
+          (⟦⟨h₁, hh₁⟩⟧ : decompQuot (Gamma0_pair N) (HeckeCoset.rep D))) := by
+  set q : decompQuot (Gamma0_pair N) (HeckeCoset.rep D) := ⟦⟨h₁, hh₁⟩⟧
   have hκ : gamma0Correction (N := N) D q h₁ h₂ ∈ (Gamma0_pair N).H :=
     gamma0Correction_mem_H (N := N) D q h₁ hh₁ h₂ hh₂ (Quotient.out_eq q)
   have hη :
@@ -399,90 +344,50 @@ lemma twisted_weighted_slash_tRep_gen_of_mem (k : ℤ) (χ : (ZMod N)ˣ →* ℂ
   rw [hf (GL_adjugate (gamma0Correction (N := N) D q h₁ h₂)) hκadj,
     ModularForm.smul_slash]
   · rw [tRep_gen_sigma_eq_id (N := N) D q,
-      delta0NebentypusHChar_adjugate_adjugate_correction (N := N) χ D q h₁ h₂ hκ hκadj]
-    have hscalar :
-        ((↑(delta0NebentypusDeltaChar (N := N) χ
-          (gamma0TripleDelta (N := N) D h₁ hh₁ h₂ hh₂)) : ℂ)⁻¹ *
-          (↑(delta0NebentypusDeltaChar (N := N) χ
-            (gamma0CorrectionDelta (N := N) D q h₁ h₂ hκ)) : ℂ)) =
-        (↑(delta0NebentypusDeltaChar (N := N) χ
-          (deltaRep_gen (N := N) D q)) : ℂ)⁻¹ := by
-      rw [hη]
-      exact units_coe_mul_inv_mul_right_cancel
-        (delta0NebentypusDeltaChar (N := N) χ (deltaRep_gen (N := N) D q))
-        (delta0NebentypusDeltaChar (N := N) χ
-          (gamma0CorrectionDelta (N := N) D q h₁ h₂ hκ))
+      delta0NebentypusHChar_adjugate_adjugate_correction (N := N) χ D q h₁ h₂ hκ hκadj, hη]
     ext z
-    simp only [Pi.smul_apply, smul_eq_mul, ContinuousAlgEquiv.refl_apply, RingHom.id_apply]
-    rw [← mul_assoc, hscalar]
+    simp only [Pi.smul_apply, smul_eq_mul, ContinuousAlgEquiv.refl_apply, Units.val_mul, mul_inv]
+    rw [mul_assoc, inv_mul_cancel_left₀ (Units.ne_zero _)]
     rfl
 
 private lemma units_coe_inv_right_eq_mul_inv_mul (a b : ℂˣ) (x : ℂ) :
     (↑b : ℂ)⁻¹ * x = (↑a : ℂ) * (((↑(a * b) : ℂ)⁻¹) * x) := by
-  simp [Units.val_mul, _root_.mul_inv_rev, mul_assoc, mul_left_comm, a.ne_zero]
+  simp [Units.val_mul, _root_.mul_inv_rev, mul_assoc, mul_left_comm]
 
 private lemma units_coe_inv_right_smul_eq_mul_smul_inv_mul (a b : ℂˣ) (g : ℍ → ℂ) :
     (↑b : ℂ)⁻¹ • g = (↑a : ℂ) • ((↑(a * b) : ℂ)⁻¹ • g) := by
-  ext z
-  simp only [Pi.smul_apply, smul_eq_mul]
-  exact units_coe_inv_right_eq_mul_inv_mul a b (g z)
+  funext z
+  simpa only [Pi.smul_apply, smul_eq_mul] using units_coe_inv_right_eq_mul_inv_mul a b (g z)
 
 private lemma units_inv_smul_inv_smul_eq_mul_inv_smul (a b : ℂˣ) (g : ℍ → ℂ) :
     (↑a : ℂ)⁻¹ • ((↑b : ℂ)⁻¹ • g) = (↑(a * b) : ℂ)⁻¹ • g := by
-  ext z
-  simp [Pi.smul_apply, smul_eq_mul, Units.val_mul, _root_.mul_inv_rev,
-    mul_left_comm, mul_comm]
+  grind [smul_smul, Units.val_mul, mul_comm]
 
 private noncomputable def gamma0LeftMulQuot (D : HeckeCoset (Gamma0_pair N))
-    (σ : (Gamma0_pair N).H) :
-    decompQuot (Gamma0_pair N) (HeckeCoset.rep D) →
-      decompQuot (Gamma0_pair N) (HeckeCoset.rep D) :=
+    (σ : (Gamma0_pair N).H) : decompQuot (Gamma0_pair N) (HeckeCoset.rep D) →
+    decompQuot (Gamma0_pair N) (HeckeCoset.rep D) :=
   fun i ↦ ⟦⟨σ * i.out, (Gamma0_pair N).H.mul_mem σ.prop (SetLike.coe_mem _)⟩⟧
 
-private lemma gamma0LeftMulQuot_injective (D : HeckeCoset (Gamma0_pair N))
-    (σ : (Gamma0_pair N).H) :
+private lemma gamma0LeftMulQuot_injective (D : HeckeCoset (Gamma0_pair N)) (σ : (Gamma0_pair N).H) :
     Function.Injective (gamma0LeftMulQuot (N := N) D σ) := by
   intro i₁ i₂ h
-  simp only [gamma0LeftMulQuot] at h
-  by_contra hne
-  have h_K := QuotientGroup.leftRel_apply.mp (Quotient.exact h)
-  simp only [Subgroup.mem_subgroupOf] at h_K
-  have h_mem : (HeckeCoset.rep D : GL _ ℚ)⁻¹ *
-      ((i₁.out : GL _ ℚ)⁻¹ * (i₂.out : GL _ ℚ)) *
-      (HeckeCoset.rep D : GL _ ℚ) ∈ (Gamma0_pair N).H := by
-    rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ConjAct.smul_def] at h_K
-    simp only [ConjAct.ofConjAct_toConjAct, map_inv, inv_inv] at h_K
-    convert h_K using 1
-    simp only [Subgroup.coe_mul, Subgroup.coe_inv]
-    group
-  exact decompQuot_coset_diff (Gamma0_pair N) (HeckeCoset.rep D) i₁ i₂ hne
-    (leftCoset_eq_of_not_disjoint (Gamma0_pair N).H _ _ (by
-      rw [Set.not_disjoint_iff]
-      refine ⟨(i₂.out : GL _ ℚ) * (HeckeCoset.rep D : GL _ ℚ), ?_, ?_⟩
-      · rw [smul_eq_singleton_mul]
-        exact ⟨_, rfl, _, h_mem, by group⟩
-      · rw [smul_eq_singleton_mul]
-        exact ⟨_, rfl, 1, (Gamma0_pair N).H.one_mem, by group⟩))
+  rw [← Quotient.out_eq i₁, ← Quotient.out_eq i₂, Quotient.eq'', QuotientGroup.leftRel_apply]
+  convert QuotientGroup.leftRel_apply.mp (Quotient.exact h) using 1
+  exact Subtype.ext (by simp only [Subgroup.coe_mul, InvMemClass.coe_inv]; group)
 
 private noncomputable def gamma0LeftMulEquiv (D : HeckeCoset (Gamma0_pair N))
-    (σ : (Gamma0_pair N).H) :
-    decompQuot (Gamma0_pair N) (HeckeCoset.rep D) ≃
+    (σ : (Gamma0_pair N).H) : decompQuot (Gamma0_pair N) (HeckeCoset.rep D) ≃
       decompQuot (Gamma0_pair N) (HeckeCoset.rep D) :=
-  Equiv.ofBijective _ ⟨gamma0LeftMulQuot_injective (N := N) D σ,
-    Finite.surjective_of_injective (gamma0LeftMulQuot_injective (N := N) D σ)⟩
+  Equiv.ofBijective _ (gamma0LeftMulQuot_injective D σ).bijective_of_finite
 
 private lemma gamma0TripleDelta_left_eq_h_mul_deltaRep (D : HeckeCoset (Gamma0_pair N))
     (σ : GL (Fin 2) ℚ) (hσ : σ ∈ (Gamma0_pair N).H)
     (i : decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) :
     gamma0TripleDelta (N := N) D (σ * (i.out : GL (Fin 2) ℚ))
-        ((Gamma0_pair N).H.mul_mem hσ (SetLike.coe_mem _))
-        1 (Gamma0_pair N).H.one_mem =
+        ((Gamma0_pair N).H.mul_mem hσ (SetLike.coe_mem _)) 1 (Gamma0_pair N).H.one_mem =
       (⟨σ, (Gamma0_pair N).h₀ hσ⟩ : (Gamma0_pair N).Δ) *
         deltaRep_gen (N := N) D i := by
-  apply Subtype.ext
-  change (σ * (i.out : GL _ ℚ)) * (HeckeCoset.rep D : GL _ ℚ) * 1 =
-    σ * ((i.out : GL _ ℚ) * (HeckeCoset.rep D : GL _ ℚ))
-  group
+  simp [gamma0TripleDelta, deltaRep_gen, mul_assoc]
 
 private lemma delta0Nebentypus_left_weight (χ : (ZMod N)ˣ →* ℂˣ)
     (D : HeckeCoset (Gamma0_pair N))

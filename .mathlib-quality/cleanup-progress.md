@@ -93,3 +93,9 @@ twistedHeckeSlashGen (99 sites/4 files, substring cascade), twistedHeckeSlashExt
 IsCoprime restatement (big-change, declined-pending); CommMonoid-χ generality (big-change);
 SMul-tower smul (big-change). Remaining waves 6–9: decls from gamma0CorrectionDelta
 through twistedHeckeSumFunction_one (22 decls incl. the >45-line monsters).
+CHECKPOINT update: waves 6–7 done (42/70 decls — total recount: 70 not 52). Monster
+twisted_weighted_slash_tRep_gen_of_mem CLEANED: let-in-statement eliminated (consumers verified),
+unused simp arg gone (file LSP-warning-free), body 35→23. gamma0LeftMulQuot_injective 23→4
+(leftRel direct). Queue still 6 renames. New 5a flags: units inline-CHAIN
+(units_coe_inv_right_eq_mul_inv_mul → units_coe_inv_right_smul_eq_mul_smul_inv_mul, both 1-use).
+Remaining 28 decls: delta0Nebentypus_left_weight … twistedHeckeSumFunction_one (waves 8–12).
