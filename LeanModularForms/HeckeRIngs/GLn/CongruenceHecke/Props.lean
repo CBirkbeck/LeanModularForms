@@ -243,7 +243,7 @@ private lemma fin2_col_scale (m : ℕ) (j : Fin 2) :
     (![0, (m : ℤ)] : Fin 2 → ℤ) j = (m : ℤ) * (![0, 1] : Fin 2 → ℤ) j := by
   fin_cases j <;> simp
 
-private noncomputable def lunip_inject (N : ℕ) [NeZero N] (k_exp : ℕ)
+noncomputable def lunip_inject (N : ℕ) [NeZero N] (k_exp : ℕ)
     (g : (Gamma0_pair N).Δ) : Fin k_exp → HeckeRing.decompQuot (Gamma0_pair N) g :=
   fun r ↦ ⟦⟨mapGL ℚ ⟨Matrix.of ![![(1 : ℤ), 0], ![↑N * (↑r : ℤ), 1]],
     by simp [Matrix.det_fin_two, Matrix.of_apply, Matrix.cons_val_zero,
@@ -382,7 +382,7 @@ private lemma lunip_conj_diag_eq (N : ℕ) [NeZero N] (k_exp : ℕ)
     (try ring) <;>
     (have := congr_arg (Int.cast (R := ℚ)) hc''; push_cast at this ⊢; nlinarith)
 
-private lemma lunip_inject_surjective (N : ℕ) [NeZero N]
+lemma lunip_inject_surjective (N : ℕ) [NeZero N]
     (k_exp : ℕ) (hk_pos : 0 < k_exp) (hk : ℕ) (hk_dvd : k_exp ∣ N ^ hk)
     (ha : ∀ i : Fin 2, 0 < (![1, k_exp] : Fin 2 → ℕ) i) :
     Function.Surjective (lunip_inject N k_exp
@@ -454,7 +454,7 @@ private lemma lunip_diff_unipotent_mul (N : ℕ) (r₁ r₂ : ℤ)
 (viewed at position `(1,0)`), with `τ.1 1 0 = N·q₂`, derive the integer
 identity `σ₁.1 0 0 ^ 2 · (r₂ - r₁) = k_exp · q₂`. This is the arithmetic
 core of `lunip_inject_injective`. -/
-private lemma lunip_inject_witness_eq (N : ℕ) [NeZero N] (k_exp : ℕ)
+lemma lunip_inject_witness_eq (N : ℕ) [NeZero N] (k_exp : ℕ)
     (ha : ∀ i : Fin 2, 0 < (![1, k_exp] : Fin 2 → ℕ) i)
     (σ₁ τ u_diff : SpecialLinearGroup (Fin 2) ℤ)
     (r₁ r₂ : Fin k_exp) (q₂ : ℤ) (hq₂ : τ.1 1 0 = ↑N * q₂)
@@ -488,7 +488,7 @@ private lemma lunip_inject_witness_eq (N : ℕ) [NeZero N] (k_exp : ℕ)
 /-- The conjugation bridge for `lunip_inject_injective`: combines the unipotent
 algebra with the matrix-coefficient witness to extract divisibility from the
 conjugation hypothesis. -/
-private lemma lunip_inject_dvd_of_conj (N : ℕ) [NeZero N] (k_exp : ℕ)
+lemma lunip_inject_dvd_of_conj (N : ℕ) [NeZero N] (k_exp : ℕ)
     (ha : ∀ i : Fin 2, 0 < (![1, k_exp] : Fin 2 → ℕ) i)
     (σ₁ τ : SpecialLinearGroup (Fin 2) ℤ) (r₁ r₂ : Fin k_exp)
     (hτ_dvd : (↑N : ℤ) ∣ τ.1 1 0)
@@ -530,7 +530,7 @@ private lemma lunip_inject_dvd_of_conj (N : ℕ) [NeZero N] (k_exp : ℕ)
   obtain ⟨q₂, hq₂⟩ := hτ_dvd
   exact ⟨q₂, lunip_inject_witness_eq N k_exp ha σ₁ τ u_diff r₁ r₂ q₂ hq₂ rfl h_mul'⟩
 
-private lemma lunip_inject_injective (N : ℕ) [NeZero N]
+lemma lunip_inject_injective (N : ℕ) [NeZero N]
     (k_exp : ℕ) (hk_pos : 0 < k_exp) (g : (Gamma0_pair N).Δ)
     (γ₁ γ₂ : GL (Fin 2) ℚ) (hγ₂ : γ₂ ∈ (Gamma0_pair N).H)
     (σ₁ : SpecialLinearGroup (Fin 2) ℤ) (hσ₁_eq : mapGL ℚ σ₁ = γ₁)

@@ -1025,7 +1025,7 @@ combinatorics, mediated by the `Γ₁(N)`-invariance of `f`. -/
 
 /-- For a bad prime `p ∣ N`, the prime double coset `D_p_Gamma0` coincides with the bad
 diagonal class `T(1, p)`, whose `decompQuot` has exactly `p` elements (Shimura §3.3). -/
-private lemma decompQuot_D_p_Gamma0_bad_natcard (p : ℕ) (hp : Nat.Prime p)
+lemma decompQuot_D_p_Gamma0_bad_natcard (p : ℕ) (hp : Nat.Prime p)
     (hpN : ¬ Nat.Coprime p N) :
     Nat.card (HeckeRing.decompQuot (Gamma0_pair N)
         (HeckeRing.HeckeCoset.rep (D_p_Gamma0 N p hp.pos))) = p := by
