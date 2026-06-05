@@ -13,8 +13,8 @@ commit per file after Phase 7.
 | # | File | LOC | Status |
 |---|------|-----|--------|
 | 1 | HeckeRIngs/GL2/Unified/Core.lean | 88→79 | **DONE 2026-06-05** |
-| 2 | HeckeRIngs/GL2/Unified/NebentypusSpace.lean | 59 | IN PROGRESS |
-| 3 | HeckeRIngs/GL2/Unified/Gamma1CharSpace.lean | 82 | queued |
+| 2 | HeckeRIngs/GL2/Unified/NebentypusSpace.lean | 59→59 | **DONE 2026-06-05** |
+| 3 | HeckeRIngs/GL2/Unified/Gamma1CharSpace.lean | 82 | IN PROGRESS |
 | 4 | HeckeRIngs/GL2/Unified/TwistedSlash.lean | 95 | queued |
 | 5 | HeckeRIngs/GL2/Unified/CuspNebentypusSpace.lean | 186 | queued |
 | 6 | HeckeRIngs/GL2/Unified/TwistedHeckeRing.lean | 1249 | queued |
@@ -40,6 +40,16 @@ FourierHecke.lean (789), LevelRaise.lean (598), Newforms/ subdir, …
 ## Tranche 5 — ForMathlib
 
 ## Per-file log
+
+### 2. GL2/Unified/NebentypusSpace.lean (59 → 59 lines) — 2026-06-05
+- Phases 0–7 all run; 3 declarations + 1 new API lemma; 3 workers, all gates pass; build green ×3.
+- Header normalized; module docstring rewritten (stale "experimental/isolated from SMO path" → Main definitions).
+- NEW `@[simp] gamma0NebentypusChar_apply` (API-completeness; lets downstream stop unfolding the def by name).
+- `gamma0NebentypusChar` now genuinely NeZero-free; `↥(Gamma0 N)` → `Gamma0 N`; noncomputable confirmed genuine (Gamma0MapUnits dep).
+- Submodule copy-proof: `by ext f; simp […, gamma0NebentypusChar]` → term-mode `Set.ext fun f ↦ by simp [modFormCharSpace_iff_nebentypus, isNebentypus_iff]` (semicolon chain gone, redundant unfold-hint dropped).
+- /simplify: variable/omit inversion fixed — `variable {N : ℕ}` + mid-file `variable [NeZero N]` split replaces 2–3 `omit` lines (note: an `omit` before a decl whose BODY needs the instance is a silent no-op — signature keeps the instance; verified via hover).
+- mem_…_iff docstring de-staled. Renames queued: 0.
+- **Campaign notes:** TwistedSlash.lean L36/37/57/58 + CuspNebentypusSpace.lean L132 carry now-redundant `gamma0NebentypusChar` simp unfold-hints (drop in their runs); CuspNebentypusSpace's `cuspGamma0NebentypusSubmodule` copy-proof can take the same Set.ext golf. PRE-EXISTING compiler PANICs (info-level, replayed) in ForMathlib/Seg1FTCProvider.lean:326 + Seg4FTCProvider.lean:343 (LCNF ExplicitBoxing) — investigate in tranche 5.
 
 ### 1. GL2/Unified/Core.lean (88 → 79 lines, −10%) — 2026-06-05
 - Phases 0–7 all run; 11 declarations, 11 individual workers, all gates pass; full build green ×3.
