@@ -1056,9 +1056,14 @@ brute-force confirmed at `N = 2, p = 2` and `N = 6, p = 2`).  Hence
 Consequently the ring-first transport (`Unified/RingTransport.lean`) is deliberately
 restricted to indices coprime to `N`; bad-prime blocks (`U_p`-powers) live on the
 operator side.  The proven cardinality `decompQuot_D_p_Gamma0_bad_natcard` above is kept
-for future use (e.g. a bridge for the non-adjugate companion homomorphism
-`T ↦ Σ f∣δᵢ`, which is also multiplicative by commutativity of `𝕋(Γ₀(N))` and DOES send
-`D_p ↦ U_p` at bad primes). -/
+for future use.  (A second machine-verified obstruction, recorded in
+`Unified/DirectHeckeRing.lean`: simply dropping the adjugate does NOT give the
+Shimura-convention companion either — `decompQuot` indexes RIGHT cosets `δᵢ·H`, whose
+Γ₀(N)-correction lands on the right of the slash where invariance of `f` cannot absorb it,
+and whose bad-prime representatives are lower-unipotent, not the `U_p` matrices.  The genuine
+companion homomorphism that sends `D_p ↦ U_p` at bad primes must be built on the LEFT-coset
+quotient `Γ₀(N)\Γ₀(N)·g·Γ₀(N)` — a new finite-quotient development whose representatives are
+exactly the `T_p_upper`/`T_p_lower` matrices of `heckeT_p_all`.) -/
 
 end Bridge
 
