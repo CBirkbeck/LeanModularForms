@@ -167,6 +167,217 @@ theorem heckeRingHomCharSpaceShimura_single_coe (k : ℤ) (χ : (ZMod N)ˣ →* 
   rw [mul_assoc, mul_comm (↑(delta0NebentypusWeight (N := N) (chiConj χ) D i) : ℂ)⁻¹,
     ← mul_assoc, inv_mul_cancel₀ (frickeScalar_ne_zero (N := N) (k := k)), one_mul]
 
+/-! ## Bad-prime infrastructure: the lower-unipotent representatives
+
+At a bad prime `p ∣ N` the right-coset representatives of
+`D_p = Γ₀(N)·diag(1,p)·Γ₀(N)` are the lower-unipotent matrices
+`lunipRep p r = [[1,0],[N·r,p]]`, `r = 0, …, p−1`.  We exhibit them as factorisations
+`h₁ · rep(D_p) · h₂` through the abstract representative, build the index bijection
+`Fin p ≃ decompQuot`, compute their Nebentypus character (`= 1`), and assemble the
+**true** bad-prime matching: the χ-twisted slash sum equals the sum of slashes by the
+*adjugates* `adj(lunipRep r)` — which the Fricke conjugation then turns into `U_p`. -/
+
+section BadPrime
+
+variable (p : ℕ)
+
+/-- The lower-unipotent `Γ₀(N)`-element `[[1,0],[N·r,1]]`. -/
+noncomputable def lunipH (r : ℕ) : GL (Fin 2) ℚ :=
+  mapGL ℚ (⟨!![1, 0; (N : ℤ) * r, 1], by simp [Matrix.det_fin_two]⟩ : SL(2, ℤ))
+
+lemma lunipH_mem (r : ℕ) : lunipH (N := N) r ∈ (Gamma0_pair N).H :=
+  Subgroup.mem_map_of_mem _ (by
+    rw [CongruenceSubgroup.Gamma0_mem]
+    show (((!![1, 0; (N : ℤ) * r, 1] : Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ℤ) : ZMod N) = 0
+    simp)
+
+lemma lunipRep_eq_lunipH_mul_diag (hp : 0 < p) (r : ℕ) :
+    lunipRep (N := N) p hp r =
+      lunipH (N := N) r * (diag_1p_delta_Gamma0 N p hp : GL (Fin 2) ℚ) := by
+  apply Units.ext
+  ext i j
+  have hpos : ∀ m : Fin 2, 0 < (![1, p] : Fin 2 → ℕ) m := fun m ↦ by
+    fin_cases m <;> simp [hp]
+  simp only [Units.val_mul, lunipRep_coe, diag_1p_delta_Gamma0, diagMat_val _ _ hpos,
+    Matrix.mul_apply, Fin.sum_univ_two, Matrix.diagonal_apply, lunipH,
+    mapGL_coe_matrix, algebraMap_int_eq]
+  fin_cases i <;> fin_cases j <;> simp
+
+lemma lunipRep_mem_toSet (hp : Nat.Prime p) (r : ℕ) :
+    (lunipRep (N := N) p hp.pos r) ∈ HeckeCoset.toSet (D_p_Gamma0 N p hp.pos) :=
+  mem_D_p_Gamma0_of_factor_through_diag N p hp.pos _ (lunipH (N := N) r) 1
+    (lunipH_mem r) (one_mem _)
+    (by rw [mul_one]; exact lunipRep_eq_lunipH_mul_diag p hp.pos r)
+
+/-- Every bad lower-unipotent representative factors through the abstract coset
+representative. -/
+lemma lunipRep_factorisation (hp : Nat.Prime p) (r : ℕ) :
+    ∃ (h₁ : GL (Fin 2) ℚ) (_ : h₁ ∈ (Gamma0_pair N).H)
+      (h₂ : GL (Fin 2) ℚ) (_ : h₂ ∈ (Gamma0_pair N).H),
+      lunipRep (N := N) p hp.pos r =
+        h₁ * (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL (Fin 2) ℚ) * h₂ := by
+  have h := lunipRep_mem_toSet (N := N) p hp r
+  rw [HeckeCoset.toSet_eq_rep, DoubleCoset.mem_doubleCoset] at h
+  obtain ⟨a, ha, c, hc, heq⟩ := h
+  exact ⟨a, ha, c, hc, heq⟩
+
+/-- The Nebentypus character of (any `Δ`-packaging of) a lower-unipotent representative
+is `1`: its upper-left entry is `1`. -/
+lemma lunipRep_deltaChar (hp : Nat.Prime p) (r : ℕ) (χ'' : (ZMod N)ˣ →* ℂˣ)
+    (g : (Gamma0_pair N).Δ)
+    (hg : (g : GL (Fin 2) ℚ) = lunipRep (N := N) p hp.pos r) :
+    delta0NebentypusDeltaChar (N := N) χ'' g = 1 := by
+  unfold delta0NebentypusDeltaChar
+  simp only [MonoidHom.coe_mk, OneHom.coe_mk]
+  rw [show (1 : ℂˣ) = χ'' 1 from (map_one χ'').symm]
+  congr 1
+  apply Units.ext
+  rw [Delta0UpperUnit_val, Units.val_one]
+  have hwit : delta0IntegralMatrix (N := N) g = !![1, 0; (N : ℤ) * r, (p : ℤ)] := by
+    apply delta0IntegralMatrix_witness_unique
+    rw [hg]
+    ext i j
+    fin_cases i <;> fin_cases j <;>
+      simp [lunipRep, GeneralLinearGroup.mkOfDetNeZero, Matrix.map_apply]
+  rw [hwit]
+  simp
+
+/-- The index map `Fin p → decompQuot` attached to the lower-unipotent factorisations. -/
+noncomputable def lunipPsi (hp : Nat.Prime p) :
+    Fin p → decompQuot (Gamma0_pair N) (HeckeCoset.rep (D_p_Gamma0 N p hp.pos)) :=
+  fun r ↦ ⟦⟨(lunipRep_factorisation (N := N) p hp r.val).choose,
+    (lunipRep_factorisation (N := N) p hp r.val).choose_spec.choose⟩⟧
+
+/-- Unadjugated companion of `adj_quot_eq_imp_inv_mul_mem_H`: two factorisations through
+the representative whose `H`-parts agree in `decompQuot` differ by a right `Γ₀(N)`-factor. -/
+lemma quot_eq_imp_inv_mul_mem_H' (g : (Gamma0_pair N).Δ)
+    (a₁ : GL (Fin 2) ℚ) (ha₁ : a₁ ∈ (Gamma0_pair N).H)
+    (c₁ : GL (Fin 2) ℚ) (hc₁ : c₁ ∈ (Gamma0_pair N).H)
+    (a₂ : GL (Fin 2) ℚ) (ha₂ : a₂ ∈ (Gamma0_pair N).H)
+    (c₂ : GL (Fin 2) ℚ) (hc₂ : c₂ ∈ (Gamma0_pair N).H)
+    (g₁ g₂ : GL (Fin 2) ℚ)
+    (heq₁ : g₁ = a₁ * (g : GL (Fin 2) ℚ) * c₁)
+    (heq₂ : g₂ = a₂ * (g : GL (Fin 2) ℚ) * c₂)
+    (hquot : (⟦(⟨a₁, ha₁⟩ : (Gamma0_pair N).H)⟧ :
+        decompQuot (Gamma0_pair N) g) = ⟦⟨a₂, ha₂⟩⟧) :
+    g₁⁻¹ * g₂ ∈ (Gamma0_pair N).H := by
+  rw [heq₁, heq₂]
+  have hrel := QuotientGroup.leftRel_apply.mp (Quotient.exact hquot)
+  rw [Subgroup.mem_subgroupOf] at hrel
+  rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem] at hrel
+  simp only [ConjAct.smul_def, ConjAct.ofConjAct_toConjAct, map_inv, inv_inv] at hrel
+  simp only [Subgroup.coe_mul, Subgroup.coe_inv] at hrel
+  have h_prod : (a₁ * (g : GL (Fin 2) ℚ) * c₁)⁻¹ * (a₂ * (g : GL (Fin 2) ℚ) * c₂) =
+      c₁⁻¹ * (((g : GL (Fin 2) ℚ))⁻¹ * (a₁⁻¹ * a₂) * (g : GL (Fin 2) ℚ)) * c₂ := by
+    group
+  rw [h_prod]
+  exact (Gamma0_pair N).H.mul_mem
+    ((Gamma0_pair N).H.mul_mem ((Gamma0_pair N).H.inv_mem hc₁) hrel) hc₂
+
+/-- Distinct lower-unipotent representatives lie in distinct right cosets: the quotient
+matrix `[[1,0],[N(r'−r)/p,1]]` lies in `Γ₀(N)` only when `p ∣ r'−r`. -/
+lemma lunipPsi_injective (hp : Nat.Prime p) (hpN : ¬ Nat.Coprime p N) :
+    Function.Injective (lunipPsi (N := N) p hp) := by
+  intro r r' hquot
+  by_contra hne
+  -- Extract the two factorisations and conclude the quotient matrix is in `Γ₀(N)`.
+  obtain ⟨ha₁, c₁, hc₁, heq₁⟩ := (lunipRep_factorisation (N := N) p hp r.val).choose_spec
+  obtain ⟨ha₂, c₂, hc₂, heq₂⟩ := (lunipRep_factorisation (N := N) p hp r'.val).choose_spec
+  have hmem := quot_eq_imp_inv_mul_mem_H' (N := N)
+    (⟨HeckeCoset.rep (D_p_Gamma0 N p hp.pos),
+      (HeckeCoset.rep (D_p_Gamma0 N p hp.pos)).2⟩)
+    _ ha₁ c₁ hc₁ _ ha₂ c₂ hc₂ _ _ heq₁ heq₂ hquot
+  -- The quotient matrix, computed explicitly.
+  have hp0 : (p : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr hp.pos.ne'
+  have hmat : ((lunipRep (N := N) p hp.pos r.val)⁻¹ *
+      lunipRep (N := N) p hp.pos r'.val : GL (Fin 2) ℚ) =
+      GeneralLinearGroup.mkOfDetNeZero
+        !![1, 0; ((N : ℚ) * r' - (N : ℚ) * r) / p, 1] (by
+          rw [Matrix.det_fin_two_of]; simp) := by
+    rw [inv_mul_eq_iff_eq_mul]
+    apply Units.ext
+    ext i j
+    have hco : ∀ s : ℕ, (↑(lunipRep (N := N) p hp.pos s) : Matrix (Fin 2) (Fin 2) ℚ) =
+        !![1, 0; (N : ℚ) * s, (p : ℚ)] := fun s ↦ lunipRep_coe p hp.pos s
+    fin_cases i <;> fin_cases j <;> simp only [Units.val_mul, hco,
+        GeneralLinearGroup.mkOfDetNeZero, Matrix.mul_apply, Fin.sum_univ_two,
+        Matrix.cons_val', Matrix.cons_val_zero, Matrix.cons_val_one,
+        Matrix.of_apply, Matrix.cons_val_fin_one, Matrix.empty_val'] <;>
+      (try simp) <;> (try field_simp) <;> (try ring)
+  rw [hmat] at hmem
+  -- Membership in `Γ₀(N)` forces integrality and `N ∣` the lower-left entry.
+  obtain ⟨γ, hγ, hγeq⟩ := Subgroup.mem_map.mp hmem
+  have hentry : ((γ : Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ℚ) =
+      ((N : ℚ) * r' - (N : ℚ) * r) / p := by
+    have := congr_arg (fun M : GL (Fin 2) ℚ ↦ (M : Matrix (Fin 2) (Fin 2) ℚ) 1 0) hγeq
+    simpa [mapGL_coe_matrix, GeneralLinearGroup.mkOfDetNeZero] using this
+  have hdvdN : (N : ℤ) ∣ (γ : Matrix (Fin 2) (Fin 2) ℤ) 1 0 := by
+    rw [CongruenceSubgroup.Gamma0_mem] at hγ
+    exact_mod_cast (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp hγ
+  obtain ⟨m, hm⟩ := hdvdN
+  -- `p·N·m = N(r'−r)` ⟹ `p·m = r'−r` ⟹ `p ∣ r'−r` ⟹ `r = r'`.
+  have hNQ : (N : ℚ) ≠ 0 := Nat.cast_ne_zero.mpr (NeZero.ne N)
+  have hkey : (p : ℤ) * m = (r' : ℤ) - r := by
+    have h1 : ((γ : Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ℚ) * p =
+        (N : ℚ) * r' - (N : ℚ) * r := by
+      rw [hentry]; field_simp
+    rw [hm] at h1
+    push_cast at h1
+    have h2 : (N : ℚ) * (m * p) = (N : ℚ) * ((r' : ℚ) - r) := by ring_nf; ring_nf at h1; linarith
+    have h3 : (m : ℚ) * p = (r' : ℚ) - r := by
+      exact mul_left_cancel₀ hNQ h2
+    exact_mod_cast (by linarith : (p : ℚ) * m = (r' : ℚ) - r)
+  have habs : (p : ℤ) ∣ (r' : ℤ) - r := ⟨m, hkey.symm⟩
+  have hzero : ((r' : ℤ) - r) = 0 := by
+    refine Int.eq_zero_of_dvd_of_natAbs_lt_natAbs habs ?_
+    have h1 := r.isLt
+    have h2 := r'.isLt
+    simp only [Int.natAbs_natCast]
+    omega
+  exact hne (Fin.ext (by omega : r.val = r'.val))
+
+lemma lunipPsi_bijective (hp : Nat.Prime p) (hpN : ¬ Nat.Coprime p N) :
+    Function.Bijective (lunipPsi (N := N) p hp) := by
+  rw [Fintype.bijective_iff_injective_and_card]
+  refine ⟨lunipPsi_injective (N := N) p hp hpN, ?_⟩
+  rw [Fintype.card_fin, ← Nat.card_eq_fintype_card]
+  exact (decompQuot_D_p_Gamma0_bad_natcard (N := N) p hp hpN).symm
+
+/-- **The true bad-prime matching**: for a `Γ₀(N),χ''`-twisted-invariant function `g`, the
+χ''-twisted Hecke slash at the bad class equals the plain sum of slashes by the **adjugated**
+lower-unipotent representatives.  (The non-adjugated/`U_p` form is FALSE for the
+right-coset convention — see `DirectHeckeRing.lean`; the Fricke conjugation below converts
+the adjugates into the genuine `U_p` matrices.) -/
+theorem twistedHeckeSlash_gen_bad (hp : Nat.Prime p) (hpN : ¬ Nat.Coprime p N)
+    (χ'' : (ZMod N)ˣ →* ℂˣ) {k : ℤ} {g : ℍ → ℂ}
+    (hg : IsGamma0TwistedInvariant (N := N) k χ'' g) :
+    twistedHeckeSlash_gen (N := N) k χ'' (D_p_Gamma0 N p hp.pos) g =
+      ∑ r ∈ Finset.range p, g ∣[k] GL_adjugate (lunipRep (N := N) p hp.pos r) := by
+  rw [twistedHeckeSlash_gen, ← Fin.sum_univ_eq_sum_range
+    (fun r ↦ g ∣[k] GL_adjugate (lunipRep (N := N) p hp.pos r)) p]
+  refine (Fintype.sum_bijective (lunipPsi (N := N) p hp)
+    (lunipPsi_bijective (N := N) p hp hpN) _ _ fun r ↦ ?_).symm
+  -- Per-index evaluation via the absorption lemma.
+  obtain ⟨ha₁, c₁, hc₁, heq₁⟩ := (lunipRep_factorisation (N := N) p hp r.val).choose_spec
+  set h₁ := (lunipRep_factorisation (N := N) p hp r.val).choose with hh₁_def
+  have habs := twisted_weighted_slash_tRep_gen_of_mem (N := N) k χ''
+    (D_p_Gamma0 N p hp.pos) h₁ ha₁ c₁ hc₁ g hg
+  simp only at habs
+  -- The triple is the lower-unipotent representative; its character is 1.
+  have htriple_char : delta0NebentypusDeltaChar (N := N) χ''
+      (gamma0TripleDelta (N := N) (D_p_Gamma0 N p hp.pos) h₁ ha₁ c₁ hc₁) = 1 := by
+    refine lunipRep_deltaChar (N := N) p hp r.val χ'' _ ?_
+    show h₁ * (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL (Fin 2) ℚ) * c₁ = _
+    exact heq₁.symm
+  rw [htriple_char, Units.val_one, inv_one, one_smul, ← heq₁] at habs
+  show g ∣[k] GL_adjugate (lunipRep (N := N) p hp.pos r.val) =
+    (↑(delta0NebentypusWeight (N := N) χ'' (D_p_Gamma0 N p hp.pos)
+      (lunipPsi (N := N) p hp r)) : ℂ)⁻¹ •
+      (g ∣[k] tRep_gen (Gamma0_pair N) (D_p_Gamma0 N p hp.pos) (lunipPsi (N := N) p hp r))
+  exact habs
+
+end BadPrime
+
 /-! ## The bad-prime payoff `Ψ(D_p) = U_p`
 
 The matrix algebra is fully verified: at a bad prime `p ∣ N`, the right-coset representatives
@@ -195,23 +406,44 @@ theorem heckeRingHomCharSpaceShimura_D_p_bad (k : ℤ) (χ : (ZMod N)ˣ →* ℂ
     (⇑(heckeT_p_all k p hp (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) : ℍ → ℂ)
   rw [heckeRingHomCharSpaceShimura_single_coe, heckeT_p_all_not_coprime_apply k hp hpN,
     heckeT_p_ut]
-  -- REMAINING GAP (deliverable 7, precisely diagnosed): the bad-prime index-bijection identity
-  --   `∑ᵢ wᵢ⁻¹ • (f ∣ (W · tRep_gen i · W⁻¹)) = ∑_{b<p} f ∣ T_p_upper(b)`.
-  -- All non-combinatorial pieces are in place / verified:
-  --  • LHS reduction `…_single_coe` (sorry-free above).
-  --  • Per-rep matrix core (`Fricke.frickeGL_mul_adj_lunipRep_mul_frickeGL_inv`, sorry-free):
-  --      `W · adj([[1,0],[N·r,p]]) · W⁻¹ = T_p_upper(r)`.
-  --  • Cardinality `Nat.card (decompQuot …) = p` (`decompQuot_D_p_Gamma0_bad_natcard`,
-  --      currently `private` in `NebentypusHeckeRingHom.lean`; de-privatise or replicate).
-  --  • Weight `wᵢ = 1`: the bad reps `δ_r = [[1,0],[N·r,p]]` have upper-left unit `1`, so
-  --      `delta0NebentypusWeight (chiConj χ) D_p i = 1` (cf. `adjLowerΔ_weight` pattern).
-  -- What is missing is the index bijection `Fin p ≃ decompQuot (Gamma0_pair N) (rep D_p)`
-  -- sending `b ↦ ⟦lunipRep p b⟧` (the bad-prime analogue of `twistedTpPsi`, built on the
-  -- `private lunip_inject` of `CongruenceHecke/Props.lean`), plus the bookkeeping identifying
-  -- `deltaRep_gen i` with `δ_r` up to a `Γ₀(N)`-correction that the adjugate turns into a left
-  -- `Γ₁(N)`-factor absorbed by `f` (mirroring `weighted_value_eq` /
-  -- `twisted_weighted_slash_tRep_gen_of_mem`, but on the `W`-conjugated reps).  This is a
-  -- standalone ~250-LOC port of the good-prime `twisted_matches_T_p` apparatus.
-  sorry
+  -- Set g = ⇑↑f ∣[k] frickeGL N, the Fricke transform of f.
+  set g := ⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) ∣[k] (frickeGL N : GL (Fin 2) ℚ)
+    with hg_def
+  -- g is (chiConj χ)-twisted-invariant since frickeOperator sends χ-space to (chiConj χ)-space.
+  have hg : IsGamma0TwistedInvariant (N := N) k (chiConj χ) g :=
+    coe_mem_twistedInvariant (frickeOperator k (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k))
+      (frickeOperator_mem_charSpace (N := N) k χ f.property)
+  -- Positivity of det(W⁻¹) needed for smul_slash commutation.
+  have hfrickeInvDetPos : 0 < ((frickeGL N)⁻¹ : GL (Fin 2) ℚ).det.val := by
+    rw [show ((frickeGL N)⁻¹ : GL (Fin 2) ℚ).det.val =
+        ((frickeGL N).det.val)⁻¹ from by rw [← Units.val_inv_eq_inv_val, ← map_inv]]
+    exact inv_pos.mpr frickeGL_det_pos
+  -- Per-term: ⇑↑f ∣[k] (W * M * W⁻¹) = (g ∣[k] M) ∣[k] W⁻¹, then pull smul through slash.
+  have hterm : ∀ (i : decompQuot (Gamma0_pair N) (HeckeCoset.rep (D_p_Gamma0 N p hp.pos))),
+      (↑(delta0NebentypusWeight (chiConj χ) (D_p_Gamma0 N p hp.pos) i) : ℂ)⁻¹ •
+        (⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) ∣[k]
+          (frickeGL N * tRep_gen (Gamma0_pair N) (D_p_Gamma0 N p hp.pos) i * (frickeGL N)⁻¹)) =
+      ((↑(delta0NebentypusWeight (chiConj χ) (D_p_Gamma0 N p hp.pos) i) : ℂ)⁻¹ •
+          g ∣[k] tRep_gen (Gamma0_pair N) (D_p_Gamma0 N p hp.pos) i) ∣[k] (frickeGL N)⁻¹ := by
+    intro i
+    rw [show ⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) ∣[k]
+        (frickeGL N * tRep_gen (Gamma0_pair N) (D_p_Gamma0 N p hp.pos) i * (frickeGL N)⁻¹) =
+        (g ∣[k] tRep_gen (Gamma0_pair N) (D_p_Gamma0 N p hp.pos) i) ∣[k] (frickeGL N)⁻¹
+      from by rw [← SlashAction.slash_mul, ← SlashAction.slash_mul]; congr 1; group,
+      smul_slash_pos_det k _ _ _ hfrickeInvDetPos]
+  -- Rewrite the sum using hterm, then pull W⁻¹ out.
+  rw [Finset.sum_congr rfl (fun i _ ↦ hterm i), ← SlashAction.sum_slash]
+  -- The remaining sum is twistedHeckeSlash_gen k (chiConj χ) D_p g.
+  rw [show ∑ i : decompQuot (Gamma0_pair N) (HeckeCoset.rep (D_p_Gamma0 N p hp.pos)),
+        (↑(delta0NebentypusWeight (chiConj χ) (D_p_Gamma0 N p hp.pos) i) : ℂ)⁻¹ •
+          (g ∣[k] tRep_gen (Gamma0_pair N) (D_p_Gamma0 N p hp.pos) i) =
+      twistedHeckeSlash_gen (N := N) k (chiConj χ) (D_p_Gamma0 N p hp.pos) g from rfl]
+  -- Apply the bad-prime theorem: twisted sum = sum over Finset.range p of adjugate slashes.
+  rw [twistedHeckeSlash_gen_bad (N := N) p hp hpN (chiConj χ) hg, SlashAction.sum_slash]
+  -- Use the matrix identity W·adj(δ_r)·W⁻¹ = T_p_upper r per term.
+  refine Finset.sum_congr rfl fun r _ ↦ ?_
+  rw [hg_def, ← SlashAction.slash_mul, ← SlashAction.slash_mul]
+  congr 1
+  rw [← mul_assoc, frickeGL_mul_adj_lunipRep_mul_frickeGL_inv]
 
 end HeckeRing.GL2.Unified

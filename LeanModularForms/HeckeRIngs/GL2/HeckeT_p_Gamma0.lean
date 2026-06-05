@@ -90,7 +90,7 @@ lemma HeckeCoset_deg_D_p_Gamma0 (N : ℕ) [NeZero N] (p : ℕ) (hp : Nat.Prime p
         (by simp)))) = p^(1-1) * (p + 1) := by exact_mod_cast h_deg
   rw [h_nat]; simp
 
-private lemma mem_D_p_Gamma0_of_factor_through_diag (N : ℕ) [NeZero N] (p : ℕ)
+lemma mem_D_p_Gamma0_of_factor_through_diag (N : ℕ) [NeZero N] (p : ℕ)
     (hp : 0 < p) (g s t : GL (Fin 2) ℚ) (hs : s ∈ (Gamma0_pair N).H)
     (ht : t ∈ (Gamma0_pair N).H)
     (hfact : g = s * (diag_1p_delta_Gamma0 N p hp : GL (Fin 2) ℚ) * t) :
