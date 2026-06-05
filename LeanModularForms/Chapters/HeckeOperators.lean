@@ -6,6 +6,7 @@ import LeanModularForms.HeckeRIngs.GL2.HeckeModularForm
 import LeanModularForms.HeckeRIngs.GL2.HeckeModularForm_Gamma0
 import LeanModularForms.HeckeRIngs.GL2.HeckeT_n
 import LeanModularForms.HeckeRIngs.GL2.FourierHecke
+import LeanModularForms.HeckeRIngs.GL2.Unified.RingTransport
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -205,7 +206,8 @@ $`T(n)`, for $`n \geq 1`, acting on the space of weight-$`k` modular forms for $
 satisfy the two classical relations that, together, determine every $`T(n)` from the operators at
 prime arguments.
 
-*Coprime multiplicativity.* For any two strictly positive integers $`m` and $`n` that are coprime,
+*Coprime multiplicativity.* For any two strictly positive integers $`m` and $`n` that are coprime
+to each other and to the level $`N`,
 $$`
   T(mn) \;=\; T(m)\,T(n).
 `
@@ -228,17 +230,16 @@ Depends on: {uses "heckeT-n"}[] {uses "diamondOp"}[]
 :::
 
 :::proof "heckeT-n-mult"
-*Coprime multiplicativity.* By construction $`T(n)` is assembled as the product of its prime-power
-components: writing $`n = \prod_{p} p^{\,v_p}` for the prime factorisation, one peels off the
-smallest prime factor at each stage to obtain $`T(n) = \prod_{p \mid n} T(p^{\,v_p})`. When $`m` and
-$`n` are coprime their prime supports are disjoint, so the prime-power blocks making up $`T(m)` and
-those making up $`T(n)` are distinct and, being built from operators at different primes, commute
-with one another. The product defining $`T(mn)` therefore factors, by reordering its commuting
-prime-power blocks into those coming from $`m` and those coming from $`n`, as $`T(m)\,T(n)`. The
-argument is a strong induction on $`m + n`: stripping the smallest prime factor of $`mn` off
-whichever of $`m`, $`n` it divides reduces to a strictly smaller coprime pair, and the commutation
-of each prime-power block past the components of the complementary factor lets the induction
-hypothesis recombine the pieces.
+*Coprime multiplicativity* is **transported from the Hecke ring**. Inside the commutative ring
+$`R(\Gamma_0(N), \Delta_0(N))` ({bpref "commring-Gamma0"}[]) the ring-side elements $`D_n` —
+assembled by the same prime-power recurrence and `minFac`-peeling as the operators — satisfy
+$`D_{mn} = D_m D_n` for coprime $`m, n` by pure commutative algebra ({bpref "gamma0-mult-table"}[]
+records the full multiplication table). The character-space homomorphisms send $`D_n` to
+$`\chi(n)^{-1}\,T(n)` on each Nebentypus subspace $`M_k(N,\chi)` ({uses "charSpace-bridge"}[]),
+so applying them to the ring identity yields $`T(mn) = T(m)\,T(n)` on every $`M_k(N,\chi)`; the
+character decomposition $`M_k(\Gamma_1(N)) = \bigoplus_\chi M_k(N,\chi)`
+({uses "charSpace-directSum"}[]) then glues the identity to the whole space. No operator-level
+coset combinatorics enters.
 
 *Prime-power recurrence.* This is the defining relation of $`T(p^{\,v})`: the operators on prime
 powers are introduced precisely by the three-term recursion above, with the two base values
@@ -258,8 +259,8 @@ classes $`d` modulo $`N`, all acting on the space $`M_k(\Gamma_1(N))` of weight-
 for $`\Gamma_1(N)`.
 
 *Pairwise commutativity of the Hecke operators.* For any two strictly positive integers $`m` and
-$`n`, with no coprimality hypothesis whatsoever — neither between $`m` and $`n` nor with the level
-$`N` — the corresponding operators commute,
+$`n` coprime to the level $`N` (no coprimality between $`m` and $`n` themselves is required), the
+corresponding operators commute,
 $$`
   T(m)\,T(n) \;=\; T(n)\,T(m).
 `
@@ -278,33 +279,20 @@ Depends on: {uses "heckeT-n"}[] {uses "heckeT-n-mult"}[] {uses "diamondOp"}[]
 :::
 
 :::proof "heckeT-n-comm"
-Both statements reduce to the prime-power level through the multiplicative construction of $`T(n)`.
+*Commutativity is inherited from the ring.* The Hecke ring $`R(\Gamma_0(N), \Delta_0(N))` is
+commutative — Shimura's anti-involution argument applied to the Atkin–Lehner-conjugated transpose
+({bpref "commring-Gamma0"}[]). For indices coprime to $`N` the character-space homomorphisms
+identify the restriction of $`T(n)` to each Nebentypus subspace $`M_k(N,\chi)` with the scalar
+multiple $`\chi(n)` of the image of the ring element $`D_n` ({uses "charSpace-bridge"}[]).
+Commutativity of the ring therefore forces the restricted operators to commute on every
+$`M_k(N,\chi)`, and the character decomposition ({uses "charSpace-directSum"}[]) glues these
+identities to all of $`M_k(\Gamma_1(N))`. The former self-contained coset-combinatorial induction
+has been retired in favour of this transport.
 
-*Commutativity of the Hecke operators.* Recall that $`T(n)` is assembled as the product of its
-prime-power blocks $`T(p^{\,v_p})` along the factorisation of $`n`. The proof is a strong induction
-on $`m`: peeling the smallest prime factor $`p` of $`m` off together with its full multiplicity
-$`v`, it suffices to know that the single block $`T(p^{\,v})` commutes with the entire operator
-$`T(n)`, and then to recombine the remaining factor $`T(m / p^{\,v})` by the inductive hypothesis.
-That a single prime-power block commutes with all of $`T(n)` is itself proved by induction along the
-factorisation of $`n`, splitting at each step into two cases. For a power of the *same* prime, two
-blocks $`T(p^{\,a})` and $`T(p^{\,b})` commute; for powers of *distinct* primes, $`T(p^{\,a})` and
-$`T(q^{\,b})` commute. Each of these is established by induction off the three-term recurrence that
-defines the prime-power operators: unfolding $`T(p^{\,v+2}) = T(p)\,T(p^{\,v+1}) - p^{\,k-1}\,\langle
-p\rangle\,T(p^{\,v})` reduces every case to lower exponents, the diamond factor $`\langle p\rangle`
-appearing in the recurrence being carried through using that it commutes with all the prime-power
-operators. The base case, that $`T(p)` commutes with $`T(q)` for distinct primes $`p \neq q`, is a
-direct computation: expanding both operators into their summed slash over coset representatives, the
-upper-triangular coset systems of $`p` and $`q` commute, the diamond contributions commute among
-themselves and with those sums, and the matched slash actions recombine to give equality. No
-appeal to the abstract commutativity of the Hecke algebra is made; the identity is computed in place.
-
-*Commutation with the diamond operators.* This too is a strong induction along the factorisation of
-$`n`, valid once $`n` is coprime to $`N` (so that each prime in its support is coprime to $`N` and
-carries a genuine, nonzero diamond operator). Stripping the smallest prime $`p` and its multiplicity
-$`v`, the claim reduces to the fact that the prime-power block $`T(p^{\,v})` commutes with every
-diamond operator, which in turn follows by induction off the same three-term recurrence — the
-diamond operators commute with $`T(p)` and with one another — together with the inductive hypothesis
-on the complementary factor.
+*Commutation with the diamond operators* needs no ring input at all: on each Nebentypus subspace
+the diamond operator acts as the scalar $`\chi(d)` (and the operators $`T(n)` preserve each
+subspace, by a direct block induction over their construction), so the two visibly commute
+summand-by-summand, and the direct sum decomposition again glues the conclusion.
 
 Depends on: {uses "heckeT-n"}[] {uses "heckeT-n-mult"}[] {uses "diamondOp"}[]
 :::

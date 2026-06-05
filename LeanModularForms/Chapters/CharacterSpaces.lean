@@ -3,6 +3,7 @@ import VersoManual
 import VersoBlueprint
 import LeanModularForms.HeckeRIngs.GL2.CharacterDecomp
 import LeanModularForms.HeckeRIngs.GL2.Unified.NebentypusHeckeRingHom
+import LeanModularForms.HeckeRIngs.GL2.Unified.RingTransport
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -118,4 +119,43 @@ $`\chi(p)^{-1}\,p^{\,k-2}`. Because the source ring is commutative, all the resu
 $`M_k(N,\chi)` commute.
 
 Depends on: {uses "modFormCharSpace"}[] {uses "gamma0-pair"}[]
+:::
+
+:::theorem "charSpace-bridge" (lean := "HeckeRing.GL2.Unified.heckeRingHomCharSpace_heckeRingD_n_all")
+*The composite bridge: the ring action computes the Hecke operators.*
+Fix a level $`N \ge 1`, a weight $`k`, and a Dirichlet character $`\chi` modulo $`N`.  For every
+positive integer $`n` coprime to $`N`, the image of the ring element $`D_n` of
+$`R(\Gamma_0(N),\Delta_0(N))` under the character-space homomorphism
+({uses "heckeRingHomCharSpace"}[]) is the restriction to $`M_k(N,\chi)` of the classical Hecke
+operator, rescaled by the character:
+$$`
+  \Phi_{\chi}(D_n) \;=\; \chi(n)^{-1}\,\bigl(T(n)\big|_{M_k(N,\chi)}\bigr).
+`
+Equivalently $`T(n)\big|_{M_k(N,\chi)} = \chi(n)\,\Phi_{\chi}(D_n)`: the construction of the
+homomorphisms into the endomorphism rings *is* the construction of the Hecke operators on each
+Nebentypus subspace, up to the explicit character scalar.  Together with the character
+decomposition ({uses "charSpace-directSum"}[]) this transports every identity of the commutative
+ring — commutativity, the multiplication table {bpref "gamma0-mult-table"}[] — to the operators
+on all of $`M_k(\Gamma_1(N))`; see {bpref "heckeT-n-comm"}[] and {bpref "heckeT-n-mult"}[].
+
+The coprimality restriction is essential and reflects an arithmetic fact, not a deficiency: the
+twisted slash underlying $`\Phi_{\chi}` is built on the adjugate, which at a bad prime
+$`p \mid N` exchanges the (then disjoint) double cosets of $`\operatorname{diag}(1,p)` and
+$`\operatorname{diag}(p,1)` — so the ring image of $`D_p` at a bad prime is a $`V_p`-type
+operator rather than $`U_p`.
+
+Depends on: {uses "heckeRingHomCharSpace"}[] {uses "modFormCharSpace"}[] {uses "heckeT-n"}[]
+:::
+
+:::proof "charSpace-bridge"
+Strong induction along the `minFac`-peeling of $`n`, all of whose prime factors are coprime to
+$`N`.  Both sides decompose multiplicatively: the ring element peels as
+$`D_n = D_{p^{v}}\,D_{n/p^{v}}` (coprime multiplicativity in the ring), the operator restriction
+peels by its defining assembly, and the character scalar is multiplicative by construction.  The
+prime-power case is itself an induction on the three-term recurrence, matching the recurrence
+satisfied by $`\Phi_{\chi}(D_{p^{v}})` — under $`\Phi_{\chi}` the scalar class $`S_p` maps to
+the explicit scalar $`\chi(p)^{-1} p^{\,k-2}`, which is exactly the diamond contribution
+$`p^{\,k-1}\langle p\rangle` of the operator recurrence read on the $`\chi`-eigenspace.
+
+Depends on: {uses "heckeRingHomCharSpace"}[] {uses "charSpace-directSum"}[]
 :::

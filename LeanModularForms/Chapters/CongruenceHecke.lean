@@ -5,6 +5,7 @@ import LeanModularForms.HeckeRIngs.GLn.CongruenceHecke.Foundation
 import LeanModularForms.HeckeRIngs.GLn.CongruenceHecke.Props
 import LeanModularForms.HeckeRIngs.GLn.CongruenceHecke.AtkinLehner
 import LeanModularForms.HeckeRIngs.GLn.CongruenceHecke.Surjectivity
+import LeanModularForms.HeckeRIngs.GL2.Unified.Gamma0RingDn
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -178,4 +179,45 @@ cosets {bpref "shimura-prop-3-31"}[] reduces each to a product of the prime imag
 the scalar classes are images of the corresponding squares of those generators. Hence every basis
 class is in the range, $`\psi` is surjective, and therefore so is the induced map $`\varphi`,
 completing the proof of Shimura's Theorem 3.35.
+:::
+
+:::theorem "gamma0-mult-table" (lean := "HeckeRing.GL2.Unified.heckeRingD_n_mul, HeckeRing.GL2.Unified.heckeRingD_n_mul_coprime, HeckeRing.GL2.Unified.heckeRingD_ppow_mul")
+*The multiplication table of `R(Γ₀(N), Δ₀(N))` (Shimura 3.24 at level `N`).*
+Inside the Hecke ring $`R(\Gamma_0(N), \Delta_0(N))` define, for each prime $`p`, the prime class
+$`D_p` of $`\operatorname{diag}(1,p)`, the scalar class $`S_p` of $`\operatorname{diag}(p,p)` for
+$`p \nmid N` (and $`S_p = 0` for $`p \mid N`, mirroring the vanishing of the diamond operator
+there), the prime-power elements $`D_{p^{v}}` by the three-term recurrence
+$`D_{p^{v+2}} = D_p\,D_{p^{v+1}} - (p\,S_p)\,D_{p^{v}}`, and the composite elements $`D_n` by
+multiplicative assembly over the prime factorisation of $`n`.  Then:
+
+- *per-prime product formula*: for $`r \le s`,
+  $$`
+    D_{p^{r}}\,D_{p^{s}} \;=\; \sum_{i=0}^{r} (p\,S_p)^{i}\,D_{p^{\,r+s-2i}};
+  `
+- *coprime multiplicativity*: $`D_{mn} = D_m\,D_n` for coprime $`m, n`;
+- *the full table*: for all positive $`m, n`,
+  $$`
+    D_m\,D_n \;=\; \sum_{d \mid (m,n)} d\;S_d\,D_{mn/d^{2}},
+  `
+  where $`S_d` is the multiplicative extension of the scalar classes (so summands with
+  $`\gcd(d,N) > 1` vanish).
+
+This is the level-$`N` counterpart of the level-one table {bpref "T-sum-mul"}[], and the ring-side
+source from which the operator identities {bpref "heckeT-n-mult"}[] and {bpref "heckeT-n-comm"}[]
+are transported.
+
+Depends on: {uses "gamma0-pair"}[] {uses "commring-Gamma0"}[]
+:::
+
+:::proof "gamma0-mult-table"
+Pure commutative algebra.  All three identities are proven for an *arbitrary* commutative ring
+equipped with elements satisfying the recurrence, and then instantiated at
+$`R(\Gamma_0(N),\Delta_0(N))` — whose commutativity is {bpref "commring-Gamma0"}[].  The
+per-prime formula is a Chebyshev-style induction on the recurrence; coprime multiplicativity is a
+reordering of the prime-power blocks of the peeling product, by strong induction on the product;
+and the full table follows by peeling the maximal prime power of the gcd, reindexing the divisor
+sum along $`d \leftrightarrow (p^{i}, d')`, and combining the previous two identities.  No coset
+combinatorics, operators, or analytic input appears anywhere in the proof.
+
+Depends on: {uses "commring-Gamma0"}[]
 :::
