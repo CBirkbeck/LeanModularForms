@@ -80,3 +80,16 @@ FourierHecke.lean (789), LevelRaise.lean (598), Newforms/ subdir, …
   - Generalise `GoodHeckeFamily` to `[CommSemiring R] [AddCommMonoid V] [Module R V]` and drop `[NeZero N]` (all verified-compiling by the structure worker; public-API restatement, 2 consumer files).
   - Bundle `transport` as an equiv `GoodHeckeFamily N V ≃ GoodHeckeFamily N W` (altitude reviewer; 1 call site).
 - **Campaign notes for later files:** `conjEndCharSpaceOne`/`conjEndRingHomCharSpaceOne` (HeckeT_p_CharSpace_Comm.lean:53,60) and `conjEndFricke`/`conjEndRingHomFricke` (Unified/ShimuraHom.lean:54,61) are the same conjRingEquiv pattern — migrate when those files are processed. `GoodIndex` kept (3-file vocabulary abbrev). Import `HeckeRingHomCharSpace_General` is heavier than Core's body needs but the sole consumer needs it anyway (report-only). Pre-existing info-note: ArcContribution.lean:44 `ring` → "Try this: ring_nf" (tranche 5).
+
+### CHECKPOINT — file 6 (TwistedHeckeRing.lean) Phase 4 in progress (2026-06-05)
+Waves 1–5 done (30/52 decls): delta0IntegralMatrix cluster, Delta0UpperUnit cluster,
+NebentypusDeltaChar (+2 new extracted @[simp] _one lemmas), HChar, deltaRep_gen(term-mode),
+Weight, twistedHeckeSlash_gen, tRep dets/sigmas, smul_slash, _add/_smul, Ext_gen(+_add),
+IsGamma0TwistedInvariant, invariant submodule (17→11), gamma0Correction(+_mem_H),
+adjugate_decomp_eq, gamma0TripleDelta. All gates pass; file LSP-clean throughout.
+Queue (6): isUnit_delta0UpperEntry, delta0UpperUnit, delta0UpperUnit_one, deltaRepGen,
+twistedHeckeSlashGen (99 sites/4 files, substring cascade), twistedHeckeSlashExtGen.
+5a flags so far: units_coe_mul_inv_mul_right_cancel inline-candidate (1 use, L~404);
+IsCoprime restatement (big-change, declined-pending); CommMonoid-χ generality (big-change);
+SMul-tower smul (big-change). Remaining waves 6–9: decls from gamma0CorrectionDelta
+through twistedHeckeSumFunction_one (22 decls incl. the >45-line monsters).
