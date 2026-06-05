@@ -267,6 +267,322 @@ private theorem peelProd_mul_coprime (f : ℕ → ℕ → R) :
 
 end FormalPeelComm
 
+/-! ## Formal general multiplication table
+
+The ring-side Shimura 3.24: for two `peelProd`-assembled families `D = peelProd dblk` and
+`S = peelProd sblk` over a commutative ring, whose prime-power blocks satisfy the
+Chebyshev-style per-prime product law, the general product `D_m · D_n` expands as a sum over
+the divisors of `gcd m n`.  Mirrors the operator-side `heckeT_n_mul` combinatorics
+(induction on the gcd, peeling its maximal prime power, reindexing the divisor sum via
+`d ↔ (p^i, d')`), with every operator manipulation replaced by commutative-ring algebra. -/
+
+section FormalTable
+
+variable {R : Type*} [CommRing R]
+
+/-! ### Pure-`ℕ` divisor combinatorics
+
+These are copies of the (private) pure-`ℕ` helpers from the operator layer `HeckeT_n.lean`;
+they are reproduced here because this file may not import the operator layer. -/
+
+/-- `p`-adic valuation of `g · p^c` is `c` when `p ∤ g`. -/
+private lemma factorization_coprime_mul_pow_self {p g c : ℕ} (hp : Nat.Prime p)
+    (hpg : ¬p ∣ g) : (g * p ^ c).factorization p = c := by
+  rw [Nat.factorization_mul_apply_of_coprime (hp.coprime_pow_of_not_dvd hpg),
+    Nat.factorization_eq_zero_of_not_dvd hpg,
+    Nat.Prime.factorization_pow hp, Finsupp.single_apply, if_pos rfl, zero_add]
+
+/-- `p`-adic valuation of `p^j · d` is `j` when `p ∤ d` and `d > 0`. -/
+private lemma factorization_pow_mul_self {p j d : ℕ} (hp : Nat.Prime p) (hd_pos : 0 < d)
+    (hpd : ¬p ∣ d) : (p ^ j * d).factorization p = j := by
+  rw [Nat.factorization_mul (pow_pos hp.pos j).ne' hd_pos.ne', Finsupp.coe_add, Pi.add_apply,
+    hp.factorization_pow, Finsupp.single_eq_same,
+    Nat.factorization_eq_zero_of_not_dvd hpd, add_zero]
+
+/-- Forward map well-definedness for the divisor-sum bijection: `p^j · d'` divides `m·n`
+when `d' ∣ g'`, `j ≤ c` and `gcd m n = g' · p^c`. -/
+private lemma pow_mul_mem_gcd_divisors {p m n g' c j d' : ℕ} (_hp : Nat.Prime p)
+    (hgcd_eq : m.gcd n = g' * p ^ c) (hg'_pos : 0 < g') (hpc_pos : 0 < p ^ c)
+    (hd' : d' ∈ g'.divisors) (hj_le : j ≤ c) :
+    p ^ j * d' ∈ (m.gcd n).divisors := by
+  rw [hgcd_eq, Nat.mem_divisors]
+  exact ⟨mul_comm (p ^ j) d' ▸
+    Nat.mul_dvd_mul (Nat.dvd_of_mem_divisors hd') (pow_dvd_pow p hj_le),
+    (Nat.mul_pos hg'_pos hpc_pos).ne'⟩
+
+/-- Backward map well-definedness: `d / p^(v_p d) ∈ g'.divisors` when `d ∣ g' · p^c`,
+`p ∤ g'`. -/
+private lemma ordCompl_mem_divisors_of_dvd_mul_pow {p g' c d : ℕ} (hp : Nat.Prime p)
+    (hg'_pos : 0 < g') (hpc_pos : 0 < p ^ c) (hp_not_dvd_g' : ¬p ∣ g')
+    (hd_dvd_gpc : d ∣ g' * p ^ c) :
+    d / p ^ d.factorization p ∈ g'.divisors := by
+  have hordCompl_gpc : g' * p ^ c / p ^ (g' * p ^ c).factorization p = g' := by
+    rw [factorization_coprime_mul_pow_self hp hp_not_dvd_g', Nat.mul_div_cancel g' hpc_pos]
+  rw [Nat.mem_divisors]
+  refine ⟨?_, hg'_pos.ne'⟩
+  have := Nat.ordCompl_dvd_ordCompl_of_dvd hd_dvd_gpc p
+  rwa [hordCompl_gpc] at this
+
+/-- Decomposition of `gcd m n` after extracting `p`-powers: when `m = p^va·m'`, `n = p^vb·n'`
+with `p ∤ m'`, `p ∤ n'`, then `gcd m n = gcd m' n' · p^(min va vb)`. -/
+private lemma gcd_eq_gcd_ordCompl_mul_pow_min {p va vb m' n' m n : ℕ}
+    (hp : Nat.Prime p) (hm_eq : m = p ^ va * m') (hn_eq : n = p ^ vb * n')
+    (hp_not_dvd_m' : ¬p ∣ m') (hp_not_dvd_n' : ¬p ∣ n') :
+    Nat.gcd m n = Nat.gcd m' n' * p ^ min va vb := by
+  have hpa_cop_m' : Nat.Coprime (p ^ va) m' := (hp.coprime_pow_of_not_dvd hp_not_dvd_m').symm
+  have hpa_cop_n' : Nat.Coprime (p ^ va) n' := (hp.coprime_pow_of_not_dvd hp_not_dvd_n').symm
+  have hm'_cop_pb : Nat.Coprime m' (p ^ vb) := hp.coprime_pow_of_not_dvd hp_not_dvd_m'
+  have hgcd_pp : Nat.gcd (p ^ va) (p ^ vb) = p ^ min va vb := by
+    rcases le_or_gt va vb with h | h
+    · rw [min_eq_left h]; exact Nat.gcd_eq_left (pow_dvd_pow p h)
+    · rw [min_eq_right h.le]; exact Nat.gcd_eq_right (pow_dvd_pow p h.le)
+  rw [hm_eq, hn_eq, hpa_cop_m'.mul_gcd _,
+      Nat.Coprime.gcd_mul_right_cancel_right _ hpa_cop_n'.symm,
+      Nat.Coprime.gcd_mul_left_cancel_right _ hm'_cop_pb.symm, hgcd_pp, mul_comm]
+
+/-- The pure-`ℕ` index identity underlying the divisor-sum summand:
+`m·n / ((p^j·d')²) = p^{min+max-2j} · (m'·n'/(d'·d'))`, together with coprimality of the two
+factors, when `m = p^va·m'`, `n = p^vb·n'`, `p ∤ m'`, `p ∤ n'`, `d' ∣ gcd m' n'`. -/
+private lemma mn_div_pjd_eq {p va vb m' n' m n d' j : ℕ} (hp : Nat.Prime p)
+    (hm_eq : m = p ^ va * m') (hn_eq : n = p ^ vb * n')
+    (hp_not_dvd_m' : ¬p ∣ m') (hp_not_dvd_n' : ¬p ∣ n')
+    (hd'_dvd_m' : d' ∣ m') (hd'_dvd_n' : d' ∣ n') (_hd'_pos : 0 < d')
+    (_hm'_pos : 0 < m') (_hn'_pos : 0 < n') (hj_le : j ≤ min va vb) :
+    m * n / (p ^ j * d' * (p ^ j * d')) =
+        p ^ (min va vb + max va vb - 2 * j) * (m' * n' / (d' * d')) ∧
+      Nat.Coprime (p ^ (min va vb + max va vb - 2 * j)) (m' * n' / (d' * d')) := by
+  have hdd_dvd : d' * d' ∣ m' * n' := Nat.mul_dvd_mul hd'_dvd_m' hd'_dvd_n'
+  set r := va + vb - 2 * j with hr_def
+  have hr_eq : min va vb + max va vb - 2 * j = r := by rw [min_add_max]
+  have hmn_div_eq : m * n / (p ^ j * d' * (p ^ j * d')) =
+      p ^ r * (m' * n' / (d' * d')) := by
+    rw [hm_eq, hn_eq]
+    have h1 : p ^ va * m' * (p ^ vb * n') = p ^ (va + vb) * (m' * n') := by rw [pow_add]; ring
+    have h2 : p ^ j * d' * (p ^ j * d') = p ^ (2 * j) * (d' * d') := by
+      rw [show 2 * j = j + j by omega, pow_add]; ring
+    rw [h1, h2, show va + vb = 2 * j + r by omega, pow_add, mul_assoc,
+        Nat.mul_div_mul_left _ _ (pow_pos hp.pos (2 * j)), Nat.mul_div_assoc _ hdd_dvd]
+  have hp_not_dvd_quot : ¬p ∣ (m' * n' / (d' * d')) := by
+    intro h
+    have h3 : p ∣ m' * n' :=
+      dvd_trans (dvd_mul_left p (d' * d')) ((Nat.dvd_div_iff_mul_dvd hdd_dvd).mp h)
+    exact hp_not_dvd_m' ((hp.dvd_mul.mp h3).elim id (fun h ↦ absurd h hp_not_dvd_n'))
+  exact ⟨hr_eq ▸ hmn_div_eq,
+    hr_eq ▸ (hp.coprime_iff_not_dvd.mpr hp_not_dvd_quot).pow_left r⟩
+
+/-! ### The ring algebra of the table -/
+
+variable (dblk sblk : ℕ → ℕ → R)
+
+/-- The summand-matching identity for the divisor-sum reindexing: the product of the
+`(j, d')` term of the prime-power sum and the `d'` term of the `m'·n'` divisor sum equals
+the `p^j·d'` term of the `m·n` divisor sum. -/
+private lemma formal_table_summand {p : ℕ} (hp : Nat.Prime p) (va vb m' n' m n j d' : ℕ)
+    (hm'_pos : 0 < m') (hn'_pos : 0 < n')
+    (hm_eq : m = p ^ va * m') (hn_eq : n = p ^ vb * n')
+    (hp_not_dvd_m' : ¬p ∣ m') (hp_not_dvd_n' : ¬p ∣ n')
+    (hd' : d' ∈ (m'.gcd n').divisors) (hj_le : j ≤ min va vb) :
+    ((p : ℤ) ^ j • (peelProd sblk (p ^ j) *
+        peelProd dblk (p ^ (min va vb + max va vb - 2 * j)))) *
+      ((d' : ℤ) • (peelProd sblk d' * peelProd dblk (m' * n' / (d' * d')))) =
+    ((p ^ j * d' : ℕ) : ℤ) •
+      (peelProd sblk (p ^ j * d') * peelProd dblk (m * n / (p ^ j * d' * (p ^ j * d')))) := by
+  have hd'_dvd_g' : d' ∣ m'.gcd n' := Nat.dvd_of_mem_divisors hd'
+  have hd'_dvd_m' : d' ∣ m' := dvd_trans hd'_dvd_g' (Nat.gcd_dvd_left m' n')
+  have hd'_dvd_n' : d' ∣ n' := dvd_trans hd'_dvd_g' (Nat.gcd_dvd_right m' n')
+  have hd'_pos : 0 < d' :=
+    Nat.pos_of_ne_zero fun h ↦ (Nat.mem_divisors.mp hd').2
+      (Nat.eq_zero_of_zero_dvd (h ▸ hd'_dvd_g'))
+  -- `p ∤ d'`, so `p^j` and `d'` are coprime.
+  have hp_not_dvd_d' : ¬p ∣ d' := fun h ↦ hp_not_dvd_m' (dvd_trans h hd'_dvd_m')
+  have hcop_S : Nat.Coprime (p ^ j) d' := (hp.coprime_iff_not_dvd.mpr hp_not_dvd_d').pow_left j
+  -- The `ℕ`-index identity and coprimality of the two `D`-factors.
+  obtain ⟨hidx, hcop_D⟩ := mn_div_pjd_eq hp hm_eq hn_eq hp_not_dvd_m' hp_not_dvd_n'
+    hd'_dvd_m' hd'_dvd_n' hd'_pos hm'_pos hn'_pos hj_le
+  rw [smul_mul_smul_comm, hidx, peelProd_mul_coprime dblk _ _ hcop_D,
+      peelProd_mul_coprime sblk _ _ hcop_S, Nat.cast_mul, Nat.cast_pow]
+  congr 1
+  ring
+
+/-- The divisor-sum reindexing: the product of the prime-power sum and the `m'·n'` divisor
+sum equals the `m·n` divisor sum, via the bijection `(j, d') ↔ p^j·d'`. -/
+private lemma formal_table_div_sum {p : ℕ} (hp : Nat.Prime p) (va vb m' n' m n : ℕ)
+    (hm'_pos : 0 < m') (hn'_pos : 0 < n')
+    (hm_eq : m = p ^ va * m') (hn_eq : n = p ^ vb * n')
+    (hp_not_dvd_m' : ¬p ∣ m') (hp_not_dvd_n' : ¬p ∣ n')
+    (hgcd_eq : Nat.gcd m n = Nat.gcd m' n' * p ^ min va vb) :
+    (∑ j ∈ Finset.range (min va vb + 1),
+        (p : ℤ) ^ j • (peelProd sblk (p ^ j) *
+          peelProd dblk (p ^ (min va vb + max va vb - 2 * j)))) *
+      (∑ d ∈ (Nat.gcd m' n').divisors.attach,
+        (d.val : ℤ) • (peelProd sblk d.val *
+          peelProd dblk (m' * n' / (d.val * d.val)))) =
+    ∑ d ∈ (Nat.gcd m n).divisors.attach,
+      (d.val : ℤ) • (peelProd sblk d.val *
+        peelProd dblk (m * n / (d.val * d.val))) := by
+  rw [Finset.sum_mul_sum, ← Finset.sum_product']
+  set c := min va vb with hc_def
+  set g' := m'.gcd n' with hg'_def
+  have hg'_pos : 0 < g' :=
+    Nat.pos_of_ne_zero fun h ↦ absurd (Nat.eq_zero_of_gcd_eq_zero_left h) hm'_pos.ne'
+  have hpc_pos : 0 < p ^ c := pow_pos hp.pos c
+  have hp_not_dvd_g' : ¬p ∣ g' := fun h ↦
+    hp_not_dvd_m' (dvd_trans (dvd_trans h (Nat.gcd_dvd_left m' n')) (dvd_refl m'))
+  refine Finset.sum_bij'
+    (fun (x : ℕ × {d // d ∈ g'.divisors})
+        (hx : x ∈ Finset.range (c + 1) ×ˢ g'.divisors.attach) ↦
+      ⟨p ^ x.1 * x.2.val, ?_⟩)
+    (fun (d : {d // d ∈ (m.gcd n).divisors}) (_ : d ∈ (m.gcd n).divisors.attach) ↦
+      ((d.val.factorization p), ⟨d.val / p ^ (d.val.factorization p), ?_⟩))
+    ?_ ?_ ?_ ?_ ?_
+  case refine_1 =>
+    exact pow_mul_mem_gcd_divisors hp hgcd_eq hg'_pos hpc_pos x.2.prop
+      (Nat.lt_add_one_iff.mp (Finset.mem_range.mp (Finset.mem_product.mp hx).1))
+  case refine_2 =>
+    exact ordCompl_mem_divisors_of_dvd_mul_pow hp hg'_pos hpc_pos hp_not_dvd_g'
+      (hgcd_eq ▸ Nat.dvd_of_mem_divisors d.prop)
+  case refine_3 => exact fun _ _ ↦ Finset.mem_attach _ _
+  case refine_4 =>
+    intro ⟨d, hd⟩ _
+    simp only [Finset.mem_product, Finset.mem_range, Finset.mem_attach, and_true]
+    have hd_dvd_gpc : d ∣ g' * p ^ c := hgcd_eq ▸ Nat.dvd_of_mem_divisors hd
+    have hgpc_ne : g' * p ^ c ≠ 0 := (Nat.mul_pos hg'_pos hpc_pos).ne'
+    have hd_ne : d ≠ 0 := fun h ↦ hgpc_ne (by rw [← Nat.zero_dvd]; exact h ▸ hd_dvd_gpc)
+    exact Nat.lt_succ_of_le (factorization_coprime_mul_pow_self (c := c) hp hp_not_dvd_g' ▸
+      (Nat.factorization_le_iff_dvd hd_ne hgpc_ne).mpr hd_dvd_gpc p)
+  case refine_5 =>
+    rintro ⟨j, ⟨d', hd'⟩⟩ -
+    have hd'_pos : 0 < d' := Nat.pos_of_ne_zero fun h ↦
+      hg'_pos.ne' (Nat.eq_zero_of_zero_dvd (h ▸ Nat.dvd_of_mem_divisors hd'))
+    have hfact : (p ^ j * d').factorization p = j :=
+      factorization_pow_mul_self hp hd'_pos
+        (fun h ↦ hp_not_dvd_g' (dvd_trans h (Nat.dvd_of_mem_divisors hd')))
+    ext1
+    · exact hfact
+    · exact Subtype.ext (by simp only [hfact, Nat.mul_div_cancel_left d' (pow_pos hp.pos j)])
+  case refine_6 =>
+    rintro ⟨d, hd⟩ -
+    exact Subtype.ext (Nat.ordProj_mul_ordCompl_eq_self d p)
+  case refine_7 =>
+    rintro ⟨j, ⟨d', hd'⟩⟩ hmem
+    exact formal_table_summand dblk sblk hp va vb m' n' m n j d' hm'_pos hn'_pos
+      hm_eq hn_eq hp_not_dvd_m' hp_not_dvd_n' hd'
+      (Nat.lt_add_one_iff.mp (Finset.mem_range.mp (Finset.mem_product.mp hmem).1))
+
+/-- The non-coprime inductive step of `formal_table`: peel the maximal prime power of
+`gcd m n`, reduce the two same-prime power factors via the per-prime law `hppow`, apply the
+inductive hypothesis on the strictly smaller gcd `gcd m' n'`, and reindex. -/
+private theorem formal_table_noncoprime
+    (hppow : ∀ (p : ℕ), Nat.Prime p → ∀ r s : ℕ, r ≤ s →
+      peelProd dblk (p ^ r) * peelProd dblk (p ^ s) =
+        ∑ i ∈ Finset.range (r + 1),
+          (p : ℤ) ^ i • (peelProd sblk (p ^ i) * peelProd dblk (p ^ (r + s - 2 * i))))
+    (g : ℕ) (m n : ℕ) [NeZero m] [NeZero n] (hg : Nat.gcd m n = g) (hg1 : g ≠ 1)
+    (ih : ∀ g', g' < g → ∀ (m' n' : ℕ), [NeZero m'] → [NeZero n'] → Nat.gcd m' n' = g' →
+      peelProd dblk m' * peelProd dblk n' =
+        ∑ d ∈ (Nat.gcd m' n').divisors.attach,
+          (d.val : ℤ) • (peelProd sblk d.val *
+            peelProd dblk (m' * n' / (d.val * d.val)))) :
+    peelProd dblk m * peelProd dblk n =
+      ∑ d ∈ (Nat.gcd m n).divisors.attach,
+        (d.val : ℤ) • (peelProd sblk d.val *
+          peelProd dblk (m * n / (d.val * d.val))) := by
+  have hg_pos : 0 < g := by
+    rcases Nat.eq_zero_or_pos g with rfl | h
+    · exact absurd ((Nat.gcd_eq_zero_iff.mp hg)).1 (NeZero.ne m)
+    · exact h
+  set p := g.minFac with hp_def
+  have hp : Nat.Prime p := Nat.minFac_prime (by omega)
+  have hp_dvd_m : p ∣ m := dvd_trans (hg ▸ Nat.minFac_dvd g) (Nat.gcd_dvd_left m n)
+  have hp_dvd_n : p ∣ n := dvd_trans (hg ▸ Nat.minFac_dvd g) (Nat.gcd_dvd_right m n)
+  set va := m.factorization p with hva_def
+  set vb := n.factorization p with hvb_def
+  have ha_pos : 0 < va := hp.factorization_pos_of_dvd (NeZero.ne m) hp_dvd_m
+  have hb_pos : 0 < vb := hp.factorization_pos_of_dvd (NeZero.ne n) hp_dvd_n
+  set m' := m / p ^ va with hm'_def
+  set n' := n / p ^ vb with hn'_def
+  have hm'_pos : 0 < m' :=
+    Nat.div_pos (Nat.le_of_dvd (NeZero.pos m) (Nat.ordProj_dvd m p)) (pow_pos hp.pos va)
+  have hn'_pos : 0 < n' :=
+    Nat.div_pos (Nat.le_of_dvd (NeZero.pos n) (Nat.ordProj_dvd n p)) (pow_pos hp.pos vb)
+  haveI : NeZero m' := ⟨hm'_pos.ne'⟩
+  haveI : NeZero n' := ⟨hn'_pos.ne'⟩
+  have hp_not_dvd_m' : ¬p ∣ m' := Nat.not_dvd_ordCompl hp (NeZero.ne m)
+  have hp_not_dvd_n' : ¬p ∣ n' := Nat.not_dvd_ordCompl hp (NeZero.ne n)
+  have hm_eq : m = p ^ va * m' := (Nat.mul_div_cancel' (Nat.ordProj_dvd m p)).symm
+  have hn_eq : n = p ^ vb * n' := (Nat.mul_div_cancel' (Nat.ordProj_dvd n p)).symm
+  have hgcd_eq : Nat.gcd m n = Nat.gcd m' n' * p ^ min va vb :=
+    gcd_eq_gcd_ordCompl_mul_pow_min hp hm_eq hn_eq hp_not_dvd_m' hp_not_dvd_n'
+  set g' := Nat.gcd m' n' with hg'_def
+  have hg'_lt : g' < g := by
+    rw [← hg, hgcd_eq]
+    refine lt_mul_of_one_lt_right (Nat.pos_of_ne_zero fun hg'0 ↦ ?_)
+      (Nat.one_lt_pow (by omega) hp.one_lt)
+    exact hm'_pos.ne' (Nat.eq_zero_of_gcd_eq_zero_left hg'0)
+  -- Coprime peeling of `D` at the maximal prime power.
+  have hcop_m : Nat.Coprime (p ^ va) m' := (hp.coprime_pow_of_not_dvd hp_not_dvd_m').symm
+  have hcop_n : Nat.Coprime (p ^ vb) n' := (hp.coprime_pow_of_not_dvd hp_not_dvd_n').symm
+  have hDm : peelProd dblk m = peelProd dblk (p ^ va) * peelProd dblk m' := by
+    rw [hm_eq, peelProd_mul_coprime dblk _ _ hcop_m]
+  have hDn : peelProd dblk n = peelProd dblk (p ^ vb) * peelProd dblk n' := by
+    rw [hn_eq, peelProd_mul_coprime dblk _ _ hcop_n]
+  -- Reorder same-prime powers to `(min, max)`.
+  have hppow_minmax : peelProd dblk (p ^ va) * peelProd dblk (p ^ vb) =
+      peelProd dblk (p ^ min va vb) * peelProd dblk (p ^ max va vb) := by
+    rcases le_or_gt va vb with h | h
+    · rw [min_eq_left h, max_eq_right h]
+    · rw [min_eq_right h.le, max_eq_left h.le, mul_comm]
+  rw [hDm, hDn, show peelProd dblk (p ^ va) * peelProd dblk m' *
+        (peelProd dblk (p ^ vb) * peelProd dblk n') =
+      peelProd dblk (p ^ va) * peelProd dblk (p ^ vb) *
+        (peelProd dblk m' * peelProd dblk n') by ring,
+      hppow_minmax,
+      hppow p hp (min va vb) (max va vb) (min_le_max),
+      ih g' (hg ▸ hg'_lt) m' n' rfl]
+  exact formal_table_div_sum dblk sblk hp va vb m' n' m n hm'_pos hn'_pos
+    hm_eq hn_eq hp_not_dvd_m' hp_not_dvd_n' hgcd_eq
+
+/-- **Formal general multiplication table** (ring-side Shimura 3.24).  For two
+`peelProd`-assembled families `D = peelProd dblk` and `S = peelProd sblk` over a commutative
+ring whose prime-power blocks satisfy the per-prime Chebyshev product law `hppow`,
+`D_m · D_n = ∑_{d ∣ gcd m n} d • (S_d · D_{mn/d²})`. -/
+private theorem formal_table
+    (hppow : ∀ (p : ℕ), Nat.Prime p → ∀ r s : ℕ, r ≤ s →
+      peelProd dblk (p ^ r) * peelProd dblk (p ^ s) =
+        ∑ i ∈ Finset.range (r + 1),
+          (p : ℤ) ^ i • (peelProd sblk (p ^ i) * peelProd dblk (p ^ (r + s - 2 * i))))
+    (m n : ℕ) [NeZero m] [NeZero n] :
+    peelProd dblk m * peelProd dblk n =
+      ∑ d ∈ (Nat.gcd m n).divisors.attach,
+        (d.val : ℤ) • (peelProd sblk d.val *
+          peelProd dblk (m * n / (d.val * d.val))) := by
+  suffices H : ∀ g, ∀ (m n : ℕ), [NeZero m] → [NeZero n] → Nat.gcd m n = g →
+      peelProd dblk m * peelProd dblk n =
+        ∑ d ∈ (Nat.gcd m n).divisors.attach,
+          (d.val : ℤ) • (peelProd sblk d.val *
+            peelProd dblk (m * n / (d.val * d.val))) by
+    exact H (Nat.gcd m n) m n rfl
+  intro g
+  induction g using Nat.strong_induction_on with
+  | _ g ih =>
+  intro m n _ _ hg
+  by_cases hg1 : g = 1
+  · subst hg1
+    have hmn_cop : Nat.Coprime m n := hg
+    have hattach : (Nat.gcd m n).divisors.attach = {⟨1, by rw [hg]; simp⟩} := by
+      have hd : (Nat.gcd m n).divisors = {1} := hg ▸ Nat.divisors_one
+      ext ⟨a, ha⟩
+      rw [hd] at ha
+      simp only [Finset.mem_singleton] at ha ⊢
+      exact ⟨fun _ ↦ Subtype.ext ha, fun _ ↦ Finset.mem_attach _ _⟩
+    rw [hattach, Finset.sum_singleton]
+    simp only [Nat.cast_one, one_smul, Nat.one_mul, Nat.div_one]
+    rw [peelProd_one, one_mul, ← peelProd_mul_coprime dblk m n hmn_cop]
+  · exact formal_table_noncoprime dblk sblk hppow g m n hg hg1
+      (fun g' hlt m' n' _ _ h ↦ ih g' hlt m' n' h)
+
+end FormalTable
+
 variable {N : ℕ} [NeZero N]
 
 /-! ## The ring elements -/
@@ -378,5 +694,42 @@ noncomputable def heckeRingS_n (d : ℕ) : 𝕋 (Gamma0_pair N) ℤ :=
     (fun p v ↦ if hp : Nat.Prime p then heckeRingSpp p hp ^ v else 1) d
 
 @[simp] theorem heckeRingS_n_one : heckeRingS_n (N := N) 1 = 1 := peelProd_one _
+
+/-- On a prime power, the composite scalar class agrees with the power of the prime scalar:
+`S_{p^v} = S_p^v`. -/
+theorem heckeRingS_n_ppow (p : ℕ) (hp : Nat.Prime p) (v : ℕ) :
+    heckeRingS_n (N := N) (p ^ v) = heckeRingSpp p hp ^ v := by
+  rcases Nat.eq_zero_or_pos v with rfl | hv
+  · simp
+  rw [heckeRingS_n, peelProd_ppow _ hp v hv, dif_pos hp]
+
+/-- **Per-prime product formula in composite form** (Shimura 3.24(3), ring side): for
+`r ≤ s`,
+`D_{p^r} · D_{p^s} = ∑_{i=0}^{r} p^i • (S_{p^i} · D_{p^{r+s−2i}})`.
+This is the per-prime hypothesis required to feed the formal general table. -/
+theorem heckeRingD_n_ppow_mul (p : ℕ) (hp : Nat.Prime p) (r s : ℕ) (hrs : r ≤ s) :
+    heckeRingD_n (N := N) (p ^ r) * heckeRingD_n (p ^ s) =
+      ∑ i ∈ Finset.range (r + 1),
+        (p : ℤ) ^ i • (heckeRingS_n (p ^ i) * heckeRingD_n (p ^ (r + s - 2 * i))) := by
+  rw [heckeRingD_n_ppow p hp r, heckeRingD_n_ppow p hp s, heckeRingD_ppow_mul p hp r s hrs]
+  refine Finset.sum_congr rfl fun i _ ↦ ?_
+  rw [heckeRingD_n_ppow p hp, heckeRingS_n_ppow p hp, smul_pow, smul_mul_assoc]
+
+/-- **General multiplication table** (ring-side Shimura 3.24 at level `Γ₀(N)`): for
+`m, n > 0`,
+`D_m · D_n = ∑_{d ∣ gcd m n} d • (S_d · D_{mn/d²})`.
+The bad-prime divisors `d` with `gcd(d, N) > 1` contribute `0` (since `S_d = 0` there), so the
+sum over *all* divisors of `gcd m n` is correct as stated.  Instantiates the formal table
+`formal_table` with the concrete `peelProd`-assembled families `heckeRingD_n`, `heckeRingS_n`,
+whose per-prime blocks satisfy the Chebyshev product law `heckeRingD_n_ppow_mul`. -/
+theorem heckeRingD_n_mul (m n : ℕ) [NeZero m] [NeZero n] :
+    heckeRingD_n (N := N) m * heckeRingD_n n =
+      ∑ d ∈ (Nat.gcd m n).divisors.attach,
+        (d.val : ℤ) • (heckeRingS_n d.val * heckeRingD_n (m * n / (d.val * d.val))) := by
+  letI : CommRing (𝕋 (Gamma0_pair N) ℤ) := instCommRing_Gamma0 N
+  exact formal_table
+    (fun p v ↦ if hp : Nat.Prime p then heckeRingD_ppow p hp v else 1)
+    (fun p v ↦ if hp : Nat.Prime p then heckeRingSpp p hp ^ v else 1)
+    (fun p hp r s hrs ↦ heckeRingD_n_ppow_mul p hp r s hrs) m n
 
 end HeckeRing.GL2.Unified
