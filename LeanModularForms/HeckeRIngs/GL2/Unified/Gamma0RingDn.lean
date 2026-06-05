@@ -124,7 +124,7 @@ variable {R : Type*} [Monoid R]
 `p = minFac n` and `v = v_p(n)`, with `peelProd f 0 = peelProd f 1 = 1`.  The block map
 `f : ℕ → ℕ → R` is only ever evaluated at `(p, v_p(n))` with `p` prime. -/
 private noncomputable def peelProd (f : ℕ → ℕ → R) (n : ℕ) : R :=
-  if h : n ≤ 1 then 1
+  if _h : n ≤ 1 then 1
   else
     let p := n.minFac
     let v := n.factorization p

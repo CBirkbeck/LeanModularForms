@@ -487,6 +487,29 @@ theorem exists_finsupp_charSpace_of_diamondOpCuspHom_invariant
 
 end InvariantSubmoduleCharDecomp
 
+section EndoExt
+
+variable {N : ℕ} [NeZero N]
+
+/-- **Extensionality along the character decomposition**: two `ℂ`-linear endomorphisms of
+`ModularForm (Γ₁(N)) k` that agree on every Nebentypus subspace `modFormCharSpace k χ`
+are equal.  This is the gluing principle by which identities of Hecke operators proven
+per character space (e.g. transported from the commutative ring `𝕋(Γ₀(N))` along
+`heckeRingHomCharSpace`) extend to the whole space of modular forms. -/
+theorem ModularForm_Gamma1_endo_ext {k : ℤ}
+    {S T : Module.End ℂ (ModularForm ((Gamma1 N).map (mapGL ℝ)) k)}
+    (h : ∀ (χ : (ZMod N)ˣ →* ℂˣ) (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k),
+      f ∈ modFormCharSpace k χ → S f = T f) : S = T := by
+  refine LinearMap.ext fun f ↦ ?_
+  have hf : f ∈ (⊤ : Submodule ℂ (ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) :=
+    Submodule.mem_top
+  rw [← ModularForm_Gamma1_iSup_charSpace (N := N) k] at hf
+  refine Submodule.iSup_induction _ (motive := fun g ↦ S g = T g) hf
+    (fun χ g hg ↦ h χ g hg) (by simp) (fun x y hx hy ↦ ?_)
+  simp [map_add, hx, hy]
+
+end EndoExt
+
 end
 
 end HeckeRing.GL2
