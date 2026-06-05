@@ -872,6 +872,77 @@ theorem IsNullHomologous.of_convex_open {x : ℂ}
 
 /-! ## Cauchy's theorem on a rectangle -/
 
+/-- The image of the rectangular contour `rectangleContour a b c d` on `[0, 1]`
+lies inside any set containing every point of the closed rectangle
+`[a, b] × [c, d]`. Useful for applying Cauchy on the rectangle. -/
+theorem rectangleContour_image_subset_rect
+    {a b c d : ℝ} (hab : a < b) (hcd : c < d)
+    {U : Set ℂ} (h_corners : ∀ x ∈ Icc a b, ∀ y ∈ Icc c d, (x : ℂ) + (y : ℂ) * I ∈ U) :
+    ∀ t ∈ Icc (0 : ℝ) 1,
+      (rectangleContour a b c d hab hcd).toPwC1Immersion.toPiecewiseC1Path t ∈ U := by
+  intro t ht
+  show (rectanglePath a b c d).extend t ∈ U
+  rw [rectanglePath_extend_eq a b c d t ht]
+  by_cases ht1 : t ≤ 1/4
+  · have hcoeff_nn : 0 ≤ 4 * t := by linarith [ht.1]
+    have hcoeff_le : 4 * t ≤ 1 := by linarith [ht1]
+    have hx_mem : a + 4 * t * (b - a) ∈ Icc a b := by
+      refine ⟨?_, ?_⟩
+      · nlinarith [hab.le]
+      · nlinarith [hab.le]
+    have hy_mem : c ∈ Icc c d := ⟨le_refl _, hcd.le⟩
+    have h_in_U := h_corners _ hx_mem c hy_mem
+    simp only [rectangleFun, if_pos ht1, rectSeg1]
+    have h_eq : ((a : ℂ) + 4 * (t : ℂ) * (b - a)) + (c : ℂ) * I =
+        ((a + 4 * t * (b - a) : ℝ) : ℂ) + (c : ℂ) * I := by push_cast; ring
+    rw [h_eq]; exact h_in_U
+  · push Not at ht1
+    by_cases ht2 : t ≤ 1/2
+    · have hcoeff_nn : 0 ≤ 4 * (t - 1/4) := by linarith
+      have hcoeff_le : 4 * (t - 1/4) ≤ 1 := by linarith
+      have hy_mem : c + 4 * (t - 1/4) * (d - c) ∈ Icc c d := by
+        refine ⟨?_, ?_⟩
+        · nlinarith [hcd.le]
+        · nlinarith [hcd.le]
+      have hx_mem : b ∈ Icc a b := ⟨hab.le, le_refl _⟩
+      have h_in_U := h_corners b hx_mem _ hy_mem
+      simp only [rectangleFun, if_neg (not_le.mpr ht1), if_pos ht2, rectSeg2]
+      have h_eq : ((b : ℂ) + ((c : ℂ) + 4 * ((t : ℂ) - 1/4) * (d - c)) * I) =
+          ((b : ℝ) : ℂ) + ((c + 4 * (t - 1/4) * (d - c) : ℝ) : ℂ) * I := by
+        push_cast; ring
+      rw [h_eq]; exact h_in_U
+    · push Not at ht2
+      by_cases ht3 : t ≤ 3/4
+      · have hcoeff_nn : 0 ≤ 4 * (t - 1/2) := by linarith
+        have hcoeff_le : 4 * (t - 1/2) ≤ 1 := by linarith
+        have hx_mem : b - 4 * (t - 1/2) * (b - a) ∈ Icc a b := by
+          refine ⟨?_, ?_⟩
+          · nlinarith [hab.le]
+          · nlinarith [hab.le]
+        have hy_mem : d ∈ Icc c d := ⟨hcd.le, le_refl _⟩
+        have h_in_U := h_corners _ hx_mem d hy_mem
+        simp only [rectangleFun, if_neg (not_le.mpr ht1), if_neg (not_le.mpr ht2),
+          if_pos ht3, rectSeg3]
+        have h_eq : ((b : ℂ) - 4 * ((t : ℂ) - 1/2) * (b - a)) + (d : ℂ) * I =
+            ((b - 4 * (t - 1/2) * (b - a) : ℝ) : ℂ) + (d : ℂ) * I := by
+          push_cast; ring
+        rw [h_eq]; exact h_in_U
+      · push Not at ht3
+        have hcoeff_nn : 0 ≤ 4 * (t - 3/4) := by linarith
+        have hcoeff_le : 4 * (t - 3/4) ≤ 1 := by linarith [ht.2]
+        have hy_mem : d - 4 * (t - 3/4) * (d - c) ∈ Icc c d := by
+          refine ⟨?_, ?_⟩
+          · nlinarith [hcd.le]
+          · nlinarith [hcd.le]
+        have hx_mem : a ∈ Icc a b := ⟨le_refl _, hab.le⟩
+        have h_in_U := h_corners a hx_mem _ hy_mem
+        simp only [rectangleFun, if_neg (not_le.mpr ht1), if_neg (not_le.mpr ht2),
+          if_neg (not_le.mpr ht3), rectSeg4]
+        have h_eq : ((a : ℂ) + ((d : ℂ) - 4 * ((t : ℂ) - 3/4) * (d - c)) * I) =
+            ((a : ℝ) : ℂ) + ((d - 4 * (t - 3/4) * (d - c) : ℝ) : ℂ) * I := by
+          push_cast; ring
+        rw [h_eq]; exact h_in_U
+
 /-- **Cauchy's theorem on a rectangle.** If `f` is holomorphic on a convex open
 set `U` containing the closed rectangle `[a, b] × [c, d]`, then the contour
 integral of `f` along the boundary of the rectangle (traversed counterclockwise)
@@ -896,84 +967,398 @@ theorem cauchy_rectangle_zero
     -- `h_rect_in_U` uses `Complex.I`; our goal is the same.
     exact this
   -- Image-in-U via segment-wise reasoning.
-  have h_image : ∀ t ∈ Icc (0 : ℝ) 1,
-      (rectangleContour a b c d hab hcd).toPwC1Immersion.toPiecewiseC1Path t ∈ U := by
-    intro t ht
-    -- Recall: the contour is `(rectanglePath a b c d).extend = rectangleFun a b c d`
-    -- on `[0, 1]`, broken into 4 pieces. On each piece, the path is an affine
-    -- combination of two corners of the rectangle.
-    show (rectanglePath a b c d).extend t ∈ U
-    rw [rectanglePath_extend_eq a b c d t ht]
-    -- Locate the segment.
-    by_cases ht1 : t ≤ 1/4
-    · -- bottom: (a + 4t(b-a)) + c·I
-      have hcoeff_nn : 0 ≤ 4 * t := by linarith [ht.1]
-      have hcoeff_le : 4 * t ≤ 1 := by linarith [ht1]
-      -- x = a + 4t(b - a) ∈ [a, b]
-      have hx_mem : a + 4 * t * (b - a) ∈ Icc a b := by
-        refine ⟨?_, ?_⟩
-        · nlinarith [hab.le]
-        · nlinarith [hab.le]
-      have hy_mem : c ∈ Icc c d := ⟨le_refl _, hcd.le⟩
-      have h_in_U := h_corners _ hx_mem c hy_mem
-      simp only [rectangleFun, if_pos ht1, rectSeg1]
-      have h_eq : ((a : ℂ) + 4 * (t : ℂ) * (b - a)) + (c : ℂ) * I =
-          ((a + 4 * t * (b - a) : ℝ) : ℂ) + (c : ℂ) * I := by push_cast; ring
-      rw [h_eq]; exact h_in_U
-    · push Not at ht1
-      by_cases ht2 : t ≤ 1/2
-      · -- right: b + (c + 4(t - 1/4)(d - c))·I
-        have hcoeff_nn : 0 ≤ 4 * (t - 1/4) := by linarith
-        have hcoeff_le : 4 * (t - 1/4) ≤ 1 := by linarith
-        have hy_mem : c + 4 * (t - 1/4) * (d - c) ∈ Icc c d := by
-          refine ⟨?_, ?_⟩
-          · nlinarith [hcd.le]
-          · nlinarith [hcd.le]
-        have hx_mem : b ∈ Icc a b := ⟨hab.le, le_refl _⟩
-        have h_in_U := h_corners b hx_mem _ hy_mem
-        simp only [rectangleFun, if_neg (not_le.mpr ht1), if_pos ht2, rectSeg2]
-        have h_eq : ((b : ℂ) + ((c : ℂ) + 4 * ((t : ℂ) - 1/4) * (d - c)) * I) =
-            ((b : ℝ) : ℂ) + ((c + 4 * (t - 1/4) * (d - c) : ℝ) : ℂ) * I := by
-          push_cast; ring
-        rw [h_eq]; exact h_in_U
-      · push Not at ht2
-        by_cases ht3 : t ≤ 3/4
-        · -- top: (b - 4(t - 1/2)(b - a)) + d·I
-          have hcoeff_nn : 0 ≤ 4 * (t - 1/2) := by linarith
-          have hcoeff_le : 4 * (t - 1/2) ≤ 1 := by linarith
-          have hx_mem : b - 4 * (t - 1/2) * (b - a) ∈ Icc a b := by
-            refine ⟨?_, ?_⟩
-            · nlinarith [hab.le]
-            · nlinarith [hab.le]
-          have hy_mem : d ∈ Icc c d := ⟨hcd.le, le_refl _⟩
-          have h_in_U := h_corners _ hx_mem d hy_mem
-          simp only [rectangleFun, if_neg (not_le.mpr ht1), if_neg (not_le.mpr ht2),
-            if_pos ht3, rectSeg3]
-          have h_eq : ((b : ℂ) - 4 * ((t : ℂ) - 1/2) * (b - a)) + (d : ℂ) * I =
-              ((b - 4 * (t - 1/2) * (b - a) : ℝ) : ℂ) + (d : ℂ) * I := by
-            push_cast; ring
-          rw [h_eq]; exact h_in_U
-        · push Not at ht3
-          -- left: a + (d - 4(t - 3/4)(d - c))·I
-          have hcoeff_nn : 0 ≤ 4 * (t - 3/4) := by linarith
-          have hcoeff_le : 4 * (t - 3/4) ≤ 1 := by linarith [ht.2]
-          have hy_mem : d - 4 * (t - 3/4) * (d - c) ∈ Icc c d := by
-            refine ⟨?_, ?_⟩
-            · nlinarith [hcd.le]
-            · nlinarith [hcd.le]
-          have hx_mem : a ∈ Icc a b := ⟨le_refl _, hab.le⟩
-          have h_in_U := h_corners a hx_mem _ hy_mem
-          simp only [rectangleFun, if_neg (not_le.mpr ht1), if_neg (not_le.mpr ht2),
-            if_neg (not_le.mpr ht3), rectSeg4]
-          have h_eq : ((a : ℂ) + ((d : ℂ) - 4 * ((t : ℂ) - 3/4) * (d - c)) * I) =
-              ((a : ℝ) : ℂ) + ((d - 4 * (t - 3/4) * (d - c) : ℝ) : ℂ) * I := by
-            push_cast; ring
-          rw [h_eq]; exact h_in_U
+  have h_image := rectangleContour_image_subset_rect hab hcd h_corners
   -- The basepoint is at parameter `0`, i.e. `(a + c·I) ∈ U`.
   have hx : ((a : ℂ) + (c : ℂ) * I) ∈ U :=
     h_corners a ⟨le_refl _, hab.le⟩ c ⟨le_refl _, hcd.le⟩
   exact cauchy_integral_zero_pwc1 hU_open hU_ne hf (rectangleContour a b c d hab hcd)
     (IsNullHomologous.of_convex_open _ hU_open hU_convex h_image) hx
+
+/-! ## Decomposition into four segment integrals
+
+The contour integral along `rectangleContour a b c d` decomposes as
+`(bottom) + (right) + (top) + (left)`, each parameterised over `[0, 1]`. -/
+
+/-- `HasDerivAt` of `(rectanglePath a b c d).extend` on the open first piece. -/
+private lemma rectanglePath_extend_hasDerivAt_seg1 (a b c d : ℝ) {t : ℝ}
+    (ht : t ∈ Ioo (0 : ℝ) (1/4)) :
+    HasDerivAt (rectanglePath a b c d).extend (4 * ((b : ℂ) - a)) t :=
+  (rectSeg1_hasDerivAt a b c t).congr_of_eventuallyEq
+    (Filter.eventually_of_mem (Ioo_mem_nhds ht.1 ht.2) fun _ hs =>
+      rectanglePath_extend_eq_seg1_on_Icc a b c d (Ioo_subset_Icc_self hs))
+
+/-- `HasDerivAt` of `(rectanglePath a b c d).extend` on the open second piece. -/
+private lemma rectanglePath_extend_hasDerivAt_seg2 (a b c d : ℝ) {t : ℝ}
+    (ht : t ∈ Ioo (1/4 : ℝ) (1/2)) :
+    HasDerivAt (rectanglePath a b c d).extend (4 * ((d : ℂ) - c) * I) t :=
+  (rectSeg2_hasDerivAt b c d t).congr_of_eventuallyEq
+    (Filter.eventually_of_mem (Ioo_mem_nhds ht.1 ht.2) fun _ hs =>
+      rectanglePath_extend_eq_seg2_on_Icc a b c d (Ioo_subset_Icc_self hs))
+
+/-- `HasDerivAt` of `(rectanglePath a b c d).extend` on the open third piece. -/
+private lemma rectanglePath_extend_hasDerivAt_seg3 (a b c d : ℝ) {t : ℝ}
+    (ht : t ∈ Ioo (1/2 : ℝ) (3/4)) :
+    HasDerivAt (rectanglePath a b c d).extend (-(4 * ((b : ℂ) - a))) t :=
+  (rectSeg3_hasDerivAt a b d t).congr_of_eventuallyEq
+    (Filter.eventually_of_mem (Ioo_mem_nhds ht.1 ht.2) fun _ hs =>
+      rectanglePath_extend_eq_seg3_on_Icc a b c d (Ioo_subset_Icc_self hs))
+
+/-- `HasDerivAt` of `(rectanglePath a b c d).extend` on the open fourth piece. -/
+private lemma rectanglePath_extend_hasDerivAt_seg4 (a b c d : ℝ) {t : ℝ}
+    (ht : t ∈ Ioo (3/4 : ℝ) 1) :
+    HasDerivAt (rectanglePath a b c d).extend (-(4 * ((d : ℂ) - c)) * I) t :=
+  (rectSeg4_hasDerivAt a c d t).congr_of_eventuallyEq
+    (Filter.eventually_of_mem (Ioo_mem_nhds ht.1 ht.2) fun _ hs =>
+      rectanglePath_extend_eq_seg4_on_Icc a b c d (Ioo_subset_Icc_self hs))
+
+/-- The derivative of `(rectanglePath a b c d).extend` on the open first piece. -/
+private lemma rectanglePath_extend_deriv_seg1 (a b c d : ℝ) {t : ℝ}
+    (ht : t ∈ Ioo (0 : ℝ) (1/4)) :
+    deriv (rectanglePath a b c d).extend t = 4 * ((b : ℂ) - a) :=
+  (rectanglePath_extend_hasDerivAt_seg1 a b c d ht).deriv
+
+/-- The derivative of `(rectanglePath a b c d).extend` on the open second piece. -/
+private lemma rectanglePath_extend_deriv_seg2 (a b c d : ℝ) {t : ℝ}
+    (ht : t ∈ Ioo (1/4 : ℝ) (1/2)) :
+    deriv (rectanglePath a b c d).extend t = 4 * ((d : ℂ) - c) * I :=
+  (rectanglePath_extend_hasDerivAt_seg2 a b c d ht).deriv
+
+/-- The derivative of `(rectanglePath a b c d).extend` on the open third piece. -/
+private lemma rectanglePath_extend_deriv_seg3 (a b c d : ℝ) {t : ℝ}
+    (ht : t ∈ Ioo (1/2 : ℝ) (3/4)) :
+    deriv (rectanglePath a b c d).extend t = -(4 * ((b : ℂ) - a)) :=
+  (rectanglePath_extend_hasDerivAt_seg3 a b c d ht).deriv
+
+/-- The derivative of `(rectanglePath a b c d).extend` on the open fourth piece. -/
+private lemma rectanglePath_extend_deriv_seg4 (a b c d : ℝ) {t : ℝ}
+    (ht : t ∈ Ioo (3/4 : ℝ) 1) :
+    deriv (rectanglePath a b c d).extend t = -(4 * ((d : ℂ) - c)) * I :=
+  (rectanglePath_extend_hasDerivAt_seg4 a b c d ht).deriv
+
+/-- On the open first piece `Ioo 0 (1/4)`, the contour integrand of `f` along
+`rectangleContour` equals `f (rectSeg1 a b c t) * (4 * (b - a))`. -/
+private lemma rectangleContour_integrand_seg1_ae (a b c d : ℝ) (f : ℂ → ℂ) :
+    ∀ᵐ t, t ∈ Ι (0 : ℝ) (1/4) →
+      f ((rectanglePath a b c d).extend t) * deriv (rectanglePath a b c d).extend t
+        = f (rectSeg1 a b c t) * (4 * ((b : ℂ) - a)) := by
+  filter_upwards [MeasureTheory.Measure.ae_ne volume (1/4 : ℝ)] with t ht hI
+  rw [show Ι (0 : ℝ) (1/4) = Ioc 0 (1/4) from uIoc_of_le (by norm_num)] at hI
+  have ht' : t ∈ Ioo (0 : ℝ) (1/4) := ⟨hI.1, lt_of_le_of_ne hI.2 ht⟩
+  rw [rectanglePath_extend_deriv_seg1 a b c d ht',
+      rectanglePath_extend_eq_seg1_on_Icc a b c d (Ioo_subset_Icc_self ht')]
+
+/-- On the open second piece `Ioo (1/4) (1/2)`, the contour integrand of `f` along
+`rectangleContour` equals `f (rectSeg2 b c d t) * (4 * (d - c) * I)`. -/
+private lemma rectangleContour_integrand_seg2_ae (a b c d : ℝ) (f : ℂ → ℂ) :
+    ∀ᵐ t, t ∈ Ι (1/4 : ℝ) (1/2) →
+      f ((rectanglePath a b c d).extend t) * deriv (rectanglePath a b c d).extend t
+        = f (rectSeg2 b c d t) * (4 * ((d : ℂ) - c) * I) := by
+  filter_upwards [MeasureTheory.Measure.ae_ne volume (1/2 : ℝ)] with t ht hI
+  rw [show Ι (1/4 : ℝ) (1/2) = Ioc (1/4) (1/2) from uIoc_of_le (by norm_num)] at hI
+  have ht' : t ∈ Ioo (1/4 : ℝ) (1/2) := ⟨hI.1, lt_of_le_of_ne hI.2 ht⟩
+  rw [rectanglePath_extend_deriv_seg2 a b c d ht',
+      rectanglePath_extend_eq_seg2_on_Icc a b c d (Ioo_subset_Icc_self ht')]
+
+/-- On the open third piece `Ioo (1/2) (3/4)`, the contour integrand of `f` along
+`rectangleContour` equals `f (rectSeg3 a b d t) * (-(4 * (b - a)))`. -/
+private lemma rectangleContour_integrand_seg3_ae (a b c d : ℝ) (f : ℂ → ℂ) :
+    ∀ᵐ t, t ∈ Ι (1/2 : ℝ) (3/4) →
+      f ((rectanglePath a b c d).extend t) * deriv (rectanglePath a b c d).extend t
+        = f (rectSeg3 a b d t) * (-(4 * ((b : ℂ) - a))) := by
+  filter_upwards [MeasureTheory.Measure.ae_ne volume (3/4 : ℝ)] with t ht hI
+  rw [show Ι (1/2 : ℝ) (3/4) = Ioc (1/2) (3/4) from uIoc_of_le (by norm_num)] at hI
+  have ht' : t ∈ Ioo (1/2 : ℝ) (3/4) := ⟨hI.1, lt_of_le_of_ne hI.2 ht⟩
+  rw [rectanglePath_extend_deriv_seg3 a b c d ht',
+      rectanglePath_extend_eq_seg3_on_Icc a b c d (Ioo_subset_Icc_self ht')]
+
+/-- On the open fourth piece `Ioo (3/4) 1`, the contour integrand of `f` along
+`rectangleContour` equals `f (rectSeg4 a c d t) * (-(4 * (d - c)) * I)`. -/
+private lemma rectangleContour_integrand_seg4_ae (a b c d : ℝ) (f : ℂ → ℂ) :
+    ∀ᵐ t, t ∈ Ι (3/4 : ℝ) 1 →
+      f ((rectanglePath a b c d).extend t) * deriv (rectanglePath a b c d).extend t
+        = f (rectSeg4 a c d t) * (-(4 * ((d : ℂ) - c)) * I) := by
+  filter_upwards [MeasureTheory.Measure.ae_ne volume (1 : ℝ)] with t ht hI
+  rw [show Ι (3/4 : ℝ) 1 = Ioc (3/4) 1 from uIoc_of_le (by norm_num)] at hI
+  have ht' : t ∈ Ioo (3/4 : ℝ) 1 := ⟨hI.1, lt_of_le_of_ne hI.2 ht⟩
+  rw [rectanglePath_extend_deriv_seg4 a b c d ht',
+      rectanglePath_extend_eq_seg4_on_Icc a b c d (Ioo_subset_Icc_self ht')]
+
+/-! ### Continuity helpers for the segment integrands
+
+If `f` is continuous on the image of the rectangle path, then the segment
+integrand `t ↦ f (rectSeg_i ...) * v_i` (where `v_i` is the segment
+velocity) is continuous on the corresponding closed sub-interval. -/
+
+/-- The image of `rectSeg1 a b c` on `Icc 0 (1/4)` lies inside the image of the
+rectangle path on `Icc 0 1`. -/
+private lemma rectSeg1_image_subset_path_image (a b c d : ℝ) :
+    rectSeg1 a b c '' Icc (0 : ℝ) (1/4)
+      ⊆ (rectanglePath a b c d).extend '' Icc (0 : ℝ) 1 := by
+  rintro _ ⟨t, ht, rfl⟩
+  exact ⟨t, ⟨ht.1, le_trans ht.2 (by norm_num)⟩,
+    rectanglePath_extend_eq_seg1_on_Icc a b c d ht⟩
+
+/-- The image of `rectSeg2 b c d` on `Icc (1/4) (1/2)` lies inside the image of the
+rectangle path on `Icc 0 1`. -/
+private lemma rectSeg2_image_subset_path_image (a b c d : ℝ) :
+    rectSeg2 b c d '' Icc (1/4 : ℝ) (1/2)
+      ⊆ (rectanglePath a b c d).extend '' Icc (0 : ℝ) 1 := by
+  rintro _ ⟨t, ht, rfl⟩
+  exact ⟨t, ⟨le_trans (by norm_num) ht.1, le_trans ht.2 (by norm_num)⟩,
+    rectanglePath_extend_eq_seg2_on_Icc a b c d ht⟩
+
+/-- The image of `rectSeg3 a b d` on `Icc (1/2) (3/4)` lies inside the image of the
+rectangle path on `Icc 0 1`. -/
+private lemma rectSeg3_image_subset_path_image (a b c d : ℝ) :
+    rectSeg3 a b d '' Icc (1/2 : ℝ) (3/4)
+      ⊆ (rectanglePath a b c d).extend '' Icc (0 : ℝ) 1 := by
+  rintro _ ⟨t, ht, rfl⟩
+  exact ⟨t, ⟨le_trans (by norm_num) ht.1, le_trans ht.2 (by norm_num)⟩,
+    rectanglePath_extend_eq_seg3_on_Icc a b c d ht⟩
+
+/-- The image of `rectSeg4 a c d` on `Icc (3/4) 1` lies inside the image of the
+rectangle path on `Icc 0 1`. -/
+private lemma rectSeg4_image_subset_path_image (a b c d : ℝ) :
+    rectSeg4 a c d '' Icc (3/4 : ℝ) 1
+      ⊆ (rectanglePath a b c d).extend '' Icc (0 : ℝ) 1 := by
+  rintro _ ⟨t, ht, rfl⟩
+  exact ⟨t, ⟨le_trans (by norm_num) ht.1, ht.2⟩,
+    rectanglePath_extend_eq_seg4_on_Icc a b c d ht⟩
+
+/-- If `f` is continuous on the image of the rectangle path on `Icc 0 1`, then
+`fun t ↦ f (rectSeg1 a b c t) * (4 * (b - a))` is continuous on `Icc 0 (1/4)`. -/
+private lemma rectSeg1_integrand_continuousOn (a b c d : ℝ) {f : ℂ → ℂ}
+    (hf : ContinuousOn f ((rectanglePath a b c d).extend '' Icc (0 : ℝ) 1)) :
+    ContinuousOn (fun t : ℝ => f (rectSeg1 a b c t) * (4 * ((b : ℂ) - a)))
+      (Icc (0 : ℝ) (1/4)) :=
+  ((hf.comp (rectSeg1_continuous a b c).continuousOn
+    (fun _ ht => rectSeg1_image_subset_path_image a b c d (mem_image_of_mem _ ht))).mul
+    continuousOn_const)
+
+/-- If `f` is continuous on the image of the rectangle path on `Icc 0 1`, then
+`fun t ↦ f (rectSeg2 b c d t) * (4 * (d - c) * I)` is continuous on `Icc (1/4) (1/2)`. -/
+private lemma rectSeg2_integrand_continuousOn (a b c d : ℝ) {f : ℂ → ℂ}
+    (hf : ContinuousOn f ((rectanglePath a b c d).extend '' Icc (0 : ℝ) 1)) :
+    ContinuousOn (fun t : ℝ => f (rectSeg2 b c d t) * (4 * ((d : ℂ) - c) * I))
+      (Icc (1/4 : ℝ) (1/2)) :=
+  ((hf.comp (rectSeg2_continuous b c d).continuousOn
+    (fun _ ht => rectSeg2_image_subset_path_image a b c d (mem_image_of_mem _ ht))).mul
+    continuousOn_const)
+
+/-- If `f` is continuous on the image of the rectangle path on `Icc 0 1`, then
+`fun t ↦ f (rectSeg3 a b d t) * (-(4 * (b - a)))` is continuous on `Icc (1/2) (3/4)`. -/
+private lemma rectSeg3_integrand_continuousOn (a b c d : ℝ) {f : ℂ → ℂ}
+    (hf : ContinuousOn f ((rectanglePath a b c d).extend '' Icc (0 : ℝ) 1)) :
+    ContinuousOn (fun t : ℝ => f (rectSeg3 a b d t) * (-(4 * ((b : ℂ) - a))))
+      (Icc (1/2 : ℝ) (3/4)) :=
+  ((hf.comp (rectSeg3_continuous a b d).continuousOn
+    (fun _ ht => rectSeg3_image_subset_path_image a b c d (mem_image_of_mem _ ht))).mul
+    continuousOn_const)
+
+/-- If `f` is continuous on the image of the rectangle path on `Icc 0 1`, then
+`fun t ↦ f (rectSeg4 a c d t) * (-(4 * (d - c)) * I)` is continuous on `Icc (3/4) 1`. -/
+private lemma rectSeg4_integrand_continuousOn (a b c d : ℝ) {f : ℂ → ℂ}
+    (hf : ContinuousOn f ((rectanglePath a b c d).extend '' Icc (0 : ℝ) 1)) :
+    ContinuousOn (fun t : ℝ => f (rectSeg4 a c d t) * (-(4 * ((d : ℂ) - c)) * I))
+      (Icc (3/4 : ℝ) 1) :=
+  ((hf.comp (rectSeg4_continuous a c d).continuousOn
+    (fun _ ht => rectSeg4_image_subset_path_image a b c d (mem_image_of_mem _ ht))).mul
+    continuousOn_const)
+
+/-! ### Integrability of the original integrand on each sub-interval -/
+
+private lemma rectangleContour_integrand_intervalIntegrable_seg1 (a b c d : ℝ) {f : ℂ → ℂ}
+    (hf : ContinuousOn f ((rectanglePath a b c d).extend '' Icc (0 : ℝ) 1)) :
+    IntervalIntegrable
+      (fun t => f ((rectanglePath a b c d).extend t) * deriv (rectanglePath a b c d).extend t)
+      volume 0 (1/4) := by
+  have hg_cont : ContinuousOn (fun t : ℝ => f (rectSeg1 a b c t) * (4 * ((b : ℂ) - a)))
+      (uIcc (0 : ℝ) (1/4)) := by
+    rw [uIcc_of_le (by norm_num : (0:ℝ) ≤ 1/4)]
+    exact rectSeg1_integrand_continuousOn a b c d hf
+  have hg_int : IntervalIntegrable
+      (fun t : ℝ => f (rectSeg1 a b c t) * (4 * ((b : ℂ) - a))) volume 0 (1/4) :=
+    hg_cont.intervalIntegrable
+  rw [intervalIntegrable_congr_ae
+    ((ae_restrict_iff' measurableSet_uIoc).mpr (rectangleContour_integrand_seg1_ae a b c d f))]
+  exact hg_int
+
+private lemma rectangleContour_integrand_intervalIntegrable_seg2 (a b c d : ℝ) {f : ℂ → ℂ}
+    (hf : ContinuousOn f ((rectanglePath a b c d).extend '' Icc (0 : ℝ) 1)) :
+    IntervalIntegrable
+      (fun t => f ((rectanglePath a b c d).extend t) * deriv (rectanglePath a b c d).extend t)
+      volume (1/4) (1/2) := by
+  have hg_cont : ContinuousOn (fun t : ℝ => f (rectSeg2 b c d t) * (4 * ((d : ℂ) - c) * I))
+      (uIcc (1/4 : ℝ) (1/2)) := by
+    rw [uIcc_of_le (by norm_num : (1/4:ℝ) ≤ 1/2)]
+    exact rectSeg2_integrand_continuousOn a b c d hf
+  have hg_int : IntervalIntegrable
+      (fun t : ℝ => f (rectSeg2 b c d t) * (4 * ((d : ℂ) - c) * I)) volume (1/4) (1/2) :=
+    hg_cont.intervalIntegrable
+  rw [intervalIntegrable_congr_ae
+    ((ae_restrict_iff' measurableSet_uIoc).mpr (rectangleContour_integrand_seg2_ae a b c d f))]
+  exact hg_int
+
+private lemma rectangleContour_integrand_intervalIntegrable_seg3 (a b c d : ℝ) {f : ℂ → ℂ}
+    (hf : ContinuousOn f ((rectanglePath a b c d).extend '' Icc (0 : ℝ) 1)) :
+    IntervalIntegrable
+      (fun t => f ((rectanglePath a b c d).extend t) * deriv (rectanglePath a b c d).extend t)
+      volume (1/2) (3/4) := by
+  have hg_cont : ContinuousOn (fun t : ℝ => f (rectSeg3 a b d t) * (-(4 * ((b : ℂ) - a))))
+      (uIcc (1/2 : ℝ) (3/4)) := by
+    rw [uIcc_of_le (by norm_num : (1/2:ℝ) ≤ 3/4)]
+    exact rectSeg3_integrand_continuousOn a b c d hf
+  have hg_int : IntervalIntegrable
+      (fun t : ℝ => f (rectSeg3 a b d t) * (-(4 * ((b : ℂ) - a)))) volume (1/2) (3/4) :=
+    hg_cont.intervalIntegrable
+  rw [intervalIntegrable_congr_ae
+    ((ae_restrict_iff' measurableSet_uIoc).mpr (rectangleContour_integrand_seg3_ae a b c d f))]
+  exact hg_int
+
+private lemma rectangleContour_integrand_intervalIntegrable_seg4 (a b c d : ℝ) {f : ℂ → ℂ}
+    (hf : ContinuousOn f ((rectanglePath a b c d).extend '' Icc (0 : ℝ) 1)) :
+    IntervalIntegrable
+      (fun t => f ((rectanglePath a b c d).extend t) * deriv (rectanglePath a b c d).extend t)
+      volume (3/4) 1 := by
+  have hg_cont : ContinuousOn (fun t : ℝ => f (rectSeg4 a c d t) * (-(4 * ((d : ℂ) - c)) * I))
+      (uIcc (3/4 : ℝ) 1) := by
+    rw [uIcc_of_le (by norm_num : (3/4:ℝ) ≤ 1)]
+    exact rectSeg4_integrand_continuousOn a b c d hf
+  have hg_int : IntervalIntegrable
+      (fun t : ℝ => f (rectSeg4 a c d t) * (-(4 * ((d : ℂ) - c)) * I)) volume (3/4) 1 :=
+    hg_cont.intervalIntegrable
+  rw [intervalIntegrable_congr_ae
+    ((ae_restrict_iff' measurableSet_uIoc).mpr (rectangleContour_integrand_seg4_ae a b c d f))]
+  exact hg_int
+
+/-! ### Each segment integral equals the corresponding "standard form" integral
+
+After an affine change of variables `t = (k + s)/4`, the integral on the `k`-th
+sub-interval becomes `∫₀¹ f(v + s • Δ) * Δ ds`, where `v` is the starting
+vertex and `Δ` is the segment direction. -/
+
+private lemma rectangleContour_seg1_integral_eq (a b c d : ℝ) (f : ℂ → ℂ) :
+    (∫ t in (0 : ℝ)..(1/4),
+        f ((rectanglePath a b c d).extend t) * deriv (rectanglePath a b c d).extend t)
+      = ∫ s in (0 : ℝ)..1,
+          f ((a : ℂ) + c * I + s • (((b : ℂ) + c * I) - ((a : ℂ) + c * I))) *
+            (((b : ℂ) + c * I) - ((a : ℂ) + c * I)) := by
+  rw [intervalIntegral.integral_congr_ae (rectangleContour_integrand_seg1_ae a b c d f)]
+  have h_cov := intervalIntegral.smul_integral_comp_mul_left (a := (0 : ℝ)) (b := 1)
+    (f := fun y => f (rectSeg1 a b c y) * (4 * ((b : ℂ) - a))) (1/4 : ℝ)
+  simp only [mul_zero, mul_one] at h_cov
+  rw [← h_cov, ← intervalIntegral.integral_smul]
+  apply intervalIntegral.integral_congr
+  intro x _hx
+  show (1/4 : ℝ) • (f (rectSeg1 a b c ((1/4) * x)) * (4 * ((b : ℂ) - a)))
+    = f ((a : ℂ) + c * I + x • (((b : ℂ) + c * I) - ((a : ℂ) + c * I))) *
+        (((b : ℂ) + c * I) - ((a : ℂ) + c * I))
+  rw [Complex.real_smul, Complex.real_smul]
+  simp only [rectSeg1]
+  push_cast
+  ring_nf
+
+private lemma rectangleContour_seg2_integral_eq (a b c d : ℝ) (f : ℂ → ℂ) :
+    (∫ t in (1/4 : ℝ)..(1/2),
+        f ((rectanglePath a b c d).extend t) * deriv (rectanglePath a b c d).extend t)
+      = ∫ s in (0 : ℝ)..1,
+          f ((b : ℂ) + c * I + s • (((b : ℂ) + d * I) - ((b : ℂ) + c * I))) *
+            (((b : ℂ) + d * I) - ((b : ℂ) + c * I)) := by
+  rw [intervalIntegral.integral_congr_ae (rectangleContour_integrand_seg2_ae a b c d f)]
+  have h_cov := intervalIntegral.smul_integral_comp_mul_add (a := (0 : ℝ)) (b := 1)
+    (f := fun y => f (rectSeg2 b c d y) * (4 * ((d : ℂ) - c) * I)) (1/4 : ℝ) (1/4 : ℝ)
+  simp only [mul_zero, mul_one, zero_add, show (1/4 : ℝ) + 1/4 = 1/2 by norm_num] at h_cov
+  rw [← h_cov, ← intervalIntegral.integral_smul]
+  apply intervalIntegral.integral_congr
+  intro x _hx
+  show (1/4 : ℝ) • (f (rectSeg2 b c d ((1/4) * x + 1/4)) * (4 * ((d : ℂ) - c) * I))
+    = f ((b : ℂ) + c * I + x • (((b : ℂ) + d * I) - ((b : ℂ) + c * I))) *
+        (((b : ℂ) + d * I) - ((b : ℂ) + c * I))
+  rw [Complex.real_smul, Complex.real_smul]
+  simp only [rectSeg2]
+  push_cast
+  ring_nf
+
+private lemma rectangleContour_seg3_integral_eq (a b c d : ℝ) (f : ℂ → ℂ) :
+    (∫ t in (1/2 : ℝ)..(3/4),
+        f ((rectanglePath a b c d).extend t) * deriv (rectanglePath a b c d).extend t)
+      = ∫ s in (0 : ℝ)..1,
+          f ((b : ℂ) + d * I + s • (((a : ℂ) + d * I) - ((b : ℂ) + d * I))) *
+            (((a : ℂ) + d * I) - ((b : ℂ) + d * I)) := by
+  rw [intervalIntegral.integral_congr_ae (rectangleContour_integrand_seg3_ae a b c d f)]
+  have h_cov := intervalIntegral.smul_integral_comp_mul_add (a := (0 : ℝ)) (b := 1)
+    (f := fun y => f (rectSeg3 a b d y) * (-(4 * ((b : ℂ) - a)))) (1/4 : ℝ) (1/2 : ℝ)
+  simp only [mul_zero, mul_one, zero_add, show (1/4 : ℝ) + 1/2 = 3/4 by norm_num] at h_cov
+  rw [← h_cov, ← intervalIntegral.integral_smul]
+  apply intervalIntegral.integral_congr
+  intro x _hx
+  show (1/4 : ℝ) • (f (rectSeg3 a b d ((1/4) * x + 1/2)) * (-(4 * ((b : ℂ) - a))))
+    = f ((b : ℂ) + d * I + x • (((a : ℂ) + d * I) - ((b : ℂ) + d * I))) *
+        (((a : ℂ) + d * I) - ((b : ℂ) + d * I))
+  rw [Complex.real_smul, Complex.real_smul]
+  simp only [rectSeg3]
+  push_cast
+  ring_nf
+
+private lemma rectangleContour_seg4_integral_eq (a b c d : ℝ) (f : ℂ → ℂ) :
+    (∫ t in (3/4 : ℝ)..1,
+        f ((rectanglePath a b c d).extend t) * deriv (rectanglePath a b c d).extend t)
+      = ∫ s in (0 : ℝ)..1,
+          f ((a : ℂ) + d * I + s • (((a : ℂ) + c * I) - ((a : ℂ) + d * I))) *
+            (((a : ℂ) + c * I) - ((a : ℂ) + d * I)) := by
+  rw [intervalIntegral.integral_congr_ae (rectangleContour_integrand_seg4_ae a b c d f)]
+  have h_cov := intervalIntegral.smul_integral_comp_mul_add (a := (0 : ℝ)) (b := 1)
+    (f := fun y => f (rectSeg4 a c d y) * (-(4 * ((d : ℂ) - c)) * I)) (1/4 : ℝ) (3/4 : ℝ)
+  simp only [mul_zero, mul_one, zero_add, show (1/4 : ℝ) + 3/4 = 1 by norm_num] at h_cov
+  rw [← h_cov, ← intervalIntegral.integral_smul]
+  apply intervalIntegral.integral_congr
+  intro x _hx
+  show (1/4 : ℝ) • (f (rectSeg4 a c d ((1/4) * x + 3/4)) * (-(4 * ((d : ℂ) - c)) * I))
+    = f ((a : ℂ) + d * I + x • (((a : ℂ) + c * I) - ((a : ℂ) + d * I))) *
+        (((a : ℂ) + c * I) - ((a : ℂ) + d * I))
+  rw [Complex.real_smul, Complex.real_smul]
+  simp only [rectSeg4]
+  push_cast
+  ring_nf
+
+/-- **Decomposition of the contour integral over the rectangle into four segment
+integrals.** For `f` continuous on the image of the rectangle, the contour
+integral of `f` along the boundary of `rectangleContour a b c d hab hcd`
+equals the sum of the four segment integrals
+`(bottom: a+ci → b+ci) + (right: b+ci → b+di) + (top: b+di → a+di) + (left: a+di → a+ci)`,
+each parameterised on `[0, 1]` as `(p, q) ↦ ∫ s in 0..1, f (p + s • (q - p)) * (q - p)`. -/
+theorem contourIntegral_rectangleContour_eq
+    {a b c d : ℝ} (hab : a < b) (hcd : c < d)
+    {f : ℂ → ℂ}
+    (hf : ContinuousOn f
+      ((rectangleContour a b c d hab hcd).toPwC1Immersion.toPiecewiseC1Path '' Icc (0:ℝ) 1)) :
+    (rectangleContour a b c d hab hcd).toPwC1Immersion.toPiecewiseC1Path.contourIntegral f
+      = (∫ s in (0:ℝ)..1, f ((a : ℂ) + c * I + s • (((b : ℂ) + c * I) - ((a : ℂ) + c * I))) *
+                          (((b : ℂ) + c * I) - ((a : ℂ) + c * I)))
+      + (∫ s in (0:ℝ)..1, f ((b : ℂ) + c * I + s • (((b : ℂ) + d * I) - ((b : ℂ) + c * I))) *
+                          (((b : ℂ) + d * I) - ((b : ℂ) + c * I)))
+      + (∫ s in (0:ℝ)..1, f ((b : ℂ) + d * I + s • (((a : ℂ) + d * I) - ((b : ℂ) + d * I))) *
+                          (((a : ℂ) + d * I) - ((b : ℂ) + d * I)))
+      + (∫ s in (0:ℝ)..1, f ((a : ℂ) + d * I + s • (((a : ℂ) + c * I) - ((a : ℂ) + d * I))) *
+                          (((a : ℂ) + c * I) - ((a : ℂ) + d * I))) := by
+  -- Unfold the contour integral. The rectangle's path is `(rectanglePath a b c d).extend`.
+  show ∫ t in (0:ℝ)..1, f ((rectanglePath a b c d).extend t) *
+      deriv (rectanglePath a b c d).extend t = _
+  -- `hf` becomes `ContinuousOn f ((rectanglePath a b c d).extend '' Icc 0 1)`.
+  have hf' : ContinuousOn f ((rectanglePath a b c d).extend '' Icc (0 : ℝ) 1) := hf
+  -- Split the integral at `1/4`, `1/2`, `3/4`.
+  have h_int1 := rectangleContour_integrand_intervalIntegrable_seg1 a b c d hf'
+  have h_int2 := rectangleContour_integrand_intervalIntegrable_seg2 a b c d hf'
+  have h_int3 := rectangleContour_integrand_intervalIntegrable_seg3 a b c d hf'
+  have h_int4 := rectangleContour_integrand_intervalIntegrable_seg4 a b c d hf'
+  rw [← intervalIntegral.integral_add_adjacent_intervals h_int1
+        ((h_int2.trans h_int3).trans h_int4),
+      ← intervalIntegral.integral_add_adjacent_intervals h_int2 (h_int3.trans h_int4),
+      ← intervalIntegral.integral_add_adjacent_intervals h_int3 h_int4,
+      rectangleContour_seg1_integral_eq a b c d f,
+      rectangleContour_seg2_integral_eq a b c d f,
+      rectangleContour_seg3_integral_eq a b c d f,
+      rectangleContour_seg4_integral_eq a b c d f, ← add_assoc, ← add_assoc]
 
 end LeanModularForms
 
