@@ -4,6 +4,7 @@ import VersoBlueprint
 import LeanModularForms.HeckeRIngs.GL2.CharacterDecomp
 import LeanModularForms.HeckeRIngs.GL2.Unified.NebentypusHeckeRingHom
 import LeanModularForms.HeckeRIngs.GL2.Unified.RingTransport
+import LeanModularForms.HeckeRIngs.GL2.Unified.ShimuraHom
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -158,4 +159,75 @@ the explicit scalar $`\chi(p)^{-1} p^{\,k-2}`, which is exactly the diamond cont
 $`p^{\,k-1}\langle p\rangle` of the operator recurrence read on the $`\chi`-eigenspace.
 
 Depends on: {uses "heckeRingHomCharSpace"}[] {uses "charSpace-directSum"}[]
+:::
+
+:::definition "fricke-operator" (lean := "HeckeRing.GL2.frickeOperator, HeckeRing.GL2.frickeCharEquiv")
+*The Fricke involution.*
+For a level $`N \ge 1` let $`W_N` be the matrix $`\begin{pmatrix}0 & -1\\ N & 0\end{pmatrix}`
+(determinant $`N`).  Slashing by $`W_N` defines the *Fricke operator*
+$`f \mapsto f|_k W_N` on $`M_k(\Gamma_1(N))`: the matrix $`W_N` normalises
+$`\Gamma_1(N)` (and $`\Gamma_0(N)`), so the slash preserves modularity.  It conjugates the
+diamond operators, $`W_N \circ \langle d\rangle = \langle d^{-1}\rangle \circ W_N`, hence
+maps the Nebentypus subspace $`M_k(N,\chi)` to $`M_k(N,\bar{\chi})` (with
+$`\bar{\chi} = \chi \circ (\cdot)^{-1}`), and its square is the explicit nonzero scalar
+$`N^{2(k-1)}(-N)^{-k}`, so it packages as a linear equivalence
+$`M_k(N,\chi) \simeq M_k(N,\bar{\chi})`.
+
+Depends on: {uses "diamondOp"}[] {uses "modFormCharSpace"}[]
+:::
+
+:::definition "shimura-hom" (lean := "HeckeRing.GL2.Unified.heckeRingHomCharSpaceShimura")
+*The Shimura-convention Hecke action `Ψ`.*
+The character-space homomorphism $`\Phi_{\chi}` ({bpref "heckeRingHomCharSpace"}[]) is built
+on the *adjugates* of the right-coset representatives; this makes it a homomorphism on the
+nose, but at a bad prime $`p \mid N` it routes the class of
+$`\operatorname{diag}(1,p)` to the disjoint adjugate class, so its image there is a
+$`V_p`-type operator rather than $`U_p`.  The classical references (Shimura §3.5, Miyake
+§4.5, Diamond–Shurman §5.2) instead sum over *left*-coset representatives — an
+anti-homomorphism, absorbed by commutativity.  Because the project's Atkin–Lehner
+anti-involution satisfies $`\iota(\delta) = W_N\,\operatorname{adj}(\delta)\,W_N^{-1}`,
+that left-coset convention is realised with **no new coset theory** as the Fricke conjugate
+$$`
+  \Psi_{\chi}(T) \;=\; E^{-1} \circ \Phi_{\bar{\chi}}(T) \circ E,
+`
+where $`E` is the Fricke equivalence $`M_k(N,\chi) \simeq M_k(N,\bar{\chi})`
+({uses "fricke-operator"}[]) — a ring homomorphism
+$`R(\Gamma_0(N),\Delta_0(N)) \to \operatorname{End}_{\mathbb{C}} M_k(N,\chi)` by
+construction.
+
+Depends on: {uses "heckeRingHomCharSpace"}[] {uses "fricke-operator"}[] {uses "commring-Gamma0"}[]
+:::
+
+:::theorem "shimura-hom-Up" (lean := "HeckeRing.GL2.Unified.heckeRingHomCharSpaceShimura_D_p_bad")
+*`Ψ` hits `U_p` at bad primes.*
+For every prime $`p \mid N`, the Shimura-convention action sends the prime class to the
+classical $`U_p` operator on each Nebentypus subspace:
+$$`
+  \Psi_{\chi}(D_p) \;=\; U_p\big|_{M_k(N,\chi)},
+  \qquad U_p f \;=\; \sum_{b=0}^{p-1} f\big|_k \begin{pmatrix}1 & b\\ 0 & p\end{pmatrix},
+`
+with no character factor.  Together with the good-prime bridges for $`\Phi_{\chi}`
+({bpref "charSpace-bridge"}[]) this realises the full classical picture: the Hecke ring of
+the pair $`(\Gamma_0(N), \Delta_0(N))` acts on modular forms with the bad classes acting
+as $`U_p` — as in Shimura and Miyake.
+
+Depends on: {uses "shimura-hom"}[] {uses "gamma0-pair"}[]
+:::
+
+:::proof "shimura-hom-Up"
+At a bad prime the right-coset representatives of
+$`\Gamma_0(N)\operatorname{diag}(1,p)\Gamma_0(N)` are the $`p` lower-unipotent matrices
+$`\delta_r = \begin{pmatrix}1 & 0\\ N r & p\end{pmatrix}`, $`r = 0,\dots,p-1`
+(an index bijection with the abstract coset quotient, whose cardinality is the bad-class
+degree $`p`; injectivity reduces to the fact that
+$`\begin{pmatrix}1 & 0\\ N(r'-r)/p & 1\end{pmatrix}` lies in $`\Gamma_0(N)` only when
+$`p \mid r' - r`).  Each $`\delta_r` has upper-left entry $`1`, so its Nebentypus weight
+is $`1`, and the twisted slash sum collapses to
+$`\sum_r g|_k \operatorname{adj}(\delta_r)` — the matching that is *true* for the
+adjugate convention.  The Fricke conjugation then transforms each representative by the
+machine-checked matrix identity
+$`W_N\,\operatorname{adj}(\delta_r)\,W_N^{-1} = \begin{pmatrix}1 & r\\ 0 & p\end{pmatrix}`,
+turning the adjugated sum into exactly the $`U_p` coset sum.
+
+Depends on: {uses "shimura-hom"}[] {uses "fricke-operator"}[]
 :::

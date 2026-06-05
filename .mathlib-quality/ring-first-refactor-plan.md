@@ -139,6 +139,75 @@ with the old minFac assembly becoming theorem `heckeT_n_eq_assembly`.
   (d) consumer import fix-ups: AdjointTheoryPetersson, Unified/Gamma1CharSpace
       (uses heckeT_n_mul), FourierHecke (ppow lemmas stay — no change expected),
       Newforms/LevelRaiseComm (ppow — no change), SMOObligations.
-- [ ] P5 def-flip: heckeT_n := ⟨goodPart n⟩ ∘ Φ̂(D_n) with glued hom Φ̂ (needs
-  IsInternal-based assembly), old minFac assembly becomes heckeT_n_eq_assembly.
-- [ ] P6 blueprint chapter updates + deploy.
+- [x] P4 — commit 0bdbc31 (cascade deleted, −890 LOC, names re-homed, DAG liberated).
+- [x] P6 — commit dff1a85 (blueprint updated: gamma0-mult-table, charSpace-bridge,
+  ring-first prose; deployed).
+- [x] OBSTRUCTION 2 — commit 08e8151: DirectHeckeRing.lean machine-verifies that
+  dropping the adjugate is NOT well-defined (decompQuot = RIGHT cosets; correction
+  lands right of the slash; bad right-reps are lower-unipotent [[1,0],[Nr,p]]).
+- [~] **W: the Fricke route to Ψ (user-approved; replaces the 1500-LOC left-coset plan)**
+  KEY ALGEBRA (verified by hand, to re-verify in Lean): the project's AL anti-involution
+  is ι(g) = diag(1,N)·ᵗg·diag(1,N)⁻¹, and ι(δ) = W·adj(δ)·W⁻¹ with W = (0,−1;N,0)
+  (since ᵗδ = s·adj(δ)·s⁻¹, s = (0,−1;1,0), and diag(1,N)·s = W). ι fixes every class
+  and swaps coset sides, so the LEFT-coset (Shimura-convention) hom is the Fricke
+  conjugate of Φ: **Ψ_χ(T) := (|W)⁻¹ ∘ Φ_{χ'}(T) ∘ (|W)** — ring hom for free.
+  Bad-prime sanity: Φ's reps are adj([[1,0],[Nr,p]]) = [[p,0],[−Nr,1]], and
+  W⁻¹·[[p,0],[−Nr,1]]·W = [[1,r],[0,p]] = the U_p reps. Stages:
+  - [x] W1 DONE (Fricke.lean, sorry-free, axiom-clean: propext/Classical.choice/Quot.sound).
+    VERIFIED ALGEBRA: W = (0,−1;N,0), det N, W² = (−N)·I, W⁻¹ = (0,1/N;−1,0). CONJUGATION
+    DIRECTION IS W⁻¹·M·W (NOT W·M·W⁻¹ — they differ by sign on the off-diag; W⁻¹MW gives the
+    U_p reps [[1,r],[0,p]] from adj-bad-rep [[p,0],[−Nr,1]] ✓; W·M·W⁻¹ gives [[1,−r],[0,p]]).
+    χ' DERIVED = chiConj χ = χ∘inv (diamond σ_d ↦ frickeConjSL with Gamma0MapUnits = d⁻¹).
+    W²-SCALAR c = frickeScalar N k = (N:ℂ)^(2(k−1))·(−N)^(−k) (nonzero). Decls: frickeGL,
+    frickeConjSL (=W⁻¹σW=WσW⁻¹ since W² central), frickeGL_mul_mapGL/mapGL_mul_frickeGL (norm),
+    frickeOperator (Module.End ℂ), frickeOperator_diamondOp (∘⟨d⟩=⟨d⁻¹⟩∘), frickeGL_sq_slash,
+    frickeOperator_frickeOperator (=c•id), chiConj, frickeOperator_mem_charSpace,
+    frickeCharRestrict, frickeCharRestrict_comp(′), frickeCharEquiv. Placed below
+    HeckeRingHomCharSpace (imports it). KEY FRICTION: LinearMap smul-instance lemmas
+    (smul_apply/comp_smul/inv_smul_smul₀) don't syntactically match `c•LinearMap.id` on End ℂ;
+    finish equiv inverses at the ModularForm coe level via `show` + `frickeOperator_frickeOperator`
+    + smul_smul instead.
+  - W1 (orig note) Fricke operator on M_k(Γ₁(N)): slash by W normalizes Γ₁(N); maps
+    modFormCharSpace k χ → k χ' (χ' = χ or χ⁻¹ — COMPUTE via diamond conjugation
+    ⟨d⟩∘W = W∘⟨d±1⟩); W∘W = explicit scalar ⇒ LinearEquiv.
+  - [x] W2 DONE (ShimuraHom.lean, ring hom Ψ sorry-free + axiom-clean). Decls: conjEndFricke,
+    conjEndRingHomFricke (End(M_k(N,χ'))→+*End(M_k(N,χ))), heckeRingHomCharSpaceShimura (Ψ_χ,
+    THE ring hom), heckeRingHomCharSpaceShimura_single_coe (SORRY-FREE function-level reduction:
+    Ψ(T_single D 1)(f) = ∑_i wᵢ⁻¹•(f∣(W·tRep_gen i·W⁻¹)); the two W's collapse via
+    A·W=(A·W⁻¹)·W² + f∣(·)∣W² = c•·, cancelling E.symm's c⁻¹). PAYOFF
+    heckeRingHomCharSpaceShimura_D_p_bad (Ψ(D_p)=U_p|_χ at p∣N): reduced SORRY-FREE to ONE
+    diagnosed combinatorial sorry (the bad-prime index bijection Fin p ≃ decompQuot via
+    lunip_inject + Γ₁ absorption — a ~250-LOC port of twisted_matches_T_p/twistedTpPsi to the
+    W-conjugated reps). MATRIX CORE of the bridge recorded SORRY-FREE in Fricke as
+    frickeGL_mul_adj_lunipRep_mul_frickeGL_inv: W·adj([[1,0],[Nr,p]])·W⁻¹ = T_p_upper(r).
+    Cardinality decompQuot=p (decompQuot_D_p_Gamma0_bad_natcard) still private — de-privatise for 7.
+    Full project builds; only sorry is ShimuraHom payoff (sorryAx confined there).
+  - W2 (orig) Ψ := Fricke-conj of Φ (ring hom by construction).
+  - W3 bridges: Ψ(D_p^bad) = U_p|_χ (the conj computation above, near-termwise);
+    good-prime + scalar-class bridges by conjugating the existing ones.
+  - W4 all-n bridge for Ψ + general-index transports (drop coprimality hyps on
+    heckeT_n_comm/mul_coprime; optionally restore operator-level general table).
+  - W5 blueprint (Fricke entry + Ψ entry + prose updates) + deploy.
+
+## W-route final status (2026-06-05, late)
+- [x] W3 — commit 446b205: **Ψ(D_p) = U_p at p | N PROVEN, sorry-free**
+  (`heckeRingHomCharSpaceShimura_D_p_bad`). Infrastructure in ShimuraHom.lean:
+  lunipH/lunipRep factorisations through the abstract rep, weight = 1, lunipPsi
+  bijection (injectivity: [[1,0],[N(r'-r)/p,1]] ∈ Γ₀(N) ⟹ p | r'-r; surjectivity:
+  bad coset count), quot_eq_imp_inv_mul_mem_H' (unadjugated quotient comparison),
+  and **twistedHeckeSlash_gen_bad** — the TRUE bad matching (twisted sum =
+  Σ_r g|adj([[1,0],[Nr,p]])), assembled to U_p by the Fricke matrix core.
+  De-privated: lunip_inject family (Props.lean), decompQuot_D_p_Gamma0_bad_natcard,
+  mem_D_p_Gamma0_of_factor_through_diag.
+- [x] W5-lite — blueprint entries fricke-operator / shimura-hom / shimura-hom-Up
+  (CharacterSpaces chapter; 121 labels, 0 orphans).
+- [ ] W4 REMAINING (the last piece for all-index transports): the GOOD-prime
+  Ψ-bridge needs the Fricke–Hecke intertwining frickeOperator ∘ T_p =
+  (⟨p⟩^{±1} T_p) ∘ frickeOperator — hand computation: W⁻¹·T_p_upper(b)·W =
+  [[p,0],[-Nb,1]] (transposed system) ⟹ conjugate of T_p|_{χ'} is the ⟨p⟩-twisted
+  T_p|_χ (classical Fricke-adjoint relation). ~150-250 LOC coset matching in the
+  now-established style (absorption lemma + ψ-bijection for W-conjugated good reps,
+  with BOTH upper and lower reps this time). Then chiAllUΨ peelProd scalar (bad
+  blocks = 1 via W3), Ψ-bridge_all for ALL n, general heckeT_n_comm/mul_coprime
+  with NO coprimality-to-N hypotheses via ModularForm_Gamma1_endo_ext, optional
+  operator-table restoration from heckeRingD_n_mul.
