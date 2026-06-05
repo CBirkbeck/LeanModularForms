@@ -565,7 +565,7 @@ private lemma lunip_inject_injective (N : ℕ) [NeZero N]
     (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp hτ_mem
   exact lunip_inject_dvd_of_conj N k_exp ha σ₁ τ r₁ r₂ hτ_dvd ha₁k h_mul
 
-private lemma decompQuot_Npow_natcard (N : ℕ) [NeZero N]
+lemma decompQuot_Npow_natcard (N : ℕ) [NeZero N]
     (k_exp : ℕ) (hk_pos : 0 < k_exp) (hk : ℕ) (hk_dvd : k_exp ∣ N ^ hk)
     (g : (Gamma0_pair N).Δ)
     (hg : (⟦g⟧ : HeckeCoset (Gamma0_pair N)) = T_diag_Gamma0 N (![1, k_exp])
@@ -620,7 +620,9 @@ private lemma decompQuot_Npow_natcard (N : ℕ) [NeZero N]
     exact Fintype.card_le_of_injective (lunip_inject N k_exp g)
       (lunip_inject_injective N k_exp hk_pos g γ₁ γ₂ hγ₂ σ₁ hσ₁_eq ha₁k hg_eq)
 
-private lemma Gamma0_bad_deg (N : ℕ) [NeZero N]
+/-- The Γ₀(N)-double-coset degree of the bad diagonal class `T(1,m)` for `m ∣ N^k` is `m`
+(Shimura §3.3): the class decomposes into exactly `m` upper-triangular left cosets. -/
+lemma Gamma0_bad_deg (N : ℕ) [NeZero N]
     (k_exp : ℕ) (hk_pos : 0 < k_exp) (hk : ℕ) (hk_dvd : k_exp ∣ N ^ hk) :
     HeckeRing.HeckeCoset_deg (Gamma0_pair N)
       (T_diag_Gamma0 N (![1, k_exp])

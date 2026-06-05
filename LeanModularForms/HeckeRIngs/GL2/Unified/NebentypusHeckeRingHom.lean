@@ -7,6 +7,7 @@ import LeanModularForms.HeckeRIngs.GL2.Unified.TwistedHeckeRing
 import LeanModularForms.HeckeRIngs.GL2.Prop334_HeckeSlashDiag
 import LeanModularForms.HeckeRIngs.GL2.HeckeT_p_CharSpace_Comm
 import LeanModularForms.HeckeRIngs.GL2.MultiplicationTable
+import LeanModularForms.HeckeRIngs.GL2.Unified.Gamma0RingDn
 
 /-!
 # Nebentypus Hecke ring action
@@ -1003,6 +1004,89 @@ theorem heckeRingHomCharSpace_T_pp_eq_scalar (p : ℕ) (hp : Nat.Prime p)
   rw [← hD] at hwgt
   rw [hwgt, slash_diag_scalar k p hp.pos (⇑f0), smul_smul]
 
+/-! ### Bad-prime bridge (`p ∣ N`)
+
+When `p ∣ N`, the double coset `Γ₀(N)·diag(1,p)·Γ₀(N)` decomposes into exactly `p`
+right cosets — the upper-triangular representatives `[[1,b],[0,p]]`, `b = 0,…,p−1` — with
+**no** lower representative: the matrix `[[p,0],[0,1]]` has upper-left entry `p`, not
+coprime to `N`, so it does not lie in `Δ₀(N)`.  This is the source of the classical `U_p`
+operator having `p` terms.  Every χ-weight is `1`.
+
+Unlike the good prime, the good-prime adjugate factorisations (`adj_T_p_upper_factorisation`)
+have **no** bad-prime analogue: for `p ∣ N` the adjugate `adj([[1,b],[0,p]]) = [[p,-b],[0,1]]`
+has upper-left entry `p`, not coprime to `N`, so it does *not* lie in `Δ₀(N)`, hence cannot be
+written as `h₁·rep(D_p)·h₂` with `h₁,h₂ ∈ Γ₀(N)` (every such product lies in `Δ₀(N)`).
+Consequently the matrices `tRep_gen(i)` (adjugates of det-`p` elements of `Δ₀(N)`, whose
+upper-left entries are `≡ 0 (mod p)`) are *not* the upper representatives `[[1,b],[0,p]]`
+(whose upper-left entries are `≡ 1 (mod p)`); the two are distinct complete sets of
+right-coset representatives, and the equality of the two slash sums is genuine coset
+combinatorics, mediated by the `Γ₁(N)`-invariance of `f`. -/
+
+/-- **Bad-prime bridge.**  For a bad prime `p ∣ N` and a `Γ₀(N),χ`-twisted-invariant `f`,
+the abstract χ-weighted Hecke slash at the prime double coset `D_p_Gamma0` equals the
+unweighted explicit `U_p` coset-sum: the `p` upper representatives `[[1,b],[0,p]]`,
+`b = 0,…,p−1`, each carry weight `1`, and there is no lower representative. -/
+theorem twisted_matches_T_p_bad (p : ℕ) (hp : Nat.Prime p)
+    (hpN : ¬ Nat.Coprime p N) {f : ℍ → ℂ}
+    (hf : IsGamma0TwistedInvariant (N := N) k χ f) :
+    twistedHeckeSlash_gen (N := N) k χ (D_p_Gamma0 N p hp.pos) f =
+      ∑ b ∈ Finset.range p, f ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ) := by
+  -- BLOCKED.  This is genuine, novel coset combinatorics with no reusable scaffolding;
+  -- the good-prime machinery (`twistedTpPsi` / `weighted_value_eq`) is *mathematically
+  -- inapplicable* for `p ∣ N` (see the section docstring above).  Two independent
+  -- subgoals remain:
+  --
+  -- (1) CARDINALITY `Nat.card (decompQuot (Gamma0_pair N) (rep (D_p_Gamma0 N p hp.pos))) = p`.
+  --     This holds (it is `decompQuot_Npow_natcard`/`Gamma0_bad_deg` in
+  --     `CongruenceHecke/Props.lean`, with `k_exp = p`, `hk = 1`, `hk_dvd : p ∣ N`) but
+  --     those lemmas are `private` and out of scope to expose.  A self-contained route,
+  --     fully inside this file's public imports: `decompQuot_double_H_equiv` reduces to
+  --     `decompQuot (diag(1,p))`, whose index is `[Γ₀(N) : Γ₀(Np)]`; the conjugation
+  --     `diag(1,p)·Γ₀(N)·diag(1,p)⁻¹ ∩ Γ₀(N) = Γ₀(Np)` (lower-left `Nc ↦ Nc/p` integral and
+  --     `≡0 mod N` ⟺ `p ∣ c`), and `[Γ₀(N) : Γ₀(Np)] = p` for `p ∣ N` (e.g. via the
+  --     `Gamma0_relindex_step`/`Gamma0_prime_power_index` API in `GL2/CongruenceIndex.lean`,
+  --     using that `q ∣ Np ⟺ q ∣ N`).
+  --
+  -- (2) MATCHING.  Build a bijection `Fin p ≃ decompQuot` and show, for matched `(b, i)`,
+  --     `(weight i)⁻¹ • (f ∣[k] tRep_gen … i) = f ∣[k] T_p_upper p hp.pos b`.  Unlike the
+  --     good case, `tRep_gen i = adj(δ_i)` with `δ_i ∈ Δ₀(N)` of det `p` has upper-left
+  --     entry `≡ 0 (mod p)`, whereas `T_p_upper b = [[1,b],[0,p]]` has upper-left `1`; they
+  --     are *distinct* complete sets of right-coset representatives.  The equality is by
+  --     `Γ₁(N)`-invariance of `f` (the χ-weights all collapse to `1`).  The key tool is
+  --     `twisted_weighted_slash_tRep_gen_of_mem`, but a *new* factorisation step is needed
+  --     in place of `adj_T_p_upper_factorisation` (which has no bad-prime analogue): one
+  --     must exhibit, per `b`, elements `h₁ b, h₂ b ∈ Γ₀(N)` so that
+  --     `adj(h₁ b · rep(D_p) · h₂ b)` is `Γ₁(N)`-left-equivalent to `T_p_upper p hp.pos b`,
+  --     and verify `delta0NebentypusDeltaChar χ (gamma0TripleDelta … (h₁ b) (h₂ b)) = 1`.
+  sorry
+
+/-- For a bad prime `p ∣ N` and `f ∈ modFormCharSpace k χ`, the canonical χ-twisted operator
+at the prime double coset equals the concrete operator `heckeT_p_all` (the `U_p` operator),
+as functions on `ℍ`.  No χ-factor appears (contrast the good-prime `χ(p)⁻¹`). -/
+theorem heckeRingHomCharSpace_D_p_eq_heckeT_p_all_bad (p : ℕ) (hp : Nat.Prime p)
+    (hpN : ¬ Nat.Coprime p N)
+    (f : modFormCharSpace k χ) :
+    (⇑((heckeRingHomCharSpace (k := k) (χ := χ) (T_single (Gamma0_pair N) ℤ
+        (D_p_Gamma0 N p hp.pos) 1) f : modFormCharSpace k χ) :
+        ModularForm ((Gamma1 N).map (mapGL ℝ)) k) : ℍ → ℂ) =
+      (⇑(heckeT_p_all k p hp (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) : ℍ → ℂ) := by
+  have hLHS : (⇑((heckeRingHomCharSpace (k := k) (χ := χ) (T_single (Gamma0_pair N) ℤ
+      (D_p_Gamma0 N p hp.pos) 1) f : modFormCharSpace k χ) :
+      ModularForm ((Gamma1 N).map (mapGL ℝ)) k) : ℍ → ℂ) =
+        twistedHeckeSlash_gen (N := N) k χ (D_p_Gamma0 N p hp.pos)
+          (⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) := by
+    change (⇑(((nebentypusHeckeSum (N := N) (k := k) (χ := χ)
+        (T_single (Gamma0_pair N) ℤ (D_p_Gamma0 N p hp.pos) 1)) f :
+        modFormCharSpace k χ) : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) : ℍ → ℂ) = _
+    rw [nebentypusHeckeSum_apply_coe, twistedHeckeSlashExt_gen,
+      Finsupp.sum_single_index (by simp :
+        (0 : ℤ) • twistedHeckeSlash_gen (N := N) k χ (D_p_Gamma0 N p hp.pos)
+          (⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) = 0),
+      one_smul]
+  rw [hLHS, twisted_matches_T_p_bad (k := k) (χ := χ) p hp hpN
+      (coe_mem_twistedInvariant (f : ModularForm _ k) f.2),
+    heckeT_p_all_not_coprime_apply k hp hpN (f : ModularForm _ k), heckeT_p_ut]
+
 end Bridge
 
 section OperatorCommutativityFromRing
@@ -1025,43 +1109,30 @@ theorem heckeRingHomCharSpace_D_p_eq_scalar_charRestrict (p : ℕ) (hp : Nat.Pri
   rw [heckeRingHomCharSpace_D_p_eq_heckeT_p_all p hp hpN f]
   rfl
 
+/-- **Bad-prime bridge, endomorphism form.**  On the χ-space, for a bad prime `p ∣ N`, the
+canonical χ-twisted operator at the prime double coset `D_p` equals the restricted concrete
+operator `heckeT_p_all_charRestrict` — with **no** χ-factor (contrast the good-prime `χ(p)⁻¹`
+in `heckeRingHomCharSpace_D_p_eq_scalar_charRestrict`).  Stated about the ring generator
+`T_single … (D_p_Gamma0 N p hp.pos) 1`, which is `heckeRingDp p hp.pos`. -/
+theorem heckeRingHomCharSpace_D_p_bad (p : ℕ) (hp : Nat.Prime p)
+    (hpN : ¬ Nat.Coprime p N) :
+    heckeRingHomCharSpace (k := k) (χ := χ)
+        (T_single (Gamma0_pair N) ℤ (D_p_Gamma0 N p hp.pos) 1) =
+      heckeT_p_all_charRestrict k p hp χ := by
+  refine LinearMap.ext fun f ↦ ?_
+  apply Subtype.ext
+  apply DFunLike.coe_injective
+  show (⇑((heckeRingHomCharSpace (k := k) (χ := χ) (T_single (Gamma0_pair N) ℤ
+      (D_p_Gamma0 N p hp.pos) 1) f : modFormCharSpace k χ) :
+      ModularForm ((Gamma1 N).map (mapGL ℝ)) k) : ℍ → ℂ) = _
+  rw [heckeRingHomCharSpace_D_p_eq_heckeT_p_all_bad p hp hpN f]
+  rfl
+
 end OperatorCommutativityFromRing
 
 section CompositeBridge
 
 variable {k : ℤ} {χ : (ZMod N)ˣ →* ℂˣ}
-
-/-- The ring-side prime generator: the single double coset `D_p`. -/
-noncomputable def heckeRingDp (p : ℕ) (hp : 0 < p) : 𝕋 (Gamma0_pair N) ℤ :=
-  T_single (Gamma0_pair N) ℤ (D_p_Gamma0 N p hp) 1
-
-/-- The ring-side scalar generator: the single scalar double coset `T(p,p)`. -/
-noncomputable def heckeRingTpp (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
-    𝕋 (Gamma0_pair N) ℤ :=
-  T_single (Gamma0_pair N) ℤ (T_diag_Gamma0 N (fun _ : Fin 2 ↦ p) (fun _ ↦ hp.pos)
-    (by rw [Int.gcd_natCast_natCast]; exact hpN)) 1
-
-/-- The ring-side prime-power element, built by the same recurrence as `heckeT_ppow`:
-`D_{p^0} = 1`, `D_{p^1} = D_p`, and
-`D_{p^{r+2}} = D_p · D_{p^{r+1}} − p · (T(p,p) · D_{p^r})`. -/
-noncomputable def heckeRingD_ppow (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
-    ℕ → 𝕋 (Gamma0_pair N) ℤ
-  | 0 => 1
-  | 1 => heckeRingDp p hp.pos
-  | r + 2 =>
-    heckeRingDp p hp.pos * heckeRingD_ppow p hp hpN (r + 1) -
-      (p : ℤ) • (heckeRingTpp p hp hpN * heckeRingD_ppow p hp hpN r)
-
-@[simp] theorem heckeRingD_ppow_zero (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
-    heckeRingD_ppow (N := N) p hp hpN 0 = 1 := rfl
-
-@[simp] theorem heckeRingD_ppow_one (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
-    heckeRingD_ppow (N := N) p hp hpN 1 = heckeRingDp p hp.pos := rfl
-
-theorem heckeRingD_ppow_succ_succ (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (r : ℕ) :
-    heckeRingD_ppow (N := N) p hp hpN (r + 2) =
-      heckeRingDp p hp.pos * heckeRingD_ppow p hp hpN (r + 1) -
-        (p : ℤ) • (heckeRingTpp p hp hpN * heckeRingD_ppow p hp hpN r) := rfl
 
 /-- The diamond operator `⟨d⟩` preserves `modFormCharSpace k χ` (it acts by the
 scalar `χ(d)`). -/
@@ -1166,13 +1237,14 @@ theorem heckeRingHomCharSpace_heckeRingDp (p : ℕ) (hp : Nat.Prime p)
       ((↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ))⁻¹ • heckeT_p_all_charRestrict k p hp χ :=
   heckeRingHomCharSpace_D_p_eq_scalar_charRestrict p hp hpN
 
-/-- `heckeRingHomCharSpace` of the scalar generator `T(p,p)` is the scalar
+/-- `heckeRingHomCharSpace` of the scalar generator `S_{(p,p)}` is the scalar
 `χ(p)⁻¹ · p^(k-2)` (endomorphism form). -/
-theorem heckeRingHomCharSpace_heckeRingTpp (p : ℕ) (hp : Nat.Prime p)
+theorem heckeRingHomCharSpace_heckeRingSpp (p : ℕ) (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) :
-    heckeRingHomCharSpace (k := k) (χ := χ) (heckeRingTpp p hp hpN) =
+    heckeRingHomCharSpace (k := k) (χ := χ) (heckeRingSpp p hp) =
       ((↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ)⁻¹ * (p : ℂ) ^ (k - 2)) •
         (1 : Module.End ℂ (modFormCharSpace k χ)) := by
+  rw [heckeRingSpp, dif_pos hpN]
   refine LinearMap.ext fun f ↦ ?_
   apply Subtype.ext
   apply DFunLike.coe_injective
@@ -1187,7 +1259,7 @@ theorem heckeRingHomCharSpace_heckeRingTpp (p : ℕ) (hp : Nat.Prime p)
 `heckeRingHomCharSpace (D_{p^r}) = (χ(p)⁻¹)^r • heckeT_ppow_charRestrict r`. -/
 theorem heckeRingHomCharSpace_heckeRingD_ppow (p : ℕ) (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) (r : ℕ) :
-    heckeRingHomCharSpace (k := k) (χ := χ) (heckeRingD_ppow p hp hpN r) =
+    heckeRingHomCharSpace (k := k) (χ := χ) (heckeRingD_ppow p hp r) =
       ((↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ)⁻¹) ^ r •
         heckeT_ppow_charRestrict (k := k) (χ := χ) p hp hpN r := by
   set c : ℂ := (↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ) with hc
@@ -1200,17 +1272,14 @@ theorem heckeRingHomCharSpace_heckeRingD_ppow (p : ℕ) (hp : Nat.Prime p)
       rw [heckeRingD_ppow_one, heckeT_ppow_charRestrict_one, pow_one,
         heckeRingHomCharSpace_heckeRingDp p hp hpN]
     | (r + 2), ih =>
-      rw [heckeRingD_ppow_succ_succ, map_sub, map_mul, map_zsmul, map_mul,
+      rw [heckeRingD_ppow_succ_succ, map_sub, map_mul, map_mul, map_zsmul,
         heckeRingHomCharSpace_heckeRingDp p hp hpN,
-        heckeRingHomCharSpace_heckeRingTpp p hp hpN, ih (r + 1) (by omega), ih r (by omega),
+        heckeRingHomCharSpace_heckeRingSpp p hp hpN, ih (r + 1) (by omega), ih r (by omega),
         heckeT_ppow_charRestrict_succ_succ p hp hpN r]
       simp only [smul_mul_assoc, mul_smul_comm, one_mul, smul_smul, smul_sub, ← hc]
-      rw [show ((↑p : ℤ) • ((c⁻¹ ^ r * (c⁻¹ * (↑p : ℂ) ^ (k - 2))) •
-          heckeT_ppow_charRestrict (k := k) (χ := χ) p hp hpN r)) =
-        ((p : ℂ) * (c⁻¹ ^ r * (c⁻¹ * (↑p : ℂ) ^ (k - 2)))) •
-          heckeT_ppow_charRestrict (k := k) (χ := χ) p hp hpN r by
-        rw [← Int.cast_smul_eq_zsmul ℂ, smul_smul]; norm_cast]
-      have h2 : (p : ℂ) * (c⁻¹ ^ r * (c⁻¹ * (p : ℂ) ^ (k - 2))) =
+      -- The scalar coefficient identity for the diamond term, after collapsing all the
+      -- nested `ℂ`/`ℤ`-smuls into a single `ℂ`-scalar.
+      have h2 : c⁻¹ ^ r * ((p : ℂ) * (c⁻¹ * (p : ℂ) ^ (k - 2))) =
           c⁻¹ ^ (r + 2) * (c * (p : ℂ) ^ (k - 1)) := by
         rw [show (c⁻¹ ^ (r + 2) * (c * (p : ℂ) ^ (k - 1))) =
           (c⁻¹ ^ (r + 1) * (c⁻¹ * c)) * (p : ℂ) ^ (k - 1) by rw [pow_succ]; ring,
@@ -1218,7 +1287,13 @@ theorem heckeRingHomCharSpace_heckeRingD_ppow (p : ℕ) (hp : Nat.Prime p)
           show (k - 1) = (k - 2) + 1 by ring, zpow_add₀ (Nat.cast_ne_zero.mpr hp.pos.ne'),
           zpow_one]
         ring
-      rw [(pow_succ c⁻¹ (r + 1)).symm, h2]
+      rw [show (c⁻¹ ^ r • (↑p : ℤ) • (c⁻¹ * (↑p : ℂ) ^ (k - 2)) •
+            heckeT_ppow_charRestrict (k := k) (χ := χ) p hp hpN r) =
+          (c⁻¹ ^ (r + 2) * (c * (↑p : ℂ) ^ (k - 1))) •
+            heckeT_ppow_charRestrict (k := k) (χ := χ) p hp hpN r by
+        rw [← Int.cast_smul_eq_zsmul ℂ, smul_smul, smul_smul, ← h2, Int.cast_natCast,
+          mul_assoc],
+        (pow_succ c⁻¹ (r + 1)).symm]
 
 /-- On a prime power `p^v` (good `p ∤ N`), `heckeT_n_charRestrict` agrees with the
 prime-power restriction `heckeT_ppow_charRestrict`. -/
@@ -1281,37 +1356,6 @@ private lemma chi_eq_ordProj_mul_ordCompl (χ : (ZMod N)ˣ →* ℂˣ) {n : ℕ}
   refine Units.ext ?_
   rw [ZMod.coe_unitOfCoprime, ZMod.coe_unitOfCoprime, Nat.ordProj_mul_ordCompl_eq_self n p]
 
-/-- The ring-side element `D_n` for general `n`, assembled by the same `minFac`-peeling
-recursion as `heckeT_n` (`heckeT_n_aux`): `D_1 = 1`, and for `m > 1`,
-`D_m = D_{p^v} · D_{m / p^v}` where `p = minFac m`, `v = v_p(m)`. -/
-noncomputable def heckeRingD_n (n : ℕ) : 𝕋 (Gamma0_pair N) ℤ :=
-  if h : n ≤ 1 then 1
-  else
-    let p := n.minFac
-    let hp := Nat.minFac_prime (by omega : n ≠ 1)
-    let v := n.factorization p
-    -- The good-prime hypothesis is supplied at the bridge level; here we use a junk
-    -- `0` when `p ∣ N` so the definition is total.
-    (if hpN : Nat.Coprime p N then heckeRingD_ppow p hp hpN v else 0) *
-      heckeRingD_n (n / p ^ v)
-termination_by n
-decreasing_by
-  have hp := Nat.minFac_prime (by omega : n ≠ 1)
-  exact Nat.div_lt_self (by omega) (Nat.one_lt_pow
-    (hp.factorization_pos_of_dvd (by omega) (Nat.minFac_dvd n)).ne' hp.one_lt)
-
-@[simp] theorem heckeRingD_n_one : heckeRingD_n (N := N) 1 = 1 := by
-  rw [heckeRingD_n]
-  simp
-
-private lemma heckeRingD_n_peel (n p v : ℕ) (hn2 : 1 < n) (hp : Nat.Prime p)
-    (hpN : Nat.Coprime p N) (hpe : p = n.minFac) (hve : v = n.factorization p) :
-    heckeRingD_n (N := N) n = heckeRingD_ppow p hp hpN v * heckeRingD_n (n / p ^ v) := by
-  subst hpe hve
-  conv_lhs => rw [heckeRingD_n]
-  rw [dif_neg (by omega : ¬ n ≤ 1)]
-  simp only [dif_pos hpN]
-
 private lemma heckeRingHomCharSpace_heckeRingD_n_step (n : ℕ) [NeZero n] (hn1 : n ≠ 1)
     (hn : Nat.Coprime n N)
     (ih : ∀ m, m < n → (hm0 : NeZero m) → ∀ hm : Nat.Coprime m N,
@@ -1342,7 +1386,10 @@ private lemma heckeRingHomCharSpace_heckeRingD_n_step (n : ℕ) [NeZero n] (hn1 
       hpvN hquotN hcop]
     congr 1
     exact (Nat.ordProj_mul_ordCompl_eq_self n p).symm
-  rw [heckeRingD_n_peel n p v (by omega) hp hpN hp_def hv_def, map_mul,
+  have hpeel : heckeRingD_n (N := N) n =
+      heckeRingD_ppow p hp v * heckeRingD_n (n / p ^ v) :=
+    heckeRingD_n_peel (N := N) n (by omega : 1 < n)
+  rw [hpeel, map_mul,
     heckeRingHomCharSpace_heckeRingD_ppow p hp hpN v,
     ih (n / p ^ v) (Nat.div_lt_self (by omega)
         (Nat.one_lt_pow hvpos.ne' hp.one_lt)) ⟨hquot_pos.ne'⟩ hquotN,
