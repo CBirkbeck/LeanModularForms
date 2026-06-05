@@ -125,4 +125,107 @@ noncomputable def heckeT_n_charRestrict (k : ℤ) (n : ℕ) [NeZero n]
         modFormCharSpace k χ) : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) =
     heckeT_n k n (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) := rfl
 
+/-! ### Character-space preservation for arbitrary index
+
+The preservation lemmas below hold for **all** indices, including bad primes `p ∣ N` and
+composites sharing factors with `N`.  They are proven by direct block induction over the
+construction of `T_n` (each building block — `heckeT_p_all`, the diamond, the recurrence —
+preserves the eigenspace), *not* via commutation with the diamond operators, so they are
+available before any commutativity is established.  This is what lets operator identities
+be transported from the Hecke ring `𝕋(Γ₀(N))` per character space and then glued. -/
+
+/-- The diamond operator `⟨n⟩` preserves each character space `M_k(Γ₁(N), χ)` for every
+index: at coprime `n` it acts by the scalar `χ(n)`, otherwise it vanishes. -/
+theorem diamondOp_n_preserves_modFormCharSpace (k : ℤ) (n : ℕ) (χ : (ZMod N)ˣ →* ℂˣ)
+    {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k} (hf : f ∈ modFormCharSpace k χ) :
+    diamondOp_n k n f ∈ modFormCharSpace k χ := by
+  by_cases h : Nat.Coprime n N
+  · rw [diamondOp_n_coprime k h]
+    have heig : diamondOp k (ZMod.unitOfCoprime n h) f =
+        (↑(χ (ZMod.unitOfCoprime n h)) : ℂ) • f :=
+      (mem_modFormCharSpace_iff k χ f).mp hf _
+    rw [heig]
+    exact Submodule.smul_mem _ _ hf
+  · rw [diamondOp_n_not_coprime k h]
+    simpa using (modFormCharSpace (N := N) k χ).zero_mem
+
+/-- `T_{p^r}` preserves each character space, for **every** prime `p` (including
+`p ∣ N`).  Direct induction over the defining recurrence. -/
+theorem heckeT_ppow_preserves_modFormCharSpace (k : ℤ) (p : ℕ) (hp : Nat.Prime p)
+    (r : ℕ) (χ : (ZMod N)ˣ →* ℂˣ)
+    {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k} (hf : f ∈ modFormCharSpace k χ) :
+    heckeT_ppow k p hp r f ∈ modFormCharSpace k χ := by
+  induction r using Nat.strong_induction_on generalizing f with
+  | _ r ih =>
+    match r, ih with
+    | 0, _ => simpa using hf
+    | 1, _ =>
+      rw [heckeT_ppow_one]
+      exact heckeT_p_all_preserves_modFormCharSpace k p hp χ hf
+    | (r + 2), ih =>
+      rw [heckeT_ppow_succ_succ]
+      simp only [LinearMap.sub_apply, LinearMap.smul_apply, Module.End.mul_apply]
+      refine Submodule.sub_mem _
+        (heckeT_p_all_preserves_modFormCharSpace k p hp χ (ih (r + 1) (by omega) hf)) ?_
+      exact Submodule.smul_mem _ _
+        (diamondOp_n_preserves_modFormCharSpace k p χ (ih r (by omega) hf))
+
+/-- `T_n` preserves each character space `M_k(Γ₁(N), χ)` for **every** positive `n`
+(no coprimality with the level required).  Induction over the `minFac`-peeling
+assembly of `T_n`. -/
+theorem heckeT_n_preserves_modFormCharSpace_all (k : ℤ) (n : ℕ) [NeZero n]
+    (χ : (ZMod N)ˣ →* ℂˣ)
+    {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k} (hf : f ∈ modFormCharSpace k χ) :
+    heckeT_n k n f ∈ modFormCharSpace k χ := by
+  suffices H : ∀ m : ℕ, (hm0 : NeZero m) →
+      ∀ {g : ModularForm ((Gamma1 N).map (mapGL ℝ)) k}, g ∈ modFormCharSpace k χ →
+        heckeT_n k m g ∈ modFormCharSpace k χ from H n ‹_› hf
+  intro m
+  induction m using Nat.strong_induction_on with
+  | _ m ih =>
+    intro hm0 g hg
+    haveI := hm0
+    rcases eq_or_ne m 1 with rfl | hm1
+    · rw [heckeT_n_one]
+      simpa using hg
+    · have hm : 1 < m := by
+        have := NeZero.ne m
+        omega
+      rw [heckeT_n_unfold k m hm]
+      simp only [Module.End.mul_apply]
+      set p := m.minFac with hp_def
+      have hp : Nat.Prime p := Nat.minFac_prime (by omega)
+      set v := m.factorization p with hv_def
+      have hv_pos : 0 < v :=
+        hp.factorization_pos_of_dvd (by omega) (Nat.minFac_dvd m)
+      have hdiv_pos : 0 < m / p ^ v :=
+        Nat.div_pos (Nat.le_of_dvd (by omega) (Nat.ordProj_dvd m p)) (pow_pos hp.pos v)
+      have hdiv_lt : m / p ^ v < m :=
+        Nat.div_lt_self (by omega) (Nat.one_lt_pow hv_pos.ne' hp.one_lt)
+      exact heckeT_ppow_preserves_modFormCharSpace k p hp v χ
+        (ih _ hdiv_lt ⟨hdiv_pos.ne'⟩ hg)
+
+/-- `heckeT_n k n` restricted to `modFormCharSpace k χ`, for **arbitrary** positive `n`
+(extends `heckeT_n_charRestrict`, which requires `n` coprime to `N`). -/
+noncomputable def heckeT_n_charRestrictAll (k : ℤ) (n : ℕ) [NeZero n]
+    (χ : (ZMod N)ˣ →* ℂˣ) :
+    Module.End ℂ (modFormCharSpace k χ) where
+  toFun f :=
+    ⟨heckeT_n k n (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k),
+      heckeT_n_preserves_modFormCharSpace_all k n χ f.property⟩
+  map_add' _ _ := Subtype.ext (map_add (heckeT_n k n) _ _)
+  map_smul' c _ := Subtype.ext (map_smul (heckeT_n k n) c _)
+
+@[simp] lemma heckeT_n_charRestrictAll_coe (k : ℤ) (n : ℕ) [NeZero n]
+    (χ : (ZMod N)ˣ →* ℂˣ) (f : modFormCharSpace k χ) :
+    ((heckeT_n_charRestrictAll k n χ f :
+        modFormCharSpace k χ) : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) =
+    heckeT_n k n (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) := rfl
+
+/-- On indices coprime to the level the two restrictions agree. -/
+lemma heckeT_n_charRestrictAll_eq (k : ℤ) (n : ℕ) [NeZero n] (hn : Nat.Coprime n N)
+    (χ : (ZMod N)ˣ →* ℂˣ) :
+    heckeT_n_charRestrictAll (N := N) k n χ = heckeT_n_charRestrict k n hn χ :=
+  LinearMap.ext fun f ↦ Subtype.ext rfl
+
 end HeckeRing.GL2
