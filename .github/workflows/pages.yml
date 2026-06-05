@@ -1,10 +1,10 @@
 name: Blueprint Pages
 
 on:
-  pull_request:
   push:
     branches:
-      - main
+      - master
+      - hecke-ring
   workflow_dispatch:
 
 permissions:
@@ -16,3 +16,5 @@ jobs:
   pages:
     uses: ./.github/workflows/blueprint-pages.yml
     secrets: inherit
+    with:
+      warm_dependency_cache: true
