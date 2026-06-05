@@ -2,7 +2,7 @@ import Verso
 import VersoManual
 import VersoBlueprint
 import LeanModularForms.HeckeRIngs.GL2.CharacterDecomp
-import LeanModularForms.HeckeRIngs.GL2.HeckeRingHomCharSpace
+import LeanModularForms.HeckeRIngs.GL2.Unified.NebentypusHeckeRingHom
 
 open Verso.Genre
 open Verso.Genre.Manual
