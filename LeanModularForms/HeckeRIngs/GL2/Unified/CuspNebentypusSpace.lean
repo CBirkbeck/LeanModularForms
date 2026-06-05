@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: LeanModularForms contributors
 -/
 import LeanModularForms.HeckeRIngs.GL2.Unified.NebentypusSpace
+import LeanModularForms.HeckeRIngs.GL2.Unified.Gamma1CharSpace
 import LeanModularForms.HeckeRIngs.GL2.AdjointTheoryPetersson
 
 /-!
@@ -98,7 +99,7 @@ noncomputable def cuspFormCharSpaceFamily
       ((heckeT_n k (m : ℕ))
         ((heckeT_n k (n : ℕ))
           (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k).toModularForm')).toFun z
-    rw [heckeT_n_mul_coprime k (m : ℕ) (n : ℕ) hmn]; rfl
+    rw [heckeT_n_mul_coprime k (m : ℕ) (n : ℕ) hmn m.property.2 n.property.2]; rfl
   commute' := heckeT_n_cusp_charRestrict_commute_from_mulFormula (N := N) k χ
 
 @[simp] lemma cuspCharHeckeOfGoodIndex_coe

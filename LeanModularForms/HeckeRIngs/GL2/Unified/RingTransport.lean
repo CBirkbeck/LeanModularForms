@@ -272,3 +272,53 @@ theorem heckeT_n_comm_diamondOp_all (k : ℤ) (n d : ℕ) [NeZero n] :
   · simp [diamondOp_n_not_coprime k hd]
 
 end HeckeRing.GL2.Unified
+
+/-! ## Re-homed public operator identities
+
+The public Hecke-operator structural identities formerly lived (with self-contained
+induction proofs) in `HeckeT_n.lean`.  After the ring-first refactor their proofs are the
+transported `Unified.*_ring` results above; we re-export them here under their original
+`HeckeRing.GL2` names and signatures so that downstream consumers are unaffected (modulo the
+explicit coprimality hypotheses, which the consumers already have in scope).
+
+`heckeT_n_mul` (the full divisor-sum multiplication table) is **deleted without an
+operator-level replacement**: its canonical form is the ring-side `heckeRingD_n_mul`
+in `Unified/Gamma0RingDn.lean`. -/
+
+namespace HeckeRing.GL2
+
+open HeckeRing.GL2.Unified
+
+variable {N : ℕ} [NeZero N]
+
+/-- `T_m` and `T_n` commute (for `m, n` coprime to the level `N`) — transported from the
+commutative Hecke ring `𝕋(Γ₀(N))`. -/
+theorem heckeT_n_comm (k : ℤ) (m n : ℕ) [NeZero m] [NeZero n]
+    (hm : Nat.Coprime m N) (hn : Nat.Coprime n N) :
+    heckeT_n (N := N) k m * heckeT_n k n = heckeT_n k n * heckeT_n k m :=
+  heckeT_n_comm_ring k m n hm hn
+
+/-- Coprime multiplicativity `T_{mn} = T_m T_n` (for `m, n` coprime to the level `N`) —
+transported from the ring identity `heckeRingD_n_mul_coprime`. -/
+theorem heckeT_n_mul_coprime (k : ℤ) (m n : ℕ) [NeZero m] [NeZero n]
+    (hmn : Nat.Coprime m n) (hm : Nat.Coprime m N) (hn : Nat.Coprime n N) :
+    haveI : NeZero (m * n) := ⟨Nat.mul_ne_zero (NeZero.ne m) (NeZero.ne n)⟩
+    heckeT_n (N := N) (n := m * n) k = heckeT_n k m * heckeT_n k n :=
+  heckeT_n_mul_coprime_ring k m n hmn hm hn
+
+/-- `T_n` commutes with the diamond operator `⟨d⟩` (for `n` coprime to the level `N`) —
+on each character space the diamond acts by a scalar, so the identity glues from the
+character decomposition. -/
+theorem heckeT_n_comm_diamondOp (k : ℤ) (n : ℕ) [NeZero n]
+    (_hn : Nat.Coprime n N) (d : (ZMod N)ˣ) :
+    diamondOp k d * heckeT_n (N := N) k n = heckeT_n k n * diamondOp k d := by
+  refine ModularForm_Gamma1_endo_ext (fun χ f hf ↦ ?_)
+  have hTf : heckeT_n k n f ∈ modFormCharSpace k χ :=
+    heckeT_n_preserves_modFormCharSpace_all k n χ hf
+  have h1 : diamondOp k d (heckeT_n k n f) = (↑(χ d) : ℂ) • heckeT_n k n f :=
+    (mem_modFormCharSpace_iff k χ _).mp hTf _
+  have h2 : diamondOp k d f = (↑(χ d) : ℂ) • f :=
+    (mem_modFormCharSpace_iff k χ f).mp hf _
+  simp only [Module.End.mul_apply, h1, h2, map_smul]
+
+end HeckeRing.GL2

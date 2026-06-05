@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: LeanModularForms contributors
 -/
 import LeanModularForms.HeckeRIngs.GL2.AdjointTheory.ConcreteFamily
+import LeanModularForms.HeckeRIngs.GL2.Unified.RingTransport
 
 /-!
 # Hecke adjoint theory: Petersson development and eigenform diagonalization
@@ -67,11 +68,12 @@ private theorem heckeT_n_cusp_decomp (m : ℕ) [NeZero m] (hm : 1 < m)
   CuspForm.ext fun z ↦ heckeT_n_cusp_unfold m hm f z
 
 private theorem heckeT_n_cusp_comm (m n : ℕ) [NeZero m] [NeZero n]
+    (hm : Nat.Coprime m N) (hn : Nat.Coprime n N)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
     heckeT_n_cusp k m (heckeT_n_cusp k n f) = heckeT_n_cusp k n (heckeT_n_cusp k m f) :=
   CuspForm.ext fun τ ↦ congr_arg
     (fun m : ModularForm ((Gamma1 N).map (mapGL ℝ)) k ↦ m.toFun τ)
-    (DFunLike.congr_fun (heckeT_n_comm k m n) f.toModularForm')
+    (DFunLike.congr_fun (heckeT_n_comm k m n hm hn) f.toModularForm')
 
 private theorem diamondOp_cusp_comp (d₁ d₂ : (ZMod N)ˣ)
     (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) :
@@ -109,7 +111,7 @@ private theorem heckeT_n_adjoint_coprime_case (m : ℕ) [NeZero m]
     heckeT_n_cusp_comm_diamondOp n₂ hn₂_cop (ZMod.unitOfCoprime n₁ hn₁_cop)⁻¹
       (heckeT_n_cusp k n₁ g'), diamondOp_cusp_comp]
   have h_hecke : heckeT_n_cusp k n₂ (heckeT_n_cusp k n₁ g') = heckeT_n_cusp k m g' :=
-    (heckeT_n_cusp_comm n₂ n₁ g').trans (hDecomp g').symm
+    (heckeT_n_cusp_comm n₂ n₁ hn₂_cop hn₁_cop g').trans (hDecomp g').symm
   have h_unit : (ZMod.unitOfCoprime n₂ hn₂_cop)⁻¹ *
       (ZMod.unitOfCoprime n₁ hn₁_cop)⁻¹ = (ZMod.unitOfCoprime m hcop)⁻¹ := by
     rw [← mul_inv]
@@ -229,7 +231,8 @@ private theorem heckeT_n_adjoint_ppow_case (p : ℕ) (hp : Nat.Prime p) (v : ℕ
       (diamondOp_cusp k up⁻¹ g'),
     heckeT_n_cusp_comm_diamondOp (p ^ (r + 1)) hpv1_cop up⁻¹ (heckeT_n_cusp k p g'),
     heckeT_n_cusp_comm_diamondOp (p ^ r) hpr_cop up⁻¹ g', diamondOp_cusp_comp,
-    diamondOp_cusp_comp, heckeT_n_cusp_comm (p ^ (r + 1)) p g', ← petN_smul_right c f',
+    diamondOp_cusp_comp, heckeT_n_cusp_comm (p ^ (r + 1)) p hpv1_cop hp_cop g',
+    ← petN_smul_right c f',
     ← petN_neg_right, ← petN_add_right]
   congr 1
   have h_unit_prod_v : (ZMod.unitOfCoprime (p ^ (r + 1)) hpv1_cop)⁻¹ * up⁻¹ =
@@ -451,7 +454,7 @@ private lemma heckeT_n_cusp_charRestrict_commute (χ : (ZMod N)ˣ →* ℂˣ) (m
     heckeT_n_cusp_charRestrict k n hn χ * heckeT_n_cusp_charRestrict k m hm χ
   refine LinearMap.ext fun ⟨f, _⟩ ↦ ?_
   simp only [Module.End.mul_apply]
-  exact Subtype.ext (heckeT_n_cusp_comm m n f)
+  exact Subtype.ext (heckeT_n_cusp_comm m n hm hn f)
 
 private abbrev CoprimeIndex (N : ℕ) := { n : ℕ+ // Nat.Coprime n.val N }
 

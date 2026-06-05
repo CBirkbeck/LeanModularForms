@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
 import LeanModularForms.HeckeRIngs.GL2.HeckeRingHomCharSpace
+import LeanModularForms.HeckeRIngs.GL2.Unified.RingTransport
 
 /-!
 # Multiplicative structure of `heckeT_n_charRestrict` on `modFormCharSpace k χ`
@@ -67,7 +68,7 @@ theorem heckeT_n_charRestrict_mul_coprime (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
   show heckeT_n k (m * n) (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) =
     ((heckeT_n_charRestrict k m hm χ * heckeT_n_charRestrict k n hn χ) f :
       ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-  rw [heckeT_n_mul_coprime k m n hmn]; rfl
+  rw [heckeT_n_mul_coprime k m n hmn hm hn]; rfl
 
 /-- The submonoid of ℕ of positive naturals coprime to `N`.
 Closed under multiplication because `Nat.Coprime.mul_left`. -/

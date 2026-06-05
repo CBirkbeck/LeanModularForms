@@ -8,6 +8,7 @@ import LeanModularForms.HeckeRIngs.GL2.Prop334_HeckeSlashDiag
 import LeanModularForms.HeckeRIngs.GL2.HeckeT_p_CharSpace_Comm
 import LeanModularForms.HeckeRIngs.GL2.MultiplicationTable
 import LeanModularForms.HeckeRIngs.GL2.Unified.Gamma0RingDn
+import LeanModularForms.HeckeRIngs.GL2.AdjointTheory
 
 /-!
 # Nebentypus Hecke ring action
@@ -1259,19 +1260,6 @@ theorem heckeT_n_charRestrict_ppow (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Copri
   refine LinearMap.ext fun f ↦ Subtype.ext ?_
   rw [heckeT_n_charRestrict_coe, heckeT_ppow_charRestrict_coe, heckeT_n_prime_pow k hp v hv]
 
-/-- `heckeT_n_charRestrict` is multiplicative over coprime factors. -/
-theorem heckeT_n_charRestrict_mul_coprime (m n : ℕ) [NeZero m] [NeZero n]
-    (hm : Nat.Coprime m N) (hn : Nat.Coprime n N) (hmn : Nat.Coprime m n) :
-    haveI : NeZero (m * n) := ⟨Nat.mul_ne_zero (NeZero.ne m) (NeZero.ne n)⟩
-    heckeT_n_charRestrict k (m * n) (Nat.Coprime.mul_left hm hn) χ =
-      heckeT_n_charRestrict k m hm χ * heckeT_n_charRestrict k n hn χ := by
-  haveI : NeZero (m * n) := ⟨Nat.mul_ne_zero (NeZero.ne m) (NeZero.ne n)⟩
-  refine LinearMap.ext fun f ↦ Subtype.ext ?_
-  rw [heckeT_n_charRestrict_coe]
-  simp only [Module.End.mul_apply, heckeT_n_charRestrict_coe]
-  rw [heckeT_n_mul_coprime k m n hmn]
-  rfl
-
 omit [NeZero N] in
 /-- The χ-character is multiplicative on coprime parts: for `m, n` coprime to `N` and to
 each other, `χ(unitOfCoprime (mn)) = χ(unitOfCoprime m) · χ(unitOfCoprime n)`. -/
@@ -1335,10 +1323,13 @@ private lemma heckeRingHomCharSpace_heckeRingD_n_step (n : ℕ) [NeZero n] (hn1 
   have hTn : heckeT_n_charRestrict k n hn χ =
       heckeT_n_charRestrict k (p ^ v) hpvN χ *
         heckeT_n_charRestrict k (n / p ^ v) hquotN χ := by
-    rw [← heckeT_n_charRestrict_mul_coprime (k := k) (χ := χ) (p ^ v) (n / p ^ v)
-      hpvN hquotN hcop]
-    congr 1
-    exact (Nat.ordProj_mul_ordCompl_eq_self n p).symm
+    have hop : heckeT_n (N := N) k n =
+        heckeT_n k (p ^ v) * heckeT_n k (n / p ^ v) := by
+      rw [heckeT_n_unfold k n (by omega : 1 < n), heckeT_n_prime_pow k hp v hvpos]
+    refine LinearMap.ext fun f ↦ Subtype.ext ?_
+    simp only [Module.End.mul_apply, heckeT_n_charRestrict_coe]
+    exact congrArg (fun T : Module.End ℂ (ModularForm ((Gamma1 N).map (mapGL ℝ)) k) ↦
+      T (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) hop
   have hpeel : heckeRingD_n (N := N) n =
       heckeRingD_ppow p hp v * heckeRingD_n (n / p ^ v) :=
     heckeRingD_n_peel (N := N) n (by omega : 1 < n)

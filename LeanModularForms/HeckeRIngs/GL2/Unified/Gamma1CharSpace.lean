@@ -32,20 +32,15 @@ noncomputable def ambientHeckeOfGoodIndex (k : ℤ) (n : GoodIndex N) :
   letI : NeZero (n : ℕ) := ⟨n.property.1.ne'⟩
   heckeT_n k (n : ℕ)
 
-/-- The ambient good-index operators commute by the symmetric multiplication
-table `heckeT_n_mul`, not by the later `heckeT_n_comm` induction. -/
+/-- The ambient good-index operators commute.  Since the indices are coprime to the level,
+this is the re-homed `heckeT_n_comm` (transported from the commutative Hecke ring). -/
 theorem ambientHeckeOfGoodIndex_commute_from_mulFormula (k : ℤ) (m n : GoodIndex N) :
     Commute (ambientHeckeOfGoodIndex (N := N) k m) (ambientHeckeOfGoodIndex (N := N) k n) := by
   letI : NeZero (m : ℕ) := ⟨m.property.1.ne'⟩
   letI : NeZero (n : ℕ) := ⟨n.property.1.ne'⟩
   show heckeT_n (N := N) k (m : ℕ) * heckeT_n k (n : ℕ) =
       heckeT_n (N := N) k (n : ℕ) * heckeT_n k (m : ℕ)
-  rw [heckeT_n_mul (N := N) k (m : ℕ) (n : ℕ), heckeT_n_mul (N := N) k (n : ℕ) (m : ℕ)]
-  refine Finset.sum_bij (fun d _ ↦ ⟨d.1, by simp [Nat.gcd_comm]⟩)
-    (fun _ _ ↦ Finset.mem_attach _ _)
-    (fun _ _ _ _ h ↦ Subtype.ext (congrArg (·.1) h))
-    (fun d _ ↦ ⟨⟨d.1, by simpa [Nat.gcd_comm] using d.2⟩, Finset.mem_attach _ _, rfl⟩)
-    (fun _ _ ↦ by simp [Nat.mul_comm])
+  exact heckeT_n_comm k (m : ℕ) (n : ℕ) m.property.2 n.property.2
 
 /-- Pointwise form of `ambientHeckeOfGoodIndex_commute_from_mulFormula`. -/
 theorem ambientHeckeOfGoodIndex_commute_apply_from_mulFormula (k : ℤ) (m n : GoodIndex N)
