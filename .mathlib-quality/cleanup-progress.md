@@ -12,12 +12,12 @@ commit per file after Phase 7.
 
 | # | File | LOC | Status |
 |---|------|-----|--------|
-| 1 | HeckeRIngs/GL2/Unified/Core.lean | 88→79 | **DONE 2026-06-05** |
-| 2 | HeckeRIngs/GL2/Unified/NebentypusSpace.lean | 59→59 | **DONE 2026-06-05** |
-| 3 | HeckeRIngs/GL2/Unified/Gamma1CharSpace.lean | 82→81 | **DONE 2026-06-05** |
-| 4 | HeckeRIngs/GL2/Unified/TwistedSlash.lean | 95 | IN PROGRESS |
-| 5 | HeckeRIngs/GL2/Unified/CuspNebentypusSpace.lean | 186 | queued |
-| 6 | HeckeRIngs/GL2/Unified/TwistedHeckeRing.lean | 1249 | queued |
+| 1 | HeckeRIngs/GL2/Unified/Core.lean | 88→79→0 | cleaned, then **DELETED 2026-06-05** (dead subtree) |
+| 2 | HeckeRIngs/GL2/Unified/NebentypusSpace.lean | 59→0 | cleaned, then **DELETED 2026-06-05** |
+| 3 | HeckeRIngs/GL2/Unified/Gamma1CharSpace.lean | 82→81→0 | cleaned, then **DELETED 2026-06-05** |
+| 4 | HeckeRIngs/GL2/Unified/TwistedSlash.lean | 95→0 | **DELETED 2026-06-05** (audit found subtree dead) |
+| 5 | HeckeRIngs/GL2/Unified/CuspNebentypusSpace.lean | 186→0 | **DELETED 2026-06-05** |
+| 6 | HeckeRIngs/GL2/Unified/TwistedHeckeRing.lean | 1249 | IN PROGRESS |
 | 7 | HeckeRIngs/GL2/Unified/Gamma0RingDn.lean | 783 | queued |
 | 8 | HeckeRIngs/GL2/Unified/NebentypusHeckeRingHom.lean | 1420 | queued |
 | 9 | HeckeRIngs/GL2/Fricke.lean | 491 | queued |
@@ -25,6 +25,16 @@ commit per file after Phase 7.
 | 11 | HeckeRIngs/GL2/Unified/RingTransport.lean | 324 | queued |
 | 12 | HeckeRIngs/GL2/Unified/DirectHeckeRing.lean | 178 | queued |
 | 13 | HeckeRIngs/GL2/Unified/EigenformFromRing.lean | 102 | queued |
+
+**SUBTREE DELETION (2026-06-05, user-approved):** files 1–5 (the GoodHeckeFamily/Γ₀-model
+experimental layer, ~500 LOC) deleted as dead code — zero external consumers, zero blueprint
+refs, superseded by the ring-first architecture. TwistedHeckeRing's vestigial
+`import …Unified.TwistedSlash` rewired to `import …HeckeRingHomCharSpace`. Full build green.
+Surviving artifact: `instance (n : coprimeToN N) : NeZero (n : ℕ)` in
+HeckeRingHomCharSpace_General.lean:84 (extracted during file-3 cleanup; General's 3 redundant
+haveI sites sweep in its tranche-2 run). The file-1/2/3 cleanup commits (b9702bc, 18e55d8,
+3fd25b8) document the workers' audits; their mathlib finding (conjEnd = LinearEquiv.conjRingEquiv)
+still applies to the LIVE files HeckeT_p_CharSpace_Comm.lean + ShimuraHom.lean (their runs).
 
 ## Tranche 2 — rest of HeckeRIngs/GL2 (queued, order TBD upstream-first)
 HeckeRingHomCharSpace.lean (99), HeckeRingHomCharSpace_General.lean (108),

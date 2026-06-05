@@ -3,7 +3,7 @@
  Released under Apache 2.0 license as described in the file LICENSE.
  Authors: LeanModularForms contributors
  -/
-import LeanModularForms.HeckeRIngs.GL2.Unified.TwistedSlash
+import LeanModularForms.HeckeRIngs.GL2.HeckeRingHomCharSpace
 import LeanModularForms.HeckeRIngs.GL2.HeckeActionGeneral
 import LeanModularForms.HeckeRIngs.GLn.CongruenceHecke
 
