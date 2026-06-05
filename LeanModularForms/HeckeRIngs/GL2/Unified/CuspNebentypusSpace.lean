@@ -50,7 +50,7 @@ theorem ambientCuspHeckeOfGoodIndex_commute_from_mulFormula (k : ℤ) (m n : Goo
       (ambientCuspHeckeOfGoodIndex (N := N) k n) :=
   LinearMap.ext fun f ↦ CuspForm.ext fun z ↦
     congrArg (fun mf : ModularForm ((Gamma1 N).map (mapGL ℝ)) k ↦ mf z)
-      (ambientHeckeOfGoodIndex_commute_apply_from_mulFormula (N := N) k m n f.toModularForm')
+      (ambientHeckeOfGoodIndex_commute_apply (N := N) k m n f.toModularForm')
 
 /-- Pointwise form of `ambientCuspHeckeOfGoodIndex_commute_from_mulFormula`. -/
 theorem ambientCuspHeckeOfGoodIndex_commute_apply_from_mulFormula (k : ℤ) (m n : GoodIndex N)

@@ -14,8 +14,8 @@ commit per file after Phase 7.
 |---|------|-----|--------|
 | 1 | HeckeRIngs/GL2/Unified/Core.lean | 88→79 | **DONE 2026-06-05** |
 | 2 | HeckeRIngs/GL2/Unified/NebentypusSpace.lean | 59→59 | **DONE 2026-06-05** |
-| 3 | HeckeRIngs/GL2/Unified/Gamma1CharSpace.lean | 82 | IN PROGRESS |
-| 4 | HeckeRIngs/GL2/Unified/TwistedSlash.lean | 95 | queued |
+| 3 | HeckeRIngs/GL2/Unified/Gamma1CharSpace.lean | 82→81 | **DONE 2026-06-05** |
+| 4 | HeckeRIngs/GL2/Unified/TwistedSlash.lean | 95 | IN PROGRESS |
 | 5 | HeckeRIngs/GL2/Unified/CuspNebentypusSpace.lean | 186 | queued |
 | 6 | HeckeRIngs/GL2/Unified/TwistedHeckeRing.lean | 1249 | queued |
 | 7 | HeckeRIngs/GL2/Unified/Gamma0RingDn.lean | 783 | queued |
@@ -40,6 +40,13 @@ FourierHecke.lean (789), LevelRaise.lean (598), Newforms/ subdir, …
 ## Tranche 5 — ForMathlib
 
 ## Per-file log
+
+### 3. GL2/Unified/Gamma1CharSpace.lean (82 → 81 lines) — 2026-06-05
+- Phases 0–7 all run; 7 declarations, 7 workers, all gates pass; build green ×3.
+- NEW `instance (n : coprimeToN N) : NeZero (n : ℕ)` — born in this file's worker pass, then MOVED by /simplify-altitude to its true home next to `coprimeToN` (HeckeRingHomCharSpace_General.lean:84) so the whole import cone benefits. Killed 4 `letI`/`haveI` here.
+- **4 renames applied (Phase 5b)**: `*_commute_from_mulFormula` → `*_commute` (×2 ambient + heckeT_coprimeRestrict), `*_commute_apply_from_mulFormula` → `*_commute_apply`, `modFormCharSpaceFamily_apply` → `modFormCharSpaceFamily_op` (proof-source suffixes violate name-what-is-proved; _op matches transport_op precedent). 1 external call site updated (CuspNebentypusSpace.lean:53). Queue truncated after apply.
+- commute theorem: 5-line tactic proof (2 letI + show + rw/exact) → 1-line bare term (defeq Commute). All docstrings de-narrativized; ~10 redundant `(N := N)` named args dropped; header + module docstring normalized.
+- **Campaign notes:** CuspNebentypusSpace.lean (file 5) now has 5 redundant `letI : NeZero …` sites (33, 68, 92, 93, 112 — instance covers them; the m*n product letI at 94–95 stays) + its own 3 `_from_mulFormula` renames to queue + Set.ext copy-proof golf. HeckeRingHomCharSpace_General.lean's 3 haveI sites (89, 102–103) also now redundant (instance is local there) — its tranche-2 run sweeps them.
 
 ### 2. GL2/Unified/NebentypusSpace.lean (59 → 59 lines) — 2026-06-05
 - Phases 0–7 all run; 3 declarations + 1 new API lemma; 3 workers, all gates pass; build green ×3.

@@ -81,6 +81,8 @@ def coprimeToN (N : ℕ) : Submonoid ℕ where
 @[simp] lemma mem_coprimeToN {N n : ℕ} :
     n ∈ coprimeToN N ↔ 0 < n ∧ Nat.Coprime n N := Iff.rfl
 
+instance (n : coprimeToN N) : NeZero (n : ℕ) := ⟨n.property.1.ne'⟩
+
 /-- `heckeT_n` restricted to `modFormCharSpace k χ`, indexed by elements of
 `coprimeToN N`. Wraps `heckeT_n_charRestrict` with the positivity→`NeZero` bridge. -/
 noncomputable def heckeT_coprimeRestrict (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
