@@ -146,7 +146,7 @@ private lemma moebius_row2_det_eq {p : ℕ} (M : Matrix (Fin 2) (Fin 2) ℤ) (b 
       ((M 1 0 : ℤ) : ZMod p) * ((M 0 1 + ↑b * M 1 1 : ℤ) : ZMod p) =
     ((M 0 0 * M 1 1 - M 0 1 * M 1 0 : ℤ) : ZMod p) := by push_cast; ring
 
-private noncomputable def moebiusFin' (p : ℕ) (hp : Nat.Prime p)
+noncomputable def moebiusFin' (p : ℕ) (hp : Nat.Prime p)
     (M : Matrix (Fin 2) (Fin 2) ℤ) (b : Fin p) : Fin p :=
   haveI : NeZero p := ⟨hp.ne_zero⟩
   let A : ℤ := M 0 0 + ↑b.val * M 1 0
@@ -156,7 +156,7 @@ private noncomputable def moebiusFin' (p : ℕ) (hp : Nat.Prime p)
   else
     ⟨((B : ZMod p) * (A : ZMod p)⁻¹).val, ZMod.val_lt _⟩
 
-private lemma moebiusFin'_injective (p : ℕ) (hp : Nat.Prime p)
+lemma moebiusFin'_injective (p : ℕ) (hp : Nat.Prime p)
     (M : Matrix (Fin 2) (Fin 2) ℤ) (hdet : M.det = 1) :
     Function.Injective (moebiusFin' p hp M) := by
   haveI : Fact p.Prime := ⟨hp⟩
@@ -219,7 +219,7 @@ private lemma det_fin_two_moebius {A M10 M11 B q jj p : ℤ}
 `[1,b;0,p]·σ = τ·[1,j;0,p]` (where `j = moebiusFin' p hp M b`) and explicit entries
 `τ₀₀ = M₀₀ + b·M₁₀`, `τ₁₀ = p·M₁₀`, `τ₁₁ = M₁₁ - M₁₀·j`.  The entry data lets callers
 verify `τ ∈ Γ₁(N)` or `Γ₀(N)`. -/
-private lemma moebius_conj {p : ℕ} [Fact p.Prime] (hp : Nat.Prime p)
+lemma moebius_conj {p : ℕ} [Fact p.Prime] (hp : Nat.Prime p)
     (σ : SL(2, ℤ)) (b : Fin p)
     (hA : ¬(p : ℤ) ∣ ((σ : Matrix (Fin 2) (Fin 2) ℤ) 0 0 +
       ↑b.val * (σ : Matrix (Fin 2) (Fin 2) ℤ) 1 0)) :
@@ -281,7 +281,7 @@ private lemma moebius_conj {p : ℕ} [Fact p.Prime] (hp : Nat.Prime p)
   · show τ_mat 1 1 = M 1 1 - M 1 0 * ↑(moebiusFin' p hp M b).val
     rw [hmoeb]; simp [hτ_mat_def]
 
-private theorem orbit_upper_divN [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.Prime p)
+theorem orbit_upper_divN [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.Prime p)
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
     (σ : SL(2, ℤ)) (hσ : σ ∈ Gamma1 N) (b : Fin p)
     (hA : ¬(p : ℤ) ∣ ((σ : Matrix (Fin 2) (Fin 2) ℤ) 0 0 +
@@ -307,7 +307,7 @@ private theorem orbit_upper_divN [NeZero N] (k : ℤ) (p : ℕ) (hp : Nat.Prime 
   congr 1
   exact f.slash_action_eq' _ (Subgroup.mem_map.mpr ⟨τ, hτ_g1, rfl⟩)
 
-private theorem heckeT_p_ut_slash_invariant_divN [NeZero N] (k : ℤ) (p : ℕ)
+theorem heckeT_p_ut_slash_invariant_divN [NeZero N] (k : ℤ) (p : ℕ)
     (hp : Nat.Prime p) (hpN : ¬Nat.Coprime p N)
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
     (γ : GL (Fin 2) ℝ) (hγ : γ ∈ (Gamma1 N).map (mapGL ℝ)) :

@@ -1022,70 +1022,42 @@ upper-left entries are `≡ 0 (mod p)`) are *not* the upper representatives `[[1
 right-coset representatives, and the equality of the two slash sums is genuine coset
 combinatorics, mediated by the `Γ₁(N)`-invariance of `f`. -/
 
-/-- **Bad-prime bridge.**  For a bad prime `p ∣ N` and a `Γ₀(N),χ`-twisted-invariant `f`,
-the abstract χ-weighted Hecke slash at the prime double coset `D_p_Gamma0` equals the
-unweighted explicit `U_p` coset-sum: the `p` upper representatives `[[1,b],[0,p]]`,
-`b = 0,…,p−1`, each carry weight `1`, and there is no lower representative. -/
-theorem twisted_matches_T_p_bad (p : ℕ) (hp : Nat.Prime p)
-    (hpN : ¬ Nat.Coprime p N) {f : ℍ → ℂ}
-    (hf : IsGamma0TwistedInvariant (N := N) k χ f) :
-    twistedHeckeSlash_gen (N := N) k χ (D_p_Gamma0 N p hp.pos) f =
-      ∑ b ∈ Finset.range p, f ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ) := by
-  -- BLOCKED.  This is genuine, novel coset combinatorics with no reusable scaffolding;
-  -- the good-prime machinery (`twistedTpPsi` / `weighted_value_eq`) is *mathematically
-  -- inapplicable* for `p ∣ N` (see the section docstring above).  Two independent
-  -- subgoals remain:
-  --
-  -- (1) CARDINALITY `Nat.card (decompQuot (Gamma0_pair N) (rep (D_p_Gamma0 N p hp.pos))) = p`.
-  --     This holds (it is `decompQuot_Npow_natcard`/`Gamma0_bad_deg` in
-  --     `CongruenceHecke/Props.lean`, with `k_exp = p`, `hk = 1`, `hk_dvd : p ∣ N`) but
-  --     those lemmas are `private` and out of scope to expose.  A self-contained route,
-  --     fully inside this file's public imports: `decompQuot_double_H_equiv` reduces to
-  --     `decompQuot (diag(1,p))`, whose index is `[Γ₀(N) : Γ₀(Np)]`; the conjugation
-  --     `diag(1,p)·Γ₀(N)·diag(1,p)⁻¹ ∩ Γ₀(N) = Γ₀(Np)` (lower-left `Nc ↦ Nc/p` integral and
-  --     `≡0 mod N` ⟺ `p ∣ c`), and `[Γ₀(N) : Γ₀(Np)] = p` for `p ∣ N` (e.g. via the
-  --     `Gamma0_relindex_step`/`Gamma0_prime_power_index` API in `GL2/CongruenceIndex.lean`,
-  --     using that `q ∣ Np ⟺ q ∣ N`).
-  --
-  -- (2) MATCHING.  Build a bijection `Fin p ≃ decompQuot` and show, for matched `(b, i)`,
-  --     `(weight i)⁻¹ • (f ∣[k] tRep_gen … i) = f ∣[k] T_p_upper p hp.pos b`.  Unlike the
-  --     good case, `tRep_gen i = adj(δ_i)` with `δ_i ∈ Δ₀(N)` of det `p` has upper-left
-  --     entry `≡ 0 (mod p)`, whereas `T_p_upper b = [[1,b],[0,p]]` has upper-left `1`; they
-  --     are *distinct* complete sets of right-coset representatives.  The equality is by
-  --     `Γ₁(N)`-invariance of `f` (the χ-weights all collapse to `1`).  The key tool is
-  --     `twisted_weighted_slash_tRep_gen_of_mem`, but a *new* factorisation step is needed
-  --     in place of `adj_T_p_upper_factorisation` (which has no bad-prime analogue): one
-  --     must exhibit, per `b`, elements `h₁ b, h₂ b ∈ Γ₀(N)` so that
-  --     `adj(h₁ b · rep(D_p) · h₂ b)` is `Γ₁(N)`-left-equivalent to `T_p_upper p hp.pos b`,
-  --     and verify `delta0NebentypusDeltaChar χ (gamma0TripleDelta … (h₁ b) (h₂ b)) = 1`.
-  sorry
+/-- For a bad prime `p ∣ N`, the prime double coset `D_p_Gamma0` coincides with the bad
+diagonal class `T(1, p)`, whose `decompQuot` has exactly `p` elements (Shimura §3.3). -/
+private lemma decompQuot_D_p_Gamma0_bad_natcard (p : ℕ) (hp : Nat.Prime p)
+    (hpN : ¬ Nat.Coprime p N) :
+    Nat.card (HeckeRing.decompQuot (Gamma0_pair N)
+        (HeckeRing.HeckeCoset.rep (D_p_Gamma0 N p hp.pos))) = p := by
+  have hpdvd : p ∣ N := (Nat.Prime.coprime_iff_not_dvd hp).not_left.mp hpN
+  have h_eq : (D_p_Gamma0 N p hp.pos : HeckeRing.HeckeCoset (Gamma0_pair N)) =
+      T_diag_Gamma0 N (![1, p])
+        (fun i ↦ by fin_cases i <;> simp [hp.pos]) (by simp) := by
+    apply (HeckeRing.HeckeCoset.eq_iff _ _).mpr
+    show DoubleCoset.doubleCoset (diagMat 2 (![1, p] : Fin 2 → ℕ) : GL _ ℚ) _ _ =
+      DoubleCoset.doubleCoset (diagMat 2 (![1, p] : Fin 2 → ℕ) : GL _ ℚ) _ _
+    rfl
+  refine decompQuot_Npow_natcard N p hp.pos 1 (by simpa using hpdvd)
+    (HeckeRing.HeckeCoset.rep (D_p_Gamma0 N p hp.pos)) ?_
+  rw [HeckeRing.HeckeCoset.mk_rep]
+  exact h_eq
 
-/-- For a bad prime `p ∣ N` and `f ∈ modFormCharSpace k χ`, the canonical χ-twisted operator
-at the prime double coset equals the concrete operator `heckeT_p_all` (the `U_p` operator),
-as functions on `ℍ`.  No χ-factor appears (contrast the good-prime `χ(p)⁻¹`). -/
-theorem heckeRingHomCharSpace_D_p_eq_heckeT_p_all_bad (p : ℕ) (hp : Nat.Prime p)
-    (hpN : ¬ Nat.Coprime p N)
-    (f : modFormCharSpace k χ) :
-    (⇑((heckeRingHomCharSpace (k := k) (χ := χ) (T_single (Gamma0_pair N) ℤ
-        (D_p_Gamma0 N p hp.pos) 1) f : modFormCharSpace k χ) :
-        ModularForm ((Gamma1 N).map (mapGL ℝ)) k) : ℍ → ℂ) =
-      (⇑(heckeT_p_all k p hp (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) : ℍ → ℂ) := by
-  have hLHS : (⇑((heckeRingHomCharSpace (k := k) (χ := χ) (T_single (Gamma0_pair N) ℤ
-      (D_p_Gamma0 N p hp.pos) 1) f : modFormCharSpace k χ) :
-      ModularForm ((Gamma1 N).map (mapGL ℝ)) k) : ℍ → ℂ) =
-        twistedHeckeSlash_gen (N := N) k χ (D_p_Gamma0 N p hp.pos)
-          (⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) := by
-    change (⇑(((nebentypusHeckeSum (N := N) (k := k) (χ := χ)
-        (T_single (Gamma0_pair N) ℤ (D_p_Gamma0 N p hp.pos) 1)) f :
-        modFormCharSpace k χ) : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) : ℍ → ℂ) = _
-    rw [nebentypusHeckeSum_apply_coe, twistedHeckeSlashExt_gen,
-      Finsupp.sum_single_index (by simp :
-        (0 : ℤ) • twistedHeckeSlash_gen (N := N) k χ (D_p_Gamma0 N p hp.pos)
-          (⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) = 0),
-      one_smul]
-  rw [hLHS, twisted_matches_T_p_bad (k := k) (χ := χ) p hp hpN
-      (coe_mem_twistedInvariant (f : ModularForm _ k) f.2),
-    heckeT_p_all_not_coprime_apply k hp hpN (f : ModularForm _ k), heckeT_p_ut]
+/- **No bad-prime bridge for THIS homomorphism** (verified disproof, 2026-06-05).
+
+`twistedHeckeSlash_gen` slashes by `tRep_gen i = GL_adjugate(δᵢ)`, so the image of the
+class of `diag(1,p)` is the Hecke operator of the **adjugate** class
+`Γ₀(N)·diag(p,1)·Γ₀(N)`.  For a good prime `p ∤ N` the two classes coincide and the
+bridge `twisted_matches_T_p` above holds; for a bad prime `p ∣ N` they are **disjoint**
+(separating invariant: `M₁₁ mod p` — a unit on the adjugate side, `0` on the `U_p` side;
+brute-force confirmed at `N = 2, p = 2` and `N = 6, p = 2`).  Hence
+`Φ_χ(D_p)` is a `V_p`-type operator and **not** `U_p`, and the statement
+"`twistedHeckeSlash_gen (D_p_Gamma0) f = ∑_b f∣[[1,b],[0,p]]`" is FALSE at bad primes.
+
+Consequently the ring-first transport (`Unified/RingTransport.lean`) is deliberately
+restricted to indices coprime to `N`; bad-prime blocks (`U_p`-powers) live on the
+operator side.  The proven cardinality `decompQuot_D_p_Gamma0_bad_natcard` above is kept
+for future use (e.g. a bridge for the non-adjugate companion homomorphism
+`T ↦ Σ f∣δᵢ`, which is also multiplicative by commutativity of `𝕋(Γ₀(N))` and DOES send
+`D_p ↦ U_p` at bad primes). -/
 
 end Bridge
 
@@ -1107,25 +1079,6 @@ theorem heckeRingHomCharSpace_D_p_eq_scalar_charRestrict (p : ℕ) (hp : Nat.Pri
       (D_p_Gamma0 N p hp.pos) 1) f : modFormCharSpace k χ) :
       ModularForm ((Gamma1 N).map (mapGL ℝ)) k) : ℍ → ℂ) = _
   rw [heckeRingHomCharSpace_D_p_eq_heckeT_p_all p hp hpN f]
-  rfl
-
-/-- **Bad-prime bridge, endomorphism form.**  On the χ-space, for a bad prime `p ∣ N`, the
-canonical χ-twisted operator at the prime double coset `D_p` equals the restricted concrete
-operator `heckeT_p_all_charRestrict` — with **no** χ-factor (contrast the good-prime `χ(p)⁻¹`
-in `heckeRingHomCharSpace_D_p_eq_scalar_charRestrict`).  Stated about the ring generator
-`T_single … (D_p_Gamma0 N p hp.pos) 1`, which is `heckeRingDp p hp.pos`. -/
-theorem heckeRingHomCharSpace_D_p_bad (p : ℕ) (hp : Nat.Prime p)
-    (hpN : ¬ Nat.Coprime p N) :
-    heckeRingHomCharSpace (k := k) (χ := χ)
-        (T_single (Gamma0_pair N) ℤ (D_p_Gamma0 N p hp.pos) 1) =
-      heckeT_p_all_charRestrict k p hp χ := by
-  refine LinearMap.ext fun f ↦ ?_
-  apply Subtype.ext
-  apply DFunLike.coe_injective
-  show (⇑((heckeRingHomCharSpace (k := k) (χ := χ) (T_single (Gamma0_pair N) ℤ
-      (D_p_Gamma0 N p hp.pos) 1) f : modFormCharSpace k χ) :
-      ModularForm ((Gamma1 N).map (mapGL ℝ)) k) : ℍ → ℂ) = _
-  rw [heckeRingHomCharSpace_D_p_eq_heckeT_p_all_bad p hp hpN f]
   rfl
 
 end OperatorCommutativityFromRing

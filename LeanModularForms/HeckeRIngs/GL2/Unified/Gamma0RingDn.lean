@@ -123,7 +123,7 @@ variable {R : Type*} [Monoid R]
 /-- The `minFac`-peeling product: `peelProd f n = f p v · peelProd f (n / p^v)` where
 `p = minFac n` and `v = v_p(n)`, with `peelProd f 0 = peelProd f 1 = 1`.  The block map
 `f : ℕ → ℕ → R` is only ever evaluated at `(p, v_p(n))` with `p` prime. -/
-private noncomputable def peelProd (f : ℕ → ℕ → R) (n : ℕ) : R :=
+noncomputable def peelProd (f : ℕ → ℕ → R) (n : ℕ) : R :=
   if _h : n ≤ 1 then 1
   else
     let p := n.minFac
@@ -135,13 +135,13 @@ decreasing_by
   exact Nat.div_lt_self (by omega) (Nat.one_lt_pow
     (hp.factorization_pos_of_dvd (by omega) (Nat.minFac_dvd n)).ne' hp.one_lt)
 
-@[simp] private theorem peelProd_zero (f : ℕ → ℕ → R) : peelProd f 0 = 1 := by
+@[simp] theorem peelProd_zero (f : ℕ → ℕ → R) : peelProd f 0 = 1 := by
   rw [peelProd]; simp
 
-@[simp] private theorem peelProd_one (f : ℕ → ℕ → R) : peelProd f 1 = 1 := by
+@[simp] theorem peelProd_one (f : ℕ → ℕ → R) : peelProd f 1 = 1 := by
   rw [peelProd]; simp
 
-private theorem peelProd_peel (f : ℕ → ℕ → R) (n : ℕ) (hn : 1 < n) :
+theorem peelProd_peel (f : ℕ → ℕ → R) (n : ℕ) (hn : 1 < n) :
     peelProd f n =
       f n.minFac (n.factorization n.minFac) *
         peelProd f (n / n.minFac ^ n.factorization n.minFac) := by
@@ -149,7 +149,7 @@ private theorem peelProd_peel (f : ℕ → ℕ → R) (n : ℕ) (hn : 1 < n) :
   rw [dif_neg (by omega : ¬ n ≤ 1)]
 
 /-- `peelProd` over a prime power is a single block. -/
-private theorem peelProd_ppow (f : ℕ → ℕ → R) {p : ℕ} (hp : Nat.Prime p) (v : ℕ)
+theorem peelProd_ppow (f : ℕ → ℕ → R) {p : ℕ} (hp : Nat.Prime p) (v : ℕ)
     (hv : 0 < v) : peelProd f (p ^ v) = f p v := by
   have h1 : 1 < p ^ v := Nat.one_lt_pow hv.ne' hp.one_lt
   have hminFac : (p ^ v).minFac = p := hp.pow_minFac hv.ne'
@@ -167,7 +167,7 @@ variable {R : Type*} [CommMonoid R]
 /-- **`peelProd` is multiplicative on coprime arguments** — for any block map `f`.
 Pure commutative algebra: the blocks of `m·n` are the disjoint union of the blocks of
 `m` and `n`, and commutativity reorders the product. -/
-private theorem peelProd_mul_coprime (f : ℕ → ℕ → R) :
+theorem peelProd_mul_coprime (f : ℕ → ℕ → R) :
     ∀ m n : ℕ, Nat.Coprime m n → peelProd f (m * n) = peelProd f m * peelProd f n := by
   -- Strong induction on the product `m * n`.
   suffices H : ∀ t m n : ℕ, m * n = t → Nat.Coprime m n →
@@ -694,6 +694,54 @@ noncomputable def heckeRingS_n (d : ℕ) : 𝕋 (Gamma0_pair N) ℤ :=
     (fun p v ↦ if hp : Nat.Prime p then heckeRingSpp p hp ^ v else 1) d
 
 @[simp] theorem heckeRingS_n_one : heckeRingS_n (N := N) 1 = 1 := peelProd_one _
+
+/-- The composite scalar class vanishes as soon as `d` shares a factor with `N`:
+some prime-power block is `S_p^v = 0^v = 0`. -/
+theorem heckeRingS_n_eq_zero_of_not_coprime :
+    ∀ d : ℕ, d ≠ 0 → ¬ Nat.Coprime d N → heckeRingS_n (N := N) d = 0 := by
+  intro d
+  induction d using Nat.strong_induction_on with
+  | _ d ih =>
+    intro hd0 hdN
+    have hd1 : d ≠ 1 := fun h ↦ hdN (h ▸ Nat.coprime_one_left N)
+    have hd2 : 1 < d := by omega
+    set q := d.minFac with hq_def
+    have hq : Nat.Prime q := Nat.minFac_prime hd1
+    set v := d.factorization q with hv_def
+    have hv_pos : 0 < v :=
+      hq.factorization_pos_of_dvd (by omega) (Nat.minFac_dvd d)
+    have hpeel : heckeRingS_n (N := N) d =
+        heckeRingSpp q hq ^ v * heckeRingS_n (d / q ^ v) := by
+      rw [heckeRingS_n, peelProd_peel _ d hd2, dif_pos hq]
+      rfl
+    by_cases hqN : Nat.Coprime q N
+    · -- The bad part persists in the quotient.
+      obtain ⟨p, hp, hpdvd⟩ := Nat.exists_prime_and_dvd
+        (fun h ↦ hdN h : Nat.gcd d N ≠ 1)
+      have hpd : p ∣ d := hpdvd.trans (Nat.gcd_dvd_left d N)
+      have hpN : p ∣ N := hpdvd.trans (Nat.gcd_dvd_right d N)
+      have hpq : p ≠ q := by
+        rintro rfl
+        exact (hp.coprime_iff_not_dvd.mp hqN) hpN
+      have hp_quot : p ∣ d / q ^ v := by
+        have hqv_dvd : q ^ v ∣ d := Nat.ordProj_dvd d q
+        have hsplit : d = q ^ v * (d / q ^ v) :=
+          (Nat.mul_div_cancel' hqv_dvd).symm
+        have hmul : p ∣ q ^ v * (d / q ^ v) := hsplit ▸ hpd
+        rcases hp.dvd_mul.mp hmul with h | h
+        · exact absurd ((Nat.prime_dvd_prime_iff_eq hp hq).mp
+            (hp.dvd_of_dvd_pow h)) hpq
+        · exact h
+      have hquot_pos : 0 < d / q ^ v :=
+        Nat.div_pos (Nat.le_of_dvd (by omega) (Nat.ordProj_dvd d q))
+          (pow_pos hq.pos v)
+      have hquot_lt : d / q ^ v < d :=
+        Nat.div_lt_self (by omega) (Nat.one_lt_pow hv_pos.ne' hq.one_lt)
+      have hquotN : ¬ Nat.Coprime (d / q ^ v) N := fun hcop ↦
+        (hp.coprime_iff_not_dvd.mp (Nat.Coprime.coprime_dvd_left hp_quot hcop)) hpN
+      rw [hpeel, ih _ hquot_lt hquot_pos.ne' hquotN, mul_zero]
+    · -- The leading block already vanishes.
+      rw [hpeel, heckeRingSpp_of_not_coprime q hq hqN, zero_pow hv_pos.ne', zero_mul]
 
 /-- On a prime power, the composite scalar class agrees with the power of the prime scalar:
 `S_{p^v} = S_p^v`. -/
