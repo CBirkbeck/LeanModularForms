@@ -130,7 +130,7 @@ private lemma logDeriv_modFormComp_periodic :
     Function.Periodic (logDeriv (modularFormCompOfComplex f)) (1 : ℂ) := by
   have h_per : Function.Periodic (modularFormCompOfComplex f) (1 : ℂ) := by
     simpa only [Nat.cast_one] using SlashInvariantFormClass.periodic_comp_ofComplex f
-      ModularFormClass.one_mem_strictPeriods_SL2Z
+      (Gamma_one_coe_eq_SL ▸ one_mem_strictPeriods_SL)
   intro z
   simp only [logDeriv, Pi.div_apply, h_per z,
     ← deriv_comp_add_const (modularFormCompOfComplex f) 1 z,
@@ -252,7 +252,7 @@ include hf in
 private theorem seg5_logDeriv_integral_value
     {H : ℝ} (_hH : Real.sqrt 3 / 2 < H)
     (_hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) (seg5_q_radius_H H),
-      q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℝ) f q ≠ 0) :
+      q ≠ 0 → UpperHalfPlane.cuspFunction (1 : ℝ) f q ≠ 0) :
     ∫ t in (4:ℝ)..5,
       logDeriv (modularFormCompOfComplex f) (fdBoundary_H H t) *
         deriv (fdBoundary_H H) t =
@@ -264,7 +264,7 @@ private theorem tendsto_pvIntegral_seg5
     (S : Finset UpperHalfPlane)
     {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
     (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) (seg5_q_radius_H H),
-      q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℝ) f q ≠ 0)
+      q ≠ 0 → UpperHalfPlane.cuspFunction (1 : ℝ) f q ≠ 0)
     (h_vert_below_H : ∀ s ∈ sVertOfS S, s.im < H)
     (h_arc_below_H : ∀ s ∈ sArcOfS S, s.im < H) :
     Tendsto (fun ε =>
@@ -312,7 +312,6 @@ private theorem tendsto_pvIntegral_seg5
               rw [Set.mem_Ioc] at ht
               simp only [pvIntegrand, cauchyPrincipalValueIntegrandOn,
                 if_neg (hε t ht.1 ht.2)]
-              rfl
           · exact Filter.Eventually.of_forall fun t ht => by
               rw [Set.mem_Ioc] at ht
               exact absurd ht.1 (by linarith [ht.2])
@@ -509,7 +508,7 @@ omit hf in
 private lemma modFormComp_ne_zero_at_height
     {H : ℝ} (hH_pos : 0 < H)
     (hcusp : ∀ q ∈ Metric.closedBall (0 : ℂ) (seg5_q_radius_H H),
-      q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℝ) f q ≠ 0)
+      q ≠ 0 → UpperHalfPlane.cuspFunction (1 : ℝ) f q ≠ 0)
     {z : ℂ} (hz_im : z.im = H) :
     modularFormCompOfComplex f z ≠ 0 := by
   have hz_pos : 0 < z.im := hz_im ▸ hH_pos
@@ -523,7 +522,7 @@ private lemma modFormComp_ne_zero_at_height
     rw [Metric.mem_closedBall, dist_zero_right, Function.Periodic.norm_qParam]
     simp [seg5_q_radius_H, hz_im]
   exact absurd ((SlashInvariantFormClass.eq_cuspFunction f ⟨z, hz_pos⟩
-    ModularFormClass.one_mem_strictPeriods_SL2Z one_ne_zero).trans
+    (Gamma_one_coe_eq_SL ▸ one_mem_strictPeriods_SL) one_ne_zero).trans
     (h_bridge ▸ h_zero)) (hcusp _ h_qmem (Complex.exp_ne_zero _))
 
 include hf in
@@ -535,7 +534,7 @@ private lemma modular_side_h_capture
     (hH_gt_one : 1 < H)
     (_hH_bound : ∀ s ∈ S, (s : ℂ).im < H)
     (hcusp : ∀ q ∈ Metric.closedBall (0 : ℂ) (seg5_q_radius_H H),
-      q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℝ) f q ≠ 0) :
+      q ≠ 0 → UpperHalfPlane.cuspFunction (1 : ℝ) f q ≠ 0) :
     ∀ t ∈ Icc (0 : ℝ) 5,
       modularFormCompOfComplex f (fdBoundary_H H t) = 0 →
       fdBoundary_H H t ∈ (↑(sArcOfS S ∪ sVertOfS S) : Set ℂ) := by
@@ -593,7 +592,7 @@ private lemma modular_side_h_capture
               modularFormCompOfComplex f (fdBoundary_H H (4 - t)) = 0 := by
             have h_F_per : Function.Periodic (modularFormCompOfComplex f) (1 : ℂ) := by
               simpa only [Nat.cast_one] using SlashInvariantFormClass.periodic_comp_ofComplex f
-                ModularFormClass.one_mem_strictPeriods_SL2Z
+                (Gamma_one_coe_eq_SL ▸ one_mem_strictPeriods_SL)
             have := h_F_per (fdBoundary_H H (4 - t) - 1)
             simp only [sub_add_cancel] at this
             rw [ht_seg4] at h_zero

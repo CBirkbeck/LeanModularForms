@@ -157,7 +157,7 @@ private theorem no_zeros_above_height' (hf : f ≠ 0) :
   obtain ⟨H₀, hH₀_gt, hH₀_nonvan⟩ := exists_height_cusp_nonvanishing f hf
   refine ⟨H₀, hH₀_gt, fun p hp hfp => ?_⟩
   have h_eq := SlashInvariantFormClass.eq_cuspFunction f p
-      ModularFormClass.one_mem_strictPeriods_SL2Z one_ne_zero
+      (Gamma_one_coe_eq_SL ▸ one_mem_strictPeriods_SL) one_ne_zero
   have h_qParam_mem : Function.Periodic.qParam (1 : ℝ) (↑p : ℂ) ∈
       Metric.closedBall (0 : ℂ) (Real.exp (-2 * Real.pi * H₀)) := by
     rw [Metric.mem_closedBall, dist_zero_right, Function.Periodic.norm_qParam, div_one]

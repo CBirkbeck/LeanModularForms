@@ -75,7 +75,9 @@ theorem deriv_fdBoundaryFun_eq_five_deriv_fdBoundary_H (H : ℝ) (t : ℝ) :
 /-- Complex-valued version: `deriv (fdBoundaryFun H) t = 5 * deriv (fdBoundary_H H) (5*t)`. -/
 theorem deriv_fdBoundaryFun_eq (H : ℝ) (t : ℝ) :
     deriv (fdBoundaryFun H) t = (5 : ℂ) * deriv (fdBoundary_H H) (5 * t) := by
-  exact_mod_cast deriv_fdBoundaryFun_eq_five_deriv_fdBoundary_H H t
+  rw [deriv_fdBoundaryFun_eq_five_deriv_fdBoundary_H, Complex.real_smul]
+  push_cast
+  ring
 
 /-- The Cauchy PV integrand using `fdBoundaryFun` and `[0,1]` equals
 `5` times the integrand using `fdBoundary_H` and `[0,5]` after reparametrization.

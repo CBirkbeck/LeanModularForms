@@ -853,6 +853,7 @@ theorem I12_eq_rectangular (r : ℝ) : I12 r = I12_vert r + I12_horiz r := by
     have := (head_integral_tendsto_zero (continuousOn_diagonal_integrand r)).sub
       (head_integral_tendsto_zero (continuousOn_vertical_integrand r))
       |>.add (G_diff_tendsto_zero r G hG)
+    simp only [S]
     simpa using this
   exact tendsto_nhds_unique (tendsto_const_nhds.congr' heq) hS
 

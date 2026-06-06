@@ -404,6 +404,7 @@ theorem I12_eq_rectangular_via_triangle (r : ℝ) :
     have := (head_integral_tendsto_zero (continuousOn_diagonal_integrand r)).sub
       (head_integral_tendsto_zero (continuousOn_vertical_integrand r))
       |>.add (G_diff_tendsto_zero r G hG)
+    simp only [S]
     simpa using this
   exact tendsto_nhds_unique (tendsto_const_nhds.congr' heq) hS
 

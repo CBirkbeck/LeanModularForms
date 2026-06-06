@@ -255,20 +255,22 @@ theorem modularForm_finitely_many_zeros_in_fdBox (hf : f ≠ 0) {M : ℝ} (hM : 
 
 /-- The cusp function of a nonzero modular form is not identically zero near 0. -/
 theorem cuspFunction_not_eventually_zero (hf : f ≠ 0) :
-    ¬∀ᶠ q in 𝓝 (0 : ℂ), SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f) q = 0 := by
+    ¬∀ᶠ q in 𝓝 (0 : ℂ), UpperHalfPlane.cuspFunction (1 : ℝ) (⇑f) q = 0 := by
   intro h_freq
-  have h_diff : DifferentiableOn ℂ (SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f))
+  have hperiod : (1 : ℝ) ∈ (Subgroup.map (Matrix.SpecialLinearGroup.mapGL ℝ) Γ(1)).strictPeriods :=
+    Gamma_one_coe_eq_SL ▸ one_mem_strictPeriods_SL
+  have h_diff : DifferentiableOn ℂ (UpperHalfPlane.cuspFunction (1 : ℝ) (⇑f))
       (Metric.ball 0 1) := fun q hq =>
     (ModularFormClass.differentiableAt_cuspFunction f
-      (by norm_num : (0 : ℝ) < 1) ModularFormClass.one_mem_strictPeriods_SL2Z
+      (by norm_num : (0 : ℝ) < 1) hperiod
       (by rwa [Metric.mem_ball, dist_zero_right] at hq)).differentiableWithinAt
-  have h_eqOn : EqOn (SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f)) 0 (Metric.ball 0 1) :=
+  have h_eqOn : EqOn (UpperHalfPlane.cuspFunction (1 : ℝ) (⇑f)) 0 (Metric.ball 0 1) :=
     (h_diff.analyticOnNhd Metric.isOpen_ball).eqOn_zero_of_preconnected_of_eventuallyEq_zero
       (convex_ball 0 1).isPreconnected (Metric.mem_ball_self (by norm_num : (0:ℝ) < 1)) h_freq
   apply hf
   ext τ
   simp only [ModularForm.coe_zero, Pi.zero_apply]
-  rw [← SlashInvariantFormClass.eq_cuspFunction f τ ModularFormClass.one_mem_strictPeriods_SL2Z
+  rw [← SlashInvariantFormClass.eq_cuspFunction f τ hperiod
     (by norm_num : (1:ℝ) ≠ 0)]
   exact h_eqOn (by
     rw [Metric.mem_ball, dist_zero_right]
@@ -277,15 +279,15 @@ theorem cuspFunction_not_eventually_zero (hf : f ≠ 0) :
 /-- For a nonzero modular form, the cusp function is eventually nonzero near 0. -/
 theorem cuspFunction_eventually_ne_zero (hf : f ≠ 0) :
     ∀ᶠ q in 𝓝[≠] (0 : ℂ),
-      SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f) q ≠ 0 :=
+      UpperHalfPlane.cuspFunction (1 : ℝ) (⇑f) q ≠ 0 :=
   (ModularFormClass.analyticAt_cuspFunction_zero f (by norm_num : (0 : ℝ) < 1)
-    ModularFormClass.one_mem_strictPeriods_SL2Z).eventually_eq_zero_or_eventually_ne_zero.resolve_left
-    (cuspFunction_not_eventually_zero f hf)
+      (Gamma_one_coe_eq_SL ▸ one_mem_strictPeriods_SL)).eventually_eq_zero_or_eventually_ne_zero
+    |>.resolve_left (cuspFunction_not_eventually_zero f hf)
 
 /-- Existence of a nonvanishing radius for the cusp function. -/
 theorem exists_radius_cusp_nonvanishing (hf : f ≠ 0) :
     ∃ r : ℝ, 0 < r ∧ ∀ q : ℂ, q ∈ Metric.closedBall (0 : ℂ) r →
-      q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f) q ≠ 0 := by
+      q ≠ 0 → UpperHalfPlane.cuspFunction (1 : ℝ) (⇑f) q ≠ 0 := by
   obtain ⟨s, hs_prop, hs_open, hs_zero⟩ := eventually_nhds_iff.mp
     (eventually_nhdsWithin_iff.mp (cuspFunction_eventually_ne_zero f hf))
   obtain ⟨r, hr_pos, hr_ball⟩ := Metric.isOpen_iff.mp hs_open 0 hs_zero
@@ -300,7 +302,7 @@ noncomputable def heightOfRadius (r : ℝ) : ℝ := -Real.log r / (2 * Real.pi)
 theorem exists_height_cusp_nonvanishing (hf : f ≠ 0) :
     ∃ H : ℝ, Real.sqrt 3 / 2 < H ∧
       ∀ q : ℂ, q ∈ Metric.closedBall (0 : ℂ) (Real.exp (-2 * Real.pi * H)) →
-        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f) q ≠ 0 := by
+        q ≠ 0 → UpperHalfPlane.cuspFunction (1 : ℝ) (⇑f) q ≠ 0 := by
   obtain ⟨r, hr_pos, hr_nonvan⟩ := exists_radius_cusp_nonvanishing f hf
   let H₀ := max (heightOfRadius r) (Real.sqrt 3 / 2 + 1)
   refine ⟨H₀, (by linarith : Real.sqrt 3 / 2 < Real.sqrt 3 / 2 + 1).trans_le
@@ -319,9 +321,9 @@ theorem exists_height_cusp_nonvanishing (hf : f ≠ 0) :
 /-- Height monotonicity for cusp nonvanishing. -/
 lemma cusp_nonvanishing_height_mono {H₁ H₂ : ℝ} (hH : H₁ ≤ H₂)
     (h : ∀ q ∈ Metric.closedBall (0 : ℂ) (Real.exp (-2 * Real.pi * H₁)), q ≠ 0 →
-      SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f) q ≠ 0) :
+      UpperHalfPlane.cuspFunction (1 : ℝ) (⇑f) q ≠ 0) :
     ∀ q ∈ Metric.closedBall (0 : ℂ) (Real.exp (-2 * Real.pi * H₂)), q ≠ 0 →
-      SlashInvariantFormClass.cuspFunction (1 : ℝ) (⇑f) q ≠ 0 :=
+      UpperHalfPlane.cuspFunction (1 : ℝ) (⇑f) q ≠ 0 :=
   fun q hq hq_ne => h q (Metric.closedBall_subset_closedBall
     (Real.exp_le_exp.mpr (by nlinarith [Real.pi_pos])) hq) hq_ne
 

@@ -88,7 +88,9 @@ lemma quadratic_approx_of_contDiffAt_two {γ : ℝ → ℂ} {t₀ : ℝ} {L : �
     fun s hs => ((h_γ_diff_on s hs).sub (h_f₂_diff s)).sub (h_f₃_diff s)
   have h_deriv_f₂ : ∀ s, deriv f₂ s = 0 := fun s => deriv_const s (γ t₀)
   have h_deriv_f₃ : ∀ s, deriv f₃ s = L := fun s => by
-    simpa using (((hasDerivAt_id s).sub_const t₀).smul_const L).deriv
+    have : HasDerivAt (fun s : ℝ => (s - t₀) • L) L s := by
+      simpa using ((hasDerivAt_id s).sub_const t₀).smul_const L
+    exact this.deriv
   have h_deriv : ∀ s ∈ Set.uIcc t₀ t, deriv h s = deriv γ s - L := by
     intro s hs
     have hs_diff : DifferentiableAt ℝ γ s := h_γ_diff_on s hs

@@ -49,31 +49,52 @@ private lemma eball_one_eq_ball {F : ℂ → ℂ} (hF : AnalyticOnNhd ℂ F (Met
   hF.mono fun _x hx => by
     simpa [Metric.mem_eball, Metric.mem_ball, enorm_eq_nnnorm, ENNReal.coe_lt_one_iff] using hx
 
+/-- Modular form version of `UpperHalfPlane.hasFPowerSeries_cuspFunction`. -/
+private lemma modular_hasFPowerSeries_cuspFunction
+    (g : ModularForm (Gamma 1) k) :
+    HasFPowerSeriesOnBall (UpperHalfPlane.cuspFunction 1 ⇑g)
+      (UpperHalfPlane.qExpansionFormalMultilinearSeries 1 g) 0 1 := by
+  have hΓ : (1 : ℝ) ∈
+      (Subgroup.map (Matrix.SpecialLinearGroup.mapGL ℝ) Γ(1)).strictPeriods :=
+    Gamma_one_coe_eq_SL ▸ one_mem_strictPeriods_SL
+  have hcusp : Fact (IsCusp OnePoint.infty
+      (Subgroup.map (Matrix.SpecialLinearGroup.mapGL ℝ) Γ(1))) :=
+    ⟨(Subgroup.map (Matrix.SpecialLinearGroup.mapGL ℝ) Γ(1)).isCusp_of_mem_strictPeriods
+      one_pos hΓ⟩
+  have hfper : Function.Periodic (⇑g ∘ UpperHalfPlane.ofComplex) 1 :=
+    SlashInvariantFormClass.periodic_comp_ofComplex g hΓ
+  have hfana : AnalyticAt ℂ (UpperHalfPlane.cuspFunction 1 ⇑g) 0 :=
+    ModularFormClass.analyticAt_cuspFunction_zero g one_pos hΓ
+  have hfhol := ModularFormClass.holo g
+  have hfbdd := ModularFormClass.bdd_at_infty g
+  exact UpperHalfPlane.hasFPowerSeries_cuspFunction (c := fun m =>
+      (UpperHalfPlane.qExpansion 1 g).coeff m) (h := 1) g one_pos hfana
+    (UpperHalfPlane.hasSum_qExpansion one_pos hfper hfhol hfbdd)
+
 private lemma qExpFMS_ne_zero (hf : f ≠ 0) :
-    ModularFormClass.qExpansionFormalMultilinearSeries 1 f ≠ 0 := by
+    UpperHalfPlane.qExpansionFormalMultilinearSeries 1 f ≠ 0 := by
   intro h
-  have hp := ModularFormClass.hasFPowerSeries_cuspFunction
-    (f := f) one_pos ModularFormClass.one_mem_strictPeriods_SL2Z
-  have hp0 : HasFPowerSeriesOnBall (SlashInvariantFormClass.cuspFunction (1 : ℝ) f)
+  have hp := modular_hasFPowerSeries_cuspFunction f
+  have hp0 : HasFPowerSeriesOnBall (UpperHalfPlane.cuspFunction (1 : ℝ) f)
       (0 : FormalMultilinearSeries ℂ ℂ ℂ) 0 1 := h ▸ hp
-  have hF_eq_zero : Set.EqOn (SlashInvariantFormClass.cuspFunction (1 : ℝ) f) 0
+  have hF_eq_zero : Set.EqOn (UpperHalfPlane.cuspFunction (1 : ℝ) f) 0
       (Metric.ball 0 1) :=
     (eball_one_eq_ball hp.analyticOnNhd).eqOn_zero_of_preconnected_of_eventuallyEq_zero
       (Convex.isPreconnected (convex_ball 0 1)) (Metric.mem_ball_self one_pos)
       hp0.eventually_eq_zero
   refine hf (ModularForm.ext fun τ => ?_)
   rw [← SlashInvariantFormClass.eq_cuspFunction f τ
-    ModularFormClass.one_mem_strictPeriods_SL2Z (by norm_num : (1:ℝ) ≠ 0)]
+    (Gamma_one_coe_eq_SL ▸ one_mem_strictPeriods_SL) (by norm_num : (1:ℝ) ≠ 0)]
   exact hF_eq_zero (by simpa using τ.norm_qParam_lt_one 1)
 
 /-- Auxiliary: the FMS order equals `(orderAtCusp' f).toNat`. -/
 private lemma qExpFMS_order_eq (hf : f ≠ 0) :
-    (ModularFormClass.qExpansionFormalMultilinearSeries 1 f).order =
+    (UpperHalfPlane.qExpansionFormalMultilinearSeries 1 f).order =
     (orderAtCusp' f).toNat := by
-  set p := ModularFormClass.qExpansionFormalMultilinearSeries 1 f
-  set ps := ModularFormClass.qExpansion 1 f
+  set p := UpperHalfPlane.qExpansionFormalMultilinearSeries 1 f
+  set ps := UpperHalfPlane.qExpansion 1 f
   have h_norm : ∀ n, ‖p n‖ = ‖ps.coeff n‖ :=
-    ModularFormClass.qExpansionFormalMultilinearSeries_apply_norm f
+    UpperHalfPlane.qExpansionFormalMultilinearSeries_apply_norm f
   have h_zero_iff : ∀ n, p n = 0 ↔ ps.coeff n = 0 := by
     intro n
     rw [← norm_eq_zero, h_norm, norm_eq_zero]
@@ -102,13 +123,11 @@ private lemma cuspFunction_factored (hf : f ≠ 0) :
       DifferentiableOn ℂ g (Metric.ball 0 1) ∧
       g 0 ≠ 0 ∧
       ∀ q ∈ Metric.ball (0 : ℂ) 1,
-        SlashInvariantFormClass.cuspFunction (1 : ℝ) f q =
+        UpperHalfPlane.cuspFunction (1 : ℝ) f q =
         q ^ (orderAtCusp' f).toNat * g q := by
-  set F := SlashInvariantFormClass.cuspFunction (1 : ℝ) f
-  set p := ModularFormClass.qExpansionFormalMultilinearSeries 1 f
-  have hp : HasFPowerSeriesOnBall F p 0 1 :=
-    ModularFormClass.hasFPowerSeries_cuspFunction f one_pos
-      ModularFormClass.one_mem_strictPeriods_SL2Z
+  set F := UpperHalfPlane.cuspFunction (1 : ℝ) f
+  set p := UpperHalfPlane.qExpansionFormalMultilinearSeries 1 f
+  have hp : HasFPowerSeriesOnBall F p 0 1 := modular_hasFPowerSeries_cuspFunction f
   have hp_order : p.order = (orderAtCusp' f).toNat := qExpFMS_order_eq f hf
   set g₀ := (Function.swap dslope 0)^[p.order] F
   have hF_analytic : AnalyticOnNhd ℂ F (Metric.ball 0 1) := eball_one_eq_ball hp.analyticOnNhd
@@ -129,7 +148,7 @@ private lemma cuspFunction_factored (hf : f ≠ 0) :
     hF_analytic.eqOn_of_preconnected_of_eventuallyEq
       (fun z hz => ((analyticAt_id.sub analyticAt_const).pow p.order).smul (hg_analytic z hz))
       (Convex.isPreconnected (convex_ball 0 1)) (Metric.mem_ball_self one_pos)
-      hp.hasFPowerSeriesAt.eq_pow_order_mul_iterate_dslope
+      (Filter.Eventually.of_forall hp.hasFPowerSeriesAt.eq_pow_order_mul_iterate_dslope)
   refine ⟨g₀, hg_diff, hg_ne, fun q hq => ?_⟩
   have := hF_eq hq
   simp only [sub_zero, smul_eq_mul] at this
@@ -182,11 +201,11 @@ This is the radius-parameterized version. The factorization `F(q) = q^m · g(q)`
 `∮ logDeriv(F) = m · ∮ 1/q + ∮ logDeriv(g) = m · 2πi + 0`. -/
 lemma circleIntegral_logDeriv_cuspFunction_of_radius (hf : f ≠ 0)
     {R : ℝ} (hR_pos : 0 < R) (hR_lt : R < 1) (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) R,
-        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℝ) f q ≠ 0) :
+        q ≠ 0 → UpperHalfPlane.cuspFunction (1 : ℝ) f q ≠ 0) :
     (∮ q in C(0, R),
-      logDeriv (SlashInvariantFormClass.cuspFunction (1 : ℝ) f) q) =
+      logDeriv (UpperHalfPlane.cuspFunction (1 : ℝ) f) q) =
     2 * ↑Real.pi * I * ↑(orderAtCusp' f) := by
-  set F := SlashInvariantFormClass.cuspFunction (1 : ℝ) f with hF_def
+  set F := UpperHalfPlane.cuspFunction (1 : ℝ) f with hF_def
   set m := (orderAtCusp' f).toNat
   obtain ⟨g, hg_diff, hg_ne, hFg⟩ := cuspFunction_factored f hf
   have hg_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) R, g q ≠ 0 := fun q hq => by
@@ -270,11 +289,11 @@ omit hf in
 private lemma logDeriv_modularForm_eq_logDeriv_cuspFn_mul_qderiv_H
     {H : ℝ} (hH : 0 < H) (t : ℝ) :
     logDeriv (modularFormCompOfComplex f) (fdBoundary_seg5_H H t) =
-    logDeriv (SlashInvariantFormClass.cuspFunction (1 : ℝ) f)
+    logDeriv (UpperHalfPlane.cuspFunction (1 : ℝ) f)
       (Function.Periodic.qParam (1 : ℝ) (fdBoundary_seg5_H H t)) *
     (2 * ↑Real.pi * I * Function.Periodic.qParam (1 : ℝ) (fdBoundary_seg5_H H t)) := by
   set z := fdBoundary_seg5_H H t
-  set F := SlashInvariantFormClass.cuspFunction (1 : ℝ) f
+  set F := UpperHalfPlane.cuspFunction (1 : ℝ) f
   set q_fn := Function.Periodic.qParam (1 : ℝ)
   have hz_im : 0 < z.im := im_fdBoundary_seg5_H_pos hH t
   have h_eq_at : ∀ w : ℂ, 0 < w.im →
@@ -286,7 +305,7 @@ private lemma logDeriv_modularForm_eq_logDeriv_cuspFn_mul_qderiv_H
     have h_rw : F (q_fn w) = F (q_fn (↑(UpperHalfPlane.ofComplex w))) := by rw [h_ofC]
     rw [h_rw]
     exact (SlashInvariantFormClass.eq_cuspFunction f
-      (UpperHalfPlane.ofComplex w) ModularFormClass.one_mem_strictPeriods_SL2Z
+      (UpperHalfPlane.ofComplex w) (Gamma_one_coe_eq_SL ▸ one_mem_strictPeriods_SL)
       (by norm_num : (1:ℝ) ≠ 0)).symm
   have hq_norm : ‖q_fn z‖ < 1 := by
     simp only [q_fn, Function.Periodic.norm_qParam]
@@ -294,7 +313,7 @@ private lemma logDeriv_modularForm_eq_logDeriv_cuspFn_mul_qderiv_H
     exact Real.exp_lt_one_iff.mpr (by nlinarith [Real.pi_pos])
   have hF_diff : DifferentiableAt ℂ F (q_fn z) :=
     ModularFormClass.differentiableAt_cuspFunction f one_pos
-      ModularFormClass.one_mem_strictPeriods_SL2Z hq_norm
+      (Gamma_one_coe_eq_SL ▸ one_mem_strictPeriods_SL) hq_norm
   have h_eq_nhd : modularFormCompOfComplex f =ᶠ[𝓝 z] F ∘ q_fn :=
     (UpperHalfPlane.isOpen_upperHalfPlaneSet.eventually_mem hz_im).mono h_eq_at
   have h_logDeriv_eq : logDeriv (modularFormCompOfComplex f) z = logDeriv (F ∘ q_fn) z := by
@@ -317,8 +336,8 @@ lemma seg5_integral_eq_circleIntegral_H {H : ℝ} (hH : 0 < H) :
     ∫ t in (4:ℝ)..5,
       logDeriv (modularFormCompOfComplex f) (fdBoundary_seg5_H H t) =
     ∮ q in C(0, seg5_q_radius_H H),
-      logDeriv (SlashInvariantFormClass.cuspFunction (1 : ℝ) f) q := by
-  set F := SlashInvariantFormClass.cuspFunction (1 : ℝ) f
+      logDeriv (UpperHalfPlane.cuspFunction (1 : ℝ) f) q := by
+  set F := UpperHalfPlane.cuspFunction (1 : ℝ) f
   set R := seg5_q_radius_H H
   simp_rw [logDeriv_modularForm_eq_logDeriv_cuspFn_mul_qderiv_H f hH]
   simp_rw [qParam_seg5_H_eq_circleMap H]
@@ -352,13 +371,12 @@ lemma seg5_integral_eq_circleIntegral_H {H : ℝ} (hH : 0 < H) :
   simp only [zero_add, show (-Real.pi + 2 * Real.pi : ℝ) = Real.pi by ring] at h_shift
   rw [h_shift]
   simp only [circleIntegral, hg_def]
-  rfl
 
 /-- Combination of Stages 1 and 2 at height H:
 the logDeriv integral along seg5 at height H = 2πi · orderAtCusp'. -/
 lemma seg5_logDeriv_integral_eq_H (hf : f ≠ 0) {H : ℝ} (hH : 0 < H)
     (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) (seg5_q_radius_H H),
-        q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℝ) f q ≠ 0) :
+        q ≠ 0 → UpperHalfPlane.cuspFunction (1 : ℝ) f q ≠ 0) :
     ∫ t in (4:ℝ)..5,
       logDeriv (modularFormCompOfComplex f) (fdBoundary_seg5_H H t) =
     2 * ↑Real.pi * I * ↑(orderAtCusp' f) := by
@@ -377,7 +395,7 @@ For `t > 4`, `fdBoundary_H H t = fdBoundary_seg5_H H t` and `deriv (fdBoundary_H
 so the integrand with `* deriv ...` equals the integrand without. -/
 theorem seg5_logDeriv_integral_value_bridge {H : ℝ} (hH : Real.sqrt 3 / 2 < H)
     (hcusp_nonvan : ∀ q ∈ Metric.closedBall (0 : ℂ) (seg5_q_radius_H H),
-      q ≠ 0 → SlashInvariantFormClass.cuspFunction (1 : ℝ) f q ≠ 0) :
+      q ≠ 0 → UpperHalfPlane.cuspFunction (1 : ℝ) f q ≠ 0) :
     ∫ t in (4:ℝ)..5,
       logDeriv (modularFormCompOfComplex f) (fdBoundary_H H t) *
         deriv (fdBoundary_H H) t =

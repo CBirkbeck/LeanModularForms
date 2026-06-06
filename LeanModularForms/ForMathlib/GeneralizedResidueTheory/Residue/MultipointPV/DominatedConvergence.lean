@@ -100,7 +100,7 @@ private lemma pointwise_ae_limit_off_crossing (S0 : Finset ℂ) (f g_reg : ℂ �
       Tendsto (fun ε => A_int ε t) (𝓝[>] 0) (𝓝 (f_lim t)) := by
   intro A_int f_lim
   rw [ae_iff]
-  apply le_antisymm _ (zero_le _)
+  apply le_antisymm _ zero_le
   calc volume {t | ¬(t ∈ Ι γ.a γ.b →
           Tendsto (fun ε => A_int ε t) (𝓝[>] 0) (𝓝 (f_lim t)))}
       ≤ volume {t | t ∈ Icc γ.a γ.b ∧ γ.toFun t ∈ (S0 : Set ℂ)} := by
