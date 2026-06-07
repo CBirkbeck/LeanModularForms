@@ -3,8 +3,10 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import Mathlib.Analysis.Calculus.Deriv.Basic
-import Mathlib.Topology.ContinuousOn
+module
+
+public import Mathlib.Analysis.Calculus.Deriv.Basic
+public import Mathlib.Topology.ContinuousOn
 
 /-!
 # Piecewise C¹ Paths on Arbitrary Intervals
@@ -37,6 +39,8 @@ fixed to `[0, 1]` via `unitInterval`. A free-interval generalization needs a raw
 -/
 
 open Set Filter Topology
+
+@[expose] public section
 
 noncomputable section
 
@@ -76,5 +80,7 @@ instance : CoeFun (PiecewiseC1PathOn a b hab x y) fun _ => ℝ → E where
   coe := PiecewiseC1PathOn.toFun
 
 end PiecewiseC1PathOn
+
+end
 
 end

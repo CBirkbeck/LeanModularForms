@@ -3,7 +3,9 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import LeanModularForms.ForMathlib.HungerbuhlerWasem.CPVExistenceMulti
+module
+
+public import LeanModularForms.ForMathlib.HungerbuhlerWasem.CPVExistenceMulti
 
 /-!
 # Localized exit-time cutoffs for multi-crossing CPV existence (T-BR-Y6c)
@@ -50,6 +52,8 @@ in `CPVExistenceMulti.lean` (applied with the common radius `r` from
 
 open Complex MeasureTheory Set Filter Topology Asymptotics
 open scoped Real Interval
+
+@[expose] public section
 
 noncomputable section
 
@@ -123,7 +127,7 @@ pw-`C¹` immersion `γ` crossing `s` at an **interior** parameter `t₀`
 (smooth OR corner — no off-partition assumption), with local uniqueness on
 the window `[t₀ - r, t₀ + r] ⊆ [0, 1]`, produce a right cutoff
 `δ_right : ℝ → ℝ` and threshold satisfying the asymmetric far/near bounds. -/
-private theorem exists_right_cutoff_local
+theorem exists_right_cutoff_local
     (γ : ClosedPwC1Immersion x) {s : ℂ} {t₀ r : ℝ}
     (h_window_pos : 0 < r)
     (h_window_Icc : Set.Icc (t₀ - r) (t₀ + r) ⊆ Set.Icc (0 : ℝ) 1)
@@ -193,7 +197,7 @@ private theorem exists_right_cutoff_local
 
 /-- **Localized left cutoff existence (corner-friendly).** Symmetric
 counterpart of `exists_right_cutoff_local`. -/
-private theorem exists_left_cutoff_local
+theorem exists_left_cutoff_local
     (γ : ClosedPwC1Immersion x) {s : ℂ} {t₀ r : ℝ}
     (h_window_pos : 0 < r)
     (h_window_Icc : Set.Icc (t₀ - r) (t₀ + r) ⊆ Set.Icc (0 : ℝ) 1)
@@ -1027,5 +1031,7 @@ theorem multi_pole_smooth_complement_far_bound
        by linarith [hr_at_pos t_min h_t_min_in_crossings]⟩
 
 end HungerbuhlerWasem
+
+end
 
 end

@@ -3,9 +3,11 @@ Copyright (c) 2024. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import LeanModularForms.ForMathlib.FDBoundary
-import LeanModularForms.ForMathlib.SingleCrossing
-import LeanModularForms.ForMathlib.SegmentFTC
+module
+
+public import LeanModularForms.ForMathlib.FDBoundary
+public import LeanModularForms.ForMathlib.SingleCrossing
+public import LeanModularForms.ForMathlib.SegmentFTC
 
 /-!
 # Winding Weight Proofs for the Valence Formula
@@ -50,6 +52,8 @@ are the inputs to the constructor `mkSingleCrossingData_atI`.
 
 open Complex MeasureTheory Set Filter Topology
 open scoped Real Interval
+
+@[expose] public section
 
 noncomputable section
 
@@ -296,5 +300,7 @@ def mkSingleCrossingData_atI {H : ℝ} (hH : 1 < H)
   hint_left := ftcHyp.hint_left
   hint_right := ftcHyp.hint_right
   h_limit := ftcHyp.h_limit
+
+end
 
 end

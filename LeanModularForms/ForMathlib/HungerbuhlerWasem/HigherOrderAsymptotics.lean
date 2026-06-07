@@ -2,8 +2,10 @@
 Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import LeanModularForms.ForMathlib.FlatChordBound
-import LeanModularForms.ForMathlib.FlatnessConditions
+module
+
+public import LeanModularForms.ForMathlib.FlatChordBound
+public import LeanModularForms.ForMathlib.FlatnessConditions
 
 /-!
 # F-diff asymptotic chain (T-SC-00a)
@@ -36,6 +38,8 @@ is intentionally omitted as it isn't needed for T-SC-01.
 
 open Complex Set Filter Topology MeasureTheory
 open scoped Classical Real Interval
+
+@[expose] public section
 
 noncomputable section
 
@@ -469,5 +473,7 @@ theorem F_diff_at_tangent_target_tendsto_zero_left
     (Eventually.of_forall fun _ => norm_nonneg _) h_F_diff_le
 
 end HungerbuhlerWasem
+
+end
 
 end

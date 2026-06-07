@@ -2,13 +2,15 @@
 Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import LeanModularForms.ForMathlib.DixonDef
-import LeanModularForms.ForMathlib.DslopeIntegral
-import LeanModularForms.ForMathlib.NullHomologous
-import Mathlib.Analysis.Complex.CauchyIntegral
-import Mathlib.Analysis.Complex.Liouville
-import Mathlib.Analysis.Complex.RemovableSingularity
-import Mathlib.Analysis.Calculus.ParametricIntervalIntegral
+module
+
+public import LeanModularForms.ForMathlib.DixonDef
+public import LeanModularForms.ForMathlib.DslopeIntegral
+public import LeanModularForms.ForMathlib.NullHomologous
+public import Mathlib.Analysis.Complex.CauchyIntegral
+public import Mathlib.Analysis.Complex.Liouville
+public import Mathlib.Analysis.Complex.RemovableSingularity
+public import Mathlib.Analysis.Calculus.ParametricIntervalIntegral
 
 /-!
 # Dixon Function Differentiability
@@ -30,6 +32,8 @@ for differentiation under the integral sign.
 
 open Complex Set Filter Topology MeasureTheory
 open scoped Classical Real Interval
+
+@[expose] public section
 
 noncomputable section
 
@@ -581,5 +585,7 @@ theorem dixonFunction_differentiable {f : ℂ → ℂ} {U : Set ℂ} (hU : IsOpe
       · rw [h_identity w' (hoff' w' hw'), h_wn_zero w' hw']; ring
       · rfl
     exact (h2_diff w hoff).congr_of_eventuallyEq heq_near
+
+end
 
 end

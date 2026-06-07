@@ -2,8 +2,10 @@
 Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import LeanModularForms.ForMathlib.CrossingAnalysis
-import LeanModularForms.ForMathlib.GeneralizedWindingNumber
+module
+
+public import LeanModularForms.ForMathlib.CrossingAnalysis
+public import LeanModularForms.ForMathlib.GeneralizedWindingNumber
 
 /-!
 # Winding Number Decomposition — Proposition 2.3
@@ -28,6 +30,8 @@ winding number.
 open Complex Set
 open scoped Real
 
+@[expose] public section
+
 noncomputable section
 
 variable {x y : ℂ}
@@ -51,5 +55,7 @@ theorem angleAtCrossing_smooth (γ : PwC1Immersion x y) (t₀ : ℝ) (ht₀ : t�
     (hsmooth : t₀ ∉ γ.toPiecewiseC1Path.partition) :
     angleAtCrossing γ t₀ ht₀ = Real.pi := by
   simp [angleAtCrossing, hsmooth]
+
+end
 
 end

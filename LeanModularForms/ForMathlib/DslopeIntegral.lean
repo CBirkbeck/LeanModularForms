@@ -3,14 +3,16 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import Mathlib.Analysis.Calculus.DSlope
-import Mathlib.Analysis.Calculus.Deriv.Shift
-import Mathlib.Analysis.Complex.Convex
-import Mathlib.Analysis.Complex.Liouville
-import Mathlib.Analysis.Complex.RemovableSingularity
-import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
-import Mathlib.Analysis.SpecificLimits.RCLike
-import Mathlib.MeasureTheory.Integral.DominatedConvergence
+module
+
+public import Mathlib.Analysis.Calculus.DSlope
+public import Mathlib.Analysis.Calculus.Deriv.Shift
+public import Mathlib.Analysis.Complex.Convex
+public import Mathlib.Analysis.Complex.Liouville
+public import Mathlib.Analysis.Complex.RemovableSingularity
+public import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
+public import Mathlib.Analysis.SpecificLimits.RCLike
+public import Mathlib.MeasureTheory.Integral.DominatedConvergence
 
 /-!
 # `dslope` as a parameter integral
@@ -34,6 +36,8 @@ From this integral representation we deduce:
 -/
 
 open Set MeasureTheory Filter Topology intervalIntegral
+
+@[expose] public section
 
 noncomputable section
 
@@ -244,5 +248,7 @@ theorem deriv_dslope_bounded_on_compact_open {U : Set ℂ} (hU_open : IsOpen U)
     h_DC h_sphere_bound]
 
 end Complex
+
+end
 
 end

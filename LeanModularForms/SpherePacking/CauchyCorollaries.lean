@@ -3,7 +3,9 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import LeanModularForms.ForMathlib.HW33Clean
+module
+
+public import LeanModularForms.ForMathlib.HW33Clean
 
 /-!
 # Cauchy-theorem corollaries of HW Theorem 3.3
@@ -24,6 +26,8 @@ immersion in an open set.
   is holomorphic. Proof: specialize `hw_3_3_clean_full_mero` with
   `S = ∅`.
 -/
+
+@[expose] public section
 
 noncomputable section
 
@@ -89,5 +93,7 @@ theorem cauchy_integral_zero_pwc1
   exact tendsto_nhds_unique h_avoids h_cpv
 
 end LeanModularForms
+
+end
 
 end

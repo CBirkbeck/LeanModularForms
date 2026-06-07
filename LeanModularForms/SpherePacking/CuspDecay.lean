@@ -3,11 +3,13 @@ Copyright (c) 2024. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors:
 -/
-import Mathlib.NumberTheory.ModularForms.LevelOne
-import Mathlib.NumberTheory.ModularForms.Discriminant
-import Mathlib.NumberTheory.ModularForms.EisensteinSeries.QExpansion
-import Mathlib.NumberTheory.TsumDivisorsAntidiagonal
-import Mathlib.NumberTheory.LSeries.RiemannZeta
+module
+
+public import Mathlib.NumberTheory.ModularForms.LevelOne
+public import Mathlib.NumberTheory.ModularForms.Discriminant
+public import Mathlib.NumberTheory.ModularForms.EisensteinSeries.QExpansion
+public import Mathlib.NumberTheory.TsumDivisorsAntidiagonal
+public import Mathlib.NumberTheory.LSeries.RiemannZeta
 
 /-!
 # Cusp decay for Eisenstein series and the Viazovska integrand
@@ -42,6 +44,8 @@ combines a numerator bound `‖E₂E₄ - E₆‖ = O(‖q‖)` with a denominat
 open Complex Set Filter Topology MeasureTheory ModularFormClass
 open EisensteinSeries UpperHalfPlane Function.Periodic
 open scoped Real MatrixGroups
+
+@[expose] public section
 
 noncomputable section
 
@@ -459,5 +463,7 @@ theorem phi0_isBoundedAtImInfty :
           (by positivity) hDelta_lower
     _ = 2 * K ^ 2 * ‖qz‖ := by field_simp
     _ ≤ 2 * K ^ 2 := by nlinarith [hqz_lt_one, sq_nonneg K]
+
+end
 
 end

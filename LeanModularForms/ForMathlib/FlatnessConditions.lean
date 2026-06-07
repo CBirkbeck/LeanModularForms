@@ -2,10 +2,12 @@
 Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import Mathlib.Analysis.Calculus.FDeriv.Extend
-import Mathlib.Analysis.Meromorphic.Order
-import LeanModularForms.ForMathlib.Instances
-import LeanModularForms.ForMathlib.WindingDecomposition
+module
+
+public import Mathlib.Analysis.Calculus.FDeriv.Extend
+public import Mathlib.Analysis.Meromorphic.Order
+public import LeanModularForms.ForMathlib.Instances
+public import LeanModularForms.ForMathlib.WindingDecomposition
 
 /-!
 # Flatness Conditions for CPV Convergence (Definition 3.2)
@@ -36,6 +38,8 @@ Hungerbuhler-Wasem ensuring Cauchy principal value convergence at higher-order p
 
 open Complex Set Filter Topology Asymptotics
 open scoped Real Interval
+
+@[expose] public section
 
 noncomputable section
 
@@ -225,5 +229,7 @@ structure SatisfiesConditionB (γ : PwC1Immersion x y) (f : ℂ → ℂ)
         (∀ k : Fin N, a k ≠ 0 → k.val ≥ 1 →
           ∃ m : ℤ, (↑k.val : ℝ) * angleAtCrossing γ t₀ ht₀ =
             ↑m * (2 * Real.pi))
+
+end
 
 end

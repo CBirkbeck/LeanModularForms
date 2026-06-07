@@ -3,11 +3,13 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import Mathlib.Analysis.SpecialFunctions.Complex.Log
-import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
-import Mathlib.Analysis.SpecialFunctions.Complex.Circle
-import Mathlib.MeasureTheory.Integral.DivergenceTheorem
-import Mathlib.Topology.MetricSpace.Lipschitz
+module
+
+public import Mathlib.Analysis.SpecialFunctions.Complex.Log
+public import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
+public import Mathlib.Analysis.SpecialFunctions.Complex.Circle
+public import Mathlib.MeasureTheory.Integral.DivergenceTheorem
+public import Mathlib.Topology.MetricSpace.Lipschitz
 
 /-!
 # Continuous argument lift and integer-valued winding number
@@ -33,6 +35,8 @@ adjusted by the running sum of previous segments' angles.
 -/
 
 open Set Filter Topology
+
+@[expose] public section
 
 noncomputable section
 
@@ -474,3 +478,9 @@ theorem segment_log_FTC
   change Complex.log ((γ b - w) / (γ a - w)) - Complex.log ((γ a - w) / (γ a - w)) =
        Complex.log ((γ b - w) / (γ a - w))
   rw [div_self h_a_ne, Complex.log_one, sub_zero]
+
+end Complex
+
+end
+
+end

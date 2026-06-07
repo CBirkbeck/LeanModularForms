@@ -2,10 +2,12 @@
 Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import Mathlib.Analysis.SpecialFunctions.Complex.Circle
-import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
-import LeanModularForms.ForMathlib.FlatnessConditions
-import LeanModularForms.ForMathlib.HungerbuhlerWasem.HigherOrderAsymptotics
+module
+
+public import Mathlib.Analysis.SpecialFunctions.Complex.Circle
+public import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
+public import LeanModularForms.ForMathlib.FlatnessConditions
+public import LeanModularForms.ForMathlib.HungerbuhlerWasem.HigherOrderAsymptotics
 
 /-!
 # Sector-even cancellation under condition (B) (T-SC-01)
@@ -44,6 +46,8 @@ which is identically zero whenever `(n-1) α ∈ 2πℤ`.
 
 open Filter Topology Set Complex MeasureTheory
 open scoped Real Interval
+
+@[expose] public section
 
 noncomputable section
 
@@ -161,5 +165,7 @@ theorem F_curve_diff_tendsto_zero_under_conditionB
     _ = ‖B - TR‖ + ‖A - TR‖ := add_comm _ _
 
 end HungerbuhlerWasem
+
+end
 
 end

@@ -3,10 +3,12 @@ Copyright (c) 2024. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import LeanModularForms.ForMathlib.FDBoundaryPath
-import LeanModularForms.ForMathlib.ArcFTCLimit
-import LeanModularForms.ForMathlib.SingleCrossing
-import LeanModularForms.ForMathlib.WindingWeightsUnconditional
+module
+
+public import LeanModularForms.ForMathlib.FDBoundaryPath
+public import LeanModularForms.ForMathlib.ArcFTCLimit
+public import LeanModularForms.ForMathlib.SingleCrossing
+public import LeanModularForms.ForMathlib.WindingWeightsUnconditional
 
 /-!
 # SingleCrossingData for the FD boundary crossing at i
@@ -26,6 +28,8 @@ monotonicity of `sin` on `[0, π/2]` via `|sin α| = sin|α|`. The analytic core
 
 open Complex MeasureTheory Set Filter Topology
 open scoped Real Interval
+
+@[expose] public section
 
 noncomputable section
 
@@ -152,5 +156,7 @@ def singleCrossingData_atI_of_ftcHyp {H : ℝ} (hH : 1 < H)
     (fun ε hε hεt t ht =>
       arc_near_at_I_arcsin H hε (lt_of_lt_of_le hεt (min_le_left _ _)) ht)
     ftcHyp
+
+end
 
 end

@@ -3,7 +3,9 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import LeanModularForms.ForMathlib.HungerbuhlerWasem.CPVExistence
+module
+
+public import LeanModularForms.ForMathlib.HungerbuhlerWasem.CPVExistence
 
 /-!
 # Multi-crossing CPV existence — geometric foundations (T-BR-Y6b)
@@ -54,6 +56,8 @@ dischargeable using the local-uniqueness lemmas below.
 
 open Complex MeasureTheory Set Filter Topology Asymptotics
 open scoped Real Interval
+
+@[expose] public section
 
 noncomputable section
 
@@ -218,5 +222,7 @@ theorem multi_pole_local_far_bound
   · exact fun t ht ↦ (min_le_right _ _).trans (ht_r_min ht)
 
 end HungerbuhlerWasem
+
+end
 
 end

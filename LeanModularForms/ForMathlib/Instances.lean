@@ -2,7 +2,9 @@
 Copyright (c) 2024. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import Mathlib.Analysis.Complex.Basic
+module
+
+public import Mathlib.Analysis.Complex.Basic
 
 /-!
 # Shared typeclass instances for `ℝ`-scalar-on-`ℂ`
@@ -19,6 +21,8 @@ We also provide `IsScalarTower ℝ ℂ ℂ` which was previously redeclared
 in several files with different proof terms.
 -/
 
+@[expose] public section
+
 noncomputable instance instNormSMulClassRealComplex : NormSMulClass ℝ ℂ :=
   NormedSpace.toNormSMulClass
 
@@ -29,3 +33,5 @@ noncomputable instance instContinuousSMulRealComplex : ContinuousSMul ℝ ℂ :=
   IsBoundedSMul.continuousSMul
 
 instance instIsScalarTowerRealComplexComplex : IsScalarTower ℝ ℂ ℂ := inferInstance
+
+end

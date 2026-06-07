@@ -3,8 +3,10 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import Mathlib.Analysis.Calculus.DSlope
-import LeanModularForms.ForMathlib.SimplePoleIntegral
+module
+
+public import Mathlib.Analysis.Calculus.DSlope
+public import LeanModularForms.ForMathlib.SimplePoleIntegral
 
 /-!
 # Dixon Function Definitions and the h1/h2 Identity
@@ -44,6 +46,8 @@ The `dslope f w (γ t)` has center `w` (second argument) and evaluation point `�
 
 open Complex Set Filter Topology MeasureTheory
 open scoped Classical Real Interval
+
+@[expose] public section
 
 noncomputable section
 
@@ -151,5 +155,7 @@ theorem dixonFunction_eq_dixonH1 {f : ℂ → ℂ} {U : Set ℂ}
     {γ : PiecewiseC1Path x x} {w : ℂ} (hw : w ∈ U) :
     dixonFunction f U γ w = dixonH1 f γ w :=
   if_pos hw
+
+end
 
 end

@@ -3,9 +3,11 @@ Copyright (c) 2024. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import LeanModularForms.ForMathlib.GeneralizedWindingNumber
-import LeanModularForms.ForMathlib.CurveUtilities
-import LeanModularForms.ForMathlib.WindingArgDiff
+module
+
+public import LeanModularForms.ForMathlib.GeneralizedWindingNumber
+public import LeanModularForms.ForMathlib.CurveUtilities
+public import LeanModularForms.ForMathlib.WindingArgDiff
 
 /-!
 # Null-Homologous Curves
@@ -42,6 +44,8 @@ downstream applications need the actual numerical value `0`.
 
 open Complex Set Filter Topology MeasureTheory
 open scoped Real Interval
+
+@[expose] public section
 
 noncomputable section
 
@@ -247,5 +251,7 @@ theorem IsNullHomologous.winding_zero_nhds_of_not_mem_of_closed
   exact ⟨ε, hε_pos, fun w' hw' => by rw [h_const w' hw', h_null.winding_zero w hw]⟩
 
 /-! ### Convex domains -/
+
+end
 
 end

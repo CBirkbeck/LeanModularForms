@@ -3,15 +3,17 @@ Copyright (c) 2024. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors:
 -/
-import Mathlib.Analysis.Asymptotics.Defs
-import Mathlib.Analysis.Calculus.ContDiff.Basic
-import Mathlib.Analysis.Complex.CauchyIntegral
-import Mathlib.Analysis.Complex.LocallyUniformLimit
-import Mathlib.Analysis.SpecialFunctions.Complex.Log
-import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
-import Mathlib.MeasureTheory.Integral.CircleIntegral
-import Mathlib.RingTheory.LaurentSeries
-import LeanModularForms.ForMathlib.PiecewiseC1PathOn
+module
+
+public import Mathlib.Analysis.Asymptotics.Defs
+public import Mathlib.Analysis.Calculus.ContDiff.Basic
+public import Mathlib.Analysis.Complex.CauchyIntegral
+public import Mathlib.Analysis.Complex.LocallyUniformLimit
+public import Mathlib.Analysis.SpecialFunctions.Complex.Log
+public import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
+public import Mathlib.MeasureTheory.Integral.CircleIntegral
+public import Mathlib.RingTheory.LaurentSeries
+public import LeanModularForms.ForMathlib.PiecewiseC1PathOn
 
 /-!
 # Basic Definitions for Complex Analysis with Principal Values
@@ -43,6 +45,8 @@ and generalized winding numbers following Hungerbühler–Wasem.
 
 open Complex MeasureTheory Set Filter Topology
 open scoped Real Interval
+
+@[expose] public section
 
 noncomputable section
 
@@ -188,5 +192,7 @@ def CauchyPrincipalValueExists' (f : ℂ → ℂ) (γ : ℝ → ℂ)
 `n_{z₀}(γ) = (1/2πi) · PV ∮_γ dz/(z - z₀)`. -/
 def generalizedWindingNumber' (γ : ℝ → ℂ) (a b : ℝ) (z₀ : ℂ) : ℂ :=
   (2 * Real.pi * I)⁻¹ * cauchyPrincipalValue' (·⁻¹) (fun t ↦ γ t - z₀) a b 0
+
+end
 
 end

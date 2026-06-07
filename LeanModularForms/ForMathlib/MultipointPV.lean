@@ -3,7 +3,9 @@ Copyright (c) 2026 Chris Birkbeck. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import LeanModularForms.ForMathlib.CauchyPrincipalValue
+module
+
+public import LeanModularForms.ForMathlib.CauchyPrincipalValue
 
 /-!
 # Multi-Point Cauchy Principal Value Infrastructure
@@ -44,6 +46,8 @@ of finite sets. These are the building blocks for the generalized residue theore
 
 open Set Filter Topology MeasureTheory Complex
 open scoped Interval
+
+@[expose] public section
 
 noncomputable section
 
@@ -153,5 +157,7 @@ theorem HasCauchyPVOn.finset_sum {ι : Type*} [DecidableEq ι] (T : Finset ι)
       (ih (fun i hi => hf i (Finset.mem_insert_of_mem hi))
         (fun i hi => hfi i (Finset.mem_insert_of_mem hi)))
       (hfi a (Finset.mem_insert_self a T')) h_T'_int
+
+end
 
 end

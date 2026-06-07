@@ -3,8 +3,10 @@ Copyright (c) 2024. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import LeanModularForms.ForMathlib.SingleCrossing
-import LeanModularForms.ForMathlib.EllipticPoints
+module
+
+public import LeanModularForms.ForMathlib.SingleCrossing
+public import LeanModularForms.ForMathlib.EllipticPoints
 
 /-!
 # Fundamental Domain Boundary
@@ -35,6 +37,8 @@ parameterized on `[0, 1]` with breakpoints at `1/5, 2/5, 3/5, 4/5`.
 
 open Complex MeasureTheory Set Filter Topology
 open scoped Real Interval
+
+@[expose] public section
 
 noncomputable section
 
@@ -294,5 +298,7 @@ def fdHeightValid (H : ℝ) : Prop := Real.sqrt 3 / 2 < H
 theorem fdHeightValid_of_one_lt (H : ℝ) (hH : 1 < H) : fdHeightValid H := by
   unfold fdHeightValid
   linarith [(Real.sqrt_lt' (by norm_num : (0:ℝ) < 2)).mpr (by norm_num : (3:ℝ) < 2^2)]
+
+end
 
 end

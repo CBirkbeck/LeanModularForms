@@ -2,11 +2,13 @@
 Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import LeanModularForms.ForMathlib.FlatnessConditions
-import LeanModularForms.ForMathlib.HungerbuhlerWasem
-import Mathlib.Analysis.Meromorphic.Order
-import Mathlib.Analysis.Analytic.Order
-import Mathlib.Analysis.Analytic.IsolatedZeros
+module
+
+public import LeanModularForms.ForMathlib.FlatnessConditions
+public import LeanModularForms.ForMathlib.HungerbuhlerWasem
+public import Mathlib.Analysis.Meromorphic.Order
+public import Mathlib.Analysis.Analytic.Order
+public import Mathlib.Analysis.Analytic.IsolatedZeros
 
 /-!
 # Laurent extraction for HungerbuhlerWasem (T-LE-01)
@@ -34,6 +36,8 @@ This adds no axioms beyond the existing `Classical.choice`.
 -/
 
 open Filter Topology Set Complex MeasureTheory Metric
+
+@[expose] public section
 
 noncomputable section
 
@@ -397,7 +401,7 @@ private theorem mero_otherPolar_analyticAt {S : Finset ℂ} {f : ℂ → ℂ}
   have h_ne : s'.1 ≠ s := (Finset.mem_filter.mp hs').2
   exact meroPolarPartAt_analyticAt_off (hMero s'.1 s'.2) h_ne.symm
 
-private theorem mero_f_minus_total_eventuallyEq_analytic {S : Finset ℂ} {f : ℂ → ℂ}
+theorem mero_f_minus_total_eventuallyEq_analytic {S : Finset ℂ} {f : ℂ → ℂ}
     (hMero : ∀ s ∈ S, MeromorphicAt f s) {s : ℂ} (hs : s ∈ S) :
     ∃ g_s : ℂ → ℂ, AnalyticAt ℂ g_s s ∧
       ∀ᶠ z in 𝓝[≠] s, f z - meroPolarPartTotal hMero z = g_s z := by
@@ -569,5 +573,7 @@ noncomputable def PolarPartDecomposition.ofMeromorphicWithCondB
     ring
 
 end HungerbuhlerWasem
+
+end
 
 end

@@ -2,8 +2,10 @@
 Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import Mathlib.Topology.Order.IntermediateValue
-import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
+module
+
+public import Mathlib.Topology.Order.IntermediateValue
+public import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
 
 /-!
 # Exit-time function for curves crossing a point
@@ -25,6 +27,8 @@ arc length is `o(ε^n)`, controlling the contribution of arcs in the limit.
 -/
 
 open Set Filter Topology
+
+@[expose] public section
 
 namespace LeanModularForms
 
@@ -340,3 +344,5 @@ theorem firstExitTimeLeft_radius_eventually
   exact norm_at_firstExitTimeLeft_eq hδ hγ_cont h_s hε.1 hε.2.le
 
 end LeanModularForms
+
+end

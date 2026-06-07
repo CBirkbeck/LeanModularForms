@@ -2,15 +2,17 @@
 Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import LeanModularForms.ForMathlib.HungerbuhlerWasem.LaurentExtraction
-import LeanModularForms.ForMathlib.HungerbuhlerWasem.SectorCancellation
-import LeanModularForms.ForMathlib.HungerbuhlerWasem.CrossingCPV
-import LeanModularForms.ForMathlib.HungerbuhlerWasem.CrossingHigherOrder
-import LeanModularForms.ForMathlib.HungerbuhlerWasem.CPVExistence
-import LeanModularForms.ForMathlib.HungerbuhlerWasem.CPVExistenceMulti
-import LeanModularForms.ForMathlib.HungerbuhlerWasem.LocalCutoffs
-import LeanModularForms.ForMathlib.HungerbuhlerWasem.MultiPoleDCT
-import LeanModularForms.ForMathlib.CrossingAnalysis
+module
+
+public import LeanModularForms.ForMathlib.HungerbuhlerWasem.LaurentExtraction
+public import LeanModularForms.ForMathlib.HungerbuhlerWasem.SectorCancellation
+public import LeanModularForms.ForMathlib.HungerbuhlerWasem.CrossingCPV
+public import LeanModularForms.ForMathlib.HungerbuhlerWasem.CrossingHigherOrder
+public import LeanModularForms.ForMathlib.HungerbuhlerWasem.CPVExistence
+public import LeanModularForms.ForMathlib.HungerbuhlerWasem.CPVExistenceMulti
+public import LeanModularForms.ForMathlib.HungerbuhlerWasem.LocalCutoffs
+public import LeanModularForms.ForMathlib.HungerbuhlerWasem.MultiPoleDCT
+public import LeanModularForms.ForMathlib.CrossingAnalysis
 
 /-!
 # Per-pole CPV composition (T-GL-01)
@@ -46,6 +48,8 @@ The proof composes three pieces:
 
 open Filter Topology Set Complex MeasureTheory
 open scoped Real
+
+@[expose] public section
 
 noncomputable section
 
@@ -848,5 +852,7 @@ theorem condB_to_h_B_at_crossings_corner
     exact h_result
 
 end HungerbuhlerWasem
+
+end
 
 end

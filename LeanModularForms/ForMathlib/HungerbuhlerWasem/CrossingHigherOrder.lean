@@ -2,10 +2,12 @@
 Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import LeanModularForms.ForMathlib.HungerbuhlerWasem.SectorCancellation
-import LeanModularForms.ForMathlib.HungerbuhlerWasem.CrossingDataBuilder
-import LeanModularForms.ForMathlib.ExitTime
-import Mathlib.MeasureTheory.Integral.DivergenceTheorem
+module
+
+public import LeanModularForms.ForMathlib.HungerbuhlerWasem.SectorCancellation
+public import LeanModularForms.ForMathlib.HungerbuhlerWasem.CrossingDataBuilder
+public import LeanModularForms.ForMathlib.ExitTime
+public import Mathlib.MeasureTheory.Integral.DivergenceTheorem
 
 /-!
 # Higher-order CPV discharger from immersion data (T-BR-03)
@@ -35,6 +37,8 @@ of inputs:
 
 open Filter Topology Set Complex MeasureTheory
 open scoped Real Interval
+
+@[expose] public section
 
 noncomputable section
 
@@ -211,3 +215,9 @@ theorem h_B_of_angle_compat_corner
     push_cast at h ⊢
     linear_combination h
   linear_combination congr_arg (· * Complex.I) hm_complex
+
+end HungerbuhlerWasem
+
+end
+
+end

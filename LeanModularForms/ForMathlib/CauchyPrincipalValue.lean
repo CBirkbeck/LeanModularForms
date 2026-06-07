@@ -3,8 +3,10 @@ Copyright (c) 2024. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import LeanModularForms.ForMathlib.PiecewiseContourIntegral
-import Mathlib.Topology.Order.DenselyOrdered
+module
+
+public import LeanModularForms.ForMathlib.PiecewiseContourIntegral
+public import Mathlib.Topology.Order.DenselyOrdered
 
 /-!
 # Cauchy Principal Value Integrals along Piecewise C¹ Paths
@@ -56,6 +58,8 @@ only used when extracting a concrete value is needed.
 
 open Set Filter Topology MeasureTheory Complex
 open scoped Interval
+
+@[expose] public section
 
 noncomputable section
 
@@ -164,5 +168,7 @@ theorem HasCauchyPV.unique {f : ℂ → ℂ} {γ : PiecewiseC1Path x y} {z₀ : 
     {L₁ L₂ : ℂ} (h₁ : HasCauchyPV f γ z₀ L₁) (h₂ : HasCauchyPV f γ z₀ L₂) :
     L₁ = L₂ :=
   tendsto_nhds_unique h₁ h₂
+
+end
 
 end

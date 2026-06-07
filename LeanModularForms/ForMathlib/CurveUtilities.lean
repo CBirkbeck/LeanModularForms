@@ -2,8 +2,10 @@
 Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import LeanModularForms.ForMathlib.PiecewiseC1Path
-import Mathlib.Analysis.Complex.Basic
+module
+
+public import LeanModularForms.ForMathlib.PiecewiseC1Path
+public import Mathlib.Analysis.Complex.Basic
 
 /-!
 # Curve Utilities and Avoidance
@@ -17,6 +19,8 @@ Utility lemmas for working with `PiecewiseC1Path` partition structure and curve 
 
 open Set Complex Metric
 
+@[expose] public section
+
 noncomputable section
 
 variable {x y : ℂ}
@@ -28,5 +32,7 @@ noncomputable def infDist (γ : PiecewiseC1Path x y) (z₀ : ℂ) : ℝ :=
   Metric.infDist z₀ (γ.toPath.extend '' Icc 0 1)
 
 end PiecewiseC1Path
+
+end
 
 end

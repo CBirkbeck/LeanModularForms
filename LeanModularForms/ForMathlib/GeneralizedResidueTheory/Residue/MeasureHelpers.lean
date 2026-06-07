@@ -3,7 +3,9 @@ Copyright (c) 2024. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors:
 -/
-import LeanModularForms.ForMathlib.ClassicalCPV
+module
+
+public import LeanModularForms.ForMathlib.ClassicalCPV
 
 /-!
 # Measure Theory Helpers for Residue Theory
@@ -14,6 +16,8 @@ preimages of singletons under piecewise C¹ immersions.
 
 open Complex MeasureTheory Set Filter Topology Metric
 open scoped Real Interval
+
+@[expose] public section
 
 noncomputable section
 
@@ -89,5 +93,7 @@ theorem preimage_finset_measure_zero_of_deriv_ne_zero {γ : ℝ → ℂ} {a b : 
   rw [h_eq, measure_biUnion_null_iff S.finite_toSet.countable]
   intro s _
   exact preimage_singleton_measure_zero_of_deriv_ne_zero s hγ hγ_diff hγ'_ne
+
+end
 
 end

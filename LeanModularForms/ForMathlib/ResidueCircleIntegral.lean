@@ -3,8 +3,10 @@ Copyright (c) 2024. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import LeanModularForms.ForMathlib.Residue
-import Mathlib.Analysis.Complex.CauchyIntegral
+module
+
+public import LeanModularForms.ForMathlib.Residue
+public import Mathlib.Analysis.Complex.CauchyIntegral
 
 /-!
 # Residue via Circle Integral
@@ -33,6 +35,8 @@ Properties of the residue `residue f z₀`, defined as the circle-integral limit
 
 open Complex Set Filter Topology MeasureTheory Metric
 open scoped Interval Real
+
+@[expose] public section
 
 noncomputable section
 
@@ -74,5 +78,7 @@ theorem residue_congr {f g : ℂ → ℂ} {z₀ : ℂ}
   have h_ne : z ≠ z₀ := fun heq => by
     rw [heq, mem_sphere, dist_self] at hz; linarith
   exact hε ⟨mem_ball.mpr (mem_sphere.mp hz ▸ hr_lt), mem_compl_singleton_iff.mpr h_ne⟩
+
+end
 
 end

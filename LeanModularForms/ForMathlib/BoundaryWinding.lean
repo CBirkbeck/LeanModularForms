@@ -3,9 +3,11 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import LeanModularForms.ForMathlib.FDBoundaryPath
-import LeanModularForms.ForMathlib.SingleCrossing
-import LeanModularForms.ForMathlib.CrossingAtI
+module
+
+public import LeanModularForms.ForMathlib.FDBoundaryPath
+public import LeanModularForms.ForMathlib.SingleCrossing
+public import LeanModularForms.ForMathlib.CrossingAtI
 
 /-!
 # Smooth Boundary Winding Number
@@ -45,6 +47,8 @@ content is:
 
 open Complex MeasureTheory Set Filter Topology
 open scoped Real Interval
+
+@[expose] public section
 
 noncomputable section
 
@@ -160,5 +164,7 @@ def linDelta (C : ℝ) (ε : ℝ) : ℝ := ε / C
 
 theorem linDelta_pos {C ε : ℝ} (hC : 0 < C) (hε : 0 < ε) : 0 < linDelta C ε :=
   div_pos hε hC
+
+end
 
 end

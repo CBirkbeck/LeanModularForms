@@ -2,8 +2,10 @@
 Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import LeanModularForms.ForMathlib.DixonDiff
-import Mathlib.Analysis.Complex.Liouville
+module
+
+public import LeanModularForms.ForMathlib.DixonDiff
+public import Mathlib.Analysis.Complex.Liouville
 
 /-!
 # Dixon Theorem: the Dixon Function is Identically Zero
@@ -49,6 +51,8 @@ so `h2(w) = 2πi · n(γ,w) · f(w)`.
 
 open Complex Set Filter Topology MeasureTheory
 open scoped Classical Real Interval
+
+@[expose] public section
 
 noncomputable section
 
@@ -474,5 +478,7 @@ theorem dixonFunction_eq_zero_of_nullHomologous_open_full_unbounded
   dixonFunction_eq_zero_of_nullHomologous_autoBounds_unbounded hU hf γ h_null
     hLip (dixonH1_differentiableOn_of_regular_open_full hU hf γ
       h_null.image_subset hLip) h_winding_zero_near
+
+end
 
 end

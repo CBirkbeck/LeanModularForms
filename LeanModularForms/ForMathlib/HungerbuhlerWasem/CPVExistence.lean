@@ -3,8 +3,10 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import LeanModularForms.ForMathlib.HungerbuhlerWasem.CrossingDataBuilder
-import LeanModularForms.ForMathlib.WindingInteger
+module
+
+public import LeanModularForms.ForMathlib.HungerbuhlerWasem.CrossingDataBuilder
+public import LeanModularForms.ForMathlib.WindingInteger
 
 /-!
 # Cauchy principal-value existence at a transverse crossing
@@ -35,6 +37,8 @@ the full CPV existence theorem.
 
 open Complex MeasureTheory Set Filter Topology Asymptotics
 open scoped Real Interval
+
+@[expose] public section
 
 noncomputable section
 
@@ -420,4 +424,10 @@ theorem arg_left_annular_tendsto
       (((δ_left ε)⁻¹ : ℝ) : ℂ) * ((γ (t₀ - δ_left ε) - s) / (γ (t₀ - r) - s)) from by
     push_cast; field_simp]
   exact Complex.arg_real_mul _ (inv_pos.mpr hε)
+
+end HungerbuhlerWasem
+
+end
+
+end
 

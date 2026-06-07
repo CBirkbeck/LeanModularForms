@@ -3,15 +3,17 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import LeanModularForms.ForMathlib.NullHomologous
-import LeanModularForms.ForMathlib.DixonTheorem
-import LeanModularForms.ForMathlib.PaperPwC1Immersion
-import LeanModularForms.ForMathlib.SimplePoleIntegral
-import LeanModularForms.ForMathlib.MultipointPV
-import LeanModularForms.ForMathlib.PiecewiseContourIntegral
-import LeanModularForms.ForMathlib.ResidueCircleIntegral
-import LeanModularForms.ForMathlib.CurveMeasureZero
-import LeanModularForms.ForMathlib.GeneralizedResidueTheory.Residue.MeasureHelpers
+module
+
+public import LeanModularForms.ForMathlib.NullHomologous
+public import LeanModularForms.ForMathlib.DixonTheorem
+public import LeanModularForms.ForMathlib.PaperPwC1Immersion
+public import LeanModularForms.ForMathlib.SimplePoleIntegral
+public import LeanModularForms.ForMathlib.MultipointPV
+public import LeanModularForms.ForMathlib.PiecewiseContourIntegral
+public import LeanModularForms.ForMathlib.ResidueCircleIntegral
+public import LeanModularForms.ForMathlib.CurveMeasureZero
+public import LeanModularForms.ForMathlib.GeneralizedResidueTheory.Residue.MeasureHelpers
 
 -- NOTE on imports / Central B:
 -- The project currently maintains two parallel residue libraries with overlapping
@@ -53,6 +55,8 @@ equals `2πi · Σ winding(γ, s) · residue(f, s)` over the singular set `S ⊆
 
 open Set Filter Topology Complex MeasureTheory
 open scoped Interval
+
+@[expose] public section
 
 noncomputable section
 
@@ -442,5 +446,7 @@ theorem cpvIntegrandOn_polarPart_intervalIntegrable
 
 
 end HungerbuhlerWasem
+
+end
 
 end

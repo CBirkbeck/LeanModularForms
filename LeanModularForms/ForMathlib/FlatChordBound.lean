@@ -2,7 +2,9 @@
 Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import LeanModularForms.ForMathlib.FlatnessConditions
+module
+
+public import LeanModularForms.ForMathlib.FlatnessConditions
 
 /-!
 # Chord-to-tangent bounds from flatness
@@ -35,6 +37,8 @@ Pythagoras + sqrt asymptotic.
 -/
 
 open Set Filter Topology Asymptotics
+
+@[expose] public section
 
 namespace LeanModularForms
 
@@ -171,3 +175,5 @@ theorem norm_chord_to_tangent_target_le {w L : ℂ} (hL : L ≠ 0) (hw : 0 < ‖
   linarith [norm_orthogonalProjection_shortfall_le L hw]
 
 end LeanModularForms
+
+end

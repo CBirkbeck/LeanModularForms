@@ -2,8 +2,10 @@
 Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
-import LeanModularForms.ForMathlib.MultipointPV
-import LeanModularForms.ForMathlib.GeneralizedWindingNumber
+module
+
+public import LeanModularForms.ForMathlib.MultipointPV
+public import LeanModularForms.ForMathlib.GeneralizedWindingNumber
 
 /-!
 # PV Integrals of Simple Pole Terms
@@ -25,6 +27,8 @@ generalized winding number.
 open Set Filter Topology MeasureTheory Complex
 open scoped Interval
 
+@[expose] public section
+
 noncomputable section
 
 variable {x y : ℂ}
@@ -37,5 +41,7 @@ theorem integral_inv_sub_eq_winding {s : ℂ} {γ : PiecewiseC1Path x y}
       2 * ↑Real.pi * I * generalizedWindingNumber γ s := by
   have hw := hasGeneralizedWindingNumber_of_avoids hδ
   rw [HasCauchyPV.unique (hasCauchyPV_of_avoids hδ) hw, hw.eq]
+
+end
 
 end

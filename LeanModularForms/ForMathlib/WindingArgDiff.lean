@@ -3,8 +3,10 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import LeanModularForms.ForMathlib.GeneralizedWindingNumber
-import LeanModularForms.ForMathlib.WindingInteger
+module
+
+public import LeanModularForms.ForMathlib.GeneralizedWindingNumber
+public import LeanModularForms.ForMathlib.WindingInteger
 
 /-!
 # Winding number via continuous arg lift
@@ -31,6 +33,8 @@ on each segment, and sum via `intervalIntegral.sum_integral_adjacent_intervals`.
 
 open Set Filter Topology MeasureTheory Complex
 open scoped Interval
+
+@[expose] public section
 
 noncomputable section
 
@@ -307,5 +311,7 @@ theorem generalizedWindingNumber_locally_const_of_closed
   rw [h_eq_w', h_eq_w, h_int_eq]
 
 end Complex
+
+end
 
 end

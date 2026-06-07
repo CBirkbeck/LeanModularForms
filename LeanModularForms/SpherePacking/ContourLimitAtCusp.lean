@@ -3,12 +3,14 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import LeanModularForms.SpherePacking.CuspDecay
-import LeanModularForms.SpherePacking.PhiHolomorphic
-import LeanModularForms.SpherePacking.RectangularContour
-import Mathlib.Analysis.SpecialFunctions.ExpDeriv
-import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
-import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
+module
+
+public import LeanModularForms.SpherePacking.CuspDecay
+public import LeanModularForms.SpherePacking.PhiHolomorphic
+public import LeanModularForms.SpherePacking.RectangularContour
+public import Mathlib.Analysis.SpecialFunctions.ExpDeriv
+public import Mathlib.Analysis.SpecialFunctions.Complex.Analytic
+public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 
 /-!
 # Cusp-neighborhood limits of contour integrals
@@ -35,6 +37,8 @@ exponential decay `|e^{πirz}| = e^{-π·r·Im z}` to discharge
 
 open Complex Set Filter Topology MeasureTheory
 open scoped Real Interval
+
+@[expose] public section
 
 noncomputable section
 
@@ -475,5 +479,7 @@ theorem cauchy_semi_infinite_rectangle_eq
   linear_combination h_eq_lim
 
 end LeanModularForms
+
+end
 
 end

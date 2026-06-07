@@ -3,7 +3,9 @@ Copyright (c) 2024. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import LeanModularForms.ForMathlib.CauchyPrincipalValue
+module
+
+public import LeanModularForms.ForMathlib.CauchyPrincipalValue
 
 /-!
 # Generalized Winding Number
@@ -50,6 +52,8 @@ via the bridge theorem when needed.
 
 open Set Filter Topology MeasureTheory Complex
 open scoped Interval
+
+@[expose] public section
 
 noncomputable section
 
@@ -164,5 +168,7 @@ theorem generalizedWindingNumber_continuousAt_of_avoids
       rw [h, norm_zero] at this; linarith
     exact ((continuous_const.sub continuous_id).continuousAt.inv₀ h_avoid).mul
       continuousAt_const
+
+end
 
 end

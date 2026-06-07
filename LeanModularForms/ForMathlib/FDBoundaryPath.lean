@@ -3,7 +3,9 @@ Copyright (c) 2024. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import LeanModularForms.ForMathlib.FDBoundary
+module
+
+public import LeanModularForms.ForMathlib.FDBoundary
 
 /-!
 # PiecewiseC1Path for the FD Boundary
@@ -23,6 +25,8 @@ segment away from partition points.
 
 open Complex MeasureTheory Set Filter Topology
 open scoped Real Interval
+
+@[expose] public section
 
 noncomputable section
 
@@ -169,13 +173,13 @@ private lemma fdBoundaryFun_deriv_continuousAt_off (H : ℝ) (t : ℝ)
   exact (continuousAt_congr (fdBoundaryFun_eventuallyEq_seg5 H t h4).deriv).mpr
     ((seg5Fun_contDiff H).continuous_deriv le_top).continuousAt
 
-private lemma fdBoundaryPath_differentiableAt_off (H : ℝ) (t : ℝ)
+lemma fdBoundaryPath_differentiableAt_off (H : ℝ) (t : ℝ)
     (ht : t ∈ Ioo (0 : ℝ) 1) (htp : t ∉ fdBoundaryPartition) :
     DifferentiableAt ℝ (fdBoundaryPath H).extend t :=
   (fdBoundaryFun_differentiableAt_off H t ht htp).congr_of_eventuallyEq
     (fdBoundaryPath_extend_eventuallyEq H t ht)
 
-private lemma fdBoundaryPath_deriv_continuousAt_off (H : ℝ) (t : ℝ)
+lemma fdBoundaryPath_deriv_continuousAt_off (H : ℝ) (t : ℝ)
     (ht : t ∈ Ioo (0 : ℝ) 1) (htp : t ∉ fdBoundaryPartition) :
     ContinuousAt (deriv (fdBoundaryPath H).extend) t :=
   (continuousAt_congr (fdBoundaryPath_extend_eventuallyEq H t ht).deriv).mpr
@@ -200,5 +204,7 @@ theorem fdBoundaryPC1Path_eq (H : ℝ) (hH : H > Real.sqrt 3 / 2) (t : ℝ)
     (ht : t ∈ Icc (0 : ℝ) 1) :
     (fdBoundaryPC1Path H hH).toPath.extend t = fdBoundaryFun H t :=
   fdBoundaryPath_extend_eq H t ht
+
+end
 
 end

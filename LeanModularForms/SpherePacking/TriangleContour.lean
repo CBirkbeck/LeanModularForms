@@ -3,13 +3,15 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import LeanModularForms.ForMathlib.PaperPwC1Immersion
-import LeanModularForms.ForMathlib.NullHomologous
-import LeanModularForms.ForMathlib.CauchyPrincipalValue
-import LeanModularForms.SpherePacking.CauchyCorollaries
-import LeanModularForms.SpherePacking.RectangularContour
-import Mathlib.Analysis.Complex.CauchyIntegral
-import Mathlib.Analysis.Convex.Star
+module
+
+public import LeanModularForms.ForMathlib.PaperPwC1Immersion
+public import LeanModularForms.ForMathlib.NullHomologous
+public import LeanModularForms.ForMathlib.CauchyPrincipalValue
+public import LeanModularForms.SpherePacking.CauchyCorollaries
+public import LeanModularForms.SpherePacking.RectangularContour
+public import Mathlib.Analysis.Complex.CauchyIntegral
+public import Mathlib.Analysis.Convex.Star
 
 /-!
 # Triangular contours in the complex plane
@@ -32,6 +34,8 @@ Used by sphere-packing's Viazovska contour decomposition (e.g.
 open Complex Set Filter Topology MeasureTheory
 open scoped Real Interval
 
+@[expose] public section
+
 noncomputable section
 
 namespace LeanModularForms
@@ -40,45 +44,45 @@ namespace LeanModularForms
 
 /-- The first side of the triangle, parameterised on all of `ℝ` by
 `t ↦ (1 - 3t) · a + 3t · b`. -/
-private def triSeg1 (a b : ℂ) : ℝ → ℂ := fun t =>
+def triSeg1 (a b : ℂ) : ℝ → ℂ := fun t =>
   (1 - 3 * (t : ℂ)) * a + 3 * (t : ℂ) * b
 
 /-- The second side of the triangle, parameterised by
 `t ↦ (2 - 3t) · b + (3t - 1) · c`. -/
-private def triSeg2 (b c : ℂ) : ℝ → ℂ := fun t =>
+def triSeg2 (b c : ℂ) : ℝ → ℂ := fun t =>
   (2 - 3 * (t : ℂ)) * b + (3 * (t : ℂ) - 1) * c
 
 /-- The third side of the triangle, parameterised by
 `t ↦ (3 - 3t) · c + (3t - 2) · a`. -/
-private def triSeg3 (a c : ℂ) : ℝ → ℂ := fun t =>
+def triSeg3 (a c : ℂ) : ℝ → ℂ := fun t =>
   (3 - 3 * (t : ℂ)) * c + (3 * (t : ℂ) - 2) * a
 
 /-- The full parameterisation of the triangular boundary on `[0, 1]`. Outside
 `[0, 1]` the value is whatever the last segment gives; this is fine because
 we only ever use the path via its restriction to `Icc 0 1`. -/
-private def triangleFun (a b c : ℂ) : ℝ → ℂ := fun t =>
+def triangleFun (a b c : ℂ) : ℝ → ℂ := fun t =>
   if t ≤ 1/3 then triSeg1 a b t
   else if t ≤ 2/3 then triSeg2 b c t
   else triSeg3 a c t
 
 /-! ### Junction values -/
 
-private lemma triSeg1_at_zero (a b : ℂ) : triSeg1 a b 0 = a := by
+lemma triSeg1_at_zero (a b : ℂ) : triSeg1 a b 0 = a := by
   simp [triSeg1]
 
-private lemma triSeg1_at_third (a b : ℂ) : triSeg1 a b (1/3) = b := by
+lemma triSeg1_at_third (a b : ℂ) : triSeg1 a b (1/3) = b := by
   simp only [triSeg1]; push_cast; ring
 
-private lemma triSeg2_at_third (b c : ℂ) : triSeg2 b c (1/3) = b := by
+lemma triSeg2_at_third (b c : ℂ) : triSeg2 b c (1/3) = b := by
   simp only [triSeg2]; push_cast; ring
 
-private lemma triSeg2_at_two_thirds (b c : ℂ) : triSeg2 b c (2/3) = c := by
+lemma triSeg2_at_two_thirds (b c : ℂ) : triSeg2 b c (2/3) = c := by
   simp only [triSeg2]; push_cast; ring
 
-private lemma triSeg3_at_two_thirds (a c : ℂ) : triSeg3 a c (2/3) = c := by
+lemma triSeg3_at_two_thirds (a c : ℂ) : triSeg3 a c (2/3) = c := by
   simp only [triSeg3]; push_cast; ring
 
-private lemma triSeg3_at_one (a c : ℂ) : triSeg3 a c 1 = a := by
+lemma triSeg3_at_one (a c : ℂ) : triSeg3 a c 1 = a := by
   simp only [triSeg3]; push_cast; ring
 
 lemma triangleFun_at_zero (a b c : ℂ) : triangleFun a b c 0 = a := by
@@ -94,45 +98,45 @@ lemma triangleFun_closed (a b c : ℂ) :
 
 /-! ### `ContDiff ℝ ⊤` for each segment -/
 
-private lemma triSeg1_contDiff (a b : ℂ) : ContDiff ℝ ⊤ (triSeg1 a b) :=
+lemma triSeg1_contDiff (a b : ℂ) : ContDiff ℝ ⊤ (triSeg1 a b) :=
   ((contDiff_const.sub
     (contDiff_const.mul Complex.ofRealCLM.contDiff)).mul contDiff_const).add
       ((contDiff_const.mul Complex.ofRealCLM.contDiff).mul contDiff_const)
 
-private lemma triSeg2_contDiff (b c : ℂ) : ContDiff ℝ ⊤ (triSeg2 b c) :=
+lemma triSeg2_contDiff (b c : ℂ) : ContDiff ℝ ⊤ (triSeg2 b c) :=
   ((contDiff_const.sub
     (contDiff_const.mul Complex.ofRealCLM.contDiff)).mul contDiff_const).add
       (((contDiff_const.mul Complex.ofRealCLM.contDiff).sub
         contDiff_const).mul contDiff_const)
 
-private lemma triSeg3_contDiff (a c : ℂ) : ContDiff ℝ ⊤ (triSeg3 a c) :=
+lemma triSeg3_contDiff (a c : ℂ) : ContDiff ℝ ⊤ (triSeg3 a c) :=
   ((contDiff_const.sub
     (contDiff_const.mul Complex.ofRealCLM.contDiff)).mul contDiff_const).add
       (((contDiff_const.mul Complex.ofRealCLM.contDiff).sub
         contDiff_const).mul contDiff_const)
 
-private lemma triSeg1_continuous (a b : ℂ) : Continuous (triSeg1 a b) :=
+lemma triSeg1_continuous (a b : ℂ) : Continuous (triSeg1 a b) :=
   (triSeg1_contDiff a b).continuous
 
-private lemma triSeg2_continuous (b c : ℂ) : Continuous (triSeg2 b c) :=
+lemma triSeg2_continuous (b c : ℂ) : Continuous (triSeg2 b c) :=
   (triSeg2_contDiff b c).continuous
 
-private lemma triSeg3_continuous (a c : ℂ) : Continuous (triSeg3 a c) :=
+lemma triSeg3_continuous (a c : ℂ) : Continuous (triSeg3 a c) :=
   (triSeg3_contDiff a c).continuous
 
 /-! ### Layered continuity of `triangleFun` -/
 
-private def triangleFun_inner23 (a b c : ℂ) : ℝ → ℂ := fun t =>
+def triangleFun_inner23 (a b c : ℂ) : ℝ → ℂ := fun t =>
   if t ≤ 2/3 then triSeg2 b c t else triSeg3 a c t
 
-private lemma triangleFun_inner23_continuous (a b c : ℂ) :
+lemma triangleFun_inner23_continuous (a b c : ℂ) :
     Continuous (triangleFun_inner23 a b c) :=
   Continuous.if_le (triSeg2_continuous b c) (triSeg3_continuous a c)
     continuous_id continuous_const (fun t (ht : t = 2/3) => by
       subst ht
       rw [triSeg2_at_two_thirds, triSeg3_at_two_thirds])
 
-private lemma triangleFun_eq_layered (a b c : ℂ) (t : ℝ) :
+lemma triangleFun_eq_layered (a b c : ℂ) (t : ℝ) :
     triangleFun a b c t =
       (if t ≤ 1/3 then triSeg1 a b t else triangleFun_inner23 a b c t) := by
   unfold triangleFun triangleFun_inner23
@@ -155,12 +159,12 @@ theorem triangleFun_continuous (a b c : ℂ) :
 
 /-! ### Eventual-equality lemmas to each segment -/
 
-private lemma triangleFun_eventuallyEq_seg1 (a b c : ℂ) {t : ℝ} (ht1 : t < 1/3) :
+lemma triangleFun_eventuallyEq_seg1 (a b c : ℂ) {t : ℝ} (ht1 : t < 1/3) :
     triangleFun a b c =ᶠ[𝓝 t] triSeg1 a b :=
   Filter.eventually_of_mem (Iio_mem_nhds ht1) fun s (hs : s < 1/3) => by
     simp only [triangleFun, if_pos hs.le]
 
-private lemma triangleFun_eventuallyEq_seg2 (a b c : ℂ) {t : ℝ}
+lemma triangleFun_eventuallyEq_seg2 (a b c : ℂ) {t : ℝ}
     (ht1 : 1/3 < t) (ht2 : t < 2/3) :
     triangleFun a b c =ᶠ[𝓝 t] triSeg2 b c :=
   Filter.eventually_of_mem
@@ -170,7 +174,7 @@ private lemma triangleFun_eventuallyEq_seg2 (a b c : ℂ) {t : ℝ}
         show ¬s ≤ 1/3 from not_le.mpr hs1,
         show s ≤ 2/3 from le_of_lt hs2, if_true, if_false]
 
-private lemma triangleFun_eventuallyEq_seg3 (a b c : ℂ) {t : ℝ}
+lemma triangleFun_eventuallyEq_seg3 (a b c : ℂ) {t : ℝ}
     (ht2 : 2/3 < t) :
     triangleFun a b c =ᶠ[𝓝 t] triSeg3 a c :=
   Filter.eventually_of_mem (Ioi_mem_nhds ht2) fun s (hs2 : 2/3 < s) => by
@@ -207,7 +211,7 @@ lemma triangleClosedPartition_eq :
     Finset.mem_singleton]
   tauto
 
-private lemma triangleFun_differentiableAt_off (a b c : ℂ) (t : ℝ)
+lemma triangleFun_differentiableAt_off (a b c : ℂ) (t : ℝ)
     (_ht : t ∈ Ioo (0 : ℝ) 1) (htp : t ∉ trianglePartition) :
     DifferentiableAt ℝ (triangleFun a b c) t := by
   simp only [trianglePartition, Finset.mem_insert, Finset.mem_singleton] at htp
@@ -223,7 +227,7 @@ private lemma triangleFun_differentiableAt_off (a b c : ℂ) (t : ℝ)
   exact ((triSeg3_contDiff a c).differentiable hT).differentiableAt.congr_of_eventuallyEq
     (triangleFun_eventuallyEq_seg3 a b c h2)
 
-private lemma triangleFun_deriv_continuousAt_off (a b c : ℂ) (t : ℝ)
+lemma triangleFun_deriv_continuousAt_off (a b c : ℂ) (t : ℝ)
     (_ht : t ∈ Ioo (0 : ℝ) 1) (htp : t ∉ trianglePartition) :
     ContinuousAt (deriv (triangleFun a b c)) t := by
   simp only [trianglePartition, Finset.mem_insert, Finset.mem_singleton] at htp
@@ -247,23 +251,23 @@ def trianglePath (a b c : ℂ) : Path a a where
   source' := triangleFun_at_zero a b c
   target' := triangleFun_at_one a b c
 
-private lemma trianglePath_extend_eq (a b c : ℂ) (t : ℝ) (ht : t ∈ Icc (0 : ℝ) 1) :
+lemma trianglePath_extend_eq (a b c : ℂ) (t : ℝ) (ht : t ∈ Icc (0 : ℝ) 1) :
     (trianglePath a b c).extend t = triangleFun a b c t :=
   Path.extend_apply _ ht
 
-private lemma trianglePath_extend_eventuallyEq (a b c : ℂ) {t : ℝ}
+lemma trianglePath_extend_eventuallyEq (a b c : ℂ) {t : ℝ}
     (ht : t ∈ Ioo (0 : ℝ) 1) :
     (trianglePath a b c).extend =ᶠ[𝓝 t] triangleFun a b c :=
   Filter.eventually_of_mem (Ioo_mem_nhds ht.1 ht.2) fun s hs =>
     trianglePath_extend_eq a b c s (Ioo_subset_Icc_self hs)
 
-private lemma trianglePath_differentiableAt_off (a b c : ℂ) (t : ℝ)
+lemma trianglePath_differentiableAt_off (a b c : ℂ) (t : ℝ)
     (ht : t ∈ Ioo (0 : ℝ) 1) (htp : t ∉ trianglePartition) :
     DifferentiableAt ℝ (trianglePath a b c).extend t :=
   (triangleFun_differentiableAt_off a b c t ht htp).congr_of_eventuallyEq
     (trianglePath_extend_eventuallyEq a b c ht)
 
-private lemma trianglePath_deriv_continuousAt_off (a b c : ℂ) (t : ℝ)
+lemma trianglePath_deriv_continuousAt_off (a b c : ℂ) (t : ℝ)
     (ht : t ∈ Ioo (0 : ℝ) 1) (htp : t ∉ trianglePartition) :
     ContinuousAt (deriv (trianglePath a b c).extend) t :=
   (continuousAt_congr (trianglePath_extend_eventuallyEq a b c ht).deriv).mpr
@@ -288,7 +292,7 @@ The closed partition `{0, 1/3, 2/3, 1}` has exactly three consecutive pairs:
 `(0, 1/3)`, `(1/3, 2/3)`, `(2/3, 1)`. We case-split on these in order to provide
 `contDiffOn_pieces` and `derivWithin_ne_zero_pieces`. -/
 
-private lemma triangleClosedPartition_consecutive_cases {p q : ℝ}
+lemma triangleClosedPartition_consecutive_cases {p q : ℝ}
     (h : triangleClosedPartition.IsConsecutive p q) :
     (p = 0 ∧ q = 1/3) ∨ (p = 1/3 ∧ q = 2/3) ∨ (p = 2/3 ∧ q = 1) := by
   obtain ⟨hp, hq, hpq, hno⟩ := h
@@ -325,12 +329,12 @@ private lemma triangleClosedPartition_consecutive_cases {p q : ℝ}
 On each of the three closed sub-intervals, `(trianglePath a b c).extend` agrees
 with the corresponding analytically-defined segment function. -/
 
-private lemma triangleFun_eq_seg1_on_Icc (a b c : ℂ) :
+lemma triangleFun_eq_seg1_on_Icc (a b c : ℂ) :
     EqOn (triangleFun a b c) (triSeg1 a b) (Icc 0 (1/3 : ℝ)) := by
   intro t ht
   simp only [triangleFun, if_pos ht.2]
 
-private lemma triangleFun_eq_seg2_on_Icc (a b c : ℂ) :
+lemma triangleFun_eq_seg2_on_Icc (a b c : ℂ) :
     EqOn (triangleFun a b c) (triSeg2 b c) (Icc (1/3 : ℝ) (2/3)) := by
   intro t ht
   by_cases h_eq : t = 1/3
@@ -340,7 +344,7 @@ private lemma triangleFun_eq_seg2_on_Icc (a b c : ℂ) :
   · have ht1 : ¬ t ≤ 1/3 := not_le.mpr (lt_of_le_of_ne ht.1 (Ne.symm h_eq))
     simp only [triangleFun, if_neg ht1, if_pos ht.2]
 
-private lemma triangleFun_eq_seg3_on_Icc (a b c : ℂ) :
+lemma triangleFun_eq_seg3_on_Icc (a b c : ℂ) :
     EqOn (triangleFun a b c) (triSeg3 a c) (Icc (2/3 : ℝ) 1) := by
   intro t ht
   by_cases h_eq : t = 2/3
@@ -353,17 +357,17 @@ private lemma triangleFun_eq_seg3_on_Icc (a b c : ℂ) :
       (not_le.mp ht2))
     simp only [triangleFun, if_neg ht1, if_neg ht2]
 
-private lemma trianglePath_extend_eq_seg1_on_Icc (a b c : ℂ) :
+lemma trianglePath_extend_eq_seg1_on_Icc (a b c : ℂ) :
     EqOn (trianglePath a b c).extend (triSeg1 a b) (Icc 0 (1/3 : ℝ)) := fun t ht => by
   have hIcc : t ∈ Icc (0 : ℝ) 1 := ⟨ht.1, by linarith [ht.2]⟩
   rw [trianglePath_extend_eq a b c t hIcc, triangleFun_eq_seg1_on_Icc a b c ht]
 
-private lemma trianglePath_extend_eq_seg2_on_Icc (a b c : ℂ) :
+lemma trianglePath_extend_eq_seg2_on_Icc (a b c : ℂ) :
     EqOn (trianglePath a b c).extend (triSeg2 b c) (Icc (1/3 : ℝ) (2/3)) := fun t ht => by
   have hIcc : t ∈ Icc (0 : ℝ) 1 := ⟨by linarith [ht.1], by linarith [ht.2]⟩
   rw [trianglePath_extend_eq a b c t hIcc, triangleFun_eq_seg2_on_Icc a b c ht]
 
-private lemma trianglePath_extend_eq_seg3_on_Icc (a b c : ℂ) :
+lemma trianglePath_extend_eq_seg3_on_Icc (a b c : ℂ) :
     EqOn (trianglePath a b c).extend (triSeg3 a c) (Icc (2/3 : ℝ) 1) := fun t ht => by
   have hIcc : t ∈ Icc (0 : ℝ) 1 := ⟨by linarith [ht.1], ht.2⟩
   rw [trianglePath_extend_eq a b c t hIcc, triangleFun_eq_seg3_on_Icc a b c ht]
@@ -373,7 +377,7 @@ private lemma trianglePath_extend_eq_seg3_on_Icc (a b c : ℂ) :
 Each segment is affine-linear in `t`, so its derivative is the constant
 "velocity" complex number `3·(next - prev)`. -/
 
-private lemma triSeg1_hasDerivAt (a b : ℂ) (t : ℝ) :
+lemma triSeg1_hasDerivAt (a b : ℂ) (t : ℝ) :
     HasDerivAt (triSeg1 a b) (3 * (b - a)) t := by
   have h1 : HasDerivAt (fun s : ℝ => ((s : ℂ))) (1 : ℂ) t :=
     Complex.ofRealCLM.hasDerivAt
@@ -393,11 +397,11 @@ private lemma triSeg1_hasDerivAt (a b : ℂ) (t : ℝ) :
     convert this using 1; ring
   exact h_sum
 
-private lemma triSeg1_deriv (a b : ℂ) (t : ℝ) :
+lemma triSeg1_deriv (a b : ℂ) (t : ℝ) :
     deriv (triSeg1 a b) t = 3 * (b - a) :=
   (triSeg1_hasDerivAt a b t).deriv
 
-private lemma triSeg2_hasDerivAt (b c : ℂ) (t : ℝ) :
+lemma triSeg2_hasDerivAt (b c : ℂ) (t : ℝ) :
     HasDerivAt (triSeg2 b c) (3 * (c - b)) t := by
   have h1 : HasDerivAt (fun s : ℝ => ((s : ℂ))) (1 : ℂ) t :=
     Complex.ofRealCLM.hasDerivAt
@@ -419,11 +423,11 @@ private lemma triSeg2_hasDerivAt (b c : ℂ) (t : ℝ) :
     convert this using 1; ring
   exact h_sum
 
-private lemma triSeg2_deriv (b c : ℂ) (t : ℝ) :
+lemma triSeg2_deriv (b c : ℂ) (t : ℝ) :
     deriv (triSeg2 b c) t = 3 * (c - b) :=
   (triSeg2_hasDerivAt b c t).deriv
 
-private lemma triSeg3_hasDerivAt (a c : ℂ) (t : ℝ) :
+lemma triSeg3_hasDerivAt (a c : ℂ) (t : ℝ) :
     HasDerivAt (triSeg3 a c) (3 * (a - c)) t := by
   have h1 : HasDerivAt (fun s : ℝ => ((s : ℂ))) (1 : ℂ) t :=
     Complex.ofRealCLM.hasDerivAt
@@ -445,23 +449,23 @@ private lemma triSeg3_hasDerivAt (a c : ℂ) (t : ℝ) :
     convert this using 1; ring
   exact h_sum
 
-private lemma triSeg3_deriv (a c : ℂ) (t : ℝ) :
+lemma triSeg3_deriv (a c : ℂ) (t : ℝ) :
     deriv (triSeg3 a c) t = 3 * (a - c) :=
   (triSeg3_hasDerivAt a c t).deriv
 
 /-! ### `ContDiffOn ℝ 1` of `(trianglePath a b c).extend` on each closed piece -/
 
-private lemma trianglePath_extend_contDiffOn_seg1 (a b c : ℂ) :
+lemma trianglePath_extend_contDiffOn_seg1 (a b c : ℂ) :
     ContDiffOn ℝ 1 (trianglePath a b c).extend (Icc 0 (1/3 : ℝ)) :=
   (((triSeg1_contDiff a b).of_le le_top).contDiffOn).congr fun _ ht =>
     trianglePath_extend_eq_seg1_on_Icc a b c ht
 
-private lemma trianglePath_extend_contDiffOn_seg2 (a b c : ℂ) :
+lemma trianglePath_extend_contDiffOn_seg2 (a b c : ℂ) :
     ContDiffOn ℝ 1 (trianglePath a b c).extend (Icc (1/3 : ℝ) (2/3)) :=
   (((triSeg2_contDiff b c).of_le le_top).contDiffOn).congr fun _ ht =>
     trianglePath_extend_eq_seg2_on_Icc a b c ht
 
-private lemma trianglePath_extend_contDiffOn_seg3 (a b c : ℂ) :
+lemma trianglePath_extend_contDiffOn_seg3 (a b c : ℂ) :
     ContDiffOn ℝ 1 (trianglePath a b c).extend (Icc (2/3 : ℝ) 1) :=
   (((triSeg3_contDiff a c).of_le le_top).contDiffOn).congr fun _ ht =>
     trianglePath_extend_eq_seg3_on_Icc a b c ht
@@ -472,22 +476,22 @@ We compute the within-derivative of `(trianglePath a b c).extend` on each
 closed sub-interval. Each is the constant complex "velocity" of the
 corresponding side: `3(b-a)`, `3(c-b)`, `3(a-c)`. -/
 
-private lemma trianglePath_extend_eventuallyEq_seg1_nhdsWithin (a b c : ℂ) {t : ℝ}
+lemma trianglePath_extend_eventuallyEq_seg1_nhdsWithin (a b c : ℂ) {t : ℝ}
     (_ht : t ∈ Icc (0 : ℝ) (1/3)) :
     (trianglePath a b c).extend =ᶠ[𝓝[Icc (0 : ℝ) (1/3)] t] triSeg1 a b :=
   Filter.eventually_of_mem self_mem_nhdsWithin (trianglePath_extend_eq_seg1_on_Icc a b c)
 
-private lemma trianglePath_extend_eventuallyEq_seg2_nhdsWithin (a b c : ℂ) {t : ℝ}
+lemma trianglePath_extend_eventuallyEq_seg2_nhdsWithin (a b c : ℂ) {t : ℝ}
     (_ht : t ∈ Icc (1/3 : ℝ) (2/3)) :
     (trianglePath a b c).extend =ᶠ[𝓝[Icc (1/3 : ℝ) (2/3)] t] triSeg2 b c :=
   Filter.eventually_of_mem self_mem_nhdsWithin (trianglePath_extend_eq_seg2_on_Icc a b c)
 
-private lemma trianglePath_extend_eventuallyEq_seg3_nhdsWithin (a b c : ℂ) {t : ℝ}
+lemma trianglePath_extend_eventuallyEq_seg3_nhdsWithin (a b c : ℂ) {t : ℝ}
     (_ht : t ∈ Icc (2/3 : ℝ) 1) :
     (trianglePath a b c).extend =ᶠ[𝓝[Icc (2/3 : ℝ) 1] t] triSeg3 a c :=
   Filter.eventually_of_mem self_mem_nhdsWithin (trianglePath_extend_eq_seg3_on_Icc a b c)
 
-private lemma trianglePath_extend_derivWithin_seg1 (a b c : ℂ) {t : ℝ}
+lemma trianglePath_extend_derivWithin_seg1 (a b c : ℂ) {t : ℝ}
     (ht : t ∈ Icc (0 : ℝ) (1/3)) :
     derivWithin (trianglePath a b c).extend (Icc (0 : ℝ) (1/3)) t = 3 * (b - a) := by
   have h_seg : HasDerivWithinAt (triSeg1 a b) (3 * (b - a)) (Icc (0 : ℝ) (1/3)) t :=
@@ -501,7 +505,7 @@ private lemma trianglePath_extend_derivWithin_seg1 (a b c : ℂ) {t : ℝ}
     (uniqueDiffOn_Icc (by norm_num : (0 : ℝ) < 1/3)) t ht
   exact h_path.derivWithin hUDiff
 
-private lemma trianglePath_extend_derivWithin_seg2 (a b c : ℂ) {t : ℝ}
+lemma trianglePath_extend_derivWithin_seg2 (a b c : ℂ) {t : ℝ}
     (ht : t ∈ Icc (1/3 : ℝ) (2/3)) :
     derivWithin (trianglePath a b c).extend (Icc (1/3 : ℝ) (2/3)) t = 3 * (c - b) := by
   have h_seg : HasDerivWithinAt (triSeg2 b c) (3 * (c - b)) (Icc (1/3 : ℝ) (2/3)) t :=
@@ -515,7 +519,7 @@ private lemma trianglePath_extend_derivWithin_seg2 (a b c : ℂ) {t : ℝ}
     (uniqueDiffOn_Icc (by norm_num : (1/3 : ℝ) < 2/3)) t ht
   exact h_path.derivWithin hUDiff
 
-private lemma trianglePath_extend_derivWithin_seg3 (a b c : ℂ) {t : ℝ}
+lemma trianglePath_extend_derivWithin_seg3 (a b c : ℂ) {t : ℝ}
     (ht : t ∈ Icc (2/3 : ℝ) 1) :
     derivWithin (trianglePath a b c).extend (Icc (2/3 : ℝ) 1) t = 3 * (a - c) := by
   have h_seg : HasDerivWithinAt (triSeg3 a c) (3 * (a - c)) (Icc (2/3 : ℝ) 1) t :=
@@ -574,7 +578,7 @@ noncomputable def triangleContour
 
 /-- Helper: every convex combination of two points in a convex set is in the set.
 This is `convex_iff_add_mem` applied. -/
-private lemma convex_combo_mem {U : Set ℂ} (hU : Convex ℝ U) {x y : ℂ}
+lemma convex_combo_mem {U : Set ℂ} (hU : Convex ℝ U) {x y : ℂ}
     (hx : x ∈ U) (hy : y ∈ U) {s : ℝ} (hs0 : 0 ≤ s) (hs1 : s ≤ 1) :
     ((1 - s : ℝ) : ℂ) * x + (s : ℂ) * y ∈ U := by
   have h_combo : (1 - s) • x + s • y ∈ U := by
@@ -650,7 +654,7 @@ The contour integral along `triangleContour a b c` decomposes as
 `(a → b) + (b → c) + (c → a)`, each parameterised over `[0, 1]`. -/
 
 /-- `HasDerivAt` of `(trianglePath a b c).extend` on the open first piece. -/
-private lemma trianglePath_extend_hasDerivAt_seg1 (a b c : ℂ) {t : ℝ}
+lemma trianglePath_extend_hasDerivAt_seg1 (a b c : ℂ) {t : ℝ}
     (ht : t ∈ Ioo (0 : ℝ) (1/3)) :
     HasDerivAt (trianglePath a b c).extend (3 * (b - a)) t :=
   (triSeg1_hasDerivAt a b t).congr_of_eventuallyEq
@@ -658,7 +662,7 @@ private lemma trianglePath_extend_hasDerivAt_seg1 (a b c : ℂ) {t : ℝ}
       trianglePath_extend_eq_seg1_on_Icc a b c (Ioo_subset_Icc_self hs))
 
 /-- `HasDerivAt` of `(trianglePath a b c).extend` on the open second piece. -/
-private lemma trianglePath_extend_hasDerivAt_seg2 (a b c : ℂ) {t : ℝ}
+lemma trianglePath_extend_hasDerivAt_seg2 (a b c : ℂ) {t : ℝ}
     (ht : t ∈ Ioo (1/3 : ℝ) (2/3)) :
     HasDerivAt (trianglePath a b c).extend (3 * (c - b)) t :=
   (triSeg2_hasDerivAt b c t).congr_of_eventuallyEq
@@ -666,7 +670,7 @@ private lemma trianglePath_extend_hasDerivAt_seg2 (a b c : ℂ) {t : ℝ}
       trianglePath_extend_eq_seg2_on_Icc a b c (Ioo_subset_Icc_self hs))
 
 /-- `HasDerivAt` of `(trianglePath a b c).extend` on the open third piece. -/
-private lemma trianglePath_extend_hasDerivAt_seg3 (a b c : ℂ) {t : ℝ}
+lemma trianglePath_extend_hasDerivAt_seg3 (a b c : ℂ) {t : ℝ}
     (ht : t ∈ Ioo (2/3 : ℝ) 1) :
     HasDerivAt (trianglePath a b c).extend (3 * (a - c)) t :=
   (triSeg3_hasDerivAt a c t).congr_of_eventuallyEq
@@ -674,26 +678,26 @@ private lemma trianglePath_extend_hasDerivAt_seg3 (a b c : ℂ) {t : ℝ}
       trianglePath_extend_eq_seg3_on_Icc a b c (Ioo_subset_Icc_self hs))
 
 /-- The derivative of `(trianglePath a b c).extend` on the open first piece. -/
-private lemma trianglePath_extend_deriv_seg1 (a b c : ℂ) {t : ℝ}
+lemma trianglePath_extend_deriv_seg1 (a b c : ℂ) {t : ℝ}
     (ht : t ∈ Ioo (0 : ℝ) (1/3)) :
     deriv (trianglePath a b c).extend t = 3 * (b - a) :=
   (trianglePath_extend_hasDerivAt_seg1 a b c ht).deriv
 
 /-- The derivative of `(trianglePath a b c).extend` on the open second piece. -/
-private lemma trianglePath_extend_deriv_seg2 (a b c : ℂ) {t : ℝ}
+lemma trianglePath_extend_deriv_seg2 (a b c : ℂ) {t : ℝ}
     (ht : t ∈ Ioo (1/3 : ℝ) (2/3)) :
     deriv (trianglePath a b c).extend t = 3 * (c - b) :=
   (trianglePath_extend_hasDerivAt_seg2 a b c ht).deriv
 
 /-- The derivative of `(trianglePath a b c).extend` on the open third piece. -/
-private lemma trianglePath_extend_deriv_seg3 (a b c : ℂ) {t : ℝ}
+lemma trianglePath_extend_deriv_seg3 (a b c : ℂ) {t : ℝ}
     (ht : t ∈ Ioo (2/3 : ℝ) 1) :
     deriv (trianglePath a b c).extend t = 3 * (a - c) :=
   (trianglePath_extend_hasDerivAt_seg3 a b c ht).deriv
 
 /-- On the open first piece `Ioo 0 (1/3)`, the contour integrand of `f` along
 `triangleContour` equals `f (triSeg1 a b t) * (3 * (b - a))`. -/
-private lemma triangleContour_integrand_seg1_ae (a b c : ℂ) (f : ℂ → ℂ) :
+lemma triangleContour_integrand_seg1_ae (a b c : ℂ) (f : ℂ → ℂ) :
     ∀ᵐ t, t ∈ Ι (0 : ℝ) (1/3) →
       f ((trianglePath a b c).extend t) * deriv (trianglePath a b c).extend t
         = f (triSeg1 a b t) * (3 * (b - a)) := by
@@ -705,7 +709,7 @@ private lemma triangleContour_integrand_seg1_ae (a b c : ℂ) (f : ℂ → ℂ) 
 
 /-- On the open second piece `Ioo (1/3) (2/3)`, the contour integrand of `f` along
 `triangleContour` equals `f (triSeg2 b c t) * (3 * (c - b))`. -/
-private lemma triangleContour_integrand_seg2_ae (a b c : ℂ) (f : ℂ → ℂ) :
+lemma triangleContour_integrand_seg2_ae (a b c : ℂ) (f : ℂ → ℂ) :
     ∀ᵐ t, t ∈ Ι (1/3 : ℝ) (2/3) →
       f ((trianglePath a b c).extend t) * deriv (trianglePath a b c).extend t
         = f (triSeg2 b c t) * (3 * (c - b)) := by
@@ -717,7 +721,7 @@ private lemma triangleContour_integrand_seg2_ae (a b c : ℂ) (f : ℂ → ℂ) 
 
 /-- On the open third piece `Ioo (2/3) 1`, the contour integrand of `f` along
 `triangleContour` equals `f (triSeg3 a c t) * (3 * (a - c))`. -/
-private lemma triangleContour_integrand_seg3_ae (a b c : ℂ) (f : ℂ → ℂ) :
+lemma triangleContour_integrand_seg3_ae (a b c : ℂ) (f : ℂ → ℂ) :
     ∀ᵐ t, t ∈ Ι (2/3 : ℝ) 1 →
       f ((trianglePath a b c).extend t) * deriv (trianglePath a b c).extend t
         = f (triSeg3 a c t) * (3 * (a - c)) := by
@@ -735,7 +739,7 @@ segment velocity) is continuous on the corresponding closed sub-interval. -/
 
 /-- The image of `triSeg1 a b` on `Icc 0 (1/3)` lies inside the image of the
 triangle path on `Icc 0 1`. -/
-private lemma triSeg1_image_subset_path_image (a b c : ℂ) :
+lemma triSeg1_image_subset_path_image (a b c : ℂ) :
     triSeg1 a b '' Icc (0 : ℝ) (1/3)
       ⊆ (trianglePath a b c).extend '' Icc (0 : ℝ) 1 := by
   rintro _ ⟨t, ht, rfl⟩
@@ -744,7 +748,7 @@ private lemma triSeg1_image_subset_path_image (a b c : ℂ) :
 
 /-- The image of `triSeg2 b c` on `Icc (1/3) (2/3)` lies inside the image of the
 triangle path on `Icc 0 1`. -/
-private lemma triSeg2_image_subset_path_image (a b c : ℂ) :
+lemma triSeg2_image_subset_path_image (a b c : ℂ) :
     triSeg2 b c '' Icc (1/3 : ℝ) (2/3)
       ⊆ (trianglePath a b c).extend '' Icc (0 : ℝ) 1 := by
   rintro _ ⟨t, ht, rfl⟩
@@ -753,7 +757,7 @@ private lemma triSeg2_image_subset_path_image (a b c : ℂ) :
 
 /-- The image of `triSeg3 a c` on `Icc (2/3) 1` lies inside the image of the
 triangle path on `Icc 0 1`. -/
-private lemma triSeg3_image_subset_path_image (a b c : ℂ) :
+lemma triSeg3_image_subset_path_image (a b c : ℂ) :
     triSeg3 a c '' Icc (2/3 : ℝ) 1
       ⊆ (trianglePath a b c).extend '' Icc (0 : ℝ) 1 := by
   rintro _ ⟨t, ht, rfl⟩
@@ -762,7 +766,7 @@ private lemma triSeg3_image_subset_path_image (a b c : ℂ) :
 
 /-- If `f` is continuous on the image of the triangle path on `Icc 0 1`, then
 `fun t ↦ f (triSeg1 a b t) * (3 * (b - a))` is continuous on `Icc 0 (1/3)`. -/
-private lemma seg1_integrand_continuousOn (a b c : ℂ) {f : ℂ → ℂ}
+lemma seg1_integrand_continuousOn (a b c : ℂ) {f : ℂ → ℂ}
     (hf : ContinuousOn f ((trianglePath a b c).extend '' Icc (0 : ℝ) 1)) :
     ContinuousOn (fun t : ℝ => f (triSeg1 a b t) * (3 * (b - a))) (Icc (0 : ℝ) (1/3)) :=
   ((hf.comp (triSeg1_continuous a b).continuousOn
@@ -771,7 +775,7 @@ private lemma seg1_integrand_continuousOn (a b c : ℂ) {f : ℂ → ℂ}
 
 /-- If `f` is continuous on the image of the triangle path on `Icc 0 1`, then
 `fun t ↦ f (triSeg2 b c t) * (3 * (c - b))` is continuous on `Icc (1/3) (2/3)`. -/
-private lemma seg2_integrand_continuousOn (a b c : ℂ) {f : ℂ → ℂ}
+lemma seg2_integrand_continuousOn (a b c : ℂ) {f : ℂ → ℂ}
     (hf : ContinuousOn f ((trianglePath a b c).extend '' Icc (0 : ℝ) 1)) :
     ContinuousOn (fun t : ℝ => f (triSeg2 b c t) * (3 * (c - b))) (Icc (1/3 : ℝ) (2/3)) :=
   ((hf.comp (triSeg2_continuous b c).continuousOn
@@ -780,7 +784,7 @@ private lemma seg2_integrand_continuousOn (a b c : ℂ) {f : ℂ → ℂ}
 
 /-- If `f` is continuous on the image of the triangle path on `Icc 0 1`, then
 `fun t ↦ f (triSeg3 a c t) * (3 * (a - c))` is continuous on `Icc (2/3) 1`. -/
-private lemma seg3_integrand_continuousOn (a b c : ℂ) {f : ℂ → ℂ}
+lemma seg3_integrand_continuousOn (a b c : ℂ) {f : ℂ → ℂ}
     (hf : ContinuousOn f ((trianglePath a b c).extend '' Icc (0 : ℝ) 1)) :
     ContinuousOn (fun t : ℝ => f (triSeg3 a c t) * (3 * (a - c))) (Icc (2/3 : ℝ) 1) :=
   ((hf.comp (triSeg3_continuous a c).continuousOn
@@ -789,7 +793,7 @@ private lemma seg3_integrand_continuousOn (a b c : ℂ) {f : ℂ → ℂ}
 
 /-! ### Integrability of the original integrand on each sub-interval -/
 
-private lemma triangleContour_integrand_intervalIntegrable_seg1 (a b c : ℂ) {f : ℂ → ℂ}
+lemma triangleContour_integrand_intervalIntegrable_seg1 (a b c : ℂ) {f : ℂ → ℂ}
     (hf : ContinuousOn f ((trianglePath a b c).extend '' Icc (0 : ℝ) 1)) :
     IntervalIntegrable
       (fun t => f ((trianglePath a b c).extend t) * deriv (trianglePath a b c).extend t)
@@ -805,7 +809,7 @@ private lemma triangleContour_integrand_intervalIntegrable_seg1 (a b c : ℂ) {f
     ((ae_restrict_iff' measurableSet_uIoc).mpr (triangleContour_integrand_seg1_ae a b c f))]
   exact hg_int
 
-private lemma triangleContour_integrand_intervalIntegrable_seg2 (a b c : ℂ) {f : ℂ → ℂ}
+lemma triangleContour_integrand_intervalIntegrable_seg2 (a b c : ℂ) {f : ℂ → ℂ}
     (hf : ContinuousOn f ((trianglePath a b c).extend '' Icc (0 : ℝ) 1)) :
     IntervalIntegrable
       (fun t => f ((trianglePath a b c).extend t) * deriv (trianglePath a b c).extend t)
@@ -821,7 +825,7 @@ private lemma triangleContour_integrand_intervalIntegrable_seg2 (a b c : ℂ) {f
     ((ae_restrict_iff' measurableSet_uIoc).mpr (triangleContour_integrand_seg2_ae a b c f))]
   exact hg_int
 
-private lemma triangleContour_integrand_intervalIntegrable_seg3 (a b c : ℂ) {f : ℂ → ℂ}
+lemma triangleContour_integrand_intervalIntegrable_seg3 (a b c : ℂ) {f : ℂ → ℂ}
     (hf : ContinuousOn f ((trianglePath a b c).extend '' Icc (0 : ℝ) 1)) :
     IntervalIntegrable
       (fun t => f ((trianglePath a b c).extend t) * deriv (trianglePath a b c).extend t)
@@ -843,7 +847,7 @@ After an affine change of variables `t = (k + s)/3`, the integral on the `k`-th
 sub-interval becomes `∫₀¹ f(v + s • Δ) * Δ ds`, where `v` is the starting
 vertex and `Δ` is the segment direction. -/
 
-private lemma triangleContour_seg1_integral_eq (a b c : ℂ) (f : ℂ → ℂ) :
+lemma triangleContour_seg1_integral_eq (a b c : ℂ) (f : ℂ → ℂ) :
     (∫ t in (0 : ℝ)..(1/3),
         f ((trianglePath a b c).extend t) * deriv (trianglePath a b c).extend t)
       = ∫ s in (0 : ℝ)..1, f (a + s • (b - a)) * (b - a) := by
@@ -863,7 +867,7 @@ private lemma triangleContour_seg1_integral_eq (a b c : ℂ) (f : ℂ → ℂ) :
   push_cast
   ring_nf
 
-private lemma triangleContour_seg2_integral_eq (a b c : ℂ) (f : ℂ → ℂ) :
+lemma triangleContour_seg2_integral_eq (a b c : ℂ) (f : ℂ → ℂ) :
     (∫ t in (1/3 : ℝ)..(2/3),
         f ((trianglePath a b c).extend t) * deriv (trianglePath a b c).extend t)
       = ∫ s in (0 : ℝ)..1, f (b + s • (c - b)) * (c - b) := by
@@ -881,7 +885,7 @@ private lemma triangleContour_seg2_integral_eq (a b c : ℂ) (f : ℂ → ℂ) :
   push_cast
   ring_nf
 
-private lemma triangleContour_seg3_integral_eq (a b c : ℂ) (f : ℂ → ℂ) :
+lemma triangleContour_seg3_integral_eq (a b c : ℂ) (f : ℂ → ℂ) :
     (∫ t in (2/3 : ℝ)..1,
         f ((trianglePath a b c).extend t) * deriv (trianglePath a b c).extend t)
       = ∫ s in (0 : ℝ)..1, f (c + s • (a - c)) * (a - c) := by
@@ -929,5 +933,7 @@ theorem contourIntegral_triangleContour_eq
       triangleContour_seg3_integral_eq a b c f, ← add_assoc]
 
 end LeanModularForms
+
+end
 
 end

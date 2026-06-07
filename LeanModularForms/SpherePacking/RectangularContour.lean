@@ -3,12 +3,14 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import LeanModularForms.ForMathlib.PaperPwC1Immersion
-import LeanModularForms.ForMathlib.NullHomologous
-import LeanModularForms.ForMathlib.CauchyPrincipalValue
-import LeanModularForms.SpherePacking.CauchyCorollaries
-import Mathlib.Analysis.Complex.CauchyIntegral
-import Mathlib.Analysis.Convex.Star
+module
+
+public import LeanModularForms.ForMathlib.PaperPwC1Immersion
+public import LeanModularForms.ForMathlib.NullHomologous
+public import LeanModularForms.ForMathlib.CauchyPrincipalValue
+public import LeanModularForms.SpherePacking.CauchyCorollaries
+public import Mathlib.Analysis.Complex.CauchyIntegral
+public import Mathlib.Analysis.Convex.Star
 
 /-!
 # Rectangular contours in the complex plane
@@ -35,6 +37,8 @@ clean upstream of the HW 3.3 framework. -/
 open Complex Set Filter Topology MeasureTheory
 open scoped Real Interval
 
+@[expose] public section
+
 noncomputable section
 
 namespace LeanModularForms
@@ -43,28 +47,28 @@ namespace LeanModularForms
 
 /-- The bottom side of the rectangle `[a, b] × [c, d]`, parameterised on all of
 `ℝ` by `t ↦ (a + 4t(b - a)) + c·I`. -/
-private def rectSeg1 (a b c : ℝ) : ℝ → ℂ := fun t =>
+def rectSeg1 (a b c : ℝ) : ℝ → ℂ := fun t =>
   ((a : ℂ) + 4 * t * (b - a)) + (c : ℂ) * I
 
 /-- The right side of the rectangle, parameterised by
 `t ↦ b + (c + 4(t - 1/4)(d - c))·I`. -/
-private def rectSeg2 (b c d : ℝ) : ℝ → ℂ := fun t =>
+def rectSeg2 (b c d : ℝ) : ℝ → ℂ := fun t =>
   (b : ℂ) + ((c : ℂ) + 4 * (t - 1/4) * (d - c)) * I
 
 /-- The top side of the rectangle, parameterised by
 `t ↦ (b - 4(t - 1/2)(b - a)) + d·I`. -/
-private def rectSeg3 (a b d : ℝ) : ℝ → ℂ := fun t =>
+def rectSeg3 (a b d : ℝ) : ℝ → ℂ := fun t =>
   ((b : ℂ) - 4 * (t - 1/2) * (b - a)) + (d : ℂ) * I
 
 /-- The left side of the rectangle, parameterised by
 `t ↦ a + (d - 4(t - 3/4)(d - c))·I`. -/
-private def rectSeg4 (a c d : ℝ) : ℝ → ℂ := fun t =>
+def rectSeg4 (a c d : ℝ) : ℝ → ℂ := fun t =>
   (a : ℂ) + ((d : ℂ) - 4 * (t - 3/4) * (d - c)) * I
 
 /-- The full parameterisation of the rectangular boundary on `[0, 1]`. Outside
 `[0, 1]` the value is whatever the last segment gives; this is fine because
 we only ever use the path via its restriction to `Icc 0 1`. -/
-private def rectangleFun (a b c d : ℝ) : ℝ → ℂ := fun t =>
+def rectangleFun (a b c d : ℝ) : ℝ → ℂ := fun t =>
   if t ≤ 1/4 then rectSeg1 a b c t
   else if t ≤ 1/2 then rectSeg2 b c d t
   else if t ≤ 3/4 then rectSeg3 a b d t
@@ -72,41 +76,41 @@ private def rectangleFun (a b c d : ℝ) : ℝ → ℂ := fun t =>
 
 /-! ### Junction values -/
 
-private lemma rectSeg1_at_zero (a b c : ℝ) :
+lemma rectSeg1_at_zero (a b c : ℝ) :
     rectSeg1 a b c 0 = (a : ℂ) + (c : ℂ) * I := by
   simp [rectSeg1]
 
-private lemma rectSeg1_at_quarter (a b c : ℝ) :
+lemma rectSeg1_at_quarter (a b c : ℝ) :
     rectSeg1 a b c (1/4) = (b : ℂ) + (c : ℂ) * I := by
   simp only [rectSeg1]
   push_cast; ring
 
-private lemma rectSeg2_at_quarter (b c d : ℝ) :
+lemma rectSeg2_at_quarter (b c d : ℝ) :
     rectSeg2 b c d (1/4) = (b : ℂ) + (c : ℂ) * I := by
   simp only [rectSeg2]
   push_cast; ring
 
-private lemma rectSeg2_at_half (b c d : ℝ) :
+lemma rectSeg2_at_half (b c d : ℝ) :
     rectSeg2 b c d (1/2) = (b : ℂ) + (d : ℂ) * I := by
   simp only [rectSeg2]
   push_cast; ring
 
-private lemma rectSeg3_at_half (a b d : ℝ) :
+lemma rectSeg3_at_half (a b d : ℝ) :
     rectSeg3 a b d (1/2) = (b : ℂ) + (d : ℂ) * I := by
   simp only [rectSeg3]
   push_cast; ring
 
-private lemma rectSeg3_at_three_quarters (a b d : ℝ) :
+lemma rectSeg3_at_three_quarters (a b d : ℝ) :
     rectSeg3 a b d (3/4) = (a : ℂ) + (d : ℂ) * I := by
   simp only [rectSeg3]
   push_cast; ring
 
-private lemma rectSeg4_at_three_quarters (a c d : ℝ) :
+lemma rectSeg4_at_three_quarters (a c d : ℝ) :
     rectSeg4 a c d (3/4) = (a : ℂ) + (d : ℂ) * I := by
   simp only [rectSeg4]
   push_cast; ring
 
-private lemma rectSeg4_at_one (a c d : ℝ) :
+lemma rectSeg4_at_one (a c d : ℝ) :
     rectSeg4 a c d 1 = (a : ℂ) + (c : ℂ) * I := by
   simp only [rectSeg4]
   push_cast; ring
@@ -127,56 +131,56 @@ lemma rectangleFun_closed (a b c d : ℝ) :
 
 /-! ### `ContDiff ℝ ⊤` for each segment -/
 
-private lemma rectSeg1_contDiff (a b c : ℝ) : ContDiff ℝ ⊤ (rectSeg1 a b c) :=
+lemma rectSeg1_contDiff (a b c : ℝ) : ContDiff ℝ ⊤ (rectSeg1 a b c) :=
   (contDiff_const.add
     ((contDiff_const.mul Complex.ofRealCLM.contDiff).mul contDiff_const)).add
       contDiff_const
 
-private lemma rectSeg2_contDiff (b c d : ℝ) : ContDiff ℝ ⊤ (rectSeg2 b c d) :=
+lemma rectSeg2_contDiff (b c d : ℝ) : ContDiff ℝ ⊤ (rectSeg2 b c d) :=
   contDiff_const.add
     ((contDiff_const.add
       ((contDiff_const.mul (Complex.ofRealCLM.contDiff.sub contDiff_const)).mul
         contDiff_const)).mul contDiff_const)
 
-private lemma rectSeg3_contDiff (a b d : ℝ) : ContDiff ℝ ⊤ (rectSeg3 a b d) :=
+lemma rectSeg3_contDiff (a b d : ℝ) : ContDiff ℝ ⊤ (rectSeg3 a b d) :=
   (contDiff_const.sub
     ((contDiff_const.mul (Complex.ofRealCLM.contDiff.sub contDiff_const)).mul
       contDiff_const)).add contDiff_const
 
-private lemma rectSeg4_contDiff (a c d : ℝ) : ContDiff ℝ ⊤ (rectSeg4 a c d) :=
+lemma rectSeg4_contDiff (a c d : ℝ) : ContDiff ℝ ⊤ (rectSeg4 a c d) :=
   contDiff_const.add
     ((contDiff_const.sub
       ((contDiff_const.mul (Complex.ofRealCLM.contDiff.sub contDiff_const)).mul
         contDiff_const)).mul contDiff_const)
 
-private lemma rectSeg1_continuous (a b c : ℝ) : Continuous (rectSeg1 a b c) :=
+lemma rectSeg1_continuous (a b c : ℝ) : Continuous (rectSeg1 a b c) :=
   (rectSeg1_contDiff a b c).continuous
 
-private lemma rectSeg2_continuous (b c d : ℝ) : Continuous (rectSeg2 b c d) :=
+lemma rectSeg2_continuous (b c d : ℝ) : Continuous (rectSeg2 b c d) :=
   (rectSeg2_contDiff b c d).continuous
 
-private lemma rectSeg3_continuous (a b d : ℝ) : Continuous (rectSeg3 a b d) :=
+lemma rectSeg3_continuous (a b d : ℝ) : Continuous (rectSeg3 a b d) :=
   (rectSeg3_contDiff a b d).continuous
 
-private lemma rectSeg4_continuous (a c d : ℝ) : Continuous (rectSeg4 a c d) :=
+lemma rectSeg4_continuous (a c d : ℝ) : Continuous (rectSeg4 a c d) :=
   (rectSeg4_contDiff a c d).continuous
 
 /-! ### Layered continuity of `rectangleFun` -/
 
-private def rectangleFun_inner34 (a b c d : ℝ) : ℝ → ℂ := fun t =>
+def rectangleFun_inner34 (a b c d : ℝ) : ℝ → ℂ := fun t =>
   if t ≤ 3/4 then rectSeg3 a b d t else rectSeg4 a c d t
 
-private lemma rectangleFun_inner34_continuous (a b c d : ℝ) :
+lemma rectangleFun_inner34_continuous (a b c d : ℝ) :
     Continuous (rectangleFun_inner34 a b c d) :=
   Continuous.if_le (rectSeg3_continuous a b d) (rectSeg4_continuous a c d)
     continuous_id continuous_const (fun t (ht : t = 3/4) => by
       subst ht
       rw [rectSeg3_at_three_quarters, rectSeg4_at_three_quarters])
 
-private def rectangleFun_inner234 (a b c d : ℝ) : ℝ → ℂ := fun t =>
+def rectangleFun_inner234 (a b c d : ℝ) : ℝ → ℂ := fun t =>
   if t ≤ 1/2 then rectSeg2 b c d t else rectangleFun_inner34 a b c d t
 
-private lemma rectangleFun_inner234_continuous (a b c d : ℝ) :
+lemma rectangleFun_inner234_continuous (a b c d : ℝ) :
     Continuous (rectangleFun_inner234 a b c d) := by
   apply Continuous.if_le (rectSeg2_continuous b c d)
     (rectangleFun_inner34_continuous a b c d) continuous_id continuous_const
@@ -187,7 +191,7 @@ private lemma rectangleFun_inner234_continuous (a b c d : ℝ) :
   simp only [show (1/2 : ℝ) ≤ 3/4 by norm_num, if_true,
     rectSeg2_at_half, rectSeg3_at_half]
 
-private lemma rectangleFun_eq_layered (a b c d : ℝ) (t : ℝ) :
+lemma rectangleFun_eq_layered (a b c d : ℝ) (t : ℝ) :
     rectangleFun a b c d t =
       (if t ≤ 1/4 then rectSeg1 a b c t else rectangleFun_inner234 a b c d t) := by
   unfold rectangleFun rectangleFun_inner234 rectangleFun_inner34
@@ -210,12 +214,12 @@ theorem rectangleFun_continuous (a b c d : ℝ) :
 
 /-! ### Eventual-equality lemmas to each segment -/
 
-private lemma rectangleFun_eventuallyEq_seg1 (a b c d : ℝ) {t : ℝ} (ht1 : t < 1/4) :
+lemma rectangleFun_eventuallyEq_seg1 (a b c d : ℝ) {t : ℝ} (ht1 : t < 1/4) :
     rectangleFun a b c d =ᶠ[𝓝 t] rectSeg1 a b c :=
   Filter.eventually_of_mem (Iio_mem_nhds ht1) fun s (hs : s < 1/4) => by
     simp only [rectangleFun, if_pos hs.le]
 
-private lemma rectangleFun_eventuallyEq_seg2 (a b c d : ℝ) {t : ℝ}
+lemma rectangleFun_eventuallyEq_seg2 (a b c d : ℝ) {t : ℝ}
     (ht1 : 1/4 < t) (ht2 : t < 1/2) :
     rectangleFun a b c d =ᶠ[𝓝 t] rectSeg2 b c d :=
   Filter.eventually_of_mem
@@ -225,7 +229,7 @@ private lemma rectangleFun_eventuallyEq_seg2 (a b c d : ℝ) {t : ℝ}
         show ¬s ≤ 1/4 from not_le.mpr hs1,
         show s ≤ 1/2 from le_of_lt hs2, if_true, if_false]
 
-private lemma rectangleFun_eventuallyEq_seg3 (a b c d : ℝ) {t : ℝ}
+lemma rectangleFun_eventuallyEq_seg3 (a b c d : ℝ) {t : ℝ}
     (ht2 : 1/2 < t) (ht3 : t < 3/4) :
     rectangleFun a b c d =ᶠ[𝓝 t] rectSeg3 a b d :=
   Filter.eventually_of_mem
@@ -236,7 +240,7 @@ private lemma rectangleFun_eventuallyEq_seg3 (a b c d : ℝ) {t : ℝ}
         show ¬s ≤ 1/2 from not_le.mpr hs2,
         show s ≤ 3/4 from le_of_lt hs3, if_true, if_false]
 
-private lemma rectangleFun_eventuallyEq_seg4 (a b c d : ℝ) {t : ℝ}
+lemma rectangleFun_eventuallyEq_seg4 (a b c d : ℝ) {t : ℝ}
     (ht3 : 3/4 < t) :
     rectangleFun a b c d =ᶠ[𝓝 t] rectSeg4 a c d :=
   Filter.eventually_of_mem (Ioi_mem_nhds ht3) fun s (hs3 : 3/4 < s) => by
@@ -274,7 +278,7 @@ lemma rectangleClosedPartition_eq :
     Finset.mem_singleton]
   tauto
 
-private lemma rectangleFun_differentiableAt_off (a b c d : ℝ) (t : ℝ)
+lemma rectangleFun_differentiableAt_off (a b c d : ℝ) (t : ℝ)
     (_ht : t ∈ Ioo (0 : ℝ) 1) (htp : t ∉ rectanglePartition) :
     DifferentiableAt ℝ (rectangleFun a b c d) t := by
   simp only [rectanglePartition, Finset.mem_insert, Finset.mem_singleton] at htp
@@ -293,7 +297,7 @@ private lemma rectangleFun_differentiableAt_off (a b c d : ℝ) (t : ℝ)
   exact ((rectSeg4_contDiff a c d).differentiable hT).differentiableAt.congr_of_eventuallyEq
     (rectangleFun_eventuallyEq_seg4 a b c d h3)
 
-private lemma rectangleFun_deriv_continuousAt_off (a b c d : ℝ) (t : ℝ)
+lemma rectangleFun_deriv_continuousAt_off (a b c d : ℝ) (t : ℝ)
     (_ht : t ∈ Ioo (0 : ℝ) 1) (htp : t ∉ rectanglePartition) :
     ContinuousAt (deriv (rectangleFun a b c d)) t := by
   simp only [rectanglePartition, Finset.mem_insert, Finset.mem_singleton] at htp
@@ -322,23 +326,23 @@ def rectanglePath (a b c d : ℝ) :
   source' := rectangleFun_at_zero a b c d
   target' := rectangleFun_at_one a b c d
 
-private lemma rectanglePath_extend_eq (a b c d : ℝ) (t : ℝ) (ht : t ∈ Icc (0 : ℝ) 1) :
+lemma rectanglePath_extend_eq (a b c d : ℝ) (t : ℝ) (ht : t ∈ Icc (0 : ℝ) 1) :
     (rectanglePath a b c d).extend t = rectangleFun a b c d t :=
   Path.extend_apply _ ht
 
-private lemma rectanglePath_extend_eventuallyEq (a b c d : ℝ) {t : ℝ}
+lemma rectanglePath_extend_eventuallyEq (a b c d : ℝ) {t : ℝ}
     (ht : t ∈ Ioo (0 : ℝ) 1) :
     (rectanglePath a b c d).extend =ᶠ[𝓝 t] rectangleFun a b c d :=
   Filter.eventually_of_mem (Ioo_mem_nhds ht.1 ht.2) fun s hs =>
     rectanglePath_extend_eq a b c d s (Ioo_subset_Icc_self hs)
 
-private lemma rectanglePath_differentiableAt_off (a b c d : ℝ) (t : ℝ)
+lemma rectanglePath_differentiableAt_off (a b c d : ℝ) (t : ℝ)
     (ht : t ∈ Ioo (0 : ℝ) 1) (htp : t ∉ rectanglePartition) :
     DifferentiableAt ℝ (rectanglePath a b c d).extend t :=
   (rectangleFun_differentiableAt_off a b c d t ht htp).congr_of_eventuallyEq
     (rectanglePath_extend_eventuallyEq a b c d ht)
 
-private lemma rectanglePath_deriv_continuousAt_off (a b c d : ℝ) (t : ℝ)
+lemma rectanglePath_deriv_continuousAt_off (a b c d : ℝ) (t : ℝ)
     (ht : t ∈ Ioo (0 : ℝ) 1) (htp : t ∉ rectanglePartition) :
     ContinuousAt (deriv (rectanglePath a b c d).extend) t :=
   (continuousAt_congr (rectanglePath_extend_eventuallyEq a b c d ht).deriv).mpr
@@ -364,7 +368,7 @@ The closed partition `{0, 1/4, 1/2, 3/4, 1}` has exactly four consecutive pairs:
 `(0, 1/4)`, `(1/4, 1/2)`, `(1/2, 3/4)`, `(3/4, 1)`. We case-split on these in
 order to provide `contDiffOn_pieces` and `derivWithin_ne_zero_pieces`. -/
 
-private lemma rectangleClosedPartition_consecutive_cases {p q : ℝ}
+lemma rectangleClosedPartition_consecutive_cases {p q : ℝ}
     (h : rectangleClosedPartition.IsConsecutive p q) :
     (p = 0 ∧ q = 1/4) ∨ (p = 1/4 ∧ q = 1/2) ∨ (p = 1/2 ∧ q = 3/4) ∨ (p = 3/4 ∧ q = 1) := by
   obtain ⟨hp, hq, hpq, hno⟩ := h
@@ -412,12 +416,12 @@ private lemma rectangleClosedPartition_consecutive_cases {p q : ℝ}
 On each of the four closed sub-intervals, `(rectanglePath a b c d).extend` agrees
 with the corresponding analytically-defined segment function. -/
 
-private lemma rectangleFun_eq_seg1_on_Icc (a b c d : ℝ) :
+lemma rectangleFun_eq_seg1_on_Icc (a b c d : ℝ) :
     EqOn (rectangleFun a b c d) (rectSeg1 a b c) (Icc 0 (1/4 : ℝ)) := by
   intro t ht
   simp only [rectangleFun, if_pos ht.2]
 
-private lemma rectangleFun_eq_seg2_on_Icc (a b c d : ℝ) :
+lemma rectangleFun_eq_seg2_on_Icc (a b c d : ℝ) :
     EqOn (rectangleFun a b c d) (rectSeg2 b c d) (Icc (1/4 : ℝ) (1/2)) := by
   intro t ht
   by_cases h_eq : t = 1/4
@@ -427,7 +431,7 @@ private lemma rectangleFun_eq_seg2_on_Icc (a b c d : ℝ) :
   · have ht1 : ¬ t ≤ 1/4 := not_le.mpr (lt_of_le_of_ne ht.1 (Ne.symm h_eq))
     simp only [rectangleFun, if_neg ht1, if_pos ht.2]
 
-private lemma rectangleFun_eq_seg3_on_Icc (a b c d : ℝ) :
+lemma rectangleFun_eq_seg3_on_Icc (a b c d : ℝ) :
     EqOn (rectangleFun a b c d) (rectSeg3 a b d) (Icc (1/2 : ℝ) (3/4)) := by
   intro t ht
   by_cases h_eq : t = 1/2
@@ -440,7 +444,7 @@ private lemma rectangleFun_eq_seg3_on_Icc (a b c d : ℝ) :
       (not_le.mp ht2))
     simp only [rectangleFun, if_neg ht1, if_neg ht2, if_pos ht.2]
 
-private lemma rectangleFun_eq_seg4_on_Icc (a b c d : ℝ) :
+lemma rectangleFun_eq_seg4_on_Icc (a b c d : ℝ) :
     EqOn (rectangleFun a b c d) (rectSeg4 a c d) (Icc (3/4 : ℝ) 1) := by
   intro t ht
   by_cases h_eq : t = 3/4
@@ -455,24 +459,24 @@ private lemma rectangleFun_eq_seg4_on_Icc (a b c d : ℝ) :
       (lt_of_le_of_ne ht.1 (Ne.symm h_eq)))
     simp only [rectangleFun, if_neg ht1, if_neg ht2, if_neg ht3]
 
-private lemma rectanglePath_extend_eq_seg1_on_Icc (a b c d : ℝ) :
+lemma rectanglePath_extend_eq_seg1_on_Icc (a b c d : ℝ) :
     EqOn (rectanglePath a b c d).extend (rectSeg1 a b c) (Icc 0 (1/4 : ℝ)) := fun t ht => by
   have hIcc : t ∈ Icc (0 : ℝ) 1 := ⟨ht.1, by linarith [ht.2]⟩
   rw [rectanglePath_extend_eq a b c d t hIcc, rectangleFun_eq_seg1_on_Icc a b c d ht]
 
-private lemma rectanglePath_extend_eq_seg2_on_Icc (a b c d : ℝ) :
+lemma rectanglePath_extend_eq_seg2_on_Icc (a b c d : ℝ) :
     EqOn (rectanglePath a b c d).extend (rectSeg2 b c d) (Icc (1/4 : ℝ) (1/2)) :=
   fun t ht => by
     have hIcc : t ∈ Icc (0 : ℝ) 1 := ⟨by linarith [ht.1], by linarith [ht.2]⟩
     rw [rectanglePath_extend_eq a b c d t hIcc, rectangleFun_eq_seg2_on_Icc a b c d ht]
 
-private lemma rectanglePath_extend_eq_seg3_on_Icc (a b c d : ℝ) :
+lemma rectanglePath_extend_eq_seg3_on_Icc (a b c d : ℝ) :
     EqOn (rectanglePath a b c d).extend (rectSeg3 a b d) (Icc (1/2 : ℝ) (3/4)) :=
   fun t ht => by
     have hIcc : t ∈ Icc (0 : ℝ) 1 := ⟨by linarith [ht.1], by linarith [ht.2]⟩
     rw [rectanglePath_extend_eq a b c d t hIcc, rectangleFun_eq_seg3_on_Icc a b c d ht]
 
-private lemma rectanglePath_extend_eq_seg4_on_Icc (a b c d : ℝ) :
+lemma rectanglePath_extend_eq_seg4_on_Icc (a b c d : ℝ) :
     EqOn (rectanglePath a b c d).extend (rectSeg4 a c d) (Icc (3/4 : ℝ) 1) :=
   fun t ht => by
     have hIcc : t ∈ Icc (0 : ℝ) 1 := ⟨by linarith [ht.1], ht.2⟩
@@ -483,7 +487,7 @@ private lemma rectanglePath_extend_eq_seg4_on_Icc (a b c d : ℝ) :
 Each segment is affine-linear in `t`, so its derivative is the constant
 "velocity" complex number. -/
 
-private lemma rectSeg1_hasDerivAt (a b c : ℝ) (t : ℝ) :
+lemma rectSeg1_hasDerivAt (a b c : ℝ) (t : ℝ) :
     HasDerivAt (rectSeg1 a b c) (4 * ((b : ℂ) - a)) t := by
   have h1 : HasDerivAt (fun s : ℝ => ((s : ℂ))) (1 : ℂ) t :=
     Complex.ofRealCLM.hasDerivAt
@@ -501,11 +505,11 @@ private lemma rectSeg1_hasDerivAt (a b c : ℝ) (t : ℝ) :
     simpa using this
   exact h_outer
 
-private lemma rectSeg1_deriv (a b c : ℝ) (t : ℝ) :
+lemma rectSeg1_deriv (a b c : ℝ) (t : ℝ) :
     deriv (rectSeg1 a b c) t = 4 * ((b : ℂ) - a) :=
   (rectSeg1_hasDerivAt a b c t).deriv
 
-private lemma rectSeg2_hasDerivAt (b c d : ℝ) (t : ℝ) :
+lemma rectSeg2_hasDerivAt (b c d : ℝ) (t : ℝ) :
     HasDerivAt (rectSeg2 b c d) (4 * ((d : ℂ) - c) * I) t := by
   have h1 : HasDerivAt (fun s : ℝ => ((s : ℂ))) (1 : ℂ) t :=
     Complex.ofRealCLM.hasDerivAt
@@ -528,11 +532,11 @@ private lemma rectSeg2_hasDerivAt (b c d : ℝ) (t : ℝ) :
     convert h using 1; ring
   exact h_outer
 
-private lemma rectSeg2_deriv (b c d : ℝ) (t : ℝ) :
+lemma rectSeg2_deriv (b c d : ℝ) (t : ℝ) :
     deriv (rectSeg2 b c d) t = 4 * ((d : ℂ) - c) * I :=
   (rectSeg2_hasDerivAt b c d t).deriv
 
-private lemma rectSeg3_hasDerivAt (a b d : ℝ) (t : ℝ) :
+lemma rectSeg3_hasDerivAt (a b d : ℝ) (t : ℝ) :
     HasDerivAt (rectSeg3 a b d) (-(4 * ((b : ℂ) - a))) t := by
   have h1 : HasDerivAt (fun s : ℝ => ((s : ℂ))) (1 : ℂ) t :=
     Complex.ofRealCLM.hasDerivAt
@@ -552,11 +556,11 @@ private lemma rectSeg3_hasDerivAt (a b d : ℝ) (t : ℝ) :
     simpa using this
   exact h_outer
 
-private lemma rectSeg3_deriv (a b d : ℝ) (t : ℝ) :
+lemma rectSeg3_deriv (a b d : ℝ) (t : ℝ) :
     deriv (rectSeg3 a b d) t = -(4 * ((b : ℂ) - a)) :=
   (rectSeg3_hasDerivAt a b d t).deriv
 
-private lemma rectSeg4_hasDerivAt (a c d : ℝ) (t : ℝ) :
+lemma rectSeg4_hasDerivAt (a c d : ℝ) (t : ℝ) :
     HasDerivAt (rectSeg4 a c d) (-(4 * ((d : ℂ) - c)) * I) t := by
   have h1 : HasDerivAt (fun s : ℝ => ((s : ℂ))) (1 : ℂ) t :=
     Complex.ofRealCLM.hasDerivAt
@@ -579,28 +583,28 @@ private lemma rectSeg4_hasDerivAt (a c d : ℝ) (t : ℝ) :
     convert h using 1; ring
   exact h_outer
 
-private lemma rectSeg4_deriv (a c d : ℝ) (t : ℝ) :
+lemma rectSeg4_deriv (a c d : ℝ) (t : ℝ) :
     deriv (rectSeg4 a c d) t = -(4 * ((d : ℂ) - c)) * I :=
   (rectSeg4_hasDerivAt a c d t).deriv
 
 /-! ### `ContDiffOn ℝ 1` of `(rectanglePath a b c d).extend` on each closed piece -/
 
-private lemma rectanglePath_extend_contDiffOn_seg1 (a b c d : ℝ) :
+lemma rectanglePath_extend_contDiffOn_seg1 (a b c d : ℝ) :
     ContDiffOn ℝ 1 (rectanglePath a b c d).extend (Icc 0 (1/4 : ℝ)) :=
   (((rectSeg1_contDiff a b c).of_le le_top).contDiffOn).congr fun _ ht =>
     rectanglePath_extend_eq_seg1_on_Icc a b c d ht
 
-private lemma rectanglePath_extend_contDiffOn_seg2 (a b c d : ℝ) :
+lemma rectanglePath_extend_contDiffOn_seg2 (a b c d : ℝ) :
     ContDiffOn ℝ 1 (rectanglePath a b c d).extend (Icc (1/4 : ℝ) (1/2)) :=
   (((rectSeg2_contDiff b c d).of_le le_top).contDiffOn).congr fun _ ht =>
     rectanglePath_extend_eq_seg2_on_Icc a b c d ht
 
-private lemma rectanglePath_extend_contDiffOn_seg3 (a b c d : ℝ) :
+lemma rectanglePath_extend_contDiffOn_seg3 (a b c d : ℝ) :
     ContDiffOn ℝ 1 (rectanglePath a b c d).extend (Icc (1/2 : ℝ) (3/4)) :=
   (((rectSeg3_contDiff a b d).of_le le_top).contDiffOn).congr fun _ ht =>
     rectanglePath_extend_eq_seg3_on_Icc a b c d ht
 
-private lemma rectanglePath_extend_contDiffOn_seg4 (a b c d : ℝ) :
+lemma rectanglePath_extend_contDiffOn_seg4 (a b c d : ℝ) :
     ContDiffOn ℝ 1 (rectanglePath a b c d).extend (Icc (3/4 : ℝ) 1) :=
   (((rectSeg4_contDiff a c d).of_le le_top).contDiffOn).congr fun _ ht =>
     rectanglePath_extend_eq_seg4_on_Icc a b c d ht
@@ -611,27 +615,27 @@ We compute the within-derivative of `(rectanglePath a b c d).extend` on each
 closed sub-interval. Each is the constant complex "velocity" of the
 corresponding side: `4(b-a)`, `4i(d-c)`, `-4(b-a)`, `-4i(d-c)`. -/
 
-private lemma rectanglePath_extend_eventuallyEq_seg1_nhdsWithin (a b c d : ℝ) {t : ℝ}
+lemma rectanglePath_extend_eventuallyEq_seg1_nhdsWithin (a b c d : ℝ) {t : ℝ}
     (_ht : t ∈ Icc (0 : ℝ) (1/4)) :
     (rectanglePath a b c d).extend =ᶠ[𝓝[Icc (0 : ℝ) (1/4)] t] rectSeg1 a b c :=
   Filter.eventually_of_mem self_mem_nhdsWithin (rectanglePath_extend_eq_seg1_on_Icc a b c d)
 
-private lemma rectanglePath_extend_eventuallyEq_seg2_nhdsWithin (a b c d : ℝ) {t : ℝ}
+lemma rectanglePath_extend_eventuallyEq_seg2_nhdsWithin (a b c d : ℝ) {t : ℝ}
     (_ht : t ∈ Icc (1/4 : ℝ) (1/2)) :
     (rectanglePath a b c d).extend =ᶠ[𝓝[Icc (1/4 : ℝ) (1/2)] t] rectSeg2 b c d :=
   Filter.eventually_of_mem self_mem_nhdsWithin (rectanglePath_extend_eq_seg2_on_Icc a b c d)
 
-private lemma rectanglePath_extend_eventuallyEq_seg3_nhdsWithin (a b c d : ℝ) {t : ℝ}
+lemma rectanglePath_extend_eventuallyEq_seg3_nhdsWithin (a b c d : ℝ) {t : ℝ}
     (_ht : t ∈ Icc (1/2 : ℝ) (3/4)) :
     (rectanglePath a b c d).extend =ᶠ[𝓝[Icc (1/2 : ℝ) (3/4)] t] rectSeg3 a b d :=
   Filter.eventually_of_mem self_mem_nhdsWithin (rectanglePath_extend_eq_seg3_on_Icc a b c d)
 
-private lemma rectanglePath_extend_eventuallyEq_seg4_nhdsWithin (a b c d : ℝ) {t : ℝ}
+lemma rectanglePath_extend_eventuallyEq_seg4_nhdsWithin (a b c d : ℝ) {t : ℝ}
     (_ht : t ∈ Icc (3/4 : ℝ) 1) :
     (rectanglePath a b c d).extend =ᶠ[𝓝[Icc (3/4 : ℝ) 1] t] rectSeg4 a c d :=
   Filter.eventually_of_mem self_mem_nhdsWithin (rectanglePath_extend_eq_seg4_on_Icc a b c d)
 
-private lemma rectanglePath_extend_derivWithin_seg1 (a b c d : ℝ) {t : ℝ}
+lemma rectanglePath_extend_derivWithin_seg1 (a b c d : ℝ) {t : ℝ}
     (ht : t ∈ Icc (0 : ℝ) (1/4)) :
     derivWithin (rectanglePath a b c d).extend (Icc (0 : ℝ) (1/4)) t = 4 * ((b : ℂ) - a) := by
   have h_seg : HasDerivWithinAt (rectSeg1 a b c) (4 * ((b : ℂ) - a)) (Icc (0 : ℝ) (1/4)) t :=
@@ -645,7 +649,7 @@ private lemma rectanglePath_extend_derivWithin_seg1 (a b c d : ℝ) {t : ℝ}
     (uniqueDiffOn_Icc (by norm_num : (0 : ℝ) < 1/4)) t ht
   exact h_path.derivWithin hUDiff
 
-private lemma rectanglePath_extend_derivWithin_seg2 (a b c d : ℝ) {t : ℝ}
+lemma rectanglePath_extend_derivWithin_seg2 (a b c d : ℝ) {t : ℝ}
     (ht : t ∈ Icc (1/4 : ℝ) (1/2)) :
     derivWithin (rectanglePath a b c d).extend (Icc (1/4 : ℝ) (1/2)) t =
       4 * ((d : ℂ) - c) * I := by
@@ -661,7 +665,7 @@ private lemma rectanglePath_extend_derivWithin_seg2 (a b c d : ℝ) {t : ℝ}
     (uniqueDiffOn_Icc (by norm_num : (1/4 : ℝ) < 1/2)) t ht
   exact h_path.derivWithin hUDiff
 
-private lemma rectanglePath_extend_derivWithin_seg3 (a b c d : ℝ) {t : ℝ}
+lemma rectanglePath_extend_derivWithin_seg3 (a b c d : ℝ) {t : ℝ}
     (ht : t ∈ Icc (1/2 : ℝ) (3/4)) :
     derivWithin (rectanglePath a b c d).extend (Icc (1/2 : ℝ) (3/4)) t =
       -(4 * ((b : ℂ) - a)) := by
@@ -677,7 +681,7 @@ private lemma rectanglePath_extend_derivWithin_seg3 (a b c d : ℝ) {t : ℝ}
     (uniqueDiffOn_Icc (by norm_num : (1/2 : ℝ) < 3/4)) t ht
   exact h_path.derivWithin hUDiff
 
-private lemma rectanglePath_extend_derivWithin_seg4 (a b c d : ℝ) {t : ℝ}
+lemma rectanglePath_extend_derivWithin_seg4 (a b c d : ℝ) {t : ℝ}
     (ht : t ∈ Icc (3/4 : ℝ) 1) :
     derivWithin (rectanglePath a b c d).extend (Icc (3/4 : ℝ) 1) t =
       -(4 * ((d : ℂ) - c)) * I := by
@@ -742,7 +746,7 @@ noncomputable def rectangleContour
 
 /-- Auxiliary: every continuous `ℝ`-linear functional `f : ℂ →L[ℝ] ℝ` has the
 form `f w = Re (α * w)` for `α = ⟨f 1, -(f I)⟩ : ℂ`. -/
-private lemma realCLM_eq_re_mul {f : ℂ →L[ℝ] ℝ} (w : ℂ) :
+lemma realCLM_eq_re_mul {f : ℂ →L[ℝ] ℝ} (w : ℂ) :
     f w = ((Complex.mk (f 1) (-(f I))) * w).re := by
   have hf_decomp : f w = w.re * f 1 + w.im * f I := by
     have h_decomp : w = (w.re : ℝ) • (1 : ℂ) + (w.im : ℝ) • Complex.I := by
@@ -755,7 +759,7 @@ private lemma realCLM_eq_re_mul {f : ℂ →L[ℝ] ℝ} (w : ℂ) :
 
 /-- Auxiliary: if `f z < f w` for some `w`, the complex direction
 `⟨f 1, -(f I)⟩` is nonzero. -/
-private lemma realCLM_dir_ne_zero {f : ℂ →L[ℝ] ℝ} {z w : ℂ} (h : f z < f w) :
+lemma realCLM_dir_ne_zero {f : ℂ →L[ℝ] ℝ} {z w : ℂ} (h : f z < f w) :
     Complex.mk (f 1) (-(f I)) ≠ 0 := by
   intro hα
   rw [Complex.ext_iff] at hα
@@ -769,7 +773,7 @@ private lemma realCLM_dir_ne_zero {f : ℂ →L[ℝ] ℝ} {z w : ℂ} (h : f z <
 
 /-- Auxiliary: on the open half-plane where `Re(α * (u - z)) > 0`, the function
 `u ↦ Complex.log(α * (u - z))` is a holomorphic primitive of `u ↦ (u - z)⁻¹`. -/
-private lemma hasDerivAt_log_mul_sub_const {α z : ℂ} (hα : α ≠ 0) {w : ℂ}
+lemma hasDerivAt_log_mul_sub_const {α z : ℂ} (hα : α ≠ 0) {w : ℂ}
     (h : 0 < (α * (w - z)).re) :
     HasDerivAt (fun u => Complex.log (α * (u - z))) (w - z)⁻¹ w := by
   have hα_wz_slit : α * (w - z) ∈ slitPlane := Or.inl h
@@ -980,7 +984,7 @@ The contour integral along `rectangleContour a b c d` decomposes as
 `(bottom) + (right) + (top) + (left)`, each parameterised over `[0, 1]`. -/
 
 /-- `HasDerivAt` of `(rectanglePath a b c d).extend` on the open first piece. -/
-private lemma rectanglePath_extend_hasDerivAt_seg1 (a b c d : ℝ) {t : ℝ}
+lemma rectanglePath_extend_hasDerivAt_seg1 (a b c d : ℝ) {t : ℝ}
     (ht : t ∈ Ioo (0 : ℝ) (1/4)) :
     HasDerivAt (rectanglePath a b c d).extend (4 * ((b : ℂ) - a)) t :=
   (rectSeg1_hasDerivAt a b c t).congr_of_eventuallyEq
@@ -988,7 +992,7 @@ private lemma rectanglePath_extend_hasDerivAt_seg1 (a b c d : ℝ) {t : ℝ}
       rectanglePath_extend_eq_seg1_on_Icc a b c d (Ioo_subset_Icc_self hs))
 
 /-- `HasDerivAt` of `(rectanglePath a b c d).extend` on the open second piece. -/
-private lemma rectanglePath_extend_hasDerivAt_seg2 (a b c d : ℝ) {t : ℝ}
+lemma rectanglePath_extend_hasDerivAt_seg2 (a b c d : ℝ) {t : ℝ}
     (ht : t ∈ Ioo (1/4 : ℝ) (1/2)) :
     HasDerivAt (rectanglePath a b c d).extend (4 * ((d : ℂ) - c) * I) t :=
   (rectSeg2_hasDerivAt b c d t).congr_of_eventuallyEq
@@ -996,7 +1000,7 @@ private lemma rectanglePath_extend_hasDerivAt_seg2 (a b c d : ℝ) {t : ℝ}
       rectanglePath_extend_eq_seg2_on_Icc a b c d (Ioo_subset_Icc_self hs))
 
 /-- `HasDerivAt` of `(rectanglePath a b c d).extend` on the open third piece. -/
-private lemma rectanglePath_extend_hasDerivAt_seg3 (a b c d : ℝ) {t : ℝ}
+lemma rectanglePath_extend_hasDerivAt_seg3 (a b c d : ℝ) {t : ℝ}
     (ht : t ∈ Ioo (1/2 : ℝ) (3/4)) :
     HasDerivAt (rectanglePath a b c d).extend (-(4 * ((b : ℂ) - a))) t :=
   (rectSeg3_hasDerivAt a b d t).congr_of_eventuallyEq
@@ -1004,7 +1008,7 @@ private lemma rectanglePath_extend_hasDerivAt_seg3 (a b c d : ℝ) {t : ℝ}
       rectanglePath_extend_eq_seg3_on_Icc a b c d (Ioo_subset_Icc_self hs))
 
 /-- `HasDerivAt` of `(rectanglePath a b c d).extend` on the open fourth piece. -/
-private lemma rectanglePath_extend_hasDerivAt_seg4 (a b c d : ℝ) {t : ℝ}
+lemma rectanglePath_extend_hasDerivAt_seg4 (a b c d : ℝ) {t : ℝ}
     (ht : t ∈ Ioo (3/4 : ℝ) 1) :
     HasDerivAt (rectanglePath a b c d).extend (-(4 * ((d : ℂ) - c)) * I) t :=
   (rectSeg4_hasDerivAt a c d t).congr_of_eventuallyEq
@@ -1012,32 +1016,32 @@ private lemma rectanglePath_extend_hasDerivAt_seg4 (a b c d : ℝ) {t : ℝ}
       rectanglePath_extend_eq_seg4_on_Icc a b c d (Ioo_subset_Icc_self hs))
 
 /-- The derivative of `(rectanglePath a b c d).extend` on the open first piece. -/
-private lemma rectanglePath_extend_deriv_seg1 (a b c d : ℝ) {t : ℝ}
+lemma rectanglePath_extend_deriv_seg1 (a b c d : ℝ) {t : ℝ}
     (ht : t ∈ Ioo (0 : ℝ) (1/4)) :
     deriv (rectanglePath a b c d).extend t = 4 * ((b : ℂ) - a) :=
   (rectanglePath_extend_hasDerivAt_seg1 a b c d ht).deriv
 
 /-- The derivative of `(rectanglePath a b c d).extend` on the open second piece. -/
-private lemma rectanglePath_extend_deriv_seg2 (a b c d : ℝ) {t : ℝ}
+lemma rectanglePath_extend_deriv_seg2 (a b c d : ℝ) {t : ℝ}
     (ht : t ∈ Ioo (1/4 : ℝ) (1/2)) :
     deriv (rectanglePath a b c d).extend t = 4 * ((d : ℂ) - c) * I :=
   (rectanglePath_extend_hasDerivAt_seg2 a b c d ht).deriv
 
 /-- The derivative of `(rectanglePath a b c d).extend` on the open third piece. -/
-private lemma rectanglePath_extend_deriv_seg3 (a b c d : ℝ) {t : ℝ}
+lemma rectanglePath_extend_deriv_seg3 (a b c d : ℝ) {t : ℝ}
     (ht : t ∈ Ioo (1/2 : ℝ) (3/4)) :
     deriv (rectanglePath a b c d).extend t = -(4 * ((b : ℂ) - a)) :=
   (rectanglePath_extend_hasDerivAt_seg3 a b c d ht).deriv
 
 /-- The derivative of `(rectanglePath a b c d).extend` on the open fourth piece. -/
-private lemma rectanglePath_extend_deriv_seg4 (a b c d : ℝ) {t : ℝ}
+lemma rectanglePath_extend_deriv_seg4 (a b c d : ℝ) {t : ℝ}
     (ht : t ∈ Ioo (3/4 : ℝ) 1) :
     deriv (rectanglePath a b c d).extend t = -(4 * ((d : ℂ) - c)) * I :=
   (rectanglePath_extend_hasDerivAt_seg4 a b c d ht).deriv
 
 /-- On the open first piece `Ioo 0 (1/4)`, the contour integrand of `f` along
 `rectangleContour` equals `f (rectSeg1 a b c t) * (4 * (b - a))`. -/
-private lemma rectangleContour_integrand_seg1_ae (a b c d : ℝ) (f : ℂ → ℂ) :
+lemma rectangleContour_integrand_seg1_ae (a b c d : ℝ) (f : ℂ → ℂ) :
     ∀ᵐ t, t ∈ Ι (0 : ℝ) (1/4) →
       f ((rectanglePath a b c d).extend t) * deriv (rectanglePath a b c d).extend t
         = f (rectSeg1 a b c t) * (4 * ((b : ℂ) - a)) := by
@@ -1049,7 +1053,7 @@ private lemma rectangleContour_integrand_seg1_ae (a b c d : ℝ) (f : ℂ → �
 
 /-- On the open second piece `Ioo (1/4) (1/2)`, the contour integrand of `f` along
 `rectangleContour` equals `f (rectSeg2 b c d t) * (4 * (d - c) * I)`. -/
-private lemma rectangleContour_integrand_seg2_ae (a b c d : ℝ) (f : ℂ → ℂ) :
+lemma rectangleContour_integrand_seg2_ae (a b c d : ℝ) (f : ℂ → ℂ) :
     ∀ᵐ t, t ∈ Ι (1/4 : ℝ) (1/2) →
       f ((rectanglePath a b c d).extend t) * deriv (rectanglePath a b c d).extend t
         = f (rectSeg2 b c d t) * (4 * ((d : ℂ) - c) * I) := by
@@ -1061,7 +1065,7 @@ private lemma rectangleContour_integrand_seg2_ae (a b c d : ℝ) (f : ℂ → �
 
 /-- On the open third piece `Ioo (1/2) (3/4)`, the contour integrand of `f` along
 `rectangleContour` equals `f (rectSeg3 a b d t) * (-(4 * (b - a)))`. -/
-private lemma rectangleContour_integrand_seg3_ae (a b c d : ℝ) (f : ℂ → ℂ) :
+lemma rectangleContour_integrand_seg3_ae (a b c d : ℝ) (f : ℂ → ℂ) :
     ∀ᵐ t, t ∈ Ι (1/2 : ℝ) (3/4) →
       f ((rectanglePath a b c d).extend t) * deriv (rectanglePath a b c d).extend t
         = f (rectSeg3 a b d t) * (-(4 * ((b : ℂ) - a))) := by
@@ -1073,7 +1077,7 @@ private lemma rectangleContour_integrand_seg3_ae (a b c d : ℝ) (f : ℂ → �
 
 /-- On the open fourth piece `Ioo (3/4) 1`, the contour integrand of `f` along
 `rectangleContour` equals `f (rectSeg4 a c d t) * (-(4 * (d - c)) * I)`. -/
-private lemma rectangleContour_integrand_seg4_ae (a b c d : ℝ) (f : ℂ → ℂ) :
+lemma rectangleContour_integrand_seg4_ae (a b c d : ℝ) (f : ℂ → ℂ) :
     ∀ᵐ t, t ∈ Ι (3/4 : ℝ) 1 →
       f ((rectanglePath a b c d).extend t) * deriv (rectanglePath a b c d).extend t
         = f (rectSeg4 a c d t) * (-(4 * ((d : ℂ) - c)) * I) := by
@@ -1091,7 +1095,7 @@ velocity) is continuous on the corresponding closed sub-interval. -/
 
 /-- The image of `rectSeg1 a b c` on `Icc 0 (1/4)` lies inside the image of the
 rectangle path on `Icc 0 1`. -/
-private lemma rectSeg1_image_subset_path_image (a b c d : ℝ) :
+lemma rectSeg1_image_subset_path_image (a b c d : ℝ) :
     rectSeg1 a b c '' Icc (0 : ℝ) (1/4)
       ⊆ (rectanglePath a b c d).extend '' Icc (0 : ℝ) 1 := by
   rintro _ ⟨t, ht, rfl⟩
@@ -1100,7 +1104,7 @@ private lemma rectSeg1_image_subset_path_image (a b c d : ℝ) :
 
 /-- The image of `rectSeg2 b c d` on `Icc (1/4) (1/2)` lies inside the image of the
 rectangle path on `Icc 0 1`. -/
-private lemma rectSeg2_image_subset_path_image (a b c d : ℝ) :
+lemma rectSeg2_image_subset_path_image (a b c d : ℝ) :
     rectSeg2 b c d '' Icc (1/4 : ℝ) (1/2)
       ⊆ (rectanglePath a b c d).extend '' Icc (0 : ℝ) 1 := by
   rintro _ ⟨t, ht, rfl⟩
@@ -1109,7 +1113,7 @@ private lemma rectSeg2_image_subset_path_image (a b c d : ℝ) :
 
 /-- The image of `rectSeg3 a b d` on `Icc (1/2) (3/4)` lies inside the image of the
 rectangle path on `Icc 0 1`. -/
-private lemma rectSeg3_image_subset_path_image (a b c d : ℝ) :
+lemma rectSeg3_image_subset_path_image (a b c d : ℝ) :
     rectSeg3 a b d '' Icc (1/2 : ℝ) (3/4)
       ⊆ (rectanglePath a b c d).extend '' Icc (0 : ℝ) 1 := by
   rintro _ ⟨t, ht, rfl⟩
@@ -1118,7 +1122,7 @@ private lemma rectSeg3_image_subset_path_image (a b c d : ℝ) :
 
 /-- The image of `rectSeg4 a c d` on `Icc (3/4) 1` lies inside the image of the
 rectangle path on `Icc 0 1`. -/
-private lemma rectSeg4_image_subset_path_image (a b c d : ℝ) :
+lemma rectSeg4_image_subset_path_image (a b c d : ℝ) :
     rectSeg4 a c d '' Icc (3/4 : ℝ) 1
       ⊆ (rectanglePath a b c d).extend '' Icc (0 : ℝ) 1 := by
   rintro _ ⟨t, ht, rfl⟩
@@ -1127,7 +1131,7 @@ private lemma rectSeg4_image_subset_path_image (a b c d : ℝ) :
 
 /-- If `f` is continuous on the image of the rectangle path on `Icc 0 1`, then
 `fun t ↦ f (rectSeg1 a b c t) * (4 * (b - a))` is continuous on `Icc 0 (1/4)`. -/
-private lemma rectSeg1_integrand_continuousOn (a b c d : ℝ) {f : ℂ → ℂ}
+lemma rectSeg1_integrand_continuousOn (a b c d : ℝ) {f : ℂ → ℂ}
     (hf : ContinuousOn f ((rectanglePath a b c d).extend '' Icc (0 : ℝ) 1)) :
     ContinuousOn (fun t : ℝ => f (rectSeg1 a b c t) * (4 * ((b : ℂ) - a)))
       (Icc (0 : ℝ) (1/4)) :=
@@ -1137,7 +1141,7 @@ private lemma rectSeg1_integrand_continuousOn (a b c d : ℝ) {f : ℂ → ℂ}
 
 /-- If `f` is continuous on the image of the rectangle path on `Icc 0 1`, then
 `fun t ↦ f (rectSeg2 b c d t) * (4 * (d - c) * I)` is continuous on `Icc (1/4) (1/2)`. -/
-private lemma rectSeg2_integrand_continuousOn (a b c d : ℝ) {f : ℂ → ℂ}
+lemma rectSeg2_integrand_continuousOn (a b c d : ℝ) {f : ℂ → ℂ}
     (hf : ContinuousOn f ((rectanglePath a b c d).extend '' Icc (0 : ℝ) 1)) :
     ContinuousOn (fun t : ℝ => f (rectSeg2 b c d t) * (4 * ((d : ℂ) - c) * I))
       (Icc (1/4 : ℝ) (1/2)) :=
@@ -1147,7 +1151,7 @@ private lemma rectSeg2_integrand_continuousOn (a b c d : ℝ) {f : ℂ → ℂ}
 
 /-- If `f` is continuous on the image of the rectangle path on `Icc 0 1`, then
 `fun t ↦ f (rectSeg3 a b d t) * (-(4 * (b - a)))` is continuous on `Icc (1/2) (3/4)`. -/
-private lemma rectSeg3_integrand_continuousOn (a b c d : ℝ) {f : ℂ → ℂ}
+lemma rectSeg3_integrand_continuousOn (a b c d : ℝ) {f : ℂ → ℂ}
     (hf : ContinuousOn f ((rectanglePath a b c d).extend '' Icc (0 : ℝ) 1)) :
     ContinuousOn (fun t : ℝ => f (rectSeg3 a b d t) * (-(4 * ((b : ℂ) - a))))
       (Icc (1/2 : ℝ) (3/4)) :=
@@ -1157,7 +1161,7 @@ private lemma rectSeg3_integrand_continuousOn (a b c d : ℝ) {f : ℂ → ℂ}
 
 /-- If `f` is continuous on the image of the rectangle path on `Icc 0 1`, then
 `fun t ↦ f (rectSeg4 a c d t) * (-(4 * (d - c)) * I)` is continuous on `Icc (3/4) 1`. -/
-private lemma rectSeg4_integrand_continuousOn (a b c d : ℝ) {f : ℂ → ℂ}
+lemma rectSeg4_integrand_continuousOn (a b c d : ℝ) {f : ℂ → ℂ}
     (hf : ContinuousOn f ((rectanglePath a b c d).extend '' Icc (0 : ℝ) 1)) :
     ContinuousOn (fun t : ℝ => f (rectSeg4 a c d t) * (-(4 * ((d : ℂ) - c)) * I))
       (Icc (3/4 : ℝ) 1) :=
@@ -1167,7 +1171,7 @@ private lemma rectSeg4_integrand_continuousOn (a b c d : ℝ) {f : ℂ → ℂ}
 
 /-! ### Integrability of the original integrand on each sub-interval -/
 
-private lemma rectangleContour_integrand_intervalIntegrable_seg1 (a b c d : ℝ) {f : ℂ → ℂ}
+lemma rectangleContour_integrand_intervalIntegrable_seg1 (a b c d : ℝ) {f : ℂ → ℂ}
     (hf : ContinuousOn f ((rectanglePath a b c d).extend '' Icc (0 : ℝ) 1)) :
     IntervalIntegrable
       (fun t => f ((rectanglePath a b c d).extend t) * deriv (rectanglePath a b c d).extend t)
@@ -1183,7 +1187,7 @@ private lemma rectangleContour_integrand_intervalIntegrable_seg1 (a b c d : ℝ)
     ((ae_restrict_iff' measurableSet_uIoc).mpr (rectangleContour_integrand_seg1_ae a b c d f))]
   exact hg_int
 
-private lemma rectangleContour_integrand_intervalIntegrable_seg2 (a b c d : ℝ) {f : ℂ → ℂ}
+lemma rectangleContour_integrand_intervalIntegrable_seg2 (a b c d : ℝ) {f : ℂ → ℂ}
     (hf : ContinuousOn f ((rectanglePath a b c d).extend '' Icc (0 : ℝ) 1)) :
     IntervalIntegrable
       (fun t => f ((rectanglePath a b c d).extend t) * deriv (rectanglePath a b c d).extend t)
@@ -1199,7 +1203,7 @@ private lemma rectangleContour_integrand_intervalIntegrable_seg2 (a b c d : ℝ)
     ((ae_restrict_iff' measurableSet_uIoc).mpr (rectangleContour_integrand_seg2_ae a b c d f))]
   exact hg_int
 
-private lemma rectangleContour_integrand_intervalIntegrable_seg3 (a b c d : ℝ) {f : ℂ → ℂ}
+lemma rectangleContour_integrand_intervalIntegrable_seg3 (a b c d : ℝ) {f : ℂ → ℂ}
     (hf : ContinuousOn f ((rectanglePath a b c d).extend '' Icc (0 : ℝ) 1)) :
     IntervalIntegrable
       (fun t => f ((rectanglePath a b c d).extend t) * deriv (rectanglePath a b c d).extend t)
@@ -1215,7 +1219,7 @@ private lemma rectangleContour_integrand_intervalIntegrable_seg3 (a b c d : ℝ)
     ((ae_restrict_iff' measurableSet_uIoc).mpr (rectangleContour_integrand_seg3_ae a b c d f))]
   exact hg_int
 
-private lemma rectangleContour_integrand_intervalIntegrable_seg4 (a b c d : ℝ) {f : ℂ → ℂ}
+lemma rectangleContour_integrand_intervalIntegrable_seg4 (a b c d : ℝ) {f : ℂ → ℂ}
     (hf : ContinuousOn f ((rectanglePath a b c d).extend '' Icc (0 : ℝ) 1)) :
     IntervalIntegrable
       (fun t => f ((rectanglePath a b c d).extend t) * deriv (rectanglePath a b c d).extend t)
@@ -1237,7 +1241,7 @@ After an affine change of variables `t = (k + s)/4`, the integral on the `k`-th
 sub-interval becomes `∫₀¹ f(v + s • Δ) * Δ ds`, where `v` is the starting
 vertex and `Δ` is the segment direction. -/
 
-private lemma rectangleContour_seg1_integral_eq (a b c d : ℝ) (f : ℂ → ℂ) :
+lemma rectangleContour_seg1_integral_eq (a b c d : ℝ) (f : ℂ → ℂ) :
     (∫ t in (0 : ℝ)..(1/4),
         f ((rectanglePath a b c d).extend t) * deriv (rectanglePath a b c d).extend t)
       = ∫ s in (0 : ℝ)..1,
@@ -1258,7 +1262,7 @@ private lemma rectangleContour_seg1_integral_eq (a b c d : ℝ) (f : ℂ → ℂ
   push_cast
   ring_nf
 
-private lemma rectangleContour_seg2_integral_eq (a b c d : ℝ) (f : ℂ → ℂ) :
+lemma rectangleContour_seg2_integral_eq (a b c d : ℝ) (f : ℂ → ℂ) :
     (∫ t in (1/4 : ℝ)..(1/2),
         f ((rectanglePath a b c d).extend t) * deriv (rectanglePath a b c d).extend t)
       = ∫ s in (0 : ℝ)..1,
@@ -1279,7 +1283,7 @@ private lemma rectangleContour_seg2_integral_eq (a b c d : ℝ) (f : ℂ → ℂ
   push_cast
   ring_nf
 
-private lemma rectangleContour_seg3_integral_eq (a b c d : ℝ) (f : ℂ → ℂ) :
+lemma rectangleContour_seg3_integral_eq (a b c d : ℝ) (f : ℂ → ℂ) :
     (∫ t in (1/2 : ℝ)..(3/4),
         f ((rectanglePath a b c d).extend t) * deriv (rectanglePath a b c d).extend t)
       = ∫ s in (0 : ℝ)..1,
@@ -1300,7 +1304,7 @@ private lemma rectangleContour_seg3_integral_eq (a b c d : ℝ) (f : ℂ → ℂ
   push_cast
   ring_nf
 
-private lemma rectangleContour_seg4_integral_eq (a b c d : ℝ) (f : ℂ → ℂ) :
+lemma rectangleContour_seg4_integral_eq (a b c d : ℝ) (f : ℂ → ℂ) :
     (∫ t in (3/4 : ℝ)..1,
         f ((rectanglePath a b c d).extend t) * deriv (rectanglePath a b c d).extend t)
       = ∫ s in (0 : ℝ)..1,
@@ -1361,5 +1365,7 @@ theorem contourIntegral_rectangleContour_eq
       rectangleContour_seg4_integral_eq a b c d f, ← add_assoc, ← add_assoc]
 
 end LeanModularForms
+
+end
 
 end

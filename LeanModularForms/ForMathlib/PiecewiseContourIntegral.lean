@@ -3,9 +3,11 @@ Copyright (c) 2024. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
-import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
-import LeanModularForms.ForMathlib.PiecewiseC1Path
+module
+
+public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
+public import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
+public import LeanModularForms.ForMathlib.PiecewiseC1Path
 
 /-!
 # Contour Integration along Piecewise C¹ Paths
@@ -41,6 +43,8 @@ endpoints. On each smooth segment, standard FTC applies; adjacent segments teles
 
 open Set MeasureTheory Filter Topology
 open scoped Interval
+
+@[expose] public section
 
 noncomputable section
 
@@ -226,5 +230,7 @@ theorem contourIntegral_eq_zero_of_hasDerivAt_of_closed {F f : ℂ → ℂ}
   rw [contourIntegral_eq_sub_of_hasDerivAt γ hU hF h_int, hclosed, sub_self]
 
 end PiecewiseC1Path
+
+end
 
 end

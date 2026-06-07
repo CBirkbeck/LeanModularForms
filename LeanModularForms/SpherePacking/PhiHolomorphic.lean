@@ -3,7 +3,9 @@ Copyright (c) 2024. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors:
 -/
-import Mathlib.NumberTheory.ModularForms.DedekindEta
+module
+
+public import Mathlib.NumberTheory.ModularForms.DedekindEta
 
 /-!
 # Holomorphicity of E₂ and φ₀ on the upper half-plane
@@ -15,6 +17,8 @@ the Dedekind eta function. Since η is holomorphic and nonvanishing on ℍ,
 
 open ModularForm EisensteinSeries UpperHalfPlane Set Filter Topology Function
 open scoped Real
+
+@[expose] public section
 
 noncomputable section
 
@@ -43,5 +47,7 @@ theorem E₂_differentiableOn :
     · exact mul_ne_zero (Complex.ofReal_ne_zero.mpr Real.pi_ne_zero) Complex.I_ne_zero
     · norm_num
   rw [h, inv_mul_cancel_left₀ hpi]
+
+end
 
 end

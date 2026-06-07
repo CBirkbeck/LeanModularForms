@@ -3,11 +3,13 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import Mathlib.Analysis.InnerProductSpace.Calculus
-import LeanModularForms.ForMathlib.BoundaryWinding
-import LeanModularForms.ForMathlib.PaperPwC1Immersion
-import LeanModularForms.ForMathlib.AsymmetricSingleCrossing
-import LeanModularForms.ForMathlib.HungerbuhlerWasem.HigherOrderAsymptotics
+module
+
+public import Mathlib.Analysis.InnerProductSpace.Calculus
+public import LeanModularForms.ForMathlib.BoundaryWinding
+public import LeanModularForms.ForMathlib.PaperPwC1Immersion
+public import LeanModularForms.ForMathlib.AsymmetricSingleCrossing
+public import LeanModularForms.ForMathlib.HungerbuhlerWasem.HigherOrderAsymptotics
 
 /-!
 # Generic `SingleCrossingData` builder from `IsFlatOfOrder _ _ 1`
@@ -83,6 +85,8 @@ information.
 
 open Complex MeasureTheory Set Filter Topology Asymptotics
 open scoped Real Interval
+
+@[expose] public section
 
 noncomputable section
 
@@ -404,3 +408,9 @@ theorem inv_sub_mul_deriv_intervalIntegrable
       continuousOn_const).inv₀ fun t ht h_eq => h_ne t ht ?_
     linear_combination h_eq
   exact (hγ_int.mul_continuousOn h_cont).congr (fun t _ => by ring)
+
+end HungerbuhlerWasem
+
+end
+
+end

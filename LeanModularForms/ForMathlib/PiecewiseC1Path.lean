@@ -3,8 +3,10 @@ Copyright (c) 2024. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import LeanModularForms.ForMathlib.PiecewiseC1PathOn
-import Mathlib.Topology.Path
+module
+
+public import LeanModularForms.ForMathlib.PiecewiseC1PathOn
+public import Mathlib.Topology.Path
 
 /-!
 # Piecewise C¹ Paths
@@ -39,6 +41,8 @@ covers `ℂ` as the main application.
 -/
 
 open Set Filter Topology
+
+@[expose] public section
 
 noncomputable section
 
@@ -125,5 +129,7 @@ theorem continuous (γ : PwC1Immersion x y) : Continuous (γ : ℝ → E) :=
   γ.toPiecewiseC1Path.continuous
 
 end PwC1Immersion
+
+end
 
 end

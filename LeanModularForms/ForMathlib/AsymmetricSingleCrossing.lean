@@ -3,7 +3,9 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
-import LeanModularForms.ForMathlib.SingleCrossing
+module
+
+public import LeanModularForms.ForMathlib.SingleCrossing
 
 /-!
 # Asymmetric single-crossing winding-number framework
@@ -35,6 +37,8 @@ bound when `δ_R ≠ δ_L`).
 
 open Complex MeasureTheory Set Filter Topology
 open scoped Interval
+
+@[expose] public section
 
 noncomputable section
 
@@ -211,5 +215,7 @@ theorem hasWindingNumber (D : AsymmetricSingleCrossingData γ z₀) :
   rw [show D.L / (2 * ↑Real.pi * I) = (2 * ↑Real.pi * I)⁻¹ * D.L by ring]
   exact hasGeneralizedWindingNumber_of_hasCauchyPV D.hasCauchyPV
 end AsymmetricSingleCrossingData
+
+end
 
 end

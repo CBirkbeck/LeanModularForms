@@ -3,12 +3,14 @@ Copyright (c) 2026 LeanModularForms contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: LeanModularForms contributors
 -/
-import LeanModularForms.ForMathlib.HungerbuhlerWasem
-import LeanModularForms.ForMathlib.SingleCrossing
-import LeanModularForms.ForMathlib.AsymmetricSingleCrossing
-import LeanModularForms.ForMathlib.DixonTheorem
-import LeanModularForms.ForMathlib.CurveMeasureZero
-import LeanModularForms.ForMathlib.FlatnessConditions
+module
+
+public import LeanModularForms.ForMathlib.HungerbuhlerWasem
+public import LeanModularForms.ForMathlib.SingleCrossing
+public import LeanModularForms.ForMathlib.AsymmetricSingleCrossing
+public import LeanModularForms.ForMathlib.DixonTheorem
+public import LeanModularForms.ForMathlib.CurveMeasureZero
+public import LeanModularForms.ForMathlib.FlatnessConditions
 
 /-! # Crossing CPV — single-pole CPV at transverse crossing + analytic remainder Cauchy
 
@@ -43,6 +45,8 @@ plus the FTC limit from each side, and produces `D.hasCauchyPV` with limit
 
 open Filter Topology Set Complex MeasureTheory
 
+@[expose] public section
+
 noncomputable section
 
 variable {x y : ℂ}
@@ -71,5 +75,7 @@ theorem HasCauchyPV.to_singletonOn
     cpvIntegrand_eq_cpvIntegrandOn_singleton
 
 end HungerbuhlerWasem
+
+end
 
 end
