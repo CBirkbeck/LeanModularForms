@@ -84,6 +84,7 @@ singularities directly:
 -/
 
 open Complex Set Filter Topology MeasureTheory
+open LeanModularForms
 open scoped Interval
 
 noncomputable section

@@ -49,6 +49,8 @@ open scoped Real MatrixGroups
 
 noncomputable section
 
+namespace LeanModularForms
+
 -- ---------------------------------------------------------------------------
 -- Private infrastructure: define Δ, φ₀
 -- ---------------------------------------------------------------------------
@@ -463,6 +465,8 @@ theorem phi0_isBoundedAtImInfty :
           (by positivity) hDelta_lower
     _ = 2 * K ^ 2 * ‖qz‖ := by field_simp
     _ ≤ 2 * K ^ 2 := by nlinarith [hqz_lt_one, sq_nonneg K]
+
+end LeanModularForms
 
 end
 
