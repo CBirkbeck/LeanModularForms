@@ -653,8 +653,7 @@ private lemma twistedTpPsi_val_eq (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprim
 `twistedHeckeSlashGen` at the prime double coset `D_p_Gamma0` equals the χ-weighted explicit
 `T_p` coset-sum: each upper representative `T_p_upper(b)` carries weight `χ(p)⁻¹`, and the
 lower representative `T_p_lower` carries weight `1`. -/
-theorem twisted_matches_T_p (p : ℕ) (hp : Nat.Prime p)
-    (hpN : Nat.Coprime p N) {f : ℍ → ℂ}
+theorem twisted_matches_T_p (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) {f : ℍ → ℂ}
     (hf : IsGamma0TwistedInvariant (N := N) k χ f) :
     twistedHeckeSlashGen (N := N) k χ (D_p_Gamma0 N p hp.pos) f =
       (↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ)⁻¹ •
@@ -703,8 +702,7 @@ private lemma heckeT_p_all_coe_eq (p : ℕ) (hp : Nat.Prime p)
 at the prime double coset equals `χ(p)⁻¹` times the concrete operator `heckeT_p_all`, as
 functions on `ℍ`. -/
 theorem heckeRingHomCharSpace_D_p_eq_heckeT_p_all (p : ℕ) (hp : Nat.Prime p)
-    (hpN : Nat.Coprime p N)
-    (f : modFormCharSpace k χ) :
+    (hpN : Nat.Coprime p N) (f : modFormCharSpace k χ) :
     (⇑((heckeRingHomCharSpace (k := k) (χ := χ) (T_single (Gamma0_pair N) ℤ
         (D_p_Gamma0 N p hp.pos) 1) f : modFormCharSpace k χ) :
         ModularForm ((Gamma1 N).map (mapGL ℝ)) k) : ℍ → ℂ) =
@@ -836,11 +834,11 @@ private lemma diag_scalar_mem_Delta0 (c : ℕ) (hc : 0 < c)
     (hgcd : Int.gcd (c : ℤ) (N : ℤ) = 1) :
     (diagMat 2 (fun _ : Fin 2 ↦ c) : GL (Fin 2) ℚ) ∈ Delta0_submonoid N := by
   have hcpos : ∀ i : Fin 2, 0 < (fun _ : Fin 2 ↦ c) i := fun _ ↦ hc
-  set A : Matrix (Fin 2) (Fin 2) ℤ := Matrix.diagonal (fun _ : Fin 2 ↦ (c : ℤ)) with hA
+  set A : Matrix (Fin 2) (Fin 2) ℤ := Matrix.diagonal (fun _ : Fin 2 ↦ (c : ℤ))
   have hA_eq : (↑(diagMat 2 (fun _ : Fin 2 ↦ c)) : Matrix _ _ ℚ) = A.map (Int.cast : ℤ → ℚ) := by
     rw [diagMat_val _ _ hcpos]
-    ext i j; fin_cases i <;> fin_cases j <;>
-      simp [A, Matrix.diagonal, Matrix.map_apply]
+    ext i j
+    fin_cases i <;> fin_cases j <;> simp [A, Matrix.diagonal, Matrix.map_apply]
   refine ⟨⟨A, hA_eq⟩, ?_, A, hA_eq, ?_, ?_⟩
   · rw [diagMat_val _ _ hcpos, Matrix.det_diagonal, Fin.prod_univ_two]
     positivity
@@ -869,7 +867,8 @@ private lemma diagScalarΔ_weight (χ : (ZMod N)ˣ →* ℂˣ) (c : ℕ) (hc : 0
       Matrix.diagonal (fun _ : Fin 2 ↦ (c : ℤ)) := by
     apply delta0IntegralMatrix_witness_unique
     rw [diagScalarΔ_coe, diagMat_val _ _ (fun _ ↦ hc)]
-    ext i j; fin_cases i <;> fin_cases j <;> simp [Matrix.diagonal, Matrix.map_apply]
+    ext i j
+    fin_cases i <;> fin_cases j <;> simp [Matrix.diagonal, Matrix.map_apply]
   rw [hwit]
   simp [Matrix.diagonal]
 
@@ -972,8 +971,7 @@ combinatorics, mediated by the `Γ₁(N)`-invariance of `f`. -/
 
 /-- For a bad prime `p ∣ N`, the prime double coset `D_p_Gamma0` coincides with the bad
 diagonal class `T(1, p)`, whose `decompQuot` has exactly `p` elements (Shimura §3.3). -/
-lemma decompQuot_D_p_Gamma0_bad_natcard (p : ℕ) (hp : Nat.Prime p)
-    (hpN : ¬ Nat.Coprime p N) :
+lemma decompQuot_D_p_Gamma0_bad_natcard (p : ℕ) (hp : Nat.Prime p) (hpN : ¬ Nat.Coprime p N) :
     Nat.card (HeckeRing.decompQuot (Gamma0_pair N)
         (HeckeRing.HeckeCoset.rep (D_p_Gamma0 N p hp.pos))) = p := by
   have hpdvd : p ∣ N := (Nat.Prime.coprime_iff_not_dvd hp).not_left.mp hpN
@@ -1051,9 +1049,8 @@ theorem diamondOp_preserves_charSpace (d : (ZMod N)ˣ)
   exact Submodule.smul_mem _ _ hf
 
 /-- `heckeT_ppow k p hp r` (for `p ∤ N`) preserves `modFormCharSpace k χ`. -/
-theorem heckeT_ppow_preserves_charSpace' (p : ℕ) (hp : Nat.Prime p)
-    (hpN : Nat.Coprime p N) (r : ℕ)
-    {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k} (hf : f ∈ modFormCharSpace k χ) :
+theorem heckeT_ppow_preserves_charSpace' (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (r : ℕ) {f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k} (hf : f ∈ modFormCharSpace k χ) :
     heckeT_ppow k p hp r f ∈ modFormCharSpace k χ := by
   induction r using Nat.strong_induction_on with
   | _ r ih =>
@@ -1073,8 +1070,8 @@ theorem heckeT_ppow_preserves_charSpace' (p : ℕ) (hp : Nat.Prime p)
 
 /-- `heckeT_ppow k p hp r` (for `p ∤ N`) restricted to `modFormCharSpace k χ` as a
 `ℂ`-linear endomorphism. -/
-noncomputable def heckeT_ppow_charRestrict (p : ℕ) (hp : Nat.Prime p)
-    (hpN : Nat.Coprime p N) (r : ℕ) : Module.End ℂ (modFormCharSpace k χ) where
+noncomputable def heckeT_ppow_charRestrict (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (r : ℕ) : Module.End ℂ (modFormCharSpace k χ) where
   toFun f := ⟨heckeT_ppow k p hp r (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k),
     heckeT_ppow_preserves_charSpace' p hp hpN r f.property⟩
   map_add' f₁ f₂ := by
@@ -1133,7 +1130,8 @@ theorem heckeT_ppow_charRestrict_succ_succ (p : ℕ) (hp : Nat.Prime p)
     exact (mem_modFormCharSpace_iff k χ
       (heckeT_ppow k p hp r (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k))).mp
       (heckeT_ppow_preserves_charSpace' p hp hpN r f.property) (ZMod.unitOfCoprime p hpN)
-  rw [hdiam, smul_smul, mul_comm ((↑p : ℂ) ^ (k - 1)) (↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ)]
+  rw [hdiam, smul_smul,
+    mul_comm ((↑p : ℂ) ^ (k - 1)) (↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ)]
 
 /-- `heckeRingHomCharSpace` of the prime generator `D_p` equals `χ(p)⁻¹` times the
 restricted prime operator (endomorphism form). -/
@@ -1145,8 +1143,7 @@ theorem heckeRingHomCharSpace_heckeRingDp (p : ℕ) (hp : Nat.Prime p)
 
 /-- `heckeRingHomCharSpace` of the scalar generator `S_{(p,p)}` is the scalar
 `χ(p)⁻¹ · p^(k-2)` (endomorphism form). -/
-theorem heckeRingHomCharSpace_heckeRingSpp (p : ℕ) (hp : Nat.Prime p)
-    (hpN : Nat.Coprime p N) :
+theorem heckeRingHomCharSpace_heckeRingSpp (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
     heckeRingHomCharSpace (k := k) (χ := χ) (heckeRingSpp p hp) =
       ((↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ)⁻¹ * (p : ℂ) ^ (k - 2)) •
         (1 : Module.End ℂ (modFormCharSpace k χ)) := by
@@ -1154,7 +1151,7 @@ theorem heckeRingHomCharSpace_heckeRingSpp (p : ℕ) (hp : Nat.Prime p)
   refine LinearMap.ext fun f ↦ ?_
   apply Subtype.ext
   apply DFunLike.coe_injective
-  show (⇑((heckeRingHomCharSpace (k := k) (χ := χ) (T_single (Gamma0_pair N) ℤ
+  change (⇑((heckeRingHomCharSpace (k := k) (χ := χ) (T_single (Gamma0_pair N) ℤ
       (T_diag_Gamma0 N (fun _ : Fin 2 ↦ p) (fun _ ↦ hp.pos)
         (by rw [Int.gcd_natCast_natCast]; exact hpN)) 1) f : modFormCharSpace k χ) :
       ModularForm ((Gamma1 N).map (mapGL ℝ)) k) : ℍ → ℂ) = _
@@ -1219,11 +1216,7 @@ theorem chi_unitOfCoprime_mul (χ : (ZMod N)ˣ →* ℂˣ) {m n : ℕ}
     (hm : Nat.Coprime m N) (hn : Nat.Coprime n N) :
     (↑(χ (ZMod.unitOfCoprime (m * n) (Nat.Coprime.mul_left hm hn))) : ℂ) =
       (↑(χ (ZMod.unitOfCoprime m hm)) : ℂ) * (↑(χ (ZMod.unitOfCoprime n hn)) : ℂ) := by
-  rw [← Units.val_mul, ← map_mul]
-  congr 2
-  ext
-  push_cast [ZMod.coe_unitOfCoprime]
-  ring
+  rw [← Units.val_mul, ← map_mul, ZMod.unitOfCoprime_mul]
 
 omit [NeZero N] in
 private lemma chi_unitOfCoprime_pow (χ : (ZMod N)ˣ →* ℂˣ) {p : ℕ} (v : ℕ)
