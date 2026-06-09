@@ -588,7 +588,7 @@ private lemma twistedTpPsi_injective (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Cop
   simp only [twistedTpPsi] at heq
   by_cases h₁ : j₁.val < p <;> by_cases h₂ : j₂.val < p
   · simp only [h₁, h₂, dite_true] at heq
-    exact HeckeRing.GL2.adj_upper_inv_mul_not_mem_H p hp j₁.val j₂.val h₁ h₂
+    exact HeckeRing.GL2.adj_upper_inv_mul_upper_not_mem_H p hp j₁.val j₂.val h₁ h₂
       (fun h ↦ hne (Fin.ext h))
       (Gamma0_pair_H_le_GL_pair_H N (adj_inv_mul_mem_H_of_factorizations
         (HeckeCoset.rep (D_p_Gamma0 N p hp.pos)) _ _
