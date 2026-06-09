@@ -46,6 +46,22 @@ HeckeT_p_CharSpace_Comm + NebentypusHeckeRingHom), and `GLn/DiagonalRepresentati
 (deliberate umbrella, 9 importers + rich docs — intentional API surface, not cruft). No other
 empty files in the project.
 
+**Tranche-2 progress (2026-06-09, smallest-first):**
+| File | Result |
+|------|--------|
+| LevelEmbed (62) | DONE — stale docstring fixed (advertised never-written primitive-form infra) |
+| HeckeT_p_CharSpace_Comm (87) | **DELETED** — all 4 decls zero-use (old trivial-char conjugation route); import surgery into HeckeRingHomCharSpace + NebentypusHeckeRingHom |
+| HeckeRingHomCharSpace (99→96) | DONE — dead heckeT_n_charRestrictAll_eq deleted; absorbed shell imports |
+| HeckeRingHomCharSpace_General (110) | **DELETED** — fully orphaned cascade leaf (coprimeToN packaging; consumer was the deleted Gamma1CharSpace) |
+| HeckeT_p_GLpair (127→89, −30%) | DONE — stale docstring; lemma-3 25→4 via inv_mem; Rat.den trick; renamed adj_upper_inv_mul_upper_not_mem_H; dropped unused Degree import |
+| Prop334_HeckeSlash (138) | **DELETED** — 6 dead decls (old conditional-packaging route); live glMap_smul_isCusp_Gamma1 relocated to HeckeModularForm_Gamma0 (golfed 11→6); 2 call sites + imports fixed |
+| Degree (160→123, −23%) | DONE — deg_T_sum_prime_pow 35→8 (Nat.twoStepInduction); deg_T_sum 26→13 (isMultiplicative_sigma); blueprint targets untouched |
+| CharSpaceIso (173) | **DELETED** — all 6 decls zero-use (cascade orphan of Bridge/CharSpace_Comm deletions) |
+| HeckeT_p_Gamma1 (165→137, −17%) | DONE — 5th glMap_mapGL duplicate → glMap_mapGL_eq; unused _hp binder cascade-dropped; M_infty_det_pos→_ne_zero |
+
+Known pending dedup: private Gamma1_isCusp_glMap_smul* duplicates of glMap_smul_isCusp_Gamma1
+in AdjointTheory.lean:64, HeckeT_n.lean:352, HeckeT_p.lean:909 (handle in those files' passes).
+
 Remaining substantive GL2 files (queued, upstream-first):
 HeckeRingHomCharSpace.lean (99), HeckeRingHomCharSpace_General.lean (108),
 HeckeT_p_CharSpace_Comm.lean (87), HeckeT_p_GLpair.lean (127), HeckeT_p_Gamma0_Bridge.lean (39),
