@@ -36,7 +36,17 @@ haveI sites sweep in its tranche-2 run). The file-1/2/3 cleanup commits (b9702bc
 3fd25b8) document the workers' audits; their mathlib finding (conjEnd = LinearEquiv.conjRingEquiv)
 still applies to the LIVE files HeckeT_p_CharSpace_Comm.lean + ShimuraHom.lean (their runs).
 
-## Tranche 2 — rest of HeckeRIngs/GL2 (queued, order TBD upstream-first)
+## Tranche 2 — rest of HeckeRIngs/GL2 (IN PROGRESS 2026-06-09)
+
+**Empty-file sweep (project-wide, done):** deleted 3 zero-declaration shells —
+`GL2/Prop334_HeckeSlashDiag.lean` (32) + `GL2/HeckeT_p_Gamma0_Bridge.lean` (39) (abandoned
+stubs whose docstrings claimed theorems that never existed; inlined their re-exports into
+HeckeT_p_CharSpace_Comm + NebentypusHeckeRingHom), and `GLn/DiagonalRepresentatives.lean` (14)
+(single-use alias → re-pointed Foundation to DiagonalCosets). KEPT `GLn/CongruenceHecke.lean`
+(deliberate umbrella, 9 importers + rich docs — intentional API surface, not cruft). No other
+empty files in the project.
+
+Remaining substantive GL2 files (queued, upstream-first):
 HeckeRingHomCharSpace.lean (99), HeckeRingHomCharSpace_General.lean (108),
 HeckeT_p_CharSpace_Comm.lean (87), HeckeT_p_GLpair.lean (127), HeckeT_p_Gamma0_Bridge.lean (39),
 Prop334_HeckeSlashDiag.lean (32), Prop334_HeckeSlash.lean (138), LevelEmbed.lean (62),
