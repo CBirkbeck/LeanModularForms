@@ -397,10 +397,6 @@ omit [NeZero N] in
 @[simp] lemma chiConj_apply (χ : (ZMod N)ˣ →* ℂˣ) (d : (ZMod N)ˣ) :
     chiConj χ d = χ d⁻¹ := rfl
 
-omit [NeZero N] in
-@[simp] lemma chiConj_chiConj (χ : (ZMod N)ˣ →* ℂˣ) : chiConj (chiConj χ) = χ := by
-  ext d; simp [chiConj]
-
 /-- The Fricke operator carries the `χ`-Nebentypus space into the `χ⁻¹`-Nebentypus space:
 `⟨d⟩ (W f) = χ(d⁻¹) • (W f)`. -/
 theorem frickeOperator_mem_charSpace (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
@@ -429,34 +425,6 @@ noncomputable def frickeCharRestrict (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
         ModularForm ((Gamma1 N).map (mapGL ℝ)) k) =
       frickeOperator k (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) := rfl
 
-/-- The composite `frickeCharRestrict (chiConj χ) ∘ frickeCharRestrict χ = c • id`, with the
-explicit nonzero scalar `c = frickeScalar N k`.  (Note `chiConj (chiConj χ) = χ`.) -/
-theorem frickeCharRestrict_comp (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
-    (frickeCharRestrict k (chiConj χ)).comp (frickeCharRestrict k χ) =
-      frickeScalar N k • (LinearMap.id :
-        modFormCharSpace k χ →ₗ[ℂ] modFormCharSpace k χ) :=
-  LinearMap.ext fun f ↦ Subtype.ext <| by
-    show frickeOperator k (frickeOperator k (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) =
-      ((frickeScalar N k • (f : modFormCharSpace k χ) : modFormCharSpace k χ) :
-        ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-    have := LinearMap.congr_fun (frickeOperator_frickeOperator (N := N) k)
-      (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-    simpa only [LinearMap.comp_apply, LinearMap.smul_apply, LinearMap.id_apply] using this
-
-/-- The reverse composite `frickeCharRestrict χ ∘ frickeCharRestrict (chiConj χ) = c • id`,
-on `modFormCharSpace k (chiConj χ)`. -/
-theorem frickeCharRestrict_comp' (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
-    (frickeCharRestrict k χ).comp (frickeCharRestrict k (chiConj χ)) =
-      frickeScalar N k • (LinearMap.id :
-        modFormCharSpace k (chiConj χ) →ₗ[ℂ] modFormCharSpace k (chiConj χ)) :=
-  LinearMap.ext fun f ↦ Subtype.ext <| by
-    show frickeOperator k (frickeOperator k (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) =
-      ((frickeScalar N k • (f : modFormCharSpace k (chiConj χ)) :
-        modFormCharSpace k (chiConj χ)) : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-    have := LinearMap.congr_fun (frickeOperator_frickeOperator (N := N) k)
-      (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
-    simpa only [LinearMap.comp_apply, LinearMap.smul_apply, LinearMap.id_apply] using this
-
 /-- **The Fricke isomorphism** `modFormCharSpace k χ ≃ₗ[ℂ] modFormCharSpace k (chiConj χ)`.
 Its forward map is `frickeCharRestrict`; the inverse is `c⁻¹ •` the other Fricke restriction
 (using `W² = c • id` and `chiConj (chiConj χ) = χ`). -/
@@ -484,8 +452,5 @@ noncomputable def frickeCharEquiv (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
     show frickeOperator k ((frickeScalar N k)⁻¹ • frickeOperator k
         (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) = (f : ModularForm _ k)
     rw [map_smul, hsq, smul_smul, inv_mul_cancel₀ hc, one_smul]
-
-@[simp] lemma frickeCharEquiv_apply (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (f : modFormCharSpace k χ) :
-    frickeCharEquiv k χ f = frickeCharRestrict k χ f := rfl
 
 end HeckeRing.GL2
