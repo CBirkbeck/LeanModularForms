@@ -19,7 +19,7 @@ commit per file after Phase 7.
 | 5 | HeckeRIngs/GL2/Unified/CuspNebentypusSpace.lean | 186→0 | **DELETED 2026-06-05** |
 | 6 | HeckeRIngs/GL2/Unified/TwistedHeckeRing.lean | 1249→968 | **DONE 2026-06-09** |
 | 7 | HeckeRIngs/GL2/Unified/Gamma0RingDn.lean | 783→613 | **DONE 2026-06-09** |
-| 8 | HeckeRIngs/GL2/Unified/NebentypusHeckeRingHom.lean | 1420 | queued |
+| 8 | HeckeRIngs/GL2/Unified/NebentypusHeckeRingHom.lean | 1420→1360 | **DONE 2026-06-09** |
 | 9 | HeckeRIngs/GL2/Fricke.lean | 491 | queued |
 | 10 | HeckeRIngs/GL2/Unified/ShimuraHom.lean | 449 | queued |
 | 11 | HeckeRIngs/GL2/Unified/RingTransport.lean | 324 | queued |
@@ -50,6 +50,42 @@ FourierHecke.lean (789), LevelRaise.lean (598), Newforms/ subdir, …
 ## Tranche 5 — ForMathlib
 
 ## Per-file log
+
+### 8. GL2/Unified/NebentypusHeckeRingHom.lean (1420 → 1360 lines, −4%) — 2026-06-09
+- Phases 0–7 all run; 77 declarations; 6 worker waves (~41 substantive decls dispatched, one
+  worker per decl) + file-level + a sequential finish; full build green ×8.
+- Phase 3: imports alphabetized; stale docstring ref `heckeRingHomCharSpace_commute` (never
+  defined) replaced with the real headline `heckeRingHomCharSpace_heckeRingDn` + docstring long
+  line wrapped; L1010 `### Bad-prime bridge` subsection divider demoted to a plain comment.
+- **Golf wins** (mathlib API the per-decl search surfaced, when LSP was live): 2 duplicate
+  `glMap (mapGL ℚ ·) = mapGL ℝ ·` re-proofs → `glMap_mapGL_eq`; `smul_slash_tRep_gen_modForm`
+  8→1 (`smul_slash_pos_det`); `nebentypusHeckeOpLinear` fields 12→3; `nebentypusHeckeSum_add`
+  6→2 (`Finsupp.sum_add_index'` term-mode); `nebentypusToFunctionSubmodule_heckeSum` 7→1
+  (`Subtype.ext`); `heckeRingHomCharSpace.map_one'` 5→1; `chi_unitOfCoprime_mul` 5→1
+  (`ZMod.unitOfCoprime_mul`). Plus pervasive signature line-packing, `;`→newline splits,
+  `show`→`change`, rwa-folds, unused-binder drops, consecutive-`rw` merges.
+- **Phase 5b rename:** British→American spelling for the whole adjugate-factorisation family
+  (`adj_factorisation`, `adj_T_p_{upper,lower}_factorisation`,
+  `adj_inv_mul_mem_H_of_factorisations`, `adj_diagScalar_factorisation` → `_factoriz*`), 24
+  occurrences incl. the demoted comment; all `private`/in-file so zero cross-file/blueprint impact.
+- **LSP-saturation note:** with ~6–9 concurrent per-decl workers editing one file, the lean-lsp
+  server could not keep the 17-module import chain elaborated, so most waves achieved only
+  statically-safe edits (packing/format/safe-golf) and FLAGGED goal-state-dependent golf. The
+  central `lake build` after each wave was the authoritative gate (green every time).
+- **FLAGGED for follow-up (big changes / user judgment):**
+  - `heckeT_ppow_preserves_charSpace'` is a redundant wrapper of the more-general
+    `heckeT_ppow_preserves_modFormCharSpace` (HeckeT_n.lean:1071; `hpN` hyp unused) — deletable +
+    repoint its 2 in-file call sites.
+  - Extract `heckeRingHomCharSpace_apply_coe` API lemma — the `change …; rw [nebentypusHeckeSum_apply_coe, …]`
+    block is duplicated verbatim across 3 proofs (`D_p_eq_heckeT_p_all`, `T_pp_eq_scalar`, …).
+  - Shared `private` helper for `adjUpperΔ_weight`/`adjLowerΔ_weight`/`diagScalarΔ_weight`
+    (near-identical skeletons, ~30 lines).
+  - Upstream `ZMod.unitOfCoprime_one` (missing API; used inline in `_heckeRingDn`).
+  - Speculative safe-golf left as flags (LSP-unverifiable): `twistedTpPsi_bijective` tail→`simpa`,
+    `chi_unitOfCoprime_pow` mirror of the `_mul` golf.
+  - The 5 long proofs (`slash_diag_scalar` 47, `subsingleton_decompQuot_scalar` 47,
+    `heckeRingHomCharSpace_T_pp_eq_scalar` 43, `_heckeRingDppow` 37, `_heckeRingDn_step` 46) all
+    PASS the ≤60 structure gate (domain plumbing, not decomposition targets).
 
 ### 7. GL2/Unified/Gamma0RingDn.lean (783 → 613 lines, −22%) — 2026-06-09
 - Phases 0–7 all run; 31 declarations across 5 worker waves; all gates pass; full build green ×4.

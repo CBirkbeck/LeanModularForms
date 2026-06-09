@@ -395,7 +395,7 @@ private lemma adj_rep_mem (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
   rw [h1, hadj_diag, hTl_eq]
   group
 
-private lemma adj_factorisation (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+private lemma adj_factorization (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
     (g : GL (Fin 2) ℚ) (hg : g ∈ HeckeCoset.toSet (D_p_Gamma0 N p hp.pos)) :
     ∃ (h₁ : GL (Fin 2) ℚ) (_ : h₁ ∈ (Gamma0_pair N).H)
       (h₂ : GL (Fin 2) ℚ) (_ : h₂ ∈ (Gamma0_pair N).H),
@@ -518,31 +518,31 @@ private lemma adjLowerΔ_weight (p : ℕ) (hp : Nat.Prime p) :
   rw [hwit]
   simp
 
-private lemma adj_T_p_upper_factorisation (p : ℕ) (hp : Nat.Prime p)
+private lemma adj_T_p_upper_factorization (p : ℕ) (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) (b : ℕ) :
     ∃ (h₁ : GL (Fin 2) ℚ) (_ : h₁ ∈ (Gamma0_pair N).H)
       (h₂ : GL (Fin 2) ℚ) (_ : h₂ ∈ (Gamma0_pair N).H),
       GL_adjugate (T_p_upper p hp.pos b : GL (Fin 2) ℚ) =
         h₁ * (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) * h₂ :=
-  adj_factorisation p hp hpN _ (T_p_upper_mem_D_p_Gamma0 N p hp b)
+  adj_factorization p hp hpN _ (T_p_upper_mem_D_p_Gamma0 N p hp b)
 
-private lemma adj_T_p_lower_factorisation (p : ℕ) (hp : Nat.Prime p)
+private lemma adj_T_p_lower_factorization (p : ℕ) (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) :
     ∃ (h₁ : GL (Fin 2) ℚ) (_ : h₁ ∈ (Gamma0_pair N).H)
       (h₂ : GL (Fin 2) ℚ) (_ : h₂ ∈ (Gamma0_pair N).H),
       GL_adjugate (T_p_lower p hp.pos : GL (Fin 2) ℚ) =
         h₁ * (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) * h₂ :=
-  adj_factorisation p hp hpN _ (T_p_lower_mem_D_p_Gamma0 N p hp hpN)
+  adj_factorization p hp hpN _ (T_p_lower_mem_D_p_Gamma0 N p hp hpN)
 
 private noncomputable def twistedTpPsi (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
     Fin (p + 1) → decompQuot (Gamma0_pair N) (HeckeCoset.rep (D_p_Gamma0 N p hp.pos)) :=
   fun j ↦
     if _h : j.val < p then
-      ⟦⟨(adj_T_p_upper_factorisation (N := N) p hp hpN j.val).choose,
-        (adj_T_p_upper_factorisation (N := N) p hp hpN j.val).choose_spec.choose⟩⟧
+      ⟦⟨(adj_T_p_upper_factorization (N := N) p hp hpN j.val).choose,
+        (adj_T_p_upper_factorization (N := N) p hp hpN j.val).choose_spec.choose⟩⟧
     else
-      ⟦⟨(adj_T_p_lower_factorisation (N := N) p hp hpN).choose,
-        (adj_T_p_lower_factorisation (N := N) p hp hpN).choose_spec.choose⟩⟧
+      ⟦⟨(adj_T_p_lower_factorization (N := N) p hp hpN).choose,
+        (adj_T_p_lower_factorization (N := N) p hp hpN).choose_spec.choose⟩⟧
 
 private lemma adj_quot_eq_imp_inv_mul_mem_H (g : (Gamma0_pair N).Δ)
     (a₁ : GL (Fin 2) ℚ) (ha₁ : a₁ ∈ (Gamma0_pair N).H)
@@ -566,7 +566,7 @@ private lemma adj_quot_eq_imp_inv_mul_mem_H (g : (Gamma0_pair N).Δ)
   exact (Gamma0_pair N).H.mul_mem
     ((Gamma0_pair N).H.mul_mem ((Gamma0_pair N).H.inv_mem hc₁) hrel) hc₂
 
-private lemma adj_inv_mul_mem_H_of_factorisations (g : (Gamma0_pair N).Δ) (g₁ g₂ : GL (Fin 2) ℚ)
+private lemma adj_inv_mul_mem_H_of_factorizations (g : (Gamma0_pair N).Δ) (g₁ g₂ : GL (Fin 2) ℚ)
     (e₁ : ∃ (h₁ : GL (Fin 2) ℚ) (_ : h₁ ∈ (Gamma0_pair N).H) (h₂ : GL (Fin 2) ℚ)
         (_ : h₂ ∈ (Gamma0_pair N).H), GL_adjugate g₁ = h₁ * (g : GL (Fin 2) ℚ) * h₂)
     (e₂ : ∃ (h₁ : GL (Fin 2) ℚ) (_ : h₁ ∈ (Gamma0_pair N).H) (h₂ : GL (Fin 2) ℚ)
@@ -591,22 +591,22 @@ private lemma twistedTpPsi_injective (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Cop
   · simp only [h₁, h₂, dite_true] at heq
     exact HeckeRing.GL2.adj_upper_inv_mul_not_mem_H p hp j₁.val j₂.val h₁ h₂
       (fun h ↦ hne (Fin.ext h))
-      (Gamma0_pair_H_le_GL_pair_H N (adj_inv_mul_mem_H_of_factorisations
+      (Gamma0_pair_H_le_GL_pair_H N (adj_inv_mul_mem_H_of_factorizations
         (HeckeCoset.rep (D_p_Gamma0 N p hp.pos)) _ _
-        (adj_T_p_upper_factorisation (N := N) p hp hpN j₁.val)
-        (adj_T_p_upper_factorisation (N := N) p hp hpN j₂.val) heq))
+        (adj_T_p_upper_factorization (N := N) p hp hpN j₁.val)
+        (adj_T_p_upper_factorization (N := N) p hp hpN j₂.val) heq))
   · simp only [h₁, dite_true, h₂, dite_false] at heq
     exact HeckeRing.GL2.adj_upper_inv_mul_lower_not_mem_H p hp j₁.val
-      (Gamma0_pair_H_le_GL_pair_H N (adj_inv_mul_mem_H_of_factorisations
+      (Gamma0_pair_H_le_GL_pair_H N (adj_inv_mul_mem_H_of_factorizations
         (HeckeCoset.rep (D_p_Gamma0 N p hp.pos)) _ _
-        (adj_T_p_upper_factorisation (N := N) p hp hpN j₁.val)
-        (adj_T_p_lower_factorisation (N := N) p hp hpN) heq))
+        (adj_T_p_upper_factorization (N := N) p hp hpN j₁.val)
+        (adj_T_p_lower_factorization (N := N) p hp hpN) heq))
   · simp only [h₁, dite_false, h₂, dite_true] at heq
     exact HeckeRing.GL2.adj_lower_inv_mul_upper_not_mem_H p hp j₂.val
-      (Gamma0_pair_H_le_GL_pair_H N (adj_inv_mul_mem_H_of_factorisations
+      (Gamma0_pair_H_le_GL_pair_H N (adj_inv_mul_mem_H_of_factorizations
         (HeckeCoset.rep (D_p_Gamma0 N p hp.pos)) _ _
-        (adj_T_p_lower_factorisation (N := N) p hp hpN)
-        (adj_T_p_upper_factorisation (N := N) p hp hpN j₂.val) heq))
+        (adj_T_p_lower_factorization (N := N) p hp hpN)
+        (adj_T_p_upper_factorization (N := N) p hp hpN j₂.val) heq))
   · have hj₁ := j₁.isLt
     have hj₂ := j₂.isLt
     omega
@@ -632,7 +632,7 @@ private lemma twistedTpPsi_val_eq (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprim
         (twistedTpPsi (N := N) p hp hpN j)) := by
   simp only [twistedTpPsi]
   split_ifs with h
-  · set e := adj_T_p_upper_factorisation (N := N) p hp hpN j.val
+  · set e := adj_T_p_upper_factorization (N := N) p hp hpN j.val
     have hval := weighted_value_eq p hp (χ := χ) hf
       (T_p_upper p hp.pos j.val) (adjUpperΔ (N := N) p hp hpN j.val)
       e.choose e.choose_spec.choose
@@ -640,7 +640,7 @@ private lemma twistedTpPsi_val_eq (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprim
       e.choose_spec.choose_spec.choose_spec.choose
       e.choose_spec.choose_spec.choose_spec.choose_spec rfl
     rwa [adjUpperΔ_weight (χ := χ) p hp hpN j.val] at hval
-  · set e := adj_T_p_lower_factorisation (N := N) p hp hpN
+  · set e := adj_T_p_lower_factorization (N := N) p hp hpN
     have hval := weighted_value_eq p hp (χ := χ) hf
       (T_p_lower p hp.pos) (adjLowerΔ (N := N) p hp)
       e.choose e.choose_spec.choose
@@ -872,7 +872,7 @@ private lemma diagScalarΔ_weight (χ : (ZMod N)ˣ →* ℂˣ) (c : ℕ) (hc : 0
   rw [hwit]
   simp [Matrix.diagonal]
 
-private lemma adj_diagScalar_factorisation (p : ℕ) (hp : Nat.Prime p)
+private lemma adj_diagScalar_factorization (p : ℕ) (hp : Nat.Prime p)
     (hgcd : Int.gcd (p : ℤ) (N : ℤ) = 1) :
     ∃ (h₁ : GL (Fin 2) ℚ) (_ : h₁ ∈ (Gamma0_pair N).H)
       (h₂ : GL (Fin 2) ℚ) (_ : h₂ ∈ (Gamma0_pair N).H),
@@ -936,7 +936,7 @@ theorem heckeRingHomCharSpace_T_pp_eq_scalar (p : ℕ) (hp : Nat.Prime p)
   rw [hLHS]
   haveI hsub : Subsingleton (decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) :=
     subsingleton_decompQuot_scalar (N := N) p hp.pos hgcd
-  obtain ⟨h₁, hh₁, h₂, hh₂, hfact⟩ := adj_diagScalar_factorisation (N := N) p hp hgcd
+  obtain ⟨h₁, hh₁, h₂, hh₂, hfact⟩ := adj_diagScalar_factorization (N := N) p hp hgcd
   rw [← hD] at hfact
   set q : decompQuot (Gamma0_pair N) (HeckeCoset.rep D) := ⟦⟨h₁, hh₁⟩⟧ with hq
   rw [twistedHeckeSlashGen, Fintype.sum_subsingleton _ q]
@@ -959,7 +959,7 @@ right cosets — the upper-triangular representatives `[[1,b],[0,p]]`, `b = 0,�
 coprime to `N`, so it does not lie in `Δ₀(N)`.  This is the source of the classical `U_p`
 operator having `p` terms.  Every χ-weight is `1`.
 
-Unlike the good prime, the good-prime adjugate factorisations (`adj_T_p_upper_factorisation`)
+Unlike the good prime, the good-prime adjugate factorizations (`adj_T_p_upper_factorization`)
 have **no** bad-prime analogue: for `p ∣ N` the adjugate `adj([[1,b],[0,p]]) = [[p,-b],[0,1]]`
 has upper-left entry `p`, not coprime to `N`, so it does *not* lie in `Δ₀(N)`, hence cannot be
 written as `h₁·rep(D_p)·h₂` with `h₁,h₂ ∈ Γ₀(N)` (every such product lies in `Δ₀(N)`).
