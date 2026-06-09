@@ -76,6 +76,14 @@ lemma glMap_smul_isCusp_Gamma0 (A : GL (Fin 2) ℚ) {c : OnePoint ℝ}
   obtain ⟨q, rfl⟩ := hc
   exact ⟨A • q, OnePoint.map_smul (algebraMap ℚ ℝ) A q⟩
 
+/-- `GL₂(ℚ)` maps cusps of `(Gamma1 N).map (mapGL ℝ)` to cusps. -/
+lemma glMap_smul_isCusp_Gamma1 (A : GL (Fin 2) ℚ) {c : OnePoint ℝ}
+    (hc : IsCusp c ((Gamma1 N).map (mapGL ℝ))) :
+    IsCusp (glMap A • c) ((Gamma1 N).map (mapGL ℝ)) := by
+  rw [Subgroup.IsArithmetic.isCusp_iff_isCusp_SL2Z, isCusp_SL2Z_iff] at hc ⊢
+  obtain ⟨q, rfl⟩ := hc
+  exact ⟨A • q, OnePoint.map_smul (algebraMap ℚ ℝ) A q⟩
+
 /-- The Hecke slash action preserves boundedness at cusps. -/
 lemma heckeSlash_gen_Gamma0_bdd_at_cusps (k : ℤ) (D : HeckeCoset (Gamma0_pair N))
     (f : ModularForm ((Gamma0 N).map (mapGL ℝ)) k)

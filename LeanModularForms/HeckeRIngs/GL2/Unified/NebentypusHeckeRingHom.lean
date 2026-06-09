@@ -5,7 +5,7 @@ Authors: Chris Birkbeck
 -/
 import LeanModularForms.HeckeRIngs.GL2.AdjointTheory
 import LeanModularForms.HeckeRIngs.GL2.MultiplicationTable
-import LeanModularForms.HeckeRIngs.GL2.Prop334_HeckeSlash
+import LeanModularForms.HeckeRIngs.GL2.LevelEmbed
 import LeanModularForms.HeckeRIngs.GL2.Unified.Gamma0RingDn
 import LeanModularForms.HeckeRIngs.GL2.Unified.TwistedHeckeRing
 
@@ -153,7 +153,7 @@ private lemma twistedHeckeSlashGen_bdd_at_cusps
   rw [smul_slash_tRep_gen_modForm (N := N) D i _ f]
   exact OnePoint.IsBoundedAt.smul_iff.mp
     (((↑(delta0NebentypusWeight (N := N) χ D i) : ℂ)⁻¹ • f).bdd_at_cusps'
-      (HeckeRing.GL2.glMap_smul_isCusp_Gamma1 _ hc))
+      (HeckeRing.GL2.glMap_smul_isCusp_Gamma1 N _ hc))
 
 /-- The twisted Hecke operator output `twistedHeckeSlashGen k χ D (⇑f)`, packaged as a
 `ModularForm` at the `Γ₁(N)`-level. -/

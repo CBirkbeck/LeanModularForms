@@ -460,7 +460,7 @@ theorem miyake_hecke_descend_cusp
     (fun _ _ ha hb ↦ ha.add hb)
     ((0 : CuspForm ((Gamma1 N).map (mapGL ℝ)) k).zero_at_cusps' hc_N) fun v _ ↦ ?_
   obtain ⟨A, hA⟩ := descendCosetList_lift_eq_glMap hp v
-  exact hA ▸ OnePoint.IsZeroAt.smul_iff.mp (f.zero_at_cusps' (glMap_smul_isCusp_Gamma1 A hc_N))
+  exact hA ▸ OnePoint.IsZeroAt.smul_iff.mp (f.zero_at_cusps' (glMap_smul_isCusp_Gamma1 N A hc_N))
 
 /-- For `f ∈ modFormCharSpace k χ` with `χ = χ'.comp (ZMod.unitsMap h)`, slashing the coset sum
 by `γ_d ∈ Γ₀(N/p)` scales it by `χ'(Gamma0MapUnits ⟨γ_d, _⟩)`. -/

@@ -7,7 +7,6 @@ import LeanModularForms.Eigenforms.AtkinLehner
 import LeanModularForms.Eigenforms.ConductorTheorem
 import LeanModularForms.Eigenforms.MainLemma
 import LeanModularForms.HeckeRIngs.GL2.Newforms
-import LeanModularForms.HeckeRIngs.GL2.Prop334_HeckeSlash
 
 /-!
 # Strong Multiplicity One via Miyake §4.6 — Lemma 4.6.5
