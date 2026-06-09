@@ -20,7 +20,7 @@ commit per file after Phase 7.
 | 6 | HeckeRIngs/GL2/Unified/TwistedHeckeRing.lean | 1249→968 | **DONE 2026-06-09** |
 | 7 | HeckeRIngs/GL2/Unified/Gamma0RingDn.lean | 783→613 | **DONE 2026-06-09** |
 | 8 | HeckeRIngs/GL2/Unified/NebentypusHeckeRingHom.lean | 1420→1360 | **DONE 2026-06-09** |
-| 9 | HeckeRIngs/GL2/Fricke.lean | 491 | queued |
+| 9 | HeckeRIngs/GL2/Fricke.lean | 491→439 | **DONE 2026-06-09** |
 | 10 | HeckeRIngs/GL2/Unified/ShimuraHom.lean | 449 | queued |
 | 11 | HeckeRIngs/GL2/Unified/RingTransport.lean | 324 | queued |
 | 12 | HeckeRIngs/GL2/Unified/DirectHeckeRing.lean | 178 | queued |
@@ -50,6 +50,22 @@ FourierHecke.lean (789), LevelRaise.lean (598), Newforms/ subdir, …
 ## Tranche 5 — ForMathlib
 
 ## Per-file log
+
+### 9. GL2/Fricke.lean (491 → 439 lines, −11%) — 2026-06-09
+- Phases 0–7 run. **Dead code deleted (user-authorized, build-gated, ~30 LOC, committed separately
+  for recoverability):** `frickeCharRestrict_comp` + `frickeCharRestrict_comp'` (char-space
+  Fricke-involution theorems, redundant with `frickeCharEquiv`'s left/right_inv, zero refs) and the
+  `@[simp]` lemmas `chiConj_chiConj` + `frickeCharEquiv_apply` (zero explicit/implicit consumers).
+  Blueprint targets `frickeOperator` + `frickeCharEquiv` retained.
+- Phase 3: 5 navigation-only `## …` subsection dividers stripped; 2 `show … from by` → `show … by`.
+- Phase 4 (5-worker wave on the substantive proofs): statement line-packing; `Gamma0MapUnits_frickeConjSL`
+  tail 4→1 (`simpa only … using congrArg`); `frickeGL_mul_mapGL` folded `coe_mul` into the terminal
+  `simp only`; `frickeGL_sq_slash` simp+norm_num merges (−3); `frickeOperator_mem_charSpace` 8→5
+  (dropped a goal-rewriting `show`); semicolon splits. Lint-clean, full build green (8604).
+- **FLAGGED (cross-decl/file, not applied):** `frickeGL_mul_mapGL`/`mapGL_mul_frickeGL` share a
+  byte-identical entry-wise proof (shared helper, or derive one from the other via W²-centrality);
+  `frickeGL_sq_slash`/`slash_diag_scalar` (NebentypusHeckeRingHom) share the "slash by scalar-matrix
+  = c•f" skeleton (cross-file helper keyed on `↑M = c • 1`).
 
 ### 8. GL2/Unified/NebentypusHeckeRingHom.lean (1420 → 1360 lines, −4%) — 2026-06-09
 - Phases 0–7 all run; 77 declarations; 6 worker waves (~41 substantive decls dispatched, one

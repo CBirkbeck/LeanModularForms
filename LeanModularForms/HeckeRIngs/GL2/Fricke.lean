@@ -64,7 +64,7 @@ lemma frickeGL_inv_coe :
     (↑(frickeGL N)⁻¹ : Matrix (Fin 2) (Fin 2) ℚ) = !![0, 1 / (N : ℚ); -1, 0] := by
   have hN : (N : ℚ) ≠ 0 := NeZero.ne _
   rw [GeneralLinearGroup.coe_inv, frickeGL_coe, Matrix.inv_def,
-    show (!![0, -1; (N : ℚ), 0] : Matrix (Fin 2) (Fin 2) ℚ).det = N from by
+    show (!![0, -1; (N : ℚ), 0] : Matrix (Fin 2) (Fin 2) ℚ).det = N by
       rw [det_fin_two_of]; ring,
     Matrix.adjugate_fin_two, Ring.inverse_eq_inv]
   ext i j; fin_cases i <;> fin_cases j <;> simp [Matrix.smul_apply]
@@ -93,8 +93,7 @@ representative `T_p_upper(r) = [[1,r],[0,p]]`:
 `W · adj(δ_r) · W⁻¹ = T_p_upper(r)`.
 (`adj(δ_r) = [[p,0],[−N·r,1]]`; this is the core of the `Ψ(D_p) = U_p` bridge at `p ∣ N`.) -/
 lemma frickeGL_mul_adj_lunipRep_mul_frickeGL_inv (p : ℕ) (hp : 0 < p) (r : ℕ) :
-    frickeGL N * GL_adjugate (lunipRep (N := N) p hp r) * (frickeGL N)⁻¹ =
-      T_p_upper p hp r := by
+    frickeGL N * GL_adjugate (lunipRep (N := N) p hp r) * (frickeGL N)⁻¹ = T_p_upper p hp r := by
   apply Units.ext
   have hNc : (N : ℚ) ≠ 0 := NeZero.ne _
   rw [GeneralLinearGroup.coe_mul, GeneralLinearGroup.coe_mul, GL_adjugate_val, lunipRep_coe,
@@ -102,8 +101,6 @@ lemma frickeGL_mul_adj_lunipRep_mul_frickeGL_inv (p : ℕ) (hp : 0 < p) (r : ℕ
   ext i j
   fin_cases i <;> fin_cases j <;>
     simp [Matrix.mul_apply, Fin.sum_univ_two] <;> field_simp
-
-/-! ## `W` normalizes `Γ₀(N)` and `Γ₁(N)` -/
 
 /-- The integer `c'` with `c = N · c'` for a `Γ₀(N)` matrix `σ` (lower-left entry over `N`). -/
 private noncomputable def botLeftDiv (σ : ↥(Gamma0 N)) : ℤ :=
@@ -162,15 +159,14 @@ lemma Gamma0MapUnits_frickeConjSL (σ : ↥(Gamma0 N)) :
   have hc : ((σ : Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ZMod N) = 0 := Gamma0_mem.mp σ.property
   have hdet : (σ : Matrix (Fin 2) (Fin 2) ℤ) 0 0 * (σ : Matrix (Fin 2) (Fin 2) ℤ) 1 1 -
       (σ : Matrix (Fin 2) (Fin 2) ℤ) 0 1 * (σ : Matrix (Fin 2) (Fin 2) ℤ) 1 0 = 1 := by
-    have := σ.1.prop; rwa [det_fin_two] at this
+    have := σ.1.prop
+    rwa [det_fin_two] at this
   rw [eq_inv_iff_mul_eq_one]
   ext
   simp only [Units.val_mul, Gamma0MapUnits_val, Gamma0Map, MonoidHom.coe_mk, OneHom.coe_mk,
     Units.val_one, frickeConjSL_coe, Matrix.cons_val_one, Matrix.cons_val_zero, Matrix.of_apply]
-  have := congrArg (Int.cast : ℤ → ZMod N) hdet
-  push_cast at this
-  rw [hc, mul_zero, sub_zero] at this
-  exact this
+  simpa only [Int.cast_sub, Int.cast_mul, Int.cast_one, hc, mul_zero, sub_zero] using
+    congrArg (Int.cast : ℤ → ZMod N) hdet
 
 /-- **`W` normalizes `Γ₀(N)`** (the core matrix identity): `W · σ = (frickeConjSL σ) · W`
 in `GL₂(ℚ)`, for `σ ∈ Γ₀(N)`. -/
@@ -178,12 +174,11 @@ lemma frickeGL_mul_mapGL (σ : ↥(Gamma0 N)) :
     frickeGL N * mapGL ℚ (σ : SL(2, ℤ)) =
       mapGL ℚ (frickeConjSL σ) * frickeGL N := by
   apply Units.ext
-  rw [GeneralLinearGroup.coe_mul, GeneralLinearGroup.coe_mul]
   have hc : ((σ : Matrix (Fin 2) (Fin 2) ℤ) 1 0 : ℚ) = (N : ℚ) * (botLeftDiv σ : ℚ) := by
     exact_mod_cast congrArg (Int.cast : ℤ → ℚ) (botLeftDiv_spec σ)
   ext i j
   fin_cases i <;> fin_cases j <;>
-    simp only [Matrix.mul_apply, Fin.sum_univ_two, frickeGL_coe,
+    simp only [GeneralLinearGroup.coe_mul, Matrix.mul_apply, Fin.sum_univ_two, frickeGL_coe,
       mapGL_coe_matrix, RingHom.mapMatrix_apply, Matrix.map_apply, frickeConjSL_coe,
       Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.of_apply,
       algebraMap_int_eq, Int.coe_castRingHom, SpecialLinearGroup.map_apply_coe, Fin.isValue] <;>
@@ -219,8 +214,6 @@ lemma mapGL_mul_glMap_frickeGL (σ : ↥(Gamma0 N)) :
     mapGL ℝ (σ : SL(2, ℤ)) * glMap (frickeGL N) =
       glMap (frickeGL N) * mapGL ℝ (frickeConjSL σ) := by
   rw [← glMap_mapGL_eq, ← glMap_mapGL_eq, ← map_mul, ← map_mul, mapGL_mul_frickeGL]
-
-/-! ## The Fricke operator -/
 
 /-- Slash-invariance of `f ∣[k] W` under `Γ₁(N)`: for `f` invariant under
 `(Γ₁(N)).map (mapGL ℝ)`, the slash `f ∣[k] W` is again invariant.  Uses that `W` conjugates
@@ -287,8 +280,6 @@ noncomputable def frickeOperator (k : ℤ) :
 @[simp] lemma frickeOperator_coe (k : ℤ) (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
     (⇑(frickeOperator (N := N) k f) : ℍ → ℂ) = ⇑f ∣[k] (frickeGL N : GL (Fin 2) ℚ) := rfl
 
-/-! ## `frickeOperator` commutes with diamonds (with inversion) -/
-
 /-- **Diamond shift**: `W ∘ ⟨d⟩ = ⟨d⁻¹⟩ ∘ W`.  Concretely on functions
 `(⟨d⟩ f) ∣ W = ⟨d⁻¹⟩ (f ∣ W)`, because `W · σ_d = σ_{d⁻¹}' · W` with
 `Gamma0MapUnits σ_{d⁻¹}' = d⁻¹`. -/
@@ -304,8 +295,6 @@ theorem frickeOperator_diamondOp (k : ℤ) (d : (ZMod N)ˣ) :
   show ((⇑f ∣[k] mapGL ℝ (g : SL(2, ℤ))) ∣[k] glMap (frickeGL N)) z =
     ((⇑f ∣[k] glMap (frickeGL N)) ∣[k] mapGL ℝ (frickeConjSL g : SL(2, ℤ))) z
   rw [← SlashAction.slash_mul, ← SlashAction.slash_mul, mapGL_mul_glMap_frickeGL g]
-
-/-! ## `W² = (-N)·I`: the Fricke operator squares to a scalar -/
 
 /-- The scalar `c` with `frickeOperator ∘ frickeOperator = c • id`, namely
 `c = N^{2(k-1)} · (-N)^{-k}` (from `W² = (-N)·I` and the weight-`k` slash normalization). -/
@@ -328,7 +317,7 @@ lemma frickeGL_sq_slash (k : ℤ) (f : UpperHalfPlane → ℂ) :
     rw [GeneralLinearGroup.val_det_apply, GeneralLinearGroup.coe_mul, Matrix.det_mul, frickeGL_det]
     positivity
   have hσ : UpperHalfPlane.σ (glMap (frickeGL N * frickeGL N)) = ContinuousAlgEquiv.refl ℝ ℂ := by
-    unfold UpperHalfPlane.σ; rw [if_pos (glMap_det_pos_of_rat_det_pos _ hdetpos)]
+    rw [UpperHalfPlane.σ, if_pos (glMap_det_pos_of_rat_det_pos _ hdetpos)]
   rw [hσ]
   have hentry : ∀ i j, (glMap (frickeGL N * frickeGL N)) i j =
       (((-(N : ℚ)) • (1 : Matrix (Fin 2) (Fin 2) ℚ)) i j : ℝ) := by
@@ -344,23 +333,22 @@ lemma frickeGL_sq_slash (k : ℤ) (f : UpperHalfPlane → ℂ) :
         ((glMap (frickeGL N * frickeGL N)) 1 0 * (z : ℂ) +
           (glMap (frickeGL N * frickeGL N)) 1 1) = (z : ℂ)
     rw [hentry 0 0, hentry 0 1, hentry 1 0, hentry 1 1]
-    simp only [Matrix.smul_apply, Matrix.one_apply]
     have hNc : (N : ℂ) ≠ 0 := NeZero.ne _
-    norm_num
+    norm_num [Matrix.smul_apply, Matrix.one_apply]
     field_simp
   have hdenom : UpperHalfPlane.denom (glMap (frickeGL N * frickeGL N)) z = (-N : ℂ) := by
     show (glMap (frickeGL N * frickeGL N)) 1 0 * (z : ℂ) +
         (glMap (frickeGL N * frickeGL N)) 1 1 = _
     rw [hentry 1 0, hentry 1 1]
-    simp only [Matrix.smul_apply, Matrix.one_apply]
-    norm_num
+    norm_num [Matrix.smul_apply, Matrix.one_apply]
   have habsdet : (↑|(glMap (frickeGL N * frickeGL N)).det.val| : ℂ) = (N : ℂ) ^ 2 := by
     have hdet : (glMap (frickeGL N * frickeGL N)).det.val =
         algebraMap ℚ ℝ (frickeGL N * frickeGL N : GL (Fin 2) ℚ).det.val :=
       congr_arg Units.val (GeneralLinearGroup.map_det (algebraMap ℚ ℝ) _)
     rw [hdet, GeneralLinearGroup.val_det_apply, GeneralLinearGroup.coe_mul, Matrix.det_mul,
       frickeGL_det, abs_of_nonneg (by positivity)]
-    push_cast; ring
+    push_cast
+    ring
   rw [hsmul, hdenom, habsdet]
   show f z * ((N : ℂ) ^ 2) ^ (k - 1) * (-(N : ℂ)) ^ (-k) = frickeScalar N k • f z
   rw [frickeScalar, smul_eq_mul,
@@ -374,7 +362,7 @@ identity that makes the two Fricke factors in `Ψ = E.symm ∘ Φ ∘ E` collaps
 of the slash representatives. -/
 lemma slash_mul_frickeGL (k : ℤ) (f : UpperHalfPlane → ℂ) (A : GL (Fin 2) ℚ) :
     f ∣[k] (A * frickeGL N) = frickeScalar N k • (f ∣[k] (A * (frickeGL N)⁻¹)) := by
-  rw [show A * frickeGL N = (A * (frickeGL N)⁻¹) * (frickeGL N * frickeGL N) from by group,
+  rw [show A * frickeGL N = (A * (frickeGL N)⁻¹) * (frickeGL N * frickeGL N) by group,
     SlashAction.slash_mul, frickeGL_sq_slash]
 
 /-- **`W ∘ W = c • id`** for the explicit scalar `c = frickeScalar N k = N^{2(k-1)}·(-N)^{-k}`. -/
@@ -385,8 +373,6 @@ theorem frickeOperator_frickeOperator (k : ℤ) :
   show (⇑(frickeOperator k f) ∣[k] (frickeGL N : GL (Fin 2) ℚ)) z = _
   rw [frickeOperator_coe, ← SlashAction.slash_mul, frickeGL_sq_slash]
   rfl
-
-/-! ## The Fricke operator on the Nebentypus character spaces -/
 
 /-- The **inverse-conjugate character** `χ' = χ ∘ (·)⁻¹`.  The Fricke operator sends
 `modFormCharSpace k χ` into `modFormCharSpace k (chiConj χ)`. -/
@@ -404,12 +390,9 @@ theorem frickeOperator_mem_charSpace (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     frickeOperator k f ∈ modFormCharSpace k (chiConj χ) := by
   rw [mem_modFormCharSpace_iff]
   intro d
-  have hstep : frickeOperator k (diamondOp k d⁻¹ f) = diamondOp k d (frickeOperator k f) := by
-    have := LinearMap.congr_fun (frickeOperator_diamondOp (N := N) k d⁻¹) f
-    simpa only [LinearMap.comp_apply, inv_inv] using this
-  show diamondOp k d (frickeOperator k f) = (↑(chiConj χ d) : ℂ) • frickeOperator k f
-  rw [← hstep, show diamondOp k d⁻¹ f = diamondOpHom k d⁻¹ f from rfl,
-    (mem_modFormCharSpace_iff k χ f).mp hf d⁻¹, map_smul, chiConj_apply]
+  have hd : diamondOp k d⁻¹ f = (↑(χ d⁻¹) : ℂ) • f := (mem_modFormCharSpace_iff k χ f).mp hf d⁻¹
+  have h := LinearMap.congr_fun (frickeOperator_diamondOp (N := N) k d⁻¹) f
+  simpa only [LinearMap.comp_apply, inv_inv, hd, map_smul, chiConj_apply] using h.symm
 
 /-- The Fricke operator restricted to `modFormCharSpace k χ`, landing in
 `modFormCharSpace k (chiConj χ)`. -/
