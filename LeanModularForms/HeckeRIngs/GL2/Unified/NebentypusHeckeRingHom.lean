@@ -6,7 +6,7 @@ Authors: Chris Birkbeck
 import LeanModularForms.HeckeRIngs.GL2.AdjointTheory
 import LeanModularForms.HeckeRIngs.GL2.HeckeT_p_CharSpace_Comm
 import LeanModularForms.HeckeRIngs.GL2.MultiplicationTable
-import LeanModularForms.HeckeRIngs.GL2.Prop334_HeckeSlashDiag
+import LeanModularForms.HeckeRIngs.GL2.Prop334_HeckeSlash
 import LeanModularForms.HeckeRIngs.GL2.Unified.Gamma0RingDn
 import LeanModularForms.HeckeRIngs.GL2.Unified.TwistedHeckeRing
 

@@ -4,14 +4,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
 import LeanModularForms.HeckeRIngs.GL2.HeckeT_n
-import LeanModularForms.HeckeRIngs.GL2.HeckeT_p_Gamma0_Bridge
+import LeanModularForms.HeckeRIngs.GL2.CharSpaceIso
+import LeanModularForms.HeckeRIngs.GL2.HeckeModularForm_Gamma0
+import LeanModularForms.HeckeRIngs.GL2.HeckeT_p_Gamma0
+import LeanModularForms.HeckeRIngs.GL2.HeckeT_p_Gamma1
 import LeanModularForms.HeckeRIngs.GL2.CharacterDecomp
 
 /-!
 # Commutativity of `heckeT_p_all` on the Nebentypus character spaces
 
-Using the trivial-character bridge `heckeT_p_val_eq_heckeOperator_Gamma0_on_charSpace_one`
-from `HeckeT_p_Gamma0_Bridge.lean`, we obtain a clean, short proof that for any two
+Via the trivial-character bridge to the abstract `Γ₀(N)` Hecke operator, we obtain a clean,
+short proof that for any two
 distinct primes `p, q` (both coprime to `N`), the operators `heckeT_p_all k p hp`
 and `heckeT_p_all k q hq` commute when restricted to the trivial Nebentypus
 eigenspace `modFormCharSpace k 1`. The proof reduces to commutativity of the abstract
