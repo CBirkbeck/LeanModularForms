@@ -23,7 +23,7 @@ commit per file after Phase 7.
 | 9 | HeckeRIngs/GL2/Fricke.lean | 491→439 | **DONE 2026-06-09** |
 | 10 | HeckeRIngs/GL2/Unified/ShimuraHom.lean | 449→432 | **DONE 2026-06-09** |
 | 11 | HeckeRIngs/GL2/Unified/RingTransport.lean | 324→307 | **DONE 2026-06-09** |
-| 12 | HeckeRIngs/GL2/Unified/DirectHeckeRing.lean | 178 | queued |
+| 12 | HeckeRIngs/GL2/Unified/DirectHeckeRing.lean | 178→0 | **DELETED 2026-06-09** (orphaned obstruction-notes) |
 | 13 | HeckeRIngs/GL2/Unified/EigenformFromRing.lean | 102 | queued |
 
 **SUBTREE DELETION (2026-06-05, user-approved):** files 1–5 (the GoodHeckeFamily/Γ₀-model
@@ -50,6 +50,17 @@ FourierHecke.lean (789), LevelRaise.lean (598), Newforms/ subdir, …
 ## Tranche 5 — ForMathlib
 
 ## Per-file log
+
+### 12. GL2/Unified/DirectHeckeRing.lean — DELETED (178 LOC) — 2026-06-09
+- User-authorized deletion ("anything we can delete you can delete"). The file was a **fully
+  orphaned** design-notes/obstruction record: nothing imported it, none of its 5 decls
+  (`directHeckeSlash_gen`, `direct_correction_on_right`, …) were used anywhere, no blueprint refs.
+- The obstruction it documented (the naive non-adjugate direct action is not twisted-invariant —
+  the right-coset Γ₀(N)-correction lands on the right of the slash) is now **moot**: ShimuraHom
+  built the genuine Ψ via Fricke conjugation. The detailed obstruction description survives inline
+  in NebentypusHeckeRingHom's bad-prime comment + the [[project-ring-first-hecke]] memory; the two
+  live citations (ShimuraHom, NebentypusHeckeRingHom) were re-pointed (no dangling file refs).
+- Build-gated: full build green (8604 jobs) after deletion. Recoverable from git (restore point f1d3e9a).
 
 ### 11. GL2/Unified/RingTransport.lean (324 → 307 lines, −5%) — 2026-06-09
 - Phases 0–7 run. **Dead code deleted (build-gated):** `chiAllU_ppow_bad` — the bad-prime branch of

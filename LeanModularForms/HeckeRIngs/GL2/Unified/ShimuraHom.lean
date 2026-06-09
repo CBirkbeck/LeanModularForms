@@ -340,7 +340,7 @@ lemma lunipPsi_bijective (hp : Nat.Prime p) (hpN : ¬ Nat.Coprime p N) :
 /-- **The true bad-prime matching**: for a `Γ₀(N),χ''`-twisted-invariant function `g`, the
 χ''-twisted Hecke slash at the bad class equals the plain sum of slashes by the **adjugated**
 lower-unipotent representatives.  (The non-adjugated/`U_p` form is FALSE for the
-right-coset convention — see `DirectHeckeRing.lean`; the Fricke conjugation below converts
+right-coset convention; the Fricke conjugation below converts
 the adjugates into the genuine `U_p` matrices.) -/
 theorem twistedHeckeSlashGen_bad (hp : Nat.Prime p) (hpN : ¬ Nat.Coprime p N)
     (χ'' : (ZMod N)ˣ →* ℂˣ) {k : ℤ} {g : ℍ → ℂ} (hg : IsGamma0TwistedInvariant (N := N) k χ'' g) :
