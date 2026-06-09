@@ -24,7 +24,7 @@ commit per file after Phase 7.
 | 10 | HeckeRIngs/GL2/Unified/ShimuraHom.lean | 449→432 | **DONE 2026-06-09** |
 | 11 | HeckeRIngs/GL2/Unified/RingTransport.lean | 324→307 | **DONE 2026-06-09** |
 | 12 | HeckeRIngs/GL2/Unified/DirectHeckeRing.lean | 178→0 | **DELETED 2026-06-09** (orphaned obstruction-notes) |
-| 13 | HeckeRIngs/GL2/Unified/EigenformFromRing.lean | 102 | queued |
+| 13 | HeckeRIngs/GL2/Unified/EigenformFromRing.lean | 102→101 | **DONE 2026-06-09** |
 
 **SUBTREE DELETION (2026-06-05, user-approved):** files 1–5 (the GoodHeckeFamily/Γ₀-model
 experimental layer, ~500 LOC) deleted as dead code — zero external consumers, zero blueprint
@@ -50,6 +50,18 @@ FourierHecke.lean (789), LevelRaise.lean (598), Newforms/ subdir, …
 ## Tranche 5 — ForMathlib
 
 ## Per-file log
+
+### 13. GL2/Unified/EigenformFromRing.lean (102 → 101 lines) — 2026-06-09
+- Phases 0–7 run. Already mechanically clean (0 λ/push_neg, no dividers, no `show … from by`, no
+  long lines). Fixed the stale "Main results" docstring: it listed `cuspFormCharSpace_toModularForm'_mem`
+  + `heckeT_n_cusp_eq_heckeRingHom` (both moved to NebentypusHeckeRingHom during file 8's cleanup) and
+  omitted this file's actual second theorem — now lists `Eigenform.isRingEigenvector` +
+  `isRingEigenvector_of_isEigenform`. No dead code (`isRingEigenvector_of_isEigenform` is consumed by
+  the SMO obligations; `Eigenform.isRingEigenvector` is the documented headline). Both proofs already
+  tight; shared end-structure flagged (cross-decl, not extracted). Full build green (8604).
+
+**TRANCHE 1 COMPLETE (13/13):** files 1–5 + 12 deleted (dead/orphaned, ~680 LOC), files 6–11 + 13
+cleaned. Net: the ring-first refactor tree audited end-to-end, build green throughout.
 
 ### 12. GL2/Unified/DirectHeckeRing.lean — DELETED (178 LOC) — 2026-06-09
 - User-authorized deletion ("anything we can delete you can delete"). The file was a **fully

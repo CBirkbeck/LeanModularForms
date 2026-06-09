@@ -24,14 +24,12 @@ of the ring.
 
 ## Main results
 
-* `cuspFormCharSpace_toModularForm'_mem` : the modular-form coercion of a `χ`-cusp form lies
-  in `modFormCharSpace k χ`.
-* `heckeT_n_cusp_eq_heckeRingHom` : for `f ∈ cuspFormCharSpace k χ` and `n` coprime to `N`,
-  `(heckeT_n_cusp k n f).toModularForm' = χ(n) • heckeRingHomCharSpace (heckeRingDn n) (↑f)`,
-  i.e. the eigenform operator IS the ring image (up to the diamond normalization `χ(n)`).
 * `Eigenform.isRingEigenvector` : the modular-form coercion of an `Eigenform` (whose
   coercion lies in `modFormCharSpace k χ`) is a simultaneous eigenvector of the ring action:
   `heckeRingHomCharSpace (heckeRingDn n) (↑f) = (χ(n)⁻¹ · eigenvalue n) • (↑f)`.
+* `isRingEigenvector_of_isEigenform` : the predicate-level version — any `χ`-cusp form
+  satisfying `IsEigenform` has modular-form coercion a simultaneous eigenvector of the ring
+  action (with eigenvalues `χ(n)⁻¹ · aₙ`).
 
 ## References
 
