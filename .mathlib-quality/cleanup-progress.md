@@ -22,7 +22,7 @@ commit per file after Phase 7.
 | 8 | HeckeRIngs/GL2/Unified/NebentypusHeckeRingHom.lean | 1420→1360 | **DONE 2026-06-09** |
 | 9 | HeckeRIngs/GL2/Fricke.lean | 491→439 | **DONE 2026-06-09** |
 | 10 | HeckeRIngs/GL2/Unified/ShimuraHom.lean | 449→432 | **DONE 2026-06-09** |
-| 11 | HeckeRIngs/GL2/Unified/RingTransport.lean | 324 | queued |
+| 11 | HeckeRIngs/GL2/Unified/RingTransport.lean | 324→307 | **DONE 2026-06-09** |
 | 12 | HeckeRIngs/GL2/Unified/DirectHeckeRing.lean | 178 | queued |
 | 13 | HeckeRIngs/GL2/Unified/EigenformFromRing.lean | 102 | queued |
 
@@ -50,6 +50,16 @@ FourierHecke.lean (789), LevelRaise.lean (598), Newforms/ subdir, …
 ## Tranche 5 — ForMathlib
 
 ## Per-file log
+
+### 11. GL2/Unified/RingTransport.lean (324 → 307 lines, −5%) — 2026-06-09
+- Phases 0–7 run. **Dead code deleted (build-gated):** `chiAllU_ppow_bad` — the bad-prime branch of
+  the good-part character scalar, with zero consumers anywhere (the composite bridge
+  `heckeRingHomCharSpace_heckeRingDn_all` is coprime-to-N only, so the bad branch is never reached).
+- Phase 3: 6 bare navigation dividers stripped; 1 WHY-bearing divider (re-homed identities) demoted.
+- Mechanically clean (0 λ/push_neg, no `show … from by`, no long lines); Phase-4 golf light — the
+  remaining proofs are tight ring-transport induction (recently-written ring-first code, already
+  minimal). Public re-exports `heckeT_n_comm`/`heckeT_n_mul_coprime`/`heckeT_n_comm_diamondOp` and
+  the `_ring` intermediaries retained (consumed downstream + blueprint).
 
 ### 10. GL2/Unified/ShimuraHom.lean (449 → 432 lines, −4%) — 2026-06-09
 - Phases 0–7 run. **No dead code** — leaf endpoint (the Ψ construction culminating in

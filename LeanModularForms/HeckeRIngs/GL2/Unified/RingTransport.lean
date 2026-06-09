@@ -42,8 +42,6 @@ open HeckeRing.GL2
 
 variable {N : ℕ} [NeZero N] {k : ℤ} {χ : (ZMod N)ˣ →* ℂˣ}
 
-/-! ## The good-part character scalar -/
-
 /-- The good-part character value `∏_{p ∤ N} χ(p)^{v_p(n)}`, as a unit of `ℂ`.
 Assembled by the generic `peelProd`, so that coprime multiplicativity and prime-power
 evaluation come from the generic lemmas. -/
@@ -61,13 +59,6 @@ theorem chiAllU_ppow_good (χ : (ZMod N)ˣ →* ℂˣ) {p : ℕ} (hp : Nat.Prime
     (hpN : Nat.Coprime p N) (v : ℕ) (hv : 0 < v) :
     chiAllU χ (p ^ v) = (χ (ZMod.unitOfCoprime p hpN)) ^ v := by
   rw [chiAllU, peelProd_ppow _ hp v hv, dif_pos hpN]
-
-theorem chiAllU_ppow_bad (χ : (ZMod N)ˣ →* ℂˣ) {p : ℕ} (hp : Nat.Prime p)
-    (hpN : ¬ Nat.Coprime p N) (v : ℕ) (hv : 0 < v) :
-    chiAllU χ (p ^ v) = 1 := by
-  rw [chiAllU, peelProd_ppow _ hp v hv, dif_neg hpN]
-
-/-! ## Prime-power restrictions for arbitrary primes -/
 
 /-- `heckeT_ppow k p hp r` restricted to `modFormCharSpace k χ`, for **every** prime `p`
 (including `p ∣ N`). -/
@@ -93,8 +84,6 @@ lemma heckeT_ppow_charRestrictAll_eq_good (k : ℤ) {p : ℕ} (hp : Nat.Prime p)
       heckeT_ppow_charRestrict (k := k) (χ := χ) p hp hpN r :=
   LinearMap.ext fun _ ↦ Subtype.ext rfl
 
-/-! ## Assembly of the general restriction -/
-
 @[simp] lemma heckeT_n_charRestrictAll_one (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) :
     heckeT_n_charRestrictAll (N := N) k 1 χ = 1 := by
   refine LinearMap.ext fun f ↦ Subtype.ext ?_
@@ -119,8 +108,6 @@ lemma heckeT_n_charRestrictAll_unfold (k : ℤ) (n : ℕ) [NeZero n] (hn : 1 < n
     heckeT_ppow_charRestrictAll_coe]
   rw [heckeT_n_unfold k n hn]
   rfl
-
-/-! ## The extended composite bridge -/
 
 /-- **Composite bridge, restriction form**: for `n` coprime to `N`,
 `Φ_χ(D_n) = (chiAllU χ n)⁻¹ • (T_n restricted to M_k(N,χ))`.
@@ -189,8 +176,6 @@ theorem heckeRingHomCharSpace_heckeRingDn_all (n : ℕ) [NeZero n]
       simp only [Units.val_mul, Units.val_pow_eq_pow_val, mul_inv]
       rw [inv_pow]
 
-/-! ## Endomorphism-level identities on each character space -/
-
 /-- The general restriction, rescaled form of the bridge:
 `T_n|_χ = chiAllU χ n • Φ_χ(D_n)`. -/
 theorem heckeT_n_charRestrictAll_eq_smul_ringHom (n : ℕ) [NeZero n]
@@ -224,8 +209,6 @@ theorem heckeT_n_charRestrictAll_mul_coprime' (m n : ℕ) [NeZero m] [NeZero n]
     heckeT_n_charRestrictAll_eq_smul_ringHom n hn,
     heckeRingDn_mul_coprime m n hmn, map_mul, chiAllU_mul_coprime χ m n hmn,
     smul_mul_smul_comm, Units.val_mul]
-
-/-! ## Full-space identities, by gluing -/
 
 /-- **Commutativity of the Hecke operators `T_n` on `M_k(Γ₁(N))`** — for all positive
 indices, transported from the commutative ring `𝕋(Γ₀(N))` and glued over the character
@@ -273,7 +256,7 @@ theorem heckeT_n_comm_diamondOp_all (k : ℤ) (n d : ℕ) [NeZero n] :
 
 end HeckeRing.GL2.Unified
 
-/-! ## Re-homed public operator identities
+/- Re-homed public operator identities.
 
 The public Hecke-operator structural identities formerly lived (with self-contained
 induction proofs) in `HeckeT_n.lean`.  After the ring-first refactor their proofs are the
