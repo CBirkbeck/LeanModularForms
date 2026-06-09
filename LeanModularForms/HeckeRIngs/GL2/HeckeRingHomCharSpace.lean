@@ -94,10 +94,4 @@ noncomputable def heckeT_n_charRestrictAll (k : ℤ) (n : ℕ) [NeZero n]
         modFormCharSpace k χ) : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) =
     heckeT_n k n (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) := rfl
 
-/-- On indices coprime to the level the two restrictions agree. -/
-lemma heckeT_n_charRestrictAll_eq (k : ℤ) (n : ℕ) [NeZero n] (hn : Nat.Coprime n N)
-    (χ : (ZMod N)ˣ →* ℂˣ) :
-    heckeT_n_charRestrictAll (N := N) k n χ = heckeT_n_charRestrict k n hn χ :=
-  LinearMap.ext fun f ↦ Subtype.ext rfl
-
 end HeckeRing.GL2
