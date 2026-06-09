@@ -21,7 +21,7 @@ character space and bridges it to the concrete Hecke operators.
 * `heckeRingHomCharSpace` : the general-`χ` ring homomorphism
   `Φ_χ : 𝕋(Γ₀(N)) →+* End_ℂ (Mₖ(Γ₁(N), χ))`, assembling the χ-twisted double-coset
   operators on the nebentypus eigenspace `modFormCharSpace k χ`.  It is built from the
-  per-coset twisted Hecke slash `twistedHeckeSlash_gen`, packaged as a `ℂ`-linear
+  per-coset twisted Hecke slash `twistedHeckeSlashGen`, packaged as a `ℂ`-linear
   endomorphism (`nebentypusHeckeOpLinear`) and extended `ℤ`-linearly over the ring
   (`nebentypusHeckeSum`); the ring axioms transport from the proven function-level
   homomorphism `twistedHeckeRingHomFunction` via injectivity of the coercion
@@ -68,7 +68,7 @@ lemma char_bridge (χ : (ZMod N)ˣ →* ℂˣ) (g : ↥(Gamma0 N))
   simp only [MonoidHom.coe_mk, OneHom.coe_mk]
   congr 1
   apply Units.ext
-  rw [Delta0UpperUnit_val, Gamma0MapUnits_val]
+  rw [delta0UpperUnit_val, Gamma0MapUnits_val]
   set gZ : Matrix (Fin 2) (Fin 2) ℤ := ((g : SL(2, ℤ)) : Matrix (Fin 2) (Fin 2) ℤ) with hgZ
   generalize hΔ : (⟨GL_adjugate (mapGL ℚ (g : SL(2, ℤ))), _⟩ : (Gamma0_pair N).Δ) = dEl
   have hval : ((dEl : GL (Fin 2) ℚ) : Matrix (Fin 2) (Fin 2) ℚ) =
@@ -125,19 +125,19 @@ theorem twistedInvariant_nebentypus
 
 variable {k : ℤ} {χ : (ZMod N)ˣ →* ℂˣ}
 
-private lemma twistedHeckeSlash_gen_eq_sum
+private lemma twistedHeckeSlashGen_eq_sum
     (D : HeckeCoset (Gamma0_pair N))
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    twistedHeckeSlash_gen (N := N) k χ D (⇑f) =
+    twistedHeckeSlashGen (N := N) k χ D (⇑f) =
       ∑ i : decompQuot (Gamma0_pair N) (HeckeCoset.rep D),
         (↑(delta0NebentypusWeight (N := N) χ D i) : ℂ)⁻¹ •
           ((⇑f) ∣[k] tRep_gen (Gamma0_pair N) D i) := rfl
 
-private lemma twistedHeckeSlash_gen_holomorphic
+private lemma twistedHeckeSlashGen_holomorphic
     (D : HeckeCoset (Gamma0_pair N))
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
-    MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (twistedHeckeSlash_gen (N := N) k χ D (⇑f)) := by
-  rw [twistedHeckeSlash_gen_eq_sum]
+    MDifferentiable 𝓘(ℂ) 𝓘(ℂ) (twistedHeckeSlashGen (N := N) k χ D (⇑f)) := by
+  rw [twistedHeckeSlashGen_eq_sum]
   exact MDifferentiable.sum fun i _ ↦
     MDifferentiable.const_smul _ ((ModularFormClass.holo f).slash k _)
 
@@ -155,12 +155,12 @@ private lemma smul_slash_tRep_gen_modForm
     (a • ⇑f : ℍ → ℂ) ∣[k] glMap (tRep_gen (Gamma0_pair N) D i)
   rw [ModularForm.smul_slash, hσ, ContinuousAlgEquiv.refl_apply]
 
-private lemma twistedHeckeSlash_gen_bdd_at_cusps
+private lemma twistedHeckeSlashGen_bdd_at_cusps
     (D : HeckeCoset (Gamma0_pair N))
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
     {c : OnePoint ℝ} (hc : IsCusp c ((Gamma1 N).map (mapGL ℝ))) :
-    c.IsBoundedAt (twistedHeckeSlash_gen (N := N) k χ D (⇑f)) k := by
-  rw [twistedHeckeSlash_gen_eq_sum]
+    c.IsBoundedAt (twistedHeckeSlashGen (N := N) k χ D (⇑f)) k := by
+  rw [twistedHeckeSlashGen_eq_sum]
   apply Finset.sum_induction _ (fun g ↦ c.IsBoundedAt g k)
     (fun _ _ ha hb ↦ ha.add hb)
     ((0 : ModularForm ((Gamma1 N).map (mapGL ℝ)) k).bdd_at_cusps' hc)
@@ -172,13 +172,13 @@ private lemma twistedHeckeSlash_gen_bdd_at_cusps
     (((↑(delta0NebentypusWeight (N := N) χ D i) : ℂ)⁻¹ • f).bdd_at_cusps'
       (HeckeRing.GL2.glMap_smul_isCusp_Gamma1 _ hc))
 
-/-- The twisted Hecke operator output `twistedHeckeSlash_gen k χ D (⇑f)`, packaged as a
+/-- The twisted Hecke operator output `twistedHeckeSlashGen k χ D (⇑f)`, packaged as a
 `ModularForm` at the `Γ₁(N)`-level. -/
 noncomputable def nebentypusHeckeOpModularForm
     (D : HeckeCoset (Gamma0_pair N))
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) (hf : f ∈ modFormCharSpace k χ) :
     ModularForm ((Gamma1 N).map (mapGL ℝ)) k where
-  toFun := twistedHeckeSlash_gen (N := N) k χ D (⇑f)
+  toFun := twistedHeckeSlashGen (N := N) k χ D (⇑f)
   slash_action_eq' γ hγ := by
     obtain ⟨σ, hσ_Gamma1, rfl⟩ := Subgroup.mem_map.mp hγ
     have hσ_Gamma0 : σ ∈ Gamma0 N := Gamma1_le_Gamma0 N hσ_Gamma1
@@ -189,18 +189,18 @@ noncomputable def nebentypusHeckeOpModularForm
       exact ((Gamma1_mem N σ).mp hσ_Gamma1).2.1
     have hneb := twistedInvariant_nebentypus
       (coe_mem_twistedInvariant f hf
-        |> twistedHeckeSlash_gen_preserves_invariant (N := N) k χ D (⇑f))
+        |> twistedHeckeSlashGen_preserves_invariant (N := N) k χ D (⇑f))
       ⟨σ, hσ_Gamma0⟩
     rw [h_units, map_one, Units.val_one, one_smul] at hneb
     exact hneb
-  holo' := twistedHeckeSlash_gen_holomorphic D f
-  bdd_at_cusps' hc := twistedHeckeSlash_gen_bdd_at_cusps D f hc
+  holo' := twistedHeckeSlashGen_holomorphic D f
+  bdd_at_cusps' hc := twistedHeckeSlashGen_bdd_at_cusps D f hc
 
 @[simp] lemma nebentypusHeckeOpModularForm_coe
     (D : HeckeCoset (Gamma0_pair N))
     (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) (hf : f ∈ modFormCharSpace k χ) :
     (⇑(nebentypusHeckeOpModularForm (N := N) D f hf) : ℍ → ℂ) =
-      twistedHeckeSlash_gen (N := N) k χ D (⇑f) := rfl
+      twistedHeckeSlashGen (N := N) k χ D (⇑f) := rfl
 
 /-- The packaged twisted Hecke operator output lies in the character space
 `modFormCharSpace k χ`. -/
@@ -213,7 +213,7 @@ theorem nebentypusHeckeOpModularForm_mem
   rw [nebentypusHeckeOpModularForm_coe]
   exact twistedInvariant_nebentypus
     (coe_mem_twistedInvariant f hf
-      |> twistedHeckeSlash_gen_preserves_invariant (N := N) k χ D (⇑f)) g
+      |> twistedHeckeSlashGen_preserves_invariant (N := N) k χ D (⇑f)) g
 
 /-- The packaged twisted Hecke operator as an element of `modFormCharSpace k χ`,
 viewed as the subtype `↥(modFormCharSpace k χ)`. -/
@@ -246,7 +246,7 @@ noncomputable def nebentypusHeckeOp
     (f : modFormCharSpace k χ) (z : ℍ) :
     ((nebentypusHeckeOp D f : modFormCharSpace k χ) :
         ModularForm ((Gamma1 N).map (mapGL ℝ)) k) z =
-      twistedHeckeSlash_gen (N := N) k χ D
+      twistedHeckeSlashGen (N := N) k χ D
         (⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) z := rfl
 
 /-- The twisted Hecke double-coset operator as a `ℂ`-linear endomorphism
@@ -258,13 +258,13 @@ noncomputable def nebentypusHeckeOpLinear
   map_add' f g := by
     refine Subtype.ext (ModularForm.ext fun z ↦ ?_)
     simp only [nebentypusHeckeOp_coe_coe, Submodule.coe_add, ModularForm.add_apply,
-      ModularForm.coe_add, twistedHeckeSlash_gen_add, Pi.add_apply]
+      ModularForm.coe_add, twistedHeckeSlashGen_add, Pi.add_apply]
   map_smul' c f := by
     refine Subtype.ext (ModularForm.ext fun z ↦ ?_)
     rw [nebentypusHeckeOp_coe_coe, Submodule.coe_smul,
       show (⇑(c • (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k))) =
         c • ⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) from rfl,
-      twistedHeckeSlash_gen_smul]
+      twistedHeckeSlashGen_smul]
     simp [Pi.smul_apply]
 
 @[simp] lemma nebentypusHeckeOpLinear_apply
@@ -302,21 +302,21 @@ lemma nebentypusHeckeSum_add
     simp [add_smul]
 
 /-- Applying `Φ_χ` to a form `f` and coercing to a function reproduces the function-valued
-weighted extension `twistedHeckeSlashExt_gen` of `⇑f`. -/
+weighted extension `twistedHeckeSlashExtGen` of `⇑f`. -/
 lemma nebentypusHeckeSum_apply_coe
     (T : 𝕋 (Gamma0_pair N) ℤ)
     (f : modFormCharSpace k χ) :
     (⇑((nebentypusHeckeSum (N := N) (k := k) (χ := χ) T f :
         modFormCharSpace k χ) :
         ModularForm ((Gamma1 N).map (mapGL ℝ)) k) : ℍ → ℂ) =
-      twistedHeckeSlashExt_gen (N := N) k χ T
+      twistedHeckeSlashExtGen (N := N) k χ T
         (⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) := by
   induction T using HeckeRing.induction_linear_𝕋 with
   | h_zero =>
       rw [nebentypusHeckeSum_zero]
-      simp [twistedHeckeSlashExt_gen]; rfl
+      simp [twistedHeckeSlashExtGen]; rfl
   | h_add T₁ T₂ h₁ h₂ =>
-      rw [nebentypusHeckeSum_add, twistedHeckeSlashExt_gen_add]
+      rw [nebentypusHeckeSum_add, twistedHeckeSlashExtGen_add]
       funext z
       simp only [LinearMap.add_apply, Submodule.coe_add, ModularForm.add_apply,
         Pi.add_apply]
@@ -324,9 +324,9 @@ lemma nebentypusHeckeSum_apply_coe
   | h_single D c =>
       rw [nebentypusHeckeSum_T_single]
       funext z
-      unfold twistedHeckeSlashExt_gen
+      unfold twistedHeckeSlashExtGen
       rw [Finsupp.sum_single_index (by simp :
-        (0 : ℤ) • twistedHeckeSlash_gen (N := N) k χ D
+        (0 : ℤ) • twistedHeckeSlashGen (N := N) k χ D
           (⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) = 0)]
       simp [LinearMap.smul_apply, nebentypusHeckeOpLinear_apply, SetLike.val_smul]
 
@@ -541,7 +541,7 @@ private lemma adjUpperΔ_weight (p : ℕ) (hp : Nat.Prime p)
   simp only [MonoidHom.coe_mk, OneHom.coe_mk]
   congr 1
   apply Units.ext
-  rw [Delta0UpperUnit_val, ZMod.coe_unitOfCoprime]
+  rw [delta0UpperUnit_val, ZMod.coe_unitOfCoprime]
   have hwit : delta0IntegralMatrix (N := N) (adjUpperΔ (N := N) p hp hpN b) =
       !![(p : ℤ), -(b : ℤ); 0, 1] := by
     apply delta0IntegralMatrix_witness_unique
@@ -557,7 +557,7 @@ private lemma adjLowerΔ_weight (p : ℕ) (hp : Nat.Prime p) :
   rw [show (1 : ℂˣ) = χ 1 from (map_one χ).symm]
   congr 1
   apply Units.ext
-  rw [Delta0UpperUnit_val, Units.val_one]
+  rw [delta0UpperUnit_val, Units.val_one]
   have hwit : delta0IntegralMatrix (N := N) (adjLowerΔ (N := N) p hp) =
       !![1, 0; 0, (p : ℤ)] := by
     apply delta0IntegralMatrix_witness_unique
@@ -703,17 +703,17 @@ private lemma twistedTpPsi_val_eq (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprim
     exact hval
 
 /-- For a `Γ₀(N),χ`-twisted-invariant function `f`, the abstract χ-weighted Hecke slash
-`twistedHeckeSlash_gen` at the prime double coset `D_p_Gamma0` equals the χ-weighted explicit
+`twistedHeckeSlashGen` at the prime double coset `D_p_Gamma0` equals the χ-weighted explicit
 `T_p` coset-sum: each upper representative `T_p_upper(b)` carries weight `χ(p)⁻¹`, and the
 lower representative `T_p_lower` carries weight `1`. -/
 theorem twisted_matches_T_p (p : ℕ) (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) {f : ℍ → ℂ}
     (hf : IsGamma0TwistedInvariant (N := N) k χ f) :
-    twistedHeckeSlash_gen (N := N) k χ (D_p_Gamma0 N p hp.pos) f =
+    twistedHeckeSlashGen (N := N) k χ (D_p_Gamma0 N p hp.pos) f =
       (↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ)⁻¹ •
           (∑ b ∈ Finset.range p, f ∣[k] (T_p_upper p hp.pos b : GL (Fin 2) ℚ)) +
         f ∣[k] (T_p_lower p hp.pos : GL (Fin 2) ℚ) := by
-  rw [twistedHeckeSlash_gen]
+  rw [twistedHeckeSlashGen]
   symm
   rw [Finset.smul_sum, ← Fin.sum_univ_eq_sum_range,
     show (∑ j : Fin p, (↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ)⁻¹ •
@@ -766,14 +766,14 @@ theorem heckeRingHomCharSpace_D_p_eq_heckeT_p_all (p : ℕ) (hp : Nat.Prime p)
   have hLHS : (⇑((heckeRingHomCharSpace (k := k) (χ := χ) (T_single (Gamma0_pair N) ℤ
       (D_p_Gamma0 N p hp.pos) 1) f : modFormCharSpace k χ) :
       ModularForm ((Gamma1 N).map (mapGL ℝ)) k) : ℍ → ℂ) =
-        twistedHeckeSlash_gen (N := N) k χ (D_p_Gamma0 N p hp.pos)
+        twistedHeckeSlashGen (N := N) k χ (D_p_Gamma0 N p hp.pos)
           (⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) := by
     change (⇑(((nebentypusHeckeSum (N := N) (k := k) (χ := χ)
         (T_single (Gamma0_pair N) ℤ (D_p_Gamma0 N p hp.pos) 1)) f :
         modFormCharSpace k χ) : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) : ℍ → ℂ) = _
-    rw [nebentypusHeckeSum_apply_coe, twistedHeckeSlashExt_gen,
+    rw [nebentypusHeckeSum_apply_coe, twistedHeckeSlashExtGen,
       Finsupp.sum_single_index (by simp :
-        (0 : ℤ) • twistedHeckeSlash_gen (N := N) k χ (D_p_Gamma0 N p hp.pos)
+        (0 : ℤ) • twistedHeckeSlashGen (N := N) k χ (D_p_Gamma0 N p hp.pos)
           (⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) = 0),
       one_smul]
   rw [hLHS, twisted_matches_T_p (k := k) (χ := χ) p hp hpN
@@ -917,7 +917,7 @@ private lemma diagScalarΔ_weight (χ : (ZMod N)ˣ →* ℂˣ) (c : ℕ) (hc : 0
   simp only [MonoidHom.coe_mk, OneHom.coe_mk]
   congr 1
   apply Units.ext
-  rw [Delta0UpperUnit_val, ZMod.coe_unitOfCoprime]
+  rw [delta0UpperUnit_val, ZMod.coe_unitOfCoprime]
   have hwit : delta0IntegralMatrix (N := N) (diagScalarΔ (N := N) c hc hgcd) =
       Matrix.diagonal (fun _ : Fin 2 ↦ (c : ℤ)) := by
     apply delta0IntegralMatrix_witness_unique
@@ -979,13 +979,13 @@ theorem heckeRingHomCharSpace_T_pp_eq_scalar (p : ℕ) (hp : Nat.Prime p)
     coe_mem_twistedInvariant f0 f.2
   have hLHS : (⇑((heckeRingHomCharSpace (k := k) (χ := χ) (T_single (Gamma0_pair N) ℤ D 1) f :
       modFormCharSpace k χ) : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) : ℍ → ℂ) =
-        twistedHeckeSlash_gen (N := N) k χ D (⇑f0) := by
+        twistedHeckeSlashGen (N := N) k χ D (⇑f0) := by
     change (⇑(((nebentypusHeckeSum (N := N) (k := k) (χ := χ)
         (T_single (Gamma0_pair N) ℤ D 1)) f :
         modFormCharSpace k χ) : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) : ℍ → ℂ) = _
-    rw [nebentypusHeckeSum_apply_coe, twistedHeckeSlashExt_gen,
+    rw [nebentypusHeckeSum_apply_coe, twistedHeckeSlashExtGen,
       Finsupp.sum_single_index (by simp :
-        (0 : ℤ) • twistedHeckeSlash_gen (N := N) k χ D (⇑f0) = 0),
+        (0 : ℤ) • twistedHeckeSlashGen (N := N) k χ D (⇑f0) = 0),
       one_smul]
   rw [hLHS]
   haveI hsub : Subsingleton (decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) :=
@@ -993,11 +993,11 @@ theorem heckeRingHomCharSpace_T_pp_eq_scalar (p : ℕ) (hp : Nat.Prime p)
   obtain ⟨h₁, hh₁, h₂, hh₂, hfact⟩ := adj_diagScalar_factorisation (N := N) p hp hgcd
   rw [← hD] at hfact
   set q : decompQuot (Gamma0_pair N) (HeckeCoset.rep D) := ⟦⟨h₁, hh₁⟩⟧ with hq
-  rw [twistedHeckeSlash_gen, Fintype.sum_subsingleton _ q]
+  rw [twistedHeckeSlashGen, Fintype.sum_subsingleton _ q]
   have hmatch := twisted_weighted_slash_tRep_gen_of_mem (N := N) k χ D h₁ hh₁ h₂ hh₂ (⇑f0) hf0inv
   simp only [hq] at hmatch ⊢
   rw [show delta0NebentypusWeight (N := N) χ D ⟦(⟨h₁, hh₁⟩ : (Gamma0_pair N).H)⟧ =
-    delta0NebentypusDeltaChar (N := N) χ (deltaRep_gen (N := N) D ⟦⟨h₁, hh₁⟩⟧) from rfl,
+    delta0NebentypusDeltaChar (N := N) χ (deltaRepGen (N := N) D ⟦⟨h₁, hh₁⟩⟧) from rfl,
     ← hmatch]
   rw [← hfact, GL_adjugate_involutive]
   have hwgt := diagScalar_triple_weight (N := N) (χ := χ) p hp hpN hgcd
@@ -1044,14 +1044,14 @@ lemma decompQuot_D_p_Gamma0_bad_natcard (p : ℕ) (hp : Nat.Prime p)
 
 /- **No bad-prime bridge for THIS homomorphism** (verified disproof, 2026-06-05).
 
-`twistedHeckeSlash_gen` slashes by `tRep_gen i = GL_adjugate(δᵢ)`, so the image of the
+`twistedHeckeSlashGen` slashes by `tRep_gen i = GL_adjugate(δᵢ)`, so the image of the
 class of `diag(1,p)` is the Hecke operator of the **adjugate** class
 `Γ₀(N)·diag(p,1)·Γ₀(N)`.  For a good prime `p ∤ N` the two classes coincide and the
 bridge `twisted_matches_T_p` above holds; for a bad prime `p ∣ N` they are **disjoint**
 (separating invariant: `M₁₁ mod p` — a unit on the adjugate side, `0` on the `U_p` side;
 brute-force confirmed at `N = 2, p = 2` and `N = 6, p = 2`).  Hence
 `Φ_χ(D_p)` is a `V_p`-type operator and **not** `U_p`, and the statement
-"`twistedHeckeSlash_gen (D_p_Gamma0) f = ∑_b f∣[[1,b],[0,p]]`" is FALSE at bad primes.
+"`twistedHeckeSlashGen (D_p_Gamma0) f = ∑_b f∣[[1,b],[0,p]]`" is FALSE at bad primes.
 
 Consequently the ring-first transport (`Unified/RingTransport.lean`) is deliberately
 restricted to indices coprime to `N`; bad-prime blocks (`U_p`-powers) live on the

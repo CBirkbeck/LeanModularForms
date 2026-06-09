@@ -17,8 +17,8 @@ commit per file after Phase 7.
 | 3 | HeckeRIngs/GL2/Unified/Gamma1CharSpace.lean | 82→81→0 | cleaned, then **DELETED 2026-06-05** |
 | 4 | HeckeRIngs/GL2/Unified/TwistedSlash.lean | 95→0 | **DELETED 2026-06-05** (audit found subtree dead) |
 | 5 | HeckeRIngs/GL2/Unified/CuspNebentypusSpace.lean | 186→0 | **DELETED 2026-06-05** |
-| 6 | HeckeRIngs/GL2/Unified/TwistedHeckeRing.lean | 1249 | IN PROGRESS |
-| 7 | HeckeRIngs/GL2/Unified/Gamma0RingDn.lean | 783 | queued |
+| 6 | HeckeRIngs/GL2/Unified/TwistedHeckeRing.lean | 1249→968 | **DONE 2026-06-09** |
+| 7 | HeckeRIngs/GL2/Unified/Gamma0RingDn.lean | 783 | IN PROGRESS |
 | 8 | HeckeRIngs/GL2/Unified/NebentypusHeckeRingHom.lean | 1420 | queued |
 | 9 | HeckeRIngs/GL2/Fricke.lean | 491 | queued |
 | 10 | HeckeRIngs/GL2/Unified/ShimuraHom.lean | 449 | queued |
@@ -50,6 +50,16 @@ FourierHecke.lean (789), LevelRaise.lean (598), Newforms/ subdir, …
 ## Tranche 5 — ForMathlib
 
 ## Per-file log
+
+### 6. GL2/Unified/TwistedHeckeRing.lean (1249 → 968 lines, −22%) — 2026-06-09
+- Phases 0–7 all run; ~70 declarations across 11 worker waves (2 extracted helpers grew the count), every gate pass; full build green ×5. (Wave 8 hit a transient weekly agent-limit; re-dispatched after reset — all succeeded.)
+- Header normalized; module docstring rewritten with Main definitions/results.
+- **Big golf wins** (via mathlib lemmas the per-decl search surfaced): `twistedHeckeSlashGen_comp_eq_prod_sum` 37→2 (SlashAction.sum_slash + Fintype.sum_prod_type'); `delta0NebentypusWeight_mul_eq_tripleDelta` 15→2; `tRep_genmul_eq_adjugate_leftMul` 15→6; `twisted_filtered_sum_collapse_of_qOf` 41→25 (Finset.sum_fiberwise'); `twisted_fiber_filter_card_eq` 16→6 (Nat.subtype_card); `gamma0LeftMulQuot_injective` 23→4 (QuotientGroup.leftRel direct); `delta0IntegralMatrix_mul` 15→4 (Matrix.map_mul_intCast); `delta0UpperEntry isUnit` 9→3 (ZMod.coe_int_isUnit_iff_isCoprime); `delta0IntegralMatrix_witness_unique` 12→4 (Matrix.map_injective). Headline `twistedHeckeSlashGen_comp` 27→5 via 2 extracted helpers (≤15 main-result gate).
+- **5 renames applied (Phase 5b)**, substring-cascade across 4 files: `_gen` defs → camelCase (`twistedHeckeSlash_gen→twistedHeckeSlashGen` +14 dependent lemmas, `twistedHeckeSlashExt_gen→…ExtGen`, `deltaRep_gen→deltaRepGen`), `Delta0UpperUnit→delta0UpperUnit` (+_val/_mul/_one), `delta0UpperEntry_isUnit→isUnit_delta0UpperEntry`. ~140 call sites updated in NebentypusHeckeRingHom/ShimuraHom/DirectHeckeRing.
+- **/simplify pass**: deleted dead private `units_coe_mul_inv_mul_right_cancel` (zero callers); merged the units-smul lemma pair (2→1); **stripped all 141 redundant `(N := N)`** (build-gated — all removable). Efficiency + Altitude reviewers: clean (simp-set healthy, 4-layer tower honest, no split needed at 968 lines given project's >1500 convention).
+- 3 worst-overlong signature lines hand-wrapped; 9 lines remain 101–104 (irreducible multi-binder/nested-statement; runLinter clean — project has no longLine enforcement).
+- **FLAGGED for user (big-change, NOT applied):** CommMonoid-valued χ generality; SMul-tower `smul`; `IsCoprime` restatement of `delta0IntegralMatrix_upper_left_coprime`; promote cross-file `sigma_eq_id_of_pos_det_gen` (HeckeActionGeneral.lean) out of `private` to kill the `*_sigma_eq_id` duplication repo-wide. **Split-seam recorded** (if ever needed): Δ₀-char layer (L48–149) / twisted-slash layer / 𝕋-extension layer.
+- Renames queue truncated. Sole remaining file-level note: pre-existing compiler PANICs in ForMathlib/Seg{1,4}FTCProvider (tranche 5).
 
 ### 3. GL2/Unified/Gamma1CharSpace.lean (82 → 81 lines) — 2026-06-05
 - Phases 0–7 all run; 7 declarations, 7 workers, all gates pass; build green ×3.

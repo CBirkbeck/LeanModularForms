@@ -14,11 +14,11 @@ Hecke ring `𝕋 (Gamma0_pair N) ℤ` on `modFormCharSpace k χ` — the compani
 `Ψ_χ` that, unlike the existing `heckeRingHomCharSpace` (`Φ_χ`), would send the prime double
 coset `D_p` to the `U_p` operator at the bad primes `p ∣ N`.
 
-## The literal "slash by `deltaRep_gen`" construction is non-invariant (verified obstruction)
+## The literal "slash by `deltaRepGen`" construction is non-invariant (verified obstruction)
 
-The existing `Φ_χ` (`twistedHeckeSlash_gen`) slashes a coset `D` by the **adjugates**
-`tRep_gen D i = GL_adjugate (deltaRep_gen D i)` of the representatives.  The proposed direct
-`Ψ_χ` slashes by `deltaRep_gen D i = σᵢ · rep(D)` themselves.  This is provably **not**
+The existing `Φ_χ` (`twistedHeckeSlashGen`) slashes a coset `D` by the **adjugates**
+`tRep_gen D i = GL_adjugate (deltaRepGen D i)` of the representatives.  The proposed direct
+`Ψ_χ` slashes by `deltaRepGen D i = σᵢ · rep(D)` themselves.  This is provably **not**
 twisted-invariant, and therefore does not land in `modFormCharSpace k χ`.  The precise
 reason:
 
@@ -26,7 +26,7 @@ reason:
   `HgH = ⊔ᵢ δᵢ · H` into **right cosets** `δᵢ · H` with `δᵢ = i.out · g` (see
   `decompQuot_coset_diff` and `DoubleCoset.doubleCoset_eq_iUnion_leftCosets`).
 * For the un-adjugated representatives the `H`-correction lands on the **right**:
-  `gamma0TripleDelta D h₁ h₂ = deltaRep_gen D ⟦h₁⟧ · κ` with `κ ∈ Γ₀(N)` (the existing
+  `gamma0TripleDelta D h₁ h₂ = deltaRepGen D ⟦h₁⟧ · κ` with `κ ∈ Γ₀(N)` (the existing
   `gamma0TripleDelta_eq_deltaRep_mul_correction`).  Hence
   `f ∣ (h₁ · rep · h₂) = (f ∣ δ_q) ∣ κ`.
 * A right `Γ₀(N)`-correction on a **slashed** term `f ∣ δ_q` does *not* simplify: it would
@@ -74,7 +74,7 @@ existing `decompQuot (Gamma0_pair N) (rep D)`).
 Building `Ψ_χ` therefore requires a **new** finite left-coset-decomposition quotient
 (mirroring `decompQuot`'s finiteness via the symmetry of the commensurator) together with a
 full re-derivation of the per-coset slash, its `Γ₀(N)`-invariance, and — the substantial
-part — its multiplicativity (the fiber-sum combinatorics of `twistedHeckeSlash_gen_comp`,
+part — its multiplicativity (the fiber-sum combinatorics of `twistedHeckeSlashGen_comp`,
 `twistedHeckeSumFunction_mul` re-expressed for the *opposite*-order per-coset product, an
 anti-law turned into a hom by `Gamma0_pair_HeckeAlgebra_mul_comm`).  This is a major
 standalone development rather than a sign-flipped mirror of `TwistedHeckeRing.lean`, and is
@@ -101,30 +101,30 @@ variable {N : ℕ} [NeZero N]
 variable {k : ℤ} {χ : (ZMod N)ˣ →* ℂˣ}
 
 /-- Positivity of the rational determinant of a (non-adjugated) `Γ₀(N)` Hecke
-representative `deltaRep_gen D i = σᵢ · rep(D)`. -/
-lemma deltaRep_gen_det_pos (D : HeckeCoset (Gamma0_pair N))
+representative `deltaRepGen D i = σᵢ · rep(D)`. -/
+lemma deltaRepGen_det_pos (D : HeckeCoset (Gamma0_pair N))
     (i : decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) :
-    0 < (deltaRep_gen (N := N) D i : GL (Fin 2) ℚ).det.val := by
-  simpa [deltaRep_gen] using (deltaRep_gen (N := N) D i).prop.2.1
+    0 < (deltaRepGen (N := N) D i : GL (Fin 2) ℚ).det.val := by
+  simpa [deltaRepGen] using (deltaRepGen (N := N) D i).prop.2.1
 
-private lemma smul_slash_deltaRep_gen (k : ℤ) (D : HeckeCoset (Gamma0_pair N))
+private lemma smul_slash_deltaRepGen (k : ℤ) (D : HeckeCoset (Gamma0_pair N))
     (i : decompQuot (Gamma0_pair N) (HeckeCoset.rep D)) (c : ℂ) (f : ℍ → ℂ) :
-    (c • f) ∣[k] (deltaRep_gen (N := N) D i : GL (Fin 2) ℚ) =
-      c • (f ∣[k] (deltaRep_gen (N := N) D i : GL (Fin 2) ℚ)) :=
-  smul_slash_pos_det k c f _ (deltaRep_gen_det_pos (N := N) D i)
+    (c • f) ∣[k] (deltaRepGen (N := N) D i : GL (Fin 2) ℚ) =
+      c • (f ∣[k] (deltaRepGen (N := N) D i : GL (Fin 2) ℚ)) :=
+  smul_slash_pos_det k c f _ (deltaRepGen_det_pos (N := N) D i)
 
 /-- The **direct** (non-adjugate) χ-twisted Hecke slash attached to a `Γ₀(N)` Hecke coset:
-slashing by the right-coset representatives `deltaRep_gen D i = σᵢ · rep(D)` themselves,
+slashing by the right-coset representatives `deltaRepGen D i = σᵢ · rep(D)` themselves,
 weighted by the χ-character of their upper-left unit.
 
 ⚠ This is *not* `Γ₀(N)`-twisted-invariant in general (see the module docstring) — it is the
-naive companion to `twistedHeckeSlash_gen` and is recorded here only at the function level.
+naive companion to `twistedHeckeSlashGen` and is recorded here only at the function level.
 The genuine `U_p`-hitting companion `Ψ_χ` requires the left-coset reformulation. -/
 noncomputable def directHeckeSlash_gen (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (D : HeckeCoset (Gamma0_pair N)) (f : ℍ → ℂ) : ℍ → ℂ :=
   ∑ i : decompQuot (Gamma0_pair N) (HeckeCoset.rep D),
     (↑(delta0NebentypusWeight (N := N) χ D i) : ℂ) •
-      (f ∣[k] (deltaRep_gen (N := N) D i : GL (Fin 2) ℚ))
+      (f ∣[k] (deltaRepGen (N := N) D i : GL (Fin 2) ℚ))
 
 @[simp] lemma directHeckeSlash_gen_add (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
     (D : HeckeCoset (Gamma0_pair N)) (f g : ℍ → ℂ) :
@@ -142,32 +142,32 @@ noncomputable def directHeckeSlash_gen (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
   apply Finset.sum_congr rfl
   intro i _
   ext z
-  rw [smul_slash_deltaRep_gen (N := N) k D i c f]
+  rw [smul_slash_deltaRepGen (N := N) k D i c f]
   simp only [Pi.smul_apply, smul_eq_mul]
   ring
 
 /-- **The obstruction, stated as a lemma.** For the direct (non-adjugate) representatives the
 `Γ₀(N)`-correction in the right-coset decomposition lands on the *right* of the slashed
 representative.  Concretely, for `h₁, h₂ ∈ Γ₀(N)`, with `q = ⟦h₁⟧` the corresponding class,
-the representative `h₁ · rep(D) · h₂` factors as `deltaRep_gen D q · κ` with `κ ∈ Γ₀(N)`, so
+the representative `h₁ · rep(D) · h₂` factors as `deltaRepGen D q · κ` with `κ ∈ Γ₀(N)`, so
 
-`f ∣ (h₁ · rep(D) · h₂) = (f ∣ deltaRep_gen D q) ∣ κ`.
+`f ∣ (h₁ · rep(D) · h₂) = (f ∣ deltaRepGen D q) ∣ κ`.
 
 Twisted-invariance of `f` (a `χ`-eigenform under the *adjugate* action of `Γ₀(N)`) cannot
-absorb this right factor, because `f ∣ deltaRep_gen D q` is not a `χ`-eigenform under
+absorb this right factor, because `f ∣ deltaRepGen D q` is not a `χ`-eigenform under
 `Γ₀(N)`.  This is the formal record of why `directHeckeSlash_gen` is not invariant; it does
 *not* assert invariance. -/
 lemma direct_correction_on_right (D : HeckeCoset (Gamma0_pair N))
     (h₁ : GL (Fin 2) ℚ) (hh₁ : h₁ ∈ (Gamma0_pair N).H)
     (h₂ : GL (Fin 2) ℚ) (hh₂ : h₂ ∈ (Gamma0_pair N).H) (f : ℍ → ℂ) :
     f ∣[k] (h₁ * (HeckeCoset.rep D : GL (Fin 2) ℚ) * h₂) =
-      (f ∣[k] (deltaRep_gen (N := N) D ⟦⟨h₁, hh₁⟩⟧ : GL (Fin 2) ℚ)) ∣[k]
+      (f ∣[k] (deltaRepGen (N := N) D ⟦⟨h₁, hh₁⟩⟧ : GL (Fin 2) ℚ)) ∣[k]
         glMap (gamma0Correction (N := N) D ⟦⟨h₁, hh₁⟩⟧ h₁ h₂) := by
   set q : decompQuot (Gamma0_pair N) (HeckeCoset.rep D) := ⟦⟨h₁, hh₁⟩⟧ with hq
   have hκ : gamma0Correction (N := N) D q h₁ h₂ ∈ (Gamma0_pair N).H :=
     gamma0Correction_mem_H (N := N) D q h₁ hh₁ h₂ hh₂ (Quotient.out_eq q)
   have hδ : (h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂) =
-      (deltaRep_gen (N := N) D q : GL (Fin 2) ℚ) * gamma0Correction (N := N) D q h₁ h₂ :=
+      (deltaRepGen (N := N) D q : GL (Fin 2) ℚ) * gamma0Correction (N := N) D q h₁ h₂ :=
     congrArg (fun x : (Gamma0_pair N).Δ ↦ (x : GL (Fin 2) ℚ))
       (gamma0TripleDelta_eq_deltaRep_mul_correction (N := N) D q h₁ hh₁ h₂ hh₂ hκ)
   rw [hδ]

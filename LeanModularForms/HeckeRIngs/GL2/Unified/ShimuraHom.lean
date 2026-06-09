@@ -99,7 +99,7 @@ noncomputable def heckeRingHomCharSpaceShimura (k : ℤ) (χ : (ZMod N)ˣ →* �
 /-- The single-coset Fricke-conjugation identity at the **function level**: for `f` in the
 `χ`-Nebentypus space, the Shimura action `Ψ_χ(T_single D 1)` applied to `f`, as a function on
 `ℍ`, equals the sum over the right-coset decomposition of `D` of the `χ'`-weighted slash by
-the **`W`-conjugated** adjugate representatives `W · tRep_gen D i · W⁻¹` (`= ι(deltaRep_gen i)`,
+the **`W`-conjugated** adjugate representatives `W · tRep_gen D i · W⁻¹` (`= ι(deltaRepGen i)`,
 the Atkin–Lehner image).  This is the clean algebraic core: the two Fricke factors `W`
 contribute `W·(·)·W` per term, which equals `(W·(·)·W⁻¹) · W²`, and `W² = c·I` cancels the
 `c⁻¹` from `E.symm`. -/
@@ -148,11 +148,11 @@ theorem heckeRingHomCharSpaceShimura_single_coe (k : ℤ) (χ : (ZMod N)ˣ →* 
         ((nebentypusHeckeSum (N := N) (k := k) (χ := chiConj χ)
           (T_single (Gamma0_pair N) ℤ D 1) (frickeCharEquiv k χ f) :
           modFormCharSpace k (chiConj χ)) : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) := rfl
-    rw [hΦf', nebentypusHeckeSum_apply_coe, twistedHeckeSlashExt_gen,
+    rw [hΦf', nebentypusHeckeSum_apply_coe, twistedHeckeSlashExtGen,
       Finsupp.sum_single_index (by simp :
-        (0 : ℤ) • twistedHeckeSlash_gen (N := N) k (chiConj χ) D
+        (0 : ℤ) • twistedHeckeSlashGen (N := N) k (chiConj χ) D
           (⇑(frickeCharEquiv k χ f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) = 0),
-      one_zsmul, twistedHeckeSlash_gen, hEf]
+      one_zsmul, twistedHeckeSlashGen, hEf]
   -- Step 3: assemble, using the per-term identity `g ∣ (W · M · W) = c • (g ∣ (W · M · W⁻¹))`.
   rw [hstep1, hstep2, SlashAction.sum_slash, Finset.smul_sum]
   refine Finset.sum_congr rfl fun i _ ↦ ?_
@@ -232,7 +232,7 @@ lemma lunipRep_deltaChar (hp : Nat.Prime p) (r : ℕ) (χ'' : (ZMod N)ˣ →* �
   rw [show (1 : ℂˣ) = χ'' 1 from (map_one χ'').symm]
   congr 1
   apply Units.ext
-  rw [Delta0UpperUnit_val, Units.val_one]
+  rw [delta0UpperUnit_val, Units.val_one]
   have hwit : delta0IntegralMatrix (N := N) g = !![1, 0; (N : ℤ) * r, (p : ℤ)] := by
     apply delta0IntegralMatrix_witness_unique
     rw [hg]
@@ -348,12 +348,12 @@ lemma lunipPsi_bijective (hp : Nat.Prime p) (hpN : ¬ Nat.Coprime p N) :
 lower-unipotent representatives.  (The non-adjugated/`U_p` form is FALSE for the
 right-coset convention — see `DirectHeckeRing.lean`; the Fricke conjugation below converts
 the adjugates into the genuine `U_p` matrices.) -/
-theorem twistedHeckeSlash_gen_bad (hp : Nat.Prime p) (hpN : ¬ Nat.Coprime p N)
+theorem twistedHeckeSlashGen_bad (hp : Nat.Prime p) (hpN : ¬ Nat.Coprime p N)
     (χ'' : (ZMod N)ˣ →* ℂˣ) {k : ℤ} {g : ℍ → ℂ}
     (hg : IsGamma0TwistedInvariant (N := N) k χ'' g) :
-    twistedHeckeSlash_gen (N := N) k χ'' (D_p_Gamma0 N p hp.pos) g =
+    twistedHeckeSlashGen (N := N) k χ'' (D_p_Gamma0 N p hp.pos) g =
       ∑ r ∈ Finset.range p, g ∣[k] GL_adjugate (lunipRep (N := N) p hp.pos r) := by
-  rw [twistedHeckeSlash_gen, ← Fin.sum_univ_eq_sum_range
+  rw [twistedHeckeSlashGen, ← Fin.sum_univ_eq_sum_range
     (fun r ↦ g ∣[k] GL_adjugate (lunipRep (N := N) p hp.pos r)) p]
   refine (Fintype.sum_bijective (lunipPsi (N := N) p hp)
     (lunipPsi_bijective (N := N) p hp hpN) _ _ fun r ↦ ?_).symm
@@ -392,7 +392,7 @@ Combined with `heckeRingHomCharSpaceShimura_single_coe`, this gives
 `Ψ_χ(D_p)(f) = ∑_r (⇑f) ∣ T_p_upper(r) = U_p(f)`.  The remaining gap is the **index
 bijection bookkeeping**: identifying `decompQuot`'s abstract index set with `Fin p` via the
 explicit reps `lunip_inject` (currently `private` in `CongruenceHecke/Props.lean`), matching
-`deltaRep_gen` to `[[1,0],[N·r,p]]`, and absorbing the residual `Γ₁(N)` factor (left of the
+`deltaRepGen` to `[[1,0],[N·r,p]]`, and absorbing the residual `Γ₁(N)` factor (left of the
 slash, killed by `f`'s `Γ₁(N)`-invariance).  This mirrors `twisted_matches_T_p` /
 `twistedTpPsi` (the good-prime analogue) but on the `W`-conjugated bad reps. -/
 theorem heckeRingHomCharSpaceShimura_D_p_bad (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
@@ -433,13 +433,13 @@ theorem heckeRingHomCharSpaceShimura_D_p_bad (k : ℤ) (χ : (ZMod N)ˣ →* ℂ
       smul_slash_pos_det k _ _ _ hfrickeInvDetPos]
   -- Rewrite the sum using hterm, then pull W⁻¹ out.
   rw [Finset.sum_congr rfl (fun i _ ↦ hterm i), ← SlashAction.sum_slash]
-  -- The remaining sum is twistedHeckeSlash_gen k (chiConj χ) D_p g.
+  -- The remaining sum is twistedHeckeSlashGen k (chiConj χ) D_p g.
   rw [show ∑ i : decompQuot (Gamma0_pair N) (HeckeCoset.rep (D_p_Gamma0 N p hp.pos)),
         (↑(delta0NebentypusWeight (chiConj χ) (D_p_Gamma0 N p hp.pos) i) : ℂ)⁻¹ •
           (g ∣[k] tRep_gen (Gamma0_pair N) (D_p_Gamma0 N p hp.pos) i) =
-      twistedHeckeSlash_gen (N := N) k (chiConj χ) (D_p_Gamma0 N p hp.pos) g from rfl]
+      twistedHeckeSlashGen (N := N) k (chiConj χ) (D_p_Gamma0 N p hp.pos) g from rfl]
   -- Apply the bad-prime theorem: twisted sum = sum over Finset.range p of adjugate slashes.
-  rw [twistedHeckeSlash_gen_bad (N := N) p hp hpN (chiConj χ) hg, SlashAction.sum_slash]
+  rw [twistedHeckeSlashGen_bad (N := N) p hp hpN (chiConj χ) hg, SlashAction.sum_slash]
   -- Use the matrix identity W·adj(δ_r)·W⁻¹ = T_p_upper r per term.
   refine Finset.sum_congr rfl fun r _ ↦ ?_
   rw [hg_def, ← SlashAction.slash_mul, ← SlashAction.slash_mul]
