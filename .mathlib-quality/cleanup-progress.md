@@ -21,7 +21,7 @@ commit per file after Phase 7.
 | 7 | HeckeRIngs/GL2/Unified/Gamma0RingDn.lean | 783→613 | **DONE 2026-06-09** |
 | 8 | HeckeRIngs/GL2/Unified/NebentypusHeckeRingHom.lean | 1420→1360 | **DONE 2026-06-09** |
 | 9 | HeckeRIngs/GL2/Fricke.lean | 491→439 | **DONE 2026-06-09** |
-| 10 | HeckeRIngs/GL2/Unified/ShimuraHom.lean | 449 | queued |
+| 10 | HeckeRIngs/GL2/Unified/ShimuraHom.lean | 449→432 | **DONE 2026-06-09** |
 | 11 | HeckeRIngs/GL2/Unified/RingTransport.lean | 324 | queued |
 | 12 | HeckeRIngs/GL2/Unified/DirectHeckeRing.lean | 178 | queued |
 | 13 | HeckeRIngs/GL2/Unified/EigenformFromRing.lean | 102 | queued |
@@ -50,6 +50,20 @@ FourierHecke.lean (789), LevelRaise.lean (598), Newforms/ subdir, …
 ## Tranche 5 — ForMathlib
 
 ## Per-file log
+
+### 10. GL2/Unified/ShimuraHom.lean (449 → 432 lines, −4%) — 2026-06-09
+- Phases 0–7 run. **No dead code** — leaf endpoint (the Ψ construction culminating in
+  `heckeRingHomCharSpaceShimura_D_p_bad`); imported only by the Chapters blueprint, which targets
+  `heckeRingHomCharSpace­Shimura` (`shimura-hom`) + `_D_p_bad` (`shimura-hom-Up`). The 2 unreferenced
+  `@[simp] _apply` rfl-lemmas are standard canonical-form API, kept (consistent with file 8's coe-lemmas).
+- Phase 3: 1 bare divider stripped; 2 WHY-bearing dividers (bad-prime infra / payoff) demoted to plain comments.
+- Phase 4 (4-worker wave on the big proofs): stripped ~17 narrative step-comments; `show … from by`
+  → `show … by` (×4); dropped dead `have hc`/`set … with` bindings; `by exact e`→`e`; semicolon splits.
+  `_single_coe` −5, `_D_p_bad` −8 lines. Lint-clean, full build green (8604).
+- **FLAGGED (need a live-LSP verify pass, not applied):** several `show … = _; rw` → `change`
+  candidates in `_single_coe`/`_D_p_bad`; bare `simp only at habs` in `twistedHeckeSlashGen_bad`;
+  `lunipPsi_injective` has a likely-dead `hp0 : (p:ℚ) ≠ 0` (may be consumed implicitly by `field_simp`)
+  and an unused `hpN` in its body (call site `lunipPsi_bijective` still needs it) — both left intact.
 
 ### 9. GL2/Fricke.lean (491 → 439 lines, −11%) — 2026-06-09
 - Phases 0–7 run. **Dead code deleted (user-authorized, build-gated, ~30 LOC, committed separately
