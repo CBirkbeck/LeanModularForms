@@ -7,7 +7,7 @@ import LeanModularForms.HeckeRIngs.GLn.Basic
 import LeanModularForms.HeckeRIngs.GLn.SL2Surjection
 import LeanModularForms.HeckeRIngs.AbstractHeckeRing.Ring
 import LeanModularForms.HeckeRIngs.AbstractHeckeRing.StabConjugation
-import LeanModularForms.HeckeRIngs.GLn.DiagonalRepresentatives
+import LeanModularForms.HeckeRIngs.GLn.DiagonalCosets
 import LeanModularForms.HeckeRIngs.GLn.PrimeDecomposition
 import LeanModularForms.HeckeRIngs.GLn.PolynomialRing
 import LeanModularForms.HeckeRIngs.GLn.TransposeAntiInvolution
