@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
 import LeanModularForms.HeckeRIngs.GL2.AdjointTheory
-import LeanModularForms.HeckeRIngs.GL2.HeckeT_p_CharSpace_Comm
 import LeanModularForms.HeckeRIngs.GL2.MultiplicationTable
 import LeanModularForms.HeckeRIngs.GL2.Prop334_HeckeSlash
 import LeanModularForms.HeckeRIngs.GL2.Unified.Gamma0RingDn

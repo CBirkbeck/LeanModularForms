@@ -3,8 +3,12 @@ Copyright (c) 2026 Chris Birkbeck. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
+import LeanModularForms.HeckeRIngs.GL2.CharSpaceIso
+import LeanModularForms.HeckeRIngs.GL2.CharacterDecomp
+import LeanModularForms.HeckeRIngs.GL2.HeckeModularForm_Gamma0
 import LeanModularForms.HeckeRIngs.GL2.HeckeT_n
-import LeanModularForms.HeckeRIngs.GL2.HeckeT_p_CharSpace_Comm
+import LeanModularForms.HeckeRIngs.GL2.HeckeT_p_Gamma0
+import LeanModularForms.HeckeRIngs.GL2.HeckeT_p_Gamma1
 
 /-!
 # Hecke operators restricted to `modFormCharSpace k χ`
