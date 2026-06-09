@@ -122,7 +122,7 @@ $`M_k(N,\chi)` commute.
 Depends on: {uses "modFormCharSpace"}[] {uses "gamma0-pair"}[]
 :::
 
-:::theorem "charSpace-bridge" (lean := "HeckeRing.GL2.Unified.heckeRingHomCharSpace_heckeRingD_n_all")
+:::theorem "charSpace-bridge" (lean := "HeckeRing.GL2.Unified.heckeRingHomCharSpace_heckeRingDn_all")
 *The composite bridge: the ring action computes the Hecke operators.*
 Fix a level $`N \ge 1`, a weight $`k`, and a Dirichlet character $`\chi` modulo $`N`.  For every
 positive integer $`n` coprime to $`N`, the image of the ring element $`D_n` of

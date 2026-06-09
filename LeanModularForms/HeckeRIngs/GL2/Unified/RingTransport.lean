@@ -22,7 +22,7 @@ The pipeline:
 1. `chiAllU χ n` — the good-part character scalar `∏_{p ∤ N} χ(p)^{v_p(n)}` as a *unit*,
    assembled by the same generic `peelProd` as the ring elements, so its coprime
    multiplicativity is the generic `peelProd_mul_coprime`.
-2. `heckeRingHomCharSpace_heckeRingD_n_all` — the **extended composite bridge**: for every
+2. `heckeRingHomCharSpace_heckeRingDn_all` — the **extended composite bridge**: for every
    positive `n` (bad primes included),
    `Φ_χ(D_n) = (chiAllU χ n)⁻¹ • (T_n restricted to M_k(N,χ))`.
 3. The endomorphism-level identities on each `M_k(N,χ)` follow from ring identities by
@@ -132,12 +132,12 @@ the class of `diag(1,p)` to the (disjoint) class of `diag(p,1)`, so the ring ima
 `D_p` is **not** `U_p` — see the diagnosis at `decompQuot_D_p_Gamma0_bad_natcard` in
 `NebentypusHeckeRingHom.lean`.  Bad-prime blocks are therefore handled on the operator
 side (they are explicit `U_p`-powers), and only the good part transports. -/
-theorem heckeRingHomCharSpace_heckeRingD_n_all (n : ℕ) [NeZero n]
+theorem heckeRingHomCharSpace_heckeRingDn_all (n : ℕ) [NeZero n]
     (hn : Nat.Coprime n N) :
-    heckeRingHomCharSpace (k := k) (χ := χ) (heckeRingD_n n) =
+    heckeRingHomCharSpace (k := k) (χ := χ) (heckeRingDn n) =
       ((chiAllU χ n : ℂ))⁻¹ • heckeT_n_charRestrictAll k n χ := by
   suffices H : ∀ m : ℕ, (hm0 : NeZero m) → Nat.Coprime m N →
-      heckeRingHomCharSpace (k := k) (χ := χ) (heckeRingD_n m) =
+      heckeRingHomCharSpace (k := k) (χ := χ) (heckeRingDn m) =
         ((chiAllU χ m : ℂ))⁻¹ • heckeT_n_charRestrictAll k m χ from H n ‹_› hn
   intro m
   induction m using Nat.strong_induction_on with
@@ -145,7 +145,7 @@ theorem heckeRingHomCharSpace_heckeRingD_n_all (n : ℕ) [NeZero n]
     intro hm0 hmN
     haveI := hm0
     rcases eq_or_ne m 1 with rfl | hm1
-    · rw [heckeRingD_n_one, map_one, chiAllU_one, heckeT_n_charRestrictAll_one]
+    · rw [heckeRingDn_one, map_one, chiAllU_one, heckeT_n_charRestrictAll_one]
       simp
     · have hm : 1 < m := by
         have := NeZero.ne m
@@ -165,10 +165,10 @@ theorem heckeRingHomCharSpace_heckeRingD_n_all (n : ℕ) [NeZero n]
           (hp.coprime_iff_not_dvd.mpr (hv_def ▸ Nat.not_dvd_ordCompl hp (NeZero.ne m)))
       have hsplit : m = p ^ v * (m / p ^ v) := (Nat.ordProj_mul_ordCompl_eq_self m p).symm
       -- Peel all three objects.
-      have hD : heckeRingD_n (N := N) m =
-          heckeRingD_ppow p hp v * heckeRingD_n (m / p ^ v) := by
+      have hD : heckeRingDn (N := N) m =
+          heckeRingDppow p hp v * heckeRingDn (m / p ^ v) := by
         conv_lhs => rw [hsplit]
-        rw [heckeRingD_n_mul_coprime _ _ hcop, heckeRingD_n_ppow p hp v]
+        rw [heckeRingDn_mul_coprime _ _ hcop, heckeRingDn_ppow p hp v]
       have hchi : chiAllU χ m = chiAllU χ (p ^ v) * chiAllU χ (m / p ^ v) := by
         conv_lhs => rw [hsplit]
         exact chiAllU_mul_coprime χ _ _ hcop
@@ -181,7 +181,7 @@ theorem heckeRingHomCharSpace_heckeRingD_n_all (n : ℕ) [NeZero n]
         Nat.Coprime.coprime_dvd_left (Nat.div_dvd_of_dvd (Nat.ordProj_dvd m p)) hmN
       have hpN : Nat.Coprime p N := hmN.coprime_dvd_left (Nat.minFac_dvd m)
       rw [hD, map_mul, ih (m / p ^ v) hdiv_lt ⟨hdiv_pos.ne'⟩ hquotN, hchi, hT]
-      rw [heckeRingHomCharSpace_heckeRingD_ppow p hp hpN v,
+      rw [heckeRingHomCharSpace_heckeRingDppow p hp hpN v,
           heckeT_ppow_charRestrictAll_eq_good k hp hpN v χ,
           chiAllU_ppow_good χ hp hpN v hv_pos]
       rw [smul_mul_smul_comm]
@@ -196,8 +196,8 @@ theorem heckeRingHomCharSpace_heckeRingD_n_all (n : ℕ) [NeZero n]
 theorem heckeT_n_charRestrictAll_eq_smul_ringHom (n : ℕ) [NeZero n]
     (hn : Nat.Coprime n N) :
     heckeT_n_charRestrictAll (N := N) k n χ =
-      ((chiAllU χ n : ℂ)) • heckeRingHomCharSpace (k := k) (χ := χ) (heckeRingD_n n) := by
-  rw [heckeRingHomCharSpace_heckeRingD_n_all n hn, smul_smul,
+      ((chiAllU χ n : ℂ)) • heckeRingHomCharSpace (k := k) (χ := χ) (heckeRingDn n) := by
+  rw [heckeRingHomCharSpace_heckeRingDn_all n hn, smul_smul,
     mul_inv_cancel₀ (Units.ne_zero _), one_smul]
 
 /-- Pairwise commutativity of the restricted operators — from `CommRing 𝕋(Γ₀(N))`. -/
@@ -208,11 +208,11 @@ theorem heckeT_n_charRestrictAll_comm (m n : ℕ) [NeZero m] [NeZero n]
   rw [heckeT_n_charRestrictAll_eq_smul_ringHom m hm,
     heckeT_n_charRestrictAll_eq_smul_ringHom n hn,
     smul_mul_smul_comm, smul_mul_smul_comm, ← map_mul, ← map_mul,
-    Gamma0_pair_HeckeAlgebra_mul_comm N (heckeRingD_n m) (heckeRingD_n n),
+    Gamma0_pair_HeckeAlgebra_mul_comm N (heckeRingDn m) (heckeRingDn n),
     mul_comm ((chiAllU χ m : ℂ)) ((chiAllU χ n : ℂ))]
 
 /-- Coprime multiplicativity of the restricted operators — from
-`heckeRingD_n_mul_coprime` in the ring. -/
+`heckeRingDn_mul_coprime` in the ring. -/
 theorem heckeT_n_charRestrictAll_mul_coprime' (m n : ℕ) [NeZero m] [NeZero n]
     (hmn : Nat.Coprime m n) (hm : Nat.Coprime m N) (hn : Nat.Coprime n N) :
     haveI : NeZero (m * n) := ⟨Nat.mul_ne_zero (NeZero.ne m) (NeZero.ne n)⟩
@@ -222,7 +222,7 @@ theorem heckeT_n_charRestrictAll_mul_coprime' (m n : ℕ) [NeZero m] [NeZero n]
   rw [heckeT_n_charRestrictAll_eq_smul_ringHom (m * n) (Nat.Coprime.mul_left hm hn),
     heckeT_n_charRestrictAll_eq_smul_ringHom m hm,
     heckeT_n_charRestrictAll_eq_smul_ringHom n hn,
-    heckeRingD_n_mul_coprime m n hmn, map_mul, chiAllU_mul_coprime χ m n hmn,
+    heckeRingDn_mul_coprime m n hmn, map_mul, chiAllU_mul_coprime χ m n hmn,
     smul_mul_smul_comm, Units.val_mul]
 
 /-! ## Full-space identities, by gluing -/
@@ -282,7 +282,7 @@ transported `Unified.*_ring` results above; we re-export them here under their o
 explicit coprimality hypotheses, which the consumers already have in scope).
 
 `heckeT_n_mul` (the full divisor-sum multiplication table) is **deleted without an
-operator-level replacement**: its canonical form is the ring-side `heckeRingD_n_mul`
+operator-level replacement**: its canonical form is the ring-side `heckeRingDn_mul`
 in `Unified/Gamma0RingDn.lean`. -/
 
 namespace HeckeRing.GL2
@@ -299,7 +299,7 @@ theorem heckeT_n_comm (k : ℤ) (m n : ℕ) [NeZero m] [NeZero n]
   heckeT_n_comm_ring k m n hm hn
 
 /-- Coprime multiplicativity `T_{mn} = T_m T_n` (for `m, n` coprime to the level `N`) —
-transported from the ring identity `heckeRingD_n_mul_coprime`. -/
+transported from the ring identity `heckeRingDn_mul_coprime`. -/
 theorem heckeT_n_mul_coprime (k : ℤ) (m n : ℕ) [NeZero m] [NeZero n]
     (hmn : Nat.Coprime m n) (hm : Nat.Coprime m N) (hn : Nat.Coprime n N) :
     haveI : NeZero (m * n) := ⟨Nat.mul_ne_zero (NeZero.ne m) (NeZero.ne n)⟩

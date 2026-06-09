@@ -13,9 +13,9 @@ This file connects the cusp-form Hecke operators used in the definition of an `E
 to the canonical `Γ₀(N)` Hecke ring action `heckeRingHomCharSpace` of
 `NebentypusHeckeRingHom.lean`.
 
-The composite-`n` modular-form bridge `heckeRingHomCharSpace_heckeRingD_n` identifies, for
+The composite-`n` modular-form bridge `heckeRingHomCharSpace_heckeRingDn` identifies, for
 `n` coprime to `N`, the concrete operator `heckeT_n` (restricted to `modFormCharSpace k χ`)
-with `χ(n)⁻¹` times the ring image of the explicit element `heckeRingD_n n ∈ 𝕋(Γ₀(N))`.
+with `χ(n)⁻¹` times the ring image of the explicit element `heckeRingDn n ∈ 𝕋(Γ₀(N))`.
 Since `heckeT_n_cusp` is the restriction of `heckeT_n` to cusp forms
 (`heckeT_n_cusp_toModularForm'`), the same identity holds for the cusp operator on the
 coercion of a `χ`-cusp form.  Consequently the Hecke operators in the `Eigenform`
@@ -27,11 +27,11 @@ of the ring.
 * `cuspFormCharSpace_toModularForm'_mem` : the modular-form coercion of a `χ`-cusp form lies
   in `modFormCharSpace k χ`.
 * `heckeT_n_cusp_eq_heckeRingHom` : for `f ∈ cuspFormCharSpace k χ` and `n` coprime to `N`,
-  `(heckeT_n_cusp k n f).toModularForm' = χ(n) • heckeRingHomCharSpace (heckeRingD_n n) (↑f)`,
+  `(heckeT_n_cusp k n f).toModularForm' = χ(n) • heckeRingHomCharSpace (heckeRingDn n) (↑f)`,
   i.e. the eigenform operator IS the ring image (up to the diamond normalization `χ(n)`).
 * `Eigenform.isRingEigenvector` : the modular-form coercion of an `Eigenform` (whose
   coercion lies in `modFormCharSpace k χ`) is a simultaneous eigenvector of the ring action:
-  `heckeRingHomCharSpace (heckeRingD_n n) (↑f) = (χ(n)⁻¹ · eigenvalue n) • (↑f)`.
+  `heckeRingHomCharSpace (heckeRingDn n) (↑f) = (χ(n)⁻¹ · eigenvalue n) • (↑f)`.
 
 ## References
 
@@ -53,7 +53,7 @@ variable {N : ℕ} [NeZero N] {k : ℤ} {χ : (ZMod N)ˣ →* ℂˣ}
 /-- **Eigenforms are ring eigenvectors.** If the modular-form coercion of an `Eigenform`
 `f` lies in `modFormCharSpace k χ`, then `↑f` is a simultaneous eigenvector of the canonical
 `Γ₀(N)` Hecke ring action: for each `n` coprime to `N`,
-`heckeRingHomCharSpace (heckeRingD_n n) (↑f) = (χ(n)⁻¹ · eigenvalue n) • (↑f)`.
+`heckeRingHomCharSpace (heckeRingDn n) (↑f) = (χ(n)⁻¹ · eigenvalue n) • (↑f)`.
 
 The eigenvalue for the ring action is `χ(n)⁻¹ · a_n`, where `a_n` is the classical Hecke
 eigenvalue; the diamond factor `χ(n)⁻¹` is the normalization between the abstract
@@ -62,14 +62,14 @@ theorem Eigenform.isRingEigenvector (f : Eigenform N k)
     (hf : f.toCuspForm ∈ cuspFormCharSpace k χ)
     (n : ℕ+) (hn : Nat.Coprime n.val N) :
     haveI : NeZero n.val := ⟨n.pos.ne'⟩
-    heckeRingHomCharSpace (k := k) (χ := χ) (heckeRingD_n n.val)
+    heckeRingHomCharSpace (k := k) (χ := χ) (heckeRingDn n.val)
         ⟨f.toCuspForm.toModularForm', cuspFormCharSpace_toModularForm'_mem hf⟩ =
       ((↑(χ (ZMod.unitOfCoprime n.val hn)) : ℂ)⁻¹ * f.eigenvalue n) •
         (⟨f.toCuspForm.toModularForm', cuspFormCharSpace_toModularForm'_mem hf⟩ :
           modFormCharSpace k χ) := by
   haveI : NeZero n.val := ⟨n.pos.ne'⟩
   apply Subtype.ext
-  rw [heckeRingHomCharSpace_heckeRingD_n (k := k) (χ := χ) n.val hn]
+  rw [heckeRingHomCharSpace_heckeRingDn (k := k) (χ := χ) n.val hn]
   simp only [LinearMap.smul_apply, SetLike.val_smul, heckeT_n_charRestrict_coe]
   have heig : (heckeT_n_cusp k n.val f.toCuspForm).toModularForm' =
       f.eigenvalue n • f.toCuspForm.toModularForm' := by rw [f.isEigen n hn]; rfl
@@ -83,7 +83,7 @@ theorem isRingEigenvector_of_isEigenform
     (hev : IsEigenform f) :
     ∃ a : ℕ+ → ℂ, ∀ n : ℕ+, Nat.Coprime n.val N →
       haveI : NeZero n.val := ⟨n.pos.ne'⟩
-      heckeRingHomCharSpace (k := k) (χ := χ) (heckeRingD_n n.val)
+      heckeRingHomCharSpace (k := k) (χ := χ) (heckeRingDn n.val)
           ⟨f.toModularForm', cuspFormCharSpace_toModularForm'_mem hf⟩ =
         a n • (⟨f.toModularForm', cuspFormCharSpace_toModularForm'_mem hf⟩ :
           modFormCharSpace k χ) := by
@@ -92,7 +92,7 @@ theorem isRingEigenvector_of_isEigenform
     (↑(χ (ZMod.unitOfCoprime n.val h)) : ℂ)⁻¹ * a n else 0, fun n hn ↦ ?_⟩
   haveI : NeZero n.val := ⟨n.pos.ne'⟩
   apply Subtype.ext
-  rw [heckeRingHomCharSpace_heckeRingD_n (k := k) (χ := χ) n.val hn]
+  rw [heckeRingHomCharSpace_heckeRingDn (k := k) (χ := χ) n.val hn]
   simp only [LinearMap.smul_apply, SetLike.val_smul, heckeT_n_charRestrict_coe, dif_pos hn]
   have heig : (heckeT_n_cusp k n.val f).toModularForm' =
       a n • f.toModularForm' := by rw [ha n hn]; rfl

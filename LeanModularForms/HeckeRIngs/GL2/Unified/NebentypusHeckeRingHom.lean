@@ -1216,9 +1216,9 @@ theorem heckeRingHomCharSpace_heckeRingSpp (p : ℕ) (hp : Nat.Prime p)
 
 /-- Prime-power bridge (endomorphism form): for `p ∤ N`,
 `heckeRingHomCharSpace (D_{p^r}) = (χ(p)⁻¹)^r • heckeT_ppow_charRestrict r`. -/
-theorem heckeRingHomCharSpace_heckeRingD_ppow (p : ℕ) (hp : Nat.Prime p)
+theorem heckeRingHomCharSpace_heckeRingDppow (p : ℕ) (hp : Nat.Prime p)
     (hpN : Nat.Coprime p N) (r : ℕ) :
-    heckeRingHomCharSpace (k := k) (χ := χ) (heckeRingD_ppow p hp r) =
+    heckeRingHomCharSpace (k := k) (χ := χ) (heckeRingDppow p hp r) =
       ((↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ)⁻¹) ^ r •
         heckeT_ppow_charRestrict (k := k) (χ := χ) p hp hpN r := by
   set c : ℂ := (↑(χ (ZMod.unitOfCoprime p hpN)) : ℂ) with hc
@@ -1226,12 +1226,12 @@ theorem heckeRingHomCharSpace_heckeRingD_ppow (p : ℕ) (hp : Nat.Prime p)
   induction r using Nat.strong_induction_on with
   | _ r ih =>
     match r, ih with
-    | 0, _ => simp [heckeRingD_ppow_zero, heckeT_ppow_charRestrict_zero]
+    | 0, _ => simp [heckeRingDppow_zero, heckeT_ppow_charRestrict_zero]
     | 1, _ =>
-      rw [heckeRingD_ppow_one, heckeT_ppow_charRestrict_one, pow_one,
+      rw [heckeRingDppow_one, heckeT_ppow_charRestrict_one, pow_one,
         heckeRingHomCharSpace_heckeRingDp p hp hpN]
     | (r + 2), ih =>
-      rw [heckeRingD_ppow_succ_succ, map_sub, map_mul, map_mul, map_zsmul,
+      rw [heckeRingDppow_succ_succ, map_sub, map_mul, map_mul, map_zsmul,
         heckeRingHomCharSpace_heckeRingDp p hp hpN,
         heckeRingHomCharSpace_heckeRingSpp p hp hpN, ih (r + 1) (by omega), ih r (by omega),
         heckeT_ppow_charRestrict_succ_succ p hp hpN r]
@@ -1302,12 +1302,12 @@ private lemma chi_eq_ordProj_mul_ordCompl (χ : (ZMod N)ˣ →* ℂˣ) {n : ℕ}
   refine Units.ext ?_
   rw [ZMod.coe_unitOfCoprime, ZMod.coe_unitOfCoprime, Nat.ordProj_mul_ordCompl_eq_self n p]
 
-private lemma heckeRingHomCharSpace_heckeRingD_n_step (n : ℕ) [NeZero n] (hn1 : n ≠ 1)
+private lemma heckeRingHomCharSpace_heckeRingDn_step (n : ℕ) [NeZero n] (hn1 : n ≠ 1)
     (hn : Nat.Coprime n N)
     (ih : ∀ m, m < n → (hm0 : NeZero m) → ∀ hm : Nat.Coprime m N,
-      heckeRingHomCharSpace (k := k) (χ := χ) (heckeRingD_n m) =
+      heckeRingHomCharSpace (k := k) (χ := χ) (heckeRingDn m) =
         ((↑(χ (ZMod.unitOfCoprime m hm)) : ℂ))⁻¹ • heckeT_n_charRestrict k m hm χ) :
-    heckeRingHomCharSpace (k := k) (χ := χ) (heckeRingD_n n) =
+    heckeRingHomCharSpace (k := k) (χ := χ) (heckeRingDn n) =
       ((↑(χ (ZMod.unitOfCoprime n hn)) : ℂ))⁻¹ • heckeT_n_charRestrict k n hn χ := by
   have hnpos : 0 < n := Nat.pos_of_ne_zero (NeZero.ne n)
   set p := n.minFac with hp_def
@@ -1335,11 +1335,11 @@ private lemma heckeRingHomCharSpace_heckeRingD_n_step (n : ℕ) [NeZero n] (hn1 
     simp only [Module.End.mul_apply, heckeT_n_charRestrict_coe]
     exact congrArg (fun T : Module.End ℂ (ModularForm ((Gamma1 N).map (mapGL ℝ)) k) ↦
       T (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)) hop
-  have hpeel : heckeRingD_n (N := N) n =
-      heckeRingD_ppow p hp v * heckeRingD_n (n / p ^ v) :=
-    heckeRingD_n_peel (N := N) n (by omega : 1 < n)
+  have hpeel : heckeRingDn (N := N) n =
+      heckeRingDppow p hp v * heckeRingDn (n / p ^ v) :=
+    heckeRingDn_peel (N := N) n (by omega : 1 < n)
   rw [hpeel, map_mul,
-    heckeRingHomCharSpace_heckeRingD_ppow p hp hpN v,
+    heckeRingHomCharSpace_heckeRingDppow p hp hpN v,
     ih (n / p ^ v) (Nat.div_lt_self (by omega)
         (Nat.one_lt_pow hvpos.ne' hp.one_lt)) ⟨hquot_pos.ne'⟩ hquotN,
     ← heckeT_n_charRestrict_ppow p hp hpN v hvpos]
@@ -1351,11 +1351,11 @@ private lemma heckeRingHomCharSpace_heckeRingD_n_step (n : ℕ) [NeZero n] (hn1 
 
 /-- Composite-`n` bridge (endomorphism form): for `n` coprime to `N`,
 `heckeRingHomCharSpace (D_n) = χ(n)⁻¹ • heckeT_n_charRestrict k n hn χ`. -/
-theorem heckeRingHomCharSpace_heckeRingD_n (n : ℕ) [NeZero n] (hn : Nat.Coprime n N) :
-    heckeRingHomCharSpace (k := k) (χ := χ) (heckeRingD_n n) =
+theorem heckeRingHomCharSpace_heckeRingDn (n : ℕ) [NeZero n] (hn : Nat.Coprime n N) :
+    heckeRingHomCharSpace (k := k) (χ := χ) (heckeRingDn n) =
       ((↑(χ (ZMod.unitOfCoprime n hn)) : ℂ))⁻¹ • heckeT_n_charRestrict k n hn χ := by
   suffices H : ∀ m : ℕ, (hm0 : NeZero m) → ∀ hm : Nat.Coprime m N,
-      heckeRingHomCharSpace (k := k) (χ := χ) (heckeRingD_n m) =
+      heckeRingHomCharSpace (k := k) (χ := χ) (heckeRingDn m) =
         ((↑(χ (ZMod.unitOfCoprime m hm)) : ℂ))⁻¹ • heckeT_n_charRestrict k m hm χ by
     exact H n ‹NeZero n› hn
   intro n
@@ -1365,13 +1365,13 @@ theorem heckeRingHomCharSpace_heckeRingD_n (n : ℕ) [NeZero n] (hn : Nat.Coprim
     haveI : NeZero n := hn0
     by_cases hn1 : n = 1
     · subst hn1
-      rw [heckeRingD_n_one, map_one]
+      rw [heckeRingDn_one, map_one]
       refine LinearMap.ext fun f ↦ Subtype.ext ?_
       simp only [LinearMap.smul_apply, Module.End.one_apply, SetLike.val_smul,
         heckeT_n_charRestrict_coe, heckeT_n_one]
       rw [show (ZMod.unitOfCoprime 1 hn) = 1 by ext; simp [ZMod.coe_unitOfCoprime]]
       simp
-    · exact heckeRingHomCharSpace_heckeRingD_n_step (k := k) (χ := χ) n hn1 hn ih
+    · exact heckeRingHomCharSpace_heckeRingDn_step (k := k) (χ := χ) n hn1 hn ih
 
 /-- The modular-form coercion of a `χ`-cusp form lies in `modFormCharSpace k χ`. -/
 theorem cuspFormCharSpace_toModularForm'_mem
@@ -1399,18 +1399,18 @@ theorem cuspFormCharSpace_of_toModularForm'_mem
     DFunLike.congr_fun (((mem_modFormCharSpace_iff k χ f.toModularForm').mp hf) d) τ
 
 /-- For a `χ`-cusp form `f` and `n` coprime to `N`,
-`(heckeT_n_cusp k n f).toModularForm' = χ(n) • heckeRingHomCharSpace (heckeRingD_n n) (↑f)`. -/
+`(heckeT_n_cusp k n f).toModularForm' = χ(n) • heckeRingHomCharSpace (heckeRingDn n) (↑f)`. -/
 theorem heckeT_n_cusp_eq_heckeRingHom (n : ℕ) [NeZero n] (hn : Nat.Coprime n N)
     {f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k} (hf : f ∈ cuspFormCharSpace k χ) :
     (heckeT_n_cusp k n f).toModularForm' =
       (↑(χ (ZMod.unitOfCoprime n hn)) : ℂ) •
-        (heckeRingHomCharSpace (k := k) (χ := χ) (heckeRingD_n n)
+        (heckeRingHomCharSpace (k := k) (χ := χ) (heckeRingDn n)
           ⟨f.toModularForm', cuspFormCharSpace_toModularForm'_mem hf⟩ :
           modFormCharSpace k χ).val := by
   rw [heckeT_n_cusp_toModularForm' n f]
   have happ := congrArg (fun (T : Module.End ℂ (modFormCharSpace k χ)) ↦
     (T ⟨f.toModularForm', cuspFormCharSpace_toModularForm'_mem hf⟩ : modFormCharSpace k χ).val)
-    (heckeRingHomCharSpace_heckeRingD_n (k := k) (χ := χ) n hn)
+    (heckeRingHomCharSpace_heckeRingDn (k := k) (χ := χ) n hn)
   simp only [LinearMap.smul_apply, SetLike.val_smul, heckeT_n_charRestrict_coe] at happ
   rw [happ, smul_smul, mul_inv_cancel₀ (by exact_mod_cast Units.ne_zero _), one_smul]
 

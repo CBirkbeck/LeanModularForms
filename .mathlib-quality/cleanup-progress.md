@@ -18,7 +18,7 @@ commit per file after Phase 7.
 | 4 | HeckeRIngs/GL2/Unified/TwistedSlash.lean | 95→0 | **DELETED 2026-06-05** (audit found subtree dead) |
 | 5 | HeckeRIngs/GL2/Unified/CuspNebentypusSpace.lean | 186→0 | **DELETED 2026-06-05** |
 | 6 | HeckeRIngs/GL2/Unified/TwistedHeckeRing.lean | 1249→968 | **DONE 2026-06-09** |
-| 7 | HeckeRIngs/GL2/Unified/Gamma0RingDn.lean | 783 | IN PROGRESS |
+| 7 | HeckeRIngs/GL2/Unified/Gamma0RingDn.lean | 783→613 | **DONE 2026-06-09** |
 | 8 | HeckeRIngs/GL2/Unified/NebentypusHeckeRingHom.lean | 1420 | queued |
 | 9 | HeckeRIngs/GL2/Fricke.lean | 491 | queued |
 | 10 | HeckeRIngs/GL2/Unified/ShimuraHom.lean | 449 | queued |
@@ -50,6 +50,14 @@ FourierHecke.lean (789), LevelRaise.lean (598), Newforms/ subdir, …
 ## Tranche 5 — ForMathlib
 
 ## Per-file log
+
+### 7. GL2/Unified/Gamma0RingDn.lean (783 → 613 lines, −22%) — 2026-06-09
+- Phases 0–7 all run; 31 declarations across 5 worker waves; all gates pass; full build green ×4.
+- Phase 3: 5 subsection dividers stripped (2 valuable WHY-notes → module Implementation-notes section).
+- **Big golf wins** (mathlib API the per-decl search surfaced): `peelProd_mul_coprime` 96→24 (Nat factorization-multiplicativity + extracted `peelProd_eq_factorization_prod` helper); `formal_D_mul_d`→`grind`; `formal_table` coprime branch 11→4 (Finset.sum_attach); `twisted_fiber`/`gcd`/`factorization` helpers golfed via Nat.factorization_pow_self, ne_zero_of_dvd_ne_zero, Nat.ordCompl_pow_mul_of_not_dvd; several `omega`→`lia`, dropped unused hyps (`_hp`, `hpc_pos`).
+- **3 renames applied (Phase 5b)**, substring-cascade across 7 files: `heckeRingD_ppow→heckeRingDppow`, `heckeRingD_n→heckeRingDn`, `heckeRingS_n→heckeRingSn` (all underscore-in-def linter findings; match the `heckeRingDp`/`heckeRingSpp` no-underscore precedent). Cascaded to ~10 sibling lemmas + RingTransport/NebentypusHeckeRingHom/EigenformFromRing/Newforms.Basic + **2 Chapters blueprint `(lean := …)` refs** (kept valid).
+- **/simplify (targeted, context-constrained)**: no dead private helpers (all use-count ≥2); stripped all 17 `(N := N)` (build-gated, all removable). Full 4-agent fan-out skipped given session depth — dead-code + (N:=N) are the high-value cross-decl checks and were done inline.
+- **FLAGGED:** `/decompose-proof` on `heckeRingSn_eq_zero_of_not_coprime` (19-line "bad prime persists" branch, genuinely hard to extract — needs an aux lemma taking the strong-IH + set bindings). Big-change generalisation (abstract Hecke ring / [CommRing R] parameterisation of the ring elements) deferred to user.
 
 ### 6. GL2/Unified/TwistedHeckeRing.lean (1249 → 968 lines, −22%) — 2026-06-09
 - Phases 0–7 all run; ~70 declarations across 11 worker waves (2 extracted helpers grew the count), every gate pass; full build green ×5. (Wave 8 hit a transient weekly agent-limit; re-dispatched after reset — all succeeded.)

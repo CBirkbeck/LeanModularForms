@@ -181,7 +181,7 @@ class is in the range, $`\psi` is surjective, and therefore so is the induced ma
 completing the proof of Shimura's Theorem 3.35.
 :::
 
-:::theorem "gamma0-mult-table" (lean := "HeckeRing.GL2.Unified.heckeRingD_n_mul, HeckeRing.GL2.Unified.heckeRingD_n_mul_coprime, HeckeRing.GL2.Unified.heckeRingD_ppow_mul")
+:::theorem "gamma0-mult-table" (lean := "HeckeRing.GL2.Unified.heckeRingDn_mul, HeckeRing.GL2.Unified.heckeRingDn_mul_coprime, HeckeRing.GL2.Unified.heckeRingDppow_mul")
 *The multiplication table of `R(Γ₀(N), Δ₀(N))` (Shimura 3.24 at level `N`).*
 Inside the Hecke ring $`R(\Gamma_0(N), \Delta_0(N))` define, for each prime $`p`, the prime class
 $`D_p` of $`\operatorname{diag}(1,p)`, the scalar class $`S_p` of $`\operatorname{diag}(p,p)` for

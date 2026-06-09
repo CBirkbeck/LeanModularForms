@@ -54,11 +54,11 @@ structure Eigenform (N : ℕ) [NeZero N] (k : ℤ)
   mem_charSpace : toCuspForm.toModularForm' ∈ modFormCharSpace k χ
   /-- The eigenvalues for the canonical `Γ₀(N)` Hecke **ring** action. -/
   ringEigenvalue : ℕ+ → ℂ
-  /-- For `n` coprime to `N`, the explicit ring element `heckeRingD_n n` acts on the
+  /-- For `n` coprime to `N`, the explicit ring element `heckeRingDn n` acts on the
   coercion `↑f ∈ modFormCharSpace k χ` by the scalar `ringEigenvalue n`. -/
   isRingEigen : ∀ n : ℕ+, Nat.Coprime n.val N →
     haveI : NeZero n.val := ⟨n.pos.ne'⟩
-    heckeRingHomCharSpace (k := k) (χ := χ) (heckeRingD_n n.val)
+    heckeRingHomCharSpace (k := k) (χ := χ) (heckeRingDn n.val)
         ⟨toCuspForm.toModularForm', mem_charSpace⟩ =
       ringEigenvalue n • (⟨toCuspForm.toModularForm', mem_charSpace⟩ : modFormCharSpace k χ)
 
