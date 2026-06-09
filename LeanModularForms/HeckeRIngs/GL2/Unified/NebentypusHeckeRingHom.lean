@@ -380,7 +380,8 @@ private lemma adj_rep_mem (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
       fin_cases m <;> simp [hp.pos]
     simp only [GL_adjugate_val, diagMat_val _ _ hpos]
     have huniv : (Finset.univ : Finset (Fin 2)) = {0, 1} := by
-      ext x; fin_cases x <;> simp
+      ext x
+      fin_cases x <;> simp
     have he0 : ({0, 1} : Finset (Fin 2)).erase 0 = {1} := by decide
     have he1 : ({0, 1} : Finset (Fin 2)).erase 1 = {0} := by decide
     fin_cases i <;> fin_cases j <;>
@@ -394,9 +395,8 @@ private lemma adj_rep_mem (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
   rw [h1, hadj_diag, hTl_eq]
   group
 
-private lemma adj_factorisation (p : ℕ) (hp : Nat.Prime p)
-    (hpN : Nat.Coprime p N) (g : GL (Fin 2) ℚ)
-    (hg : g ∈ HeckeCoset.toSet (D_p_Gamma0 N p hp.pos)) :
+private lemma adj_factorisation (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N)
+    (g : GL (Fin 2) ℚ) (hg : g ∈ HeckeCoset.toSet (D_p_Gamma0 N p hp.pos)) :
     ∃ (h₁ : GL (Fin 2) ℚ) (_ : h₁ ∈ (Gamma0_pair N).H)
       (h₂ : GL (Fin 2) ℚ) (_ : h₂ ∈ (Gamma0_pair N).H),
       GL_adjugate g =
@@ -431,7 +431,7 @@ private lemma weighted_value_eq (p : ℕ) (hp : Nat.Prime p)
       ((↑(delta0NebentypusWeight (N := N) χ (D_p_Gamma0 N p hp.pos)
           ⟦⟨h₁, hh₁⟩⟧) : ℂ)⁻¹) •
         (f ∣[k] tRep_gen (Gamma0_pair N) (D_p_Gamma0 N p hp.pos) ⟦⟨h₁, hh₁⟩⟧) := by
-  set D := D_p_Gamma0 N p hp.pos with hD
+  set D := D_p_Gamma0 N p hp.pos
   have hg_eq : g = GL_adjugate (h₁ * (HeckeCoset.rep D : GL _ ℚ) * h₂) := by
     rw [← hadj, GL_adjugate_involutive]
   have hweight : delta0NebentypusDeltaChar (N := N) χ gΔ =
@@ -443,8 +443,8 @@ private lemma weighted_value_eq (p : ℕ) (hp : Nat.Prime p)
   rw [hweight, hg_eq]
   exact twisted_weighted_slash_tRep_gen_of_mem (N := N) k χ D h₁ hh₁ h₂ hh₂ f hf
 
-private noncomputable def adjUpperΔ (p : ℕ) (hp : Nat.Prime p)
-    (hpN : Nat.Coprime p N) (b : ℕ) : (Gamma0_pair N).Δ := by
+private noncomputable def adjUpperΔ (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (b : ℕ) :
+    (Gamma0_pair N).Δ := by
   refine ⟨GL_adjugate (T_p_upper p hp.pos b), ?_⟩
   set A : Matrix (Fin 2) (Fin 2) ℤ := !![(p : ℤ), -(b : ℤ); 0, 1]
   have hA_eq : ((GL_adjugate (T_p_upper p hp.pos b) : GL (Fin 2) ℚ) :
@@ -460,8 +460,7 @@ private noncomputable def adjUpperΔ (p : ℕ) (hp : Nat.Prime p)
   · simp [A]
   · simpa [A] using hpN
 
-private noncomputable def adjLowerΔ (p : ℕ) (hp : Nat.Prime p) :
-    (Gamma0_pair N).Δ := by
+private noncomputable def adjLowerΔ (p : ℕ) (hp : Nat.Prime p) : (Gamma0_pair N).Δ := by
   refine ⟨GL_adjugate (T_p_lower p hp.pos), ?_⟩
   set A : Matrix (Fin 2) (Fin 2) ℤ := !![1, 0; 0, (p : ℤ)]
   have hA_eq : ((GL_adjugate (T_p_lower p hp.pos) : GL (Fin 2) ℚ) :
@@ -486,8 +485,7 @@ private noncomputable def adjLowerΔ (p : ℕ) (hp : Nat.Prime p) :
     (adjLowerΔ (N := N) p hp : GL (Fin 2) ℚ) =
       GL_adjugate (T_p_lower p hp.pos) := rfl
 
-private lemma adjUpperΔ_weight (p : ℕ) (hp : Nat.Prime p)
-    (hpN : Nat.Coprime p N) (b : ℕ) :
+private lemma adjUpperΔ_weight (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) (b : ℕ) :
     delta0NebentypusDeltaChar (N := N) χ (adjUpperΔ (N := N) p hp hpN b) =
       χ (ZMod.unitOfCoprime p hpN) := by
   unfold delta0NebentypusDeltaChar
@@ -515,7 +513,8 @@ private lemma adjLowerΔ_weight (p : ℕ) (hp : Nat.Prime p) :
       !![1, 0; 0, (p : ℤ)] := by
     apply delta0IntegralMatrix_witness_unique
     rw [adjLowerΔ_coe, GL_adjugate_val, T_p_lower_coe, Matrix.adjugate_fin_two]
-    ext i j; fin_cases i <;> fin_cases j <;> simp
+    ext i j
+    fin_cases i <;> fin_cases j <;> simp
   rw [hwit]
   simp
 
@@ -535,8 +534,7 @@ private lemma adj_T_p_lower_factorisation (p : ℕ) (hp : Nat.Prime p)
         h₁ * (HeckeCoset.rep (D_p_Gamma0 N p hp.pos) : GL _ ℚ) * h₂ :=
   adj_factorisation p hp hpN _ (T_p_lower_mem_D_p_Gamma0 N p hp hpN)
 
-private noncomputable def twistedTpPsi (p : ℕ) (hp : Nat.Prime p)
-    (hpN : Nat.Coprime p N) :
+private noncomputable def twistedTpPsi (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprime p N) :
     Fin (p + 1) → decompQuot (Gamma0_pair N) (HeckeCoset.rep (D_p_Gamma0 N p hp.pos)) :=
   fun j ↦
     if _h : j.val < p then
@@ -559,8 +557,7 @@ private lemma adj_quot_eq_imp_inv_mul_mem_H (g : (Gamma0_pair N).Δ)
     (GL_adjugate g₁)⁻¹ * GL_adjugate g₂ ∈ (Gamma0_pair N).H := by
   rw [heq₁, heq₂]
   have hrel := QuotientGroup.leftRel_apply.mp (Quotient.exact hquot)
-  rw [Subgroup.mem_subgroupOf] at hrel
-  rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem] at hrel
+  rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem] at hrel
   simp only [ConjAct.smul_def, ConjAct.ofConjAct_toConjAct, map_inv, inv_inv] at hrel
   simp only [Subgroup.coe_mul, Subgroup.coe_inv] at hrel
   have h_prod : (a₁ * (g : GL (Fin 2) ℚ) * c₁)⁻¹ * (a₂ * (g : GL (Fin 2) ℚ) * c₂) =
@@ -569,8 +566,7 @@ private lemma adj_quot_eq_imp_inv_mul_mem_H (g : (Gamma0_pair N).Δ)
   exact (Gamma0_pair N).H.mul_mem
     ((Gamma0_pair N).H.mul_mem ((Gamma0_pair N).H.inv_mem hc₁) hrel) hc₂
 
-private lemma adj_inv_mul_mem_H_of_factorisations (g : (Gamma0_pair N).Δ)
-    (g₁ g₂ : GL (Fin 2) ℚ)
+private lemma adj_inv_mul_mem_H_of_factorisations (g : (Gamma0_pair N).Δ) (g₁ g₂ : GL (Fin 2) ℚ)
     (e₁ : ∃ (h₁ : GL (Fin 2) ℚ) (_ : h₁ ∈ (Gamma0_pair N).H) (h₂ : GL (Fin 2) ℚ)
         (_ : h₂ ∈ (Gamma0_pair N).H), GL_adjugate g₁ = h₁ * (g : GL (Fin 2) ℚ) * h₂)
     (e₂ : ∃ (h₁ : GL (Fin 2) ℚ) (_ : h₁ ∈ (Gamma0_pair N).H) (h₂ : GL (Fin 2) ℚ)
@@ -636,24 +632,22 @@ private lemma twistedTpPsi_val_eq (p : ℕ) (hp : Nat.Prime p) (hpN : Nat.Coprim
         (twistedTpPsi (N := N) p hp hpN j)) := by
   simp only [twistedTpPsi]
   split_ifs with h
-  · set e := adj_T_p_upper_factorisation (N := N) p hp hpN j.val with he
+  · set e := adj_T_p_upper_factorisation (N := N) p hp hpN j.val
     have hval := weighted_value_eq p hp (χ := χ) hf
       (T_p_upper p hp.pos j.val) (adjUpperΔ (N := N) p hp hpN j.val)
       e.choose e.choose_spec.choose
       e.choose_spec.choose_spec.choose
       e.choose_spec.choose_spec.choose_spec.choose
       e.choose_spec.choose_spec.choose_spec.choose_spec rfl
-    rw [adjUpperΔ_weight (χ := χ) p hp hpN j.val] at hval
-    exact hval
-  · set e := adj_T_p_lower_factorisation (N := N) p hp hpN with he
+    rwa [adjUpperΔ_weight (χ := χ) p hp hpN j.val] at hval
+  · set e := adj_T_p_lower_factorisation (N := N) p hp hpN
     have hval := weighted_value_eq p hp (χ := χ) hf
       (T_p_lower p hp.pos) (adjLowerΔ (N := N) p hp)
       e.choose e.choose_spec.choose
       e.choose_spec.choose_spec.choose
       e.choose_spec.choose_spec.choose_spec.choose
       e.choose_spec.choose_spec.choose_spec.choose_spec rfl
-    rw [adjLowerΔ_weight (χ := χ) p hp, Units.val_one, inv_one, one_smul] at hval
-    exact hval
+    rwa [adjLowerΔ_weight (χ := χ) p hp, Units.val_one, inv_one, one_smul] at hval
 
 /-- For a `Γ₀(N),χ`-twisted-invariant function `f`, the abstract χ-weighted Hecke slash
 `twistedHeckeSlashGen` at the prime double coset `D_p_Gamma0` equals the χ-weighted explicit
