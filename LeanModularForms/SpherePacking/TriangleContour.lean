@@ -26,7 +26,7 @@ The parametrisation glues the three sides `a → b → c → a` — each an
 calculus comes from `AffineSegment.lean`.
 
 Used by sphere-packing's Viazovska contour decomposition (e.g.
-`I12_eq_rectangular`, which is actually a *triangle* identity).
+`I12_eq_rectangular_via_triangle`, which is actually a *triangle* identity).
 -/
 
 open Complex Set Filter Topology MeasureTheory

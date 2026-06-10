@@ -419,7 +419,7 @@ private lemma ftc_logDeriv_telescope_rho_plus_one (H : ℝ) (hH : Real.sqrt 3 / 
   have hh₀_slit : ∀ t ∈ Icc (0:ℝ) (1 - δ_L), h₀ t ∈ slitPlane := fun t ⟨ht0, ht1⟩ => by
     rw [← hg_eq_h₀ t (by linarith)]
     exact g_rho'_slitPlane hH ⟨ht0, by linarith⟩ (by linarith) (by linarith)
-  have piece₀ := ftc_log_pieceFM (by linarith : (0:ℝ) ≤ 1 - δ_L) hh₀_cont hh₀_diff
+  have piece₀ := LogDerivFTC.ftc_log_pieceFM (by linarith : (0:ℝ) ≤ 1 - δ_L) hh₀_cont hh₀_diff
     hh₀_deriv_cont hh₀_slit heq_0_1mδ hg0 hg1mδ
   have hg_eq_h₁_on : ∀ t ∈ Icc (1 + δ_R) (3:ℝ), g t = h₁ t := fun t ⟨_, ht3⟩ => by
     rcases eq_or_lt_of_le ht3 with rfl | ht3'
@@ -453,7 +453,7 @@ private lemma ftc_logDeriv_telescope_rho_plus_one (H : ℝ) (hH : Real.sqrt 3 / 
     rcases eq_or_lt_of_le ht4 with rfl | ht4'
     · rw [← hg4_3]; exact hg_slit_seg4 4 ⟨le_rfl, by linarith⟩
     · rw [← hg_eq_h₃ t ht4']; exact hg_slit_seg4 t ⟨ht4'.le, ht5⟩
-  have piece₃ := ftc_log_pieceFM (by norm_num : (4:ℝ) ≤ 5)
+  have piece₃ := LogDerivFTC.ftc_log_pieceFM (by norm_num : (4:ℝ) ≤ 5)
     hh₃_cont hh₃_diff hh₃_deriv_cont hh₃_slit heq_45 hg4_3 hg5
   refine ⟨piece₀.1, piece₁.1.trans (piece₂.1.trans piece₃.1), ?_⟩
   rw [(intervalIntegral.integral_add_adjacent_intervals piece₁.1

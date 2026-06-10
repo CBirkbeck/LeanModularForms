@@ -32,13 +32,14 @@ top-of-box decay `tendsto_phi0_topSegment_integral_zero` adapted to the
 
 ## Why not `I12_eq_rectangular_via_cauchy`
 
-The original plan was to re-derive `I12_eq_rectangular` (from
-`ViazovskaMagicFunction.lean`, line 841) using only the new
+The original plan was to derive the decomposition `I12 = I12_vert + I12_horiz`
+(now `I12_eq_rectangular_via_triangle` below) using only the new
 HW-3.3-flavoured infrastructure. After analysis, this turned out to be
 fundamentally mismatched with `cauchy_rectangle_zero` + cusp decay
 for two independent reasons:
 
-* **Geometric mismatch.** The legacy `I12_eq_rectangular` is a *triangular*
+* **Geometric mismatch.** Despite the historical name, the decomposition
+  `I12 = I12_vert + I12_horiz` is a *triangular*
   contour identity (the closed triangle `-1 → -1 + i → i → -1` has zero
   integral), not a rectangular one. The diagonal `-1 → i` from `I12` is
   not parallel to any rectangle axis. Re-deriving it via the new
@@ -177,8 +178,8 @@ convex (`convex_halfSpace_im_gt 0`) and open. By `cauchy_triangle_zero`
 triangle strictly inside the upper half-plane is zero.
 
 This is the parallel of `viazovska_tail_rectangle_cauchy` for the triangular
-contour. It is the key building block for a triangle-based re-derivation
-of `I12_eq_rectangular` (from `ViazovskaMagicFunction.lean`), which states
+contour. It is the key building block for the triangle-based proof of
+`I12_eq_rectangular_via_triangle`, which states
 `I12 = I12_vert + I12_horiz`.
 -/
 
@@ -201,9 +202,9 @@ theorem viazovska_left_triangle_cauchy
 
 /-! ## Triangle-based re-derivation of `I12 = I12_vert + I12_horiz`
 
-We re-prove `I12_eq_rectangular` (originally proved in `ViazovskaMagicFunction.lean`
-via path-independence through a primitive) using the new triangle Cauchy
-infrastructure.
+We prove `I12 = I12_vert + I12_horiz` (originally proved in
+`ViazovskaMagicFunction.lean` via path-independence through a primitive; that
+legacy proof has been retired) using the new triangle Cauchy infrastructure.
 
 **Strategy.** For each `δ ∈ (0, 1)`, the triangle with vertices
 `(-1 + δI, -1 + I, I)` lies strictly inside the upper half-plane. By
@@ -371,11 +372,11 @@ private lemma I12_difference_eq_via_triangle (r : ℝ) (G : ℂ → ℂ)
   rw [hcomm]
   linear_combination hsd + htd - hsv - htv - hhoriz
 
-/-- **The triangle-based version of `I12_eq_rectangular`.** Re-proves
-`I12 r = I12_vert r + I12_horiz r` using the new triangular Cauchy theorem
-(`cauchy_triangle_zero`) and the contour decomposition
+/-- **The rectangular decomposition of `I12`, via the triangle Cauchy theorem.**
+Proves `I12 r = I12_vert r + I12_horiz r` using the new triangular Cauchy
+theorem (`cauchy_triangle_zero`) and the contour decomposition
 (`contourIntegral_triangleContour_eq`), instead of the legacy
-`segment_integral_add_of_holomorphic` path-independence argument.
+path-independence argument (since retired from `ViazovskaMagicFunction.lean`).
 
 The full proof uses:
 * `cauchy_triangle_zero` (HW 3.3, `S = ∅`) for the truncated triangle

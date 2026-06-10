@@ -3,7 +3,7 @@ Copyright (c) 2026. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import LeanModularForms.ForMathlib.CrossingAtI
-import LeanModularForms.ForMathlib.PVSplitting
+import LeanModularForms.ForMathlib.ContourIntegral.CrossingLimit
 
 /-!
 # Asymmetric Crossing Data at rho and rho+1
@@ -16,8 +16,9 @@ vertical segment have different geometry. The arc side uses `arcsinDelta`
 and the vertical side uses `vertDelta(H, eps) = eps / (5 * (H - sqrt(3)/2))`.
 
 We bypass `SingleCrossingData` (which requires a symmetric delta) and instead
-use `pv_tendsto_of_crossing_limit_asymmetric` from `PVSplitting.lean` to
-directly construct `HasCauchyPV`, then derive `HasGeneralizedWindingNumber`.
+use `ContourIntegral.pv_tendsto_of_crossing_limit_asymmetric` from
+`ContourIntegral/CrossingLimit.lean` to directly construct `HasCauchyPV`,
+then derive `HasGeneralizedWindingNumber`.
 
 ## Main results
 
@@ -425,7 +426,7 @@ theorem hasWindingNumber_atRho_of_cornerFtcHyp {H : ℝ} (hH : 1 < H)
   have h_pv : HasCauchyPV (fun z => (z - ellipticPointRho)⁻¹) γ ellipticPointRho
       (-(↑Real.pi / 3 * I)) := by
     simp only [HasCauchyPV]
-    apply PVSplitting.pv_tendsto_of_crossing_limit_asymmetric
+    apply ContourIntegral.pv_tendsto_of_crossing_limit_asymmetric
       (ht₀ := show (3/5 : ℝ) ∈ Ioo 0 1 from ⟨by norm_num, by norm_num⟩)
       (hthresh := hthresh)
       (δ_left := arcsinDelta) (δ_right := vertDelta H)
@@ -467,14 +468,14 @@ theorem hasWindingNumber_atRhoPlusOne_of_cornerFtcHyp {H : ℝ} (hH : 1 < H)
   have h_pv : HasCauchyPV (fun z => (z - ellipticPointRhoPlusOne)⁻¹) γ
       ellipticPointRhoPlusOne (-(↑Real.pi / 3 * I)) := by
     simp only [HasCauchyPV]
-    apply PVSplitting.pv_tendsto_of_crossing_limit_asymmetric
+    apply ContourIntegral.pv_tendsto_of_crossing_limit_asymmetric
       (ht₀ := show (1/5 : ℝ) ∈ Ioo 0 1 from ⟨by norm_num, by norm_num⟩)
       (hthresh := hthresh)
       (δ_left := vertDelta H) (δ_right := arcsinDelta)
       (hδL_pos := fun ε hε _ => vertDelta_pos hH_valid hε)
       (hδR_pos := fun ε hε _ => arcsinDelta_pos hε)
-      (hδL_small := fun ε hε hεt =>
-        vertDelta_lt_one_fifth hH_valid (lt_of_lt_of_le hεt (min_le_right _ _)))
+      (hδL_small := fun ε hε hεt => by
+        linarith [vertDelta_lt_one_fifth hH_valid (lt_of_lt_of_le hεt (min_le_right _ _))])
       (hδR_small := fun ε hε hεt => by
         linarith [arcsinDelta_lt_one_fifth hε (lt_of_lt_of_le hεt (min_le_left _ _))])
       (h_far_left := fun ε hε _ t ht => rhoPlusOne_far_left hH γ hγ hε ht)

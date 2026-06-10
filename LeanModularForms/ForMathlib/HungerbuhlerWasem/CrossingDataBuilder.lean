@@ -6,76 +6,43 @@ Authors: Chris Birkbeck
 module
 
 public import Mathlib.Analysis.InnerProductSpace.Calculus
-public import LeanModularForms.ForMathlib.BoundaryWinding
 public import LeanModularForms.ForMathlib.PaperPwC1Immersion
-public import LeanModularForms.ForMathlib.AsymmetricSingleCrossing
 public import LeanModularForms.ForMathlib.HungerbuhlerWasem.HigherOrderAsymptotics
 
 /-!
-# Generic `SingleCrossingData` builder from `IsFlatOfOrder _ _ 1`
+# Local geometry of a `ClosedPwC1Immersion` near an interior parameter
 
-This file provides infrastructure to build `SingleCrossingData` for any closed
-piecewise-`C¹` immersion `γ` crossing a point `s` at parameter `t₀ ∈ Ioo 0 1`
-transversely (`IsFlatOfOrder γ t₀ 1`) and uniquely.
+This file provides the local geometric ingredients used to analyse a closed
+piecewise-`C¹` immersion `γ` near a transverse crossing of a point `s` at a
+parameter `t₀ ∈ Ioo 0 1`.
 
-## Components delivered
+## Main results
 
-1. **`SingleCrossingData.ofClosedImmersion_flat_one`** — the headline generic
-   builder. Takes `(γ : ClosedPwC1Immersion x, t₀, h_at, h_unique, h_flat,
-   L, δ, threshold, hthresh, hδ_pos, hδ_small, h_far, h_near, ftcHyp)` and
-   packages into `SingleCrossingData γ.toPiecewiseC1Path s`. Mirrors
-   `mkSingleCrossingData_smooth` but for arbitrary `ClosedPwC1Immersion`.
-
-2. **Far bound from uniqueness** (`exists_far_bound_compact`): if `γ` crosses
-   `s` only at `t₀` on `[0, 1]`, then `‖γ(t) - s‖` has a positive minimum on
-   any compact set `[0, t₀ - r] ∪ [t₀ + r, 1]`.
-
-3. **One-sided derivative limits** (`exists_left_deriv_limit`,
+1. **One-sided derivative limits** (`exists_left_deriv_limit`,
    `exists_right_deriv_limit`): at any interior `t₀`, the immersion has nonzero
    one-sided derivative limits.
 
-4. **Chord-to-tangent eventual bounds** (`exists_chord_lower_bound_right`,
-   etc.): for some `r > 0`, on `(t₀, t₀ + r)`, `(‖L_+‖/2)·(t-t₀) ≤
-   ‖γ(t) - s‖ ≤ (3‖L_+‖/2)·(t-t₀)`. Symmetric on the left.
+2. **Eventual differentiability on each side** (`eventually_differentiable_left`,
+   `eventually_differentiable_right`): `γ` is differentiable on a punctured
+   one-sided neighbourhood of any interior `t₀`.
 
-5. **Eventual differentiability on each side** (`eventually_differentiable_*`).
+3. **Strict monotonicity of the distance to the crossed point**:
 
-These pieces are the geometric ingredients needed by the downstream T-BR-04
-ticket (per-pole CPV witness assembly).
+   * `norm_sub_strictMonoOn_right` — `‖γ(t) - s‖` is strictly increasing on
+     `[t₀, t₀ + r]` for some `r > 0`;
+   * `norm_sub_strictAntiOn_left` — `‖γ(t) - s‖` is strictly decreasing on
+     `[t₀ - r, t₀]` for some `r > 0`.
 
-## Design note
+   These follow from `HasDerivAt.norm_sq` and a chord-to-tangent positivity
+   argument: `(d/dt)‖γ(t) - s‖² = 2 · ⟪γ(t) - s, γ'(t)⟫_ℝ`, whose leading term
+   `(t - t₀) · ‖L‖²` dominates the `o(t - t₀)` corrections.
 
-The strict-monotonicity infrastructure is now in place:
+4. **Integrability away from the singularity**
+   (`inv_sub_mul_deriv_intervalIntegrable`): if `γ(t) ≠ s` on `[a, b] ⊆ [0, 1]`,
+   then `(γ(t) - s)⁻¹ * γ'(t)` is interval-integrable on `[a, b]`.
 
-* **`norm_sub_strictMonoOn_right`** — `‖γ(t) - s‖` is strictly increasing on
-  `[t₀, t₀ + r]` for some `r > 0`.
-* **`norm_sub_strictAntiOn_left`** — `‖γ(t) - s‖` is strictly decreasing on
-  `[t₀ - r, t₀]` for some `r > 0`.
-
-These follow from `HasDerivAt.norm_sq` and a careful chord-to-tangent
-positivity argument: `(d/dt)‖γ(t) - s‖² = 2 · ⟪γ(t) - s, γ'(t)⟫_ℝ`, whose
-leading term `(t - t₀) · ‖L‖²` dominates the `o(t - t₀)` corrections.
-
-### Asymmetric crossings
-
-The `SingleCrossingData` scheme uses a SINGLE cutoff `δ(ε)` controlling both
-sides simultaneously: `‖γ(t) - s‖ ≤ ε` for `|t - t₀| ≤ δ(ε)` and
-`‖γ(t) - s‖ > ε` for `|t - t₀| > δ(ε)`. For this to hold, the LEFT and RIGHT
-exit times `δ_R(ε)`, `δ_L(ε)` (where `‖γ(t₀ ± δ_•(ε)) - s‖ = ε`) must be EQUAL
-— i.e., the curve's distance-to-`s` function must be SYMMETRIC about `t₀`.
-
-Even at off-partition (smooth) interior points, this symmetry does not hold
-generically: for asymmetric `γ`, the level set `{t : ‖γ(t) - s‖ = ε}` consists
-of two distinct points `t₀ + δ_R(ε)` and `t₀ - δ_L(ε)` with `δ_R ≠ δ_L`. Then
-no choice of `δ(ε)` simultaneously satisfies h_near and h_far (h_near requires
-`δ ≤ min(δ_R, δ_L)`, h_far requires `δ ≥ max(δ_R, δ_L)`).
-
-Therefore the headline constructor `SingleCrossingData.ofClosedImmersion_flat_one`
-continues to take `(δ, threshold, h_far, h_near)` as parameters: callers supply
-curve-specific cutoffs (using either symmetry of the curve, or stronger flatness
-input). The strict-monotonicity lemmas exposed in this file allow callers to
-*build* such cutoffs via IVT inversion when they have additional symmetry
-information.
+The strict-monotonicity lemmas let callers build excision cutoffs via IVT
+inversion when they have additional symmetry information about the curve.
 
 ## References
 

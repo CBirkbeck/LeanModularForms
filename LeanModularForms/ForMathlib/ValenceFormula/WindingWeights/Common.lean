@@ -80,16 +80,6 @@ theorem fdBoundary_H_eq_arc {H : ℝ} {t : ℝ} (ht1 : 1 < t) (ht3 : t < 3) :
     simp only [h2, ↓reduceIte, ht3.le] <;>
     congr 1 <;> push_cast <;> ring
 
-lemma ftc_log_pieceFM {g h : ℝ → ℂ} {a b : ℝ} (hab : a ≤ b)
-    (hh_cont : ContinuousOn h (Icc a b)) (hh_diff : ∀ t ∈ Ioo a b, DifferentiableAt ℝ h t)
-    (hh_deriv_cont : ContinuousOn (deriv h) (Icc a b))
-    (hh_slit : ∀ t ∈ Icc a b, h t ∈ Complex.slitPlane)
-    (heq : ∀ t ∈ Ioo a b, g t = h t ∧ deriv g t = deriv h t)
-    (heq_a : g a = h a) (heq_b : g b = h b) :
-    IntervalIntegrable (fun t => deriv g t / g t) volume a b ∧
-    ∫ t in a..b, deriv g t / g t = Complex.log (g b) - Complex.log (g a) :=
-  LogDerivFTC.ftc_log_pieceFM hab hh_cont hh_diff hh_deriv_cont hh_slit heq heq_a heq_b
-
 lemma continuousOn_arg_im_nonneg :
     ContinuousOn Complex.arg {z : ℂ | 0 ≤ z.im ∧ z ≠ 0} := by
   intro z ⟨hz_im, hz_ne⟩

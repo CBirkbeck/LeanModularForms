@@ -15,35 +15,30 @@ public import LeanModularForms.ForMathlib.HungerbuhlerWasem.MultiPoleDCT
 public import LeanModularForms.ForMathlib.CrossingAnalysis
 
 /-!
-# Per-pole CPV composition (T-GL-01)
+# Compositional crossing residue theorem and condition-(B) bridges
 
-For each pole `s ∈ S`, the CPV of the polar part `decomp.polarPart s` along
-`γ` equals `2πi · w(γ, s) · residue f s` — when γ crosses `s` transversely
-(witnessed by a `SingleCrossingData γ s`) and the higher-order Laurent
-contributions vanish (which is the conclusion of T-SC-01 under condition (B)).
-
-The proof composes three pieces:
-
-* T-CC-01 (`cpv_simplePole_at_crossing`) for the simple pole `a₀ / (z − s)`
-  — this contributes the `2πi · w · residue` term, because `a₀` is exactly
-  `decomp.coeff s ⟨0, _⟩ = residue f s`.
-* T-SC-01 (`hasCauchyPVOn_singleton_pow_of_conditionB_assembled`, packaged
-  per-term) for the higher-order Laurent terms `aₖ / (z − s)^(k+1)`,
-  `k ≥ 1` — these contribute zero under condition (B). We take the per-term
-  vanishing as a hypothesis here (rather than building it out in this file).
-* Three small algebraic helpers (`HasCauchyPV.add`, `HasCauchyPV.zero_fun`,
-  `HasCauchyPV.finset_sum`, `HasCauchyPV.congr_pointwise`) that the public
-  CPV API in `CauchyPrincipalValue.lean` does not currently provide.
+The compositional form of Hungerbühler–Wasem Theorem 3.3: given a
+`PolarPartDecomposition` of `f` over `S ⊆ U` and per-pole CPV witnesses for
+each polar part, the multi-point CPV of `∮f` along a null-homologous closed γ
+equals `∑ s ∈ S, 2πi · w(γ, s) · residue f s`. The analytic-remainder
+contribution vanishes (`analyticRemainder_hasCauchyPVOn_zero`); the polar
+contributions are summed with the small CPV algebra developed here.
 
 ## Main results
 
-* `HungerbuhlerWasem.HasCauchyPV.add` — additivity of CPV.
-* `HungerbuhlerWasem.HasCauchyPV.zero_fun` — `HasCauchyPV 0 γ z₀ 0`.
-* `HungerbuhlerWasem.HasCauchyPV.finset_sum` — finite-sum form.
-* `HungerbuhlerWasem.HasCauchyPV.congr_pointwise` — congruence-rewrite via
-  pointwise equality off the singularity.
-* `HungerbuhlerWasem.cpv_polarPart_at_pole_under_conditions` — the headline
-  theorem.
+* `HungerbuhlerWasem.residueTheorem_crossing_compositional` — the headline
+  theorem: per-pole CPV witnesses in, winding-weighted residue sum out.
+* `HungerbuhlerWasem.cpv_polarPart_at_uncrossed_pole` — discharges the
+  witness at a pole that γ avoids.
+* CPV algebra: `HasCauchyPV.add`, `HasCauchyPV.zero_fun`,
+  `HasCauchyPV.finset_sum`, `HasCauchyPV.congr_pointwise`.
+* Condition-(B) / corner-angle bridges feeding the multi-crossing theorems:
+  `angle_compat_of_condB_anywhere`, `angle_compat_of_condB`,
+  `corner_angle_compat_to_h_B`, `crossings_finset_of_endpts_off`,
+  `canonical_derivLimits_at_crossings_exists`,
+  `condB_to_h_B_at_crossings_corner`.
+* Laurent-uniqueness helpers (private) used to compare two polar-part
+  decompositions.
 -/
 
 open Filter Topology Set Complex MeasureTheory
@@ -172,12 +167,11 @@ Cauchy principal value of `∮f` along `γ` equals
 `∑ s ∈ S, 2πi · w(γ, s) · residue f s`.
 
 Per-pole CPV witnesses for each polar part — typically obtained from
-`cpv_polarPart_at_pole_under_conditions` (T-GL-01) — are supplied as data.
-The analytic-remainder CPV and integrability are derived internally from
-`analyticRemainder_hasCauchyPVOn_zero` and
-`cpvIntegrandOn_diff_intervalIntegrable`. The avoidance form
-`residueTheorem_avoidance` is the special case where the per-pole witnesses
-come from `hasCauchyPVOn_of_avoids`.
+`cpv_polarPart_at_multiCrossed_pole_under_condB_corner` (crossed poles, in
+`MultiCrossingCPV.lean`) or `cpv_polarPart_at_uncrossed_pole` (below) — are
+supplied as data. The analytic-remainder CPV and integrability are derived
+internally from `analyticRemainder_hasCauchyPVOn_zero` and
+`cpvIntegrandOn_diff_intervalIntegrable`.
 
 This is the *compositional* form: it consumes a `PolarPartDecomposition` and
 per-pole CPV witnesses as data. -/
@@ -245,8 +239,7 @@ theorem residueTheorem_crossing_compositional
 /-- **Per-pole CPV at an uncrossed pole.** When γ avoids the pole `s`, the polar
 part `decomp.polarPart s` is regular along γ, and DCT gives that the multi-point
 CPV equals the contour integral of the polar part along γ. The contour integral
-in turn equals `2πi · w · res f s` by the avoidance computation
-(`residueTheorem_avoidance` per-pole step). -/
+in turn equals `2πi · w · res f s` by the avoidance computation. -/
 theorem cpv_polarPart_at_uncrossed_pole
     {U : Set ℂ} (_hU_open : IsOpen U) (_hU_ne : U.Nonempty)
     {S : Finset ℂ} (hS_in_U : ↑S ⊆ U)

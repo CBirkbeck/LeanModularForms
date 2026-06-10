@@ -30,8 +30,6 @@ This file provides:
 - `SingleCrossingData`: a structure bundling all geometric ingredients
 - `SingleCrossingData.hasCauchyPV`: the CPV integral has limit `L`
 - `SingleCrossingData.hasWindingNumber`: the generalized winding number is `L / (2πi)`
-- `SingleCrossingData.windingNumber_neg_half`: specialized for `L = -πi` giving `-1/2`
-- `SingleCrossingData.windingNumber_neg_sixth`: specialized for `L = -πi/3` giving `-1/6`
 
 ## Design
 

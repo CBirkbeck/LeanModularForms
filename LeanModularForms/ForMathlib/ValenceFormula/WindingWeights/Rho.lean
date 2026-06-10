@@ -26,12 +26,12 @@ attribute [local instance] Classical.propDecidable
 noncomputable section
 
 /-- On seg 0: `γ(t) - ρ` has `re = 1`. -/
-theorem fdBoundary_H_sub_rho_seg0_re (H : ℝ) {t : ℝ} (ht : t ≤ 1) :
+private theorem fdBoundary_H_sub_rho_seg0_re (H : ℝ) {t : ℝ} (ht : t ≤ 1) :
     (fdBoundary_H H t - ellipticPointRho).re = 1 := by
   rw [fdBoundary_H_seg1 H ht]; simp [ellipticPointRho, ellipticPointRho']; ring
 
 /-- On seg 0: `γ(t) - ρ ∈ slitPlane` since `re = 1 > 0`. -/
-theorem fdBoundary_H_sub_rho_seg0_slitPlane (H : ℝ) {t : ℝ} (ht : t ≤ 1) :
+private theorem fdBoundary_H_sub_rho_seg0_slitPlane (H : ℝ) {t : ℝ} (ht : t ≤ 1) :
     fdBoundary_H H t - ellipticPointRho ∈ slitPlane :=
   Complex.mem_slitPlane_iff.mpr <| Or.inl <| by
     rw [fdBoundary_H_sub_rho_seg0_re H ht]; norm_num
@@ -46,7 +46,7 @@ private lemma re_arc_sub_rho (θ : ℝ) :
 
 /-- On seg 1: `γ(t) - ρ` has `re = cos(θ(t)) + 1/2` where `θ ∈ [π/3, π/2]`,
     so `cos(θ) ∈ [0, 1/2]` and `re ∈ [1/2, 1] > 0`. -/
-theorem fdBoundary_H_sub_rho_seg1_re (H : ℝ) {t : ℝ} (ht1 : 1 < t) (ht2 : t ≤ 2) :
+private theorem fdBoundary_H_sub_rho_seg1_re (H : ℝ) {t : ℝ} (ht1 : 1 < t) (ht2 : t ≤ 2) :
     (fdBoundary_H H t - ellipticPointRho).re > 0 := by
   rw [fdBoundary_H_seg2 H (not_le.mpr ht1) ht2]
   simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
@@ -60,7 +60,7 @@ theorem fdBoundary_H_sub_rho_seg1_re (H : ℝ) {t : ℝ} (ht1 : 1 < t) (ht2 : t 
 
 /-- On seg 2 (t ∈ (2, 3)): `γ(t) - ρ` has `re = cos(θ(t)) + 1/2 > 0` since
     `θ ∈ (π/2, 2π/3)` gives `cos ∈ (-1/2, 0)` hence `re ∈ (0, 1/2)`. -/
-theorem fdBoundary_H_sub_rho_seg2_re (H : ℝ) {t : ℝ} (ht2 : 2 < t) (ht3 : t < 3) :
+private theorem fdBoundary_H_sub_rho_seg2_re (H : ℝ) {t : ℝ} (ht2 : 2 < t) (ht3 : t < 3) :
     (fdBoundary_H H t - ellipticPointRho).re > 0 := by
   rw [fdBoundary_H_seg3 H (by linarith) (by linarith) (le_of_lt ht3)]
   simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
@@ -75,7 +75,7 @@ theorem fdBoundary_H_sub_rho_seg2_re (H : ℝ) {t : ℝ} (ht2 : 2 < t) (ht3 : t 
   linarith
 
 /-- On seg 3 (t ∈ (3, 4]): `γ(t) - ρ = (y(t) - √3/2)I` with `y > √3/2`, so `im > 0`. -/
-theorem fdBoundary_H_sub_rho_seg3_slitPlane (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
+private theorem fdBoundary_H_sub_rho_seg3_slitPlane (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
     {t : ℝ} (ht3 : 3 < t) (ht4 : t ≤ 4) :
     fdBoundary_H H t - ellipticPointRho ∈ slitPlane := by
   have h_diff : fdBoundary_H H t - (ellipticPointRho : ℂ) =
@@ -87,7 +87,7 @@ theorem fdBoundary_H_sub_rho_seg3_slitPlane (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
   nlinarith
 
 /-- On seg 4: `γ(t) - ρ` has `im = H - √3/2 > 0` for `H > √3/2`. -/
-theorem fdBoundary_H_sub_rho_seg4_slitPlane (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
+private theorem fdBoundary_H_sub_rho_seg4_slitPlane (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
     {t : ℝ} (ht4 : 4 < t) (_ht5 : t ≤ 5) :
     fdBoundary_H H t - ellipticPointRho ∈ slitPlane := by
   have h_diff : fdBoundary_H H t - (ellipticPointRho : ℂ) =
@@ -100,7 +100,7 @@ theorem fdBoundary_H_sub_rho_seg4_slitPlane (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
   linarith
 
 /-- Combined: `γ(t) - ρ ∈ slitPlane` for all `t ∈ [0, 5]` with `t ≠ 3`. -/
-theorem fdBoundary_H_sub_rho_slitPlane (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
+private theorem fdBoundary_H_sub_rho_slitPlane (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
     {t : ℝ} (ht : t ∈ Icc (0 : ℝ) 5) (hne : t ≠ 3) :
     fdBoundary_H H t - ellipticPointRho ∈ slitPlane := by
   rcases le_or_gt t 1 with h1 | h1
@@ -362,15 +362,15 @@ private lemma ftc_logDeriv_telescope_rho (H : ℝ) (hH : Real.sqrt 3 / 2 < H)
       exact fdBoundary_H_sub_rho_slitPlane H hH ⟨by norm_num, by norm_num⟩ (by norm_num)
     · rw [← hg_eq_h₃ t ht4']
       exact fdBoundary_H_sub_rho_slitPlane H hH ⟨by linarith, ht5⟩ (by linarith)
-  have piece₀ := ftc_log_pieceFM (by norm_num : (0:ℝ) ≤ 1)
+  have piece₀ := LogDerivFTC.ftc_log_pieceFM (by norm_num : (0:ℝ) ≤ 1)
     hh₀_cont hh₀_diff hh₀_deriv_cont hh₀_slit heq_01 hg0 hg1_0
-  have piece₁ := ftc_log_pieceFM (by linarith : (1:ℝ) ≤ 3 - δ_L)
+  have piece₁ := LogDerivFTC.ftc_log_pieceFM (by linarith : (1:ℝ) ≤ 3 - δ_L)
     hh₁_cont hh₁_diff hh₁_deriv_cont
     hh₁_slit heq_1_3mδ (hg1_0.symm ▸ hg1_1) hg3mδ
-  have piece₂ := ftc_log_pieceFM (by linarith : (3 + δ_R) ≤ 4)
+  have piece₂ := LogDerivFTC.ftc_log_pieceFM (by linarith : (3 + δ_R) ≤ 4)
     hh₂_cont hh₂_diff hh₂_deriv_cont
     hh₂_slit heq_3pδ_4 hg3pδ (hg4_3.symm ▸ hg4_2)
-  have piece₃ := ftc_log_pieceFM (by norm_num : (4:ℝ) ≤ 5)
+  have piece₃ := LogDerivFTC.ftc_log_pieceFM (by norm_num : (4:ℝ) ≤ 5)
     hh₃_cont hh₃_diff hh₃_deriv_cont hh₃_slit heq_45 hg4_3 hg5
   refine ⟨piece₀.1.trans piece₁.1, piece₂.1.trans piece₃.1, ?_⟩
   rw [(intervalIntegral.integral_add_adjacent_intervals piece₀.1 piece₁.1).symm,

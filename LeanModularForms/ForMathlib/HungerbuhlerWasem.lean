@@ -15,42 +15,45 @@ public import LeanModularForms.ForMathlib.ResidueCircleIntegral
 public import LeanModularForms.ForMathlib.CurveMeasureZero
 public import LeanModularForms.ForMathlib.GeneralizedResidueTheory.Residue.MeasureHelpers
 
--- NOTE on imports / Central B:
+-- NOTE on imports:
 -- The project currently maintains two parallel residue libraries with overlapping
 -- root-namespace identifiers (e.g. both `LeanModularForms.ForMathlib.Residue` and
 -- `LeanModularForms.ForMathlib.GeneralizedResidueTheory.Residue` define
--- `HasSimplePoleAt`; both `MultipointPV` files define `disjoint_balls_of_small_epsilon`).
--- This file commits to the legacy chain (`Residue`, `SimplePoleIntegral`,
--- `MultipointPV`, `MeromorphicCauchy`). Central theorem B
--- (`residueTheorem_simplePoles_convex`) and corollary 4
--- (`residueTheorem_simplePoles_convex_transverse`) wrap the existing
--- `generalizedResidueTheorem'` in `GeneralizedResidueTheory.Residue.GeneralizedTheoremBase`,
--- which uses the GRT chain.
+-- `HasSimplePoleAt`). This file commits to the legacy chain (`Residue`,
+-- `SimplePoleIntegral`, `MultipointPV`).
 
 /-!
-# Hungerbühler–Wasem residue theorem
+# Hungerbühler–Wasem residue theorem — base layer
 
-The generalized residue theorem of Hungerbühler and Wasem
-(arXiv:1808.00997v2, Theorem 3.3): the Cauchy principal value of `∮f` along a
-closed piecewise-`C¹` immersion `γ` null-homologous in an open domain `U`
-equals `2πi · Σ winding(γ, s) · residue(f, s)` over the singular set `S ⊆ U`.
+Foundational layer for the generalized residue theorem of Hungerbühler and
+Wasem (arXiv:1808.00997v2, Theorem 3.3): the Cauchy principal value of `∮f`
+along a closed piecewise-`C¹` immersion `γ` null-homologous in an open domain
+`U` equals `2πi · Σ winding(γ, s) · residue(f, s)` over the singular set
+`S ⊆ U`. The headline crossing theorems built on this layer live downstream:
+`HungerbuhlerWasem.residueTheorem_crossing_compositional`
+(`HungerbuhlerWasem/Crossing.lean`),
+`HungerbuhlerWasem.residueTheorem_crossing_paper_faithful_clean`
+(`HungerbuhlerWasem/MultiCrossingCPV.lean`) and `hw_3_3_clean_full_mero`
+(`HW33Clean.lean`).
 
 ## Main results
 
 * `HungerbuhlerWasem.PolarPartDecomposition` — the data of an explicit
   Laurent polar-part decomposition of a meromorphic function.
-* `HungerbuhlerWasem.residueTheorem_avoidance` — central theorem A:
-  decomposition-as-data form. γ avoids every pole.
-* `HungerbuhlerWasem.residueTheorem_simplePoles_convex` — central theorem B:
-  simple poles only on a convex domain. γ may cross poles, but two CPV
-  oracles must be supplied.
-* Four corollaries specializing one or the other central theorem:
-  `residueTheorem_simplePoles_avoidance`, `residueTheorem_convex_avoidance`,
-  `residueTheorem_simplePoles_convex_avoidance`,
-  `residueTheorem_simplePoles_convex_transverse`.
-* `HungerbuhlerWasem.residueTheorem_crossing` — unifying form (higher-order
-  + crossings); lives in
-  `LeanModularForms.ForMathlib.HungerbuhlerWasem.Crossing`.
+* `HungerbuhlerWasem.contourIntegral_higherOrder_eq_zero_of_avoids` — for
+  `k ≥ 2`, the contour integral of `c / (z - s)^k` along a closed path
+  avoiding `s` vanishes (single-valued antiderivative).
+* `HungerbuhlerWasem.analyticRemainder_contourIntegral_zero` — the contour
+  integral of the analytic remainder of a `PolarPartDecomposition` along a
+  null-homologous closed γ vanishes, even when γ crosses poles of `f`.
+* `HungerbuhlerWasem.analyticRemainder_hasCauchyPVOn_zero` — CPV version of
+  the previous result.
+* CPV integrand plumbing for the crossing theorems: `cpv_badSet`,
+  `cpvIntegrandOn_eq_indicator_compl`,
+  `cpvIntegrandOn_diff_intervalIntegrable`,
+  `cpvIntegrandOn_tendsto_contourIntegrand_ae`,
+  `cpvIntegrandOn_polarPart_intervalIntegrable`, and the measure-zero fact
+  `volume_preimage_finset_in_Icc01_zero`.
 -/
 
 open Set Filter Topology Complex MeasureTheory

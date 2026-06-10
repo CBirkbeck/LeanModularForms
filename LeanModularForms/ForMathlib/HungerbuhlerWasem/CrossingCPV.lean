@@ -6,41 +6,19 @@ Authors: LeanModularForms contributors
 module
 
 public import LeanModularForms.ForMathlib.HungerbuhlerWasem
-public import LeanModularForms.ForMathlib.SingleCrossing
-public import LeanModularForms.ForMathlib.AsymmetricSingleCrossing
-public import LeanModularForms.ForMathlib.DixonTheorem
 public import LeanModularForms.ForMathlib.CurveMeasureZero
 public import LeanModularForms.ForMathlib.FlatnessConditions
 
-/-! # Crossing CPV — single-pole CPV at transverse crossing + analytic remainder Cauchy
+/-! # Crossing CPV — simple-pole CPV algebra
 
-Helpers for `residueTheorem_crossing`. This file contains:
-* `analyticRemainder_contourIntegral_zero` (T-AR-01) — see
-  `HungerbuhlerWasem.analyticRemainder_contourIntegral_zero` in the parent file
-  `LeanModularForms.ForMathlib.HungerbuhlerWasem`. The theorem must live there
-  (rather than here) so that `residueTheorem_avoidance` — which is in the
-  parent file and is the entry point that imports cascade up to — can call it.
-  Importing this file (`CrossingCPV.lean`) gives access via the transitive
-  import of the parent.
-* `cpv_simplePole_at_crossing` (T-CC-01) — CPV of `c/(z-s)` at a transverse
-  crossing equals `2πi · w · c`, where `w = generalizedWindingNumber γ s`.
+Two small CPV conversion lemmas used by the crossing residue theorems:
 
-## T-CC-01 strategy
-
-The CPV value `2πi · w · c` is essentially **by definition** of
-`generalizedWindingNumber`:
-
-  `generalizedWindingNumber γ s := (2πi)⁻¹ · cauchyPV (fun z => 1/(z-s)) γ s`.
-
-So the theorem reduces to **CPV existence**: once we know
-`HasCauchyPV (fun z => (z - s)⁻¹) γ s L`, multiplying by `c` and rewriting the
-inverse as a fraction gives the simple-pole CPV with value `c · L`.
-
-For a transverse crossing the CPV existence is supplied by
-`SingleCrossingData γ s`, which encapsulates the geometric (far/near) bounds
-plus the FTC limit from each side, and produces `D.hasCauchyPV` with limit
-`D.L`. Combining `D.hasCauchyPV` with `D.windingNumber_eq` gives that
-`D.L = 2πi · generalizedWindingNumber γ s`, completing the formula.
+* `HungerbuhlerWasem.hasCauchyPV_simplePole_of_inv` — if the CPV of
+  `(z - s)⁻¹` along `γ` exists with limit `L`, then the CPV of `c / (z - s)`
+  exists with limit `c * L`.
+* `HungerbuhlerWasem.HasCauchyPV.to_singletonOn` — the single-point CPV
+  predicate `HasCauchyPV f γ z₀ L` upgrades to the multi-point predicate
+  `HasCauchyPVOn {z₀} f γ L` on the singleton.
 -/
 
 open Filter Topology Set Complex MeasureTheory

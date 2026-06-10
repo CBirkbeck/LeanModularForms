@@ -12,9 +12,10 @@ import LeanModularForms.SpherePacking.CuspDecay
 # Viazovska's Magic Function — Original Contour Integrals
 
 This file defines the magic function `a(r)` from Viazovska's proof of the
-optimality of the E₈ sphere packing [Via2017] and proves the key contour
-equivalence `I₁₂ = I₁₂_vert + I₁₂_horiz` (rectangular decomposition of the
-diagonal contour from `-1` to `i`).
+optimality of the E₈ sphere packing [Via2017] and provides the analytic
+scaffolding (cusp continuity, primitives, FTC tails, vanishing head integrals)
+for the contour equivalence `I₁₂ = I₁₂_vert + I₁₂_horiz`, which is proved as
+`I12_eq_rectangular_via_triangle` in `ViazovskaResidueRep.lean`.
 
 ## What we prove
 
@@ -28,10 +29,11 @@ a_rad(r) = ∫_{-1→i} φ₀(-1/(z+1)) · (z+1)² · e^{πirz} dz
 ```
 where `φ₀(z) = (E₂E₄ - E₆)² / Δ(z)`.
 
-The main result `I12_eq_rectangular` proves that the diagonal contour integral
-`∫_{-1→i}` equals the sum of a vertical integral `∫_{-1→-1+i}` and a
-horizontal integral `∫_{-1+i→i}`. This is the first step toward evaluating
-`a_rad(r)` via the Fourier expansion of φ₀.
+The contour equivalence — the diagonal contour integral `∫_{-1→i}` equals the
+sum of a vertical integral `∫_{-1→-1+i}` and a horizontal integral
+`∫_{-1+i→i}` — is the first step toward evaluating `a_rad(r)` via the Fourier
+expansion of φ₀. It is proved in `ViazovskaResidueRep.lean`
+(`I12_eq_rectangular_via_triangle`) from the ingredients in this file.
 
 ## How this differs from Sphere-Packing-Lean (Gauss2 PR)
 
@@ -53,19 +55,14 @@ singularities directly:
    bound `|E₂E₄-E₆| ≤ K|q|` (`CuspDecay.lean`), using `|E₂-1| ≤ 192|q|`
    from a comparison test on the Eisenstein series.
 
-3. **Contour equivalence**: We prove `I₁₂ = I₁₂_vert + I₁₂_horiz` using
-   path independence from `holomorphic_convex_primitive` on the convex upper
-   half-plane. The proof takes a primitive `G` of the integrand, applies FTC
-   to truncated integrals (starting at height `δ > 0`), then takes `δ → 0`
-   using the cusp cancellation `(z+1)² → 0` at `z = -1`.
-
-4. **Infrastructure**: The key tool is `holomorphic_convex_primitive` from
-   `GeneralizedResidueTheory/CauchyPrimitive.lean`, which gives path independence
-   for holomorphic functions on convex open sets. This is part of our broader
-   generalized residue theorem framework (Hungerbühler-Wasem, Theorem 3.3),
-   though this file only uses the convex primitive — the full generalized
-   residue theorem and `ContourCycle` framework will be applied when computing
-   `a_rad(r)` via the S-transformation of φ₀.
+3. **Contour-equivalence ingredients**: a primitive `G` of the integrand on
+   the convex upper half-plane (`exists_primitive_viazovska_integrand_left`,
+   via `holomorphic_convex_primitive` from
+   `GeneralizedResidueTheory/CauchyPrimitive.lean`), FTC evaluations of the
+   truncated integrals starting at height `δ > 0` (`ftc_tail_diag`,
+   `ftc_tail_vert`), and the `δ → 0` limits using the cusp cancellation
+   `(z+1)² → 0` at `z = -1` (`head_integral_tendsto_zero`,
+   `G_diff_tendsto_zero`).
 
 ## Main results
 
@@ -73,7 +70,11 @@ singularities directly:
 * `continuousOn_diagonal_integrand` : the parameterized diagonal integrand is
   continuous on `[0,1]` (including the cusp endpoint `t = 0`)
 * `continuousOn_vertical_integrand` : same for the vertical parameterization
-* `I12_eq_rectangular` : `I₁₂(r) = I₁₂_vert(r) + I₁₂_horiz(r)`
+* `exists_primitive_viazovska_integrand_left`, `ftc_tail_diag`,
+  `ftc_tail_vert`, `head_integral_tendsto_zero`, `G_diff_tendsto_zero` :
+  the ingredients consumed by `I12_eq_rectangular_via_triangle`
+  (`ViazovskaResidueRep.lean`), which proves
+  `I₁₂(r) = I₁₂_vert(r) + I₁₂_horiz(r)`
 
 ## References
 
@@ -216,22 +217,6 @@ theorem segment_integral_eq_sub_of_hasDerivAt {f G : ℂ → ℂ} {S : Set ℂ}
   erw [intervalIntegral.integral_mul_const]; rw [mul_comm]
   exact key
 
-/-- Contour additivity: for a holomorphic function on a convex open set,
-the segment integral from `a` to `b` equals the sum of segment integrals
-from `a` to `c` and from `c` to `b`. -/
-theorem segment_integral_add_of_holomorphic {f : ℂ → ℂ} {S : Set ℂ}
-    (hS_open : IsOpen S) (hS_convex : Convex ℝ S)
-    (hf : DifferentiableOn ℂ f S)
-    {a b c : ℂ} (ha : a ∈ S) (hb : b ∈ S) (hc : c ∈ S) :
-    ∫ t in (0:ℝ)..1, f (a + t • (b - a)) * (b - a) =
-    (∫ t in (0:ℝ)..1, f (a + t • (c - a)) * (c - a)) +
-    (∫ t in (0:ℝ)..1, f (c + t • (b - c)) * (b - c)) := by
-  obtain ⟨G, hG⟩ := holomorphic_convex_primitive hS_convex hS_open ⟨a, ha⟩ hf
-  rw [segment_integral_eq_sub_of_hasDerivAt hS_convex ha hb hG hf.continuousOn,
-      segment_integral_eq_sub_of_hasDerivAt hS_convex ha hc hG hf.continuousOn,
-      segment_integral_eq_sub_of_hasDerivAt hS_convex hc hb hG hf.continuousOn]
-  ring
-
 /-- The derivative of `contour_neg1_to_i` as a `HasDerivAt` statement. -/
 theorem hasDerivAt_contour_neg1_to_i (t : ℝ) :
     HasDerivAt contour_neg1_to_i (1 + I : ℂ) t := by
@@ -244,17 +229,6 @@ theorem hasDerivAt_contour_neg1_to_i (t : ℝ) :
 theorem deriv_contour_neg1_to_i (t : ℝ) : deriv contour_neg1_to_i t = 1 + I :=
   (hasDerivAt_contour_neg1_to_i t).deriv
 
-/-- `I12` expressed as a segment integral from `-1` to `I`. -/
-theorem I12_eq_segment_integral (r : ℝ) :
-    I12 r = ∫ t in (0:ℝ)..1,
-      viazovska_integrand_left r ((-1 : ℂ) + t • ((I : ℂ) - (-1))) *
-        ((I : ℂ) - (-1)) := by
-  unfold I12; congr 1; ext t
-  rw [deriv_contour_neg1_to_i]
-  have h1 : contour_neg1_to_i t = (-1 : ℂ) + ↑t • ((I : ℂ) - (-1)) := by
-    simp [contour_neg1_to_i, Complex.real_smul, sub_neg_eq_add]; ring
-  rw [h1, show (1 : ℂ) + I = (I : ℂ) - (-1) by ring]
-
 /-- The vertical integral from `-1` to `-1+I`: left side of the rectangular path. -/
 def I12_vert (r : ℝ) : ℂ :=
   ∫ t in (0:ℝ)..1, viazovska_integrand_left r (-1 + I * ↑t) * I
@@ -262,16 +236,6 @@ def I12_vert (r : ℝ) : ℂ :=
 /-- The horizontal integral from `-1+I` to `I`: top side of the rectangular path. -/
 def I12_horiz (r : ℝ) : ℂ :=
   ∫ t in (0:ℝ)..1, viazovska_integrand_left r (-1 + I + ↑t)
-
-/-- `I12_vert` expressed as a segment integral from `-1` to `-1+I`. -/
-theorem I12_vert_eq_segment (r : ℝ) :
-    I12_vert r = ∫ t in (0:ℝ)..1,
-      viazovska_integrand_left r ((-1 : ℂ) + t • ((-1 + I) - (-1 : ℂ))) *
-        ((-1 + I) - (-1 : ℂ)) := by
-  simp only [I12_vert]; congr 1; ext t
-  congr 1
-  · congr 1; simp [Complex.real_smul]; ring
-  · ring
 
 /-- `I12_horiz` expressed as a segment integral from `-1+I` to `I`. -/
 theorem I12_horiz_eq_segment (r : ℝ) :
@@ -295,22 +259,6 @@ theorem neg_one_add_I_mem_uhp : (-1 + I : ℂ) ∈ {z : ℂ | 0 < z.im} := by
 /-- The point `I` lies in the upper half-plane. -/
 theorem I_mem_uhp : (I : ℂ) ∈ {z : ℂ | 0 < z.im} := by
   change 0 < (I : ℂ).im; simp
-
-/-- Truncated contour equivalence: for `δ > 0`, the diagonal segment integral from
-`-1 + δI` to `I` equals the vertical from `-1 + δI` to `-1 + I` plus the
-horizontal from `-1 + I` to `I`. This is path independence for holomorphic
-functions on the convex open upper half-plane. -/
-theorem truncated_contour_equivalence (r : ℝ) (δ : ℝ) (hδ : 0 < δ) :
-    let a : ℂ := -1 + ↑δ * I
-    let c : ℂ := -1 + I
-    let b : ℂ := I
-    let F := viazovska_integrand_left r
-    (∫ t in (0:ℝ)..1, F (a + t • (b - a)) * (b - a)) =
-    (∫ t in (0:ℝ)..1, F (a + t • (c - a)) * (c - a)) +
-    (∫ t in (0:ℝ)..1, F (c + t • (b - c)) * (b - c)) :=
-  segment_integral_add_of_holomorphic UpperHalfPlane.isOpen_upperHalfPlaneSet convex_upperHalfPlaneSet
-    (viazovska_integrand_left_differentiableOn r)
-    (neg_one_add_delta_I_mem_uhp hδ) I_mem_uhp neg_one_add_I_mem_uhp
 
 private theorem integrand_at_zero_diag (r : ℝ) :
     viazovska_integrand_left r (contour_neg1_to_i 0) * (1 + I) = 0 := by
@@ -555,30 +503,6 @@ theorem exists_primitive_viazovska_integrand_left (r : ℝ) :
   holomorphic_convex_primitive convex_upperHalfPlaneSet UpperHalfPlane.isOpen_upperHalfPlaneSet
     ⟨I, I_mem_uhp⟩ (viazovska_integrand_left_differentiableOn r)
 
-/-- The truncated diagonal integral from `-1 + δI` to `I` equals `G(I) - G(-1+δI)`
-for the primitive `G` of the integrand. -/
-theorem truncated_diagonal_eq_primitive_sub (r : ℝ) (G : ℂ → ℂ)
-    (hG : ∀ z ∈ {z : ℂ | 0 < z.im}, HasDerivAt G (viazovska_integrand_left r z) z)
-    (δ : ℝ) (hδ : 0 < δ) :
-    (∫ t in (0:ℝ)..1, viazovska_integrand_left r
-      ((-1 + ↑δ * I) + t • ((I : ℂ) - (-1 + ↑δ * I))) *
-        ((I : ℂ) - (-1 + ↑δ * I))) = G I - G (-1 + ↑δ * I) :=
-  segment_integral_eq_sub_of_hasDerivAt convex_upperHalfPlaneSet
-    (neg_one_add_delta_I_mem_uhp hδ) I_mem_uhp hG
-    (viazovska_integrand_left_differentiableOn r).continuousOn
-
-/-- The truncated vertical integral from `-1 + δI` to `-1 + I` equals
-`G(-1+I) - G(-1+δI)` for the primitive. -/
-theorem truncated_vertical_eq_primitive_sub (r : ℝ) (G : ℂ → ℂ)
-    (hG : ∀ z ∈ {z : ℂ | 0 < z.im}, HasDerivAt G (viazovska_integrand_left r z) z)
-    (δ : ℝ) (hδ : 0 < δ) :
-    (∫ t in (0:ℝ)..1, viazovska_integrand_left r
-      ((-1 + ↑δ * I) + t • ((-1 + I) - (-1 + ↑δ * I))) *
-        ((-1 + I) - (-1 + ↑δ * I))) = G (-1 + I) - G (-1 + ↑δ * I) :=
-  segment_integral_eq_sub_of_hasDerivAt convex_upperHalfPlaneSet
-    (neg_one_add_delta_I_mem_uhp hδ) neg_one_add_I_mem_uhp hG
-    (viazovska_integrand_left_differentiableOn r).continuousOn
-
 /-- The horizontal integral from `-1 + I` to `I` equals `G(I) - G(-1+I)`. -/
 theorem horizontal_eq_primitive_sub (r : ℝ) (G : ℂ → ℂ)
     (hG : ∀ z ∈ {z : ℂ | 0 < z.im}, HasDerivAt G (viazovska_integrand_left r z) z) :
@@ -665,26 +589,6 @@ theorem ftc_tail_vert (r : ℝ) (G : ℂ → ℂ)
   exact intervalIntegral.integral_eq_sub_of_hasDerivAt hGvert
     ((hcont.mono (fun x hx => ⟨by linarith [hx.1], hx.2⟩)).intervalIntegrable_of_Icc
       (by linarith))
-
-private theorem D_eq_three_terms (r : ℝ) (G : ℂ → ℂ)
-    (hG : ∀ z ∈ {z : ℂ | 0 < z.im}, HasDerivAt G (viazovska_integrand_left r z) z)
-    (δ : ℝ) (hδ : 0 < δ) (hδ1 : δ ≤ 1) :
-    I12 r - (I12_vert r + I12_horiz r) =
-      (∫ t in (0:ℝ)..δ, viazovska_integrand_left r (contour_neg1_to_i t) * (1 + I)) -
-      (∫ t in (0:ℝ)..δ, viazovska_integrand_left r (-1 + I * ↑t) * I) +
-      (G (-1 + ↑δ * I) - G (contour_neg1_to_i δ)) := by
-  have hsd := I12_split_at_delta r δ hδ.le hδ1 (continuousOn_diagonal_integrand r)
-  have hsv := I12_vert_split_at_delta r δ hδ.le hδ1 (continuousOn_vertical_integrand r)
-  have htd := ftc_tail_diag r G hG δ hδ hδ1
-  have hc1 : contour_neg1_to_i 1 = I := by simp [contour_neg1_to_i]
-  rw [hc1] at htd
-  have htv := ftc_tail_vert r G hG δ hδ hδ1
-  have hv1 : (-1 : ℂ) + I * (1 : ℝ) = -1 + I := by push_cast; ring
-  rw [hv1] at htv
-  have hhoriz := horizontal_eq_primitive_sub r G hG
-  have hcomm : (-1 : ℂ) + ↑δ * I = -1 + I * ↑δ := by ring
-  rw [hcomm]
-  linear_combination hsd + htd - hsv - htv - hhoriz
 
 theorem head_integral_tendsto_zero {f : ℝ → ℂ}
     (hcont : ContinuousOn f (Icc 0 1)) :
@@ -835,27 +739,5 @@ theorem G_diff_tendsto_zero (r : ℝ) (G : ℂ → ℂ)
   have hbound := intervalIntegral.norm_integral_le_of_norm_le_const hpt_bound
   simp only [sub_zero, abs_one, mul_one] at hbound
   linarith
-
-/-- **Full contour equivalence**: the diagonal integral `I12` from `-1` to `I`
-equals the sum of the vertical integral `I12_vert` (from `-1` to `-1+I`)
-and the horizontal integral `I12_horiz` (from `-1+I` to `I`). -/
-theorem I12_eq_rectangular (r : ℝ) : I12 r = I12_vert r + I12_horiz r := by
-  suffices hsuff : I12 r - (I12_vert r + I12_horiz r) = 0 from eq_of_sub_eq_zero hsuff
-  obtain ⟨G, hG⟩ := exists_primitive_viazovska_integrand_left r
-  set F := viazovska_integrand_left r
-  set S := fun δ : ℝ => (∫ t in (0:ℝ)..δ, F (contour_neg1_to_i t) * (1 + I)) -
-    (∫ t in (0:ℝ)..δ, F (-1 + I * ↑t) * I) + (G (-1 + ↑δ * I) - G (contour_neg1_to_i δ))
-  have heq : ∀ᶠ δ in 𝓝[>] 0, I12 r - (I12_vert r + I12_horiz r) = S δ := by
-    filter_upwards [self_mem_nhdsWithin,
-      nhdsWithin_le_nhds (Metric.ball_mem_nhds (0:ℝ) one_pos)] with δ hδ hδ_ball
-    simp only [Set.mem_Ioi] at hδ; simp only [Metric.mem_ball, Real.dist_eq, sub_zero] at hδ_ball
-    exact D_eq_three_terms r G hG δ hδ (by linarith [abs_of_pos hδ])
-  have hS : Filter.Tendsto S (𝓝[>] 0) (𝓝 0) := by
-    have := (head_integral_tendsto_zero (continuousOn_diagonal_integrand r)).sub
-      (head_integral_tendsto_zero (continuousOn_vertical_integrand r))
-      |>.add (G_diff_tendsto_zero r G hG)
-    simp only [S]
-    simpa using this
-  exact tendsto_nhds_unique (tendsto_const_nhds.congr' heq) hS
 
 end
