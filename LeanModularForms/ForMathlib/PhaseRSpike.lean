@@ -38,22 +38,25 @@ crosses on its circular arc, at parameter `t = 2/5`), `U` = open upper half-plan
 * `pv_integral_at_i_tendsto_via_hw33` — the protected trio statement at `i`
   recovered **verbatim** as a corollary of the HW route (given the anchor).
 
-**Key negative finding** (`pentagon_via_hw33_clean_route`): the protected crown
-`hw_3_3_clean_full_mero` is NOT directly instantiable on the pentagon, because
-its `hCondA` hypothesis demands flatness of order
-`(PolarPartDecomposition.ofMeromorphicWithCondB …).order s`, which unfolds to
-`meroPolarOrderAt = (mero_laurent_data_exists hMero).choose` — a
-`Classical.choose`-opaque `N`. On the *curved* arc, `IsFlatOfOrder` holds only
-for `n = 1`, and `N = 1` is not provable (the existential admits any `N ≥ 1`
-with vanishing higher coefficients). The compositional layer
-(`residueTheorem_crossing_compositional`), which takes a *caller-supplied*
-`PolarPartDecomposition` (here with `order ≡ 1` by construction), is the correct
-entry point — or `mero_laurent_data_exists` should be fixed upstream to return
-the canonical minimal `N`.
+**Key finding and its resolution** (`pentagon_via_hw33_clean_route`): as
+originally spiked, the protected crown `hw_3_3_clean_full_mero` was NOT
+directly instantiable on the pentagon: its `hCondA` hypothesis demanded
+flatness of order `(PolarPartDecomposition.ofMeromorphicWithCondB …).order s`,
+then a `Classical.choose`-opaque `N` admitting any value `≥ 1` — while on the
+*curved* arc `IsFlatOfOrder` holds only for `n = 1`. The upstream fix in
+`HungerbuhlerWasem/LaurentExtraction.lean` makes that order the **canonical
+minimal** one (`meroPolarOrderAt`, via mathlib's `meromorphicOrderAt`), so
+`ofMeromorphicWithCondB_order` + `meroPolarOrderAt_eq_one` pin the order to
+`1` at the simple pole and `isFlatOfOrder_one` discharges `hCondA` (§8). The
+compositional layer (`residueTheorem_crossing_compositional`) with a
+caller-supplied `order ≡ 1` decomposition (§5–6) remains a second,
+fix-independent route.
 
 This file is a SPIKE: it is deliberately not added to the root
-`LeanModularForms.lean` index, and the clean-route section carries annotated
-sorries. See `.mathlib-quality/phase-r-spike-memo.md` for the verdict.
+`LeanModularForms.lean` index, and the clean-route section carries one
+annotated sorry (SPIKE-GAP #1, the corner-angle rationality computation —
+never needed by the compositional route). See
+`.mathlib-quality/phase-r-spike-memo.md` for the verdict.
 -/
 
 open Complex Set Filter Topology MeasureTheory HungerbuhlerWasem
@@ -356,10 +359,11 @@ private lemma residue_inv_sub_I : residue (fun z : ℂ => (z - I)⁻¹) I = 1 :=
   rw [h, dif_pos one_pos]
 
 /-- A by-hand `PolarPartDecomposition` for `(z−i)⁻¹` with `order ≡ 1` BY
-CONSTRUCTION. This sidesteps the `Classical.choose`-opaque order of
-`PolarPartDecomposition.ofMeromorphicWithCondB` (see the SPIKE-GAP in §8):
-with a definitional order, the condition-A′ obligation is flatness of order 1,
-which `isFlatOfOrder_one` discharges for every pw-C¹ immersion. -/
+CONSTRUCTION: the condition-A′ obligation is flatness of order 1, which
+`isFlatOfOrder_one` discharges for every pw-C¹ immersion. The compositional
+route needs no `ofMeromorphicWithCondB` at all; since the canonical-order fix
+in `LaurentExtraction.lean`, the clean wrapper's choice-free order is equally
+dischargeable (§8). -/
 private def spikeDecomp : PolarPartDecomposition (fun z : ℂ => (z - I)⁻¹) {I} UHP where
   polarPart := fun s z => (z - s)⁻¹
   order := fun _ => 1
@@ -514,25 +518,37 @@ theorem pv_integral_at_i_tendsto_via_hw33 (H : ℝ) (hH : 1 < H) :
   · rw [if_pos hc, if_neg (not_lt.mpr hc)]
   · rw [if_neg hc, if_pos (lt_of_not_ge hc)]
 
-/-! ## §8 The clean-wrapper route (the protected crown) — partially blocked
+/-! ## §8 The clean-wrapper route (the protected crown)
 
-`hw_3_3_clean_full_mero` bakes the choice-based
-`PolarPartDecomposition.ofMeromorphicWithCondB` into the type of its `hCondA`
-hypothesis. Its `.order s` is `meroPolarOrderAt = Classical.choose
-(mero_laurent_data_exists hMero)` — an OPAQUE natural number: the existential
-is satisfied by every `N ≥ 1` (pad with zero coefficients), so `order = 1` is
-not provable. Since the pentagon crosses `i` on the *curved* arc,
+`hw_3_3_clean_full_mero` bakes `PolarPartDecomposition.ofMeromorphicWithCondB`
+into the type of its `hCondA` hypothesis. Since the canonical-order fix in
+`HungerbuhlerWasem/LaurentExtraction.lean`, that decomposition's `.order s` is
+the **canonical minimal** polar order `meroPolarOrderAt` — provably `1` at the
+simple pole `i` (`meroPolarOrderAt_eq_one`) — rather than a
+`Classical.choose`-opaque witness. Condition (A′) is therefore dischargeable
+even though the pentagon crosses `i` on the *curved* arc, where
 `IsFlatOfOrder γ (2/5) n` is false for every `n ≥ 2` (the deviation from the
-tangent is `Θ(dist²)`), so `hCondA` is genuinely undischargeable as stated.
+tangent is `Θ(dist²)`): the required order is exactly `1`, and
+`isFlatOfOrder_one` is generic.
 
-This does not block Phase R — the compositional route (§6) is the right entry
-point — but it means the *crown statement itself* cannot be the pentagon's
-engine without an upstream fix to `mero_laurent_data_exists` (return the
-canonical minimal `N`, e.g. via `meromorphicOrderAt`); the crown's statement
-text would not change. -/
+The remaining sorry is SPIKE-GAP #1 only: condition (B)'s corner-angle
+rationality at the inherited partition point `t = 2/5` — an angle computation
+the compositional route (§6) never needs, since for simple poles its corner
+form is vacuous. -/
 
-/-- Clean-wrapper instantiation, exhibiting which hypotheses are cheap (all
-but two are discharged) and exactly where the wrapper is blocked. -/
+/-- The test pole is simple: `meromorphicOrderAt` of `(z − i)⁻¹` at `i` is
+`-1`, by the mathlib characterization with cofactor `g ≡ 1`. -/
+private lemma meroOrder_inv_sub_I :
+    meromorphicOrderAt (fun z : ℂ => (z - I)⁻¹) I = -1 :=
+  (meromorphicOrderAt_eq_int_iff (n := -1)
+      (hMero_test I (Finset.mem_singleton_self I))).mpr
+    ⟨fun _ => 1, analyticAt_const, one_ne_zero, by
+      filter_upwards with z
+      rw [smul_eq_mul, mul_one, zpow_neg, zpow_one]⟩
+
+/-- Clean-wrapper instantiation. All hypotheses are discharged except
+condition (B)'s corner-angle rationality (SPIKE-GAP #1, annotated below); in
+particular `hCondA` is now a real proof via the canonical minimal order. -/
 theorem pentagon_via_hw33_clean_route (H : ℝ) (hH : H > Real.sqrt 3 / 2) :
     HasCauchyPVOn {I} (fun z : ℂ => (z - I)⁻¹)
       (pentagonContour H hH).toPwC1Immersion.toPiecewiseC1Path
@@ -544,7 +560,7 @@ theorem pentagon_via_hw33_clean_route (H : ℝ) (hH : H > Real.sqrt 3 / 2) :
     (pentagonContour H hH) (pentagon_null_homologous H hH) hMero_test
     ⟨?_, ?_⟩ ?_ (fdStart_ne_I H)
   · -- SatisfiesConditionB.angle_rational
-    -- SPIKE-GAP: angle rationality at the crossing t = 2/5. The inherited
+    -- SPIKE-GAP #1: angle rationality at the crossing t = 2/5. The inherited
     -- partition makes 2/5 a partition point, so `angleAtCrossing` takes the
     -- corner branch: `arg L₊ − arg(−L₋)` with `L₊ = L₋ = −5π/6` (both arc
     -- halves have the same tangent at i), giving angle = π = 1·π/1. Needs:
@@ -568,19 +584,19 @@ theorem pentagon_via_hw33_clean_route (H : ℝ) (hH : H > Real.sqrt 3 / 2) :
     exact ⟨1, fun _ => 1, fun _ => 0, analyticAt_const,
       by filter_upwards with z; simp [one_div],
       fun k _ hk => absurd hk (by have := k.isLt; omega)⟩
-  · -- SatisfiesConditionA' w.r.t. the choice-based order
-    -- SPIKE-GAP: UNDISCHARGEABLE AS STATED. The required flatness order is
-    -- `(PolarPartDecomposition.ofMeromorphicWithCondB …).order I =
-    -- (mero_laurent_data_exists hMero).choose` — Classical.choose-opaque.
-    -- `IsFlatOfOrder` at order 1 holds (`isFlatOfOrder_one`), at order ≥ 2 it is
-    -- FALSE on the curved arc, and the chosen N is provably neither.
-    -- Fix lives upstream: make `mero_laurent_data_exists` return the canonical
-    -- minimal N (via `meromorphicOrderAt`/`MeromorphicAt.order`), so that
-    -- `meroPolarOrderAt hMero = 1` becomes a lemma for simple poles —
-    -- est. 60–120 lines in HungerbuhlerWasem/LaurentExtraction.lean, no change
-    -- to any protected statement's text. Until then, callers must use
-    -- `residueTheorem_crossing_compositional` with a by-hand decomposition (§5–6).
-    sorry
+  · -- SatisfiesConditionA' w.r.t. the canonical order (SPIKE-GAP #2,
+    -- discharged): the pole at `i` is simple, so the decomposition's order is
+    -- provably 1 (`ofMeromorphicWithCondB_order` + `meroPolarOrderAt_eq_one`)
+    -- and `isFlatOfOrder_one` supplies the flatness — even though the pentagon
+    -- crosses `i` on the curved arc, where flatness of any order ≥ 2 fails.
+    intro s hs t₀ _ _ ht₀
+    rw [Finset.mem_singleton] at hs
+    subst hs
+    simp only [PolarPartDecomposition.ofMeromorphicWithCondB_order UHP_open
+        S_subset_UHP hf_test hMero_test _ (Finset.mem_singleton_self I),
+      meroPolarOrderAt_eq_one (hMero_test I (Finset.mem_singleton_self I))
+        meroOrder_inv_sub_I]
+    exact isFlatOfOrder_one (pentagonContour H hH).toPwC1Immersion t₀ ht₀
 
 end PhaseRSpike
 

@@ -15,24 +15,36 @@ public import Mathlib.Analysis.Analytic.IsolatedZeros
 
 For the Hungerbühler–Wasem residue theorem in its full crossing form, we need
 to extract a Laurent decomposition `f = polarPart + holomorphicRemainder` at
-each pole `s ∈ S`. Condition (B) (`SatisfiesConditionB.laurent_compatible`)
-already carries this data via `∃ N a g, ...`.
-
-This file extracts that data into named functions (using `Classical.choose`)
-and builds a `PolarPartDecomposition` from a `SatisfiesConditionB` hypothesis.
+each pole `s ∈ S`. This file proves that such data exists at the **canonical
+minimal order** `meroPolarOrderAt` (the negative part of mathlib's
+`meromorphicOrderAt`), extracts it into named functions, and builds a
+`PolarPartDecomposition` from `MeromorphicAt` hypotheses.
 
 ## Main definitions
 
+* `HungerbuhlerWasem.meroPolarOrderAt` — the canonical polar-part order at a
+  pole: `k` for a pole of order `k` (in particular `1` at a simple pole,
+  `meroPolarOrderAt_eq_one`), `0` at an analytic-or-removable point. It is
+  computed from `meromorphicOrderAt f s`, NOT extracted by `Classical.choose`,
+  so callers can evaluate it.
 * `HungerbuhlerWasem.PolarPartDecomposition.ofMeromorphicWithCondB` — the
   constructor consuming `MeromorphicAt` data and `SatisfiesConditionB γ f S`
-  to build a `PolarPartDecomposition` (handles both crossed and uncrossed poles).
+  to build a `PolarPartDecomposition` (handles both crossed and uncrossed
+  poles). Its `order` field is `meroPolarOrderAt`
+  (`ofMeromorphicWithCondB_order`); this is what makes the condition-(A′)
+  hypothesis of `hw_3_3_clean_full_mero` dischargeable at simple poles via
+  `isFlatOfOrder_one`, even on contours that cross poles on curved pieces
+  (where flatness of any order `≥ 2` fails).
 
 ## Strategy
 
-We use `Classical.choose` on `hCondB.laurent_compatible` to extract the data
-`(N, a, g)` for each crossed pole. For uncrossed poles, we use a default
-`order = 0` (empty polar part) and the analytic remainder is `f` locally.
-This adds no axioms beyond the existing `Classical.choice`.
+`mero_laurent_data_exists` factors
+`f =ᶠ[𝓝[≠] s] (z - s) ^ (-meroPolarOrderAt) • g₀` with `g₀` analytic at `s`
+(via `meromorphicOrderAt_eq_int_iff` / `meromorphicOrderAt_eq_top_iff`), then
+Taylor-expands `g₀` to order `meroPolarOrderAt` and divides, producing Laurent
+data whose length is pinned to the canonical order. Only the coefficients and
+the remainder are then extracted with `Classical.choose`; this adds no axioms
+beyond the existing `Classical.choice`.
 -/
 
 open Filter Topology Set Complex MeasureTheory Metric
@@ -239,7 +251,7 @@ private lemma pow_div_pow_neg {w : ℂ} (hw : w ≠ 0) {k j : ℕ} (hjk : j < k)
   rw [show (w ^ k)⁻¹ = (w ^ ((k - j) + j))⁻¹ by rw [h_exp], pow_add]
   field_simp
 
-private lemma reindex_sum_fin_neg {k : ℕ} (_hk : 0 < k) (c : Fin k → ℂ) (w : ℂ) :
+private lemma reindex_sum_fin_neg {k : ℕ} (c : Fin k → ℂ) (w : ℂ) :
     (∑ j : Fin k, c j / w ^ (k - j.val)) =
       ∑ i : Fin k,
         c ⟨k - 1 - i.val, by have := i.isLt; omega⟩ / w ^ (i.val + 1) := by
@@ -259,87 +271,138 @@ private lemma reindex_sum_fin_neg {k : ℕ} (_hk : 0 < k) (c : Fin k → ℂ) (w
   simp only [σ]
   omega
 
-/-- **Generic Laurent data extraction from `MeromorphicAt`.** For any meromorphic
-function `f` at `s`, there exist `(N, a, g)` such that `g` is analytic at `s` and
-`f =ᶠ[𝓝[≠] s] g + ∑ k : Fin N, a k / (z - s)^(k+1)`. -/
-theorem mero_laurent_data_exists {f : ℂ → ℂ} {s : ℂ} (hMero : MeromorphicAt f s) :
-    ∃ (N : ℕ) (a : Fin N → ℂ) (g : ℂ → ℂ),
+/-- **The canonical minimal polar-part order** of a meromorphic function at
+`s`: the negative part of mathlib's `meromorphicOrderAt`. For a pole of order
+`k` this is `k` (in particular `1` at a simple pole,
+`meroPolarOrderAt_eq_one`); at an analytic-or-removable point (including
+locally-vanishing `f`) it is `0`.
+
+Unlike a `Classical.choose`-extracted witness, this order is computed from `f`
+alone, so callers can evaluate it — see `ofMeromorphicWithCondB_order`. -/
+noncomputable def meroPolarOrderAt {f : ℂ → ℂ} {s : ℂ}
+    (_hMero : MeromorphicAt f s) : ℕ :=
+  (-(meromorphicOrderAt f s).untop₀).toNat
+
+/-- The canonical polar-part order, computed from `meromorphicOrderAt`. -/
+theorem meroPolarOrderAt_eq_of_order_eq {f : ℂ → ℂ} {s : ℂ}
+    (hMero : MeromorphicAt f s) {n : ℤ} (h : meromorphicOrderAt f s = n) :
+    meroPolarOrderAt hMero = (-n).toNat := by
+  rw [meroPolarOrderAt, h, WithTop.untop₀_coe]
+
+/-- **At a simple pole the canonical polar-part order is `1`.** Combined with
+`PolarPartDecomposition.ofMeromorphicWithCondB_order` and `isFlatOfOrder_one`,
+this discharges condition (A′) of `hw_3_3_clean_full_mero` at simple poles for
+every closed piecewise-`C¹` immersion — curved-crossing contours included. -/
+theorem meroPolarOrderAt_eq_one {f : ℂ → ℂ} {s : ℂ}
+    (hMero : MeromorphicAt f s) (h : meromorphicOrderAt f s = -1) :
+    meroPolarOrderAt hMero = 1 := by
+  rw [meroPolarOrderAt_eq_of_order_eq hMero h]
+  rfl
+
+/-- Laurent data of length exactly `k` from a `(z - s) ^ (-k)`-factorization
+with analytic cofactor: Taylor-expand the cofactor to order `k` and divide. -/
+private lemma laurent_data_of_zpow_factor {f g₀ : ℂ → ℂ} {s : ℂ} (k : ℕ)
+    (hg₀_an : AnalyticAt ℂ g₀ s)
+    (hg₀_eq : ∀ᶠ z in 𝓝[≠] s, f z = (z - s) ^ (-(k : ℤ)) • g₀ z) :
+    ∃ (a : Fin k → ℂ) (g : ℂ → ℂ),
       AnalyticAt ℂ g s ∧
-      ∀ᶠ z in 𝓝[≠] s, f z = g z + ∑ k : Fin N, a k / (z - s) ^ (k.val + 1) := by
-  classical
-  obtain ⟨n, g₀, hg₀_an, hg₀_eq⟩ :=
-    MeromorphicAt.iff_eventuallyEq_zpow_smul_analyticAt.mp hMero
-  by_cases hn_neg : n < 0
-  · set k : ℕ := (-n).toNat with hk_def
-    have hk_pos : 0 < k := by rw [hk_def]; omega
-    have hn_eq : n = -(k : ℤ) := by omega
-    obtain ⟨c, R, hR_an, hR_eq⟩ := analyticAt_taylor_decomp hg₀_an k
-    refine ⟨k, fun i : Fin k => c ⟨k - 1 - i.val, by have := i.isLt; omega⟩, R, hR_an, ?_⟩
-    have hR_eq_nbhd : ∀ᶠ z in 𝓝[≠] s, g₀ z =
-        (∑ j : Fin k, c j * (z - s) ^ j.val) + (z - s) ^ k * R z :=
-      nhdsWithin_le_nhds hR_eq
-    have hg₀_eq' : ∀ᶠ z in 𝓝[≠] s, f z = (z - s) ^ (-(k : ℤ)) • g₀ z := by
-      filter_upwards [hg₀_eq] with z hz
-      rw [hz, hn_eq]
-    filter_upwards [hg₀_eq', hR_eq_nbhd, self_mem_nhdsWithin] with z hf_eq hR_eq_z hz_ne
-    have hz_sub : (z - s) ≠ 0 := sub_ne_zero.mpr hz_ne
-    rw [hf_eq, hR_eq_z, smul_eq_mul, zpow_neg, zpow_natCast, mul_add]
-    have h1 : ((z - s) ^ k)⁻¹ * ((z - s) ^ k * R z) = R z := by field_simp
-    rw [h1, add_comm]
-    congr 1
-    rw [Finset.mul_sum, show ∑ j : Fin k, ((z - s) ^ k)⁻¹ * (c j * (z - s) ^ j.val) =
-        ∑ j : Fin k, c j / (z - s) ^ (k - j.val) from
-      Finset.sum_congr rfl fun j _ => by
-        rw [div_eq_mul_inv, show ((z - s) ^ k)⁻¹ * (c j * (z - s) ^ j.val) =
-            c j * ((z - s) ^ j.val * ((z - s) ^ k)⁻¹) by ring,
-          pow_div_pow_neg hz_sub j.isLt]]
-    exact reindex_sum_fin_neg hk_pos c (z - s)
-  · set m : ℕ := n.toNat
-    refine ⟨0, Fin.elim0, fun z => (z - s) ^ m * g₀ z, ?_, ?_⟩
-    · exact ((analyticAt_id.sub analyticAt_const).pow m).mul hg₀_an
-    · filter_upwards [hg₀_eq] with z hf_eq
-      simp only [Finset.sum_empty, Finset.univ_eq_empty, add_zero]
-      rw [hf_eq, smul_eq_mul, show n = (m : ℤ) by omega, zpow_natCast]
+      ∀ᶠ z in 𝓝[≠] s, f z = g z + ∑ i : Fin k, a i / (z - s) ^ (i.val + 1) := by
+  obtain ⟨c, R, hR_an, hR_eq⟩ := analyticAt_taylor_decomp hg₀_an k
+  refine ⟨fun i : Fin k => c ⟨k - 1 - i.val, by have := i.isLt; omega⟩, R, hR_an, ?_⟩
+  filter_upwards [hg₀_eq, nhdsWithin_le_nhds hR_eq, self_mem_nhdsWithin]
+    with z hf_eq hR_eq_z hz_ne
+  have hz_sub : (z - s) ≠ 0 := sub_ne_zero.mpr hz_ne
+  rw [hf_eq, hR_eq_z, smul_eq_mul, zpow_neg, zpow_natCast, mul_add]
+  have h1 : ((z - s) ^ k)⁻¹ * ((z - s) ^ k * R z) = R z := by field_simp
+  rw [h1, add_comm]
+  congr 1
+  rw [Finset.mul_sum, show ∑ j : Fin k, ((z - s) ^ k)⁻¹ * (c j * (z - s) ^ j.val) =
+      ∑ j : Fin k, c j / (z - s) ^ (k - j.val) from
+    Finset.sum_congr rfl fun j _ => by
+      rw [div_eq_mul_inv, show ((z - s) ^ k)⁻¹ * (c j * (z - s) ^ j.val) =
+          c j * ((z - s) ^ j.val * ((z - s) ^ k)⁻¹) by ring,
+        pow_div_pow_neg hz_sub j.isLt]]
+  exact reindex_sum_fin_neg c (z - s)
 
-/-- Local polar part at pole `s` from a `MeromorphicAt` hypothesis: extracted
-via `Classical.choose` on `mero_laurent_data_exists`. -/
-noncomputable def meroPolarPartAt {f : ℂ → ℂ} {s : ℂ} (hMero : MeromorphicAt f s)
-    (z : ℂ) : ℂ :=
-  ∑ k : Fin (mero_laurent_data_exists hMero).choose,
-    (mero_laurent_data_exists hMero).choose_spec.choose k /
-      (z - s) ^ (k.val + 1)
+/-- Factorization of a meromorphic `f` at the canonical polar order:
+`f =ᶠ[𝓝[≠] s] (z - s) ^ (-meroPolarOrderAt hMero) • g₀` with `g₀` analytic at
+`s` (by `meromorphicOrderAt_eq_int_iff` for finite order, absorbing
+nonnegative powers of `z - s` into the cofactor; `g₀ = 0` when `f` vanishes
+near `s`). -/
+private lemma exists_zpow_factor_at_canonical_order {f : ℂ → ℂ} {s : ℂ}
+    (hMero : MeromorphicAt f s) :
+    ∃ g₀ : ℂ → ℂ, AnalyticAt ℂ g₀ s ∧
+      ∀ᶠ z in 𝓝[≠] s, f z = (z - s) ^ (-(meroPolarOrderAt hMero : ℤ)) • g₀ z := by
+  by_cases h_top : meromorphicOrderAt f s = ⊤
+  · have h0 : meroPolarOrderAt hMero = 0 := by
+      rw [meroPolarOrderAt, h_top, WithTop.untop₀_top, neg_zero, Int.toNat_zero]
+    refine ⟨fun _ => 0, analyticAt_const, ?_⟩
+    filter_upwards [meromorphicOrderAt_eq_top_iff.mp h_top] with z hz
+    rw [hz, smul_zero]
+  · obtain ⟨n, h_ord⟩ := WithTop.ne_top_iff_exists.mp h_top
+    obtain ⟨g, hg_an, _, hg_eq⟩ := (meromorphicOrderAt_eq_int_iff hMero).mp h_ord.symm
+    have h_val : (meroPolarOrderAt hMero : ℤ) = max (-n) 0 := by
+      rw [meroPolarOrderAt_eq_of_order_eq hMero h_ord.symm]
+      omega
+    rcases le_or_gt 0 n with hn | hn
+    · -- `n ≥ 0`: no pole; absorb `(z - s) ^ n` into the analytic cofactor.
+      refine ⟨fun z => (z - s) ^ n.toNat * g z,
+        ((analyticAt_id.sub analyticAt_const).pow _).mul hg_an, ?_⟩
+      filter_upwards [hg_eq] with z hz
+      rw [hz, show -(meroPolarOrderAt hMero : ℤ) = 0 by omega, zpow_zero, one_smul,
+        smul_eq_mul, show n = (n.toNat : ℤ) by omega, zpow_natCast, Int.toNat_natCast]
+    · -- `n < 0`: a pole of order `-n = meroPolarOrderAt hMero`.
+      refine ⟨g, hg_an, ?_⟩
+      rw [show -(meroPolarOrderAt hMero : ℤ) = n by omega]
+      exact hg_eq
 
-/-- Order of the local polar part at `s` from a `MeromorphicAt` hypothesis. -/
-noncomputable def meroPolarOrderAt {f : ℂ → ℂ} {s : ℂ} (hMero : MeromorphicAt f s) :
-    ℕ :=
-  (mero_laurent_data_exists hMero).choose
+/-- **Laurent data extraction from `MeromorphicAt`, at the canonical minimal
+order.** For any meromorphic function `f` at `s`, there exist `(a, g)` with
+`g` analytic at `s` and
+`f =ᶠ[𝓝[≠] s] g + ∑ k : Fin (meroPolarOrderAt hMero), a k / (z - s)^(k+1)`.
+
+The length of the Laurent tail is pinned to `meroPolarOrderAt hMero`, not
+existentially quantified, so the `order` of decompositions extracted from this
+lemma is provable (e.g. `= 1` at simple poles) rather than
+`Classical.choose`-opaque. -/
+theorem mero_laurent_data_exists {f : ℂ → ℂ} {s : ℂ} (hMero : MeromorphicAt f s) :
+    ∃ (a : Fin (meroPolarOrderAt hMero) → ℂ) (g : ℂ → ℂ),
+      AnalyticAt ℂ g s ∧
+      ∀ᶠ z in 𝓝[≠] s,
+        f z = g z + ∑ k : Fin (meroPolarOrderAt hMero), a k / (z - s) ^ (k.val + 1) := by
+  obtain ⟨g₀, hg₀_an, hg₀_eq⟩ := exists_zpow_factor_at_canonical_order hMero
+  exact laurent_data_of_zpow_factor _ hg₀_an hg₀_eq
 
 /-- Laurent coefficient `a_k` at `s` from a `MeromorphicAt` hypothesis. -/
 noncomputable def meroPolarCoeffAt {f : ℂ → ℂ} {s : ℂ} (hMero : MeromorphicAt f s)
     (k : Fin (meroPolarOrderAt hMero)) : ℂ :=
-  (mero_laurent_data_exists hMero).choose_spec.choose
-    (Fin.cast (by simp [meroPolarOrderAt]) k)
+  (mero_laurent_data_exists hMero).choose k
+
+/-- Local polar part at pole `s` from a `MeromorphicAt` hypothesis: the
+Laurent tail of length `meroPolarOrderAt hMero`. -/
+noncomputable def meroPolarPartAt {f : ℂ → ℂ} {s : ℂ} (hMero : MeromorphicAt f s)
+    (z : ℂ) : ℂ :=
+  ∑ k : Fin (meroPolarOrderAt hMero),
+    meroPolarCoeffAt hMero k / (z - s) ^ (k.val + 1)
 
 /-- The analytic remainder `g` at `s` from a `MeromorphicAt` hypothesis. -/
 noncomputable def meroAnalyticPartAt {f : ℂ → ℂ} {s : ℂ}
     (hMero : MeromorphicAt f s) : ℂ → ℂ :=
-  (mero_laurent_data_exists hMero).choose_spec.choose_spec.choose
+  (mero_laurent_data_exists hMero).choose_spec.choose
 
 /-- The analytic part is `AnalyticAt ℂ` at `s`. -/
 theorem meroAnalyticPartAt_analyticAt {f : ℂ → ℂ} {s : ℂ}
     (hMero : MeromorphicAt f s) : AnalyticAt ℂ (meroAnalyticPartAt hMero) s :=
-  (mero_laurent_data_exists hMero).choose_spec.choose_spec.choose_spec.1
+  (mero_laurent_data_exists hMero).choose_spec.choose_spec.1
 
 /-- **Local Laurent decomposition** from `MeromorphicAt`: near `s`,
 `f = analyticPart + polarPart` (in the punctured neighborhood). -/
 theorem mero_f_eq_analyticPart_plus_polarPart_eventually {f : ℂ → ℂ} {s : ℂ}
     (hMero : MeromorphicAt f s) :
     ∀ᶠ z in 𝓝[≠] s, f z = meroAnalyticPartAt hMero z + meroPolarPartAt hMero z := by
-  filter_upwards
-    [(mero_laurent_data_exists hMero).choose_spec.choose_spec.choose_spec.2]
+  filter_upwards [(mero_laurent_data_exists hMero).choose_spec.choose_spec.2]
     with z hz
-  rw [hz]
-  rfl
+  exact hz
 
 /-- `meroPolarPartAt s` is differentiable at any point `z ≠ s`. -/
 theorem meroPolarPartAt_differentiableAt {f : ℂ → ℂ} {s : ℂ}
@@ -365,27 +428,19 @@ theorem meroPolarPartAt_eq_sum {f : ℂ → ℂ} {s : ℂ}
     (hMero : MeromorphicAt f s) (z : ℂ) :
     meroPolarPartAt hMero z =
       ∑ k : Fin (meroPolarOrderAt hMero),
-        meroPolarCoeffAt hMero k / (z - s) ^ (k.val + 1) := by
-  unfold meroPolarPartAt meroPolarCoeffAt meroPolarOrderAt
+        meroPolarCoeffAt hMero k / (z - s) ^ (k.val + 1) :=
   rfl
 
 /-- The leading Laurent coefficient `a_0` equals the residue of `f` at `s`. -/
 theorem meroPolarCoeffAt_zero_eq_residue {f : ℂ → ℂ} {s : ℂ}
     (hMero : MeromorphicAt f s) (h_pos : 0 < meroPolarOrderAt hMero) :
     meroPolarCoeffAt hMero ⟨0, h_pos⟩ = residue f s := by
-  have h_data := mero_laurent_data_exists hMero
-  set N := h_data.choose
-  set a := h_data.choose_spec.choose
-  set g := h_data.choose_spec.choose_spec.choose
-  have hg_an : AnalyticAt ℂ g s := h_data.choose_spec.choose_spec.choose_spec.1
-  have hf_eq : ∀ᶠ z in 𝓝[≠] s, f z = g z + ∑ k : Fin N, a k / (z - s) ^ (k.val + 1) :=
-    h_data.choose_spec.choose_spec.choose_spec.2
-  have hN_pos : 0 < N := h_pos
-  have hres := residue_of_laurent_expansion N a hg_an hf_eq
-  rw [dif_pos hN_pos] at hres
-  unfold meroPolarCoeffAt
-  rw [hres]
-  rfl
+  have hres := residue_of_laurent_expansion (meroPolarOrderAt hMero)
+    (mero_laurent_data_exists hMero).choose
+    (mero_laurent_data_exists hMero).choose_spec.choose_spec.1
+    (mero_laurent_data_exists hMero).choose_spec.choose_spec.2
+  rw [dif_pos h_pos] at hres
+  exact hres.symm
 
 /-- The total polar part across all poles, using `MeromorphicAt` data
 (uniform across crossed and uncrossed poles). -/
@@ -446,7 +501,9 @@ Given:
 we build a `PolarPartDecomposition f S U`. This constructor handles **both
 crossed and uncrossed** poles uniformly (no `hAllCrossed` hypothesis), since
 for each pole `s` we extract Laurent data from the `MeromorphicAt` hypothesis
-directly via `meromorphicOrderAt_ne_top_iff`.
+directly via `mero_laurent_data_exists`. The `order` field is the **canonical
+minimal** order `meroPolarOrderAt` (`ofMeromorphicWithCondB_order`), so it is
+provable by callers — e.g. `= 1` at simple poles.
 
 The `hCondB` parameter is kept in the signature for use downstream (e.g. by
 per-pole CPV dischargers that need the angle compatibility data); it is not
@@ -503,19 +560,11 @@ noncomputable def PolarPartDecomposition.ofMeromorphicWithCondB
       simp only [coeff, hs, ↓reduceDIte]
       rfl
     · rw [dif_neg h_pos]
-      have h_zero : meroPolarOrderAt (hMero s hs) = 0 := by rw [← h_order]; omega
-      have h_data := mero_laurent_data_exists (hMero s hs)
-      set N := h_data.choose
-      set a := h_data.choose_spec.choose
-      set g := h_data.choose_spec.choose_spec.choose
-      have hg_an : AnalyticAt ℂ g s := h_data.choose_spec.choose_spec.choose_spec.1
-      have hf_eq : ∀ᶠ z in 𝓝[≠] s,
-          f z = g z + ∑ k : Fin N, a k / (z - s) ^ (k.val + 1) :=
-        h_data.choose_spec.choose_spec.choose_spec.2
-      have hN_zero : N = 0 := h_zero
-      have hres := residue_of_laurent_expansion N a hg_an hf_eq
-      rw [dif_neg (by omega)] at hres
-      exact hres
+      have hres := residue_of_laurent_expansion (meroPolarOrderAt (hMero s hs))
+        (mero_laurent_data_exists (hMero s hs)).choose
+        (mero_laurent_data_exists (hMero s hs)).choose_spec.choose_spec.1
+        (mero_laurent_data_exists (hMero s hs)).choose_spec.choose_spec.2
+      rwa [dif_neg (h_order ▸ h_pos)] at hres
   · intro z hzU
     by_cases hzS : z ∈ (↑S : Set ℂ)
     · have hzS' := Finset.mem_coe.mp hzS
@@ -571,6 +620,25 @@ noncomputable def PolarPartDecomposition.ofMeromorphicWithCondB
     change f z = correction z + ∑ s ∈ S, polarPart s z
     rw [h_corr, h_rem, h_total]
     ring
+
+/-- The `order` field of `ofMeromorphicWithCondB` at `s ∈ S` is the
+**canonical minimal** polar order `meroPolarOrderAt (hMero s hs)`. Combined
+with `meroPolarOrderAt_eq_one`, this lets callers of `hw_3_3_clean_full_mero`
+discharge its condition-(A′) hypothesis at simple poles via
+`isFlatOfOrder_one` — including on contours that cross poles on curved pieces,
+where flatness of any order `≥ 2` fails. -/
+theorem PolarPartDecomposition.ofMeromorphicWithCondB_order
+    {U : Set ℂ} (hU_open : IsOpen U)
+    {S : Finset ℂ} (hS_in_U : ↑S ⊆ U) {f : ℂ → ℂ}
+    (hf : DifferentiableOn ℂ f (U \ ↑S))
+    {γ : PwC1Immersion x x}
+    (hMero : ∀ s ∈ S, MeromorphicAt f s)
+    (hCondB : SatisfiesConditionB γ f S)
+    {s : ℂ} (hs : s ∈ S) :
+    (PolarPartDecomposition.ofMeromorphicWithCondB hU_open hS_in_U hf hMero
+        hCondB).order s = meroPolarOrderAt (hMero s hs) := by
+  show (if h_mem : s ∈ S then meroPolarOrderAt (hMero s h_mem) else 0) = _
+  rw [dif_pos hs]
 
 end HungerbuhlerWasem
 
