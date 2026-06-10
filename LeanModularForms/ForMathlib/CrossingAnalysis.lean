@@ -64,31 +64,17 @@ theorem crossingSet_isClosed (γ : PwC1Immersion x y) (z₀ : E) :
   rw [this]
   exact isClosed_Icc.inter (isClosed_singleton.preimage γ.toPiecewiseC1Path.continuous)
 
-/-- Near `p` from the left, points are eventually not in the partition. -/
-private theorem eventually_not_in_partition_left
-    (γ : PwC1Immersion x y) (p : ℝ) :
-    ∀ᶠ t in 𝓝[<] p, t ∉ γ.toPiecewiseC1Path.partition := by
+/-- Near `p` within any `u ∌ p`, points are eventually not in the partition. -/
+private theorem eventually_not_in_partition
+    (γ : PwC1Immersion x y) {p : ℝ} {u : Set ℝ} (hu : p ∉ u) :
+    ∀ᶠ t in 𝓝[u] p, t ∉ γ.toPiecewiseC1Path.partition := by
   have hcl : _root_.IsClosed ((↑γ.toPiecewiseC1Path.partition \ {p} : Set ℝ)) :=
     (γ.toPiecewiseC1Path.partition.finite_toSet.subset diff_subset).isClosed
   have hmem : p ∉ (↑γ.toPiecewiseC1Path.partition \ {p} : Set ℝ) := by simp
-  have h1 : ∀ᶠ t in 𝓝[<] p, t ∈ (↑γ.toPiecewiseC1Path.partition \ {p} : Set ℝ)ᶜ :=
-    eventually_nhdsWithin_of_eventually_nhds (hcl.isOpen_compl.mem_nhds hmem)
-  have h2 : ∀ᶠ t in 𝓝[<] p, t < p := eventually_nhdsWithin_of_forall fun t ht => ht
-  exact (h1.and h2).mono fun t ⟨ht_compl, ht_lt⟩ ht_part =>
-    ht_compl ⟨ht_part, ne_of_lt ht_lt⟩
-
-/-- Near `p` from the right, points are eventually not in the partition. -/
-private theorem eventually_not_in_partition_right
-    (γ : PwC1Immersion x y) (p : ℝ) :
-    ∀ᶠ t in 𝓝[>] p, t ∉ γ.toPiecewiseC1Path.partition := by
-  have hcl : _root_.IsClosed ((↑γ.toPiecewiseC1Path.partition \ {p} : Set ℝ)) :=
-    (γ.toPiecewiseC1Path.partition.finite_toSet.subset diff_subset).isClosed
-  have hmem : p ∉ (↑γ.toPiecewiseC1Path.partition \ {p} : Set ℝ) := by simp
-  have h1 : ∀ᶠ t in 𝓝[>] p, t ∈ (↑γ.toPiecewiseC1Path.partition \ {p} : Set ℝ)ᶜ :=
-    eventually_nhdsWithin_of_eventually_nhds (hcl.isOpen_compl.mem_nhds hmem)
-  have h2 : ∀ᶠ t in 𝓝[>] p, p < t := eventually_nhdsWithin_of_forall fun t ht => ht
-  exact (h1.and h2).mono fun t ⟨ht_compl, ht_gt⟩ ht_part =>
-    ht_compl ⟨ht_part, ne_of_gt ht_gt⟩
+  filter_upwards [
+    eventually_nhdsWithin_of_eventually_nhds (hcl.isOpen_compl.mem_nhds hmem),
+    self_mem_nhdsWithin] with t ht_compl ht_mem ht_part
+  exact ht_compl ⟨ht_part, fun h => hu (h ▸ ht_mem)⟩
 
 /-- `Ioo q p ⊆ Ioo 0 1` implies `Icc q p ⊆ Icc 0 1` by taking closures. -/
 private theorem Icc_subset_of_Ioo_subset {q p : ℝ} (hqp : q < p)
@@ -106,6 +92,34 @@ theorem crossing_isolated_smooth (γ : PwC1Immersion x y) (z₀ : E) (t₀ : ℝ
   exact (γ.toPiecewiseC1Path.differentiable_off_extend t₀ ht₀ hsmooth).hasDerivAt.eventually_ne
     (γ.deriv_ne_zero t₀ ht₀ hsmooth)
 
+/-- **At-most-one-crossing core.** If a dual functional `f` of a one-sided
+tangent has positive derivative along `γ - z₀` on `(a, b) ⊆ (0, 1)` off the
+partition, then `f ∘ (γ - z₀)` is strictly monotone on `[a, b]`, so `γ` meets
+`z₀` at most once there. Shared by both one-sided isolation lemmas. -/
+private theorem crossing_atMostOne_of_dual_deriv_pos
+    (γ : PwC1Immersion x y) {z₀ : E} {f : StrongDual ℝ E} {a b : ℝ}
+    (h_sub : Icc a b ⊆ Icc (0 : ℝ) 1)
+    (h_cond : ∀ t ∈ Ioo a b, t ∉ γ.toPiecewiseC1Path.partition ∧
+      t ∈ Ioo (0 : ℝ) 1 ∧ f (deriv (γ : ℝ → E) t) > 0) :
+    ∀ t₁ ∈ Icc a b, ∀ t₂ ∈ Icc a b,
+      (γ : ℝ → E) t₁ = z₀ → (γ : ℝ → E) t₂ = z₀ → t₁ = t₂ := by
+  set h : ℝ → ℝ := fun t => f ((γ : ℝ → E) t - z₀) with hh_def
+  have hh_cont : ContinuousOn h (Icc a b) :=
+    f.continuous.comp_continuousOn
+      ((γ.toPiecewiseC1Path.continuous.continuousOn.mono h_sub).sub continuousOn_const)
+  have hh_deriv_pos : ∀ s ∈ interior (Icc a b), 0 < deriv h s := by
+    rw [interior_Icc]
+    intro s hs
+    obtain ⟨hs_smooth, hs_Ioo, hs_dpos⟩ := h_cond s hs
+    have h_sub' : HasDerivAt (fun t => (γ : ℝ → E) t - z₀) (deriv (γ : ℝ → E) s - 0) s :=
+      (γ.toPiecewiseC1Path.differentiable_off_extend s hs_Ioo hs_smooth).hasDerivAt.sub
+        (hasDerivAt_const s z₀)
+    simp only [sub_zero] at h_sub'
+    exact (f.hasFDerivAt.comp_hasDerivAt s h_sub').deriv ▸ hs_dpos
+  intro t₁ ht₁ t₂ ht₂ hc₁ hc₂
+  refine (strictMonoOn_of_deriv_pos (convex_Icc a b) hh_cont hh_deriv_pos).injOn ht₁ ht₂ ?_
+  simp only [hh_def, hc₁, hc₂]
+
 /-- At a partition point `p` with `0 < p`, `γ(t) ≠ γ(p)` for `t` sufficiently close
 to `p` from the left. -/
 theorem crossing_isolated_left (γ : PwC1Immersion x y) (z₀ : E) (p : ℝ)
@@ -117,42 +131,22 @@ theorem crossing_isolated_left (γ : PwC1Immersion x y) (z₀ : E) (p : ℝ)
   have hfL_pos : (0 : ℝ) < f L := by
     rw [hf_L]
     exact_mod_cast norm_pos_iff.mpr hL_ne
-  set h : ℝ → ℝ := fun t => f ((γ : ℝ → E) t - z₀) with hh_def
-  have hh_p : h p = 0 := by simp only [hh_def, hcross, sub_self, map_zero]
   have hp_Ioo := γ.toPiecewiseC1Path.partition_subset hp_part
-  have h_ev_smooth := eventually_not_in_partition_left γ p
   have h_ev_Ioo : ∀ᶠ t in 𝓝[<] p, t ∈ Ioo (0 : ℝ) 1 :=
     (eventually_nhdsWithin_of_eventually_nhds (Ioi_mem_nhds hp_pos) |>.and
       (eventually_nhdsWithin_of_forall fun _ ht => ht)).mono
       fun _ ⟨h0t, htp⟩ => ⟨h0t, lt_trans htp hp_Ioo.2⟩
   have h_ev_deriv_pos : ∀ᶠ t in 𝓝[<] p, f (deriv (γ : ℝ → E) t) > 0 :=
     (f.continuous.continuousAt.tendsto.comp hL_tendsto).eventually (Ioi_mem_nhds hfL_pos)
-  have h_all : ∀ᶠ t in 𝓝[<] p,
-      t ∉ γ.toPiecewiseC1Path.partition ∧ t ∈ Ioo (0 : ℝ) 1 ∧
-      f (deriv (γ : ℝ → E) t) > 0 :=
-    h_ev_smooth.and (h_ev_Ioo.and h_ev_deriv_pos)
+  have h_all := (eventually_not_in_partition γ self_notMem_Iio).and
+    (h_ev_Ioo.and h_ev_deriv_pos)
   rw [Filter.Eventually, mem_nhdsLT_iff_exists_Ioo_subset' hp_pos] at h_all
   obtain ⟨q, hq_lt_p, hq_cond⟩ := h_all
-  have hqp_sub : Icc q p ⊆ Icc (0 : ℝ) 1 :=
-    Icc_subset_of_Ioo_subset hq_lt_p (fun t ht => (hq_cond ht).2.1)
-  have hh_cont_qp : ContinuousOn h (Icc q p) :=
-    f.continuous.comp_continuousOn
-      ((γ.toPiecewiseC1Path.continuous.continuousOn.mono hqp_sub).sub continuousOn_const)
-  have hh_deriv_pos : ∀ s ∈ interior (Icc q p), 0 < deriv h s := by
-    rw [interior_Icc]
-    intro s hs
-    obtain ⟨hs_smooth, hs_Ioo, hs_dpos⟩ := hq_cond hs
-    have h_sub : HasDerivAt (fun t => (γ : ℝ → E) t - z₀) (deriv (γ : ℝ → E) s - 0) s :=
-      (γ.toPiecewiseC1Path.differentiable_off_extend s hs_Ioo hs_smooth).hasDerivAt.sub
-        (hasDerivAt_const s z₀)
-    simp only [sub_zero] at h_sub
-    exact (f.hasFDerivAt.comp_hasDerivAt s h_sub).deriv ▸ hs_dpos
-  have hh_mono := strictMonoOn_of_deriv_pos (convex_Icc q p) hh_cont_qp hh_deriv_pos
+  have h_once := crossing_atMostOne_of_dual_deriv_pos γ (z₀ := z₀)
+    (Icc_subset_of_Ioo_subset hq_lt_p fun t ht => (hq_cond ht).2.1) fun t ht => hq_cond ht
   rw [Filter.Eventually, mem_nhdsLT_iff_exists_Ioo_subset' hp_pos]
-  exact ⟨q, hq_lt_p, fun t ht hγt => by
-    have hht : h t = 0 := by simp only [hh_def, hγt, sub_self, map_zero]
-    have : h t < h p := hh_mono (Ioo_subset_Icc_self ht) (right_mem_Icc.mpr hq_lt_p.le) ht.2
-    linarith⟩
+  exact ⟨q, hq_lt_p, fun t ht hγt => (ne_of_lt ht.2) (h_once t (Ioo_subset_Icc_self ht) p
+    (right_mem_Icc.mpr hq_lt_p.le) hγt hcross)⟩
 
 /-- At a partition point `p` with `p < 1`, `γ(t) ≠ γ(p)` for `t` sufficiently close
 to `p` from the right. -/
@@ -165,42 +159,22 @@ theorem crossing_isolated_right (γ : PwC1Immersion x y) (z₀ : E) (p : ℝ)
   have hfL_pos : (0 : ℝ) < f L := by
     rw [hf_L]
     exact_mod_cast norm_pos_iff.mpr hL_ne
-  set h : ℝ → ℝ := fun t => f ((γ : ℝ → E) t - z₀) with hh_def
-  have hh_p : h p = 0 := by simp only [hh_def, hcross, sub_self, map_zero]
   have hp_Ioo := γ.toPiecewiseC1Path.partition_subset hp_part
-  have h_ev_smooth := eventually_not_in_partition_right γ p
   have h_ev_Ioo : ∀ᶠ t in 𝓝[>] p, t ∈ Ioo (0 : ℝ) 1 :=
     (eventually_nhdsWithin_of_eventually_nhds (Iio_mem_nhds hp_lt_one) |>.and
       (eventually_nhdsWithin_of_forall fun _ ht => ht)).mono
       fun _ ⟨ht1, htp⟩ => ⟨lt_trans hp_Ioo.1 htp, ht1⟩
   have h_ev_deriv_pos : ∀ᶠ t in 𝓝[>] p, f (deriv (γ : ℝ → E) t) > 0 :=
     (f.continuous.continuousAt.tendsto.comp hL_tendsto).eventually (Ioi_mem_nhds hfL_pos)
-  have h_all : ∀ᶠ t in 𝓝[>] p,
-      t ∉ γ.toPiecewiseC1Path.partition ∧ t ∈ Ioo (0 : ℝ) 1 ∧
-      f (deriv (γ : ℝ → E) t) > 0 :=
-    h_ev_smooth.and (h_ev_Ioo.and h_ev_deriv_pos)
+  have h_all := (eventually_not_in_partition γ self_notMem_Ioi).and
+    (h_ev_Ioo.and h_ev_deriv_pos)
   rw [Filter.Eventually, mem_nhdsGT_iff_exists_Ioo_subset' hp_lt_one] at h_all
   obtain ⟨r, hr_gt_p, hr_cond⟩ := h_all
-  have hpr_sub : Icc p r ⊆ Icc (0 : ℝ) 1 :=
-    Icc_subset_of_Ioo_subset hr_gt_p (fun t ht => (hr_cond ht).2.1)
-  have hh_cont_pr : ContinuousOn h (Icc p r) :=
-    f.continuous.comp_continuousOn
-      ((γ.toPiecewiseC1Path.continuous.continuousOn.mono hpr_sub).sub continuousOn_const)
-  have hh_deriv_pos : ∀ s ∈ interior (Icc p r), 0 < deriv h s := by
-    rw [interior_Icc]
-    intro s hs
-    obtain ⟨hs_smooth, hs_Ioo, hs_dpos⟩ := hr_cond hs
-    have h_sub : HasDerivAt (fun t => (γ : ℝ → E) t - z₀) (deriv (γ : ℝ → E) s - 0) s :=
-      (γ.toPiecewiseC1Path.differentiable_off_extend s hs_Ioo hs_smooth).hasDerivAt.sub
-        (hasDerivAt_const s z₀)
-    simp only [sub_zero] at h_sub
-    exact (f.hasFDerivAt.comp_hasDerivAt s h_sub).deriv ▸ hs_dpos
-  have hh_mono := strictMonoOn_of_deriv_pos (convex_Icc p r) hh_cont_pr hh_deriv_pos
+  have h_once := crossing_atMostOne_of_dual_deriv_pos γ (z₀ := z₀)
+    (Icc_subset_of_Ioo_subset hr_gt_p fun t ht => (hr_cond ht).2.1) fun t ht => hr_cond ht
   rw [Filter.Eventually, mem_nhdsGT_iff_exists_Ioo_subset' hp_lt_one]
-  exact ⟨r, hr_gt_p, fun t ht hγt => by
-    have hht : h t = 0 := by simp only [hh_def, hγt, sub_self, map_zero]
-    have : h p < h t := hh_mono (left_mem_Icc.mpr hr_gt_p.le) (Ioo_subset_Icc_self ht) ht.1
-    linarith⟩
+  exact ⟨r, hr_gt_p, fun t ht hγt => (ne_of_gt ht.1) (h_once t (Ioo_subset_Icc_self ht) p
+    (left_mem_Icc.mpr hr_gt_p.le) hγt hcross)⟩
 
 /-- At any crossing `t₀ ∈ (0, 1)`, there is a punctured neighborhood with no other
 crossings in `[0, 1]`. Combines the smooth-point and partition-point cases. -/

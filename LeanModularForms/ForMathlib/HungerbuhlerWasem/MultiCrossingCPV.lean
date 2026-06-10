@@ -23,7 +23,7 @@ Given `D : MultiPoleCrossData γ s` with `crossings.card = n`:
 
 1. **Common radius `r > 0`**: take `r` to be the minimum of the geometric
    `multi_pole_common_radius` and the per-crossing chord-quotient threshold
-   radii from `exists_chord_slitPlane_radius_right/left` and
+   radii from `exists_slitPlane_chord_quotient_right/_left_forward` and
    `exists_chord_div_endpoint_slitPlane_right/left`.
 
 2. **Smooth complement bound** via `multi_pole_smooth_complement_far_bound`.
@@ -125,9 +125,9 @@ private theorem exists_per_crossing_radius
   obtain ⟨L_R, L_L, hL_R_ne, hL_L_ne, h_deriv_right, h_deriv_left⟩ :=
     oneSided_deriv_setup γ ht₀
   obtain ⟨r_R₁, hr_R₁_pos, hr_R₁_slit⟩ :=
-    exists_chord_slitPlane_radius_right h_deriv_right h_at hL_R_ne
+    exists_slitPlane_chord_quotient_right h_deriv_right h_at hL_R_ne
   obtain ⟨r_L₁, hr_L₁_pos, hr_L₁_slit⟩ :=
-    exists_chord_slitPlane_radius_left h_deriv_left h_at hL_L_ne
+    exists_slitPlane_chord_quotient_left_forward h_deriv_left h_at hL_L_ne
   obtain ⟨r_R₂, hr_R₂_pos, hr_R₂_endpoint⟩ :=
     exists_chord_div_endpoint_slitPlane_right h_deriv_right h_at hL_R_ne
   obtain ⟨r_L₂, hr_L₂_pos, hr_L₂_endpoint⟩ :=

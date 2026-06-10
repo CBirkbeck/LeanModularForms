@@ -91,36 +91,6 @@ theorem h_B_of_angle_compat_smooth
       ((k - 1 : ℕ) : ℝ) * Real.pi = (2 * m) * Real.pi)
   rw [neg_div, neg_pow_eq_self_of_even_sub_one (L / ↑‖L‖) m hkm]
 
-/-- For a function `γ` with `Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L)` and eventual
-differentiability on `(t₀, ∞)`, plus continuity at `t₀`, we have
-`HasDerivWithinAt γ L (Ioi t₀) t₀`. -/
-theorem hasDerivWithinAt_Ioi_of_tendsto
-    {γ : ℝ → ℂ} {t₀ : ℝ} {L : ℂ}
-    (hγ_cont : ContinuousAt γ t₀)
-    (hγ_diff : ∀ᶠ t in 𝓝[>] t₀, DifferentiableAt ℝ γ t)
-    (hL_right : Tendsto (deriv γ) (𝓝[>] t₀) (𝓝 L)) :
-    HasDerivWithinAt γ L (Ioi t₀) t₀ := by
-  obtain ⟨s, hs_mem, hs_diff⟩ := hγ_diff.exists_mem
-  exact hasDerivWithinAt_Ioi_iff_Ici.mpr
-    (hasDerivWithinAt_Ici_of_tendsto_deriv
-      (fun t ht => (hs_diff t ht).differentiableWithinAt)
-      hγ_cont.continuousWithinAt hs_mem hL_right)
-
-/-- For a function `γ` with `Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L)` and eventual
-differentiability on `(-∞, t₀)`, plus continuity at `t₀`, we have
-`HasDerivWithinAt γ L (Iio t₀) t₀`. -/
-theorem hasDerivWithinAt_Iio_of_tendsto
-    {γ : ℝ → ℂ} {t₀ : ℝ} {L : ℂ}
-    (hγ_cont : ContinuousAt γ t₀)
-    (hγ_diff : ∀ᶠ t in 𝓝[<] t₀, DifferentiableAt ℝ γ t)
-    (hL_left : Tendsto (deriv γ) (𝓝[<] t₀) (𝓝 L)) :
-    HasDerivWithinAt γ L (Iio t₀) t₀ := by
-  obtain ⟨s, hs_mem, hs_diff⟩ := hγ_diff.exists_mem
-  exact hasDerivWithinAt_Iio_iff_Iic.mpr
-    (hasDerivWithinAt_Iic_of_tendsto_deriv
-      (fun t ht => (hs_diff t ht).differentiableWithinAt)
-      hγ_cont.continuousWithinAt hs_mem hL_left)
-
 /-- A cutoff-integrability lemma for `c / (z - s)^k`, mirroring
 `cpvIntegrandOn_polarPart_intervalIntegrable` but specialised to a single
 Laurent monomial. -/

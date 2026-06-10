@@ -345,35 +345,6 @@ noncomputable def localDerivedCutoffs
     h_near_right := fun ε hε hεt =>
       dR_props.2.2.2.2.2 ε hε (hεt.trans_le (min_le_left _ _)) }
 
-/-- **Right-side chord-quotient radius existence**: given a right one-sided
-derivative limit `L ≠ 0`, there exists `r > 0` such that the chord quotient
-`(γ(b) - s) / (γ(a) - s) ∈ Complex.slitPlane` for all `t₀ < a ≤ b ≤ t₀ + r`.
-
-Pure repackaging of `exists_slitPlane_chord_quotient_right`. Provided as a
-companion to the exact-radius API so that callers can derive their per-crossing
-threshold radius before invoking `cpvFullSetup_local_exact`. -/
-theorem exists_chord_slitPlane_radius_right
-    {γ : ℝ → ℂ} {t₀ : ℝ} {s L : ℂ}
-    (h_deriv : HasDerivWithinAt γ L (Set.Ioi t₀) t₀)
-    (h_at : γ t₀ = s) (hL : L ≠ 0) :
-    ∃ r > 0, ∀ a b, t₀ < a → a ≤ b → b ≤ t₀ + r →
-      (γ b - s) / (γ a - s) ∈ Complex.slitPlane :=
-  exists_slitPlane_chord_quotient_right h_deriv h_at hL
-
-/-- **Left-side chord-quotient radius existence (forward direction)**: given a
-left one-sided derivative limit `L ≠ 0`, there exists `r > 0` such that the
-chord quotient `(γ(b) - s) / (γ(a) - s) ∈ Complex.slitPlane` for all
-`t₀ - r ≤ a ≤ b < t₀`.
-
-Pure repackaging of `exists_slitPlane_chord_quotient_left_forward`. -/
-theorem exists_chord_slitPlane_radius_left
-    {γ : ℝ → ℂ} {t₀ : ℝ} {s L : ℂ}
-    (h_deriv : HasDerivWithinAt γ L (Set.Iio t₀) t₀)
-    (h_at : γ t₀ = s) (hL : L ≠ 0) :
-    ∃ r > 0, ∀ a b, t₀ - r ≤ a → a ≤ b → b < t₀ →
-      (γ b - s) / (γ a - s) ∈ Complex.slitPlane :=
-  exists_slitPlane_chord_quotient_left_forward h_deriv h_at hL
-
 /-- **Right boundary slit-plane radius existence**: given a right one-sided
 derivative limit `L ≠ 0`, there exists `r > 0` such that for every
 `0 < r' ≤ r`, the boundary chord-to-tangent quotient
@@ -509,19 +480,11 @@ theorem oneSided_deriv_setup
   obtain ⟨L_L, hL_L_ne, hL_L_tendsto⟩ := exists_left_deriv_limit γ ht₀
   have hγf_cont : ContinuousAt γf t₀ :=
     γ.toPwC1Immersion.toPiecewiseC1Path.toPath.continuous_extend.continuousAt
-  obtain ⟨S_R, hS_R_mem, hS_R_diff⟩ :=
-    (eventually_differentiable_right γ ht₀).exists_mem
-  obtain ⟨S_L, hS_L_mem, hS_L_diff⟩ :=
-    (eventually_differentiable_left γ ht₀).exists_mem
-  refine ⟨L_R, L_L, hL_R_ne, hL_L_ne,
-    hasDerivWithinAt_Ioi_iff_Ici.mpr
-      (hasDerivWithinAt_Ici_of_tendsto_deriv
-        (fun t ht => (hS_R_diff t ht).differentiableWithinAt)
-        hγf_cont.continuousWithinAt hS_R_mem hL_R_tendsto),
-    hasDerivWithinAt_Iio_iff_Iic.mpr
-      (hasDerivWithinAt_Iic_of_tendsto_deriv
-        (fun t ht => (hS_L_diff t ht).differentiableWithinAt)
-        hγf_cont.continuousWithinAt hS_L_mem hL_L_tendsto)⟩
+  exact ⟨L_R, L_L, hL_R_ne, hL_L_ne,
+    hasDerivWithinAt_Ioi_of_tendsto hγf_cont
+      (eventually_differentiable_right γ ht₀) hL_R_tendsto,
+    hasDerivWithinAt_Iio_of_tendsto hγf_cont
+      (eventually_differentiable_left γ ht₀) hL_L_tendsto⟩
 
 /-- **Annular log-difference on a crossing-free subinterval.** The directionless
 core shared by `right_annular_log_diff_local` and `left_annular_log_diff_local`:
@@ -745,7 +708,7 @@ SAME fixed radius `r`.
 
 The caller is responsible for ensuring the slit-plane bounds hold at the
 chosen `r`. The companion theorems
-`exists_chord_slitPlane_radius_right/left` and
+`exists_slitPlane_chord_quotient_right/_left_forward` and
 `exists_chord_div_endpoint_slitPlane_right/left` produce per-crossing
 threshold radii. -/
 theorem perCrossing_window_integral_tendsto_exact
