@@ -3,6 +3,7 @@ Copyright (c) 2024 Chris Birkbeck. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Chris Birkbeck
 -/
+import Mathlib.Algebra.Field.ZMod
 import Mathlib.Data.ZMod.Units
 import Mathlib.GroupTheory.Index
 import Mathlib.NumberTheory.ModularForms.CongruenceSubgroups
@@ -31,7 +32,7 @@ namespace HeckeRing.GL2
 
 private lemma dvd_sub_val_mul (p : ℕ) (hp : Nat.Prime p) (a b : ℤ) (hb : (b : ZMod p) ≠ 0) :
     (p : ℤ) ∣ a - (((a : ZMod p) * (b : ZMod p)⁻¹).val : ℤ) * b := by
-  have : Fact p.Prime := ⟨hp⟩
+  haveI : Fact p.Prime := ⟨hp⟩
   rw [← ZMod.intCast_zmod_eq_zero_iff_dvd]
   push_cast
   rw [ZMod.natCast_zmod_val, mul_assoc, inv_mul_cancel₀ hb, mul_one, sub_self]
