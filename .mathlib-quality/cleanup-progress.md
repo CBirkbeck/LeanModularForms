@@ -59,8 +59,15 @@ empty files in the project.
 | CharSpaceIso (173) | **DELETED** — all 6 decls zero-use (cascade orphan of Bridge/CharSpace_Comm deletions) |
 | HeckeT_p_Gamma1 (165→137, −17%) | DONE — 5th glMap_mapGL duplicate → glMap_mapGL_eq; unused _hp binder cascade-dropped; M_infty_det_pos→_ne_zero |
 
+| HeckeT_p_Gamma0 (186→117, −37%) | DONE — bezout lemma → mathlib Nat.Coprime.isCoprime; deg 17→6; header normalized |
+| CongruenceIndex (245→211, −14%) | DONE — worker died at session limit post-substance; all edits LSP-verified, lint-clean |
+| HeckeAction (302→242, −20%) | DONE — same; **sigma_eq_id_of_pos_det PROMOTED to public** (cross-file API) |
+
 Known pending dedup: private Gamma1_isCusp_glMap_smul* duplicates of glMap_smul_isCusp_Gamma1
 in AdjointTheory.lean:64, HeckeT_n.lean:352, HeckeT_p.lean:909 (handle in those files' passes).
+Also: inline `UpperHalfPlane.σ = refl` re-derivations in slash_diag_scalar
+(NebentypusHeckeRingHom) + frickeGL_sq_slash (Fricke) can now delegate to the promoted
+`sigma_eq_id_of_pos_det` — fold into the flagged "slash by scalar matrix" shared-helper item.
 
 Remaining substantive GL2 files (queued, upstream-first):
 HeckeRingHomCharSpace.lean (99), HeckeRingHomCharSpace_General.lean (108),
