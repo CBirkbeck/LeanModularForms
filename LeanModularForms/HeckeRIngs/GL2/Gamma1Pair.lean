@@ -271,12 +271,14 @@ theorem Gamma0MapUnits_surjective [NeZero N] :
   obtain ⟨g, hg⟩ := SL2Reduction.SL2_reduction_surjective N target
   have hg0 : g ∈ Gamma0 N := by
     rw [Gamma0_mem]
-    simpa using congr_fun (congr_fun (congr_arg Subtype.val hg) 1) 0
+    have h := congr_fun (congr_fun (congr_arg Subtype.val hg) 1) 0
+    simpa using h.trans (by simp [target])
   refine ⟨⟨g, hg0⟩, ?_⟩
   ext
   show Gamma0Map N ⟨g, hg0⟩ = ↑d
   simp only [Gamma0Map, MonoidHom.coe_mk, OneHom.coe_mk]
-  simpa using congr_fun (congr_fun (congr_arg Subtype.val hg) 1) 1
+  have h := congr_fun (congr_fun (congr_arg Subtype.val hg) 1) 1
+  simpa using h.trans (by simp [target])
 
 /-- The diamond operator `⟨d⟩` on modular forms for `Gamma1(N)`, indexed by
 `d : (ZMod N)ˣ`. -/

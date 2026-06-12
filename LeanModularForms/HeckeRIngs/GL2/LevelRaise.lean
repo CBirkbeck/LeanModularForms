@@ -154,9 +154,11 @@ lemma levelRaiseConj_mem_Gamma1 (d M : ℕ) [NeZero d] (γ : SL(2, ℤ))
     (hγ : γ ∈ Gamma1 (d * M)) :
     levelRaiseConj d M γ hγ ∈ Gamma1 M := by
   obtain ⟨ha, he, hc⟩ := (Gamma1_mem _ _).mp hγ
+  have h00 : (levelRaiseConj d M γ hγ).val 0 0 = γ.val 0 0 := rfl
+  have h11 : (levelRaiseConj d M γ hγ).val 1 1 = γ.val 1 1 := rfl
   refine (Gamma1_mem _ _).mpr
-    ⟨by simpa using congr_arg (ZMod.castHom (Nat.dvd_mul_left M d) (ZMod M)) ha,
-     by simpa using congr_arg (ZMod.castHom (Nat.dvd_mul_left M d) (ZMod M)) he,
+    ⟨by rw [h00]; simpa using congr_arg (ZMod.castHom (Nat.dvd_mul_left M d) (ZMod M)) ha,
+     by rw [h11]; simpa using congr_arg (ZMod.castHom (Nat.dvd_mul_left M d) (ZMod M)) he,
      ?_⟩
   rw [ZMod.intCast_zmod_eq_zero_iff_dvd]
   exact natCast_dvd_ediv_of_mul_dvd ((ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp hc)

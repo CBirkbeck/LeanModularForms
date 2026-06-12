@@ -117,7 +117,8 @@ lemma eq_iff (g h : P.Δ) : (⟦g⟧ : HeckeCoset P) = ⟦h⟧ ↔
 lemma toSet_eq_rep (D : HeckeCoset P) :
     HeckeCoset.toSet D = DoubleCoset.doubleCoset (HeckeCoset.rep D : G) P.H P.H := by
   refine Quotient.inductionOn D fun g ↦ ?_
-  simpa only [toSet_mk] using (Quotient.exact (Quotient.out_eq (⟦g⟧ : HeckeCoset P))).symm
+  simpa only [toSet_mk, HeckeCoset.rep]
+    using (Quotient.exact (Quotient.out_eq (⟦g⟧ : HeckeCoset P))).symm
 
 /-- The representative lies in its double coset. -/
 lemma rep_mem (D : HeckeCoset P) : (HeckeCoset.rep D : G) ∈ HeckeCoset.toSet D :=
