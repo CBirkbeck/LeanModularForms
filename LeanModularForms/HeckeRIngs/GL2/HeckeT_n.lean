@@ -810,7 +810,7 @@ private lemma heckeT_p_ut_slash_lower_comm [NeZero N] (k : ℤ) {p q : ℕ}
     use b_zmod.val
     refine ⟨ZMod.val_lt _, ?_⟩
     have key : (q : ZMod p) * b_zmod = (c : ZMod p) := by
-      simp [b_zmod, ← hu, Units.mul_inv_cancel_left]
+      simp only [b_zmod, ← hu, Units.mul_inv_cancel_left]
     rw [show q * b_zmod.val % p = (((q * b_zmod.val : Nat) : ZMod p)).val from
       (ZMod.val_natCast p _).symm]
     simp only [Nat.cast_mul, ZMod.natCast_zmod_val]

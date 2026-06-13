@@ -375,8 +375,8 @@ private theorem formal_table_noncoprime
     Nat.div_pos (Nat.le_of_dvd (NeZero.pos m) (Nat.ordProj_dvd m p)) (pow_pos hp.pos va)
   have hn'_pos : 0 < n' :=
     Nat.div_pos (Nat.le_of_dvd (NeZero.pos n) (Nat.ordProj_dvd n p)) (pow_pos hp.pos vb)
-  have : NeZero m' := ⟨hm'_pos.ne'⟩
-  have : NeZero n' := ⟨hn'_pos.ne'⟩
+  haveI : NeZero m' := ⟨hm'_pos.ne'⟩
+  haveI : NeZero n' := ⟨hn'_pos.ne'⟩
   have hp_not_dvd_m' : ¬p ∣ m' := Nat.not_dvd_ordCompl hp (NeZero.ne m)
   have hp_not_dvd_n' : ¬p ∣ n' := Nat.not_dvd_ordCompl hp (NeZero.ne n)
   have hm_eq : m = p ^ va * m' := (Nat.mul_div_cancel' (Nat.ordProj_dvd m p)).symm
@@ -453,7 +453,7 @@ noncomputable def heckeRingSpp (p : ℕ) (hp : Nat.Prime p) : 𝕋 (Gamma0_pair 
   else 0
 
 @[simp] theorem heckeRingSpp_of_not_coprime (p : ℕ) (hp : Nat.Prime p)
-    (hpN : ¬ Nat.Coprime p N) : heckeRingSpp p hp = 0 :=
+    (hpN : ¬ Nat.Coprime p N) : heckeRingSpp (N := N) p hp = 0 :=
   dif_neg hpN
 
 /-- The ring-side prime-power element, defined by the Diamond–Shurman recurrence
@@ -468,19 +468,19 @@ noncomputable def heckeRingDppow (p : ℕ) (hp : Nat.Prime p) : ℕ → 𝕋 (Ga
       ((p : ℤ) • heckeRingSpp p hp) * heckeRingDppow p hp r
 
 @[simp] theorem heckeRingDppow_zero (p : ℕ) (hp : Nat.Prime p) :
-    heckeRingDppow p hp 0 = 1 := rfl
+    heckeRingDppow (N := N) p hp 0 = 1 := rfl
 
 @[simp] theorem heckeRingDppow_one (p : ℕ) (hp : Nat.Prime p) :
-    heckeRingDppow p hp 1 = heckeRingDp p hp.pos := rfl
+    heckeRingDppow (N := N) p hp 1 = heckeRingDp p hp.pos := rfl
 
 /-- The `r + 2` case of the recurrence: `D_{p^{r+2}} = D_p · D_{p^{r+1}} − (p · S_p) · D_{p^r}`. -/
 theorem heckeRingDppow_succ_succ (p : ℕ) (hp : Nat.Prime p) (r : ℕ) :
-    heckeRingDppow p hp (r + 2) = heckeRingDp p hp.pos * heckeRingDppow p hp (r + 1) -
+    heckeRingDppow (N := N) p hp (r + 2) = heckeRingDp p hp.pos * heckeRingDppow p hp (r + 1) -
       ((p : ℤ) • heckeRingSpp p hp) * heckeRingDppow p hp r := rfl
 
 /-- For a bad prime `p ∣ N` the recurrence degenerates: `D_{p^r} = D_p^r`. -/
 theorem heckeRingDppow_eq_pow_of_not_coprime (p : ℕ) (hp : Nat.Prime p) (hpN : ¬ Nat.Coprime p N)
-    (r : ℕ) : heckeRingDppow p hp r = heckeRingDp p hp.pos ^ r := by
+    (r : ℕ) : heckeRingDppow (N := N) p hp r = heckeRingDp p hp.pos ^ r := by
   induction r using Nat.twoStepInduction with
   | zero => simp
   | one => simp
@@ -494,7 +494,7 @@ theorem heckeRingDppow_eq_pow_of_not_coprime (p : ℕ) (hp : Nat.Prime p) (hpN :
 Instantiates the formal Chebyshev identity in the commutative ring `𝕋 (Gamma0_pair N) ℤ`.
 For `p ∣ N` both sides collapse to `D_p^{r+s}`. -/
 theorem heckeRingDppow_mul (p : ℕ) (hp : Nat.Prime p) (r s : ℕ) (hrs : r ≤ s) :
-    heckeRingDppow p hp r * heckeRingDppow p hp s =
+    heckeRingDppow (N := N) p hp r * heckeRingDppow p hp s =
       ∑ i ∈ Finset.range (r + 1), ((p : ℤ) • heckeRingSpp p hp) ^ i * heckeRingDppow p hp (r + s - 2 * i) := by
   letI : CommRing (𝕋 (Gamma0_pair N) ℤ) := instCommRing_Gamma0 N
   exact formal_ppow_mul (heckeRingDp p hp.pos) ((p : ℤ) • heckeRingSpp p hp)
@@ -507,27 +507,27 @@ noncomputable def heckeRingDn (n : ℕ) : 𝕋 (Gamma0_pair N) ℤ :=
   peelProd (R := 𝕋 (Gamma0_pair N) ℤ)
     (fun p v ↦ if hp : Nat.Prime p then heckeRingDppow p hp v else 1) n
 
-@[simp] theorem heckeRingDn_zero : heckeRingDn 0 = 1 := peelProd_zero _
+@[simp] theorem heckeRingDn_zero : heckeRingDn (N := N) 0 = 1 := peelProd_zero _
 
-@[simp] theorem heckeRingDn_one : heckeRingDn 1 = 1 := peelProd_one _
+@[simp] theorem heckeRingDn_one : heckeRingDn (N := N) 1 = 1 := peelProd_one _
 
 /-- On a prime power, the composite assembly agrees with the prime-power element. -/
 theorem heckeRingDn_ppow (p : ℕ) (hp : Nat.Prime p) (v : ℕ) :
-    heckeRingDn (p ^ v) = heckeRingDppow p hp v := by
+    heckeRingDn (N := N) (p ^ v) = heckeRingDppow p hp v := by
   rcases Nat.eq_zero_or_pos v with rfl | hv
   · simp
   rw [heckeRingDn, peelProd_ppow _ hp v hv, dif_pos hp]
 
 /-- Peeling step for `heckeRingDn`: for `1 < n`, expresses `D_n` as `D_{p^v} * D_{n/p^v}`
 where `p = n.minFac` and `v` is the `p`-adic valuation of `n`. -/
-theorem heckeRingDn_peel (n : ℕ) (hn : 1 < n) : heckeRingDn n =
+theorem heckeRingDn_peel (n : ℕ) (hn : 1 < n) : heckeRingDn (N := N) n =
     heckeRingDppow n.minFac (Nat.minFac_prime (by omega : n ≠ 1))
         (n.factorization n.minFac) * heckeRingDn (n / n.minFac ^ n.factorization n.minFac) := by
   grind [heckeRingDn, peelProd_peel]
 
 /-- **Coprime multiplicativity** (ring side): `D_{mn} = D_m · D_n` for coprime `m, n`. -/
 theorem heckeRingDn_mul_coprime (m n : ℕ) (hmn : Nat.Coprime m n) :
-    heckeRingDn (m * n) = heckeRingDn m * heckeRingDn n := by
+    heckeRingDn (N := N) (m * n) = heckeRingDn m * heckeRingDn n := by
   letI : CommRing (𝕋 (Gamma0_pair N) ℤ) := instCommRing_Gamma0 N
   exact peelProd_mul_coprime _ m n hmn
 
@@ -538,12 +538,12 @@ noncomputable def heckeRingSn (d : ℕ) : 𝕋 (Gamma0_pair N) ℤ :=
   peelProd (R := 𝕋 (Gamma0_pair N) ℤ)
     (fun p v ↦ if hp : Nat.Prime p then heckeRingSpp p hp ^ v else 1) d
 
-@[simp] theorem heckeRingSn_one : heckeRingSn 1 = 1 := peelProd_one _
+@[simp] theorem heckeRingSn_one : heckeRingSn (N := N) 1 = 1 := peelProd_one _
 
 /-- The composite scalar class vanishes as soon as `d` shares a factor with `N`:
 some prime-power block is `S_p^v = 0^v = 0`. -/
 theorem heckeRingSn_eq_zero_of_not_coprime :
-    ∀ d : ℕ, d ≠ 0 → ¬ Nat.Coprime d N → heckeRingSn d = 0 := by
+    ∀ d : ℕ, d ≠ 0 → ¬ Nat.Coprime d N → heckeRingSn (N := N) d = 0 := by
   intro d
   induction d using Nat.strong_induction_on with
   | _ d ih =>
@@ -555,7 +555,7 @@ theorem heckeRingSn_eq_zero_of_not_coprime :
     set v := d.factorization q with hv_def
     have hv_pos : 0 < v :=
       hq.factorization_pos_of_dvd (by omega) (Nat.minFac_dvd d)
-    have hpeel : heckeRingSn d =
+    have hpeel : heckeRingSn (N := N) d =
         heckeRingSpp q hq ^ v * heckeRingSn (d / q ^ v) := by
       rw [heckeRingSn, peelProd_peel _ d hd2, dif_pos hq]
       rfl
@@ -584,12 +584,12 @@ theorem heckeRingSn_eq_zero_of_not_coprime :
 /-- On a prime power, the composite scalar class agrees with the power of the prime scalar:
 `S_{p^v} = S_p^v`. -/
 theorem heckeRingSn_ppow (p : ℕ) (hp : Nat.Prime p) (v : ℕ) :
-    heckeRingSn (p ^ v) = heckeRingSpp p hp ^ v := by
+    heckeRingSn (N := N) (p ^ v) = heckeRingSpp p hp ^ v := by
   cases v <;> simp_all [heckeRingSn, peelProd_ppow _ hp _ (Nat.succ_pos _)]
 
 /-- The per-prime product formula in `D_n`/`S_n` form: `D_{p^r} * D_{p^s} = ∑_{i=0}^{r} p^i • (S_{p^i} * D_{p^{r+s−2i}})` for `r ≤ s` (Shimura 3.24(3)). -/
 theorem heckeRingDn_ppow_mul (p : ℕ) (hp : Nat.Prime p) (r s : ℕ) (hrs : r ≤ s) :
-    heckeRingDn (p ^ r) * heckeRingDn (p ^ s) = ∑ i ∈ Finset.range (r + 1),
+    heckeRingDn (N := N) (p ^ r) * heckeRingDn (p ^ s) = ∑ i ∈ Finset.range (r + 1),
         (p : ℤ) ^ i • (heckeRingSn (p ^ i) * heckeRingDn (p ^ (r + s - 2 * i))) := by
   rw [heckeRingDn_ppow p hp r, heckeRingDn_ppow p hp s, heckeRingDppow_mul p hp r s hrs]
   simp only [heckeRingDn_ppow p hp, heckeRingSn_ppow p hp, smul_pow, smul_mul_assoc]
@@ -602,7 +602,7 @@ sum over *all* divisors of `gcd m n` is correct as stated.  Instantiates the for
 `formal_table` with the concrete `peelProd`-assembled families `heckeRingDn`, `heckeRingSn`,
 whose per-prime blocks satisfy the Chebyshev product law `heckeRingDn_ppow_mul`. -/
 theorem heckeRingDn_mul (m n : ℕ) [NeZero m] [NeZero n] :
-    heckeRingDn m * heckeRingDn n = ∑ d ∈ (Nat.gcd m n).divisors.attach,
+    heckeRingDn (N := N) m * heckeRingDn n = ∑ d ∈ (Nat.gcd m n).divisors.attach,
       (d.val : ℤ) • (heckeRingSn d.val * heckeRingDn (m * n / (d.val * d.val))) := by
   letI : CommRing (𝕋 (Gamma0_pair N) ℤ) := instCommRing_Gamma0 N
   exact formal_table
