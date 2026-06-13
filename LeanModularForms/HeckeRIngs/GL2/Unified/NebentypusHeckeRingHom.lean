@@ -137,8 +137,14 @@ private lemma smul_slash_tRep_gen_modForm
     (i : decompQuot (Gamma0_pair N) (HeckeCoset.rep D))
     (a : ℂ) (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) :
     a • ((⇑f) ∣[k] tRep_gen (Gamma0_pair N) D i) =
-      ((a • ⇑f : ℍ → ℂ)) ∣[k] tRep_gen (Gamma0_pair N) D i :=
-  (smul_slash_pos_det k a _ _ (tRep_gen_Gamma0_det_pos D i)).symm
+      ((a • ⇑f : ℍ → ℂ)) ∣[k] tRep_gen (Gamma0_pair N) D i := by
+  have hσ : UpperHalfPlane.σ (glMap (tRep_gen (Gamma0_pair N) D i)) =
+      ContinuousAlgEquiv.refl ℝ ℂ := by
+    unfold UpperHalfPlane.σ
+    simp only [tRep_gen_Gamma0_det_pos (N := N) D i, ↓reduceIte]
+  change a • ((⇑f) ∣[k] glMap (tRep_gen (Gamma0_pair N) D i)) =
+    (a • ⇑f : ℍ → ℂ) ∣[k] glMap (tRep_gen (Gamma0_pair N) D i)
+  rw [ModularForm.smul_slash, hσ, ContinuousAlgEquiv.refl_apply]
 
 private lemma twistedHeckeSlashGen_bdd_at_cusps
     (D : HeckeCoset (Gamma0_pair N))
@@ -230,8 +236,17 @@ noncomputable def nebentypusHeckeOpLinear
     (D : HeckeCoset (Gamma0_pair N)) :
     modFormCharSpace k χ →ₗ[ℂ] modFormCharSpace k χ where
   toFun f := nebentypusHeckeOp D f
-  map_add' f g := by simp [twistedHeckeSlashGen_add]
-  map_smul' c f := by simp [twistedHeckeSlashGen_smul]
+  map_add' f g := by
+    refine Subtype.ext (ModularForm.ext fun z ↦ ?_)
+    simp only [nebentypusHeckeOp_coe_coe, Submodule.coe_add, ModularForm.add_apply,
+      ModularForm.coe_add, twistedHeckeSlashGen_add, Pi.add_apply]
+  map_smul' c f := by
+    refine Subtype.ext (ModularForm.ext fun z ↦ ?_)
+    rw [nebentypusHeckeOp_coe_coe, Submodule.coe_smul,
+      show (⇑(c • (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k))) =
+        c • ⇑(f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) from rfl,
+      twistedHeckeSlashGen_smul]
+    simp [Pi.smul_apply]
 
 @[simp] lemma nebentypusHeckeOpLinear_apply
     (D : HeckeCoset (Gamma0_pair N)) (f : modFormCharSpace k χ) :
@@ -261,7 +276,11 @@ lemma nebentypusHeckeSum_add
       nebentypusHeckeSum (N := N) (k := k) (χ := χ) T₁ +
         nebentypusHeckeSum (N := N) (k := k) (χ := χ) T₂ := by
   unfold nebentypusHeckeSum
-  exact Finsupp.sum_add_index' (fun _ ↦ zero_smul ..) fun _ _ _ ↦ add_smul ..
+  refine Finsupp.sum_add_index' (f := T₁) (g := T₂)
+    (h := fun D c ↦ (c : ℂ) • nebentypusHeckeOpLinear (N := N) (k := k) (χ := χ) D) ?_ ?_
+  · intro D; simp
+  · intro D c₁ c₂; ext f
+    simp [add_smul]
 
 /-- Applying `Φ_χ` to a form `f` and coercing to a function reproduces the function-valued
 weighted extension `twistedHeckeSlashExtGen` of `⇑f`. -/
@@ -1215,7 +1234,11 @@ theorem chi_unitOfCoprime_mul (χ : (ZMod N)ˣ →* ℂˣ) {m n : ℕ}
     (hm : Nat.Coprime m N) (hn : Nat.Coprime n N) :
     (↑(χ (ZMod.unitOfCoprime (m * n) (Nat.Coprime.mul_left hm hn))) : ℂ) =
       (↑(χ (ZMod.unitOfCoprime m hm)) : ℂ) * (↑(χ (ZMod.unitOfCoprime n hn)) : ℂ) := by
-  rw [← Units.val_mul, ← map_mul, ZMod.unitOfCoprime_mul]
+  rw [← Units.val_mul, ← map_mul]
+  congr 2
+  ext
+  push_cast [ZMod.coe_unitOfCoprime]
+  ring
 
 omit [NeZero N] in
 private lemma chi_unitOfCoprime_pow (χ : (ZMod N)ˣ →* ℂˣ) {p : ℕ} (v : ℕ)
