@@ -151,11 +151,17 @@ private theorem preservesCusps_mul {T₁ T₂ : Module.End ℂ (ModularForm ((Ga
 
 omit [NeZero N] in
 private theorem preservesCusps_sub {T₁ T₂ : Module.End ℂ (ModularForm ((Gamma1 N).map (mapGL ℝ)) k)}
-    (h₁ : PreservesCusps T₁) (h₂ : PreservesCusps T₂) : PreservesCusps (T₁ - T₂) :=
-  fun f _ hc ↦
-    (({ T₁ f.toModularForm' with zero_at_cusps' := h₁ f } -
-      { T₂ f.toModularForm' with zero_at_cusps' := h₂ f } :
-        CuspForm ((Gamma1 N).map (mapGL ℝ)) k)).zero_at_cusps' hc
+    (h₁ : PreservesCusps T₁) (h₂ : PreservesCusps T₂) : PreservesCusps (T₁ - T₂) := by
+  intro f c hc
+  let g₁ : CuspForm ((Gamma1 N).map (mapGL ℝ)) k :=
+    { toSlashInvariantForm := (T₁ f.toModularForm').toSlashInvariantForm
+      holo' := (T₁ f.toModularForm').holo'
+      zero_at_cusps' := h₁ f }
+  let g₂ : CuspForm ((Gamma1 N).map (mapGL ℝ)) k :=
+    { toSlashInvariantForm := (T₂ f.toModularForm').toSlashInvariantForm
+      holo' := (T₂ f.toModularForm').holo'
+      zero_at_cusps' := h₂ f }
+  exact (g₁ - g₂).zero_at_cusps' hc
 
 omit [NeZero N] in
 private theorem preservesCusps_smul (a : ℂ)
@@ -290,9 +296,9 @@ lemma adjointGamma1Rep_mem_Gamma1 (p N : ℕ) [NeZero N] (hpN : Nat.Coprime p N)
   show (((adjointGamma1Rep p N hpN).val 0 0 : ℤ) : ZMod N) = 1
   unfold adjointGamma1Rep
   have h : ((p : ℤ) * Int.gcdA p N + Int.gcdB p N * N : ZMod N) = 1 := by
-    have := congr_arg (Int.cast : ℤ → ZMod N) (coprime_bezout_aux hpN)
-    push_cast at this
-    linear_combination -this
+    have hb := congr_arg (Int.cast : ℤ → ZMod N) (coprime_bezout_aux hpN)
+    push_cast [ZMod.natCast_self] at hb ⊢
+    linear_combination -hb
   simpa [ZMod.natCast_self] using h
 
 section PeterssonAdjoint
@@ -382,8 +388,7 @@ lemma slash_peterssonAdj_eq (α : GL (Fin 2) ℝ) (hα : 0 < α.det.val) (g : �
   rw [inv_zpow']
   have h1 : (α.det.val : ℂ) ^ (k - 1) * (α.det.val : ℂ) ^ (-k) =
       (α.det.val : ℂ) ^ (k - 2) * (α.det.val : ℂ) ^ (-(k - 1)) := by
-    rw [← zpow_add₀ hcd, ← zpow_add₀ hcd]
-    norm_num
+    rw [← zpow_add₀ hcd, ← zpow_add₀ hcd, show k - 1 + -k = k - 2 + -(k - 1) by ring]
   linear_combination σ α⁻¹ (g (α⁻¹ • τ)) * denom α⁻¹ (↑τ : ℂ) ^ (-k) * h1
 
 /-- **GL₂⁺ Petersson adjoint** (DS Proposition 5.5.2a):
@@ -402,7 +407,9 @@ theorem peterssonInner_slash_adjoint (D : Set ℍ) (α : GL (Fin 2) ℝ) (hα : 
   have h_eq : ∀ τ, petersson k (f ∣[k] α) g τ =
       ↑|α.det.val| ^ (k - 2) * petersson k f g' (α • τ) := by
     intro τ
-    rw [hg_decomp, petersson_slash, show σ α = ContinuousAlgEquiv.refl ℝ ℂ by simp [σ, hα],
+    rw [hg_decomp, petersson_slash,
+      show σ α = ContinuousAlgEquiv.refl ℝ ℂ by
+        simp [σ]; intro hcontra; exact absurd hα (not_lt.mpr hcontra),
       ContinuousAlgEquiv.refl_apply]
   simp_rw [h_eq]
   symm
@@ -410,7 +417,7 @@ theorem peterssonInner_slash_adjoint (D : Set ℍ) (α : GL (Fin 2) ℝ) (hα : 
       ↑|α.det.val| ^ (k - 2) * petersson k f g' τ := by
     intro τ
     rw [slash_peterssonAdj_eq α hα g]
-    simp only [petersson, Pi.smul_apply, smul_eq_mul]
+    simp [petersson, Pi.smul_apply, smul_eq_mul]
     ring
   simp_rw [hpet_adj]
   set α' : GL(2, ℝ)⁺ := ⟨α, hα⟩
