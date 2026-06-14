@@ -5,6 +5,7 @@ Authors: Chris Birkbeck
 -/
 import Mathlib.Data.ZMod.Basic
 import Mathlib.Data.ZMod.Coprime
+import Mathlib.Data.ZMod.Units
 import Mathlib.LinearAlgebra.Matrix.FixedDetMatrices
 import Mathlib.LinearAlgebra.Matrix.SpecialLinearGroup
 import Mathlib.RingTheory.Int.Basic

@@ -131,7 +131,7 @@ private lemma logDeriv_modFormComp_periodic :
   have hMC : ModularFormClass (ModularForm (Gamma 1) k) 𝒮ℒ k :=
     Gamma_one_coe_eq_SL ▸ inferInstance
   have h_per : Function.Periodic (modularFormCompOfComplex f) (1 : ℂ) := by
-    simpa only [Nat.cast_one] using SlashInvariantFormClass.periodic_comp_ofComplex f
+    simpa using SlashInvariantFormClass.periodic_comp_ofComplex f
       one_mem_strictPeriods_SL
   intro z
   simp only [logDeriv, Pi.div_apply, h_per z,
@@ -597,7 +597,7 @@ private lemma modular_side_h_capture
             have hMC : ModularFormClass (ModularForm (Gamma 1) k) 𝒮ℒ k :=
               Gamma_one_coe_eq_SL ▸ inferInstance
             have h_F_per : Function.Periodic (modularFormCompOfComplex f) (1 : ℂ) := by
-              simpa only [Nat.cast_one] using SlashInvariantFormClass.periodic_comp_ofComplex f
+              simpa using SlashInvariantFormClass.periodic_comp_ofComplex f
                 one_mem_strictPeriods_SL
             have := h_F_per (fdBoundary_H H (4 - t) - 1)
             simp only [sub_add_cancel] at this

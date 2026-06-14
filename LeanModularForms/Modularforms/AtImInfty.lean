@@ -25,7 +25,7 @@ open UpperHalfPlane Filter Topology ModularForm
 the arguments is an explicit function instead of a bundled modular form. -/
 instance : FunLike (ℍ → ℂ) ℍ ℂ where
   coe := fun ⦃a₁⦄ ↦ a₁
-  coe_injective' := fun ⦃_ _⦄ a ↦ a
+  coe_injective := fun ⦃_ _⦄ a ↦ a
 
 /-- Two `FunLike` objects with identical underlying functions have the same period-1
 q-expansion. -/

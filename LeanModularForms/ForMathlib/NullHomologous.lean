@@ -142,7 +142,8 @@ private lemma contourIntegral_inv_norm_le_of_far
         ≤ (‖w‖ - R)⁻¹ * M_d := mul_le_mul (inv_anti₀ hpos (h_dist_lb t ht))
           (hM_d t ht) (norm_nonneg _) (inv_pos.mpr hpos).le
       _ = M_d / (‖w‖ - R) := by rw [inv_mul_eq_div]
-  simpa using intervalIntegral.norm_integral_le_of_norm_le_const h_ptwise
+  simpa [PiecewiseC1Path.extendedPath] using
+    intervalIntegral.norm_integral_le_of_norm_le_const h_ptwise
 
 /-! ### Generalized winding number vanishes for `w` far from γ (Lipschitz form) -/
 

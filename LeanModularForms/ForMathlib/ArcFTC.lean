@@ -40,7 +40,7 @@ theorem fdBoundary_arc_deriv_eq (t : ℝ) :
       Real.pi / 3 + (5 * s - 1) * (Real.pi / 6)) (5 * Real.pi / 6) t := by
     convert (((hasDerivAt_id t).const_mul 5).sub_const 1).mul_const (Real.pi / 6)
       |>.const_add (Real.pi / 3) using 1
-    ring
+    all_goals first | rfl | ring
   rw [(hd.ofReal_comp.mul_const I).cexp.deriv]; push_cast; ring
 
 end

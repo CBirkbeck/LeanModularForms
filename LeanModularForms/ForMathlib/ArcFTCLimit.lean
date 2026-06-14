@@ -49,7 +49,8 @@ theorem fdBoundaryFun_sub_i_ne_zero_seg3 (H : ℝ) (t : ℝ) (ht2 : 2/5 < t) (ht
   rw [fdBoundaryFun_arc_eq_exp H t (by linarith) ht3,
     exp_mul_I, ← ofReal_cos, ← ofReal_sin]
   intro h
-  have hre : Real.cos (fdArcAngle t) = 0 := by simpa using congr_arg Complex.re h
+  have hre : Real.cos (fdArcAngle t) = 0 := by
+    simpa [Complex.cos_ofReal_re] using congr_arg Complex.re h
   linarith [Real.cos_neg_of_pi_div_two_lt_of_lt (x := fdArcAngle t)
     (by unfold fdArcAngle; nlinarith [Real.pi_pos])
     (by unfold fdArcAngle; nlinarith [Real.pi_pos])]

@@ -382,7 +382,8 @@ noncomputable def heckeT_p_divN [NeZero N] (k : ℤ) (p : ℕ)
           heckeT_p_ut_slash_invariant_divN k p hp hpN f γ hγ }
       holo' := by
         show MDifferentiable _ _ (heckeT_p_ut k p hp.pos (⇑f))
-        simpa only [heckeT_p_ut] using MDifferentiable.sum fun b _ ↦ (ModularFormClass.holo f).slash k _
+        simp only [heckeT_p_ut]
+        exact MDifferentiable.sum fun b _ ↦ (ModularFormClass.holo f).slash k _
       bdd_at_cusps' := fun {cusp} hc ↦ by
         show cusp.IsBoundedAt (heckeT_p_ut k p hp.pos (⇑f)) k
         simp only [heckeT_p_ut]

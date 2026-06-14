@@ -47,7 +47,8 @@ variable {k : ℤ} (f : ModularForm (Gamma 1) k) (hf : f ≠ 0)
 private lemma eball_one_eq_ball {F : ℂ → ℂ} (hF : AnalyticOnNhd ℂ F (Metric.eball 0 1)) :
     AnalyticOnNhd ℂ F (Metric.ball 0 1) :=
   hF.mono fun _x hx => by
-    simpa [Metric.mem_eball, Metric.mem_ball, enorm_eq_nnnorm, ENNReal.coe_lt_one_iff] using hx
+    simpa [Metric.mem_eball, Metric.mem_ball, enorm_eq_nnnorm, ENNReal.coe_lt_one_iff,
+      ← NNReal.coe_lt_coe, coe_nnnorm] using hx
 
 /-- Modular-form wrapper for `UpperHalfPlane.hasFPowerSeries_cuspFunction`:
 the q-expansion formal multilinear series is a power-series representation of the

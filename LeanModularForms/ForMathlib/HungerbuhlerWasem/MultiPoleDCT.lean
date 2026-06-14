@@ -345,8 +345,9 @@ theorem hasCauchyPVOn_polarPart_of_hasCauchyPV_multipole
         (measure_mono Set.inter_subset_left)) hM_nonneg)
   have h_vol_lim : Tendsto (fun ε => (volume (badSetIcc γP T ε)).toReal)
       (𝓝[>] 0) (𝓝 0) := by
-    simpa using (ENNReal.continuousAt_toReal ENNReal.zero_ne_top).tendsto.comp
+    have := (ENNReal.continuousAt_toReal ENNReal.zero_ne_top).tendsto.comp
       (badSet_volume_tendsto_zero γ T)
+    simpa only [Function.comp_def, ENNReal.toReal_zero] using this
   have h_bound_tendsto : Tendsto (fun ε => M * (volume (badSetIcc γP T ε)).toReal)
       (𝓝[>] 0) (𝓝 0) := by simpa using h_vol_lim.const_mul M
   have h_diff_tendsto :

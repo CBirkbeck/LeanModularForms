@@ -354,7 +354,6 @@ theorem twistedHeckeSlashGen_bad (hp : Nat.Prime p) (hpN : ¬ Nat.Coprime p N)
   set h₁ := (lunipRep_factorisation (N := N) p hp r.val).choose
   have habs := twisted_weighted_slash_tRep_gen_of_mem (N := N) k χ''
     (D_p_Gamma0 N p hp.pos) h₁ ha₁ c₁ hc₁ g hg
-  simp only at habs
   have htriple_char : delta0NebentypusDeltaChar (N := N) χ''
       (gamma0TripleDelta (N := N) (D_p_Gamma0 N p hp.pos) h₁ ha₁ c₁ hc₁) = 1 := by
     refine lunipRep_deltaChar (N := N) p hp r.val χ'' _ ?_

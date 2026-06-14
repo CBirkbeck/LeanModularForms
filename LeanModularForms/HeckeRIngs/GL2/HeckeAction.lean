@@ -133,8 +133,8 @@ section SlashInvariance
 lemma glMap_mapGL_eq (s : SL(2, ℤ)) :
     glMap (mapGL ℚ s) = (mapGL ℝ : SL(2, ℤ) →* GL (Fin 2) ℝ) s := by
   ext i j
-  simpa only [glMap, GeneralLinearGroup.map] using
-    (IsScalarTower.algebraMap_apply ℤ ℚ ℝ (s.1 i j)).symm
+  simp only [glMap, GeneralLinearGroup.map_apply, mapGL_coe_matrix]
+  exact (IsScalarTower.algebraMap_apply ℤ ℚ ℝ (s.1 i j)).symm
 
 private lemma glMap_mem_SL (σ : (GL_pair 2).H) :
     glMap (σ : GL (Fin 2) ℚ) ∈ 𝒮ℒ :=
@@ -168,7 +168,8 @@ private lemma h_coset_mem_H (D : HeckeCoset (GL_pair 2))
   rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
     ConjAct.smul_def] at h_K
   simp only [ConjAct.ofConjAct_toConjAct, map_inv, inv_inv] at h_K
-  exact (GL_pair 2).H.mul_mem (by convert h_K using 1) hh₂
+  exact (GL_pair 2).H.mul_mem
+    (by convert h_K using 1; simp only [Subgroup.coe_mul, Subgroup.coe_inv]) hh₂
 
 private lemma transpose_decomp_eq (D : HeckeCoset (GL_pair 2))
     (q : decompQuot (GL_pair 2) (HeckeCoset.rep D))

@@ -35,10 +35,9 @@ private lemma unitArc_angle_hasDerivAt (θ₁ θ₂ a b t : ℝ) (hab : b - a �
       ((θ₂ - θ₁) / (b - a)) t := by
   have hd : HasDerivAt (fun s => (s - a) / (b - a)) (1 / (b - a)) t :=
     ((hasDerivAt_id t).sub_const a).div_const (b - a)
+  have hval : (1 : ℝ) / (b - a) * (θ₂ - θ₁) = (θ₂ - θ₁) / (b - a) := by ring
   have h1 : HasDerivAt (fun s => (s - a) / (b - a) * (θ₂ - θ₁))
-      ((θ₂ - θ₁) / (b - a)) t := by
-    convert hd.mul_const (θ₂ - θ₁) using 1
-    field_simp
+      ((θ₂ - θ₁) / (b - a)) t := hval ▸ hd.mul_const (θ₂ - θ₁)
   exact h1.const_add θ₁
 
 /-- Derivative of the unit arc. -/

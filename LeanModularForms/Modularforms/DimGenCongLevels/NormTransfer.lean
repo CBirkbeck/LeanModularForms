@@ -32,7 +32,7 @@ variable {Γ : Subgroup SL(2, ℤ)} {k : ℤ}
 
 lemma tendsto_τfun_atImInfty {h : ℝ} (hh : 0 < h) :
     Tendsto (τfun h) (𝓝[≠] (0 : ℂ)) UpperHalfPlane.atImInfty := by
-  simpa [τfun] using
+  simpa [τfun, Function.comp_def] using
     UpperHalfPlane.tendsto_comap_im_ofComplex.comp
       (Function.Periodic.invQParam_tendsto (h := h) hh)
 
@@ -116,11 +116,11 @@ lemma valueAtInfty_norm_eq_zero_of_valueAtInfty_eq_zero
         (fun τ : ℍ ↦ restProd (Γ := Γ) (k := k) f τ) =O[UpperHalfPlane.atImInfty] (1 : ℍ → ℝ) := by
       simpa [UpperHalfPlane.IsBoundedAtImInfty, Filter.BoundedAtFilter] using
         (restProd_isBoundedAtImInfty (Γ := Γ) (k := k) hΓ f)
-    simpa [Function.comp] using hbd.isBoundedUnder_le
+    simpa [Function.comp_def] using hbd.isBoundedUnder_le
   have ht_mul :
       Tendsto (fun τ : ℍ ↦ f τ * restProd (Γ := Γ) (k := k) f τ) UpperHalfPlane.atImInfty
         (𝓝 (0 : ℂ)) := by
-    simpa [smul_eq_mul] using
+    simpa [smul_eq_mul, Pi.mul_def] using
       (NormedField.tendsto_zero_smul_of_tendsto_zero_of_bounded (l := UpperHalfPlane.atImInfty)
         (ε := fun τ : ℍ ↦ f τ) (f := fun τ : ℍ ↦ restProd (Γ := Γ) (k := k) f τ) ht_f
         hbd_rest_im)
@@ -137,9 +137,10 @@ private lemma restProd_τfun_boundedAtFilter_punctNhds
     (hh : 0 < cuspWidth (Γ := Γ)) :
     Filter.BoundedAtFilter (𝓝[≠] (0 : ℂ))
       (fun q : ℂ ↦ restProd (Γ := Γ) (k := k) f (τfun (cuspWidth (Γ := Γ)) q)) := by
-  simpa [UpperHalfPlane.IsBoundedAtImInfty, τfun] using
-    (restProd_isBoundedAtImInfty (Γ := Γ) (k := k) hΓ f).comp_tendsto
-      (tendsto_τfun_atImInfty (h := cuspWidth (Γ := Γ)) hh)
+  have h := (restProd_isBoundedAtImInfty (Γ := Γ) (k := k) hΓ f).comp_tendsto
+    (tendsto_τfun_atImInfty (h := cuspWidth (Γ := Γ)) hh)
+  simp only [Function.comp_def, τfun, Pi.one_apply] at h
+  exact h
 
 /-- Near the puncture, the cusp function of `ModularForm.norm 𝒮ℒ f` factors as the cusp
 function of `f` times `restProd ∘ τfun`. -/

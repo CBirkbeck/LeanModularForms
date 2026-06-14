@@ -54,6 +54,10 @@ theorem hasDerivAt_antiderivative_pow_inv_complex
   have h_const := (h_pow.inv (pow_ne_zero _ (sub_ne_zero.mpr hz))).const_mul
     (-(↑(k - 1) : ℂ)⁻¹)
   convert h_const using 1
+  -- In Lean v4.31 `convert` can emit a spurious instance-equality side-goal
+  -- (`addCommGroup = NormedField…toAddCommGroup`) before the arithmetic goal;
+  -- it is closed by `rfl`, so discharge any such defeq goals first.
+  all_goals try rfl
   have hk1 : (↑(k - 1) : ℂ) ≠ 0 := by exact_mod_cast (by lia : 0 < k - 1).ne'
   have h_pow_k2_ne : (z - s) ^ (k - 2) ≠ 0 := pow_ne_zero _ (sub_ne_zero.mpr hz)
   have h_pow2 : ((z - s) ^ (k - 1)) ^ 2 = (z - s) ^ k * (z - s) ^ (k - 2) := by

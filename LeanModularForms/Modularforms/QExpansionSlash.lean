@@ -120,8 +120,12 @@ theorem slash_T_p_upper_eval (k : ℤ) (p : ℕ) (hp : Nat.Prime p)
   have hp_ne : (↑p : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr hp.ne_zero
   have halg (x : ℂ) : x * (↑p : ℂ) ^ (k - 1) * (↑p : ℂ) ^ (-k) = (↑p : ℂ)⁻¹ * x := by
     rw [mul_assoc, ← zpow_add₀ hp_ne]; simp [show (k - 1 + -k : ℤ) = -1 by omega]; ring
-  convert halg (f (glMap (T_p_upper p hp.pos b) • τ)) using 2
-  exact congr_arg f (by ext : 1; exact hmob.symm)
+  have harg : (⟨(↑τ + ↑b) / ↑p, by
+      simp; exact div_pos (by linarith [τ.im_pos])
+        (Nat.cast_pos.mpr hp.pos)⟩ : ℍ) = glMap (T_p_upper p hp.pos b) • τ :=
+    UpperHalfPlane.ext hmob.symm
+  convert halg (f (glMap (T_p_upper p hp.pos b) • τ)) using 2 <;>
+    first | exact congr_arg f harg | (push_cast; rfl) | rfl
 
 private theorem qParam_smul_T_p_upper_pow (h : ℝ) (p : ℕ) (hp : 0 < p) (b : ℕ)
     (τ : ℍ) (n : ℕ) :

@@ -109,6 +109,7 @@ theorem contourIntegral_higherOrder_eq_zero_of_avoids
       ((hasDerivAt_id z).sub_const s)
     simp only [Function.comp_def, mul_one] at h_inner
     convert h_inner.const_mul (-c / ((k - 1 : ℕ) : ℂ)) using 1
+    all_goals try rfl
     have hk_eq : -((k - 1 : ℕ) : ℤ) - 1 = -(k : ℤ) := by omega
     rw [hk_eq, zpow_neg, zpow_natCast]
     field_simp

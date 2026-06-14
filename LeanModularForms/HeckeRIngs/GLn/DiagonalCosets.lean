@@ -171,8 +171,9 @@ lemma T_diag_eq_iff (a b : Fin n → ℕ) (ha : ∀ i, 0 < a i) (hb : ∀ i, 0 <
     DoubleCoset.doubleCoset (diagMat n a : GL (Fin n) ℚ) (SLnZ_subgroup n) (SLnZ_subgroup n) =
     DoubleCoset.doubleCoset (diagMat n b : GL (Fin n) ℚ) (SLnZ_subgroup n) (SLnZ_subgroup n) := by
   refine ⟨fun h ↦ ?_, fun h ↦ ?_⟩
-  · simpa [T_diag, HeckeCoset.toSet_mk, diagMat_delta_val n a ha, diagMat_delta_val n b hb]
-      using congr_arg HeckeCoset.toSet h
+  · simp only [T_diag] at h
+    have h' := (HeckeCoset.eq_iff _ _).mp h
+    rwa [diagMat_delta_val n a ha, diagMat_delta_val n b hb] at h'
   · simp only [T_diag]
     show (⟦_⟧ : HeckeCoset (GL_pair n)) = ⟦_⟧
     rw [HeckeCoset.eq_iff]

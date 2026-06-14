@@ -79,8 +79,7 @@ lemma fdBoundary_H_hasDerivAt_seg4' (H : ℝ) (t : ℝ) (ht : t ∈ Ioo (3 : ℝ
       show s ≤ 4 by linarith, ite_true, ite_false]
   have h_lin : HasDerivAt (fun s : ℝ => (↑s : ℂ) - 3) 1 t := by
     have h := ((hasDerivAt_id t).ofReal_comp).sub (hasDerivAt_const t (3 : ℂ))
-    convert h using 1
-    simp
+    convert h using 1 <;> first | rfl | simp
   refine HasDerivAt.congr_of_eventuallyEq ?_ heq
   have h := ((h_lin.mul_const (↑H - ↑(Real.sqrt 3) / 2)).const_add
     (↑(Real.sqrt 3) / 2 : ℂ)).mul_const I |>.const_add ((-1 : ℂ) / 2)

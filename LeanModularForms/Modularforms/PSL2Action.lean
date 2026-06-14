@@ -94,7 +94,8 @@ instance : MeasurableConstSMul PSL(2, ℤ) ℍ where
   measurable_const_smul g := by
     induction g using Quotient.inductionOn with | h a => ?_
     change Measurable (fun τ ↦ (↑a : PSL(2, ℤ)) • τ)
-    simpa only [PSL_smul_coe] using (continuous_const_smul (mapGL ℝ a)).measurable
+    simp only [PSL_smul_coe]
+    exact (continuous_const_smul (mapGL ℝ a)).measurable
 
 private lemma mapGL_det_abs_eq_one (g : SL(2, ℤ)) :
     |(Matrix.GeneralLinearGroup.det (mapGL ℝ g)).val| = 1 := by
@@ -506,7 +507,8 @@ instance : MeasurableConstSMul PSL(2, ℝ) ℍ where
   measurable_const_smul g := by
     induction g using Quotient.inductionOn with | h a => ?_
     change Measurable (fun τ ↦ (↑a : PSL(2, ℝ)) • τ)
-    simpa only [PSL_R_smul_coe] using (continuous_const_smul (mapGL ℝ a)).measurable
+    simp only [PSL_R_smul_coe]
+    exact (continuous_const_smul (mapGL ℝ a)).measurable
 
 instance instSMulInvMeasure_PSL_R : SMulInvariantMeasure PSL(2, ℝ) ℍ μ_hyp where
   measure_preimage_smul g s hs := by

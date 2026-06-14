@@ -122,7 +122,8 @@ theorem coeff_one_ne_zero_of_mem_cuspFormsNew_of_eigen
   exact hg_ne (Submodule.disjoint_def.mp cuspFormsOld_disjoint_cuspFormsNew _
     (mainLemma_charSpace_routeB χ g.toCuspForm
       ((cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace (k := k) χ
-        g.toCuspForm).mp (by convert hgχ using 1)) h_vanish) hg_new)
+        g.toCuspForm).mp (by convert hgχ using 1; exact ModularForm.ext fun _ ↦ rfl)) h_vanish)
+        hg_new)
 
 /-- **Miyake Lemma 4.6.2** (eigenvalue-preservation form).  If `h` is a `T_n`-eigenform
 at level `M` with eigenvalue `λ` for some `(n, l*M) = 1`, then its level-raise
@@ -170,7 +171,7 @@ theorem exists_eigenform_decomposition_mem_cuspFormsNew
         (∀ i, IsEigenform (h i)) ∧ g = ∑ i, h i := by
   have hg_char : g ∈ cuspFormCharSpace k χ :=
     (cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace (k := k) χ g).mp
-      (by convert hgχ using 1)
+      (by convert hgχ using 1; exact ModularForm.ext fun _ ↦ rfl)
   obtain ⟨ι, hι, h, h_new, h_char, h_eigen, h_sum⟩ :=
     exists_eigenform_decomposition_of_invariant χ (cuspFormsNew N k)
       (fun n _ hn f hf ↦ heckeT_n_preserves_cuspFormsNew n hn f hf) g hg_char hg_new
@@ -919,9 +920,9 @@ theorem newPart_eq_smul_of_shared_eigenvalues
     have h_diff_char : g₁ - f.toCuspForm ∈ cuspFormCharSpace k χ :=
       (cuspFormCharSpace k χ).sub_mem
         ((cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace (k := k) χ
-          g₁).mp (by convert hg₁_char using 1))
+          g₁).mp (by convert hg₁_char using 1; exact ModularForm.ext fun _ ↦ rfl))
         ((cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace (k := k) χ
-          f.toCuspForm).mp (by convert hfχ using 1))
+          f.toCuspForm).mp (by convert hfχ using 1; exact ModularForm.ext fun _ ↦ rfl))
     have h_vanish : ∀ n : ℕ, Nat.Coprime n N →
         (UpperHalfPlane.qExpansion (1 : ℝ) (g₁ - f.toCuspForm)).coeff n = 0 := by
       intro n hn
@@ -1213,7 +1214,7 @@ theorem oldPart_eq_zero_of_shared_eigenvalues
   have h_diff_char : ιh - c₁' • f.toCuspForm ∈ cuspFormCharSpace k χ :=
     (cuspFormCharSpace k χ).sub_mem hιh_char ((cuspFormCharSpace k χ).smul_mem c₁'
       ((cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace (k := k) χ
-        f.toCuspForm).mp (by convert hfχ using 1)))
+        f.toCuspForm).mp (by convert hfχ using 1; exact ModularForm.ext fun _ ↦ rfl)))
   have h_vanish := oldPart_diff_qExpansion_coeff_eq_zero f χ hfχ hMN ψ hψχ h hh_char lam
     hh_eig hh_ne hc₁'_ne S hh_lam
   have hf_ext : f.toCuspForm ∈ cuspFormsOldExtended N k :=
@@ -1238,7 +1239,7 @@ theorem strongMultiplicityOne_constMul
     ∃ c : ℂ, g.toCuspForm = c • f.toCuspForm := by
   have hgχ_cusp : g.toCuspForm ∈ cuspFormCharSpace k χ :=
     (cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace (k := k) χ
-      g.toCuspForm).mp (by convert hgχ using 1)
+      g.toCuspForm).mp (by convert hgχ using 1; exact ModularForm.ext fun _ ↦ rfl)
   set χ_dir : DirichletCharacter ℂ N := Newform.dirichletLift χ
   have h_round : χ_dir.toUnitHom = χ := MulChar.equivToUnitHom.apply_symm_apply χ
   have h_old_char : oldPart g.toCuspForm ∈ cuspFormsOldChar N k χ χ_dir.conductor := by

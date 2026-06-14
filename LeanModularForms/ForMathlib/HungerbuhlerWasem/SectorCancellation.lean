@@ -136,7 +136,7 @@ theorem F_curve_diff_tendsto_zero_under_conditionB
               ^ (k - 1))⁻¹‖)
       (𝓝[>] 0) (𝓝 0) := by
     convert h_sum_raw using 2
-    simp
+    all_goals simp
   refine tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds h_sum
     (Eventually.of_forall fun _ => norm_nonneg _) ?_
   filter_upwards [h_plus_radius, h_minus_radius] with ε hpr hmr

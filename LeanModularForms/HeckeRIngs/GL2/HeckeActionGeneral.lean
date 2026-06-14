@@ -124,8 +124,8 @@ because for elements of determinant 1, the adjugate equals the inverse, and
 `Γ₁(N)` is a subgroup (hence closed under inversion). -/
 noncomputable instance (N : ℕ) [NeZero N] : HeckePairAction (Gamma1_pair N) where
   det_pos := Gamma1_pair_det_pos N
-  adjugate_mem_H _ hh := GL_adjugate_mem_of_le_SLnZ (by
-    simpa [MonoidHom.range_eq_map] using Subgroup.map_mono (f := mapGL ℚ) le_top) hh
+  adjugate_mem_H _ hh := GL_adjugate_mem_of_le_SLnZ
+    (Subgroup.map_le_range (mapGL ℚ) (Gamma1 N)) hh
 
 /-- Det-positivity for `Gamma0_pair N`. -/
 theorem Gamma0_pair_det_pos (N : ℕ) [NeZero N] (g : (HeckeRing.GLn.Gamma0_pair N).Δ) :
@@ -139,8 +139,8 @@ theorem Gamma0_pair_det_pos (N : ℕ) [NeZero N] (g : (HeckeRing.GLn.Gamma0_pair
 is a subgroup. -/
 noncomputable instance (N : ℕ) [NeZero N] : HeckePairAction (HeckeRing.GLn.Gamma0_pair N) where
   det_pos := Gamma0_pair_det_pos N
-  adjugate_mem_H _ hh := GL_adjugate_mem_of_le_SLnZ (by
-    simpa [MonoidHom.range_eq_map] using Subgroup.map_mono (f := mapGL ℚ) le_top) hh
+  adjugate_mem_H _ hh := GL_adjugate_mem_of_le_SLnZ
+    (Subgroup.map_le_range (mapGL ℚ) (Gamma0 N)) hh
 
 section DetPositivity
 
@@ -300,7 +300,9 @@ private lemma h_coset_mem_H_gen (D : HeckeCoset P)
   rw [Subgroup.mem_subgroupOf, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
     ConjAct.smul_def] at h_K
   simp only [ConjAct.ofConjAct_toConjAct, map_inv, inv_inv] at h_K
-  exact P.H.mul_mem (by convert h_K using 1) hh₂
+  exact P.H.mul_mem (by
+    convert h_K using 2
+    simp only [Subgroup.coe_mul, Subgroup.coe_inv]) hh₂
 
 omit [HeckePairAction P] in
 private lemma adjugate_decomp_eq_gen (D : HeckeCoset P)
@@ -636,7 +638,7 @@ theorem heckeSlash_gen_comp (k : ℤ) (D₁ D₂ : HeckeCoset P) (f : ℍ → �
     heckeSlashExt_gen P k (T_single P ℤ D₂ 1 * T_single P ℤ D₁ 1) f := by
   rw [heckeSlashExt_gen_mul_T_single, show m P (HeckeCoset.rep D₂) (HeckeCoset.rep D₁) =
       m P (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) by
-    simpa only [T_single_one_mul_T_single_one] using hcomm]
+    simp only [T_single_one_mul_T_single_one] at hcomm; exact hcomm]
   simp_rw [heckeSlash_gen, sum_slash_eq_swap, slash_tRep_gen_mul]
   rw [← Fintype.sum_prod_type']
   exact heckeSlash_gen_comp_sum_eq k D₁ D₂ f hf

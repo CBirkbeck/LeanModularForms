@@ -165,11 +165,13 @@ theorem hyperbolicMeasure_fd_lt_top : μ_hyp fd < ⊤ := by
   set T := Icc (-1/2 : ℝ) (1/2) ×ˢ Ioi (Real.sqrt 3 / 4)
   have h_prod : ∫⁻ z in equivRealProd ⁻¹' T, f z ∂(volume : Measure ℂ) =
       ∫⁻ p in T, ENNReal.ofReal (p.2 ^ (-2 : ℤ)) ∂(volume : Measure (ℝ × ℝ)) := by
-    simpa only [MeasurableEquiv.image_preimage] using
-      volume_preserving_equiv_real_prod.setLIntegral_comp_emb
+    rw [show (⇑equivRealProd : ℂ → ℝ × ℝ) = ⇑measurableEquivRealProd from rfl]
+    have h := volume_preserving_equiv_real_prod.setLIntegral_comp_emb
         measurableEquivRealProd.measurableEmbedding
         (fun p : ℝ × ℝ ↦ ENNReal.ofReal (p.2 ^ (-2 : ℤ)))
         (measurableEquivRealProd ⁻¹' T)
+    rw [MeasurableEquiv.image_preimage] at h
+    simpa only [measurableEquivRealProd_apply, f] using h
   calc ∫⁻ z in UpperHalfPlane.coe '' fd, f z ∂volume.restrict (range UpperHalfPlane.coe)
       ≤ ∫⁻ z in UpperHalfPlane.coe '' fd, f z ∂volume :=
         lintegral_mono' (restrict_mono Subset.rfl restrict_le_self) le_rfl

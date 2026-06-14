@@ -85,7 +85,7 @@ theorem Eigenform.isEigen (f : Eigenform N k) (n : ℕ+) (hn : Nat.Coprime n.val
     rw [heckeT_n_cusp_eq_heckeRingHom n.val hn hf_mem, f.isRingEigen n hn]
     simp only [SetLike.val_smul, smul_smul]
     rw [Eigenform.eigenvalue, dif_pos hn]; rfl
-  exact DFunLike.ext _ _ fun τ ↦ by simpa using DFunLike.congr_fun key τ
+  exact DFunLike.ext _ _ fun τ ↦ DFunLike.congr_fun key τ
 
 /-- A predicate version: a cusp form is an eigenform if it has eigenvalues. -/
 def IsEigenform (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) : Prop :=
@@ -284,7 +284,7 @@ lemma petN_realBilin_orthogonal_cuspFormsOld_eq :
   refine ⟨fun hf g hg ↦ ?_, fun hf g hg ↦ ?_⟩
   · have re_eq_zero : ∀ h ∈ Submodule.restrictScalars ℝ (cuspFormsOld N k),
         (petN h f).re = 0 := fun h hh ↦ by
-      simpa only [LinearMap.BilinForm.IsOrtho, petN_realBilin_apply] using hf h hh
+      rw [← petN_realBilin_apply]; exact hf h hh
     exact petN_swap_eq_zero g f <|
       petN_eq_zero_of_re_eq_zero_of_I_smul_re_eq_zero f g (re_eq_zero g hg)
         (re_eq_zero (Complex.I • g) ((cuspFormsOld N k).smul_mem Complex.I hg))

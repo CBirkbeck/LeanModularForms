@@ -128,7 +128,7 @@ theorem hasSimplePoleAt_logDeriv_of_zero_full (s : ℍ) (hs : f s = 0) :
       logDeriv (fun w => (w - (s : ℂ)) ^ n) z = ↑↑n / (z - (s : ℂ)) := by
     have h_hd : HasDerivAt (fun w => (w - (s : ℂ)) ^ n) (↑n * (z - (s : ℂ)) ^ (n - 1)) z := by
       convert ((hasDerivAt_id z).sub (hasDerivAt_const z (s : ℂ))).pow n using 1
-      simp
+      all_goals first | rfl | simp
     rw [logDeriv_apply, h_hd.deriv, div_eq_div_iff h_pow_ne_zero hzs, mul_assoc, ← pow_succ,
       show n - 1 + 1 = n from by omega]
   have h_eq_at_z : (modularFormCompOfComplex f) =ᶠ[𝓝 z]
@@ -454,6 +454,7 @@ lemma ftc_integral_zero_of_closed_slit {γ : ℝ → ℂ} {z₀ : ℂ} {ω : ℂ
         using 1
     convert (@HasDerivAt.scomp ℝ _ ℂ _ _ t ℂ _ _ _ IsScalarTower.right _ _ _ _
       (Complex.hasDerivAt_log (h_slit t (Ioo_subset_Icc_self ht_ioo))) h_inner) using 1
+    all_goals try rfl
     rw [smul_eq_mul]
     have hωne : ω * (γ t - z₀) ≠ 0 :=
       mul_ne_zero hω (sub_ne_zero.mpr (h_off t (Ioo_subset_Icc_self ht_ioo)))

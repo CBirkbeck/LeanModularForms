@@ -579,7 +579,7 @@ private lemma heckeFamily_iSupIndep_iInf_eigenspace
     iSupIndep (fun ev : CoprimeIndex N → ℂ ↦
       ⨅ i, Module.End.eigenspace (heckeFamily k χ i) (ev i)) := by
   refine (heckeFamily_iSupIndep_iInf_maxGenEigenspace (k := k) χ).mono fun ev ↦ ?_
-  rw [heckeFamily_iInf_eq]
+  simp only [heckeFamily_iInf_eq, le_refl]
 
 private lemma heckeFamily_iSup_iInf_eigenspace_eq_top
     (χ : (ZMod N)ˣ →* ℂˣ)
@@ -696,8 +696,9 @@ theorem exists_simultaneous_eigenform_basis (χ : (ZMod N)ˣ →* ℂˣ)
       fun _ hu _ hv ↦ jointEigenspace_petN_orthogonal χ h_ne hu hv
   have h_orthonormal : Orthonormal ℂ ⇑bigBasis :=
     DirectSum.IsInternal.collectedBasis_orthonormal h_orthFamily h_internal
-      fun ev ↦ by simpa only [OrthonormalBasis.coe_toBasis] using
-        (stdOrthonormalBasis ℂ (W ev)).orthonormal
+      fun ev ↦ by
+        simp only [basisAtEv, OrthonormalBasis.coe_toBasis]
+        exact (stdOrthonormalBasis ℂ (W ev)).orthonormal
   haveI : Finite (Σ ev, evToBasis ev) := Module.Finite.finite_basis bigBasis
   haveI : Fintype (Σ ev, evToBasis ev) := Fintype.ofFinite _
   refine ⟨(Finset.univ : Finset (Σ ev, evToBasis ev)).image
@@ -796,7 +797,9 @@ private lemma isCommonEigenfunction_of_mem_iInf_eigenspace_restrict (χ : (ZMod 
   have heq_V : (heckeFamily k χ ⟨n, hn_cop⟩) (v : p).1 = ev ⟨n, hn_cop⟩ • (v : p).1 := by
     have := congr_arg (Subtype.val) heq
     simpa only [LinearMap.restrict_coe_apply, SetLike.val_smul] using this
-  simpa only [SetLike.val_smul] using congr_arg (Subtype.val) heq_V
+  have h := congr_arg (Subtype.val) heq_V
+  simp only [SetLike.val_smul] at h
+  exact h
 
 /-- **Eigenform decomposition of an invariant submodule.**  Let `W` be a submodule of cusp
 forms preserved by every Hecke operator `T_n` with `(n,N)=1`, and let `g ∈ W` lie in the

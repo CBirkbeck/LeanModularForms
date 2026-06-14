@@ -493,7 +493,6 @@ private lemma toPrimeExp_detCombo_eq_of_detProd_eq (d s : GenIdx →₀ ℕ)
     (p : {p : ℕ // p.Prime}) (hp : p ∈ primesOf s) :
     toPrimeExp d p 0 + 2 * toPrimeExp d p 1 = toPrimeExp s p 0 + 2 * toPrimeExp s p 1 := by
   have h_fact := congr_arg (fun n ↦ n.factorization p.1) (h_same_primes ▸ h_det_eq)
-  dsimp only at h_fact
   rw [Nat.factorization_prod_apply (fun (q : {p : ℕ // p.Prime}) _ ↦ pow_ne_zero _ q.2.ne_zero),
       Nat.factorization_prod_apply
         (fun (q : {p : ℕ // p.Prime}) _ ↦ pow_ne_zero _ q.2.ne_zero)] at h_fact

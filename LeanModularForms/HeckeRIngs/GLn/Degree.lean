@@ -116,7 +116,7 @@ private lemma Gamma0_of_conj_diagMat_mem (a : Fin 2 → ℕ) (ha : ∀ i, 0 < a 
     have := congr_arg (fun M => M 1 0) h10
     simpa only [Units.val_mul, mapGL_coe_matrix, map_apply_coe, RingHom.mapMatrix_apply,
       diagMat_val 2 a ha, Matrix.diagonal_mul, Matrix.mul_diagonal,
-      Matrix.map_apply] using this
+      Matrix.map_apply, algebraMap_int_eq, eq_intCast] using this
   have h_σ₁₀ : (σ.1 1 0 : ℚ) = ↑(p ^ k) * (τ.1 1 0 : ℚ) := by
     rw [ha1] at h_entry; field_simp at h_entry ⊢; linarith
   exact ⟨τ.1 1 0, by exact_mod_cast h_σ₁₀⟩

@@ -80,8 +80,7 @@ lemma vAdd_neg_one_norm_eq_of_re_halfFM (p : ℍ) (hre : (p : ℂ).re = 1/2) :
 theorem vAdd_one_mem_fd_of_left_vertFM (p : ℍ) (hp_fd : p ∈ 𝒟) (hre : (p : ℂ).re = -1/2) :
     (1 : ℝ) +ᵥ p ∈ 𝒟 := by
   refine ⟨?_, ?_⟩
-  · change 1 ≤ Complex.normSq ((1 : ℝ) +ᵥ p : ℂ)
-    rw [vAdd_one_coeFM, normSq_add_one_eq_of_re_neg_halfFM _ hre]
+  · rw [vAdd_one_coeFM, normSq_add_one_eq_of_re_neg_halfFM _ hre]
     exact hp_fd.1
   · change |((1 : ℝ) +ᵥ p : ℂ).re| ≤ 1 / 2
     rw [vAdd_one_coeFM, add_re, one_re, hre]
@@ -91,8 +90,7 @@ theorem vAdd_one_mem_fd_of_left_vertFM (p : ℍ) (hp_fd : p ∈ 𝒟) (hre : (p 
 theorem vAdd_neg_one_mem_fd_of_right_vertFM (p : ℍ) (hp_fd : p ∈ 𝒟) (hre : (p : ℂ).re = 1/2) :
     (-1 : ℝ) +ᵥ p ∈ 𝒟 := by
   refine ⟨?_, ?_⟩
-  · change 1 ≤ Complex.normSq ((-1 : ℝ) +ᵥ p : ℂ)
-    rw [vAdd_neg_one_coeFM, normSq_sub_one_eq_of_re_halfFM _ hre]
+  · rw [vAdd_neg_one_coeFM, normSq_sub_one_eq_of_re_halfFM _ hre]
     exact hp_fd.1
   · change |((-1 : ℝ) +ᵥ p : ℂ).re| ≤ 1 / 2
     rw [vAdd_neg_one_coeFM, sub_re, one_re, hre]
@@ -140,11 +138,10 @@ theorem S_smul_mem_fd_of_unitFM (p : ℍ) (hp_fd : p ∈ 𝒟) (hp_norm : ‖(p 
     ModularGroup.S • p ∈ 𝒟 := by
   have hns : Complex.normSq (p : ℂ) = 1 := normSq_eq_one_of_norm_eq_oneFM hp_norm
   refine ⟨?_, ?_⟩
-  · change 1 ≤ Complex.normSq ((ModularGroup.S • p : ℍ) : ℂ)
-    rw [S_smul_coeFM, map_inv₀, Complex.normSq_neg, hns, inv_one]
+  · rw [S_smul_coeFM, map_inv₀, Complex.normSq_neg, hns, inv_one]
   · change |((ModularGroup.S • p : ℍ) : ℂ).re| ≤ 1 / 2
     simpa only [S_smul_coeFM, Complex.inv_re, Complex.neg_re,
-      Complex.normSq_neg, hns, div_one, abs_neg] using hp_fd.2
+      Complex.normSq_neg, hns, div_one, abs_neg, UpperHalfPlane.coe_re] using hp_fd.2
 
 private lemma S_mul_SFM : ModularGroup.S * ModularGroup.S = -1 := by
   ext i j
@@ -215,8 +212,7 @@ theorem sum_ord_rightVert_eq_sum_ord_leftVertFM (S : Finset ℍ)
     · change ((-1 : ℝ) +ᵥ p : ℂ).re = -1 / 2
       rw [vAdd_neg_one_coeFM, sub_re, one_re, hre]
       norm_num
-    · change ‖((-1 : ℝ) +ᵥ p : ℂ)‖ > 1
-      rw [vAdd_neg_one_norm_eq_of_re_halfFM p hre]
+    · rw [vAdd_neg_one_norm_eq_of_re_halfFM p hre]
       exact hnorm
     · exact ord_vAdd_neg_one_eqFM f p ▸ hord
   · exact fun _ _ _ _ => IsLeftCancelVAdd.left_cancel _ _ _
@@ -230,8 +226,7 @@ theorem sum_ord_rightVert_eq_sum_ord_leftVertFM (S : Finset ℍ)
     · change ((1 : ℝ) +ᵥ q : ℂ).re = 1 / 2
       rw [vAdd_one_coeFM, add_re, one_re, hre]
       norm_num
-    · change ‖((1 : ℝ) +ᵥ q : ℂ)‖ > 1
-      rw [vAdd_one_norm_eq_of_re_neg_halfFM q hre]
+    · rw [vAdd_one_norm_eq_of_re_neg_halfFM q hre]
       exact hnorm
     · exact ord_add_one_eq f q ▸ hord
     · change (-1 : ℝ) +ᵥ ((1 : ℝ) +ᵥ q) = q

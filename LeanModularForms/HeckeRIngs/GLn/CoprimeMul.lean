@@ -262,7 +262,7 @@ private lemma slTransvec_mul (i j : Fin n) (hij : i ≠ j) (a b : ℤ) :
     slTransvec n i j hij a * slTransvec n i j hij b =
       slTransvec n i j hij (a + b) := by
   apply Subtype.ext
-  simpa only [slTransvec, Matrix.TransvectionStruct.toMatrix] using
+  simpa only [slTransvec, Matrix.TransvectionStruct.toMatrix, SpecialLinearGroup.coe_mul] using
     Matrix.transvection_mul_transvection_same (n := Fin n) (i := i) (j := j) hij a b
 
 omit [NeZero n] in
@@ -601,7 +601,7 @@ private lemma GLnQ_mem_SLnZ_of_coprime_scaling (C : GL (Fin n) ℚ)
   apply Units.ext
   simp only [mapGL_coe_matrix, map_apply_coe, RingHom.mapMatrix_apply]
   ext i j
-  simpa only [Matrix.map_apply] using (hN_eq i j).symm
+  simpa only [Matrix.map_apply, algebraMap_int_eq, eq_intCast] using (hN_eq i j).symm
 
 omit [NeZero n] in
 private lemma diagConj_scaling (a : Fin n → ℕ) (ha : ∀ i, 0 < a i)

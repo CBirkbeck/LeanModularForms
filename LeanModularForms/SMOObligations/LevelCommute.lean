@@ -197,7 +197,8 @@ theorem descendCosetList_slash_sum_rep_invariance {N : ℕ} [NeZero N] {k : ℤ}
     simp [Matrix.cons_val_one, show c = (δ : Matrix (Fin 2) (Fin 2) ℤ) 1 0 from rfl, h10]
   have h_chi_α' : χ (Gamma0MapUnits ⟨α', hα'_mem⟩) = 1 := by
     rw [show Gamma0MapUnits ⟨α', hα'_mem⟩ = 1 from Units.ext <| by
-      simpa [Gamma0MapUnits_val, Gamma0Map] using h22, map_one]
+      simpa [Gamma0MapUnits_val, Gamma0Map, α', Matrix.cons_val_one, Matrix.head_cons,
+        show d = (δ : Matrix (Fin 2) (Fin 2) ℤ) 1 1 from rfl] using h22, map_one]
   let D : GL (Fin 2) ℝ := Matrix.GeneralLinearGroup.mkOfDetNeZero
       !![(1 : ℝ), 0; 0, (p : ℝ)]
       (by simp [Matrix.det_fin_two]; exact_mod_cast hp.ne_zero)

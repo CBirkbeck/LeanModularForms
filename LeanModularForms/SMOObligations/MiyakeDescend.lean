@@ -164,6 +164,7 @@ private lemma levelRaiseConj_mul_inv_zero_one_dvd_p
                 : Matrix (Fin 2) (Fin 2) ℤ) 0 1 := by
   set γt := HeckeRing.GL2.levelRaiseConjOfDvd l γ hdvd
   have h_γt_00 : ((γt : Matrix (Fin 2) (Fin 2) ℤ) 0 0 : ZMod p) = 0 := by
+    show ((γ : Matrix (Fin 2) (Fin 2) ℤ) 0 0 : ZMod p) = 0
     simpa [Matrix.map_apply] using congr_fun (congr_fun hγ_p 0) 0
   have h_γt_01 : ((γt : Matrix (Fin 2) (Fin 2) ℤ) 0 1 : ZMod p) = -(l : ZMod p) := by
     have h := congr_fun (congr_fun hγ_p 0) 1
@@ -370,10 +371,15 @@ lemma multipass_V_p_slash_descendCoset
       simpa using multipass_V_p_slash_upper_aux p hp g_low 0 w
     have h_γ_in_Γ1 : descendExtraGamma p N ∈ Gamma1 (N / p) := by
       rw [Gamma1_mem]
-      refine ⟨?_, ?_, ?_⟩ <;>
-        · simpa [Matrix.map_apply, Matrix.one_apply_ne (show (1 : Fin 2) ≠ 0 by decide)]
-            using congr_fun (congr_fun
-              (descendExtraGamma_spec hp hpN (not_p_sq_dvd_of_not_lt h_v)).2.2 _) _
+      have h_spec := (descendExtraGamma_spec hp hpN (not_p_sq_dvd_of_not_lt h_v)).2.2
+      refine ⟨?_, ?_, ?_⟩
+      · have h := congr_fun (congr_fun h_spec 0) 0
+        simpa [Matrix.map_apply, Matrix.one_apply_eq] using h
+      · have h := congr_fun (congr_fun h_spec 1) 1
+        simpa [Matrix.map_apply, Matrix.one_apply_eq] using h
+      · have h := congr_fun (congr_fun h_spec 1) 0
+        simpa [Matrix.map_apply,
+          Matrix.one_apply_ne (show (1 : Fin 2) ≠ 0 by decide)] using h
     have h_g_low_inv : (⇑g_low : UpperHalfPlane → ℂ) ∣[k]
         (mapGL ℝ (descendExtraGamma p N) : GL (Fin 2) ℝ) = ⇑g_low :=
       g_low.slash_action_eq' _ ⟨descendExtraGamma p N, h_γ_in_Γ1, rfl⟩

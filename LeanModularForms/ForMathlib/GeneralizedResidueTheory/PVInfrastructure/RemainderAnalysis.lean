@@ -30,8 +30,11 @@ noncomputable section
 /-- C¹ regularity of `deriv γ` from C² regularity of `γ`. -/
 lemma contDiffAt_one_deriv_of_contDiffAt_two {γ : ℝ → ℂ} {t₀ : ℝ}
     (hγ_C2 : ContDiffAt ℝ 2 γ t₀) : ContDiffAt ℝ 1 (deriv γ) t₀ := by
-  simpa [fderiv_apply_one_eq_deriv] using
-    hγ_C2.fderiv_right_succ.clm_apply (contDiffAt_const (c := (1 : ℝ)))
+  have hfderiv : ContDiffAt ℝ 1 (fderiv ℝ γ) t₀ :=
+    hγ_C2.fderiv_right (by norm_num)
+  have h := hfderiv.clm_apply (contDiffAt_const (c := (1 : ℝ)))
+  simp only [fderiv_apply_one_eq_deriv] at h
+  exact h
 
 /-- Lipschitz-type bound on `deriv γ` deviation from C². -/
 lemma deriv_deviation_bound_of_C2 {γ : ℝ → ℂ} {t₀ : ℝ} {L : ℂ}

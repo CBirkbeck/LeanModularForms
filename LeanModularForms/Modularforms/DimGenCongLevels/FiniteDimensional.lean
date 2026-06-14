@@ -1,7 +1,7 @@
 module
 import Mathlib.RingTheory.Artinian.Module
 public import LeanModularForms.Modularforms.DimGenCongLevels.Basic
-public import LeanModularForms.Modularforms.DimGenCongLevels.Aux
+public import LeanModularForms.Modularforms.DimGenCongLevels.Auxiliary
 
 /-!
 # Injectivity of finite `q`-coefficients
@@ -67,9 +67,7 @@ lemma exists_qKerBelow_eq_bot
   have hle : ∀ M : ℕ, qKerBelow (Γ := Γ) (k := k) (h := h) hh hΓ N ≤
       qKerBelow (Γ := Γ) (k := k) (h := h) hh hΓ M := fun M ↦ by
     by_cases hNM : N ≤ M
-    · simp [show qKerBelow (Γ := Γ) (k := k) (h := h) hh hΓ N =
-        qKerBelow (Γ := Γ) (k := k) (h := h) hh hΓ M by
-        simpa using congrArg OrderDual.ofDual (hN M hNM)]
+    · exact le_of_eq (congrArg OrderDual.ofDual (hN M hNM))
     · exact qKerBelow_antitone (Γ := Γ) (k := k) (h := h) hh hΓ (Nat.le_of_not_ge hNM)
   refine ⟨N, ?_⟩
   simpa [le_antisymm (iInf_le _ N) (le_iInf hle)] using

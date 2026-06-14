@@ -326,7 +326,8 @@ private lemma arcsinDelta_tendsto_nhdsWithin :
   · have hcont : ContinuousAt (fun ε : ℝ =>
         12 / (5 * Real.pi) * Real.arcsin (ε / 2)) 0 := by fun_prop
     convert hcont.tendsto.mono_left nhdsWithin_le_nhds using 1
-    simp [Real.arcsin_zero]
+    · rfl
+    · rw [zero_div, Real.arcsin_zero, mul_zero]
   · rw [eventually_nhdsWithin_iff]
     filter_upwards [Iio_mem_nhds (show (0:ℝ) < 1 from by norm_num)] with ε _ hε
     exact mem_Ioi.mpr (arcsinDelta_pos hε)
@@ -335,7 +336,9 @@ private theorem E_atI_tendsto (H : ℝ) :
     Tendsto (E_atI H) (𝓝[>] 0) (𝓝 (-(↑Real.pi * I))) := by
   have h2 := ((fdBoundaryFun_log_diff_core_tendsto H).comp
     arcsinDelta_tendsto_nhdsWithin).sub (tendsto_const_nhds (x := (2 * ↑Real.pi * I : ℂ)))
-  convert h2 using 2; ring_nf
+  convert h2 using 2
+  all_goals (try simp only [E_atI, Function.comp])
+  all_goals ring_nf
 
 /-- The complete `ArcFTCHyp` at `i` for the FD boundary. -/
 def arcFTCHyp_atI {H : ℝ} (hH : 1 < H) {γ : PiecewiseC1Path (fdStart H) (fdStart H)}

@@ -100,6 +100,7 @@ theorem ResToImagAxis.Differentiable (F : ℍ → ℂ) (hF : MDiff F) (t : ℝ)
   have h_diff : DifferentiableAt ℝ (fun t : ℝ ↦ F (ofComplex (Complex.I * t))) t := by
     convert hmdiff.restrictScalars ℝ |> DifferentiableAt.comp t <|
       DifferentiableAt.const_mul ofRealCLM.differentiableAt _ using 1
+    all_goals try rfl
   refine h_diff.congr_of_eventuallyEq ?_
   filter_upwards [lt_mem_nhds ht] with t ht
   simp_all only [ResToImagAxis, ↓reduceDIte]

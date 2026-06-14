@@ -437,7 +437,8 @@ private lemma twistedHeckeSlashGen_perm_summand (k : ℤ) (χ : (ZMod N)ˣ →* 
           (HeckeCoset.rep D : GL (Fin 2) ℚ))) =
       ((↑(delta0NebentypusWeight χ D (π i)) : ℂ)⁻¹) •
         (f ∣[k] tRep_gen (Gamma0_pair N) D (π i)) := by
-    simpa [π, gamma0LeftMulQuot, mul_one]
+    simpa [π, gamma0LeftMulEquiv, gamma0LeftMulQuot, delta0NebentypusWeight,
+      Equiv.ofBijective_apply, mul_one]
       using twisted_weighted_slash_tRep_gen_of_mem k χ D
         (σA.val * (i.out : GL (Fin 2) ℚ))
         ((Gamma0_pair N).H.mul_mem σA.prop (SetLike.coe_mem _))
@@ -459,7 +460,7 @@ lemma twistedHeckeSlashGen_preserves_invariant (k : ℤ) (χ : (ZMod N)ˣ →* �
       ∑ i : decompQuot (Gamma0_pair N) (HeckeCoset.rep D),
         (((↑(delta0NebentypusWeight χ D i) : ℂ)⁻¹) •
           (f ∣[k] tRep_gen (Gamma0_pair N) D i)) ∣[k] glMap σ_Q by
-    simpa using (twistedHeckeSlashGen_slash_distrib k χ D f σ_Q),
+    exact twistedHeckeSlashGen_slash_distrib k χ D f σ_Q,
     Finset.sum_congr rfl
       (fun i _ ↦ twistedHeckeSlashGen_perm_summand k χ D σ_Q hσ f hf i),
     ← Finset.smul_sum, Fintype.sum_equiv π _ (fun i ↦
@@ -802,7 +803,7 @@ theorem twistedHeckeSlashGen_comp (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
   rw [twistedHeckeSlashExtGen_T_single_one_mul_eq_m_sum k χ D₂ D₁ f,
     show m (Gamma0_pair N) (HeckeCoset.rep D₂) (HeckeCoset.rep D₁) =
       m (Gamma0_pair N) (HeckeCoset.rep D₁) (HeckeCoset.rep D₂) by
-      simpa only [T_single_one_mul_T_single_one] using hcomm]
+      simp only [T_single_one_mul_T_single_one] at hcomm; exact hcomm]
   exact twistedHeckeSlashGen_comp_eq_m_sum k χ D₁ D₂ f hf
 
 private lemma twistedHeckeSlashExtGen_zsmul (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ) (n : ℤ)

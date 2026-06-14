@@ -643,6 +643,7 @@ theorem isFundamentalDomain_Gamma_p_α_fundDomain_PSL_at_PSL_R
     (Equiv.refl ℍ) (MeasureTheory.Measure.QuasiMeasurePreserving.id _)
     ((Subgroup.subgroupOfEquivOfLe (Subgroup.map_mono (Gamma_p_α_le_Gamma1 α))).symm.toEquiv)
     (fun _ _ ↦ rfl)
+  rw [Gamma_p_α_fundDomain_PSL]
   simpa using h_image
 
 open CongruenceSubgroup Pointwise UpperHalfPlane MeasureTheory in

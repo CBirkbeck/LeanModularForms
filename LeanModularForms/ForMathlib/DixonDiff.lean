@@ -78,7 +78,9 @@ private lemma h2_pointwise_hasDerivAt (fz c z w : ℂ) (hne : z - w ≠ 0) :
   have h_sub : HasDerivAt (fun w' => z - w') (-1) w :=
     HasDerivAt.const_sub z (hasDerivAt_id w)
   have h_inv : HasDerivAt (fun w' => (z - w')⁻¹) ((z - w)⁻¹ ^ 2) w := by
-    simpa [inv_pow] using HasDerivAt.inv h_sub hne
+    have h := HasDerivAt.inv h_sub hne
+    rw [show (- -1 / (z - w) ^ 2 : ℂ) = (z - w)⁻¹ ^ 2 by rw [inv_pow]; ring] at h
+    exact h
   exact ((h_inv.const_mul fz).mul_const c).congr_deriv (by ring)
 
 private lemma h2_integrand_norm_bound {f : ℂ → ℂ} {γ : PiecewiseC1Path x x}
@@ -138,7 +140,7 @@ theorem dixonH2_differentiableAt {f : ℂ → ℂ}
   obtain ⟨D, hD⟩ := h_deriv_bound
   have h_ball_avoids := ball_avoids_curve γ w hε_pos h2ε
   have h_dist_lb := ball_dist_lower_bound γ w h2ε
-  convert (intervalIntegral.hasDerivAt_integral_of_dominated_loc_of_deriv_le (𝕜 := ℂ)
+  exact (intervalIntegral.hasDerivAt_integral_of_dominated_loc_of_deriv_le (𝕜 := ℂ)
     (F := fun w' t => f (γ t) * (γ t - w')⁻¹ * deriv γ.toPath.extend t)
     (F' := fun w' t => f (γ t) * (γ t - w')⁻¹ ^ 2 * deriv γ.toPath.extend t)
     (bound := fun _ => M * ε⁻¹ ^ 2 * D)

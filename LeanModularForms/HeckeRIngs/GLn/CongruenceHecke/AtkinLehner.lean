@@ -669,7 +669,9 @@ private lemma Gamma0_AL_preserves_00 (N : ℕ) [NeZero N]
     Matrix.transpose_apply] at h00
   exact_mod_cast show (B 0 0 : ℚ) = (A 0 0 : ℚ) from
     (by rw [show (B 0 0 : ℚ) = (B.map (Int.cast : ℤ → ℚ)) 0 0 by
-        simp [Matrix.map_apply], ← hB]; simpa using h00 : (B 0 0 : ℚ) = g.val 0 0).trans
+        simp [Matrix.map_apply], ← hB]
+        simp only [AntiInvolution.bar, Gamma0_antiInvolution]
+        simpa using h00 : (B 0 0 : ℚ) = g.val 0 0).trans
     (by rw [show (A 0 0 : ℚ) = (A.map (Int.cast : ℤ → ℚ)) 0 0 by
         simp [Matrix.map_apply], ← hA] : g.val 0 0 = (A 0 0 : ℚ))
 

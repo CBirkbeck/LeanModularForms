@@ -533,7 +533,7 @@ private lemma smul_assoc_key_apply_pos (g₁ g₂ β₀ : P.Δ) (x₀ : HeckeLef
     rw [Finsupp.sum, Finset.sum_eq_single D₀
       (fun D _ hne ↦ if_neg (Finset.disjoint_left.mp
         (smulOrbit_disjoint_of_ne P (HeckeCoset.rep D₀) (HeckeCoset.rep D) β₀
-          (by simpa only [HeckeCoset.rep, Quotient.out_eq] using hne.symm)) hx₀))
+          (by simp only [HeckeCoset.rep, Quotient.out_eq]; exact hne.symm)) hx₀))
       (fun h ↦ absurd hD₀ h)]
     exact if_pos hx₀
   rw [h_lhs]
@@ -613,7 +613,6 @@ private lemma smul_assoc_singles_rhs_apply (D₁ D₂ : HeckeCoset P) (a₁ a₂
     (fun a b₁ b₂ ↦ by split_ifs <;> simp [*, mul_add])]
   rw [Finset.mul_sum]
   refine Finset.sum_congr rfl fun j _ ↦ ?_
-  dsimp only
   split_ifs <;> ring
 
 private lemma smul_assoc_singles_sum_eq (D₁ D₂ : HeckeCoset P) (a₁ a₂ : ℤ)

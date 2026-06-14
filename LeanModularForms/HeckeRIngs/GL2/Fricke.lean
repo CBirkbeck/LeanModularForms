@@ -353,7 +353,7 @@ lemma frickeGL_sq_slash (k : ℤ) (f : UpperHalfPlane → ℂ) :
   show f z * ((N : ℂ) ^ 2) ^ (k - 1) * (-(N : ℂ)) ^ (-k) = frickeScalar N k • f z
   rw [frickeScalar, smul_eq_mul,
     show ((N : ℂ) ^ 2) ^ (k - 1) = (N : ℂ) ^ (2 * (k - 1)) by
-      rw [show ((N : ℂ) ^ 2) = (N : ℂ) ^ (2 : ℤ) by norm_cast, ← zpow_mul]]
+      rw [show ((N : ℂ) ^ 2) = (N : ℂ) ^ (2 : ℤ) by norm_cast, ← _root_.zpow_mul]]
   ring
 
 /-- Per-term Fricke conjugation: slashing by `A · W` equals `c •` slashing by `A · W⁻¹`,
@@ -392,7 +392,8 @@ theorem frickeOperator_mem_charSpace (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
   intro d
   have hd : diamondOp k d⁻¹ f = (↑(χ d⁻¹) : ℂ) • f := (mem_modFormCharSpace_iff k χ f).mp hf d⁻¹
   have h := LinearMap.congr_fun (frickeOperator_diamondOp (N := N) k d⁻¹) f
-  simpa only [LinearMap.comp_apply, inv_inv, hd, map_smul, chiConj_apply] using h.symm
+  simpa only [diamondOpHom_apply, LinearMap.comp_apply, inv_inv, hd, map_smul, chiConj_apply]
+    using h.symm
 
 /-- The Fricke operator restricted to `modFormCharSpace k χ`, landing in
 `modFormCharSpace k (chiConj χ)`. -/

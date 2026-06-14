@@ -353,14 +353,12 @@ noncomputable def heckeRingHomCharSpace :
     refine LinearMap.ext fun f ↦ ?_
     apply Subtype.ext
     apply DFunLike.coe_injective
-    dsimp only
     rw [nebentypusHeckeSum_coe_eq_twistedHeckeSumFunction, twistedHeckeSumFunction_one]
     rfl
   map_mul' T₁ T₂ := by
     refine LinearMap.ext fun f ↦ ?_
     apply Subtype.ext
     apply DFunLike.coe_injective
-    dsimp only
     rw [nebentypusHeckeSum_coe_eq_twistedHeckeSumFunction, twistedHeckeSumFunction_mul]
     show (twistedHeckeSumFunction (N := N) k χ T₁ *
         twistedHeckeSumFunction (N := N) k χ T₂)
@@ -787,7 +785,7 @@ private lemma slash_diag_scalar (k : ℤ) (c : ℕ) (hc : 0 < c) (f : ℍ → �
     ring
   rw [hsmul, hdenom, habsdet]
   show f z * ((c : ℂ) ^ 2) ^ (k - 1) * (c : ℂ) ^ (-k) = (c : ℂ) ^ (k - 2) * f z
-  rw [show ((c : ℂ) ^ 2) = (c : ℂ) ^ (2 : ℤ) by norm_cast, ← zpow_mul, mul_assoc,
+  rw [show ((c : ℂ) ^ 2) = (c : ℂ) ^ (2 : ℤ) by norm_cast, ← _root_.zpow_mul, mul_assoc,
     ← zpow_add₀ hcne, mul_comm]
   congr 1
   ring_nf
@@ -1357,8 +1355,7 @@ theorem cuspFormCharSpace_of_toModularForm'_mem
   intro d
   show diamondOpCusp k d f = (↑(χ d) : ℂ) • f
   refine DFunLike.ext _ _ fun τ ↦ ?_
-  simpa using
-    DFunLike.congr_fun (((mem_modFormCharSpace_iff k χ f.toModularForm').mp hf) d) τ
+  exact DFunLike.congr_fun (((mem_modFormCharSpace_iff k χ f.toModularForm').mp hf) d) τ
 
 /-- For a `χ`-cusp form `f` and `n` coprime to `N`,
 `(heckeT_n_cusp k n f).toModularForm' = χ(n) • heckeRingHomCharSpace (heckeRingDn n) (↑f)`. -/

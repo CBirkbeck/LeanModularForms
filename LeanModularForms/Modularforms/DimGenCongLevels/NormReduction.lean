@@ -5,7 +5,7 @@ Authors: Chris Birkbeck
 -/
 module
 public import LeanModularForms.Modularforms.DimGenCongLevels.FiniteDimensional
-public import LeanModularForms.Modularforms.DimGenCongLevels.Aux
+public import LeanModularForms.Modularforms.DimGenCongLevels.Auxiliary
 
 /-!
 # Norm reduction for `q`-coefficients
@@ -72,7 +72,9 @@ lemma quotientFunc_isBoundedAtImInfty
     IsBoundedAtImInfty (SlashInvariantForm.quotientFunc (ℋ := 𝒮ℒ) (𝒢 := G Γ) (k := k) f q) := by
   have : (G Γ).IsArithmetic := instIsArithmetic Γ hΓ
   refine Quotient.inductionOn q fun ⟨_, ⟨γ, rfl⟩⟩ ↦ ?_
-  simpa [SlashInvariantForm.quotientFunc_mk, ModularForm.SL_slash, G] using
+  rw [SlashInvariantForm.quotientFunc_mk]
+  simpa only [map_inv, ModularForm.SL_slash, Matrix.SpecialLinearGroup.mapGL,
+    MonoidHom.coe_comp, Function.comp_apply, algebraMap_int_eq] using
     ModularFormClass.bdd_at_infty_slash (f := f) (Γ := G Γ) (k := k) (g := γ⁻¹)
 
 /-- The product of all nontrivial quotient factors appearing in the norm formula.

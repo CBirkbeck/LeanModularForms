@@ -526,11 +526,13 @@ private lemma product_mem_GL_DC_coprime (N : ℕ) [NeZero N]
   · apply Gamma0_doubleCoset_subset_Gamma N
     have h := HeckeCoset.rep_mem (T_diag_Gamma0 N (![1, m])
       (fun i ↦ by fin_cases i <;> simp [hm_pos]) (by simp))
-    simpa only [T_diag_Gamma0, HeckeCoset.toSet_mk] using h
+    simp only [T_diag_Gamma0, HeckeCoset.toSet_mk] at h ⊢
+    exact h
   · apply Gamma0_doubleCoset_subset_Gamma N
     have h := HeckeCoset.rep_mem (T_diag_Gamma0 N (![1, n])
       (fun i ↦ by fin_cases i <;> simp [hn_pos]) (by simp))
-    simpa only [T_diag_Gamma0, HeckeCoset.toSet_mk] using h
+    simp only [T_diag_Gamma0, HeckeCoset.toSet_mk] at h ⊢
+    exact h
 
 /-- Every mulMap output for coprime `diag(1,m) × diag(1,n)` in the Gamma0 Hecke algebra
 equals `T_diag_Gamma0 N (![1, m*n])`. Uses the level-1 `doubleCoset_mul_coprime_mem`
