@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 import Mathlib.Analysis.Calculus.FDeriv.Extend
 import Mathlib.Analysis.Meromorphic.Order
-import LeanModularForms.ForMathlib.Instances
 import LeanModularForms.ForMathlib.WindingDecomposition
 
 /-!

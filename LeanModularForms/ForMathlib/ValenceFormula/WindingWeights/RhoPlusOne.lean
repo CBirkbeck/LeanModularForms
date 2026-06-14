@@ -218,7 +218,7 @@ private lemma rho'_arc_factor (δ : ℝ) :
 private lemma arg_approach_rho'_right_helper (hδ : 0 < δ) (hδ_small : δ < 2) :
     (fdBoundary_H H (1 + δ) - ellipticPointRhoPlusOne).arg =
       5 * Real.pi / 6 + δ * Real.pi / 12 := by
-  rw [g_rho'_arc_value (by linarith) (by linarith), exp_real_angle_I, rho'_arc_factor δ,
+  rw [g_rho'_arc_value (by linarith) (by linarith), Complex.exp_ofReal_mul_I, rho'_arc_factor δ,
     Complex.ofReal_cos, Complex.ofReal_sin]
   have h_sin_pos : 0 < Real.sin (δ * Real.pi / 12) :=
     sin_delta_pi_div_twelve_pos hδ hδ_small
@@ -228,7 +228,7 @@ private lemma arg_approach_rho'_right_helper (hδ : 0 < δ) (hδ_small : δ < 2)
 private lemma g_rho'_norm_arc {δ : ℝ} (hδ : 0 < δ) (hδ2 : δ < 2) :
     ‖fdBoundary_H H (1 + δ) - ellipticPointRhoPlusOne‖ = 2 * Real.sin (δ * Real.pi / 12) := by
   rw [g_rho'_arc_value (by linarith : 1 < 1 + δ) (by linarith : 1 + δ < 3),
-    exp_real_angle_I, rho'_arc_factor δ, ← exp_real_angle_I]
+    Complex.exp_ofReal_mul_I, rho'_arc_factor δ, ← Complex.exp_ofReal_mul_I]
   exact norm_two_sin_mul_exp hδ hδ2
 
 private lemma g_rho'_norm_arc_full {t : ℝ} (ht1 : 1 < t) (ht3 : t < 3) :
@@ -349,7 +349,7 @@ private lemma ftc_logDeriv_telescope_rho_plus_one (H : ℝ) (hH : Real.sqrt 3 / 
     simp only [h₁, hρ'_def, ellipticPointRhoPlusOne, ellipticPointRhoPlusOne',
       ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk,
       show Real.pi * (1 + 3) / 6 = 2 * Real.pi / 3 by ring]
-    rw [exp_real_angle_I, cos_two_pi_div_three, sin_two_pi_div_three]
+    rw [Complex.exp_ofReal_mul_I, cos_two_pi_div_three, sin_two_pi_div_three]
     push_cast; ring
   have hg3_2 : g 3 = h₂ 3 := by
     change fdBoundary_H H 3 - ρ' = h₂ 3

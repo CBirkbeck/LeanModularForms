@@ -7,7 +7,6 @@ import Mathlib.Analysis.Calculus.MeanValue
 import Mathlib.Analysis.Calculus.ParametricIntervalIntegral
 import Mathlib.Analysis.Complex.HasPrimitives
 import Mathlib.MeasureTheory.Integral.IntervalIntegral.IntegrationByParts
-import LeanModularForms.ForMathlib.Instances
 
 /-!
 # Holomorphic Primitives on Convex Sets
@@ -24,9 +23,6 @@ open Complex MeasureTheory Set Filter Topology
 open scoped Real Interval
 
 noncomputable section
-
--- Needed in mathlib v4.29 where this instance is no longer synthesized automatically
-attribute [local instance] IsScalarTower.complexToReal
 
 private lemma segment_subset_convex {S : Set ℂ} (hS : Convex ℝ S)
     {c z : ℂ} (hc : c ∈ S) (hz : z ∈ S) :

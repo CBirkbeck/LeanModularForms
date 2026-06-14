@@ -10,7 +10,6 @@ import LeanModularForms.ForMathlib.ContourIntegral.SegmentFTC
 import LeanModularForms.ForMathlib.ClassicalCPV
 import LeanModularForms.ForMathlib.EllipticPoints
 import LeanModularForms.ForMathlib.FDBoundaryH
-import LeanModularForms.ForMathlib.Instances
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.ArcCalculus
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.CauchyPrimitive
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.Homotopy.Integrality

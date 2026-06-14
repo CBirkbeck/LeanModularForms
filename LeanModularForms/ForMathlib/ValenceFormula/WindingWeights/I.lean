@@ -51,7 +51,7 @@ private lemma arg_approach_i_left (hδ : 0 < δ) (hδ_small : δ < 1) :
   rw [fdBoundary_H_eq_arc h1 h3]
   set θ := Real.pi / 2 - δ * Real.pi / 6 with hθ_def
   rw [show Real.pi * (1 + (2 - δ)) / 6 = θ by simp only [hθ_def]; ring]
-  rw [show (↑θ : ℂ) * I = ↑θ * I from rfl, exp_real_angle_I]
+  rw [show (↑θ : ℂ) * I = ↑θ * I from rfl, Complex.exp_ofReal_mul_I]
   have h_cos : Real.cos θ = Real.sin (δ * Real.pi / 6) := by
     rw [hθ_def, Real.cos_pi_div_two_sub]
   have h_sin : Real.sin θ = Real.cos (δ * Real.pi / 6) := by
@@ -78,7 +78,7 @@ private lemma arg_approach_i_right (hδ : 0 < δ) (hδ_small : δ < 1) :
   rw [fdBoundary_H_eq_arc h1 h3]
   set θ := Real.pi / 2 + δ * Real.pi / 6 with hθ_def
   rw [show Real.pi * (1 + (2 + δ)) / 6 = θ by simp only [hθ_def]; ring]
-  rw [show (↑θ : ℂ) * I = ↑θ * I from rfl, exp_real_angle_I]
+  rw [show (↑θ : ℂ) * I = ↑θ * I from rfl, Complex.exp_ofReal_mul_I]
   have h_cos : Real.cos θ = -Real.sin (δ * Real.pi / 6) := by
     rw [hθ_def, Real.cos_add, Real.cos_pi_div_two, Real.sin_pi_div_two]; ring
   have h_sin : Real.sin θ = Real.cos (δ * Real.pi / 6) := by
@@ -119,7 +119,7 @@ private lemma g_i_norm_left {δ : ℝ} (hδ : 0 < δ) (hδ1 : δ < 1) :
     ‖fdBoundary_H H (2 - δ) - I‖ = 2 * Real.sin (δ * Real.pi / 12) := by
   have h1 : 1 < 2 - δ := by linarith
   have h3 : 2 - δ < 3 := by linarith
-  rw [fdBoundary_H_eq_arc h1 h3, exp_real_angle_I]
+  rw [fdBoundary_H_eq_arc h1 h3, Complex.exp_ofReal_mul_I]
   set θ := Real.pi / 2 - δ * Real.pi / 6 with hθ_def
   rw [show Real.pi * (1 + (2 - δ)) / 6 = θ by simp only [hθ_def]; ring]
   have h_cos : Real.cos θ = Real.sin (δ * Real.pi / 6) := by
@@ -129,7 +129,7 @@ private lemma g_i_norm_left {δ : ℝ} (hδ : 0 < δ) (hδ1 : δ < 1) :
   obtain ⟨h_re_factor, h_im_factor, h_sin_pos⟩ := trig_setup_i hδ hδ1
   have h_eq : ↑(Real.cos θ) + ↑(Real.sin θ) * I - I =
       (2 * Real.sin (δ * Real.pi / 12)) • Complex.exp (↑(-(δ * Real.pi / 12)) * I) := by
-    rw [Complex.real_smul, exp_real_angle_I, Real.cos_neg, Real.sin_neg, h_cos, h_sin]
+    rw [Complex.real_smul, Complex.exp_ofReal_mul_I, Real.cos_neg, Real.sin_neg, h_cos, h_sin]
     exact eq_factor_i (by linarith [h_re_factor]) (by linarith [h_im_factor])
   rw [h_eq, norm_smul, Complex.norm_exp_ofReal_mul_I, mul_one, Real.norm_of_nonneg (by linarith)]
 
@@ -137,7 +137,7 @@ private lemma g_i_norm_right {δ : ℝ} (hδ : 0 < δ) (hδ1 : δ < 1) :
     ‖fdBoundary_H H (2 + δ) - I‖ = 2 * Real.sin (δ * Real.pi / 12) := by
   have h1 : 1 < 2 + δ := by linarith
   have h3 : 2 + δ < 3 := by linarith
-  rw [fdBoundary_H_eq_arc h1 h3, exp_real_angle_I]
+  rw [fdBoundary_H_eq_arc h1 h3, Complex.exp_ofReal_mul_I]
   set θ := Real.pi / 2 + δ * Real.pi / 6 with hθ_def
   rw [show Real.pi * (1 + (2 + δ)) / 6 = θ by simp only [hθ_def]; ring]
   have h_cos : Real.cos θ = -Real.sin (δ * Real.pi / 6) := by
@@ -147,7 +147,7 @@ private lemma g_i_norm_right {δ : ℝ} (hδ : 0 < δ) (hδ1 : δ < 1) :
   obtain ⟨h_re_factor, h_im_factor, h_sin_pos⟩ := trig_setup_i hδ hδ1
   have h_eq : ↑(Real.cos θ) + ↑(Real.sin θ) * I - I =
       (-(2 * Real.sin (δ * Real.pi / 12))) • Complex.exp (↑(δ * Real.pi / 12) * I) := by
-    rw [Complex.real_smul, exp_real_angle_I, h_cos, h_sin]
+    rw [Complex.real_smul, Complex.exp_ofReal_mul_I, h_cos, h_sin]
     exact eq_factor_i (by linarith [h_re_factor]) (by linarith [h_im_factor])
   rw [h_eq, norm_smul, Complex.norm_exp_ofReal_mul_I, mul_one, Real.norm_eq_abs, abs_neg,
     abs_of_nonneg (by linarith)]
@@ -191,7 +191,7 @@ private lemma g_i_slitPlane_left {t : ℝ} (ht2 : t < 2) :
   · rw [fdBoundary_H_seg2 H (by linarith) (by linarith)]
     set θ := Real.pi / 3 + (t - 1) * (Real.pi / 2 - Real.pi / 3) with hθ_def
     rw [show (↑Real.pi / 3 + (↑t - 1) * (↑Real.pi / 2 - ↑Real.pi / 3)) * I =
-      (↑θ : ℂ) * I by simp only [hθ_def]; push_cast; ring, exp_real_angle_I]
+      (↑θ : ℂ) * I by simp only [hθ_def]; push_cast; ring, Complex.exp_ofReal_mul_I]
     simp only [Complex.add_re, Complex.sub_re, Complex.ofReal_re, Complex.mul_re,
       Complex.I_re, Complex.I_im, Complex.ofReal_im, mul_zero, sub_zero, add_zero,
       mul_one]
@@ -236,7 +236,7 @@ private lemma g_i_slitPlane_arc_right {t : ℝ} (ht2 : 2 < t) (ht3 : t ≤ 3) :
       Complex.one_im, Complex.mul_im, Complex.ofReal_re, Complex.ofReal_im,
       Complex.I_re, Complex.I_im, mul_zero, add_zero, mul_one, zero_div]
     nlinarith [Real.sq_sqrt (show (3:ℝ) ≥ 0 by norm_num), sq_nonneg (2 - Real.sqrt 3)]
-  · rw [fdBoundary_H_eq_arc (by linarith) ht3', exp_real_angle_I]
+  · rw [fdBoundary_H_eq_arc (by linarith) ht3', Complex.exp_ofReal_mul_I]
     simp only [Complex.add_im, Complex.sub_im, Complex.ofReal_im, Complex.mul_im,
       Complex.ofReal_re, Complex.I_re, Complex.I_im, mul_zero, add_zero, mul_one, zero_add]
     have hθ_bound : Real.pi / 2 < Real.pi * (1 + t) / 6 := by nlinarith [Real.pi_pos]
@@ -437,7 +437,7 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 
       UpperHalfPlane.coe_mk]
     rw [show Real.pi * (1 + 1) / 6 = Real.pi / 3 by ring,
         show (↑(Real.pi / 3) : ℂ) * I = ↑(Real.pi / 3) * I from rfl,
-        exp_real_angle_I, Real.cos_pi_div_three, Real.sin_pi_div_three]
+        Complex.exp_ofReal_mul_I, Real.cos_pi_div_three, Real.sin_pi_div_three]
     push_cast; ring
   have hg2mδ : g (2 - δ) = h₁ (2 - δ) := hg_eq_h₁ (2 - δ) (by linarith) (by linarith)
   have hg2pδ : g (2 + δ) = h₁ (2 + δ) := hg_eq_h₁ (2 + δ) (by linarith) (by linarith)
@@ -447,7 +447,7 @@ private lemma ftc_logDeriv_telescope_i (H : ℝ) (hH : 1 < H) {δ : ℝ} (hδ : 
     simp only [h₁, ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
     rw [show Real.pi * (1 + 3) / 6 = 2 * Real.pi / 3 by ring]
     rw [show (↑(2 * Real.pi / 3) : ℂ) * I = ↑(2 * Real.pi / 3) * I from rfl,
-        exp_real_angle_I, cos_two_pi_div_three, sin_two_pi_div_three]
+        Complex.exp_ofReal_mul_I, cos_two_pi_div_three, sin_two_pi_div_three]
     push_cast; ring
   have hg3_2 : g 3 = h₂ 3 := by
     change fdBoundary_H H 3 - I = h₂ 3

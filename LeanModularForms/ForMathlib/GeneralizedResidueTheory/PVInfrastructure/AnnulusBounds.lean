@@ -6,7 +6,6 @@ Authors:
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.PVInfrastructure.GammaAnalysis
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.PVInfrastructure.RemainderAnalysis
 import LeanModularForms.ForMathlib.GeneralizedResidueTheory.PVInfrastructure.StepBounds
-import LeanModularForms.ForMathlib.Instances
 
 /-!
 # PV Infrastructure: Annulus Bounds

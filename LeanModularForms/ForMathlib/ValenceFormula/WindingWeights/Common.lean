@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors:
 -/
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Bounds
-import LeanModularForms.ForMathlib.Instances
 import LeanModularForms.ForMathlib.SegmentFTC
 import LeanModularForms.ForMathlib.TrigLemmas
 import LeanModularForms.ForMathlib.ValenceFormula.Boundary.Smooth
@@ -33,7 +32,7 @@ theorem fdBoundary_H_at_two_eq_I (H : ℝ) :
   simp only [fdBoundary_H, show ¬((2 : ℝ) ≤ 1) by norm_num, le_refl, ↓reduceIte]
   rw [show ((↑(Real.pi : ℝ) / 3 + (↑(2:ℝ) - 1) *
       (↑(Real.pi : ℝ) / 2 - ↑(Real.pi : ℝ) / 3)) * I = ↑(Real.pi / 2) * I) by push_cast; ring,
-    exp_real_angle_I, Real.cos_pi_div_two, Real.sin_pi_div_two]
+    Complex.exp_ofReal_mul_I, Real.cos_pi_div_two, Real.sin_pi_div_two]
   push_cast; ring
 
 theorem fdBoundary_H_at_three_eq_rho (H : ℝ) :
@@ -43,7 +42,7 @@ theorem fdBoundary_H_at_three_eq_rho (H : ℝ) :
   rw [show ((↑(Real.pi : ℝ) / 2 + (↑(3:ℝ) - 2) *
       (2 * ↑(Real.pi : ℝ) / 3 - ↑(Real.pi : ℝ) / 2)) * I = ↑(2 * Real.pi / 3) * I) by
     push_cast; ring,
-    exp_real_angle_I, cos_two_pi_div_three, sin_two_pi_div_three]
+    Complex.exp_ofReal_mul_I, cos_two_pi_div_three, sin_two_pi_div_three]
   simp only [ellipticPointRho, ellipticPointRho', UpperHalfPlane.coe_mk]
   push_cast; ring
 
