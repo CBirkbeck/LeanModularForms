@@ -1,3 +1,7 @@
 /.lake
 /_out
 /blueprint-import
+
+# PDFs (reference textbooks / papers / generated blueprint) live LOCALLY ONLY — never on GitHub.
+# Copyrighted books must not be on this public repo. Use `git add -f <file>` if a specific PDF must be tracked.
+*.pdf
